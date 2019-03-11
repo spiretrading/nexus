@@ -115,9 +115,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   return (
     <div id='GROUP BOX' style={GroupSelectionBox.STYLE.box}
         ref={this.boxRef}
-        onBlur={() => {
-          /// UGHDFGHKLDHKFGDHSLKGSDGHKDFGHKDFGHSHKLHKLHKLDFGHS
-        }}
+        onBlur={() => this.setState({showSuggestions: false})}
         onFocus={() => this.setState({showSuggestions: true})}>
       <input type='text'
         ref={this.inputRef}
@@ -386,7 +384,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
           selectedGroups.push(
             <li style={{...SuggestionBox.STYLE.entry,
                   ...textStyle, ...SuggestionBox.STYLE.selected}}
-                onClick={this.props.addGroup}
+                onMouseDown={() => this.props.addGroup()}
                 key={index}
                 ref={this.currentEntryRef}>
               {group.name}
@@ -395,7 +393,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
           selectedGroups.push(
             <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
                 onMouseMove={() => this.props.changeIndex(index)}
-                onClick={this.props.addGroup}
                 key={index}>
               {group.name}
             </li>);
@@ -403,7 +400,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       }
     }
     return (
-      <ul style={SuggestionBox.STYLE.box}
+      <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
           tabIndex={-1}>
         {selectedGroups}
       </ul>
@@ -434,8 +431,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       display: 'flex',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      cursor: 'default',
-      tabIndex: -1
+      cursor: 'default'
     },
     textSmall: {
       font: '400 16px Roboto',
@@ -450,7 +446,10 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
     selected: {
       color: '#FFFFFF',
       backgroundColor: '#684BC7'
-    },
+    }
+  };
+
+  private static DYNAMIC_STYLE = StyleSheet.create({
     box: {
       boxSizing: 'border-box' as 'border-box',
       zIndex: 1,
@@ -462,8 +461,36 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       position: 'absolute' as 'absolute',
       padding: '0px',
       margin: '0px',
-      tabFocus: -1
+      tabFocus: -1,
+     ':focus': {
+        ouline: 'none',
+        borderStyle: 'none',
+        boxShadow: '0px 2px 6px #C8C8C8',
+        borderColor: 'transparent',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      ':active': {
+        ouline: 'none',
+        borderStyle: 'none',
+        boxShadow: '0px 2px 6px #C8C8C8',
+        borderColor: 'transparent',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::-moz-focus-inner': {
+        ouline: 'none',
+        borderStyle: 'none',
+        boxShadow: '0px 2px 6px #C8C8C8',
+        borderColor: 'transparent',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      }
     }
-  };
+  });
+
   private currentEntryRef: React.RefObject<HTMLLIElement>;
 }
