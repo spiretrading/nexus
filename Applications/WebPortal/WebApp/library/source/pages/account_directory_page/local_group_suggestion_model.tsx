@@ -25,17 +25,13 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return new Promise<Beam.DirectoryEntry[]> ((resolve) => {
-        const set: Beam.DirectoryEntry[] = [];
-        if(prefix) {
-          for(const group of this._groups) {
-            if(group.name.indexOf(prefix) === 0) {
-              set.push(group);
-            }
-          }
-        }
-        resolve(set);
-      });
+    const set: Beam.DirectoryEntry[] = [];
+    for(const group of this._groups) {
+      if(group.name.indexOf(prefix) === 0) {
+        set.push(group);
+      }
+    }
+    return set;
   }
 
   private _isLoaded: boolean;

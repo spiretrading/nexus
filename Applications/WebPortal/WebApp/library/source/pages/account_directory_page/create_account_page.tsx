@@ -46,7 +46,7 @@ interface State {
   hasFirstNameError: boolean;
   hasLastNameError: boolean;
   hasUserNameError: boolean;
-  hasRoleError: string;
+  roleError: string;
   hasGroupError: boolean;
   hasEmailError: boolean;
   photoUploaderMode: PhotoFieldDisplayMode;
@@ -72,7 +72,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       selectedGroups: [],
       isSubmitButtonDisabled: true,
       errorStatus: '',
-      hasRoleError: '',
+      roleError: '',
       hasFirstNameError: false,
       hasLastNameError: false,
       hasUserNameError: false,
@@ -92,8 +92,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.onUsernameChange = this.onUsernameChange.bind(this);
     this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
     this.filterGroups = this.filterGroups.bind(this);
-    this.addGroup = this.addGroup.bind(this);
-    this.removeGroup = this.removeGroup.bind(this);
+    this.onAddGroup = this.onAddGroup.bind(this);
+    this.onRemoveGroup = this.onRemoveGroup.bind(this);
     this.onEmailChange = this.onEmailChange.bind(this);
     this.onAddressChange = this.onAddressChange.bind(this);
     this.onCityChange = this.onCityChange.bind(this);
@@ -240,7 +240,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                       onClick={this.onRoleClick}/>
                       <div style={CreateAccountPage.STYLE.filler}/>
                       <div style={CreateAccountPage.STYLE.roleErrorStatus}>
-                        {this.state.hasRoleError}
+                        {this.state.roleError}
                       </div>
                     </div>
                 </FormEntry>
@@ -253,8 +253,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}
                     selectedGroups={this.state.selectedGroups}
                     suggestions={this.state.suggestedGroups}
-                    onAddGroup={this.addGroup}
-                    onRemoveGroup={this.removeGroup}
+                    onAddGroup={this.onAddGroup}
+                    onRemoveGroup={this.onRemoveGroup}
                     isError={this.state.hasGroupError}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -390,7 +390,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     });
   }
 
-  private async addGroup(group: Beam.DirectoryEntry) {
+  private async onAddGroup(group: Beam.DirectoryEntry) {
     if(this.state.selectedGroups.indexOf(group) < 0) {
       this.state.selectedGroups.push(group);
       this.setState({
@@ -401,7 +401,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     }
   }
 
-  private removeGroup(group: Beam.DirectoryEntry) {
+  private onRemoveGroup(group: Beam.DirectoryEntry) {
     this.state.selectedGroups.
       splice(this.state.selectedGroups.indexOf(group), 1);
     this.setState({
@@ -462,14 +462,14 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private checkInputs(): boolean {
-    const errorFirstName = this.state.identity.firstName === '';
-    const errorLastName = this.state.identity.lastName === '';
-    const errorUsername = this.state.username === '';
-    const errorGroups = this.state.selectedGroups.length < 1;
-    const errorEmail = this.state.identity.emailAddress === '' ||
+    const hasErrorFirstName = this.state.identity.firstName === '';
+    const hasErrorLastName = this.state.identity.lastName === '';
+    const hasErrorUsername = this.state.username === '';
+    const hasErrorGroups = this.state.selectedGroups.length < 1;
+    const hasErrorEmail = this.state.identity.emailAddress === '' ||
       (!this.state.identity.emailAddress.includes('@') &&
         !this.state.identity.emailAddress.includes('.'));
-    const errorRoles = (() => {
+    const hasErrorRoles = (() => {
       if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ||
           this.state.roles.test(Nexus.AccountRoles.Role.MANAGER) ||
           this.state.roles.test(Nexus.AccountRoles.Role.TRADER) ||
@@ -479,26 +479,26 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return 'Select role(s)';
       }
     })();
-    if(errorFirstName || errorLastName || errorEmail || errorUsername ||
-        errorRoles || errorGroups) {
+    if(hasErrorFirstName || hasErrorLastName || hasErrorEmail ||
+        hasErrorUsername || hasErrorRoles || hasErrorGroups) {
       this.setState({
         errorStatus: 'Invalid inputs',
-        hasFirstNameError: errorFirstName,
-        hasLastNameError: errorLastName,
-        hasEmailError: errorEmail,
-        hasUserNameError: errorUsername,
-        hasGroupError: errorGroups,
-        hasRoleError: errorRoles
+        hasFirstNameError: hasErrorFirstName,
+        hasLastNameError: hasErrorLastName,
+        hasEmailError: hasErrorEmail,
+        hasUserNameError: hasErrorUsername,
+        hasGroupError: hasErrorGroups,
+        roleError: hasErrorRoles
       });
       return false;
     } else {
       this.setState({
         errorStatus: '',
-        hasFirstNameError: errorFirstName,
-        hasLastNameError: errorLastName,
-        hasEmailError: errorEmail,
-        hasUserNameError: errorUsername,
-        hasRoleError: errorRoles
+        hasFirstNameError: hasErrorFirstName,
+        hasLastNameError: hasErrorLastName,
+        hasEmailError: hasErrorEmail,
+        hasUserNameError: hasErrorUsername,
+        roleError: hasErrorRoles
       });
       return true;
     }

@@ -62,8 +62,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     this.inputRef = React.createRef();
     this.onFocus = this.onFocus.bind(this);
     this.onBlur = this.onBlur.bind(this);
-    this.addGroup = this.addGroup.bind(this);
-    this.changeIndex = this.changeIndex.bind(this);
+    this.onAddGroup = this.onAddGroup.bind(this);
+    this.onChangeIndex = this.onChangeIndex.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
   }
 
@@ -98,9 +98,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         return GroupSelectionBox.STYLE.hidden;
       }
     })();
-    const selectedGroups = this.props.selectedGroups.map( (group) => {
-      return (
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
+    const selectedGroups = this.props.selectedGroups.map((group) => {
+        return (<div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
             key={group.id}>
           <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
             {group.name}
@@ -130,14 +129,15 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
           currentIndex={this.state.currentIndex}
           suggestedGroups={this.props.suggestions}
           displaySize={this.props.displaySize}
-          onAddGroup={this.addGroup}
-          onChangeIndex={this.changeIndex}/>
+          onAddGroup={this.onAddGroup}
+          onChangeIndex={this.onChangeIndex}/>
       </div>
       {selectedGroups}
     </div>);
   }
 
   public componentDidUpdate(prevProps: Properties): void {
+    console.log(this.props.selectedGroups);
     if(this.props.suggestions === null && this.state.currentIndex !== -1) {
       this.setState({
         currentIndex: -1
@@ -156,17 +156,20 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   private onBlur() {
     this.setState({showSuggestions: false});
   }
-  private addGroup() {
+
+  private onAddGroup() {
+    console.log('howdy');
     if(this.props.suggestions !== null && this.state.currentIndex >= 0) {
-        const newGroup =  this.props.suggestions[this.state.currentIndex];
-        if(newGroup) {
-          this.props.onAddGroup(newGroup);
-        }
+      const newGroup =  this.props.suggestions[this.state.currentIndex];
+      console.log(newGroup);
+      if(newGroup) {
+        this.props.onAddGroup(newGroup);
       }
+    }
     this.inputRef.current.focus();
   }
 
-  private changeIndex(newCurrent: number) {
+  private onChangeIndex(newCurrent: number) {
     this.setState({ currentIndex: newCurrent });
   }
 
@@ -179,9 +182,9 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       if(this.state.currentIndex < this.props.suggestions.length - 1) {
         this.setState({ currentIndex: this.state.currentIndex + 1 });
       }
-    } else if(event.keyCode === 13 && this.props.suggestions
-        && this.state.currentIndex >= 0) {
-      this.addGroup();
+    } else if(event.keyCode === 13 && this.props.suggestions &&
+        this.state.currentIndex >= 0) {
+      this.onAddGroup();
     }
   }
 
