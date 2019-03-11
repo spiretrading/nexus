@@ -21,6 +21,9 @@ interface Properties {
   /** The status given back from the server on callback. */
   errorStatus?: string;
 
+  /** The model that provides the group suggestions. */
+  groupSuggestionModel: GroupSuggestionModel;
+
   /** The call to submit the profile page.
    * @param username - The username for the account.
    * @param groups - The groups the account belongs to.
@@ -29,9 +32,6 @@ interface Properties {
    */
   onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
-
-  /** The model that provides the group suggestions. */
-  groupSuggestionModel?: GroupSuggestionModel;
 }
 
 interface State {
@@ -43,12 +43,12 @@ interface State {
   selectedGroups: Beam.DirectoryEntry[];
   isSubmitButtonDisabled: boolean;
   errorStatus: string;
-  firstNameError: boolean;
-  lastNameError: boolean;
-  userNameError: boolean;
-  roleError: string;
-  groupError: boolean;
-  emailError: boolean;
+  hasFirstNameError: boolean;
+  hasLastNameError: boolean;
+  hasUserNameError: boolean;
+  hasRoleError: string;
+  hasGroupError: boolean;
+  hasEmailError: boolean;
   photoUploaderMode: PhotoFieldDisplayMode;
   newPhoto: string;
   newScaling: number;
@@ -68,16 +68,16 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       username: '',
       identity: new Nexus.AccountIdentity(),
       groupsValue: '',
-      suggestedGroups: new Array<Beam.DirectoryEntry>(),
-      selectedGroups: new Array<Beam.DirectoryEntry>(),
+      suggestedGroups: [],
+      selectedGroups: [],
       isSubmitButtonDisabled: true,
       errorStatus: '',
-      roleError: '',
-      firstNameError: false,
-      lastNameError: false,
-      userNameError: false,
-      groupError: false,
-      emailError: false,
+      hasRoleError: '',
+      hasFirstNameError: false,
+      hasLastNameError: false,
+      hasUserNameError: false,
+      hasGroupError: false,
+      hasEmailError: false,
       photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
       newPhoto: '',
       newScaling: 1
@@ -211,7 +211,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <TextField
                     value={this.state.identity.firstName}
                     displaySize={this.props.displaySize}
-                    isError={this.state.firstNameError}
+                    isError={this.state.hasFirstNameError}
                     onInput={this.onFirstNameChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -220,7 +220,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <TextField
                     value={this.state.identity.lastName}
                     displaySize={this.props.displaySize}
-                    isError={this.state.lastNameError}
+                    isError={this.state.hasLastNameError}
                     onInput={this.onLastNameChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -229,7 +229,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <TextField
                     value={this.state.username}
                     displaySize={this.props.displaySize}
-                    isError={this.state.userNameError}
+                    isError={this.state.hasUserNameError}
                     onInput={this.onUsernameChange}/>
                 </FormEntry>
                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -240,7 +240,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                       onClick={this.onRoleClick}/>
                       <div style={CreateAccountPage.STYLE.filler}/>
                       <div style={CreateAccountPage.STYLE.roleErrorStatus}>
-                        {this.state.roleError}
+                        {this.state.hasRoleError}
                       </div>
                     </div>
                 </FormEntry>
@@ -253,9 +253,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}
                     selectedGroups={this.state.selectedGroups}
                     suggestions={this.state.suggestedGroups}
-                    addGroup={this.addGroup}
-                    removeGroup={this.removeGroup}
-                    isError={this.state.groupError}/>
+                    onAddGroup={this.addGroup}
+                    onRemoveGroup={this.removeGroup}
+                    isError={this.state.hasGroupError}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
@@ -263,7 +263,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <TextField
                     value={this.state.identity.emailAddress}
                     displaySize={this.props.displaySize}
-                    isError={this.state.emailError}
+                    isError={this.state.hasEmailError}
                     onInput={this.onEmailChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -379,17 +379,14 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     });
     this.filterGroups(newValue);
   }
+
   private async filterGroups(newValue: string) {
     const newSuggestions =
       await this.props.groupSuggestionModel.loadSuggestions(newValue);
-    const filteredSuggestins = [];
-    for (const group of newSuggestions) {
-      if(this.state.selectedGroups.indexOf(group) < 0) {
-        filteredSuggestins.push(group);
-      }
-    }
+    const filteredSuggestions = newSuggestions.filter(
+      (group) => this.state.selectedGroups.indexOf(group) < 0);
     this.setState({
-      suggestedGroups: filteredSuggestins
+      suggestedGroups: filteredSuggestions
     });
   }
 
@@ -399,7 +396,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       this.setState({
         selectedGroups: this.state.selectedGroups,
         groupsValue: '',
-        suggestedGroups: null
+        suggestedGroups: []
       });
     }
   }
@@ -459,7 +456,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, null,
+      this.props.onSubmit(this.state.username, this.state.selectedGroups,
         this.state.identity, this.state.roles);
     }
   }
@@ -468,6 +465,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     const errorFirstName = this.state.identity.firstName === '';
     const errorLastName = this.state.identity.lastName === '';
     const errorUsername = this.state.username === '';
+    const errorGroups = this.state.selectedGroups.length < 1;
     const errorEmail = this.state.identity.emailAddress === '' ||
       (!this.state.identity.emailAddress.includes('@') &&
         !this.state.identity.emailAddress.includes('.'));
@@ -481,33 +479,26 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         return 'Select role(s)';
       }
     })();
-    let errorGroups = true;
-    for (const group of this.state.selectedGroups) {
-      if(group.id) {
-        errorGroups = false;
-      }
-      break;
-    }
     if(errorFirstName || errorLastName || errorEmail || errorUsername ||
         errorRoles || errorGroups) {
       this.setState({
         errorStatus: 'Invalid inputs',
-        firstNameError: errorFirstName,
-        lastNameError: errorLastName,
-        emailError: errorEmail,
-        userNameError: errorUsername,
-        groupError: errorGroups,
-        roleError: errorRoles
+        hasFirstNameError: errorFirstName,
+        hasLastNameError: errorLastName,
+        hasEmailError: errorEmail,
+        hasUserNameError: errorUsername,
+        hasGroupError: errorGroups,
+        hasRoleError: errorRoles
       });
       return false;
     } else {
       this.setState({
         errorStatus: '',
-        firstNameError: errorFirstName,
-        lastNameError: errorLastName,
-        emailError: errorEmail,
-        userNameError: errorUsername,
-        roleError: errorRoles
+        hasFirstNameError: errorFirstName,
+        hasLastNameError: errorLastName,
+        hasEmailError: errorEmail,
+        hasUserNameError: errorUsername,
+        hasRoleError: errorRoles
       });
       return true;
     }

@@ -16,16 +16,15 @@ interface State {
   model: WebPortal.GroupSuggestionModel;
 }
 
-/**  Displays displays and tests the CreateAccountPage. */
+/**  Displays and tests the CreateAccountPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
       errorStatus: '',
       displayStatus: '',
-      groups: new Array<Beam.DirectoryEntry>(),
-      model: new WebPortal.LocalGroupSuggestionModel(
-          new Array<Beam.DirectoryEntry>())
+      groups: [],
+      model: new WebPortal.LocalGroupSuggestionModel([])
     };
     this.setErrorMessage = this.setErrorMessage.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -53,7 +52,7 @@ class TestApp extends React.Component<Properties, State> {
       </Dali.VBoxLayout>);
   }
 
-  public componentDidMount() {
+  public componentDidMount(): void {
     const type = Beam.DirectoryEntry.Type.DIRECTORY;
     const group1 =
       new Beam.DirectoryEntry(type, 80, 'Lonely Mountain');
@@ -127,9 +126,9 @@ class TestApp extends React.Component<Properties, State> {
     const newModel = new WebPortal.LocalGroupSuggestionModel(this.state.groups);
     newModel.load();
     this.setState({
-        model: newModel
-      });
-    }
+      model: newModel
+    });
+  }
 
   private onSubmit(username: string, groups: Beam.DirectoryEntry[],
       identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {

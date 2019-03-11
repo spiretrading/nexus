@@ -15,19 +15,17 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
   public isLoaded(): boolean {
     return this._isLoaded;
   }
-  // Loads this model.
+
   public async load(): Promise<void> {
     this._isLoaded = true;
   }
 
-  // Returns all the accounts with the given prefix.
   public async loadSuggestions(
       prefix: string): Promise<Beam.DirectoryEntry[]> {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
     return new Promise<Beam.DirectoryEntry[]> ((resolve) => {
-      setTimeout(() => {
         const set: Beam.DirectoryEntry[] = [];
         if(prefix) {
           for(const group of this._groups) {
@@ -36,7 +34,7 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
             }
           }
         }
-        resolve(set);}, 100);
+        resolve(set);
       });
   }
 
