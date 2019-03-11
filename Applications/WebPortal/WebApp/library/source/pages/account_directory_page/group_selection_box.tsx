@@ -137,7 +137,6 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties): void {
-    console.log(this.props.selectedGroups);
     if(this.props.suggestions === null && this.state.currentIndex !== -1) {
       this.setState({
         currentIndex: -1
@@ -158,10 +157,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   private onAddGroup() {
-    console.log('howdy');
     if(this.props.suggestions !== null && this.state.currentIndex >= 0) {
       const newGroup =  this.props.suggestions[this.state.currentIndex];
-      console.log(newGroup);
       if(newGroup) {
         this.props.onAddGroup(newGroup);
       }
