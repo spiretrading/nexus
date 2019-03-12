@@ -124,7 +124,6 @@ class TestApp extends React.Component<Properties, State> {
     this.state.groups.push(group22);
     this.state.groups.push(group23);
     const newModel = new WebPortal.LocalGroupSuggestionModel(this.state.groups);
-    newModel.load();
     this.setState({
       model: newModel
     });

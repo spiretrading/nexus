@@ -1,14 +1,15 @@
 import * as Beam from 'beam';
 import { GroupSuggestionModel } from './group_suggestion_model';
 
-/** Interface for model  */
+/** Implements an GroupSuggestionModel in memory. */
 export class LocalGroupSuggestionModel extends GroupSuggestionModel {
 
   /** Constructs an new model.
-   * @param groups - A set of groups.
+   * @param groups - A list of all available
    */
   public constructor(groups: Beam.DirectoryEntry[]) {
     super();
+    this._isLoaded = false;
     this._groups = groups.slice();
   }
 
@@ -25,13 +26,9 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    const set: Beam.DirectoryEntry[] = [];
-    for(const group of this._groups) {
-      if(group.name.indexOf(prefix) === 0) {
-        set.push(group);
-      }
-    }
-    return set;
+    const suggestions = this._groups.filter(
+      group => group.name.indexOf(prefix) === 0);
+    return suggestions;
   }
 
   private _isLoaded: boolean;

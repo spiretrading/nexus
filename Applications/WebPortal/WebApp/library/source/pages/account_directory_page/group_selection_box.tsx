@@ -60,6 +60,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       showSuggestions: false
     };
     this.inputRef = React.createRef();
+    this.onValueChange = this.onValueChange.bind(this);
     this.onFocus = this.onFocus.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onAddGroup = this.onAddGroup.bind(this);
@@ -99,29 +100,27 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     })();
     const selectedGroups = this.props.selectedGroups.map((group) => {
-        return (<div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
-            key={group.id}>
-          <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
-            {group.name}
-          </div>
-          <div style={GroupSelectionBox.STYLE.imageWrapper}>
-            <img style={GroupSelectionBox.STYLE.image}
-              onClick={ () => this.props.onRemoveGroup(group) }
-              src={'resources/remove.svg'}/>
-          </div>
-        </div>);
+      return (<div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
+          key={group.id}>
+        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
+          {group.name}
+        </div>
+        <div style={GroupSelectionBox.STYLE.imageWrapper}>
+          <img style={GroupSelectionBox.STYLE.image}
+            onClick={ () => this.props.onRemoveGroup(group) }
+            src='resources/remove.svg'/>
+        </div>
+      </div>);
     });
   return (
-    <div id='GROUP BOX' style={GroupSelectionBox.STYLE.box}
+    <div style={GroupSelectionBox.STYLE.box}
         onBlur={this.onBlur}
         onFocus={this.onFocus}>
       <input type='text'
         ref={this.inputRef}
         value={this.props.value}
-        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
-          this.onKeyPress(event)}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onValueChange(event.target.value);}}
+        onKeyDown={this.onKeyPress}
+        onChange={this.onValueChange}
         className={css(inputStyle, textStyle, errorBoxStyle)}/>
       <div style={GroupSelectionBox.STYLE.filler}/>
       <div style={suggestionBox}>
@@ -137,7 +136,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties): void {
-    if(this.props.suggestions === null && this.state.currentIndex !== -1) {
+    if(this.props.suggestions === [] && this.state.currentIndex !== -1) {
       this.setState({
         currentIndex: -1
       });
@@ -146,6 +145,10 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         currentIndex: 0
       });
     }
+  }
+
+  private onValueChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    this.props.onValueChange(event.target.value);
   }
 
   private onFocus() {
@@ -157,8 +160,8 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   private onAddGroup() {
-    if(this.props.suggestions !== null && this.state.currentIndex >= 0) {
-      const newGroup =  this.props.suggestions[this.state.currentIndex];
+    if(this.props.suggestions !== [] && this.state.currentIndex >= 0) {
+      const newGroup = this.props.suggestions[this.state.currentIndex];
       if(newGroup) {
         this.props.onAddGroup(newGroup);
       }
@@ -357,7 +360,7 @@ interface SuggestionBoxProps {
    */
   onChangeIndex?: (newIndex: number) => void;
 
-  /** Add a group to the selected groups. */
+  /** Adds the group at the CurrentIndex to the selected groups. */
   onAddGroup?: () => void;
 }
 
@@ -381,33 +384,29 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
         return SuggestionBox.STYLE.textLarge;
       }
     })();
-    const selectedGroups = [];
-    if(this.props.suggestedGroups !== null) {
-      for(let index = 0; index < this.props.suggestedGroups.length; ++index) {
-        const group = this.props.suggestedGroups[index];
-        if(this.props.currentIndex === index) {
-          selectedGroups.push(
-            <li style={{...SuggestionBox.STYLE.entry,
-                  ...textStyle, ...SuggestionBox.STYLE.selected}}
-                onMouseDown={() => this.props.onAddGroup()}
-                key={index}
-                ref={this.currentEntryRef}>
-              {group.name}
-            </li>);
-        } else {
-          selectedGroups.push(
-            <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
-                onMouseMove={() => this.props.onChangeIndex(index)}
-                key={index}>
-              {group.name}
-            </li>);
-        }
+    const suggestions = this.props.suggestedGroups.map((group, index) => {
+      if(group === this.props.suggestedGroups[this.props.currentIndex]) {
+        return (
+          <li style={{...SuggestionBox.STYLE.entry,
+                ...textStyle, ...SuggestionBox.STYLE.selected}}
+              onMouseDown={() => this.props.onAddGroup()}
+              key={group.id}
+              ref={this.currentEntryRef}>
+            {group.name}
+          </li>);
+      } else {
+        return (
+          <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
+              onMouseMove={() => this.props.onChangeIndex(index)}
+              key={group.id}>
+            {group.name}
+          </li>);
       }
-    }
+    });
     return (
       <ul className={css(SuggestionBox.DYNAMIC_STYLE.box)}
           tabIndex={-1}>
-        {selectedGroups}
+        {suggestions}
       </ul>);
  }
 
