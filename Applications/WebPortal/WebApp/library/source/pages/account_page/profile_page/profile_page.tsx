@@ -5,7 +5,8 @@ import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
 import { CommentBox } from '../comment_box';
 import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
-  SubmitButton, TextField } from '.';
+  SubmitButton } from '.';
+import { TextField } from './text_field';
 
 interface Properties {
 

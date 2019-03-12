@@ -5,4 +5,3 @@ export * from './profile_page';
 export * from './roles_field';
 export * from './role_icon';
 export * from './submit_button';
-export * from './text_field';

@@ -292,7 +292,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     onSubmitImage: () => {},
     onPhotoChange: () => {},
     onScalingChange: () => {}
-  }
+  };
 
   constructor(properties: ModalProperties) {
     super(properties);
