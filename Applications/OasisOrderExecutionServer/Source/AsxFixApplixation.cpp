@@ -49,7 +49,7 @@ const Order& AsxFixApplication::Submit(const OrderInfo& info) {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid market."});
       }
       if(info.m_fields.m_destination == DefaultDestinations::ASXT()) {
-        newOrderSingle->set(FIX::ExDestination{"ASX"});
+        newOrderSingle->set(FIX::ExDestination{"BESTMKT"});
       } else if(info.m_fields.m_destination == DefaultDestinations::CXA()) {
         newOrderSingle->set(FIX::ExDestination{"CXA"});
       } else {
@@ -111,7 +111,17 @@ void AsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
         update->m_liquidityFlag = ToString(LiquidityFlag::ACTIVE);
-        update->m_lastMarket = order.GetInfo().m_fields.m_destination;
+        auto lastMkt = FIX::LastMkt();
+        if(message.isSet(lastMkt)) {
+          message.get(lastMkt);
+        }
+        if(lastMkt == "CXA" || lastMkt == "CXAP" || lastMkt == "CXAC") {
+          update->m_lastMarket = DefaultDestinations::CXA();
+        } else if(lastMkt == "TM") {
+          update->m_lastMarket = DefaultDestinations::ASXT();
+        } else {
+          update->m_lastMarket = order.GetInfo().m_fields.m_destination;
+        }
       }
     });
 }
