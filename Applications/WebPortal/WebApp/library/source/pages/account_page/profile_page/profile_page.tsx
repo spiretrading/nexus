@@ -121,6 +121,8 @@ export class ProfilePage extends React.Component<Properties, State> {
             displaySize={this.props.displaySize}
             displayMode={PhotoFieldDisplayMode.DISPLAY}
             imageSource={this.props.identity.photoId}
+            newImageSource={null}
+            newScaling={1}
             scaling={1}/>);
       }
     })();
@@ -142,6 +144,8 @@ export class ProfilePage extends React.Component<Properties, State> {
               displaySize={this.props.displaySize}
               displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
+              newImageSource={null}
+              newScaling={1}
               scaling={1}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
