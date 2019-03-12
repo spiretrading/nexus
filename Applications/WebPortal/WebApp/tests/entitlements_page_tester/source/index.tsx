@@ -20,7 +20,7 @@ interface State {
   submitEnabled: boolean;
 }
 
-/**  Displays a testing application. */
+/**  Displays and tests the CreateAccountPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
