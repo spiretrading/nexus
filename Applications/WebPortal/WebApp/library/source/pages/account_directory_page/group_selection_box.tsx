@@ -374,7 +374,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
   constructor(props: SuggestionBoxProps) {
     super(props);
     this.currentEntryRef = React.createRef();
-    this.onChangeIndex = this.onChangeIndex.bind(this);
   }
 
   public render(): JSX.Element {
@@ -398,7 +397,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       } else {
         return (
           <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
-              onMouseMove={this.onChangeIndex(index)}
+              onMouseMove={() => this.props.onChangeIndex(index)}
               key={group.id}>
             {group.name}
           </li>);
@@ -423,10 +422,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
         this.currentEntryRef.current.scrollIntoView(false);
       }
     }
-  }
-
-  private onChangeIndex( index: number ) {
-    return () => this.props.onChangeIndex(index);
   }
 
   private static STYLE = {
