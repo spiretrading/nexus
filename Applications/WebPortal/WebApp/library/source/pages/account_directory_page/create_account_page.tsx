@@ -106,7 +106,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(!this.state.isModelLoaded) {
-      return(<div/>);
+      return<div/>;
     }
     const contentWidth = (() => {
       switch(this.props.displaySize) {
@@ -324,7 +324,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   public componentDidMount(): void {
-    this.props.groupSuggestionModel.load().then( () => {
+    this.props.groupSuggestionModel.load().then(() => {
       this.setState({isModelLoaded: true});
     });
   }

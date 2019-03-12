@@ -5,7 +5,7 @@ import { GroupSuggestionModel } from './group_suggestion_model';
 export class LocalGroupSuggestionModel extends GroupSuggestionModel {
 
   /** Constructs an new model.
-   * @param groups - A list of all available
+   * @param groups - A list of all available groups.
    */
   public constructor(groups: Beam.DirectoryEntry[]) {
     super();

@@ -147,7 +147,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     }
   }
 
-  private onValueChange(event: React.ChangeEvent<HTMLInputElement>): void {
+  private onValueChange(event: React.ChangeEvent<HTMLInputElement>) {
     this.props.onValueChange(event.target.value);
   }
 
@@ -374,6 +374,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
   constructor(props: SuggestionBoxProps) {
     super(props);
     this.currentEntryRef = React.createRef();
+    this.onChangeIndex = this.onChangeIndex.bind(this);
   }
 
   public render(): JSX.Element {
@@ -389,7 +390,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
         return (
           <li style={{...SuggestionBox.STYLE.entry,
                 ...textStyle, ...SuggestionBox.STYLE.selected}}
-              onMouseDown={() => this.props.onAddGroup()}
+              onMouseDown={this.props.onAddGroup}
               key={group.id}
               ref={this.currentEntryRef}>
             {group.name}
@@ -397,7 +398,7 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       } else {
         return (
           <li style={{...SuggestionBox.STYLE.entry, ...textStyle}}
-              onMouseMove={() => this.props.onChangeIndex(index)}
+              onMouseMove={this.onChangeIndex(index)}
               key={group.id}>
             {group.name}
           </li>);
@@ -422,6 +423,10 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
         this.currentEntryRef.current.scrollIntoView(false);
       }
     }
+  }
+
+  private onChangeIndex( index: number ) {
+    return () => this.props.onChangeIndex(index);
   }
 
   private static STYLE = {
