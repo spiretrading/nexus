@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
+import { TextInputField } from '.';
 
 interface Properties {
 
@@ -26,7 +27,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     readonly: false,
     onChange: () => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);
@@ -61,9 +62,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
     const content = (() => {
       if(this.props.readonly) {
         return (
-          <div style={{...boxSizing, ...CountrySelectionBox.STYLE.readonly}}>
-            {this.props.countryDatabase.fromCode(this.props.value).name}
-          </div>);
+          <TextInputField
+            value={this.props.countryDatabase.fromCode(this.props.value).name}
+            displaySize={this.props.displaySize}/>);
       } else {
         return (
           <select value={this.props.value.code}
@@ -92,12 +93,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
       width: '200px',
       height: '34px',
       font: '400 14px Roboto'
-    },
-    readonly: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      alignItems: 'center'  as 'center',
-      paddingLeft: '11px'
     },
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
