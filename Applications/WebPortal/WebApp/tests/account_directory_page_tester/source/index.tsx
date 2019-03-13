@@ -15,7 +15,7 @@ interface State {
   model: WebPortal.AccountDirectoryModel;
 }
 
-/**  Displays a testing application. */
+/**  Displays and tests the AccountDirectoryPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);

@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../display_size';
-import { TextField } from '../pages/account_page/profile_page';
+import { TextInputField } from '.';
 
 interface Properties {
 
@@ -27,7 +27,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     readonly: false,
     onChange: () => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);
@@ -62,7 +62,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
     const content = (() => {
       if(this.props.readonly) {
         return (
-          <TextField readonly
+          <TextInputField
             value={this.props.countryDatabase.fromCode(this.props.value).name}
             displaySize={this.props.displaySize}/>);
       } else {

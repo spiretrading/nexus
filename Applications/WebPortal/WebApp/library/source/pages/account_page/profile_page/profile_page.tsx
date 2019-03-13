@@ -5,7 +5,8 @@ import * as React from 'react';
 import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
 import { CommentBox } from '../comment_box';
 import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
-  SubmitButton, TextField } from '.';
+  SubmitButton } from '.';
+import { TextField } from './text_field';
 
 interface Properties {
 
@@ -121,6 +122,8 @@ export class ProfilePage extends React.Component<Properties, State> {
             displaySize={this.props.displaySize}
             displayMode={PhotoFieldDisplayMode.DISPLAY}
             imageSource={this.props.identity.photoId}
+            newImageSource={null}
+            newScaling={1}
             scaling={1}/>);
       }
     })();
@@ -142,6 +145,8 @@ export class ProfilePage extends React.Component<Properties, State> {
               displaySize={this.props.displaySize}
               displayMode={PhotoFieldDisplayMode.DISPLAY}
               imageSource={this.props.identity.photoId}
+              newImageSource={null}
+              newScaling={1}
               scaling={1}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
