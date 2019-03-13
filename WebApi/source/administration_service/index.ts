@@ -1,3 +1,4 @@
+export * from './account_identity';
 export * from './account_modification_request';
 export * from './account_roles';
 export * from './administration_client';

@@ -1,4 +1,5 @@
-import * as Beam from 'Beam';
+import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -7,6 +8,7 @@ import * as WebPortal from 'web_portal';
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
+
 interface State {
   roles: Nexus.AccountRoles;
   checkedDB: Beam.Set<Beam.DirectoryEntry>;
@@ -18,7 +20,7 @@ interface State {
   submitEnabled: boolean;
 }
 
-/**  Displays a testing application. */
+/**  Displays and tests the CreateAccountPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
@@ -43,7 +45,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage
           displaySize={this.props.displaySize}
           marketDatabase={this.state.marketDB}
@@ -86,7 +88,7 @@ class TestApp extends React.Component<Properties, State> {
             TOGGLE SUBMIT
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   public componentDidMount(): void {

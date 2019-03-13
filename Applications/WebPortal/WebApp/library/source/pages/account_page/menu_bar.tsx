@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
+import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
-import { Center, DisplaySize, HBoxLayout, Padding, VBoxLayout } from '../..';
+import { DisplaySize } from '../..';
 import { SubPage } from './sub_page';
 
 interface Properties {

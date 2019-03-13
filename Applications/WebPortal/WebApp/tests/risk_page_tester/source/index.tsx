@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -67,26 +68,26 @@ class TestApp extends React.Component<Properties, State> {
       return 'Not Admin';
     })();
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
-        <WebPortal.Padding size='30px'/>
-        <WebPortal.HBoxLayout width='100%' className={
+      <Dali.VBoxLayout width='100%' height='100%'>
+        <Dali.Padding size='30px'/>
+        <Dali.HBoxLayout width='100%' className={
           css(TestApp.STYLE.outerContainer)}>
-          <WebPortal.VBoxLayout className={containerClassName}>
+          <Dali.VBoxLayout className={containerClassName}>
             <WebPortal.RiskParametersView parameters={parameters}
               displaySize={this.props.displaySize}
               currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
-            <WebPortal.Padding size='30px'/>
-            <WebPortal.HBoxLayout width='100%'>
+            <Dali.Padding size='30px'/>
+            <Dali.HBoxLayout width='100%'>
               <WebPortal.SubmissionBox roles={this.state.roles}
                 onSubmit={ this.onSubmit }/>
-            </WebPortal.HBoxLayout>
-          </WebPortal.VBoxLayout>
-        </WebPortal.HBoxLayout>
+            </Dali.HBoxLayout>
+          </Dali.VBoxLayout>
+        </Dali.HBoxLayout>
         <button className={css(TestApp.STYLE.button)} onClick={
             this.onToggleIsAdmin}>
           {toggleAdminButtonText}
         </button>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   private onSubmit(comment: string) {

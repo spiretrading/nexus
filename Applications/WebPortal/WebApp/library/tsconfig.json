@@ -5,7 +5,7 @@
     "jsx": "react",
     "module": "commonjs",
     "noImplicitAny": true,
-    "outDir": "./library/web_portal",
+    "outDir": "./library",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,

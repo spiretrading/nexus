@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
+import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
-import { Center, HBoxLayout, Padding, VBoxLayout } from '../../';
 
 interface Properties {
 

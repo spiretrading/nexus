@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
@@ -13,7 +14,7 @@ class TestApp extends React.Component {
 
   public render(): JSX.Element {
     return (
-      <WebPortal.VBoxLayout width='100%' height='100%'>
+      <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.LoginController model={this.model} onLogin={this.onLogin}/>
         <div style={TestApp.STYLE}>
           <button tabIndex={-1} onClick={() => this.model.accept()}>
@@ -28,7 +29,7 @@ class TestApp extends React.Component {
             Reject - Server error
           </button>
         </div>
-      </WebPortal.VBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
   private onLogin(account: Beam.DirectoryEntry) {

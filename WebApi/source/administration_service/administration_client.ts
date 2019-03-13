@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
-import {Message, RiskParameters} from '..';
-import {AccountModificationRequest, AccountRoles, EntitlementModification,
-  RiskModification} from '.';
+import { Message, RiskParameters } from '..';
+import { AccountIdentity, AccountModificationRequest, AccountRoles,
+  EntitlementModification, RiskModification } from '.';
 
 /** Client used to access administration services. */
 export abstract class AdministrationClient {
@@ -12,6 +12,13 @@ export abstract class AdministrationClient {
    */
   public abstract async loadAccountRoles(account: Beam.DirectoryEntry):
     Promise<AccountRoles>;
+
+  /** Loads an account's identity.
+   * @param account - The directory entry of the account.
+   * @return The account's identity.
+   */
+  public abstract async loadIdentity(account: Beam.DirectoryEntry):
+    Promise<AccountIdentity>;
 
   /** Loads an account's entitlements.
    * @param account - The account whose entitlements are to be loaded.

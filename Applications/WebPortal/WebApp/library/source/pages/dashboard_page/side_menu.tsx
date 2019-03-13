@@ -1,6 +1,6 @@
+import { Padding, VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import {Padding, VBoxLayout} from '../..';
 import { SideMenuButton } from './side_menu_button';
 
 interface Properties {

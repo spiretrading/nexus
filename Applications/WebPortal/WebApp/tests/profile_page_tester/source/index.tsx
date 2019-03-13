@@ -1,20 +1,31 @@
+import * as Beam from 'beam';
+import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
- /** Determines the size to render components at. */
+/** Determines the size to render components at. */
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
 
 interface State {
-  lastNameValue: string;
   someRoles: Nexus.AccountRoles;
-  isPhotoFieldReadonly: boolean;
   imageSource: string;
-  imagingScaling: number;
-  photoFieldDisplayMode: WebPortal.DisplayMode;
+  identity: Nexus.AccountIdentity;
+  statusMessage: string;
+  passwordStatusMessage: string;
+  account: Beam.DirectoryEntry;
+  group: Beam.DirectoryEntry;
+  countryDatabase: Nexus.CountryDatabase;
+  hasPassword: boolean;
+  readOnly: boolean;
+  isPasswordSubmitEnabled: boolean;
+  hasError: boolean;
+  hasPasswordError: boolean;
+  testProfileError: boolean;
+  testPasswordError: boolean;
 }
 
 /**  Displays a testing application. */
@@ -22,137 +33,168 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      lastNameValue: 'Grey',
       someRoles: new Nexus.AccountRoles(),
       imageSource: TestApp.SOME_IMAGE,
-      isPhotoFieldReadonly: false,
-      imagingScaling: 1,
-      photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY
+      identity: new Nexus.AccountIdentity(),
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false,
+      account: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
+      group: new Beam.DirectoryEntry(
+        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
+      countryDatabase: Nexus.buildDefaultCountryDatabase(),
+      hasPassword: true,
+      readOnly: false,
+      isPasswordSubmitEnabled: false,
+      hasPasswordError: false,
+      testProfileError: false,
+      testPasswordError: false
     };
-    this.onTextInput = this.onTextInput.bind(this);
-    this.onRoleClick = this.onRoleClick.bind(this);
-    this.changeImage = this.changeImage.bind(this);
-    this.toggleReadOnly = this.toggleReadOnly.bind(this);
-    this.updateImage = this.updateImage.bind(this);
-    this.toggleDisplayMode = this.toggleDisplayMode.bind(this);
+    this.setStatusToError = this.setStatusToError.bind(this);
+    this.setStatusToNull = this.setStatusToNull.bind(this);
+    this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
+    this.togglePasswordVisibility = this.togglePasswordVisibility.bind(this);
+    this.toggleReadonlyOfForm = this.toggleReadonlyOfForm.bind(this);
+    this.passwordSubmit = this.passwordSubmit.bind(this);
+    this.profileSubmit = this.profileSubmit.bind(this);
   }
 
   public render(): JSX.Element {
-    const orientation = (() => {
-      if(this.props.displaySize === WebPortal.DisplaySize.SMALL) {
-        return WebPortal.FormEntry.Orientation.VERTICAL;
-      } else {
-        return WebPortal.FormEntry.Orientation.HORIZONTAL;
-      }
-    })();
     return (
-      <WebPortal.HBoxLayout width='100%' height='100%'>
-        <WebPortal.Padding size='18px'/>
-        <WebPortal.VBoxLayout width='100%' height='100%'>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='First Name'
-              readonly
-              orientation={orientation}>
-            <WebPortal.TextField
-              value = 'Gandalf'
-              displaySize={this.props.displaySize}
-              disabled/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='Last Name'
-              orientation={orientation}>
-            <WebPortal.TextField
-              displaySize={this.props.displaySize}
-              value={this.state.lastNameValue}
-              onInput={this.onTextInput}/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.RolesField roles={this.state.someRoles}
-            onClick={this.onRoleClick}/>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.FormEntry name='Nickname'
-              readonly
-              orientation={orientation}>
-            <WebPortal.TextField
-              value = 'Stormcrow'
-              displaySize={this.props.displaySize}
-              disabled/>
-          </WebPortal.FormEntry>
-          <WebPortal.Padding size='30px'/>
-          <WebPortal.PhotoField
-            displaySize={this.props.displaySize}
-            displayMode={this.state.photoFieldDisplayMode}
-            imageSource = {this.state.imageSource}
-            readonly={this.state.isPhotoFieldReadonly}
-            onSubmit={this.updateImage}
-            onToggleUploader={this.toggleDisplayMode}
-            scaling={this.state.imagingScaling}/>
-        </WebPortal.VBoxLayout>
-        <WebPortal.Padding size='18px'/>
+      <Dali.VBoxLayout width='100%' height='100%'>
+        <WebPortal.ProfilePage
+          account={this.state.account}
+          roles={this.state.someRoles}
+          identity={this.state.identity}
+          group={this.state.group}
+          countryDatabase={this.state.countryDatabase}
+          displaySize={this.props.displaySize}
+          readonly={this.state.readOnly}
+          isSubmitEnabled={true}
+          onSubmit={this.profileSubmit}
+          submitStatus={this.state.statusMessage}
+          hasError={this.state.hasError}
+          hasPassword={this.state.hasPassword}
+          isPasswordSubmitEnabled={true}
+          submitPasswordStatus={this.state.passwordStatusMessage}
+          hasPasswordError={this.state.hasPasswordError}
+          onSubmitPassword={this.passwordSubmit}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
-              onClick={this.toggleReadOnly}>
-            TOGGLE PHOTOFIELD READONLY
+            onClick={this.setStatusToNull}>
+            NO STATUS MESSAGES
           </button>
           <button tabIndex={-1}
-              onClick={this.changeImage}>
-            CHANGE IMAGE
+            onClick={this.setStatusToSuccessful}>
+            SAVED FEEDBACK MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.setStatusToError}>
+            ERROR MESSAGES
+          </button>
+          <button tabIndex={-1}
+            onClick={this.togglePasswordVisibility}>
+            TOGGLE PASSWORD FIELD
+          </button>
+          <button tabIndex={-1}
+            onClick={this.toggleReadonlyOfForm}>
+            TOGGLE READONLY
           </button>
         </div>
-      </WebPortal.HBoxLayout>);
+      </Dali.VBoxLayout>);
   }
 
-  private onTextInput(value: string) {
+  public componentDidMount() {
+    const testIdentity = this.state.identity.clone();
+    testIdentity.photoId = TestApp.SOME_IMAGE;
+    testIdentity.firstName = 'Frodo';
+    testIdentity.lastName = 'Baggins';
+    testIdentity.lastLoginTime = new Beam.DateTime(
+      new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15)));
+    testIdentity.province = 'Westfarthing';
+    testIdentity.country = Nexus.DefaultCountries.AU;
+    testIdentity.city = 'Hobbiton';
+    testIdentity.addressLineOne = '56 Bag End';
+    testIdentity.userNotes = '';
+    testIdentity.emailAddress = 'frodo@bagend.nz';
+    testIdentity.registrationTime = new Beam.DateTime(
+      new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
+      Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
+      Beam.Duration.SECOND.multiply(15)));
+    this.setState({identity: testIdentity});
+  }
+
+  private setStatusToNull() {
     this.setState({
-      lastNameValue: value
+      statusMessage: '',
+      passwordStatusMessage: '',
+      hasError: false,
+      hasPasswordError: false
     });
   }
 
-  private onRoleClick(role: Nexus.AccountRoles.Role) {
-    if(this.state.someRoles.test(role)) {
-      this.state.someRoles.unset(role);
-    } else {
-      this.state.someRoles.set(role);
-    }
-    this.setState({someRoles: this.state.someRoles});
-  }
-
-  private toggleReadOnly() {
+  private setStatusToError() {
     this.setState({
-      isPhotoFieldReadonly: !this.state.isPhotoFieldReadonly
+      testPasswordError: true,
+      testProfileError: true
     });
   }
 
-  private changeImage() {
-    if(this.state.imageSource) {
+  private setStatusToSuccessful() {
+    this.setState({
+      testPasswordError: false,
+      testProfileError: false
+    });
+  }
+
+  private togglePasswordVisibility() {
+    this.setState({
+      hasPassword: !this.state.hasPassword,
+      isPasswordSubmitEnabled: !this.state.isPasswordSubmitEnabled
+    });
+  }
+
+  private toggleReadonlyOfForm() {
+    this.setState({
+      readOnly: !this.state.readOnly
+    });
+  }
+
+  private passwordSubmit(newPassword: string) {
+    if(this.state.testPasswordError) {
       this.setState({
-        imageSource: null
+        passwordStatusMessage: 'Password not saved',
+        hasPasswordError: true
       });
     } else {
       this.setState({
-        imageSource: TestApp.SOME_IMAGE
+        passwordStatusMessage: 'Saved',
+        hasPasswordError: false
       });
     }
   }
 
-  private updateImage(fileLocation: string, newScaling: number) {
-    this.setState({
-      imageSource: fileLocation,
-      imagingScaling: newScaling
-    });
-  }
-
-  private toggleDisplayMode() {
-    if(this.state.photoFieldDisplayMode === WebPortal.DisplayMode.DISPLAY) {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.UPLOADING});
+  private profileSubmit() {
+    if(this.state.testProfileError) {
+      this.setState({
+        statusMessage: 'Profile not saved',
+        hasError: true
+      });
     } else {
-      this.setState({photoFieldDisplayMode: WebPortal.DisplayMode.DISPLAY});
+      this.setState({
+        statusMessage: 'Saved',
+        hasError: false
+      });
     }
   }
 
   private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',
+      fontSize: '8px',
       top: 0,
       left: 0,
       zIndex: 500

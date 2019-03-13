@@ -12,4 +12,5 @@ roles.set(Nexus.AccountRoles.Role.MANAGER);
 roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
 
 ReactDOM.render(<WebPortal.AccountPage displaySize={WebPortal.DisplaySize.LARGE}
-  account={account} roles={roles}/>, document.getElementById('main'));
+  account={account} roles={roles} subPage={WebPortal.SubPage.ENTITLEMENTS}/>,
+  document.getElementById('main'));
