@@ -52,14 +52,14 @@ export class RoleIcon extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={RoleIcon.STYLE.iconBox}>
+      <div style={RoleIcon.STYLE.iconBox}
+          onClick={this.props.onClick}
+          onMouseEnter={this.showToolTip}
+          onMouseLeave={this.hideToolTip}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
           style={iconStyle}
           width={RoleIcon.IMAGE_SIZE}
-          height={RoleIcon.IMAGE_SIZE}
-          onClick={this.props.onClick}
-          onMouseEnter={this.showToolTip}
-          onMouseLeave={this.hideToolTip}/>
+          height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
           <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
             {(state) => (
@@ -121,7 +121,11 @@ export class RoleIcon extends React.Component<Properties, State> {
   };
   private static STYLE = {
     iconBox: {
-      //position: 'relative' as 'relative'
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      height: '24px',
+      width: '24px'
     },
     tooltipAnchor: {
       position: 'relative' as 'relative',
@@ -149,8 +153,8 @@ export class RoleIcon extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      top: '8px',
-      left: '-2px',
+      top: '16px',
+      left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064'

@@ -45,6 +45,6 @@ export class RolesField extends React.Component<Properties, {}> {
   }
 
   private static readonly IMAGE_SIZE = '20px';
-  private static readonly IMAGE_PADDING = '14px';
+  private static readonly IMAGE_PADDING = '10px';
   private static readonly COMPONENT_WIDTH = '122px';
 }
