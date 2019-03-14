@@ -60,15 +60,17 @@ export class RoleIcon extends React.Component<Properties, State> {
           onClick={this.props.onClick}
           onMouseEnter={this.showToolTip}
           onMouseLeave={this.hideToolTip}/>
-        <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
-          {(state) => (
-              <div
-                style={{...RoleIcon.STYLE.animationBase,
-                  ...RoleIcon.STYLE.imageTooltip,
-                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                {this.getText(this.props.role)}
-            </div>)}
-        </Transition>
+        <div style={RoleIcon.STYLE.tooltipAnchor}>
+          <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
+            {(state) => (
+                <div
+                  style={{...RoleIcon.STYLE.animationBase,
+                    ...RoleIcon.STYLE.imageTooltip,
+                    ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                  {this.getText(this.props.role)}
+              </div>)}
+          </Transition>
+        </div>
       </div>);
   }
 
@@ -119,7 +121,12 @@ export class RoleIcon extends React.Component<Properties, State> {
   };
   private static STYLE = {
     iconBox: {
-      position: 'relative' as 'relative'
+      //position: 'relative' as 'relative'
+    },
+    tooltipAnchor: {
+      position: 'relative' as 'relative',
+      height: 0,
+      width: 0
     },
     clickable: {
       cursor: 'pointer'
@@ -132,15 +139,17 @@ export class RoleIcon extends React.Component<Properties, State> {
       transition: 'opacity 100ms ease-in-out'
     },
     imageTooltip: {
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
       font: '400 12px Roboto',
       paddingLeft: '15px',
       paddingRight: '15px',
-      paddingTop: '30%',
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      top: '28px',
+      top: '8px',
       left: '-2px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
