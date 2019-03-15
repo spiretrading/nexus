@@ -33,7 +33,7 @@ QtPromise<std::vector<SecurityInfo>> LocalSecurityInputModel::autocomplete(
     }
     return std::vector<SecurityInfo>(matches.begin(), matches.end());
   }();
-  return make_qt_promise(
+  return QtPromise(
     [matches = std::move(matches)] {
       return std::move(matches);
     });

@@ -146,7 +146,7 @@ Quantity LocalBookViewModel::get_volume() const {
 }
 
 QtPromise<void> LocalBookViewModel::load() {
-  return make_qt_promise([] {});
+  return QtPromise();
 }
 
 connection LocalBookViewModel::connect_bbo_slot(

@@ -80,7 +80,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
   };
   std::vector<TimeAndSalesModel::Entry> snapshot;
   if(m_load_duration == pos_infin) {
-    return make_qt_promise(
+    return QtPromise(
       [=] {
         return snapshot;
       });
@@ -114,7 +114,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     e = Decrement(e);
   }
   snapshot.insert(snapshot.begin(), i, i + count);
-  return make_qt_promise([d = m_load_duration, pool = m_timer_thread_pool,
+  return QtPromise([d = m_load_duration, pool = m_timer_thread_pool,
       snapshot=std::move(snapshot), is_loaded = m_is_loaded] {
     LiveTimer t(d, Ref(*pool));
     t.Start();

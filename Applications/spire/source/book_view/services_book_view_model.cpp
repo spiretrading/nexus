@@ -80,7 +80,7 @@ QtPromise<void> ServicesBookViewModel::load() {
     [=] (const auto& value) { on_close(value); });
   auto loader = m_loader;
   auto definitions = m_definitions;
-  return make_qt_promise([=, clients = m_clients] {
+  return QtPromise([=, clients = m_clients] {
     loader->Call(
       [&] {
         auto query = BuildCurrentQuery(security);

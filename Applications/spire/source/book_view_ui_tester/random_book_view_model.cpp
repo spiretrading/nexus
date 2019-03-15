@@ -79,7 +79,7 @@ QtPromise<void> RandomBookViewModel::load() {
   auto load_time = m_load_time;
   auto timer_thread_pool = m_timer_thread_pool;
   auto loader = m_loader;
-  return make_qt_promise([=] {
+  return QtPromise([=] {
     auto load_timer = LiveTimer(load_time, Ref(*timer_thread_pool));
     load_timer.Start();
     load_timer.Wait();

@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
+#include "spire/charting/cached_chart_model.hpp"
 #include "spire/charting/local_chart_model.hpp"
 #include "spire/charting/charting_window.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
@@ -69,9 +70,10 @@ int main(int argc, char** argv) {
         open, close, high, low));
         time -= boost::posix_time::minutes(1);
     }
-    auto chart_model = std::make_shared<LocalChartModel>(
+    auto chart_model = new LocalChartModel(
       ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
-    window->set_model(chart_model);
+    auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
+    window->set_model(std::move(cached_model));
   });
   window->show();
   application->exec();
