@@ -33,8 +33,11 @@ export class RoleIcon extends React.Component<Properties, State> {
     this.state = {
       showToolTip: false
     };
+    console.log('HELLO WORLD!');
     this.showToolTip = this.showToolTip.bind(this);
     this.hideToolTip = this.hideToolTip.bind(this);
+    this.onTouch = this.onTouch.bind(this);
+    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -53,7 +56,8 @@ export class RoleIcon extends React.Component<Properties, State> {
     })();
     return (
       <div style={RoleIcon.STYLE.iconBox}
-          onClick={this.props.onClick}
+          onClick={this.onClick}
+          //onTouchStart={this.onTouch}
           onMouseEnter={this.showToolTip}
           onMouseLeave={this.hideToolTip}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
@@ -61,13 +65,14 @@ export class RoleIcon extends React.Component<Properties, State> {
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
-          <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
+          <Transition in={this.state.showToolTip}
+              timeout={RoleIcon.TIMEOUT}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
                     ...RoleIcon.STYLE.imageTooltip,
                     ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                  {this.getText(this.props.role)}
+                    {'status' + (this.state.showToolTip)}
               </div>)}
           </Transition>
         </div>
@@ -75,11 +80,37 @@ export class RoleIcon extends React.Component<Properties, State> {
   }
 
   private showToolTip() {
-    this.setState({ showToolTip: true });
+    console.log('Mouse entered');
+    if(!this.state.showToolTip) {
+      this.setState({
+        showToolTip: true});
+    }
+    if(this.state.showToolTip) {
+      this.setState({
+        showToolTip: false});
+    }
   }
 
   private hideToolTip() {
-    this.setState({ showToolTip: false });
+    this.setState( {showToolTip: false});
+    console.log('Mouse left');
+  }
+
+  private onClick() {
+    console.log('CLICK CLICK!!!!!!');
+    this.props.onClick();
+    console.log();
+  }
+
+  private onTouch() {
+    console.log('Button was touched.');
+     event.preventDefault();
+    this.setState({ showToolTip: true });
+    setTimeout(() => {
+        console.log('Mobile Tooltip hiddenn');
+        this.setState({ showToolTip: false });
+      },
+      2000);
   }
 
   private getText(role: Nexus.AccountRoles.Role) {
@@ -115,6 +146,9 @@ export class RoleIcon extends React.Component<Properties, State> {
     entered: {
       opacity: 1
     },
+    exiting: {
+      opacity: 0
+    },
     exited: {
       display: 'none' as 'none'
     }
@@ -139,8 +173,8 @@ export class RoleIcon extends React.Component<Properties, State> {
       cursor: 'inherit'
     },
     animationBase: {
-      opacity: 0,
-      transition: 'opacity 100ms ease-in-out'
+      //opacity: 0,
+      transition: 'opacity 600ms ease-in-out'
     },
     imageTooltip: {
       display: 'flex' as 'flex',
@@ -153,8 +187,8 @@ export class RoleIcon extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      top: '16px',
-      left: '-20px',
+      top: '-40px',
+      left: '-18px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064'
@@ -162,9 +196,9 @@ export class RoleIcon extends React.Component<Properties, State> {
   };
   private static readonly TIMEOUT = {
     enter: 1,
-    entered: 100,
-    exit: 100,
-    exited:  100
+    entered: 600,
+    exit: 600,
+    exited:  600
   };
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
