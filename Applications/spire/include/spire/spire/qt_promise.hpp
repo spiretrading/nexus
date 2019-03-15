@@ -81,6 +81,17 @@ namespace Spire {
 
   QtPromise() -> QtPromise<void>;
 
+  //! Returns a promise that signals the result only when all provided
+  //! promises have completed, or throws an exception if any provided
+  //! promise throws an exception.
+  /*
+    \param promises The promises to be executed.
+  */
+  template<typename T>
+  QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
+    return std::move(QtPromise<std::vector<T>());
+  }
+
   //! Waits for a promise to complete and returns its result.
   /*!
     \param promise The promise to wait for.
