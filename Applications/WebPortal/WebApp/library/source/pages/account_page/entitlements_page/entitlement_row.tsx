@@ -118,6 +118,13 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.box.tablePadding;
       }
     })();
+    const applicabilityTableHeaderStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return EntitlementRow.STYLE.text.tableHeaderSmall;
+      } else {
+        return EntitlementRow.STYLE.text.tableHeader;
+      }
+    })();
     return (
       <VBoxLayout style={elementSize}>
         <div style={EntitlementRow.STYLE.box.header}>
@@ -147,7 +154,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   style={EntitlementRow.STYLE.box.expandableTable}>
                 <HLine color='#E6E6E6'/>
                 <div style={EntitlementRow.STYLE.box.header}>
-                  <div style={EntitlementRow.STYLE.text.tableHeader}>
+                  <div style={applicabilityTableHeaderStyle}>
                     Applicability
                   </div>
                   <div style={EntitlementRow.STYLE.box.headerFiller}/>
@@ -257,6 +264,10 @@ export class EntitlementRow extends React.Component<Properties, State> {
       },
       tableHeader: {
         paddingLeft: '76px',
+        font: '500 14px Roboto',
+        color: '#4B23A0'
+      },
+      tableHeaderSmall: {
         font: '500 14px Roboto',
         color: '#4B23A0'
       }
