@@ -609,10 +609,14 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       width: '20px',
       height: '20px',
       cursor: 'pointer' as 'pointer',
-      ':focus' : {
+      ':focus': {
         outline: 0
       },
-      '::moz-focus-inner' : {
+      ':active': {
+        outline: 0,
+        border: 0
+      },
+      '::moz-focus-inner': {
         border: 0
       }
     }
