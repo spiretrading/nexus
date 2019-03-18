@@ -324,6 +324,13 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
         return ChangePictureModal.STYLE.buttonBoxLarge;
       }
     })();
+    const button = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.DYNAMIC_STYLE.buttonSmall;
+      } else {
+        return ChangePictureModal.DYNAMIC_STYLE.buttonLarge;
+      }
+    })();
     const imageSrc = (() => {
       if(this.props.imageSource) {
         return this.props.imageSource;
@@ -369,7 +376,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
               <img src='resources/close.svg' tabIndex={0}
-                style={ChangePictureModal.STYLE.closeIcon}
+                className={css(ChangePictureModal.DYNAMIC_STYLE.closeIcon)}
                 onClick={this.onClose}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -391,10 +398,10 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput' tabIndex={0}
-                className={css(ChangePictureModal.DYNAMIC_STYLE.button)}>
+                className={css(button)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(ChangePictureModal.DYNAMIC_STYLE.button)}
+              <div className={css(button)}
                 onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
@@ -442,18 +449,20 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       opacity: 0.9
     },
     boxShadowSmall:{
+      boxSizing: 'border-box' as 'border-box',
       opacity: 0.4,
       display: 'block',
       boxShadow: '0px 0px 6px #000000',
       position: 'absolute' as 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
-      width: '284px',
+      width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
     },
     boxShadowLarge:{
+      boxSizing: 'border-box' as 'border-box',
       opacity: 0.4,
       boxShadow: '0px 0px 6px #000000',
       display: 'block',
@@ -465,16 +474,18 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       left: 'calc(50% - 180px)'
     },
     boxSmall: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'block',
       position: 'absolute' as 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
-      width: '284px',
+      width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
     },
     boxLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
@@ -487,11 +498,6 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       display: 'flex' as 'flex',
       justifyContent: 'space-between' as 'space-between',
       font: '400 16px Roboto'
-    },
-    closeIcon: {
-      width: '20px',
-      height: '20px',
-      cursor: 'pointer' as 'pointer'
     },
     buttonBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -529,7 +535,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     imageBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '166px',
-      width: '248px',
+      width: '246px',
       overflow: 'hidden' as 'hidden',
       borderRadius: '1px',
       border: '1px solid #EBEBEB',
@@ -553,7 +559,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     }
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
-    button: {
+    buttonSmall: {
       boxSizing: 'border-box' as 'border-box',
       cursor: 'pointer' as 'pointer',
       display: 'flex' as 'flex',
@@ -561,8 +567,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
-      minWidth: '153px',
-      maxWidth: '248px',
+      width: '246px',
       height: '34px',
       backgroundColor: '#684BC7',
       color: '#FFFFFF',
@@ -576,11 +581,45 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       ':hover': {
         backgroundColor: '#4B23A0'
       }
+    },
+    buttonLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      cursor: 'pointer' as 'pointer',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'wrap' as 'wrap',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      width: '153px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      font: '400 14px Roboto',
+      border: '1px solid #684BC7',
+      borderRadius: '1px',
+      outline: '0px',
+      ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':hover': {
+        backgroundColor: '#4B23A0'
+      }
+    },
+    closeIcon: {
+      width: '20px',
+      height: '20px',
+      cursor: 'pointer' as 'pointer',
+      ':focus' : {
+        outline: 0
+      },
+      '::moz-focus-inner' : {
+        border: 0
+      }
     }
   });
   private static readonly HEADER_TEXT = 'Change Picture';
-  private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
-  private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
+  private static readonly BROWSE_BUTTON_TEXT = 'Browse';
+  private static readonly SUBMIT_BUTTON_TEXT = 'Submit';
   private static readonly PADDING = '18px';
   private static readonly PADDING_BETWEEN_ELEMENTS = '30px';
 }
