@@ -73,13 +73,6 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return EntitlementRow.STYLE.text.default;
       }
     })();
-    const headerPaddingInternal = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return EntitlementRow.STYLE.box.mobilePaddingStyle;
-      } else {
-        return EntitlementRow.STYLE.box.paddingStyle;
-      }
-    })();
     const amount = (() => {
       if(this.props.entitlementEntry.price.equals(Nexus.Money.ZERO)) {
         return 'FREE';
@@ -132,11 +125,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
             size={buttonSize}
             onClick={this.props.onClick}
             isChecked={this.props.isActive}/>
-          <div style={headerPaddingInternal}/>
+          <div style={EntitlementRow.STYLE.box.internalHeaderPadding}/>
           <DropDownButton size={buttonSize}
             isExpanded={this.state.isExpanded}
             onClick={this.showApplicabilityTable}/>
-          <div style={headerPaddingInternal}/>
+          <div style={EntitlementRow.STYLE.box.internalHeaderPadding}/>
           <div style={entitlementNameStyle}>
             {this.props.entitlementEntry.name}
           </div>
@@ -154,7 +147,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   style={EntitlementRow.STYLE.box.expandableTable}>
                 <HLine color='#E6E6E6'/>
                 <div style={EntitlementRow.STYLE.box.header}>
-                  <div style={EntitlementRow.STYLE.text.nameWhenExpandedTable}>
+                  <div style={EntitlementRow.STYLE.text.tableHeader}>
                     Applicability
                   </div>
                   <div style={EntitlementRow.STYLE.box.headerFiller}/>
@@ -225,14 +218,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
         width: '1000px',
         maxWidth: '1000px'
       },
-      paddingStyle: {
-        width: '20px'
+      internalHeaderPadding: {
+        width: '18px'
       },
       expandableTable: {
         width: 'inherit' as 'inherit'
-      },
-      mobilePaddingStyle: {
-        width: '18px'
       },
       tablePadding: {
         paddingLeft: '76px',
@@ -262,6 +252,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
         color: '#000000'
       },
       nameWhenExpandedTable: {
+        font: '500 14px Roboto',
+        color: '#4B23A0'
+      },
+      tableHeader: {
+        paddingLeft: '76px',
         font: '500 14px Roboto',
         color: '#4B23A0'
       }
