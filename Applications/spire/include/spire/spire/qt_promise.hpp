@@ -89,7 +89,11 @@ namespace Spire {
   */
   template<typename T>
   QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
-    return std::move(QtPromise<std::vector<T>());
+    if(promises.empty()) {
+      return std::move(QtPromise<std::vector<T>>());
+    }
+    // TODO: what to do if a promise throws an exception?
+    return std::move(QtPromise<std::vector<T>>());
   }
 
   //! Waits for a promise to complete and returns its result.
