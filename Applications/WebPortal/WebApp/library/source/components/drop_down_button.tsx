@@ -64,18 +64,17 @@ export class DropDownButton extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={{height: this.props.size}}>
-        <div style={DropDownButton.STYLE.containerStyle}>
+      <div style={DropDownButton.STYLE.componentWrapper}
+        onClick={this.props.onClick}>
+        <div style={DropDownButton.STYLE.imageWrapper}>
           <img src={endSource}
             width={this.props.size}
             height={this.props.size}
-            className={css(DropDownButton.ANIMATION.base, startStyle)}
-            onClick={this.props.onClick}/>
+            className={css(DropDownButton.ANIMATION.base, startStyle)}/>
           <img src={startSource}
             width={this.props.size}
             height={this.props.size}
-            className={css(DropDownButton.ANIMATION.base, endStyle)}
-            onClick={this.props.onClick}/>
+            className={css(DropDownButton.ANIMATION.base, endStyle)}/>
         </div>
       </div>);
   }
@@ -158,9 +157,18 @@ export class DropDownButton extends React.Component<Properties, State> {
     }
   });
   public static readonly STYLE = {
-    containerStyle: {
+    imageWrapper: {
       position: 'relative' as 'relative',
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      width: '20px',
+      height: '20px',
       cursor: 'pointer'
+    },
+    componentWrapper: {
+      width: '20px',
+      height: '20px'
     }
   };
 }
