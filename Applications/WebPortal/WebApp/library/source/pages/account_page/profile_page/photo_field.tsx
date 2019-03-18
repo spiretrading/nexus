@@ -317,14 +317,14 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
         return ChangePictureModal.STYLE.boxShadowLarge;
       }
     })();
-    const buttonBox = (() => {
+    const buttonBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.STYLE.buttonBoxSmall;
       } else {
         return ChangePictureModal.STYLE.buttonBoxLarge;
       }
     })();
-    const button = (() => {
+    const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.DYNAMIC_STYLE.buttonSmall;
       } else {
@@ -391,17 +391,17 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
-            <div style={buttonBox}>
+            <div style={buttonBoxStyle}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
                 tabIndex={0}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput' tabIndex={0}
-                className={css(button)}>
+                className={css(buttonStyle)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(button)}
+              <div className={css(buttonStyle)}
                 onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
