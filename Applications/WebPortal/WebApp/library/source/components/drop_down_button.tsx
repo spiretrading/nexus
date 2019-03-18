@@ -65,7 +65,7 @@ export class DropDownButton extends React.Component<Properties, State> {
     })();
     return (
       <div style={DropDownButton.STYLE.componentWrapper}
-        onClick={this.props.onClick}>
+          onClick={this.props.onClick}>
         <div style={DropDownButton.STYLE.imageWrapper}>
           <img src={endSource}
             width={this.props.size}

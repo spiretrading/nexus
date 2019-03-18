@@ -15,7 +15,7 @@ interface Properties {
 
 /** Displays a check mark button. */
 export class CheckMarkButton extends React.Component<Properties, {}> {
-  static readonly defaultProps = {
+  public static readonly defaultProps = {
     onClick: () => {}
   }
 
@@ -34,8 +34,7 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
       }
     })();
     return (
-      <div onClick={this.props.onClick}
-        style={CheckMarkButton.STYLE.wrapper}>
+      <div onClick={this.props.onClick} style={CheckMarkButton.STYLE.wrapper}>
         <img src={source}
           alt='checkbox'
           height={this.props.size}
