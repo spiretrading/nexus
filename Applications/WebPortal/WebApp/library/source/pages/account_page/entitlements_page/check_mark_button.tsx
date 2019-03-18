@@ -43,15 +43,13 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
   }
 
   private static STYLE = {
-    base: {
-      cursor: 'pointer'
-    },
     wrapper: {
       display: 'flex' as 'flex',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
       width: '20px',
-      height: '20px'
+      height: '20px',
+      cursor: 'pointer' as 'pointer'
     }
   };
 }
