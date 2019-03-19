@@ -316,9 +316,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               </button>
             </div>
             {errorStatus}
-            <div style={CreateAccountPage.STYLE.bottomPadding}>
-            BOOP
-            </div>
+            <Dali.Padding size={CreateAccountPage.BOTTOM_PADDING}/>
           </Dali.VBoxLayout>
         </div>
         <div style={CreateAccountPage.STYLE.pagePadding}/>
@@ -581,10 +579,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     roleErrorStatus: {
       color: '#E63F44',
       font: '400 14px Roboto'
-    },
-    bottomPadding: {
-      height: '60px',
-      flexBasis: '60px'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
