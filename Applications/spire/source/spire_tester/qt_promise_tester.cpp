@@ -35,10 +35,6 @@ QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
         return *completed_promises;
       });
   });
-  //return promise.then([&] (auto result) {
-  //  completed_promises->insert(completed_promises->begin(), result.Get());
-  //  return std::move(*completed_promises);
-  //});
 }
 
 TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
@@ -61,18 +57,21 @@ TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
   }, "test_chaining_promise_then");
 }
 
-TEST_CASE("test_empty_promise_vector", "[QtPromise]") {
-  auto promises = std::vector<QtPromise<std::vector<int>>>();
-  REQUIRE(wait(all(std::move(promises))) == std::vector<std::vector<int>>());
+TEST_CASE("test_empty_promise", "[QtPromise]") {
+  run_test([] {
+    auto promises = std::vector<QtPromise<std::vector<int>>>();
+    auto result = wait(std::move(all(std::move(promises))));
+    REQUIRE(result == std::vector<std::vector<int>>());
+  }, "test_empty_promise");
 }
 
 TEST_CASE("test_single_promise", "[QtPromise]") {
-  run_test([=] {
+  run_test([] {
     auto promises = std::vector<QtPromise<int>>();
     promises.push_back(QtPromise([] {
       return 1;
     }));
-    auto all_promise = all(std::move(promises));
-    auto result = wait(std::move(all_promise));
+    auto result = wait(std::move(all(std::move(promises))));
+    REQUIRE(result == std::vector<int>{1});
   }, "test_single_promise");
 }
