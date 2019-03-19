@@ -4,6 +4,9 @@
 
 using namespace Spire;
 
+//QT_TEST_CASE("test_single_promise", "[QtPromise]") {
+//}
+
 //! Returns a promise that signals the result only when all provided
 //! promises have completed, or throws an exception if any provided
 //! promise throws an exception.
@@ -13,7 +16,7 @@ using namespace Spire;
 template<typename T>
 QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   if(promises.empty()) {
-    return QtPromise<std::vector<T>>();
+    return {};
   }
   // TODO: what to do if a promise throws an exception?
   auto completed_promises = std::make_shared<std::vector<T>>();
@@ -27,7 +30,10 @@ QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   //}
   return promise.then([=] (auto result) {
     completed_promises->insert(completed_promises->begin(), result.Get());
-    return *completed_promises;
+    return QtPromise(
+      [=] {
+        return *completed_promises;
+      });
   });
   //return promise.then([&] (auto result) {
   //  completed_promises->insert(completed_promises->begin(), result.Get());
@@ -35,10 +41,30 @@ QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   //});
 }
 
-//TEST_CASE("test_empty_promise_vector", "[QtPromise]") {
-//  auto promises = std::vector<QtPromise<std::vector<int>>>();
-//  REQUIRE(wait(all(promises)) == std::vector<int>());
-//}
+TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
+  run_test([] {
+    auto p = QtPromise(
+      [] {
+        return 123;
+      }).then([] (auto result) {
+        return QtPromise(
+          [=] {
+            return 2 * result.Get();
+          }).then([] (auto result) {
+            return 3 * result.Get();
+          });
+      }).then([] (auto result) {
+        return 6 * result.Get();
+      });
+    auto r = wait(std::move(p));
+    REQUIRE(r == 4428);
+  }, "test_chaining_promise_then");
+}
+
+TEST_CASE("test_empty_promise_vector", "[QtPromise]") {
+  auto promises = std::vector<QtPromise<std::vector<int>>>();
+  REQUIRE(wait(all(std::move(promises))) == std::vector<std::vector<int>>());
+}
 
 TEST_CASE("test_single_promise", "[QtPromise]") {
   run_test([=] {
@@ -48,8 +74,5 @@ TEST_CASE("test_single_promise", "[QtPromise]") {
     }));
     auto all_promise = all(std::move(promises));
     auto result = wait(std::move(all_promise));
-    //auto result = static_cast<std::vector<std::vector<int>>
-    //  (*)(QtPromise<std::vector<std::vector<int>>>&)>(wait)(all_promise);
-    REQUIRE(true == true);
   }, "test_single_promise");
 }

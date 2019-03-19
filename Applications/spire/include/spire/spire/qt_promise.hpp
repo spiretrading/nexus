@@ -52,7 +52,7 @@ namespace Spire {
       */
       template<typename F>
       std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-        void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>> then(
+        void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>> then(
         F&& continuation);
 
       //! Disconnects from this promise, upon disconnection the callback
@@ -63,6 +63,7 @@ namespace Spire {
       QtPromise& operator =(QtPromise&& other);
 
     private:
+      template<typename> friend class QtPromise;
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
 
       template<typename U, typename F>
@@ -137,9 +138,10 @@ namespace Spire {
   template<typename T>
   template<typename F>
   std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-      void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>>
+      void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>>
       QtPromise<T>::then(F&& continuation) {
-    return QtPromise(std::move(*this), std::forward<F>(continuation));
+    return QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>(
+      std::move(*this), std::forward<F>(continuation));
   }
 
   template<typename T>

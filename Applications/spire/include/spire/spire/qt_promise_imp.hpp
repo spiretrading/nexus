@@ -24,6 +24,16 @@ namespace Spire {
     ASYNC
   };
 
+  /** Type trait used to determine if a type represents a promise. */
+  template<typename T>
+  struct is_promise : std::false_type {};
+
+  template<typename T>
+  struct is_promise<QtPromise<T>> : std::true_type {};
+
+  template<typename T>
+  inline constexpr auto is_promise_v = is_promise<T>::value;
+
   /** Type trait used to determine the type a promise evaluates to. */
   template<typename T>
   struct promise_result {
@@ -170,9 +180,10 @@ namespace details {
         return true;
       }
       if(m_continuation.is_initialized()) {
-        (*m_continuation)(std::move(result));
         disconnect();
         m_self = nullptr;
+        (*m_continuation)(std::move(result));
+        m_continuation = boost::none;
       } else {
         m_value = std::move(result);
       }
@@ -184,9 +195,10 @@ namespace details {
       }
       auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
       if(m_continuation.is_initialized()) {
-        (*m_continuation)(std::move(promise_event.get_result()));
         disconnect();
         m_self = nullptr;
+        (*m_continuation)(std::move(promise_event.get_result()));
+        m_continuation = boost::none;
       } else {
         m_value = std::move(promise_event.get_result());
       }
