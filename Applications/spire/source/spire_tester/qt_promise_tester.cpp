@@ -13,22 +13,25 @@ using namespace Spire;
 template<typename T>
 QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   if(promises.empty()) {
-    return std::move(QtPromise<std::vector<T>>());
+    return QtPromise<std::vector<T>>();
   }
   // TODO: what to do if a promise throws an exception?
-  // how to make this persist?
-  auto completed = std::vector<T>();
-  auto& promise = promises.front();
-  return QtPromise<std::vector<T>>();
+  auto completed_promises = std::make_shared<std::vector<T>>();
+  auto promise = std::move(promises.front());
   //for(auto i = 1; i < promises.size(); ++i) {
-  //  promise.then([&] (auto result) {
-  //    completed.insert(completed.begin() + i, result.Get());
-  //    return promises[i];
+  //  promise = promise.then([&] (auto result) {
+  //    completed_promises->insert(completed_promises->begin() + i,
+  //      result.Get());
+  //    return std::move(promises[i]);
   //  });
   //}
+  return promise.then([=] (auto result) {
+    completed_promises->insert(completed_promises->begin(), result.Get());
+    return *completed_promises;
+  });
   //return promise.then([&] (auto result) {
-  //  completed.insert(completed.begin(), result.Get());
-  //  return std::move(completed);
+  //  completed_promises->insert(completed_promises->begin(), result.Get());
+  //  return std::move(*completed_promises);
   //});
 }
 
@@ -39,12 +42,14 @@ QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
 
 TEST_CASE("test_single_promise", "[QtPromise]") {
   run_test([=] {
-    auto promises = std::vector<QtPromise<std::vector<int>>>();
-    promises.push_back(QtPromise([=] {
-      return std::vector<int>({1, 2, 3});
+    auto promises = std::vector<QtPromise<int>>();
+    promises.push_back(QtPromise([] {
+      return 1;
     }));
-    auto result = all(promises);
-    //auto result = all(promises);
+    auto all_promise = all(std::move(promises));
+    auto result = wait(std::move(all_promise));
+    //auto result = static_cast<std::vector<std::vector<int>>
+    //  (*)(QtPromise<std::vector<std::vector<int>>>&)>(wait)(all_promise);
     REQUIRE(true == true);
   }, "test_single_promise");
 }
