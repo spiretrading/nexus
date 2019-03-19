@@ -72,7 +72,7 @@ export class RoleIcon extends React.Component<Properties, State> {
                   style={{...RoleIcon.STYLE.animationBase,
                     ...RoleIcon.STYLE.imageTooltip,
                     ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                    {'status' + (this.state.showToolTip)}
+                    {this.getText(this.props.role)}
               </div>)}
           </Transition>
         </div>
@@ -196,9 +196,9 @@ export class RoleIcon extends React.Component<Properties, State> {
   };
   private static readonly TIMEOUT = {
     enter: 1,
-    entered: 600,
-    exit: 600,
-    exited:  600
+    entered: 200,
+    exit: 200,
+    exited: 200
   };
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';

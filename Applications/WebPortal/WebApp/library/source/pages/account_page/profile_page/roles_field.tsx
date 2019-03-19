@@ -25,23 +25,32 @@ export class RolesField extends React.Component<Properties, {}> {
   }
 
   public render(): JSX.Element {
-    const Icon = (props: any) => {
-      return (<RoleIcon role={props.role}
-        readonly={this.props.readonly}
-        isSet={this.props.roles.test(props.role)}
-        onClick={() => this.props.onClick(props.role)}/>);
-    };
+
     return (
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
-        <Icon role={Nexus.AccountRoles.Role.TRADER}/>
+        <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
+          readonly={this.props.readonly}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
+          onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <Icon role={Nexus.AccountRoles.Role.MANAGER}/>
+        <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
+          readonly={this.props.readonly}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
+          onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <Icon role={Nexus.AccountRoles.Role.ADMINISTRATOR}/>
+        <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
+          readonly={this.props.readonly}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
+          onClick={() => 
+            this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
-        <Icon role={Nexus.AccountRoles.Role.SERVICE}/>
-      </HBoxLayout>);
+        <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
+          readonly={this.props.readonly}
+          isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
+          onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
+      </HBoxLayout>
+     );
   }
 
   private static readonly IMAGE_SIZE = '20px';
