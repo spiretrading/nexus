@@ -4,38 +4,6 @@
 
 using namespace Spire;
 
-//! Returns a promise that signals the result only when all provided
-//! promises have completed, or throws an exception if any provided
-//! promise throws an exception.
-/*
-  \param promises The promises to be executed.
-*/
-template<typename T>
-QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
-  if(promises.empty()) {
-    return QtPromise(
-      [] {
-        return std::vector<T>();
-      });
-  }
-  auto promises_ptr = std::make_shared<std::vector<QtPromise<T>>>();
-  for(auto& promise : promises) {
-    promises_ptr->push_back(std::move(promise));
-  }
-  auto completed_promises = std::make_shared<std::vector<T>>();
-  auto promise = std::move(promises_ptr->front());
-  for(auto i = 0; i < promises_ptr->size() - 1; ++i) {
-    promise = promise.then([=] (auto result) {
-      completed_promises->push_back(std::move(result.Get()));
-      return std::move(promises_ptr->at(i + 1));
-    });
-  }
-  return promise.then([=] (auto result) {
-    completed_promises->push_back(result.Get());
-    return *completed_promises;
-  });
-}
-
 TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
   run_test([] {
     auto p = QtPromise(
