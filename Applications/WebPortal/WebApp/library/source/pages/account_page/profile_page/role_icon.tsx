@@ -110,7 +110,7 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private onClick() {
     console.log('CLICK CLICK!!!!!!');
-    if(this.state.showToolTipMobile) {
+    if(!this.state.showToolTipMobile) {
       this.props.onClick();
     }
   }
@@ -118,13 +118,13 @@ export class RoleIcon extends React.Component<Properties, State> {
   private onTouch() {
     event.preventDefault();
     console.log('Button was touched.');
-    this.props.onClick();
     this.setState({showToolTip: true});
+    this.props.onClick();
     const timerID = setTimeout(() => {
         console.log('Mobile Tooltip hiddenn');
         this.setState({showToolTip: false});
       },
-      2000);
+      1000);
   }
 
   private getText(role: Nexus.AccountRoles.Role) {
