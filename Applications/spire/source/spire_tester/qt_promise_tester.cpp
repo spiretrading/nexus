@@ -16,7 +16,10 @@ using namespace Spire;
 template<typename T>
 QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   if(promises.empty()) {
-    return {};
+    return QtPromise(
+      [=] {
+        return std::vector<T>();
+      });
   }
   // TODO: what to do if a promise throws an exception?
   auto completed_promises = std::make_shared<std::vector<T>>();
