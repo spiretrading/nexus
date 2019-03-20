@@ -17,22 +17,25 @@ template<typename T>
 QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   if(promises.empty()) {
     return QtPromise(
-      [=] {
+      [] {
         return std::vector<T>();
       });
   }
   // TODO: what to do if a promise throws an exception?
-  auto completed_promises = std::make_shared<std::vector<T>>();
-  auto promise = std::move(promises.front());
-  //for(auto i = 1; i < promises.size(); ++i) {
-  //  promise = promise.then([&] (auto result) {
-  //    completed_promises->insert(completed_promises->begin() + i,
-  //      result.Get());
-  //    return std::move(promises[i]);
-  //  });
-  //}
+  auto completed_promises = std::make_shared<std::vector<T>>(promises.size());
+  auto promises_ptr = std::make_shared<std::vector<QtPromise<T>>>();
+  for(auto& promise : promises) {
+    promises_ptr->push_back(std::move(promise));
+  }
+  auto promise = std::move(promises_ptr->front());
+  for(auto i = 1; i < promises_ptr->size(); ++i) {
+    promise = promise.then([=] (auto result) {
+      completed_promises->at(i - 1) = result.Get();
+      return std::move(promises_ptr->at(i));
+    });
+  }
   return promise.then([=] (auto result) {
-    completed_promises->insert(completed_promises->begin(), result.Get());
+    completed_promises->back() = result.Get();
     return QtPromise(
       [=] {
         return *completed_promises;
@@ -77,4 +80,25 @@ TEST_CASE("test_single_promise", "[QtPromise]") {
     auto result = wait(std::move(all(std::move(promises))));
     REQUIRE(result == std::vector<int>{1});
   }, "test_single_promise");
+}
+
+TEST_CASE("test_multiple_promises", "[QtPromise]") {
+  run_test([] {
+    auto promises = std::vector<QtPromise<int>>();
+    promises.push_back(QtPromise([] {
+      return 1;
+    }));
+    promises.push_back(QtPromise([] {
+      return 2;
+    }));
+    promises.push_back(QtPromise([] {
+      return 3;
+    }));
+    promises.push_back(QtPromise([] {
+      return 4;
+    }));
+    auto all_promise = std::move(all(std::move(promises)));
+    auto result = wait(std::move(all_promise));
+    REQUIRE(result == std::vector<int>{1, 2, 3, 4});
+  }, "test_multiple_promises");
 }
