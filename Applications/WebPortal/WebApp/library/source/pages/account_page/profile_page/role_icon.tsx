@@ -15,10 +15,13 @@ interface Properties {
 
   /** Called when icon is clicked on. */
   onClick?: () => void;
+
+  /** */
 }
 
 interface State {
   showToolTip: boolean;
+  showToolTipMobile: boolean;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -26,12 +29,13 @@ export class RoleIcon extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
     onClick: () => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);
     this.state = {
-      showToolTip: false
+      showToolTip: false,
+      showToolTipMobile: false
     };
     console.log('HELLO WORLD!');
     this.showToolTip = this.showToolTip.bind(this);
@@ -57,7 +61,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     return (
       <div style={RoleIcon.STYLE.iconBox}
           onClick={this.onClick}
-          //onTouchStart={this.onTouch}
+          onTouchStart={this.onTouch}
           onMouseEnter={this.showToolTip}
           onMouseLeave={this.hideToolTip}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
@@ -65,8 +69,19 @@ export class RoleIcon extends React.Component<Properties, State> {
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
-          <Transition in={this.state.showToolTip}
-              timeout={RoleIcon.TIMEOUT}>
+         <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
+            in={this.state.showToolTipMobile}>
+            {(state) => (
+                <div
+                  style={{...RoleIcon.STYLE.animationBase,
+                    ...RoleIcon.STYLE.imageTooltip,
+                    ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                    {this.getText(this.props.role)}
+              </div>)}
+          </Transition>
+          <Transition timeout={RoleIcon.TIMEOUT}
+            in={this.state.showToolTip &&
+              !this.state.showToolTipMobile}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
@@ -85,30 +100,26 @@ export class RoleIcon extends React.Component<Properties, State> {
       this.setState({
         showToolTip: true});
     }
-    if(this.state.showToolTip) {
-      this.setState({
-        showToolTip: false});
-    }
   }
 
   private hideToolTip() {
-    this.setState( {showToolTip: false});
+    this.setState( {
+      showToolTip: false});
     console.log('Mouse left');
   }
 
   private onClick() {
     console.log('CLICK CLICK!!!!!!');
     this.props.onClick();
-    console.log();
   }
 
   private onTouch() {
     console.log('Button was touched.');
      event.preventDefault();
-    this.setState({ showToolTip: true });
+     this.setState({showToolTip: true});
     setTimeout(() => {
         console.log('Mobile Tooltip hiddenn');
-        this.setState({ showToolTip: false });
+        this.setState({showToolTip: false});
       },
       2000);
   }
@@ -146,9 +157,6 @@ export class RoleIcon extends React.Component<Properties, State> {
     entered: {
       opacity: 1
     },
-    exiting: {
-      opacity: 0
-    },
     exited: {
       display: 'none' as 'none'
     }
@@ -173,8 +181,8 @@ export class RoleIcon extends React.Component<Properties, State> {
       cursor: 'inherit'
     },
     animationBase: {
-      //opacity: 0,
-      transition: 'opacity 600ms ease-in-out'
+      opacity: 0,
+      transition: 'opacity 200ms ease-in-out'
     },
     imageTooltip: {
       display: 'flex' as 'flex',
@@ -187,14 +195,20 @@ export class RoleIcon extends React.Component<Properties, State> {
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      top: '-40px',
-      left: '-18px',
+      top: '16px',
+      left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064'
     }
   };
   private static readonly TIMEOUT = {
+    enter: 100,
+    entered: 200,
+    exit: 200,
+    exited: 200
+  };
+  private static readonly TIMEOUT_MOBILE_TOOLIP = {
     enter: 1,
     entered: 200,
     exit: 200,

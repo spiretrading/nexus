@@ -16,6 +16,9 @@ interface Properties {
    */
   onClick?: (role: Nexus.AccountRoles.Role) => void;
 }
+interface State {
+
+}
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RolesField extends React.Component<Properties, {}> {
@@ -42,7 +45,7 @@ export class RolesField extends React.Component<Properties, {}> {
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-          onClick={() => 
+          onClick={() =>
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
