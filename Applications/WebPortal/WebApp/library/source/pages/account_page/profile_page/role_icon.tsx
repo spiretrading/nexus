@@ -110,14 +110,17 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private onClick() {
     console.log('CLICK CLICK!!!!!!');
-    this.props.onClick();
+    if(this.state.showToolTipMobile) {
+      this.props.onClick();
+    }
   }
 
   private onTouch() {
+    event.preventDefault();
     console.log('Button was touched.');
-     event.preventDefault();
-     this.setState({showToolTip: true});
-    setTimeout(() => {
+    this.props.onClick();
+    this.setState({showToolTip: true});
+    const timerID = setTimeout(() => {
         console.log('Mobile Tooltip hiddenn');
         this.setState({showToolTip: false});
       },
