@@ -16,11 +16,11 @@ interface Properties {
   /** Determines if the mobile tooltip should be shown. */
   isTouchTooltipShown: boolean;
 
-  /** Called when icon is clicked on. */
+  /** Called when the icon is clicked on. */
   onClick?: () => void;
 
-  /** Called when a icon is touched. */
-  onTouch?: (role: Nexus.AccountRoles.Role) => void;
+  /** Called whent the icon is touched. */
+  onTouch?: () => void;
 }
 
 interface State {
@@ -71,25 +71,23 @@ export class RoleIcon extends React.Component<Properties, State> {
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
-         <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
-            in={this.props.isTouchTooltipShown}>
+          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
+              in={this.props.isTouchTooltipShown}>
             {(state) => (
-                <div
-                  style={{...RoleIcon.STYLE.animationBase,
-                    ...RoleIcon.STYLE.imageTooltip,
-                    ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                    {this.getText(this.props.role)}
+              <div style={{...RoleIcon.STYLE.animationBase,
+                  ...RoleIcon.STYLE.imageTooltip,
+                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                {this.getText(this.props.role)}
               </div>)}
           </Transition>
           <Transition timeout={RoleIcon.TIMEOUT_TOOLTIP}
-            in={this.state.isMouseTooltipShown &&
-              !this.props.isTouchTooltipShown}>
+              in={this.state.isMouseTooltipShown &&
+                !this.props.isTouchTooltipShown}>
             {(state) => (
-                <div
-                  style={{...RoleIcon.STYLE.animationBase,
-                    ...RoleIcon.STYLE.imageTooltip,
-                    ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
-                    {this.getText(this.props.role)}
+              <div style={{...RoleIcon.STYLE.animationBase,
+                  ...RoleIcon.STYLE.imageTooltip,
+                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                {this.getText(this.props.role)}
               </div>)}
           </Transition>
         </div>
@@ -103,14 +101,12 @@ export class RoleIcon extends React.Component<Properties, State> {
   }
 
   private hideToolTipMouse() {
-    this.setState( {isMouseTooltipShown: false});
+    this.setState({isMouseTooltipShown: false});
   }
 
   private onClick() {
-    if(!this.props.readonly) {
-      if(!this.props.isTouchTooltipShown) {
-        this.props.onClick();
-      }
+    if(!this.props.readonly && !this.props.isTouchTooltipShown) {
+      this.props.onClick();
     }
   }
 
@@ -118,8 +114,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     if(!this.props.readonly) {
       this.props.onClick();
     }
-    this.props.onTouch(this.props.role);
-    return true;
+    this.props.onTouch();
   }
 
   private getText(role: Nexus.AccountRoles.Role) {

@@ -16,6 +16,7 @@ interface Properties {
    */
   onClick?: (role: Nexus.AccountRoles.Role) => void;
 }
+
 interface State {
   mobileTooltipRole: Nexus.AccountRoles.Role;
 }
@@ -44,7 +45,8 @@ export class RolesField extends React.Component<Properties, State> {
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.TRADER}
-          onTouch={this.onTouchTooltipEvent}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.TRADER)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
@@ -52,7 +54,8 @@ export class RolesField extends React.Component<Properties, State> {
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.MANAGER}
-          onTouch={this.onTouchTooltipEvent}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.MANAGER)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
@@ -60,7 +63,8 @@ export class RolesField extends React.Component<Properties, State> {
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.ADMINISTRATOR}
-          onTouch={this.onTouchTooltipEvent}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           onClick={() =>
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
@@ -69,7 +73,8 @@ export class RolesField extends React.Component<Properties, State> {
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.SERVICE}
-          onTouch={this.onTouchTooltipEvent}
+          onTouch={() =>
+            this.onTouchTooltipEvent(Nexus.AccountRoles.Role.SERVICE)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
       </HBoxLayout>
      );
@@ -79,8 +84,7 @@ export class RolesField extends React.Component<Properties, State> {
     this.setState({mobileTooltipRole: role});
     clearTimeout(this.timerID);
     this.timerID = setTimeout(() => {
-        this.setState({mobileTooltipRole: null});
-      }, 1500);
+      this.setState({mobileTooltipRole: null});}, 1500);
   }
 
   private timerID: NodeJS.Timeout;
