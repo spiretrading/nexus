@@ -96,18 +96,19 @@ namespace Spire {
           return std::vector<T>();
         });
     }
-    auto completed_promises = std::make_shared<std::vector<T>>();
+    auto completed_promises = std::make_unique<std::vector<T>>();
     auto promise = std::move(promises.front());
     for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
       promise = promise.then(
-        [=, p = std::move(promises[i + 1])]
+        [=, p = std::move(promises[i + 1]),
+          completed_promises = completed_promises.get()]
         (auto&& result) mutable {
           completed_promises->push_back(std::move(result.Get()));
           return std::move(p);
         });
     }
     return promise.then(
-      [=] (auto&& result) {
+      [=, completed_promises = std::move(completed_promises)] (auto&& result) {
         completed_promises->push_back(std::move(result.Get()));
         return std::move(*completed_promises);
       });
