@@ -103,10 +103,9 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
   }
   return all(std::move(promises)).then(
     [=] (std::vector<std::vector<Candlestick>> result) {
-      for(auto i = std::size_t(0); gaps.size(); ++i) {
+      for(auto i = std::size_t(0); i < gaps.size(); ++i) {
         on_data_loaded(result[i], gaps[i].m_start, gaps[i].m_end);
       }
-      // find indexes of result.begin() and result.end() in m_loaded_data
       auto first_index = std::lower_bound(m_loaded_data.begin(),
         m_loaded_data.end(), result.front().front(),
         [] (const auto& index, const auto& value) {
@@ -142,6 +141,10 @@ void CachedChartModel::remove_range(const ChartRange& range) {
 }
 
 void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
+  if(m_ranges.empty()) {
+    m_ranges.push_back({first, last});
+    return;
+  }
   auto ranges = m_ranges;
   auto new_first = first;
   auto new_last = last;
@@ -165,7 +168,7 @@ void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
   }
   auto index = std::lower_bound(m_ranges.begin(), m_ranges.end(), first,
     [] (const auto& index, const auto& value) {
-      return index.m_start < first.m_start;
+      return index.m_start < value;
     });
   ranges.insert(index, ChartRange{new_first, new_last});
   m_ranges = ranges;
