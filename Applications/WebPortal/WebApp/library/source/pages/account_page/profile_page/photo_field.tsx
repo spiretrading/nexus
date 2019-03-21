@@ -386,6 +386,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
+              displaySize={this.props.displaySize}
               scale={this.props.scaling}
               readonly={!this.props.imageSource}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -630,6 +631,9 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
 
 interface SliderProperties {
 
+  /** Determines the size to render the component at. */
+  displaySize: DisplaySize;
+
   /** Callback that updates the value */
   onChange?: (value: number) => void;
 
@@ -654,13 +658,20 @@ export class Slider extends React.Component<SliderProperties, {}> {
   }
 
   public render(): JSX.Element {
+    const sliderStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return Slider.SLIDER_STYLE.smallSlider;
+      } else {
+        return Slider.SLIDER_STYLE.slider;
+      }
+    })();
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
       value={Slider.convertFromDecimal(this.props.scale)}
       disabled={this.props.readonly}
       onChange={this.onValueChange}
-      className={css(Slider.SLIDER_STYLE.slider)}/>);
+      className={css(sliderStyle)}/>);
   }
 
   private onValueChange(event: any) {
@@ -710,7 +721,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px'
       },
       '::-ms-thumb': {
@@ -721,6 +732,65 @@ export class Slider extends React.Component<SliderProperties, {}> {
         backgroundColor: '#FFFFFF',
         border: '1px solid #8C8C8C',
         borderRadius: '20px',
+        marginTop: '0px'
+      },
+      '::-webkit-slider-runnable-track': {
+        '-webkit-appearance': 'none',
+        boxShadow: 'none' as 'none',
+        backgroundColor: '#E6E6E6',
+        height: '4px'
+      },
+      '::-moz-range-track': {
+        backgroundColor: '#E6E6E6',
+        height: '4px',
+        border: '0px'
+      },
+      '::-ms-track': {
+        backgroundColor: '#E6E6E6',
+        height: '4px'
+      },
+      '-webkit-appearance': 'none',
+      '::-moz-focus-outer': {
+        border: '0px'
+      }
+    },
+    smallSlider: {
+      width: '100%',
+      height: '24px',
+      margin: '0px',
+      outline: '0px',
+      ':disabled' : {
+        backgroundColor: '#FFFFFF'
+      },
+      '::-webkit-slider-thumb': {
+        '-webkit-appearance': 'none',
+        boxSizing: 'border-box' as 'border-box',
+        cursor: 'pointer' as 'pointer',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #8C8C8C',
+        borderRadius: '24px',
+        boxShadow: 'none',
+        marginTop: '-8px'
+      },
+      '::-moz-range-thumb': {
+        boxSizing: 'border-box' as 'border-box',
+        cursor: 'pointer' as 'pointer',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '6px solid #684BC7',
+        borderRadius: '24px'
+      },
+      '::-ms-thumb': {
+        boxSizing: 'border-box' as 'border-box',
+        cursor: 'pointer' as 'pointer',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #8C8C8C',
+        borderRadius: '24px',
         marginTop: '0px'
       },
       '::-webkit-slider-runnable-track': {
