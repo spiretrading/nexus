@@ -20,13 +20,13 @@ interface Properties {
   /** */
   showToolTipMobile?: boolean;
 
-  showMobileCallback?: () => void;
+  showMobileCallback?: (role: Nexus.AccountRoles.Role, value: boolean) => void;
 
 }
 
 interface State {
   showToolTip: boolean;
-  showToolTipMobile: boolean;
+  //showToolTipMobile: boolean;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -40,7 +40,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     super(props);
     this.state = {
       showToolTip: false,
-      showToolTipMobile: false
+      //showToolTipMobile: false
     };
     console.log('HELLO WORLD!');
     this.showToolTip = this.showToolTip.bind(this);
@@ -75,7 +75,7 @@ export class RoleIcon extends React.Component<Properties, State> {
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
-            in={this.state.showToolTipMobile}>
+            in={this.props.showToolTipMobile}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
@@ -86,7 +86,7 @@ export class RoleIcon extends React.Component<Properties, State> {
           </Transition>
           <Transition timeout={RoleIcon.TIMEOUT}
             in={this.state.showToolTip &&
-              !this.state.showToolTipMobile}>
+              !this.props.showToolTipMobile}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
@@ -101,7 +101,7 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private showToolTip() {
     console.log('Mouse entered');
-    if(!this.state.showToolTip && !this.state.showToolTipMobile) {
+    if(!this.state.showToolTip && !this.props.showToolTipMobile) {
       this.setState({showToolTip: true});
     }
   }
@@ -114,7 +114,7 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private onClick() {
     console.log('CLICK CLICK!!!!!!');
-    if(!this.state.showToolTipMobile) {
+    if(!this.props.showToolTipMobile) {
       this.props.onClick();
     }
   }
@@ -122,12 +122,12 @@ export class RoleIcon extends React.Component<Properties, State> {
   private onTouch() {
     event.preventDefault();
     console.log('Button was touched.');
-    this.setState({showToolTipMobile: true});
     this.props.onClick();
+    this.props.showMobileCallback(this.props.role, true);
     clearTimeout(this.timerID);
     this.timerID = setTimeout(() => {
         console.log('Mobile Tooltip hiddenn');
-        this.setState({showToolTipMobile: false});
+        this.props.showMobileCallback(this.props.role, false);
       },
       1500);
   }
