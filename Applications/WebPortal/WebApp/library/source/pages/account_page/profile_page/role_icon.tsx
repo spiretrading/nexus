@@ -19,7 +19,7 @@ interface Properties {
   /** Called when the icon is clicked on. */
   onClick?: () => void;
 
-  /** Called whent the icon is touched. */
+  /** Called when the icon is touched. */
   onTouch?: () => void;
 }
 
