@@ -32,7 +32,7 @@ export class RolesField extends React.Component<Properties, State> {
     this.state = {
       tooltipRole: null
     };
-    this.onMobileTooltip = this.onMobileTooltip.bind(this);
+    this.onTouchTooltipEvent = this.onTouchTooltipEvent.bind(this);
   }
 
   public render(): JSX.Element {
@@ -42,36 +42,40 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
-          showToolTipMobile={this.state.tooltipRole === Nexus.AccountRoles.Role.TRADER}
-          showMobileCallback={this.onMobileTooltip}
+          showToolTipMobile={this.state.tooltipRole 
+            === Nexus.AccountRoles.Role.TRADER}
+          showMobileCallback={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
-          showToolTipMobile={this.state.tooltipRole === Nexus.AccountRoles.Role.MANAGER}
-          showMobileCallback={this.onMobileTooltip}
+          showToolTipMobile={this.state.tooltipRole 
+            === Nexus.AccountRoles.Role.MANAGER}
+          showMobileCallback={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-          showToolTipMobile={this.state.tooltipRole === Nexus.AccountRoles.Role.ADMINISTRATOR}
-          showMobileCallback={this.onMobileTooltip}
+          showToolTipMobile={this.state.tooltipRole 
+            === Nexus.AccountRoles.Role.ADMINISTRATOR}
+          showMobileCallback={this.onTouchTooltipEvent}
           onClick={() =>
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
-          showToolTipMobile={this.state.tooltipRole === Nexus.AccountRoles.Role.SERVICE}
-          showMobileCallback={this.onMobileTooltip}
+          showToolTipMobile={this.state.tooltipRole
+            === Nexus.AccountRoles.Role.SERVICE}
+          showMobileCallback={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
       </HBoxLayout>
      );
   }
 
-  private onMobileTooltip(role: Nexus.AccountRoles.Role, value: boolean) {
+  private onTouchTooltipEvent(role: Nexus.AccountRoles.Role, value: boolean) {
     if(value)  {
       this.setState({tooltipRole: role});
           clearTimeout(this.timerID);

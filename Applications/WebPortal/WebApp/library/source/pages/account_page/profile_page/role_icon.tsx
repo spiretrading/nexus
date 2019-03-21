@@ -1,7 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { clearTimeout } from 'timers';
 
 interface Properties {
 
