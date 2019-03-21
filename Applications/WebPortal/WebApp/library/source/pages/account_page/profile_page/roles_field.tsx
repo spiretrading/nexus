@@ -17,7 +17,7 @@ interface Properties {
   onClick?: (role: Nexus.AccountRoles.Role) => void;
 }
 interface State {
-  tooltipRole: Nexus.AccountRoles.Role;
+  mobileTooltipRole: Nexus.AccountRoles.Role;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -30,7 +30,7 @@ export class RolesField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      tooltipRole: null
+      mobileTooltipRole: null
     };
     this.onTouchTooltipEvent = this.onTouchTooltipEvent.bind(this);
   }
@@ -42,49 +42,45 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
-          showToolTipMobile={this.state.tooltipRole 
-            === Nexus.AccountRoles.Role.TRADER}
-          showMobileCallback={this.onTouchTooltipEvent}
+          isTooltipTouchShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.TRADER}
+          onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
-          showToolTipMobile={this.state.tooltipRole 
-            === Nexus.AccountRoles.Role.MANAGER}
-          showMobileCallback={this.onTouchTooltipEvent}
+          isTooltipTouchShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.MANAGER}
+          onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-          showToolTipMobile={this.state.tooltipRole 
-            === Nexus.AccountRoles.Role.ADMINISTRATOR}
-          showMobileCallback={this.onTouchTooltipEvent}
+          isTooltipTouchShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.ADMINISTRATOR}
+          onTouch={this.onTouchTooltipEvent}
           onClick={() =>
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
-          showToolTipMobile={this.state.tooltipRole
-            === Nexus.AccountRoles.Role.SERVICE}
-          showMobileCallback={this.onTouchTooltipEvent}
+          isTooltipTouchShown={this.state.mobileTooltipRole ===
+            Nexus.AccountRoles.Role.SERVICE}
+          onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
       </HBoxLayout>
      );
   }
 
-  private onTouchTooltipEvent(role: Nexus.AccountRoles.Role, value: boolean) {
-    if(value)  {
-      this.setState({tooltipRole: role});
-          clearTimeout(this.timerID);
-      this.timerID = setTimeout(() => {
-        console.log('Mobile Tooltip hiddenn');
-        this.setState({tooltipRole: null});
-      },
-      1500);
-    }
+  private onTouchTooltipEvent(role: Nexus.AccountRoles.Role) {
+    this.setState({mobileTooltipRole: role});
+    clearTimeout(this.timerID);
+    this.timerID = setTimeout(() => {
+        this.setState({mobileTooltipRole: null});
+      }, 1500);
   }
 
   private timerID: NodeJS.Timeout;
