@@ -1,6 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
+import { clearTimeout } from 'timers';
 
 interface Properties {
 
@@ -17,6 +18,10 @@ interface Properties {
   onClick?: () => void;
 
   /** */
+  showToolTipMobile?: boolean;
+
+  showMobileCallback?: () => void;
+
 }
 
 interface State {
@@ -96,9 +101,8 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private showToolTip() {
     console.log('Mouse entered');
-    if(!this.state.showToolTip) {
-      this.setState({
-        showToolTip: true});
+    if(!this.state.showToolTip && !this.state.showToolTipMobile) {
+      this.setState({showToolTip: true});
     }
   }
 
@@ -118,13 +122,14 @@ export class RoleIcon extends React.Component<Properties, State> {
   private onTouch() {
     event.preventDefault();
     console.log('Button was touched.');
-    this.setState({showToolTip: true});
+    this.setState({showToolTipMobile: true});
     this.props.onClick();
-    const timerID = setTimeout(() => {
+    clearTimeout(this.timerID);
+    this.timerID = setTimeout(() => {
         console.log('Mobile Tooltip hiddenn');
-        this.setState({showToolTip: false});
+        this.setState({showToolTipMobile: false});
       },
-      1000);
+      1500);
   }
 
   private getText(role: Nexus.AccountRoles.Role) {
@@ -202,21 +207,23 @@ export class RoleIcon extends React.Component<Properties, State> {
       left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064'
+      boxShadow: '0px 0px 2px #00000064',
+      tabFocus: 0
     }
   };
   private static readonly TIMEOUT = {
     enter: 100,
     entered: 200,
     exit: 200,
-    exited: 200
+    exited: 1
   };
   private static readonly TIMEOUT_MOBILE_TOOLIP = {
     enter: 1,
     entered: 200,
     exit: 200,
-    exited: 200
+    exited: 1
   };
+  private timerID: NodeJS.Timeout;
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
   private static readonly MANAGER_TOOLTIP_TEXT = 'Manager';
