@@ -104,10 +104,16 @@ TEST_CASE("test_move_only_type", "[QtPromise]") {
     promises.push_back(QtPromise([] {
       return std::make_unique<int>(4);
     }));
+    auto expected_result = std::vector<std::unique_ptr<int>>();
+    expected_result.push_back(std::make_unique<int>(1));
+    expected_result.push_back(std::make_unique<int>(2));
+    expected_result.push_back(std::make_unique<int>(3));
+    expected_result.push_back(std::make_unique<int>(4));
     auto all_promise = all(std::move(promises));
-    auto result = wait(std::move(all_promise));
-    REQUIRE(result == std::vector<std::unique_ptr<int>>{
-      std::make_unique<int>(1), std::make_unique<int>(2),
-      std::make_unique<int>(3), std::make_unique<int>(4)});
+    auto result = std::move(wait(std::move(all_promise)));
+    REQUIRE(std::equal(result.begin(), result.end(), expected_result.begin(),
+      expected_result.end(), [](const auto& lhs, const auto& rhs) {
+        return *lhs == *rhs;
+      }));
   }, "test_move_only_type");
 }
