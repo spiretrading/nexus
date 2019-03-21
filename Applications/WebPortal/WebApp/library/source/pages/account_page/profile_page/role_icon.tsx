@@ -14,7 +14,7 @@ interface Properties {
   isSet: boolean;
 
   /** Determines if the mobile tooltip should be shown. */
-  isTooltipTouchShown: boolean;
+  isTouchTooltipShown: boolean;
 
   /** Called when icon is clicked on. */
   onClick?: () => void;
@@ -24,7 +24,7 @@ interface Properties {
 }
 
 interface State {
-  isTooltipMouseShown: boolean;
+  isMouseTooltipShown: boolean;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -38,7 +38,7 @@ export class RoleIcon extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isTooltipMouseShown: false
+      isMouseTooltipShown: false
     };
     this.showTooltipMouse = this.showTooltipMouse.bind(this);
     this.hideToolTipMouse = this.hideToolTipMouse.bind(this);
@@ -72,7 +72,7 @@ export class RoleIcon extends React.Component<Properties, State> {
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
-            in={this.props.isTooltipTouchShown}>
+            in={this.props.isTouchTooltipShown}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
@@ -82,8 +82,8 @@ export class RoleIcon extends React.Component<Properties, State> {
               </div>)}
           </Transition>
           <Transition timeout={RoleIcon.TIMEOUT_TOOLTIP}
-            in={this.state.isTooltipMouseShown &&
-              !this.props.isTooltipTouchShown}>
+            in={this.state.isMouseTooltipShown &&
+              !this.props.isTouchTooltipShown}>
             {(state) => (
                 <div
                   style={{...RoleIcon.STYLE.animationBase,
@@ -97,18 +97,18 @@ export class RoleIcon extends React.Component<Properties, State> {
   }
 
   private showTooltipMouse() {
-    if(!this.state.isTooltipMouseShown && !this.props.isTooltipTouchShown) {
-      this.setState({isTooltipMouseShown: true});
+    if(!this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown) {
+      this.setState({isMouseTooltipShown: true});
     }
   }
 
   private hideToolTipMouse() {
-    this.setState( {isTooltipMouseShown: false});
+    this.setState( {isMouseTooltipShown: false});
   }
 
   private onClick() {
     if(!this.props.readonly) {
-      if(!this.props.isTooltipTouchShown) {
+      if(!this.props.isTouchTooltipShown) {
         this.props.onClick();
       }
     }
