@@ -9,21 +9,21 @@ QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
   if(promises.empty()) {
     return QtPromise(
       [] {
-        return std::move(std::vector<T>());
+        return std::vector<T>();
       });
   }
   auto completed_promises = std::make_shared<std::vector<T>>();
   auto promise = std::move(promises.front());
   for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
     promise = promise.then(
-      [=, p = std::make_shared<QtPromise<T>>(std::move(promises[i + 1]))]
-      (auto result) {
+      [=, p = std::move(promises[i + 1])]
+      (auto&& result) mutable {
         completed_promises->push_back(std::move(result.Get()));
-        return std::move(*p);
+        return std::move(p);
       });
   }
   return promise.then(
-    [=] (auto result) {
+    [=] (auto&& result) {
       completed_promises->push_back(std::move(result.Get()));
       return std::move(*completed_promises);
     });
@@ -92,22 +92,22 @@ TEST_CASE("test_multiple_promises", "[QtPromise]") {
 TEST_CASE("test_move_only_type", "[QtPromise]") {
   run_test([] {
     auto promises = std::vector<QtPromise<std::unique_ptr<int>>>();
-    //promises.push_back(QtPromise([] {
-    //  return std::make_unique<int>(1);
-    //}));
-    //promises.push_back(QtPromise([] {
-    //  return std::make_unique<int>(2);
-    //}));
-    //promises.push_back(QtPromise([] {
-    //  return std::make_unique<int>(3);
-    //}));
-    //promises.push_back(QtPromise([] {
-    //  return std::make_unique<int>(4);
-    //}));
+    promises.push_back(QtPromise([] {
+      return std::make_unique<int>(1);
+    }));
+    promises.push_back(QtPromise([] {
+      return std::make_unique<int>(2);
+    }));
+    promises.push_back(QtPromise([] {
+      return std::make_unique<int>(3);
+    }));
+    promises.push_back(QtPromise([] {
+      return std::make_unique<int>(4);
+    }));
     auto all_promise = all(std::move(promises));
-    //auto result = wait(std::move(all_promise));
-    /*REQUIRE(result == std::vector<std::unique_ptr<int>>{
+    auto result = wait(std::move(all_promise));
+    REQUIRE(result == std::vector<std::unique_ptr<int>>{
       std::make_unique<int>(1), std::make_unique<int>(2),
-      std::make_unique<int>(3), std::make_unique<int>(4)});*/
+      std::make_unique<int>(3), std::make_unique<int>(4)});
   }, "test_move_only_type");
 }
