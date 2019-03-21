@@ -4,6 +4,31 @@
 
 using namespace Spire;
 
+template<typename T>
+QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
+  if(promises.empty()) {
+    return QtPromise(
+      [] {
+        return std::move(std::vector<T>());
+      });
+  }
+  auto completed_promises = std::make_shared<std::vector<T>>();
+  auto promise = std::move(promises.front());
+  for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
+    promise = promise.then(
+      [=, p = std::make_shared<QtPromise<T>>(std::move(promises[i + 1]))]
+      (auto result) {
+        completed_promises->push_back(std::move(result.Get()));
+        return std::move(*p);
+      });
+  }
+  return promise.then(
+    [=] (auto result) {
+      completed_promises->push_back(std::move(result.Get()));
+      return std::move(*completed_promises);
+    });
+}
+
 TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
   run_test([] {
     auto p = QtPromise(
@@ -62,4 +87,27 @@ TEST_CASE("test_multiple_promises", "[QtPromise]") {
     auto result = wait(std::move(all_promise));
     REQUIRE(result == std::vector<int>{1, 2, 3, 4});
   }, "test_multiple_promises");
+}
+
+TEST_CASE("test_move_only_type", "[QtPromise]") {
+  run_test([] {
+    auto promises = std::vector<QtPromise<std::unique_ptr<int>>>();
+    //promises.push_back(QtPromise([] {
+    //  return std::make_unique<int>(1);
+    //}));
+    //promises.push_back(QtPromise([] {
+    //  return std::make_unique<int>(2);
+    //}));
+    //promises.push_back(QtPromise([] {
+    //  return std::make_unique<int>(3);
+    //}));
+    //promises.push_back(QtPromise([] {
+    //  return std::make_unique<int>(4);
+    //}));
+    auto all_promise = all(std::move(promises));
+    //auto result = wait(std::move(all_promise));
+    /*REQUIRE(result == std::vector<std::unique_ptr<int>>{
+      std::make_unique<int>(1), std::make_unique<int>(2),
+      std::make_unique<int>(3), std::make_unique<int>(4)});*/
+  }, "test_move_only_type");
 }
