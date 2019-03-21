@@ -43,10 +43,15 @@ namespace Spire {
       std::vector<ChartRange> m_ranges;
       std::vector<Candlestick> m_loaded_data;
 
-      QtPromise<std::vector<Candlestick>> load_data(const ChartRange& data);
-      std::tuple<std::vector<ChartRange>::iterator,
-        std::vector<ChartRange>::iterator> range_search(
-        const ChartRange& range);
+      std::vector<ChartRange> get_gaps(ChartValue first, ChartValue last);
+      void insert_data(const std::vector<Candlestick>& data);
+      QtPromise<std::vector<Candlestick>> load_data(
+        const std::vector<ChartRange>& gaps, ChartValue first,
+        ChartValue last);
+      void on_data_loaded(const std::vector<Candlestick>& data,
+        ChartValue first, ChartValue last);
+      void remove_range(const ChartRange& range);
+      void update_ranges(ChartValue first, ChartValue last);
   };
 }
 
