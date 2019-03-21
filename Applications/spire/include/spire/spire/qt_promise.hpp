@@ -52,7 +52,7 @@ namespace Spire {
       */
       template<typename F>
       std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-        void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>> then(
+        void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>> then(
         F&& continuation);
 
       //! Disconnects from this promise, upon disconnection the callback
@@ -63,6 +63,7 @@ namespace Spire {
       QtPromise& operator =(QtPromise&& other);
 
     private:
+      template<typename> friend class QtPromise;
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
 
       template<typename U, typename F>
@@ -80,6 +81,38 @@ namespace Spire {
   QtPromise(QtPromise<U>, F&&) -> QtPromise<promise_executor_result_t<F>>;
 
   QtPromise() -> QtPromise<void>;
+
+  //! Returns a promise that signals the result only when all provided
+  //! promises have completed, or throws an exception if any provided
+  //! promise throws an exception.
+  /*
+    \param promises The promises to be executed.
+  */
+  template<typename T>
+  QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
+    if(promises.empty()) {
+      return QtPromise(
+        [] {
+          return std::vector<T>();
+        });
+    }
+    auto completed_promises = std::make_unique<std::vector<T>>();
+    auto promise = std::move(promises.front());
+    for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
+      promise = promise.then(
+        [=, p = std::move(promises[i + 1]),
+          completed_promises = completed_promises.get()]
+        (auto&& result) mutable {
+          completed_promises->push_back(std::move(result.Get()));
+          return std::move(p);
+        });
+    }
+    return promise.then(
+      [=, completed_promises = std::move(completed_promises)] (auto&& result) {
+        completed_promises->push_back(std::move(result.Get()));
+        return std::move(*completed_promises);
+      });
+  }
 
   //! Waits for a promise to complete and returns its result.
   /*!
@@ -137,9 +170,10 @@ namespace Spire {
   template<typename T>
   template<typename F>
   std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-      void>, QtPromise<std::invoke_result_t<F, Beam::Expect<T>>>>
+      void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>>
       QtPromise<T>::then(F&& continuation) {
-    return QtPromise(std::move(*this), std::forward<F>(continuation));
+    return QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>(
+      std::move(*this), std::forward<F>(continuation));
   }
 
   template<typename T>

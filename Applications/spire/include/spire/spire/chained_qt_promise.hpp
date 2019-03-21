@@ -57,14 +57,28 @@ namespace Spire {
   template<typename P, typename E>
   void ChainedQtPromise<P, E>::bind(std::shared_ptr<void> self) {
     m_self = std::move(self);
-    m_promise.then(
-      [=] (auto result) {
-        QCoreApplication::postEvent(this,
-          details::make_qt_promise_event(Beam::Try(
-          [&] {
-            return m_executor(result);
-          })));
-      });
+    if constexpr(is_promise_v<std::invoke_result_t<Executor,
+        Beam::Expect<typename Promise::Type>>>) {
+      m_promise.then(
+        [=, self = m_self] (auto result) {
+          auto continuation = std::make_shared<std::invoke_result_t<Executor,
+            Beam::Expect<typename Promise::Type>>>(m_executor(result));
+          continuation->then(
+            [=, continuation = continuation] (auto result) {
+              QCoreApplication::postEvent(this,
+                details::make_qt_promise_event(std::move(result)));
+            });
+        });
+    } else {
+      m_promise.then(
+        [=] (auto result) {
+          QCoreApplication::postEvent(this,
+            details::make_qt_promise_event(Beam::Try(
+            [&] {
+              return m_executor(result);
+            })));
+        });
+    }
   }
 
   template<typename P, typename E>
@@ -91,9 +105,10 @@ namespace Spire {
       }
       auto& promise_event = *static_cast<details::QtPromiseEvent<Type>*>(event);
       if(m_continuation.is_initialized()) {
-        (*m_continuation)(std::move(promise_event.get_result()));
         disconnect();
         m_self = nullptr;
+        (*m_continuation)(std::move(promise_event.get_result()));
+        m_continuation = boost::none;
       } else {
         m_value = std::move(promise_event.get_result());
       }

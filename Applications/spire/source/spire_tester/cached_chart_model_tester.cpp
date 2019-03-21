@@ -1,9 +1,8 @@
 #include <catch.hpp>
-#include <QApplication>
-#include <QTimer>
 #include "spire/charting/cached_chart_model.hpp"
 #include "spire/charting/chart_value.hpp"
 #include "spire/charting/local_chart_model.hpp"
+#include "spire/spire_tester/spire_tester.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -21,21 +20,6 @@ namespace {
         return candlesticks;
       }());
     return local_model;
-  }
-
-  template <typename T>
-  void run_test(T&& test, const QString& name) {
-    auto argc = 0;
-    auto app = QCoreApplication(argc, nullptr);
-    QTimer::singleShot(0,
-      [&] {
-        test();
-        app.exit();
-    });
-    app.exec();
-    qDebug() << "\n**************************************************";
-    qDebug() << name << " PASSED";
-    qDebug() << "**************************************************\n";
   }
 
   std::vector<Candlestick> load(ChartModel* model, int first, int last) {
