@@ -10,31 +10,40 @@ interface Properties {
   /** Whether the roles can be changed. */
   readonly?: boolean;
 
-  /** Determines if the role is set of not. */
+  /** Determines if the role is set. */
   isSet: boolean;
 
-  /** Called when icon is clicked on. */
+  /** Determines if the mobile tooltip should be shown. */
+  isTouchTooltipShown: boolean;
+
+  /** Called when the icon is clicked on. */
   onClick?: () => void;
+
+  /** Called when the icon is touched. */
+  onTouch?: () => void;
 }
 
 interface State {
-  showToolTip: boolean;
+  isMouseTooltipShown: boolean;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
-    onClick: () => {}
-  }
+    onClick: () => {},
+    onTouch: () => {}
+  };
 
   constructor(props: Properties) {
     super(props);
     this.state = {
-      showToolTip: false
+      isMouseTooltipShown: false
     };
-    this.showToolTip = this.showToolTip.bind(this);
-    this.hideToolTip = this.hideToolTip.bind(this);
+    this.showTooltipMouse = this.showTooltipMouse.bind(this);
+    this.hideToolTipMouse = this.hideToolTipMouse.bind(this);
+    this.onTouch = this.onTouch.bind(this);
+    this.onClick = this.onClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -52,32 +61,60 @@ export class RoleIcon extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={RoleIcon.STYLE.iconBox}>
+      <div style={{...RoleIcon.STYLE.iconWrapper, ...iconStyle}}
+          onClick={this.onClick}
+          onTouchStart={this.onTouch}
+          onMouseEnter={this.showTooltipMouse}
+          onMouseLeave={this.hideToolTipMouse}>
         <img src={`${this.getSource(this.props.role)}${iconColor}.svg`}
           style={iconStyle}
           width={RoleIcon.IMAGE_SIZE}
-          height={RoleIcon.IMAGE_SIZE}
-          onClick={this.props.onClick}
-          onMouseEnter={this.showToolTip}
-          onMouseLeave={this.hideToolTip}/>
-        <Transition in={this.state.showToolTip} timeout={RoleIcon.TIMEOUT}>
-          {(state) => (
-              <div
-                style={{...RoleIcon.STYLE.animationBase,
+          height={RoleIcon.IMAGE_SIZE}/>
+        <div style={RoleIcon.STYLE.tooltipAnchor}>
+          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
+              in={this.props.isTouchTooltipShown}>
+            {(state) => (
+              <div style={{...RoleIcon.STYLE.animationBase,
                   ...RoleIcon.STYLE.imageTooltip,
                   ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
                 {this.getText(this.props.role)}
-            </div>)}
-        </Transition>
+              </div>)}
+          </Transition>
+          <Transition timeout={RoleIcon.TIMEOUT_TOOLTIP}
+              in={this.state.isMouseTooltipShown &&
+                !this.props.isTouchTooltipShown}>
+            {(state) => (
+              <div style={{...RoleIcon.STYLE.animationBase,
+                  ...RoleIcon.STYLE.imageTooltip,
+                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                {this.getText(this.props.role)}
+              </div>)}
+          </Transition>
+        </div>
       </div>);
   }
 
-  private showToolTip() {
-    this.setState({ showToolTip: true });
+  private showTooltipMouse() {
+    if(!this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown) {
+      this.setState({isMouseTooltipShown: true});
+    }
   }
 
-  private hideToolTip() {
-    this.setState({ showToolTip: false });
+  private hideToolTipMouse() {
+    this.setState({isMouseTooltipShown: false});
+  }
+
+  private onClick() {
+    if(!this.props.readonly && !this.props.isTouchTooltipShown) {
+      this.props.onClick();
+    }
+  }
+
+  private onTouch() {
+    if(!this.props.readonly) {
+      this.props.onClick();
+    }
+    this.props.onTouch();
   }
 
   private getText(role: Nexus.AccountRoles.Role) {
@@ -106,7 +143,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     }
   }
 
-  private static ANIMATION_STYLE = {
+  private static readonly ANIMATION_STYLE = {
     entering: {
       opacity: 0
     },
@@ -117,9 +154,14 @@ export class RoleIcon extends React.Component<Properties, State> {
       display: 'none' as 'none'
     }
   };
-  private static STYLE = {
-    iconBox: {
-      position: 'relative' as 'relative'
+  private static readonly STYLE = {
+    iconWrapper: {
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      height: '24px',
+      width: '24px',
+      ouline: 0
     },
     clickable: {
       cursor: 'pointer'
@@ -127,31 +169,45 @@ export class RoleIcon extends React.Component<Properties, State> {
     readonly: {
       cursor: 'inherit'
     },
+    tooltipAnchor: {
+      position: 'relative' as 'relative',
+      height: 0,
+      width: 0
+    },
     animationBase: {
       opacity: 0,
-      transition: 'opacity 100ms ease-in-out'
+      transition: 'opacity 200ms ease-in-out'
     },
     imageTooltip: {
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
       font: '400 12px Roboto',
       paddingLeft: '15px',
       paddingRight: '15px',
-      paddingTop: '30%',
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
       position: 'absolute' as 'absolute',
-      top: '28px',
-      left: '-2px',
+      top: '16px',
+      left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064'
+      boxShadow: '0px 0px 2px #00000064',
+      tabFocus: 0
     }
   };
-  private static readonly TIMEOUT = {
+  private static readonly TIMEOUT_TOOLTIP = {
+    enter: 100,
+    entered: 200,
+    exit: 200,
+    exited: 1
+  };
+  private static readonly TIMEOUT_MOBILE_TOOLIP = {
     enter: 1,
-    entered: 100,
-    exit: 100,
-    exited:  100
+    entered: 200,
+    exit: 200,
+    exited: 1
   };
   private static readonly IMAGE_SIZE = '20px';
   private static readonly TRADER_TOOLTIP_TEXT = 'Trader';
