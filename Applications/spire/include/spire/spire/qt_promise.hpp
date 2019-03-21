@@ -88,6 +88,30 @@ namespace Spire {
   /*
     \param promises The promises to be executed.
   */
+  template<typename T>
+  QtPromise<std::vector<T>> all(std::vector<QtPromise<T>> promises) {
+    if(promises.empty()) {
+      return QtPromise(
+        [] {
+          return std::vector<T>();
+        });
+    }
+    auto completed_promises = std::make_shared<std::vector<T>>();
+    auto promise = std::move(promises.front());
+    for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
+      promise = promise.then(
+        [=, p = std::move(promises[i + 1])]
+        (auto&& result) mutable {
+          completed_promises->push_back(std::move(result.Get()));
+          return std::move(p);
+        });
+    }
+    return promise.then(
+      [=] (auto&& result) {
+        completed_promises->push_back(std::move(result.Get()));
+        return std::move(*completed_promises);
+      });
+  }
 
   //! Waits for a promise to complete and returns its result.
   /*!
