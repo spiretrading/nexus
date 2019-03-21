@@ -42,7 +42,7 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
-          isTooltipTouchShown={this.state.mobileTooltipRole ===
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.TRADER}
           onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
@@ -50,7 +50,7 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
-          isTooltipTouchShown={this.state.mobileTooltipRole ===
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.MANAGER}
           onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
@@ -58,7 +58,7 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
-          isTooltipTouchShown={this.state.mobileTooltipRole ===
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.ADMINISTRATOR}
           onTouch={this.onTouchTooltipEvent}
           onClick={() =>
@@ -67,7 +67,7 @@ export class RolesField extends React.Component<Properties, State> {
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
-          isTooltipTouchShown={this.state.mobileTooltipRole ===
+          isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.SERVICE}
           onTouch={this.onTouchTooltipEvent}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
