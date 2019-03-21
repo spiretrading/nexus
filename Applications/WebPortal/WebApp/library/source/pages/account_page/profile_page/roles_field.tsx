@@ -74,11 +74,16 @@ export class RolesField extends React.Component<Properties, State> {
   private onMobileTooltip(role: Nexus.AccountRoles.Role, value: boolean) {
     if(value)  {
       this.setState({tooltipRole: role});
-    } else if (role === this.state.tooltipRole) {
-      this.setState({tooltipRole: null});
+          clearTimeout(this.timerID);
+      this.timerID = setTimeout(() => {
+        console.log('Mobile Tooltip hiddenn');
+        this.setState({tooltipRole: null});
+      },
+      1500);
     }
   }
 
+  private timerID: NodeJS.Timeout;
   private static readonly IMAGE_SIZE = '20px';
   private static readonly IMAGE_PADDING = '10px';
   private static readonly COMPONENT_WIDTH = '122px';

@@ -18,15 +18,14 @@ interface Properties {
   onClick?: () => void;
 
   /** */
-  showToolTipMobile?: boolean;
+  showToolTipMobile: boolean;
 
-  showMobileCallback?: (role: Nexus.AccountRoles.Role, value: boolean) => void;
+  showMobileCallback: (role: Nexus.AccountRoles.Role, value: boolean) => void;
 
 }
 
 interface State {
   showToolTip: boolean;
-  //showToolTipMobile: boolean;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -39,8 +38,7 @@ export class RoleIcon extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      showToolTip: false,
-      //showToolTipMobile: false
+      showToolTip: false
     };
     console.log('HELLO WORLD!');
     this.showToolTip = this.showToolTip.bind(this);
@@ -120,16 +118,9 @@ export class RoleIcon extends React.Component<Properties, State> {
   }
 
   private onTouch() {
-    event.preventDefault();
     console.log('Button was touched.');
     this.props.onClick();
     this.props.showMobileCallback(this.props.role, true);
-    clearTimeout(this.timerID);
-    this.timerID = setTimeout(() => {
-        console.log('Mobile Tooltip hiddenn');
-        this.props.showMobileCallback(this.props.role, false);
-      },
-      1500);
   }
 
   private getText(role: Nexus.AccountRoles.Role) {
