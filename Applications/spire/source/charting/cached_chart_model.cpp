@@ -128,20 +128,19 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
   update_ranges(first, last);
 }
 
-void CachedChartModel::remove_range(const ChartRange& range) {
-  for(auto iter = m_ranges.begin(); iter != m_ranges.end(); ++iter) {
-    if((*iter).m_start == range.m_start && (*iter).m_end == range.m_end) {
-      m_ranges.erase(iter);
-      break;
-    }
-  }
-}
-
 void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
   if(m_ranges.empty()) {
     m_ranges.push_back({first, last});
     return;
   }
+  auto remove_range = [&] (auto& ranges, auto& range) {
+    for(auto iter = ranges.begin(); iter != ranges.end(); ++iter) {
+      if((*iter).m_start == range.m_start && (*iter).m_end == range.m_end) {
+        ranges.erase(iter);
+        break;
+      }
+    }
+  };
   auto ranges = m_ranges;
   auto new_first = first;
   auto new_last = last;
@@ -154,13 +153,13 @@ void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
     }
     if(range.m_start <= first && range.m_end >= first) {
       new_first = range.m_start;
-      remove_range(range);
+      remove_range(ranges, range);
     } else if(range.m_start <= last && range.m_end >= last) {
       new_last = range.m_end;
-      remove_range(range);
+      remove_range(ranges, range);
     }
     if(range.m_start >= first && range.m_end <= last) {
-      remove_range(range);
+      remove_range(ranges, range);
     }
   }
   auto index = std::lower_bound(ranges.begin(), ranges.end(), first,

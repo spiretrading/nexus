@@ -50,7 +50,6 @@ namespace Spire {
         ChartValue last);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
-      void remove_range(const ChartRange& range);
       void update_ranges(ChartValue first, ChartValue last);
   };
 }
