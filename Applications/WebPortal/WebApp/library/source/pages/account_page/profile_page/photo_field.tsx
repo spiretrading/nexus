@@ -816,7 +816,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
     },
     enabled:{
       '::-webkit-slider-thumb': {
-        '-webkit-appearance': 'none',
         cursor: 'pointer' as 'pointer'
       },
       '::-moz-range-thumb': {
@@ -828,7 +827,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
     },
     disabled: {
     '::-webkit-slider-thumb': {
-        '-webkit-appearance': 'none',
         cursor: 'default' as 'default'
       },
       '::-moz-range-thumb': {
