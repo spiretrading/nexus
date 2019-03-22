@@ -140,7 +140,7 @@ export class LoginPage extends React.Component<Properties> {
       height: '20px',
       color: '#FAEB96'
     }
-  }
+  };
 
   private static DYNAMIC_STYLES = StyleSheet.create({
     inputBox: {
@@ -205,7 +205,8 @@ export class LoginPage extends React.Component<Properties> {
       },
       ':focus': {
         ':not(:disabled)': {
-          border: '1px solid white'
+          border: '1px solid white',
+          backgroundColor: '#B9B4EC'
         }
       }
     }
