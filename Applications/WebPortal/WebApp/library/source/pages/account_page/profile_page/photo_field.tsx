@@ -665,13 +665,20 @@ export class Slider extends React.Component<SliderProperties, {}> {
         return Slider.SLIDER_STYLE.slider;
       }
     })();
+    const cursorStyle = (() => {
+      if(this.props.readonly) {
+        return Slider.SLIDER_STYLE.disabled;
+      } else {
+        return Slider.SLIDER_STYLE.enabled;
+      }
+    })();
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
       value={Slider.convertFromDecimal(this.props.scale)}
       disabled={this.props.readonly}
       onChange={this.onValueChange}
-      className={css(sliderStyle)}/>);
+      className={css(sliderStyle, cursorStyle)}/>);
   }
 
   private onValueChange(event: any) {
@@ -706,18 +713,16 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px',
         boxShadow: 'none',
         marginTop: '-8px'
       },
       '::-moz-range-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
@@ -726,11 +731,10 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-ms-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px',
         marginTop: '0px'
       },
@@ -765,18 +769,16 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '24px',
         boxShadow: 'none',
         marginTop: '-8px'
       },
       '::-moz-range-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
@@ -785,11 +787,10 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-ms-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '24px',
         marginTop: '0px'
       },
@@ -811,6 +812,28 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '-webkit-appearance': 'none',
       '::-moz-focus-outer': {
         border: '0px'
+      }
+    },
+    enabled:{
+      '::-webkit-slider-thumb': {
+        cursor: 'pointer' as 'pointer'
+      },
+      '::-moz-range-thumb': {
+        cursor: 'pointer' as 'pointer'
+      },
+      '::-ms-thumb': {
+        cursor: 'pointer' as 'pointer'
+      }
+    },
+    disabled: {
+      '::-webkit-slider-thumb': {
+        cursor: 'default' as 'default'
+      },
+      '::-moz-range-thumb': {
+        cursor: 'default' as 'default'
+      },
+      '::-ms-thumb': {
+        cursor: 'default' as 'default'
       }
     }
   });
