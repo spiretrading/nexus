@@ -2,7 +2,6 @@
 
 using namespace boost::signals2;
 using namespace Spire;
-using ChartRange = CachedChartModel::ChartRange;
 
 CachedChartModel::CachedChartModel(ChartModel& model)
     : m_chart_model(&model) {}
@@ -17,8 +16,8 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last) {
-  for(auto range = m_ranges.begin(); range != m_ranges.end(); ++range) {
-    if((*range).m_start <= first && (*range).m_end >= last) {
+  for(auto& range : m_ranges)  {
+    if(range.m_start <= first && range.m_end >= last) {
       return QtPromise([=] {
         auto first_iterator = std::lower_bound(m_loaded_data.begin(),
           m_loaded_data.end(), first,
@@ -45,8 +44,8 @@ connection CachedChartModel::connect_candlestick_slot(
   return m_chart_model->connect_candlestick_slot(slot);
 }
 
-std::vector<ChartRange> CachedChartModel::get_gaps(ChartValue first,
-    ChartValue last) {
+std::vector<CachedChartModel::ChartRange> CachedChartModel::get_gaps(
+    ChartValue first, ChartValue last) {
   if(m_ranges.empty()) {
     return {{ChartRange{first, last}}};
   }
@@ -62,6 +61,9 @@ std::vector<ChartRange> CachedChartModel::get_gaps(ChartValue first,
       range_points.front() = range.m_end;
     } else if(range.m_start <= last && range.m_end >= last) {
       range_points.back() = range.m_start;
+    } else {
+      range_points.insert(range_points.end() - 1, range.m_start);
+      range_points.insert(range_points.end() - 1, range.m_end);
     }
   }
   auto gaps = std::vector<ChartRange>();
