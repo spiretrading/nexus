@@ -61,6 +61,9 @@ std::vector<CachedChartModel::ChartRange> CachedChartModel::get_gaps(
       range_points.front() = range.m_end;
     } else if(range.m_start <= last && range.m_end >= last) {
       range_points.back() = range.m_start;
+    } else {
+      range_points.insert(range_points.end() - 1, range.m_start);
+      range_points.insert(range_points.end() - 1, range.m_end);
     }
   }
   auto gaps = std::vector<ChartRange>();
