@@ -133,7 +133,7 @@ void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
     m_ranges.push_back({first, last});
     return;
   }
-  auto remove_range = [&] (auto& ranges, auto& range) {
+  auto remove_range = [] (auto& ranges, auto& range) {
     for(auto iter = ranges.begin(); iter != ranges.end(); ++iter) {
       if((*iter).m_start == range.m_start && (*iter).m_end == range.m_end) {
         ranges.erase(iter);
