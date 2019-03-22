@@ -826,7 +826,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       }
     },
     disabled: {
-    '::-webkit-slider-thumb': {
+      '::-webkit-slider-thumb': {
         cursor: 'default' as 'default'
       },
       '::-moz-range-thumb': {
