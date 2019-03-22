@@ -72,26 +72,20 @@ std::vector<ChartRange> CachedChartModel::get_gaps(ChartValue first,
 }
 
 void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
-  if(m_loaded_data.empty()) {
+  if(data.empty()) {
     return;
   }
   auto first = std::lower_bound(m_loaded_data.begin(),
-    m_loaded_data.end(), data.front().GetOpen(), [] (const auto& index,
+    m_loaded_data.end(), data.front().GetStart(), [] (const auto& index,
         const auto& value) {
       return index.GetStart() < value;
     });
   auto last = std::lower_bound(m_loaded_data.begin(),
-    m_loaded_data.end(), data.back().GetClose(), [] (const auto& index,
+    m_loaded_data.end(), data.back().GetEnd(), [] (const auto& index,
         const auto& value) {
       return index.GetStart() < value;
     });
-  auto index =
-    [&] {
-      if(last != m_loaded_data.end()) {
-        return m_loaded_data.erase(first, last + 1);
-      }
-      return m_loaded_data.erase(first, last);
-    }();
+  auto index = m_loaded_data.erase(first, last);
   m_loaded_data.insert(index, data.begin(), data.end());
 }
 
@@ -107,15 +101,18 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
         on_data_loaded(result[i], gaps[i].m_start, gaps[i].m_end);
       }
       auto first_index = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), result.front().front(),
+        m_loaded_data.end(), first,
         [] (const auto& index, const auto& value) {
-          return index.GetEnd() < value.GetStart();
+          return index.GetEnd() < value;
         });
       auto last_index = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), result.back().back(),
+        m_loaded_data.end(), last,
         [] (const auto& index, const auto& value) {
-          return index.GetStart() < value.GetEnd();
+          return index.GetStart() < value;
         });
+      if(last_index != m_loaded_data.end()) {
+        ++last_index;
+      }
       return std::vector<Candlestick>(first_index, last_index);
     });
 }
@@ -166,7 +163,7 @@ void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
       remove_range(range);
     }
   }
-  auto index = std::lower_bound(m_ranges.begin(), m_ranges.end(), first,
+  auto index = std::lower_bound(ranges.begin(), ranges.end(), first,
     [] (const auto& index, const auto& value) {
       return index.m_start < value;
     });
