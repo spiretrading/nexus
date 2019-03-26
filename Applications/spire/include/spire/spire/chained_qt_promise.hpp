@@ -106,9 +106,9 @@ namespace Spire {
       auto& promise_event = *static_cast<details::QtPromiseEvent<Type>*>(event);
       if(m_continuation.is_initialized()) {
         disconnect();
-        m_self = nullptr;
+        auto self = std::move(m_self);
         (*m_continuation)(std::move(promise_event.get_result()));
-// TODO: Fix potential crash.        m_continuation = boost::none;
+        m_continuation = boost::none;
       } else {
         m_value = std::move(promise_event.get_result());
       }

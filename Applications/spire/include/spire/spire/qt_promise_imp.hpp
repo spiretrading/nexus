@@ -181,7 +181,7 @@ namespace details {
       }
       if(m_continuation.is_initialized()) {
         disconnect();
-        m_self = nullptr;
+        auto self = std::move(m_self);
         (*m_continuation)(std::move(result));
         m_continuation = boost::none;
       } else {
@@ -196,7 +196,7 @@ namespace details {
       auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
       if(m_continuation.is_initialized()) {
         disconnect();
-        m_self = nullptr;
+        auto self = std::move(m_self);
         (*m_continuation)(std::move(promise_event.get_result()));
         m_continuation = boost::none;
       } else {
