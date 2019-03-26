@@ -176,3 +176,30 @@ TEST_CASE("test_cache_functionality", "[CachedChartModel]") {
     cache_load2->set_result({});
   }, "test_cache_functionality");
 }
+
+TEST_CASE("test_load_ordering_b_before_a", "[CachedChartModel") {
+  run_test([=] {
+    auto model = create_model();
+    auto test_model = TestChartModel(model->get_x_axis_type(),
+      model->get_y_axis_type());
+    auto cache = CachedChartModel(test_model);
+    auto load_a = cache.load(ChartValue(40 * Money::ONE),
+      ChartValue(60 * Money::ONE));
+    auto load_b = cache.load(ChartValue(50 * Money::ONE),
+      ChartValue(70 * Money::ONE));
+    auto entry_a = test_model.pop_load();
+    auto entry_b = test_model.pop_load();
+    entry_b->set_result(wait(model->load(
+      ChartValue(50 * Money::ONE), ChartValue(70 * Money::ONE))));
+    entry_a->set_result(wait(model->load(ChartValue(40 * Money::ONE),
+      ChartValue(60 * Money::ONE))));
+    auto result_a = wait(std::move(load_a));
+    auto result_b = wait(std::move(load_b));
+    REQUIRE(result_a == wait(model->load(ChartValue(40 * Money::ONE),
+      ChartValue(60 * Money::ONE))));
+    REQUIRE(result_b == wait(model->load(ChartValue(50 * Money::ONE),
+      ChartValue(70 * Money::ONE))));
+  }, "test_load_ordering_b_then_a");
+}
+
+
