@@ -108,7 +108,7 @@ namespace Spire {
         disconnect();
         m_self = nullptr;
         (*m_continuation)(std::move(promise_event.get_result()));
-        m_continuation = boost::none;
+// TODO: Fix potential crash.        m_continuation = boost::none;
       } else {
         m_value = std::move(promise_event.get_result());
       }
