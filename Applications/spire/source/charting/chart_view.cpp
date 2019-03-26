@@ -177,36 +177,40 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   painter.setPen(Qt::white);
   for(auto& candlestick : m_candlesticks) {
-    auto open = convert_chart_to_pixels({candlestick.GetStart(),
-      candlestick.GetOpen()});
-    auto close = convert_chart_to_pixels({candlestick.GetEnd(),
-      candlestick.GetClose()});
-    auto high = map_to(candlestick.GetHigh(), m_bottom_right.m_y,
-      m_top_left.m_y, m_y_origin, 0);
-    auto low = map_to(candlestick.GetLow(), m_bottom_right.m_y,
-      m_top_left.m_y, m_y_origin, 0);
-    auto wick_pos = open.x() + (close.x() - open.x()) / 2;
-    if(wick_pos < m_x_origin && high < m_y_origin) {
-      painter.fillRect(QRect(QPoint(wick_pos, high),
-        QPoint(wick_pos, std::min(low, m_y_origin - 1))), QColor("#C8C8C8"));
-    }
-    if(open.y() > close.y()) {
-      if(close.y() < m_y_origin) {
-        painter.fillRect(QRect(QPoint(open.x(), close.y()),
-          QPoint(std::min(close.x() - 1, m_x_origin - 1),
-          std::min(open.y(), m_y_origin - 1))), QColor("#8AF5C0"));
-        painter.fillRect(QRect(QPoint(open.x() + 1, close.y() + 1),
-          QPoint(std::min(close.x() - 2, m_x_origin - 1),
-          std::min(open.y() - 1, m_y_origin - 1))), QColor("#1FD37A"));
+    if(candlestick.GetEnd() >= convert_pixels_to_chart({0, 0}).m_x &&
+        candlestick.GetStart() <=
+        convert_pixels_to_chart({m_x_origin, 0}).m_x) {
+      auto open = convert_chart_to_pixels({candlestick.GetStart(),
+        candlestick.GetOpen()});
+      auto close = convert_chart_to_pixels({candlestick.GetEnd(),
+        candlestick.GetClose()});
+      auto high = map_to(candlestick.GetHigh(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
+      auto low = map_to(candlestick.GetLow(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
+      auto wick_pos = open.x() + (close.x() - open.x()) / 2;
+      if(wick_pos < m_x_origin && high < m_y_origin) {
+        painter.fillRect(QRect(QPoint(wick_pos, high),
+          QPoint(wick_pos, std::min(low, m_y_origin - 1))), QColor("#C8C8C8"));
       }
-    } else {
-      if(open.y() < m_y_origin) {
-        painter.fillRect(QRect(open,
-          QPoint(std::min(close.x() - 1, m_x_origin - 1),
-          std::min(close.y(), m_y_origin - 1))), QColor("#FFA7A0"));
-        painter.fillRect(QRect(QPoint(open.x() + 1, open.y() + 1),
-          QPoint(std::min(close.x() - 2, m_x_origin - 1),
-          std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
+      if(open.y() > close.y()) {
+        if(close.y() < m_y_origin) {
+          painter.fillRect(QRect(QPoint(open.x(), close.y()),
+            QPoint(std::min(close.x() - 1, m_x_origin - 1),
+            std::min(open.y(), m_y_origin - 1))), QColor("#8AF5C0"));
+          painter.fillRect(QRect(QPoint(open.x() + 1, close.y() + 1),
+            QPoint(std::min(close.x() - 2, m_x_origin - 1),
+            std::min(open.y() - 1, m_y_origin - 1))), QColor("#1FD37A"));
+        }
+      } else {
+        if(open.y() < m_y_origin) {
+          painter.fillRect(QRect(open,
+            QPoint(std::min(close.x() - 1, m_x_origin - 1),
+            std::min(close.y(), m_y_origin - 1))), QColor("#FFA7A0"));
+          painter.fillRect(QRect(QPoint(open.x() + 1, open.y() + 1),
+            QPoint(std::min(close.x() - 2, m_x_origin - 1),
+            std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
+        }
       }
     }
   }
