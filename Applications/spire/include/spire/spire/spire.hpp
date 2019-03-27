@@ -8,8 +8,10 @@
 
 namespace Spire {
   class Definitions;
+  class LocalTechnicalsModel;
   template<typename T> class QtPromise;
   class SpireController;
+  class TechnicalsModel;
 
   //! Defines the common type of boost signal used throughout Spire.
   template<typename F>
