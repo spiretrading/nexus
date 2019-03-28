@@ -44,7 +44,7 @@ void LoginController::on_login(const std::string& username,
     [=, service_clients = std::move(service_clients)] () mutable {
       service_clients->Open();
       return std::move(service_clients);
-    });
+    }, LaunchPolicy::ASYNC);
   m_login_promise.then(
     [=] (auto&& result) { on_login_promise(std::move(result)); });
 }

@@ -113,7 +113,7 @@ QtPromise<void> ServicesBookViewModel::load() {
           close_slot->Push(*close);
         }
       });
-  });
+  }, LaunchPolicy::ASYNC);
 }
 
 connection ServicesBookViewModel::connect_bbo_slot(

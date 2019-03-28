@@ -18,5 +18,5 @@ QtPromise<std::vector<SecurityInfo>> ServicesSecurityInputModel::autocomplete(
       } catch(const std::exception&) {
         return std::vector<SecurityInfo>();
       }
-    });
+    }, LaunchPolicy::ASYNC);
 }

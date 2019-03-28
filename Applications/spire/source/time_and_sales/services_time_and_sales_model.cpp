@@ -60,7 +60,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     } catch(const PipeBrokenException&) {
     }
     return result;
-  });
+  }, LaunchPolicy::ASYNC);
 }
 
 connection ServicesTimeAndSalesModel::connect_time_and_sale_signal(
