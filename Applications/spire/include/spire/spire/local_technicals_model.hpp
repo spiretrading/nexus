@@ -69,7 +69,6 @@ namespace Spire {
       mutable PriceSignal m_close_signal;
       mutable PriceSignal m_last_price_signal;
       mutable QuantitySignal m_volume_signal;
-
       Nexus::Security m_security;
       boost::optional<Nexus::Money> m_high;
       boost::optional<Nexus::Money> m_low;

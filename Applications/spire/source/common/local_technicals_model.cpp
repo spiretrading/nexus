@@ -69,10 +69,9 @@ Quantity LocalTechnicalsModel::get_volume() const {
 }
 
 QtPromise<void> LocalTechnicalsModel::load() {
-  return QtPromise<void>([=] {
-    m_volume = Quantity(0);
-    m_volume_signal(m_volume);
-  });
+  m_volume = Quantity(0);
+  m_volume_signal(m_volume);
+  return QtPromise<void>();
 }
 
 connection LocalTechnicalsModel::connect_high_slot(
