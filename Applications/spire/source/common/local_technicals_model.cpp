@@ -6,10 +6,7 @@ using namespace Nexus;
 using namespace Spire;
 
 LocalTechnicalsModel::LocalTechnicalsModel(Security security)
-    : m_security(security),
-      m_volume(0) {
-  m_volume_signal(m_volume);
-}
+    : m_security(security) {}
 
 void LocalTechnicalsModel::set_close(Money price) {
   m_close = price;
@@ -72,7 +69,10 @@ Quantity LocalTechnicalsModel::get_volume() const {
 }
 
 QtPromise<void> LocalTechnicalsModel::load() {
-  return QtPromise<void>();
+  return QtPromise<void>([=] {
+    m_volume = Quantity(0);
+    m_volume_signal(m_volume);
+  });
 }
 
 connection LocalTechnicalsModel::connect_high_slot(
