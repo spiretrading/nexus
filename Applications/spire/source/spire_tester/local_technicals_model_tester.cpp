@@ -15,11 +15,6 @@ namespace {
   }
 }
 
-TEST_CASE("asdf", "asdf") {
-  auto model = LocalTechnicalsModel(Security());
-  model.load();
-}
-
 TEST_CASE("test_signals", "[LocalTechnicalsModel]") {
   auto model = LocalTechnicalsModel(Security());
   auto test_high = Money();
