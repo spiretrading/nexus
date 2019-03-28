@@ -66,3 +66,29 @@ TEST_CASE("test_signals", "[LocalTechnicalsModel]") {
   REQUIRE(test_volume == Quantity(400));
   print_test_name("test_signals");
 }
+
+TEST_CASE("test_setting_and_getting_values", "[LocalTechnicalsModel]") {
+  auto model = LocalTechnicalsModel(Security());
+  model.update(test_sale(10, 100));
+  REQUIRE(*(model.get_high()) == Money(10 * Money::ONE));
+  REQUIRE(*(model.get_low()) == Money(10 * Money::ONE));
+  REQUIRE(*(model.get_open()) == Money(10 * Money::ONE));
+  REQUIRE(!model.get_close().is_initialized());
+  REQUIRE(*(model.get_last_price()) == Money(10 * Money::ONE));
+  REQUIRE(model.get_volume() == Quantity(100));
+  model.update(test_sale(5, 100));
+  REQUIRE(*(model.get_high()) == Money(10 * Money::ONE));
+  REQUIRE(*(model.get_low()) == Money(5 * Money::ONE));
+  REQUIRE(*(model.get_open()) == Money(10 * Money::ONE));
+  REQUIRE(!model.get_close().is_initialized());
+  REQUIRE(*(model.get_last_price()) == Money(5 * Money::ONE));
+  REQUIRE(model.get_volume() == Quantity(200));
+  model.set_close(Money(7 * Money::ONE));
+  REQUIRE(*(model.get_high()) == Money(10 * Money::ONE));
+  REQUIRE(*(model.get_low()) == Money(5 * Money::ONE));
+  REQUIRE(*(model.get_open()) == Money(10 * Money::ONE));
+  REQUIRE(*(model.get_close()) == Money(7 * Money::ONE));
+  REQUIRE(*(model.get_last_price()) == Money(7 * Money::ONE));
+  REQUIRE(model.get_volume() == Quantity(200));
+  print_test_name("test_setting_and_getting_values");
+}

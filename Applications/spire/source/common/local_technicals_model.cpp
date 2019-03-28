@@ -14,6 +14,8 @@ LocalTechnicalsModel::LocalTechnicalsModel(Security security)
 void LocalTechnicalsModel::set_close(Money price) {
   m_close = price;
   m_close_signal(*m_close);
+  m_last_price = m_close;
+  m_last_price_signal(*m_last_price);
 }
 
 void LocalTechnicalsModel::update(const TimeAndSale& time_and_sale) {
