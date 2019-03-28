@@ -6,37 +6,54 @@ using namespace Nexus;
 using namespace Spire;
 
 LocalTechnicalsModel::LocalTechnicalsModel(Security security)
-    : m_security(security) {}
+    : m_security(std::move(security)),
+      m_volume(0),
+      m_high_changed(false),
+      m_low_changed(false),
+      m_open_changed(false),
+      m_last_price_changed(false) {
+  m_volume_signal(m_volume);
+}
 
 void LocalTechnicalsModel::set_close(Money price) {
   m_close = price;
   m_close_signal(*m_close);
-  m_last_price = m_close;
-  m_last_price_signal(*m_last_price);
 }
 
 void LocalTechnicalsModel::update(const TimeAndSale& time_and_sale) {
   if(!m_open.is_initialized()) {
     m_open = time_and_sale.m_price;
-    m_open_signal(*m_open);
+    m_open_changed = true;
   }
-  m_last_price = time_and_sale.m_price;
-  m_last_price_signal(*m_last_price);
+  if(time_and_sale.m_price != m_last_price) {
+    m_last_price = time_and_sale.m_price;
+    m_last_price_changed = true;
+  }
+  if(!m_high.is_initialized() || time_and_sale.m_price > *m_high) {
+    m_high = time_and_sale.m_price;
+    m_high_changed = true;
+  }
+  if(!m_low.is_initialized() || time_and_sale.m_price < *m_low) {
+    m_low = time_and_sale.m_price;
+    m_low_changed = true;
+  }
   m_volume += time_and_sale.m_size;
   m_volume_signal(m_volume);
-  if(!m_high.is_initialized()) {
-    m_high = time_and_sale.m_price;
-    m_high_signal(*m_high);
-  } else if(time_and_sale.m_price > *m_high) {
-    m_high = time_and_sale.m_price;
-    m_high_signal(*m_high);
+  if(m_open_changed) {
+    m_open_signal(*m_open);
+    m_open_changed = false;
   }
-  if(!m_low.is_initialized()) {
-    m_low = time_and_sale.m_price;
+  if(m_high_changed) {
+    m_high_signal(*m_high);
+    m_high_changed = false;
+  }
+  if(m_low_changed) {
     m_low_signal(*m_low);
-  } else if(time_and_sale.m_price < *m_low) {
-    m_low = time_and_sale.m_price;
-    m_low_signal(*m_low);
+    m_low_changed = false;
+  }
+  if(m_last_price_changed) {
+    m_last_price_signal(*m_last_price);
+    m_last_price_changed = false;
   }
 }
 
@@ -69,9 +86,7 @@ Quantity LocalTechnicalsModel::get_volume() const {
 }
 
 QtPromise<void> LocalTechnicalsModel::load() {
-  m_volume = Quantity(0);
-  m_volume_signal(m_volume);
-  return QtPromise<void>();
+  return QtPromise<void>([] {});
 }
 
 connection LocalTechnicalsModel::connect_high_slot(

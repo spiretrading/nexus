@@ -15,6 +15,11 @@ namespace {
   }
 }
 
+TEST_CASE("asdf", "asdf") {
+  auto model = LocalTechnicalsModel(Security());
+  model.load();
+}
+
 TEST_CASE("test_signals", "[LocalTechnicalsModel]") {
   auto model = LocalTechnicalsModel(Security());
   auto test_high = Money();
@@ -83,12 +88,12 @@ TEST_CASE("test_setting_and_getting_values", "[LocalTechnicalsModel]") {
   REQUIRE(!model.get_close().is_initialized());
   REQUIRE(*(model.get_last_price()) == Money(5 * Money::ONE));
   REQUIRE(model.get_volume() == Quantity(200));
-  model.set_close(Money(7 * Money::ONE));
+  model.set_close(Money(5 * Money::ONE));
   REQUIRE(*(model.get_high()) == Money(10 * Money::ONE));
   REQUIRE(*(model.get_low()) == Money(5 * Money::ONE));
   REQUIRE(*(model.get_open()) == Money(10 * Money::ONE));
-  REQUIRE(*(model.get_close()) == Money(7 * Money::ONE));
-  REQUIRE(*(model.get_last_price()) == Money(7 * Money::ONE));
+  REQUIRE(*(model.get_close()) == Money(5 * Money::ONE));
+  REQUIRE(*(model.get_last_price()) == Money(5 * Money::ONE));
   REQUIRE(model.get_volume() == Quantity(200));
   print_test_name("test_setting_and_getting_values");
 }

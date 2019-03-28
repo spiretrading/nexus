@@ -76,6 +76,10 @@ namespace Spire {
       boost::optional<Nexus::Money> m_close;
       boost::optional<Nexus::Money> m_last_price;
       Nexus::Quantity m_volume;
+      bool m_high_changed;
+      bool m_low_changed;
+      bool m_open_changed;
+      bool m_last_price_changed;
   };
 }
 
