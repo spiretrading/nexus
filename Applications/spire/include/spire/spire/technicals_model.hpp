@@ -3,7 +3,7 @@
 #include <memory>
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
-#include <boost/signals2/signals2.hpp>
+#include <boost/signals2.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/spire/qt_promise.hpp"

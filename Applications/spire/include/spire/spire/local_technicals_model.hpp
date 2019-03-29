@@ -61,6 +61,21 @@ namespace Spire {
 
       boost::signals2::connection connect_volume_slot(
         const QuantitySignal::slot_type& slot) const override;
+
+    private:
+      mutable PriceSignal m_high_signal;
+      mutable PriceSignal m_low_signal;
+      mutable PriceSignal m_open_signal;
+      mutable PriceSignal m_close_signal;
+      mutable PriceSignal m_last_price_signal;
+      mutable QuantitySignal m_volume_signal;
+      Nexus::Security m_security;
+      boost::optional<Nexus::Money> m_high;
+      boost::optional<Nexus::Money> m_low;
+      boost::optional<Nexus::Money> m_open;
+      boost::optional<Nexus::Money> m_close;
+      boost::optional<Nexus::Money> m_last_price;
+      Nexus::Quantity m_volume;
   };
 }
 
