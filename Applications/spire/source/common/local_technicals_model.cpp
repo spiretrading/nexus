@@ -30,8 +30,7 @@ void LocalTechnicalsModel::update(const TimeAndSale& time_and_sale) {
     if(m_high < time_and_sale.m_price) {
       m_high = time_and_sale.m_price;
       m_high_signal(*m_high);
-    }
-    if(m_low > time_and_sale.m_price) {
+    } else if(m_low > time_and_sale.m_price) {
       m_low = time_and_sale.m_price;
       m_low_signal(*m_low);
     }
