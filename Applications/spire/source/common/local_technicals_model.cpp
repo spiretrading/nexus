@@ -15,28 +15,27 @@ void LocalTechnicalsModel::set_close(Money price) {
 }
 
 void LocalTechnicalsModel::update(const TimeAndSale& time_and_sale) {
-  if(!m_last_price.is_initialized() || time_and_sale.m_price != m_last_price) {
-    m_last_price = time_and_sale.m_price;
-  }
-  if(!m_high.is_initialized() || time_and_sale.m_price > *m_high) {
-    m_high = time_and_sale.m_price;
-  }
-  if(!m_low.is_initialized() || time_and_sale.m_price < *m_low) {
-    m_low = time_and_sale.m_price;
-  }
   m_volume += time_and_sale.m_size;
-  if(!m_open.is_initialized()) {
+  if(!m_open) {
     m_open = time_and_sale.m_price;
+    m_last_price = time_and_sale.m_price;
+    m_high = time_and_sale.m_price;
+    m_low = time_and_sale.m_price;
     m_open_signal(*m_open);
-  }
-  if(*m_last_price != time_and_sale.m_price || *m_low == *m_high) {
     m_last_price_signal(*m_last_price);
-    if(*m_high == time_and_sale.m_price) {
+    m_high_signal(*m_high);
+    m_low_signal(*m_low);
+  } else if(m_last_price != time_and_sale.m_price) {
+    m_last_price = time_and_sale.m_price;
+    if(m_high < time_and_sale.m_price) {
+      m_high = time_and_sale.m_price;
       m_high_signal(*m_high);
     }
-    if(*m_low == time_and_sale.m_price) {
+    if(m_low > time_and_sale.m_price) {
+      m_low = time_and_sale.m_price;
       m_low_signal(*m_low);
     }
+    m_last_price_signal(*m_last_price);
   }
   m_volume_signal(m_volume);
 }
