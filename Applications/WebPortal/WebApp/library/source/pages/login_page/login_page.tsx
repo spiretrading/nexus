@@ -186,6 +186,7 @@ export class LoginPage extends React.Component<Properties> {
       }
     },
     signInButton: {
+      boxSizing: 'border-box' as 'border-box',
       width: '284px',
       height: '48px',
       color: '#4B23A0',
