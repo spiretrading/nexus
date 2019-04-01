@@ -144,6 +144,7 @@ export class LoginPage extends React.Component<Properties> {
 
   private static DYNAMIC_STYLES = StyleSheet.create({
     inputBox: {
+      boxSizing: 'border-box' as 'border-box',
       width: '284px',
       padding: 0,
       height: '34px',
@@ -193,9 +194,6 @@ export class LoginPage extends React.Component<Properties> {
       borderRadius: '1px',
       border: 'none',
       outline: 0,
-      ':hover': {
-        backgroundColor: '#FFFFFF'
-      },
       '::-moz-focus-inner': {
         border: 0
       },
@@ -207,6 +205,11 @@ export class LoginPage extends React.Component<Properties> {
         ':not(:disabled)': {
           border: '1px solid white',
           backgroundColor: '#B9B4EC'
+        }
+      },
+      ':hover': {
+        ':not(:disabled)': {
+          backgroundColor: '#FFFFFF'
         }
       }
     }
