@@ -57,6 +57,7 @@ namespace Spire {
     protected:
       void closeEvent(QCloseEvent* event) override;
       void contextMenuEvent(QContextMenuEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable ClosedSignal m_closed_signal;

@@ -59,6 +59,7 @@ namespace Spire {
     protected:
       void closeEvent(QCloseEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable ClosedSignal m_closed_signal;
