@@ -116,6 +116,10 @@ bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void BookViewWindow::keyPressEvent(QKeyEvent* event) {
+  QApplication::sendEvent(m_security_widget, event);
+}
+
 void BookViewWindow::show_context_menu(const QPoint& pos) {
   QMenu context_menu(this);
   QAction properties_action(tr("Properties"), &context_menu);

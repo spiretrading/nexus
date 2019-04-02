@@ -57,7 +57,6 @@ namespace Spire {
         const ChangeSecuritySignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* object, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:

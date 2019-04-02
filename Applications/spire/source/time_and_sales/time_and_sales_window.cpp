@@ -158,6 +158,10 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
   }
 }
 
+void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
+  QApplication::sendEvent(m_security_widget, event);
+}
+
 void TimeAndSalesWindow::export_table() {
   m_security_widget->show_overlay_widget();
   auto filepath = QFileDialog::getSaveFileName(this, tr("Export As"),

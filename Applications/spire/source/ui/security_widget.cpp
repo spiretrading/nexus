@@ -48,14 +48,6 @@ connection SecurityWidget::connect_change_security_signal(
   return m_change_security_signal.connect(slot);
 }
 
-bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
-  if(object == m_widget && event->type() == QEvent::KeyPress) {
-    keyPressEvent(static_cast<QKeyEvent*>(event));
-    return event->isAccepted();
-  }
-  return QWidget::eventFilter(object, event);
-}
-
 void SecurityWidget::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_PageUp) {
     if(m_current_security != Security()) {
