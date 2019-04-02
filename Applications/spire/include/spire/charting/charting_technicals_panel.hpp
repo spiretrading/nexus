@@ -7,7 +7,7 @@ namespace Spire {
   class ChartingTechnicalsPanel : public QWidget {
     public:
 
-      ChartingTechnicalsPanel(std::shared_ptr<TechnicalsModel> model);
+      ChartingTechnicalsPanel(const TechnicalsModel& model);
   };
 }
 
