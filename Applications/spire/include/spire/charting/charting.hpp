@@ -9,6 +9,7 @@ namespace Spire {
   struct ChartPoint;
   class ChartValue;
   class ChartView;
+  class ChartingTechnicalsPanel;
   class ChartingWindow;
   using Candlestick =
     Nexus::TechnicalAnalysis::Candlestick<ChartValue, ChartValue>;
