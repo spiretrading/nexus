@@ -49,7 +49,7 @@ export class TextField extends React.Component<Properties, State> {
     placeholder: '',
     isError: false,
     onInput: (_: string) => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);
