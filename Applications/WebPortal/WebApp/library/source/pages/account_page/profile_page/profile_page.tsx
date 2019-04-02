@@ -20,7 +20,7 @@ interface Properties {
   identity: Nexus.AccountIdentity;
 
   /** The name of the group the account belongs to. */
-  group: Beam.DirectoryEntry;
+  groups: Beam.DirectoryEntry[];
 
   /** The database of all available countries. */
   countryDatabase: Nexus.CountryDatabase;
@@ -153,6 +153,22 @@ export class ProfilePage extends React.Component<Properties, State> {
       } else {
         return null;
       }
+    })();
+    const groupsList = (() => {
+      const list = [];
+      for(const group of this.props.groups) {
+        list.push(
+          <TextField value={group.name.toString()}
+            displaySize={this.props.displaySize}
+            key={group.id}
+            readonly/>);
+        list.push(
+          <Dali.Padding
+            key={'padding' + group.id}
+            size='5px'/>
+        );
+      }
+      return list;
     })();
     const formFooter = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -313,11 +329,11 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
-                  <TextField value={this.props.group.name.toString()}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
+                  <Dali.VBoxLayout>
+                      {groupsList}
+                  </Dali.VBoxLayout>
                 </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                <Dali.Padding size='9px'/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Registration Date'
