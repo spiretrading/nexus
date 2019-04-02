@@ -93,17 +93,29 @@ export class GroupCard extends React.Component<Properties, State> {
           </div>);
       }
     })();
+    const topAccountPadding = (() => {
+      if(this.props.accounts.length === 0) {
+        return '14px';
+      } else {
+        return '10px';
+      }
+    })();
+    const lineWhenOpen = (() => {
+      if(this.props.isOpen) {
+        return (
+          <div>
+            <HLine color='#E6E6E6'/>
+            <div style={{height: topAccountPadding}}/>
+          </div>);
+      } else {
+        return null;
+      }
+    })();
     const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
-      let noLine = true;
       for(const account of this.props.accounts) {
         if(account.account.name.indexOf(this.props.filter) === 0
             && this.props.filter) {
-          if(!this.props.isOpen && noLine) {
-            accounts.push(
-              <HLine key={this.props.group.id} color='#E6E6E6'/>);
-            noLine = false;
-          }
           accounts.push(
             <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}
@@ -120,6 +132,13 @@ export class GroupCard extends React.Component<Properties, State> {
               <RolesField roles={account.roles}/>
             </div>
           </div>);
+          if(!this.props.isOpen &&
+            this.props.accounts.indexOf(account) ===
+            this.props.accounts.length-1) {
+            accounts.push(<div style={{height: topAccountPadding}}/>);
+            accounts.push(
+              <HLine key={this.props.group.id} color='#E6E6E6'/>);
+          }
         } else {
           accounts.push(
             <Transition in={this.props.isOpen}
@@ -158,13 +177,6 @@ export class GroupCard extends React.Component<Properties, State> {
           )}
         </Transition>);
     }
-    const topAccountPadding = (() => {
-      if(this.props.accounts.length === 0) {
-        return '14px';
-      } else {
-        return '10px';
-      }
-    })();
     return (
       <VBoxLayout width='100%'>
         <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
@@ -181,9 +193,8 @@ export class GroupCard extends React.Component<Properties, State> {
             timeout={GroupCard.TIMEOUTS}>
           {(state) => (
             <div>
+              {lineWhenOpen}
               <div style={(GroupCard.topPaddingAnimationStyle as any)[state]}>
-                <HLine color='#E6E6E6'/>
-                <div style={{height: topAccountPadding}}/>
               </div>
               <div style={GroupCard.STYLE.entryListWrapper}>
                 {accounts}
