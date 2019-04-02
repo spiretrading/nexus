@@ -4,8 +4,9 @@ import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
-import { RolesField } from '../account_page';
+//import { RolesField } from '../account_page';
 import { AccountEntry } from '.';
+import { RolePanel } from '../account_page/role_panel';
 
 interface Properties {
 
@@ -129,12 +130,12 @@ export class GroupCard extends React.Component<Properties, State> {
               {account.account.name.slice(this.props.filter.length)}
             </div>
             <div style={GroupCard.STYLE.rolesWrapper}>
-              <RolesField roles={account.roles}/>
+              <RolePanel roles={account.roles}/>
             </div>
           </div>);
           if(!this.props.isOpen &&
             this.props.accounts.indexOf(account) ===
-            this.props.accounts.length-1) {
+            this.props.accounts.length - 1) {
             accounts.push(<div style={{height: topAccountPadding}}/>);
             accounts.push(
               <HLine key={this.props.group.id} color='#E6E6E6'/>);
@@ -156,7 +157,7 @@ export class GroupCard extends React.Component<Properties, State> {
                     {account.account.name.toString()}
                   </div>
                   <div style={GroupCard.STYLE.rolesWrapper}>
-                    <RolesField roles={account.roles}/>
+                    <RolePanel roles={account.roles}/>
                   </div>
                 </div>
               )}
@@ -281,7 +282,7 @@ export class GroupCard extends React.Component<Properties, State> {
       flexShrink: 0
     },
     rolesWrapper: {
-      width: '122px',
+      width: '80px',
       flexGrow: 0,
       flexShrink: 0
     },
