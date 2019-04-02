@@ -13,7 +13,6 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     : QWidget(parent),
       m_input_model(input_model.Get()) {
   setFocusPolicy(Qt::ClickFocus);
-  window()->installEventFilter(this);
   auto empty_label_font_color = QColor();
   if(theme == Theme::DARK) {
     setStyleSheet("background-color: #25212E;");
@@ -53,8 +52,6 @@ bool SecurityWidget::eventFilter(QObject* object, QEvent* event) {
   if(object == m_widget && event->type() == QEvent::KeyPress) {
     keyPressEvent(static_cast<QKeyEvent*>(event));
     return event->isAccepted();
-  } else if(object == window() && event->type() == QEvent::WindowActivate) {
-    setFocus();
   }
   return QWidget::eventFilter(object, event);
 }
