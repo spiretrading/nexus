@@ -158,7 +158,7 @@ export class TextField extends React.Component<Properties, State> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
-      border: '1px solid #C8C8C8',
+      border: '1px solid #FFFFFF',
       borderRadius: '1px',
       ':focus': {
         ouline: 0
