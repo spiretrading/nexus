@@ -53,6 +53,7 @@ namespace Spire {
     private:
       mutable ClosedSignal m_closed_signal;
       std::shared_ptr<ChartModel> m_model;
+      std::shared_ptr<LocalTechnicalsModel> m_technicals_model;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       QWidget* m_button_header_widget;
@@ -60,6 +61,8 @@ namespace Spire {
       DropdownMenu* m_period_dropdown;
       ToggleButton* m_auto_scale_button;
       bool m_is_chart_auto_scaled;
+      QWidget* m_security_widget_container;
+      ChartingTechnicalsPanel* m_technicals_panel;
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;

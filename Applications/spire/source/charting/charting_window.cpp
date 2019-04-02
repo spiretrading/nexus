@@ -8,9 +8,11 @@
 #include <QListView>
 #include <QVBoxLayout>
 #include "spire/charting/chart_view.hpp"
+#include "spire/charting/charting_technicals_panel.hpp"
 #include "spire/security_input/security_input_dialog.hpp"
 #include "spire/security_input/security_input_model.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/spire/local_technicals_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/dropdown_menu.hpp"
 #include "spire/ui/security_widget.hpp"
@@ -31,6 +33,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
     : QWidget(parent),
       m_is_mouse_dragging(false),
+      m_security_widget_container(nullptr),
+      m_technicals_panel(nullptr),
       m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
@@ -142,10 +146,23 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
+  delete m_security_widget_container;
+  delete m_technicals_panel;
   delete m_chart;
-  m_chart = new ChartView(*m_model, this);
+  m_security_widget_container = new QWidget(this);
+  auto container_layout = new QVBoxLayout(m_security_widget_container);
+  container_layout->setContentsMargins({});
+  m_technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
+  m_technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
+    Money(12.34 * Money::ONE), 100, TimeAndSale::Condition(), "null"));
+  m_technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
+    Money(23.45 * Money::ONE), 100, TimeAndSale::Condition(), "null"));
+  m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
+  container_layout->addWidget(m_technicals_panel);
+  m_chart = new ChartView(*m_model, m_security_widget_container);
   m_chart->set_auto_scale(m_is_chart_auto_scaled);
-  m_security_widget->set_widget(m_chart);
+  container_layout->addWidget(m_chart);
+  m_security_widget->set_widget(m_security_widget_container);
   m_chart->installEventFilter(this);
 }
 

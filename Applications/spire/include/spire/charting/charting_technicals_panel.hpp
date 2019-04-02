@@ -3,6 +3,7 @@
 #include "spire/spire/spire.hpp"
 #include <QLabel>
 #include <QWidget>
+#include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
 
@@ -21,6 +22,7 @@ namespace Spire {
 
     private:
       TechnicalsModel& m_model;
+      CustomVariantItemDelegate* m_item_delegate;
       QLabel* m_last_label;
       QLabel* m_change_label;
       QLabel* m_open_text_label;
@@ -33,6 +35,8 @@ namespace Spire {
       QLabel* m_low_value_label;
       QLabel* m_volume_text_label;
       QLabel* m_volume_value_label;
+
+      void update_last_and_change_labels();
   };
 }
 

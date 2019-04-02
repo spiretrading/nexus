@@ -2,11 +2,14 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "spire/spire/dimensions.hpp"
+#include "spire/spire/technicals_model.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
     : m_model(model) {
+  m_item_delegate = new CustomVariantItemDelegate(this);
   setStyleSheet("background-color: #25212E;");
   setFixedHeight(scale_height(50));
   auto layout = new QVBoxLayout(this);
@@ -15,23 +18,13 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   auto price_layout = new QHBoxLayout();
   price_layout->setContentsMargins({});
   layout->addLayout(price_layout);
-  m_last_label = new QLabel(tr("N/A"), this);
+  m_last_label = new QLabel(this);
   m_last_label->setFixedHeight(scale_height(19));
-  m_last_label->setStyleSheet(QString(R"(
-    color: #FFFFFF;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;)").arg(scale_height(16)));
   price_layout->addWidget(m_last_label);
   price_layout->addSpacing(scale_width(4));
-  m_change_label = new QLabel(tr("N/A"), this);
+  m_change_label = new QLabel(this);
+  update_last_and_change_labels();
   m_change_label->setFixedHeight(scale_height(18));
-  m_change_label->setStyleSheet(QString(R"(
-    color: #FFFFFF;
-    font-family: Roboto;
-    font-size: %1px;
-    font-weight: 550;
-    qproperty-alignment: AlignBottom;)").arg(scale_height(10)));
   price_layout->addWidget(m_change_label);
   price_layout->addStretch(1);
   layout->addStretch(4);
@@ -49,6 +42,10 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addWidget(m_open_text_label);
   ohlc_layout->addSpacing(scale_width(3));
   m_open_value_label = new QLabel(tr("N/A"), this);
+  if(m_model.get_open().is_initialized()) {
+    m_open_value_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_open())), QLocale()));
+  }
   m_open_value_label->setFixedHeight(scale_height(11));
   auto value_label_stylesheet = QString(R"(
     color: #FFFFFF;
@@ -64,6 +61,10 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addWidget(m_close_text_label);
   ohlc_layout->addSpacing(scale_width(3));
   m_close_value_label = new QLabel(tr("N/A"), this);
+  if(m_model.get_close().is_initialized()) {
+    m_close_value_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_close())), QLocale()));
+  }
   m_close_value_label->setFixedHeight(scale_height(11));
   m_close_value_label->setStyleSheet(value_label_stylesheet);
   ohlc_layout->addWidget(m_close_value_label);
@@ -74,6 +75,10 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addWidget(m_high_text_label);
   ohlc_layout->addSpacing(scale_width(3));
   m_high_value_label = new QLabel(tr("N/A"), this);
+  if(m_model.get_high().is_initialized()) {
+    m_high_value_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_high())), QLocale()));
+  }
   m_high_value_label->setFixedHeight(scale_height(11));
   m_high_value_label->setStyleSheet(value_label_stylesheet);
   ohlc_layout->addWidget(m_high_value_label);
@@ -84,6 +89,10 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addWidget(m_low_text_label);
   ohlc_layout->addSpacing(scale_width(3));
   m_low_value_label = new QLabel(tr("N/A"), this);
+  if(m_model.get_low().is_initialized()) {
+    m_low_value_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_low())), QLocale()));
+  }
   m_low_value_label->setFixedHeight(scale_height(11));
   m_low_value_label->setStyleSheet(value_label_stylesheet);
   ohlc_layout->addWidget(m_low_value_label);
@@ -93,7 +102,8 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   m_volume_text_label->setStyleSheet(text_label_stylesheet);
   ohlc_layout->addWidget(m_volume_text_label);
   ohlc_layout->addSpacing(scale_width(3));
-  m_volume_value_label = new QLabel(tr("N/A"), this);
+  m_volume_value_label = new QLabel(m_item_delegate->displayText(
+    QVariant::fromValue(m_model.get_volume()), QLocale()), this);
   m_volume_value_label->setFixedHeight(scale_height(11));
   m_volume_value_label->setStyleSheet(value_label_stylesheet);
   ohlc_layout->addWidget(m_volume_value_label);
@@ -116,4 +126,41 @@ void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
     m_low_text_label->setText(tr("Low"));
     m_volume_text_label->setText(tr("Vol"));
   }
+}
+
+void ChartingTechnicalsPanel::update_last_and_change_labels() {
+  auto color = QColor("#FFFFFF");
+  if(m_model.get_open().is_initialized()) {
+    m_last_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_last_price())), QLocale()));
+    auto change = *(m_model.get_last_price()) - *(m_model.get_open());
+    auto change_text = QString(" " + m_item_delegate->displayText(
+      QVariant::fromValue(change), QLocale()) + " (" +
+      m_item_delegate->displayText(QVariant::fromValue(
+        (change / *(m_model.get_open())) * (100 * Money::ONE)),
+        QLocale()) + "%)");
+    if(change > Money()) {
+      change_text = change_text.replace(0, 1, "+");
+      color = QColor("#1FD37A");
+    } else if(change < Money()) {
+      change_text = change_text.replace(0, 1, "");
+      color = QColor("#EF5357");
+    }
+    m_change_label->setText(change_text);
+  } else {
+    m_last_label->setText(tr("N/A"));
+    m_change_label->setText(tr("N/A"));
+  }
+  m_last_label->setStyleSheet(QString(R"(
+    color: %1;
+    font-family: Roboto;
+    font-size: %2px;
+    font-weight: 550;)").arg(color.name()).arg(scale_height(16)));
+  m_change_label->setStyleSheet(QString(R"(
+    color: %1;
+    font-family: Roboto;
+    font-size: %2px;
+    font-weight: 550;
+    qproperty-alignment: AlignBottom;)")
+      .arg(color.name()).arg(scale_height(10)));
 }
