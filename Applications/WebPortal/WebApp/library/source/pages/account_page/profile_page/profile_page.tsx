@@ -165,8 +165,7 @@ export class ProfilePage extends React.Component<Properties, State> {
         list.push(
           <Dali.Padding
             key={'padding' + group.id}
-            size='5px'/>
-        );
+            size='5px'/>);
       }
       return list;
     })();
