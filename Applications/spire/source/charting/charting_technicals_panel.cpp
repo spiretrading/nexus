@@ -103,7 +103,7 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
 }
 
 void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
-  if(width() < 500) {
+  if(width() < scale_width(500)) {
     m_open_text_label->setText(tr("O"));
     m_close_text_label->setText(tr("C"));
     m_high_text_label->setText(tr("H"));
