@@ -1,8 +1,8 @@
 #ifndef SPIRE_CHARTING_TECHNICALS_PANEL_HPP
 #define SPIRE_CHARTING_TECHNICALS_PANEL_HPP
-#include "spire/spire/spire.hpp"
 #include <QLabel>
 #include <QWidget>
+#include "spire/spire/spire.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 
 namespace Spire {
@@ -21,7 +21,7 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      TechnicalsModel& m_model;
+      TechnicalsModel* m_model;
       CustomVariantItemDelegate* m_item_delegate;
       QLabel* m_last_label;
       QLabel* m_change_label;
@@ -35,6 +35,12 @@ namespace Spire {
       QLabel* m_low_value_label;
       QLabel* m_volume_text_label;
       QLabel* m_volume_value_label;
+      boost::signals2::scoped_connection m_last_price_connection;
+      boost::signals2::scoped_connection m_open_connection;
+      boost::signals2::scoped_connection m_close_connection;
+      boost::signals2::scoped_connection m_high_connection;
+      boost::signals2::scoped_connection m_low_connection;
+      boost::signals2::scoped_connection m_volume_connection;
 
       void on_last_price_signal(const Nexus::Money& last);
       void on_open_signal(const Nexus::Money& open);

@@ -1,5 +1,6 @@
-#include <QApplication>
 #include <random>
+#include <QApplication>
+#include <QTimer>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -8,6 +9,7 @@
 #include "spire/charting/local_chart_model.hpp"
 #include "spire/charting/charting_window.hpp"
 #include "spire/security_input/local_security_input_model.hpp"
+#include "spire/spire/local_technicals_model.hpp"
 #include "spire/spire/resources.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/version.hpp"
@@ -44,7 +46,10 @@ int main(int argc, char** argv) {
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
   auto window = new ChartingWindow(Ref(model));
-  window->connect_security_change_signal([=] (const auto& security) {
+  auto test_timer = QTimer();
+  window->connect_security_change_signal(
+      [=, &test_timer] (const auto& security) {
+    test_timer.stop();
     window->setWindowTitle(CustomVariantItemDelegate().displayText(
       QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
     auto candlesticks = std::vector<Candlestick>();
@@ -73,7 +78,15 @@ int main(int argc, char** argv) {
     auto chart_model = new LocalChartModel(
       ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
     auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
-    window->set_model(std::move(cached_model));
+    auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
+    technicals_model->load();
+    test_timer.start(1500);
+    QObject::connect(&test_timer, &QTimer::timeout, [=] {
+      auto rand = std::default_random_engine(std::random_device()())() % 100;
+      technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
+        Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
+    });
+    window->set_models(std::move(cached_model), technicals_model);
   });
   window->show();
   application->exec();

@@ -5,7 +5,6 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QTimer>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
@@ -36,8 +35,13 @@ namespace Spire {
       ChartingWindow(Beam::Ref<SecurityInputModel> input_model,
         QWidget* parent = nullptr);
 
-      //! Sets the model to display.
-      void set_model(std::shared_ptr<ChartModel> model);
+      //! Sets the chart and technicals models to display.
+      /*
+        \param chart_model The chart model data source.
+        \param technicals_model The technicals model data source.
+      */
+      void set_models(std::shared_ptr<ChartModel> chart_model,
+        std::shared_ptr<TechnicalsModel> technicals_model);
 
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
@@ -54,7 +58,7 @@ namespace Spire {
     private:
       mutable ClosedSignal m_closed_signal;
       std::shared_ptr<ChartModel> m_model;
-      std::shared_ptr<LocalTechnicalsModel> m_technicals_model;
+      std::shared_ptr<TechnicalsModel> m_technicals_model;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       QWidget* m_button_header_widget;
@@ -67,7 +71,6 @@ namespace Spire {
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
-      QTimer m_update_test_timer;
 
       void on_auto_scale_button_click();
       void on_period_line_edit_changed();

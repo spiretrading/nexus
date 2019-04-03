@@ -1,6 +1,5 @@
 #include "spire/charting/charting_window.hpp"
 #include <climits>
-#include <random>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -37,8 +36,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_security_widget_container(nullptr),
       m_technicals_panel(nullptr),
       m_chart(nullptr),
-      m_is_chart_auto_scaled(true),
-      m_update_test_timer(this) {
+      m_is_chart_auto_scaled(true) {
   m_body = new QWidget(this);
   m_body->installEventFilter(this);
   m_body->setMinimumSize(scale(400, 320));
@@ -146,21 +144,16 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_security_widget->setFocus();
 }
 
-void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
-  m_model = model;
+void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
+    std::shared_ptr<TechnicalsModel> technicals_model) {
+  m_model = chart_model;
+  m_technicals_model = technicals_model;
   delete m_technicals_panel;
   delete m_chart;
   delete m_security_widget_container;
   m_security_widget_container = new QWidget(this);
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
-  m_technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
-  m_update_test_timer.start(1500);
-  connect(&m_update_test_timer, &QTimer::timeout, [=] {
-    auto rand = std::default_random_engine(std::random_device()())() % 100;
-    m_technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
-      Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
-  });
   m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
   container_layout->addWidget(m_technicals_panel);
   m_chart = new ChartView(*m_model, m_security_widget_container);
