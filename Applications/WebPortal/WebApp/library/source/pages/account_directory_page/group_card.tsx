@@ -195,8 +195,6 @@ export class GroupCard extends React.Component<Properties, State> {
           {(state) => (
             <div>
               {lineWhenOpen}
-              <div style={(GroupCard.topPaddingAnimationStyle as any)[state]}>
-              </div>
               <div style={GroupCard.STYLE.entryListWrapper}>
                 {accounts}
               </div>
@@ -334,10 +332,12 @@ export class GroupCard extends React.Component<Properties, State> {
   });
   private static readonly accountLabelAnimationStyle = StyleSheet.create({
     entering: {
+      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)'
     },
     entered: {
+      width: '100%',
       maxHeight: '34px',
       transform: 'scaleY(1)',
       transitionProperty: 'max-height, transform',
@@ -345,6 +345,7 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     },
     exiting: {
+      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
@@ -352,6 +353,7 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     },
     exited: {
+      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)',
       transformOrigin: 'top' as 'top'
