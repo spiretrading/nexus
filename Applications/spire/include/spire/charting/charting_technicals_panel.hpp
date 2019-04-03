@@ -36,7 +36,13 @@ namespace Spire {
       QLabel* m_volume_text_label;
       QLabel* m_volume_value_label;
 
-      void update_last_and_change_labels();
+      void on_last_price_signal(const Nexus::Money& last);
+      void on_open_signal(const Nexus::Money& open);
+      void on_close_signal(const Nexus::Money& close);
+      void on_high_signal(const Nexus::Money& high);
+      void on_low_signal(const Nexus::Money& low);
+      void on_volume_signal(const Nexus::Quantity& volume);
+      void update_change_label();
   };
 }
 

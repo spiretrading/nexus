@@ -155,12 +155,11 @@ void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
   m_technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
-  m_update_test_timer.setInterval(1000);
-  m_update_test_timer.start(1000);
+  m_update_test_timer.start(1500);
   connect(&m_update_test_timer, &QTimer::timeout, [=] {
-    auto rand = std::default_random_engine(std::random_device()());
+    auto rand = std::default_random_engine(std::random_device()())() % 100;
     m_technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
-      Money(rand() * Money::ONE), 100, TimeAndSale::Condition(), "null"));
+      Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
   });
   m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
   container_layout->addWidget(m_technicals_panel);

@@ -32,7 +32,7 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   price_layout->addWidget(m_last_label);
   price_layout->addSpacing(scale_width(4));
   m_change_label = new QLabel(this);
-  update_last_and_change_labels();
+  update_change_label();
   m_change_label->setFixedHeight(scale_height(18));
   price_layout->addWidget(m_change_label);
   price_layout->addStretch(1);
@@ -119,6 +119,18 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addSpacing(scale_width(10));
   ohlc_layout->addStretch(1);
   layout->addStretch(8);
+  m_model.connect_last_price_slot([=] (const Money& last) {
+    on_last_price_signal(last); });
+  m_model.connect_open_slot([=] (const Money& open) {
+    on_open_signal(open); });
+  m_model.connect_close_slot([=] (const Money& close) {
+    on_close_signal(close); });
+  m_model.connect_high_slot([=] (const Money& high) {
+    on_high_signal(high); });
+  m_model.connect_low_slot([=] (const Money& low) {
+    on_low_signal(low); });
+  m_model.connect_volume_slot([=] (const Quantity& volume) {
+    on_volume_signal(volume); });
 }
 
 void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
@@ -137,7 +149,38 @@ void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
   }
 }
 
-void ChartingTechnicalsPanel::update_last_and_change_labels() {
+void ChartingTechnicalsPanel::on_last_price_signal(const Money& last) {
+  m_last_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(last), QLocale()));
+  update_change_label();
+}
+
+void ChartingTechnicalsPanel::on_open_signal(const Money& open) {
+  m_open_value_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(open), QLocale()));
+}
+
+void ChartingTechnicalsPanel::on_close_signal(const Money& close) {
+  m_close_value_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(close), QLocale()));
+}
+
+void ChartingTechnicalsPanel::on_high_signal(const Money& high) {
+  m_high_value_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(high), QLocale()));
+}
+
+void ChartingTechnicalsPanel::on_low_signal(const Money& low) {
+  m_low_value_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(low), QLocale()));
+}
+
+void ChartingTechnicalsPanel::on_volume_signal(const Quantity& volume) {
+  m_volume_value_label->setText(m_item_delegate->displayText(
+    QVariant::fromValue(volume), QLocale()));
+}
+
+void ChartingTechnicalsPanel::update_change_label() {
   auto color = QColor("#FFFFFF");
   if(m_model.get_open().is_initialized()) {
     auto change = *(m_model.get_last_price()) - *(m_model.get_open());
