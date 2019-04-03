@@ -79,7 +79,6 @@ int main(int argc, char** argv) {
       ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
     auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
     auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
-    technicals_model->load();
     test_timer.start(1500);
     QObject::connect(&test_timer, &QTimer::timeout, [=] {
       auto rand = std::default_random_engine(std::random_device()())() % 100;
