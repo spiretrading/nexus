@@ -148,9 +148,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
 
 void ChartingWindow::set_model(std::shared_ptr<ChartModel> model) {
   m_model = model;
-  delete m_security_widget_container;
   delete m_technicals_panel;
   delete m_chart;
+  delete m_security_widget_container;
   m_security_widget_container = new QWidget(this);
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
