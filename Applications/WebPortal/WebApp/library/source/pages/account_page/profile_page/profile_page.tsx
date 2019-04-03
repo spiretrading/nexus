@@ -165,8 +165,7 @@ export class ProfilePage extends React.Component<Properties, State> {
         list.push(
           <Dali.Padding
             key={'padding' + group.id}
-            size='5px'/>
-        );
+            size='5px'/>);
       }
       return list;
     })();
@@ -330,7 +329,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Groups(s)'
                     displaySize={this.props.displaySize}>
                   <Dali.VBoxLayout>
-                      {groupsList}
+                    {groupsList}
                   </Dali.VBoxLayout>
                 </FormEntry>
                 <Dali.Padding size='9px'/>

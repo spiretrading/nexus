@@ -4,9 +4,9 @@ import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../..';
-//import { RolesField } from '../account_page';
-import { AccountEntry } from '.';
 import { RolePanel } from '../account_page/role_panel';
+import { AccountEntry } from '.';
+
 
 interface Properties {
 
@@ -115,8 +115,8 @@ export class GroupCard extends React.Component<Properties, State> {
     const accounts: JSX.Element[] = [];
     if(this.props.accounts.length > 0) {
       for(const account of this.props.accounts) {
-        if(account.account.name.indexOf(this.props.filter) === 0
-            && this.props.filter) {
+        if(account.account.name.indexOf(this.props.filter) === 0 &&
+            this.props.filter) {
           accounts.push(
             <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
               key={account.account.id}
@@ -133,12 +133,10 @@ export class GroupCard extends React.Component<Properties, State> {
               <RolePanel roles={account.roles}/>
             </div>
           </div>);
-          if(!this.props.isOpen &&
-            this.props.accounts.indexOf(account) ===
-            this.props.accounts.length - 1) {
+          if(!this.props.isOpen && this.props.accounts.indexOf(account) ===
+              this.props.accounts.length - 1) {
             accounts.push(<div style={{height: topAccountPadding}}/>);
-            accounts.push(
-              <HLine key={this.props.group.id} color='#E6E6E6'/>);
+            accounts.push(<HLine key={this.props.group.id} color='#E6E6E6'/>);
           }
         } else {
           accounts.push(
