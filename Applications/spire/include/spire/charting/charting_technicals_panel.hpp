@@ -7,7 +7,7 @@
 
 namespace Spire {
 
-  //! Displays a security's technical data in a responsive panel.
+  //! Displays a charting window's technical data in a responsive panel.
   class ChartingTechnicalsPanel : public QWidget {
     public:
 
