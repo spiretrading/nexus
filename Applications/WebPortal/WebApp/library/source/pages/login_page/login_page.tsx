@@ -123,7 +123,8 @@ export class LoginPage extends React.Component<Properties> {
 
   private static readonly STATIC_STYLES = {
     page: {
-      backgroundColor: '#4B23A0'
+      backgroundColor: '#4B23A0',
+      boxSizing: 'border-box' as 'border-box'
     },
     logoVisible: {
       width: '130px',
@@ -140,10 +141,11 @@ export class LoginPage extends React.Component<Properties> {
       height: '20px',
       color: '#FAEB96'
     }
-  }
+  };
 
   private static DYNAMIC_STYLES = StyleSheet.create({
     inputBox: {
+      boxSizing: 'border-box',
       width: '284px',
       padding: 0,
       height: '34px',
@@ -185,27 +187,32 @@ export class LoginPage extends React.Component<Properties> {
       }
     },
     signInButton: {
+      boxSizing: 'border-box',
       width: '284px',
       height: '48px',
       color: '#4B23A0',
       backgroundColor: '#E2E0FF',
       font: '400 20px Roboto',
       borderRadius: '1px',
-      border: 'none',
+      border: '1px solid #E2E0FF',
       outline: 0,
-      ':hover': {
-        backgroundColor: '#FFFFFF'
-      },
       '::-moz-focus-inner': {
         border: 0
       },
       ':disabled': {
         backgroundColor: '#684BC7',
-        border: 'none'
+        border: '1px solid #684BC7'
       },
       ':focus': {
         ':not(:disabled)': {
-          border: '1px solid white'
+          border: '1px solid white',
+          backgroundColor: '#B9B4EC'
+        }
+      },
+      ':hover': {
+        ':not(:disabled)': {
+          border: '1px solid white',
+          backgroundColor: '#FFFFFF'
         }
       }
     }
