@@ -169,6 +169,23 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
       return list;
     })();
+    const countryBox = (() => {
+      if(this.props.readonly) {
+        return (
+          <TextField
+            value={this.props.countryDatabase.fromCode(
+              this.props.identity.country).name}
+            displaySize={this.props.displaySize}
+            readonly={this.props.readonly}/>);
+      } else {
+        return (
+          <CountrySelectionBox
+            readonly={this.props.readonly}
+            displaySize={this.props.displaySize}
+            value={this.props.identity.country}
+            countryDatabase={this.props.countryDatabase}/>);
+      }
+    })();
     const formFooter = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return <HLine color={ProfilePage.LINE_COLOR}/>;
@@ -326,7 +343,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Groups(s)'
+                <FormEntry name='Group(s)'
                     displaySize={this.props.displaySize}>
                   <Dali.VBoxLayout>
                     {groupsList}
@@ -350,7 +367,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.account.id.toString()}
                     displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
+                    readonly/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
@@ -397,11 +414,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Country'
                     displaySize={this.props.displaySize}>
-                  <CountrySelectionBox
-                    readonly={this.props.readonly}
-                    displaySize={this.props.displaySize}
-                    value={this.props.identity.country}
-                    countryDatabase={this.props.countryDatabase}/>
+                  {countryBox}
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
                 {formFooter}
@@ -497,6 +510,7 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     page: {
+      boxSizing: 'border-box' as 'border-box',
       height: '100%',
       width: '100%',
       display: 'flex' as 'flex',
@@ -505,6 +519,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       overflowY: 'auto' as 'auto'
     },
     hidden: {
+      boxSizing: 'border-box' as 'border-box',
       opacity: 0,
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
@@ -519,19 +534,27 @@ export class ProfilePage extends React.Component<Properties, State> {
       font: '400 14px Roboto'
     },
     contentSmall: {
+      boxSizing: 'border-box' as 'border-box',
       flexGrow: 1,
       maxWidth: '424px'
     },
     contentMedium: {
-      width: '732px'
+      boxSizing: 'border-box' as 'border-box',
+      width: '732px',
+      flexGrow: 0,
+      flexShrink: 0
     },
     contentLarge: {
-      width: '1000px'
+      boxSizing: 'border-box' as 'border-box',
+      width: '1000px',
+      flexGrow: 0,
+      flexShrink: 0
     },
     pagePadding: {
       width: '30px'
     },
     rolesWrapper: {
+      boxSizing: 'border-box' as 'border-box',
       marginLeft: '11px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -552,20 +575,27 @@ export class ProfilePage extends React.Component<Properties, State> {
       flexGrow: 1
     },
     smallPadding: {
+      flexGrow: 1,
+      flexShrink: 0,
       width: '100%',
       height: '18px'
+
     },
     mediumPadding: {
+      flexGrow: 1,
+      flexShrink: 0,
       width: '100%',
       height: '30px'
     },
     inlineStatusBox: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center'
     },
     stackedStatusBox: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       alignItems: 'center' as 'center',
