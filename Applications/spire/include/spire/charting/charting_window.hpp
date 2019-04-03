@@ -5,6 +5,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QTimer>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
@@ -66,6 +67,7 @@ namespace Spire {
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
+      QTimer m_update_test_timer;
 
       void on_auto_scale_button_click();
       void on_period_line_edit_changed();

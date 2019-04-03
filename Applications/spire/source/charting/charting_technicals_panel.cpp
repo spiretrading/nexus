@@ -18,7 +18,16 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   auto price_layout = new QHBoxLayout();
   price_layout->setContentsMargins({});
   layout->addLayout(price_layout);
-  m_last_label = new QLabel(this);
+  m_last_label = new QLabel(tr("N/A"), this);
+  if(m_model.get_last_price().is_initialized()) {
+    m_last_label->setText(m_item_delegate->displayText(
+      QVariant::fromValue(*(m_model.get_last_price())), QLocale()));
+  }
+  m_last_label->setStyleSheet(QString(R"(
+    color: #FFFFFF;
+    font-family: Roboto;
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(16)));
   m_last_label->setFixedHeight(scale_height(19));
   price_layout->addWidget(m_last_label);
   price_layout->addSpacing(scale_width(4));
@@ -131,8 +140,6 @@ void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
 void ChartingTechnicalsPanel::update_last_and_change_labels() {
   auto color = QColor("#FFFFFF");
   if(m_model.get_open().is_initialized()) {
-    m_last_label->setText(m_item_delegate->displayText(
-      QVariant::fromValue(*(m_model.get_last_price())), QLocale()));
     auto change = *(m_model.get_last_price()) - *(m_model.get_open());
     auto change_text = QString(" " + m_item_delegate->displayText(
       QVariant::fromValue(change), QLocale()) + " (" +
@@ -148,14 +155,8 @@ void ChartingTechnicalsPanel::update_last_and_change_labels() {
     }
     m_change_label->setText(change_text);
   } else {
-    m_last_label->setText(tr("N/A"));
     m_change_label->setText(tr("N/A"));
   }
-  m_last_label->setStyleSheet(QString(R"(
-    color: %1;
-    font-family: Roboto;
-    font-size: %2px;
-    font-weight: 550;)").arg(color.name()).arg(scale_height(16)));
   m_change_label->setStyleSheet(QString(R"(
     color: %1;
     font-family: Roboto;
