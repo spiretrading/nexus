@@ -169,6 +169,23 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
       return list;
     })();
+    const countryBox = (() => {
+      if(this.props.readonly) {
+        return (
+          <TextField
+            value={
+              this.props.countryDatabase.fromCode(this.props.identity.country).name}
+            displaySize={this.props.displaySize}
+            readonly={this.props.readonly}/>);
+      } else {
+        return (
+          <CountrySelectionBox
+            readonly={this.props.readonly}
+            displaySize={this.props.displaySize}
+            value={this.props.identity.country}
+            countryDatabase={this.props.countryDatabase}/>);
+      }
+    })();
     const formFooter = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return <HLine color={ProfilePage.LINE_COLOR}/>;
@@ -397,11 +414,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Country'
                     displaySize={this.props.displaySize}>
-                  <CountrySelectionBox
-                    readonly={this.props.readonly}
-                    displaySize={this.props.displaySize}
-                    value={this.props.identity.country}
-                    countryDatabase={this.props.countryDatabase}/>
+                  {countryBox}
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
                 {formFooter}
