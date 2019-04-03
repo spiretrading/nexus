@@ -173,8 +173,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       if(this.props.readonly) {
         return (
           <TextField
-            value={
-              this.props.countryDatabase.fromCode(this.props.identity.country).name}
+            value={this.props.countryDatabase.fromCode(
+              this.props.identity.country).name}
             displaySize={this.props.displaySize}
             readonly={this.props.readonly}/>);
       } else {

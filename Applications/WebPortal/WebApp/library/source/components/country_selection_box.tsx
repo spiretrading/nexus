@@ -42,13 +42,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
         return CountrySelectionBox.STYLE.boxLarge;
       }
     })();
-    const selectStyle = (() => {
-      if(this.props.readonly) {
-        //return CountrySelectionBox.STYLE.disabledBoxStyle;
-      } else {
-        return CountrySelectionBox.STYLE.selectionBoxStyle;
-      }
-    })();
     const options = (() => {
       const options = [];
       for(const country of this.props.countryDatabase) {
@@ -69,7 +62,8 @@ export class CountrySelectionBox extends React.Component<Properties> {
         return (
           <select value={this.props.value.code}
               className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
-              style={{...boxSizing,...selectStyle}}
+              style={{...boxSizing,
+                ...CountrySelectionBox.STYLE.selectionBoxStyle}}
               onChange={this.onChange}>
             {options}
           </select>);
