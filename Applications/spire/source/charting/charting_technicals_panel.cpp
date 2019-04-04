@@ -98,43 +98,37 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   ohlc_layout->addSpacing(scale_width(10));
   ohlc_layout->addStretch(1);
   layout->addStretch(8);
-  m_model_promise = m_model->load();
-  m_model_promise.then([&] (auto result) {
+  m_model_load_promise = m_model->load();
+  m_model_load_promise.then([=] (auto result) {
     if(m_model->get_last_price().is_initialized()) {
-      m_last_label->setText(m_item_delegate->displayText(
-        QVariant::fromValue(*(m_model->get_last_price())), QLocale()));
+      on_last_price_signal(*(m_model->get_last_price()));
     }
     if(m_model->get_open().is_initialized()) {
-      m_open_value_label->setText(m_item_delegate->displayText(
-        QVariant::fromValue(*(m_model->get_open())), QLocale()));
+      on_open_signal(*(m_model->get_open()));
     }
     if(m_model->get_close().is_initialized()) {
-      m_close_value_label->setText(m_item_delegate->displayText(
-        QVariant::fromValue(*(m_model->get_close())), QLocale()));
+      on_close_signal(*(m_model->get_close()));
     }
     if(m_model->get_high().is_initialized()) {
-      m_high_value_label->setText(m_item_delegate->displayText(
-        QVariant::fromValue(*(m_model->get_high())), QLocale()));
+      on_high_signal(*(m_model->get_high()));
     }
     if(m_model->get_low().is_initialized()) {
-      m_low_value_label->setText(m_item_delegate->displayText(
-        QVariant::fromValue(*(m_model->get_low())), QLocale()));
+      on_low_signal(*(m_model->get_low()));
     }
-    m_volume_value_label->setText(m_item_delegate->displayText(
-      QVariant::fromValue(m_model->get_volume()), QLocale()));
-    m_last_price_connection = m_model->connect_last_price_slot(
-      [=] (Money last) { on_last_price_signal(last); });
-    m_open_connection = m_model->connect_open_slot([=] (Money open) {
-      on_open_signal(open); });
-    m_close_connection = m_model->connect_close_slot([=] (Money close) {
-      on_close_signal(close); });
-    m_high_connection = m_model->connect_high_slot([=] (Money high) {
-      on_high_signal(high); });
-    m_low_connection = m_model->connect_low_slot([=] (Money low) {
-      on_low_signal(low); });
-    m_volume_connection = m_model->connect_volume_slot(
-      [=] (Quantity volume) { on_volume_signal(volume); });
+    on_volume_signal(m_model->get_volume());
   });
+  m_last_price_connection = m_model->connect_last_price_slot(
+    [=] (Money last) { on_last_price_signal(last); });
+  m_open_connection = m_model->connect_open_slot([=] (Money open) {
+    on_open_signal(open); });
+  m_close_connection = m_model->connect_close_slot([=] (Money close) {
+    on_close_signal(close); });
+  m_high_connection = m_model->connect_high_slot([=] (Money high) {
+    on_high_signal(high); });
+  m_low_connection = m_model->connect_low_slot([=] (Money low) {
+    on_low_signal(low); });
+  m_volume_connection = m_model->connect_volume_slot(
+    [=] (Quantity volume) { on_volume_signal(volume); });
 }
 
 void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {

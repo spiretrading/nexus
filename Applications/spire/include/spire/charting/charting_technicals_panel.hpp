@@ -23,7 +23,7 @@ namespace Spire {
 
     private:
       TechnicalsModel* m_model;
-      QtPromise<void> m_model_promise;
+      QtPromise<void> m_model_load_promise;
       CustomVariantItemDelegate* m_item_delegate;
       QLabel* m_last_label;
       QLabel* m_change_label;
