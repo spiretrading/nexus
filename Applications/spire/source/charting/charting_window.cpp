@@ -146,8 +146,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
 
 void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
     std::shared_ptr<TechnicalsModel> technicals_model) {
-  m_model = chart_model;
-  m_technicals_model = technicals_model;
+  m_model = std::move(chart_model);
+  m_technicals_model = std::move(technicals_model);
   delete m_technicals_panel;
   delete m_chart;
   delete m_security_widget_container;

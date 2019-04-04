@@ -118,17 +118,29 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
     on_volume_signal(m_model->get_volume());
   });
   m_last_price_connection = m_model->connect_last_price_slot(
-    [=] (Money last) { on_last_price_signal(last); });
-  m_open_connection = m_model->connect_open_slot([=] (Money open) {
-    on_open_signal(open); });
-  m_close_connection = m_model->connect_close_slot([=] (Money close) {
-    on_close_signal(close); });
-  m_high_connection = m_model->connect_high_slot([=] (Money high) {
-    on_high_signal(high); });
-  m_low_connection = m_model->connect_low_slot([=] (Money low) {
-    on_low_signal(low); });
+    [=] (Money last) {
+      on_last_price_signal(last);
+    });
+  m_open_connection = m_model->connect_open_slot(
+    [=] (Money open) {
+      on_open_signal(open);
+    });
+  m_close_connection = m_model->connect_close_slot(
+    [=] (Money close) {
+      on_close_signal(close);
+    });
+  m_high_connection = m_model->connect_high_slot(
+    [=] (Money high) {
+      on_high_signal(high);
+    });
+  m_low_connection = m_model->connect_low_slot(
+    [=] (Money low) {
+      on_low_signal(low);
+    });
   m_volume_connection = m_model->connect_volume_slot(
-    [=] (Quantity volume) { on_volume_signal(volume); });
+    [=] (Quantity volume) {
+      on_volume_signal(volume);
+    });
 }
 
 void ChartingTechnicalsPanel::resizeEvent(QResizeEvent* event) {
@@ -185,12 +197,12 @@ void ChartingTechnicalsPanel::update_change_label() {
     auto change_text = QString(" " + m_item_delegate->displayText(
       QVariant::fromValue(change), QLocale()) + " (" +
       m_item_delegate->displayText(QVariant::fromValue(
-        (change / *(m_model->get_open())) * (100 * Money::ONE)),
+        100 * (change / *(m_model->get_open()))),
         QLocale()) + "%)");
-    if(change > Money()) {
+    if(change > Money::ZERO) {
       change_text = change_text.replace(0, 1, "+");
       color = QColor("#1FD37A");
-    } else if(change < Money()) {
+    } else if(change < Money::ZERO) {
       change_text = change_text.replace(0, 1, "");
       color = QColor("#EF5357");
     }
