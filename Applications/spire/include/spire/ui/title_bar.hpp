@@ -55,12 +55,13 @@ namespace Spire {
       //! Returns the title text QLabel.
       QLabel* get_title_label() const;
 
+      void update_window_flags();
+
       //bool nativeEventFilter(const QByteArray& event_type, void* message,
       //  long* result) override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      //void mouseDoubleClickEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:

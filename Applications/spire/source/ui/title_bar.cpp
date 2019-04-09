@@ -65,8 +65,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
   m_minimize_button->set_hover_style("background-color: #EBEBEB;");
-  m_minimize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
@@ -78,8 +76,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_maximize_button->set_default_style("background-color: #F5F5F5;");
   m_maximize_button->set_hover_style("background-color: #EBEBEB;");
-  m_maximize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
@@ -105,14 +101,12 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->set_default_style("background-color: #F5F5F5;");
   m_close_button->set_hover_style("background-color: #EBEBEB;");
-  m_close_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
+  update_window_flags();
   window()->installEventFilter(this);
-  //qApp->installNativeEventFilter(this);
 }
 
 void TitleBar::set_icon(const QImage& icon) {
@@ -147,28 +141,14 @@ QLabel* TitleBar::get_title_label() const {
   return m_title_label;
 }
 
-//#ifdef Q_OS_WIN
-//bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
-//    long* result) {
-//  auto msg = static_cast<MSG*>(message);
-//  if(msg->message == WM_SYSCOMMAND &&
-//      reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
-//    if(msg->wParam == SC_MAXIMIZE) {
-//      on_maximize_button_press();
-//      return true;
-//    } else if(msg->wParam == SC_RESTORE && !window()->isMinimized()) {
-//      on_restore_button_press();
-//      return true;
-//    }
-//  }
-//  return false;
-//}
-//#else
-//bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
-//    long* result) {
-//  return false;
-//}
-//#endif
+void TitleBar::update_window_flags() {
+  m_minimize_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
+  m_maximize_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
+  m_close_button->setVisible(
+    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
+}
 
 bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
@@ -183,7 +163,9 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
         m_maximize_button->hide();
         m_restore_button->show();
       } else {
-        m_maximize_button->show();
+        if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
+          m_maximize_button->show();
+        }
         m_restore_button->hide();
       }
     }
