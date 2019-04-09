@@ -232,6 +232,7 @@ int main(int argc, char** argv) {
     make_svg_window_icon(":icons/spire-icon-grey.svg"));
   w->setWindowTitle("Spire Test Window");
   w->resize(400, 600);
+  // TODO: make it so windows with setFixedSize called don't need to also call setResizeable
   w->setMaximumSize(1000, 1000);
   // TODO: make it so this sequence doesn't break the window when they're called
   // out of order, maybe override setMaximumSize, setMaximumWidth, etc.
