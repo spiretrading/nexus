@@ -50,11 +50,11 @@ protected:
 //private slots:
 //    void onTitleBarDestroyed();
 public:
-    void setContentsMargins(const QMargins &margins);
-    void setContentsMargins(int left, int top, int right, int bottom);
-    QMargins contentsMargins() const;
+    //void setContentsMargins(const QMargins &margins);
+    //void setContentsMargins(int left, int top, int right, int bottom);
+    //QMargins contentsMargins() const;
     QRect contentsRect() const;
-    void getContentsMargins(int *left, int *top, int *right, int *bottom) const;
+    //void getContentsMargins(int *left, int *top, int *right, int *bottom) const;
 
 
 
@@ -174,7 +174,12 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   m_restore_button->set_default_style("background-color: #F5F5F5;");
   m_restore_button->set_hover_style("background-color: #EBEBEB;");
   m_restore_button->hide();
-  m_restore_button->connect_clicked_signal([=] { window()->showNormal(); });
+  auto c = new QWidget(this);
+  auto c_layout = new QVBoxLayout(c);
+  m_restore_button->connect_clicked_signal([=] {
+    //c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
+    //scale_height(1));
+    window()->showNormal(); });
   title_bar_layout->addWidget(m_restore_button);
   auto close_box = QRect(translate(11, 8), scale(10, 10));
   m_close_button = new IconButton(
@@ -190,9 +195,7 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   title_bar_layout->addWidget(m_close_button);
   setTitleBar(title_bar);
-  auto c = new QWidget(this);
   //c->setStyleSheet("background-color: red;");
-  auto c_layout = new QVBoxLayout(c);
   c_layout->setSpacing(0);
   c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
     scale_height(1));
@@ -203,6 +206,7 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   c_layout->addWidget(label);
   setCentralWidget(c);
   m_maximize_button->connect_clicked_signal([=] {
+    //c_layout->setContentsMargins(11, 11, 11, 11);
     window()->showMaximized(); });
 
   c->setStyleSheet("background-color: red;");
@@ -268,7 +272,7 @@ void CFramelessWindow::setTitleBar(QWidget* titlebar) {
   if(!titlebar) {
     return;
   }
-  connect(titlebar, SIGNAL(destroyed(QObject*)), this, SLOT(onTitleBarDestroyed()));
+  //connect(titlebar, SIGNAL(destroyed(QObject*)), this, SLOT(onTitleBarDestroyed()));
 }
 
 //void CFramelessWindow::onTitleBarDestroyed()
@@ -317,6 +321,7 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     case WM_NCCALCSIZE:
     {
       //this kills the window frame and title bar we added with WS_THICKFRAME and WS_CAPTION
+      // why does it crash when I remove this?
       *result = 0;
       return true;
     }
@@ -397,10 +402,10 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     case WM_GETMINMAXINFO:
     {
         if (::IsZoomed(msg->hwnd)) {
-            //RECT frame = { 0, 0, 0, 0 };
-            //AdjustWindowRectEx(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0);
+            RECT frame = { 0, 0, 0, 0 };
+            AdjustWindowRectEx(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0);
 
-            //record frame area data
+            ////record frame area data
             //double dpr = this->devicePixelRatioF();
 
             //m_frames.setLeft(abs(frame.left)/dpr+0.5);
@@ -408,19 +413,10 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
             //m_frames.setRight(abs(frame.right)/dpr+0.5);
             //m_frames.setBottom(abs(frame.bottom)/dpr+0.5);
 
-            //QMainWindow::setContentsMargins(m_frames.left()+m_margins.left(), \
-            //                                m_frames.top()+m_margins.top(), \
-            //                                m_frames.right()+m_margins.right(), \
-            //                                m_frames.bottom()+m_margins.bottom());
-            auto maximize_dimensions = reinterpret_cast<::MINMAXINFO*>(msg->lParam);
-            auto rect = QApplication::desktop()->availableGeometry(this);
-            maximize_dimensions->ptMaxSize.x = 100;//rect.width();
-            maximize_dimensions->ptMaxSize.y = rect.height() - 1;
-            maximize_dimensions->ptMaxPosition.x = 0;
-            maximize_dimensions->ptMaxPosition.y = 0;
+            setContentsMargins(11, 11, 11, 11);
             m_bJustMaximized = true;
-            *result = 0;
-            return true;
+            //*result = 0;
+            //return true;
         }else {
             if (m_bJustMaximized)
             {
@@ -428,8 +424,9 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
                 //after window back to normal size from maximized state
                 //a twinkle will happen, to avoid this twinkle
                 //repaint() is important used just before the window back to normal
+                setContentsMargins(0, 0, 0, 0);
                 repaint();
-                m_frames = QMargins();
+                //m_frames = QMargins();
                 m_bJustMaximized = false;
             }
         }
@@ -440,40 +437,41 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     }
 }
 
-void CFramelessWindow::setContentsMargins(const QMargins &margins)
-{
-    QMainWindow::setContentsMargins(margins);
-    //m_margins = margins;
-}
-void CFramelessWindow::setContentsMargins(int left, int top, int right, int bottom)
-{
-    //QMainWindow::setContentsMargins(left+m_frames.left(),\
-    //                                top+m_frames.top(), \
-    //                                right+m_frames.right(), \
-    //                                bottom+m_frames.bottom());
-    //m_margins.setLeft(left);
-    //m_margins.setTop(top);
-    //m_margins.setRight(right);
-    //m_margins.setBottom(bottom);
-}
-QMargins CFramelessWindow::contentsMargins() const
-{
-    QMargins margins = QMainWindow::contentsMargins();
-    //margins -= m_frames;
-    return margins;
-}
-void CFramelessWindow::getContentsMargins(int *left, int *top, int *right, int *bottom) const
-{
-    QMainWindow::getContentsMargins(left,top,right,bottom);
-    if (!(left&&top&&right&&bottom)) return;
-    if (isMaximized())
-    {
-        //*left -= m_frames.left();
-        //*top -= m_frames.top();
-        //*right -= m_frames.right();
-        //*bottom -= m_frames.bottom();
-    }
-}
+//void CFramelessWindow::setContentsMargins(const QMargins &margins)
+//{
+//    QMainWindow::setContentsMargins(margins);
+//    //m_margins = margins;
+//}
+//void CFramelessWindow::setContentsMargins(int left, int top, int right, int bottom)
+//{
+//    //QMainWindow::setContentsMargins(left+m_frames.left(),\
+//    //                                top+m_frames.top(), \
+//    //                                right+m_frames.right(), \
+//    //                                bottom+m_frames.bottom());
+//    //m_margins.setLeft(left);
+//    //m_margins.setTop(top);
+//    //m_margins.setRight(right);
+//    //m_margins.setBottom(bottom);
+//}
+//QMargins CFramelessWindow::contentsMargins() const
+//{
+//    QMargins margins = QMainWindow::contentsMargins();
+//    //margins -= m_frames;
+//    return margins;
+//}
+//void CFramelessWindow::getContentsMargins(int *left, int *top, int *right, int *bottom) const
+//{
+//    QMainWindow::getContentsMargins(left,top,right,bottom);
+//    if (!(left&&top&&right&&bottom)) return;
+//    if (isMaximized())
+//    {
+//        //*left -= m_frames.left();
+//        //*top -= m_frames.top();
+//        //*right -= m_frames.right();
+//        //*bottom -= m_frames.bottom();
+//    }
+//}
+
 QRect CFramelessWindow::contentsRect() const
 {
     QRect rect = QMainWindow::contentsRect();
