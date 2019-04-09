@@ -195,7 +195,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   title_bar_layout->addWidget(m_close_button);
   setTitleBar(title_bar);
-  //c->setStyleSheet("background-color: red;");
   c_layout->setSpacing(0);
   c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
     scale_height(1));
@@ -206,17 +205,12 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   c_layout->addWidget(label);
   setCentralWidget(c);
   m_maximize_button->connect_clicked_signal([=] {
-    //c_layout->setContentsMargins(11, 11, 11, 11);
     window()->showMaximized(); });
 
   c->setStyleSheet("background-color: red;");
 
   // TODO: review current and previous cases related to Spire::Window issues
   // and verify that they're fixed with this window
-
-  // TODO: if worst comes to worst, it may be possible to manually add margins
-  // into the central widget layout to push everything back into place.
-
 
   // TODO: fix the issue where the restored window is partly drawn on the left
   // screen while the window is maximized. This window segment can't be interacted
