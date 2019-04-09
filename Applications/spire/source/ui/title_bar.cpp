@@ -173,17 +173,6 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-// TODO: test that this works as expected for windows with a fixed maximum size
-//void TitleBar::mouseDoubleClickEvent(QMouseEvent* event) {
-//  if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
-//    if(window()->isMaximized()) {
-//      on_restore_button_press();
-//    } else {
-//      on_maximize_button_press();
-//    }
-//  }
-//}
-
 void TitleBar::resizeEvent(QResizeEvent* event) {
   on_window_title_change(window()->windowTitle());
 }

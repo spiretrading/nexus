@@ -52,11 +52,10 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-  // TODO: how to deal with max size windows?
-  // use QWIDGETSIZE_MAX to determine if a window has a maximum size set or not
+  // TODO: verify window handles double-click of fixed size, maximum size windows
 
-  // TODO: how to disable maximize button (including system menu maximize item)?
-  //setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+  // TODO: verify winkey + up/down/left/right works correctly
+
   m_title_bar = new TitleBar(icon, unfocused_icon, this);
   auto c = new QWidget(this);
   auto c_layout = new QVBoxLayout(c);
@@ -82,15 +81,22 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   // TODO: fix the issue where the restored window is partly drawn on the left
   // screen while the window is maximized. This window segment can't be interacted
   // with so maybe it's possible to set its' background color to transparent if it can't be removed
+
+  // TODO: fix issue where far right of drag area doesn't activate click-drag
+
+  // TODO: fix issue with aero snap where fixed-size windows can be maximized by dragging
+  // them to the top of the screen
 }
 
 void CFramelessWindow::setResizeable(bool resizeable) {
   m_is_resizeable = resizeable;
   if(m_is_resizeable) {
-    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    if(m_title_bar != nullptr) {
-      m_title_bar->update_window_flags();
+    if(window()->maximumSize() == QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+      setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
+    } else {
+      setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     }
+    m_title_bar->update_window_flags();
     //this line will get titlebar/thick frame/Aero back, which is exactly what we want
     //we will get rid of titlebar and thick frame again in nativeEvent() later
     HWND hwnd = (HWND)this->winId();
@@ -105,8 +111,7 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
   }
-  // TODO: why is this required?
-  //we better left 1 pixel width of border untouched, so OS can draw nice shadow around it
+  // this allows the drop shadow to draw
   const MARGINS shadow = { 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(HWND(winId()), &shadow);
 }
@@ -201,6 +206,11 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
       }
     }
     return false;
+  } else if(msg->message == WM_NCLBUTTONDBLCLK) {
+    if(!window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
+      *result = 0;
+      return true;
+    }
   }
   return QMainWindow::nativeEvent(eventType, message, result);
 }
@@ -222,7 +232,10 @@ int main(int argc, char** argv) {
     make_svg_window_icon(":icons/spire-icon-grey.svg"));
   w->setWindowTitle("Spire Test Window");
   w->resize(400, 600);
-  w->setResizeable(false);
+  w->setMaximumSize(1000, 1000);
+  // TODO: make it so this sequence doesn't break the window when they're called
+  // out of order, maybe override setMaximumSize, setMaximumWidth, etc.
+  w->setResizeable(true);
   w->show();
   application->exec();
 }
