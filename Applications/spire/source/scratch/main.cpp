@@ -35,16 +35,13 @@ public:
 
     void setCentralWidget(QWidget* widget);
 
-    //set a widget which will be treat as SYSTEM titlebar
-    void setTitleBar(QWidget* titlebar);
-
     //generally, we can add widget say "label1" on titlebar, and it will cover the titlebar under it
     //as a result, we can not drag and move the MainWindow with this "label1" again
     //we can fix this by add "label1" to a ignorelist, just call addIgnoreWidget(label1)
     void addIgnoreWidget(QWidget* widget);
 
 protected:
-    bool eventFilter(QObject* watched, QEvent* event) override;
+    //bool eventFilter(QObject* watched, QEvent* event) override;
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override;
 
 //private slots:
@@ -61,7 +58,6 @@ public:
 //public slots:
 //    void showFullScreen();
 private:
-    QWidget* m_titlebar;
     QList<QWidget*> m_whiteList;
     int m_borderWidth;
 
@@ -70,17 +66,15 @@ private:
 
     bool m_bResizeable;
 
-    IconButton* m_icon;
-    QImage m_default_icon;
-    QImage m_unfocused_icon;
-    QLabel* m_title_label;
-    IconButton* m_minimize_button;
-    IconButton* m_maximize_button;
-    IconButton* m_restore_button;
-    IconButton* m_close_button;
-
-    void on_close_button_press();
-    void set_title_text_stylesheet(const QColor& font_color);
+    //IconButton* m_icon;
+    //QImage m_default_icon;
+    //QImage m_unfocused_icon;
+    //QLabel* m_title_label;
+    //IconButton* m_minimize_button;
+    //IconButton* m_maximize_button;
+    //IconButton* m_restore_button;
+    //IconButton* m_close_button;
+    TitleBar* m_title_bar;
 };
 
 #include <QPoint>
@@ -113,99 +107,32 @@ namespace {
 CFramelessWindow::CFramelessWindow(const QImage& icon,
     const QImage& unfocused_icon, QWidget *parent)
     : QMainWindow(parent),
-      m_titlebar(nullptr),
       m_borderWidth(5),
       m_bJustMaximized(false),
-      m_bResizeable(true) {
+      m_bResizeable(true),
+      m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
+  // TODO: how to disable maximize button (including system menu maximize item)?
+  //setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setResizeable(m_bResizeable);
-  auto title_bar = new QWidget(this);
-  title_bar->setStyleSheet("background-color: #F5F5F5;");
-  title_bar->setFixedHeight(scale_height(26));
-  auto title_bar_layout = new QHBoxLayout(title_bar);
-  title_bar_layout->setSpacing(0);
-  title_bar_layout->setContentsMargins({});
-  m_default_icon = icon.scaled(ICON_SIZE());
-  m_unfocused_icon = unfocused_icon.scaled(ICON_SIZE());
-  m_icon = new IconButton(m_default_icon, m_unfocused_icon, this);
-  title_bar_layout->addWidget(m_icon);
-  // TODO: override setWindowTitle to set this
-  m_title_label = new QLabel("Spire Test Window", this);
-  m_title_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
-  set_title_text_stylesheet(QColor("#000000"));
-  title_bar_layout->addWidget(m_title_label);
-  addIgnoreWidget(m_title_label);
-  auto button_size = scale(32, 26);
-  auto minimize_box = QRect(translate(11, 12), scale(10, 2));
-  m_minimize_button = new IconButton(
-    imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
-    imageFromSvg(":/icons/minimize-black.svg", button_size, minimize_box),
-    imageFromSvg(":/icons/minimize-grey.svg", button_size, minimize_box), this);
-  m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_minimize_button->set_default_style("background-color: #F5F5F5;");
-  m_minimize_button->set_hover_style("background-color: #EBEBEB;");
-  m_minimize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
-  m_minimize_button->connect_clicked_signal(
-    [=] {
-      window()->showMinimized();
-    });
-  title_bar_layout->addWidget(m_minimize_button);
-  auto maximize_box = QRect(translate(11, 8), scale(10, 10));
-  m_maximize_button = new IconButton(
-    imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
-    imageFromSvg(":/icons/maximize-black.svg", button_size, maximize_box),
-    imageFromSvg(":/icons/maximize-grey.svg", button_size, maximize_box), this);
-  m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_maximize_button->set_default_style("background-color: #F5F5F5;");
-  m_maximize_button->set_hover_style("background-color: #EBEBEB;");
-  m_maximize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
-  title_bar_layout->addWidget(m_maximize_button);
-  auto restore_box = QRect(translate(11, 8), scale(10, 10));
-  m_restore_button = new IconButton(
-    imageFromSvg(":/icons/unmaximize-black.svg",
-      button_size, restore_box),
-    imageFromSvg(":/icons/unmaximize-black.svg", button_size, restore_box),
-    imageFromSvg(":/icons/unmaximize-grey.svg", button_size, restore_box),
-    this);
-  m_restore_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_restore_button->set_default_style("background-color: #F5F5F5;");
-  m_restore_button->set_hover_style("background-color: #EBEBEB;");
-  m_restore_button->hide();
+  m_title_bar = new TitleBar(icon, unfocused_icon, this);
+  addIgnoreWidget(m_title_bar->get_title_label());
   auto c = new QWidget(this);
   auto c_layout = new QVBoxLayout(c);
-  m_restore_button->connect_clicked_signal([=] {
-    //c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-    //scale_height(1));
-    window()->showNormal(); });
-  title_bar_layout->addWidget(m_restore_button);
-  auto close_box = QRect(translate(11, 8), scale(10, 10));
-  m_close_button = new IconButton(
-    imageFromSvg(":/icons/close-black.svg", button_size, close_box),
-    imageFromSvg(":/icons/close-red.svg", button_size, close_box),
-    imageFromSvg(":/icons/close-grey.svg", button_size, close_box),
-    this);
-  m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  m_close_button->set_default_style("background-color: #F5F5F5;");
-  m_close_button->set_hover_style("background-color: #EBEBEB;");
-  m_close_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
-  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
-  title_bar_layout->addWidget(m_close_button);
-  setTitleBar(title_bar);
+  //setTitleBar(m_title_bar);
   c_layout->setSpacing(0);
   c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
     scale_height(1));
-  c_layout->addWidget(title_bar);
+  c_layout->addWidget(m_title_bar);
   auto label = new QLabel("Test Label", c);
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   label->setStyleSheet("background-color: rgb(226, 224, 255);");
   c_layout->addWidget(label);
   setCentralWidget(c);
-  m_maximize_button->connect_clicked_signal([=] {
-    window()->showMaximized(); });
+  // TODO: why doesn't this work when installed directly in the TitleBar constructor?
+  // is it possible that the widget that window() return changes?
+  window()->installEventFilter(m_title_bar);
 
   c->setStyleSheet("background-color: red;");
 
@@ -227,7 +154,7 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     bool visible = isVisible();
     m_bResizeable = resizeable;
     if(m_bResizeable) {
-        setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
+        //setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
         //this line will get titlebar/thick frame/Aero back, which is exactly what we want
         //we will get rid of titlebar and thick frame again in nativeEvent() later
         HWND hwnd = (HWND)this->winId();
@@ -261,14 +188,6 @@ void CFramelessWindow::setCentralWidget(QWidget* widget) {
   QMainWindow::setCentralWidget(widget);
 }
 
-void CFramelessWindow::setTitleBar(QWidget* titlebar) {
-  m_titlebar = titlebar;
-  if(!titlebar) {
-    return;
-  }
-  //connect(titlebar, SIGNAL(destroyed(QObject*)), this, SLOT(onTitleBarDestroyed()));
-}
-
 //void CFramelessWindow::onTitleBarDestroyed()
 //{
 //    if (m_titlebar == QObject::sender())
@@ -285,27 +204,6 @@ void CFramelessWindow::addIgnoreWidget(QWidget* widget) {
     return;
   }
   m_whiteList.append(widget);
-}
-
-bool CFramelessWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == window()) {
-    if(event->type() == QEvent::WindowDeactivate) {
-      set_title_text_stylesheet(QColor("#A0A0A0"));
-      m_icon->set_icon(m_unfocused_icon);
-    } else if(event->type() == QEvent::WindowActivate) {
-      set_title_text_stylesheet(QColor("#000000"));
-      m_icon->set_icon(m_default_icon);
-    } else if(event->type() == QEvent::WindowStateChange) {
-      if(window()->isMaximized()) {
-        m_maximize_button->hide();
-        m_restore_button->show();
-      } else {
-        m_maximize_button->show();
-        m_restore_button->hide();
-      }
-    }
-  }
-  return QMainWindow::eventFilter(watched, event);
 }
 
 bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
@@ -376,12 +274,12 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
       if (0 != *result) return true;
       //*result still equals 0, that means the cursor locate OUTSIDE the frame area
       //but it may locate in titlebar area
-      if (!m_titlebar) return false;
+      if (!m_title_bar) return false;
       //support highdpi
       double dpr = this->devicePixelRatioF();
-      QPoint pos = m_titlebar->mapFromGlobal(QPoint(x/dpr,y/dpr));
-      if (!m_titlebar->rect().contains(pos)) return false;
-      QWidget* child = m_titlebar->childAt(pos);
+      QPoint pos = m_title_bar->mapFromGlobal(QPoint(x/dpr,y/dpr));
+      if (!m_title_bar->rect().contains(pos)) return false;
+      QWidget* child = m_title_bar->childAt(pos);
       if(!child) {
         *result = HTCAPTION;
         return true;
@@ -487,17 +385,6 @@ QRect CFramelessWindow::contentsRect() const
 //    QMainWindow::showFullScreen();
 //}
 
-void CFramelessWindow::on_close_button_press() {
-  window()->close();
-}
-
-void CFramelessWindow::set_title_text_stylesheet(const QColor& font_color) {
-  m_title_label->setStyleSheet(QString(
-    R"(color: %2;
-       font-family: Roboto;
-       font-size: %1px;)").arg(scale_height(12)).arg(font_color.name()));
-}
-
 namespace {
   auto make_svg_window_icon(const QString& icon_path) {
     return imageFromSvg(icon_path, scale(26, 26),
@@ -513,6 +400,7 @@ int main(int argc, char** argv) {
   auto w = new CFramelessWindow(
     make_svg_window_icon(":icons/spire-icon-black.svg"),
     make_svg_window_icon(":icons/spire-icon-grey.svg"));
+  w->setWindowTitle("Spire Test Window");
   w->resize(400, 600);
   w->show();
   application->exec();

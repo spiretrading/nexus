@@ -1,6 +1,6 @@
 #ifndef SPIRE_TITLE_BAR_HPP
 #define SPIRE_TITLE_BAR_HPP
-#include <QAbstractNativeEventFilter>
+//#include <QAbstractNativeEventFilter>
 #include <QLabel>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
@@ -8,7 +8,7 @@
 namespace Spire {
 
   //! Displays a window's title bar.
-  class TitleBar : public QWidget, public QAbstractNativeEventFilter {
+  class TitleBar : public QWidget {
     public:
 
       //! Constructs a title bar.
@@ -52,15 +52,15 @@ namespace Spire {
       */
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
-      bool nativeEventFilter(const QByteArray& event_type, void* message,
-        long* result) override;
+      //! Returns the title text QLabel.
+      QLabel* get_title_label() const;
+
+      //bool nativeEventFilter(const QByteArray& event_type, void* message,
+      //  long* result) override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void mouseDoubleClickEvent(QMouseEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
+      //void mouseDoubleClickEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -77,7 +77,6 @@ namespace Spire {
       QWidget* m_body;
       QRect m_restore_geometry;
 
-      void drag_restore(const QPoint& pos);
       void on_window_title_change(const QString& title);
       void on_minimize_button_press();
       void on_maximize_button_press();
