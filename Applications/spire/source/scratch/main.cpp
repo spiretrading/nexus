@@ -74,9 +74,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   // screen while the window is maximized. This window segment can't be interacted
   // with so maybe it's possible to set its' background color to transparent if it can't be removed
 
-  // TODO: fix issue with aero snap where fixed-size windows can be maximized by dragging
-  // them to the top of the screen
-
   // TODO: fix issue with winkey + arrow key shortcuts break window. When the window is
   // maximized and winkey + left is pressed, the window is snapped to the left of the
   // screen but the margins aren't added. May have to overwrite the aero snap functionality
@@ -124,11 +121,10 @@ void CFramelessWindow::changeEvent(QEvent* event) {
   }
 }
 
-bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
+bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message,
+    long *result) {
   MSG* msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
-    //this kills the window frame and title bar we added with WS_THICKFRAME and WS_CAPTION
-    // why does it crash when I remove this?
     *result = 0;
     return true;
   } else if(msg->message == WM_NCHITTEST) {
@@ -137,39 +133,51 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
-      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
-          y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+      if (x >= window_rect.left &&
+          x < window_rect.left + m_resize_area_width &&
+          y < window_rect.bottom &&
+          y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMLEFT;
         return true;
       }
-      if (x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
-          y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+      if (x < window_rect.right &&
+          x >= window_rect.right - m_resize_area_width &&
+          y < window_rect.bottom &&
+          y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMRIGHT;
         return true;
       }
-      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
-          y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+      if (x >= window_rect.left &&
+          x < window_rect.left + m_resize_area_width &&
+          y >= window_rect.top &&
+          y < window_rect.top + m_resize_area_width) {
         *result = HTTOPLEFT;
         return true;
       }
-      if(x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
-          y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+      if(x < window_rect.right &&
+          x >= window_rect.right - m_resize_area_width &&
+          y >= window_rect.top &&
+          y < window_rect.top + m_resize_area_width) {
         *result = HTTOPRIGHT;
         return true;
       }
-      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width) {
+      if (x >= window_rect.left &&
+          x < window_rect.left + m_resize_area_width) {
         *result = HTLEFT;
         return true;
       }
-      if (x < window_rect.right && x >= window_rect.right - m_resize_area_width) {
+      if (x < window_rect.right &&
+          x >= window_rect.right - m_resize_area_width) {
         *result = HTRIGHT;
         return true;
       }
-      if (y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+      if (y < window_rect.bottom &&
+          y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOM;
         return true;
       }
-      if (y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+      if (y >= window_rect.top &&
+          y < window_rect.top + m_resize_area_width) {
         *result = HTTOP;
         return true;
       }
