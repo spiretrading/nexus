@@ -20,11 +20,9 @@ class CFramelessWindow : public QMainWindow {
     explicit CFramelessWindow(const QImage& icon, const QImage& unfocused_icon,
       QWidget *parent = 0);
 
-    // if resizeable is set to false, then the window can not be resized by mouse
-    // but still can be resized programmatically
-    void setResizeable(bool resizeable = true);
+    void setFixedSize(int width, int height);
 
-    bool isResizeable() { return m_is_resizeable; }
+    void setFixedSize(const QSize& size);
 
   protected:
     void changeEvent(QEvent* event) override;
@@ -37,6 +35,8 @@ class CFramelessWindow : public QMainWindow {
     int m_resize_area_width;
     bool m_just_maximized;
     bool m_is_resizeable;
+
+    void set_resizeable(bool resizeable);
 };
 
 namespace {
@@ -69,9 +69,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   label->setStyleSheet("background-color: rgb(226, 224, 255);");
   container_layout->addWidget(label);
   setCentralWidget(m_container);
-  // TODO: why doesn't this work when installed directly in the TitleBar constructor?
-  // is it possible that the widget that window() returns changes?
-  window()->installEventFilter(m_title_bar);
 
   // TODO: review current and previous cases related to Spire::Window issues
   // and verify that they're fixed with this window
@@ -82,9 +79,25 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
 
   // TODO: fix issue with aero snap where fixed-size windows can be maximized by dragging
   // them to the top of the screen
+
+  // TODO: fix issue with winkey + arrow key shortcuts break window. When the window is
+  // maximized and winkey + left is pressed, the window is snapped to the left of the
+  // screen but the margins aren't added. May have to overwrite the aero snap functionality
+  // with regards to keyboard shortcuts.
+
+  set_resizeable(m_is_resizeable);
 }
 
-void CFramelessWindow::setResizeable(bool resizeable) {
+void CFramelessWindow::setFixedSize(int width, int height) {
+  setFixedSize({width, height});
+}
+
+void CFramelessWindow::setFixedSize(const QSize& size) {
+  set_resizeable(false);
+  QMainWindow::setFixedSize(size);
+}
+
+void CFramelessWindow::set_resizeable(bool resizeable) {
   m_is_resizeable = resizeable;
   if(m_is_resizeable) {
     if(window()->maximumSize() == QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
@@ -92,7 +105,6 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     } else {
       setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     }
-    m_title_bar->update_window_flags();
     //this line will get titlebar/thick frame/Aero back, which is exactly what we want
     //we will get rid of titlebar and thick frame again in nativeEvent() later
     auto hwnd = reinterpret_cast<HWND>(winId());
@@ -100,13 +112,11 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    if(m_title_bar != nullptr) {
-      m_title_bar->update_window_flags();
-    }
     auto hwnd = reinterpret_cast<HWND>(winId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
   }
+  m_title_bar->update_window_flags();
   // this allows the drop shadow to draw
   const MARGINS shadow = { 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
@@ -238,13 +248,6 @@ int main(int argc, char** argv) {
     make_svg_window_icon(":icons/spire-icon-black.svg"),
     make_svg_window_icon(":icons/spire-icon-grey.svg"));
   w->setWindowTitle("Spire Test Window");
-  w->resize(400, 600);
-  // TODO: make it so windows with setFixedSize called don't need to also call setResizeable
-  //w->setMaximumSize(1000, 1000);
-  //w->setFixedSize(500, 500);
-  // TODO: make it so this sequence doesn't break the window when they're called
-  // out of order, maybe override setMaximumSize, setMaximumWidth, etc.
-  w->setResizeable(true);
   w->show();
   application->exec();
 }
