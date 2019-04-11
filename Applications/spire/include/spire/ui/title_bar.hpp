@@ -53,6 +53,8 @@ namespace Spire {
       void set_icon(const QImage& icon, const QImage& unfocused_icon);
 
       //! Returns the title text QLabel.
+      // TODO: this is just a workaround for QTBUG-70873
+      // https://bugreports.qt.io/browse/QTBUG-70873
       QLabel* get_title_label() const;
 
       void update_window_flags();
