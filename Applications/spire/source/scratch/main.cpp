@@ -97,16 +97,11 @@ void CFramelessWindow::setFixedSize(const QSize& size) {
 void CFramelessWindow::set_resizeable(bool resizeable) {
   m_is_resizeable = resizeable;
   if(m_is_resizeable) {
-    if(window()->maximumSize() == QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
-      setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    } else {
-      setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    }
-    //this line will get titlebar/thick frame/Aero back, which is exactly what we want
-    //we will get rid of titlebar and thick frame again in nativeEvent() later
+    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(winId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
-    ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+    ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME |
+      WS_CAPTION);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(winId());
@@ -114,8 +109,7 @@ void CFramelessWindow::set_resizeable(bool resizeable) {
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
   }
   m_title_bar->update_window_flags();
-  // this allows the drop shadow to draw
-  const MARGINS shadow = { 1, 1, 1, 1 };
+  const auto shadow = MARGINS{ 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
     &shadow);
 }
@@ -138,59 +132,49 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     *result = 0;
     return true;
   } else if(msg->message == WM_NCHITTEST) {
-    RECT window_rect;
+    auto window_rect = RECT{};
     GetWindowRect(reinterpret_cast<HWND>(winId()), &window_rect);
-    long x = GET_X_LPARAM(msg->lParam);
-    long y = GET_Y_LPARAM(msg->lParam);
+    auto x = GET_X_LPARAM(msg->lParam);
+    auto y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
-      bool resizeWidth = minimumWidth() != maximumWidth();
-      bool resizeHeight = minimumHeight() != maximumHeight();
-      if(resizeWidth && resizeHeight) {
-        if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
-            y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
-          *result = HTBOTTOMLEFT;
-          return true;
-        }
-        if (x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
-            y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
-          *result = HTBOTTOMRIGHT;
-          return true;
-        }
-        if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
-            y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
-          *result = HTTOPLEFT;
-          return true;
-        }
-        if(x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
-            y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
-          *result = HTTOPRIGHT;
-          return true;
-        }
+      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
+          y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+        *result = HTBOTTOMLEFT;
+        return true;
       }
-      if(resizeWidth) {
-        if (x >= window_rect.left && x < window_rect.left + m_resize_area_width) {
-          *result = HTLEFT;
-          return true;
-        }
-        if (x < window_rect.right && x >= window_rect.right - m_resize_area_width) {
-          *result = HTRIGHT;
-          return true;
-        }
+      if (x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
+          y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+        *result = HTBOTTOMRIGHT;
+        return true;
       }
-      if(resizeHeight) {
-        if (y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
-          *result = HTBOTTOM;
-          return true;
-        }
-        if (y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
-          *result = HTTOP;
-          return true;
-        }
+      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width &&
+          y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+        *result = HTTOPLEFT;
+        return true;
+      }
+      if(x < window_rect.right && x >= window_rect.right - m_resize_area_width &&
+          y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+        *result = HTTOPRIGHT;
+        return true;
+      }
+      if (x >= window_rect.left && x < window_rect.left + m_resize_area_width) {
+        *result = HTLEFT;
+        return true;
+      }
+      if (x < window_rect.right && x >= window_rect.right - m_resize_area_width) {
+        *result = HTRIGHT;
+        return true;
+      }
+      if (y < window_rect.bottom && y >= window_rect.bottom - m_resize_area_width) {
+        *result = HTBOTTOM;
+        return true;
+      }
+      if (y >= window_rect.top && y < window_rect.top + m_resize_area_width) {
+        *result = HTTOP;
+        return true;
       }
     }
     QPoint pos = m_title_bar->mapFromGlobal({x, y});
-    // TODO: review if there might not be a better way to check this
-    // or, can title bar handle dragging?
     if (m_title_bar->get_title_label()->geometry().contains(pos)) {
       *result = HTCAPTION;
       return true;
@@ -240,6 +224,7 @@ int main(int argc, char** argv) {
     make_svg_window_icon(":icons/spire-icon-black.svg"),
     make_svg_window_icon(":icons/spire-icon-grey.svg"));
   w->setWindowTitle("Spire Test Window");
+  w->resize(500, 500);
   w->show();
   application->exec();
 }
