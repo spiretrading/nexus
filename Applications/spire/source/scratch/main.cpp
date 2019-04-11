@@ -54,9 +54,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-
-  // TODO: verify winkey + up/down/left/right works correctly
-
   m_title_bar = new TitleBar(icon, unfocused_icon, this);
   m_container = new QWidget(this);
   auto container_layout = new QVBoxLayout(m_container);
@@ -223,11 +220,6 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
       }
     }
     return false;
-  } else if(msg->message == WM_NCLBUTTONDBLCLK) {
-    if(!window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
-      *result = 0;
-      return true;
-    }
   }
   return QMainWindow::nativeEvent(eventType, message, result);
 }
