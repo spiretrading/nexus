@@ -95,7 +95,7 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     m_title_bar->update_window_flags();
     //this line will get titlebar/thick frame/Aero back, which is exactly what we want
     //we will get rid of titlebar and thick frame again in nativeEvent() later
-    HWND hwnd = (HWND)this->winId();
+    auto hwnd = reinterpret_cast<HWND>(winId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
   } else {
@@ -103,13 +103,14 @@ void CFramelessWindow::setResizeable(bool resizeable) {
     if(m_title_bar != nullptr) {
       m_title_bar->update_window_flags();
     }
-    HWND hwnd = (HWND)this->winId();
+    auto hwnd = reinterpret_cast<HWND>(winId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
   }
   // this allows the drop shadow to draw
   const MARGINS shadow = { 1, 1, 1, 1 };
-  DwmExtendFrameIntoClientArea(HWND(winId()), &shadow);
+  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
+    &shadow);
 }
 
 void CFramelessWindow::changeEvent(QEvent* event) {
@@ -131,7 +132,7 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     return true;
   } else if(msg->message == WM_NCHITTEST) {
     RECT window_rect;
-    GetWindowRect(HWND(winId()), &window_rect);
+    GetWindowRect(reinterpret_cast<HWND>(winId()), &window_rect);
     long x = GET_X_LPARAM(msg->lParam);
     long y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
@@ -189,8 +190,7 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     }
     return false;
   } else if(msg->message == WM_GETMINMAXINFO) {
-    // using IsZoomed instead of isMaximized() because isMaximized()'s state 'lags'
-    if (::IsZoomed(HWND(winId()))) {
+    if (::IsZoomed(reinterpret_cast<HWND>(winId()))) {
       // TODO: calculate proper margins so this works on every monitor
       //auto margins = QMargins();
       //RECT frame = { 0, 0, 0, 0 };
