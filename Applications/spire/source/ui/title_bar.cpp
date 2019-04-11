@@ -106,7 +106,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
   update_window_flags();
-  window()->installEventFilter(this);
 }
 
 void TitleBar::set_icon(const QImage& icon) {

@@ -55,6 +55,7 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(icon, unfocused_icon, this);
+  installEventFilter(m_title_bar);
   m_container = new QWidget(this);
   auto container_layout = new QVBoxLayout(m_container);
   container_layout->setSpacing(0);
