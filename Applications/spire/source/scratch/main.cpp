@@ -27,10 +27,12 @@ class CFramelessWindow : public QMainWindow {
     bool isResizeable() { return m_is_resizeable; }
 
   protected:
+    void changeEvent(QEvent* event) override;
     bool nativeEvent(const QByteArray &eventType, void *message,
       long *result) override;
 
   private:
+    QWidget* m_container;
     TitleBar* m_title_bar;
     int m_resize_area_width;
     bool m_just_maximized;
@@ -56,23 +58,20 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   // TODO: verify winkey + up/down/left/right works correctly
 
   m_title_bar = new TitleBar(icon, unfocused_icon, this);
-  auto c = new QWidget(this);
-  auto c_layout = new QVBoxLayout(c);
-  c_layout->setSpacing(0);
-  c_layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-    scale_height(1));
-  c_layout->addWidget(m_title_bar);
-  auto label = new QLabel("Test Label", c);
+  m_container = new QWidget(this);
+  auto container_layout = new QVBoxLayout(m_container);
+  container_layout->setSpacing(0);
+  container_layout->setContentsMargins(scale_width(1), scale_height(1),
+    scale_width(1), scale_height(1));
+  container_layout->addWidget(m_title_bar);
+  auto label = new QLabel("Test Label", m_container);
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   label->setStyleSheet("background-color: rgb(226, 224, 255);");
-  c_layout->addWidget(label);
-  setCentralWidget(c);
+  container_layout->addWidget(label);
+  setCentralWidget(m_container);
   // TODO: why doesn't this work when installed directly in the TitleBar constructor?
   // is it possible that the widget that window() returns changes?
   window()->installEventFilter(m_title_bar);
-
-  // TODO: window border color on active/inactive
-  c->setStyleSheet("background-color: red;");
 
   // TODO: review current and previous cases related to Spire::Window issues
   // and verify that they're fixed with this window
@@ -80,8 +79,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   // TODO: fix the issue where the restored window is partly drawn on the left
   // screen while the window is maximized. This window segment can't be interacted
   // with so maybe it's possible to set its' background color to transparent if it can't be removed
-
-  // TODO: fix issue where far right of drag area doesn't activate click-drag
 
   // TODO: fix issue with aero snap where fixed-size windows can be maximized by dragging
   // them to the top of the screen
@@ -113,6 +110,16 @@ void CFramelessWindow::setResizeable(bool resizeable) {
   // this allows the drop shadow to draw
   const MARGINS shadow = { 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(HWND(winId()), &shadow);
+}
+
+void CFramelessWindow::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ActivationChange) {
+    if(isActiveWindow()) {
+      m_container->setStyleSheet("background-color: #A0A0A0;");
+    } else {
+      m_container->setStyleSheet("background-color: #C8C8C8;");
+    }
+  }
 }
 
 bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
