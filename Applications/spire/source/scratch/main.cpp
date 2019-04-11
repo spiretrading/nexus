@@ -52,7 +52,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
     Qt::WindowSystemMenuHint);
-  // TODO: verify window handles double-click of fixed size, maximum size windows
 
   // TODO: verify winkey + up/down/left/right works correctly
 
@@ -177,13 +176,14 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message, l
     QPoint pos = m_title_bar->mapFromGlobal({x, y});
     // TODO: review if there might not be a better way to check this
     // or, can title bar handle dragging?
-    if (m_title_bar->get_title_label()->rect().contains(pos)) {
+    if (m_title_bar->get_title_label()->geometry().contains(pos)) {
       *result = HTCAPTION;
       return true;
     }
     return false;
   } else if(msg->message == WM_GETMINMAXINFO) {
-    if (window()->isMaximized()) {
+    // using IsZoomed instead of isMaximized() because isMaximized()'s state 'lags'
+    if (::IsZoomed(HWND(winId()))) {
       // TODO: calculate proper margins so this works on every monitor
       //auto margins = QMargins();
       //RECT frame = { 0, 0, 0, 0 };
@@ -233,7 +233,8 @@ int main(int argc, char** argv) {
   w->setWindowTitle("Spire Test Window");
   w->resize(400, 600);
   // TODO: make it so windows with setFixedSize called don't need to also call setResizeable
-  w->setMaximumSize(1000, 1000);
+  //w->setMaximumSize(1000, 1000);
+  //w->setFixedSize(500, 500);
   // TODO: make it so this sequence doesn't break the window when they're called
   // out of order, maybe override setMaximumSize, setMaximumWidth, etc.
   w->setResizeable(true);
