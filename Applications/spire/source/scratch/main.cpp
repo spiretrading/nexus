@@ -66,22 +66,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   label->setStyleSheet("background-color: rgb(226, 224, 255);");
   container_layout->addWidget(label);
   setCentralWidget(m_container);
-
-  // TODO: review current and previous cases related to Spire::Window issues
-  // and verify that they're fixed with this window
-
-  // TODO: fix the issue where the restored window is partly drawn on the left
-  // screen while the window is maximized. This window segment can't be interacted
-  // with so maybe it's possible to set its' background color to transparent if it can't be removed
-
-  // TODO: fix issue with winkey + arrow key shortcuts break window. When the window is
-  // maximized and winkey + left is pressed, the window is snapped to the left of the
-  // screen but the margins aren't added. May have to overwrite the aero snap functionality
-  // with regards to keyboard shortcuts.
-  //
-  // there may be a hint when the window is 'maximized', but it's size doesn't match
-  // the size of the screen. If that's the case, then set the margins to 0.
-
   set_resizeable(m_is_resizeable);
 }
 
@@ -194,9 +178,14 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message,
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
       auto abs_pos = mapToGlobal(m_container->pos());
-      // TODO: fix this offset hack
       auto pos = QGuiApplication::screenAt(
         abs_pos + QPoint(100, 100))->geometry().topLeft();
+      // try y < 0;
+      //    then...
+      // try x < 0;
+      //   then...
+      // try both x and y < 0
+      //   then...
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
       setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
