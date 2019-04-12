@@ -8,6 +8,7 @@
 using namespace Spire;
 
 #include <QMainWindow>
+#include <QScreen>
 
 #include "spire/ui/icon_button.hpp"
 #include <qt_windows.h>
@@ -33,7 +34,6 @@ class CFramelessWindow : public QMainWindow {
     QWidget* m_container;
     TitleBar* m_title_bar;
     int m_resize_area_width;
-    bool m_just_maximized;
     bool m_is_resizeable;
 
     void set_resizeable(bool resizeable);
@@ -49,7 +49,6 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
     const QImage& unfocused_icon, QWidget *parent)
     : QMainWindow(parent),
       m_resize_area_width(5),
-      m_just_maximized(false),
       m_is_resizeable(true),
       m_title_bar(nullptr) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
@@ -79,6 +78,9 @@ CFramelessWindow::CFramelessWindow(const QImage& icon,
   // maximized and winkey + left is pressed, the window is snapped to the left of the
   // screen but the margins aren't added. May have to overwrite the aero snap functionality
   // with regards to keyboard shortcuts.
+  //
+  // there may be a hint when the window is 'maximized', but it's size doesn't match
+  // the size of the screen. If that's the case, then set the margins to 0.
 
   set_resizeable(m_is_resizeable);
 }
@@ -189,30 +191,18 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message,
       return true;
     }
     return false;
-  } else if(msg->message == WM_GETMINMAXINFO) {
-    if (::IsZoomed(reinterpret_cast<HWND>(winId()))) {
-      // TODO: calculate proper margins so this works on every monitor
-      //auto margins = QMargins();
-      //RECT frame = { 0, 0, 0, 0 };
-      //AdjustWindowRectEx(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0);
-
-      ////record frame area data
-      //double dpr = this->devicePixelRatioF();
-
-      //margins.setLeft(frame.left);
-      //margins.setTop(frame.bottom);
-      //margins.setRight(frame.right);
-      //margins.setBottom(frame.bottom);
-      //QMainWindow::setContentsMargins(margins);
-      QMainWindow::setContentsMargins(11, 11, 11, 11);
-      m_just_maximized = true;
-    } else {
-      if (m_just_maximized) {
-        setContentsMargins(0, 0, 0, 0);
-        m_just_maximized = false;
-      }
+  } else if(msg->message == WM_SIZE) {
+    if(msg->wParam == SIZE_MAXIMIZED) {
+      auto abs_pos = mapToGlobal(m_container->pos());
+      // TODO: fix this offset hack
+      auto pos = QGuiApplication::screenAt(
+        abs_pos + QPoint(100, 100))->geometry().topLeft();
+      pos = QPoint(std::abs(abs_pos.x() - pos.x()),
+        std::abs(abs_pos.y() - pos.y()));
+      setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
+    } else if(msg->wParam == SIZE_RESTORED) {
+      setContentsMargins({});
     }
-    return false;
   }
   return QMainWindow::nativeEvent(eventType, message, result);
 }
