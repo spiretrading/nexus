@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QVBoxLayout>
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
@@ -19,6 +20,30 @@ namespace {
     return imageFromSvg(icon_path, scale(26, 26),
       QRect(translate(8, 8), scale(10, 10)));
   }
+}
+
+Window::Window(QWidget *parent)
+    : QMainWindow(parent),
+      m_resize_area_width(5),
+      m_is_resizeable(true),
+      m_title_bar(nullptr) {
+  setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint |
+    Qt::WindowSystemMenuHint);
+  m_title_bar = new TitleBar(this);
+  set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
+  installEventFilter(m_title_bar);
+  m_container = new QWidget(this);
+  auto container_layout = new QVBoxLayout(m_container);
+  container_layout->setSpacing(0);
+  container_layout->setContentsMargins(scale_width(1), scale_height(1),
+    scale_width(1), scale_height(1));
+  container_layout->addWidget(m_title_bar);
+  auto label = new QLabel("Test Label", m_container);
+  label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  label->setStyleSheet("background-color: rgb(226, 224, 255);");
+  container_layout->addWidget(label);
+  setCentralWidget(m_container);
+  set_resizeable(m_is_resizeable);
 }
 
 void Window::set_icon(const QImage& icon) {
