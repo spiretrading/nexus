@@ -178,14 +178,8 @@ bool CFramelessWindow::nativeEvent(const QByteArray &eventType, void *message,
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
       auto abs_pos = mapToGlobal(m_container->pos());
-      auto pos = QGuiApplication::screenAt(
-        abs_pos + QPoint(100, 100))->geometry().topLeft();
-      // try y < 0;
-      //    then...
-      // try x < 0;
-      //   then...
-      // try both x and y < 0
-      //   then...
+      auto pos = QGuiApplication::screenAt(mapToGlobal({window()->width() / 2,
+        window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
         std::abs(abs_pos.y() - pos.y()));
       setContentsMargins(pos.x(), pos.y(), pos.x(), pos.y());
