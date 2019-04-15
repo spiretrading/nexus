@@ -29,7 +29,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new Window(m_body, this);
+  auto window = new Window(m_body);
   window->set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   this->window()->setWindowTitle(tr("Properties"));

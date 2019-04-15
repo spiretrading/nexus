@@ -7,6 +7,7 @@
 #include "spire/spire/resources.hpp"
 #include "spire/book_view_ui_tester/book_view_test_controller_window.hpp"
 #include "spire/book_view/book_view_window.hpp"
+#include "spire/ui/window.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;
@@ -41,9 +42,13 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance"));
-  auto window = new BookViewWindow(BookViewProperties(), Ref(model));
+  auto book_view = new BookViewWindow(BookViewProperties(), Ref(model));
+  auto window = new Window(book_view);
+  window->set_svg_icon(":icons/spire-icon-black.svg",
+    ":icons/spire-icon-grey.svg");
   window->show();
-  auto tester = new BookViewTestControllerWindow(window, timer_thread_pool);
+  auto tester = new BookViewTestControllerWindow(book_view,
+    timer_thread_pool);
   tester->show();
   tester->move(window->pos().x() + window->width() + 100,
     tester->pos().y());

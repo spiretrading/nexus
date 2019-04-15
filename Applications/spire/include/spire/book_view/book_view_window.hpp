@@ -27,9 +27,6 @@ namespace Spire {
       using ChangeSecuritySignal =
         Signal<void (const Nexus::Security& security)>;
 
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
-
       //! Constructs a book view window.
       /*!
         \param properties The display properties.
@@ -52,22 +49,15 @@ namespace Spire {
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
-      void closeEvent(QCloseEvent* event) override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
+      void contextMenuEvent(QContextMenuEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
       std::shared_ptr<BookViewModel> m_model;
       SecurityWidget* m_security_widget;
-      QWidget* m_body;
       QWidget* m_container_widget;
       QVBoxLayout* m_layout;
       TechnicalsPanel* m_technicals_panel;

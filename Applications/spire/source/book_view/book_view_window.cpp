@@ -27,29 +27,22 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
       m_technicals_panel(nullptr) {
-  m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(220, 280));
+  setMinimumSize(scale(220, 280));
+  // this doesn't work, window initially shows as minimum size
   resize(scale(220, 410));
-  m_body->setStyleSheet("background-color: #FFFFFF;");
-  auto window_layout = new QVBoxLayout(this);
-  window_layout->setContentsMargins({});
-  auto window = new Window(m_body, this);
   setWindowTitle(tr("Book View"));
-  window->set_svg_icon(":/icons/bookview-black.svg",
-    ":/icons/bookview-grey.svg");
   setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
-  window_layout->addWidget(window);
-  m_body->installEventFilter(this);
-  auto body_layout = new QVBoxLayout(m_body);
-  body_layout->setContentsMargins({});
-  body_layout->setSpacing(0);
+  auto layout = new QVBoxLayout(this);
+  layout->setSpacing(0);
+  layout->setContentsMargins({});
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  body_layout->addWidget(m_security_widget);
+  layout->addWidget(m_security_widget);
   m_container_widget = new QWidget(this);
   m_layout = new QVBoxLayout(m_container_widget);
   m_layout->setContentsMargins({});
   m_layout->setSpacing(0);
+  m_container_widget->hide();
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
@@ -66,6 +59,7 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
     m_quote_widgets_container_layout->setSpacing(0);
     m_layout->addWidget(m_quote_widgets_container);
     m_security_widget->set_widget(m_container_widget);
+    m_container_widget->show();
   } else {
     m_technicals_panel->reset_model();
   }
@@ -98,22 +92,8 @@ connection BookViewWindow::connect_security_change_signal(
   return m_security_widget->connect_change_security_signal(slot);
 }
 
-connection BookViewWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
-void BookViewWindow::closeEvent(QCloseEvent* event) {
-  m_closed_signal();
-}
-
-bool BookViewWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_body) {
-    if(event->type() == QEvent::ContextMenu) {
-      show_context_menu(static_cast<QContextMenuEvent*>(event)->globalPos());
-    }
-  }
-  return QWidget::eventFilter(watched, event);
+void BookViewWindow::contextMenuEvent(QContextMenuEvent* event) {
+  show_context_menu(event->globalPos());
 }
 
 void BookViewWindow::keyPressEvent(QKeyEvent* event) {
@@ -154,13 +134,15 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
 }
 
 void BookViewWindow::show_properties_dialog() {
-  BookViewPropertiesDialog dialog(get_properties(), Security(), this);
-  dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
-  m_security_widget->show_overlay_widget();
-  if(dialog.exec() == QDialog::Accepted) {
-    set_properties(dialog.get_properties());
-  }
-  m_security_widget->hide_overlay_widget();
+  //BookViewPropertiesDialog dialog(get_properties(), Security(), this);
+  //dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowMinimizeButtonHint
+  //  & ~Qt::WindowMaximizeButtonHint);
+  //dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
+  //m_security_widget->show_overlay_widget();
+  //if(dialog.exec() == QDialog::Accepted) {
+  //  set_properties(dialog.get_properties());
+  //}
+  //m_security_widget->hide_overlay_widget();
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {

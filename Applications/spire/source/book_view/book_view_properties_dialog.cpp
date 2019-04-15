@@ -27,7 +27,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   body->setStyleSheet("background-color: #F5F5F5;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new Window(body, this);
+  auto window = new Window(body);
   setWindowTitle(tr("Properties"));
   window->set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");

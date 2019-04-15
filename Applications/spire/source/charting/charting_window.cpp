@@ -44,7 +44,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_body->setStyleSheet("background-color: #FFFFFF;");
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  auto window = new Window(m_body, this);
+  auto window = new Window(m_body);
   setWindowTitle(tr("Chart"));
   window->set_svg_icon(":/icons/chart-black.svg",
     ":/icons/chart-grey.svg");

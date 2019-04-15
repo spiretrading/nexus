@@ -9,6 +9,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/title_bar.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -22,7 +23,7 @@ namespace {
   }
 }
 
-Window::Window(QWidget *parent)
+Window::Window(QWidget* body, QWidget *parent)
     : QMainWindow(parent),
       m_resize_area_width(5),
       m_is_resizeable(true),
@@ -38,10 +39,7 @@ Window::Window(QWidget *parent)
   container_layout->setContentsMargins(scale_width(1), scale_height(1),
     scale_width(1), scale_height(1));
   container_layout->addWidget(m_title_bar);
-  auto label = new QLabel("Test Label", m_container);
-  label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  label->setStyleSheet("background-color: rgb(226, 224, 255);");
-  container_layout->addWidget(label);
+  container_layout->addWidget(body);
   setCentralWidget(m_container);
   set_resizeable(m_is_resizeable);
 }
@@ -73,24 +71,23 @@ void Window::setFixedSize(const QSize& size) {
   QMainWindow::setFixedSize(size);
 }
 
-void Window::set_resizeable(bool resizeable) {
-  m_is_resizeable = resizeable;
-  if(m_is_resizeable) {
-    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(winId());
-    auto style = ::GetWindowLong(hwnd, GWL_STYLE);
-    ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME |
-      WS_CAPTION);
-  } else {
-    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(winId());
-    auto style = ::GetWindowLong(hwnd, GWL_STYLE);
-    ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
+void Window::setWindowFlag(Qt::WindowType flag, bool on) {
+  QMainWindow::setWindowFlag(flag, on);
+  if(m_title_bar != nullptr) {
+    m_title_bar->update_window_flags();
   }
-  m_title_bar->update_window_flags();
-  const auto shadow = MARGINS{ 1, 1, 1, 1 };
-  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
-    &shadow);
+}
+
+void Window::setWindowFlags(Qt::WindowFlags type) {
+  QMainWindow::setWindowFlags(type);
+  if(m_title_bar != nullptr) {
+    m_title_bar->update_window_flags();
+  }
+}
+
+connection Window::connect_closed_signal(
+    const ClosedSignal::slot_type& slot) const {
+  return m_closed_signal.connect(slot);
 }
 
 void Window::changeEvent(QEvent* event) {
@@ -101,6 +98,10 @@ void Window::changeEvent(QEvent* event) {
       m_container->setStyleSheet("background-color: #C8C8C8;");
     }
   }
+}
+
+void Window::closeEvent(QCloseEvent* event) {
+  m_closed_signal();
 }
 
 bool Window::nativeEvent(const QByteArray &eventType, void *message,
@@ -183,4 +184,24 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
     }
   }
   return QMainWindow::nativeEvent(eventType, message, result);
+}
+
+void Window::set_resizeable(bool resizeable) {
+  m_is_resizeable = resizeable;
+  if(m_is_resizeable) {
+    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
+    auto hwnd = reinterpret_cast<HWND>(winId());
+    auto style = ::GetWindowLong(hwnd, GWL_STYLE);
+    ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME |
+      WS_CAPTION);
+  } else {
+    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+    auto hwnd = reinterpret_cast<HWND>(winId());
+    auto style = ::GetWindowLong(hwnd, GWL_STYLE);
+    ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
+  }
+  m_title_bar->update_window_flags();
+  const auto shadow = MARGINS{ 1, 1, 1, 1 };
+  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
+    &shadow);
 }

@@ -23,7 +23,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto window_layout = new QHBoxLayout(this);
   window_layout->setContentsMargins({});
-  m_window = new Window(m_body, this);
+  m_window = new Window(this);
   m_window->set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":icons/toolbar-icon-256x256.png"));
