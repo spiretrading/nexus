@@ -13,6 +13,8 @@ IF NOT "%commit%" == "%beam_commit%" (
   git checkout %beam_commit%
 )
 CALL run_cmake.bat "-DD=%ROOT%"
+CALL Beam\build.bat Debug
+CALL Beam\build.bat Release
 POPD
 SET commit=
 ENDLOCAL
