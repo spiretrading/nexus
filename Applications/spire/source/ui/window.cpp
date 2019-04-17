@@ -69,11 +69,6 @@ void Window::setFixedSize(const QSize& size) {
   QWidget::setFixedSize(size);
 }
 
-connection Window::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
@@ -82,10 +77,6 @@ void Window::changeEvent(QEvent* event) {
       setStyleSheet("background-color: #C8C8C8;");
     }
   }
-}
-
-void Window::closeEvent(QCloseEvent* event) {
-  m_closed_signal();
 }
 
 bool Window::nativeEvent(const QByteArray &eventType, void *message,

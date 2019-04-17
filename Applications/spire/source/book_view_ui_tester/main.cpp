@@ -49,10 +49,10 @@ int main(int argc, char** argv) {
   window->show();
   auto tester = new BookViewTestControllerWindow(book_view,
     timer_thread_pool);
+  book_view->connect_closed_signal([=] { tester->close(); });
   tester->show();
   tester->move(window->pos().x() + window->width() + 100,
     tester->pos().y());
   window->activateWindow();
-  window->connect_closed_signal([=] { tester->close(); });
   application->exec();
 }

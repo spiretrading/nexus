@@ -9,9 +9,6 @@ namespace Spire {
   class Window : public QWidget {
     public:
 
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
-
       //! Constructs a Window.
       /*
         \param body The widget displayed within the window.
@@ -52,18 +49,12 @@ namespace Spire {
 
       void setFixedSize(const QSize& size);
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
       void changeEvent(QEvent* event) override;
-      void closeEvent(QCloseEvent* event) override;
       bool nativeEvent(const QByteArray &eventType, void *message,
         long *result) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;

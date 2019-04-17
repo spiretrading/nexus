@@ -30,6 +30,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   setMinimumSize(scale(220, 280));
   // this doesn't work, window initially shows as minimum size
   resize(scale(220, 410));
+  // these need to be set after the window is created, otherwise they're ignored
   setWindowTitle(tr("Book View"));
   setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
   auto layout = new QVBoxLayout(this);
@@ -38,18 +39,17 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
   layout->addWidget(m_security_widget);
-  m_container_widget = new QWidget(this);
-  m_layout = new QVBoxLayout(m_container_widget);
-  m_layout->setContentsMargins({});
-  m_layout->setSpacing(0);
-  m_container_widget->hide();
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   auto item_delegate = CustomVariantItemDelegate();
-  setWindowTitle(item_delegate.displayText(QVariant::fromValue(
+  window()->setWindowTitle(item_delegate.displayText(QVariant::fromValue(
     model->get_security()), QLocale()) + tr(" - Book View"));
   if(m_technicals_panel == nullptr) {
+    auto container_widget = new QWidget(this);
+    m_layout = new QVBoxLayout(container_widget);
+    m_layout->setContentsMargins({});
+    m_layout->setSpacing(0);
     m_technicals_panel = new TechnicalsPanel(this);
     m_layout->addWidget(m_technicals_panel);
     m_quote_widgets_container = new QWidget(this);
@@ -58,8 +58,7 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
     m_quote_widgets_container_layout->setContentsMargins({});
     m_quote_widgets_container_layout->setSpacing(0);
     m_layout->addWidget(m_quote_widgets_container);
-    m_security_widget->set_widget(m_container_widget);
-    m_container_widget->show();
+    m_security_widget->set_widget(container_widget);
   } else {
     m_technicals_panel->reset_model();
   }
@@ -87,9 +86,18 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
   }
 }
 
+connection BookViewWindow::connect_closed_signal(
+    const ClosedSignal::slot_type& slot) const {
+  return m_closed_signal.connect(slot);
+}
+
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
+}
+
+void BookViewWindow::closeEvent(QCloseEvent* event) {
+  m_closed_signal();
 }
 
 void BookViewWindow::contextMenuEvent(QContextMenuEvent* event) {
