@@ -11,6 +11,8 @@ include_directories(${NEXUS_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
 include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
+include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
+include_directories(SYSTEM ${MYSQLPP_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
@@ -24,6 +26,7 @@ if(MSVC)
   add_definitions(-DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
   add_definitions(-D_HAS_AUTO_PTR_ETC=1)
+  add_definitions(-DMYSQLPP_NO_DLL)
   add_definitions(-DNOMINMAX)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
   add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
@@ -57,6 +60,10 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(AdministrationServer
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${MYSQLPP_LIBRARY_DEBUG_PATH}
+  optimized ${MYSQLPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${MYSQL_LIBRARY_DEBUG_PATH}
+  optimized ${MYSQL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
@@ -76,5 +83,8 @@ if(UNIX)
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     dl pthread rt)
+endif()
+if(WIN32)
+  target_link_libraries(AdministrationServer shlwapi)
 endif()
 install(TARGETS AdministrationServer DESTINATION ${PWD}/Application)
