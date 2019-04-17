@@ -149,6 +149,13 @@ void TitleBar::update_window_flags() {
     window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
 }
 
+void TitleBar::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ParentChange) {
+    connect(window(), &QWidget::windowTitleChanged,
+      [=] (auto& title) {on_window_title_change(title);});
+  }
+}
+
 bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::WindowDeactivate) {
