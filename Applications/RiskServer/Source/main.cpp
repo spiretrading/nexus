@@ -26,7 +26,7 @@
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
-#include "RiskServer/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

@@ -20,7 +20,6 @@
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
 #include <Viper/MySql/Connection.hpp>
-#include "MarketDataServer/Version.hpp"
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/BufferedHistoricalDataStore.hpp"
@@ -29,6 +28,7 @@
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
 #include "Nexus/MarketDataService/SessionCachedHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

@@ -1,30 +1,30 @@
-#ifndef NEXUS_SERVICE_LOCATOR_WEB_SERVLET_HPP
-#define NEXUS_SERVICE_LOCATOR_WEB_SERVLET_HPP
+#ifndef NEXUS_DEFINITIONS_WEB_SERVLET_HPP
+#define NEXUS_DEFINITIONS_WEB_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "WebPortal/WebPortal/WebPortal.hpp"
-#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
-  //! Provides a web interface to the ServiceLocator.
-  class ServiceLocatorWebServlet : private boost::noncopyable {
+  //! Provides a web interface to the DefinitionsService.
+  class DefinitionsWebServlet : private boost::noncopyable {
     public:
 
-      //! Constructs a ServiceLocatorWebServlet.
+      //! Constructs a DefinitionsWebServlet.
       /*!
         \param sessions The available web sessions.
         \param serviceClients The clients used to access Spire services.
       */
-      ServiceLocatorWebServlet(Beam::Ref<
+      DefinitionsWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions,
         Beam::Ref<ApplicationServiceClients> serviceClients);
 
-      ~ServiceLocatorWebServlet();
+      ~DefinitionsWebServlet();
 
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
@@ -38,19 +38,17 @@ namespace Nexus::WebPortal {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      Beam::WebServices::HttpResponse OnLogin(
+      Beam::WebServices::HttpResponse OnLoadComplianceRuleSchemas(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLogout(
+      Beam::WebServices::HttpResponse OnLoadCountryDatabase(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadCurrentAccount(
+      Beam::WebServices::HttpResponse OnLoadCurrencyDatabase(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStorePassword(
+      Beam::WebServices::HttpResponse OnLoadDestinationDatabase(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSearchDirectoryEntry(
+      Beam::WebServices::HttpResponse OnLoadExchangeRates(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateAccount(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateGroup(
+      Beam::WebServices::HttpResponse OnLoadMarketDatabase(
         const Beam::WebServices::HttpRequest& request);
   };
 }

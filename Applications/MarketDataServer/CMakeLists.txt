@@ -15,7 +15,9 @@ include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
 include_directories(SYSTEM ${MYSQLPP_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
+include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
+include_directories(SYSTEM ${ZLIB_INCLUDE_PATH})
 link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
 if(MSVC)
@@ -69,7 +71,9 @@ target_link_libraries(MarketDataServer
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
-  optimized ${YAML_LIBRARY_OPTIMIZED_PATH})
+  optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
+  debug ${ZLIB_LIBRARY_DEBUG_PATH}
+  optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
   target_link_libraries(MarketDataServer
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}

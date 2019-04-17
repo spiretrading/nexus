@@ -1,4 +1,4 @@
-#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
 using namespace Beam::WebServices;

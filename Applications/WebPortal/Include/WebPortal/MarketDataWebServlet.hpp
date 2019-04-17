@@ -6,8 +6,8 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "WebPortal/WebPortal/WebPortal.hpp"
-#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 

@@ -1,8 +1,8 @@
-#include "WebPortal/WebPortal/ComplianceWebServlet.hpp"
+#include "WebPortal/ComplianceWebServlet.hpp"
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

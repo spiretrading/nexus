@@ -12,7 +12,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
-#include "WebPortal/WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortal.hpp"
 
 namespace Nexus::WebPortal {
 

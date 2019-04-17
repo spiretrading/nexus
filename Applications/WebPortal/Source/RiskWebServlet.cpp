@@ -1,10 +1,10 @@
-#include "WebPortal/WebPortal/RiskWebServlet.hpp"
+#include "WebPortal/RiskWebServlet.hpp"
 #include <algorithm>
 #include <Beam/Stomp/StompServer.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include "WebPortal/WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

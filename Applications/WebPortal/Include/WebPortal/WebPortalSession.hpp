@@ -6,7 +6,7 @@
 #include <Beam/WebServices/AuthenticatedSession.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
-#include "WebPortal/WebPortal/WebPortal.hpp"
+#include "WebPortal/WebPortal.hpp"
 
 namespace Nexus::WebPortal {
 

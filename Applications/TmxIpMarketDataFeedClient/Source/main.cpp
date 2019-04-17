@@ -31,7 +31,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpServiceAccessClient.hpp"
-#include "TmxIpMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

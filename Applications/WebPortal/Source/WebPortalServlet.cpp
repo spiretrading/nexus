@@ -1,4 +1,4 @@
-#include "WebPortal/WebPortal/WebPortalServlet.hpp"
+#include "WebPortal/WebPortalServlet.hpp"
 #include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>

@@ -23,7 +23,7 @@
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "SimulationMarketDataFeedClient/SimulationMarketDataFeedClient.hpp"
-#include "SimulationMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

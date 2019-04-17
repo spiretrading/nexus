@@ -29,7 +29,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "TmxTl1MarketDataFeedClient/TmxTl1MarketDataFeedClient.hpp"
 #include "TmxTl1MarketDataFeedClient/TmxTl1ServiceAccessClient.hpp"
-#include "TmxTl1MarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
