@@ -24,7 +24,7 @@ namespace {
 }
 
 Window::Window(QWidget* body, QWidget *parent)
-    : QMainWindow(parent),
+    : QWidget(parent),
       m_resize_area_width(5),
       m_is_resizeable(true),
       m_title_bar(nullptr) {
@@ -33,14 +33,12 @@ Window::Window(QWidget* body, QWidget *parent)
   m_title_bar = new TitleBar(this);
   set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
   installEventFilter(m_title_bar);
-  m_container = new QWidget(this);
-  auto container_layout = new QVBoxLayout(m_container);
-  container_layout->setSpacing(0);
-  container_layout->setContentsMargins(scale_width(1), scale_height(1),
+  auto layout = new QVBoxLayout(this);
+  layout->setSpacing(0);
+  layout->setContentsMargins(scale_width(1), scale_height(1),
     scale_width(1), scale_height(1));
-  container_layout->addWidget(m_title_bar);
-  container_layout->addWidget(body);
-  setCentralWidget(m_container);
+  layout->addWidget(m_title_bar);
+  layout->addWidget(body);
   set_resizeable(m_is_resizeable);
 }
 
@@ -68,21 +66,7 @@ void Window::setFixedSize(int width, int height) {
 
 void Window::setFixedSize(const QSize& size) {
   set_resizeable(false);
-  QMainWindow::setFixedSize(size);
-}
-
-void Window::setWindowFlag(Qt::WindowType flag, bool on) {
-  QMainWindow::setWindowFlag(flag, on);
-  if(m_title_bar != nullptr) {
-    m_title_bar->update_window_flags();
-  }
-}
-
-void Window::setWindowFlags(Qt::WindowFlags type) {
-  QMainWindow::setWindowFlags(type);
-  if(m_title_bar != nullptr) {
-    m_title_bar->update_window_flags();
-  }
+  QWidget::setFixedSize(size);
 }
 
 connection Window::connect_closed_signal(
@@ -93,9 +77,9 @@ connection Window::connect_closed_signal(
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
-      m_container->setStyleSheet("background-color: #A0A0A0;");
+      setStyleSheet("background-color: #A0A0A0;");
     } else {
-      m_container->setStyleSheet("background-color: #C8C8C8;");
+      setStyleSheet("background-color: #C8C8C8;");
     }
   }
 }
@@ -173,7 +157,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
     return false;
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
-      auto abs_pos = mapToGlobal(m_container->pos());
+      auto abs_pos = mapToGlobal(m_title_bar->pos());
       auto pos = QGuiApplication::screenAt(mapToGlobal({window()->width() / 2,
         window()->height() / 2}))->geometry().topLeft();
       pos = QPoint(std::abs(abs_pos.x() - pos.x()),
@@ -183,7 +167,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
       setContentsMargins({});
     }
   }
-  return QMainWindow::nativeEvent(eventType, message, result);
+  return QWidget::nativeEvent(eventType, message, result);
 }
 
 void Window::set_resizeable(bool resizeable) {

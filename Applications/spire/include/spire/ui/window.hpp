@@ -6,7 +6,7 @@
 namespace Spire {
 
   //! A customized window container for top-level windows.
-  class Window : public QMainWindow {
+  class Window : public QWidget {
     public:
 
       //! Signals that the window closed.
@@ -17,7 +17,7 @@ namespace Spire {
         \param body The widget displayed within the window.
         \param parent The window's parent widget.
       */
-      explicit Window(QWidget* m_body, QWidget* parent = nullptr);
+      explicit Window(QWidget* body, QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*
@@ -52,10 +52,6 @@ namespace Spire {
 
       void setFixedSize(const QSize& size);
 
-      void setWindowFlag(Qt::WindowType flag, bool on = true);
-
-      void setWindowFlags(Qt::WindowFlags type);
-
       //! Connects a slot to the window closed signal.
       boost::signals2::connection connect_closed_signal(
         const ClosedSignal::slot_type& slot) const;
@@ -68,7 +64,6 @@ namespace Spire {
 
     private:
       mutable ClosedSignal m_closed_signal;
-      QWidget* m_container;
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;
