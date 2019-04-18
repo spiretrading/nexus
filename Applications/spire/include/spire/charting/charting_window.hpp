@@ -5,16 +5,16 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays a financial chart.
-  class ChartingWindow : public QWidget {
+  class ChartingWindow : public Window {
     public:
 
       //! Signals a request to change the displayed security.
@@ -60,7 +60,6 @@ namespace Spire {
       std::shared_ptr<ChartModel> m_model;
       std::shared_ptr<TechnicalsModel> m_technicals_model;
       SecurityWidget* m_security_widget;
-      QWidget* m_body;
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;
