@@ -8,11 +8,12 @@
 #include "spire/toolbar/toolbar.hpp"
 #include "spire/toolbar/toolbar_menu.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays the toolbar window.
-  class ToolbarWindow : public QWidget {
+  class ToolbarWindow : public Window {
     public:
 
       //! Signals a window should be opened.
@@ -59,8 +60,6 @@ namespace Spire {
       mutable ReopenSignal m_reopen_signal;
       RecentlyClosedModel* m_model;
       std::vector<RecentlyClosedModel::Entry> m_entries;
-      Window* m_window;
-      QWidget* m_body;
       ToolbarMenu* m_window_manager_button;
       ToolbarMenu* m_recently_closed_button;
       IconButton* m_account_button;
