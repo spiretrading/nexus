@@ -13,11 +13,12 @@
 #include "spire/book_view/book_view_properties.hpp"
 #include "spire/ui/security_stack.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays a book view window.
-  class BookViewWindow : public QWidget {
+  class BookViewWindow : public Window {
     public:
 
       //! Signals a request to change the displayed security.
@@ -26,9 +27,6 @@ namespace Spire {
       */
       using ChangeSecuritySignal =
         Signal<void (const Nexus::Security& security)>;
-
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
 
       //! Constructs a book view window.
       /*!
@@ -48,21 +46,15 @@ namespace Spire {
       //! Sets the display properties.
       void set_properties(const BookViewProperties& properties);
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
     protected:
-      void closeEvent(QCloseEvent* event) override;
       void contextMenuEvent(QContextMenuEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       BookViewProperties m_properties;
       SecurityInputModel* m_input_model;
       std::shared_ptr<BookViewModel> m_model;

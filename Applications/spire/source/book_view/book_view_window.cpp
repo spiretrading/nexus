@@ -23,7 +23,7 @@ using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     Ref<SecurityInputModel> input_model, QWidget* parent)
-    : QWidget(parent),
+    : Window(parent),
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
       m_technicals_panel(nullptr) {
@@ -33,12 +33,9 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
   // these need to be set after the window is created, otherwise they're ignored
   setWindowTitle(tr("Book View"));
   setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
-  layout->setContentsMargins({});
   m_security_widget = new SecurityWidget(input_model,
     SecurityWidget::Theme::LIGHT, this);
-  layout->addWidget(m_security_widget);
+  layout()->addWidget(m_security_widget);
 }
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
@@ -86,18 +83,9 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
   }
 }
 
-connection BookViewWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
-}
-
-void BookViewWindow::closeEvent(QCloseEvent* event) {
-  m_closed_signal();
 }
 
 void BookViewWindow::contextMenuEvent(QContextMenuEvent* event) {
