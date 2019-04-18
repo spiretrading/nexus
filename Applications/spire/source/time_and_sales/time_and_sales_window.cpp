@@ -25,20 +25,16 @@ using namespace Spire;
 
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     Ref<SecurityInputModel> input_model, QWidget* parent)
-    : QWidget(parent),
+    : Window(parent),
       m_table(nullptr) {
-  m_body = new QWidget(this);
-  m_body->setMinimumSize(scale(180, 200));
+  setMinimumSize(scale(180, 200));
   resize(scale_width(180), scale_height(450));
-  m_body->setStyleSheet("background-color: #FFFFFF;");
-  auto window_layout = new QHBoxLayout(this);
-  window_layout->setContentsMargins({});
-  auto window = new Window(m_body);
+  setStyleSheet("background-color: #FFFFFF;");
   setWindowTitle(tr("Time and Sales"));
-  window->set_svg_icon(":/icons/time-sale-black.svg",
+  set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   setWindowIcon(QIcon(":icons/time-sales-icon-256x256.png"));
-  window_layout->addWidget(window);
+  m_body = new QWidget(this);
   auto layout = new QVBoxLayout(m_body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -65,6 +61,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
   set_model(std::make_shared<EmptyTimeAndSalesModel>(Security()));
   set_properties(properties);
   m_item_delegate = new CustomVariantItemDelegate(this);
+  Window::layout()->addWidget(m_body);
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {

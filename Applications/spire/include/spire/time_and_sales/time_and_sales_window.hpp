@@ -12,11 +12,12 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays a time and sales window.
-  class TimeAndSalesWindow : public QWidget {
+  class TimeAndSalesWindow : public Window {
     public:
 
       //! Signals a request to change the displayed security.
