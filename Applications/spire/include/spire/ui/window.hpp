@@ -17,7 +17,7 @@ namespace Spire {
         \param body The widget displayed within the window.
         \param parent The window's parent widget.
       */
-      explicit Window(QWidget* body, QWidget* parent = nullptr);
+      explicit Window(QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*

@@ -23,7 +23,7 @@ namespace {
   }
 }
 
-Window::Window(QWidget* body, QWidget *parent)
+Window::Window(QWidget *parent)
     : QWidget(parent),
       m_resize_area_width(5),
       m_is_resizeable(true),
@@ -38,7 +38,6 @@ Window::Window(QWidget* body, QWidget *parent)
   layout->setContentsMargins(scale_width(1), scale_height(1),
     scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);
-  layout->addWidget(body);
   set_resizeable(m_is_resizeable);
 }
 
