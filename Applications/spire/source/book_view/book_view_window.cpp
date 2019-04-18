@@ -28,9 +28,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_is_data_loaded(false),
       m_technicals_panel(nullptr) {
   setMinimumSize(scale(220, 280));
-  // this doesn't work, window initially shows as minimum size
   resize(scale(220, 410));
-  // these need to be set after the window is created, otherwise they're ignored
   setWindowTitle(tr("Book View"));
   setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
   m_security_widget = new SecurityWidget(input_model,
@@ -40,7 +38,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
 
 void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   auto item_delegate = CustomVariantItemDelegate();
-  window()->setWindowTitle(item_delegate.displayText(QVariant::fromValue(
+  setWindowTitle(item_delegate.displayText(QVariant::fromValue(
     model->get_security()), QLocale()) + tr(" - Book View"));
   if(m_technicals_panel == nullptr) {
     auto container_widget = new QWidget(this);
@@ -130,15 +128,15 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
 }
 
 void BookViewWindow::show_properties_dialog() {
-  //BookViewPropertiesDialog dialog(get_properties(), Security(), this);
-  //dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowMinimizeButtonHint
-  //  & ~Qt::WindowMaximizeButtonHint);
-  //dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
-  //m_security_widget->show_overlay_widget();
-  //if(dialog.exec() == QDialog::Accepted) {
-  //  set_properties(dialog.get_properties());
-  //}
-  //m_security_widget->hide_overlay_widget();
+  BookViewPropertiesDialog dialog(get_properties(), Security(), this);
+  dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowMinimizeButtonHint
+    & ~Qt::WindowMaximizeButtonHint);
+  dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
+  m_security_widget->show_overlay_widget();
+  if(dialog.exec() == QDialog::Accepted) {
+    set_properties(dialog.get_properties());
+  }
+  m_security_widget->hide_overlay_widget();
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {

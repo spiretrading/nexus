@@ -69,6 +69,20 @@ void Window::setFixedSize(const QSize& size) {
   QWidget::setFixedSize(size);
 }
 
+void Window::setWindowFlag(Qt::WindowType flag, bool on) {
+  QWidget::setWindowFlag(flag, on);
+  if(m_title_bar != nullptr) {
+    m_title_bar->update_window_flags();
+  }
+}
+
+void Window::setWindowFlags(Qt::WindowFlags type) {
+  QWidget::setWindowFlags(type);
+  if(m_title_bar != nullptr) {
+    m_title_bar->update_window_flags();
+  }
+}
+
 connection Window::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);

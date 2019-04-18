@@ -52,6 +52,10 @@ namespace Spire {
 
       void setFixedSize(const QSize& size);
 
+      void setWindowFlag(Qt::WindowType flag, bool on = true);
+
+      void setWindowFlags(Qt::WindowFlags type);
+
       //! Connects a slot to the window closed signal.
       boost::signals2::connection connect_closed_signal(
         const ClosedSignal::slot_type& slot) const;
