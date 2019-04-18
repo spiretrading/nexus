@@ -1,15 +1,15 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
-#include <QDialog>
 #include <QTabWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/book_view/book_view.hpp"
 #include "spire/book_view/book_view_properties.hpp"
+#include "spire/ui/dialog.hpp"
 
 namespace Spire {
 
   //! Displays the properties for a book view window.
-  class BookViewPropertiesDialog : public QDialog {
+  class BookViewPropertiesDialog : public Dialog {
     public:
 
       //! Signals that properties should be applied to the parent window.
