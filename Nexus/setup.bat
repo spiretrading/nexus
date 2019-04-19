@@ -1,22 +1,25 @@
 @ECHO OFF
 SETLOCAL
 SET ROOT="%cd%"
+SET BUILD_BEAM=
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
+  SET BUILD_BEAM=1
 )
 SET beam_commit="e82694fca1ec7336012998c5f0dbfe0468199680"
 PUSHD Beam
-FOR /f "usebackq tokens=*" %%a IN (`git log -1 ^| head -1 ^| awk "{ print $2 }"`) DO SET commit=%%a
-IF NOT "%commit%" == "%beam_commit%" (
+git merge-base --is-ancestor "%beam_commit%" HEAD
+IF NOT "%ERRORLEVEL%" == "0" (
   git checkout master
   git pull
-  git checkout %beam_commit%
+  git checkout "%beam_commit%"
+  SET BUILD_BEAM=1
 )
-CALL Beam\run_cmake.bat "-DD=%ROOT%"
-PUSHD Beam
-CALL build.bat Debug
-CALL build.bat Release
-POPD
+IF "%BUILD_BEAM%" == "1" (
+  CALL run_cmake.bat "-DD=%ROOT%"
+  CALL build.bat Debug
+  CALL build.bat Release
+)
 POPD
 SET commit=
 IF NOT EXIST qt-5.11.2 (
@@ -31,7 +34,7 @@ IF NOT EXIST qt-5.11.2 (
     SET CL=/MP
     nmake
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
-    copy NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
+    COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
   )
 )

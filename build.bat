@@ -26,7 +26,7 @@ EXIT /B %ERRORLEVEL%
 
 :build
 IF NOT EXIST "%~1" (
-  mkdir "%~1"
+  MD "%~1"
 )
 PUSHD "%~1"
 CALL "%~dp0%~1\build.bat" %~2 %~3 %~4 %~5 %~6 %~7

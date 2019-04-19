@@ -10,6 +10,7 @@ source_group("Form Files" FILES ${form_files})
 source_group("Generated Files\\Header Files" FILES ${generated_header_files})
 source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${PWD})
 add_library(UI ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
