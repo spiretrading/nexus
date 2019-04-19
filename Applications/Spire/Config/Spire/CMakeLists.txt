@@ -62,8 +62,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    imm32.lib winmm.lib ws2_32.lib opengl32.lib version.lib netapi32.lib
-    userenv.lib dwmapi.lib)
+    dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib version.lib
+    winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 if(UNIX)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")

@@ -10,6 +10,9 @@
 #include <QDesktopWidget>
 #include <QMessageBox>
 #include <QStandardPaths>
+#ifdef slots
+  #undef slots
+#endif
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
