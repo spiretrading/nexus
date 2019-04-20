@@ -1,7 +1,11 @@
 @ECHO OFF
 SETLOCAL
-printf "#define DEFINITIONS_SERVER_VERSION """> Version.hpp
-git --git-dir=%~dp0..\..\.git rev-list --count --first-parent HEAD | tr -d "\n\" >> Version.hpp
-printf """" >> Version.hpp
-printf "\n" >> Version.hpp
+IF NOT EXIST Version.hpp (
+  COPY NUL Version.hpp > NUL
+)
+FOR /f "usebackq tokens=*" %%a IN (`git --git-dir=%~dp0..\..\.git rev-list --count --first-parent HEAD`) DO SET VERSION=%%a
+findstr "%VERSION%" Version.hpp > NUL
+IF NOT "%ERRORLEVEL%" == "0" (
+  ECHO #define DEFINITIONS_SERVER_VERSION "%VERSION%"> Version.hpp
+)
 ENDLOCAL
