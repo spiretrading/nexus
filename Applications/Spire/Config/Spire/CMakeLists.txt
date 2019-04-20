@@ -14,6 +14,7 @@ else()
   set(resource_files "")
   set(manifest_files "")
 endif(WIN32)
+include_directories(${PWD})
 add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)

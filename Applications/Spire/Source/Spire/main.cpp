@@ -34,7 +34,7 @@
 #include "Spire/UI/LoginDialog.hpp"
 #include "Spire/UI/Toolbar.hpp"
 #include "Spire/UI/WindowSettings.hpp"
-#include "Spire/Version.hpp"
+#include "Version.hpp"
 #include <QtPlugin>
 
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)

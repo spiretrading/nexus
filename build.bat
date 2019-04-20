@@ -21,6 +21,16 @@ CALL:build Applications\TmxIpMarketDataFeedClient %*
 CALL:build Applications\TmxTl1MarketDataFeedClient %*
 CALL:build Applications\UtpMarketDataFeedClient %*
 CALL:build Applications\WebPortal %*
+
+IF NOT EXIST WebApi (
+  MD WebApi
+)
+IF NOT "%~dp0" == "%ROOT%\" (
+  robocopy "%~dp0WebApi" WebApi /E
+)
+PUSHD WebApi
+CALL build.bat %*
+POPD
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

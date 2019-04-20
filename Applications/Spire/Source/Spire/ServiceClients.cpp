@@ -21,7 +21,7 @@
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
-#include "Spire/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
