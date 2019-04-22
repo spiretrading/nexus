@@ -31,8 +31,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       BookViewPropertiesDialog(const BookViewProperties& properties,
-        const Nexus::Security& security, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        const Nexus::Security& security, QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       BookViewProperties get_properties() const;

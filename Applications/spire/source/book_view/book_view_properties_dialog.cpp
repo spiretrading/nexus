@@ -17,10 +17,11 @@ using namespace Spire;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
-    QWidget* parent, Qt::WindowFlags flags)
+    QWidget* parent)
     : Dialog(parent),
         m_last_focus_was_key(false) {
-  setWindowFlags(flags);
+  setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
+    & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
   setFixedSize(scale(492, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

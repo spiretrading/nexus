@@ -20,9 +20,10 @@ using PriceRange = TimeAndSalesProperties::PriceRange;
 using Columns = TimeAndSalesProperties::Columns;
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
-    const TimeAndSalesProperties& properties, QWidget* parent,
-    Qt::WindowFlags flags)
+    const TimeAndSalesProperties& properties, QWidget* parent)
     : Dialog(parent) {
+  setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
+    & ~Qt::WindowMaximizeButtonHint);
   setFixedSize(scale(462, 272));
   set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
