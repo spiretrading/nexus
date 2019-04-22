@@ -20,17 +20,15 @@ namespace {
   }
 }
 
-TitleBar::TitleBar(QWidget* body, QWidget* parent)
-    : TitleBar(QImage(), body, parent) {}
+TitleBar::TitleBar(QWidget* parent)
+    : TitleBar(QImage(), parent) {}
 
-TitleBar::TitleBar(const QImage& icon, QWidget* body, QWidget* parent)
-    : TitleBar(icon, icon, body, parent) {}
+TitleBar::TitleBar(const QImage& icon, QWidget* parent)
+    : TitleBar(icon, icon, parent) {}
 
 TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
-    QWidget* body, QWidget* parent)
-    : QWidget(parent),
-      m_is_dragging(false),
-      m_body(body) {
+    QWidget* parent)
+    : QWidget(parent) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);

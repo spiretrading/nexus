@@ -16,7 +16,7 @@ namespace Spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      explicit TitleBar(QWidget* body, QWidget* parent = nullptr);
+      explicit TitleBar(QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
@@ -25,7 +25,7 @@ namespace Spire {
                     when changing the window state.
         \param parent The parent widget.
       */
-      TitleBar(const QImage& icon, QWidget* body, QWidget* parent = nullptr);
+      TitleBar(const QImage& icon, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
@@ -36,7 +36,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       TitleBar(const QImage& icon, const QImage& unfocused_icon,
-        QWidget* body, QWidget* parent = nullptr);
+        QWidget* parent = nullptr);
 
       //! Sets the icon to display.
       /*!
@@ -74,10 +74,6 @@ namespace Spire {
       IconButton* m_maximize_button;
       IconButton* m_restore_button;
       IconButton* m_close_button;
-      bool m_is_dragging;
-      QPoint m_last_mouse_pos;
-      QWidget* m_body;
-      QRect m_restore_geometry;
 
       void on_window_title_change(const QString& title);
       void on_minimize_button_press();
