@@ -9,9 +9,6 @@ namespace Spire {
   class Dialog : public Window {
     public:
 
-      //! Signals that 
-      using StatusSignal = Signal<void ()>;
-
       //! Constructs a Dialog.
       /*
         \param parent The parent widget to the Dialog.

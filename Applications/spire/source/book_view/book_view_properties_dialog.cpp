@@ -20,6 +20,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     QWidget* parent, Qt::WindowFlags flags)
     : Dialog(parent),
         m_last_focus_was_key(false) {
+  setWindowFlags(flags);
   setWindowModality(Qt::WindowModal);
   setFixedSize(scale(492, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

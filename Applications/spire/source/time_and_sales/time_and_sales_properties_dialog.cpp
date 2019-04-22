@@ -22,20 +22,14 @@ using Columns = TimeAndSalesProperties::Columns;
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     const TimeAndSalesProperties& properties, QWidget* parent,
     Qt::WindowFlags flags)
-    : QDialog(parent, flags | Qt::FramelessWindowHint |
-        Qt::WindowCloseButtonHint) {
-  m_body = new QWidget(this);
-  m_body->setFixedSize(scale(462, 272));
-  m_body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  auto window_layout = new QHBoxLayout(this);
-  window_layout->setContentsMargins({});
-  auto window = new Window(m_body);
-  window->set_svg_icon(":/icons/time-sale-black.svg",
+    : Dialog(parent) {
+  setFixedSize(scale(462, 272));
+  set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
-  this->window()->setWindowTitle(tr("Properties"));
-  window_layout->addWidget(window);
-  m_body->setStyleSheet("background-color: #F5F5F5;");
-  auto layout = new QVBoxLayout(m_body);
+  setWindowTitle(tr("Properties"));
+  auto body = new QWidget(this);
+  body->setStyleSheet("background-color: #F5F5F5;");
+  auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
   layout->addStretch(10);
@@ -196,6 +190,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   buttons_layout->addWidget(buttons_widget);
   layout->addLayout(buttons_layout);
   layout->setStretchFactor(buttons_layout, 60);
+  Window::layout()->addWidget(body);
   set_properties(properties);
 }
 
