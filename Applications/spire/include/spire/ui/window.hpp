@@ -1,6 +1,6 @@
 #ifndef SPIRE_WINDOW_HPP
 #define SPIRE_WINDOW_HPP
-#include <QMainWindow>
+#include <QWidget>
 #include "spire/ui/ui.hpp"
 
 namespace Spire {
