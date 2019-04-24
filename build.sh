@@ -5,32 +5,38 @@ while [ -h "$source" ]; do
   source="$(readlink "$source")"
   [[ $source != /* ]] && source="$dir/$source"
 done
-directory="$(cd -P "$(dirname "$source" )" >/dev/null 2>&1 && pwd)"
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
 build_function() {
   if [ ! -d "$1" ]; then
     mkdir -p "$1"
   fi
   pushd "$1"
-  $directory/$1/build.sh "$@"
+  "$directory/$1/build.sh" "$@"
   popd
 }
 
 export -f build_function
 export directory
 
-build_function "Beam"
-targets+="Applications/AdminClient"
-targets+=" Applications/ClientTemplate"
-targets+=" Applications/DataStoreProfiler"
-targets+=" Applications/HttpFileServer"
-targets+=" Applications/QueryStressTest"
-targets+=" Applications/RegistryServer"
-targets+=" Applications/ServiceLocator"
-targets+=" Applications/ServiceProtocolProfiler"
-targets+=" Applications/ServletTemplate"
-targets+=" Applications/UidServer"
-targets+=" Applications/WebSocketEchoServer"
+build_function "Nexus"
+targets+=" Applications/AdministrationServer"
+targets+=" Applications/AsxItchMarketDataFeedClient"
+targets+=" Applications/ChartingServer"
+targets+=" Applications/ChiaMarketDataFeedClient"
+targets+=" Applications/ComplianceServer"
+targets+=" Applications/CseMarketDataFeedClient"
+targets+=" Applications/CtaMarketDataFeedClient"
+targets+=" Applications/MarketDataRelayServer"
+targets+=" Applications/MarketDataServer"
+targets+=" Applications/ReplayMarketDataFeedClient"
+targets+=" Applications/RiskServer"
+targets+=" Applications/SimulationMarketDataFeedClient"
+targets+=" Applications/SimulationOrderExecutionServer"
+targets+=" Applications/TmxIpMarketDataFeedClient"
+targets+=" Applications/TmxTl1MarketDataFeedClient"
+targets+=" Applications/UtpMarketDataFeedClient"
+targets+=" Applications/WebPortal"
 
 let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
 let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 4194304"
@@ -38,12 +44,12 @@ let jobs="$(($cores<$mem?$cores:$mem))"
 
 parallel -j$jobs --no-notice build_function ::: $targets
 
-pushd $directory/WebApi
-./build.sh
-popd
 if [ ! -d "WebApi" ]; then
   mkdir "WebApi"
 fi
 if [ "$root" != "$directory" ]; then
-  cp -r $directory/WebApi .
+  cp -r "$directory/WebApi" .
 fi
+pushd "WebApi"
+./build.sh "$@"
+popd
