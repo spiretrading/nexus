@@ -44,7 +44,6 @@ namespace Spire {
         const ReopenSignal::slot_type& slot) const;
 
     protected:
-      void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:

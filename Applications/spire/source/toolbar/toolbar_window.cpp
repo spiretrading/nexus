@@ -124,10 +124,6 @@ connection ToolbarWindow::connect_reopen_signal(
   return m_reopen_signal.connect(slot);
 }
 
-void ToolbarWindow::closeEvent(QCloseEvent* event) {
-  m_closed_signal();
-}
-
 void ToolbarWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(m_window_manager_button->hasFocus()) {
