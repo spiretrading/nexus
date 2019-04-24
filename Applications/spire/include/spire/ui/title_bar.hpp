@@ -48,8 +48,6 @@ namespace Spire {
       //! Returns the title text QLabel.
       QLabel* get_title_label() const;
 
-      void update_window_flags();
-
     protected:
       void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;

@@ -103,7 +103,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
-  update_window_flags();
 }
 
 void TitleBar::set_icon(const QImage& icon) {
@@ -138,15 +137,6 @@ QLabel* TitleBar::get_title_label() const {
   return m_title_label;
 }
 
-void TitleBar::update_window_flags() {
-  m_minimize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
-  m_maximize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
-  m_close_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
-}
-
 void TitleBar::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ParentChange) {
     connect(window(), &QWidget::windowTitleChanged,
@@ -172,6 +162,13 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
         }
         m_restore_button->hide();
       }
+    } else if(event->type() == QEvent::WinIdChange) {
+      m_minimize_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
+      m_maximize_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
+      m_close_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
     }
   }
   return QWidget::eventFilter(watched, event);

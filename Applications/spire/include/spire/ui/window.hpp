@@ -51,10 +51,6 @@ namespace Spire {
 
       void setFixedSize(const QSize& size);
 
-      void setWindowFlag(Qt::WindowType flag, bool on = true);
-
-      void setWindowFlags(Qt::WindowFlags type);
-
     protected:
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;

@@ -67,20 +67,6 @@ void Window::setFixedSize(const QSize& size) {
   QWidget::setFixedSize(size);
 }
 
-void Window::setWindowFlag(Qt::WindowType flag, bool on) {
-  QWidget::setWindowFlag(flag, on);
-  if(m_title_bar != nullptr) {
-    m_title_bar->update_window_flags();
-  }
-}
-
-void Window::setWindowFlags(Qt::WindowFlags type) {
-  QWidget::setWindowFlags(type);
-  if(m_title_bar != nullptr) {
-    m_title_bar->update_window_flags();
-  }
-}
-
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
@@ -199,7 +185,6 @@ void Window::set_resizeable(bool resizeable) {
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_THICKFRAME |
       WS_CAPTION);
   }
-  m_title_bar->update_window_flags();
   const auto shadow = MARGINS{ 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
     &shadow);
