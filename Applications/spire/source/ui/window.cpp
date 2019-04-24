@@ -38,7 +38,6 @@ Window::Window(QWidget *parent)
   layout->setContentsMargins(scale_width(1), scale_height(1),
     scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);
-  set_resizeable(m_is_resizeable);
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -101,6 +100,13 @@ void Window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }
 
+bool Window::event(QEvent* event) {
+  if(event->type() == QEvent::WinIdChange) {
+    set_resizeable(m_is_resizeable);
+  }
+  return QWidget::event(event);
+}
+
 bool Window::nativeEvent(const QByteArray &eventType, void *message,
     long *result) {
   MSG* msg = reinterpret_cast<MSG*>(message);
@@ -109,7 +115,7 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
     return true;
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT{};
-    GetWindowRect(reinterpret_cast<HWND>(winId()), &window_rect);
+    GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
@@ -187,18 +193,18 @@ void Window::set_resizeable(bool resizeable) {
   m_is_resizeable = resizeable;
   if(m_is_resizeable) {
     setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(winId());
+    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME |
       WS_CAPTION);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    auto hwnd = reinterpret_cast<HWND>(winId());
+    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX & ~WS_CAPTION);
   }
   m_title_bar->update_window_flags();
   const auto shadow = MARGINS{ 1, 1, 1, 1 };
-  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(winId()),
+  DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
     &shadow);
 }
