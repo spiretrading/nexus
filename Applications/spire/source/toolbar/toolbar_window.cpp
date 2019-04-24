@@ -15,11 +15,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint |
-    Qt::FramelessWindowHint | Qt::WindowCloseButtonHint);
-  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setFixedSize(scale(308, 98));
-  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":icons/toolbar-icon-256x256.png"));
