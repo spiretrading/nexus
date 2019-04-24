@@ -12,11 +12,12 @@
 #include "spire/time_and_sales/time_and_sales_window_model.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays a time and sales window.
-  class TimeAndSalesWindow : public QWidget {
+  class TimeAndSalesWindow : public Window {
     public:
 
       //! Signals a request to change the displayed security.
@@ -24,9 +25,6 @@ namespace Spire {
         \param s The security to display.
       */
       using ChangeSecuritySignal = Signal<void (const Nexus::Security& s)>;
-
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
 
       //! Constructs a time and sales window.
       /*!
@@ -50,17 +48,11 @@ namespace Spire {
       boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
-      void closeEvent(QCloseEvent* event) override;
       void contextMenuEvent(QContextMenuEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       TimeAndSalesProperties m_properties;
       boost::optional<TimeAndSalesWindowModel> m_model;
       SecurityWidget* m_security_widget;

@@ -20,17 +20,15 @@ namespace {
   }
 }
 
-TitleBar::TitleBar(QWidget* body, QWidget* parent)
-    : TitleBar(QImage(), body, parent) {}
+TitleBar::TitleBar(QWidget* parent)
+  : TitleBar(QImage(), parent) {}
 
-TitleBar::TitleBar(const QImage& icon, QWidget* body, QWidget* parent)
-    : TitleBar(icon, icon, body, parent) {}
+TitleBar::TitleBar(const QImage& icon, QWidget* parent)
+  : TitleBar(icon, icon, parent) {}
 
 TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
-    QWidget* body, QWidget* parent)
-    : QWidget(parent),
-      m_is_dragging(false),
-      m_body(body) {
+    QWidget* parent)
+    : QWidget(parent) {
   setFixedHeight(scale_height(26));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QHBoxLayout(this);
@@ -65,8 +63,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_minimize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_minimize_button->set_default_style("background-color: #F5F5F5;");
   m_minimize_button->set_hover_style("background-color: #EBEBEB;");
-  m_minimize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
   m_minimize_button->connect_clicked_signal(
     [=] { on_minimize_button_press(); });
   layout->addWidget(m_minimize_button);
@@ -78,8 +74,6 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_maximize_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_maximize_button->set_default_style("background-color: #F5F5F5;");
   m_maximize_button->set_hover_style("background-color: #EBEBEB;");
-  m_maximize_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
   m_maximize_button->connect_clicked_signal(
     [=] { on_maximize_button_press(); });
   layout->addWidget(m_maximize_button);
@@ -105,14 +99,10 @@ TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->set_default_style("background-color: #F5F5F5;");
   m_close_button->set_hover_style("background-color: #EBEBEB;");
-  m_close_button->setVisible(
-    window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   layout->addWidget(m_close_button);
   connect(window(), &QWidget::windowTitleChanged,
     [=] (auto& title) {on_window_title_change(title);});
-  window()->installEventFilter(this);
-  qApp->installNativeEventFilter(this);
 }
 
 void TitleBar::set_icon(const QImage& icon) {
@@ -143,28 +133,16 @@ void TitleBar::set_icon(const QImage& icon, const QImage& unfocused_icon) {
   m_icon->set_icon(m_default_icon, m_unfocused_icon);
 }
 
-#ifdef Q_OS_WIN
-bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
-    long* result) {
-  auto msg = static_cast<MSG*>(message);
-  if(msg->message == WM_SYSCOMMAND &&
-      reinterpret_cast<HWND>(window()->winId()) == msg->hwnd) {
-    if(msg->wParam == SC_MAXIMIZE) {
-      on_maximize_button_press();
-      return true;
-    } else if(msg->wParam == SC_RESTORE && !window()->isMinimized()) {
-      on_restore_button_press();
-      return true;
-    }
+QLabel* TitleBar::get_title_label() const {
+  return m_title_label;
+}
+
+void TitleBar::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ParentChange) {
+    connect(window(), &QWidget::windowTitleChanged,
+      [=] (auto& title) {on_window_title_change(title);});
   }
-  return false;
 }
-#else
-bool TitleBar::nativeEventFilter(const QByteArray& event_type, void* message,
-    long* result) {
-  return false;
-}
-#endif
 
 bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
@@ -179,97 +157,26 @@ bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
         m_maximize_button->hide();
         m_restore_button->show();
       } else {
-        m_maximize_button->show();
+        if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
+          m_maximize_button->show();
+        }
         m_restore_button->hide();
       }
+    } else if(event->type() == QEvent::WinIdChange) {
+      m_minimize_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowMinimizeButtonHint));
+      m_maximize_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint));
+      m_close_button->setVisible(
+        window()->windowFlags().testFlag(Qt::WindowCloseButtonHint));
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
-void TitleBar::mouseDoubleClickEvent(QMouseEvent* event) {
-  if(window()->windowFlags().testFlag(Qt::WindowMaximizeButtonHint)) {
-    if(window()->isMaximized()) {
-      on_restore_button_press();
-    } else {
-      on_maximize_button_press();
-    }
-  }
-}
-
-void TitleBar::mouseMoveEvent(QMouseEvent* event) {
-  if(!m_is_dragging) {
-    return;
-  }
-  if(window()->isMaximized()) {
-    drag_restore(event->globalPos());
-  } else {
-    auto delta = event->globalPos();
-    delta -= m_last_mouse_pos;
-    auto window_pos = window()->pos();
-    window_pos += delta;
-    m_last_mouse_pos = event->globalPos();
-    window()->move(window_pos);
-  }
-}
-
-void TitleBar::mousePressEvent(QMouseEvent* event)  {
-  if(m_is_dragging || event->button() != Qt::LeftButton) {
-    return;
-  }
-  m_is_dragging = true;
-  m_last_mouse_pos = event->globalPos();
-}
-
-void TitleBar::mouseReleaseEvent(QMouseEvent* event) {
-  if(event->button() != Qt::LeftButton) {
-    return;
-  }
-  m_is_dragging = false;
-}
-
 void TitleBar::resizeEvent(QResizeEvent* event) {
   on_window_title_change(window()->windowTitle());
 }
-
-#ifdef Q_OS_WIN
-void TitleBar::drag_restore(const QPoint& pos) {
-  WINDOWPLACEMENT placement;
-  placement.length = sizeof(WINDOWPLACEMENT);
-  GetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
-  auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
-  auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
-  auto new_pos = QPoint(pos.x() - (m_restore_geometry.width() / 2), 0);
-  if(mouse_screen_x - (m_restore_geometry.width() / 2) < 0) {
-    new_pos.setX(mouse_screen_pos.left());
-  } else if(mouse_screen_x + (m_restore_geometry.width() / 2) >
-      mouse_screen_pos.width()) {
-    new_pos.setX(mouse_screen_pos.right() - m_restore_geometry.width());
-  }
-  placement.rcNormalPosition.left = new_pos.x();
-  placement.rcNormalPosition.top = mouse_screen_pos.y() - (height() / 2);
-  placement.rcNormalPosition.right = new_pos.x() +
-    m_restore_geometry.width();
-  placement.rcNormalPosition.bottom = m_restore_geometry.height() -
-    (height() / 2);
-  placement.showCmd = SW_RESTORE;
-  SetWindowPlacement(reinterpret_cast<HWND>(window()->winId()), &placement);
-  on_restore_button_press();
-}
-#else
-void TitleBar::drag_restore(const QPoint& pos) {
-  on_restore_button_press();
-  auto mouse_screen_pos = QApplication::desktop()->screenGeometry(pos);
-  auto mouse_screen_x = pos.x() - mouse_screen_pos.left();
-  auto new_pos = QPoint(pos.x() - (window()->width() / 2), 0);
-  if(mouse_screen_x - (width() / 2) < 0) {
-    new_pos.setX(mouse_screen_pos.left());
-  } else if(mouse_screen_x + width() > mouse_screen_pos.width()) {
-    new_pos.setX(mouse_screen_pos.right() - width());
-  }
-  window()->move(new_pos);
-}
-#endif
 
 void TitleBar::on_window_title_change(const QString& title) {
   QFontMetrics metrics(m_title_label->font());
@@ -283,7 +190,6 @@ void TitleBar::on_minimize_button_press() {
 }
 
 void TitleBar::on_maximize_button_press() {
-  m_restore_geometry = window()->geometry();
   window()->showMaximized();
 }
 

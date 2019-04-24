@@ -4,12 +4,13 @@
 #include <QListWidget>
 #include "spire/time_and_sales/time_and_sales.hpp"
 #include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "spire/ui/dialog.hpp"
 #include "spire/ui/ui.hpp"
 
 namespace Spire {
 
   //! Displays the properties for a time and sales window.
-  class TimeAndSalesPropertiesDialog : public QDialog {
+  class TimeAndSalesPropertiesDialog : public Dialog {
     public:
 
       //! Signals that properties should be applied to the parent window.
@@ -28,11 +29,9 @@ namespace Spire {
       /*!
         \param properties The properties to modify.
         \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
       */
       explicit TimeAndSalesPropertiesDialog(
-        const TimeAndSalesProperties& properties, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = 0);
+        const TimeAndSalesProperties& properties, QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       TimeAndSalesProperties get_properties() const;
@@ -58,7 +57,6 @@ namespace Spire {
       mutable ApplyAllSignal m_apply_all_signal;
       mutable SaveDefaultSignal m_save_default_signal;
       TimeAndSalesProperties m_properties;
-      QWidget* m_body;
       QListWidget* m_band_list;
       FlatButton* m_band_color_button;
       FlatButton* m_text_color_button;

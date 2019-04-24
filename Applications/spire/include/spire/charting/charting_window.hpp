@@ -5,16 +5,16 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "spire/charting/charting.hpp"
 #include "spire/security_input/security_input.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays a financial chart.
-  class ChartingWindow : public QWidget {
+  class ChartingWindow : public Window {
     public:
 
       //! Signals a request to change the displayed security.
@@ -23,9 +23,6 @@ namespace Spire {
       */
       using ChangeSecuritySignal =
         Signal<void (const Nexus::Security& security)>;
-
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
 
       //! Constructs a charting window.
       /*!
@@ -47,20 +44,14 @@ namespace Spire {
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       std::shared_ptr<ChartModel> m_model;
       std::shared_ptr<TechnicalsModel> m_technicals_model;
       SecurityWidget* m_security_widget;
-      QWidget* m_body;
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
       DropdownMenu* m_period_dropdown;

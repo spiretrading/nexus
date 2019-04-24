@@ -18,6 +18,9 @@ namespace Spire {
       BookViewTestControllerWindow(BookViewWindow* window,
         Beam::Threading::TimerThreadPool& thread_timer_pool);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       BookViewWindow* m_window;
       std::shared_ptr<RandomBookViewModel> m_model;

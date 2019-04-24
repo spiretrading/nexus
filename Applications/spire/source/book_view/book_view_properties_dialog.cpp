@@ -17,26 +17,24 @@ using namespace Spire;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
-    QWidget* parent, Qt::WindowFlags flags)
-    : QDialog(parent, flags | Qt::FramelessWindowHint |
-        Qt::WindowCloseButtonHint),
-        m_last_focus_was_key(false) {
+    QWidget* parent)
+    : Dialog(parent),
+      m_last_focus_was_key(false) {
+  setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
+    & ~Qt::WindowMaximizeButtonHint);
+  setWindowModality(Qt::WindowModal);
+  setFixedSize(scale(492, 394));
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
-  body->setFixedSize(scale(492, 394));
-  body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   body->setStyleSheet("background-color: #F5F5F5;");
-  auto window_layout = new QHBoxLayout(this);
-  window_layout->setContentsMargins({});
-  auto window = new Window(body, this);
   setWindowTitle(tr("Properties"));
-  window->set_svg_icon(":/icons/bookview-black.svg",
+  set_svg_icon(":/icons/bookview-black.svg",
     ":/icons/bookview-grey.svg");
-  window_layout->addWidget(window);
   auto layout = new QVBoxLayout(body);
   layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
     0);
   layout->setSpacing(0);
-  m_tab_widget = new QTabWidget(body);
+  m_tab_widget = new QTabWidget(this);
   m_tab_widget->tabBar()->setFixedHeight(scale_height(40));
   m_tab_widget->setStyleSheet(QString(R"(
     QWidget {
@@ -88,6 +86,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   connect(m_tab_widget->tabBar(), &QTabBar::tabBarClicked, this,
     &BookViewPropertiesDialog::on_tab_bar_clicked);
   auto button_group_widget = new PropertiesWindowButtonsWidget(this);
+  layout->addWidget(button_group_widget);
   button_group_widget->connect_apply_signal(
     [=] { m_apply_signal(get_properties()); });
   button_group_widget->connect_apply_to_all_signal(
@@ -96,7 +95,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   button_group_widget->connect_ok_signal([=] { accept(); });
   button_group_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(get_properties()); });
-  layout->addWidget(button_group_widget);
+  Window::layout()->addWidget(body);
 }
 
 BookViewProperties BookViewPropertiesDialog::get_properties() const {

@@ -31,29 +31,24 @@ namespace {
 
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     QWidget* parent)
-    : QWidget(parent),
+    : Window(parent),
       m_is_mouse_dragging(false),
       m_security_widget_container(nullptr),
       m_technicals_panel(nullptr),
       m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
-  m_body = new QWidget(this);
-  m_body->installEventFilter(this);
-  m_body->setMinimumSize(scale(400, 320));
-  m_body->resize(scale(400, 320));
-  m_body->setStyleSheet("background-color: #FFFFFF;");
-  auto window_layout = new QHBoxLayout(this);
-  window_layout->setContentsMargins({});
-  auto window = new Window(m_body, this);
-  setWindowTitle(tr("Chart"));
-  window->set_svg_icon(":/icons/chart-black.svg",
+  setMinimumSize(scale(400, 320));
+  resize(scale(400, 320));
+  set_svg_icon(":/icons/chart-black.svg",
     ":/icons/chart-grey.svg");
   setWindowIcon(QIcon(":/icons/chart-icon-256x256.png"));
-  window_layout->addWidget(window);
-  auto layout = new QVBoxLayout(m_body);
+  setWindowTitle(tr("Chart"));
+  auto body = new QWidget(this);
+  body->setStyleSheet("background-color: #FFFFFF;");
+  auto layout = new QVBoxLayout(body);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  m_button_header_widget = new QWidget(m_body);
+  m_button_header_widget = new QWidget(body);
   m_button_header_widget->setFixedHeight(scale_height(46));
   m_button_header_widget->setStyleSheet("background-color: #F5F5F5;");
   auto button_header_layout = new QHBoxLayout(m_button_header_widget);
@@ -142,6 +137,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   setTabOrder(m_auto_scale_button, draw_line_button);
   setTabOrder(draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
+  Window::layout()->addWidget(body);
 }
 
 void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
@@ -166,11 +162,6 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
 connection ChartingWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
-}
-
-connection ChartingWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
 }
 
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
@@ -224,10 +215,6 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     } else if(event->type() == QEvent::HoverEnter) {
       auto e = static_cast<QHoverEvent*>(event);
       m_chart->set_crosshair(e->pos());
-    }
-  } else if(object == m_body) {
-    if(event->type() == QEvent::MouseButtonPress) {
-      m_body->setFocus();
     }
   }
   return QWidget::eventFilter(object, event);

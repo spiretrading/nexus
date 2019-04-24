@@ -8,11 +8,12 @@
 #include "spire/toolbar/toolbar.hpp"
 #include "spire/toolbar/toolbar_menu.hpp"
 #include "spire/ui/ui.hpp"
+#include "spire/ui/window.hpp"
 
 namespace Spire {
 
   //! Displays the toolbar window.
-  class ToolbarWindow : public QWidget {
+  class ToolbarWindow : public Window {
     public:
 
       //! Signals a window should be opened.
@@ -20,9 +21,6 @@ namespace Spire {
         \param w The type of window to open.
       */
       using OpenSignal = Signal<void (RecentlyClosedModel::Type w)>;
-
-      //! Signals that this window has closed.
-      using ClosedSignal = Signal<void ()>;
 
       //! Signals that a recently closed window should be re-opened.
       using ReopenSignal = Signal<void (const RecentlyClosedModel::Entry& w)>;
@@ -41,26 +39,18 @@ namespace Spire {
       boost::signals2::connection connect_open_signal(
         const OpenSignal::slot_type& slot) const;
 
-      //! Connects a slot to the closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
       //! Connects a slot to the reopen window signal.
       boost::signals2::connection connect_reopen_signal(
         const ReopenSignal::slot_type& slot) const;
 
     protected:
-      void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable OpenSignal m_open_signal;
-      mutable ClosedSignal m_closed_signal;
       mutable ReopenSignal m_reopen_signal;
       RecentlyClosedModel* m_model;
       std::vector<RecentlyClosedModel::Entry> m_entries;
-      Window* m_window;
-      QWidget* m_body;
       ToolbarMenu* m_window_manager_button;
       ToolbarMenu* m_recently_closed_button;
       IconButton* m_account_button;
