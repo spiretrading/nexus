@@ -17,6 +17,7 @@ TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
     TimeAndSalesWindow* window, TimerThreadPool& timer_thread_pool)
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
+  m_window->installEventFilter(this);
   m_window->connect_change_security_signal(
     [=] (const auto& s) { security_changed(s); });
   m_model = std::make_shared<PeriodicTimeAndSalesModel>(Security(),
@@ -72,6 +73,14 @@ TimeAndSalesTestControllerWindow::TimeAndSalesTestControllerWindow(
   connect(m_all_data_loaded_check_box, &QCheckBox::toggled, this,
     &TimeAndSalesTestControllerWindow::update_data_loaded_check_box);
   layout->addWidget(m_all_data_loaded_check_box, 4, 1);
+}
+
+bool TimeAndSalesTestControllerWindow::eventFilter(QObject* watched,
+    QEvent* event) {
+  if(event->type() == QEvent::Close) {
+    close();
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TimeAndSalesTestControllerWindow::security_changed(

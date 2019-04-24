@@ -18,6 +18,9 @@ namespace Spire {
       TimeAndSalesTestControllerWindow(TimeAndSalesWindow* window,
         Beam::Threading::TimerThreadPool& timer_thread_pool);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       TimeAndSalesWindow* m_window;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;

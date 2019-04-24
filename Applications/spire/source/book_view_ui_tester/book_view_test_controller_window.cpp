@@ -13,6 +13,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
     : m_window(window),
       m_timer_thread_pool(&timer_thread_pool) {
   setFixedSize(scale(250, 300));
+  m_window->installEventFilter(this);
   m_window->connect_security_change_signal(
     [=] (const auto& s) { on_security_changed(s); });
   auto layout = new QGridLayout(this);
@@ -68,6 +69,14 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
   layout->addWidget(m_submit_button, 8, 1);
   connect(m_submit_button, &QPushButton::clicked, this,
     &BookViewTestControllerWindow::on_submit);
+}
+
+bool BookViewTestControllerWindow::eventFilter(QObject* watched,
+    QEvent* event) {
+  if(event->type() == QEvent::Close) {
+    close();
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void BookViewTestControllerWindow::on_security_changed(
