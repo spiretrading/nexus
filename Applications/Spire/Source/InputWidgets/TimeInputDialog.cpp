@@ -18,8 +18,9 @@ namespace {
   const auto UPDATE_INTERVAL = 1000;
 
   QTime PosixTimeToQTime(const time_duration& value) {
-    QTime qTime(value.hours(), value.minutes(), value.seconds(),
-      value.fractional_seconds() / 1000);
+    QTime qTime(static_cast<int>(value.hours()),
+      static_cast<int>(value.minutes()), static_cast<int>(value.seconds()),
+      static_cast<int>(value.fractional_seconds()) / 1000);
     return qTime;
   }
 }
