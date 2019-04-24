@@ -96,15 +96,6 @@ connection TimeAndSalesWindow::connect_change_security_signal(
   return m_security_widget->connect_change_security_signal(slot);
 }
 
-connection TimeAndSalesWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
-void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
-  m_closed_signal();
-}
-
 void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
   auto contents = m_body->layout()->itemAt(1)->widget();
   QRect widget_geometry(contents->mapToGlobal(contents->geometry().topLeft()),

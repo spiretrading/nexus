@@ -24,9 +24,6 @@ namespace Spire {
       using ChangeSecuritySignal =
         Signal<void (const Nexus::Security& security)>;
 
-      //! Signals that the window closed.
-      using ClosedSignal = Signal<void ()>;
-
       //! Constructs a charting window.
       /*!
         \param input_model The SecurityInputModel to use for autocomplete.
@@ -47,16 +44,11 @@ namespace Spire {
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
-      //! Connects a slot to the window closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClosedSignal m_closed_signal;
       std::shared_ptr<ChartModel> m_model;
       std::shared_ptr<TechnicalsModel> m_technicals_model;
       SecurityWidget* m_security_widget;

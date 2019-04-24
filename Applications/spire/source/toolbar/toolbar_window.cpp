@@ -119,11 +119,6 @@ connection ToolbarWindow::connect_open_signal(
   return m_open_signal.connect(slot);
 }
 
-connection ToolbarWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 connection ToolbarWindow::connect_reopen_signal(
     const ReopenSignal::slot_type& slot) const {
   return m_reopen_signal.connect(slot);

@@ -22,9 +22,6 @@ namespace Spire {
       */
       using OpenSignal = Signal<void (RecentlyClosedModel::Type w)>;
 
-      //! Signals that this window has closed.
-      using ClosedSignal = Signal<void ()>;
-
       //! Signals that a recently closed window should be re-opened.
       using ReopenSignal = Signal<void (const RecentlyClosedModel::Entry& w)>;
 
@@ -42,10 +39,6 @@ namespace Spire {
       boost::signals2::connection connect_open_signal(
         const OpenSignal::slot_type& slot) const;
 
-      //! Connects a slot to the closed signal.
-      boost::signals2::connection connect_closed_signal(
-        const ClosedSignal::slot_type& slot) const;
-
       //! Connects a slot to the reopen window signal.
       boost::signals2::connection connect_reopen_signal(
         const ReopenSignal::slot_type& slot) const;
@@ -56,7 +49,6 @@ namespace Spire {
 
     private:
       mutable OpenSignal m_open_signal;
-      mutable ClosedSignal m_closed_signal;
       mutable ReopenSignal m_reopen_signal;
       RecentlyClosedModel* m_model;
       std::vector<RecentlyClosedModel::Entry> m_entries;

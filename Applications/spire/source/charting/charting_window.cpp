@@ -165,11 +165,6 @@ connection ChartingWindow::connect_security_change_signal(
   return m_security_widget->connect_change_security_signal(slot);
 }
 
-connection ChartingWindow::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
