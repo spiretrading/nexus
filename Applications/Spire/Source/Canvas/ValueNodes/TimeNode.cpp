@@ -14,7 +14,8 @@ namespace {
   string GetDisplayText(const time_duration& value) {
     QTime timeDisplay(0, 0, 0, 0);
     auto localTime = ToLocalTime(value);
-    timeDisplay = timeDisplay.addMSecs(localTime.total_milliseconds());
+    timeDisplay = timeDisplay.addMSecs(
+      static_cast<int>(localTime.total_milliseconds()));
     return timeDisplay.toString("hh:mm:ss.zzz").toStdString();
   }
 }

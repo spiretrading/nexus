@@ -15,6 +15,7 @@ add_definitions(-DBEAM_BUILD_DLL)
 add_definitions(-DBEAM_ENABLE_STACK_PRINT)
 
 if(MSVC)
+  add_definitions(-DHAVE_SNPRINTF)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd" LINK_FLAGS /SAFESEH:NO
     LINK_FLAGS_RELEASE /LTCG)
 endif()

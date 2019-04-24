@@ -226,7 +226,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
   for(auto i = destinations.begin(); i != destinations.end(); ++i) {
     editor->addItem(QString::fromStdString(i->m_id));
     if(i->m_id == node.GetValue()) {
-      editor->setCurrentIndex(distance(destinations.begin(), i));
+      editor->setCurrentIndex(std::distance(destinations.begin(), i));
     }
   }
   if(m_event != nullptr) {
@@ -239,7 +239,8 @@ void OpenEditorCanvasNodeVisitor::Visit(const DurationNode& node) {
   auto editor = new QTimeEdit();
   editor->setDisplayFormat("hh:mm:ss.zzz");
   QTime timeDisplay(0, 0, 0, 0);
-  timeDisplay = timeDisplay.addMSecs(node.GetValue().total_milliseconds());
+  timeDisplay = timeDisplay.addMSecs(
+    static_cast<int>(node.GetValue().total_milliseconds()));
   if(m_event != nullptr && m_event->type() == QEvent::KeyPress) {
     QString text;
     auto keyEvent = static_cast<QKeyEvent*>(m_event);

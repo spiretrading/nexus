@@ -6,7 +6,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="e82694fca1ec7336012998c5f0dbfe0468199680"
+SET beam_commit="26d51c9ceda29ca5c9444a792ae3f844d006426b"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -16,7 +16,7 @@ IF NOT "%ERRORLEVEL%" == "0" (
   SET BUILD_BEAM=1
 )
 IF "%BUILD_BEAM%" == "1" (
-  CALL run_cmake.bat "-DD=%ROOT%"
+  CALL configure.bat "-DD=%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
 )

@@ -45,7 +45,7 @@ CanvasNodeProtectionDialog::CanvasNodeProtectionDialog(const CanvasNode& node,
       ++proxies;
       continue;
     }
-    auto row = distance(children.begin(), i) - proxies;
+    auto row = std::distance(children.begin(), i) - proxies;
     auto nodeName = i->GetName();
     replace_all(nodeName, "\\.", ".");
     auto nameItem = new QTableWidgetItem(QString::fromStdString(nodeName));
@@ -99,7 +99,7 @@ void CanvasNodeProtectionDialog::OnButtonClicked(QAbstractButton* button) {
         ++proxies;
         continue;
       }
-      auto row = distance(children.begin(), i) - proxies;
+      auto row = std::distance(children.begin(), i) - proxies;
       auto hiddenCheckBox = qobject_cast<QCheckBox*>(
         static_cast<QWidgetItem*>(m_ui->m_protectionTable->cellWidget(row,
         HIDDEN_COLUMN)->layout()->itemAt(1))->widget());

@@ -11,7 +11,8 @@ using namespace std;
 namespace {
   string GetDisplayText(const time_duration& value) {
     QTime timeDisplay(0, 0, 0, 0);
-    timeDisplay = timeDisplay.addMSecs(value.total_milliseconds());
+    timeDisplay = timeDisplay.addMSecs(
+      static_cast<int>(value.total_milliseconds()));
     return timeDisplay.toString("hh:mm:ss.zzz").toStdString();
   }
 }

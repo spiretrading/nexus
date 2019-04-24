@@ -76,8 +76,8 @@ void RiskWidget::SetModel(const std::shared_ptr<RiskModel>& model) {
   m_ui->m_netLossInput->setSuffix(QString::fromStdString(
     string{" "} + currency.m_code.GetData()));
   QTime timeDisplay(0, 0, 0, 0);
-  timeDisplay = timeDisplay.addMSecs(
-    m_model->GetRiskParameters().m_transitionTime.total_milliseconds());
+  timeDisplay = timeDisplay.addMSecs(static_cast<int>(
+    m_model->GetRiskParameters().m_transitionTime.total_milliseconds()));
   m_ui->m_transitionTimeInput->setTime(timeDisplay);
 }
 
@@ -91,7 +91,7 @@ void RiskWidget::Commit() {
     Money{Quantity{m_ui->m_netLossInput->value()}};
 
   // TODO
-  m_model->GetRiskParameters().m_lossFromTop = 1.0;
+  m_model->GetRiskParameters().m_lossFromTop = 1;
   auto transitionTime = m_ui->m_transitionTimeInput->time();
   m_model->GetRiskParameters().m_transitionTime = hours(transitionTime.hour()) +
     minutes(transitionTime.minute()) + seconds(transitionTime.second()) +

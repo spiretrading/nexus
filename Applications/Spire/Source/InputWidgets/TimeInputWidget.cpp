@@ -47,7 +47,8 @@ void TimeInputWidget::SetTime(time_duration time) {
   m_time = std::move(time);
   QTime timeDisplay{0, 0, 0, 0};
   auto localTime = ToLocalTime(m_time);
-  timeDisplay = timeDisplay.addMSecs(localTime.total_milliseconds());
+  timeDisplay = timeDisplay.addMSecs(
+    static_cast<int>(localTime.total_milliseconds()));
   m_lineEdit->setText(timeDisplay.toString("hh:mm:ss.zzz"));
   m_timeUpdatedSignal(m_time);
 }

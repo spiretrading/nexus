@@ -1571,7 +1571,8 @@ void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
     });
   m_translation = Instantiate<QueryTranslator>(
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(
-    recordReactor, distance(recordType.GetFields().begin(), fieldIterator));
+    recordReactor,
+    std::distance(recordType.GetFields().begin(), fieldIterator));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {

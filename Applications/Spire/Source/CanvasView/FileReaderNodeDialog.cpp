@@ -82,7 +82,7 @@ void FileReaderNodeDialog::Setup(const FileReaderNode& node) {
     }
   }
   for(auto i = m_fields.begin(); i != m_fields.end(); ++i) {
-    AddField(*i, distance(m_fields.begin(), i));
+    AddField(*i, std::distance(m_fields.begin(), i));
   }
   AddNewField();
   connect(m_ui->m_buttonBox, &QDialogButtonBox::clicked, this,
