@@ -13,7 +13,7 @@ namespace Spire {
       /*
         \param parent The parent widget to the Dialog.
       */
-      Dialog(QWidget* parent);
+      explicit Dialog(QWidget* parent);
 
       //! Closes the dialog and sets the result to Accepted.
       void accept();

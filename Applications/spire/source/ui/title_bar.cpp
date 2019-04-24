@@ -21,10 +21,10 @@ namespace {
 }
 
 TitleBar::TitleBar(QWidget* parent)
-    : TitleBar(QImage(), parent) {}
+  : TitleBar(QImage(), parent) {}
 
 TitleBar::TitleBar(const QImage& icon, QWidget* parent)
-    : TitleBar(icon, icon, parent) {}
+  : TitleBar(icon, icon, parent) {}
 
 TitleBar::TitleBar(const QImage& icon, const QImage& unfocused_icon,
     QWidget* parent)

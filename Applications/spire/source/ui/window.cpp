@@ -23,7 +23,7 @@ namespace {
   }
 }
 
-Window::Window(QWidget *parent)
+Window::Window(QWidget* parent)
     : QWidget(parent),
       m_resize_area_width(5),
       m_is_resizeable(true),
@@ -81,11 +81,6 @@ void Window::setWindowFlags(Qt::WindowFlags type) {
   }
 }
 
-connection Window::connect_closed_signal(
-    const ClosedSignal::slot_type& slot) const {
-  return m_closed_signal.connect(slot);
-}
-
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
@@ -107,8 +102,8 @@ bool Window::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-bool Window::nativeEvent(const QByteArray &eventType, void *message,
-    long *result) {
+bool Window::nativeEvent(const QByteArray& eventType, void* message,
+    long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
     *result = 0;
@@ -119,21 +114,21 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     if(m_is_resizeable) {
-      if (x >= window_rect.left &&
+      if(x >= window_rect.left &&
           x < window_rect.left + m_resize_area_width &&
           y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMLEFT;
         return true;
       }
-      if (x < window_rect.right &&
+      if(x < window_rect.right &&
           x >= window_rect.right - m_resize_area_width &&
           y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOMRIGHT;
         return true;
       }
-      if (x >= window_rect.left &&
+      if(x >= window_rect.left &&
           x < window_rect.left + m_resize_area_width &&
           y >= window_rect.top &&
           y < window_rect.top + m_resize_area_width) {
@@ -147,29 +142,29 @@ bool Window::nativeEvent(const QByteArray &eventType, void *message,
         *result = HTTOPRIGHT;
         return true;
       }
-      if (x >= window_rect.left &&
+      if(x >= window_rect.left &&
           x < window_rect.left + m_resize_area_width) {
         *result = HTLEFT;
         return true;
       }
-      if (x < window_rect.right &&
+      if(x < window_rect.right &&
           x >= window_rect.right - m_resize_area_width) {
         *result = HTRIGHT;
         return true;
       }
-      if (y < window_rect.bottom &&
+      if(y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
         *result = HTBOTTOM;
         return true;
       }
-      if (y >= window_rect.top &&
+      if(y >= window_rect.top &&
           y < window_rect.top + m_resize_area_width) {
         *result = HTTOP;
         return true;
       }
     }
-    QPoint pos = m_title_bar->mapFromGlobal({x, y});
-    if (m_title_bar->get_title_label()->geometry().contains(pos)) {
+    auto pos = m_title_bar->mapFromGlobal({x, y});
+    if(m_title_bar->get_title_label()->geometry().contains(pos)) {
       *result = HTCAPTION;
       return true;
     }

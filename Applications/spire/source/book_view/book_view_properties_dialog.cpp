@@ -19,7 +19,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
     QWidget* parent)
     : Dialog(parent),
-        m_last_focus_was_key(false) {
+      m_last_focus_was_key(false) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);

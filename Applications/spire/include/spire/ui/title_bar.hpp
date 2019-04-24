@@ -12,8 +12,6 @@ namespace Spire {
 
       //! Constructs a title bar.
       /*!
-        \param body The body content widget. Used to determine maximum size
-                    when changing the window state.
         \param parent The parent widget.
       */
       explicit TitleBar(QWidget* parent = nullptr);
@@ -21,18 +19,14 @@ namespace Spire {
       //! Constructs a title bar.
       /*!
         \param icon The window icon to display at the top-left corner.
-        \param body The body content widget. Used to determine maximum size
-                    when changing the window state.
         \param parent The parent widget.
       */
-      TitleBar(const QImage& icon, QWidget* parent = nullptr);
+      explicit TitleBar(const QImage& icon, QWidget* parent = nullptr);
 
       //! Constructs a title bar.
       /*!
         \param icon The window icon to display at the top-left corner.
         \param unfocused_icon The icon to display when the window lacks focus.
-        \param body The body content widget. Used to determine maximum size
-                    when changing the window state.
         \param parent The parent widget.
       */
       TitleBar(const QImage& icon, const QImage& unfocused_icon,

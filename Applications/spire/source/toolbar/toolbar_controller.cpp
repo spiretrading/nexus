@@ -58,7 +58,8 @@ void ToolbarController::open() {
     m_service_clients->GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto window) { on_open_window(window); });
-  m_toolbar_window->connect_closed_signal([=] { on_closed(); });
+  // TODO
+  //m_toolbar_window->connect_closed_signal([=] { on_closed(); });
   m_toolbar_window->show();
 }
 

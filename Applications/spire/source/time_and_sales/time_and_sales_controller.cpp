@@ -27,7 +27,8 @@ void TimeAndSalesController::open() {
     Ref(*m_security_input_model));
   m_window->connect_change_security_signal(
     [=] (const auto& security) { on_change_security(security); });
-  m_window->connect_closed_signal([=] { on_closed(); });
+  // TODO:
+  //m_window->connect_closed_signal([=] { on_closed(); });
   m_window->show();
 }
 

@@ -28,7 +28,6 @@ namespace Spire {
         \param properties The properties to modify.
         \param security The security used for modifying interactions.
         \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
       */
       BookViewPropertiesDialog(const BookViewProperties& properties,
         const Nexus::Security& security, QWidget* parent = nullptr);

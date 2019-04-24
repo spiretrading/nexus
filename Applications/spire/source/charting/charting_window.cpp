@@ -37,7 +37,6 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_technicals_panel(nullptr),
       m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
-  installEventFilter(this);
   setMinimumSize(scale(400, 320));
   resize(scale(400, 320));
   set_svg_icon(":/icons/chart-black.svg",
