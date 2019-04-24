@@ -109,7 +109,7 @@ bool Window::event(QEvent* event) {
 
 bool Window::nativeEvent(const QByteArray &eventType, void *message,
     long *result) {
-  MSG* msg = reinterpret_cast<MSG*>(message);
+  auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCCALCSIZE) {
     *result = 0;
     return true;
