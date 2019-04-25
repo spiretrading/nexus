@@ -7,8 +7,14 @@ while [ -h "$source" ]; do
   source="$(readlink "$source")"
   [[ $source != /* ]] && source="$dir/$source"
 done
-directory="$(cd -P "$(dirname "$source" )" >/dev/null 2>&1 && pwd)"
-printf "#define ADMIN_CLIENT_VERSION \""> Version.hpp
-git --git-dir=$directory/../../.git rev-list --count --first-parent HEAD | tr -d "\n" >> Version.hpp
-printf \" >> Version.hpp
-printf "\n" >> Version.hpp
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+if [ ! -f Version.hpp ]; then
+  touch Version.hpp
+fi
+version=$(git --git-dir="$directory/../../.git" rev-list --count --first-parent HEAD)
+if ! grep -q $version < Version.hpp; then
+  printf "#define SPIRE_VERSION \""> Version.hpp
+  printf $version >> Version.hpp
+  printf \" >> Version.hpp
+  printf "\n" >> Version.hpp
+fi

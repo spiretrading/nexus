@@ -79,6 +79,6 @@ if(UNIX)
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    dl pthread rt)
+    dl pthread rt stdc++fs)
 endif()
 install(TARGETS WebPortal DESTINATION ${PWD}/Application)
