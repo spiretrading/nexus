@@ -175,9 +175,10 @@ void Window::set_resizeable(bool resizeable) {
   if(m_is_resizeable) {
     setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-    auto style = ::GetWindowLong(hwnd, GWL_STYLE);
-    ::SetWindowLong(hwnd, GWL_STYLE, style | WS_MAXIMIZEBOX | WS_THICKFRAME |
-      WS_CAPTION);
+    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)
+      | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+    ::SetWindowLong(hwnd, GWL_EXSTYLE , ::GetWindowLong(hwnd, GWL_EXSTYLE) |
+      WS_EX_TRANSPARENT);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
