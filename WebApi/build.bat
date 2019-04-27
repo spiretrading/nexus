@@ -2,29 +2,28 @@
 SETLOCAL
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-PUSHD %~dp0
 IF "%1" == "clean" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /s /q library
   )
   IF EXIST node_modules\mod_time.txt (
-    del node_modules\mod_time.txt
+    DEL node_modules\mod_time.txt
   )
   EXIT /B
 )
 IF "%1" == "reset" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /s /q library
   )
   IF EXIST node_modules (
-    rmdir /s /q node_modules
+    RMDIR /s /q node_modules
   )
   IF EXIST package-lock.json (
-    del package-lock.json
+    DEL package-lock.json
   )
   EXIT /B
 )
-SET BEAM_PATH=..\..\Beam\WebApi
+SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD %BEAM_PATH%
 CALL build.bat %*
 POPD
@@ -55,9 +54,9 @@ IF NOT EXIST library (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'DIR library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -79,10 +78,9 @@ IF NOT EXIST node_modules\mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST library (
-    rm -rf library
+    RMDIR /s /q library
   )
   CALL npm run build
-  echo "timestamp" > node_modules\mod_time.txt
+  ECHO "timestamp" > node_modules\mod_time.txt
 )
-POPD
 ENDLOCAL
