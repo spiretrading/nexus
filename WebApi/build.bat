@@ -1,5 +1,6 @@
 @ECHO OFF
 SETLOCAL
+SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
 IF "%1" == "clean" (
@@ -21,7 +22,15 @@ IF "%1" == "reset" (
   IF EXIST package-lock.json (
     DEL package-lock.json
   )
+  IF NOT "%~dp0" == "%ROOT%\" (
+    DEL package.json >NUL 2>&1
+    DEL tsconfig.json >NUL 2>&1
+  )
   EXIT /B
+)
+IF NOT "%~dp0" == "%ROOT%\" (
+  COPY /Y "%~dp0package.json" . >NUL
+  COPY /Y "%~dp0tsconfig.json" . >NUL
 )
 SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD %BEAM_PATH%
