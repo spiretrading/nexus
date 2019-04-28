@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "aphrodite": "2.2.3",
-    "beam": "file:../../../../../Beam/WebApi",
-    "dali": "file:../../../../../dali",
-    "nexus": "file:../../../../WebApi",
+    "beam": "file:Dependencies/Beam/WebApi",
+    "dali": "file:Dependencies/dali",
+    "nexus": "file:Dependencies/WebApi",
     "react": "16.6.0",
     "react-dom": "16.6.0",
     "react-router-dom": "4.3.1",

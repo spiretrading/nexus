@@ -1,31 +1,39 @@
 @ECHO OFF
 SETLOCAL
+SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-PUSHD %~dp0
 IF "%1" == "clean" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /s /q library
   )
   IF EXIST node_modules\mod_time.txt (
-    del node_modules\mod_time.txt
+    DEL node_modules\mod_time.txt
   )
   EXIT /B
 )
 IF "%1" == "reset" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /s /q library
   )
   IF EXIST node_modules (
-    rmdir /s /q node_modules
+    RMDIR /s /q node_modules
   )
   IF EXIST package-lock.json (
-    del package-lock.json
+    DEL package-lock.json
+  )
+  IF NOT "%~dp0" == "%ROOT%\" (
+    DEL package.json >NUL 2>&1
+    DEL tsconfig.json >NUL 2>&1
   )
   EXIT /B
 )
-SET DALI_PATH=..\..\..\..\..\dali
-SET NEXUS_PATH=..\..\..\..\WebApi
+IF NOT "%~dp0" == "%ROOT%\" (
+  COPY /Y "%~dp0package.json" . >NUL
+  COPY /Y "%~dp0tsconfig.json" . >NUL
+)
+SET DALI_PATH=Dependencies\dali
+SET NEXUS_PATH=Dependencies\WebApi
 PUSHD %DALI_PATH%
 CALL build.bat %*
 POPD
@@ -59,9 +67,9 @@ IF NOT EXIST library (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'DIR library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -83,10 +91,9 @@ IF NOT EXIST node_modules\mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST library (
-    rm -rf library
+    RMDIR /s /q library
   )
   CALL npm run build
-  echo "timestamp" > node_modules\mod_time.txt
+  ECHO "timestamp" > node_modules\mod_time.txt
 )
-POPD
 ENDLOCAL

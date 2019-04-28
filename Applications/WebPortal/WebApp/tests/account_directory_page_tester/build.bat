@@ -1,34 +1,40 @@
 @ECHO OFF
 SETLOCAL
+SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-SET PROD_ENV=
-IF NOT "%1" == "Debug" (
-  SET PROD_ENV=1
-)
-PUSHD %~dp0
 IF "%1" == "clean" (
-  IF EXIST application (
-    rmdir /s /q application
+  IF EXIST library (
+    RMDIR /s /q library
   )
   IF EXIST node_modules\mod_time.txt (
-    del node_modules\mod_time.txt
+    DEL node_modules\mod_time.txt
   )
   EXIT /B
 )
 IF "%1" == "reset" (
-  IF EXIST application (
-    rmdir /s /q application
+  IF EXIST library (
+    RMDIR /s /q library
   )
   IF EXIST node_modules (
-    rmdir /s /q node_modules
+    RMDIR /s /q node_modules
   )
   IF EXIST package-lock.json (
-    del package-lock.json
+    DEL package-lock.json
+  )
+  IF NOT "%~dp0" == "%ROOT%\" (
+    DEL package.json >NUL 2>&1
+    DEL tsconfig.json >NUL 2>&1
+    DEL webpack.config.js >NUL 2>&1
   )
   EXIT /B
 )
-SET WEB_PORTAL_PATH=..\..\library
+IF NOT "%~dp0" == "%ROOT%\" (
+  COPY /Y "%~dp0package.json" . >NUL
+  COPY /Y "%~dp0tsconfig.json" . >NUL
+  COPY /Y "%~dp0webpack.config.js" . >NUL
+)
+SET WEB_PORTAL_PATH=Dependencies\library
 PUSHD %WEB_PORTAL_PATH%
 CALL build.bat %*
 POPD
@@ -59,9 +65,9 @@ IF NOT EXIST application (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir application /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'DIR application /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -83,12 +89,11 @@ IF NOT EXIST node_modules\mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST application (
-    rm -rf application
+    RMDIR /s /q application
   )
-  node .\node_modules\webpack\bin\webpack.js
-  echo "timestamp" > node_modules\mod_time.txt
-  cp -r ../../resources application
-  cp -r source/index.html application
+  node node_modules\webpack\bin\webpack.js
+  ECHO "timestamp" > node_modules\mod_time.txt
+  robocopy "%~dp0../../resources" application /E
+  COPY "%~dp0source/index.html" application
 )
-POPD
 ENDLOCAL

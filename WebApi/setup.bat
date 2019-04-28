@@ -3,7 +3,7 @@ SETLOCAL
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
 )
-SET beam_commit="81ceb8a5dfe36a2c7e15ee3c7b3d961a3b0259ab"
+SET beam_commit="83011c27e14b05a59c49298073af48646670f7a5"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -12,5 +12,4 @@ IF NOT "%ERRORLEVEL%" == "0" (
   git checkout "%beam_commit%"
 )
 POPD
-SET commit=
 ENDLOCAL
