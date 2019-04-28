@@ -46,7 +46,7 @@ IF NOT EXIST node_modules (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso ..\package.json ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
         'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
@@ -78,7 +78,7 @@ IF NOT EXIST node_modules\mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso tsconfig.json %WEB_PORTAL_PATH%\node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%~dp0webpack.config.js" "%WEB_PORTAL_PATH%\node_modules\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
       'ls -l --time-style=full-iso node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
@@ -92,8 +92,10 @@ IF "%UPDATE_BUILD%" == "1" (
     RMDIR /s /q application
   )
   node node_modules\webpack\bin\webpack.js
-  ECHO "timestamp" > node_modules\mod_time.txt
-  robocopy "%~dp0../../resources" application /E
-  COPY "%~dp0source/index.html" application
+  IF NOT "%ERRORLEVEL%" == "0" (
+    ECHO "timestamp" > node_modules\mod_time.txt
+    robocopy "%~dp0..\..\resources" application\resources /E
+    COPY "%~dp0source\index.html" application\index.html
+  )
 )
 ENDLOCAL

@@ -48,7 +48,7 @@ IF NOT EXIST node_modules (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso ..\package.json ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
         'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
@@ -80,7 +80,7 @@ IF NOT EXIST node_modules\mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso tsconfig.json %NEXUS_PATH%\node_modules\mod_time.txt %DALI_PATH%\node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%NEXUS_PATH%\node_modules\mod_time.txt" "%DALI_PATH%\node_modules\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
       'ls -l --time-style=full-iso node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
@@ -94,6 +94,8 @@ IF "%UPDATE_BUILD%" == "1" (
     RMDIR /s /q library
   )
   CALL npm run build
-  ECHO "timestamp" > node_modules\mod_time.txt
+  IF NOT "%ERRORLEVEL%" == "0" (
+    ECHO "timestamp" > node_modules\mod_time.txt
+  )
 )
 ENDLOCAL
