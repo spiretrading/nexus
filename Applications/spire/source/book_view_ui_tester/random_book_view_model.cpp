@@ -169,7 +169,7 @@ void RandomBookViewModel::update_bbo() {
 }
 
 void RandomBookViewModel::update_book_quote() {
-  if(m_model.get_bids().size() == 0 || m_model.get_bids().size() == 0) {
+  if(m_model.get_bids().size() == 0 || m_model.get_asks().size() == 0) {
     return;
   }
   auto side = [&] {
