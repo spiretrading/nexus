@@ -1,46 +1,54 @@
 @ECHO OFF
 SETLOCAL
+SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-SET PROD_ENV=
-IF NOT "%1" == "Debug" (
-  SET PROD_ENV=1
-)
-PUSHD %~dp0
 IF "%1" == "clean" (
-  IF EXIST application (
-    rmdir /s /q application
+  IF EXIST library (
+    RMDIR /q /s library
   )
-  IF EXIST node_modules\mod_time.txt (
-    del node_modules\mod_time.txt
+  IF EXIST mod_time.txt (
+    DEL mod_time.txt
   )
   EXIT /B
 )
 IF "%1" == "reset" (
-  IF EXIST application (
-    rmdir /s /q application
+  IF EXIST library (
+    RMDIR /q /s library
+  )
+  IF EXIST mod_time.txt (
+    DEL mod_time.txt
   )
   IF EXIST node_modules (
-    rmdir /s /q node_modules
+    RMDIR /q /s node_modules
   )
   IF EXIST package-lock.json (
-    del package-lock.json
+    DEL package-lock.json
+  )
+  IF NOT "%~dp0" == "%ROOT%\" (
+    DEL package.json >NUL 2>&1
+    DEL tsconfig.json >NUL 2>&1
+    DEL webpack.config.js >NUL 2>&1
   )
   EXIT /B
 )
-SET WEB_PORTAL_PATH=..\library
+IF NOT "%~dp0" == "%ROOT%\" (
+  COPY /Y "%~dp0package.json" . >NUL
+  COPY /Y "%~dp0tsconfig.json" . >NUL
+  COPY /Y "%~dp0webpack.config.js" . >NUL
+)
+SET WEB_PORTAL_PATH=Dependencies\library
 PUSHD %WEB_PORTAL_PATH%
 CALL build.bat %*
 POPD
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
 ) ELSE (
-  PUSHD node_modules
   IF NOT EXIST mod_time.txt (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso ..\package.json ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
         'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
@@ -49,7 +57,6 @@ IF NOT EXIST node_modules (
       )
     )
   )
-  POPD
 )
 IF "%UPDATE_NODE%" == "1" (
   SET UPDATE_BUILD=1
@@ -59,22 +66,22 @@ IF NOT EXIST application (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir application /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'DIR application /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
     )
   )
 )
-IF NOT EXIST node_modules\mod_time.txt (
+IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso tsconfig.json %WEB_PORTAL_PATH%\node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%~dp0webpack.config.js" "%WEB_PORTAL_PATH%\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
-      'ls -l --time-style=full-iso node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -83,18 +90,13 @@ IF NOT EXIST node_modules\mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST application (
-    rm -rf application
+    RMDIR /s /q application
   )
-  node .\node_modules\webpack\bin\webpack.js
-  echo "timestamp" > node_modules\mod_time.txt
-  cp -r ../resources application
-  cp -r source/index.html application
+  node node_modules\webpack\bin\webpack.js
+  ECHO "timestamp" > mod_time.txt
+  IF EXIST application (
+    robocopy "%~dp0..\..\resources" application\resources /E > NUL
+    COPY "%~dp0source\index.html" application\index.html > NUL
+  )
 )
-POPD
-IF NOT EXIST %~dp0..\..\Application\web_app (
-  PUSHD %~dp0..\..\Application\
-  mkdir web_app
-  POPD
-)
-cp -r %~dp0\application\* %~dp0..\..\Application\web_app
 ENDLOCAL

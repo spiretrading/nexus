@@ -10,15 +10,15 @@ IF NOT EXIST build.bat (
   ECHO CALL "%~dp0build.bat" %%* >> build.bat
 )
 CALL:configure account_directory_page_tester %*
-REM CALL:configure account_page_tester %*
-REM CALL:configure create_account_page_tester %*
-REM CALL:configure dashboard_page_tester %*
-REM CALL:configure entitlements_page_tester %*
-REM CALL:configure loading_page_tester %*
-REM CALL:configure login_page_tester %*
-REM CALL:configure profile_page_tester %*
-REM CALL:configure risk_page_tester %*
-REM CALL:configure scratch %*
+CALL:configure account_page_tester %*
+CALL:configure create_account_page_tester %*
+CALL:configure dashboard_page_tester %*
+CALL:configure entitlements_page_tester %*
+CALL:configure loading_page_tester %*
+CALL:configure login_page_tester %*
+CALL:configure profile_page_tester %*
+CALL:configure risk_page_tester %*
+CALL:configure scratch %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

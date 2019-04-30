@@ -32,6 +32,7 @@ module.exports = {
   },
   plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
   resolve: {
+    symlinks: false,
     extensions: ['.ts', '.tsx', '.js', '.json']
   }
 };

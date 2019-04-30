@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const MinifyPlugin = require("babel-minify-webpack-plugin");
 const PROD = JSON.parse(process.env.PROD_ENV || '0');
 const minifyOpts = {};
@@ -31,6 +32,7 @@ module.exports = {
   },
   plugins: PROD ? [new MinifyPlugin(minifyOpts, minigyPluginOpts)] : [],
   resolve: {
+    symlinks: false,
     extensions: ['.ts', '.tsx', '.js', '.json']
   }
 };

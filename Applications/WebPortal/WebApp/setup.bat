@@ -1,22 +1,11 @@
 @ECHO OFF
 SETLOCAL
 SET ROOT=%cd%
-IF NOT EXIST Beam (
-  git clone https://www.github.com/eidolonsystems/beam Beam
-)
-SET beam_commit="937ac6ef0fbc0fb561f71a31dfe0bbc039bcf093"
-PUSHD Beam
-git merge-base --is-ancestor "%beam_commit%" HEAD
-IF NOT "%ERRORLEVEL%" == "0" (
-  git checkout master
-  git pull
-  git checkout "%beam_commit%"
-)
-POPD
+CALL "%~dp0..\..\..\WebApi\setup.bat"
 IF NOT EXIST dali (
   git clone https://www.github.com/eidolonsystems/dali
 )
-SET dali_commit="159ca71eb0885febd108b621d75cc09471163e38"
+SET dali_commit="781c8f9a037ebe44b1da725d0d93d168532bff97"
 PUSHD dali
 git merge-base --is-ancestor "%dali_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
