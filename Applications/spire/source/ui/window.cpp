@@ -183,8 +183,7 @@ void Window::set_resizeable(bool resizeable) {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
-    ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_THICKFRAME |
-      WS_CAPTION);
+    ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);
   }
   const auto shadow = MARGINS{ 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
