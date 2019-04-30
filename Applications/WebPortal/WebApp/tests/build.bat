@@ -2,15 +2,15 @@
 SETLOCAL
 SET ROOT=%cd%
 CALL:build account_directory_page_tester %*
-REM CALL:build account_page_tester %*
-REM CALL:build create_account_page_tester %*
-REM CALL:build dashboard_page_tester %*
-REM CALL:build entitlements_page_tester %*
-REM CALL:build loading_page_tester %*
-REM CALL:build login_page_tester %*
-REM CALL:build profile_page_tester %*
-REM CALL:build risk_page_tester %*
-REM CALL:build scratch %*
+CALL:build account_page_tester %*
+CALL:build create_account_page_tester %*
+CALL:build dashboard_page_tester %*
+CALL:build entitlements_page_tester %*
+CALL:build loading_page_tester %*
+CALL:build login_page_tester %*
+CALL:build profile_page_tester %*
+CALL:build risk_page_tester %*
+CALL:build scratch %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

@@ -3,7 +3,7 @@ SETLOCAL
 SET ROOT=%cd%
 CALL:build library %*
 CALL:build tests %*
-REM CALL:build application %*
+CALL:build application %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

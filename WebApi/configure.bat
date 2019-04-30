@@ -35,7 +35,7 @@ PUSHD "%DEPENDENCIES%"
 CALL "%DIRECTORY%setup.bat"
 POPD
 IF NOT "%DEPENDENCIES%" == "%ROOT%\Dependencies" (
-  mklink /j Dependencies "%DEPENDENCIES%"
+  mklink /j Dependencies "%DEPENDENCIES%" > NUL
 )
 IF NOT "%DIRECTORY%" == "%ROOT%\" (
   IF EXIST source (

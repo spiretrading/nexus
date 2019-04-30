@@ -11,6 +11,7 @@ IF NOT EXIST build.bat (
 )
 CALL:configure library %*
 CALL:configure tests %*
+CALL:configure application %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

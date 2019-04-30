@@ -4,7 +4,7 @@ SET ROOT=%cd%
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
 )
-SET beam_commit="83011c27e14b05a59c49298073af48646670f7a5"
+SET beam_commit="937ac6ef0fbc0fb561f71a31dfe0bbc039bcf093"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -16,7 +16,7 @@ POPD
 IF NOT EXIST dali (
   git clone https://www.github.com/eidolonsystems/dali
 )
-SET dali_commit="ed6605bf4e8662db09d615733d44d7b65e718184"
+SET dali_commit="159ca71eb0885febd108b621d75cc09471163e38"
 PUSHD dali
 git merge-base --is-ancestor "%dali_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
