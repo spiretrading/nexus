@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QScrollArea>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
@@ -33,7 +34,46 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
+  auto markets_scroll_area = new QScrollArea(this);
+  markets_scroll_area->setFixedWidth(scale_width(140));
+  markets_scroll_area->setObjectName("markets_scroll_area");
+  markets_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  markets_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  markets_scroll_area->setWidgetResizable(true);
+  markets_scroll_area->setFrameShape(QFrame::NoFrame);
+  markets_scroll_area->setStyleSheet(QString(R"(
+    markets_scroll_area {
+      background-color: #FFFFFF;
+      border-bottom: %2px solid #A0A0A0;
+      border-left: %2px solid #A0A0A0;
+      border-right: %2px solid #A0A0A0;
+      border-top: none;
+    }
+    
+    QScrollBar {
+      background-color: #FFFFFF;
+      border: none;
+    }
+
+    QScrollBar::handle:vertical {
+      background-color: #EBEBEB;
+      margin-left: %3px;
+      width: %1px;
+    }
+
+    QScrollBar::sub-line:vertical {
+      background: none;
+      border: none;
+    }
+
+    QScrollBar::add-line:vertical {
+      background: none;
+      border: none;
+    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_width(2)));
+  markets_layout->addWidget(markets_scroll_area, 222);
   m_markets_list_widget = new QListWidget(this);
+  markets_scroll_area->setWidget(m_markets_list_widget);
+  m_markets_list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
     auto item = new MarketListItem(entry, m_markets_list_widget);
     item->setTextAlignment(Qt::AlignCenter);
@@ -58,7 +98,6 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   connect(m_markets_list_widget, &QListWidget::currentRowChanged,
     [=] { update_market_widgets(); });
   m_markets_list_widget->setFixedWidth(scale_width(140));
-  markets_layout->addWidget(m_markets_list_widget, 222);
   layout->addLayout(markets_layout, 140);
   layout->addStretch(18);
   auto market_highlight_layout = new QVBoxLayout();
@@ -159,8 +198,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     check_box_focused_style);
   orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_check_box = new CheckBox(tr("Highlight Orders"),
-    this);
+  m_highlight_orders_check_box = new CheckBox(tr("Highlight Orders"), this);
   m_highlight_orders_check_box->setChecked(true);
   m_highlight_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
