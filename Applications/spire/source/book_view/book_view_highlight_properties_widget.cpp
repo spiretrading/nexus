@@ -303,6 +303,8 @@ void BookViewHighlightPropertiesWidget::update_market_list_stylesheet(
         .arg(m_markets_list_widget->item(
           selected_item_index)->background().color().name())
         .arg(scale_height(3)));
+  m_markets_list_widget->setMinimumHeight(
+    m_markets_list_widget->sizeHintForRow(0) * m_markets_list_widget->count());
 }
 
 void BookViewHighlightPropertiesWidget::
