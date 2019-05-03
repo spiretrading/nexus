@@ -53,18 +53,23 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
 
     QScrollBar::handle:vertical {
       background-color: #EBEBEB;
+      min-height: %3px;
       width: %1px;
     }
 
     QScrollBar::sub-line:vertical {
       background: none;
       border: none;
+      height: 0px;
+      width: 0px;
     }
 
     QScrollBar::add-line:vertical {
       background: none;
       border: none;
-    })").arg(scale_width(15)).arg(scale_width(1)));
+      height: 0px;
+      width: 0px;
+    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_height(30)));
   markets_layout->addWidget(markets_scroll_area, 222);
   m_markets_list_widget = new QListWidget(this);
   markets_scroll_area->setWidget(m_markets_list_widget);
