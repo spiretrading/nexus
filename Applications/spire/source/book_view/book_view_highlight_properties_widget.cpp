@@ -42,22 +42,17 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   markets_scroll_area->setWidgetResizable(true);
   markets_scroll_area->setFrameShape(QFrame::NoFrame);
   markets_scroll_area->setStyleSheet(QString(R"(
-    markets_scroll_area {
+    #markets_scroll_area {
       background-color: #FFFFFF;
-      border-bottom: %2px solid #A0A0A0;
-      border-left: %2px solid #A0A0A0;
-      border-right: %2px solid #A0A0A0;
-      border-top: none;
+      border: %2px solid #A0A0A0;
     }
     
     QScrollBar {
       background-color: #FFFFFF;
-      border: none;
     }
 
     QScrollBar::handle:vertical {
       background-color: #EBEBEB;
-      margin-left: %3px;
       width: %1px;
     }
 
@@ -69,7 +64,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     QScrollBar::add-line:vertical {
       background: none;
       border: none;
-    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_width(2)));
+    })").arg(scale_width(15)).arg(scale_width(1)));
   markets_layout->addWidget(markets_scroll_area, 222);
   m_markets_list_widget = new QListWidget(this);
   markets_scroll_area->setWidget(m_markets_list_widget);
@@ -97,7 +92,6 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_markets_list_widget, &QListWidget::currentRowChanged,
     [=] { update_market_widgets(); });
-  m_markets_list_widget->setFixedWidth(scale_width(140));
   layout->addLayout(markets_layout, 140);
   layout->addStretch(18);
   auto market_highlight_layout = new QVBoxLayout();
@@ -289,7 +283,7 @@ void BookViewHighlightPropertiesWidget::update_market_list_stylesheet(
   m_markets_list_widget->setStyleSheet(QString(R"(
     QListWidget {
       background-color: white;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      border: %1px solid transparent %2px solid transparent;
       outline: none;
       padding: %3px %4px 0px %4px;
     }
