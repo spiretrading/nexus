@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
@@ -39,6 +40,8 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   markets_scroll_area->setObjectName("markets_scroll_area");
   markets_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
   markets_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  markets_scroll_area->verticalScrollBar()->setContextMenuPolicy(
+    Qt::NoContextMenu);
   markets_scroll_area->setWidgetResizable(true);
   markets_scroll_area->setFrameShape(QFrame::NoFrame);
   markets_scroll_area->setStyleSheet(QString(R"(

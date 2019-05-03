@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_properties.hpp"
@@ -37,6 +38,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_list_scroll_area->setObjectName("band_list_scroll_area");
   band_list_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   band_list_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  band_list_scroll_area->verticalScrollBar()->setContextMenuPolicy(
+    Qt::NoContextMenu);
   band_list_scroll_area->setWidgetResizable(true);
   band_list_scroll_area->setFrameShape(QFrame::NoFrame);
   band_list_scroll_area->setStyleSheet(QString(R"(
