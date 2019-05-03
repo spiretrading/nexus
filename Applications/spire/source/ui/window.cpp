@@ -72,7 +72,7 @@ void Window::setFixedSize(int width, int height) {
 
 void Window::setFixedSize(const QSize& size) {
   set_resizeable(false);
-  QWidget::setFixedSize(size);
+  QWidget::setFixedSize({size.width(), size.height() + m_title_bar->height()});
 }
 
 void Window::changeEvent(QEvent* event) {

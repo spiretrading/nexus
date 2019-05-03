@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
+#include <QScrollArea>
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include "spire/book_view/book_view_properties.hpp"
@@ -31,12 +32,45 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto horizontal_layout = new QHBoxLayout();
   horizontal_layout->setContentsMargins({});
   horizontal_layout->setSpacing(0);
+  auto band_list_scroll_area = new QScrollArea(this);
+  band_list_scroll_area->setFixedSize(scale(140, 222));
+  band_list_scroll_area->setObjectName("band_list_scroll_area");
+  band_list_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  band_list_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  band_list_scroll_area->setWidgetResizable(true);
+  band_list_scroll_area->setFrameShape(QFrame::NoFrame);
+  band_list_scroll_area->setStyleSheet(QString(R"(
+    #band_list_scroll_area {
+      background-color: #FFFFFF;
+      border: %2px solid #A0A0A0;
+    }
+    
+    QScrollBar {
+      background-color: #FFFFFF;
+    }
+
+    QScrollBar::handle:vertical {
+      background-color: #EBEBEB;
+      width: %1px;
+    }
+
+    QScrollBar::sub-line:vertical {
+      background: none;
+      border: none;
+    }
+
+    QScrollBar::add-line:vertical {
+      background: none;
+      border: none;
+    })").arg(scale_width(15)).arg(scale_width(1)));
+  horizontal_layout->addWidget(band_list_scroll_area, 222);
   m_band_list_widget = new QListWidget(this);
-  m_band_list_widget->setFixedSize(scale(140, 222));
+  band_list_scroll_area->setWidget(m_band_list_widget);
+  m_band_list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      border: %1px solid transparent %2px solid transparent;
       outline: none;
       padding: %3px %4px %3px %4px;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(4))
@@ -56,7 +90,6 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     QAbstractItemView::SelectionMode::SingleSelection);
   connect(m_band_list_widget, &QListWidget::currentRowChanged,
     this, &BookViewLevelPropertiesWidget::update_band_list_stylesheet);
-  horizontal_layout->addWidget(m_band_list_widget);
   horizontal_layout->addStretch(18);
   auto band_properties_layout = new QVBoxLayout();
   band_properties_layout->setContentsMargins({});
@@ -366,4 +399,6 @@ void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(
   } else {
     m_band_list_widget->setCurrentRow(current_row);
   }
+  m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
+    (m_band_list_widget->count() + 1));
 }
