@@ -53,7 +53,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       border: none;
       height: 0px;
       width: 0px;
-    })").arg(scale_height(15)).arg(scale_width(15))
+    })").arg(scale_height(13)).arg(scale_width(13))
         .arg(scale_width(30)).arg(scale_height(30)));
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);

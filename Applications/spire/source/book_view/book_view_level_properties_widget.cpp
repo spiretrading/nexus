@@ -47,12 +47,12 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     
     QScrollBar {
       background-color: #FFFFFF;
+      width: %1px;
     }
 
     QScrollBar::handle:vertical {
       background-color: #EBEBEB;
       min-height: %3px;
-      width: %1px;
     }
 
     QScrollBar::sub-line:vertical {
@@ -67,7 +67,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
       border: none;
       height: 0px;
       width: 0px;
-    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_height(30)));
+    })").arg(scale_width(13)).arg(scale_width(1)).arg(scale_height(30)));
   horizontal_layout->addWidget(band_list_scroll_area, 222);
   m_band_list_widget = new QListWidget(this);
   band_list_scroll_area->setWidget(m_band_list_widget);
