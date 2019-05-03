@@ -54,7 +54,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       height: 0px;
       width: 0px;
     })").arg(scale_height(13)).arg(scale_width(13))
-        .arg(scale_width(30)).arg(scale_height(30)));
+        .arg(scale_width(60)).arg(scale_height(60)));
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
