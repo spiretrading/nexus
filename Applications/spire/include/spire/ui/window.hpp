@@ -47,6 +47,10 @@ namespace Spire {
       void set_svg_icon(const QString& icon_path,
         const QString& unfocused_icon_path);
 
+      void resize(int width, int height);
+
+      void resize(const QSize& size);
+
       void setFixedSize(int width, int height);
 
       void setFixedSize(const QSize& size);
