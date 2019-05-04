@@ -39,4 +39,12 @@ if [ "$directory" != "$root" ]; then
     rm -rf source
   fi
   ln -s "$directory/source" source
+  if [ -L "package.json" ]; then
+    rm package.json
+  fi
+  ln -s "$directory/package.json" package.json
+  if [ -L "tsconfig.json" ]; then
+    rm tsconfig.json
+  fi
+  ln -s "$directory/tsconfig.json" tsconfig.json
 fi
