@@ -18,6 +18,7 @@ if ! git merge-base --is-ancestor "$dali_commit" HEAD; then
   git pull
   git checkout "$dali_commit"
 fi
+popd
 if [ ! -d WebApi ]; then
   mkdir WebApi
   pushd WebApi
