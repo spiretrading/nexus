@@ -1,13 +1,12 @@
 #!/bin/bash
 set -o errexit
 set -o pipefail
-arguments="$@"
 pushd library
-./build.sh $arguments
+./build.sh "$@"
 popd
 pushd tests
-./build.sh $arguments
+./build.sh "$@"
 popd
 pushd application
-./build.sh $arguments
+./build.sh "$@"
 popd
