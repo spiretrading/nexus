@@ -77,7 +77,7 @@ if [ "$UPDATE_BUILD" = "1" ]; then
   node node_modules/webpack/bin/webpack.js
   echo "timestamp" > mod_time.txt
   if [ -d application ]; then
-    cp -r ../resources application
+    cp -r "$directory/../resources" application
     cp -r source/index.html application
   fi
 fi
