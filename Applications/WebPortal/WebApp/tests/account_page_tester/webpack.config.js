@@ -1,5 +1,5 @@
 const path = require('path');
-const webpack = require('webpack');
+module.paths.push(path.resolve(process.cwd(), 'node_modules'));
 const MinifyPlugin = require("babel-minify-webpack-plugin");
 const PROD = JSON.parse(process.env.PROD_ENV || '0');
 const minifyOpts = {};
@@ -8,7 +8,7 @@ const minigyPluginOpts = {
 };
 module.exports = {
   devtool: PROD ? 'none' : 'source-map',
-  entry: './source/index.tsx',
+  entry: path.resolve(process.cwd(), 'source/index.tsx'),
   mode: PROD ? 'production' : 'development',
   module: {
     rules: [
@@ -24,7 +24,7 @@ module.exports = {
     ]
   },
   output: {
-    path: path.resolve(__dirname, 'application'),
+    path: path.resolve(process.cwd(), 'application'),
     filename: 'bundle.js'
   },
   performance: {
