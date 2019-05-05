@@ -7,15 +7,10 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
-projects=""
-projects+=" library"
-projects+=" tests"
-projects+=" application"
-for i in $projects; do
-  if [ ! -d "$i" ]; then
-    mkdir "$i"
-  fi
-  pushd "$i"
-  "$directory/$i/build.sh" "$@"
+"$directory/../setup.sh"
+if [ ! -d library ]; then
+  mkdir library
+  pushd library
+  "$directory/../library/configure.sh" -DD="$root"
   popd
-done
+fi
