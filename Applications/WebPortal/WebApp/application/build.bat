@@ -103,7 +103,7 @@ IF "%UPDATE_BUILD%" == "1" (
         MD web_app
         POPD
       )
-      robocopy application ..\..\Application\web_app
+      robocopy application ..\..\Application\web_app > NUL
     )
   )
 )
