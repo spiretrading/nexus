@@ -1,0 +1,55 @@
+#!/bin/bash
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ]; do
+  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+  source="$(readlink "$source")"
+  [[ $source != /* ]] && source="$dir/$source"
+done
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+root=$(pwd)
+build_function() {
+  if [ ! -d "$1" ]; then
+    mkdir -p "$1"
+  fi
+  pushd "$1"
+  "$directory/$1/build.sh" "$@"
+  popd
+}
+
+export -f build_function
+export directory
+
+build_function "Nexus"
+targets+=" Applications/AdministrationServer"
+targets+=" Applications/AsxItchMarketDataFeedClient"
+targets+=" Applications/ChartingServer"
+targets+=" Applications/ChiaMarketDataFeedClient"
+targets+=" Applications/ComplianceServer"
+targets+=" Applications/CseMarketDataFeedClient"
+targets+=" Applications/CtaMarketDataFeedClient"
+targets+=" Applications/MarketDataRelayServer"
+targets+=" Applications/MarketDataServer"
+targets+=" Applications/ReplayMarketDataFeedClient"
+targets+=" Applications/RiskServer"
+targets+=" Applications/SimulationMarketDataFeedClient"
+targets+=" Applications/SimulationOrderExecutionServer"
+targets+=" Applications/TmxIpMarketDataFeedClient"
+targets+=" Applications/TmxTl1MarketDataFeedClient"
+targets+=" Applications/UtpMarketDataFeedClient"
+targets+=" Applications/WebPortal"
+
+let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
+let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 4194304"
+let jobs="$(($cores<$mem?$cores:$mem))"
+
+parallel -j$jobs --no-notice build_function ::: $targets
+
+if [ ! -d "WebApi" ]; then
+  mkdir "WebApi"
+fi
+if [ "$root" != "$directory" ]; then
+  cp -r "$directory/WebApi" .
+fi
+pushd "WebApi"
+./build.sh "$@"
+popd

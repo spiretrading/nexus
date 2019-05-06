@@ -17,7 +17,7 @@ interface State {
   statusMessage: string;
   passwordStatusMessage: string;
   account: Beam.DirectoryEntry;
-  group: Beam.DirectoryEntry;
+  groups: Beam.DirectoryEntry[];
   countryDatabase: Nexus.CountryDatabase;
   hasPassword: boolean;
   readOnly: boolean;
@@ -41,8 +41,7 @@ class TestApp extends React.Component<Properties, State> {
       hasError: false,
       account: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
-      group: new Beam.DirectoryEntry(
-        Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'),
+      groups: [],
       countryDatabase: Nexus.buildDefaultCountryDatabase(),
       hasPassword: true,
       readOnly: false,
@@ -67,7 +66,7 @@ class TestApp extends React.Component<Properties, State> {
           account={this.state.account}
           roles={this.state.someRoles}
           identity={this.state.identity}
-          group={this.state.group}
+          groups={this.state.groups}
           countryDatabase={this.state.countryDatabase}
           displaySize={this.props.displaySize}
           readonly={this.state.readOnly}
@@ -124,6 +123,10 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
+    this.state.groups.push(new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'));
+    this.state.groups.push(new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.NONE, 19, 'bree_office'));
     this.setState({identity: testIdentity});
   }
 

@@ -18,12 +18,12 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
-#include "MarketDataRelayServer/Version.hpp"
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/DistributedMarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataRelayServlet.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

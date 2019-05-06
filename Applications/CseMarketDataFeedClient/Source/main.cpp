@@ -31,7 +31,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
 #include "CseMarketDataFeedClient/CseServiceAccessClient.hpp"
-#include "CseMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

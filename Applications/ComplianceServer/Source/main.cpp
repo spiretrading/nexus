@@ -20,7 +20,7 @@
 #include "Nexus/Compliance/CachedComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/MySqlComplianceRuleDataStore.hpp"
-#include "ComplianceServer/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

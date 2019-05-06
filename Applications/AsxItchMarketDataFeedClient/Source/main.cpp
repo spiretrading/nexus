@@ -22,11 +22,11 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <tclap/CmdLine.h>
 #include "AsxItchMarketDataFeedClient/AsxItchMarketDataFeedClient.hpp"
-#include "AsxItchMarketDataFeedClient/Version.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

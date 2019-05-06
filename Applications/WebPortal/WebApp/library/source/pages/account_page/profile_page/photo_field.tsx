@@ -292,7 +292,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     onSubmitImage: () => {},
     onPhotoChange: () => {},
     onScalingChange: () => {}
-  }
+  };
 
   constructor(properties: ModalProperties) {
     super(properties);
@@ -317,11 +317,18 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
         return ChangePictureModal.STYLE.boxShadowLarge;
       }
     })();
-    const buttonBox = (() => {
+    const buttonBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ChangePictureModal.STYLE.buttonBoxSmall;
       } else {
         return ChangePictureModal.STYLE.buttonBoxLarge;
+      }
+    })();
+    const buttonStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ChangePictureModal.DYNAMIC_STYLE.buttonSmall;
+      } else {
+        return ChangePictureModal.DYNAMIC_STYLE.buttonLarge;
       }
     })();
     const imageSrc = (() => {
@@ -369,7 +376,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
               <img src='resources/close.svg' tabIndex={0}
-                style={ChangePictureModal.STYLE.closeIcon}
+                className={css(ChangePictureModal.DYNAMIC_STYLE.closeIcon)}
                 onClick={this.onClose}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
@@ -379,22 +386,23 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
+              displaySize={this.props.displaySize}
               scale={this.props.scaling}
               readonly={!this.props.imageSource}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <HLine color='#E6E6E6' height={1}/>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
-            <div style={buttonBox}>
+            <div style={buttonBoxStyle}>
               <input type='file' id='imageInput' accept='image/*'
                 style={ChangePictureModal.STYLE.hiddenInput}
                 tabIndex={0}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   this.onGetImageFile(event.target.files);}}/>
               <label htmlFor='imageInput' tabIndex={0}
-                className={css(ChangePictureModal.DYNAMIC_STYLE.button)}>
+                className={css(buttonStyle)}>
                 {ChangePictureModal.BROWSE_BUTTON_TEXT}
               </label>
-              <div className={css(ChangePictureModal.DYNAMIC_STYLE.button)}
+              <div className={css(buttonStyle)}
                 onClick={this.onSubmit} tabIndex={0}>
                 {ChangePictureModal.SUBMIT_BUTTON_TEXT}
               </div>
@@ -442,18 +450,20 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       opacity: 0.9
     },
     boxShadowSmall:{
+      boxSizing: 'border-box' as 'border-box',
       opacity: 0.4,
       display: 'block',
       boxShadow: '0px 0px 6px #000000',
       position: 'absolute' as 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
-      width: '284px',
+      width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
     },
     boxShadowLarge:{
+      boxSizing: 'border-box' as 'border-box',
       opacity: 0.4,
       boxShadow: '0px 0px 6px #000000',
       display: 'block',
@@ -465,16 +475,18 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       left: 'calc(50% - 180px)'
     },
     boxSmall: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'block',
       position: 'absolute' as 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
-      width: '284px',
+      width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
     },
     boxLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
@@ -487,11 +499,6 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       display: 'flex' as 'flex',
       justifyContent: 'space-between' as 'space-between',
       font: '400 16px Roboto'
-    },
-    closeIcon: {
-      width: '20px',
-      height: '20px',
-      cursor: 'pointer' as 'pointer'
     },
     buttonBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -529,7 +536,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     imageBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '166px',
-      width: '248px',
+      width: '246px',
       overflow: 'hidden' as 'hidden',
       borderRadius: '1px',
       border: '1px solid #EBEBEB',
@@ -553,7 +560,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     }
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
-    button: {
+    buttonSmall: {
       boxSizing: 'border-box' as 'border-box',
       cursor: 'pointer' as 'pointer',
       display: 'flex' as 'flex',
@@ -561,8 +568,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
-      minWidth: '153px',
-      maxWidth: '248px',
+      width: '246px',
       height: '34px',
       backgroundColor: '#684BC7',
       color: '#FFFFFF',
@@ -576,16 +582,57 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       ':hover': {
         backgroundColor: '#4B23A0'
       }
+    },
+    buttonLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      cursor: 'pointer' as 'pointer',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'wrap' as 'wrap',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      width: '153px',
+      height: '34px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      font: '400 14px Roboto',
+      border: '1px solid #684BC7',
+      borderRadius: '1px',
+      outline: '0px',
+      ':active': {
+        backgroundColor: '#4B23A0'
+      },
+      ':hover': {
+        backgroundColor: '#4B23A0'
+      }
+    },
+    closeIcon: {
+      width: '20px',
+      height: '20px',
+      cursor: 'pointer' as 'pointer',
+      ':focus': {
+        outline: 0
+      },
+      ':active': {
+        outline: 0,
+        border: 0
+      },
+      '::moz-focus-inner': {
+        border: 0
+      }
     }
   });
   private static readonly HEADER_TEXT = 'Change Picture';
-  private static readonly BROWSE_BUTTON_TEXT = 'BROWSE';
-  private static readonly SUBMIT_BUTTON_TEXT = 'SUBMIT';
+  private static readonly BROWSE_BUTTON_TEXT = 'Browse';
+  private static readonly SUBMIT_BUTTON_TEXT = 'Submit';
   private static readonly PADDING = '18px';
   private static readonly PADDING_BETWEEN_ELEMENTS = '30px';
 }
 
 interface SliderProperties {
+
+  /** Determines the size to render the component at. */
+  displaySize: DisplaySize;
 
   /** Callback that updates the value */
   onChange?: (value: number) => void;
@@ -611,13 +658,27 @@ export class Slider extends React.Component<SliderProperties, {}> {
   }
 
   public render(): JSX.Element {
+    const sliderStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return Slider.SLIDER_STYLE.smallSlider;
+      } else {
+        return Slider.SLIDER_STYLE.slider;
+      }
+    })();
+    const cursorStyle = (() => {
+      if(this.props.readonly) {
+        return Slider.SLIDER_STYLE.disabled;
+      } else {
+        return Slider.SLIDER_STYLE.enabled;
+      }
+    })();
     return (<input type='range'
       min={Slider.MIN_RANGE_VALUE}
       max={Slider.MAX_RANGE_VALUE}
       value={Slider.convertFromDecimal(this.props.scale)}
       disabled={this.props.readonly}
       onChange={this.onValueChange}
-      className={css(Slider.SLIDER_STYLE.slider)}/>);
+      className={css(sliderStyle, cursorStyle)}/>);
   }
 
   private onValueChange(event: any) {
@@ -652,31 +713,28 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px',
         boxShadow: 'none',
         marginTop: '-8px'
       },
       '::-moz-range-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px'
       },
       '::-ms-thumb': {
         boxSizing: 'border-box' as 'border-box',
-        cursor: 'pointer' as 'pointer',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid #8C8C8C',
+        border: '6px solid #684BC7',
         borderRadius: '20px',
         marginTop: '0px'
       },
@@ -698,6 +756,84 @@ export class Slider extends React.Component<SliderProperties, {}> {
       '-webkit-appearance': 'none',
       '::-moz-focus-outer': {
         border: '0px'
+      }
+    },
+    smallSlider: {
+      width: '100%',
+      height: '24px',
+      margin: '0px',
+      outline: '0px',
+      ':disabled' : {
+        backgroundColor: '#FFFFFF'
+      },
+      '::-webkit-slider-thumb': {
+        '-webkit-appearance': 'none',
+        boxSizing: 'border-box' as 'border-box',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '6px solid #684BC7',
+        borderRadius: '24px',
+        boxShadow: 'none',
+        marginTop: '-8px'
+      },
+      '::-moz-range-thumb': {
+        boxSizing: 'border-box' as 'border-box',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '6px solid #684BC7',
+        borderRadius: '24px'
+      },
+      '::-ms-thumb': {
+        boxSizing: 'border-box' as 'border-box',
+        height: '24px',
+        width: '24px',
+        backgroundColor: '#FFFFFF',
+        border: '6px solid #684BC7',
+        borderRadius: '24px',
+        marginTop: '0px'
+      },
+      '::-webkit-slider-runnable-track': {
+        '-webkit-appearance': 'none',
+        boxShadow: 'none' as 'none',
+        backgroundColor: '#E6E6E6',
+        height: '4px'
+      },
+      '::-moz-range-track': {
+        backgroundColor: '#E6E6E6',
+        height: '4px',
+        border: '0px'
+      },
+      '::-ms-track': {
+        backgroundColor: '#E6E6E6',
+        height: '4px'
+      },
+      '-webkit-appearance': 'none',
+      '::-moz-focus-outer': {
+        border: '0px'
+      }
+    },
+    enabled:{
+      '::-webkit-slider-thumb': {
+        cursor: 'pointer' as 'pointer'
+      },
+      '::-moz-range-thumb': {
+        cursor: 'pointer' as 'pointer'
+      },
+      '::-ms-thumb': {
+        cursor: 'pointer' as 'pointer'
+      }
+    },
+    disabled: {
+      '::-webkit-slider-thumb': {
+        cursor: 'default' as 'default'
+      },
+      '::-moz-range-thumb': {
+        cursor: 'default' as 'default'
+      },
+      '::-ms-thumb': {
+        cursor: 'default' as 'default'
       }
     }
   });

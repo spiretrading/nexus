@@ -15,7 +15,7 @@ interface Properties {
 
 /** Displays a check mark button. */
 export class CheckMarkButton extends React.Component<Properties, {}> {
-  static readonly defaultProps = {
+  public static readonly defaultProps = {
     onClick: () => {}
   }
 
@@ -34,17 +34,22 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
       }
     })();
     return (
-      <img src={source}
-        alt='checkbox'
-        height={this.props.size}
-        width={this.props.size}
-        onClick={this.props.onClick}
-        style={CheckMarkButton.STYLE.base}/>);
+      <div onClick={this.props.onClick} style={CheckMarkButton.STYLE.wrapper}>
+        <img src={source}
+          alt='checkbox'
+          height={this.props.size}
+          width={this.props.size}/>
+      </div>);
   }
 
   private static STYLE = {
-    base: {
-      cursor: 'pointer'
+    wrapper: {
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      width: '20px',
+      height: '20px',
+      cursor: 'pointer' as 'pointer'
     }
   };
 }

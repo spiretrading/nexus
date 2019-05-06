@@ -26,9 +26,9 @@
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
-#include "ChiaMarketDataFeedClient/Version.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

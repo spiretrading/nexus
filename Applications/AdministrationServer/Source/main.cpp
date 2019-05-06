@@ -16,11 +16,11 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
-#include "AdministrationServer/Version.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/MySqlAdministrationDataStore.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

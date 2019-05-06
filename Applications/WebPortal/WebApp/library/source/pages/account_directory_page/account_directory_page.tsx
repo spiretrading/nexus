@@ -34,7 +34,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onNewGroupClick: () => {},
     onNewAccountClick: () => {}
-  }
+  };
 
   constructor(props: Properties) {
     super(props);

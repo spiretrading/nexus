@@ -20,7 +20,7 @@
 #include <tclap/CmdLine.h>
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "ChartingServer/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

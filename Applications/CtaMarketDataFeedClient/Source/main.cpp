@@ -30,7 +30,7 @@
 #include "CtaMarketDataFeedClient/CtaConfiguration.hpp"
 #include "CtaMarketDataFeedClient/CtaMarketDataFeedClient.hpp"
 #include "CtaMarketDataFeedClient/CtaProtocolClient.hpp"
-#include "CtaMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

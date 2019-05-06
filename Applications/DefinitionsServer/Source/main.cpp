@@ -16,7 +16,6 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
-#include "DefinitionsServer/Version.hpp"
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
@@ -25,6 +24,7 @@
 #include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
