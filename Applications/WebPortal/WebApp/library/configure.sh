@@ -32,7 +32,9 @@ pushd "$dependencies"
 "$directory"/setup.sh
 popd
 if [ "$dependencies" != "$root/Dependencies" ]; then
-  ln -s "$dependencies" Dependencies
+  if [ ! -L Dependencies ]; then
+    ln -s "$dependencies" Dependencies
+  fi
 fi
 if [ "$directory" != "$root" ]; then
   if [ -d source ]; then

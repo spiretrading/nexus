@@ -97,6 +97,14 @@ IF "%UPDATE_BUILD%" == "1" (
   IF EXIST application (
     robocopy "%~dp0..\..\resources" application\resources /E > NUL
     COPY "%~dp0source\index.html" application\index.html > NUL
+    IF EXIST ..\..\Application (
+      IF NOT EXIST ..\..\Application\web_app (
+        PUSHD ..\..\Application
+        MD web_app
+        POPD
+      )
+      robocopy application ..\..\Application\web_app
+    )
   )
 )
 ENDLOCAL
