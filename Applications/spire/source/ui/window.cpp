@@ -58,23 +58,6 @@ void Window::set_svg_icon(const QString& icon_path,
     make_svg_window_icon(unfocused_icon_path));
 }
 
-void Window::resize(int width, int height) {
-  resize({width, height});
-}
-
-void Window::resize(const QSize& size) {
-  QWidget::resize({size.width(), size.height() + m_title_bar->height()});
-}
-
-void Window::setFixedSize(int width, int height) {
-  setFixedSize({width, height});
-}
-
-void Window::setFixedSize(const QSize& size) {
-  set_resizeable(false);
-  QWidget::setFixedSize({size.width(), size.height() + m_title_bar->height()});
-}
-
 void Window::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(isActiveWindow()) {
@@ -176,6 +159,15 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
   }
   return QWidget::nativeEvent(eventType, message, result);
+}
+
+void Window::resize_body(const QSize& size) {
+  QWidget::resize({size.width(), size.height() + m_title_bar->height()});
+}
+
+void Window::set_fixed_body_size(const QSize& size) {
+  set_resizeable(false);
+  QWidget::setFixedSize({size.width(), size.height() + m_title_bar->height()});
 }
 
 void Window::set_resizeable(bool resizeable) {

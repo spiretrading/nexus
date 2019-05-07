@@ -28,7 +28,7 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_is_data_loaded(false),
       m_technicals_panel(nullptr) {
   setMinimumSize(scale(220, 280));
-  resize(scale(220, 410));
+  resize_body(scale(220, 410));
   setWindowTitle(tr("Book View"));
   setWindowIcon(QIcon(":icons/book-view-icon-256x256.png"));
   m_security_widget = new SecurityWidget(input_model,

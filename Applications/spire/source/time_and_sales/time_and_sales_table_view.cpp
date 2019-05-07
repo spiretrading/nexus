@@ -174,7 +174,6 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Paint) {
       m_table->update();
       m_header->update();
-
     }
   }
   return QScrollArea::eventFilter(watched, event);

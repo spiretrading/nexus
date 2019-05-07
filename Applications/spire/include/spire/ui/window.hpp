@@ -47,20 +47,15 @@ namespace Spire {
       void set_svg_icon(const QString& icon_path,
         const QString& unfocused_icon_path);
 
-      void resize(int width, int height);
-
-      void resize(const QSize& size);
-
-      void setFixedSize(int width, int height);
-
-      void setFixedSize(const QSize& size);
-
     protected:
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
+
+      void resize_body(const QSize& size);
+      void set_fixed_body_size(const QSize& size);
 
     private:
       mutable ClosedSignal m_closed_signal;

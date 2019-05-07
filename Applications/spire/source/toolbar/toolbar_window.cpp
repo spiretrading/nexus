@@ -15,7 +15,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
       m_model(model.Get()) {
-  setFixedSize(scale(308, 72));
+  set_fixed_body_size(scale(308, 72));
   set_svg_icon(":/icons/spire-icon-black.svg",
     ":/icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":icons/toolbar-icon-256x256.png"));
