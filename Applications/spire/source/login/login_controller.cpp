@@ -3,7 +3,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "spire/login/login_window.hpp"
 #include "spire/spire/qt_promise.hpp"
-#include "spire/version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

@@ -255,12 +255,12 @@ void BookViewLevelPropertiesWidget::update_band_list_font(
 void BookViewLevelPropertiesWidget::update_band_list_gradient() {
   auto band_count = m_band_list_widget->count();
   if(band_count > 1) {
-    int start_red;
-    int start_green;
-    int start_blue;
-    int end_red;
-    int end_green;
-    int end_blue;
+    auto start_red = 0;
+    auto start_green = 0;
+    auto start_blue = 0;
+    auto end_red = 0;
+    auto end_green = 0;
+    auto end_blue = 0;
     m_gradient_start_button->get_style().m_background_color.getRgb(&start_red,
       &start_green, &start_blue);
     m_gradient_end_button->get_style().m_background_color.getRgb(&end_red,
@@ -271,11 +271,12 @@ void BookViewLevelPropertiesWidget::update_band_list_gradient() {
       (band_count -1);
     auto blue_delta = static_cast<double>((end_blue - start_blue)) /
       (band_count - 1);
-    double red = start_red;
-    double green = start_green;
-    double blue = start_blue;
+    auto red = double(start_red);
+    auto green = double(start_green);
+    auto blue = double(start_blue);
     for(auto i = 0; i < band_count; ++i) {
-      m_band_list_widget->item(i)->setBackground(QColor(red, green, blue));
+      m_band_list_widget->item(i)->setBackground(QColor(static_cast<int>(red),
+        static_cast<int>(green), static_cast<int>(blue)));
       red += red_delta;
       green += green_delta;
       blue += blue_delta;

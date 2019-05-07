@@ -10,7 +10,7 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
 
 QImage Spire::imageFromSvg(const QString& path, const QSize& size,
     const QRect& box) {
-  QSvgRenderer renderer(path);
+  auto renderer = QSvgRenderer(path);
   auto image = QImage(size, QImage::Format_ARGB32);
   image.fill(QColor(0, 0, 0, 0));
   QPainter painter(&image);

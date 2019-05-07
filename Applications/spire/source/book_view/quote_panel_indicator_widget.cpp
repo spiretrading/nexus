@@ -43,8 +43,9 @@ void QuotePanelIndicatorWidget::on_animation_timer() {
   if(elapsed.count() >= FADE_TIME_MS) {
     m_color.setAlpha(255);
   } else {
-    m_color.setAlpha(map_to(elapsed.count(), 0, FADE_TIME_MS, STARTING_ALPHA,
-      255));
+    m_color.setAlpha(static_cast<int>(map_to(
+      static_cast<double>(elapsed.count()), 0, FADE_TIME_MS, STARTING_ALPHA,
+      255)));
     m_animation_timer.start();
   }
   update();

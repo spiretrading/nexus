@@ -10,7 +10,7 @@ using Columns = TimeAndSalesProperties::Columns;
 using PriceRange = TimeAndSalesProperties::PriceRange;
 
 namespace {
-  const auto LOADING_THRESHOLD = 25;
+  const auto LOADING_THRESHOLD = std::size_t{25};
   const auto SNAPSHOT_COUNT = 4 * LOADING_THRESHOLD;
 }
 
@@ -42,7 +42,7 @@ void TimeAndSalesWindowModel::set_properties(
 void TimeAndSalesWindowModel::set_row_visible(int row) {
   if(!m_is_fully_loaded && !m_is_loading &&
       m_entries.size() >= LOADING_THRESHOLD &&
-      row >= m_entries.size() - LOADING_THRESHOLD) {
+      row >= static_cast<int>(m_entries.size() - LOADING_THRESHOLD)) {
     load_snapshot(m_entries.front().m_time_and_sale.GetSequence());
   }
 }

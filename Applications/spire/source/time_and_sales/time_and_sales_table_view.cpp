@@ -146,18 +146,18 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
 void TimeAndSalesTableView::set_properties(
     const TimeAndSalesProperties& properties) {
   m_table->setShowGrid(properties.m_show_grid);
-  QFontMetrics metrics(properties.m_font);
+  auto metrics = QFontMetrics(properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
   auto header_font = m_table->verticalHeader()->font();
   if(properties.m_font.pointSize() >= 11) {
-    header_font.setPointSizeF(properties.m_font.pointSize() * 0.8);
+    header_font.setPointSizeF(0.8 * properties.m_font.pointSize());
   } else {
     header_font.setPointSize(9);
   }
   m_header->setFont(header_font);
-  QFontMetrics header_metrics(header_font);
-  m_header->setFixedHeight(header_metrics.height() * 1.8);
+  auto header_metrics = QFontMetrics(header_font);
+  m_header->setFixedHeight(static_cast<int>(1.8 * header_metrics.height()));
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
     update_table_height(m_table->model()->rowCount());

@@ -34,7 +34,7 @@ namespace {
 
   template<typename T, typename U>
   U map_to(T value, T a, T b, U c, U d) {
-    return ((value - a) / (b - a)) * (d - c) + c;
+    return static_cast<U>(((value - a) / (b - a)) * (d - c) + c);
   }
 
   ChartValue calculate_step(ChartValue::Type value_type,
@@ -79,10 +79,10 @@ ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
   return QPoint(
-    map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
-      static_cast<double>(m_x_origin)),
-    map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
-      static_cast<double>(m_y_origin), 0.0));
+    static_cast<int>(map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
+      static_cast<double>(m_x_origin))),
+    static_cast<int>(map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
+      static_cast<double>(m_y_origin), 0.0)));
 }
 
 void ChartView::set_crosshair(const ChartPoint& position) {
@@ -153,8 +153,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     return;
   }
   for(auto y : m_y_axis_values) {
-    auto y_pos = map_to(y, m_bottom_right.m_y,
-    m_top_left.m_y, m_y_origin, 0);
+    auto y_pos = map_to(y, m_bottom_right.m_y, m_top_left.m_y, m_y_origin, 0);
     painter.setPen("#3A3348");
     painter.drawLine(0, y_pos, m_x_origin, y_pos);
     painter.setPen(Qt::white);

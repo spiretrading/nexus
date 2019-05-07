@@ -57,7 +57,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
         return highlight->m_color;
       }
     }
-    if(quote.m_price_level < background_colors.size()) {
+    if(quote.m_price_level < static_cast<int>(background_colors.size())) {
       return background_colors[quote.m_price_level];
     } else {
       return background_colors.back();
@@ -82,7 +82,7 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
   }
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   auto test_price_levels = false;
-  if(m_size > book.size()) {
+  if(m_size > static_cast<int>(book.size())) {
     beginRemoveRows(QModelIndex(), index, index);
     --m_size;
     test_price_levels = true;

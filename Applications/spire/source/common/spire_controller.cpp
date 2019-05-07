@@ -1,4 +1,7 @@
 #include "spire/spire/spire_controller.hpp"
+#ifdef slots
+  #undef slots
+#endif
 #include <filesystem>
 #include <Beam/Network/SocketThreadPool.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>

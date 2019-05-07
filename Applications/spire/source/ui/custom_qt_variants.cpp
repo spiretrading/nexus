@@ -81,27 +81,29 @@ QString PositionSideToken::to_string() const {
 }
 
 QTime Spire::to_qtime(const posix_time::time_duration& time) {
-  QTime timestamp(time.hours(), time.minutes(), time.seconds(),
-    time.fractional_seconds() / 1000);
+  auto timestamp = QTime(static_cast<int>(time.hours()),
+    static_cast<int>(time.minutes()), static_cast<int>(time.seconds()),
+    static_cast<int>(time.fractional_seconds() / 1000));
   return timestamp;
 }
 
 posix_time::time_duration Spire::to_time_duration(const QTime& time) {
-  posix_time::time_duration timestamp(time.hour(), time.minute(), time.second(),
-    time.msec());
+  auto timestamp = posix_time::time_duration(time.hour(), time.minute(),
+    time.second(), time.msec());
   return timestamp;
 }
 
 QDateTime Spire::to_qdate_time(const ptime& time) {
-  QDateTime date_time(QDate(time.date().year(), time.date().month(),
+  auto date_time = QDateTime(QDate(time.date().year(), time.date().month(),
     time.date().day()), to_qtime(time.time_of_day()));
   return date_time;
 }
 
 posix_time::ptime Spire::to_ptime(const QDateTime& time) {
-  ptime posix_time(gregorian::date(time.date().year(), time.date().month(),
-    time.date().day()), posix_time::time_duration(time.time().hour(),
-    time.time().minute(), time.time().second(), time.time().msec()));
+  auto posix_time = ptime(gregorian::date(
+    time.date().year(), time.date().month(), time.date().day()),
+    posix_time::time_duration(time.time().hour(), time.time().minute(),
+    time.time().second(), time.time().msec()));
   return posix_time;
 }
 

@@ -17,7 +17,7 @@ void LocalSecurityInputModel::add(SecurityInfo security) {
 
 QtPromise<std::vector<SecurityInfo>> LocalSecurityInputModel::autocomplete(
     const std::string& query) {
-  constexpr auto MAX_MATCH_COUNT = 8;
+  constexpr auto MAX_MATCH_COUNT = std::size_t{8};
   auto matches = [&] {
     if(query.empty()) {
       return std::vector<SecurityInfo>();
