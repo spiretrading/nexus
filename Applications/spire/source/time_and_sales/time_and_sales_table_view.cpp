@@ -16,45 +16,13 @@ using namespace Spire;
 namespace {
   const auto MINIMUM_TABLE_WIDTH = 750;
   const auto SCROLL_BAR_FADE_TIME_MS = 500;
+  const auto SCROLL_BAR_MAX_SIZE = 13;
+  const auto SCROLL_BAR_MIN_SIZE = 6;
 }
 
 TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     : QScrollArea(parent),
       m_model(nullptr) {
-  setStyleSheet(QString(R"(
-    QWidget {
-      background-color: #FFFFFF;
-      border: none;
-    }
-
-    QScrollBar::horizontal {
-      height: %1px;
-    }
-
-    QScrollBar::vertical {
-      width: %2px;
-    }
-
-    QScrollBar::handle {
-      background-color: #C8C8C8;
-    }
-
-    QScrollBar::handle:horizontal {
-      min-width: %3px;
-    }
-
-    QScrollBar::handle:vertical {
-      min-height: %4px;
-    }
-
-    QScrollBar::add-line, QScrollBar::sub-line,
-    QScrollBar::add-page, QScrollBar::sub-page {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    })").arg(scale_height(15)).arg(scale_width(15))
-        .arg(scale_width(30)).arg(scale_height(30)));
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
@@ -169,13 +137,16 @@ bool TimeAndSalesTableView::event(QEvent* event) {
     auto e = static_cast<QHoverEvent*>(event);
     if(is_within_horizontal_scroll_bar(e->pos()) &&
         !verticalScrollBar()->isVisible()) {
+      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else if(is_within_vertical_scroll_bar(e->pos()) &&
         !horizontalScrollBar()->isSliderDown()) {
+      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
       setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     } else {
+      set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
       if(!m_v_scroll_bar_timer.isActive() &&
           verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
           !verticalScrollBar()->isSliderDown()) {
@@ -239,6 +210,43 @@ void TimeAndSalesTableView::fade_out_vertical_scroll_bar() {
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
+void TimeAndSalesTableView::set_scroll_bar_style(int size) {
+  setStyleSheet(QString(R"(
+    QWidget {
+      background-color: #FFFFFF;
+      border: none;
+    }
+
+    QScrollBar::horizontal {
+      height: %1px;
+    }
+
+    QScrollBar::vertical {
+      width: %2px;
+    }
+
+    QScrollBar::handle {
+      background-color: #C8C8C8;
+    }
+
+    QScrollBar::handle:horizontal {
+      min-width: %3px;
+    }
+
+    QScrollBar::handle:vertical {
+      min-height: %4px;
+    }
+
+    QScrollBar::add-line, QScrollBar::sub-line,
+    QScrollBar::add-page, QScrollBar::sub-page {
+      background: none;
+      border: none;
+      height: 0px;
+      width: 0px;
+    })").arg(scale_height(size)).arg(scale_width(size))
+        .arg(scale_width(60)).arg(scale_height(60)));
+}
+
 void TimeAndSalesTableView::show_loading_widget() {
   m_loading_widget = std::make_unique<SnapshotLoadingWidget>(this);
   m_layout->addWidget(m_loading_widget.get());
@@ -256,12 +264,12 @@ void TimeAndSalesTableView::update_table_height(int num_rows) {
 
 bool TimeAndSalesTableView::is_within_horizontal_scroll_bar(
     const QPoint& pos) {
-  return pos.y() > height() - horizontalScrollBar()->height();
+  return pos.y() > height() - scale_height(SCROLL_BAR_MAX_SIZE);
 }
 
 bool TimeAndSalesTableView::is_within_vertical_scroll_bar(
     const QPoint& pos) {
-  return pos.x() > width() - verticalScrollBar()->width();
+  return pos.x() > width() - scale_width(SCROLL_BAR_MAX_SIZE);
 }
 
 void TimeAndSalesTableView::on_end_loading_signal() {

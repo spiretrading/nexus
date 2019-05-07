@@ -4,6 +4,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
@@ -33,7 +35,49 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
+  auto markets_scroll_area = new QScrollArea(this);
+  markets_scroll_area->setFixedWidth(scale_width(140));
+  markets_scroll_area->setObjectName("markets_scroll_area");
+  markets_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+  markets_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  markets_scroll_area->verticalScrollBar()->setContextMenuPolicy(
+    Qt::NoContextMenu);
+  markets_scroll_area->setWidgetResizable(true);
+  markets_scroll_area->setFrameShape(QFrame::NoFrame);
+  markets_scroll_area->setStyleSheet(QString(R"(
+    #markets_scroll_area {
+      background-color: #FFFFFF;
+      border: %2px solid #A0A0A0;
+    }
+    
+    QScrollBar {
+      background-color: #FFFFFF;
+      border: %2px solid #FFFFFF;
+      width: %1px;
+    }
+
+    QScrollBar::handle:vertical {
+      background-color: #EBEBEB;
+      min-height: %3px;
+    }
+
+    QScrollBar::sub-line:vertical {
+      background: none;
+      border: none;
+      height: 0px;
+      width: 0px;
+    }
+
+    QScrollBar::add-line:vertical {
+      background: none;
+      border: none;
+      height: 0px;
+      width: 0px;
+    })").arg(scale_width(13)).arg(scale_width(1)).arg(scale_height(60)));
+  markets_layout->addWidget(markets_scroll_area, 222);
   m_markets_list_widget = new QListWidget(this);
+  markets_scroll_area->setWidget(m_markets_list_widget);
+  m_markets_list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
     auto item = new MarketListItem(entry, m_markets_list_widget);
     item->setTextAlignment(Qt::AlignCenter);
@@ -57,8 +101,6 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_markets_list_widget, &QListWidget::currentRowChanged,
     [=] { update_market_widgets(); });
-  m_markets_list_widget->setFixedWidth(scale_width(140));
-  markets_layout->addWidget(m_markets_list_widget, 222);
   layout->addLayout(markets_layout, 140);
   layout->addStretch(18);
   auto market_highlight_layout = new QVBoxLayout();
@@ -159,8 +201,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     check_box_focused_style);
   orders_layout->addWidget(m_display_orders_check_box, 16);
   orders_layout->addStretch(10);
-  m_highlight_orders_check_box = new CheckBox(tr("Highlight Orders"),
-    this);
+  m_highlight_orders_check_box = new CheckBox(tr("Highlight Orders"), this);
   m_highlight_orders_check_box->setChecked(true);
   m_highlight_orders_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style, check_box_hover_style,
@@ -251,26 +292,27 @@ void BookViewHighlightPropertiesWidget::update_market_list_stylesheet(
   m_markets_list_widget->setStyleSheet(QString(R"(
     QListWidget {
       background-color: white;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      border: 1px solid transparent;
       outline: none;
-      padding: %3px %4px 0px %4px;
+      padding: %1px %2px 0px %2px;
     }
 
     QListWidget::item {
-      padding-top: %8px;
-      padding-bottom: %8px;
+      padding-top: %6px;
+      padding-bottom: %6px;
     }
 
     QListWidget::item:selected {
-      background-color: %7;
-      border: %5px solid #4B23A0 %6px solid #4B23A0;
+      background-color: %5;
+      border: %3px solid #4B23A0 %4px solid #4B23A0;
       color: #000000;
-    })").arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(4)).arg(scale_width(4))
+    })").arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_markets_list_widget->item(
           selected_item_index)->background().color().name())
         .arg(scale_height(3)));
+  m_markets_list_widget->setMinimumHeight(
+    m_markets_list_widget->sizeHintForRow(0) * m_markets_list_widget->count());
 }
 
 void BookViewHighlightPropertiesWidget::

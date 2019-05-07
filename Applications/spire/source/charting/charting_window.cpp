@@ -38,7 +38,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_chart(nullptr),
       m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
-  resize(scale(400, 320));
+  resize_body(scale(400, 320));
   set_svg_icon(":/icons/chart-black.svg",
     ":/icons/chart-grey.svg");
   setWindowIcon(QIcon(":/icons/chart-icon-256x256.png"));

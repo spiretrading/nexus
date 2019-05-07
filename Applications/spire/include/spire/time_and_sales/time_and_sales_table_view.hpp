@@ -51,6 +51,7 @@ namespace Spire {
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
+      void set_scroll_bar_style(int size);
       void show_loading_widget();
       void update_table_height(int num_rows);
       bool is_within_horizontal_scroll_bar(const QPoint& pos);

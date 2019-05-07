@@ -23,16 +23,14 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  setFixedSize(scale(492, 394));
+  set_fixed_body_size(scale(472, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   setWindowTitle(tr("Properties"));
-  set_svg_icon(":/icons/bookview-black.svg",
-    ":/icons/bookview-grey.svg");
+  set_svg_icon(":/icons/bookview-black.svg", ":/icons/bookview-grey.svg");
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins(scale_width(8), scale_height(10), scale_width(8),
-    0);
+  layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
   m_tab_widget = new QTabWidget(this);
   m_tab_widget->tabBar()->setFixedHeight(scale_height(40));

@@ -25,7 +25,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  setFixedSize(scale(462, 272));
+  set_fixed_body_size(scale(462, 272));
   set_svg_icon(":/icons/time-sale-black.svg",
     ":/icons/time-sale-grey.svg");
   setWindowTitle(tr("Properties"));
