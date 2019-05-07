@@ -29,7 +29,7 @@ void RandomBookViewModel::set_period(time_duration period) {
   m_period = period;
   m_timer.stop();
   if(m_period != pos_infin) {
-    m_timer.start(m_period.total_milliseconds());
+    m_timer.start(static_cast<int>(m_period.total_milliseconds()));
   }
 }
 
@@ -230,5 +230,5 @@ void RandomBookViewModel::on_timeout() {
     return;
   }
   update();
-  m_timer.start(m_period.total_milliseconds());
+  m_timer.start(static_cast<int>(m_period.total_milliseconds()));
 }

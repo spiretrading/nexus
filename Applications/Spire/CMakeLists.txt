@@ -79,7 +79,7 @@ macro(find_cpp_qobject output)
   endforeach()
 endmacro()
 
-#add_subdirectory(Config/book_view_ui_tester)
+add_subdirectory(Config/book_view_ui_tester)
 #add_subdirectory(Config/charting_ui_tester)
 add_subdirectory(Config/library)
 #add_subdirectory(Config/login_ui_tester)
