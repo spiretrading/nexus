@@ -78,11 +78,10 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_band_list_stylesheet = QString(R"(
     QListWidget {
       background-color: #FFFFFF;
-      border: %1px solid transparent %2px solid transparent;
+      border: 1px solid transparent;
       outline: none;
-      padding: %3px %4px %3px %4px;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(4))
-        .arg(scale_width(4));
+      padding: %1px %2px %1px %2px;
+    })").arg(scale_height(4)).arg(scale_width(4));
   m_band_list_widget->setStyleSheet(m_band_list_stylesheet);
   auto& bg_colors =
     properties.get_book_quote_background_colors();

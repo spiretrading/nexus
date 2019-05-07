@@ -292,22 +292,21 @@ void BookViewHighlightPropertiesWidget::update_market_list_stylesheet(
   m_markets_list_widget->setStyleSheet(QString(R"(
     QListWidget {
       background-color: white;
-      border: %1px solid transparent %2px solid transparent;
+      border: 1px solid transparent;
       outline: none;
-      padding: %3px %4px 0px %4px;
+      padding: %1px %2px 0px %2px;
     }
 
     QListWidget::item {
-      padding-top: %8px;
-      padding-bottom: %8px;
+      padding-top: %6px;
+      padding-bottom: %6px;
     }
 
     QListWidget::item:selected {
-      background-color: %7;
-      border: %5px solid #4B23A0 %6px solid #4B23A0;
+      background-color: %5;
+      border: %3px solid #4B23A0 %4px solid #4B23A0;
       color: #000000;
-    })").arg(scale_height(1)).arg(scale_width(1))
-        .arg(scale_height(4)).arg(scale_width(4))
+    })").arg(scale_height(4)).arg(scale_width(4))
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_markets_list_widget->item(
           selected_item_index)->background().color().name())
