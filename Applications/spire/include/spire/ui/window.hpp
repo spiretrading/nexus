@@ -48,14 +48,25 @@ namespace Spire {
         const QString& unfocused_icon_path);
 
     protected:
+
+      //! Resizes the Window, adding the TitleBar's height to provided size.
+      /*
+        \param size The size of the Window's body.
+      */
+      void resize_body(const QSize& size);
+
+      //! Sets the Window to have a fixed size, removing the maximize button
+      //! and resize cursors. Adds the TitleBar's height to the provided size.
+      /*
+        \param size The fixed size of the Window's body.
+      */
+      void set_fixed_body_size(const QSize& size);
+
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
       bool nativeEvent(const QByteArray& eventType, void* message,
         long* result) override;
-
-      void resize_body(const QSize& size);
-      void set_fixed_body_size(const QSize& size);
 
     private:
       mutable ClosedSignal m_closed_signal;

@@ -162,12 +162,12 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
 }
 
 void Window::resize_body(const QSize& size) {
-  QWidget::resize({size.width(), size.height() + m_title_bar->height()});
+  resize({size.width(), size.height() + m_title_bar->height()});
 }
 
 void Window::set_fixed_body_size(const QSize& size) {
   set_resizeable(false);
-  QWidget::setFixedSize({size.width(), size.height() + m_title_bar->height()});
+  setFixedSize({size.width(), size.height() + m_title_bar->height()});
 }
 
 void Window::set_resizeable(bool resizeable) {
