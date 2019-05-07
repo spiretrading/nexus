@@ -3,7 +3,7 @@
 #include "spire/login/login_window.hpp"
 #include "spire/spire/resources.hpp"
 #include "spire/ui/window.hpp"
-#include "spire/version.hpp"
+#include "Version.hpp"
 
 using namespace Spire;
 

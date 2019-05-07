@@ -12,7 +12,7 @@
 #include "spire/spire/local_technicals_model.hpp"
 #include "spire/spire/resources.hpp"
 #include "spire/ui/custom_qt_variants.hpp"
-#include "spire/version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Nexus;

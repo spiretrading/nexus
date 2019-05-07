@@ -19,6 +19,9 @@ if [ "$build_beam" == "1" ]; then
   ./build.sh
 fi
 popd
+if [ ! -d "Catch-2.2.1" ]; then
+  git clone --branch v2.2.1 https://github.com/catchorg/Catch2.git Catch2-2.2.1
+fi
 if [ ! -d "quickfix-v.1.15.1" ]; then
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
   if [ -f quickfix-v.1.15.1.zip ]; then

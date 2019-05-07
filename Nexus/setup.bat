@@ -22,6 +22,9 @@ IF "%BUILD_BEAM%" == "1" (
 )
 POPD
 SET commit=
+IF NOT EXIST Catch2-2.2.1 (
+  git clone --branch v2.2.1 https://github.com/catchorg/Catch2.git Catch2-2.2.1
+)
 IF NOT EXIST qt-5.12.1 (
   git clone git://code.qt.io/qt/qt5.git qt-5.12.1
   IF EXIST qt-5.12.1 (

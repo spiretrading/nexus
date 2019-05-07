@@ -1,7 +1,7 @@
 #include <QApplication>
 #include "spire/spire/resources.hpp"
 #include "spire/spire/spire_controller.hpp"
-#include "spire/version.hpp"
+#include "Version.hpp"
 
 using namespace Spire;
 
