@@ -16,6 +16,7 @@ if [ ! -f "build.sh" ]; then
   chmod +x build.sh
 fi
 targets="Nexus"
+targets+=" WebApi"
 targets+=" Applications/AdministrationServer"
 targets+=" Applications/AsxItchMarketDataFeedClient"
 targets+=" Applications/ChartingServer"
@@ -33,6 +34,7 @@ targets+=" Applications/TmxIpMarketDataFeedClient"
 targets+=" Applications/TmxTl1MarketDataFeedClient"
 targets+=" Applications/UtpMarketDataFeedClient"
 targets+=" Applications/WebPortal"
+targets+=" Applications/WebPortal/WebApp"
 
 for i in $targets; do
   if [ ! -d "$i" ]; then

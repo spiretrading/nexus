@@ -22,6 +22,7 @@ CALL:build Applications\TmxIpMarketDataFeedClient %*
 CALL:build Applications\TmxTl1MarketDataFeedClient %*
 CALL:build Applications\UtpMarketDataFeedClient %*
 CALL:build Applications\WebPortal %*
+CALL:build Applications\WebPortal\WebApp %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 

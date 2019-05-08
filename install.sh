@@ -58,8 +58,8 @@ popd
 if [ ! -d "AdminClient" ]; then
   sudo -u $username mkdir AdminClient
   pushd AdminClient
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/AdminClient/Application/AdminClient .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/AdminClient/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/AdminClient/Application/AdminClient .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/AdminClient/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -68,9 +68,9 @@ fi
 if [ ! -d "AdministrationServer" ]; then
   sudo -u $username mkdir AdministrationServer
   pushd AdministrationServer
-  sudo -u $username cp Nexus/Applications/AdministrationServer/Application/AdministrationServer .
-  sudo -u $username cp Nexus/Applications/AdministrationServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/AdministrationServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/AdministrationServer/Application/AdministrationServer .
+  sudo -u $username cp ../Nexus/Applications/AdministrationServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/AdministrationServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -79,9 +79,9 @@ fi
 if [ ! -d "ChartingServer" ]; then
   sudo -u $username mkdir ChartingServer
   pushd ChartingServer
-  sudo -u $username cp Nexus/Applications/ChartingServer/Application/ChartingServer .
-  sudo -u $username cp Nexus/Applications/ChartingServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/ChartingServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/ChartingServer/Application/ChartingServer .
+  sudo -u $username cp ../Nexus/Applications/ChartingServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/ChartingServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -90,9 +90,9 @@ fi
 if [ ! -d "ComplianceServer" ]; then
   sudo -u $username mkdir ComplianceServer
   pushd ComplianceServer
-  sudo -u $username cp Nexus/Applications/ComplianceServer/Application/ComplianceServer .
-  sudo -u $username cp Nexus/Applications/ComplianceServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/ComplianceServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/ComplianceServer/Application/ComplianceServer .
+  sudo -u $username cp ../Nexus/Applications/ComplianceServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/ComplianceServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -101,14 +101,14 @@ fi
 if [ ! -d "DefinitionsServer" ]; then
   sudo -u $username mkdir DefinitionsServer
   pushd DefinitionsServer
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/DefinitionsServer .
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/config.default.yml config.yml
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/countries.default.yml countries.yml
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/currencies.default.yml currencies.yml
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/date_time_zonespec.csv .
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/destinations.default.yml destinations.yml
-  sudo -u $username cp Nexus/Applications/DefinitionsServer/Application/markets.default.yml markets.yml
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/DefinitionsServer .
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/countries.default.yml countries.yml
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/currencies.default.yml currencies.yml
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/date_time_zonespec.csv .
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/destinations.default.yml destinations.yml
+  sudo -u $username cp ../Nexus/Applications/DefinitionsServer/Application/markets.default.yml markets.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -117,9 +117,9 @@ fi
 if [ ! -d "MarketDataServer" ]; then
   sudo -u $username mkdir MarketDataServer
   pushd MarketDataServer
-  sudo -u $username cp Nexus/Applications/MarketDataServer/Application/MarketDataServer .
-  sudo -u $username cp Nexus/Applications/MarketDataServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/MarketDataServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/MarketDataServer/Application/MarketDataServer .
+  sudo -u $username cp ../Nexus/Applications/MarketDataServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/MarketDataServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -128,9 +128,9 @@ fi
 if [ ! -d "MarketDataRelayServer" ]; then
   sudo -u $username mkdir MarketDataRelayServer
   pushd MarketDataRelayServer
-  sudo -u $username cp Nexus/Applications/MarketDataRelayServer/Application/MarketDataRelayServer .
-  sudo -u $username cp Nexus/Applications/MarketDataRelayServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/MarketDataRelayServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/MarketDataRelayServer/Application/MarketDataRelayServer .
+  sudo -u $username cp ../Nexus/Applications/MarketDataRelayServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/MarketDataRelayServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -139,9 +139,9 @@ fi
 if [ ! -d "RegistryServer" ]; then
   sudo -u $username mkdir RegistryServer
   pushd RegistryServer
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/RegistryServer/Application/RegistryServer .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/RegistryServer/Application/*.sh .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/RegistryServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/RegistryServer/Application/RegistryServer .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/RegistryServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/RegistryServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -150,9 +150,9 @@ fi
 if [ ! -d "ReplayMarketDataFeedClient" ]; then
   sudo -u $username mkdir ReplayMarketDataFeedClient
   pushd ReplayMarketDataFeedClient
-  sudo -u $username cp Nexus/Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient .
-  sudo -u $username cp Nexus/Applications/ReplayMarketDataFeedClient/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/ReplayMarketDataFeedClient/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient .
+  sudo -u $username cp ../Nexus/Applications/ReplayMarketDataFeedClient/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/ReplayMarketDataFeedClient/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -161,9 +161,9 @@ fi
 if [ ! -d "RiskServer" ]; then
   sudo -u $username mkdir RiskServer
   pushd RiskServer
-  sudo -u $username cp Nexus/Applications/RiskServer/Application/RiskServer .
-  sudo -u $username cp Nexus/Applications/RiskServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/RiskServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/RiskServer/Application/RiskServer .
+  sudo -u $username cp ../Nexus/Applications/RiskServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/RiskServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -172,9 +172,9 @@ fi
 if [ ! -d "ServiceLocator" ]; then
   sudo -u $username mkdir ServiceLocator
   pushd ServiceLocator
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/ServiceLocator .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/*.sh .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/ServiceLocator .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/*.sh .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/ServiceLocator/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -183,9 +183,9 @@ fi
 if [ ! -d "SimulationMarketDataFeedClient" ]; then
   sudo -u $username mkdir SimulationMarketDataFeedClient
   pushd SimulationMarketDataFeedClient
-  sudo -u $username cp Nexus/Applications/SimulationMarketDataFeedClient/Application/SimulationMarketDataFeedClient .
-  sudo -u $username cp Nexus/Applications/SimulationMarketDataFeedClient/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/SimulationMarketDataFeedClient/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/SimulationMarketDataFeedClient/Application/SimulationMarketDataFeedClient .
+  sudo -u $username cp ../Nexus/Applications/SimulationMarketDataFeedClient/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/SimulationMarketDataFeedClient/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -194,9 +194,9 @@ fi
 if [ ! -d "SimulationOrderExecutionServer" ]; then
   sudo -u $username mkdir SimulationOrderExecutionServer
   pushd SimulationOrderExecutionServer
-  sudo -u $username cp Nexus/Applications/SimulationOrderExecutionServer/Application/SimulationOrderExecutionServer .
-  sudo -u $username cp Nexus/Applications/SimulationOrderExecutionServer/Application/*.sh .
-  sudo -u $username cp Nexus/Applications/SimulationOrderExecutionServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Applications/SimulationOrderExecutionServer/Application/SimulationOrderExecutionServer .
+  sudo -u $username cp ../Nexus/Applications/SimulationOrderExecutionServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Applications/SimulationOrderExecutionServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -205,9 +205,9 @@ fi
 if [ ! -d "UidServer" ]; then
   sudo -u $username mkdir UidServer
   pushd UidServer
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/UidServer/Application/UidServer .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/UidServer/Application/*.sh .
-  sudo -u $username cp Nexus/Dependencies/Beam/Applications/UidServer/Application/config.default.yml config.yml
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/UidServer/Application/UidServer .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/UidServer/Application/*.sh .
+  sudo -u $username cp ../Nexus/Dependencies/Beam/Applications/UidServer/Application/config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
   sudo -u $username sed -i "s:admin_password:\"$admin_password\":g" config.yml
@@ -216,7 +216,7 @@ fi
 if [ ! -d "WebPortal" ]; then
   sudo -u $username mkdir WebPortal
   pushd WebPortal
-  sudo -u $username cp -R Nexus/Applications/WebPortal/Application/* .
+  sudo -u $username cp -R ../Nexus/Applications/WebPortal/Application/* .
   sudo -u $username mv config.default.yml config.yml
   sudo -u $username sed -i "s:local_interface:$local_interface:g" config.yml
   sudo -u $username sed -i "s:global_address:$global_address:g" config.yml
@@ -324,9 +324,9 @@ pushd ServiceLocator
 sudo -u $username ./stop_server.sh
 popd
 
-sudo -u $username cp Nexus/Applications/*.sh .
-sudo -u $username cp Nexus/Applications/*.sql .
+sudo -u $username cp ../Nexus/Applications/*.sh .
+sudo -u $username cp ../Nexus/Applications/*.sql .
 python_directory=$(sudo -u $username python3 -m site --user-site)
-sudo -u $username cp Nexus/Dependencies/Beam/Beam/Library/Release/beam.so $python_directory
-sudo -u $username cp Nexus/Nexus/Library/Release/nexus.so $python_directory
+sudo -u $username cp ../Nexus/Dependencies/Beam/Beam/Library/Release/beam.so $python_directory
+sudo -u $username cp ../Nexus/Nexus/Library/Release/nexus.so $python_directory
 ldconfig
