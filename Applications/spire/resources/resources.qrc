@@ -93,6 +93,5 @@
         <file>icons/lock-grid-grey.svg</file>
         <file>icons/lock-grid-purple.svg</file>
         <file>icons/chart-cursor.svg</file>
-        <file>icons/toolbar-icon-256x256.png</file>
     </qresource>
 </RCC>
