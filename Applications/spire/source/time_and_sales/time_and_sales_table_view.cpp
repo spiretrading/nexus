@@ -77,6 +77,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
   m_table->horizontalHeader()->setStretchLastSection(true);
   m_table->horizontalHeader()->hide();
   m_table->verticalHeader()->hide();
+  m_table->verticalHeader()->setMinimumSectionSize(0);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setStyleSheet(R"(

@@ -17,6 +17,7 @@ BookQuoteTableView::BookQuoteTableView(
   horizontalHeader()->hide();
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   verticalHeader()->hide();
+  verticalHeader()->setMinimumSectionSize(0);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::NoSelection);
