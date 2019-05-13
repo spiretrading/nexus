@@ -93,9 +93,12 @@ void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
   if(m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
-    setCursor(Qt::BlankCursor);
+    qApp->changeOverrideCursor(Qt::BlankCursor);
   } else {
-    setCursor(Qt::ArrowCursor);
+    if(qApp->overrideCursor() != nullptr &&
+        qApp->overrideCursor()->shape() != Qt::ArrowCursor) {
+      qApp->restoreOverrideCursor();
+    }
   }
   update();
 }
@@ -140,6 +143,12 @@ void ChartView::set_auto_scale(bool auto_scale) {
   m_is_auto_scaled = auto_scale;
   if(m_is_auto_scaled) {
     update_auto_scale();
+  }
+}
+
+void ChartView::leaveEvent(QEvent* event) {
+  if(qApp->overrideCursor() != nullptr) {
+    qApp->restoreOverrideCursor();
   }
 }
 

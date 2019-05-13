@@ -68,6 +68,7 @@ namespace Spire {
       void set_auto_scale(bool auto_scale);
 
     protected:
+      void leaveEvent(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;

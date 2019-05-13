@@ -144,6 +144,13 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       *result = HTCAPTION;
       return true;
     }
+    if(qApp->overrideCursor() != nullptr) {
+      qApp->changeOverrideCursor(qApp->overrideCursor()->shape());
+    } else {
+      qApp->setOverrideCursor(Qt::ArrowCursor);
+    }
+    *result = HTCLIENT;
+    return true;
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
       auto abs_pos = mapToGlobal(m_title_bar->pos());
