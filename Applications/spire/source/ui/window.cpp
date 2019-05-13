@@ -32,7 +32,6 @@ Window::Window(QWidget* parent)
     Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(this);
   set_svg_icon(":icons/spire-icon-black.svg", ":icons/spire-icon-grey.svg");
-  installEventFilter(m_title_bar);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins(scale_width(1), scale_height(1),
@@ -145,7 +144,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       *result = HTCAPTION;
       return true;
     }
-    return false;
+    *result = HTCLIENT;
+    return true;
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
       auto abs_pos = mapToGlobal(m_title_bar->pos());
