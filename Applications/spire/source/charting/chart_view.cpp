@@ -93,7 +93,10 @@ void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
   if(m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
-    qApp->changeOverrideCursor(Qt::BlankCursor);
+    if(qApp->overrideCursor() != nullptr &&
+        qApp->overrideCursor()->shape() != Qt::BlankCursor) {
+      qApp->changeOverrideCursor(Qt::BlankCursor);
+    }
   } else {
     if(qApp->overrideCursor() != nullptr &&
         qApp->overrideCursor()->shape() != Qt::ArrowCursor) {
