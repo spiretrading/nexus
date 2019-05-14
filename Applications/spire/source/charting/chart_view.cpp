@@ -67,6 +67,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(3)),
     static_cast<double>(scale_width(3))});
+  qApp->installNativeEventFilter(this);
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -91,18 +92,6 @@ void ChartView::set_crosshair(const ChartPoint& position) {
 
 void ChartView::set_crosshair(const QPoint& position) {
   m_crosshair_pos = position;
-  if(m_crosshair_pos.value().x() <= m_x_origin &&
-      m_crosshair_pos.value().y() <= m_y_origin) {
-    if(qApp->overrideCursor() != nullptr &&
-        qApp->overrideCursor()->shape() != Qt::BlankCursor) {
-      qApp->changeOverrideCursor(Qt::BlankCursor);
-    }
-  } else {
-    if(qApp->overrideCursor() != nullptr &&
-        qApp->overrideCursor()->shape() != Qt::ArrowCursor) {
-      qApp->restoreOverrideCursor();
-    }
-  }
   update();
 }
 
@@ -149,10 +138,17 @@ void ChartView::set_auto_scale(bool auto_scale) {
   }
 }
 
-void ChartView::leaveEvent(QEvent* event) {
-  if(qApp->overrideCursor() != nullptr) {
-    qApp->restoreOverrideCursor();
+bool ChartView::nativeEventFilter(const QByteArray& eventType, void* message,
+    long* result) {
+  auto msg = reinterpret_cast<MSG*>(message);
+  if(msg->message == WM_SETCURSOR) {
+    if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
+        m_crosshair_pos.value().y() <= m_y_origin) {
+      SetCursor(LoadCursor(NULL, NULL));
+      return true;
+    }
   }
+  return QWidget::nativeEvent(eventType, message, result);
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
