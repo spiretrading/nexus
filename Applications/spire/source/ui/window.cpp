@@ -168,6 +168,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       setContentsMargins({});
     }
   } else if(msg->message == WM_SETCURSOR) {
+    // TODO: remove this when WM_NCHITTEST's HTCLIENT result behaves properly.
     SetCursor(m_cursor);
     return true;
   }

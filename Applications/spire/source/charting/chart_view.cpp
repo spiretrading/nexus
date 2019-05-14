@@ -142,6 +142,8 @@ bool ChartView::nativeEventFilter(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_SETCURSOR) {
+    // TODO: remove this when WM_NCHITTEST's HTCLIENT result behaves properly
+    // in Window class.
     if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
         m_crosshair_pos.value().y() <= m_y_origin) {
       SetCursor(LoadCursor(NULL, NULL));
