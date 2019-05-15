@@ -21,6 +21,7 @@ IconButton::IconButton(QImage icon, QImage hover_icon,
       m_hover_icon(std::move(hover_icon)),
       m_blur_icon(std::move(blur_icon)) {
   setFocusPolicy(Qt::StrongFocus);
+  setMouseTracking(true);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   setFixedSize(m_icon.size());
@@ -60,17 +61,6 @@ connection IconButton::connect_clicked_signal(
   return m_clicked_signal.connect(slot);
 }
 
-void IconButton::enterEvent(QEvent* event) {
-  if(isEnabled()) {
-    switch(m_state) {
-      case State::NORMAL:
-        return show_hovered();
-      case State::BLURRED:
-        return show_hover_blurred();
-    }
-  }
-}
-
 void IconButton::focusInEvent(QFocusEvent* event) {
   if(focusPolicy() & Qt::TabFocus) {
     switch(m_state) {
@@ -93,6 +83,12 @@ void IconButton::focusOutEvent(QFocusEvent* event) {
   }
 }
 
+void IconButton::hideEvent(QHideEvent* event) {
+  if(m_state == State::HOVERED) {
+    show_normal();
+  }
+}
+
 void IconButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
@@ -109,6 +105,18 @@ void IconButton::leaveEvent(QEvent* event) {
       return show_normal();
     case State::HOVER_BLURRED:
       return show_blurred();
+  }
+}
+
+void IconButton::mouseMoveEvent(QMouseEvent* event) {
+  if(isEnabled() && m_state != State::BLURRED &&
+      m_state != State::HOVER_BLURRED) {
+    switch(m_state) {
+      case State::NORMAL:
+        return show_hovered();
+      case State::BLURRED:
+        return show_hover_blurred();
+    }
   }
 }
 
