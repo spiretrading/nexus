@@ -95,6 +95,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           x < window_rect.left + m_resize_area_width &&
           y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENESW);
         *result = HTBOTTOMLEFT;
         return true;
       }
@@ -102,6 +103,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           x >= window_rect.right - m_resize_area_width &&
           y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENWSE);
         *result = HTBOTTOMRIGHT;
         return true;
       }
@@ -109,6 +111,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           x < window_rect.left + m_resize_area_width &&
           y >= window_rect.top &&
           y < window_rect.top + m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENWSE);
         *result = HTTOPLEFT;
         return true;
       }
@@ -116,36 +119,44 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           x >= window_rect.right - m_resize_area_width &&
           y >= window_rect.top &&
           y < window_rect.top + m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENESW);
         *result = HTTOPRIGHT;
         return true;
       }
       if(x >= window_rect.left &&
           x < window_rect.left + m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZEWE);
         *result = HTLEFT;
         return true;
       }
       if(x < window_rect.right &&
           x >= window_rect.right - m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZEWE);
         *result = HTRIGHT;
         return true;
       }
       if(y < window_rect.bottom &&
           y >= window_rect.bottom - m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENS);
         *result = HTBOTTOM;
         return true;
       }
       if(y >= window_rect.top &&
           y < window_rect.top + m_resize_area_width) {
+        m_cursor = LoadCursor(NULL, IDC_SIZENS);
         *result = HTTOP;
         return true;
       }
     }
     auto pos = m_title_bar->mapFromGlobal({x, y});
     if(m_title_bar->get_title_label()->geometry().contains(pos)) {
+      m_cursor = LoadCursor(NULL, IDC_ARROW);
       *result = HTCAPTION;
       return true;
     }
-    return false;
+    m_cursor = LoadCursor(NULL, IDC_ARROW);
+    *result = HTCLIENT;
+    return true;
   } else if(msg->message == WM_SIZE) {
     if(msg->wParam == SIZE_MAXIMIZED) {
       auto abs_pos = mapToGlobal(m_title_bar->pos());
@@ -157,6 +168,10 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     } else if(msg->wParam == SIZE_RESTORED) {
       setContentsMargins({});
     }
+  } else if(msg->message == WM_SETCURSOR) {
+    // TODO: remove this when WM_NCHITTEST's HTCLIENT result behaves properly.
+    SetCursor(m_cursor);
+    return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
 }

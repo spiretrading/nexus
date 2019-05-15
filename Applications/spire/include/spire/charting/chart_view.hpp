@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHART_VIEW_HPP
 #define SPIRE_CHART_VIEW_HPP
+#include <QAbstractNativeEventFilter>
 #include <QPen>
 #include <QWidget>
 #include "spire/charting/charting.hpp"
@@ -10,7 +11,7 @@
 namespace Spire {
 
   //! Displays a chart of financial data.
-  class ChartView : public QWidget {
+  class ChartView : public QWidget, public QAbstractNativeEventFilter {
     public:
 
       //! Constructs a ChartView.
@@ -68,6 +69,8 @@ namespace Spire {
       void set_auto_scale(bool auto_scale);
 
     protected:
+      bool nativeEventFilter(const QByteArray& eventType, void* message,
+        long* result) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
