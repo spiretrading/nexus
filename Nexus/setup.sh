@@ -17,6 +17,10 @@ fi
 if [ "$build_beam" == "1" ]; then
   ./configure.sh "-DD=$root"
   ./build.sh
+else
+  pushd "$root"
+  ./Beam/Beam/setup.sh
+  popd
 fi
 popd
 if [ ! -d "quickfix-v.1.15.1" ]; then

@@ -1,6 +1,6 @@
 @ECHO OFF
 SETLOCAL
-SET ROOT="%cd%"
+SET ROOT=%cd%
 SET BUILD_BEAM=
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
@@ -19,6 +19,10 @@ IF "%BUILD_BEAM%" == "1" (
   CALL configure.bat "-DD=%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
+) ELSE (
+  PUSHD %ROOT%
+  CALL Beam\Beam\setup.bat
+  POPD
 )
 POPD
 SET commit=

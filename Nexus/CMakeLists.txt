@@ -7,13 +7,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
-if(WIN32)
-  execute_process(COMMAND cmd /c "CALL ${CMAKE_CURRENT_LIST_DIR}/setup.bat"
-    WORKING_DIRECTORY "${DEPENDENCIES_PATH}")
-elseif(UNIX)
-  execute_process(COMMAND "${CMAKE_CURRENT_LIST_DIR}/setup.sh"
-    WORKING_DIRECTORY "${DEPENDENCIES_PATH}")
-endif()
 include(Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
