@@ -18,6 +18,10 @@ namespace Spire {
     //! The style of the trend line.
     Qt::PenStyle m_style;
 
+    //! Constructs a TrendLine with two points at (0, 0), black color,
+    //! and no style.
+    TrendLine();
+
     //! Constructs a TrendLine.
     TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
       const QColor& color, Qt::PenStyle style);

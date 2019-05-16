@@ -12,7 +12,7 @@ namespace Spire {
       using UpdateSignal = Signal<void ()>;
 
       //! Constructs an empty TrendLineModel.
-      TrendLineModel() = default;
+      TrendLineModel();
 
       //! Adds the provided trend line to the model and returns its' ID.
       /*
@@ -71,7 +71,18 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const;
 
     private:
+      enum class State {
+        UNSELECTED,
+        SELECTED
+      };
       mutable UpdateSignal m_update_signal;
+      int m_last_id;
+      std::vector<std::tuple<TrendLine, int, State>> m_trend_lines;
+
+      template <typename T>
+      std::vector<std::tuple<TrendLine, int, State>>::iterator
+        get_iterator(const T& item, int tuple_index);
+      void set_selected_status(int id, State state);
   };
 }
 
