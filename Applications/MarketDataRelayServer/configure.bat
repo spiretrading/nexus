@@ -32,7 +32,7 @@ IF NOT EXIST "%DEPENDENCIES%" (
   MD "%DEPENDENCIES%"
 )
 PUSHD "%DEPENDENCIES%"
-CALL "%DIRECTORY%..\..\Beam\setup.bat"
+CALL "%DIRECTORY%..\..\Nexus\setup.bat"
 POPD
 IF NOT "%DEPENDENCIES%" == "%ROOT%\Dependencies" (
   IF NOT EXIST Dependencies (

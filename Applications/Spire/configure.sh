@@ -29,7 +29,7 @@ if [ ! -d "$dependencies" ]; then
   mkdir -p "$dependencies"
 fi
 pushd "$dependencies"
-"$directory"/../../Beam/setup.sh
+"$directory"/../../Nexus/setup.sh
 popd
 if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
   ln -s "$dependencies" Dependencies
