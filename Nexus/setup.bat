@@ -1,6 +1,12 @@
 @ECHO OFF
 SETLOCAL
 SET ROOT=%cd%
+SET VSWHERE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+FOR /f "usebackq delims=" %%i IN (`%VSWHERE% -prerelease -latest -property installationPath`) DO (
+  IF EXIST "%%i\Common7\Tools\vsdevcmd.bat" (
+    CALL "%%i\Common7\Tools\vsdevcmd.bat"
+  )
+)
 SET BUILD_BEAM=
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
