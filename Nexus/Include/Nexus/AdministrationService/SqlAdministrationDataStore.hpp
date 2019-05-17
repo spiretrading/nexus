@@ -139,25 +139,74 @@ namespace Nexus::AdministrationService {
   template<typename C>
   std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>
       SqlAdministrationDataStore<C>::LoadAllAccountIdentities() {
-    return {};
+    auto rows = std::vector<IndexedAccountIdentity>();
+    try {
+      m_connection->execute(Viper::select(GetIndexedAccountIdentityRow(),
+        "account_identities", std::back_inserter(rows)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    auto identities = std::vector<std::tuple<
+      Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>();
+    std::transform(rows.begin(), rows.end(), std::back_inserter(identities),
+      [] (auto& row) {
+        auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          row.m_account);
+        return std::make_tuple(std::move(account), std::move(row.m_identity));
+      });
+    return identities;
   }
 
   template<typename C>
   AccountIdentity SqlAdministrationDataStore<C>::LoadIdentity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto identity = std::optional<AccountIdentity>();
+    try {
+      m_connection->execute(Viper::select(GetAccountIdentityRow(),
+        "account_identities", Viper::sym("account") == account.m_id,
+        &identity));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    if(identity) {
+      return std::move(*identity);
+    }
     return {};
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const AccountIdentity& identity) {}
+      const AccountIdentity& identity) {
+    auto row = IndexedAccountIdentity{account.m_id, identity, ""};
+    try {
+      m_connection->execute(Viper::upsert(GetIndexedAccountIdentityRow(),
+        "account_identities", &row));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       RiskService::RiskParameters>> SqlAdministrationDataStore<C>::
       LoadAllRiskParameters() {
-    return {};
+    auto rows = std::vector<IndexedRiskParameters>();
+    try {
+      m_connection->execute(Viper::select(GetIndexedRiskParameters(),
+        "risk_parameters", std::back_inserter(rows)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    auto parameters = std::vector<std::tuple<
+      Beam::ServiceLocator::DirectoryEntry, RiskParameters>>();
+    std::transform(rows.begin(), rows.end(), std::back_inserter(parameters),
+      [] (auto& row) {
+        auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          row.m_account);
+        return std::make_tuple(std::move(account), std::move(row.m_parameters));
+      });
+    return parameters;
   }
 
   template<typename C>
