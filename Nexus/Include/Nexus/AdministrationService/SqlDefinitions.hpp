@@ -3,9 +3,11 @@
 #include <Beam/Sql/Conversions.hpp>
 #include <Viper/Row.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
+#include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -83,9 +85,79 @@ namespace Nexus::AdministrationService {
   //! Returns a row representing IndexedRiskParameters.
   inline const auto& GetIndexedRiskParametersRow() {
     static auto ROW = Viper::Row<IndexedRiskParameters>().
-      add_column("account", Viper::uinteger, &IndexedRiskParameters::m_account).
+      add_column("account", &IndexedRiskParameters::m_account).
       extend(GetRiskParametersRow(), &IndexedRiskParameters::m_parameters).
       set_primary_key("account");
+    return ROW;
+  }
+
+  //! Represents a RiskState indexed by account.
+  struct IndexedRiskState {
+
+    //! The account's id.
+    unsigned int m_account;
+
+    //! The RiskState.
+    RiskService::RiskState m_state;
+  };
+
+  //! Returns a row representing an IndexedRiskState.
+  inline const auto& GetIndexedRiskStateRow() {
+    static auto ROW = Viper::Row<IndexedRiskState>().
+      add_column("account", &IndexedRiskState::m_account).
+      extend(Viper::Row<RiskService::RiskState>().
+        add_column("state", &RiskService::RiskState::m_type).
+        add_column("expiry", &RiskService::RiskState::m_expiry),
+        &IndexedRiskState::m_state).
+      set_primary_key("account");
+    return ROW;
+  }
+
+  //! Returns a row representing an AccountModificationRequest.
+  inline const auto& GetAccountModificationRequestRow() {
+    static auto ROW = Viper::Row<AccountModificationRequest>().
+      add_column("id",
+        [] (const auto& row) {
+          return row.GetId();
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(column, row.GetType(),
+            row.GetAccount(), row.GetSubmissionAccount(), row.GetTimestamp());
+        }).
+      add_column("type",
+        [] (const auto& row) {
+          return row.GetType();
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(row.GetId(), column,
+            row.GetAccount(), row.GetSubmissionAccount(), row.GetTimestamp());
+        }).
+      add_column("account",
+        [] (const auto& row) {
+          return row.GetAccount().m_id;
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(row.GetId(), row.GetType(),
+            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column),
+            row.GetSubmissionAccount(), row.GetTimestamp());
+        }).
+      add_column("submission_account",
+        [] (const auto& row) {
+          return row.GetSubmissionAccount().m_id;
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(row.GetId(), row.GetType(),
+            row.GetAccount(), Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column), row.GetTimestamp());
+        }).
+      add_column("timestamp",
+        [] (const auto& row) {
+          return row.GetTimestamp();
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(row.GetId(), row.GetType(),
+            row.GetAccount(), row.GetSubmissionAccount(), column);
+        });
     return ROW;
   }
 }
