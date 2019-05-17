@@ -95,3 +95,29 @@ TEST_CASE("test_updating_and_getting_trend_lines", "[TrendLineModel]") {
   REQUIRE(updated_line3 == model.get(id3));
   print_test_name("test_updating_and_getting_trend_lines");
 }
+
+TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto id2 = model.add(line2);
+  REQUIRE(model.get_selected().size() == 0);
+  model.set_selected(id1);
+  auto selected1 = model.get_selected();
+  REQUIRE(selected1[0] == id1);
+  REQUIRE(selected1.size() == 1);
+  model.set_selected(id2);
+  auto selected2 = model.get_selected();
+  REQUIRE(selected2[0] == id1);
+  REQUIRE(selected2[1] == id2);
+  REQUIRE(selected2.size() == 2);
+  model.unset_selected(id1);
+  auto selected3 = model.get_selected();
+  REQUIRE(selected3[0] == id2);
+  REQUIRE(selected3.size() == 1);
+  model.unset_selected(id2);
+  auto selected4 = model.get_selected();
+  REQUIRE(selected4.size() == 0);
+  print_test_name("test_setting_and_getting_selected_status");
+}

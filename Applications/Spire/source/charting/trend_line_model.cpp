@@ -34,7 +34,9 @@ std::vector<TrendLine> TrendLineModel::get_lines() const {
 std::vector<int> TrendLineModel::get_selected() const {
   auto selected = std::vector<int>();
   for(auto& line : m_trend_lines) {
-    selected.push_back(line.m_id);
+    if(line.m_state == State::SELECTED) {
+      selected.push_back(line.m_id);
+    }
   }
   return selected;
 }
