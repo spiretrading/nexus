@@ -45,6 +45,34 @@ TEST_CASE("test_creating_and_getting_trend_lines", "[TrendLineModel]") {
   print_test_name("test_creating_and_getting_trend_lines");
 }
 
+TEST_CASE("test_removing_trend_lines", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto id2 = model.add(line2);
+  auto line3 = make_line(50, 50, 60, 60, Qt::red, Qt::SolidLine);
+  auto id3 = model.add(line3);
+  auto lines1 = model.get_lines();
+  REQUIRE(lines1.size() == 3);
+  REQUIRE(lines1[0] == line1);
+  REQUIRE(lines1[1] == line2);
+  REQUIRE(lines1[2] == line3);
+  model.remove(id1);
+  auto lines2 = model.get_lines();
+  REQUIRE(lines2.size() == 2);
+  REQUIRE(lines2[0] == line2);
+  REQUIRE(lines2[1] == line3);
+  model.remove(id2);
+  auto lines3 = model.get_lines();
+  REQUIRE(lines3.size() == 1);
+  REQUIRE(lines3[0] == line3);
+  model.remove(id3);
+  auto lines4 = model.get_lines();
+  REQUIRE(lines4.size() == 0);
+  print_test_name("test_removing_trend_lines");
+}
+
 TEST_CASE("test_updating_and_getting_trend_lines", "[TrendLineModel]") {
   auto model = TrendLineModel();
   auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
