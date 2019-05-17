@@ -11,7 +11,7 @@ TrendLineModel::TrendLineModel()
   : m_last_id(0) {}
 
 int TrendLineModel::add(const TrendLine& line) {
-  m_trend_lines.push_back({line, m_last_id++, State::UNSELECTED});
+  m_trend_lines.push_back({line, ++m_last_id, State::UNSELECTED});
   return m_last_id;
 }
 
