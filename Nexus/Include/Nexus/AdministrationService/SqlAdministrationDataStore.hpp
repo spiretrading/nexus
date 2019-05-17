@@ -315,16 +315,27 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   void SqlAdministrationDataStore<C>::WithTransaction(
-      const std::function<void ()>& transaction) {}
+      const std::function<void ()>& transaction) {
+    auto lock = std::lock_guard(m_mutex);
+    Viper::transaction(*m_connection, transaction);
+  }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Open() {}
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Close() {}
+  void SqlAdministrationDataStore<C>::Close() {
+    if(m_openState.SetClosing()) {
+      return;
+    }
+    Shutdown();
+  }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Shutdown() {}
+  void SqlAdministrationDataStore<C>::Shutdown() {
+    m_connection->close();
+    m_openState.SetClosed();
+  }
 }
 
 #endif
