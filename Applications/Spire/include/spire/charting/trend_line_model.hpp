@@ -25,7 +25,7 @@ namespace Spire {
       /*
         \param id The ID of the trend line to return.
       */
-      TrendLine get(int id) const;
+      TrendLine get(int id);
 
       //! Returns the trend lines in the model.
       std::vector<TrendLine> get_lines() const;
@@ -75,13 +75,16 @@ namespace Spire {
         UNSELECTED,
         SELECTED
       };
+      struct TrendLineData {
+        TrendLine m_trend_line;
+        int m_id;
+        State m_state;
+      };
       mutable UpdateSignal m_update_signal;
       int m_last_id;
-      std::vector<std::tuple<TrendLine, int, State>> m_trend_lines;
+      std::vector<TrendLineData> m_trend_lines;
 
-      template <typename T>
-      std::vector<std::tuple<TrendLine, int, State>>::iterator
-        get_iterator(const T& item, int tuple_index);
+      std::vector<TrendLineData>::iterator find_id(int id);
       void set_selected_status(int id, State state);
   };
 }
