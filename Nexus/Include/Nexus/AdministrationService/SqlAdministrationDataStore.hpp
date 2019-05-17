@@ -193,13 +193,13 @@ namespace Nexus::AdministrationService {
       LoadAllRiskParameters() {
     auto rows = std::vector<IndexedRiskParameters>();
     try {
-      m_connection->execute(Viper::select(GetIndexedRiskParameters(),
+      m_connection->execute(Viper::select(GetIndexedRiskParametersRow(),
         "risk_parameters", std::back_inserter(rows)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     auto parameters = std::vector<std::tuple<
-      Beam::ServiceLocator::DirectoryEntry, RiskParameters>>();
+      Beam::ServiceLocator::DirectoryEntry, RiskService::RiskParameters>>();
     std::transform(rows.begin(), rows.end(), std::back_inserter(parameters),
       [] (auto& row) {
         auto account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(

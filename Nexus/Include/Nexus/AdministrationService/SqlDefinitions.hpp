@@ -1,8 +1,10 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_SQL_DEFINITIONS_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_SQL_DEFINITIONS_HPP
+#include <Beam/Sql/Conversions.hpp>
 #include <Viper/Row.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 namespace Nexus::AdministrationService {
@@ -58,7 +60,10 @@ namespace Nexus::AdministrationService {
       add_column("currency", &RiskService::RiskParameters::m_currency).
       add_column("buying_power", &RiskService::RiskParameters::m_buyingPower).
       add_column("net_loss", &RiskService::RiskParameters::m_netLoss).
-      add_column("allowed_state", &RiskService::RiskParameters::m_allowedState).
+      add_column("allowed_state",
+        [] (auto& row) -> auto& {
+          return row.m_allowedState.m_type;
+        }).
       add_column("loss_from_top", &RiskService::RiskParameters::m_lossFromTop).
       add_column("transitition_time",
         &RiskService::RiskParameters::m_transitionTime);
