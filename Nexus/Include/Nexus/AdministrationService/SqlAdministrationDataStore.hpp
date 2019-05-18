@@ -39,8 +39,7 @@ namespace Nexus::AdministrationService {
 
       ~SqlAdministrationDataStore() override;
 
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        AccountIdentity>> LoadAllAccountIdentities() override;
+      std::vector<IndexedAccountIdentity> LoadAllAccountIdentities() override;
 
       AccountIdentity LoadIdentity(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
@@ -48,8 +47,7 @@ namespace Nexus::AdministrationService {
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity) override;
 
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskParameters>> LoadAllRiskParameters() override;
+      std::vector<IndexedRiskParameters> LoadAllRiskParameters() override;
 
       RiskService::RiskParameters LoadRiskParameters(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
@@ -57,8 +55,7 @@ namespace Nexus::AdministrationService {
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& riskParameters) override;
 
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskState>> LoadAllRiskStates() override;
+      std::vector<IndexedRiskState> LoadAllRiskStates() override;
 
       RiskService::RiskState LoadRiskState(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
@@ -135,22 +132,15 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>
+  std::vector<AdministrationDataStore::IndexedAccountIdentity>
       SqlAdministrationDataStore<C>::LoadAllAccountIdentities() {
-    auto rows = std::vector<IndexedAccountIdentity>();
+    auto identities = std::vector<IndexedAccountIdentity>();
     try {
       m_connection->execute(Viper::select(GetIndexedAccountIdentityRow(),
-        "account_identities", std::back_inserter(rows)));
+        "account_identities", std::back_inserter(identities)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
-    auto identities = std::vector<std::tuple<
-      Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>();
-    std::transform(rows.begin(), rows.end(), std::back_inserter(identities),
-      [] (auto& row) {
-        return std::make_tuple(std::move(row.m_account),
-          std::move(row.m_identity));
-      });
     return identities;
   }
 
@@ -172,7 +162,7 @@ namespace Nexus::AdministrationService {
   void SqlAdministrationDataStore<C>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    auto row = IndexedAccountIdentity{account, identity, ""};
+    auto row = IndexedAccountIdentity{account, identity};
     try {
       m_connection->execute(Viper::upsert(GetIndexedAccountIdentityRow(),
         "account_identities", &row));
@@ -182,23 +172,15 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskParameters>> SqlAdministrationDataStore<C>::
-      LoadAllRiskParameters() {
-    auto rows = std::vector<IndexedRiskParameters>();
+  std::vector<AdministrationDataStore::IndexedRiskParameters>
+      SqlAdministrationDataStore<C>::LoadAllRiskParameters() {
+    auto parameters = std::vector<IndexedRiskParameters>();
     try {
       m_connection->execute(Viper::select(GetIndexedRiskParametersRow(),
-        "risk_parameters", std::back_inserter(rows)));
+        "risk_parameters", std::back_inserter(parameters)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
-    auto parameters = std::vector<std::tuple<
-      Beam::ServiceLocator::DirectoryEntry, RiskService::RiskParameters>>();
-    std::transform(rows.begin(), rows.end(), std::back_inserter(parameters),
-      [] (auto& row) {
-        return std::make_tuple(std::move(row.m_account),
-          std::move(row.m_parameters));
-      });
     return parameters;
   }
 
@@ -229,36 +211,43 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskState>> SqlAdministrationDataStore<C>::
-      LoadAllRiskStates() {
-    auto rows = std::vector<IndexedRiskState>();
+  std::vector<AdministrationDataStore::IndexedRiskState>
+      SqlAdministrationDataStore<C>::LoadAllRiskStates() {
+    auto states = std::vector<IndexedRiskState>();
     try {
       m_connection->execute(Viper::select(GetIndexedRiskStateRow(),
-        "risk_states", std::back_inserter(rows)));
+        "risk_states", std::back_inserter(states)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
-    auto riskStates = std::vector<std::tuple<
-      Beam::ServiceLocator::DirectoryEntry, RiskService::RiskState>>();
-    std::transform(rows.begin(), rows.end(), std::back_inserter(riskStates),
-      [] (auto& row) {
-        return std::make_tuple(std::move(row.m_account),
-          std::move(row.m_state));
-      });
-    return riskStates;
+    return states;
   }
 
   template<typename C>
   RiskService::RiskState SqlAdministrationDataStore<C>::LoadRiskState(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return {};
+    auto state = RiskService::RiskState();
+    try {
+      m_connection->execute(Viper::select(GetRiskStateRow(),
+        "risk_states", Viper::sym("account") == account.m_id, &state));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return state;
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& riskState) {}
+      const RiskService::RiskState& riskState) {
+    auto indexedState = IndexedRiskState{account, riskState};
+    try {
+      m_connection->execute(Viper::upsert(GetIndexedRiskStateRow(),
+        "risk_states", &indexedState));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   AccountModificationRequest SqlAdministrationDataStore<C>::

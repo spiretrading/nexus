@@ -208,7 +208,7 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    JsonObject administrationService;
+    auto administrationService = JsonObject();
     administrationService["addresses"] =
       ToString(administrationServerConnectionInitializer.m_addresses);
     serviceLocatorClient->Register(

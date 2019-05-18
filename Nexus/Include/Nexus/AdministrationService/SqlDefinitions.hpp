@@ -3,14 +3,8 @@
 #include <Beam/Sql/Conversions.hpp>
 #include <Beam/Sql/PosixTimeToSqlDateTime.hpp>
 #include <Viper/Row.hpp>
-#include "Nexus/AdministrationService/AccountIdentity.hpp"
-#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
-#include "Nexus/AdministrationService/AdministrationService.hpp"
-#include "Nexus/AdministrationService/EntitlementModification.hpp"
-#include "Nexus/AdministrationService/RiskModification.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
-#include "Nexus/RiskService/RiskParameters.hpp"
-#include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -35,33 +29,27 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an AccountIdentity indexed by account id.
-  struct IndexedAccountIdentity {
-
-    //! The account's id.
-    Beam::ServiceLocator::DirectoryEntry m_account;
-
-    //! The account's identity.
-    AccountIdentity m_identity;
-
-    //! The photo ID path.
-    std::string m_photoId;
-  };
-
   //! Returns a row representing an IndexedAccountIdentity.
   inline const auto& GetIndexedAccountIdentityRow() {
-    static auto ROW = Viper::Row<IndexedAccountIdentity>().
+    static auto ROW = Viper::Row<
+      AdministrationDataStore::IndexedAccountIdentity>().
       add_column("account",
         [] (const auto& row) {
-          return row.m_account.m_id;
+          return std::get<0>(row).m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          std::get<0>(row) = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
             column);
         }).
-      extend(GetAccountIdentityRow(), &IndexedAccountIdentity::m_identity).
+      extend(GetAccountIdentityRow(),
+        [] (auto& row) -> auto& {
+          return std::get<1>(row);
+        }).
       add_column("photo_id", Viper::varchar(256),
-        &IndexedAccountIdentity::m_photoId).
+        [] (const auto& row) {
+          return std::string();
+        },
+        [] (auto& row, auto column) {}).
       set_primary_key("account");
     return ROW;
   }
@@ -82,57 +70,49 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an account's RiskParameters.
-  struct IndexedRiskParameters {
-
-    //! The account represented.
-    Beam::ServiceLocator::DirectoryEntry m_account;
-
-    //! The account's RiskParameters.
-    RiskService::RiskParameters m_parameters;
-  };
-
   //! Returns a row representing an account's RiskParameters.
   inline const auto& GetIndexedRiskParametersRow() {
-    static auto ROW = Viper::Row<IndexedRiskParameters>().
+    static auto ROW = Viper::Row<
+      AdministrationDataStore::IndexedRiskParameters>().
       add_column("account",
         [] (const auto& row) {
-          return row.m_account.m_id;
+          return std::get<0>(row).m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          std::get<0>(row) = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
             column);
         }).
-      extend(GetRiskParametersRow(), &IndexedRiskParameters::m_parameters).
+      extend(GetRiskParametersRow(),
+        [] (auto& row) -> auto& {
+          return std::get<1>(row);
+        }).
       set_primary_key("account");
     return ROW;
   }
 
-  //! Represents an account's RiskState.
-  struct IndexedRiskState {
-
-    //! The account represented.
-    Beam::ServiceLocator::DirectoryEntry m_account;
-
-    //! The account's RiskState.
-    RiskService::RiskState m_state;
-  };
+  //! Returns a row representing a RiskState.
+  inline const auto& GetRiskStateRow() {
+    static auto ROW = Viper::Row<RiskService::RiskState>().
+      add_column("state", &RiskService::RiskState::m_type).
+      add_column("expiry", &RiskService::RiskState::m_expiry);
+    return ROW;
+  }
 
   //! Returns a row representing an IndexedRiskState.
   inline const auto& GetIndexedRiskStateRow() {
-    static auto ROW = Viper::Row<IndexedRiskState>().
+    static auto ROW = Viper::Row<AdministrationDataStore::IndexedRiskState>().
       add_column("account",
         [] (const auto& row) {
-          return row.m_account.m_id;
+          return std::get<0>(row).m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+          std::get<0>(row) = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
             column);
         }).
-      extend(Viper::Row<RiskService::RiskState>().
-        add_column("state", &RiskService::RiskState::m_type).
-        add_column("expiry", &RiskService::RiskState::m_expiry),
-        &IndexedRiskState::m_state).
+      extend(GetRiskStateRow(),
+        [] (auto& row) -> auto& {
+          return std::get<1>(row);
+        }).
       set_primary_key("account");
     return ROW;
   }
