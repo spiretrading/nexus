@@ -1,10 +1,13 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_SQL_DEFINITIONS_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_SQL_DEFINITIONS_HPP
 #include <Beam/Sql/Conversions.hpp>
+#include <Beam/Sql/PosixTimeToSqlDateTime.hpp>
 #include <Viper/Row.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
@@ -36,7 +39,7 @@ namespace Nexus::AdministrationService {
   struct IndexedAccountIdentity {
 
     //! The account's id.
-    unsigned int m_account;
+    Beam::ServiceLocator::DirectoryEntry m_account;
 
     //! The account's identity.
     AccountIdentity m_identity;
@@ -48,7 +51,14 @@ namespace Nexus::AdministrationService {
   //! Returns a row representing an IndexedAccountIdentity.
   inline const auto& GetIndexedAccountIdentityRow() {
     static auto ROW = Viper::Row<IndexedAccountIdentity>().
-      add_column("account", &IndexedAccountIdentity::m_account).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
       extend(GetAccountIdentityRow(), &IndexedAccountIdentity::m_identity).
       add_column("photo_id", Viper::varchar(256),
         &IndexedAccountIdentity::m_photoId).
@@ -72,39 +82,53 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents RiskParameters indexed by account.
+  //! Represents an account's RiskParameters.
   struct IndexedRiskParameters {
 
-    //! The account's id.
-    unsigned int m_account;
+    //! The account represented.
+    Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The RiskParameters.
+    //! The account's RiskParameters.
     RiskService::RiskParameters m_parameters;
   };
 
-  //! Returns a row representing IndexedRiskParameters.
+  //! Returns a row representing an account's RiskParameters.
   inline const auto& GetIndexedRiskParametersRow() {
     static auto ROW = Viper::Row<IndexedRiskParameters>().
-      add_column("account", &IndexedRiskParameters::m_account).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
       extend(GetRiskParametersRow(), &IndexedRiskParameters::m_parameters).
       set_primary_key("account");
     return ROW;
   }
 
-  //! Represents a RiskState indexed by account.
+  //! Represents an account's RiskState.
   struct IndexedRiskState {
 
-    //! The account's id.
-    unsigned int m_account;
+    //! The account represented.
+    Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The RiskState.
+    //! The account's RiskState.
     RiskService::RiskState m_state;
   };
 
   //! Returns a row representing an IndexedRiskState.
   inline const auto& GetIndexedRiskStateRow() {
     static auto ROW = Viper::Row<IndexedRiskState>().
-      add_column("account", &IndexedRiskState::m_account).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
       extend(Viper::Row<RiskService::RiskState>().
         add_column("state", &RiskService::RiskState::m_type).
         add_column("expiry", &RiskService::RiskState::m_expiry),
@@ -157,7 +181,173 @@ namespace Nexus::AdministrationService {
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.GetId(), row.GetType(),
             row.GetAccount(), row.GetSubmissionAccount(), column);
-        });
+        }).
+      set_primary_key("id").
+      add_index("account_index", {"id", "account"});
+    return ROW;
+  }
+
+  //! Represents a row representing a single entitlement modification.
+  struct EntitlementModificationRow {
+
+    //! The modification's id.
+    int m_id;
+
+    //! The entitlement to grant.
+    Beam::ServiceLocator::DirectoryEntry m_entitlement;
+  };
+
+  //! Returns a row representing a single entitlement modification.
+  inline const auto GetEntitlementModificationRow() {
+    static const auto ROW = Viper::Row<EntitlementModificationRow>().
+      add_column("id", &EntitlementModificationRow::m_id).
+      add_column("entitlement",
+        [] (const auto& row) {
+          return row.m_entitlement.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_entitlement =
+            Beam::ServiceLocator::DirectoryEntry::MakeDirectory(column);
+        }).
+      add_index("id_index", "id");
+  }
+
+  //! Represents an indexed RiskModification.
+  struct IndexedRiskModification {
+
+    //! The request's id.
+    int m_id;
+
+    //! The account being modified.
+    Beam::ServiceLocator::DirectoryEntry m_account;
+
+    //! The requested parameters.
+    RiskService::RiskParameters m_parameters;
+  };
+
+  //! Returns a row representing a RiskModification.
+  inline const auto GetRiskModificationRow() {
+    static const auto ROW = Viper::Row<IndexedRiskModification>().
+      add_column("id", &IndexedRiskModification::m_id).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
+      extend(GetRiskParametersRow(), &IndexedRiskModification::m_parameters).
+      set_primary_key("id");
+    return ROW;
+  }
+
+  //! Represents an indexed status of an account modification request.
+  struct IndexedAccountModificationRequestStatus {
+
+    //! The request's id.
+    int m_id;
+
+    //! The update representing the status.
+    AccountModificationRequest::Update m_update;
+  };
+
+  //! Returns a row representring an IndexedAccountModificationRequestStatus.
+  inline const auto GetIndexedAccountModificationRequestStatus() {
+    static const auto ROW = Viper::Row<
+      IndexedAccountModificationRequestStatus>().
+      add_column("id", &IndexedAccountModificationRequestStatus::m_id).
+      extend(Viper::Row<AccountModificationRequest::Update>().
+        add_column("status", &AccountModificationRequest::Update::m_status).
+        add_column("account",
+          [] (const auto& row) {
+            return row.m_account.m_id;
+          },
+          [] (auto& row, auto column) {
+            row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+              column);
+          }).
+        add_column("sequence_number",
+          &AccountModificationRequest::Update::m_sequenceNumber).
+        add_column("timestamp",
+          &AccountModificationRequest::Update::m_timestamp),
+        &IndexedAccountModificationRequestStatus::m_update).
+      add_index("id_index", "id");
+    return ROW;
+  }
+
+  //! Represents the indicies used to access messages.
+  struct AdministrationMessageIndex {
+
+    //! The message id.
+    int m_id;
+
+    //! The account that sent the message.
+    Beam::ServiceLocator::DirectoryEntry m_account;
+
+    //! The message's timestamp.
+    boost::posix_time::ptime m_timestamp;
+  };
+
+  //! Returns a row representing an AdministrationMessageIndex.
+  inline const auto GetAdministrationMessageIndexRow() {
+    static const auto ROW = Viper::Row<AdministrationMessageIndex>().
+      add_column("id", &AdministrationMessageIndex::m_id).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
+      add_column("timestamp", &AdministrationMessageIndex::m_timestamp).
+      set_primary_key("id");
+    return ROW;
+  }
+
+  //! Represents an indexed message body.
+  struct IndexedMessageBody {
+
+    //! The Message id.
+    int m_id;
+
+    //! The Message Body.
+    Message::Body m_body;
+  };
+
+  //! Returns a row representing a message body.
+  inline const auto GetMessageBodyRow() {
+    static const auto ROW = Viper::Row<IndexedMessageBody>().
+      add_column("id", &IndexedMessageBody::m_id).
+      extend(Viper::Row<Message::Body>().
+        add_column("content_type", Viper::varchar(100),
+          &Message::Body::m_contentType).
+        add_column("message", Viper::text, &Message::Body::m_message),
+        &IndexedMessageBody::m_body).
+      add_index("id_index", "id");
+    return ROW;
+  }
+
+  //! Represents an index to an administration message.
+  struct AccountModificationRequestMessageIndex {
+
+    //! The id of the request the message belongs to.
+    int m_requestId;
+
+    //! The id of the message.
+    int m_messageId;
+  };
+
+  //! Returns a row representing a message body.
+  inline const auto GetAccountModificationRequestMessageIndexRow() {
+    static const auto ROW = Viper::Row<
+      AccountModificationRequestMessageIndex>().
+      add_column("request_id",
+        &AccountModificationRequestMessageIndex::m_requestId).
+      add_column("message_id",
+        &AccountModificationRequestMessageIndex::m_messageId).
+      add_index("id_index", "request_id");
     return ROW;
   }
 }

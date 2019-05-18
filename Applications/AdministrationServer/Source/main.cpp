@@ -41,13 +41,12 @@ using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  typedef ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaAdministrationServlet<ApplicationServiceLocatorClient::Client*,
-    CachedAdministrationDataStore<
+  using AdministrationServletContainer = ServiceProtocolServletContainer<
+    MetaAuthenticationServletAdapter<MetaAdministrationServlet<
+    ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
     SqlAdministrationDataStore<MySql::Connection>>>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>
-    AdministrationServletContainer;
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct AdministrationServerConnectionInitializer {
     string m_serviceName;

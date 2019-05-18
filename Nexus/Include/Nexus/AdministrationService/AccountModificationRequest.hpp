@@ -9,18 +9,14 @@
 namespace Nexus {
 namespace AdministrationService {
 
-  /*! \class AccountModificationRequest
-      \brief Stores a request to modify an account.
-   */
+  /** Stores a request to modify an account. */
   class AccountModificationRequest {
     public:
 
       //! The type used to uniquely identify a request.
       using Id = int;
 
-      /*! \enum Type
-          \brief Lists the modifications that can be made to an account.
-       */
+      /** Lists the modifications that can be made to an account. */
       enum class Type {
 
         //! Modify an account's market data entitlements.
@@ -30,9 +26,7 @@ namespace AdministrationService {
         RISK
       };
 
-      /*! \enum Status
-          \brief Lists the status of a request.
-      */
+      /** Lists the status of a request. */
       enum class Status {
 
         //! No or invalid status.
@@ -54,9 +48,7 @@ namespace AdministrationService {
         REJECTED
       };
 
-      /*! \struct Update
-          \brief Stores a request status update.
-       */
+      /** Stores a request status update. */
       struct Update {
 
         //! The updated status.
