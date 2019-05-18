@@ -190,6 +190,7 @@ namespace Nexus::AdministrationService {
             Beam::ServiceLocator::DirectoryEntry::MakeDirectory(column);
         }).
       add_index("id_index", "id");
+    return ROW;
   }
 
   //! Represents an indexed RiskModification.
@@ -222,6 +223,24 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
+  //! Returns a row representing an AccountModificationRequest's status.
+  inline const auto GetAccountModificationRequestStatusRow() {
+    static const auto ROW = Viper::Row<AccountModificationRequest::Update>().
+      add_column("status", &AccountModificationRequest::Update::m_status).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
+            column);
+        }).
+      add_column("sequence_number",
+        &AccountModificationRequest::Update::m_sequenceNumber).
+      add_column("timestamp", &AccountModificationRequest::Update::m_timestamp);
+    return ROW;
+  }
+
   //! Represents an indexed status of an account modification request.
   struct IndexedAccountModificationRequestStatus {
 
@@ -237,20 +256,7 @@ namespace Nexus::AdministrationService {
     static const auto ROW = Viper::Row<
       IndexedAccountModificationRequestStatus>().
       add_column("id", &IndexedAccountModificationRequestStatus::m_id).
-      extend(Viper::Row<AccountModificationRequest::Update>().
-        add_column("status", &AccountModificationRequest::Update::m_status).
-        add_column("account",
-          [] (const auto& row) {
-            return row.m_account.m_id;
-          },
-          [] (auto& row, auto column) {
-            row.m_account = Beam::ServiceLocator::DirectoryEntry::MakeAccount(
-              column);
-          }).
-        add_column("sequence_number",
-          &AccountModificationRequest::Update::m_sequenceNumber).
-        add_column("timestamp",
-          &AccountModificationRequest::Update::m_timestamp),
+      extend(GetAccountModificationRequestStatusRow(),
         &IndexedAccountModificationRequestStatus::m_update).
       add_index("id_index", "id");
     return ROW;
@@ -286,6 +292,15 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
+  //! Returns a row representing a Message::Body.
+  inline const auto GetMessageBodyRow() {
+    static const auto ROW = Viper::Row<Message::Body>().
+      add_column("content_type", Viper::varchar(100),
+        &Message::Body::m_contentType).
+      add_column("message", Viper::text, &Message::Body::m_message);
+    return ROW;
+  }
+
   //! Represents an indexed message body.
   struct IndexedMessageBody {
 
@@ -297,14 +312,10 @@ namespace Nexus::AdministrationService {
   };
 
   //! Returns a row representing a message body.
-  inline const auto GetMessageBodyRow() {
+  inline const auto GetIndexedMessageBodyRow() {
     static const auto ROW = Viper::Row<IndexedMessageBody>().
       add_column("id", &IndexedMessageBody::m_id).
-      extend(Viper::Row<Message::Body>().
-        add_column("content_type", Viper::varchar(100),
-          &Message::Body::m_contentType).
-        add_column("message", Viper::text, &Message::Body::m_message),
-        &IndexedMessageBody::m_body).
+      extend(GetMessageBodyRow(), &IndexedMessageBody::m_body).
       add_index("id_index", "id");
     return ROW;
   }

@@ -5,11 +5,9 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/SqlDefinitions.hpp"
-#include "Nexus/RiskService/RiskParameters.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -252,7 +250,14 @@ namespace Nexus::AdministrationService {
   template<typename C>
   AccountModificationRequest SqlAdministrationDataStore<C>::
       LoadAccountModificationRequest(AccountModificationRequest::Id id) {
-    return {};
+    auto request = AccountModificationRequest();
+    try {
+      m_connection->execute(Viper::select(GetAccountModificationRequestRow(),
+        "account_modification_requests", Viper::sym("id") == id, &request));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return request;
   }
 
   template<typename C>
@@ -260,68 +265,218 @@ namespace Nexus::AdministrationService {
       SqlAdministrationDataStore<C>::LoadAccountModificationRequestIds(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
-    return {};
+    if(startId == -1) {
+      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+    }
+    maxCount = std::min(maxCount, 1000);
+    auto ids = std::vector<AccountModificationRequest::Id>();
+    try {
+      m_connection->execute(Viper::select(
+        Viper::Row<AccountModificationRequest::Id>("id"),
+        "account_modification_requests", Viper::sym("id") < startId &&
+        Viper::sym("account") == account.m_id,
+        Viper::order_by("id", Viper::Order::DESC), Viper::limit(maxCount),
+        std::back_inserter(ids)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return ids;
   }
 
   template<typename C>
   std::vector<AccountModificationRequest::Id>
       SqlAdministrationDataStore<C>::LoadAccountModificationRequestIds(
       AccountModificationRequest::Id startId, int maxCount) {
-    return {};
+    if(startId == -1) {
+      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+    }
+    maxCount = std::min(maxCount, 1000);
+    auto ids = std::vector<AccountModificationRequest::Id>();
+    try {
+      m_connection->execute(Viper::select(
+        Viper::Row<AccountModificationRequest::Id>("id"),
+        "account_modification_requests", Viper::sym("id") < startId,
+        Viper::order_by("id", Viper::Order::DESC), Viper::limit(maxCount),
+        std::back_inserter(ids)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return ids;
   }
 
   template<typename C>
   EntitlementModification
       SqlAdministrationDataStore<C>::LoadEntitlementModification(
       AccountModificationRequest::Id id) {
-    return {};
+    auto ids = std::vector<unsigned int>();
+    try {
+      m_connection->execute(Viper::select(
+        Viper::Row<unsigned int>("entitlement"), "entitlement_modifications",
+        Viper::sym("id") == id, std::back_inserter(ids)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
+    for(auto& id : ids) {
+      entitlements.push_back(m_directoryEntries.Load(id));
+    }
+    return entitlements;
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(
       const AccountModificationRequest& request,
-      const EntitlementModification& modification) {}
+      const EntitlementModification& modification) {
+    auto entitlements = std::vector<EntitlementModificationRow>();
+    for(auto& entitlement : modification.GetEntitlements()) {
+      entitlements.push_back({request.GetId(), entitlement});
+    }
+    try {
+      m_connection->execute(Viper::insert(GetAccountModificationRequestRow(),
+        "account_modification_requests", &request));
+      m_connection->execute(Viper::insert(GetEntitlementModificationRow(),
+        "entitlement_modifications", entitlements.begin(), entitlements.end()));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   RiskModification SqlAdministrationDataStore<C>::LoadRiskModification(
       AccountModificationRequest::Id id) {
-    return {};
+    auto parameters = RiskService::RiskParameters();
+    try {
+      m_connection->execute(Viper::select(GetRiskParametersRow(),
+        "risk_modifications", Viper::sym("id") == id, &parameters));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return {std::move(parameters)};
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(
       const AccountModificationRequest& request,
-      const RiskModification& modification) {}
+      const RiskModification& modification) {
+    auto indexedModification = IndexedRiskModification{request.GetId(),
+      request.GetAccount(), modification.GetParameters()};
+    try {
+      m_connection->execute(Viper::insert(GetAccountModificationRequestRow(),
+        "account_modification_requests", &request));
+      m_connection->execute(Viper::insert(GetRiskModificationRow(),
+        "risk_modifications", &indexedModification));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(AccountModificationRequest::Id id,
-      const Message& message) {}
+      const Message& message) {
+    auto index = AdministrationMessageIndex{id, message.GetAccount(),
+      message.GetTimestamp()};
+    auto bodies = std::vector<IndexedMessageBody>();
+    for(auto& body : message.GetBodies()) {
+      bodies.push_back({message.GetId(), body});
+    }
+    auto modificationIndex = AccountModificationRequestMessageIndex{id,
+      message.GetId()};
+    try {
+      m_connection->execute(Viper::insert(GetAdministrationMessageIndexRow(),
+        "administration_messages", &index));
+      m_connection->execute(Viper::insert(GetIndexedMessageBodyRow(),
+        "administration_message_bodies", bodies.begin(), bodies.end()));
+      m_connection->execute(Viper::insert(
+        GetAccountModificationRequestMessageIndexRow(),
+        "account_modification_request_messages", &modificationIndex));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   AccountModificationRequest::Update
       SqlAdministrationDataStore<C>::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
-    return {};
+    auto status = AccountModificationRequest::Update();
+    try {
+      m_connection->execute(Viper::select(
+        GetAccountModificationRequestStatusRow(),
+        "account_modification_request_status", Viper::sym("id") == id,
+        Viper::order_by("sequence_number", Viper::Order::DESC),
+        Viper::limit(1), &status));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return status;
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Store(AccountModificationRequest::Id id,
-      const AccountModificationRequest::Update& status) {}
+      const AccountModificationRequest::Update& status) {
+    auto indexedUpdated = IndexedAccountModificationRequestStatus{id, status};
+    try {
+      m_connection->execute(Viper::insert(
+        GetIndexedAccountModificationRequestStatus(),
+        "account_modification_request_status", &indexedUpdated));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+  }
 
   template<typename C>
   Message::Id SqlAdministrationDataStore<C>::LoadLastMessageId() {
-    return {};
+    auto id = std::optional<Message::Id>();
+    try {
+      m_connection->execute(Viper::select(Viper::Row<Message::Id>("id"),
+        "administration_messages", Viper::order_by("id", Viper::Order::DESC),
+        Viper::limit(1), &id));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    if(!id) {
+      return 0;
+    }
+    return *id;
   }
 
   template<typename C>
   Message SqlAdministrationDataStore<C>::LoadMessage(Message::Id id) {
-    return {};
+    auto index = std::optional<AdministrationMessageIndex>();
+    try {
+      m_connection->execute(Viper::select(GetAdministrationMessageIndexRow(),
+        "administration_messages", Viper::sym("id") == id, &index));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    if(!index) {
+      return {};
+    }
+    auto bodies = std::vector<Message::Body>();
+    try {
+      m_connection->execute(Viper::select(GetMessageBodyRow(),
+        "administration_message_bodies", Viper::sym("id") == id,
+        std::back_inserter(bodies)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return Message(index->m_id, index->m_account, index->m_timestamp,
+      std::move(bodies));
   }
 
   template<typename C>
   std::vector<Message::Id> SqlAdministrationDataStore<C>::LoadMessageIds(
       AccountModificationRequest::Id id) {
-    return {};
+    auto ids = std::vector<Message::Id>();
+    try {
+      m_connection->execute(Viper::select(Viper::Row<Message::Id>("message_id"),
+        "account_modification_request_messages", Viper::sym("request_id") == id,
+        Viper::order_by("message_id", Viper::Order::ASC),
+        std::back_inserter(ids)));
+    } catch(const Viper::ExecuteException& e) {
+      BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
+    }
+    return ids;
   }
 
   template<typename C>
@@ -332,7 +487,40 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Open() {}
+  void SqlAdministrationDataStore<C>::Open() {
+    if(m_openState.SetOpening()) {
+      return;
+    }
+    try {
+      m_connection->open();
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedAccountIdentityRow(), "account_identities"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedRiskParametersRow(), "risk_parameters"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedRiskStateRow(), "risk_states"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAccountModificationRequestRow(), "account_modification_requests"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetEntitlementModificationRow(), "entitlement_modifications"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetRiskModificationRow(), "risk_modifications"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedAccountModificationRequestStatus(),
+        "account_modification_request_status"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAdministrationMessageIndexRow(), "administration_messages"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedMessageBodyRow(), "administration_message_bodies"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAccountModificationRequestMessageIndexRow(),
+        "account_modification_request_messages"));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::Close() {
