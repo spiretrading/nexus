@@ -15,17 +15,17 @@ nexus_applications+=" SimulationMarketDataFeedClient"
 
 for application in $beam_applications; do
   pushd $application
-  cp /home/developers/Beam/Applications/$application/Application/$application .
+  cp ../Nexus/Dependencies/Beam/Applications/$application/Application/$application .
   popd
 done
 for application in $nexus_applications; do
   pushd $application
-  cp /home/developers/Nexus/Applications/$application/Application/$application .
+  cp ../Nexus/Applications/$application/Application/$application .
   popd
 done
 
 python_directory=$(python3 -m site --user-site)
-cp /home/developers/Nexus/Applications/web_portal/application/web_portal ./web_portal
-cp -R /home/developers/Nexus/Applications/web_portal/application/web_app ./web_portal
-cp /home/developers/Beam/Beam/Library/Release/beam.so $python_directory
-cp /home/developers/Nexus/Nexus/Library/Release/nexus.so $python_directory
+cp Nexus/Applications/WebPortal/Application/WebPortal WebPortal
+cp -R Nexus/Applications/WebPortal/Application/web_app WebPortal
+cp Nexus/Dependencies/Beam/Beam/Library/Release/beam.so $python_directory
+cp Nexus/Nexus/Library/Release/nexus.so $python_directory
