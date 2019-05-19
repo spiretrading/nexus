@@ -11,7 +11,7 @@ services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
 services+=" SimulationMarketDataFeedClient"
-services+=" web_portal"
+services+=" WebPortal"
 
 for directory in $services; do
   cd $directory
