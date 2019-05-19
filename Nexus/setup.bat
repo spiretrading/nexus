@@ -49,4 +49,23 @@ IF NOT EXIST qt-5.12.1 (
     POPD
   )
 )
+IF NOT EXIST quickfix-v.1.15.1 (
+  wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
+  IF EXIST quickfix-v.1.15.1.zip (
+    unzip quickfix-v.1.15.1.zip
+    mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
+    PUSHD quickfix-v.1.15.1
+    PUSHD src\C++
+    sed -i "105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    POPD
+    devenv /Upgrade quickfix_vs12.sln
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
+      /p:UseEnv=true
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
+      /p:UseEnv=true
+    POPD
+    DEL quickfix-v.1.15.1.zip
+  )
+)
 ENDLOCAL

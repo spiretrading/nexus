@@ -34,7 +34,7 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
     sed -i '108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/' Utility.h
     popd
     ./bootstrap
-    ./configure
+    ./configure --enable-shared=no --enable-static=yes 
     make -j $cores
     popd
     rm quickfix-v.1.15.1.zip
