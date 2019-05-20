@@ -32,6 +32,7 @@ BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
   m_slotHandler.Initialize();
   m_ui->setupUi(this);
   m_ui->m_bookView->horizontalHeader()->setSectionsMovable(true);
+  m_ui->m_bookView->verticalHeader()->setMinimumSectionSize(0);
   m_ui->m_bookView->setItemDelegate(new CustomVariantItemDelegate(
     Ref(*m_userProfile)));
   connect(&m_updateTimer, &QTimer::timeout, this,

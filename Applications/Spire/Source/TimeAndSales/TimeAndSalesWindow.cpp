@@ -59,9 +59,11 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     Security());
   m_ui->m_timeAndSalesView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_timeAndSalesView->horizontalHeader()->setMinimumSectionSize(1);
+  m_ui->m_timeAndSalesView->verticalHeader()->setMinimumSectionSize(0);
   m_ui->m_timeAndSalesView->setModel(m_model.get());
   m_ui->m_snapshotView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_snapshotView->horizontalHeader()->setMinimumSectionSize(1);
+  m_ui->m_snapshotView->verticalHeader()->setMinimumSectionSize(0);
   m_ui->m_snapshotView->setModel(m_model.get());
   QList<int> splitterSizes = m_ui->m_splitter->sizes();
   splitterSizes.back() = 0;
