@@ -24,14 +24,12 @@ def copy_build(applications, timestamp, source, path):
       file_path = os.path.join(source_directory, file)
       if os.path.isfile(file_path):
         shutil.copy2(file_path, os.path.join(application_path, file))
-  '''
-  user_call('mkdir -p ./%s/Libraries' % str(timestamp))
-  user_call('cp -r ./%s/%s/Library/Release/*.so ./%s/Libraries' %
-    (name, name, str(timestamp)))
-  user_call('mkdir -p ./%s/Documentation' % str(timestamp))
-  user_call('cp -r ./%s/Documents/sphinx/build/html/* ./%s/Documentation/%s' %
-    (name, str(timestamp), name))
-  '''
+  library_destination_path = os.path.join(destination_path, 'Libraries')
+  os.makedirs(library_destination_path)
+  library_source_path = os.path.join(source, 'Libraries', 'Release')
+  for file in os.listdir(library_source_path):
+    shutil.copy2(os.path.join(library_source_path, file),
+      os.path.join(library_destination_path, file))
 
 def build_repo(repo, path):
   try:
@@ -84,10 +82,11 @@ def build_repo(repo, path):
       'UtpMarketDataFeedClient', 'WebPortal']
     copy_build(nexus_applications, timestamp,
       os.path.join(os.getcwd(), 'Nexus'), path)
-    '''
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
-    copy_build(beam_applications, timestamp, 'Beam')
+    copy_build(beam_applications, timestamp,
+      os.path.join(os.getcwd(), 'Nexus', 'Dependencies', 'Beam'), path)
+    '''
     user_call('cp ./Nexus/Applications/*.sh ./%s/' % str(timestamp))
     user_call('cp ./Nexus/Applications/*.sql ./%s/' % str(timestamp))
     user_call('cp ./Nexus/Applications/*.py ./%s/' % str(timestamp))
