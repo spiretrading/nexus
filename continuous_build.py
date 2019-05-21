@@ -10,7 +10,7 @@ import sys
 import time
 
 def call(command, cwd=None):
-  return subprocess.Popen(command, stdout=subprocess.PIPE, cwd=cwd,
+  return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
     stderr=subprocess.PIPE).communicate()
 
 def copy_build(applications, timestamp, source, path):
