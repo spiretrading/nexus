@@ -61,12 +61,10 @@ def build_repo(repo, path):
       extension = 'bat'
     else:
       extension = 'sh'
-    '''
     result.append(call(os.path.join(os.getcwd(), 'Nexus',
       'configure.%s' % extension), os.path.join(os.getcwd(), 'Nexus')))
     result.append(call(os.path.join(os.getcwd(), 'Nexus',
       'build.%s' % extension), os.path.join(os.getcwd(), 'Nexus')))
-    '''
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
