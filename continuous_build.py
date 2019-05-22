@@ -13,7 +13,7 @@ def call(command, cwd=None):
   return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
     stderr=subprocess.PIPE).communicate()
 
-def copy_build(applications, timestamp, source, path):
+def copy_build(applications, timestamp, name, source, path):
   destination_path = os.path.join(path, str(timestamp))
   for application in applications:
     application_path = os.path.join(destination_path, application)
@@ -26,7 +26,7 @@ def copy_build(applications, timestamp, source, path):
         shutil.copy2(file_path, os.path.join(application_path, file))
   library_destination_path = os.path.join(destination_path, 'Libraries')
   os.makedirs(library_destination_path)
-  library_source_path = os.path.join(source, 'Libraries', 'Release')
+  library_source_path = os.path.join(source, name, 'Libraries', 'Release')
   for file in os.listdir(library_source_path):
     shutil.copy2(os.path.join(library_source_path, file),
       os.path.join(library_destination_path, file))
@@ -78,11 +78,11 @@ def build_repo(repo, path):
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
       'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
       'UtpMarketDataFeedClient', 'WebPortal']
-    copy_build(nexus_applications, timestamp,
+    copy_build(nexus_applications, timestamp, 'Nexus',
       os.path.join(os.getcwd(), 'Nexus'), path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
-    copy_build(beam_applications, timestamp,
+    copy_build(beam_applications, timestamp, 'Beam',
       os.path.join(os.getcwd(), 'Nexus', 'Dependencies', 'Beam'), path)
     '''
     user_call('cp ./Nexus/Applications/*.sh ./%s/' % str(timestamp))
