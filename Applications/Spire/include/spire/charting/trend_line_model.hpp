@@ -38,7 +38,7 @@ namespace Spire {
       /*
         \param point The point to compre the trend lines to.
       */
-      int intersects(const ChartPoint& point) const;
+      int intersects(const ChartPoint& point, ChartValue threshold) const;
 
       //! Removes the trend line with the provided ID from the model.
       //! Does nothing if the provided id doesn't exist.
