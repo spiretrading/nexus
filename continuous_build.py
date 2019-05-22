@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import time
 
 def call(command, cwd=None):
@@ -19,6 +20,11 @@ def makedirs(path):
   except OSError as e:
     if e.errno != errno.EEXIST:
       raise
+
+def make_tarfile(source, destination):
+  with tarfile.open(destination, "w:gz") as tar:
+    for file in os.listdir(source):
+      tar.add(os.path.join(source, file), arcname=file)
 
 def copy_build(applications, timestamp, name, source, path):
   destination_path = os.path.join(path, str(timestamp))
@@ -87,13 +93,20 @@ def build_repo(repo, path):
       'UidServer']
     copy_build(beam_applications, timestamp, 'Beam',
       os.path.join(os.getcwd(), 'Nexus', 'Dependencies', 'Beam'), path)
+    destination_path = os.path.join(path, str(timestamp))
+    for file in ['reset.sql', 'setup.py']:
+      shutil.copy2(
+        os.path.join(os.getcwd(), 'Nexus', 'Applications', file),
+        os.path.join(destination_path, file))
+    if sys.platform != 'win32':
+      for file in ['check.sh', 'copy_all.sh', 'start.sh', 'stop.sh']:
+        shutil.copy2(
+          os.path.join(os.getcwd(), 'Nexus', 'Applications', file),
+          os.path.join(destination_path, file))
+      make_tarfile(destination_path,
+        os.path.join(path, str(timestamp) + '.tar.gz'))
+      shutil.rmtree(os.path.join(path, str(timestamp)))
     '''
-    user_call('cp ./Nexus/Applications/*.sh ./%s/' % str(timestamp))
-    user_call('cp ./Nexus/Applications/*.sql ./%s/' % str(timestamp))
-    user_call('cp ./Nexus/Applications/*.py ./%s/' % str(timestamp))
-    user_call('mv Nexus Nexus_backup')
-    user_call('mv ./%s Nexus' % str(timestamp))
-    user_call('tar -czf nexus-%s.tar.gz Nexus' % str(timestamp))
     user_call('touch ./Nexus/build.txt')
     log_file = open('./Nexus/build.txt', 'wb')
     log_file.write(terminal_output)
