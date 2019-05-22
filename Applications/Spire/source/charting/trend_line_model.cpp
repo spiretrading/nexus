@@ -7,36 +7,35 @@ namespace {
   ChartValue slope(const TrendLine& line) {
     if(std::get<0>(line.m_points).m_x < std::get<1>(line.m_points).m_x) {
       return ChartValue(
-        (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x)
-        / (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y));
+        (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y)
+        / (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
     }
     return ChartValue(
-      (std::get<0>(line.m_points).m_x - std::get<1>(line.m_points).m_x)
-      / (std::get<0>(line.m_points).m_y - std::get<1>(line.m_points).m_y));
+      (std::get<0>(line.m_points).m_y - std::get<1>(line.m_points).m_y)
+      / (std::get<0>(line.m_points).m_x - std::get<1>(line.m_points).m_x));
   }
 
   ChartValue distance_squared(const ChartPoint& point, const TrendLine& line) {
     auto line_slope = slope(line);
-    auto slope_squared = static_cast<Nexus::Quantity>(line_slope) * line_slope;
-    auto point_squared = ChartPoint({static_cast<Nexus::Quantity>(point.m_x) *
-      point.m_x, static_cast<Nexus::Quantity>(point.m_y) * point.m_y});
     auto line_point = std::get<0>(line.m_points);
-    auto line_point_squared = ChartPoint({
-      static_cast<Nexus::Quantity>(line_point.m_x) * line_point.m_x,
-      static_cast<Nexus::Quantity>(line_point.m_y) * line_point.m_y});
-    return ChartValue(
-      ((static_cast<Nexus::Quantity>(slope_squared) * point_squared.m_x) -
-      point_squared.m_y + line_point_squared.m_y -
-      (static_cast<Nexus::Quantity>(slope_squared) * line_point_squared.m_x)) /
-      (line_slope + ChartValue(1)));
+    auto numerator = (static_cast<Nexus::Quantity>(line_slope) * point.m_x) -
+      point.m_y + line_point.m_y -
+      (static_cast<Nexus::Quantity>(line_slope) * line_point.m_x);
+    numerator = static_cast<Nexus::Quantity>(numerator) * numerator;
+    static_cast<double>(static_cast<Nexus::Quantity>(numerator));
+    return ChartValue(numerator /
+      ((static_cast<Nexus::Quantity>(line_slope) * line_slope) +
+      ChartValue(1)));
   }
 
   bool within_range(ChartValue value, ChartValue range_value1,
-      ChartValue range_value2) {
+      ChartValue range_value2, ChartValue threshold) {
     if(range_value1 < range_value2) {
-      return range_value1 <= value && value <= range_value2;
+      return range_value1 - threshold <= value && value <=
+        range_value2 + threshold;
     }
-    return range_value1 >= value && value >= range_value2;
+    return range_value1 + threshold >= value && value >=
+      range_value2 - threshold;
   }
 }
 
@@ -80,8 +79,12 @@ int TrendLineModel::intersects(const ChartPoint& point,
   auto threshold_squared = static_cast<Nexus::Quantity>(threshold) * threshold;
   for(auto& line : m_trend_lines) {
     if(within_range(point.m_y, std::get<0>(line.m_trend_line.m_points).m_y,
-        std::get<1>(line.m_trend_line.m_points).m_y)) {
-      if(distance_squared(point, line.m_trend_line) <= threshold_squared) {
+        std::get<1>(line.m_trend_line.m_points).m_y, threshold)) {
+      auto distance = distance_squared(point, line.m_trend_line);
+      if(distance < ChartValue(0)) {
+        distance = -distance;
+      }
+      if(distance <= threshold_squared) {
         return line.m_id;
       }
     }

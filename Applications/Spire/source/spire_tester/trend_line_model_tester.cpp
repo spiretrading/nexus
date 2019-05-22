@@ -8,7 +8,7 @@
 using namespace Spire;
 
 namespace {
-  ChartPoint make_point(int x, int y) {
+  ChartPoint make_point(double x, double y) {
     return ChartPoint(ChartValue(x), ChartValue(y));
   }  
 
@@ -120,4 +120,35 @@ TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
   auto selected4 = model.get_selected();
   REQUIRE(selected4.size() == 0);
   print_test_name("test_setting_and_getting_selected_status");
+}
+
+TEST_CASE("test_basic_intersections", "[TrendLineModel]") {
+  auto threshold = ChartValue(5);
+  auto model = TrendLineModel();
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(11, 12), threshold) == id1);
+  REQUIRE(model.intersects(make_point(21, 19), threshold) == id1);
+  REQUIRE(model.intersects(make_point(11.5, 18.5), threshold) == id1);
+  REQUIRE(model.intersects(make_point(18.5, 11.5), threshold) == id1);
+  auto id2 = model.add(make_line(110, 110, 120, 115, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(110, 111), threshold) == id2);
+  REQUIRE(model.intersects(make_point(119, 114), threshold) == id2);
+  auto id3 = model.add(make_line(50, 50, 60, 40, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(50, 48), threshold) == id3);
+  REQUIRE(model.intersects(make_point(60, 42), threshold) == id3);
+  auto id4 = model.add(make_line(150, 50, 170, 40, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(150, 48), threshold) == id4);
+  REQUIRE(model.intersects(make_point(170, 42), threshold) == id4);
+  print_test_name("test_basic_intersections");
+}
+
+TEST_CASE("test_basic_non_intersections", "[TrendLineModel]") {
+  auto threshold = ChartValue(5);
+  auto model = TrendLineModel();
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(10, 20), threshold) == -1);
+  REQUIRE(model.intersects(make_point(20, 10), threshold) == -1);
+  REQUIRE(model.intersects(make_point(15, 4), threshold) == -1);
+  REQUIRE(model.intersects(make_point(15, 26), threshold) == -1);
+  print_test_name("test_basic_non_intersections");
 }
