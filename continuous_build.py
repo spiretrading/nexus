@@ -13,11 +13,18 @@ def call(command, cwd=None):
   return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
     stderr=subprocess.PIPE).communicate()
 
+def makedirs(path):
+  try:
+    os.makedirs(path)
+  except OSError as e:
+    if e.errno != errno.EEXIST:
+      raise
+
 def copy_build(applications, timestamp, name, source, path):
   destination_path = os.path.join(path, str(timestamp))
   for application in applications:
     application_path = os.path.join(destination_path, application)
-    os.makedirs(application_path)
+    makedirs(application_path)
     source_directory = os.path.join(source, 'Applications', application,
       'Application')
     for file in os.listdir(source_directory):
@@ -25,18 +32,14 @@ def copy_build(applications, timestamp, name, source, path):
       if os.path.isfile(file_path):
         shutil.copy2(file_path, os.path.join(application_path, file))
   library_destination_path = os.path.join(destination_path, 'Libraries')
-  os.makedirs(library_destination_path)
+  makedirs(library_destination_path)
   library_source_path = os.path.join(source, name, 'Libraries', 'Release')
   for file in os.listdir(library_source_path):
     shutil.copy2(os.path.join(library_source_path, file),
       os.path.join(library_destination_path, file))
 
 def build_repo(repo, path):
-  try:
-    os.makedirs(path)
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
+  makedirs(path)
   call('git clone %s Nexus' % repo)
   repo = git.Repo('Nexus')
   commits = sorted([commit for commit in repo.iter_commits('master')],
@@ -70,7 +73,7 @@ def build_repo(repo, path):
       terminal_output += output[0] + b'\n\n\n\n'
     for output in result:
       terminal_output += output[1] + b'\n\n\n\n'
-    os.makedirs(os.path.join(path, str(timestamp)))
+    makedirs(os.path.join(path, str(timestamp)))
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
       'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
       'CseMarketDataFeedClient', 'CtaMarketDataFeedClient', 'DefinitionsServer',
