@@ -93,9 +93,9 @@ int TrendLineModel::intersects(const ChartPoint& point,
       static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
       static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y),
       line_slope);
-    auto numer = (point_x + (line_slope * point_y) - (line_slope * line_b));
-    auto denom = ((line_slope * line_slope) + 1);
-    auto line_point_x = numer / denom;
+    auto line_point_x =
+      (point_x + (line_slope * point_y) - (line_slope * line_b)) /
+      ((line_slope * line_slope) + 1);
     if(within_interval(line_point_x,
         static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
         static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
