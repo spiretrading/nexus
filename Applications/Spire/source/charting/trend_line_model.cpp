@@ -1,23 +1,46 @@
 #include "spire/charting/trend_line_model.hpp"
 
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  ChartValue slope(const TrendLine& line) {
-    return ChartValue(
+  Quantity slope(const TrendLine& line) {
+    return Quantity(
       (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y)
       / (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
   }
 
-  bool within_range(ChartValue value, ChartValue range_value1,
-      ChartValue range_value2, ChartValue threshold) {
-    if(range_value1 < range_value2) {
-      return range_value1 - threshold <= value && value <=
-        range_value2 + threshold;
+  Quantity abs_distance_squared(Quantity x1, Quantity y1, Quantity x2,
+      Quantity y2) {
+    auto distance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    if(distance < Quantity(0)) {
+      return -distance;
     }
-    return range_value1 + threshold >= value && value >=
-      range_value2 - threshold;
+    return distance;
+  }
+
+  bool within_interval(Quantity value, Quantity interval_start,
+      Quantity interval_end, Quantity threshold) {
+    if(interval_start < interval_end) {
+      return interval_start - threshold <= value && value <=
+        interval_end + threshold;
+    }
+    return interval_start + threshold >= value && value >=
+      interval_end - threshold;
+  }
+
+  bool within_interval(Quantity value, Quantity interval_start,
+      Quantity interval_end) {
+    return within_interval(value, interval_start, interval_end, Quantity(0));
+  }
+
+  Quantity y_intercept(Quantity x, Quantity y, Quantity slope) {
+    return y - (x * slope);
+  }
+
+  Quantity calculate_y(Quantity m, Quantity x, Quantity b) {
+    return (m * x) + b;
   }
 }
 
@@ -57,40 +80,36 @@ std::vector<int> TrendLineModel::get_selected() const {
 
 int TrendLineModel::intersects(const ChartPoint& point,
     ChartValue threshold) const {
-  // TODO: How to multiply these without casting?
-  auto threshold_squared = static_cast<Nexus::Quantity>(threshold) * threshold;
+  auto closest_id = -1;
+  auto closest_distance = std::numeric_limits<Quantity>::infinity();
+  auto threshold_qty = static_cast<Quantity>(threshold);
+  auto threshold_squared = threshold_qty * threshold_qty;
+  auto point_x = static_cast<Quantity>(point.m_x);
+  auto point_y = static_cast<Quantity>(point.m_y);
   for(auto& line : m_trend_lines) {
+    // TODO: edge cases for horizontal and verticals lines
     auto line_slope = slope(line.m_trend_line);
-    if(std::isinf(static_cast<double>(static_cast<Nexus::Quantity>(
-        line_slope))) || line_slope == ChartValue(0)) {
-      auto x1 = std::get<0>(line.m_trend_line.m_points).m_x;
-      auto x2 = std::get<1>(line.m_trend_line.m_points).m_x;
-      auto y1 = std::get<0>(line.m_trend_line.m_points).m_y;
-      auto y2 = std::get<1>(line.m_trend_line.m_points).m_y;
-      if(within_range(point.m_x, x1, x2, threshold) &&
-          within_range(point.m_y, y1, y2, threshold)) {
-        return line.m_id;
+    auto line_b = y_intercept(
+      static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
+      static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y),
+      line_slope);
+    auto numer = (point_x + (line_slope * point_y) - (line_slope * line_b));
+    auto denom = ((line_slope * line_slope) + 1);
+    auto line_point_x = numer / denom;
+    if(within_interval(line_point_x,
+        static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
+        static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
+      auto distance_squared = abs_distance_squared(point_x, point_y,
+        line_point_x, calculate_y(line_slope, line_point_x, line_b));
+      if(distance_squared <= threshold_squared) {
+        if(distance_squared < closest_distance) {
+          closest_id = line.m_id;
+          closest_distance = distance_squared;
+        }
       }
-    } else if(within_range(point.m_y, std::get<0>(line.m_trend_line.m_points).m_y,
-        std::get<1>(line.m_trend_line.m_points).m_y, threshold)) {
-      auto line_point = std::get<0>(line.m_trend_line.m_points);
-      auto numerator = (static_cast<Nexus::Quantity>(line_slope) * point.m_x) -
-        point.m_y + line_point.m_y -
-        (static_cast<Nexus::Quantity>(line_slope) * line_point.m_x);
-      numerator = static_cast<Nexus::Quantity>(numerator) * numerator;
-      static_cast<double>(static_cast<Nexus::Quantity>(numerator));
-      auto distance = ChartValue(numerator /
-        ((static_cast<Nexus::Quantity>(line_slope) * line_slope) +
-        ChartValue(1)));
-      if(distance < ChartValue(0)) {
-        distance = -distance;
-      }
-      if(distance <= threshold_squared) {
-        return line.m_id;
-      }
-    }
+    } // TODO: else if distance to either line point is <= threshold
   }
-  return -1;
+  return closest_id;
 }
 
 void TrendLineModel::remove(int id) {
