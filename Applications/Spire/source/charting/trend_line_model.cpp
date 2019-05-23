@@ -5,27 +5,9 @@ using namespace Spire;
 
 namespace {
   ChartValue slope(const TrendLine& line) {
-    if(std::get<0>(line.m_points).m_x < std::get<1>(line.m_points).m_x) {
-      return ChartValue(
-        (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y)
-        / (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
-    }
     return ChartValue(
-      (std::get<0>(line.m_points).m_y - std::get<1>(line.m_points).m_y)
-      / (std::get<0>(line.m_points).m_x - std::get<1>(line.m_points).m_x));
-  }
-
-  ChartValue distance_squared(const ChartPoint& point, const TrendLine& line) {
-    auto line_slope = slope(line);
-    auto line_point = std::get<0>(line.m_points);
-    auto numerator = (static_cast<Nexus::Quantity>(line_slope) * point.m_x) -
-      point.m_y + line_point.m_y -
-      (static_cast<Nexus::Quantity>(line_slope) * line_point.m_x);
-    numerator = static_cast<Nexus::Quantity>(numerator) * numerator;
-    static_cast<double>(static_cast<Nexus::Quantity>(numerator));
-    return ChartValue(numerator /
-      ((static_cast<Nexus::Quantity>(line_slope) * line_slope) +
-      ChartValue(1)));
+      (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y)
+      / (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
   }
 
   bool within_range(ChartValue value, ChartValue range_value1,
@@ -78,9 +60,28 @@ int TrendLineModel::intersects(const ChartPoint& point,
   // TODO: How to multiply these without casting?
   auto threshold_squared = static_cast<Nexus::Quantity>(threshold) * threshold;
   for(auto& line : m_trend_lines) {
-    if(within_range(point.m_y, std::get<0>(line.m_trend_line.m_points).m_y,
+    auto line_slope = slope(line.m_trend_line);
+    if(std::isinf(static_cast<double>(static_cast<Nexus::Quantity>(
+        line_slope))) || line_slope == ChartValue(0)) {
+      auto x1 = std::get<0>(line.m_trend_line.m_points).m_x;
+      auto x2 = std::get<1>(line.m_trend_line.m_points).m_x;
+      auto y1 = std::get<0>(line.m_trend_line.m_points).m_y;
+      auto y2 = std::get<1>(line.m_trend_line.m_points).m_y;
+      if(within_range(point.m_x, x1, x2, threshold) &&
+          within_range(point.m_y, y1, y2, threshold)) {
+        return line.m_id;
+      }
+    } else if(within_range(point.m_y, std::get<0>(line.m_trend_line.m_points).m_y,
         std::get<1>(line.m_trend_line.m_points).m_y, threshold)) {
-      auto distance = distance_squared(point, line.m_trend_line);
+      auto line_point = std::get<0>(line.m_trend_line.m_points);
+      auto numerator = (static_cast<Nexus::Quantity>(line_slope) * point.m_x) -
+        point.m_y + line_point.m_y -
+        (static_cast<Nexus::Quantity>(line_slope) * line_point.m_x);
+      numerator = static_cast<Nexus::Quantity>(numerator) * numerator;
+      static_cast<double>(static_cast<Nexus::Quantity>(numerator));
+      auto distance = ChartValue(numerator /
+        ((static_cast<Nexus::Quantity>(line_slope) * line_slope) +
+        ChartValue(1)));
       if(distance < ChartValue(0)) {
         distance = -distance;
       }

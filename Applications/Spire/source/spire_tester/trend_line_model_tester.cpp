@@ -150,5 +150,37 @@ TEST_CASE("test_basic_non_intersections", "[TrendLineModel]") {
   REQUIRE(model.intersects(make_point(20, 10), threshold) == -1);
   REQUIRE(model.intersects(make_point(15, 4), threshold) == -1);
   REQUIRE(model.intersects(make_point(15, 26), threshold) == -1);
+  REQUIRE(model.intersects(make_point(20, 26), threshold) == -1);
+  REQUIRE(model.intersects(make_point(10, 4), threshold) == -1);
   print_test_name("test_basic_non_intersections");
+}
+
+TEST_CASE("test_vertical_lines", "[TrendLineModel]") {
+  auto threshold = ChartValue(5);
+  auto model = TrendLineModel();
+  auto id = model.add(make_line(10, 10, 10, 20, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(12, 15), threshold) == id);
+  REQUIRE(model.intersects(make_point(8, 15), threshold) == id);
+  REQUIRE(model.intersects(make_point(10, 8), threshold) == id);
+  REQUIRE(model.intersects(make_point(10, 22), threshold) == id);
+  REQUIRE(model.intersects(make_point(16, 15), threshold) == -1);
+  REQUIRE(model.intersects(make_point(4, 15), threshold) == -1);
+  REQUIRE(model.intersects(make_point(10, 26), threshold) == -1);
+  REQUIRE(model.intersects(make_point(10, 4), threshold) == -1);
+  print_test_name("test_vertical_lines");
+}
+
+TEST_CASE("test_horizontal_lines", "[TrendLineModel]") {
+  auto threshold = ChartValue(5);
+  auto model = TrendLineModel();
+  auto id = model.add(make_line(10, 10, 20, 10, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(15, 12), threshold) == id);
+  REQUIRE(model.intersects(make_point(15, 8), threshold) == id);
+  REQUIRE(model.intersects(make_point(8, 10), threshold) == id);
+  REQUIRE(model.intersects(make_point(22, 10), threshold) == id);
+  REQUIRE(model.intersects(make_point(15, 16), threshold) == -1);
+  REQUIRE(model.intersects(make_point(15, 4), threshold) == -1);
+  REQUIRE(model.intersects(make_point(4, 10), threshold) == -1);
+  REQUIRE(model.intersects(make_point(26, 10), threshold) == -1);
+  print_test_name("test_horizontal_lines");
 }
