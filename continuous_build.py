@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tarfile
 import time
+import zipfile
 
 def call(command, cwd=None):
   return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
@@ -25,6 +26,13 @@ def make_tarfile(source, destination):
   with tarfile.open(destination, "w:gz") as tar:
     for file in os.listdir(source):
       tar.add(os.path.join(source, file), arcname=file)
+
+def make_zipfile(source, destination):
+  archive = zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED)
+  for root, dirs, files in os.walk(source):
+    for file in files:
+      archive.write(os.path.join(root, file))
+  archive.close()
 
 def copy_build(applications, timestamp, name, source, path):
   destination_path = os.path.join(path, str(timestamp))
@@ -98,7 +106,10 @@ def build_repo(repo, path):
     for file in ['reset.sql', 'setup.py']:
       shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
         os.path.join(destination_path, file))
-    if sys.platform != 'win32':
+    if sys.platform == 'win32':
+      archive_path = os.path.join(path, 'nexus-%s.zip' % str(timestamp))
+      make_zipfile(destination_path, archive_path)
+    else:
       for file in ['check.sh', 'copy_all.sh', 'start.sh', 'stop.sh']:
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           os.path.join(destination_path, file))
