@@ -176,6 +176,8 @@ TEST_CASE("test_vertical_lines", "[TrendLineModel]") {
   REQUIRE(model.intersects(make_point(8, 15), threshold) == id);
   REQUIRE(model.intersects(make_point(10, 8), threshold) == id);
   REQUIRE(model.intersects(make_point(10, 22), threshold) == id);
+  REQUIRE(model.intersects(make_point(12, 22), threshold) == id);
+  REQUIRE(model.intersects(make_point(8, 8), threshold) == id);
   REQUIRE(model.intersects(make_point(16, 15), threshold) == -1);
   REQUIRE(model.intersects(make_point(4, 15), threshold) == -1);
   REQUIRE(model.intersects(make_point(10, 26), threshold) == -1);
@@ -191,6 +193,8 @@ TEST_CASE("test_horizontal_lines", "[TrendLineModel]") {
   REQUIRE(model.intersects(make_point(15, 8), threshold) == id);
   REQUIRE(model.intersects(make_point(8, 10), threshold) == id);
   REQUIRE(model.intersects(make_point(22, 10), threshold) == id);
+  REQUIRE(model.intersects(make_point(22, 12), threshold) == id);
+  REQUIRE(model.intersects(make_point(8, 8), threshold) == id);
   REQUIRE(model.intersects(make_point(15, 16), threshold) == -1);
   REQUIRE(model.intersects(make_point(15, 4), threshold) == -1);
   REQUIRE(model.intersects(make_point(4, 10), threshold) == -1);
