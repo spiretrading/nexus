@@ -23,6 +23,11 @@ namespace Spire {
     TrendLine();
 
     //! Constructs a TrendLine.
+    /*
+      \param points The two points of the trend line.
+      \param color The color of the trend line.
+      \param style The style of the trend line.
+    */
     TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
       const QColor& color, Qt::PenStyle style);
   };
