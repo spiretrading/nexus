@@ -45,9 +45,6 @@ def copy_build(applications, timestamp, name, source, path):
       os.path.join(library_destination_path, file))
 
 def build_repo(repo, path):
-  makedirs(path)
-  call('git clone %s Nexus' % repo)
-  repo = git.Repo('Nexus')
   commits = sorted([commit for commit in repo.iter_commits('master')],
     key = lambda commit: -int(commit.committed_date))
   builds = [int(d) for d in os.listdir(path) if os.path.isdir(
@@ -62,24 +59,28 @@ def build_repo(repo, path):
       commits = commits[0:i]
       commits.reverse()
       break
+  if sys.platform == 'win32':
+    extension = 'bat'
+  else:
+    extension = 'sh'
   for commit in commits:
+    build_path = os.path.join(os.getcwd(), 'build')
+    shutil.rmtree(build_path, True)
+    makedirs(build_path)
     timestamp = int(commit.committed_date)
-    call('git checkout %s' % commit.hexsha, os.path.join(os.getcwd(), 'Nexus'))
+    repo.git.checkout(commit.hexsha)
     result = []
-    if sys.platform == 'win32':
-      extension = 'bat'
-    else:
-      extension = 'sh'
-    result.append(call(os.path.join(os.getcwd(), 'Nexus',
-      'configure.%s' % extension), os.path.join(os.getcwd(), 'Nexus')))
-    result.append(call(os.path.join(os.getcwd(), 'Nexus',
-      'build.%s' % extension), os.path.join(os.getcwd(), 'Nexus')))
+    result.append(call(os.path.join(repo.working_dir, 'configure.%s -DD=%s' %
+      (extension, os.path.join(os.getcwd(), 'Dependencies'))), build_path))
+    result.append(call(os.path.join(build_path, 'build.%s' % extension),
+      build_path))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
     for output in result:
       terminal_output += output[1] + b'\n\n\n\n'
-    makedirs(os.path.join(path, str(timestamp)))
+    destination_path = os.path.join(path, str(timestamp))
+    makedirs(destination_path)
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
       'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
       'CseMarketDataFeedClient', 'CtaMarketDataFeedClient', 'DefinitionsServer',
@@ -87,37 +88,29 @@ def build_repo(repo, path):
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
       'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
       'UtpMarketDataFeedClient', 'WebPortal']
-    copy_build(nexus_applications, timestamp, 'Nexus',
-      os.path.join(os.getcwd(), 'Nexus'), path)
+    if sys.platform == 'win32':
+      nexus_applications.append('Spire')
+    copy_build(nexus_applications, timestamp, 'Nexus', build_path, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
-    copy_build(beam_applications, timestamp, 'Beam',
-      os.path.join(os.getcwd(), 'Nexus', 'Dependencies', 'Beam'), path)
-    destination_path = os.path.join(path, str(timestamp))
+    beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
+    copy_build(beam_applications, timestamp, 'Beam', beam_path, path)
     for file in ['reset.sql', 'setup.py']:
-      shutil.copy2(
-        os.path.join(os.getcwd(), 'Nexus', 'Applications', file),
+      shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
         os.path.join(destination_path, file))
     if sys.platform != 'win32':
       for file in ['check.sh', 'copy_all.sh', 'start.sh', 'stop.sh']:
-        shutil.copy2(
-          os.path.join(os.getcwd(), 'Nexus', 'Applications', file),
+        shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           os.path.join(destination_path, file))
-      make_tarfile(destination_path,
-        os.path.join(path, str(timestamp) + '.tar.gz'))
-      shutil.rmtree(os.path.join(path, str(timestamp)))
-    '''
-    user_call('touch ./Nexus/build.txt')
-    log_file = open('./Nexus/build.txt', 'wb')
-    log_file.write(terminal_output)
-    log_file.close()
-    destination = os.path.join(path, str(timestamp))
-    user_call('mkdir %s' % destination)
-    user_call('mv nexus-%s.tar.gz %s' % (str(timestamp), destination))
-    user_call('mv ./Nexus/build.txt %s' % destination)
-    user_call('rm -rf ./Nexus')
-    user_call('mv Nexus_backup Nexus')
-    '''
+      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(timestamp))
+      make_tarfile(destination_path, archive_path)
+    shutil.rmtree(beam_path)
+    shutil.rmtree(build_path)
+    shutil.rmtree(destination_path)
+    makedirs(destination_path)
+    with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
+      log_file.write(terminal_output)
+    shutil.move(archive_path, destination_path)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -129,8 +122,16 @@ def main():
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
+  repo_path = os.path.join(os.getcwd(), 'Nexus')
+  shutil.rmtree(repo_path, True)
+  repo = git.Repo.clone_from(args.repo, repo_path)
+  makedirs(args.path)
   while True:
-    build_repo(args.repo, args.path)
+    try:
+      repo.git.pull()
+      build_repo(repo, args.path)
+    except:
+      pass
     time.sleep(args.period)
 
 if __name__ == '__main__':
