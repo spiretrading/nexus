@@ -1,6 +1,7 @@
 #ifndef SPIRE_TREND_LINE_EDITOR_HPP
 #define SPIRE_TREND_LINE_EDITOR_HPP
 #include <QWidget>
+#include "spire/charting/charting.hpp"
 
 namespace Spire {
 
@@ -37,6 +38,10 @@ namespace Spire {
     
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
+
+    private:
+      QColor m_color;
+      Qt::PenStyle m_line_style;
   };
 }
 
