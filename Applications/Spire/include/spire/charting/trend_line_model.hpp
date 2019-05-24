@@ -14,14 +14,14 @@ namespace Spire {
       //! Constructs an empty TrendLineModel.
       TrendLineModel();
 
-      //! Adds the provided trend line to the model and returns its' ID.
+      //! Adds the provided trend line to the model and returns its id.
       /*
         \param line The trend line to add to the model.
       */
       int add(const TrendLine& line);
 
-      //! Returns the trend line with the provided ID. Returns a default
-      //! TrendLine on failure.
+      //! Returns the trend line with the provided ID. Throws an exception
+      //! if the provided id doesn't exist.
       /*
         \param id The ID of the trend line to return.
       */
@@ -37,6 +37,8 @@ namespace Spire {
       //! Returns -1 if no line intersects the point.
       /*
         \param point The point to compre the trend lines to.
+        \param threshold The maximum distance from the point to the line
+                         that is considered an intersection.
       */
       int intersects(const ChartPoint& point, ChartValue threshold) const;
 
@@ -75,16 +77,16 @@ namespace Spire {
         UNSELECTED,
         SELECTED
       };
-      struct TrendLineData {
+      struct TrendLineEntry {
         TrendLine m_trend_line;
         int m_id;
         State m_state;
       };
       mutable UpdateSignal m_update_signal;
       int m_last_id;
-      std::vector<TrendLineData> m_trend_lines;
+      std::vector<TrendLineEntry> m_trend_lines;
 
-      std::vector<TrendLineData>::iterator find_id(int id);
+      std::vector<TrendLineEntry>::iterator find_id(int id);
       void set_selected_status(int id, State state);
   };
 }

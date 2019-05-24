@@ -7,32 +7,28 @@ using namespace Spire;
 namespace {
   Quantity slope(const TrendLine& line) {
     return Quantity(
-      (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y)
-      / (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
+      (std::get<1>(line.m_points).m_y - std::get<0>(line.m_points).m_y) /
+      (std::get<1>(line.m_points).m_x - std::get<0>(line.m_points).m_x));
   }
 
-  Quantity abs_distance_squared(Quantity x1, Quantity y1, Quantity x2,
+  Quantity distance_squared(Quantity x1, Quantity y1, Quantity x2,
       Quantity y2) {
-    auto distance = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-    if(distance < Quantity(0)) {
-      return -distance;
-    }
-    return distance;
+    return Abs((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
   }
 
-  bool within_interval(Quantity value, Quantity interval_start,
+  bool is_within_interval(Quantity value, Quantity interval_start,
       Quantity interval_end, Quantity threshold) {
-    if(interval_start < interval_end) {
-      return interval_start - threshold <= value && value <=
-        interval_end + threshold;
+    if(interval_start > interval_end) {
+      is_within_interval(value, interval_end, interval_start, threshold);
     }
-    return interval_start + threshold >= value && value >=
-      interval_end - threshold;
+    return interval_start - threshold <= value && value <=
+      interval_end + threshold;
   }
 
-  bool within_interval(Quantity value, Quantity interval_start,
+  bool is_within_interval(Quantity value, Quantity interval_start,
       Quantity interval_end) {
-    return within_interval(value, interval_start, interval_end, Quantity(0));
+    return is_within_interval(value, interval_start, interval_end,
+      Quantity(0));
   }
 
   Quantity y_intercept(Quantity x, Quantity y, Quantity slope) {
@@ -45,10 +41,10 @@ namespace {
 
   Quantity closest_point_distance_squared(Quantity x, Quantity y,
       const TrendLine& line) {
-    auto pt1_distance = abs_distance_squared(x, y,
+    auto pt1_distance = distance_squared(x, y,
       static_cast<Quantity>(std::get<0>(line.m_points).m_x),
       static_cast<Quantity>(std::get<0>(line.m_points).m_y));
-    auto pt2_distance = abs_distance_squared(x, y,
+    auto pt2_distance = distance_squared(x, y,
       static_cast<Quantity>(std::get<1>(line.m_points).m_x),
       static_cast<Quantity>(std::get<1>(line.m_points).m_y));
     return std::min(pt1_distance, pt2_distance);
@@ -59,16 +55,17 @@ TrendLineModel::TrendLineModel()
   : m_last_id(0) {}
 
 int TrendLineModel::add(const TrendLine& line) {
-  m_trend_lines.push_back({line, ++m_last_id, State::UNSELECTED});
+  m_trend_lines.emplace_back(TrendLineEntry{line,
+    ++m_last_id, State::UNSELECTED});
   return m_last_id;
 }
 
 TrendLine TrendLineModel::get(int id) {
   auto iter = find_id(id);
   if(iter == m_trend_lines.end()) {
-    return TrendLine();
+    throw std::exception("TrendLine not found.");
   }
-  return (*iter).m_trend_line;
+  return iter->m_trend_line;
 }
 
 std::vector<TrendLine> TrendLineModel::get_lines() const {
@@ -98,7 +95,7 @@ int TrendLineModel::intersects(const ChartPoint& point,
   auto point_x = static_cast<Quantity>(point.m_x);
   auto point_y = static_cast<Quantity>(point.m_y);
   for(auto& line : m_trend_lines) {
-    auto distance_squared = std::numeric_limits<Quantity>::infinity();
+    auto dist_squared = std::numeric_limits<Quantity>::infinity();
     auto point_distance_squared = std::numeric_limits<Quantity>::infinity();
     auto line_slope = slope(line.m_trend_line);
     auto line_b = y_intercept(
@@ -106,39 +103,38 @@ int TrendLineModel::intersects(const ChartPoint& point,
       static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y),
       line_slope);
     point_distance_squared = closest_point_distance_squared(point_x,
-        point_y, line.m_trend_line);
+      point_y, line.m_trend_line);
     if(std::isinf(static_cast<double>(line_slope))) {
-      if(within_interval(point_y,
+      if(is_within_interval(point_y,
           static_cast<Quantity>(std::get<0>(
           line.m_trend_line.m_points).m_y),
           static_cast<Quantity>(std::get<1>(
           line.m_trend_line.m_points).m_y))) {
-        distance_squared = abs_distance_squared(point_x, point_y,
+        dist_squared = distance_squared(point_x, point_y,
           static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
           point_y);
       }
     } else if(line_slope == Quantity(0)) {
-      if(within_interval(point_x,
+      if(is_within_interval(point_x,
           static_cast<Quantity>(std::get<0>(
           line.m_trend_line.m_points).m_x),
           static_cast<Quantity>(std::get<1>(
           line.m_trend_line.m_points).m_x))) {
-        distance_squared = abs_distance_squared(point_x, point_y, point_x,
+        dist_squared = distance_squared(point_x, point_y, point_x,
           static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y));
       }
     } else {
       auto line_point_x =
         (point_x + (line_slope * point_y) - (line_slope * line_b)) /
         ((line_slope * line_slope) + 1);
-      if(within_interval(line_point_x,
+      if(is_within_interval(line_point_x,
           static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
           static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
-        distance_squared = abs_distance_squared(point_x, point_y,
+        dist_squared = distance_squared(point_x, point_y,
           line_point_x, calculate_y(line_slope, line_point_x, line_b));
       }
     }
-    auto min_distance_squared = std::min(distance_squared,
-      point_distance_squared);
+    auto min_distance_squared = std::min(dist_squared, point_distance_squared);
     if(min_distance_squared <= threshold_squared &&
         min_distance_squared < closest_distance) {
       closest_id = line.m_id;
@@ -158,21 +154,21 @@ void TrendLineModel::remove(int id) {
 void TrendLineModel::set_selected(int id) {
   auto iter = find_id(id);
   if(iter != m_trend_lines.end()) {
-    (*iter).m_state = State::SELECTED;
+    iter->m_state = State::SELECTED;
   }
 }
 
 void TrendLineModel::unset_selected(int id) {
   auto iter = find_id(id);
   if(iter != m_trend_lines.end()) {
-    (*iter).m_state = State::UNSELECTED;
+    iter->m_state = State::UNSELECTED;
   }
 }
 
 void TrendLineModel::update(const TrendLine& line, int id) {
   auto iter = find_id(id);
   if(iter != m_trend_lines.end()) {
-    (*iter).m_trend_line = line;
+    iter->m_trend_line = line;
   }
 }
 
@@ -181,17 +177,17 @@ connection TrendLineModel::connect_update_signal(
   return m_update_signal.connect(slot);
 }
 
-std::vector<TrendLineModel::TrendLineData>::iterator
-TrendLineModel::find_id(int id) {
-  return std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
-    [&] (auto& line) {
-      return id == line.m_id;
-    });
+std::vector<TrendLineModel::TrendLineEntry>::iterator
+  TrendLineModel::find_id(int id) {
+    return std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
+      [&] (auto& line) {
+        return id == line.m_id;
+      });
 }
 
 void TrendLineModel::set_selected_status(int id, State state) {
   auto iter = find_id(id);
   if(iter != m_trend_lines.end()) {
-    (*iter).m_state = state;
+    iter->m_state = state;
   }
 }
