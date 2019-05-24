@@ -125,7 +125,7 @@ TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
 TEST_CASE("test_basic_intersections", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id1 = model.add(make_line(10, 10, 20, 30, Qt::red, Qt::SolidLine));
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
   REQUIRE(model.intersects(make_point(10, 12), threshold) == id1);
   REQUIRE(model.intersects(make_point(21, 19), threshold) == id1);
   REQUIRE(model.intersects(make_point(11.5, 18.5), threshold) == id1);
@@ -142,11 +142,16 @@ TEST_CASE("test_basic_intersections", "[TrendLineModel]") {
   print_test_name("test_basic_intersections");
 }
 
-TEST_CASE("test_endpoint_intersections", "[TrendLineModel]") {
-  print_test_name("test_endpoint_intersections");
-}
-
 TEST_CASE("test_multiple_intersections", "[TrendLineModel]") {
+  auto threshold = ChartValue(5);
+  auto model = TrendLineModel();
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
+  auto id2 = model.add(make_line(20, 18, 25, 35, Qt::red, Qt::SolidLine));
+  auto id3 = model.add(make_line(20, 30, 30, 20, Qt::red, Qt::SolidLine));
+  REQUIRE(model.intersects(make_point(20, 19), threshold) == id2);
+  REQUIRE(model.intersects(make_point(20.2, 20), threshold) == id1);
+  REQUIRE(model.intersects(make_point(22.6, 27.5), threshold) == id3);
+  REQUIRE(model.intersects(make_point(22.72, 27.15), threshold) == id2);
   print_test_name("test_multiple_intersections");
 }
 

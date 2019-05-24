@@ -43,13 +43,6 @@ namespace {
     return (m * x) + b;
   }
 
-  Quantity min_quantity(Quantity q1, Quantity q2) {
-    if(q1 < q2) {
-      return q1;
-    }
-    return q2;
-  }
-
   Quantity closest_point_distance_squared(Quantity x, Quantity y,
       const TrendLine& line) {
     auto pt1_distance = abs_distance_squared(x, y,
@@ -58,7 +51,7 @@ namespace {
     auto pt2_distance = abs_distance_squared(x, y,
       static_cast<Quantity>(std::get<1>(line.m_points).m_x),
       static_cast<Quantity>(std::get<1>(line.m_points).m_y));
-    return min_quantity(pt1_distance, pt2_distance);
+    return std::min(pt1_distance, pt2_distance);
   }
 }
 
@@ -114,20 +107,21 @@ int TrendLineModel::intersects(const ChartPoint& point,
     auto line_point_x =
       (point_x + (line_slope * point_y) - (line_slope * line_b)) /
       ((line_slope * line_slope) + 1);
+    auto distance_squared = std::numeric_limits<Quantity>::infinity();
     if(within_interval(line_point_x,
         static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
         static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
-      auto distance_squared = abs_distance_squared(point_x, point_y,
+      distance_squared = abs_distance_squared(point_x, point_y,
         line_point_x, calculate_y(line_slope, line_point_x, line_b));
-      auto point_distance_squared = closest_point_distance_squared(point_x,
-        point_y, line.m_trend_line);
-      auto min_distance_squared = min_quantity(distance_squared,
-        point_distance_squared);
-      if(min_distance_squared <= threshold_squared &&
-          min_distance_squared < closest_distance) {
-        closest_id = line.m_id;
-        closest_distance = min_distance_squared;
-      }
+    }
+    auto point_distance_squared = closest_point_distance_squared(point_x,
+      point_y, line.m_trend_line);
+    auto min_distance_squared = std::min(distance_squared,
+      point_distance_squared);
+    if(min_distance_squared <= threshold_squared &&
+        min_distance_squared < closest_distance) {
+      closest_id = line.m_id;
+      closest_distance = min_distance_squared;
     }
   }
   return closest_id;
