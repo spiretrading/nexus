@@ -129,9 +129,9 @@ def main():
   while True:
     try:
       repo.git.pull()
-      build_repo(repo, args.path)
     except:
       pass
+    build_repo(repo, args.path)
     time.sleep(args.period)
 
 if __name__ == '__main__':
