@@ -42,6 +42,24 @@ namespace {
   Quantity calculate_y(Quantity m, Quantity x, Quantity b) {
     return (m * x) + b;
   }
+
+  Quantity min_quantity(Quantity q1, Quantity q2) {
+    if(q1 < q2) {
+      return q1;
+    }
+    return q2;
+  }
+
+  Quantity closest_point_distance_squared(Quantity x, Quantity y,
+      const TrendLine& line) {
+    auto pt1_distance = abs_distance_squared(x, y,
+      static_cast<Quantity>(std::get<0>(line.m_points).m_x),
+      static_cast<Quantity>(std::get<0>(line.m_points).m_y));
+    auto pt2_distance = abs_distance_squared(x, y,
+      static_cast<Quantity>(std::get<1>(line.m_points).m_x),
+      static_cast<Quantity>(std::get<1>(line.m_points).m_y));
+    return min_quantity(pt1_distance, pt2_distance);
+  }
 }
 
 TrendLineModel::TrendLineModel()
@@ -101,13 +119,16 @@ int TrendLineModel::intersects(const ChartPoint& point,
         static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
       auto distance_squared = abs_distance_squared(point_x, point_y,
         line_point_x, calculate_y(line_slope, line_point_x, line_b));
-      if(distance_squared <= threshold_squared) {
-        if(distance_squared < closest_distance) {
-          closest_id = line.m_id;
-          closest_distance = distance_squared;
-        }
+      auto point_distance_squared = closest_point_distance_squared(point_x,
+        point_y, line.m_trend_line);
+      auto min_distance_squared = min_quantity(distance_squared,
+        point_distance_squared);
+      if(min_distance_squared <= threshold_squared &&
+          min_distance_squared < closest_distance) {
+        closest_id = line.m_id;
+        closest_distance = min_distance_squared;
       }
-    } // TODO: else if distance to either line point is <= threshold
+    }
   }
   return closest_id;
 }
