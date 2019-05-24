@@ -93,29 +93,50 @@ int TrendLineModel::intersects(const ChartPoint& point,
     ChartValue threshold) const {
   auto closest_id = -1;
   auto closest_distance = std::numeric_limits<Quantity>::infinity();
-  auto threshold_qty = static_cast<Quantity>(threshold);
-  auto threshold_squared = threshold_qty * threshold_qty;
+  auto threshold_squared = static_cast<Quantity>(threshold) *
+    static_cast<Quantity>(threshold);
   auto point_x = static_cast<Quantity>(point.m_x);
   auto point_y = static_cast<Quantity>(point.m_y);
   for(auto& line : m_trend_lines) {
-    // TODO: edge cases for horizontal and verticals lines
+    auto distance_squared = std::numeric_limits<Quantity>::infinity();
+    auto point_distance_squared = std::numeric_limits<Quantity>::infinity();
     auto line_slope = slope(line.m_trend_line);
     auto line_b = y_intercept(
       static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
       static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y),
       line_slope);
-    auto line_point_x =
-      (point_x + (line_slope * point_y) - (line_slope * line_b)) /
-      ((line_slope * line_slope) + 1);
-    auto distance_squared = std::numeric_limits<Quantity>::infinity();
-    if(within_interval(line_point_x,
-        static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
-        static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
-      distance_squared = abs_distance_squared(point_x, point_y,
-        line_point_x, calculate_y(line_slope, line_point_x, line_b));
+    point_distance_squared = closest_point_distance_squared(point_x,
+        point_y, line.m_trend_line);
+    if(std::isinf(static_cast<double>(line_slope))) {
+      if(within_interval(point_y,
+          static_cast<Quantity>(std::get<0>(
+          line.m_trend_line.m_points).m_y),
+          static_cast<Quantity>(std::get<1>(
+          line.m_trend_line.m_points).m_y))) {
+        distance_squared = abs_distance_squared(point_x, point_y,
+          static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
+          point_y);
+      }
+    } else if(line_slope == Quantity(0)) {
+      if(within_interval(point_x,
+          static_cast<Quantity>(std::get<0>(
+          line.m_trend_line.m_points).m_x),
+          static_cast<Quantity>(std::get<1>(
+          line.m_trend_line.m_points).m_x))) {
+        distance_squared = abs_distance_squared(point_x, point_y, point_x,
+          static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y));
+      }
+    } else {
+      auto line_point_x =
+        (point_x + (line_slope * point_y) - (line_slope * line_b)) /
+        ((line_slope * line_slope) + 1);
+      if(within_interval(line_point_x,
+          static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
+          static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x))) {
+        distance_squared = abs_distance_squared(point_x, point_y,
+          line_point_x, calculate_y(line_slope, line_point_x, line_b));
+      }
     }
-    auto point_distance_squared = closest_point_distance_squared(point_x,
-      point_y, line.m_trend_line);
     auto min_distance_squared = std::min(distance_squared,
       point_distance_squared);
     if(min_distance_squared <= threshold_squared &&
