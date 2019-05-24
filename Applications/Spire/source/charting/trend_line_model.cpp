@@ -55,6 +55,7 @@ TrendLineModel::TrendLineModel()
 
 int TrendLineModel::add(const TrendLine& line) {
   m_trend_lines.push_back({line, ++m_last_id, State::UNSELECTED});
+  m_update_signal();
   return m_last_id;
 }
 
