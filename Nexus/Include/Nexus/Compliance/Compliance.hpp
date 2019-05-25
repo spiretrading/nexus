@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
   class ApplicationComplianceClient;
   template<typename MarketDataClientType> class BuyingPowerComplianceRule;
   template<typename DataStoreType> class CachedComplianceRuleDataStore;
@@ -29,7 +28,6 @@ namespace Compliance {
   class ComplianceSession;
   class LocalComplianceRuleDataStore;
   template<typename KeyType> class MapComplianceRule;
-  class MySqlComplianceRuleDataStore;
   template<typename TimeClientType>
     class OpposingOrderCancellationComplianceRule;
   template<typename TimeClientType> class OpposingOrderSubmissionComplianceRule;
@@ -38,6 +36,7 @@ namespace Compliance {
   class RejectCancelsComplianceRule;
   class RejectSubmissionsComplianceRule;
   class SecurityFilterComplianceRule;
+  template<typename C> class SqlComplianceRuleDataStore;
   template<typename TimeClientType>
     class SubmissionRestrictionPeriodComplianceRule;
   template<typename TimeClientType> class TimeFilterComplianceRule;
@@ -45,7 +44,6 @@ namespace Compliance {
 
   // Standard name for the compliance service.
   static const std::string SERVICE_NAME = "compliance_service";
-}
 }
 
 #endif

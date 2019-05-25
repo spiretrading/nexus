@@ -1,18 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(SimulationOrderExecutionServer)
-execute_process(COMMAND "pwd" OUTPUT_VARIABLE PWD)
-string(STRIP "${PWD}" PWD)
-file(TO_CMAKE_PATH "${PWD}" PWD)
-set(D "${PWD}/Dependencies" CACHE PATH "Path to dependencies directory.")
-set(DEPENDENCIES_PATH "${D}")
-file(TO_CMAKE_PATH "${DEPENDENCIES_PATH}" DEPENDENCIES_PATH)
 include(../../Nexus/Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
 include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
 include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
-include_directories(SYSTEM ${MYSQLPP_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
 include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
@@ -28,7 +21,6 @@ if(MSVC)
   add_definitions(-DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
   add_definitions(-D_HAS_AUTO_PTR_ETC=1)
-  add_definitions(-DMYSQLPP_NO_DLL)
   add_definitions(-DNOMINMAX)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
   add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
@@ -55,8 +47,8 @@ elseif(UNIX)
   execute_process(COMMAND "${CMAKE_CURRENT_LIST_DIR}/version.sh")
 endif()
 include_directories(Include)
-include_directories(${PWD})
-file(GLOB header_files ${PWD}/*.hpp
+include_directories(${PROJECT_BINARY_DIR})
+file(GLOB header_files ${PROJECT_BINARY_DIR}/*.hpp
   Include/SimulationOrderExecutionServer/*.hpp)
 file(GLOB source_files Source/*.cpp)
 add_executable(SimulationOrderExecutionServer ${header_files} ${source_files})
@@ -64,8 +56,6 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(SimulationOrderExecutionServer
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
-  debug ${MYSQLPP_LIBRARY_DEBUG_PATH}
-  optimized ${MYSQLPP_LIBRARY_OPTIMIZED_PATH}
   debug ${MYSQL_LIBRARY_DEBUG_PATH}
   optimized ${MYSQL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -93,4 +83,5 @@ endif()
 if(WIN32)
   target_link_libraries(SimulationOrderExecutionServer shlwapi)
 endif()
-install(TARGETS SimulationOrderExecutionServer DESTINATION ${PWD}/Application)
+install(TARGETS SimulationOrderExecutionServer DESTINATION
+  ${PROJECT_BINARY_DIR}/Application)

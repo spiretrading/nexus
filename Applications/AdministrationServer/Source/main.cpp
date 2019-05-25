@@ -8,17 +8,16 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
-#include <Beam/Sql/Utilities.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <tclap/CmdLine.h>
+#include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
-#include "Nexus/AdministrationService/MySqlAdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/SqlAdministrationDataStore.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
@@ -39,14 +38,15 @@ using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
 using namespace std;
 using namespace TCLAP;
+using namespace Viper;
 
 namespace {
-  typedef ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-    MetaAdministrationServlet<ApplicationServiceLocatorClient::Client*,
-    CachedAdministrationDataStore<MySqlAdministrationDataStore*>>,
+  using AdministrationServletContainer = ServiceProtocolServletContainer<
+    MetaAuthenticationServletAdapter<MetaAdministrationServlet<
+    ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
+    SqlAdministrationDataStore<MySql::Connection>>>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>
-    AdministrationServletContainer;
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct AdministrationServerConnectionInitializer {
     string m_serviceName;
@@ -61,7 +61,7 @@ namespace {
     m_serviceName = Extract<string>(config, "service",
       AdministrationService::SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
-    vector<IpAddress> addresses;
+    auto addresses = vector<IpAddress>();
     addresses.push_back(m_interface);
     m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
   }
@@ -71,9 +71,9 @@ namespace {
       ApplicationServiceLocatorClient& serviceLocatorClient) {
     auto entitlementsDirectory = LoadOrCreateDirectory(*serviceLocatorClient,
       "entitlements", DirectoryEntry::GetStarDirectory());
-    EntitlementDatabase database;
+    auto database = EntitlementDatabase();
     for(auto entitlementConfig : config) {
-      EntitlementDatabase::Entry entry;
+      auto entry = EntitlementDatabase::Entry();
       entry.m_name = Extract<string>(entitlementConfig, "name");
       auto price = Money::FromValue(Extract<string>(entitlementConfig,
         "price"));
@@ -88,9 +88,11 @@ namespace {
         groupName, entitlementsDirectory);
       auto applicability = GetNode(entitlementConfig, "applicability");
       for(auto applicabilityConfig : applicability) {
-        MarketCode market = Extract<string>(applicabilityConfig, "market", "");
-        MarketCode source = Extract<string>(applicabilityConfig, "source");
-        EntitlementKey key{market, source};
+        auto market = MarketCode(
+          Extract<string>(applicabilityConfig, "market", ""));
+        auto source = MarketCode(
+          Extract<string>(applicabilityConfig, "source"));
+        auto key = EntitlementKey(market, source);
         auto messages = GetNode(applicabilityConfig, "messages");
         for(auto messageConfig : messages) {
           auto message = messageConfig.as<string>();
@@ -114,12 +116,12 @@ namespace {
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "0.9-r" ADMINISTRATION_SERVER_VERSION
-      "\nCopyright (C) 2009 Eidolon Systems Ltd."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ', "1.0-r" ADMINISTRATION_SERVER_VERSION
+      "\nCopyright (C) 2009 Eidolon Systems Ltd.");
+    auto configArg = ValueArg<string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
@@ -128,8 +130,8 @@ int main(int argc, const char** argv) {
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  AdministrationServerConnectionInitializer
-    administrationServerConnectionInitializer;
+  auto administrationServerConnectionInitializer =
+    AdministrationServerConnectionInitializer();
   try {
     administrationServerConnectionInitializer.Initialize(
       GetNode(config, "server"));
@@ -137,7 +139,7 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'server': " << e.what() << endl;
     return -1;
   }
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
@@ -145,9 +147,9 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'service_locator': " << e.what() << endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto socketThreadPool = SocketThreadPool();
+  auto timerThreadPool = TimerThreadPool();
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -158,14 +160,14 @@ int main(int argc, const char** argv) {
     cerr << "Error logging in: " << e.what() << endl;
     return -1;
   }
-  MySqlConfig mySqlConfig;
+  auto mySqlConfig = MySqlConfig();
   try {
     mySqlConfig = MySqlConfig::Parse(GetNode(config, "data_store"));
   } catch(const std::exception& e) {
     cerr << "Error parsing section 'data_store': " << e.what() << endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -176,7 +178,7 @@ int main(int argc, const char** argv) {
   }
   auto organizationName = Extract<string>(config, "organization",
     "Spire Trading Inc.");
-  EntitlementDatabase entitlements;
+  auto entitlements = EntitlementDatabase();
   try {
     entitlements = ParseEntitlements(GetNode(config, "entitlements"),
       definitionsClient->LoadCurrencyDatabase(), serviceLocatorClient);
@@ -188,17 +190,17 @@ int main(int argc, const char** argv) {
     [&] (unsigned int id) {
       return serviceLocatorClient->LoadDirectoryEntry(id);
     };
-  MySqlAdministrationDataStore mySqlDataStore{mySqlConfig.m_address,
-    mySqlConfig.m_schema, mySqlConfig.m_username, mySqlConfig.m_password,
-    accountSource};
-  AdministrationServletContainer administrationServer{
+  auto mySqlConnection = std::make_unique<MySql::Connection>(
+    mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
+    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema);
+  auto administrationServer = AdministrationServletContainer(
     Initialize(serviceLocatorClient.Get(),
     Initialize(serviceLocatorClient.Get(), organizationName, entitlements,
-    Initialize(&mySqlDataStore))),
+    Initialize(Initialize(std::move(mySqlConnection), accountSource)))),
     Initialize(administrationServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
-    Ref(timerThreadPool))};
+    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+    Ref(timerThreadPool)));
   try {
     administrationServer.Open();
   } catch(const std::exception& e) {
@@ -206,7 +208,7 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    JsonObject administrationService;
+    auto administrationService = JsonObject();
     administrationService["addresses"] =
       ToString(administrationServerConnectionInitializer.m_addresses);
     serviceLocatorClient->Register(

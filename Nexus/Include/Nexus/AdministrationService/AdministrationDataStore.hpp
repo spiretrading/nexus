@@ -1,8 +1,10 @@
-#ifndef NEXUS_ADMINISTRATIONDATASTORE_HPP
-#define NEXUS_ADMINISTRATIONDATASTORE_HPP
-#include <Beam/IO/Connection.hpp>
+#ifndef NEXUS_ADMINISTRATION_DATA_STORE_HPP
+#define NEXUS_ADMINISTRATION_DATA_STORE_HPP
+#include <tuple>
+#include <vector>
 #include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
@@ -10,19 +12,30 @@
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
   /*! \class AdministrationDataStore
       \brief Base class used to store Nexus account info.
    */
   class AdministrationDataStore : private boost::noncopyable {
     public:
+
+      //! Stores an AccountIdentity and its index.
+      using IndexedAccountIdentity = std::tuple<
+        Beam::ServiceLocator::DirectoryEntry, AccountIdentity>;
+
+      //! Stores RiskParameters and the account they are associated with.
+      using IndexedRiskParameters = std::tuple<
+        Beam::ServiceLocator::DirectoryEntry, RiskService::RiskParameters>;
+
+      //! Stores a RiskState and the account it is associated with.
+      using IndexedRiskState = std::tuple<Beam::ServiceLocator::DirectoryEntry,
+        RiskService::RiskState>;
+
       virtual ~AdministrationDataStore() = default;
 
       //! Loads all AccountIdentities.
-      virtual std::vector<
-        std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>
+      virtual std::vector<IndexedAccountIdentity>
         LoadAllAccountIdentities() = 0;
 
       //! Loads an AccountIdentity.
@@ -42,8 +55,7 @@ namespace AdministrationService {
         const AccountIdentity& identity) = 0;
 
       //! Loads all RiskParameters.
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskParameters>> LoadAllRiskParameters() = 0;
+      virtual std::vector<IndexedRiskParameters> LoadAllRiskParameters() = 0;
 
       //! Loads an account's RiskParameters.
       /*!
@@ -63,8 +75,7 @@ namespace AdministrationService {
         const RiskService::RiskParameters& riskParameters) = 0;
 
       //! Loads all RiskStates.
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskState>> LoadAllRiskStates() = 0;
+      virtual std::vector<IndexedRiskState> LoadAllRiskStates() = 0;
 
       //! Loads an account's RiskState.
       /*!
@@ -203,7 +214,6 @@ namespace AdministrationService {
 
       virtual void Close() = 0;
   };
-}
 }
 
 #endif
