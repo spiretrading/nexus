@@ -35,22 +35,25 @@ def make_zipfile(source, destination):
   archive.close()
 
 def copy_build(applications, timestamp, name, source, path):
-  destination_path = os.path.join(path, str(timestamp))
-  for application in applications:
-    application_path = os.path.join(destination_path, application)
-    makedirs(application_path)
-    source_directory = os.path.join(source, 'Applications', application,
-      'Application')
-    for file in os.listdir(source_directory):
-      file_path = os.path.join(source_directory, file)
-      if os.path.isfile(file_path):
-        shutil.copy2(file_path, os.path.join(application_path, file))
-  library_destination_path = os.path.join(destination_path, 'Libraries')
-  makedirs(library_destination_path)
-  library_source_path = os.path.join(source, name, 'Libraries', 'Release')
-  for file in os.listdir(library_source_path):
-    shutil.copy2(os.path.join(library_source_path, file),
-      os.path.join(library_destination_path, file))
+  try:
+    destination_path = os.path.join(path, str(timestamp))
+    for application in applications:
+      application_path = os.path.join(destination_path, application)
+      makedirs(application_path)
+      source_directory = os.path.join(source, 'Applications', application,
+        'Application')
+      for file in os.listdir(source_directory):
+        file_path = os.path.join(source_directory, file)
+        if os.path.isfile(file_path):
+          shutil.copy2(file_path, os.path.join(application_path, file))
+    library_destination_path = os.path.join(destination_path, 'Libraries')
+    makedirs(library_destination_path)
+    library_source_path = os.path.join(source, name, 'Libraries', 'Release')
+    for file in os.listdir(library_source_path):
+      shutil.copy2(os.path.join(library_source_path, file),
+        os.path.join(library_destination_path, file))
+  except OSError:
+    return
 
 def build_repo(repo, path):
   commits = sorted([commit for commit in repo.iter_commits('master')],
