@@ -1,4 +1,4 @@
-#include "spire/ui/window.hpp"
+#include "Spire/Ui/Window.hpp"
 #include <QEvent>
 #include <QGuiApplication>
 #include <QScreen>
@@ -6,8 +6,8 @@
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/title_bar.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TitleBar.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

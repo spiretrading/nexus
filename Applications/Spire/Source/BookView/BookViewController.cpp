@@ -1,6 +1,6 @@
-#include "spire/book_view/book_view_controller.hpp"
-#include "spire/book_view/services_book_view_model.hpp"
-#include "spire/book_view/book_view_window.hpp"
+#include "Spire/BookView/BookViewController.hpp"
+#include "Spire/BookView/ServicesBookViewModel.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 
 using namespace Beam;
 using namespace boost;

@@ -1,4 +1,4 @@
-#include "spire/spire/spire_controller.hpp"
+#include "Spire/Spire/SpireController.hpp"
 #ifdef slots
   #undef slots
 #endif
@@ -10,8 +10,8 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include <QMessageBox>
 #include <QStandardPaths>
-#include "spire/login/login_controller.hpp"
-#include "spire/toolbar/toolbar_controller.hpp"
+#include "Spire/Login/LoginController.hpp"
+#include "Spire/Toolbar/ToolbarController.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;

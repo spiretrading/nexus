@@ -1,4 +1,4 @@
-#include "spire/book_view_ui_tester/random_book_view_model.hpp"
+#include "Spire/BookViewUiTester/RandomBookViewModel.hpp"
 #include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;

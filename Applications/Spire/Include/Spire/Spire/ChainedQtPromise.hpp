@@ -3,7 +3,7 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include "spire/spire/qt_promise_imp.hpp"
+#include "Spire/Spire/QtPromiseImp.hpp"
 
 namespace Spire {
   template<typename P, typename E>

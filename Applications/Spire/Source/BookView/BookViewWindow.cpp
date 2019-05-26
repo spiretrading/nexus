@@ -1,19 +1,19 @@
-#include "spire/book_view/book_view_window.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QMenu>
 #include <QTimer>
-#include "spire/book_view/book_view_properties_dialog.hpp"
-#include "spire/book_view/book_view_table_widget.hpp"
-#include "spire/book_view/labeled_data_widget.hpp"
-#include "spire/book_view/technicals_panel.hpp"
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/drop_shadow.hpp"
-#include "spire/ui/security_widget.hpp"
-#include "spire/ui/transition_widget.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/BookView/BookViewPropertiesDialog.hpp"
+#include "Spire/BookView/BookViewTableWidget.hpp"
+#include "Spire/BookView/LabeledDataWidget.hpp"
+#include "Spire/BookView/TechnicalsPanel.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/SecurityWidget.hpp"
+#include "Spire/Ui/TransitionWidget.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
 using namespace boost;

@@ -1,4 +1,4 @@
-#include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QHBoxLayout>
@@ -6,12 +6,12 @@
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
-#include "spire/ui/check_box.hpp"
-#include "spire/ui/flat_button.hpp"
-#include "spire/ui/properties_window_buttons_widget.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

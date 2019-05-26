@@ -1,4 +1,4 @@
-#include "spire/time_and_sales/empty_time_and_sales_model.hpp"
+#include "Spire/TimeAndSales/EmptyTimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

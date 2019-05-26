@@ -1,7 +1,7 @@
 #ifndef SPIRE_LOCAL_TECHNICALS_MODEL_HPP
 #define SPIRE_LOCAL_TECHNICALS_MODEL_HPP
 #include "Nexus/Definitions/TimeAndSale.hpp"
-#include "spire/spire/technicals_model.hpp"
+#include "Spire/Spire/TechnicalsModel.hpp"
 
 namespace Spire {
 

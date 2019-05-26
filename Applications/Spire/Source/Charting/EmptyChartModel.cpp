@@ -1,4 +1,4 @@
-#include "spire/charting/empty_chart_model.hpp"
+#include "Spire/Charting/EmptyChartModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

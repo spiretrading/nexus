@@ -1,9 +1,9 @@
 #include <QApplication>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/security_input_ui_tester/security_input_tester.hpp"
-#include "spire/spire/resources.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/SecurityInputUiTester/SecurityInputTester.hpp"
+#include "Spire/Spire/Resources.hpp"
 
 using namespace Nexus;
 using namespace Spire;

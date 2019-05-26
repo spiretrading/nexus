@@ -1,6 +1,6 @@
-#include "spire/toolbar/toolbar_menu.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Toolbar/ToolbarMenu.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

@@ -5,8 +5,8 @@
 #include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/spire/qt_promise.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 

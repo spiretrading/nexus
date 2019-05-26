@@ -1,4 +1,4 @@
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
 

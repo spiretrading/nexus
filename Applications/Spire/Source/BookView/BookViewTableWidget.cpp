@@ -1,9 +1,9 @@
-#include "spire/book_view/book_view_table_widget.hpp"
+#include "Spire/BookView/BookViewTableWidget.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "spire/book_view/book_quote_table_model.hpp"
-#include "spire/book_view/book_quote_table_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/BookView/BookQuoteTableModel.hpp"
+#include "Spire/BookView/BookQuoteTableView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Nexus;
 using namespace Spire;

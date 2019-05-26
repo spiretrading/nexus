@@ -5,9 +5,9 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/ui/security_stack.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Ui/SecurityStack.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

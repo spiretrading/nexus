@@ -1,6 +1,6 @@
 #ifndef SPIRE_CACHED_CHART_MODEL_HPP
 #define SPIRE_CACHED_CHART_MODEL_HPP
-#include "spire/charting/chart_model.hpp"
+#include "Spire/Charting/ChartModel.hpp"
 
 namespace Spire {
 

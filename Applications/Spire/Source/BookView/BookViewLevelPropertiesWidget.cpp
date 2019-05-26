@@ -1,4 +1,4 @@
-#include "spire/book_view/book_view_level_properties_widget.hpp"
+#include "Spire/BookView/BookViewLevelPropertiesWidget.hpp"
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QHBoxLayout>
@@ -8,10 +8,10 @@
 #include <QScrollBar>
 #include <QSpinBox>
 #include <QVBoxLayout>
-#include "spire/book_view/book_view_properties.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/check_box.hpp"
-#include "spire/ui/flat_button.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
 

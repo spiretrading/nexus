@@ -1,11 +1,11 @@
-#include "spire/security_input/security_input_dialog.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
 #include <QApplication>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QVBoxLayout>
-#include "spire/security_input/security_info_list_view.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/drop_shadow.hpp"
+#include "Spire/SecurityInput/SecurityInfoListView.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace Beam;
 using namespace boost;

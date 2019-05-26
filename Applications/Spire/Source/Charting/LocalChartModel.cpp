@@ -1,4 +1,4 @@
-#include "spire/charting/local_chart_model.hpp"
+#include "Spire/Charting/LocalChartModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

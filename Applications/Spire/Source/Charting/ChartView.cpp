@@ -1,12 +1,12 @@
-#include "spire/charting/chart_view.hpp"
+#include "Spire/Charting/ChartView.hpp"
 #include <locale>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QFontMetrics>
 #include <QPainter>
 #include <QPaintEvent>
 #include "Nexus/Definitions/Money.hpp"
-#include "spire/charting/chart_model.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Charting/ChartModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;

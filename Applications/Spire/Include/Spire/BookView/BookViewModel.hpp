@@ -7,8 +7,8 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/spire/qt_promise.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 

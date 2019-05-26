@@ -1,4 +1,4 @@
-#include "spire/login/chroma_hash_widget.hpp"
+#include "Spire/Login/ChromaHashWidget.hpp"
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <QHBoxLayout>
 

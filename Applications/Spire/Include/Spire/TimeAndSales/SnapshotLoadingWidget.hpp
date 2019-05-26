@@ -2,7 +2,7 @@
 #define SNAPSHOT_LOADING_WIDGET_HPP
 #include <QLabel>
 #include <QScrollArea>
-#include "spire/time_and_sales/time_and_sales.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
 
 namespace Spire {
 

@@ -2,7 +2,7 @@
 #define SPIRE_DROPDOWN_MENU_LIST_HPP
 #include <QScrollArea>
 #include <QWidget>
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

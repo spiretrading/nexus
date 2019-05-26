@@ -1,4 +1,4 @@
-#include "spire/spire/local_technicals_model.hpp"
+#include "Spire/Spire/LocalTechnicalsModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

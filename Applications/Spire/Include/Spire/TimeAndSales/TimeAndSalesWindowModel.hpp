@@ -1,9 +1,9 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_MODEL_HPP
 #include <QAbstractItemModel>
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 namespace Spire {
 

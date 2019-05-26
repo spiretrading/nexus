@@ -1,8 +1,8 @@
 #include <QApplication>
-#include "spire/login_ui_tester/login_ui_tester.hpp"
-#include "spire/login/login_window.hpp"
-#include "spire/spire/resources.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/LoginUiTester/LoginUiTester.hpp"
+#include "Spire/Login/LoginWindow.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/Ui/Window.hpp"
 #include "Version.hpp"
 
 using namespace Spire;

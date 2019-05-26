@@ -3,7 +3,7 @@
 #include <QLabel>
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/security_input/security_input.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
 
 namespace Spire {
 

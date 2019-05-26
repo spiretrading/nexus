@@ -1,4 +1,4 @@
-#include "spire/spire_tester/test_chart_model.hpp"
+#include "Spire/SpireTester/TestChartModel.hpp"
 #include <mutex>
 
 using namespace boost::signals2;

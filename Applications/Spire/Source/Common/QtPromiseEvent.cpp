@@ -1,4 +1,4 @@
-#include "spire/spire/qt_promise_event.hpp"
+#include "Spire/Spire/QtPromiseEvent.hpp"
 
 using namespace Spire;
 using namespace Spire::details;

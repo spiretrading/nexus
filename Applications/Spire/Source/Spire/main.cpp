@@ -1,6 +1,6 @@
 #include <QApplication>
-#include "spire/spire/resources.hpp"
-#include "spire/spire/spire_controller.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/Spire/SpireController.hpp"
 #include "Version.hpp"
 
 using namespace Spire;

@@ -1,6 +1,6 @@
-#include "spire/time_and_sales/services_time_and_sales_model.hpp"
+#include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
-#include "spire/spire/definitions.hpp"
+#include "Spire/Spire/Definitions.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

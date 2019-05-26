@@ -5,9 +5,9 @@
 #include <utility>
 #include <boost/noncopyable.hpp>
 #include <QApplication>
-#include "spire/spire/chained_qt_promise.hpp"
-#include "spire/spire/qt_promise_imp.hpp"
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/ChainedQtPromise.hpp"
+#include "Spire/Spire/QtPromiseImp.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

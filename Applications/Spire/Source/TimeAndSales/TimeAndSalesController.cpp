@@ -1,6 +1,6 @@
-#include "spire/time_and_sales/time_and_sales_controller.hpp"
-#include "spire/time_and_sales/services_time_and_sales_model.hpp"
-#include "spire/time_and_sales/time_and_sales_window.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesController.hpp"
+#include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
 using namespace boost;

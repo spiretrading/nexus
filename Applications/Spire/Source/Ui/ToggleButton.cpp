@@ -1,11 +1,11 @@
-#include "spire/ui/toggle_button.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
 #include <QEvent>
 #include <QFocusEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPaintEvent>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

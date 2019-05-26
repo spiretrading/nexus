@@ -1,6 +1,6 @@
-#include "spire/time_and_sales/time_and_sales_window_model.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include <algorithm>
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

@@ -1,5 +1,5 @@
 
-#include "spire/charting/chart_point.hpp"
+#include "Spire/Charting/ChartPoint.hpp"
 
 using namespace Spire;
 

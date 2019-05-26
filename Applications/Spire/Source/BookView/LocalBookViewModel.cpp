@@ -1,4 +1,4 @@
-#include "spire/book_view/local_book_view_model.hpp"
+#include "Spire/BookView/LocalBookViewModel.hpp"
 #include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/QuoteConversions.hpp"
 

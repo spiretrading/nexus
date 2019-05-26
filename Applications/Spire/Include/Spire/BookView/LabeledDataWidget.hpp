@@ -2,7 +2,7 @@
 #define SPIRE_LABELED_DATA_WIDGET_HPP
 #include <QWidget>
 #include <QLabel>
-#include "spire/book_view/book_view.hpp"
+#include "Spire/BookView/BookView.hpp"
 
 namespace Spire {
 

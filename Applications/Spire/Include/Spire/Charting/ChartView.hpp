@@ -3,10 +3,10 @@
 #include <QAbstractNativeEventFilter>
 #include <QPen>
 #include <QWidget>
-#include "spire/charting/charting.hpp"
-#include "spire/charting/chart_point.hpp"
-#include "spire/spire/qt_promise.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartPoint.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

@@ -1,4 +1,4 @@
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QDateTime>

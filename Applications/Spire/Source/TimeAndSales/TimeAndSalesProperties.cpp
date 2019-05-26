@@ -1,4 +1,4 @@
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 using namespace Spire;
 

@@ -1,9 +1,9 @@
-#include "spire/ui/flat_button.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPointF>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

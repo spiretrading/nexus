@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOOK_QUOTE_TABLE_VIEW_HPP
 #define SPIRE_BOOK_QUOTE_TABLE_VIEW_HPP
 #include <QTableView>
-#include "spire/book_view/book_view.hpp"
+#include "Spire/BookView/BookView.hpp"
 
 namespace Spire {
 

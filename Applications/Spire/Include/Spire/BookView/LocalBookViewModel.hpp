@@ -2,9 +2,9 @@
 #define SPIRE_LOCAL_BOOK_VIEW_MODEL_HPP
 #include <unordered_map>
 #include "Nexus/Definitions/MarketQuote.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/spire/definitions.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/Spire/Definitions.hpp"
 
 namespace Spire {
 

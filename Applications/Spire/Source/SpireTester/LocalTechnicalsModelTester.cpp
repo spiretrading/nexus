@@ -3,8 +3,8 @@
 #include <boost/optional/optional_io.hpp>
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
-#include "spire/spire/local_technicals_model.hpp"
-#include "spire/spire_tester/spire_tester.hpp"
+#include "Spire/Spire/LocalTechnicalsModel.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Nexus;
 using namespace Spire;

@@ -1,10 +1,10 @@
-#include "spire/book_view/quote_panel.hpp"
+#include "Spire/BookView/QuotePanel.hpp"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QVBoxLayout>
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/book_view/quote_panel_indicator_widget.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/QuotePanelIndicatorWidget.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Nexus;
 using namespace Spire;

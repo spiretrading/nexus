@@ -1,4 +1,4 @@
-#include "spire/book_view/empty_book_view_model.hpp"
+#include "Spire/BookView/EmptyBookViewModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

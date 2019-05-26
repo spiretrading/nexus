@@ -2,8 +2,8 @@
 #define SPIRE_SERVICES_SECURITY_INPUT_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/security_input/security_input_model.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
 
 namespace Spire {
 

@@ -1,8 +1,8 @@
-#include "spire/security_input/security_info_list_view.hpp"
+#include "Spire/SecurityInput/SecurityInfoListView.hpp"
 #include <QVBoxLayout>
-#include "spire/security_input/security_info_widget.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/drop_shadow.hpp"
+#include "Spire/SecurityInput/SecurityInfoWidget.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

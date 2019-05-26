@@ -6,7 +6,7 @@
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/noncopyable.hpp>
 #include <QTimer>
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

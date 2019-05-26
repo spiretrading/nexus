@@ -1,9 +1,9 @@
 #include <catch.hpp>
-#include "spire/spire_tester/spire_tester.hpp"
-#include "spire/charting/chart_point.hpp"
-#include "spire/charting/chart_value.hpp"
-#include "spire/charting/trend_line.hpp"
-#include "spire/charting/trend_line_model.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/Charting/ChartPoint.hpp"
+#include "Spire/Charting/ChartValue.hpp"
+#include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Charting/TrendLineModel.hpp"
 
 using namespace Spire;
 

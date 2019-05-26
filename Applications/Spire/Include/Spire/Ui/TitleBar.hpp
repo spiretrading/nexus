@@ -2,7 +2,7 @@
 #define SPIRE_TITLE_BAR_HPP
 #include <QLabel>
 #include <QWidget>
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

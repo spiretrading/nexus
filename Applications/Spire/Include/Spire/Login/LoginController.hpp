@@ -6,9 +6,9 @@
 #include <Beam/Network/IpAddress.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
-#include "spire/login/login.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/spire/qt_promise.hpp"
+#include "Spire/Login/Login.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 

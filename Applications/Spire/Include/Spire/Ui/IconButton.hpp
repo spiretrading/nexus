@@ -4,7 +4,7 @@
 #include <QImage>
 #include <QString>
 #include <QWidget>
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

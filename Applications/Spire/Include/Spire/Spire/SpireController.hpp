@@ -5,10 +5,10 @@
 #include <Beam/Network/Network.hpp>
 #include <Beam/Threading/Threading.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/login/login_controller.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/spire/spire.hpp"
-#include "spire/toolbar/toolbar.hpp"
+#include "Spire/Login/LoginController.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {
 

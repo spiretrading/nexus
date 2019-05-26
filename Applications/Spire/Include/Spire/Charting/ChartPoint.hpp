@@ -1,7 +1,7 @@
 #ifndef SPIRE_CHART_POINT_HPP
 #define SPIRE_CHART_POINT_HPP
-#include "spire/charting/charting.hpp"
-#include "spire/charting/chart_value.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartValue.hpp"
 
 namespace Spire {
 

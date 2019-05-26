@@ -7,7 +7,7 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QWidgetAction>
-#include "spire/toolbar/toolbar.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {
 

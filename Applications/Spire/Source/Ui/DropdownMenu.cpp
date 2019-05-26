@@ -1,11 +1,11 @@
-#include "spire/ui/dropdown_menu.hpp"
+#include "Spire/Ui/DropdownMenu.hpp"
 #include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/dropdown_menu_item.hpp"
-#include "spire/ui/dropdown_menu_list.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropdownMenuItem.hpp"
+#include "Spire/Ui/DropdownMenuList.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 

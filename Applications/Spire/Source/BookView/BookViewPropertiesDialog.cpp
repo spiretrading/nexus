@@ -1,14 +1,14 @@
-#include "spire/book_view/book_view_properties_dialog.hpp"
+#include "Spire/BookView/BookViewPropertiesDialog.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QVBoxLayout>
-#include "spire/book_view/book_view_highlight_properties_widget.hpp"
-#include "spire/book_view/book_view_level_properties_widget.hpp"
-#include "spire/key_bindings/interactions_properties_widget.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/properties_window_buttons_widget.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/BookView/BookViewHighlightPropertiesWidget.hpp"
+#include "Spire/BookView/BookViewLevelPropertiesWidget.hpp"
+#include "Spire/KeyBindings/InteractionsPropertiesWidget.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

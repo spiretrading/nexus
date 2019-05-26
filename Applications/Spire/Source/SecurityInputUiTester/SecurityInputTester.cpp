@@ -1,9 +1,9 @@
-#include "spire/security_input_ui_tester/security_input_tester.hpp"
+#include "Spire/SecurityInputUiTester/SecurityInputTester.hpp"
 #include <QTimer>
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;

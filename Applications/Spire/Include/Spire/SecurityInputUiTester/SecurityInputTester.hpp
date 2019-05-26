@@ -2,8 +2,8 @@
 #define SPIRE_SECURITY_INPUT_TESTER
 #include <QListWidget>
 #include "Nexus/Definitions/Definitions.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/security_input_ui_tester/security_input_ui_tester.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
+#include "Spire/SecurityInputUiTester/SecurityInputUiTester.hpp"
 
 namespace Spire {
 

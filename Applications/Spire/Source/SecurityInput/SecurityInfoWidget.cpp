@@ -1,8 +1,8 @@
-#include "spire/security_input/security_info_widget.hpp"
+#include "Spire/SecurityInput/SecurityInfoWidget.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

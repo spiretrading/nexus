@@ -1,15 +1,15 @@
-#include "spire/time_and_sales/time_and_sales_table_view.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include <QEvent>
 #include <QHoverEvent>
 #include <QMovie>
 #include <QScrollBar>
 #include <QTableView>
-#include "spire/spire/dimensions.hpp"
-#include "spire/time_and_sales/snapshot_loading_widget.hpp"
-#include "spire/time_and_sales/time_and_sales_window_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/item_padding_delegate.hpp"
-#include "spire/ui/transition_widget.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/SnapshotLoadingWidget.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/ItemPaddingDelegate.hpp"
+#include "Spire/Ui/TransitionWidget.hpp"
 
 using namespace Spire;
 

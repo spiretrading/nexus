@@ -4,9 +4,9 @@
 #include <QGridLayout>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/labeled_data_widget.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/LabeledDataWidget.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

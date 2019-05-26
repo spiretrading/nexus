@@ -1,4 +1,4 @@
-#include "spire/ui/item_padding_delegate.hpp"
+#include "Spire/Ui/ItemPaddingDelegate.hpp"
 #include <QPainter>
 
 using namespace Spire;

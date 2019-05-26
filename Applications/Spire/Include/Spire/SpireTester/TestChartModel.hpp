@@ -4,8 +4,8 @@
 #include <memory>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include "spire/charting/chart_model.hpp"
-#include "spire/spire_tester/spire_tester.hpp"
+#include "Spire/Charting/ChartModel.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
 
 namespace Spire {
 

@@ -1,7 +1,7 @@
-#include "spire/book_view/book_quote_table_model.hpp"
+#include "Spire/BookView/BookQuoteTableModel.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Nexus;
 using namespace Spire;

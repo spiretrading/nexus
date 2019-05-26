@@ -1,9 +1,9 @@
-#include "spire/toolbar/toolbar_controller.hpp"
+#include "Spire/Toolbar/ToolbarController.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/book_view/book_view_controller.hpp"
-#include "spire/security_input/services_security_input_model.hpp"
-#include "spire/time_and_sales/time_and_sales_controller.hpp"
-#include "spire/toolbar/toolbar_window.hpp"
+#include "Spire/BookView/BookViewController.hpp"
+#include "Spire/SecurityInput/ServicesSecurityInputModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesController.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
 using namespace boost;

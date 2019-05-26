@@ -6,7 +6,7 @@
 #include <QColor>
 #include <QFont>
 #include "Nexus/Definitions/Market.hpp"
-#include "spire/book_view/book_view.hpp"
+#include "Spire/BookView/BookView.hpp"
 
 namespace Spire {
 

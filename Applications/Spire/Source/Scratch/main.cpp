@@ -1,5 +1,5 @@
 #include <QApplication>
-#include "spire/spire/resources.hpp"
+#include "Spire/Spire/Resources.hpp"
 
 using namespace Spire;
 

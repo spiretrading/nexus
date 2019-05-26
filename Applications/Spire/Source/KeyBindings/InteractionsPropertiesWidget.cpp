@@ -1,4 +1,4 @@
-#include "spire/key_bindings/interactions_properties_widget.hpp"
+#include "Spire/KeyBindings/InteractionsPropertiesWidget.hpp"
 
 using namespace Spire;
 

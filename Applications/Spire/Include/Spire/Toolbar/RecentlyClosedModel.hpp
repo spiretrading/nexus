@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include "spire/toolbar/toolbar.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {
 

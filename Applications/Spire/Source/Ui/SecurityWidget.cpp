@@ -1,7 +1,7 @@
-#include "spire/ui/security_widget.hpp"
+#include "Spire/Ui/SecurityWidget.hpp"
 #include <QKeyEvent>
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;

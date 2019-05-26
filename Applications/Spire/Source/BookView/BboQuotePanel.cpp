@@ -1,8 +1,8 @@
-#include "spire/book_view/bbo_quote_panel.hpp"
+#include "Spire/BookView/BboQuotePanel.hpp"
 #include <QHBoxLayout>
 #include "Nexus/Definitions/Side.hpp"
-#include "spire/book_view/quote_panel.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/BookView/QuotePanel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Nexus;
 using namespace Spire;

@@ -1,7 +1,7 @@
-#include "spire/book_view/technicals_panel.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/TechnicalsPanel.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Nexus;
 using namespace Spire;

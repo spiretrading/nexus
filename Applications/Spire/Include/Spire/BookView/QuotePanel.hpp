@@ -4,8 +4,8 @@
 #include <QWidget>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

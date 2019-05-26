@@ -2,8 +2,8 @@
 #define SPIRE_BOOK_VIEW_TABLE_VIEW_HPP
 #include <QHBoxLayout>
 #include <QWidget>
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_properties.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 
 namespace Spire {
 

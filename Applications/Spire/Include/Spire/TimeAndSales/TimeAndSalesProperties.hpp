@@ -3,7 +3,7 @@
 #include <array>
 #include <QColor>
 #include <QFont>
-#include "spire/time_and_sales/time_and_sales.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
 
 namespace Spire {
 

@@ -1,4 +1,4 @@
-#include "spire/book_view/book_view_properties.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 
 using namespace boost;
 using namespace Nexus;

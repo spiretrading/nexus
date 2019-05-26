@@ -2,9 +2,9 @@
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
-#include "spire/spire/qt_promise.hpp"
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 namespace Spire {
 

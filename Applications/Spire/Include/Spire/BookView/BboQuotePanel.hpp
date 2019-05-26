@@ -2,7 +2,7 @@
 #define SPIRE_BBO_QUOTE_PANEL_HPP
 #include <QWidget>
 #include "Nexus/Definitions/Side.hpp"
-#include "spire/book_view/book_view.hpp"
+#include "Spire/BookView/BookView.hpp"
 
 namespace Spire {
 

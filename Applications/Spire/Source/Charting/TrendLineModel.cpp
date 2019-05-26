@@ -1,4 +1,4 @@
-#include "spire/charting/trend_line_model.hpp"
+#include "Spire/Charting/TrendLineModel.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;

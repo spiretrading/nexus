@@ -1,9 +1,9 @@
-#include "spire/ui/transition_widget.hpp"
+#include "Spire/Ui/TransitionWidget.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMovie>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

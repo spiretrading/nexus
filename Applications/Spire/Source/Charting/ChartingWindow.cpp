@@ -1,4 +1,4 @@
-#include "spire/charting/charting_window.hpp"
+#include "Spire/Charting/ChartingWindow.hpp"
 #include <climits>
 #include <QApplication>
 #include <QHBoxLayout>
@@ -7,17 +7,17 @@
 #include <QKeyEvent>
 #include <QListView>
 #include <QVBoxLayout>
-#include "spire/charting/chart_view.hpp"
-#include "spire/charting/charting_technicals_panel.hpp"
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/security_input/security_input_model.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/spire/local_technicals_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/dropdown_menu.hpp"
-#include "spire/ui/security_widget.hpp"
-#include "spire/ui/toggle_button.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Charting/ChartView.hpp"
+#include "Spire/Charting/ChartingTechnicalsPanel.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalTechnicalsModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropdownMenu.hpp"
+#include "Spire/Ui/SecurityWidget.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

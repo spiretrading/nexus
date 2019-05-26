@@ -4,8 +4,8 @@
 #include <Beam/Threading/Threading.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <QTimer>
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
 

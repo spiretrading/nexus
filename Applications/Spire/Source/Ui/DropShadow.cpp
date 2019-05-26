@@ -1,11 +1,11 @@
-#include "spire/ui/drop_shadow.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 #include <QApplication>
 #include <QEvent>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QRadialGradient>
 #include <qt_windows.h>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

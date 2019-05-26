@@ -1,4 +1,4 @@
-#include "spire/time_and_sales_ui_tester/periodic_time_and_sales_model.hpp"
+#include "Spire/TimeAndSalesUiTester/PeriodicTimeAndSalesModel.hpp"
 #include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;

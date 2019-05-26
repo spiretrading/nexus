@@ -1,9 +1,9 @@
 #include <QApplication>
-#include "spire/spire/resources.hpp"
-#include "spire/toolbar/recently_closed_model.hpp"
-#include "spire/toolbar/toolbar_window.hpp"
-#include "spire/toolbar_ui_tester/toolbar_ui_tester.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/Toolbar/RecentlyClosedModel.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
+#include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

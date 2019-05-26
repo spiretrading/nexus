@@ -1,7 +1,7 @@
 #ifndef SPIRE_ITEM_PADDING_DELEGATE_HPP
 #define SPIRE_ITEM_PADDING_DELEGATE_HPP
 #include <QStyledItemDelegate>
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

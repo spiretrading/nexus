@@ -1,8 +1,8 @@
-#include "spire/charting/charting_technicals_panel.hpp"
+#include "Spire/Charting/ChartingTechnicalsPanel.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/spire/technicals_model.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/TechnicalsModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;

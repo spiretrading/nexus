@@ -1,6 +1,6 @@
-#include "spire/book_view/book_view_table_delegate.hpp"
+#include "Spire/BookView/BookViewTableDelegate.hpp"
 #include <QPainter>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

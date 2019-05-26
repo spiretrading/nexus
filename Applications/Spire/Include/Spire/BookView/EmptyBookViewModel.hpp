@@ -1,7 +1,7 @@
 #ifndef SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
 #define SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
 
 namespace Spire {
 

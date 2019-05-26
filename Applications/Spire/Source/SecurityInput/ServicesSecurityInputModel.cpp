@@ -1,4 +1,4 @@
-#include "spire/security_input/services_security_input_model.hpp"
+#include "Spire/SecurityInput/ServicesSecurityInputModel.hpp"
 
 using namespace Beam;
 using namespace Nexus;

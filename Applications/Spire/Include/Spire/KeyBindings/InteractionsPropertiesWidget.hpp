@@ -1,7 +1,7 @@
 #ifndef SPIRE_INTERACTIONS_PROPERTIES_WIDGET_HPP
 #define SPIRE_INTERACTIONS_PROPERTIES_WIDGET_HPP
 #include <QWidget>
-#include "spire/key_bindings/key_bindings.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
 
 namespace Spire {
 

@@ -1,4 +1,4 @@
-#include "spire/book_view/quote_panel_indicator_widget.hpp"
+#include "Spire/BookView/QuotePanelIndicatorWidget.hpp"
 #include <QPainter>
 
 using namespace Spire;

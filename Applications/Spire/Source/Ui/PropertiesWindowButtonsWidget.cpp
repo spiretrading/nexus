@@ -1,8 +1,8 @@
-#include "spire/ui/properties_window_buttons_widget.hpp"
+#include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include <QGridLayout>
 #include <QHBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/flat_button.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

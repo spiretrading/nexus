@@ -1,4 +1,4 @@
-#include "spire/charting/trend_line.hpp"
+#include "Spire/Charting/TrendLine.hpp"
 
 using namespace Spire;
 

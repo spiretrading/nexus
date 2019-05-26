@@ -1,5 +1,5 @@
-#include "spire/spire/export_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Spire/ExportModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Spire;
 

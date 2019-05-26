@@ -1,6 +1,6 @@
 #ifndef SPIRE_SECURITY_INPUT_HPP
 #define SPIRE_SECURITY_INPUT_HPP
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class LocalSecurityInputModel;

@@ -1,8 +1,8 @@
 #ifndef SPIRE_TOGGLE_BUTTON_HPP
 #define SPIRE_TOGGLE_BUTTON_HPP
 #include <QAbstractButton>
-#include "spire/ui/icon_button.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

@@ -1,4 +1,4 @@
-#include "spire/ui/check_box.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include <QFocusEvent>
 #include <QMouseEvent>
 

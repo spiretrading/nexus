@@ -1,4 +1,4 @@
-#include "spire/book_view/book_view_highlight_properties_widget.hpp"
+#include "Spire/BookView/BookViewHighlightPropertiesWidget.hpp"
 #include <QButtonGroup>
 #include <QColorDialog>
 #include <QHBoxLayout>
@@ -9,11 +9,11 @@
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "spire/book_view/book_view_properties.hpp"
-#include "spire/book_view/market_list_item.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/flat_button.hpp"
-#include "spire/ui/check_box.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/MarketListItem.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 
 using namespace Nexus;
 using namespace Spire;

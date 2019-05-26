@@ -1,11 +1,11 @@
-#include "spire/security_input/security_input_box.hpp"
+#include "Spire/SecurityInput/SecurityInputBox.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/security_input/security_info_list_view.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
+#include "Spire/SecurityInput/SecurityInfoListView.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace boost;

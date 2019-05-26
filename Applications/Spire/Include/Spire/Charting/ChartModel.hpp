@@ -2,9 +2,9 @@
 #define SPIRE_CHART_MODEL_HPP
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include "spire/charting/charting.hpp"
-#include "spire/charting/chart_value.hpp"
-#include "spire/spire/qt_promise.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartValue.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 

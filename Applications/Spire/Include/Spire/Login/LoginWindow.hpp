@@ -10,8 +10,8 @@
 #include <QPoint>
 #include <QPushButton>
 #include <QWidget>
-#include "spire/login/login.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Login/Login.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

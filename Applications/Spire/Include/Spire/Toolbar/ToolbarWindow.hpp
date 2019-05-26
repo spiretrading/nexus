@@ -4,11 +4,11 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QWidget>
-#include "spire/toolbar/recently_closed_model.hpp"
-#include "spire/toolbar/toolbar.hpp"
-#include "spire/toolbar/toolbar_menu.hpp"
-#include "spire/ui/ui.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Toolbar/RecentlyClosedModel.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Toolbar/ToolbarMenu.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 

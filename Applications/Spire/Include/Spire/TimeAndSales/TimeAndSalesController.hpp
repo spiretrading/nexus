@@ -4,9 +4,9 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/time_and_sales/time_and_sales.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
 
 namespace Spire {
 

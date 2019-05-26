@@ -1,8 +1,8 @@
-#include "spire/login_ui_tester/login_ui_tester.hpp"
+#include "Spire/LoginUiTester/LoginUiTester.hpp"
 #include <QVBoxLayout>
-#include "spire/login/login_window.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Login/LoginWindow.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

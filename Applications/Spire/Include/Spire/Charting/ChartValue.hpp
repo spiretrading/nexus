@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "spire/charting/charting.hpp"
+#include "Spire/Charting/Charting.hpp"
 
 namespace Spire {
 

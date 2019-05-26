@@ -1,6 +1,6 @@
-#include "spire/book_view/labeled_data_widget.hpp"
+#include "Spire/BookView/LabeledDataWidget.hpp"
 #include <QHBoxLayout>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

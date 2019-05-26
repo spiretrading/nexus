@@ -5,14 +5,14 @@
 #include <QLabel>
 #include <QMenu>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
-#include "spire/time_and_sales/time_and_sales_window_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/ui.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 

@@ -7,8 +7,8 @@
 #include <QWidget>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Nexus/Definitions/Security.hpp>
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view_ui_tester/random_book_view_model.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookViewUiTester/RandomBookViewModel.hpp"
 
 namespace Spire {
 

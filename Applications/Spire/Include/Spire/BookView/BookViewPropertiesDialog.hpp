@@ -2,9 +2,9 @@
 #define SPIRE_BOOK_VIEW_PROPERTIES_DIALOG_HPP
 #include <QTabWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_properties.hpp"
-#include "spire/ui/dialog.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Ui/Dialog.hpp"
 
 namespace Spire {
 

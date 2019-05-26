@@ -4,9 +4,9 @@
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <QTimer>
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/book_view/local_book_view_model.hpp"
-#include "spire/book_view_ui_tester/book_view_ui_tester.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/LocalBookViewModel.hpp"
+#include "Spire/BookViewUiTester/BookViewUiTester.hpp"
 
 namespace Spire {
 

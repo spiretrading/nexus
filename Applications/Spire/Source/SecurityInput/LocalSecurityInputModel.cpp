@@ -1,4 +1,4 @@
-#include "spire/security_input/local_security_input_model.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include <unordered_set>
 #include <boost/algorithm/string/case_conv.hpp>
 

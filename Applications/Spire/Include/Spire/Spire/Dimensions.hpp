@@ -2,7 +2,7 @@
 #define SPIRE_DIMENSIONS_HPP
 #include <QPoint>
 #include <QSize>
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

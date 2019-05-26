@@ -1,4 +1,4 @@
-#include "spire/ui/dialog.hpp"
+#include "Spire/Ui/Dialog.hpp"
 #include <QApplication>
 
 using namespace Spire;

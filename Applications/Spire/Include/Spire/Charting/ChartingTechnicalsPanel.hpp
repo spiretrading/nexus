@@ -2,9 +2,9 @@
 #define SPIRE_CHARTING_TECHNICALS_PANEL_HPP
 #include <QLabel>
 #include <QWidget>
-#include "spire/spire/qt_promise.hpp"
-#include "spire/spire/spire.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

@@ -2,8 +2,8 @@
 #define BOOK_VIEW_HIGHLIGHT_PROPERTIES_WIDGET_HPP
 #include <QListWidget>
 #include <QWidget>
-#include "spire/book_view/book_view.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

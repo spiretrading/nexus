@@ -1,7 +1,7 @@
 #ifndef SPIRE_EMPTY_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_EMPTY_TIME_AND_SALES_MODEL_HPP
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
 namespace Spire {
 

@@ -1,7 +1,7 @@
 #ifndef SPIRE_DIALOG_HPP
 #define SPIRE_DIALOG_HPP
 #include <QDialog>
-#include "spire/ui/window.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 

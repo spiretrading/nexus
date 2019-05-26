@@ -15,8 +15,8 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
-#include "spire/spire/spire.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

@@ -2,9 +2,9 @@
 #define SPIRE_SERVICES_TIME_AND_SALES_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_model.hpp"
-#include "spire/spire/event_handler.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
+#include "Spire/Spire/EventHandler.hpp"
 
 namespace Spire {
 

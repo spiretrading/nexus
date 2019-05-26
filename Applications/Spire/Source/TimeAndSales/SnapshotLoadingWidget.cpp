@@ -1,8 +1,8 @@
-#include "spire/time_and_sales/snapshot_loading_widget.hpp"
+#include "Spire/TimeAndSales/SnapshotLoadingWidget.hpp"
 #include <QMovie>
 #include <QResizeEvent>
 #include <QScrollBar>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

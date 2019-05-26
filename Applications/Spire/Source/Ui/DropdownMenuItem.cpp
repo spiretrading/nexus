@@ -1,7 +1,7 @@
-#include "spire/ui/dropdown_menu_item.hpp"
+#include "Spire/Ui/DropdownMenuItem.hpp"
 #include <QMouseEvent>
 #include <QPainter>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

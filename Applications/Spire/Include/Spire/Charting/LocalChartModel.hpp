@@ -1,7 +1,7 @@
 #ifndef SPIRE_LOCAL_CHART_MODEL_HPP
 #define SPIRE_LOCAL_CHART_MODEL_HPP
-#include "spire/charting/charting.hpp"
-#include "spire/charting/chart_model.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartModel.hpp"
 
 namespace Spire {
 

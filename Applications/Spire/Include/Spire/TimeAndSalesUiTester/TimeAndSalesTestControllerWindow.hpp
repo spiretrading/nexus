@@ -6,9 +6,9 @@
 #include <QSpinBox>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/time_and_sales_ui_tester/periodic_time_and_sales_model.hpp"
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
+#include "Spire/TimeAndSalesUiTester/PeriodicTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 namespace Spire {
 

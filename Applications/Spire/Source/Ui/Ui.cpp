@@ -1,4 +1,4 @@
-#include "spire/ui/ui.hpp"
+#include "Spire/Ui/Ui.hpp"
 #include <QPainter>
 #include <QtSvg/QSvgRenderer>
 

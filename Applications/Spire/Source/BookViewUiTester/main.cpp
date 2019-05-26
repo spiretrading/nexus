@@ -3,10 +3,10 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/spire/resources.hpp"
-#include "spire/book_view_ui_tester/book_view_test_controller_window.hpp"
-#include "spire/book_view/book_view_window.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/BookViewUiTester/BookViewTestControllerWindow.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;

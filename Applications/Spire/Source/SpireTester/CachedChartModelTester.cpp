@@ -1,9 +1,9 @@
 #include <catch.hpp>
-#include "spire/charting/cached_chart_model.hpp"
-#include "spire/charting/chart_value.hpp"
-#include "spire/charting/local_chart_model.hpp"
-#include "spire/spire_tester/spire_tester.hpp"
-#include "spire/spire_tester/test_chart_model.hpp"
+#include "Spire/Charting/CachedChartModel.hpp"
+#include "Spire/Charting/ChartValue.hpp"
+#include "Spire/Charting/LocalChartModel.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/SpireTester/TestChartModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;

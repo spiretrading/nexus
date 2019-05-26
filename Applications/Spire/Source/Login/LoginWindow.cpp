@@ -1,12 +1,12 @@
-#include "spire/login/login_window.hpp"
+#include "Spire/Login/LoginWindow.hpp"
 #include <QHBoxLayout>
 #include <QMovie>
 #include <QVBoxLayout>
-#include "spire/login/chroma_hash_widget.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/drop_shadow.hpp"
-#include "spire/ui/flat_button.hpp"
-#include "spire/ui/icon_button.hpp"
+#include "Spire/Login/ChromaHashWidget.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/IconButton.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

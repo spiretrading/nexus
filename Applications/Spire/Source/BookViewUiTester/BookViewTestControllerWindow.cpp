@@ -1,8 +1,8 @@
-#include "spire/book_view_ui_tester/book_view_test_controller_window.hpp"
+#include "Spire/BookViewUiTester/BookViewTestControllerWindow.hpp"
 #include <QGridLayout>
-#include "spire/book_view/book_view_window.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Nexus;
 using namespace Spire;

@@ -1,9 +1,9 @@
-#include "spire/ui/dropdown_menu_list.hpp"
+#include "Spire/Ui/DropdownMenuList.hpp"
 #include <QKeyEvent>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/dropdown_menu_item.hpp"
-#include "spire/ui/drop_shadow.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropdownMenuItem.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

@@ -3,10 +3,10 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/security_input/local_security_input_model.hpp"
-#include "spire/spire/resources.hpp"
-#include "spire/time_and_sales/time_and_sales_window.hpp"
-#include "spire/time_and_sales_ui_tester/time_and_sales_test_controller_window.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
+#include "Spire/Spire/Resources.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/TimeAndSalesUiTester/TimeAndSalesTestControllerWindow.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;

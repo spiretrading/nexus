@@ -1,21 +1,21 @@
-#include "spire/time_and_sales/time_and_sales_window.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include <QContextMenuEvent>
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QVBoxLayout>
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/security_input/security_input_model.hpp"
-#include "spire/time_and_sales/empty_time_and_sales_model.hpp"
-#include "spire/time_and_sales/time_and_sales_properties_dialog.hpp"
-#include "spire/time_and_sales/time_and_sales_table_view.hpp"
-#include "spire/time_and_sales/time_and_sales_window_model.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/spire/export_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/drop_shadow.hpp"
-#include "spire/ui/security_widget.hpp"
-#include "spire/ui/transition_widget.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
+#include "Spire/TimeAndSales/EmptyTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ExportModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/SecurityWidget.hpp"
+#include "Spire/Ui/TransitionWidget.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
 using namespace boost;

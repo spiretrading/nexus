@@ -5,8 +5,8 @@
 #include <QScrollArea>
 #include <QTimer>
 #include <QVBoxLayout>
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

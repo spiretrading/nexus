@@ -1,4 +1,4 @@
-#include "spire/book_view/services_book_view_model.hpp"
+#include "Spire/BookView/ServicesBookViewModel.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 

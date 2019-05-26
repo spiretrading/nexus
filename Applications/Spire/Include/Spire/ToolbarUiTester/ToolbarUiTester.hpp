@@ -4,8 +4,8 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QWidget>
-#include "spire/toolbar/toolbar.hpp"
-#include "spire/toolbar/recently_closed_model.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Toolbar/RecentlyClosedModel.hpp"
 
 namespace Spire {
   

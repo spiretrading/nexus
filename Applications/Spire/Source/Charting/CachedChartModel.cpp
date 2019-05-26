@@ -1,4 +1,4 @@
-#include "spire/charting/cached_chart_model.hpp"
+#include "Spire/Charting/CachedChartModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

@@ -1,4 +1,4 @@
-#include "spire/toolbar/recently_closed_model.hpp"
+#include "Spire/Toolbar/RecentlyClosedModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

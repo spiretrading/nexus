@@ -1,4 +1,4 @@
-#include "spire/ui/title_bar.hpp"
+#include "Spire/Ui/TitleBar.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QHBoxLayout>
@@ -6,9 +6,9 @@
 #ifdef Q_OS_WIN
   #include <qt_windows.h>
 #endif
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/icon_button.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

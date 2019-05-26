@@ -3,8 +3,8 @@
 #include <vector>
 #include <QScrollArea>
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

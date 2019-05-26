@@ -1,11 +1,11 @@
-#include "spire/time_and_sales_ui_tester/time_and_sales_test_controller_window.hpp"
+#include "Spire/TimeAndSalesUiTester/TimeAndSalesTestControllerWindow.hpp"
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
-#include "spire/spire/dimensions.hpp"
-#include "spire/time_and_sales/time_and_sales_window.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;

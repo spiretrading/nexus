@@ -1,6 +1,6 @@
 #include <catch.hpp>
-#include "spire/spire/qt_promise.hpp"
-#include "spire/spire_tester/spire_tester.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Spire;
 

@@ -6,14 +6,14 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/book_view/bbo_quote_panel.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/book_view/book_view_properties.hpp"
-#include "spire/ui/security_stack.hpp"
-#include "spire/ui/ui.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/BookView/BboQuotePanel.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Ui/SecurityStack.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 

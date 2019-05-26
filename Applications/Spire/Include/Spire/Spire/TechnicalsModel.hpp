@@ -6,7 +6,7 @@
 #include <boost/signals2.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/spire/qt_promise.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 

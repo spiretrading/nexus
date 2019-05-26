@@ -1,9 +1,9 @@
-#include "spire/book_view/book_quote_table_view.hpp"
+#include "Spire/BookView/BookQuoteTableView.hpp"
 #include <QHeaderView>
-#include "spire/book_view/book_quote_table_model.hpp"
-#include "spire/book_view/book_view_table_delegate.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/BookQuoteTableModel.hpp"
+#include "Spire/BookView/BookViewTableDelegate.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Spire;
 

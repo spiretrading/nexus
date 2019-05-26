@@ -1,8 +1,8 @@
 #ifndef SPIRE_LOCAL_SECURITY_INPUT_MODEL_HPP
 #define SPIRE_LOCAL_SECURITY_INPUT_MODEL_HPP
 #include <Beam/Utilities/Trie.hpp>
-#include "spire/security_input/security_input.hpp"
-#include "spire/security_input/security_input_model.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
 
 namespace Spire {
 

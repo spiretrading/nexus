@@ -3,9 +3,9 @@
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/book_view/book_view_properties.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 
 namespace Spire {
 

@@ -1,4 +1,4 @@
-#include "spire/ui/icon_button.hpp"
+#include "Spire/Ui/IconButton.hpp"
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>

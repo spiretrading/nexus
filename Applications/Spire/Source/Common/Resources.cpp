@@ -1,9 +1,9 @@
-#include "spire/spire/resources.hpp"
+#include "Spire/Spire/Resources.hpp"
 #include <cstdio>
 #include <QApplication>
 #include <QFontDatabase>
 #include <QtPlugin>
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 #ifdef _MSC_VER
   Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)

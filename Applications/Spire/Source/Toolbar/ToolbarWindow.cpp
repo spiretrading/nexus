@@ -1,9 +1,9 @@
-#include "spire/toolbar/toolbar_window.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/icon_button.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/IconButton.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

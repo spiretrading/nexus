@@ -1,8 +1,8 @@
 #ifndef SPIRE_BOOK_VIEW_TABLE_DELEGATE_HPP
 #define SPIRE_BOOK_VIEW_TABLE_DELEGATE_HPP
 #include <QStyledItemDelegate>
-#include "spire/book_view/book_view.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

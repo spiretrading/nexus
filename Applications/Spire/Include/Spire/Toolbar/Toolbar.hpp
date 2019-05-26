@@ -1,6 +1,6 @@
 #ifndef SPIRE_TOOLBAR_HPP
 #define SPIRE_TOOLBAR_HPP
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class RecentlyClosedModel;

@@ -5,11 +5,11 @@
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "spire/book_view/book_view.hpp"
-#include "spire/book_view/book_view_model.hpp"
-#include "spire/book_view/local_book_view_model.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/spire/event_handler.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/LocalBookViewModel.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/EventHandler.hpp"
 
 namespace Spire {
 

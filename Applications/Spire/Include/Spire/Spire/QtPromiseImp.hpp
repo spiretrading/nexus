@@ -9,8 +9,8 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QObject>
-#include "spire/spire/spire.hpp"
-#include "spire/spire/qt_promise_event.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/QtPromiseEvent.hpp"
 
 namespace Spire {
 

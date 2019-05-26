@@ -6,10 +6,10 @@
 #include <QLabel>
 #include <QLineEdit>
 #include "Nexus/Definitions/Security.hpp"
-#include "spire/charting/charting.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/ui/ui.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 

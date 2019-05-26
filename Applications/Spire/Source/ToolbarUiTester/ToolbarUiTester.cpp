@@ -1,9 +1,9 @@
-#include "spire/toolbar_ui_tester/toolbar_ui_tester.hpp"
+#include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "spire/spire/dimensions.hpp"
-#include "spire/toolbar/toolbar_window.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Spire;
 

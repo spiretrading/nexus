@@ -3,7 +3,7 @@
 #include <QImage>
 #include <QRect>
 #include <QSize>
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class CheckBox;

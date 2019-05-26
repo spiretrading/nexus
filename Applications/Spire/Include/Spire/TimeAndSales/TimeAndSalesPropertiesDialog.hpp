@@ -2,10 +2,10 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
 #include <QDialog>
 #include <QListWidget>
-#include "spire/time_and_sales/time_and_sales.hpp"
-#include "spire/time_and_sales/time_and_sales_properties.hpp"
-#include "spire/ui/dialog.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/Dialog.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

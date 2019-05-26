@@ -1,6 +1,6 @@
 #ifndef SPIRE_LOGIN_HPP
 #define SPIRE_LOGIN_HPP
-#include "spire/spire/spire.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class ChromaHashWidget;

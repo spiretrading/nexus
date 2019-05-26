@@ -4,10 +4,10 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ServiceClients/ServiceClients.hpp"
-#include "spire/security_input/security_input.hpp"
-#include "spire/spire/definitions.hpp"
-#include "spire/toolbar/recently_closed_model.hpp"
-#include "spire/toolbar/toolbar.hpp"
+#include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Spire/Definitions.hpp"
+#include "Spire/Toolbar/RecentlyClosedModel.hpp"
+#include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {
 
