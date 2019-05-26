@@ -25,7 +25,7 @@ CALL:configure Applications\ReplayMarketDataFeedClient %*
 CALL:configure Applications\RiskServer %*
 CALL:configure Applications\SimulationMarketDataFeedClient %*
 CALL:configure Applications\SimulationOrderExecutionServer %*
-CALL:configure Applications\spire %*
+CALL:configure Applications\Spire %*
 CALL:configure Applications\TmxIpMarketDataFeedClient %*
 CALL:configure Applications\TmxTl1MarketDataFeedClient %*
 CALL:configure Applications\UtpMarketDataFeedClient %*

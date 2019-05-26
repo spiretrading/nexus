@@ -17,7 +17,7 @@ CALL:build Applications\ReplayMarketDataFeedClient %*
 CALL:build Applications\RiskServer %*
 CALL:build Applications\SimulationMarketDataFeedClient %*
 CALL:build Applications\SimulationOrderExecutionServer %*
-CALL:build Applications\spire %*
+CALL:build Applications\Spire %*
 CALL:build Applications\TmxIpMarketDataFeedClient %*
 CALL:build Applications\TmxTl1MarketDataFeedClient %*
 CALL:build Applications\UtpMarketDataFeedClient %*
