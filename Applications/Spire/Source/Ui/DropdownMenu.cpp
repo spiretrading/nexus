@@ -12,7 +12,7 @@ using namespace Spire;
 DropdownMenu::DropdownMenu(const std::vector<QString>& items,
     QWidget* parent)
     : QWidget(parent),
-      m_dropdown_image(imageFromSvg(":/icons/arrow-down.svg", scale(6, 4))) {
+      m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))) {
   if(!items.empty()) {
     m_current_text = items.front();
   }

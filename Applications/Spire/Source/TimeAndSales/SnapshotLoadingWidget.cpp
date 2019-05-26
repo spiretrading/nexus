@@ -13,7 +13,7 @@ SnapshotLoadingWidget::SnapshotLoadingWidget(QScrollArea* scroll_area,
   setAttribute(Qt::WA_TransparentForMouseEvents);
   setFixedHeight(scale_height(44));
   m_logo_widget = new QLabel(this);
-  auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+  auto logo = new QMovie(":/Icons/pre-loader.gif", QByteArray(),
     m_logo_widget);
   logo->setScaledSize(scale(16, 16));
   m_logo_widget->setMovie(logo);

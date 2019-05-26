@@ -140,14 +140,14 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
 
     QSpinBox::up-arrow {
       height: %2px;
-      image: url(:/icons/arrow-up.svg);
+      image: url(:/Icons/arrow-up.svg);
       padding-top: %6px;
       width: %3px;
     }
 
     QSpinBox::down-arrow {
       height: %2px;
-      image: url(:/icons/arrow-down.svg);
+      image: url(:/Icons/arrow-down.svg);
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
@@ -239,7 +239,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     width: %4px;)").arg(scale_height(1))
     .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
   auto check_box_checked_style = QString(R"(
-    image: url(:/icons/check-with-box.svg);)");
+    image: url(:/Icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));

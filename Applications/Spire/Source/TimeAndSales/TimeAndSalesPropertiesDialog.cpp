@@ -26,8 +26,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
   set_fixed_body_size(scale(462, 272));
-  set_svg_icon(":/icons/time-sale-black.svg",
-    ":/icons/time-sale-grey.svg");
+  set_svg_icon(":/Icons/time-sale-black.svg",
+    ":/Icons/time-sale-grey.svg");
   setWindowTitle(tr("Properties"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
@@ -160,7 +160,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     width: %4px;)").arg(scale_height(1))
     .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
   auto check_box_checked_style = QString(R"(
-    image: url(:/icons/check-with-box.svg);)");
+    image: url(:/Icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));

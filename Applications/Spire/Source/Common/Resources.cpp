@@ -15,26 +15,26 @@ Q_IMPORT_PLUGIN(QGifPlugin);
 Q_IMPORT_PLUGIN(QSvgIconPlugin);
 
 void local_resources() {
-  Q_INIT_RESOURCE(resources);
-  QStringList fonts;
-  fonts << ":/fonts/Roboto/Roboto-Black.ttf" <<
-    ":/fonts/Roboto/Roboto-BlackItalic.ttf" <<
-    ":/fonts/Roboto/Roboto-Bold.ttf" <<
-    ":/fonts/Roboto/Roboto-BoldItalic.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-Bold.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-BoldItalic.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-Italic.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-Light.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-LightItalic.ttf" <<
-    ":/fonts/Roboto/RobotoCondensed-Regular.ttf" <<
-    ":/fonts/Roboto/Roboto-Italic.ttf" <<
-    ":/fonts/Roboto/Roboto-Light.ttf" <<
-    ":/fonts/Roboto/Roboto-LightItalic.ttf" <<
-    ":/fonts/Roboto/Roboto-Medium.ttf" <<
-    ":/fonts/Roboto/Roboto-MediumItalic.ttf" <<
-    ":/fonts/Roboto/Roboto-Regular.ttf" <<
-    ":/fonts/Roboto/Roboto-Thin.ttf" <<
-    ":/fonts/Roboto/Roboto-ThinItalic.ttf";
+  Q_INIT_RESOURCE(Resources);
+  auto fonts = QStringList();
+  fonts << ":/Fonts/Roboto/Roboto-Black.ttf" <<
+    ":/Fonts/Roboto/Roboto-BlackItalic.ttf" <<
+    ":/Fonts/Roboto/Roboto-Bold.ttf" <<
+    ":/Fonts/Roboto/Roboto-BoldItalic.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-Bold.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-BoldItalic.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-Italic.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-Light.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-LightItalic.ttf" <<
+    ":/Fonts/Roboto/RobotoCondensed-Regular.ttf" <<
+    ":/Fonts/Roboto/Roboto-Italic.ttf" <<
+    ":/Fonts/Roboto/Roboto-Light.ttf" <<
+    ":/Fonts/Roboto/Roboto-LightItalic.ttf" <<
+    ":/Fonts/Roboto/Roboto-Medium.ttf" <<
+    ":/Fonts/Roboto/Roboto-MediumItalic.ttf" <<
+    ":/Fonts/Roboto/Roboto-Regular.ttf" <<
+    ":/Fonts/Roboto/Roboto-Thin.ttf" <<
+    ":/Fonts/Roboto/Roboto-ThinItalic.ttf";
   for(auto& font : fonts) {
     QFontDatabase::addApplicationFont(font);
   }

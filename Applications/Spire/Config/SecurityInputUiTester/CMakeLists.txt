@@ -1,17 +1,17 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ../../include/spire/security_input_ui_tester/*.hpp)
-file(GLOB source_files ../../source/security_input_ui_tester/*.cpp)
+file(GLOB header_files ../../Include/Spire/SecurityInputUiTester/*.hpp)
+file(GLOB source_files ../../Source/SecurityInputUiTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if(WIN32)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
-add_executable(security_input_ui_tester ${app_type} ${header_files}
+add_executable(SecurityInputUiTester ${app_type} ${header_files}
   ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
-  target_link_libraries(security_input_ui_tester
+  target_link_libraries(SecurityInputUiTester
     debug ${QT_GIF_LIBRARY_DEBUG_PATH}
     optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -19,11 +19,11 @@ if(UNIX)
     debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
   if(EXISTS ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(security_input_ui_tester
+    target_link_libraries(SecurityInputUiTester
       debug ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
       optimized ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
   endif()
-  target_link_libraries(security_input_ui_tester
+  target_link_libraries(SecurityInputUiTester
     debug ${QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
     optimized ${QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
@@ -33,7 +33,7 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(security_input_ui_tester library resources
+target_link_libraries(SecurityInputUiTester Library Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -71,7 +71,7 @@ target_link_libraries(security_input_ui_tester library resources
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
-  target_link_libraries(security_input_ui_tester
+  target_link_libraries(SecurityInputUiTester
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
     optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
@@ -86,7 +86,7 @@ if(WIN32)
     winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
-  target_link_libraries(security_input_ui_tester
+  target_link_libraries(SecurityInputUiTester
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
@@ -112,5 +112,5 @@ if(UNIX)
     dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(TARGETS security_input_ui_tester DESTINATION
+install(TARGETS SecurityInputUiTester DESTINATION
   ${SPIRE_TESTS_INSTALL_DIRECTORY})

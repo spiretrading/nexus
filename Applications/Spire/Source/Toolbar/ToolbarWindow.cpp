@@ -16,8 +16,8 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     : Window(parent),
       m_model(model.Get()) {
   set_fixed_body_size(scale(308, 72));
-  set_svg_icon(":/icons/spire-icon-black.svg",
-    ":/icons/spire-icon-grey.svg");
+  set_svg_icon(":/Icons/spire-icon-black.svg",
+    ":/Icons/spire-icon-grey.svg");
   setWindowIcon(QIcon(":icons/spire-icon-256x256.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
@@ -56,54 +56,54 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   button_layout->setSpacing(0);
   auto window_button_size = scale(20, 20);
   m_account_button = new IconButton(
-    imageFromSvg(":/icons/account-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/account-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/account-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/account-purple.svg", window_button_size), body);
   m_account_button->setToolTip(tr("Account"));
   button_layout->addWidget(m_account_button);
   m_key_bindings_button = new IconButton(
-    imageFromSvg(":/icons/key-bindings-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/key-bindings-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/key-bindings-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/key-bindings-purple.svg", window_button_size), body);
   m_key_bindings_button->setToolTip(tr("Key Bindings"));
   button_layout->addWidget(m_key_bindings_button);
   m_canvas_button = new IconButton(
-    imageFromSvg(":/icons/canvas-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/canvas-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/canvas-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/canvas-purple.svg", window_button_size), body);
   m_canvas_button->setToolTip(tr("Canvas"));
   button_layout->addWidget(m_canvas_button);
   m_book_view_button = new IconButton(
-    imageFromSvg(":/icons/bookview-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/bookview-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/bookview-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/bookview-purple.svg", window_button_size), body);
   m_book_view_button->setToolTip(tr("Book View"));
   m_book_view_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::BOOK_VIEW); });
   button_layout->addWidget(m_book_view_button);
   m_time_and_sales_button = new IconButton(
-    imageFromSvg(":/icons/time-sale-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/time-sale-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/time-sale-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/time-sale-purple.svg", window_button_size), body);
   m_time_and_sales_button->setToolTip(tr("Time and Sales"));
   m_time_and_sales_button->connect_clicked_signal(
     [=] { on_open_window(RecentlyClosedModel::Type::TIME_AND_SALE); });
   button_layout->addWidget(m_time_and_sales_button);
   m_chart_button = new IconButton(
-    imageFromSvg(":/icons/chart-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/chart-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/chart-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/chart-purple.svg", window_button_size), body);
   m_chart_button->setToolTip(tr("Chart"));
   button_layout->addWidget(m_chart_button);
   m_dashboard_button = new IconButton(
-    imageFromSvg(":/icons/dashboard-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/dashboard-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/dashboard-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/dashboard-purple.svg", window_button_size), body);
   m_dashboard_button->setToolTip(tr("Dashboard"));
   button_layout->addWidget(m_dashboard_button);
   m_order_imbalances_button = new IconButton(
-    imageFromSvg(":/icons/order-imbalances-light-purple.svg",
+    imageFromSvg(":/Icons/order-imbalances-light-purple.svg",
       window_button_size),
-    imageFromSvg(":/icons/order-imbalances-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/order-imbalances-purple.svg", window_button_size),
     body);
   m_order_imbalances_button->setToolTip(tr("Order Imbalances"));
   button_layout->addWidget(m_order_imbalances_button);
   m_blotter_button = new IconButton(
-    imageFromSvg(":/icons/blotter-light-purple.svg", window_button_size),
-    imageFromSvg(":/icons/blotter-purple.svg", window_button_size), body);
+    imageFromSvg(":/Icons/blotter-light-purple.svg", window_button_size),
+    imageFromSvg(":/Icons/blotter-purple.svg", window_button_size), body);
   m_blotter_button->setToolTip(tr("Blotter"));
   button_layout->addWidget(m_blotter_button);
   layout->addLayout(button_layout);
@@ -145,13 +145,13 @@ void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/icons/bookview-black.svg"), icon_size,
+        imageFromSvg(QString(":/Icons/bookview-black.svg"), icon_size,
           icon_rect));
       break;
     }
     case RecentlyClosedModel::Type::TIME_AND_SALE: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/icons/time-sale-black.svg"), icon_size,
+        imageFromSvg(QString(":/Icons/time-sale-black.svg"), icon_size,
           icon_rect));
       break;
     }

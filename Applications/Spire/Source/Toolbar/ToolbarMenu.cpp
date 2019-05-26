@@ -31,7 +31,7 @@ ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
     }
     QPushButton::menu-indicator {
       height: %3px;
-      image: url(":/icons/arrow-down.svg");
+      image: url(":/Icons/arrow-down.svg");
       padding-bottom: %6px;
       padding-right: %2px;
       width: %4px;

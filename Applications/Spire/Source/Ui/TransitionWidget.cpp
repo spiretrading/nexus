@@ -14,7 +14,7 @@ TransitionWidget::TransitionWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   auto backing_widget = new QLabel(this);
-  auto logo = new QMovie(":/icons/pre-loader.gif", QByteArray(),
+  auto logo = new QMovie(":/Icons/pre-loader.gif", QByteArray(),
     backing_widget);
   logo->setScaledSize(scale(32, 32));
   backing_widget->setMovie(logo);

@@ -14,7 +14,7 @@ using namespace Spire;
 
 namespace {
   const auto& CROSSHAIR_IMAGE() {
-    static const auto image = imageFromSvg(":/icons/chart-cursor.svg",
+    static const auto image = imageFromSvg(":/Icons/chart-cursor.svg",
       scale(20, 20));
     return image;
   }

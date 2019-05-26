@@ -122,7 +122,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     width: %4px;)").arg(scale_height(1))
     .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
   auto check_box_checked_style = QString(R"(
-    image: url(:/icons/check-with-box.svg);)");
+    image: url(:/Icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));

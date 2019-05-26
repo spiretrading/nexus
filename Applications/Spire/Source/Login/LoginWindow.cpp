@@ -34,8 +34,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   auto button_size = scale(32, 26);
   auto button_box = QRect(translate(11, 8), scale(10, 10));
   m_exit_button = new IconButton(
-    imageFromSvg(":/icons/close-purple.svg", button_size, button_box),
-    imageFromSvg(":/icons/close-red.svg", button_size, button_box), this);
+    imageFromSvg(":/Icons/close-purple.svg", button_size, button_box),
+    imageFromSvg(":/Icons/close-red.svg", button_size, button_box), this);
   m_exit_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_exit_button->setFocusPolicy(Qt::NoFocus);
   m_exit_button->installEventFilter(this);
@@ -59,7 +59,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   logo_layout->addStretch(73);
   m_logo_widget = new QLabel(parent);
   m_logo_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto logo = new QMovie(":/icons/logo.gif", QByteArray(), this);
+  auto logo = new QMovie(":/Icons/logo.gif", QByteArray(), this);
   logo->setScaledSize(scale(134, 50));
   m_logo_widget->setMovie(logo);
   logo->start();

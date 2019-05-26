@@ -1,7 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/UI/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/UI/*.cpp)
-file(GLOB form_files ${SPIRE_SOURCE_PATH}/UI/*.ui)
+file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/Ui/*.hpp)
+file(GLOB source_files ${SPIRE_SOURCE_PATH}/Ui/*.cpp)
+file(GLOB form_files ${SPIRE_SOURCE_PATH}/Ui/*.ui)
 qt5_wrap_ui(generated_header_files ${form_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
