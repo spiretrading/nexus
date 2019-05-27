@@ -39,9 +39,15 @@ namespace Spire {
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+
     private:
       QColor m_color;
       Qt::PenStyle m_line_style;
+
+      void move_to_parent();
   };
 }
 

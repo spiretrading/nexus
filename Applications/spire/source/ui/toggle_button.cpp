@@ -63,13 +63,17 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   } else if(event->type() == QEvent::MouseButtonRelease) {
     auto mouse_event = static_cast<QMouseEvent*>(event);
     if(mouse_event->button() == Qt::LeftButton) {
-      swap_toggle();
+      if(isEnabled()) {
+        swap_toggle();
+      }
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
         e->key() == Qt::Key_Space) {
-      swap_toggle();
+      if(isEnabled()) {
+        swap_toggle();
+      }
     }
   } else if(event->type() == QEvent::FocusIn) {
     auto e = static_cast<QFocusEvent*>(event);
@@ -101,7 +105,9 @@ void ToggleButton::focusOutEvent(QFocusEvent* event) {
 void ToggleButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
-    swap_toggle();
+    if(isEnabled()) {
+      swap_toggle();
+    }
     event->accept();
     return;
   }
