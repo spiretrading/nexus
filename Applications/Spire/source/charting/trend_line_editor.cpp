@@ -21,6 +21,7 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
   auto color_picker = new DropdownColorPicker(this);
+  color_picker->setFixedSize(scale(70, 18));
   layout->addWidget(color_picker);
   layout->addStretch(8);
 }

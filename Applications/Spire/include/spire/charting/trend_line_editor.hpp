@@ -17,7 +17,8 @@ namespace Spire {
 
       //! Constructs a TrendLineEditor.
       /*
-        \param parent The parent to the TrendLineEditor.
+        \param parent The parent to the TrendLineEditor, and reference for
+                      determining the editor's position.
       */
       TrendLineEditor(QWidget* parent = nullptr);
 
