@@ -1,6 +1,8 @@
 #include "spire/ui/color_picker.hpp"
 #include <QHBoxLayout>
+#include <QImage>
 #include <QLabel>
+#include <QMouseEvent>
 #include "spire/spire/dimensions.hpp"
 
 using namespace boost::signals2;
@@ -18,19 +20,39 @@ ColorPicker::ColorPicker(int picker_width, int picker_height, QWidget* parent)
     })"));
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(2, 1, 2, 2);
-  auto label = new QLabel(this);
-  layout->addWidget(label);
-  m_gradient = QImage(picker_width, picker_height, QImage::Format_RGB32);
-  for (auto i = 0; i < m_gradient.height(); ++i) {
-    auto line = (QRgb *) m_gradient.scanLine(i);
-    for (int j = 0; j < m_gradient.width(); ++j) {
-      line[j] = QColor(0, 0, 0).rgb();
-    }
-  }
-  label->setPixmap(QPixmap::fromImage(m_gradient));
+  m_gradient_label = new QLabel(this);
+  m_gradient_label->setMouseTracking(true);
+  layout->addWidget(m_gradient_label);
+  auto gradient = QImage(":/icons/color-picker-display.png").scaled(
+    picker_width, picker_height);
+  m_gradient_label->setPixmap(QPixmap::fromImage(gradient));
+  m_gradient_label->installEventFilter(this);
 }
 
-connection ColorPicker::connect_color_signal(
+connection ColorPicker::connect_preview_signal(
     const ColorSignal::slot_type& slot) const {
-  return m_color_signal.connect(slot);
+  return m_preview_signal.connect(slot);
+}
+
+connection ColorPicker::connect_selected_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
+}
+
+bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::MouseButtonRelease) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton) {
+      m_selected_signal(gradient_color_at(e->pos()));
+    }
+  } else if(event->type() == QEvent::MouseMove) {
+    auto e = static_cast<QMouseEvent*>(event);
+    m_preview_signal(gradient_color_at(e->pos()));
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+QColor ColorPicker::gradient_color_at(const QPoint& pos) {
+  auto pixmap = m_gradient_label->grab({pos, QSize(1, 1)});
+  return pixmap.toImage().pixelColor(0, 0);
 }

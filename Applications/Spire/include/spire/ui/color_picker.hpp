@@ -1,6 +1,6 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
-#include <QImage>
+#include <QLabel>
 #include <QWidget>
 #include "spire/ui/ui.hpp"
 
@@ -10,6 +10,7 @@ namespace Spire {
   class ColorPicker : public QWidget {
     public:
 
+      //! Signals that a color has been interacted with.
       using ColorSignal = Signal<void (const QColor& color)>;
 
       //! Constructs a ColorPicker.
@@ -20,12 +21,21 @@ namespace Spire {
       */
       ColorPicker(int width, int height, QWidget* parent = nullptr);
 
-      boost::signals2::connection connect_color_signal(
+      boost::signals2::connection connect_preview_signal(
         const ColorSignal::slot_type& slot) const;
 
+      boost::signals2::connection connect_selected_signal(
+        const ColorSignal::slot_type& slot) const;
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
-      mutable ColorSignal m_color_signal;
-      QImage m_gradient;
+      mutable ColorSignal m_preview_signal;
+      mutable ColorSignal m_selected_signal;
+      QLabel* m_gradient_label;
+
+      QColor gradient_color_at(const QPoint& pos);
   };
 }
 
