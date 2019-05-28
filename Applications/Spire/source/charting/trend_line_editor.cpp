@@ -38,7 +38,7 @@ TrendLineStyle TrendLineEditor::get_style() const {
   return m_line_style;
 }
 
-void TrendLineEditor::set_style(TrendLineStyle style) const {
+void TrendLineEditor::set_style(TrendLineStyle style) {
   m_line_style = style;
 }
 
