@@ -26,6 +26,22 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   layout->addStretch(8);
 }
 
+const QColor& TrendLineEditor::get_color() const {
+  return m_color;
+}
+
+void TrendLineEditor::set_color(const QColor& color) {
+  m_color = color;
+}
+
+TrendLineStyle TrendLineEditor::get_style() const {
+  return m_line_style;
+}
+
+void TrendLineEditor::set_style(TrendLineStyle style) const {
+  m_line_style = style;
+}
+
 bool TrendLineEditor::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
     move_to_parent();
