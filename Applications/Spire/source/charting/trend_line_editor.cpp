@@ -10,7 +10,7 @@ using namespace Spire;
 TrendLineEditor::TrendLineEditor(QWidget* parent)
   : QWidget(parent),
     m_color(QColor("#FFCA19")),
-    m_line_style(Qt::SolidLine) {
+    m_line_style(TrendLineStyle::SOLID) {
   parent->installEventFilter(this);
   setFixedSize(scale(216, 34));
   setStyleSheet("background-color: #F5F5F5");

@@ -6,6 +6,16 @@
 
 namespace Spire {
 
+  enum class TrendLineStyle {
+    SOLID,
+    SOLID_WIDE,
+    DASHED,
+    DASHED_WIDE,
+    DOTTED,
+    DOTTED_WIDE,
+    NULL_STYLE
+  };
+
   //! Represents a chart trend line.
   struct TrendLine {
 
@@ -16,7 +26,7 @@ namespace Spire {
     QColor m_color;
 
     //! The style of the trend line.
-    Qt::PenStyle m_style;
+    TrendLineStyle m_style;
 
     //! Constructs a TrendLine with two points at (0, 0), black color,
     //! and no style.
@@ -29,7 +39,7 @@ namespace Spire {
       \param style The style of the trend line.
     */
     TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
-      const QColor& color, Qt::PenStyle style);
+      const QColor& color, TrendLineStyle style);
   };
 }
 

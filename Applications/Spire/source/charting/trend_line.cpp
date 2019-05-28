@@ -3,10 +3,10 @@
 using namespace Spire;
 
 TrendLine::TrendLine()
-    : m_style(Qt::NoPen) {}
+    : m_style(TrendLineStyle::NULL_STYLE) {}
 
 TrendLine::TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
-    const QColor& color, Qt::PenStyle style)
+    const QColor& color, TrendLineStyle style)
     : m_points(points),
       m_color(color),
       m_style(style) {}
