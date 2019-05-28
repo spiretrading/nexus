@@ -21,12 +21,18 @@ namespace Spire {
       const QColor& get_color() const;
 
       //! Sets the selected color.
+      /*
+        \param color The color to assign to the TrendLineEditor.
+      */
       void set_color(const QColor& color);
 
       //! Returns the selected line style.
       TrendLineStyle get_style() const;
 
       //! Sets the selected line style.
+      /*
+        \param style The style to assign to the TrendLineEditor.
+      */
       void set_style(TrendLineStyle style);
 
     protected:
