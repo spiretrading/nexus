@@ -103,7 +103,7 @@ void DropdownColorPicker::set_button_color(const QColor& color) {
   button_hover_style.m_background_color = color;
   m_button->set_hover_style(button_hover_style);
   auto button_focus_style = m_button->get_focus_style();
-  button_focus_style.m_background_color = m_stored_button_color;
+  button_focus_style.m_background_color = color;
   m_button->set_focus_style(button_focus_style);
 }
 
