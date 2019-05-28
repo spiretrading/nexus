@@ -9,8 +9,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ColorPicker::ColorPicker(int picker_width, int picker_height, QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint) {
-  setAttribute(Qt::WA_ShowWithoutActivating);
+    : QWidget(parent) {
   setObjectName("color_picker");
   setStyleSheet(QString(R"(
     #color_picker {
