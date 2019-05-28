@@ -56,10 +56,6 @@ bool DropdownColorPicker::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void DropdownColorPicker::leaveEvent(QEvent* event) {
-  set_button_color(m_stored_button_color);
-}
-
 void DropdownColorPicker::resizeEvent(QResizeEvent* event) {
   m_button->resize(size());
 }
