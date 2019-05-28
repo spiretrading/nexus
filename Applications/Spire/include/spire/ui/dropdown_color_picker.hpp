@@ -9,11 +9,17 @@ namespace Spire {
   class DropdownColorPicker : public QWidget {
     public:
 
+      //! Signals that a color has been selected.
+      using ColorSignal = Signal<void (const QColor& color)>;
+
       //! Constructs a DropdownColorPicker.
       /*
         \param parent The parent widget.
       */
       DropdownColorPicker(QWidget* parent = nullptr);
+
+      boost::signals2::connection connect_color_signal(
+        const ColorSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -21,6 +27,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
+      mutable ColorSignal m_color_signal;
       FlatButton* m_button;
       ColorPicker* m_color_picker;
       QColor m_stored_button_color;

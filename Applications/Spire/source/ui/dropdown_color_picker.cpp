@@ -5,6 +5,7 @@
 #include "spire/ui/color_picker.hpp"
 #include "spire/ui/flat_button.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 DropdownColorPicker::DropdownColorPicker(QWidget* parent)
@@ -42,6 +43,11 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   m_color_picker->hide();
 }
 
+connection DropdownColorPicker::connect_color_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_color_signal.connect(slot);
+}
+
 bool DropdownColorPicker::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
@@ -76,6 +82,7 @@ void DropdownColorPicker::on_color_selected(const QColor& color) {
   set_button_color(color);
   store_button_color();
   m_color_picker->hide();
+  m_color_signal(color);
 }
 
 void DropdownColorPicker::on_color_preview(const QColor& color) {
