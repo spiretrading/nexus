@@ -26,6 +26,9 @@ ColorPicker::ColorPicker(int picker_width, int picker_height, QWidget* parent)
     picker_width, picker_height);
   m_gradient_label->setPixmap(QPixmap::fromImage(gradient));
   m_gradient_label->installEventFilter(this);
+  auto cursor = QCursor(QPixmap::fromImage(
+    imageFromSvg(":/icons/color-picker-cursor.svg", scale(10, 10))));
+  setCursor(cursor);
 }
 
 connection ColorPicker::connect_preview_signal(
