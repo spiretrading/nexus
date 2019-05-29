@@ -27,7 +27,8 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
   auto color_picker = new DropdownColorPicker(this);
-  color_picker->connect_color_signal([=] { on_color_change(); });
+  color_picker->connect_color_signal(
+    [=] (auto& color) { on_color_change(color); });
   color_picker->setFixedSize(scale(70, 18));
   layout->addWidget(color_picker);
   layout->addStretch(8);
@@ -70,11 +71,13 @@ void TrendLineEditor::showEvent(QShowEvent* event) {
   move_to_parent();
 }
 
-void TrendLineEditor::on_color_change() {
+void TrendLineEditor::on_color_change(const QColor& color) {
+  m_color = color;
   m_color_signal();
 }
 
-void TrendLineEditor::on_style_change() {
+void TrendLineEditor::on_style_change(TrendLineStyle style) {
+  m_line_style = style;
   m_style_signal();
 }
 

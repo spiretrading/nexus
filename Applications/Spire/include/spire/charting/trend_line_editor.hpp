@@ -58,8 +58,8 @@ namespace Spire {
       QColor m_color;
       TrendLineStyle m_line_style;
 
-      void on_color_change();
-      void on_style_change();
+      void on_color_change(const QColor& color);
+      void on_style_change(TrendLineStyle style);
       void move_to_parent();
   };
 }
