@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QLabel>
+#include "spire/charting/trend_line_style_dropdown_menu.hpp"
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/dropdown_color_picker.hpp"
 
@@ -32,6 +33,9 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   color_picker->setFixedSize(scale(70, 18));
   layout->addWidget(color_picker);
   layout->addStretch(8);
+  auto style_dropdown = new TrendLineStyleDropdownMenu(this);
+  style_dropdown->setFixedSize(scale(70, 18));
+  layout->addWidget(style_dropdown);
 }
 
 const QColor& TrendLineEditor::get_color() const {

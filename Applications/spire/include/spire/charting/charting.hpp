@@ -11,8 +11,10 @@ namespace Spire {
   class ChartView;
   class ChartingTechnicalsPanel;
   class ChartingWindow;
+  class StyleDropdownMenuList;
   class TrendLineEditor;
   class TrendLineModel;
+  class TrendLineStyleDropdownMenu;
   using Candlestick =
     Nexus::TechnicalAnalysis::Candlestick<ChartValue, ChartValue>;
 }
