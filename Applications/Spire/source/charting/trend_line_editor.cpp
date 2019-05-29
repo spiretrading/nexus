@@ -5,6 +5,7 @@
 #include "spire/spire/dimensions.hpp"
 #include "spire/ui/dropdown_color_picker.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 TrendLineEditor::TrendLineEditor(QWidget* parent)
@@ -26,6 +27,7 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
   auto color_picker = new DropdownColorPicker(this);
+  color_picker->connect_color_signal([=] { on_color_change(); });
   color_picker->setFixedSize(scale(70, 18));
   layout->addWidget(color_picker);
   layout->addStretch(8);
@@ -47,6 +49,16 @@ void TrendLineEditor::set_style(TrendLineStyle style) {
   m_line_style = style;
 }
 
+connection TrendLineEditor::connect_color_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_color_signal.connect(slot);
+}
+    
+connection TrendLineEditor::connect_style_signal(
+    const StyleSignal::slot_type& slot) const {
+  return m_style_signal.connect(slot);
+}
+
 bool TrendLineEditor::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
     move_to_parent();
@@ -56,6 +68,14 @@ bool TrendLineEditor::eventFilter(QObject* watched, QEvent* event) {
 
 void TrendLineEditor::showEvent(QShowEvent* event) {
   move_to_parent();
+}
+
+void TrendLineEditor::on_color_change() {
+  m_color_signal();
+}
+
+void TrendLineEditor::on_style_change() {
+  m_style_signal();
 }
 
 void TrendLineEditor::move_to_parent() {

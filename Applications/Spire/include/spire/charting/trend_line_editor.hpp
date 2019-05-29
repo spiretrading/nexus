@@ -3,12 +3,19 @@
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/trend_line.hpp"
+#include "spire/ui/ui.hpp"
 
 namespace Spire {
 
   //! Displays a widget for selecting color and line styles.
   class TrendLineEditor : public QWidget {
     public:
+
+      //! Signals that a color has been selected.
+      using ColorSignal = Signal<void ()>;
+
+      //! Signals that a line style has been selected.
+      using StyleSignal = Signal<void ()>;
 
       //! Constructs a TrendLineEditor.
       /*
@@ -35,14 +42,24 @@ namespace Spire {
       */
       void set_style(TrendLineStyle style);
 
+      boost::signals2::connection connect_color_signal(
+        const ColorSignal::slot_type& slot) const;
+    
+      boost::signals2::connection connect_style_signal(
+        const StyleSignal::slot_type& slot) const;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
+      mutable ColorSignal m_color_signal;
+      mutable StyleSignal m_style_signal;
       QColor m_color;
       TrendLineStyle m_line_style;
 
+      void on_color_change();
+      void on_style_change();
       void move_to_parent();
   };
 }
