@@ -155,7 +155,6 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   delete m_technicals_panel;
   delete m_chart;
   delete m_security_widget_container;
-  delete m_trend_line_editor_widget;
   m_security_widget_container = new QWidget(this);
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
