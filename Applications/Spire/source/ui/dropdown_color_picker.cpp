@@ -36,6 +36,7 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   m_color_picker = new ColorPicker(scale_width(70) - 4, scale_height(70) - 3,
     this);
   m_color_picker->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+  m_color_picker->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_color_picker->connect_selected_signal(
     [=] (auto& color) { on_color_selected(color); });
   m_color_picker->connect_preview_signal(
@@ -56,8 +57,10 @@ bool DropdownColorPicker::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_button) {
     if(event->type() == QEvent::FocusOut) {
-      set_button_color(m_stored_button_color);
-      m_color_picker->hide();
+      if(!m_color_picker->isActiveWindow()) {
+        set_button_color(m_stored_button_color);
+        m_color_picker->hide();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);

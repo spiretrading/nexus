@@ -39,14 +39,16 @@ connection ColorPicker::connect_selected_signal(
 }
 
 bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseButtonRelease) {
-    auto e = static_cast<QMouseEvent*>(event);
-    if(e->button() == Qt::LeftButton) {
-      m_selected_signal(gradient_color_at(e->pos()));
+  if(isVisible()) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      auto e = static_cast<QMouseEvent*>(event);
+      if(e->button() == Qt::LeftButton) {
+        m_selected_signal(gradient_color_at(e->pos()));
+      }
+    } else if(event->type() == QEvent::MouseMove) {
+      auto e = static_cast<QMouseEvent*>(event);
+      m_preview_signal(gradient_color_at(e->pos()));
     }
-  } else if(event->type() == QEvent::MouseMove) {
-    auto e = static_cast<QMouseEvent*>(event);
-    m_preview_signal(gradient_color_at(e->pos()));
   }
   return QWidget::eventFilter(watched, event);
 }
