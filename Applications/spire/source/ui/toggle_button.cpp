@@ -133,7 +133,9 @@ void ToggleButton::resizeEvent(QResizeEvent* event) {
 
 void ToggleButton::set_icons(bool enabled) {
   if(enabled) {
-    if(m_is_toggled) {
+    if(!isEnabled() && m_is_toggled) {
+      m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
+    } else if(m_is_toggled) {
       m_icon_button.set_icon(m_toggle_icon, m_hover_icon);
     } else {
       m_icon_button.set_icon(m_icon, m_hover_icon);
