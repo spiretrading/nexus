@@ -64,7 +64,10 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   setAttribute(Qt::WA_Hover);
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
-  setCursor(Qt::BlankCursor);
+  //auto cursor = QCursor(QPixmap::fromImage(
+  //  imageFromSvg(":/icons/color-picker-cursor.svg", scale(10, 10))));
+  //setCursor(cursor);
+  //setCursor(Qt::CrossCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(3)),
     static_cast<double>(scale_width(3))});
   qApp->installNativeEventFilter(this);
@@ -146,7 +149,11 @@ bool ChartView::nativeEventFilter(const QByteArray& eventType, void* message,
     // in Window class.
     if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
         m_crosshair_pos.value().y() <= m_y_origin) {
-      SetCursor(LoadCursor(NULL, NULL));
+      const HCURSOR cur = static_cast<HCURSOR>(LoadImage(NULL,
+        R"(C:\\Users\\Ken\\Dropbox (spire)\\Spire Desktop\\final\\
+          chart_window\\assets\\graphics\\chart-cursor-32-A.cur)",
+        IMAGE_CURSOR, scale_width(18), scale_height(18), LR_LOADFROMFILE));
+      SetCursor(cur);
       return true;
     }
   }
@@ -230,9 +237,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
       m_crosshair_pos.value().x(), m_y_origin);
     painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
       m_crosshair_pos.value().y());
-    painter.drawImage(m_crosshair_pos.value().x() -
-      (CROSSHAIR_IMAGE().width() / 2), m_crosshair_pos.value().y() -
-      (CROSSHAIR_IMAGE().height() / 2), CROSSHAIR_IMAGE());
+    //painter.drawImage(m_crosshair_pos.value().x() -
+    //  (CROSSHAIR_IMAGE().width() / 2), m_crosshair_pos.value().y() -
+    //  (CROSSHAIR_IMAGE().height() / 2), CROSSHAIR_IMAGE());
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
     auto x_label = m_item_delegate->displayText(to_variant(
       m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());

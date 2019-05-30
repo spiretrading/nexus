@@ -60,6 +60,8 @@ void StyleDropdownMenuItem::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(m_is_highlighted) {
     painter.fillRect(event->rect(), QColor("#F2F2FF"));
+  } else  {
+    painter.fillRect(event->rect(), QColor("#FFFFFF"));
   }
   auto y = event->rect().height() / 2;
   draw_trend_line(painter, m_style, Qt::black, m_padding, y,
