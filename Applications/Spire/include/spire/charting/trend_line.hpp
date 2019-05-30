@@ -2,10 +2,12 @@
 #define SPIRE_TREND_LINE_HPP
 #include <tuple>
 #include <QColor>
+#include <QPainter>
 #include "spire/charting/chart_point.hpp"
 
 namespace Spire {
 
+  //! Defines the TrendLine styles.
   enum class TrendLineStyle {
     SOLID,
     SOLID_WIDE,
@@ -41,6 +43,19 @@ namespace Spire {
     TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
       const QColor& color, TrendLineStyle style);
   };
+
+  //! Draws a TrendLine using the provided QPainter.
+  /*
+    \param painter The painter used for drawing the trend line.
+    \param style The trend line style to draw.
+    \param color The color of the trend line.
+    \param x1 The x coordinate of the first point.
+    \param y2 The y coordinate of the first point.
+    \param x2 The x coordinate of the second point.
+    \param y2 The y coordinate of the second point.
+  */
+  void draw_trend_line(QPainter& painter, TrendLineStyle style,
+    const QColor& color, int x1, int y1, int x2, int y2);
 }
 
 #endif

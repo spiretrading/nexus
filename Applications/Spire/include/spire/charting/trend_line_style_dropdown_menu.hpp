@@ -1,22 +1,22 @@
 #ifndef SPIRE_TREND_LINE_STYLE_DROPDOWN_MENU_HPP
 #define SPIRE_TREND_LINE_STYLE_DROPDOWN_MENU_HPP
 #include <QWidget>
-#include "spire/charting/trend_line.hpp"
 #include "spire/charting/charting.hpp"
+#include "spire/charting/trend_line.hpp"
 
 namespace Spire {
 
-  //! Displays a dropdown menu with selectable trend line styles.
+  //! Displays a Spire-styled QComboBox.
   class TrendLineStyleDropdownMenu : public QWidget {
     public:
 
-      //! Constructs a TrendLineStyleDropdownMenu.
+      //! Constructs a TrnedLineStyleDropdownMenu.
       /*
-        \param parent The parent widget to the TrendLineStyleDropdownMenu.
+        \param parent The parent widget to the DropdownMenu.
       */
       TrendLineStyleDropdownMenu(QWidget* parent = nullptr);
 
-      //! Returns the selected style.
+      //! Returns the selected item.
       TrendLineStyle get_style() const;
 
     protected:
@@ -33,7 +33,7 @@ namespace Spire {
 
       void move_menu_list();
       void on_clicked();
-      void on_style_selected(TrendLineStyle style);
+      void on_item_selected(TrendLineStyle style);
   };
 }
 

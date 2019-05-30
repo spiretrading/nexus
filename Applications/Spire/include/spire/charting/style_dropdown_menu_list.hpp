@@ -1,6 +1,5 @@
-#ifndef SPIRE_DROPDOWN_MENU_LIST_HPP
-#define SPIRE_DROPDOWN_MENU_LIST_HPP
-#include <QScrollArea>
+#ifndef SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
+#define SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
 #include <QWidget>
 #include "spire/charting/charting.hpp"
 #include "spire/charting/trend_line.hpp"
@@ -8,11 +7,11 @@
 
 namespace Spire {
 
-  //! The list used by the TrendLineStyleDropdownMenu.
+  //! The list used by the StyleDropdownMenu.
   class StyleDropdownMenuList : public QWidget {
     public:
 
-      //! Signals that a style was selected from the list.
+      //! Signals that an item was selected from the list.
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a StyleDropdownMenuList.
@@ -21,15 +20,15 @@ namespace Spire {
       */
       StyleDropdownMenuList(QWidget* parent = nullptr);
 
-      //! Returns the style in the list that follows the style specified.
+      //! Returns the item in the list that follows the item specified.
       /*
-        \param style The specified style.
+        \param style The specified item.
       */
       TrendLineStyle get_next(TrendLineStyle style);
 
-      //! Returns the style in the list that comes before the style specified.
+      //! Returns the item in the list that comes before the item specified.
       /*
-        \param style The specified style.
+        \param style The specified item.
       */
       TrendLineStyle get_previous(TrendLineStyle style);
 

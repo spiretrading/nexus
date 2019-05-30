@@ -1,19 +1,27 @@
 #include "spire/charting/trend_line_style_dropdown_menu.hpp"
+#include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
 #include "spire/charting/style_dropdown_menu_list.hpp"
 #include "spire/spire/dimensions.hpp"
+#include "spire/ui/dropdown_menu_item.hpp"
+#include "spire/ui/dropdown_menu_list.hpp"
+#include "spire/ui/ui.hpp"
 
 using namespace Spire;
 
-TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(QWidget* parent)
+namespace {
+  const auto NUM_ITEMS = 6;
+}
+
+TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(
+    QWidget* parent)
     : QWidget(parent),
-      m_current_style(TrendLineStyle::SOLID),
       m_dropdown_image(imageFromSvg(":/icons/arrow-down.svg", scale(6, 4))) {
+  m_current_style = TrendLineStyle::SOLID;
   setFocusPolicy(Qt::StrongFocus);
   m_menu_list = new StyleDropdownMenuList(this);
-  m_menu_list->connect_selected_signal(
-    [=] (auto style) { on_style_selected(style); });
+  m_menu_list->connect_selected_signal([=] (auto t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);
 }
@@ -72,10 +80,12 @@ void TrendLineStyleDropdownMenu::paintEvent(QPaintEvent* event) {
     painter.fillRect(event->rect(), QColor("#C8C8C8"));
   }
   painter.fillRect(1, 1, width() - 2, height() - 2, Qt::white);
-  // TODO: draw lines
+  auto line_y = event->rect().height() / 2;
+  draw_trend_line(painter, m_current_style, Qt::black, scale_width(8),
+    line_y, scale_width(8) + scale_width(30), line_y);
   painter.drawImage(
     QPoint(width() - (m_dropdown_image.width() + scale_width(8)),
-    scale_height(7)), m_dropdown_image);
+    scale_height(8)), m_dropdown_image);
 }
 
 void TrendLineStyleDropdownMenu::move_menu_list() {
@@ -83,7 +93,7 @@ void TrendLineStyleDropdownMenu::move_menu_list() {
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     frameGeometry().bottomLeft()).y();
-  m_menu_list->move(x_pos, y_pos);
+  m_menu_list->move(x_pos, y_pos + 1);
   m_menu_list->raise();
 }
 
@@ -94,7 +104,7 @@ void TrendLineStyleDropdownMenu::on_clicked() {
   m_menu_list->raise();
 }
 
-void TrendLineStyleDropdownMenu::on_style_selected(TrendLineStyle style) {
+void TrendLineStyleDropdownMenu::on_item_selected(TrendLineStyle style) {
   m_menu_list->hide();
   m_current_style = style;
   update();
