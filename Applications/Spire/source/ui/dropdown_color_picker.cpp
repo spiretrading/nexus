@@ -24,11 +24,12 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   auto button_hover_style = m_button->get_hover_style();
   button_hover_style.m_background_color =
     button_default_style.m_background_color;
+  button_hover_style.m_border_color = QColor("#4B23A0");
   m_button->set_hover_style(button_hover_style);
   auto button_focus_style = m_button->get_focus_style();
   button_focus_style.m_background_color =
     button_default_style.m_background_color;
-    button_focus_style.m_border_color = QColor("4B23A0");
+    button_focus_style.m_border_color = QColor("#4B23A0");
   m_button->set_focus_style(button_focus_style);
   m_button->connect_clicked_signal([=] { on_button_click(); });
   layout->addWidget(m_button);
