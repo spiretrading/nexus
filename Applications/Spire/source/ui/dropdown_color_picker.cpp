@@ -34,7 +34,6 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   m_button->set_focus_style(button_focus_style);
   m_button->connect_clicked_signal([=] { on_button_click(); });
   layout->addWidget(m_button);
-  setFocusProxy(m_button);
   m_color_picker = new ColorPicker(scale_width(70) - 4, scale_height(70) - 3,
     this);
   m_color_picker->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
