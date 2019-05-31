@@ -10,6 +10,7 @@ using namespace Spire;
 
 DropdownColorPicker::DropdownColorPicker(QWidget* parent)
     : QWidget(parent) {
+  setFocusPolicy(Qt::NoFocus);
   window()->installEventFilter(this);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
