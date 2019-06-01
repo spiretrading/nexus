@@ -6,7 +6,6 @@
 
 using namespace Beam;
 using namespace Beam::Python;
-using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::RiskService;
 using namespace boost;
