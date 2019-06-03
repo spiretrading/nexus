@@ -17,7 +17,7 @@ DropdownMenu::DropdownMenu(const std::vector<QString>& items,
     m_current_text = items.front();
   }
   setFocusPolicy(Qt::StrongFocus);
-  m_menu_list = new DropdownMenuList(items, this);
+  m_menu_list = new DropDownMenuList(items, this);
   m_menu_list->connect_selected_signal([=] (auto& t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);
@@ -28,7 +28,7 @@ void DropdownMenu::set_items(const std::vector<QString>& items) {
   auto list = static_cast<QScrollArea*>(
     m_menu_list->layout()->itemAt(0)->widget())->widget();
   for(auto i = 0; i < list->layout()->count(); ++i) {
-    auto t = static_cast<DropdownMenuItem*>(
+    auto t = static_cast<DropDownMenuItem*>(
       list->layout()->itemAt(i)->widget())->text();
     if(t == m_current_text) {
       index = i;

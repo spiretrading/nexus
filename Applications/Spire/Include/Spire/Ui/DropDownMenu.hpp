@@ -38,7 +38,7 @@ namespace Spire {
     private:
       QString m_current_text;
       QImage m_dropdown_image;
-      DropdownMenuList* m_menu_list;
+      DropDownMenuList* m_menu_list;
 
       void move_menu_list();
       void on_clicked();

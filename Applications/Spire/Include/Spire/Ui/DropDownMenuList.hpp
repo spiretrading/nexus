@@ -7,7 +7,7 @@
 namespace Spire {
 
   //! The list used by the DropdownMenu.
-  class DropdownMenuList : public QWidget {
+  class DropDownMenuList : public QWidget {
     public:
 
       //! Signals that an item was selected from the list.
@@ -18,7 +18,7 @@ namespace Spire {
         \param items The initial items in the list.
         \param parent The parent to the list.
       */
-      DropdownMenuList(const std::vector<QString>& items,
+      DropDownMenuList(const std::vector<QString>& items,
         QWidget* parent = nullptr);
 
       //! Clears the items from the list and populates it with the specified
