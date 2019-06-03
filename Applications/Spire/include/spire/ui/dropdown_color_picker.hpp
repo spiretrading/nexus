@@ -22,22 +22,24 @@ namespace Spire {
         const ColorSignal::slot_type& slot) const;
 
     protected:
+      void enterEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+      void leaveEvent(QEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
       mutable ColorSignal m_color_signal;
-      FlatButton* m_button;
       ColorPicker* m_color_picker;
-      QColor m_stored_button_color;
+      QColor m_current_color;
+      QColor m_stored_color;
+      bool m_has_mouse;
 
-      void on_button_click();
       void on_color_preview(const QColor& color);
       void on_color_selected(const QColor& color);
       void move_color_picker();
-      void set_button_color(const QColor& color);
-      void store_button_color();
   };
 }
 
