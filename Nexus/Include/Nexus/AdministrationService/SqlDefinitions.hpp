@@ -65,7 +65,7 @@ namespace Nexus::AdministrationService {
           return row.m_allowedState.m_type;
         }).
       add_column("loss_from_top", &RiskService::RiskParameters::m_lossFromTop).
-      add_column("transitition_time",
+      add_column("transition_time",
         &RiskService::RiskParameters::m_transitionTime);
     return ROW;
   }
