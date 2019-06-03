@@ -6,14 +6,14 @@
 
 namespace Spire {
 
-  //! The list used by the DropdownMenu.
+  //! The list used by the DropDownMenu.
   class DropDownMenuList : public QWidget {
     public:
 
       //! Signals that an item was selected from the list.
       using SelectedSignal = Signal<void (const QString& text)>;
 
-      //! Constructs a DropdownMenuList with the specified items.
+      //! Constructs a DropDownMenuList with the specified items.
       /*
         \param items The initial items in the list.
         \param parent The parent to the list.

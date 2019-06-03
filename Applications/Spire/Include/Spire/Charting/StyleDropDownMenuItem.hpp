@@ -6,14 +6,14 @@
 
 namespace Spire {
 
-  //! Represents a style item in a StyleDropdownMenu.
+  //! Represents a style item in a StyleDropDownMenu.
   class StyleDropDownMenuItem : public QWidget {
     public:
 
       //! Signals that this item was selected.
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
-      //! Constructs a DropdownMenuItem with a specified style.
+      //! Constructs a DropDownMenuItem with a specified style.
       /*
         \param style The style to display.
         \param parent The parent to this widget.

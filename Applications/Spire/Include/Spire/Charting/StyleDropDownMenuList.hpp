@@ -7,14 +7,14 @@
 
 namespace Spire {
 
-  //! The list used by the StyleDropdownMenu.
+  //! The list used by the StyleDropDownMenu.
   class StyleDropDownMenuList : public QWidget {
     public:
 
       //! Signals that an item was selected from the list.
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
-      //! Constructs a StyleDropdownMenuList.
+      //! Constructs a StyleDropDownMenuList.
       /*
         \param parent The parent to the list.
       */

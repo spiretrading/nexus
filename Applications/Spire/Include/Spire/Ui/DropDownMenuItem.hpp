@@ -5,14 +5,14 @@
 
 namespace Spire {
 
-  //! Represents an item in a DropdownMenu.
+  //! Represents an item in a DropDownMenu.
   class DropDownMenuItem : public QLabel {
     public:
 
       //! Signals that this item was selected.
       using SelectedSignal = Signal<void (const QString& text)>;
 
-      //! Constructs a DropdownMenuItem with displayed text.
+      //! Constructs a DropDownMenuItem with displayed text.
       /*
         \param text The text to display.
         \param parent The parent to this widget.
