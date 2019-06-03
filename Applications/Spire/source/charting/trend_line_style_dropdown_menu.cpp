@@ -10,10 +10,6 @@
 
 using namespace Spire;
 
-namespace {
-  const auto NUM_ITEMS = 6;
-}
-
 TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(
     QWidget* parent)
     : QWidget(parent),

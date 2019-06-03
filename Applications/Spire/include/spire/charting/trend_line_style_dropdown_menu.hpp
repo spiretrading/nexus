@@ -6,13 +6,13 @@
 
 namespace Spire {
 
-  //! Displays a Spire-styled QComboBox.
+  //! Displays dropdown menu with selectable TrendLineStyles.
   class TrendLineStyleDropdownMenu : public QWidget {
     public:
 
-      //! Constructs a TrnedLineStyleDropdownMenu.
+      //! Constructs a TrendLineStyleDropdownMenu.
       /*
-        \param parent The parent widget to the DropdownMenu.
+        \param parent The parent widget to the TrendLineStyleDropdownMenu.
       */
       TrendLineStyleDropdownMenu(QWidget* parent = nullptr);
 
