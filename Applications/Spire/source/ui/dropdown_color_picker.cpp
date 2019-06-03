@@ -19,6 +19,7 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_current_color = QColor("#FFCA19");
+  m_stored_color = m_current_color;
   m_color_picker = new ColorPicker(scale_width(70) - 4, scale_height(70) - 3,
     this);
   m_color_picker->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
