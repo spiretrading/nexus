@@ -42,7 +42,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
   m_header->setStyleSheet(QString(R"(
     QHeaderView::section {
       background-color: #FFFFFF;
-      background-image: url(:icons/column-border.png);
+      background-image: url(:/Icons/column-border.png);
       background-position: left;
       background-repeat: repeat;
       border: none;

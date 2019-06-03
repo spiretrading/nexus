@@ -1,14 +1,14 @@
 #ifndef SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
 #define SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
 #include <QWidget>
-#include "spire/charting/charting.hpp"
-#include "spire/charting/trend_line.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! The list used by the StyleDropdownMenu.
-  class StyleDropdownMenuList : public QWidget {
+  class StyleDropDownMenuList : public QWidget {
     public:
 
       //! Signals that an item was selected from the list.
@@ -18,7 +18,7 @@ namespace Spire {
       /*
         \param parent The parent to the list.
       */
-      StyleDropdownMenuList(QWidget* parent = nullptr);
+      StyleDropDownMenuList(QWidget* parent = nullptr);
 
       //! Returns the item in the list that follows the item specified.
       /*

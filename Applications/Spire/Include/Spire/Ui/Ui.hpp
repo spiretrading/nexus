@@ -7,9 +7,7 @@
 
 namespace Spire {
   class CheckBox;
-  class ColorPicker;
   class Dialog;
-  class DropdownColorPicker;
   class DropdownMenu;
   class DropdownMenuItem;
   class DropdownMenuList;

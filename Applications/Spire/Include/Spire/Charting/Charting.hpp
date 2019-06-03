@@ -11,8 +11,10 @@ namespace Spire {
   class ChartView;
   class ChartingTechnicalsPanel;
   class ChartingWindow;
-  class StyleDropdownMenuItem;
-  class StyleDropdownMenuList;
+  class ColorPicker;
+  class DropDownColorPicker;
+  class StyleDropDownMenuItem;
+  class StyleDropDownMenuList;
   class TrendLineEditor;
   class TrendLineModel;
   class TrendLineStyleDropdownMenu;

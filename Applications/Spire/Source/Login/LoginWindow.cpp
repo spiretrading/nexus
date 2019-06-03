@@ -15,7 +15,7 @@ using namespace Spire;
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_is_dragging(false) {
-  setWindowIcon(QIcon(":icons/spire-icon-256x256.png"));
+  setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
   setFixedSize(scale(396, 358));
   m_shadow = std::make_unique<DropShadow>(this);
   setObjectName("LoginWindow");

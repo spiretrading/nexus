@@ -1,9 +1,8 @@
 #ifndef SPIRE_TREND_LINE_EDITOR_HPP
 #define SPIRE_TREND_LINE_EDITOR_HPP
 #include <QWidget>
-#include "spire/charting/charting.hpp"
-#include "spire/charting/trend_line.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/TrendLine.hpp"
 
 namespace Spire {
 

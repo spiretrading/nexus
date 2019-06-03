@@ -1,13 +1,13 @@
 #ifndef SPIRE_STYLE_DROPDOWN_MENU_ITEM_HPP
 #define SPIRE_STYLE_DROPDOWN_MENU_ITEM_HPP
 #include <QWidget>
-#include "spire/charting/trend_line.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Represents a style item in a StyleDropdownMenu.
-  class StyleDropdownMenuItem : public QWidget {
+  class StyleDropDownMenuItem : public QWidget {
     public:
 
       //! Signals that this item was selected.
@@ -18,7 +18,7 @@ namespace Spire {
         \param style The style to display.
         \param parent The parent to this widget.
       */
-      StyleDropdownMenuItem(TrendLineStyle style, QWidget* parent = nullptr);
+      StyleDropDownMenuItem(TrendLineStyle style, QWidget* parent = nullptr);
 
       //! Returns the style represented by this item.
       TrendLineStyle get_style() const;

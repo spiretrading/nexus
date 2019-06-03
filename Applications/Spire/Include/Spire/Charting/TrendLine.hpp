@@ -3,7 +3,7 @@
 #include <tuple>
 #include <QColor>
 #include <QPainter>
-#include "spire/charting/chart_point.hpp"
+#include "Spire/Charting/ChartPoint.hpp"
 
 namespace Spire {
 

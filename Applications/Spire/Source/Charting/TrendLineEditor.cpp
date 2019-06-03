@@ -1,10 +1,10 @@
-#include "spire/charting/trend_line_editor.hpp"
+#include "Spire/Charting/TrendLineEditor.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QLabel>
-#include "spire/charting/trend_line_style_dropdown_menu.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/dropdown_color_picker.hpp"
+#include "Spire/Charting/DropDownColorPicker.hpp"
+#include "Spire/Charting/TrendLineStyleDropDownMenu.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -27,7 +27,7 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   )").arg(scale_height(10)));
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
-  auto color_picker = new DropdownColorPicker(this);
+  auto color_picker = new DropDownColorPicker(this);
   color_picker->connect_color_signal(
     [=] (auto& color) { on_color_change(color); });
   color_picker->setFixedSize(scale(70, 18));

@@ -1,7 +1,7 @@
 #ifndef SPIRE_TREND_LINE_MODEL_HPP
 #define SPIRE_TREND_LINE_MODEL_HPP
-#include "spire/charting/charting.hpp"
-#include "spire/charting/trend_line.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/TrendLine.hpp"
 
 namespace Spire {
 

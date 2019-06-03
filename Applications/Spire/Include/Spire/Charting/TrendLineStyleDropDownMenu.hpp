@@ -1,8 +1,8 @@
 #ifndef SPIRE_TREND_LINE_STYLE_DROPDOWN_MENU_HPP
 #define SPIRE_TREND_LINE_STYLE_DROPDOWN_MENU_HPP
 #include <QWidget>
-#include "spire/charting/charting.hpp"
-#include "spire/charting/trend_line.hpp"
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/TrendLine.hpp"
 
 namespace Spire {
 
@@ -29,7 +29,7 @@ namespace Spire {
     private:
       TrendLineStyle m_current_style;
       QImage m_dropdown_image;
-      StyleDropdownMenuList* m_menu_list;
+      StyleDropDownMenuList* m_menu_list;
 
       void move_menu_list();
       void on_clicked();

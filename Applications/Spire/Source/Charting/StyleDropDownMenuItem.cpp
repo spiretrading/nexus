@@ -1,12 +1,12 @@
-#include "spire/charting/style_dropdown_menu_item.hpp"
+#include "Spire/Charting/StyleDropDownMenuItem.hpp"
 #include <QMouseEvent>
 #include <QPainter>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-StyleDropdownMenuItem::StyleDropdownMenuItem(TrendLineStyle style,
+StyleDropDownMenuItem::StyleDropDownMenuItem(TrendLineStyle style,
     QWidget* parent)
     : QWidget(parent),
       m_style(style),
@@ -17,46 +17,46 @@ StyleDropdownMenuItem::StyleDropdownMenuItem(TrendLineStyle style,
   setFixedHeight(scale_height(20));
 }
 
-TrendLineStyle StyleDropdownMenuItem::get_style() const {
+TrendLineStyle StyleDropDownMenuItem::get_style() const {
   return m_style;
 }
 
-void StyleDropdownMenuItem::set_highlight() {
+void StyleDropDownMenuItem::set_highlight() {
   m_is_highlighted = true;
 }
 
-void StyleDropdownMenuItem::remove_highlight() {
+void StyleDropDownMenuItem::remove_highlight() {
   m_is_highlighted = false;
 }
 
-connection StyleDropdownMenuItem::connect_selected_signal(
+connection StyleDropDownMenuItem::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
 }
 
-void StyleDropdownMenuItem::keyPressEvent(QKeyEvent* event) {
+void StyleDropDownMenuItem::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     m_selected_signal(m_style);
   }
 }
 
-void StyleDropdownMenuItem::leaveEvent(QEvent* event) {
+void StyleDropDownMenuItem::leaveEvent(QEvent* event) {
   m_is_highlighted = false;
   update();
 }
 
-void StyleDropdownMenuItem::mouseMoveEvent(QMouseEvent* event) {
+void StyleDropDownMenuItem::mouseMoveEvent(QMouseEvent* event) {
   m_is_highlighted = true;
   update();
 }
 
-void StyleDropdownMenuItem::mouseReleaseEvent(QMouseEvent* event) {
+void StyleDropDownMenuItem::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_selected_signal(m_style);
   }
 }
 
-void StyleDropdownMenuItem::paintEvent(QPaintEvent* event) {
+void StyleDropDownMenuItem::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(m_is_highlighted) {
     painter.fillRect(event->rect(), QColor("#F2F2FF"));

@@ -1,12 +1,12 @@
 #ifndef SPIRE_DROPDOWN_COLOR_PICKER_HPP
 #define SPIRE_DROPDOWN_COLOR_PICKER_HPP
 #include <QWidget>
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/Charting.hpp"
 
 namespace Spire {
 
   //! Displays a button that activates a pop-up color picker.
-  class DropdownColorPicker : public QWidget {
+  class DropDownColorPicker : public QWidget {
     public:
 
       //! Signals that a color has been selected.
@@ -16,7 +16,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      DropdownColorPicker(QWidget* parent = nullptr);
+      DropDownColorPicker(QWidget* parent = nullptr);
 
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;

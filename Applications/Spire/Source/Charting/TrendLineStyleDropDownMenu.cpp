@@ -1,22 +1,19 @@
-#include "spire/charting/trend_line_style_dropdown_menu.hpp"
+#include "Spire/Charting/TrendLineStyleDropDownMenu.hpp"
 #include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
-#include "spire/charting/style_dropdown_menu_list.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/dropdown_menu_item.hpp"
-#include "spire/ui/dropdown_menu_list.hpp"
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/StyleDropDownMenuList.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 
 TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(
     QWidget* parent)
     : QWidget(parent),
-      m_dropdown_image(imageFromSvg(":/icons/arrow-down.svg", scale(6, 4))) {
+      m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))) {
   m_current_style = TrendLineStyle::SOLID;
   setFocusPolicy(Qt::StrongFocus);
-  m_menu_list = new StyleDropdownMenuList(this);
+  m_menu_list = new StyleDropDownMenuList(this);
   m_menu_list->connect_selected_signal([=] (auto t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);

@@ -1,5 +1,5 @@
-#include "spire/charting/trend_line.hpp"
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 

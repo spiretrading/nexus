@@ -1,15 +1,15 @@
-#include "spire/ui/dropdown_color_picker.hpp"
+#include "Spire/Charting/DropDownColorPicker.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
-#include "spire/spire/dimensions.hpp"
-#include "spire/ui/color_picker.hpp"
+#include "Spire/Charting/ColorPicker.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-DropdownColorPicker::DropdownColorPicker(QWidget* parent)
+DropDownColorPicker::DropDownColorPicker(QWidget* parent)
     : QWidget(parent),
       m_has_mouse(false) {
   setMouseTracking(true);
@@ -32,17 +32,17 @@ DropdownColorPicker::DropdownColorPicker(QWidget* parent)
   m_color_picker->hide();
 }
 
-connection DropdownColorPicker::connect_color_signal(
+connection DropDownColorPicker::connect_color_signal(
     const ColorSignal::slot_type& slot) const {
   return m_color_signal.connect(slot);
 }
 
-void DropdownColorPicker::enterEvent(QEvent* event) {
+void DropDownColorPicker::enterEvent(QEvent* event) {
   m_has_mouse = true;
   update();
 }
 
-bool DropdownColorPicker::eventFilter(QObject* watched, QEvent* event) {
+bool DropDownColorPicker::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
       move_color_picker();
@@ -51,7 +51,7 @@ bool DropdownColorPicker::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void DropdownColorPicker::focusOutEvent(QFocusEvent* event) {
+void DropDownColorPicker::focusOutEvent(QFocusEvent* event) {
   if(!m_color_picker->isActiveWindow()) {
     m_current_color = m_stored_color;
     m_color_picker->hide();
@@ -59,12 +59,12 @@ void DropdownColorPicker::focusOutEvent(QFocusEvent* event) {
   update();
 }
 
-void DropdownColorPicker::leaveEvent(QEvent* event) {
+void DropDownColorPicker::leaveEvent(QEvent* event) {
   m_has_mouse = false;
   update();
 }
 
-void DropdownColorPicker::mousePressEvent(QMouseEvent* event) {
+void DropDownColorPicker::mousePressEvent(QMouseEvent* event) {
   if(event->buttons() == Qt::LeftButton) {
     if(m_color_picker->isVisible()) {
       m_color_picker->hide();
@@ -74,7 +74,7 @@ void DropdownColorPicker::mousePressEvent(QMouseEvent* event) {
   }
 }
 
-void DropdownColorPicker::paintEvent(QPaintEvent* event) {
+void DropDownColorPicker::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(hasFocus() || m_color_picker->hasFocus() || m_has_mouse) {
     painter.fillRect(event->rect(), QColor("#4B23A0"));
@@ -84,11 +84,11 @@ void DropdownColorPicker::paintEvent(QPaintEvent* event) {
   painter.fillRect(1, 1, width() - 2, height() - 2, m_current_color);
 }
 
-void DropdownColorPicker::showEvent(QShowEvent* event) {
+void DropDownColorPicker::showEvent(QShowEvent* event) {
   move_color_picker();
 }
 
-void DropdownColorPicker::on_color_selected(const QColor& color) {
+void DropDownColorPicker::on_color_selected(const QColor& color) {
   m_current_color = color;
   m_stored_color = color;
   m_color_picker->hide();
@@ -97,12 +97,12 @@ void DropdownColorPicker::on_color_selected(const QColor& color) {
   m_color_signal(color);
 }
 
-void DropdownColorPicker::on_color_preview(const QColor& color) {
+void DropDownColorPicker::on_color_preview(const QColor& color) {
   m_current_color = color;
   update();
 }
 
-void DropdownColorPicker::move_color_picker() {
+void DropDownColorPicker::move_color_picker() {
   auto pos = static_cast<QWidget*>(parent())->mapToGlobal(
     geometry().bottomLeft());
   m_color_picker->move(pos.x(), pos.y() + scale_height(1));

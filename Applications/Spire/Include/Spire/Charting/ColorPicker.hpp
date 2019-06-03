@@ -2,7 +2,7 @@
 #define SPIRE_COLOR_PICKER_HPP
 #include <QLabel>
 #include <QWidget>
-#include "spire/ui/ui.hpp"
+#include "Spire/Charting/Charting.hpp"
 
 namespace Spire {
 

@@ -1,9 +1,10 @@
-#include "spire/ui/color_picker.hpp"
+#include "Spire/Charting/ColorPicker.hpp"
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLabel>
 #include <QMouseEvent>
-#include "spire/spire/dimensions.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -22,12 +23,12 @@ ColorPicker::ColorPicker(int picker_width, int picker_height, QWidget* parent)
   m_gradient_label = new QLabel(this);
   m_gradient_label->setMouseTracking(true);
   layout->addWidget(m_gradient_label);
-  auto gradient = QImage(":/icons/color-picker-display.png").scaled(
+  auto gradient = QImage(":/Icons/color-picker-display.png").scaled(
     picker_width, picker_height);
   m_gradient_label->setPixmap(QPixmap::fromImage(gradient));
   m_gradient_label->installEventFilter(this);
   auto cursor = QCursor(QPixmap::fromImage(
-    imageFromSvg(":/icons/color-picker-cursor.svg", scale(10, 10))));
+    imageFromSvg(":/Icons/color-picker-cursor.svg", scale(10, 10))));
   setCursor(cursor);
 }
 

@@ -1,4 +1,4 @@
-#include "spire/charting/charting_window.hpp"
+#include "Spire/Charting/ChartingWindow.hpp"
 #include <climits>
 #include <QApplication>
 #include <QHBoxLayout>
@@ -7,18 +7,18 @@
 #include <QKeyEvent>
 #include <QListView>
 #include <QVBoxLayout>
-#include "spire/charting/chart_view.hpp"
-#include "spire/charting/charting_technicals_panel.hpp"
-#include "spire/security_input/security_input_dialog.hpp"
-#include "spire/security_input/security_input_model.hpp"
-#include "spire/spire/dimensions.hpp"
-#include "spire/spire/local_technicals_model.hpp"
-#include "spire/ui/custom_qt_variants.hpp"
-#include "spire/ui/dropdown_menu.hpp"
-#include "spire/ui/security_widget.hpp"
-#include "spire/ui/toggle_button.hpp"
-#include "spire/charting/trend_line_editor.hpp"
-#include "spire/ui/window.hpp"
+#include "Spire/Charting/ChartView.hpp"
+#include "Spire/Charting/ChartingTechnicalsPanel.hpp"
+#include "Spire/SecurityInput/SecurityInputDialog.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalTechnicalsModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DropdownMenu.hpp"
+#include "Spire/Ui/SecurityWidget.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
+#include "Spire/Charting/TrendLineEditor.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -41,9 +41,9 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_trend_line_editor_widget(nullptr) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
-  set_svg_icon(":/icons/chart-black.svg",
-    ":/icons/chart-grey.svg");
-  setWindowIcon(QIcon(":/icons/chart-icon-256x256.png"));
+  set_svg_icon(":/Icons/chart-black.svg",
+    ":/Icons/chart-grey.svg");
+  setWindowIcon(QIcon(":/Icons/chart-icon-256x256.png"));
   setWindowTitle(tr("Chart"));
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #FFFFFF;");
@@ -87,10 +87,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addSpacing(scale_width(18));
   auto button_image_size = scale(16, 16);
   m_lock_grid_button = new ToggleButton(
-    imageFromSvg(":/icons/lock-grid-purple.svg", button_image_size),
-    imageFromSvg(":/icons/lock-grid-green.svg", button_image_size),
-    imageFromSvg(":/icons/lock-grid-purple.svg", button_image_size),
-    imageFromSvg(":/icons/lock-grid-grey.svg", button_image_size),
+    imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/lock-grid-green.svg", button_image_size),
+    imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
   m_lock_grid_button->setFixedSize(scale(26, 26));
   m_lock_grid_button->setToolTip(tr("Lock Grid"));
@@ -98,10 +98,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(m_lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
   m_auto_scale_button = new ToggleButton(
-    imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
-    imageFromSvg(":/icons/auto-scale-green.svg", button_image_size),
-    imageFromSvg(":/icons/auto-scale-purple.svg", button_image_size),
-    imageFromSvg(":/icons/auto-scale-grey.svg", button_image_size),
+    imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/auto-scale-green.svg", button_image_size),
+    imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
   m_auto_scale_button->setFixedSize(scale(26, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
@@ -118,10 +118,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
   m_draw_line_button = new ToggleButton(
-    imageFromSvg(":/icons/draw-purple.svg", button_image_size),
-    imageFromSvg(":/icons/draw-green.svg", button_image_size),
-    imageFromSvg(":/icons/draw-purple.svg", button_image_size),
-    imageFromSvg(":/icons/draw-grey.svg", button_image_size),
+    imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/draw-green.svg", button_image_size),
+    imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
+    imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
   m_draw_line_button->setFixedSize(scale(26, 26));
   m_draw_line_button->setToolTip(tr("Draw Line"));
