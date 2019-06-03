@@ -1,12 +1,18 @@
 @ECHO OFF
 SETLOCAL
-SET ROOT="%cd%"
+SET ROOT=%cd%
+SET VSWHERE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+FOR /f "usebackq delims=" %%i IN (`%VSWHERE% -prerelease -latest -property installationPath`) DO (
+  IF EXIST "%%i\Common7\Tools\vsdevcmd.bat" (
+    CALL "%%i\Common7\Tools\vsdevcmd.bat"
+  )
+)
 SET BUILD_BEAM=
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="a899167585b5893f50c3f8b330e70d499a4b48e4"
+SET beam_commit="405667ca2e60899886f0978ea6610e4ded263eea"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -19,12 +25,17 @@ IF "%BUILD_BEAM%" == "1" (
   CALL configure.bat "-DD=%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
+) ELSE (
+  PUSHD %ROOT%
+  CALL Beam\Beam\setup.bat
+  POPD
 )
 POPD
 SET commit=
 IF NOT EXIST Catch2-2.2.1 (
   git clone --branch v2.2.1 https://github.com/catchorg/Catch2.git Catch2-2.2.1
 )
+SET PATH=%PATH%;%ROOT%\Strawberry\perl\site\bin;%ROOT%\Strawberry\perl\bin;%ROOT%\Strawberry\c\bin
 IF NOT EXIST qt-5.12.1 (
   git clone git://code.qt.io/qt/qt5.git qt-5.12.1
   IF EXIST qt-5.12.1 (
@@ -39,6 +50,25 @@ IF NOT EXIST qt-5.12.1 (
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
+  )
+)
+IF NOT EXIST quickfix-v.1.15.1 (
+  wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
+  IF EXIST quickfix-v.1.15.1.zip (
+    unzip quickfix-v.1.15.1.zip
+    mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
+    PUSHD quickfix-v.1.15.1
+    PUSHD src\C++
+    sed -i "105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    POPD
+    devenv /Upgrade quickfix_vs12.sln
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
+      /p:UseEnv=true
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
+      /p:UseEnv=true
+    POPD
+    DEL quickfix-v.1.15.1.zip
   )
 )
 ENDLOCAL

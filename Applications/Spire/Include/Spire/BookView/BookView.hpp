@@ -1,0 +1,26 @@
+#ifndef SPIRE_BOOK_VIEW_HPP
+#define SPIRE_BOOK_VIEW_HPP
+#include "Spire/Spire/Spire.hpp"
+
+namespace Spire {
+  class BboQuotePanel;
+  class BookQuoteTableModel;
+  class BookQuoteTableView;
+  class BookViewController;
+  class BookViewHighlightPropertiesWidget;
+  class BookViewLevelPropertiesWidget;
+  class BookViewModel;
+  class BookViewProperties;
+  class BookViewPropertiesDialog;
+  class BookViewTableWidget;
+  class BookViewWindow;
+  class EmptyBookViewModel;
+  class LabeledDataWidget;
+  class MarketListItem;
+  class QuotePanel;
+  class QuotePanelIndicatorWidget;
+  class ServicesBookViewModel;
+  class TechnicalsPanel;
+}
+
+#endif

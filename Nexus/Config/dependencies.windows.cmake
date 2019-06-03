@@ -1,13 +1,15 @@
-include("${DEPENDENCIES_PATH}/Beam/Beam/Config/dependencies.cmake")
-set(CATCH_INCLUDE_PATH "${DEPENDENCIES_PATH}/Catch2-2.2.1/single_include")
+include(
+  "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Config/dependencies.cmake")
+set(CATCH_INCLUDE_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/Catch2-2.2.1/single_include")
 set(NEXUS_INCLUDE_PATH "${CMAKE_CURRENT_LIST_DIR}/../Include")
 set(NEXUS_SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}/../Source")
-set(BEAM_INCLUDE_PATH "${DEPENDENCIES_PATH}/Beam/Beam/Include")
+set(BEAM_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Include")
 set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
-  "${DEPENDENCIES_PATH}/Beam/Beam/Libraries/Debug/beam.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/beam.lib")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
-  "${DEPENDENCIES_PATH}/Beam/Beam/Libraries/Release/beam.lib")
-set(QT_ROOT "${DEPENDENCIES_PATH}/qt-5.12.1")
+  "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/beam.lib")
+set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.12.1")
 set(QT_INCLUDE_PATH "${QT_ROOT}/qtbase/include")
 set(QT_CORE_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtCore")
 set(QT_GUI_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtGui")

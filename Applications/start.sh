@@ -11,7 +11,7 @@ services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
 services+=" SimulationMarketDataFeedClient"
-services+=" web_portal"
+services+=" WebPortal"
 
 hostname=$(egrep -A10 "data_store:" < \
   ./AdministrationServer/config.yml | \
