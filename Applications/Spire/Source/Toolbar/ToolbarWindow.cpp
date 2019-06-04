@@ -18,7 +18,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   set_fixed_body_size(scale(308, 72));
   set_svg_icon(":/Icons/spire-icon-black.svg",
     ":/Icons/spire-icon-grey.svg");
-  setWindowIcon(QIcon(":icons/spire-icon-256x256.png"));
+  setWindowIcon(QIcon(":/Icons/spire-icon-256x256.png"));
   setWindowTitle(tr("Spire - Signed in as ") +
     QString::fromStdString(account.m_name));
   auto body = new QWidget(this);

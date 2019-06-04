@@ -64,7 +64,6 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   setAttribute(Qt::WA_Hover);
   m_label_font.setPixelSize(scale_height(10));
   m_font_metrics = QFontMetrics(m_label_font);
-  setCursor(Qt::BlankCursor);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(3)),
     static_cast<double>(scale_width(3))});
   qApp->installNativeEventFilter(this);

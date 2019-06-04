@@ -63,13 +63,17 @@ bool ToggleButton::eventFilter(QObject* object, QEvent* event) {
   } else if(event->type() == QEvent::MouseButtonRelease) {
     auto mouse_event = static_cast<QMouseEvent*>(event);
     if(mouse_event->button() == Qt::LeftButton) {
-      swap_toggle();
+      if(isEnabled()) {
+        swap_toggle();
+      }
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
         e->key() == Qt::Key_Space) {
-      swap_toggle();
+      if(isEnabled()) {
+        swap_toggle();
+      }
     }
   } else if(event->type() == QEvent::FocusIn) {
     auto e = static_cast<QFocusEvent*>(event);
@@ -101,7 +105,9 @@ void ToggleButton::focusOutEvent(QFocusEvent* event) {
 void ToggleButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
-    swap_toggle();
+    if(isEnabled()) {
+      swap_toggle();
+    }
     event->accept();
     return;
   }
@@ -127,7 +133,9 @@ void ToggleButton::resizeEvent(QResizeEvent* event) {
 
 void ToggleButton::set_icons(bool enabled) {
   if(enabled) {
-    if(m_is_toggled) {
+    if(!isEnabled() && m_is_toggled) {
+      m_icon_button.set_icon(m_toggle_icon, m_toggle_icon);
+    } else if(m_is_toggled) {
       m_icon_button.set_icon(m_toggle_icon, m_hover_icon);
     } else {
       m_icon_button.set_icon(m_icon, m_hover_icon);

@@ -13,7 +13,7 @@ namespace {
   }  
 
   TrendLine make_line(int x1, int y1, int x2, int y2, const QColor& color,
-      Qt::PenStyle style) {
+      TrendLineStyle style) {
     return TrendLine{{make_point(x1, y1), make_point(x2, y2)}, color, style};
   }
 
@@ -30,13 +30,13 @@ namespace {
 
 TEST_CASE("test_creating_and_getting_trend_lines", "[TrendLineModel]") {
   auto model = TrendLineModel();
-  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
   auto id1 = model.add(line1);
-  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
   auto id2 = model.add(line2);
-  auto line3 = make_line(50, 50, 60, 60, Qt::red, Qt::SolidLine);
+  auto line3 = make_line(50, 50, 60, 60, Qt::red, TrendLineStyle::SOLID);
   auto id3 = model.add(line3);
-  auto line4 = make_line(70, 70, 80, 80, Qt::red, Qt::SolidLine);
+  auto line4 = make_line(70, 70, 80, 80, Qt::red, TrendLineStyle::SOLID);
   auto id4 = model.add(line4);
   REQUIRE(line1 == model.get(id1));
   REQUIRE(line2 == model.get(id2));
@@ -47,11 +47,11 @@ TEST_CASE("test_creating_and_getting_trend_lines", "[TrendLineModel]") {
 
 TEST_CASE("test_removing_trend_lines", "[TrendLineModel]") {
   auto model = TrendLineModel();
-  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
   auto id1 = model.add(line1);
-  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
   auto id2 = model.add(line2);
-  auto line3 = make_line(50, 50, 60, 60, Qt::red, Qt::SolidLine);
+  auto line3 = make_line(50, 50, 60, 60, Qt::red, TrendLineStyle::SOLID);
   auto id3 = model.add(line3);
   auto lines1 = model.get_lines();
   REQUIRE(lines1.size() == 3);
@@ -75,11 +75,11 @@ TEST_CASE("test_removing_trend_lines", "[TrendLineModel]") {
 
 TEST_CASE("test_updating_and_getting_trend_lines", "[TrendLineModel]") {
   auto model = TrendLineModel();
-  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
   auto id1 = model.add(line1);
-  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
   auto id2 = model.add(line2);
-  auto line3 = make_line(50, 50, 60, 60, Qt::red, Qt::SolidLine);
+  auto line3 = make_line(50, 50, 60, 60, Qt::red, TrendLineStyle::SOLID);
   auto id3 = model.add(line3);
   auto updated_line1 = model.get(id1);
   updated_line1.m_points = {make_point(110, 110), make_point(120, 120)};
@@ -98,9 +98,9 @@ TEST_CASE("test_updating_and_getting_trend_lines", "[TrendLineModel]") {
 
 TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
   auto model = TrendLineModel();
-  auto line1 = make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine);
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
   auto id1 = model.add(line1);
-  auto line2 = make_line(30, 30, 40, 40, Qt::red, Qt::SolidLine);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
   auto id2 = model.add(line2);
   REQUIRE(model.get_selected().size() == 0);
   model.set_selected(id1);
@@ -125,18 +125,22 @@ TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
 TEST_CASE("test_basic_intersections", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(10, 12), threshold) == id1);
   REQUIRE(model.intersects(make_point(21, 19), threshold) == id1);
   REQUIRE(model.intersects(make_point(11.5, 18.5), threshold) == id1);
   REQUIRE(model.intersects(make_point(18.5, 11.5), threshold) == id1);
-  auto id2 = model.add(make_line(110, 110, 120, 115, Qt::red, Qt::SolidLine));
+  auto id2 = model.add(make_line(110, 110, 120, 115, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(110, 111), threshold) == id2);
   REQUIRE(model.intersects(make_point(119, 114), threshold) == id2);
-  auto id3 = model.add(make_line(50, 50, 60, 40, Qt::red, Qt::SolidLine));
+  auto id3 = model.add(make_line(50, 50, 60, 40, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(50, 48), threshold) == id3);
   REQUIRE(model.intersects(make_point(60, 42), threshold) == id3);
-  auto id4 = model.add(make_line(150, 50, 170, 40, Qt::red, Qt::SolidLine));
+  auto id4 = model.add(make_line(150, 50, 170, 40, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(150, 48), threshold) == id4);
   REQUIRE(model.intersects(make_point(170, 42), threshold) == id4);
   print_test_name("test_basic_intersections");
@@ -145,9 +149,12 @@ TEST_CASE("test_basic_intersections", "[TrendLineModel]") {
 TEST_CASE("test_multiple_intersections", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
-  auto id2 = model.add(make_line(20, 18, 25, 35, Qt::red, Qt::SolidLine));
-  auto id3 = model.add(make_line(20, 30, 30, 20, Qt::red, Qt::SolidLine));
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red,
+    TrendLineStyle::SOLID));
+  auto id2 = model.add(make_line(20, 18, 25, 35, Qt::red,
+    TrendLineStyle::SOLID));
+  auto id3 = model.add(make_line(20, 30, 30, 20, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(20, 19), threshold) == id2);
   REQUIRE(model.intersects(make_point(20.2, 20), threshold) == id1);
   REQUIRE(model.intersects(make_point(22.6, 27.5), threshold) == id3);
@@ -158,7 +165,8 @@ TEST_CASE("test_multiple_intersections", "[TrendLineModel]") {
 TEST_CASE("test_basic_non_intersections", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red, Qt::SolidLine));
+  auto id1 = model.add(make_line(10, 10, 20, 20, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(10, 20), threshold) == -1);
   REQUIRE(model.intersects(make_point(20, 10), threshold) == -1);
   REQUIRE(model.intersects(make_point(15, 4), threshold) == -1);
@@ -171,7 +179,8 @@ TEST_CASE("test_basic_non_intersections", "[TrendLineModel]") {
 TEST_CASE("test_vertical_lines", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id = model.add(make_line(10, 10, 10, 20, Qt::red, Qt::SolidLine));
+  auto id = model.add(make_line(10, 10, 10, 20, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(12, 15), threshold) == id);
   REQUIRE(model.intersects(make_point(8, 15), threshold) == id);
   REQUIRE(model.intersects(make_point(10, 8), threshold) == id);
@@ -188,7 +197,8 @@ TEST_CASE("test_vertical_lines", "[TrendLineModel]") {
 TEST_CASE("test_horizontal_lines", "[TrendLineModel]") {
   auto threshold = ChartValue(5);
   auto model = TrendLineModel();
-  auto id = model.add(make_line(10, 10, 20, 10, Qt::red, Qt::SolidLine));
+  auto id = model.add(make_line(10, 10, 20, 10, Qt::red,
+    TrendLineStyle::SOLID));
   REQUIRE(model.intersects(make_point(15, 12), threshold) == id);
   REQUIRE(model.intersects(make_point(15, 8), threshold) == id);
   REQUIRE(model.intersects(make_point(8, 10), threshold) == id);

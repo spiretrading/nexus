@@ -1,21 +1,21 @@
-#ifndef SPIRE_DROPDOWN_MENU_HPP
-#define SPIRE_DROPDOWN_MENU_HPP
+#ifndef SPIRE_DROP_DOWN_MENU_HPP
+#define SPIRE_DROP_DOWN_MENU_HPP
 #include <QComboBox>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Displays a Spire-styled QComboBox.
-  class DropdownMenu : public QWidget {
+  class DropDownMenu : public QWidget {
     public:
 
-      //! Constructs a DropdownMenu with specified items. The first item
-      //! in the vector is the default selected item.
+      //! Constructs a DropDownMenu with the specified items. The first item
+      //! in the vector is the initially selected item.
       /*
         \param items The items to display in the menu.
-        \param parent The parent widget to the DropdownMenu.
+        \param parent The parent widget to the DropDownMenu.
       */
-      explicit DropdownMenu(const std::vector<QString>& items,
+      explicit DropDownMenu(const std::vector<QString>& items,
         QWidget* parent = nullptr);
 
       //! Clears the items from the list and populates it with the specified
@@ -38,7 +38,7 @@ namespace Spire {
     private:
       QString m_current_text;
       QImage m_dropdown_image;
-      DropdownMenuList* m_menu_list;
+      DropDownMenuList* m_menu_list;
 
       void move_menu_list();
       void on_clicked();

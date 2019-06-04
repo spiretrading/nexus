@@ -1,24 +1,24 @@
-#ifndef SPIRE_DROPDOWN_MENU_LIST_HPP
-#define SPIRE_DROPDOWN_MENU_LIST_HPP
+#ifndef SPIRE_DROP_DOWN_MENU_LIST_HPP
+#define SPIRE_DROP_DOWN_MENU_LIST_HPP
 #include <QScrollArea>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  //! The list used by the DropdownMenu.
-  class DropdownMenuList : public QWidget {
+  //! The list used by the DropDownMenu.
+  class DropDownMenuList : public QWidget {
     public:
 
       //! Signals that an item was selected from the list.
       using SelectedSignal = Signal<void (const QString& text)>;
 
-      //! Constructs a DropdownMenuList with the specified items.
+      //! Constructs a DropDownMenuList with the specified items.
       /*
         \param items The initial items in the list.
         \param parent The parent to the list.
       */
-      DropdownMenuList(const std::vector<QString>& items,
+      DropDownMenuList(const std::vector<QString>& items,
         QWidget* parent = nullptr);
 
       //! Clears the items from the list and populates it with the specified

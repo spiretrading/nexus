@@ -17,6 +17,7 @@
 #include "Spire/Ui/DropdownMenu.hpp"
 #include "Spire/Ui/SecurityWidget.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
+#include "Spire/Charting/TrendLineEditor.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace boost;
@@ -36,7 +37,8 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_security_widget_container(nullptr),
       m_technicals_panel(nullptr),
       m_chart(nullptr),
-      m_is_chart_auto_scaled(true) {
+      m_is_chart_auto_scaled(true),
+      m_trend_line_editor_widget(nullptr) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
   set_svg_icon(":/Icons/chart-black.svg",
@@ -78,21 +80,22 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12)));
   button_header_layout->addWidget(m_period_line_edit);
   button_header_layout->addSpacing(scale_width(4));
-  m_period_dropdown = new DropdownMenu(
+  m_period_dropdown = new DropDownMenu(
     {tr("second"), tr("minute"), tr("hour")}, m_button_header_widget);
   m_period_dropdown->setFixedSize(scale(80, 26));
   button_header_layout->addWidget(m_period_dropdown);
   button_header_layout->addSpacing(scale_width(18));
   auto button_image_size = scale(16, 16);
-  auto lock_grid_button = new ToggleButton(
+  m_lock_grid_button = new ToggleButton(
     imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-green.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
-  lock_grid_button->setFixedSize(scale(26, 26));
-  lock_grid_button->setToolTip(tr("Lock Grid"));
-  button_header_layout->addWidget(lock_grid_button);
+  m_lock_grid_button->setFixedSize(scale(26, 26));
+  m_lock_grid_button->setToolTip(tr("Lock Grid"));
+  m_lock_grid_button->setDisabled(true);
+  button_header_layout->addWidget(m_lock_grid_button);
   button_header_layout->addSpacing(scale_width(10));
   m_auto_scale_button = new ToggleButton(
     imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
@@ -103,6 +106,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   m_auto_scale_button->setFixedSize(scale(26, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
+  m_auto_scale_button->setDisabled(true);
   m_auto_scale_button->connect_clicked_signal([=] {
     on_auto_scale_button_click();
   });
@@ -113,15 +117,19 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   seperator->setStyleSheet("background-color: #D0D0D0;");
   button_header_layout->addWidget(seperator);
   button_header_layout->addSpacing(scale_width(10));
-  auto draw_line_button = new ToggleButton(
+  m_draw_line_button = new ToggleButton(
     imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
     imageFromSvg(":/Icons/draw-green.svg", button_image_size),
     imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
     imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
-  draw_line_button->setFixedSize(scale(26, 26));
-  draw_line_button->setToolTip(tr("Draw Line"));
-  button_header_layout->addWidget(draw_line_button);
+  m_draw_line_button->setFixedSize(scale(26, 26));
+  m_draw_line_button->setToolTip(tr("Draw Line"));
+  m_draw_line_button->setDisabled(true);
+  m_draw_line_button->connect_clicked_signal([=] {
+    on_draw_line_button_click();
+  });
+  button_header_layout->addWidget(m_draw_line_button);
   button_header_layout->addStretch(1);
   layout->addWidget(m_button_header_widget);
   m_security_widget = new SecurityWidget(input_model,
@@ -132,10 +140,10 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
   });
   layout->addWidget(m_security_widget);
   setTabOrder(m_period_line_edit, m_period_dropdown);
-  setTabOrder(m_period_dropdown, lock_grid_button);
-  setTabOrder(lock_grid_button, m_auto_scale_button);
-  setTabOrder(m_auto_scale_button, draw_line_button);
-  setTabOrder(draw_line_button, m_period_line_edit);
+  setTabOrder(m_period_dropdown, m_lock_grid_button);
+  setTabOrder(m_lock_grid_button, m_auto_scale_button);
+  setTabOrder(m_auto_scale_button, m_draw_line_button);
+  setTabOrder(m_draw_line_button, m_period_line_edit);
   m_security_widget->setFocus();
   Window::layout()->addWidget(body);
 }
@@ -155,6 +163,11 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_chart = new ChartView(*m_model, m_security_widget_container);
   m_chart->set_auto_scale(m_is_chart_auto_scaled);
   container_layout->addWidget(m_chart);
+  m_lock_grid_button->setEnabled(true);
+  m_auto_scale_button->setEnabled(true);
+  m_draw_line_button->setEnabled(true);
+  m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
+  m_trend_line_editor_widget->hide();
   m_security_widget->set_widget(m_security_widget_container);
   m_chart->installEventFilter(this);
 }
@@ -228,6 +241,14 @@ void ChartingWindow::on_auto_scale_button_click() {
   m_is_chart_auto_scaled = !m_is_chart_auto_scaled;
   if(m_chart != nullptr) {
     m_chart->set_auto_scale(m_is_chart_auto_scaled);
+  }
+}
+
+void ChartingWindow::on_draw_line_button_click() {
+  if(m_trend_line_editor_widget->isVisible()) {
+    m_trend_line_editor_widget->hide();
+  } else {
+    m_trend_line_editor_widget->show();
   }
 }
 

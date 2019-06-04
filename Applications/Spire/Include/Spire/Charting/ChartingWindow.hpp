@@ -5,8 +5,8 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include "Nexus/Definitions/Security.hpp"
 #include "Spire/Charting/Charting.hpp"
+#include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -54,9 +54,12 @@ namespace Spire {
       SecurityWidget* m_security_widget;
       QWidget* m_button_header_widget;
       QLineEdit* m_period_line_edit;
-      DropdownMenu* m_period_dropdown;
+      DropDownMenu* m_period_dropdown;
+      ToggleButton* m_lock_grid_button;
       ToggleButton* m_auto_scale_button;
+      ToggleButton* m_draw_line_button;
       bool m_is_chart_auto_scaled;
+      TrendLineEditor* m_trend_line_editor_widget;
       QWidget* m_security_widget_container;
       ChartingTechnicalsPanel* m_technicals_panel;
       ChartView* m_chart;
@@ -64,6 +67,7 @@ namespace Spire {
       QPoint m_last_chart_mouse_pos;
 
       void on_auto_scale_button_click();
+      void on_draw_line_button_click();
       void on_period_line_edit_changed();
       void on_security_change(const Nexus::Security& security);
   };
