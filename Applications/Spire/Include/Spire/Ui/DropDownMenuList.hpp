@@ -1,5 +1,5 @@
-#ifndef SPIRE_DROPDOWN_MENU_LIST_HPP
-#define SPIRE_DROPDOWN_MENU_LIST_HPP
+#ifndef SPIRE_DROP_DOWN_MENU_LIST_HPP
+#define SPIRE_DROP_DOWN_MENU_LIST_HPP
 #include <QScrollArea>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"

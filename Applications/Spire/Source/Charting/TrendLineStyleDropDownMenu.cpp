@@ -7,7 +7,7 @@
 
 using namespace Spire;
 
-TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(
+TrendLineStyleDropDownMenu::TrendLineStyleDropDownMenu(
     QWidget* parent)
     : QWidget(parent),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))) {
@@ -19,11 +19,11 @@ TrendLineStyleDropdownMenu::TrendLineStyleDropdownMenu(
   window()->installEventFilter(this);
 }
 
-TrendLineStyle TrendLineStyleDropdownMenu::get_style() const {
+TrendLineStyle TrendLineStyleDropDownMenu::get_style() const {
   return m_current_style;
 }
 
-bool TrendLineStyleDropdownMenu::eventFilter(QObject* watched, QEvent* event) {
+bool TrendLineStyleDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
       if(m_menu_list->isVisible()) {
@@ -36,12 +36,12 @@ bool TrendLineStyleDropdownMenu::eventFilter(QObject* watched, QEvent* event) {
   return false;
 }
 
-void TrendLineStyleDropdownMenu::focusOutEvent(QFocusEvent* event) {
+void TrendLineStyleDropDownMenu::focusOutEvent(QFocusEvent* event) {
   m_menu_list->hide();
   update();
 }
 
-void TrendLineStyleDropdownMenu::keyPressEvent(QKeyEvent* event) {
+void TrendLineStyleDropDownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     on_clicked();
@@ -55,7 +55,7 @@ void TrendLineStyleDropdownMenu::keyPressEvent(QKeyEvent* event) {
   event->ignore();
 }
 
-void TrendLineStyleDropdownMenu::mousePressEvent(QMouseEvent* event) {
+void TrendLineStyleDropDownMenu::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     if(m_menu_list->isVisible()) {
       m_menu_list->hide();
@@ -65,7 +65,7 @@ void TrendLineStyleDropdownMenu::mousePressEvent(QMouseEvent* event) {
   }
 }
 
-void TrendLineStyleDropdownMenu::paintEvent(QPaintEvent* event) {
+void TrendLineStyleDropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(hasFocus() || m_menu_list->hasFocus()) {
     painter.fillRect(event->rect(), QColor("#4B23A0"));
@@ -81,7 +81,7 @@ void TrendLineStyleDropdownMenu::paintEvent(QPaintEvent* event) {
     scale_height(8)), m_dropdown_image);
 }
 
-void TrendLineStyleDropdownMenu::move_menu_list() {
+void TrendLineStyleDropDownMenu::move_menu_list() {
   auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
@@ -90,14 +90,14 @@ void TrendLineStyleDropdownMenu::move_menu_list() {
   m_menu_list->raise();
 }
 
-void TrendLineStyleDropdownMenu::on_clicked() {
+void TrendLineStyleDropDownMenu::on_clicked() {
   move_menu_list();
   m_menu_list->setFixedWidth(width());
   m_menu_list->show();
   m_menu_list->raise();
 }
 
-void TrendLineStyleDropdownMenu::on_item_selected(TrendLineStyle style) {
+void TrendLineStyleDropDownMenu::on_item_selected(TrendLineStyle style) {
   m_menu_list->hide();
   m_current_style = style;
   update();

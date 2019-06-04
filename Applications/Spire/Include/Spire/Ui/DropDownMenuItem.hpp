@@ -1,5 +1,5 @@
-#ifndef SPIRE_DROPDOWN_MENU_ITEM_HPP
-#define SPIRE_DROPDOWN_MENU_ITEM_HPP
+#ifndef SPIRE_DROP_DOWN_MENU_ITEM_HPP
+#define SPIRE_DROP_DOWN_MENU_ITEM_HPP
 #include <QLabel>
 #include "Spire/Ui/Ui.hpp"
 
@@ -9,7 +9,10 @@ namespace Spire {
   class DropDownMenuItem : public QLabel {
     public:
 
-      //! Signals that this item was selected.
+      //! Signals that an user selected an item.
+      /*
+        \param text The item selected.
+      */
       using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropDownMenuItem with displayed text.
@@ -25,6 +28,10 @@ namespace Spire {
       //! Removes the item's highlighted style.
       void remove_highlight();
 
+      //! Calls the provided slot when the selected signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 

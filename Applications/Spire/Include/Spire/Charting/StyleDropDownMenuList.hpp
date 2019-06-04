@@ -1,5 +1,5 @@
-#ifndef SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
-#define SPIRE_STYLE_DROPDOWN_MENU_LIST_HPP
+#ifndef SPIRE_STYLE_DROP_DOWN_MENU_LIST_HPP
+#define SPIRE_STYLE_DROP_DOWN_MENU_LIST_HPP
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
@@ -12,13 +12,16 @@ namespace Spire {
     public:
 
       //! Signals that an item was selected from the list.
+      /*
+        param style The trend line style that was selected.
+      */
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a StyleDropDownMenuList.
       /*
         \param parent The parent to the list.
       */
-      StyleDropDownMenuList(QWidget* parent = nullptr);
+      explicit StyleDropDownMenuList(QWidget* parent = nullptr);
 
       //! Returns the item in the list that follows the item specified.
       /*
@@ -32,6 +35,10 @@ namespace Spire {
       */
       TrendLineStyle get_previous(TrendLineStyle style);
 
+      //! Calls the provided slot when the selected signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 

@@ -10,7 +10,10 @@ namespace Spire {
   class ColorPicker : public QWidget {
     public:
 
-      //! Signals that a color has been interacted with.
+      //! Signals that a color has been previewed or selected.
+      /*
+        \param color The color that has been previewed or selected.
+      */
       using ColorSignal = Signal<void (const QColor& color)>;
 
       //! Constructs a ColorPicker.
@@ -21,9 +24,17 @@ namespace Spire {
       */
       ColorPicker(int width, int height, QWidget* parent = nullptr);
 
+      //! Calls the provided slot when the color preview signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_preview_signal(
         const ColorSignal::slot_type& slot) const;
 
+      //! Calls the provided slot when the color selected signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_selected_signal(
         const ColorSignal::slot_type& slot) const;
 

@@ -1,5 +1,5 @@
-#ifndef SPIRE_DROPDOWN_COLOR_PICKER_HPP
-#define SPIRE_DROPDOWN_COLOR_PICKER_HPP
+#ifndef SPIRE_DROP_DOWN_COLOR_PICKER_HPP
+#define SPIRE_DROP_DOWN_COLOR_PICKER_HPP
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 
@@ -10,14 +10,21 @@ namespace Spire {
     public:
 
       //! Signals that a color has been selected.
+      /*
+        param color The color that was selected.
+      */
       using ColorSignal = Signal<void (const QColor& color)>;
 
       //! Constructs a DropdownColorPicker.
       /*
         \param parent The parent widget.
       */
-      DropDownColorPicker(QWidget* parent = nullptr);
+      explicit DropDownColorPicker(QWidget* parent = nullptr);
 
+      //! Calls the provided slot when the color selected signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 

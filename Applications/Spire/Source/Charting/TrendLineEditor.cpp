@@ -33,7 +33,7 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   color_picker->setFixedSize(scale(70, 18));
   layout->addWidget(color_picker);
   layout->addStretch(8);
-  auto style_dropdown = new TrendLineStyleDropdownMenu(this);
+  auto style_dropdown = new TrendLineStyleDropDownMenu(this);
   style_dropdown->setFixedSize(scale(70, 18));
   layout->addWidget(style_dropdown);
 }

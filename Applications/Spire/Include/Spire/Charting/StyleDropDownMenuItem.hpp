@@ -1,5 +1,5 @@
-#ifndef SPIRE_STYLE_DROPDOWN_MENU_ITEM_HPP
-#define SPIRE_STYLE_DROPDOWN_MENU_ITEM_HPP
+#ifndef SPIRE_STYLE_DROP_DOWN_MENU_ITEM_HPP
+#define SPIRE_STYLE_DROP_DOWN_MENU_ITEM_HPP
 #include <QWidget>
 #include "Spire/Charting/TrendLine.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -10,7 +10,10 @@ namespace Spire {
   class StyleDropDownMenuItem : public QWidget {
     public:
 
-      //! Signals that this item was selected.
+      //! Signals that an user selected a trend line style.
+      /*
+        \param style The trend line selected.
+      */
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a DropDownMenuItem with a specified style.
@@ -18,7 +21,8 @@ namespace Spire {
         \param style The style to display.
         \param parent The parent to this widget.
       */
-      StyleDropDownMenuItem(TrendLineStyle style, QWidget* parent = nullptr);
+      explicit StyleDropDownMenuItem(TrendLineStyle style,
+        QWidget* parent = nullptr);
 
       //! Returns the style represented by this item.
       TrendLineStyle get_style() const;
@@ -29,6 +33,10 @@ namespace Spire {
       //! Removes the item's highlighted status.
       void remove_highlight();
 
+      //! Calls the provided slot when the selected signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 

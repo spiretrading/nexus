@@ -9,7 +9,7 @@
 
 using namespace Spire;
 
-DropdownMenu::DropdownMenu(const std::vector<QString>& items,
+DropDownMenu::DropDownMenu(const std::vector<QString>& items,
     QWidget* parent)
     : QWidget(parent),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))) {
@@ -23,7 +23,7 @@ DropdownMenu::DropdownMenu(const std::vector<QString>& items,
   window()->installEventFilter(this);
 }
 
-void DropdownMenu::set_items(const std::vector<QString>& items) {
+void DropDownMenu::set_items(const std::vector<QString>& items) {
   auto index = 0;
   auto list = static_cast<QScrollArea*>(
     m_menu_list->layout()->itemAt(0)->widget())->widget();
@@ -41,11 +41,11 @@ void DropdownMenu::set_items(const std::vector<QString>& items) {
   update();
 }
 
-const QString& DropdownMenu::get_text() const {
+const QString& DropDownMenu::get_text() const {
   return m_current_text;
 }
 
-bool DropdownMenu::eventFilter(QObject* watched, QEvent* event) {
+bool DropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
       if(m_menu_list->isVisible()) {
@@ -58,12 +58,12 @@ bool DropdownMenu::eventFilter(QObject* watched, QEvent* event) {
   return false;
 }
 
-void DropdownMenu::focusOutEvent(QFocusEvent* event) {
+void DropDownMenu::focusOutEvent(QFocusEvent* event) {
   m_menu_list->hide();
   update();
 }
 
-void DropdownMenu::keyPressEvent(QKeyEvent* event) {
+void DropDownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     on_clicked();
@@ -77,7 +77,7 @@ void DropdownMenu::keyPressEvent(QKeyEvent* event) {
   event->ignore();
 }
 
-void DropdownMenu::mousePressEvent(QMouseEvent* event) {
+void DropDownMenu::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     if(m_menu_list->isVisible()) {
       m_menu_list->hide();
@@ -87,7 +87,7 @@ void DropdownMenu::mousePressEvent(QMouseEvent* event) {
   }
 }
 
-void DropdownMenu::paintEvent(QPaintEvent* event) {
+void DropDownMenu::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(hasFocus() || m_menu_list->hasFocus()) {
     painter.fillRect(event->rect(), QColor("#4B23A0"));
@@ -105,7 +105,7 @@ void DropdownMenu::paintEvent(QPaintEvent* event) {
     scale_height(11)), m_dropdown_image);
 }
 
-void DropdownMenu::move_menu_list() {
+void DropDownMenu::move_menu_list() {
   auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
@@ -114,14 +114,14 @@ void DropdownMenu::move_menu_list() {
   m_menu_list->raise();
 }
 
-void DropdownMenu::on_clicked() {
+void DropDownMenu::on_clicked() {
   move_menu_list();
   m_menu_list->setFixedWidth(width());
   m_menu_list->show();
   m_menu_list->raise();
 }
 
-void DropdownMenu::on_item_selected(const QString& text) {
+void DropDownMenu::on_item_selected(const QString& text) {
   m_menu_list->hide();
   m_current_text = text;
   update();

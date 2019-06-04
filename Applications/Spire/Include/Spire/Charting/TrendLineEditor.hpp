@@ -21,7 +21,7 @@ namespace Spire {
         \param parent The parent to the TrendLineEditor, and reference for
                       determining the editor's position.
       */
-      TrendLineEditor(QWidget* parent = nullptr);
+      explicit TrendLineEditor(QWidget* parent = nullptr);
 
       //! Returns the selected color.
       const QColor& get_color() const;
@@ -41,9 +41,17 @@ namespace Spire {
       */
       void set_style(TrendLineStyle style);
 
+      //! Calls the provided slot when the color signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
     
+      //! Calls the provided slot when the style signal is triggered.
+      /*
+        \param slot The slot to call.
+      */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
