@@ -10,14 +10,14 @@ namespace Spire {
   class StyleDropDownMenuItem : public QWidget {
     public:
 
-      //! Signals that an user selected a trend line style.
-      /*
-        \param style The trend line selected.
+      //! Signals that a user selected a trend line style.
+      /*!
+        \param style The selected trend line style.
       */
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a DropDownMenuItem with a specified style.
-      /*
+      /*!
         \param style The style to display.
         \param parent The parent to this widget.
       */
@@ -34,7 +34,7 @@ namespace Spire {
       void remove_highlight();
 
       //! Calls the provided slot when the selected signal is triggered.
-      /*
+      /*!
         \param slot The slot to call.
       */
       boost::signals2::connection connect_selected_signal(

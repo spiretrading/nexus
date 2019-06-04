@@ -12,31 +12,31 @@ namespace Spire {
     public:
 
       //! Signals that an item was selected from the list.
-      /*
-        param style The trend line style that was selected.
+      /*!
+        \param style The trend line style that was selected.
       */
       using SelectedSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a StyleDropDownMenuList.
-      /*
+      /*!
         \param parent The parent to the list.
       */
       explicit StyleDropDownMenuList(QWidget* parent = nullptr);
 
       //! Returns the item in the list that follows the item specified.
-      /*
+      /*!
         \param style The specified item.
       */
       TrendLineStyle get_next(TrendLineStyle style);
 
       //! Returns the item in the list that comes before the item specified.
-      /*
+      /*!
         \param style The specified item.
       */
       TrendLineStyle get_previous(TrendLineStyle style);
 
       //! Calls the provided slot when the selected signal is triggered.
-      /*
+      /*!
         \param slot The slot to call.
       */
       boost::signals2::connection connect_selected_signal(

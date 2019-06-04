@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Constructs a TrendLineStyleDropDownMenu.
-      /*
+      /*!
         \param parent The parent widget to the TrendLineStyleDropDownMenu.
       */
       explicit TrendLineStyleDropDownMenu(QWidget* parent = nullptr);

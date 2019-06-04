@@ -17,7 +17,7 @@ namespace Spire {
       using StyleSignal = Signal<void ()>;
 
       //! Constructs a TrendLineEditor.
-      /*
+      /*!
         \param parent The parent to the TrendLineEditor, and reference for
                       determining the editor's position.
       */
@@ -27,7 +27,7 @@ namespace Spire {
       const QColor& get_color() const;
 
       //! Sets the selected color.
-      /*
+      /*!
         \param color The color to assign to the TrendLineEditor.
       */
       void set_color(const QColor& color);
@@ -36,20 +36,20 @@ namespace Spire {
       TrendLineStyle get_style() const;
 
       //! Sets the selected line style.
-      /*
+      /*!
         \param style The style to assign to the TrendLineEditor.
       */
       void set_style(TrendLineStyle style);
 
       //! Calls the provided slot when the color signal is triggered.
-      /*
+      /*!
         \param slot The slot to call.
       */
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
     
       //! Calls the provided slot when the style signal is triggered.
-      /*
+      /*!
         \param slot The slot to call.
       */
       boost::signals2::connection connect_style_signal(

@@ -35,7 +35,7 @@ namespace Spire {
     TrendLine();
 
     //! Constructs a TrendLine.
-    /*
+    /*!
       \param points The two points of the trend line.
       \param color The color of the trend line.
       \param style The style of the trend line.
@@ -45,7 +45,7 @@ namespace Spire {
   };
 
   //! Draws a TrendLine using the provided QPainter.
-  /*
+  /*!
     \param painter The painter used for drawing the trend line.
     \param style The trend line style to draw.
     \param color The color of the trend line.
