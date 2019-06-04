@@ -11,7 +11,7 @@ namespace Spire {
 
       //! Constructs a DropDownMenu with the specified items. The first item
       //! in the vector is the initially selected item.
-      /*
+      /*!
         \param items The items to display in the menu.
         \param parent The parent widget to the DropDownMenu.
       */
@@ -20,7 +20,7 @@ namespace Spire {
 
       //! Clears the items from the list and populates it with the specified
       //! items.
-      /*
+      /*!
         \param items The items to display in the menu.
       */
       void set_items(const std::vector<QString>& items);

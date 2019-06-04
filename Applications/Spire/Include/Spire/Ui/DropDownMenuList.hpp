@@ -14,7 +14,7 @@ namespace Spire {
       using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropDownMenuList with the specified items.
-      /*
+      /*!
         \param items The initial items in the list.
         \param parent The parent to the list.
       */
@@ -23,19 +23,19 @@ namespace Spire {
 
       //! Clears the items from the list and populates it with the specified
       //! items.
-      /*
+      /*!
         \param items The items to display in the menu.
       */
       void set_items(const std::vector<QString>& items);
 
       //! Returns the item in the list that follows the item specified.
-      /*
+      /*!
         \param text The specified item.
       */
       QString get_next(const QString& text);
 
       //! Returns the item in the list that comes before the item specified.
-      /*
+      /*!
         \param text The specified item.
       */
       QString get_previous(const QString& text);

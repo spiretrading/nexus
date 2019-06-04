@@ -15,14 +15,14 @@ namespace Spire {
       explicit QuotePanelIndicatorWidget(QWidget* parent = nullptr);
 
       //! Sets the background color.
-      /*
+      /*!
         \param color The background color.
       */
       void set_color(const QColor& color);
 
       //! Sets the background color with partial opacity and animates it
       //! to full opacity.
-      /*
+      /*!
         \param color The background color.
       */
       void animate_color(const QColor& color);

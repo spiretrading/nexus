@@ -10,8 +10,9 @@ namespace Spire {
   //! Displays both sides of a security's book quotes.
   class BookViewTableWidget : public QWidget {
     public:
+
       //! Constructs a BookViewTableWidget.
-      /*
+      /*!
         \param model The model to get the table data from.
         \param properties The properties the table will be updated to have.
         \param parent The parent to this widget.
@@ -20,7 +21,7 @@ namespace Spire {
         BookViewProperties properties, QWidget* parent = nullptr);
 
       //! Sets the properties of the table.
-      /*
+      /*!
         \param properties The properties the table will be updated to have.
       */
       void set_properties(BookViewProperties properties);

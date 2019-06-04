@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Constructs a SnapshotLoadingWidget.
-      /*
+      /*!
         \param scroll_area The reference scroll area, used to size the
                animated logo widget.
         \param parent The parent widget.

@@ -85,7 +85,7 @@ namespace Spire {
   //! Returns a promise that signals the result only when all provided
   //! promises have completed, or throws an exception if any provided
   //! promise throws an exception.
-  /*
+  /*!
     \param promises The promises to be executed.
   */
   template<typename T>

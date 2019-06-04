@@ -13,7 +13,7 @@ namespace Spire {
     public:
 
       //! Constructs a ChartingTechnicalsPanel with the provided model.
-      /*
+      /*!
         \param model The data source.
       */
       ChartingTechnicalsPanel(TechnicalsModel& model);

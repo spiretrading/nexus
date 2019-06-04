@@ -14,7 +14,7 @@ namespace Spire {
       using ClickedSignal = Signal<void ()>;
 
       //! Constructs a ToggleButton.
-      /*
+      /*!
         \param icon The icon shown when the button is in an untoggled state.
         \param toggle_icon The icon shown when the button is in a toggled
                             state.
@@ -23,7 +23,7 @@ namespace Spire {
       ToggleButton(QImage icon, QImage toggle_icon, QWidget* parent = nullptr);
 
       //! Constructs a ToggleButton with a specific hover icon.
-      /*
+      /*!
         \param icon The icon shown when the button is in an untoggled state.
         \param toggle_icon The icon shown when the button is in a toggled
                             state.
@@ -35,7 +35,7 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       //! Constructs a ToggleButton with a specific hover icon.
-      /*
+      /*!
         \param icon The icon shown when the button is in an untoggled state.
         \param toggle_icon The icon shown when the button is in a toggled
                             state.
@@ -54,13 +54,13 @@ namespace Spire {
       void set_toggled(bool toggled);
 
       //! Sets the status of the button, and applies the appropriate icons.
-      /*
+      /*!
         \param enabled Enables the button if true, disables it otherwise.
       */
       void setEnabled(bool enabled);
 
       //! Sets the status of the button, and applies the appropriate icons.
-      /*
+      /*!
         \param disabled Disables the button if true, enables it otherwise.
       */
       void setDisabled(bool disabled);

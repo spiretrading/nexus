@@ -10,7 +10,7 @@ namespace Spire {
     public:
 
       //! Constructs a Dialog.
-      /*
+      /*!
         \param parent The parent widget to the Dialog.
       */
       explicit Dialog(QWidget* parent);

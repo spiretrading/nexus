@@ -18,7 +18,7 @@ namespace Spire {
       explicit TechnicalsPanel(QWidget* parent = nullptr);
 
       //! Sets the model the panel gets its data from.
-      /*
+      /*!
         \param model The associated model.
       */
       void set_model(std::shared_ptr<BookViewModel> model);

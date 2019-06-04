@@ -7,13 +7,13 @@ namespace Spire {
   class test_chart_model;
 
   //! Prints a unit test's name using QDebug.
-  /*
+  /*!
     \param name The unit test's name.
   */
   void print_test_name(const QString& name);
 
   //! Runs a unit test that use QtPromises.
-  /*
+  /*!
     \param test The unit test to run.
     \param name The unit test's name.
   */

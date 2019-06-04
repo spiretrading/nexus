@@ -10,7 +10,7 @@ namespace Spire {
     public:
 
       //! Constructs a BookQuoteTableView.
-      /*
+      /*!
         \param model The model to get the table data from.
         \param parent The parent to this widget.
       */
@@ -18,7 +18,7 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       //! Sets the properties of the table.
-      /*
+      /*!
         \param properties The properties the table will be updated to have.
       */
       void set_properties(const BookViewProperties& properties);

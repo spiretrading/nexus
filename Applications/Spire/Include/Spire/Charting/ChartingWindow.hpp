@@ -33,7 +33,7 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       //! Sets the chart and technicals models to display.
-      /*
+      /*!
         \param chart_model The chart model data source.
         \param technicals_model The technicals model data source.
       */

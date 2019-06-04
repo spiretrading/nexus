@@ -10,7 +10,7 @@ namespace Spire {
     public:
 
       //! Constructs a transition widget.
-      /*
+      /*!
         \param parent The parent widget, and the widget that the transition
                       animation will be displayed on top of.
       */

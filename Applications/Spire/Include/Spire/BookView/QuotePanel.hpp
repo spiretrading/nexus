@@ -15,7 +15,7 @@ namespace Spire {
     public:
 
       //! Constructs a QuotePanel.
-      /*
+      /*!
         \param model The model that supplies the BBO quote data.
         \param side Which side of a BBO quote this widget represents.
         \param parent The parent widget.

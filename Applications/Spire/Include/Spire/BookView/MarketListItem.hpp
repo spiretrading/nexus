@@ -13,7 +13,7 @@ namespace Spire {
 
       //! Constructs a MarketListItem and sets it's display text to the
       //! market code.
-      /*
+      /*!
         \param market The market that this widget represents.
         \param parent The list that this widget will be displayed in.
       */

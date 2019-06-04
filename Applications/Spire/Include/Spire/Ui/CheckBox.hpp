@@ -18,7 +18,7 @@ namespace Spire {
       //! Sets the CheckBox's stylesheet. Note that these styles are
       //! wrapped in the appropriate CSS selectors, so only the properties
       //! need to be specified.
-      /*
+      /*!
         \param base_style The text style.
         \param indicator_style The default box style.
         \param checked_style The box style when the CheckBox is selected.

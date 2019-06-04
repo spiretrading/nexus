@@ -15,19 +15,19 @@ namespace Spire {
     public:
 
       //! Constructs a TimeAndSalesTableView.
-      /*
+      /*!
         \param parent The parent to this widget.
       */
       explicit TimeAndSalesTableView(QWidget* parent = nullptr);
 
       //! Sets the model to get the table data from.
-      /*
+      /*!
         \param model The model.
       */
       void set_model(TimeAndSalesWindowModel* model);
 
       //! Sets the TimeAndSalesProperties of the table.
-      /*
+      /*!
         \param properties The properties the table will be updated to have.
       */
       void set_properties(const TimeAndSalesProperties& properties);

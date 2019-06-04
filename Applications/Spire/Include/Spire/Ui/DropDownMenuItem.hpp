@@ -10,13 +10,13 @@ namespace Spire {
     public:
 
       //! Signals that an user selected an item.
-      /*
+      /*!
         \param text The item selected.
       */
       using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropDownMenuItem with displayed text.
-      /*
+      /*!
         \param text The text to display.
         \param parent The parent to this widget.
       */
@@ -29,7 +29,7 @@ namespace Spire {
       void remove_highlight();
 
       //! Calls the provided slot when the selected signal is triggered.
-      /*
+      /*!
         \param slot The slot to call.
       */
       boost::signals2::connection connect_selected_signal(
