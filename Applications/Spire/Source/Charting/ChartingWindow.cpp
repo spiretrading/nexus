@@ -246,8 +246,10 @@ void ChartingWindow::on_auto_scale_button_click() {
 
 void ChartingWindow::on_draw_line_button_click() {
   if(m_trend_line_editor_widget->isVisible()) {
+    m_chart->set_draw_mode(false);
     m_trend_line_editor_widget->hide();
   } else {
+    m_chart->set_draw_mode(true);
     m_trend_line_editor_widget->show();
   }
 }

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
+#include "Spire/Charting/TrendLineModel.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -67,12 +68,26 @@ namespace Spire {
       */
       void set_auto_scale(bool auto_scale);
 
+      //! Sets draw mode on or off.
+      /*!
+        \param edit_mode Sets the draw mode on (true) or off (false).
+      */
+      void set_draw_mode(bool draw_mode);
+
     protected:
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
+      enum class DrawState {
+        IDLE,
+        LINE,
+        NEW,
+        OFF,
+        POINT
+      };
+
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
@@ -95,7 +110,10 @@ namespace Spire {
       bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
+      TrendLineModel m_trend_line_model;
+      DrawState m_draw_state;
 
+      void set_draw_mode_off();
       void update_auto_scale();
       void update_origins();
   };

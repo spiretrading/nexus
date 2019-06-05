@@ -132,6 +132,14 @@ void ChartView::set_auto_scale(bool auto_scale) {
   }
 }
 
+void ChartView::set_draw_mode(bool draw_mode) {
+  if(draw_mode) {
+    m_draw_state = DrawState::IDLE;
+  } else {
+    set_draw_mode_off();
+  }
+}
+
 void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
@@ -204,7 +212,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
-    setCursor(m_crosshair);
+    if(m_draw_state != DrawState::OFF) {
+      // TODO: hand cursor
+    } else {
+      setCursor(m_crosshair);
+    }
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
       m_crosshair_pos.value().x(), m_y_origin);
@@ -236,6 +248,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
   } else {
     setCursor(Qt::ArrowCursor);
   }
+  auto trend_lines = m_trend_line_model.get_lines();
+  for(auto& line : trend_lines) {
+    auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
+    auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
+    draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
+      second.x(), second.y());
+  }
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
@@ -256,6 +275,13 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
+}
+
+void ChartView::set_draw_mode_off() {
+  if(m_draw_state != DrawState::IDLE && m_draw_state != DrawState::OFF) {
+    // TODO: update the current line
+  }
+  m_draw_state = DrawState::OFF;
 }
 
 void ChartView::update_auto_scale() {
