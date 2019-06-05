@@ -95,5 +95,6 @@
         <file>Icons/chart-cursor.svg</file>
         <file>Icons/color-picker-cursor.svg</file>
         <file>Icons/color-picker-display.png</file>
+        <file>Icons/finger-cursor.svg</file>
     </qresource>
 </RCC>

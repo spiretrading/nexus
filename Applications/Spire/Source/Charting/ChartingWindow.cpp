@@ -168,6 +168,12 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_draw_line_button->setEnabled(true);
   m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
+  m_trend_line_editor_widget->connect_color_signal(
+    [=] { on_trend_line_color_selected(); });
+  m_trend_line_editor_widget->connect_style_signal(
+    [=] { on_trend_line_style_selected(); });
+  m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
+  m_chart->set_trend_line_style(m_trend_line_editor_widget->get_style());
   m_security_widget->set_widget(m_security_widget_container);
   m_chart->installEventFilter(this);
 }
@@ -265,4 +271,12 @@ void ChartingWindow::on_period_line_edit_changed() {
 void ChartingWindow::on_security_change(const Security& security) {
   setWindowTitle(CustomVariantItemDelegate().displayText(
     QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
+}
+
+void ChartingWindow::on_trend_line_color_selected() {
+  m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
+}
+
+void ChartingWindow::on_trend_line_style_selected() {
+  m_chart->set_trend_line_style(m_trend_line_editor_widget->get_style());
 }

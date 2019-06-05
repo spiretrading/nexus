@@ -74,7 +74,21 @@ namespace Spire {
       */
       void set_draw_mode(bool draw_mode);
 
+      //! Sets the color to apply selected and new trend lines.
+      /*!
+        \param color The color to apply.
+      */
+      void set_trend_line_color(const QColor& color);
+
+      //! Sets the style to apply to selected and new trend lines.
+      /*!
+        \param style The style to apply.
+      */
+      void set_trend_line_style(TrendLineStyle style);
+
     protected:
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -110,8 +124,13 @@ namespace Spire {
       bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
+      QCursor m_hand_cursor;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
+      int m_current_trend_line_id;
+      ChartPoint m_current_trend_line_point;
+      QColor m_current_trend_line_color;
+      TrendLineStyle m_current_trend_line_style;
 
       void set_draw_mode_off();
       void update_auto_scale();

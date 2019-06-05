@@ -41,6 +41,8 @@ namespace {
     }
     return ChartValue();
   }
+
+
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -52,7 +54,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(QColor("#E5E5E5"), scale_width(1), Qt::CustomDashLine),
       m_label_text_color(QColor("#25212E")),
-      m_is_auto_scaled(true) {
+      m_is_auto_scaled(true),
+      m_draw_state(DrawState::OFF) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -62,6 +65,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
     static_cast<double>(scale_width(3))});
   m_crosshair = QCursor(QPixmap::fromImage(
     imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
+  m_hand_cursor = QCursor(QPixmap::fromImage(
+    imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -140,6 +145,38 @@ void ChartView::set_draw_mode(bool draw_mode) {
   }
 }
 
+void ChartView::set_trend_line_color(const QColor& color) {
+  m_current_trend_line_color = color;
+}
+
+void ChartView::set_trend_line_style(TrendLineStyle style) {
+  m_current_trend_line_style = style;
+}
+
+void ChartView::mousePressEvent(QMouseEvent* event) {
+  if(m_draw_state == DrawState::IDLE) {
+    m_current_trend_line_point = convert_pixels_to_chart(event->pos());
+    m_current_trend_line_id = m_trend_line_model.add(
+      TrendLine({m_current_trend_line_point, m_current_trend_line_point},
+      m_current_trend_line_color,
+      m_current_trend_line_style));
+    m_draw_state = DrawState::NEW;
+  } else if(m_draw_state == DrawState::LINE) {
+    
+  } else if(m_draw_state == DrawState::NEW) {
+    
+  } else if(m_draw_state == DrawState::POINT) {
+    
+  }
+}
+
+void ChartView::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_draw_state == DrawState::OFF) {
+    return;
+  }
+  m_draw_state = DrawState::IDLE;
+}
+
 void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
@@ -213,38 +250,38 @@ void ChartView::paintEvent(QPaintEvent* event) {
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
     if(m_draw_state != DrawState::OFF) {
-      // TODO: hand cursor
+      setCursor(m_hand_cursor);
     } else {
       setCursor(m_crosshair);
+      painter.setPen(m_dashed_line_pen);
+      painter.drawLine(m_crosshair_pos.value().x(), 0,
+        m_crosshair_pos.value().x(), m_y_origin);
+      painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
+        m_crosshair_pos.value().y());
+      auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
+      auto x_label = m_item_delegate->displayText(to_variant(
+        m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
+      auto x_label_width = m_font_metrics.width(x_label);
+      painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
+        scale_width(5), m_y_origin, x_label_width + scale_width(10),
+        scale_height(21), Qt::white);
+      painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
+        scale_height(3), Qt::black);
+      auto text_width = m_font_metrics.width(x_label);
+      painter.setPen(m_label_text_color);
+      painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
+        m_y_origin + m_font_metrics.height() + scale_height(2), x_label);
+      painter.fillRect(m_x_origin,
+        m_crosshair_pos.value().y() - (scale_height(15) / 2),
+        width() - m_x_origin, scale_height(15), Qt::white);
+      painter.fillRect(m_x_origin, m_crosshair_pos.value().y(), scale_width(3),
+        scale_height(1), Qt::black);
+      auto y_label = m_item_delegate->displayText(to_variant(
+        m_model->get_y_axis_type(), crosshair_value.m_y), QLocale());
+      painter.setPen(m_label_text_color);
+      painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
+        (m_font_metrics.height() / 3), y_label);
     }
-    painter.setPen(m_dashed_line_pen);
-    painter.drawLine(m_crosshair_pos.value().x(), 0,
-      m_crosshair_pos.value().x(), m_y_origin);
-    painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
-      m_crosshair_pos.value().y());
-    auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
-    auto x_label = m_item_delegate->displayText(to_variant(
-      m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
-    auto x_label_width = m_font_metrics.width(x_label);
-    painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
-      scale_width(5), m_y_origin, x_label_width + scale_width(10),
-      scale_height(21), Qt::white);
-    painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
-      scale_height(3), Qt::black);
-    auto text_width = m_font_metrics.width(x_label);
-    painter.setPen(m_label_text_color);
-    painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
-      m_y_origin + m_font_metrics.height() + scale_height(2), x_label);
-    painter.fillRect(m_x_origin,
-      m_crosshair_pos.value().y() - (scale_height(15) / 2),
-      width() - m_x_origin, scale_height(15), Qt::white);
-    painter.fillRect(m_x_origin, m_crosshair_pos.value().y(), scale_width(3),
-      scale_height(1), Qt::black);
-    auto y_label = m_item_delegate->displayText(to_variant(
-      m_model->get_y_axis_type(), crosshair_value.m_y), QLocale());
-    painter.setPen(m_label_text_color);
-    painter.drawText(m_x_origin + scale_width(3), m_crosshair_pos.value().y() +
-      (m_font_metrics.height() / 3), y_label);
   } else {
     setCursor(Qt::ArrowCursor);
   }
@@ -281,6 +318,7 @@ void ChartView::set_draw_mode_off() {
   if(m_draw_state != DrawState::IDLE && m_draw_state != DrawState::OFF) {
     // TODO: update the current line
   }
+  m_current_trend_line_id = -1;
   m_draw_state = DrawState::OFF;
 }
 
