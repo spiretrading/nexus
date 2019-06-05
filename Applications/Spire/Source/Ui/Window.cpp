@@ -168,10 +168,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     } else if(msg->wParam == SIZE_RESTORED) {
       setContentsMargins({});
     }
-  } else if(msg->message == WM_SETCURSOR) {
-    // TODO: remove this when WM_NCHITTEST's HTCLIENT result behaves properly.
-    SetCursor(m_cursor);
-    return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
 }
@@ -192,8 +188,6 @@ void Window::set_resizeable(bool resizeable) {
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)
       | WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
-    ::SetWindowLong(hwnd, GWL_EXSTYLE , ::GetWindowLong(hwnd, GWL_EXSTYLE) |
-      WS_EX_TRANSPARENT);
   } else {
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
