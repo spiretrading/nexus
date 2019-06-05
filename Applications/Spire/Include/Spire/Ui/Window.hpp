@@ -73,7 +73,6 @@ namespace Spire {
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;
-      HCURSOR m_cursor;
 
       void set_resizeable(bool resizeable);
   };
