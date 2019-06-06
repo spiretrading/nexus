@@ -35,17 +35,21 @@ namespace Spire {
       */
       QPoint convert_chart_to_pixels(const ChartPoint& point) const;
 
-      //! Sets the position of the crosshair.
+      //! Sets the position of the crosshair and sets the status of the mouse
+      //! buttons.
       /*!
         \param position The position to place the crosshair.
+        \param buttons The status of the mouse buttons.
       */
-      void set_crosshair(const ChartPoint& position);
+      void set_crosshair(const ChartPoint& position, Qt::MouseButtons buttons);
 
-      //! Sets the position of the crosshair.
+      //! Sets the position of the crosshair and sets the status of the mouse
+      //! buttons.
       /*!
         \param position The position to place the crosshair.
+        \param buttons The status of the mouse buttons.
       */
-      void set_crosshair(const QPoint& position);
+      void set_crosshair(const QPoint& position, Qt::MouseButtons buttons);
 
       //! Removes the crosshair from the chart.
       void reset_crosshair();
@@ -90,9 +94,6 @@ namespace Spire {
       void set_trend_line_style(TrendLineStyle style);
 
     protected:
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -119,9 +120,10 @@ namespace Spire {
       QFont m_label_font;
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
-      QCursor m_crosshair;
+      QCursor m_crosshair_cursor;
       std::optional<QPoint> m_crosshair_pos;
       QPoint m_last_crosshair_pos;
+      Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
       std::vector<ChartValue> m_x_axis_values;
@@ -143,6 +145,7 @@ namespace Spire {
       void set_draw_mode_off();
       void update_auto_scale();
       void update_origins();
+      void on_left_mouse_button(bool pressed, const QPoint& pos);
   };
 }
 

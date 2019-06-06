@@ -199,18 +199,20 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
         m_chart->set_region(top_left, bottom_right);
         m_last_chart_mouse_pos = e->pos();
       }
-      m_chart->set_crosshair(e->pos());
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto e = static_cast<QMouseEvent*>(event);
       if(!m_is_mouse_dragging && e->button() == Qt::LeftButton) {
         m_is_mouse_dragging = true;
         m_last_chart_mouse_pos = e->pos();
       }
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::MouseButtonRelease) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->button() == Qt::LeftButton) {
         m_is_mouse_dragging = false;
       }
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
       auto [top_left, bottom_right] = m_chart->get_region();
@@ -233,7 +235,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {
       auto e = static_cast<QHoverEvent*>(event);
-      m_chart->set_crosshair(e->pos());
+      m_chart->set_crosshair(e->pos(), Qt::NoButton);
     }
   }
   return QWidget::eventFilter(object, event);
