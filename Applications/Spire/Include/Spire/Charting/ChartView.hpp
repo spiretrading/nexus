@@ -146,6 +146,7 @@ namespace Spire {
       void update_auto_scale();
       void update_origins();
       void on_left_mouse_button(bool pressed, const QPoint& pos);
+      void on_right_mouse_button(bool pressed);
   };
 }
 

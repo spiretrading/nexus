@@ -91,14 +91,18 @@ void ChartView::set_crosshair(const ChartPoint& position,
 
 void ChartView::set_crosshair(const QPoint& position,
     Qt::MouseButtons buttons) {
+  if(buttons.testFlag(Qt::LeftButton) !=
+      m_mouse_buttons.testFlag(Qt::LeftButton)) {
+    on_left_mouse_button(buttons.testFlag(Qt::LeftButton), position);
+  }
+  if(buttons.testFlag(Qt::RightButton) !=
+      m_mouse_buttons.testFlag(Qt::RightButton)) {
+    on_right_mouse_button(buttons.testFlag(Qt::RightButton));
+  }
   if(m_crosshair_pos) {
     m_last_crosshair_pos = *m_crosshair_pos;
   } else {
     m_last_crosshair_pos = position;
-  }
-  if(buttons.testFlag(Qt::LeftButton) !=
-      m_mouse_buttons.testFlag(Qt::LeftButton)) {
-    on_left_mouse_button(buttons.testFlag(Qt::LeftButton), position);
   }
   m_mouse_buttons = buttons;
   m_crosshair_pos = position;
@@ -444,5 +448,15 @@ void ChartView::on_left_mouse_button(bool pressed, const QPoint& pos) {
   }
   if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
     m_draw_state = DrawState::IDLE;
+  }
+}
+
+void ChartView::on_right_mouse_button(bool pressed) {
+  if(pressed) {
+    if(m_draw_state == DrawState::NEW) {
+      m_trend_line_model.remove(m_current_trend_line_id);
+      m_current_trend_line_id = -1;
+      m_draw_state = DrawState::IDLE;
+    }
   }
 }
