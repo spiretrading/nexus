@@ -85,12 +85,12 @@ std::vector<int> TrendLineModel::get_selected() const {
   return selected;
 }
 
-int TrendLineModel::intersects(const ChartPoint& point,
-    ChartValue threshold) const {
-  auto closest_id = -1;
+int TrendLineModel::find_closest(const ChartPoint& point) const {
+  if(m_trend_lines.empty()) {
+    return -1;
+  }
+  auto closest_id = m_trend_lines.front().m_id;
   auto closest_distance = std::numeric_limits<Quantity>::infinity();
-  auto threshold_squared = static_cast<Quantity>(threshold) *
-    static_cast<Quantity>(threshold);
   auto point_x = static_cast<Quantity>(point.m_x);
   auto point_y = static_cast<Quantity>(point.m_y);
   for(auto& line : m_trend_lines) {
@@ -126,8 +126,7 @@ int TrendLineModel::intersects(const ChartPoint& point,
       }
     }
     auto min_distance_squared = std::min(dist_squared, point_distance_squared);
-    if(min_distance_squared <= threshold_squared &&
-        min_distance_squared < closest_distance) {
+    if(min_distance_squared < closest_distance) {
       closest_id = line.m_id;
       closest_distance = min_distance_squared;
     }

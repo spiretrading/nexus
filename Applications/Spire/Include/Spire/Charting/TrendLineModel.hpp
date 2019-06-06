@@ -34,14 +34,12 @@ namespace Spire {
       //! Returns a vector of IDs representing the selected trend lines.
       std::vector<int> get_selected() const;
 
-      //! Returns the ID of the trend line that intersects the provided point.
-      //! Returns -1 if no line intersects the point.
+      //! Returns the ID of the trend line that's closest to the provided point.
+      //! Returns -1 if the model is empty.
       /*!
         \param point The point to compre the trend lines to.
-        \param threshold The maximum distance from the point to the line
-                         that is considered an intersection.
       */
-      int intersects(const ChartPoint& point, ChartValue threshold) const;
+      int find_closest(const ChartPoint& point) const;
 
       //! Removes the trend line with the provided ID from the model.
       //! Does nothing if the provided id doesn't exist.

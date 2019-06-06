@@ -105,10 +105,9 @@ void ChartView::set_crosshair(const QPoint& position,
   if(m_draw_state != DrawState::OFF) {
     if(m_draw_state == DrawState::IDLE ||
         m_draw_state == DrawState::HOVER) {
-      m_current_trend_line_id = m_trend_line_model.intersects(
-        convert_pixels_to_chart(*m_crosshair_pos),
-        //TODO: calculate this
-        ChartValue(0.1));
+      m_current_trend_line_id = m_trend_line_model.find_closest(
+        convert_pixels_to_chart(*m_crosshair_pos));
+      // TODO: calculate how far it is from the line, in pixels
       if(m_current_trend_line_id != -1) {
         m_draw_state = DrawState::HOVER;
       } else {
