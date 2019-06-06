@@ -68,6 +68,9 @@ namespace Spire {
       */
       void set_auto_scale(bool auto_scale);
 
+      //! Returns true if draw mode is enabled, false otherwise.
+      bool get_draw_mode() const;
+
       //! Sets draw mode on or off.
       /*!
         \param edit_mode Sets the draw mode on (true) or off (false).
@@ -89,12 +92,14 @@ namespace Spire {
     protected:
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
       enum class DrawState {
+        HOVER,
         IDLE,
         LINE,
         NEW,
@@ -116,6 +121,7 @@ namespace Spire {
       CustomVariantItemDelegate* m_item_delegate;
       QCursor m_crosshair;
       std::optional<QPoint> m_crosshair_pos;
+      QPoint m_last_crosshair_pos;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
       std::vector<ChartValue> m_x_axis_values;
@@ -133,6 +139,7 @@ namespace Spire {
       QColor m_current_trend_line_color;
       TrendLineStyle m_current_trend_line_style;
 
+      ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void set_draw_mode_off();
       void update_auto_scale();
       void update_origins();

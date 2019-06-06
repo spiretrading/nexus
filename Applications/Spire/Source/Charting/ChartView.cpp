@@ -135,6 +135,13 @@ void ChartView::set_auto_scale(bool auto_scale) {
   }
 }
 
+bool ChartView::get_draw_mode() const {
+  if(m_draw_state == DrawState::OFF) {
+    return false;
+  }
+  return true;
+}
+
 void ChartView::set_draw_mode(bool draw_mode) {
   if(draw_mode) {
     m_draw_state = DrawState::IDLE;
@@ -155,10 +162,25 @@ void ChartView::mouseMoveEvent(QMouseEvent* event) {
   if(m_draw_state == DrawState::OFF) {
     return;
   }
-  if(m_draw_state == DrawState::IDLE) {
-    
+  if(m_draw_state == DrawState::IDLE ||
+      m_draw_state == DrawState::HOVER) {
+    m_current_trend_line_id = m_trend_line_model.intersects(
+      convert_pixels_to_chart(event->pos()),
+      //TODO: calculate this
+      ChartValue(0.1));
+    if(m_current_trend_line_id != -1) {
+      m_draw_state = DrawState::HOVER;
+    } else {
+      m_draw_state = DrawState::IDLE;
+    }
   } else if(m_draw_state == DrawState::LINE) {
-    
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    auto first = std::get<0>(line.m_points);
+    auto second = std::get<1>(line.m_points);
+    auto delta = chart_delta(m_last_crosshair_pos, event->pos());
+    line.m_points = {{first.m_x - delta.m_x, first.m_y - delta.m_y},
+      {second.m_x - delta.m_x, second.m_y - delta.m_y}};
+    m_trend_line_model.update(line, m_current_trend_line_id);
   } else if(m_draw_state == DrawState::NEW) {
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     m_current_trend_line_point = convert_pixels_to_chart(event->pos());
@@ -168,13 +190,18 @@ void ChartView::mouseMoveEvent(QMouseEvent* event) {
   } else if(m_draw_state == DrawState::POINT) {
     
   }
+  m_last_crosshair_pos = event->pos();
 }
 
 void ChartView::mousePressEvent(QMouseEvent* event) {
   if(m_draw_state == DrawState::OFF) {
     return;
   }
-  if(m_draw_state == DrawState::IDLE) {
+  if(m_draw_state == DrawState::HOVER) {
+    //TODO: check for point intersection, else:
+    m_draw_state = DrawState::LINE;
+  } else if(m_draw_state == DrawState::IDLE) {
+    m_last_crosshair_pos = event->pos();
     m_current_trend_line_point = convert_pixels_to_chart(event->pos());
     m_current_stationary_point = m_current_trend_line_point;
     m_current_trend_line_id = m_trend_line_model.add(
@@ -182,8 +209,6 @@ void ChartView::mousePressEvent(QMouseEvent* event) {
       m_current_trend_line_color,
       m_current_trend_line_style));
     m_draw_state = DrawState::NEW;
-  } else if(m_draw_state == DrawState::LINE) {
-    
   } else if(m_draw_state == DrawState::NEW) {
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     m_current_trend_line_point = convert_pixels_to_chart(event->pos());
@@ -191,8 +216,15 @@ void ChartView::mousePressEvent(QMouseEvent* event) {
       m_current_stationary_point}, line.m_color, line.m_style},
       m_current_trend_line_id);
     m_draw_state = DrawState::IDLE;
-  } else if(m_draw_state == DrawState::POINT) {
-    
+  }
+}
+
+void ChartView::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_draw_state == DrawState::OFF) {
+    return;
+  }
+  if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
+    m_draw_state = DrawState::IDLE;
   }
 }
 
@@ -311,6 +343,19 @@ void ChartView::paintEvent(QPaintEvent* event) {
     draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
       second.x(), second.y());
   }
+  if(m_draw_state == DrawState::HOVER) {
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
+    auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
+    painter.setPen(QColor("#25212E"));
+    painter.setBrush(QColor("#25212E"));
+    painter.drawEllipse(first, scale_width(11), scale_height(11));
+    painter.drawEllipse(second, scale_width(11), scale_height(11));
+    painter.setPen(Qt::white);
+    painter.setBrush(Qt::white);
+    painter.drawEllipse(first, scale_width(8), scale_height(8));
+    painter.drawEllipse(second, scale_width(8), scale_height(8));
+  }
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
@@ -331,6 +376,14 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
+}
+
+ChartPoint ChartView::chart_delta(const QPoint& previous,
+    const QPoint& present) {
+  auto previous_value = convert_pixels_to_chart(previous);
+  auto present_value = convert_pixels_to_chart(present);
+  return {previous_value.m_x - present_value.m_x,
+    previous_value.m_y - present_value.m_y};
 }
 
 void ChartView::set_draw_mode_off() {

@@ -187,7 +187,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
-      if(m_is_mouse_dragging) {
+      if(m_is_mouse_dragging && !m_chart->get_draw_mode()) {
         auto chart_delta = m_chart->convert_pixels_to_chart(e->pos());
         auto last_pos = m_chart->convert_pixels_to_chart(
           m_last_chart_mouse_pos);
