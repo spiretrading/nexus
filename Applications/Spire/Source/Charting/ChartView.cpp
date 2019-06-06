@@ -41,8 +41,6 @@ namespace {
     }
     return ChartValue();
   }
-
-
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -153,9 +151,32 @@ void ChartView::set_trend_line_style(TrendLineStyle style) {
   m_current_trend_line_style = style;
 }
 
+void ChartView::mouseMoveEvent(QMouseEvent* event) {
+  if(m_draw_state == DrawState::OFF) {
+    return;
+  }
+  if(m_draw_state == DrawState::IDLE) {
+    
+  } else if(m_draw_state == DrawState::LINE) {
+    
+  } else if(m_draw_state == DrawState::NEW) {
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    m_current_trend_line_point = convert_pixels_to_chart(event->pos());
+    m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+      m_current_stationary_point}, line.m_color, line.m_style},
+      m_current_trend_line_id);
+  } else if(m_draw_state == DrawState::POINT) {
+    
+  }
+}
+
 void ChartView::mousePressEvent(QMouseEvent* event) {
+  if(m_draw_state == DrawState::OFF) {
+    return;
+  }
   if(m_draw_state == DrawState::IDLE) {
     m_current_trend_line_point = convert_pixels_to_chart(event->pos());
+    m_current_stationary_point = m_current_trend_line_point;
     m_current_trend_line_id = m_trend_line_model.add(
       TrendLine({m_current_trend_line_point, m_current_trend_line_point},
       m_current_trend_line_color,
@@ -164,17 +185,15 @@ void ChartView::mousePressEvent(QMouseEvent* event) {
   } else if(m_draw_state == DrawState::LINE) {
     
   } else if(m_draw_state == DrawState::NEW) {
-    
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    m_current_trend_line_point = convert_pixels_to_chart(event->pos());
+    m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+      m_current_stationary_point}, line.m_color, line.m_style},
+      m_current_trend_line_id);
+    m_draw_state = DrawState::IDLE;
   } else if(m_draw_state == DrawState::POINT) {
     
   }
-}
-
-void ChartView::mouseReleaseEvent(QMouseEvent* event) {
-  if(m_draw_state == DrawState::OFF) {
-    return;
-  }
-  m_draw_state = DrawState::IDLE;
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {

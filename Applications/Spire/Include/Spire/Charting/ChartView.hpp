@@ -87,8 +87,8 @@ namespace Spire {
       void set_trend_line_style(TrendLineStyle style);
 
     protected:
+      void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -129,6 +129,7 @@ namespace Spire {
       DrawState m_draw_state;
       int m_current_trend_line_id;
       ChartPoint m_current_trend_line_point;
+      ChartPoint m_current_stationary_point;
       QColor m_current_trend_line_color;
       TrendLineStyle m_current_trend_line_style;
 
