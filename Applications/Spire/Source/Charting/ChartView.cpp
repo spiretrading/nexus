@@ -335,7 +335,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
       second.x(), second.y());
   }
-  if(m_draw_state == DrawState::HOVER || m_draw_state == DrawState::LINE) {
+  if(m_draw_state == DrawState::HOVER || m_draw_state == DrawState::LINE ||
+      m_draw_state == DrawState::POINT) {
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
     auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
