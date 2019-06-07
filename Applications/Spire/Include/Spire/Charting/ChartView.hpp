@@ -142,12 +142,13 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
+      void draw_points(int id, QPainter& painter);
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
-      void on_left_mouse_button_click(const QPoint& pos);
+      void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
-      void on_right_mouse_button_click();
+      void on_right_mouse_button_press();
   };
 }
 

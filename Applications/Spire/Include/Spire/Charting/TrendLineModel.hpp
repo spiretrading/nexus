@@ -21,27 +21,34 @@ namespace Spire {
       */
       int add(const TrendLine& line);
 
-      //! Returns the trend line with the provided ID. Throws an exception
+      //! Returns the trend line with the provided id. Throws an exception
       //! if the provided id doesn't exist.
       /*!
-        \param id The ID of the trend line to return.
+        \param id The id of the trend line to return.
       */
       TrendLine get(int id);
 
       //! Returns the trend lines in the model.
       std::vector<TrendLine> get_lines() const;
 
-      //! Returns a vector of IDs representing the selected trend lines.
+      //! Returns a vector of ids representing the selected trend lines.
       std::vector<int> get_selected() const;
 
-      //! Returns the ID of the trend line that's closest to the provided point.
+      //! Returns true if the trend line reprsented by the provided id is
+      //! selected.
+      /*!
+        \param id The id of the trend line.
+      */
+      bool get_selected(int id);
+
+      //! Returns the id of the trend line that's closest to the provided point.
       //! Returns -1 if the model is empty.
       /*!
         \param point The point to compre the trend lines to.
       */
       int find_closest(const ChartPoint& point) const;
 
-      //! Removes the trend line with the provided ID from the model.
+      //! Removes the trend line with the provided id from the model.
       //! Does nothing if the provided id doesn't exist.
       /*!
         \param id The id of the trend line to remove.

@@ -97,7 +97,7 @@ void ChartView::set_crosshair(const QPoint& position,
     if(buttons.testFlag(Qt::LeftButton) !=
         m_mouse_buttons.testFlag(Qt::LeftButton)) {
       if(buttons.testFlag(Qt::LeftButton)) {
-        on_left_mouse_button_click(position);
+        on_left_mouse_button_press(position);
       } else {
         on_left_mouse_button_release();
       }
@@ -105,7 +105,7 @@ void ChartView::set_crosshair(const QPoint& position,
     if(buttons.testFlag(Qt::RightButton) !=
         m_mouse_buttons.testFlag(Qt::RightButton)) {
       if(buttons.testFlag(Qt::RightButton)) {
-        on_right_mouse_button_click();
+        on_right_mouse_button_press();
       }
     }
   }
@@ -335,19 +335,15 @@ void ChartView::paintEvent(QPaintEvent* event) {
     draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
       second.x(), second.y());
   }
-  if(m_draw_state == DrawState::HOVER || m_draw_state == DrawState::LINE ||
-      m_draw_state == DrawState::POINT) {
-    auto line = m_trend_line_model.get(m_current_trend_line_id);
-    auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
-    auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
-    painter.setPen(QColor("#25212E"));
-    painter.setBrush(QColor("#25212E"));
-    painter.drawEllipse(first, scale_width(5), scale_height(5));
-    painter.drawEllipse(second, scale_width(5), scale_height(5));
-    painter.setPen(Qt::white);
-    painter.setBrush(Qt::white);
-    painter.drawEllipse(first, scale_width(4), scale_height(4));
-    painter.drawEllipse(second, scale_width(4), scale_height(4));
+  if(m_draw_state != DrawState::OFF) {
+    for(auto id : m_trend_line_model.get_selected()) {
+      draw_points(id, painter);
+    }
+    if(m_draw_state == DrawState::HOVER ||
+        m_draw_state == DrawState::LINE ||
+        m_draw_state == DrawState::POINT) {
+      draw_points(m_current_trend_line_id, painter);
+    }
   }
 }
 
@@ -377,6 +373,20 @@ ChartPoint ChartView::chart_delta(const QPoint& previous,
   auto present_value = convert_pixels_to_chart(present);
   return {previous_value.m_x - present_value.m_x,
     previous_value.m_y - present_value.m_y};
+}
+
+void ChartView::draw_points(int id, QPainter& painter) {
+  auto line = m_trend_line_model.get(id);
+  auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
+  auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
+  painter.setPen(QColor("#25212E"));
+  painter.setBrush(QColor("#25212E"));
+  painter.drawEllipse(first, scale_width(5), scale_height(5));
+  painter.drawEllipse(second, scale_width(5), scale_height(5));
+  painter.setPen(Qt::white);
+  painter.setBrush(Qt::white);
+  painter.drawEllipse(first, scale_width(4), scale_height(4));
+  painter.drawEllipse(second, scale_width(4), scale_height(4));
 }
 
 void ChartView::update_auto_scale() {
@@ -471,8 +481,13 @@ void ChartView::update_origins() {
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
 
-void ChartView::on_left_mouse_button_click(const QPoint& pos) {
+void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
+    if(m_trend_line_model.get_selected(m_current_trend_line_id)) {
+      m_trend_line_model.unset_selected(m_current_trend_line_id);
+    } else {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
+    }
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
     auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
@@ -500,6 +515,9 @@ void ChartView::on_left_mouse_button_click(const QPoint& pos) {
       m_draw_state = DrawState::LINE;
     }
   } else if(m_draw_state == DrawState::IDLE) {
+    for(auto id : m_trend_line_model.get_selected()) {
+      m_trend_line_model.unset_selected(id);
+    }
     m_current_trend_line_point = convert_pixels_to_chart(pos);
     m_current_stationary_point = m_current_trend_line_point;
     m_current_trend_line_id = m_trend_line_model.add(
@@ -523,12 +541,8 @@ void ChartView::on_left_mouse_button_release() {
   }
 }
 
-void ChartView::on_right_mouse_button_click() {
-  if(m_draw_state == DrawState::HOVER) {
-    m_trend_line_model.remove(m_current_trend_line_id);
-    m_current_trend_line_id = -1;
-    m_draw_state = DrawState::IDLE;
-  } else if(m_draw_state == DrawState::NEW) {
+void ChartView::on_right_mouse_button_press() {
+  if(m_draw_state == DrawState::HOVER || m_draw_state == DrawState::NEW) {
     m_trend_line_model.remove(m_current_trend_line_id);
     m_current_trend_line_id = -1;
     m_draw_state = DrawState::IDLE;
