@@ -39,7 +39,7 @@ std::vector<int> TrendLineModel::get_selected() const {
   return selected;
 }
 
-bool TrendLineModel::get_selected(int id) {
+bool TrendLineModel::is_selected(int id) {
   auto selected = std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
     [&] (auto& line) {
       return id == line.m_id && line.m_state == State::SELECTED;

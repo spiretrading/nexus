@@ -146,6 +146,7 @@ namespace Spire {
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
+      void update_selected_line_styles();
       void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();

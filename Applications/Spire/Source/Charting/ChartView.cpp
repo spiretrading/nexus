@@ -213,10 +213,12 @@ void ChartView::set_draw_mode(bool draw_mode) {
 
 void ChartView::set_trend_line_color(const QColor& color) {
   m_current_trend_line_color = color;
+  update_selected_line_styles();
 }
 
 void ChartView::set_trend_line_style(TrendLineStyle style) {
   m_current_trend_line_style = style;
+  update_selected_line_styles();
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -481,9 +483,18 @@ void ChartView::update_origins() {
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
 
+void ChartView::update_selected_line_styles() {
+  for(auto id : m_trend_line_model.get_selected()) {
+    auto line = m_trend_line_model.get(id);
+    m_trend_line_model.update(TrendLine{line.m_points,
+      m_current_trend_line_color, m_current_trend_line_style}, id);
+  }
+  update();
+}
+
 void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
-    if(m_trend_line_model.get_selected(m_current_trend_line_id)) {
+    if(m_trend_line_model.is_selected(m_current_trend_line_id)) {
       m_trend_line_model.unset_selected(m_current_trend_line_id);
     } else {
       m_trend_line_model.set_selected(m_current_trend_line_id);
@@ -510,8 +521,10 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
         m_current_trend_line_point = std::get<1>(line.m_points);
         m_current_stationary_point = std::get<0>(line.m_points);
       }
+      m_trend_line_model.set_selected(m_current_trend_line_id);
       m_draw_state = DrawState::POINT;
     } else {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
       m_draw_state = DrawState::LINE;
     }
   } else if(m_draw_state == DrawState::IDLE) {

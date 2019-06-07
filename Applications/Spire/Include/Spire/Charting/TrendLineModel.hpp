@@ -34,12 +34,12 @@ namespace Spire {
       //! Returns a vector of ids representing the selected trend lines.
       std::vector<int> get_selected() const;
 
-      //! Returns true if the trend line reprsented by the provided id is
+      //! Returns true if the trend line represented by the provided id is
       //! selected.
       /*!
         \param id The id of the trend line.
       */
-      bool get_selected(int id);
+      bool is_selected(int id);
 
       //! Returns the id of the trend line that's closest to the provided point.
       //! Returns -1 if the model is empty.
