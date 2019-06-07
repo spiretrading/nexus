@@ -13,6 +13,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  const auto LINE_HOVER_DISTANCE = 25;
+
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -91,30 +93,38 @@ void ChartView::set_crosshair(const ChartPoint& position,
 
 void ChartView::set_crosshair(const QPoint& position,
     Qt::MouseButtons buttons) {
-  if(buttons.testFlag(Qt::LeftButton) !=
-      m_mouse_buttons.testFlag(Qt::LeftButton)) {
-    on_left_mouse_button(buttons.testFlag(Qt::LeftButton), position);
+  if(m_draw_state != DrawState::OFF) {
+    if(buttons.testFlag(Qt::LeftButton) !=
+        m_mouse_buttons.testFlag(Qt::LeftButton)) {
+      if(buttons.testFlag(Qt::LeftButton)) {
+        on_left_mouse_button_click(position);
+      } else {
+        on_left_mouse_button_release();
+      }
+    }
+    if(buttons.testFlag(Qt::RightButton) !=
+        m_mouse_buttons.testFlag(Qt::RightButton)) {
+      if(buttons.testFlag(Qt::RightButton)) {
+        on_right_mouse_button_click();
+      }
+    }
   }
-  if(buttons.testFlag(Qt::RightButton) !=
-      m_mouse_buttons.testFlag(Qt::RightButton)) {
-    on_right_mouse_button(buttons.testFlag(Qt::RightButton));
-  }
+  m_mouse_buttons = buttons;
   if(m_crosshair_pos) {
     m_last_crosshair_pos = *m_crosshair_pos;
   } else {
     m_last_crosshair_pos = position;
   }
-  m_mouse_buttons = buttons;
   m_crosshair_pos = position;
   if(m_draw_state != DrawState::OFF) {
-    if(m_draw_state == DrawState::IDLE ||
-        m_draw_state == DrawState::HOVER) {
-      m_current_trend_line_id = m_trend_line_model.find_closest(
-        convert_pixels_to_chart(*m_crosshair_pos));
-      // TODO: calculate how far it is from the line, in pixels
+    if(m_draw_state == DrawState::IDLE) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
       if(m_current_trend_line_id != -1) {
         m_draw_state = DrawState::HOVER;
-      } else {
+      }
+    } else if(m_draw_state == DrawState::HOVER) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
+      if(m_current_trend_line_id == -1) {
         m_draw_state = DrawState::IDLE;
       }
     } else if(m_draw_state == DrawState::LINE) {
@@ -385,6 +395,54 @@ void ChartView::update_auto_scale() {
     {m_bottom_right.m_x, auto_scale_bottom});
 }
 
+int ChartView::update_intersection(const QPoint& mouse_pos) {
+  auto id = -1;
+  id = m_trend_line_model.find_closest(
+    convert_pixels_to_chart(*m_crosshair_pos));
+  if(id == -1) {
+    return id;
+  }
+  auto mouse_x = static_cast<double>(mouse_pos.x());
+  auto mouse_y = static_cast<double>(mouse_pos.y());
+  auto line = m_trend_line_model.get(id);
+  auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
+  auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
+  auto point1_x = static_cast<double>(point1.x());
+  auto point1_y = static_cast<double>(point1.y());
+  auto point2_x = static_cast<double>(point2.x());
+  auto point2_y = static_cast<double>(point2.y());
+  auto line_slope = slope(point1_x, point1_y, point2_x, point2_y);
+  auto line_b = y_intercept(point1_x, point1_y, line_slope);
+  auto point_distance = std::abs(closest_point_distance_squared(mouse_x,
+    mouse_y, line));
+  auto distance = std::numeric_limits<double>::infinity();
+  if(std::isinf<double>(line_slope)) {
+    if(is_within_interval(mouse_y, point1_y, point2_y)) {
+      distance = std::abs(distance_squared(mouse_x, mouse_y,
+        point1_x, mouse_y));
+    }
+  } else if(line_slope == Quantity(0)) {
+    if(is_within_interval(mouse_x, point1_x, point2_x)) {
+      distance = std::abs(distance_squared(mouse_x, mouse_y, mouse_x,
+        point1_y));
+    }
+  } else {
+    auto line_point_x =
+      (mouse_x + line_slope * mouse_y - line_slope * line_b) /
+      (line_slope * line_slope + 1);
+    if(is_within_interval(line_point_x, point1_x, point2_x)) {
+      distance = std::abs(distance_squared(mouse_x, mouse_y, line_point_x,
+        calculate_y(line_slope, line_point_x, line_b)));
+    }
+  }
+  // TODO: make this a constant
+  if(point_distance <= LINE_HOVER_DISTANCE ||
+      distance <= LINE_HOVER_DISTANCE) {
+    return id;
+  }
+  return -1;
+}
+
 void ChartView::update_origins() {
   auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
     m_x_axis_step;
@@ -417,46 +475,44 @@ void ChartView::update_origins() {
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
 }
 
-void ChartView::on_left_mouse_button(bool pressed, const QPoint& pos) {
-  if(m_draw_state == DrawState::OFF) {
-    return;
+void ChartView::on_left_mouse_button_click(const QPoint& pos) {
+  if(m_draw_state == DrawState::HOVER) {
+    // TODO: point or line?
+    m_draw_state = DrawState::LINE;
+  } else if(m_draw_state == DrawState::IDLE) {
+    m_current_trend_line_point = convert_pixels_to_chart(pos);
+    m_current_stationary_point = m_current_trend_line_point;
+    m_current_trend_line_id = m_trend_line_model.add(
+      TrendLine({m_current_trend_line_point, m_current_trend_line_point},
+      m_current_trend_line_color,
+      m_current_trend_line_style));
+    m_draw_state = DrawState::NEW;
+  } else if(m_draw_state == DrawState::LINE) {
+
+  } else if(m_draw_state == DrawState::NEW) {
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    m_current_trend_line_point = convert_pixels_to_chart(pos);
+    m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+      m_current_stationary_point}, line.m_color, line.m_style},
+      m_current_trend_line_id);
+    m_draw_state = DrawState::IDLE;
   }
-  if(pressed) {
-    if(m_draw_state == DrawState::OFF) {
-      return;
-    }
-    if(m_draw_state == DrawState::HOVER) {
-      //TODO: check for point intersection, else:
-      m_draw_state = DrawState::LINE;
-    } else if(m_draw_state == DrawState::IDLE) {
-      m_current_trend_line_point = convert_pixels_to_chart(pos);
-      m_current_stationary_point = m_current_trend_line_point;
-      m_current_trend_line_id = m_trend_line_model.add(
-        TrendLine({m_current_trend_line_point, m_current_trend_line_point},
-        m_current_trend_line_color,
-        m_current_trend_line_style));
-      m_draw_state = DrawState::NEW;
-    } else if(m_draw_state == DrawState::NEW) {
-      auto line = m_trend_line_model.get(m_current_trend_line_id);
-      m_current_trend_line_point = convert_pixels_to_chart(pos);
-      m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
-        m_current_stationary_point}, line.m_color, line.m_style},
-        m_current_trend_line_id);
-      m_draw_state = DrawState::IDLE;
-    }
-    return;
-  }
+}
+
+void ChartView::on_left_mouse_button_release() {
   if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
     m_draw_state = DrawState::IDLE;
   }
 }
 
-void ChartView::on_right_mouse_button(bool pressed) {
-  if(pressed) {
-    if(m_draw_state == DrawState::NEW) {
-      m_trend_line_model.remove(m_current_trend_line_id);
-      m_current_trend_line_id = -1;
-      m_draw_state = DrawState::IDLE;
-    }
+void ChartView::on_right_mouse_button_click() {
+  if(m_draw_state == DrawState::HOVER) {
+    m_trend_line_model.remove(m_current_trend_line_id);
+    m_current_trend_line_id = -1;
+    m_draw_state = DrawState::IDLE;
+  } else if(m_draw_state == DrawState::NEW) {
+    m_trend_line_model.remove(m_current_trend_line_id);
+    m_current_trend_line_id = -1;
+    m_draw_state = DrawState::IDLE;
   }
 }

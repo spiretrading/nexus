@@ -144,9 +144,11 @@ namespace Spire {
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void set_draw_mode_off();
       void update_auto_scale();
+      int update_intersection(const QPoint& mouse_pos);
       void update_origins();
-      void on_left_mouse_button(bool pressed, const QPoint& pos);
-      void on_right_mouse_button(bool pressed);
+      void on_left_mouse_button_click(const QPoint& pos);
+      void on_left_mouse_button_release();
+      void on_right_mouse_button_click();
   };
 }
 

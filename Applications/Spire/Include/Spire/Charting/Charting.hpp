@@ -107,11 +107,11 @@ namespace Spire {
   template <typename T>
   T closest_point_distance_squared(T x, T y, const TrendLine& line) {
     auto pt1_distance = distance_squared(x, y,
-      static_cast<T>(std::get<0>(line.m_points).m_x),
-      static_cast<T>(std::get<0>(line.m_points).m_y));
+      static_cast<T>(static_cast<Quantity>(std::get<0>(line.m_points).m_x)),
+      static_cast<T>(static_cast<Quantity>(std::get<0>(line.m_points).m_y)));
     auto pt2_distance = distance_squared(x, y,
-      static_cast<T>(std::get<1>(line.m_points).m_x),
-      static_cast<T>(std::get<1>(line.m_points).m_y));
+      static_cast<T>(static_cast<Quantity>(std::get<1>(line.m_points).m_x)),
+      static_cast<T>(static_cast<Quantity>(std::get<1>(line.m_points).m_y)));
     return std::min(pt1_distance, pt2_distance);
   }
 }
