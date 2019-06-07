@@ -65,7 +65,7 @@ int TrendLineModel::find_closest(const ChartPoint& point) const {
       std::get<1>(line.m_trend_line.m_points).m_y);
     auto line_b = y_intercept(line_x1, line_y1, line_slope);
     point_distance_squared = Abs(closest_point_distance_squared(point_x,
-      point_y, line.m_trend_line));
+      point_y, line_x1, line_y1, line_x2, line_y2));
     if(std::isinf(static_cast<double>(line_slope))) {
       if(is_within_interval(point_y, line_y1, line_y2)) {
         dist_squared = Abs(

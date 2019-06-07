@@ -97,21 +97,20 @@ namespace Spire {
     return m * x + b;
   }
 
-  //! Returns the shortest distance between a point and the endpoints of a
-  //! TrendLine.
+  //! Returns the shortest distance between a point and two given points.
   /*!
     \param x The x-coordinate of the point.
     \param y The y-coordinate of the point.
-    \param line The TrendLine.
+    \param line_x1 The x-coordinate of the first point.
+    \param line_y1 The y-coordinate of the first point.
+    \param line_x2 The x-coordinate of the second point.
+    \param line_y2 The y-coordinate of the second point.
   */
   template <typename T>
-  T closest_point_distance_squared(T x, T y, const TrendLine& line) {
-    auto pt1_distance = distance_squared(x, y,
-      static_cast<T>(static_cast<Quantity>(std::get<0>(line.m_points).m_x)),
-      static_cast<T>(static_cast<Quantity>(std::get<0>(line.m_points).m_y)));
-    auto pt2_distance = distance_squared(x, y,
-      static_cast<T>(static_cast<Quantity>(std::get<1>(line.m_points).m_x)),
-      static_cast<T>(static_cast<Quantity>(std::get<1>(line.m_points).m_y)));
+  T closest_point_distance_squared(T x, T y, T line_x1, T line_y1, T line_x2,
+      T line_y2) {
+    auto pt1_distance = distance_squared(x, y, line_x1, line_y1);
+    auto pt2_distance = distance_squared(x, y, line_x2, line_y2);
     return std::min(pt1_distance, pt2_distance);
   }
 }

@@ -142,7 +142,6 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
-      void set_draw_mode_off();
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
