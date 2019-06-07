@@ -394,8 +394,7 @@ void ChartView::update_auto_scale() {
 }
 
 int ChartView::update_intersection(const QPoint& mouse_pos) {
-  auto id = -1;
-  id = m_trend_line_model.find_closest(
+  auto id = m_trend_line_model.find_closest(
     convert_pixels_to_chart(*m_crosshair_pos));
   if(id == -1) {
     return id;
@@ -433,7 +432,6 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
         calculate_y(line_slope, line_point_x, line_b)));
     }
   }
-  // TODO: make this a constant
   if(point_distance <= LINE_HOVER_DISTANCE ||
       distance <= LINE_HOVER_DISTANCE) {
     return id;
