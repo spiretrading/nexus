@@ -11,7 +11,7 @@ endif()
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
-add_definitions(-DBEAM_BUILD_DLL)
+add_definitions(-DBEAM_USE_DLL)
 add_definitions(-DBEAM_ENABLE_STACK_PRINT)
 
 if(MSVC)
