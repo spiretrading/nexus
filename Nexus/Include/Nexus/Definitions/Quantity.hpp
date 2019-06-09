@@ -19,17 +19,15 @@
 
 namespace Nexus {
 
-  /*! \class Quantity
-      \brief Used to represent a quantity up to 15 significant decimal places.
-   */
+  /* Used to represent a quantity up to 15 significant decimal places. */
   class Quantity {
     public:
 
       //! The number of decimal places that can be represented accurately.
-      static constexpr unsigned int DECIMAL_PLACES = 6;
+      static constexpr auto DECIMAL_PLACES = 6;
 
       //! The multiplier used.
-      static constexpr std::int64_t MULTIPLIER = 1000000;
+      static constexpr auto MULTIPLIER = std::int64_t(1000000);
 
       //! Returns a Quantity from a string.
       /*!
@@ -212,19 +210,19 @@ namespace Nexus {
 
   inline std::ostream& operator <<(std::ostream& out, Quantity value) {
     auto unscaledValue = value.m_value / Quantity::MULTIPLIER;
-    boost::float64_t integerPart;
+    auto integerPart = boost::float64_t();
     auto fraction = std::modf(unscaledValue, &integerPart);
     if(fraction == 0) {
       return out << static_cast<std::int64_t>(integerPart);
     }
-    boost::io::ios_flags_saver ifs{out};
+    auto ifs = boost::io::ios_flags_saver(out);
     out << std::fixed;
     out << unscaledValue;
     return out;
   }
 
   inline std::istream& operator >>(std::istream& in, Quantity& value) {
-    std::string symbol;
+    auto symbol = std::string();
     in >> symbol;
     auto parsedValue = Quantity::FromValue(symbol);
     if(!parsedValue.is_initialized()) {
@@ -238,55 +236,55 @@ namespace Nexus {
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator <(T lhs, U rhs) {
-    return Quantity{lhs} < rhs;
+    return Quantity(lhs) < rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator <=(T lhs, U rhs) {
-    return Quantity{lhs} <= rhs;
+    return Quantity(lhs) <= rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator ==(T lhs, U rhs) {
-    return Quantity{lhs} == rhs;
+    return Quantity(lhs) == rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator !=(T lhs, U rhs) {
-    return Quantity{lhs} != rhs;
+    return Quantity(lhs) != rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator >(T lhs, U rhs) {
-    return Quantity{lhs} > rhs;
+    return Quantity(lhs) > rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, bool> operator >=(T lhs, U rhs) {
-    return Quantity{lhs} >= rhs;
+    return Quantity(lhs) >= rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator +(T lhs, U rhs) {
-    return Quantity{lhs} + rhs;
+    return Quantity(lhs) + rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator -(T lhs, U rhs) {
-    return Quantity{lhs} - rhs;
+    return Quantity(lhs) - rhs;
   }
 
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator *(T lhs, U rhs) {
-    return Quantity{lhs} * rhs;
+    return Quantity(lhs) * rhs;
   }
 
   template<typename T>
@@ -297,7 +295,7 @@ namespace Nexus {
   template<typename T, typename U>
   constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
       std::is_same<U, Quantity>::value, Quantity> operator /(T lhs, U rhs) {
-    return Quantity{lhs} / rhs;
+    return Quantity(lhs) / rhs;
   }
 
   //! Returns the modulus of two Quantities.
@@ -324,9 +322,23 @@ namespace Nexus {
     \param decimalPlaces The decimal place to floor to.
   */
   inline Quantity Floor(Quantity value, int decimalPlaces) {
-    auto multiplier = Beam::PowerOfTen(decimalPlaces);
-    auto rawValue = static_cast<boost::float64_t>(value);
-    return Quantity{std::floor(multiplier * rawValue) / multiplier};
+    if(decimalPlaces > 0) {
+      auto multiplier = Beam::PowerOfTen(decimalPlaces);
+      auto remainder = value % (Quantity(1) / multiplier);
+      if(value > 0 || remainder == 0) {
+        return value - remainder;
+      } else {
+        return value - ((Quantity(1) / multiplier) + remainder);
+      }
+    } else {
+      auto multiplier = Beam::PowerOfTen(-decimalPlaces);
+      auto remainder = value % multiplier;
+      if(value > 0 || remainder == 0) {
+        return value - remainder;
+      } else {
+        return value - (multiplier + remainder);
+      }
+    }
   }
 
   //! Returns the ceiling.
@@ -335,9 +347,7 @@ namespace Nexus {
     \param decimalPlaces The decimal place to ceil to.
   */
   inline Quantity Ceil(Quantity value, int decimalPlaces) {
-    auto multiplier = Beam::PowerOfTen(decimalPlaces);
-    auto rawValue = static_cast<boost::float64_t>(value);
-    return Quantity{std::ceil(multiplier * rawValue) / multiplier};
+    return -Floor(-value, decimalPlaces);
   }
 
   //! Returns the truncated value.
@@ -359,9 +369,13 @@ namespace Nexus {
     \param decimalPlaces The decimal place to round to.
   */
   inline Quantity Round(Quantity value, int decimalPlaces) {
-    auto multiplier = Beam::PowerOfTen(decimalPlaces);
-    auto rawValue = static_cast<boost::float64_t>(value);
-    return Quantity{std::round(multiplier * rawValue) / multiplier};
+    if(decimalPlaces >= 0) {
+      auto multiplier = Beam::PowerOfTen(decimalPlaces + 1);
+      return Floor(value + Quantity(5) / multiplier, decimalPlaces);
+    } else {
+      auto multiplier = Beam::PowerOfTen(-(decimalPlaces + 1));
+      return Floor(value + Quantity(5) * multiplier, decimalPlaces);
+    }
   }
 
   inline boost::optional<Quantity> Quantity::FromValue(
@@ -370,7 +384,7 @@ namespace Nexus {
       return boost::none;
     }
     auto i = value.begin();
-    std::int64_t sign;
+    auto sign = std::int64_t();
     if(*i == '-') {
       sign = -1;
       ++i;
@@ -380,7 +394,7 @@ namespace Nexus {
         ++i;
       }
     }
-    std::int64_t leftHand = 0;
+    auto leftHand = std::int64_t(0);
     auto hasDecimals = false;
     while(i != value.end()) {
       if(*i >= '0' && *i <= '9') {
@@ -395,8 +409,8 @@ namespace Nexus {
         return boost::none;
       }
     }
-    std::int64_t exponent = 0;
-    std::int64_t rightHand = 0;
+    auto exponent = std::int64_t(0);
+    auto rightHand = std::int64_t(0);
     if(hasDecimals) {
       auto q = value.end() - 1;
       while(*q == '0') {
@@ -413,9 +427,8 @@ namespace Nexus {
         }
       }
     }
-    boost::float64_t lhs = MULTIPLIER * static_cast<boost::float64_t>(leftHand);
-    boost::float64_t rhs = MULTIPLIER * static_cast<boost::float64_t>(
-      rightHand);
+    auto lhs = MULTIPLIER * static_cast<boost::float64_t>(leftHand);
+    auto rhs = MULTIPLIER * static_cast<boost::float64_t>(rightHand);
     while(exponent != 0) {
       rhs /= 10;
       ++exponent;
@@ -424,26 +437,26 @@ namespace Nexus {
   }
 
   inline constexpr Quantity::Quantity()
-      : m_value{0} {}
+      : m_value(0) {}
 
   inline constexpr Quantity::Quantity(std::int32_t value)
-      : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
+      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::uint32_t value)
-      : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
+      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::int64_t value)
-      : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
+      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::uint64_t value)
-      : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
+      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(double value)
-      : m_value{static_cast<boost::float64_t>(MULTIPLIER * value)} {}
+      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity Quantity::FromRepresentation(
       boost::float64_t value) {
-    Quantity q;
+    auto q = Quantity();
     q.m_value = value;
     return q;
   }
@@ -515,7 +528,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator ++(int) {
-    Quantity q{*this};
+    auto q = *this;
     ++(*this);
     return q;
   }
@@ -535,7 +548,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator --(int) {
-    Quantity q{*this};
+    auto q = *this;
     --(*this);
     return q;
   }
@@ -590,7 +603,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::Quantity& value) const {
-      boost::float64_t representation;
+      auto representation = boost::float64_t();
       shuttle.Shuttle(name, representation);
       value = Nexus::Quantity::FromRepresentation(representation);
     }

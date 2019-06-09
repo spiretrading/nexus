@@ -24,12 +24,24 @@ namespace Tests {
       //! Tests the modulus operator.
       void TestModulus();
 
+      //! Tests the Floor function.
+      void TestFloor();
+
+      //! Tests the Ceil function.
+      void TestCeil();
+
+      //! Tests the Round function.
+      void TestRound();
+
     private:
       CPPUNIT_TEST_SUITE(QuantityTester);
         CPPUNIT_TEST(TestToString);
         CPPUNIT_TEST(TestFromString);
         CPPUNIT_TEST(TestAssignment);
         CPPUNIT_TEST(TestModulus);
+        CPPUNIT_TEST(TestFloor);
+        CPPUNIT_TEST(TestCeil);
+        CPPUNIT_TEST(TestRound);
       CPPUNIT_TEST_SUITE_END();
   };
 }

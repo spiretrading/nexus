@@ -10,6 +10,9 @@
 #include <QDesktopWidget>
 #include <QMessageBox>
 #include <QStandardPaths>
+#ifdef slots
+  #undef slots
+#endif
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
@@ -31,7 +34,7 @@
 #include "Spire/UI/LoginDialog.hpp"
 #include "Spire/UI/Toolbar.hpp"
 #include "Spire/UI/WindowSettings.hpp"
-#include "Spire/Version.hpp"
+#include "Version.hpp"
 #include <QtPlugin>
 
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)

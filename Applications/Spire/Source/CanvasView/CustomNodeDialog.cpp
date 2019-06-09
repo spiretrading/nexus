@@ -74,7 +74,7 @@ void CustomNodeDialog::Setup(const CustomNode& customNode) {
     m_nodes.emplace_back(std::move(node));
   }
   for(auto i = m_children.begin(); i != m_children.end(); ++i) {
-    AddItem(*i, distance(m_children.begin(), i));
+    AddItem(*i, std::distance(m_children.begin(), i));
   }
   AddNewChildItem();
   connect(m_ui->m_buttonBox, &QDialogButtonBox::clicked, this,

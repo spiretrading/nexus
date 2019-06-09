@@ -6,8 +6,8 @@
 #include <boost/lexical_cast.hpp>
 #include <QDesktopWidget>
 #include <QMessageBox>
-#include "Spire/Version.hpp"
 #include "ui_LoginDialog.h"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Network;

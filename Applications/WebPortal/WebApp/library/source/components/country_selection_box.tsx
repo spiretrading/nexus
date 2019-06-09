@@ -42,13 +42,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
         return CountrySelectionBox.STYLE.boxLarge;
       }
     })();
-    const selectStyle = (() => {
-      if(this.props.readonly) {
-        return CountrySelectionBox.STYLE.disabledBoxStyle;
-      } else {
-        return CountrySelectionBox.STYLE.selectionBoxStyle;
-      }
-    })();
     const options = (() => {
       const options = [];
       for(const country of this.props.countryDatabase) {
@@ -69,7 +62,8 @@ export class CountrySelectionBox extends React.Component<Properties> {
         return (
           <select value={this.props.value.code}
               className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
-              style={{...boxSizing,...selectStyle}}
+              style={{...boxSizing,
+                ...CountrySelectionBox.STYLE.selectionBoxStyle}}
               onChange={this.onChange}>
             {options}
           </select>);
@@ -96,7 +90,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
     },
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
-      paddingLeft: '6px',
+      paddingLeft: '7px',
       color: '#000000',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
@@ -106,17 +100,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
-    },
-    disabledBoxStyle: {
-      boxSizing: 'border-box' as 'border-box',
-      paddingLeft: '6px',
-      color: '#000000',
-      backgroundColor: '#FFFFFF',
-      border: '1px solid #FFFFFF',
-      borderRadius: '1px',
       MozAppearance: 'none' as 'none',
       WebkitAppearance: 'none' as 'none',
       appearance: 'none' as 'none'

@@ -3,6 +3,7 @@
     "declaration": true,
     "experimentalDecorators": true,
     "module": "commonjs",
+    "noEmitOnError": true,
     "noImplicitAny": true,
     "outDir": "./library",
     "preserveConstEnums": true,

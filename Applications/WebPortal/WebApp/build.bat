@@ -1,6 +1,17 @@
-ECHO OFF
+@ECHO OFF
 SETLOCAL
-CALL %~dp0/library/build.bat %*
-CALL %~dp0/tests/build.bat %*
-CALL %~dp0/application/build.bat %*
+SET ROOT=%cd%
+CALL:build library %*
+CALL:build tests %*
+CALL:build application %*
 ENDLOCAL
+EXIT /B %ERRORLEVEL%
+
+:build
+IF NOT EXIST "%~1" (
+  MD "%~1"
+)
+PUSHD "%~1"
+CALL "%~dp0%~1\build.bat" %~2 %~3 %~4 %~5 %~6 %~7
+POPD
+EXIT /B 0

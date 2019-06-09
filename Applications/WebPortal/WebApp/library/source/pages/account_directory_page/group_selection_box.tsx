@@ -102,7 +102,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     const selectedGroups = this.props.selectedGroups.map((group) => {
       return (<div className={css(GroupSelectionBox.DYNAMIC_STYLE.groupEntry)}
           key={group.id}>
-        <div className={css(GroupSelectionBox.DYNAMIC_STYLE.textLarge)}>
+        <div className={css(textStyle)}>
           {group.name}
         </div>
         <div style={GroupSelectionBox.STYLE.imageWrapper}>
@@ -429,7 +429,6 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
       zIndex: 1,
       height: '34px',
       paddingLeft: '10px',
-      font: '400 14px Roboto',
       color: '#000000',
       display: 'flex',
       justifyContent: 'flex-start',

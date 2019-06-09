@@ -4,6 +4,7 @@
     "experimentalDecorators": true,
     "jsx": "react",
     "module": "commonjs",
+    "noEmitOnError": true,
     "noImplicitAny": true,
     "outDir": "./library",
     "preserveConstEnums": true,

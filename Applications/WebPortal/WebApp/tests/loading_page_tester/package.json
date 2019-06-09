@@ -14,11 +14,11 @@
     "webpack-cli": "3.1.2"
   },
   "dependencies": {
-    "beam": "file:../../../../../../Beam/WebApi",
-    "dali": "file:../../../../../../dali",
-    "nexus": "file:../../../../../WebApi",
+    "beam": "file:Dependencies/Beam/WebApi",
+    "dali": "file:Dependencies/dali",
+    "nexus": "file:Dependencies/WebApi",
     "react": "16.6.0",
     "react-dom": "16.6.0",
-    "web_portal": "file:../../library"
+    "web_portal": "file:Dependencies/library"
   }
 }

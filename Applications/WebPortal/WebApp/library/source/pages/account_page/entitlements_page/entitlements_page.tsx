@@ -55,6 +55,16 @@ export class EntitlementsPage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const contentWidth = (() => {
+      switch(this.props.displaySize) {
+        case DisplaySize.SMALL:
+          return EntitlementsPage.STYLE.contentSmall;
+        case DisplaySize.MEDIUM:
+          return EntitlementsPage.STYLE.contentMedium;
+        case DisplaySize.LARGE:
+          return EntitlementsPage.STYLE.contentLarge;
+      }
+    })();
     const entitlements = (() => {
       const rows = [];
       for(const entry of this.props.entitlements) {
@@ -72,31 +82,52 @@ export class EntitlementsPage extends React.Component<Properties> {
       return <div>{rows}</div>;
     })();
     return (
-      <HBoxLayout style={EntitlementsPage.STYLE.page}>
-        <Padding/>
-        <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-        <VBoxLayout>
-          <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-          {entitlements}
-          <Padding size={EntitlementsPage.LINE_PADDING}/>
-          <HLine color={EntitlementsPage.LINE_COLOR}/>
-          <Padding size={EntitlementsPage.LINE_PADDING}/>
-          <SubmissionBox roles={this.props.roles} isError={this.props.isError}
-            status={this.props.status} isEnabled={this.props.isSubmitEnabled}
-            onSubmit={this.props.onSubmit}/>
-          <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
-        </VBoxLayout>
-        <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
-        <Padding/>
-      </HBoxLayout>);
+      <div style={EntitlementsPage.STYLE.page}>
+        <div style={EntitlementsPage.STYLE.pagePadding}/>
+        <div style={contentWidth}>
+          <VBoxLayout width='100%'>
+            <Padding size={EntitlementsPage.DEFAULT_PADDING}/>
+            {entitlements}
+            <Padding size={EntitlementsPage.LINE_PADDING}/>
+            <HLine color={EntitlementsPage.LINE_COLOR}/>
+            <Padding size={EntitlementsPage.LINE_PADDING}/>
+            <SubmissionBox roles={this.props.roles} isError={this.props.isError}
+              status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+              onSubmit={this.props.onSubmit}/>
+            <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
+          </VBoxLayout>
+        </div>
+        <div style={EntitlementsPage.STYLE.pagePadding}/>
+      </div>);
   }
 
   private static readonly STYLE = {
     page: {
-      overflow: 'auto',
       minWidth: '320px',
+      height: '100%',
       width: '100%',
-      height: '100%'
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      justifyContent: 'space-between' as 'space-between',
+      overflowY: 'auto' as 'auto'
+    },
+    contentSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      minWidth: '284px',
+      flexShrink: 1,
+      flexGrow: 1,
+      maxWidth: '424px'
+    },
+    contentMedium: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '732px'
+    },
+    contentLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '1000px'
+    },
+    pagePadding: {
+      width: '18px'
     },
     text: {
       font: '400 14px Roboto',

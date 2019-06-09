@@ -48,7 +48,8 @@ export class RolePanel extends React.Component<Properties> {
       justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center',
       flexGrow: 0,
-      flexShrink: 0
+      flexShrink: 0,
+      cursor: 'default' as 'default'
     }
   };
 }

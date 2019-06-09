@@ -1,0 +1,64 @@
+#ifndef NEXUS_DEFINITIONS_SQL_DEFINITIONS_HPP
+#define NEXUS_DEFINITIONS_SQL_DEFINITIONS_HPP
+#include <Viper/Conversions.hpp>
+#include <Viper/DataTypes/NativeToDataType.hpp>
+#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
+
+namespace Viper {
+  template<>
+  inline const auto native_to_data_type_v<Nexus::CurrencyId> = small_uint;
+
+  template<>
+  inline const auto native_to_data_type_v<Nexus::Quantity> = f64;
+
+  template<>
+  inline const auto native_to_data_type_v<Nexus::Money> = f64;
+
+  template<>
+  struct ToSql<Nexus::CurrencyId> {
+    void operator ()(Nexus::CurrencyId value, std::string& column) const {
+      to_sql(value.m_value, column);
+    }
+  };
+
+  template<>
+  struct FromSql<Nexus::CurrencyId> {
+    auto operator ()(const RawColumn& column) const {
+      return Nexus::CurrencyId(from_sql<std::uint16_t>(column));
+    }
+  };
+
+  template<>
+  struct ToSql<Nexus::Quantity> {
+    void operator ()(Nexus::Quantity value, std::string& column) const {
+      to_sql(value.GetRepresentation(), column);
+    }
+  };
+
+  template<>
+  struct FromSql<Nexus::Quantity> {
+    auto operator ()(const RawColumn& column) const {
+      return Nexus::Quantity::FromRepresentation(
+        from_sql<boost::float64_t>(column));
+    }
+  };
+
+  template<>
+  struct ToSql<Nexus::Money> {
+    void operator ()(Nexus::Money value, std::string& column) const {
+      to_sql(static_cast<Nexus::Quantity>(value), column);
+    }
+  };
+
+  template<>
+  struct FromSql<Nexus::Money> {
+    auto operator ()(const RawColumn& column) const {
+      return Nexus::Money(from_sql<Nexus::Quantity>(column));
+    }
+  };
+}
+
+#endif

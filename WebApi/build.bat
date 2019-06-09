@@ -1,42 +1,52 @@
 @ECHO OFF
 SETLOCAL
+SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-PUSHD %~dp0
 IF "%1" == "clean" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /q /s library
   )
-  IF EXIST node_modules\mod_time.txt (
-    del node_modules\mod_time.txt
+  IF EXIST mod_time.txt (
+    DEL mod_time.txt
   )
   EXIT /B
 )
 IF "%1" == "reset" (
   IF EXIST library (
-    rmdir /s /q library
+    RMDIR /q /s library
+  )
+  IF EXIST mod_time.txt (
+    DEL mod_time.txt
   )
   IF EXIST node_modules (
-    rmdir /s /q node_modules
+    RMDIR /q /s node_modules
   )
   IF EXIST package-lock.json (
-    del package-lock.json
+    DEL package-lock.json
+  )
+  IF NOT "%~dp0" == "%ROOT%\" (
+    DEL package.json >NUL 2>&1
+    DEL tsconfig.json >NUL 2>&1
   )
   EXIT /B
 )
-SET BEAM_PATH=..\..\Beam\WebApi
+IF NOT "%~dp0" == "%ROOT%\" (
+  COPY /Y "%~dp0package.json" . >NUL
+  COPY /Y "%~dp0tsconfig.json" . >NUL
+)
+SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD %BEAM_PATH%
 CALL build.bat %*
 POPD
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
 ) ELSE (
-  PUSHD node_modules
   IF NOT EXIST mod_time.txt (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso ..\package.json ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
         'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
@@ -45,7 +55,6 @@ IF NOT EXIST node_modules (
       )
     )
   )
-  POPD
 )
 IF "%UPDATE_NODE%" == "1" (
   SET UPDATE_BUILD=1
@@ -55,22 +64,22 @@ IF NOT EXIST library (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'dir source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
     FOR /F %%j IN (
-      'dir library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      'DIR library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
     )
   )
 )
-IF NOT EXIST node_modules\mod_time.txt (
+IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso tsconfig.json %BEAM_PATH%\node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%BEAM_PATH%\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
-      'ls -l --time-style=full-iso node_modules\mod_time.txt ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
@@ -79,10 +88,9 @@ IF NOT EXIST node_modules\mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST library (
-    rm -rf library
+    RMDIR /q /s library
   )
   CALL npm run build
-  echo "timestamp" > node_modules\mod_time.txt
+  ECHO "timestamp" > mod_time.txt
 )
-POPD
 ENDLOCAL

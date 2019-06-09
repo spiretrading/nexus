@@ -66,7 +66,7 @@ void LuaScriptDialog::Setup(const LuaScriptNode& node) {
     m_ui->m_typeComboBox->addItem(QString::fromStdString(i->GetName()));
     auto compatibility = i->GetCompatibility(node.GetType());
     if(compatibility == CanvasType::Compatibility::EQUAL) {
-      m_ui->m_typeComboBox->setCurrentIndex(distance(types.begin(), i));
+      m_ui->m_typeComboBox->setCurrentIndex(std::distance(types.begin(), i));
     }
   }
   m_ui->m_parametersTable->setColumnCount(COLUMN_COUNT);
@@ -81,7 +81,7 @@ void LuaScriptDialog::Setup(const LuaScriptNode& node) {
     m_nodes.emplace_back(std::move(child));
   }
   for(auto i = m_parameters.begin(); i != m_parameters.end(); ++i) {
-    AddParameter(*i, distance(m_parameters.begin(), i));
+    AddParameter(*i, std::distance(m_parameters.begin(), i));
   }
   AddNewParameter();
   connect(m_ui->m_buttonBox, &QDialogButtonBox::clicked, this,

@@ -89,8 +89,9 @@ QString PositionSideToken::ToString() const {
 }
 
 QTime Spire::UI::ToQTime(const posix_time::time_duration& time) {
-  QTime timestamp(time.hours(), time.minutes(), time.seconds(),
-    time.fractional_seconds() / 1000);
+  QTime timestamp(static_cast<int>(time.hours()),
+    static_cast<int>(time.minutes()), static_cast<int>(time.seconds()),
+    static_cast<int>(time.fractional_seconds()) / 1000);
   return timestamp;
 }
 

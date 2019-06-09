@@ -98,10 +98,12 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_startTimeOffsetButton->setChecked(true);
     time_duration offset = *startTime.m_offset;
     if(offset.minutes() % 60 == 0) {
-      m_ui->m_startTimeInputSpinBox->setValue(offset.hours());
+      m_ui->m_startTimeInputSpinBox->setValue(
+        static_cast<int>(offset.hours()));
       m_ui->m_startTimeUnitsComboBox->setCurrentIndex(HOURS_INDEX);
     } else {
-      m_ui->m_startTimeInputSpinBox->setValue(offset.minutes());
+      m_ui->m_startTimeInputSpinBox->setValue(
+        static_cast<int>(offset.minutes()));
       m_ui->m_startTimeUnitsComboBox->setCurrentIndex(MINUTES_INDEX);
     }
   } else if(startTime.m_timeOfDay.is_initialized()) {
@@ -117,10 +119,12 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_endTimeOffsetButton->setChecked(true);
     time_duration offset = *endTime.m_offset;
     if(offset.minutes() % 60 == 0) {
-      m_ui->m_endTimeInputSpinBox->setValue(offset.hours());
+      m_ui->m_endTimeInputSpinBox->setValue(
+        static_cast<int>(offset.hours()));
       m_ui->m_endTimeUnitsComboBox->setCurrentIndex(HOURS_INDEX);
     } else {
-      m_ui->m_endTimeInputSpinBox->setValue(offset.minutes());
+      m_ui->m_endTimeInputSpinBox->setValue(
+        static_cast<int>(offset.minutes()));
       m_ui->m_endTimeUnitsComboBox->setCurrentIndex(MINUTES_INDEX);
     }
   } else if(endTime.m_timeOfDay.is_initialized()) {

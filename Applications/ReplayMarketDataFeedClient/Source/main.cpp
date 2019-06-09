@@ -26,7 +26,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "ReplayMarketDataFeedClient/ReplayMarketDataFeedClient.hpp"
-#include "ReplayMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

@@ -31,7 +31,7 @@
 #include "UtpMarketDataFeedClient/UtpConfiguration.hpp"
 #include "UtpMarketDataFeedClient/UtpMarketDataFeedClient.hpp"
 #include "UtpMarketDataFeedClient/UtpProtocolClient.hpp"
-#include "UtpMarketDataFeedClient/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

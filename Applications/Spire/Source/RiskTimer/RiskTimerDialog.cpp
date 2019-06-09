@@ -32,7 +32,7 @@ void RiskTimerDialog::OnTimeRemainingUpdated(
     const time_duration& timeRemaining) {
   QTime remainingTimeDisplay(0, 0, 0, 0);
   remainingTimeDisplay = remainingTimeDisplay.addMSecs(
-    timeRemaining.total_milliseconds());
+    static_cast<int>(timeRemaining.total_milliseconds()));
   m_ui->m_remainingTimeCounter->display(remainingTimeDisplay.toString(
     QString("hh:mm:ss")));
   if(timeRemaining <= seconds(0)) {

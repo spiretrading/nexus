@@ -44,7 +44,7 @@
 #include "OasisOrderExecutionServer/MatchNowFixApplication.hpp"
 #include "OasisOrderExecutionServer/OmegaFixApplication.hpp"
 #include "OasisOrderExecutionServer/TsxSorFixApplication.hpp"
-#include "OasisOrderExecutionServer/Version.hpp"
+#include "Version.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;

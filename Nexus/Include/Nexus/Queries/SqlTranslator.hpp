@@ -17,6 +17,7 @@
 #include <Beam/Queries/VariableExpression.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
@@ -73,11 +74,9 @@ namespace Nexus::Queries {
       const Beam::Queries::ConstantExpression& expression) {
     auto& value = expression.GetValue();
     if(value->GetType()->GetNativeType() == typeid(Quantity)) {
-      GetTranslation() = Viper::literal(
-        value->GetValue<Quantity>().GetRepresentation());
+      GetTranslation() = Viper::literal(value->GetValue<Quantity>());
     } else if(value->GetType()->GetNativeType() == typeid(Money)) {
-      GetTranslation() = Viper::literal(static_cast<Quantity>(
-        value->GetValue<Money>()).GetRepresentation());
+      GetTranslation() = Viper::literal(value->GetValue<Money>());
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }

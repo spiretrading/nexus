@@ -1,9 +1,8 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICE_HPP
-#define NEXUS_ADMINISTRATIONSERVICE_HPP
+#ifndef NEXUS_ADMINISTRATION_SERVICE_HPP
+#define NEXUS_ADMINISTRATION_SERVICE_HPP
 #include <string>
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
   struct AccountIdentity;
   class AccountModificationRequest;
   template<typename ServiceProtocolClientBuilderType>
@@ -17,15 +16,14 @@ namespace AdministrationService {
   class EntitlementModification;
   class LocalAdministrationDataStore;
   class Message;
-  class MySqlAdministrationDataStore;
   class RiskModification;
+  template<typename C> class SqlAdministrationDataStore;
   class TradingGroup;
   class VirtualAdministrationClient;
   template<typename ClientType> class WrapperAdministrationClient;
 
   // Standard name for the administration service.
   static const std::string SERVICE_NAME = "administration_service";
-}
 }
 
 #endif
