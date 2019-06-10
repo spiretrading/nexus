@@ -138,8 +138,8 @@ void TrendLineModel::invert_selection(int id) {
 }
 
 void TrendLineModel::clear_selected() {
-  for(auto id : get_selected()) {
-    unset_selected(id);
+  for(auto& line : m_trend_lines) {
+    line.m_state = State::UNSELECTED;
   }
 }
 
