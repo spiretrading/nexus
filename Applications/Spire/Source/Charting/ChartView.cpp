@@ -210,6 +210,7 @@ void ChartView::set_draw_mode(bool draw_mode) {
     m_current_trend_line_id = -1;
     m_draw_state = DrawState::OFF;
   }
+  update();
 }
 
 void ChartView::set_trend_line_color(const QColor& color) {
@@ -348,6 +349,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   } else {
     setCursor(Qt::ArrowCursor);
   }
+  painter.setClipRegion({0, 0, m_x_origin, m_y_origin});
   for(auto& line : m_trend_line_model.get_lines()) {
     auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
     auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
