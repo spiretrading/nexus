@@ -39,17 +39,6 @@ std::vector<int> TrendLineModel::get_selected() const {
   return selected;
 }
 
-bool TrendLineModel::is_selected(int id) {
-  auto selected = std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
-    [&] (auto& line) {
-      return id == line.m_id && line.m_state == State::SELECTED;
-    });
-  if(selected == m_trend_lines.end()) {
-    return false;
-  }
-  return true;
-}
-
 int TrendLineModel::find_closest(const ChartPoint& point) const {
   if(m_trend_lines.empty()) {
     return -1;
@@ -162,6 +151,17 @@ std::vector<TrendLineModel::TrendLineEntry>::iterator
       [&] (auto& line) {
         return id == line.m_id;
       });
+}
+
+bool TrendLineModel::is_selected(int id) {
+  auto selected = std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
+    [&] (auto& line) {
+      return id == line.m_id && line.m_state == State::SELECTED;
+    });
+  if(selected == m_trend_lines.end()) {
+    return false;
+  }
+  return true;
 }
 
 void TrendLineModel::set_selected_status(int id, State state) {
