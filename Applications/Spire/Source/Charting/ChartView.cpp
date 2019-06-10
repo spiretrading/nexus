@@ -401,12 +401,6 @@ ChartPoint ChartView::chart_delta(const QPoint& previous,
     previous_value.m_y - present_value.m_y};
 }
 
-void ChartView::clear_selections() {
-  for(auto id : m_trend_line_model.get_selected()) {
-    m_trend_line_model.unset_selected(id);
-  }
-}
-
 void ChartView::draw_point(QPainter& painter, const QColor& border_color,
     const QPoint& pos) {
   painter.setPen(border_color);
@@ -431,14 +425,6 @@ void ChartView::draw_points(int id, QPainter& painter) {
   }
   draw_point(painter, first_color, first);
   draw_point(painter, second_color, second);
-}
-
-void ChartView::invert_selection(int id) {
-  if(m_trend_line_model.is_selected(id)) {
-    m_trend_line_model.unset_selected(id);
-  } else {
-    m_trend_line_model.set_selected(id);
-  }
 }
 
 void ChartView::update_auto_scale() {
@@ -561,10 +547,10 @@ void ChartView::update_selected_line_styles() {
 void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
     if(m_multi_select) {
-      invert_selection(m_current_trend_line_id);
+      m_trend_line_model.invert_selection(m_current_trend_line_id);
       return;
     }
-    clear_selections();
+    m_trend_line_model.clear_selected();
     m_trend_line_model.set_selected(m_current_trend_line_id);
     if(m_current_trend_line_point.m_x != ChartValue() &&
         m_current_trend_line_point.m_y != ChartValue()) {
@@ -584,7 +570,7 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
         m_current_trend_line_style));
       m_draw_state = DrawState::NEW;
     } else {
-      clear_selections();
+      m_trend_line_model.clear_selected();
       m_draw_state = DrawState::IDLE;
     }
   } else if(m_draw_state == DrawState::NEW) {

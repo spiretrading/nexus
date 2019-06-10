@@ -153,11 +153,9 @@ namespace Spire {
       bool m_multi_select;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
-      void clear_selections();
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
-      void invert_selection(int id);
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();

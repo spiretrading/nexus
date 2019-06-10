@@ -129,6 +129,20 @@ void TrendLineModel::unset_selected(int id) {
   m_update_signal();
 }
 
+void TrendLineModel::invert_selection(int id) {
+  if(is_selected(id)) {
+    unset_selected(id);
+  } else {
+    set_selected(id);
+  }
+}
+
+void TrendLineModel::clear_selected() {
+  for(auto id : get_selected()) {
+    unset_selected(id);
+  }
+}
+
 void TrendLineModel::update(const TrendLine& line, int id) {
   auto iter = find_id(id);
   if(iter != m_trend_lines.end()) {

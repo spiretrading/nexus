@@ -57,18 +57,28 @@ namespace Spire {
 
       //! Sets a trend lines status to selected.
       /*!
-        \param id The ID of the trend line to set as selected.
+        \param id The id of the trend line to set as selected.
       */
       void set_selected(int id);
 
       //! Sets a trend lines status to unselected.
       /*!
-        \param id the ID of the trend line to set as unselected.
+        \param id the id of the trend line to set as unselected.
       */
       void unset_selected(int id);
 
+      //! Inverts the selected status of the specified item.
+      //! Does nothing if the specified id doesn't exist.
+      /*!
+        \param id The id of the trend line.
+      */
+      void invert_selection(int id);
+
+      //! Unsets the selected status of all selected trend lines.
+      void clear_selected();
+
       //! Replaces the trend line at the specified id with the provided trend
-      //! line. Does nothing if the specified ID doesn't exist.
+      //! line. Does nothing if the specified id doesn't exist.
       /*!
         \param line The updated trend line.
         \param id The id of the trend line to replace.
