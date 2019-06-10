@@ -121,3 +121,23 @@ TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
   REQUIRE(selected4.size() == 0);
   print_test_name("test_setting_and_getting_selected_status");
 }
+
+TEST_CASE("test_invert_selection", "[TrendLineModel]") {
+  print_test_name("test_invert_selection");
+}
+
+TEST_CASE("test_clear_selection", "[TrendLineModel]") {
+  print_test_name("test_clear_selection");
+}
+
+TEST_CASE("test_closest_basic", "[]") {
+  print_test_name("test_closest_basic");
+}
+
+TEST_CASE("test_closest_vertical_line", "[TrendLineModel]") {
+  print_test_name("test_closest_vertical_line");
+}
+
+TEST_CASE("test_closest_horizontal_line", "[TrendLineModel]") {
+  print_test_name("test_closest_horizontal_line");
+}
