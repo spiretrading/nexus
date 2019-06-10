@@ -118,6 +118,12 @@ void ChartView::set_crosshair(const QPoint& position,
   }
   m_crosshair_pos = position;
   if(m_draw_state != DrawState::OFF) {
+    if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::NEW ||
+        m_draw_state == DrawState::POINT) {
+      if(!QRect(0, 0, m_x_origin, m_y_origin).contains(position)) {
+        m_draw_state = DrawState::IDLE;
+      }
+    }
     if(m_draw_state == DrawState::IDLE) {
       m_current_trend_line_id = update_intersection(*m_crosshair_pos);
       if(m_current_trend_line_id != -1) {
