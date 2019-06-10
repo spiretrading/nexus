@@ -93,6 +93,15 @@ namespace Spire {
       */
       void set_trend_line_style(TrendLineStyle style);
 
+      //! Deletes the selected trend lines.
+      void remove_selected_trend_lines();
+
+      //! Sets the multi-select feature on (true) or off (false).
+      /*!
+        \param on The on/off status of the multi-select feature.
+      */
+      void set_multi_select(bool on);
+
     protected:
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -140,9 +149,12 @@ namespace Spire {
       ChartPoint m_current_stationary_point;
       QColor m_current_trend_line_color;
       TrendLineStyle m_current_trend_line_style;
+      bool m_multi_select;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
+      void clear_selections();
       void draw_points(int id, QPainter& painter);
+      void invert_selection(int id);
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();

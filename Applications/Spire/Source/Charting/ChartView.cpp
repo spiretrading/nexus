@@ -56,7 +56,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_label_text_color(QColor("#25212E")),
       m_is_auto_scaled(true),
       m_draw_state(DrawState::OFF),
-      m_mouse_buttons(Qt::NoButton) {
+      m_mouse_buttons(Qt::NoButton),
+      m_multi_select(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -221,6 +222,22 @@ void ChartView::set_trend_line_style(TrendLineStyle style) {
   update_selected_line_styles();
 }
 
+void ChartView::remove_selected_trend_lines() {
+  if(m_draw_state == DrawState::NEW) {
+    m_trend_line_model.remove(m_current_trend_line_id);
+    m_draw_state = DrawState::IDLE;
+  } else {
+    for(auto id : m_trend_line_model.get_selected()) {
+      m_trend_line_model.remove(id);
+    }
+  }
+  update();
+}
+
+void ChartView::set_multi_select(bool on) {
+  m_multi_select = on;
+}
+
 void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
@@ -377,6 +394,12 @@ ChartPoint ChartView::chart_delta(const QPoint& previous,
     previous_value.m_y - present_value.m_y};
 }
 
+void ChartView::clear_selections() {
+  for(auto id : m_trend_line_model.get_selected()) {
+    m_trend_line_model.unset_selected(id);
+  }
+}
+
 void ChartView::draw_points(int id, QPainter& painter) {
   auto line = m_trend_line_model.get(id);
   auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
@@ -389,6 +412,14 @@ void ChartView::draw_points(int id, QPainter& painter) {
   painter.setBrush(Qt::white);
   painter.drawEllipse(first, scale_width(4), scale_height(4));
   painter.drawEllipse(second, scale_width(4), scale_height(4));
+}
+
+void ChartView::invert_selection(int id) {
+  if(m_trend_line_model.is_selected(id)) {
+    m_trend_line_model.unset_selected(id);
+  } else {
+    m_trend_line_model.set_selected(id);
+  }
 }
 
 void ChartView::update_auto_scale() {
@@ -494,10 +525,11 @@ void ChartView::update_selected_line_styles() {
 
 void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
-    if(m_trend_line_model.is_selected(m_current_trend_line_id)) {
-      m_trend_line_model.unset_selected(m_current_trend_line_id);
+    if(m_multi_select) {
+      invert_selection(m_current_trend_line_id);
     } else {
-      m_trend_line_model.set_selected(m_current_trend_line_id);
+      clear_selections();
+      invert_selection(m_current_trend_line_id);
     }
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
@@ -528,16 +560,18 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
       m_draw_state = DrawState::LINE;
     }
   } else if(m_draw_state == DrawState::IDLE) {
-    for(auto id : m_trend_line_model.get_selected()) {
-      m_trend_line_model.unset_selected(id);
+    if(m_trend_line_model.get_selected().empty()) {
+      m_current_trend_line_point = convert_pixels_to_chart(pos);
+      m_current_stationary_point = m_current_trend_line_point;
+      m_current_trend_line_id = m_trend_line_model.add(
+        TrendLine({m_current_trend_line_point, m_current_trend_line_point},
+        m_current_trend_line_color,
+        m_current_trend_line_style));
+      m_draw_state = DrawState::NEW;
+    } else {
+      clear_selections();
+      m_draw_state = DrawState::IDLE;
     }
-    m_current_trend_line_point = convert_pixels_to_chart(pos);
-    m_current_stationary_point = m_current_trend_line_point;
-    m_current_trend_line_id = m_trend_line_model.add(
-      TrendLine({m_current_trend_line_point, m_current_trend_line_point},
-      m_current_trend_line_color,
-      m_current_trend_line_style));
-    m_draw_state = DrawState::NEW;
   } else if(m_draw_state == DrawState::NEW) {
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     m_current_trend_line_point = convert_pixels_to_chart(pos);

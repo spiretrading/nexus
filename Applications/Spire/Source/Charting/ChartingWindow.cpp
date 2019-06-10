@@ -156,6 +156,7 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   delete m_chart;
   delete m_security_widget_container;
   m_security_widget_container = new QWidget(this);
+  m_security_widget->installEventFilter(this);
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
   m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
@@ -236,6 +237,20 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     } else if(event->type() == QEvent::HoverEnter) {
       auto e = static_cast<QHoverEvent*>(event);
       m_chart->set_crosshair(e->pos(), Qt::NoButton);
+    }
+  } else if(object == m_security_widget) {
+   if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Delete) {
+        m_chart->remove_selected_trend_lines();
+      } else if(e->key() == Qt::Key_Shift) {
+        m_chart->set_multi_select(true);
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Shift) {
+        m_chart->set_multi_select(false);
+      }
     }
   }
   return QWidget::eventFilter(object, event);
