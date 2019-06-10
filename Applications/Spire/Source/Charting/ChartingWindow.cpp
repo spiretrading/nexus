@@ -167,6 +167,7 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_lock_grid_button->setEnabled(true);
   m_auto_scale_button->setEnabled(true);
   m_draw_line_button->setEnabled(true);
+  m_draw_line_button->set_toggled(false);
   m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
   m_trend_line_editor_widget->connect_color_signal(
