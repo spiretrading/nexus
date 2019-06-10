@@ -166,6 +166,17 @@ TEST_CASE("test_clear_selection", "[TrendLineModel]") {
 }
 
 TEST_CASE("test_closest_basic", "[]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 10, 40, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id2 = model.add(line2);
+  REQUIRE(model.find_closest(make_point(10, 12)) == id1);
+  REQUIRE(model.find_closest(make_point(10, 8)) == id1);
+  REQUIRE(model.find_closest(make_point(24, 15)) == id1);
+  REQUIRE(model.find_closest(make_point(40, 22)) == id2);
+  REQUIRE(model.find_closest(make_point(30, 12)) == id2);
+  REQUIRE(model.find_closest(make_point(26, 15)) == id2);
   print_test_name("test_closest_basic");
 }
 
