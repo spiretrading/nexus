@@ -13,8 +13,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const auto LINE_HOVER_DISTANCE = 25;
-
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -57,6 +55,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_is_auto_scaled(true),
       m_draw_state(DrawState::OFF),
       m_mouse_buttons(Qt::NoButton),
+      m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
       m_multi_select(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
@@ -408,18 +407,30 @@ void ChartView::clear_selections() {
   }
 }
 
+void ChartView::draw_point(QPainter& painter, const QColor& border_color,
+    const QPoint& pos) {
+  painter.setPen(border_color);
+  painter.setBrush(border_color);
+  painter.drawEllipse(pos, scale_width(6), scale_height(6));
+  painter.setPen(Qt::white);
+  painter.setBrush(Qt::white);
+  painter.drawEllipse(pos, scale_width(4), scale_height(4));
+}
+
 void ChartView::draw_points(int id, QPainter& painter) {
   auto line = m_trend_line_model.get(id);
   auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
   auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
-  painter.setPen(QColor("#25212E"));
-  painter.setBrush(QColor("#25212E"));
-  painter.drawEllipse(first, scale_width(5), scale_height(5));
-  painter.drawEllipse(second, scale_width(5), scale_height(5));
-  painter.setPen(Qt::white);
-  painter.setBrush(Qt::white);
-  painter.drawEllipse(first, scale_width(4), scale_height(4));
-  painter.drawEllipse(second, scale_width(4), scale_height(4));
+  auto current_point = convert_chart_to_pixels(m_current_trend_line_point);
+  auto first_color = QColor("#25212E");
+  auto second_color = QColor("#25212E");
+  if(current_point == first) {
+    first_color = QColor("#B9B4EC");
+  } else if(current_point == second) {
+    second_color = QColor("#B9B4EC");
+  }
+  draw_point(painter, first_color, first);
+  draw_point(painter, second_color, second);
 }
 
 void ChartView::invert_selection(int id) {
@@ -463,6 +474,22 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
   auto line_b = y_intercept(point1_x, point1_y, line_slope);
   auto point_distance = std::abs(closest_point_distance_squared(mouse_x,
     mouse_y, point1_x, point1_y, point2_x, point2_y));
+  if(point_distance < m_line_hover_distance_squared) {
+    auto line = m_trend_line_model.get(id);
+    auto line_point = convert_chart_to_pixels(std::get<0>(line.m_points));
+    auto distance = std::abs(distance_squared(mouse_x, mouse_y, point1_x,
+      point1_y));
+    if(point_distance == distance) {
+      m_current_trend_line_point = std::get<0>(line.m_points);
+      m_current_stationary_point = std::get<1>(line.m_points);
+    } else {
+      m_current_trend_line_point = std::get<1>(line.m_points);
+      m_current_stationary_point = std::get<0>(line.m_points);
+    }
+  } else {
+    m_current_trend_line_point = ChartPoint();
+    m_current_stationary_point = ChartPoint();
+  }
   auto distance = std::numeric_limits<double>::infinity();
   if(std::isinf<double>(line_slope)) {
     if(is_within_interval(mouse_y, point1_y, point2_y)) {
@@ -483,8 +510,8 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
         calculate_y(line_slope, line_point_x, line_b)));
     }
   }
-  if(point_distance <= LINE_HOVER_DISTANCE ||
-      distance <= LINE_HOVER_DISTANCE) {
+  if(point_distance <= m_line_hover_distance_squared ||
+      distance <= m_line_hover_distance_squared) {
     return id;
   }
   return -1;
@@ -539,28 +566,8 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
     }
     clear_selections();
     m_trend_line_model.set_selected(m_current_trend_line_id);
-    auto line = m_trend_line_model.get(m_current_trend_line_id);
-    auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
-    auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
-    auto point1_x = static_cast<double>(point1.x());
-    auto point1_y = static_cast<double>(point1.y());
-    auto point2_x = static_cast<double>(point2.x());
-    auto point2_y = static_cast<double>(point2.y());
-    auto point_distance = std::abs(closest_point_distance_squared(
-      static_cast<double>(pos.x()), static_cast<double>(pos.y()),
-      point1_x, point1_y, point2_x, point2_y));
-    if(point_distance < LINE_HOVER_DISTANCE) {
-      auto line = m_trend_line_model.get(m_current_trend_line_id);
-      auto line_point = convert_chart_to_pixels(std::get<0>(line.m_points));
-      auto distance = distance_squared(pos.x(), pos.y(), line_point.x(),
-        line_point.y());
-      if(point_distance == distance) {
-        m_current_trend_line_point = std::get<0>(line.m_points);
-        m_current_stationary_point = std::get<1>(line.m_points);
-      } else {
-        m_current_trend_line_point = std::get<1>(line.m_points);
-        m_current_stationary_point = std::get<0>(line.m_points);
-      }
+    if(m_current_trend_line_point.m_x != ChartValue() &&
+        m_current_trend_line_point.m_y != ChartValue()) {
       m_trend_line_model.set_selected(m_current_trend_line_id);
       m_draw_state = DrawState::POINT;
     } else {

@@ -149,10 +149,13 @@ namespace Spire {
       ChartPoint m_current_stationary_point;
       QColor m_current_trend_line_color;
       TrendLineStyle m_current_trend_line_style;
+      int m_line_hover_distance_squared;
       bool m_multi_select;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void clear_selections();
+      void draw_point(QPainter& painter, const QColor& color,
+        const QPoint& pos);
       void draw_points(int id, QPainter& painter);
       void invert_selection(int id);
       void update_auto_scale();
