@@ -123,10 +123,45 @@ TEST_CASE("test_setting and getting_selected_status", "[TrendLineModel]") {
 }
 
 TEST_CASE("test_invert_selection", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
+  auto id2 = model.add(line2);
+  auto line3 = make_line(50, 50, 60, 60, Qt::red, TrendLineStyle::SOLID);
+  auto id3 = model.add(line3);
+  model.set_selected(id1);
+  REQUIRE(model.get_selected().front() == id1);
+  model.invert_selection(id1);
+  REQUIRE(model.get_selected().empty());
+  model.set_selected(id2);
+  REQUIRE(model.get_selected().front() == id2);
+  model.invert_selection(id2);
+  REQUIRE(model.get_selected().empty());
+  model.set_selected(id1);
+  model.set_selected(id3);
+  REQUIRE(model.get_selected().size() == 2);
+  model.invert_selection(id1);
+  REQUIRE(model.get_selected().front() == id3);
+  model.invert_selection(id3);
+  REQUIRE(model.get_selected().empty());
   print_test_name("test_invert_selection");
 }
 
 TEST_CASE("test_clear_selection", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 30, 40, 40, Qt::red, TrendLineStyle::SOLID);
+  auto id2 = model.add(line2);
+  REQUIRE(model.get_selected().empty());
+  model.set_selected(id1);
+  REQUIRE(model.get_selected().front() == id1);
+  REQUIRE(model.get_selected().size() == 1);
+  model.set_selected(id2);
+  REQUIRE(model.get_selected().size() == 2);
+  model.clear_selected();
+  REQUIRE(model.get_selected().empty());
   print_test_name("test_clear_selection");
 }
 
