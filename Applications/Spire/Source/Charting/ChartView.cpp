@@ -120,7 +120,7 @@ void ChartView::set_crosshair(const QPoint& position,
   if(m_draw_state != DrawState::OFF) {
     if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::NEW ||
         m_draw_state == DrawState::POINT) {
-      if(!QRect(0, 0, m_x_origin, m_y_origin).contains(position)) {
+      if(!QRect(0, 0, m_x_origin, m_y_origin).contains(*m_crosshair_pos)) {
         m_draw_state = DrawState::IDLE;
       }
     }
