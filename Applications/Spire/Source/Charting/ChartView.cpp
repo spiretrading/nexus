@@ -529,10 +529,10 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
     if(m_multi_select) {
       invert_selection(m_current_trend_line_id);
-    } else {
-      clear_selections();
-      invert_selection(m_current_trend_line_id);
+      return;
     }
+    clear_selections();
+    m_trend_line_model.set_selected(m_current_trend_line_id);
     auto line = m_trend_line_model.get(m_current_trend_line_id);
     auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
     auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
