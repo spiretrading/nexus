@@ -223,7 +223,9 @@ void ChartView::remove_selected_trend_lines() {
   if(m_draw_state == DrawState::NEW) {
     m_trend_line_model.remove(m_current_trend_line_id);
   } else {
-    m_trend_line_model.clear_selected();
+    for(auto id : m_trend_line_model.get_selected()) {
+      m_trend_line_model.remove(id);
+    }
   }
   m_draw_state = DrawState::IDLE;
   update();
