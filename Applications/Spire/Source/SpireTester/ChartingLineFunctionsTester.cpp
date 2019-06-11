@@ -56,6 +56,11 @@ TEST_CASE("test_y_intercept", "[Charting]") {
 }
 
 TEST_CASE("test_calculate_y", "[Charting]") {
+  REQUIRE(calculate_y(1.0, 10.0, 0.0) == 10.0);
+  REQUIRE(calculate_y(-1.0, 10.0, 0.0) == -10.0);
+  REQUIRE(calculate_y(2.0, 10.0, -10.0) == 10.0);
+  REQUIRE(calculate_y(-2.0, 10.0, -10.0) == -30.0);
+  REQUIRE(calculate_y(1.0, 10.0, 0.0) == 10.0);
   print_test_name("test_calculate_y");
 }
 
