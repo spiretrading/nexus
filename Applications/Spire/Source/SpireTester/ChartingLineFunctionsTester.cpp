@@ -20,6 +20,18 @@ TEST_CASE("test_slope", "[Charting]") {
 }
 
 TEST_CASE("test_distance_squared", "[Charting]") {
+  REQUIRE(distance_squared(10, 10, 10, 12) == 4);
+  REQUIRE(distance_squared(10, 10, 12, 10) == 4);
+  REQUIRE(distance_squared(10, 10, 10, 8) == 4);
+  REQUIRE(distance_squared(10, 10, 8, 10) == 4);
+  REQUIRE(distance_squared(10, 10, 9, 11) == 2);
+  REQUIRE(distance_squared(10, 10, 11, 9) == 2);
+  REQUIRE(distance_squared(-10, -10, -10, -12) == 4);
+  REQUIRE(distance_squared(-10, -10, -12, -10) == 4);
+  REQUIRE(distance_squared(-10, -10, -10, -8) == 4);
+  REQUIRE(distance_squared(-10, -10, -8, -10) == 4);
+  REQUIRE(distance_squared(-10, -10, -9, -11) == 2);
+  REQUIRE(distance_squared(-10, -10, -11, -9) == 2);
   print_test_name("test_distance_squared");
 }
 
