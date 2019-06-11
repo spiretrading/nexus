@@ -65,5 +65,13 @@ TEST_CASE("test_calculate_y", "[Charting]") {
 }
 
 TEST_CASE("test_closest_point_distance_squared", "[Charting]") {
+  REQUIRE(closest_point_distance_squared(10, 10, 7, 10, 10, 5) == 9);
+  REQUIRE(closest_point_distance_squared(10, 10, 10, 15, 16, 10) == 25);
+  REQUIRE(closest_point_distance_squared(10.0, 10.0, 8.0, 12.0, 14.0, 10.0) ==
+    8.0);
+  REQUIRE(closest_point_distance_squared(-10, -10, -7, -10, -10, -5) == 9);
+  REQUIRE(closest_point_distance_squared(-10, -10, -10, -15, -16, -10) == 25);
+  REQUIRE(closest_point_distance_squared(-10.0, -10.0, -8.0, -12.0,
+    -14.0, -10.0) == 8.0);
   print_test_name("test_closest_point_distance_squared");
 }
