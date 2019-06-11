@@ -189,7 +189,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
-      if(m_is_mouse_dragging && !m_chart->get_draw_mode()) {
+      if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
         auto chart_delta = m_chart->convert_pixels_to_chart(e->pos());
         auto last_pos = m_chart->convert_pixels_to_chart(
           m_last_chart_mouse_pos);
@@ -269,13 +269,9 @@ void ChartingWindow::on_auto_scale_button_click() {
 }
 
 void ChartingWindow::on_draw_line_button_click() {
-  if(m_trend_line_editor_widget->isVisible()) {
-    m_chart->set_draw_mode(false);
-    m_trend_line_editor_widget->hide();
-  } else {
-    m_chart->set_draw_mode(true);
-    m_trend_line_editor_widget->show();
-  }
+  m_trend_line_editor_widget->setVisible(
+    !m_trend_line_editor_widget->isVisible());
+  m_chart->set_draw_mode(m_trend_line_editor_widget->isVisible());
 }
 
 void ChartingWindow::on_period_line_edit_changed() {

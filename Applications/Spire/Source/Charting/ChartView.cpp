@@ -56,7 +56,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_draw_state(DrawState::OFF),
       m_mouse_buttons(Qt::NoButton),
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
-      m_multi_select(false) {
+      m_is_multi_select_enabled(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -195,11 +195,8 @@ void ChartView::set_auto_scale(bool auto_scale) {
   }
 }
 
-bool ChartView::get_draw_mode() const {
-  if(m_draw_state == DrawState::OFF) {
-    return false;
-  }
-  return true;
+bool ChartView::is_draw_mode_enabled() const {
+  return m_draw_state != DrawState::OFF;
 }
 
 void ChartView::set_draw_mode(bool draw_mode) {
@@ -233,7 +230,7 @@ void ChartView::remove_selected_trend_lines() {
 }
 
 void ChartView::set_multi_select(bool on) {
-  m_multi_select = on;
+  m_is_multi_select_enabled = on;
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -535,8 +532,8 @@ void ChartView::update_selected_line_styles() {
 
 void ChartView::on_left_mouse_button_press(const QPoint& pos) {
   if(m_draw_state == DrawState::HOVER) {
-    if(m_multi_select) {
-      m_trend_line_model.invert_selection(m_current_trend_line_id);
+    if(m_is_multi_select_enabled) {
+      m_trend_line_model.toggle_selection(m_current_trend_line_id);
       return;
     }
     m_trend_line_model.clear_selected();

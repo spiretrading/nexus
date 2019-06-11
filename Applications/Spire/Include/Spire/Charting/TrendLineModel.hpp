@@ -60,12 +60,12 @@ namespace Spire {
       */
       void unset_selected(int id);
 
-      //! Inverts the selected status of the specified item.
+      //! Toggles the selected status of the specified item.
       //! Does nothing if the specified id doesn't exist.
       /*!
         \param id The id of the trend line.
       */
-      void invert_selection(int id);
+      void toggle_selection(int id);
 
       //! Unsets the selected status of all selected trend lines.
       void clear_selected();
@@ -96,7 +96,7 @@ namespace Spire {
       std::vector<TrendLineEntry> m_trend_lines;
 
       std::vector<TrendLineEntry>::iterator find_id(int id);
-      bool is_selected(int id);
+      bool is_selected(int id) const;
       void set_selected_status(int id, State state);
   };
 }

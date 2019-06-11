@@ -132,18 +132,18 @@ TEST_CASE("test_invert_selection", "[TrendLineModel]") {
   auto id3 = model.add(line3);
   model.set_selected(id1);
   REQUIRE(model.get_selected().front() == id1);
-  model.invert_selection(id1);
+  model.toggle_selection(id1);
   REQUIRE(model.get_selected().empty());
   model.set_selected(id2);
   REQUIRE(model.get_selected().front() == id2);
-  model.invert_selection(id2);
+  model.toggle_selection(id2);
   REQUIRE(model.get_selected().empty());
   model.set_selected(id1);
   model.set_selected(id3);
   REQUIRE(model.get_selected().size() == 2);
-  model.invert_selection(id1);
+  model.toggle_selection(id1);
   REQUIRE(model.get_selected().front() == id3);
-  model.invert_selection(id3);
+  model.toggle_selection(id3);
   REQUIRE(model.get_selected().empty());
   print_test_name("test_invert_selection");
 }

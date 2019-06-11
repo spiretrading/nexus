@@ -73,7 +73,7 @@ namespace Spire {
       void set_auto_scale(bool auto_scale);
 
       //! Returns true if draw mode is enabled, false otherwise.
-      bool get_draw_mode() const;
+      bool is_draw_mode_enabled() const;
 
       //! Sets draw mode on or off.
       /*!
@@ -150,7 +150,7 @@ namespace Spire {
       QColor m_current_trend_line_color;
       TrendLineStyle m_current_trend_line_style;
       int m_line_hover_distance_squared;
-      bool m_multi_select;
+      bool m_is_multi_select_enabled;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void draw_point(QPainter& painter, const QColor& color,

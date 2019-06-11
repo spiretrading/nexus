@@ -116,7 +116,7 @@ void TrendLineModel::unset_selected(int id) {
   m_update_signal();
 }
 
-void TrendLineModel::invert_selection(int id) {
+void TrendLineModel::toggle_selection(int id) {
   if(is_selected(id)) {
     unset_selected(id);
   } else {
@@ -151,15 +151,12 @@ std::vector<TrendLineModel::TrendLineEntry>::iterator
       });
 }
 
-bool TrendLineModel::is_selected(int id) {
+bool TrendLineModel::is_selected(int id) const {
   auto selected = std::find_if(m_trend_lines.begin(), m_trend_lines.end(),
     [&] (auto& line) {
       return id == line.m_id && line.m_state == State::SELECTED;
     });
-  if(selected == m_trend_lines.end()) {
-    return false;
-  }
-  return true;
+  return selected != m_trend_lines.end();
 }
 
 void TrendLineModel::set_selected_status(int id, State state) {
