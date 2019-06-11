@@ -33,14 +33,6 @@ npm install -g n
 n 9.2.0
 ln -sf /usr/local/n/versions/node/9.2.0/bin/node /usr/bin/nodejs
 
-# Locate MySQL's shared library
-pushd /etc/ld.so.conf.d
-if [[ $(egrep "/usr/local/mysql/lib/" < libc.conf | wc -c) -eq 0 ]]; then
-  sed -i '$a /usr/local/mysql/lib/' libc.conf
-  ldconfig
-fi
-popd
-
 # Checkout and install Nexus
 if [ ! -d "Nexus" ]; then
   sudo -u $username git clone https://github.com/eidolonsystems/nexus.git Nexus
@@ -325,7 +317,6 @@ sudo -u $username ./stop_server.sh
 popd
 
 sudo -u $username cp ../Nexus/Applications/*.sh .
-sudo -u $username cp ../Nexus/Applications/*.sql .
 python_directory=$(sudo -u $username python3 -m site --user-site)
 sudo -u $username cp ../Nexus/Dependencies/Beam/Beam/Library/Release/beam.so $python_directory
 sudo -u $username cp ../Nexus/Nexus/Library/Release/nexus.so $python_directory
