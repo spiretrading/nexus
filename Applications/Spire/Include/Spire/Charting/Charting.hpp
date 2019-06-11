@@ -82,10 +82,13 @@ namespace Spire {
   /*!
     \param x The x-coordinate of the given point.
     \param y The y-coordinate of the given point.
-    \param slpoe The slope ofthe given line.
+    \param slope The slope ofthe given line.
   */
   template <typename T>
-  T y_intercept(T x, T y,T slope) {
+  T y_intercept(T x, T y, T slope) {
+    if(std::isinf(static_cast<double>(slope))) {
+      return std::numeric_limits<T>::quiet_NaN();
+    }
     return y - x * slope;
   }
 

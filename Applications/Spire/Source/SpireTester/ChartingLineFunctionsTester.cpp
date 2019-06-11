@@ -46,6 +46,12 @@ TEST_CASE("test_is_within_interval", "[Charting]") {
 }
 
 TEST_CASE("test_y_intercept", "[Charting]") {
+  REQUIRE(y_intercept(10.0, 10.0, 1.0) == 0.0);
+  REQUIRE(y_intercept(-10.0, 10.0, -1.0) == 0.0);
+  REQUIRE(y_intercept(10.0, 10.0, 2.0) == -10.0);
+  REQUIRE(y_intercept(20.0, 20.0, -2.0) == 60.0);
+  REQUIRE(y_intercept(10.0, 10.0, 0.0) == 10.0);
+  REQUIRE(y_intercept(10.0, 10.0, 0.0) == 10.0);
   print_test_name("test_y_intercept");
 }
 
