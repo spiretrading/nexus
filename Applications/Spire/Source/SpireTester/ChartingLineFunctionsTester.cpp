@@ -24,6 +24,24 @@ TEST_CASE("test_distance_squared", "[Charting]") {
 }
 
 TEST_CASE("test_is_within_interval", "[Charting]") {
+  REQUIRE(is_within_interval(5, 1, 10));
+  REQUIRE(!is_within_interval(-5, 1, 10));
+  REQUIRE(!is_within_interval(15, 1, 10));
+  REQUIRE(is_within_interval(1, 1, 10));
+  REQUIRE(is_within_interval(10, 1, 10));
+  REQUIRE(is_within_interval(-5, -10, -1));
+  REQUIRE(!is_within_interval(-15, -10, -1));
+  REQUIRE(!is_within_interval(5, -10, -1));
+  REQUIRE(is_within_interval(5, 1, 10, 2));
+  REQUIRE(!is_within_interval(-5, 1, 10, 2));
+  REQUIRE(!is_within_interval(15, 1, 10, 2));
+  REQUIRE(is_within_interval(12, 1, 10, 2));
+  REQUIRE(is_within_interval(-1, 1, 10, 2));
+  REQUIRE(is_within_interval(-5, -10, -1, 2));
+  REQUIRE(!is_within_interval(-15, -10, -1, 2));
+  REQUIRE(!is_within_interval(5, -10, -1, 2));
+  REQUIRE(is_within_interval(-12, -10, -1, 2));
+  REQUIRE(is_within_interval(1, -10, -1, 2));
   print_test_name("test_is_within_interval");
 }
 
