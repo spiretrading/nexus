@@ -452,13 +452,12 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
   auto point2_y = static_cast<double>(point2.y());
   auto line_slope = slope(point1_x, point1_y, point2_x, point2_y);
   auto line_b = y_intercept(point1_x, point1_y, line_slope);
-  auto point_distance = std::abs(closest_point_distance_squared(mouse_x,
-    mouse_y, point1_x, point1_y, point2_x, point2_y));
+  auto point_distance = closest_point_distance_squared(mouse_x, mouse_y,
+    point1_x, point1_y, point2_x, point2_y);
   if(point_distance < m_line_hover_distance_squared) {
     auto line = m_trend_line_model.get(id);
     auto line_point = convert_chart_to_pixels(std::get<0>(line.m_points));
-    auto distance = std::abs(distance_squared(mouse_x, mouse_y, point1_x,
-      point1_y));
+    auto distance = distance_squared(mouse_x, mouse_y, point1_x, point1_y);
     if(point_distance == distance) {
       m_current_trend_line_point = std::get<0>(line.m_points);
       m_current_stationary_point = std::get<1>(line.m_points);
@@ -473,21 +472,19 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
   auto distance = std::numeric_limits<double>::infinity();
   if(std::isinf<double>(line_slope)) {
     if(is_within_interval(mouse_y, point1_y, point2_y)) {
-      distance = std::abs(distance_squared(mouse_x, mouse_y,
-        point1_x, mouse_y));
+      distance = distance_squared(mouse_x, mouse_y, point1_x, mouse_y);
     }
   } else if(line_slope == Quantity(0)) {
     if(is_within_interval(mouse_x, point1_x, point2_x)) {
-      distance = std::abs(distance_squared(mouse_x, mouse_y, mouse_x,
-        point1_y));
+      distance = distance_squared(mouse_x, mouse_y, mouse_x, point1_y);
     }
   } else {
     auto line_point_x =
       (mouse_x + line_slope * mouse_y - line_slope * line_b) /
       (line_slope * line_slope + 1);
     if(is_within_interval(line_point_x, point1_x, point2_x)) {
-      distance = std::abs(distance_squared(mouse_x, mouse_y, line_point_x,
-        calculate_y(line_slope, line_point_x, line_b)));
+      distance = distance_squared(mouse_x, mouse_y, line_point_x,
+        calculate_y(line_slope, line_point_x, line_b));
     }
   }
   if(point_distance <= m_line_hover_distance_squared ||

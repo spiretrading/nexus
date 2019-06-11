@@ -64,25 +64,23 @@ int TrendLineModel::find_closest(const ChartPoint& point) const {
     auto line_y2 = static_cast<Quantity>(
       std::get<1>(line.m_trend_line.m_points).m_y);
     auto line_b = y_intercept(line_x1, line_y1, line_slope);
-    point_distance_squared = Abs(closest_point_distance_squared(point_x,
-      point_y, line_x1, line_y1, line_x2, line_y2));
+    point_distance_squared = closest_point_distance_squared(point_x, point_y,
+      line_x1, line_y1, line_x2, line_y2);
     if(std::isinf(static_cast<double>(line_slope))) {
       if(is_within_interval(point_y, line_y1, line_y2)) {
-        dist_squared = Abs(
-          distance_squared(point_x, point_y, line_x1, point_y));
+        dist_squared = distance_squared(point_x, point_y, line_x1, point_y);
       }
     } else if(line_slope == Quantity(0)) {
       if(is_within_interval(point_x, line_x1, line_x2)) {
-        dist_squared = Abs(
-          distance_squared(point_x, point_y, point_x, line_y1));
+        dist_squared =  distance_squared(point_x, point_y, point_x, line_y1);
       }
     } else {
       auto line_point_x =
         (point_x + line_slope * point_y - line_slope * line_b) /
         (line_slope * line_slope + 1);
       if(is_within_interval(line_point_x, line_x1, line_x2)) {
-        dist_squared = Abs(distance_squared(point_x, point_y,
-          line_point_x, calculate_y(line_slope, line_point_x, line_b)));
+        dist_squared = distance_squared(point_x, point_y, line_point_x,
+          calculate_y(line_slope, line_point_x, line_b));
       }
     }
     auto min_distance_squared = std::min(dist_squared, point_distance_squared);
