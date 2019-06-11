@@ -32,6 +32,9 @@ namespace Spire {
   */
   template <typename T>
   T slope(T x1, T y1, T x2, T y2) {
+    if(x1 - x2 == 0) {
+      return std::numeric_limits<T>::infinity();
+    }
     return (y2 - y1) / (x2 - x1);
   }
 
