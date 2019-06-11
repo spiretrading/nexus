@@ -165,7 +165,7 @@ TEST_CASE("test_clear_selection", "[TrendLineModel]") {
   print_test_name("test_clear_selection");
 }
 
-TEST_CASE("test_closest_basic", "[]") {
+TEST_CASE("test_closest_basic", "[TrendLineModel]") {
   auto model = TrendLineModel();
   auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
   auto id1 = model.add(line1);
@@ -181,9 +181,36 @@ TEST_CASE("test_closest_basic", "[]") {
 }
 
 TEST_CASE("test_closest_vertical_line", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 10, 40, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id2 = model.add(line2);
+  auto line3 = make_line(25, 10, 25, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id3 = model.add(line3);
+  REQUIRE(model.find_closest(make_point(22, 18)) == id1);
+  REQUIRE(model.find_closest(make_point(24, 18)) == id3);
+  REQUIRE(model.find_closest(make_point(25, 22)) == id3);
+  REQUIRE(model.find_closest(make_point(30, 16)) == id2);
+  REQUIRE(model.find_closest(make_point(27, 16)) == id3);
+  REQUIRE(model.find_closest(make_point(28, 8)) == id2);
+  REQUIRE(model.find_closest(make_point(25, 8)) == id3);
   print_test_name("test_closest_vertical_line");
 }
 
 TEST_CASE("test_closest_horizontal_line", "[TrendLineModel]") {
+  auto model = TrendLineModel();
+  auto line1 = make_line(10, 10, 20, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id1 = model.add(line1);
+  auto line2 = make_line(30, 10, 40, 20, Qt::red, TrendLineStyle::SOLID);
+  auto id2 = model.add(line2);
+  auto line3 = make_line(20, 15, 30, 15, Qt::red, TrendLineStyle::SOLID);
+  auto id3 = model.add(line3);
+  REQUIRE(model.find_closest(make_point(18, 16)) == id1);
+  REQUIRE(model.find_closest(make_point(20, 16)) == id3);
+  REQUIRE(model.find_closest(make_point(24, 16)) == id3);
+  REQUIRE(model.find_closest(make_point(32, 14)) == id2);
+  REQUIRE(model.find_closest(make_point(30, 14)) == id3);
+  REQUIRE(model.find_closest(make_point(24, 14)) == id3);
   print_test_name("test_closest_horizontal_line");
 }
