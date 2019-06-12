@@ -41,6 +41,12 @@ namespace {
     }
     return ChartValue();
   }
+
+  auto get_hand_cursor() {
+    static auto cursor = QCursor(QPixmap::fromImage(
+      imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
+    return cursor;
+  }
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -52,7 +58,11 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(QColor("#E5E5E5"), scale_width(1), Qt::CustomDashLine),
       m_label_text_color(QColor("#25212E")),
-      m_is_auto_scaled(true) {
+      m_is_auto_scaled(true),
+      m_draw_state(DrawState::OFF),
+      m_mouse_buttons(Qt::NoButton),
+      m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
+      m_is_multi_select_enabled(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -60,7 +70,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   m_font_metrics = QFontMetrics(m_label_font);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(3)),
     static_cast<double>(scale_width(3))});
-  m_crosshair = QCursor(QPixmap::fromImage(
+  m_crosshair_cursor = QCursor(QPixmap::fromImage(
     imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
 }
 
@@ -80,12 +90,69 @@ QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
       static_cast<double>(m_y_origin), 0.0)));
 }
 
-void ChartView::set_crosshair(const ChartPoint& position) {
-  set_crosshair(convert_chart_to_pixels(position));
+void ChartView::set_crosshair(const ChartPoint& position,
+    Qt::MouseButtons buttons) {
+  set_crosshair(convert_chart_to_pixels(position), buttons);
 }
 
-void ChartView::set_crosshair(const QPoint& position) {
+void ChartView::set_crosshair(const QPoint& position,
+    Qt::MouseButtons buttons) {
+  if(m_draw_state != DrawState::OFF) {
+    if(buttons.testFlag(Qt::LeftButton) !=
+        m_mouse_buttons.testFlag(Qt::LeftButton)) {
+      if(buttons.testFlag(Qt::LeftButton)) {
+        on_left_mouse_button_press(position);
+      } else {
+        on_left_mouse_button_release();
+      }
+    }
+    if(buttons.testFlag(Qt::RightButton) !=
+        m_mouse_buttons.testFlag(Qt::RightButton)) {
+      if(buttons.testFlag(Qt::RightButton)) {
+        on_right_mouse_button_press();
+      }
+    }
+  }
+  m_mouse_buttons = buttons;
+  if(m_crosshair_pos) {
+    m_last_crosshair_pos = *m_crosshair_pos;
+  } else {
+    m_last_crosshair_pos = position;
+  }
   m_crosshair_pos = position;
+  if(m_draw_state != DrawState::OFF) {
+    if(m_draw_state == DrawState::IDLE) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
+      if(m_current_trend_line_id != -1) {
+        m_draw_state = DrawState::HOVER;
+      }
+    } else if(m_draw_state == DrawState::HOVER) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
+      if(m_current_trend_line_id == -1) {
+        m_draw_state = DrawState::IDLE;
+      }
+    } else if(m_draw_state == DrawState::LINE) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      auto first = std::get<0>(line.m_points);
+      auto second = std::get<1>(line.m_points);
+      auto delta = chart_delta(m_last_crosshair_pos, *m_crosshair_pos);
+      line.m_points = {{first.m_x - delta.m_x, first.m_y - delta.m_y},
+        {second.m_x - delta.m_x, second.m_y - delta.m_y}};
+      m_trend_line_model.update(line, m_current_trend_line_id);
+    } else if(m_draw_state == DrawState::NEW) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      m_current_trend_line_point = convert_pixels_to_chart(*m_crosshair_pos);
+      m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+        m_current_stationary_point}, line.m_color, line.m_style},
+        m_current_trend_line_id);
+    } else if(m_draw_state == DrawState::POINT) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      m_current_trend_line_point = convert_pixels_to_chart(*m_crosshair_pos);
+      m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+        m_current_stationary_point}, line.m_color, line.m_style},
+        m_current_trend_line_id);
+    }
+  }
   update();
 }
 
@@ -130,6 +197,46 @@ void ChartView::set_auto_scale(bool auto_scale) {
   if(m_is_auto_scaled) {
     update_auto_scale();
   }
+}
+
+bool ChartView::is_draw_mode_enabled() const {
+  return m_draw_state != DrawState::OFF;
+}
+
+void ChartView::set_draw_mode(bool draw_mode) {
+  if(draw_mode) {
+    m_draw_state = DrawState::IDLE;
+  } else {
+    m_current_trend_line_id = -1;
+    m_draw_state = DrawState::OFF;
+  }
+  update();
+}
+
+void ChartView::set_trend_line_color(const QColor& color) {
+  m_current_trend_line_color = color;
+  update_selected_line_styles();
+}
+
+void ChartView::set_trend_line_style(TrendLineStyle style) {
+  m_current_trend_line_style = style;
+  update_selected_line_styles();
+}
+
+void ChartView::remove_selected_trend_lines() {
+  if(m_draw_state == DrawState::NEW) {
+    m_trend_line_model.remove(m_current_trend_line_id);
+  } else {
+    for(auto id : m_trend_line_model.get_selected()) {
+      m_trend_line_model.remove(id);
+    }
+  }
+  m_draw_state = DrawState::IDLE;
+  update();
+}
+
+void ChartView::set_multi_select(bool on) {
+  m_is_multi_select_enabled = on;
 }
 
 void ChartView::paintEvent(QPaintEvent* event) {
@@ -204,7 +311,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
-    setCursor(m_crosshair);
+    if(m_draw_state == DrawState::OFF ||
+        m_draw_state == DrawState::IDLE ||
+        m_draw_state == DrawState::NEW) {
+      setCursor(m_crosshair_cursor);
+    } else {
+      setCursor(get_hand_cursor());
+    }
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
       m_crosshair_pos.value().x(), m_y_origin);
@@ -236,6 +349,23 @@ void ChartView::paintEvent(QPaintEvent* event) {
   } else {
     setCursor(Qt::ArrowCursor);
   }
+  painter.setClipRegion({0, 0, m_x_origin, m_y_origin});
+  for(auto& line : m_trend_line_model.get_lines()) {
+    auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
+    auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
+    draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
+      second.x(), second.y());
+  }
+  if(m_draw_state != DrawState::OFF) {
+    for(auto id : m_trend_line_model.get_selected()) {
+      draw_points(id, painter);
+    }
+    if(m_draw_state == DrawState::HOVER ||
+        m_draw_state == DrawState::LINE ||
+        m_draw_state == DrawState::POINT) {
+      draw_points(m_current_trend_line_id, painter);
+    }
+  }
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
@@ -258,6 +388,40 @@ void ChartView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+ChartPoint ChartView::chart_delta(const QPoint& previous,
+    const QPoint& present) {
+  auto previous_value = convert_pixels_to_chart(previous);
+  auto present_value = convert_pixels_to_chart(present);
+  return {previous_value.m_x - present_value.m_x,
+    previous_value.m_y - present_value.m_y};
+}
+
+void ChartView::draw_point(QPainter& painter, const QColor& border_color,
+    const QPoint& pos) {
+  painter.setPen(border_color);
+  painter.setBrush(border_color);
+  painter.drawEllipse(pos, scale_width(6), scale_height(6));
+  painter.setPen(Qt::white);
+  painter.setBrush(Qt::white);
+  painter.drawEllipse(pos, scale_width(4), scale_height(4));
+}
+
+void ChartView::draw_points(int id, QPainter& painter) {
+  auto line = m_trend_line_model.get(id);
+  auto first = convert_chart_to_pixels(std::get<0>(line.m_points));
+  auto second = convert_chart_to_pixels(std::get<1>(line.m_points));
+  auto current_point = convert_chart_to_pixels(m_current_trend_line_point);
+  auto first_color = QColor("#25212E");
+  auto second_color = QColor("#25212E");
+  if(current_point == first) {
+    first_color = QColor("#B9B4EC");
+  } else if(current_point == second) {
+    second_color = QColor("#B9B4EC");
+  }
+  draw_point(painter, first_color, first);
+  draw_point(painter, second_color, second);
+}
+
 void ChartView::update_auto_scale() {
   if(m_candlesticks.empty()) {
     return;
@@ -270,6 +434,61 @@ void ChartView::update_auto_scale() {
   }
   set_region({m_top_left.m_x, auto_scale_top},
     {m_bottom_right.m_x, auto_scale_bottom});
+}
+
+int ChartView::update_intersection(const QPoint& mouse_pos) {
+  auto id = m_trend_line_model.find_closest(
+    convert_pixels_to_chart(*m_crosshair_pos));
+  if(id == -1) {
+    return id;
+  }
+  auto line = m_trend_line_model.get(id);
+  auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
+  auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
+  auto line_slope = slope(point1, point2);
+  auto line_b = y_intercept(point1, line_slope);
+  auto point_distance = closest_point_distance_squared(mouse_pos, point1,
+    point2);
+  if(point_distance < m_line_hover_distance_squared) {
+    auto line = m_trend_line_model.get(id);
+    auto line_point = convert_chart_to_pixels(std::get<0>(line.m_points));
+    auto distance = distance_squared(mouse_pos, point1);
+    if(point_distance == distance) {
+      m_current_trend_line_point = std::get<0>(line.m_points);
+      m_current_stationary_point = std::get<1>(line.m_points);
+    } else {
+      m_current_trend_line_point = std::get<1>(line.m_points);
+      m_current_stationary_point = std::get<0>(line.m_points);
+    }
+  } else {
+    m_current_trend_line_point = ChartPoint();
+    m_current_stationary_point = ChartPoint();
+  }
+  auto distance = std::numeric_limits<double>::infinity();
+  if(std::isinf<double>(line_slope)) {
+    if(is_within_interval(mouse_pos.y(), point1.y(), point2.y())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(point1.x()), static_cast<double>(mouse_pos.y())});
+    }
+  } else if(line_slope == 0) {
+    if(is_within_interval(mouse_pos.x(), point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(mouse_pos.x()), static_cast<double>(point1.y())});
+    }
+  } else {
+    auto line_point_x =
+      (mouse_pos.x() + line_slope * mouse_pos.y() - line_slope * line_b) /
+      (line_slope * line_slope + 1);
+    if(is_within_interval(line_point_x, point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos, {line_point_x,
+        calculate_y(line_slope, line_point_x, line_b)});
+    }
+  }
+  if(point_distance <= m_line_hover_distance_squared ||
+      distance <= m_line_hover_distance_squared) {
+    return id;
+  }
+  return -1;
 }
 
 void ChartView::update_origins() {
@@ -302,4 +521,66 @@ void ChartView::update_origins() {
     m_x_origin = old_x_origin;
   }
   m_y_origin = height() - (m_font_metrics.height() + scale_height(9));
+}
+
+void ChartView::update_selected_line_styles() {
+  for(auto id : m_trend_line_model.get_selected()) {
+    auto line = m_trend_line_model.get(id);
+    m_trend_line_model.update(TrendLine{line.m_points,
+      m_current_trend_line_color, m_current_trend_line_style}, id);
+  }
+  update();
+}
+
+void ChartView::on_left_mouse_button_press(const QPoint& pos) {
+  if(m_draw_state == DrawState::HOVER) {
+    if(m_is_multi_select_enabled) {
+      m_trend_line_model.toggle_selection(m_current_trend_line_id);
+      return;
+    }
+    m_trend_line_model.clear_selected();
+    m_trend_line_model.set_selected(m_current_trend_line_id);
+    if(m_current_trend_line_point.m_x != ChartValue() &&
+        m_current_trend_line_point.m_y != ChartValue()) {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
+      m_draw_state = DrawState::POINT;
+    } else {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
+      m_draw_state = DrawState::LINE;
+    }
+  } else if(m_draw_state == DrawState::IDLE) {
+    if(m_trend_line_model.get_selected().empty()) {
+      m_current_trend_line_point = convert_pixels_to_chart(pos);
+      m_current_stationary_point = m_current_trend_line_point;
+      m_current_trend_line_id = m_trend_line_model.add(
+        TrendLine({m_current_trend_line_point, m_current_trend_line_point},
+        m_current_trend_line_color,
+        m_current_trend_line_style));
+      m_draw_state = DrawState::NEW;
+    } else {
+      m_trend_line_model.clear_selected();
+      m_draw_state = DrawState::IDLE;
+    }
+  } else if(m_draw_state == DrawState::NEW) {
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    m_current_trend_line_point = convert_pixels_to_chart(pos);
+    m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+      m_current_stationary_point}, line.m_color, line.m_style},
+      m_current_trend_line_id);
+    m_draw_state = DrawState::IDLE;
+  }
+}
+
+void ChartView::on_left_mouse_button_release() {
+  if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
+    m_draw_state = DrawState::IDLE;
+  }
+}
+
+void ChartView::on_right_mouse_button_press() {
+  if(m_draw_state == DrawState::HOVER || m_draw_state == DrawState::NEW) {
+    m_trend_line_model.remove(m_current_trend_line_id);
+    m_current_trend_line_id = -1;
+    m_draw_state = DrawState::IDLE;
+  }
 }

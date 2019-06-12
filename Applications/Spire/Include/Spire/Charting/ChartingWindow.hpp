@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/TrendLine.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -70,6 +71,8 @@ namespace Spire {
       void on_draw_line_button_click();
       void on_period_line_edit_changed();
       void on_security_change(const Nexus::Security& security);
+      void on_trend_line_color_selected();
+      void on_trend_line_style_selected();
   };
 }
 
