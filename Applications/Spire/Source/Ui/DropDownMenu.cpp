@@ -95,7 +95,8 @@ void DropDownMenu::paintEvent(QPaintEvent* event) {
     painter.fillRect(event->rect(), QColor("#C8C8C8"));
   }
   painter.fillRect(1, 1, width() - 2, height() - 2, Qt::white);
-  auto font = QFont("Roboto", scale_height(7), QFont::Normal);
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
   painter.setFont(font);
   auto metrics = QFontMetrics(font);
   painter.drawText(QPoint(scale_width(8),
