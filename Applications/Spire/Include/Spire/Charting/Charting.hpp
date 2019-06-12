@@ -1,6 +1,5 @@
 #ifndef SPIRE_CHARTING_HPP
 #define SPIRE_CHARTING_HPP
-#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -23,29 +22,19 @@ namespace Spire {
   using Candlestick =
     Nexus::TechnicalAnalysis::Candlestick<ChartValue, ChartValue>;
 
-  //! Returns the slope of the line reprsented by the given points.
+  //! Returns the slope of the line represented by the given points.
   /*!
-    \param x1 The x-coordinate of the first point.
-    \param y1 The y-cooridnate of the first point.
-    \param x2 The x-coordinate of the second point.
-    \param y2 The y-coordinate of the second point.
+    \param first The first point of the line.
+    \param second The second point of the line.
   */
-  template <typename T>
-  T slope(T x1, T y1, T x2, T y2) {
-    return (y2 - y1) / (x2 - x1);
-  }
+  double slope(const QPointF& first, const QPointF& second);
 
   //! Returns the squared distance between the given points, as a real number.
   /*!
-    \param x1 The x-coordinate of the first point.
-    \param y1 The y-cooridnate of the first point.
-    \param x2 The x-coordinate of the second point.
-    \param y2 The y-coordinate of the second point.
+    \param first The first point.
+    \param second The second point.
   */
-  template <typename T>
-  T distance_squared(T x1, T y1, T x2, T y2) {
-    return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-  }
+  double distance_squared(const QPointF& first, const QPointF& second);
 
   //! Returns true if the given value is between:
   //! [start - threshold, end + threshold].
@@ -56,13 +45,8 @@ namespace Spire {
     \param threshold Value subtract from and added to the starting and ending
                       values of the range, respectively.
   */
-  template <typename T>
-  bool is_within_interval(T value, T start, T end, T threshold) {
-    if(start > end) {
-      return is_within_interval(value, end, start, threshold);
-    }
-    return start - threshold <= value && value <= end + threshold;
-  }
+  bool is_within_interval(double value, double start, double end,
+    double threshold);
 
   //! Returns true if the given value is between [start, end].
   /*!
@@ -70,24 +54,14 @@ namespace Spire {
     \param start The starting value of the range.
     \param end The ending value of the range.
   */
-  template <typename T>
-  bool is_within_interval(T value, T start, T end) {
-    return is_within_interval(value, start, end, static_cast<T>(0));
-  }
+  bool is_within_interval(double value, double start, double end);
 
   //! Calculates the y-intercept of a line, given a point and the slope.
   /*!
-    \param x The x-coordinate of the given point.
-    \param y The y-coordinate of the given point.
-    \param slope The slope ofthe given line.
+    \param point A point on the line.
+    \param slope The slope of the given line.
   */
-  template <typename T>
-  T y_intercept(T x, T y, T slope) {
-    if(std::isinf(static_cast<double>(slope))) {
-      return std::numeric_limits<T>::quiet_NaN();
-    }
-    return y - x * slope;
-  }
+  double y_intercept(const QPointF& point, double slope);
 
   //! Calculates the y value of a line at the given x value.
   /*!
@@ -95,27 +69,17 @@ namespace Spire {
     \param x The x value.
     \param b The y-intercept of the line.
   */
-  template <typename T>
-  T calculate_y(T m, T x, T b) {
-    return m * x + b;
-  }
+  double calculate_y(double m, double x, double b);
 
-  //! Returns the shortest distance between a point and two given points.
+  //! Returns the shortest distance squared between a given point and two other
+  //! points.
   /*!
-    \param x The x-coordinate of the point.
-    \param y The y-coordinate of the point.
-    \param line_x1 The x-coordinate of the first point.
-    \param line_y1 The y-coordinate of the first point.
-    \param line_x2 The x-coordinate of the second point.
-    \param line_y2 The y-coordinate of the second point.
+    \param point The given point.
+    \param first The first point.
+    \param second The second point.
   */
-  template <typename T>
-  T closest_point_distance_squared(T x, T y, T line_x1, T line_y1, T line_x2,
-      T line_y2) {
-    auto pt1_distance = distance_squared(x, y, line_x1, line_y1);
-    auto pt2_distance = distance_squared(x, y, line_x2, line_y2);
-    return std::min(pt1_distance, pt2_distance);
-  }
+  double closest_point_distance_squared(QPointF point, const QPointF& first,
+    const QPointF& second);
 }
 
 #endif

@@ -4,6 +4,17 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  double cast_value(ChartValue value) {
+    return static_cast<double>(
+      static_cast<Quantity>(static_cast<ChartValue>(value)));
+  }
+
+  QPointF cast_point(const ChartPoint& point) {
+    return {cast_value(point.m_x), cast_value(point.m_y)};
+  }
+}
+
 TrendLineModel::TrendLineModel()
   : m_last_id(0) {}
 
@@ -44,43 +55,36 @@ int TrendLineModel::find_closest(const ChartPoint& point) const {
     return -1;
   }
   auto closest_id = m_trend_lines.front().m_id;
-  auto closest_distance = std::numeric_limits<Quantity>::infinity();
-  auto point_x = static_cast<Quantity>(point.m_x);
-  auto point_y = static_cast<Quantity>(point.m_y);
+  auto closest_distance = std::numeric_limits<double>::infinity();
+  auto qpoint = cast_point(point);
   for(auto& line : m_trend_lines) {
-    auto dist_squared = std::numeric_limits<Quantity>::infinity();
-    auto point_distance_squared = std::numeric_limits<Quantity>::infinity();
-    auto line_slope = 
-      slope(static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_x),
-      static_cast<Quantity>(std::get<0>(line.m_trend_line.m_points).m_y),
-      static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_x),
-      static_cast<Quantity>(std::get<1>(line.m_trend_line.m_points).m_y));
-    auto line_x1 = static_cast<Quantity>(
-      std::get<0>(line.m_trend_line.m_points).m_x);
-    auto line_y1 = static_cast<Quantity>(
-      std::get<0>(line.m_trend_line.m_points).m_y);
-    auto line_x2 = static_cast<Quantity>(
-      std::get<1>(line.m_trend_line.m_points).m_x);
-    auto line_y2 = static_cast<Quantity>(
-      std::get<1>(line.m_trend_line.m_points).m_y);
-    auto line_b = y_intercept(line_x1, line_y1, line_slope);
-    point_distance_squared = closest_point_distance_squared(point_x, point_y,
-      line_x1, line_y1, line_x2, line_y2);
-    if(std::isinf(static_cast<double>(line_slope))) {
-      if(is_within_interval(point_y, line_y1, line_y2)) {
-        dist_squared = distance_squared(point_x, point_y, line_x1, point_y);
+    auto dist_squared = std::numeric_limits<double>::infinity();
+    auto point_distance_squared = std::numeric_limits<double>::infinity();
+    auto line_slope = slope(
+      cast_point(std::get<0>(line.m_trend_line.m_points)),
+      cast_point(std::get<1>(line.m_trend_line.m_points)));
+    auto line_point1 = cast_point(std::get<0>(line.m_trend_line.m_points));
+    auto line_point2 = cast_point(std::get<1>(line.m_trend_line.m_points));
+    auto line_b = y_intercept(line_point1, line_slope);
+    point_distance_squared = closest_point_distance_squared(qpoint,
+      line_point1, line_point2);
+    if(std::isinf(line_slope)) {
+      if(is_within_interval(qpoint.y(), line_point1.y(), line_point2.y())) {
+        dist_squared = distance_squared(qpoint,
+          {line_point1.x(), qpoint.y()});
       }
-    } else if(line_slope == Quantity(0)) {
-      if(is_within_interval(point_x, line_x1, line_x2)) {
-        dist_squared =  distance_squared(point_x, point_y, point_x, line_y1);
+    } else if(line_slope == 0) {
+      if(is_within_interval(qpoint.x(), line_point1.x(), line_point2.x())) {
+        dist_squared =  distance_squared(qpoint,
+          {qpoint.x(), line_point1.y()});
       }
     } else {
       auto line_point_x =
-        (point_x + line_slope * point_y - line_slope * line_b) /
+        (qpoint.x() + line_slope * qpoint.y() - line_slope * line_b) /
         (line_slope * line_slope + 1);
-      if(is_within_interval(line_point_x, line_x1, line_x2)) {
-        dist_squared = distance_squared(point_x, point_y, line_point_x,
-          calculate_y(line_slope, line_point_x, line_b));
+      if(is_within_interval(line_point_x, line_point1.x(), line_point2.x())) {
+        dist_squared = distance_squared(qpoint, {line_point_x,
+          calculate_y(line_slope, line_point_x, line_b)});
       }
     }
     auto min_distance_squared = std::min(dist_squared, point_distance_squared);

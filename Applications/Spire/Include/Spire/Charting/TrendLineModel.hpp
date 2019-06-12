@@ -70,6 +70,9 @@ namespace Spire {
       //! Unsets the selected status of all selected trend lines.
       void clear_selected();
 
+      //! Removes selected lines from the model.
+      void remove_selected();
+
       //! Replaces the trend line at the specified id with the provided trend
       //! line. Does nothing if the specified id doesn't exist.
       /*!

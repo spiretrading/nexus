@@ -11,7 +11,10 @@ namespace Spire {
     public:
 
       //! Signals that a trend line style was selected.
-      using StyleSignal = Signal<void (TrendLineStyle)>;
+      /*!
+        \param style The trend line style that was selected.
+      */
+      using StyleSignal = Signal<void (TrendLineStyle style)>;
 
       //! Constructs a TrendLineStyleDropDownMenu.
       /*!

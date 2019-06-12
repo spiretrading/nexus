@@ -141,7 +141,6 @@ namespace Spire {
       bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
       std::vector<Candlestick> m_candlesticks;
-      QCursor m_hand_cursor;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
       int m_current_trend_line_id;

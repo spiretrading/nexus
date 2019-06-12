@@ -41,6 +41,12 @@ namespace {
     }
     return ChartValue();
   }
+
+  auto get_hand_cursor() {
+    static auto cursor = QCursor(QPixmap::fromImage(
+      imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
+    return cursor;
+  }
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -66,8 +72,6 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
     static_cast<double>(scale_width(3))});
   m_crosshair_cursor = QCursor(QPixmap::fromImage(
     imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
-  m_hand_cursor = QCursor(QPixmap::fromImage(
-    imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
@@ -312,7 +316,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
         m_draw_state == DrawState::NEW) {
       setCursor(m_crosshair_cursor);
     } else {
-      setCursor(m_hand_cursor);
+      setCursor(get_hand_cursor());
     }
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
@@ -438,23 +442,17 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
   if(id == -1) {
     return id;
   }
-  auto mouse_x = static_cast<double>(mouse_pos.x());
-  auto mouse_y = static_cast<double>(mouse_pos.y());
   auto line = m_trend_line_model.get(id);
   auto point1 = convert_chart_to_pixels(std::get<0>(line.m_points));
   auto point2 = convert_chart_to_pixels(std::get<1>(line.m_points));
-  auto point1_x = static_cast<double>(point1.x());
-  auto point1_y = static_cast<double>(point1.y());
-  auto point2_x = static_cast<double>(point2.x());
-  auto point2_y = static_cast<double>(point2.y());
-  auto line_slope = slope(point1_x, point1_y, point2_x, point2_y);
-  auto line_b = y_intercept(point1_x, point1_y, line_slope);
-  auto point_distance = closest_point_distance_squared(mouse_x, mouse_y,
-    point1_x, point1_y, point2_x, point2_y);
+  auto line_slope = slope(point1, point2);
+  auto line_b = y_intercept(point1, line_slope);
+  auto point_distance = closest_point_distance_squared(mouse_pos, point1,
+    point2);
   if(point_distance < m_line_hover_distance_squared) {
     auto line = m_trend_line_model.get(id);
     auto line_point = convert_chart_to_pixels(std::get<0>(line.m_points));
-    auto distance = distance_squared(mouse_x, mouse_y, point1_x, point1_y);
+    auto distance = distance_squared(mouse_pos, point1);
     if(point_distance == distance) {
       m_current_trend_line_point = std::get<0>(line.m_points);
       m_current_stationary_point = std::get<1>(line.m_points);
@@ -468,20 +466,22 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
   }
   auto distance = std::numeric_limits<double>::infinity();
   if(std::isinf<double>(line_slope)) {
-    if(is_within_interval(mouse_y, point1_y, point2_y)) {
-      distance = distance_squared(mouse_x, mouse_y, point1_x, mouse_y);
+    if(is_within_interval(mouse_pos.y(), point1.y(), point2.y())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(point1.x()), static_cast<double>(mouse_pos.y())});
     }
-  } else if(line_slope == Quantity(0)) {
-    if(is_within_interval(mouse_x, point1_x, point2_x)) {
-      distance = distance_squared(mouse_x, mouse_y, mouse_x, point1_y);
+  } else if(line_slope == 0) {
+    if(is_within_interval(mouse_pos.x(), point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(mouse_pos.x()), static_cast<double>(point1.y())});
     }
   } else {
     auto line_point_x =
-      (mouse_x + line_slope * mouse_y - line_slope * line_b) /
+      (mouse_pos.x() + line_slope * mouse_pos.y() - line_slope * line_b) /
       (line_slope * line_slope + 1);
-    if(is_within_interval(line_point_x, point1_x, point2_x)) {
-      distance = distance_squared(mouse_x, mouse_y, line_point_x,
-        calculate_y(line_slope, line_point_x, line_b));
+    if(is_within_interval(line_point_x, point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos, {line_point_x,
+        calculate_y(line_slope, line_point_x, line_b)});
     }
   }
   if(point_distance <= m_line_hover_distance_squared ||
