@@ -1,7 +1,7 @@
 #ifndef SPIRE_CHARTING_HPP
 #define SPIRE_CHARTING_HPP
-#include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include <QPointF>
+#include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
