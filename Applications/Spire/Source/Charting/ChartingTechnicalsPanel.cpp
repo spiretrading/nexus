@@ -215,6 +215,6 @@ void ChartingTechnicalsPanel::update_change_label() {
     font-family: Roboto;
     font-size: %2px;
     font-weight: 550;
-    qproperty-alignment: AlignBottom;)")
-      .arg(color.name()).arg(scale_height(10)));
+    padding-top: %3px;)")
+      .arg(color.name()).arg(scale_height(10)).arg(scale_height(4)));
 }

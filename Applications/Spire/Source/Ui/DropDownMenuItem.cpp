@@ -14,13 +14,13 @@ DropDownMenuItem::DropDownMenuItem(const QString& text, QWidget* parent)
     QLabel {
       background-color: #FFFFFF;
       font-family: Roboto;
-      font-size: %1pt;
+      font-size: %1px;
       padding-left: %2px;
     }
 
     QLabel:hover {
       background-color: #F2F2FF;
-    })").arg(scale_height(7)).arg(scale_width(5)));
+    })").arg(scale_height(12)).arg(scale_width(5)));
 }
 
 void DropDownMenuItem::set_highlight() {
