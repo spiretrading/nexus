@@ -63,8 +63,6 @@ def main():
     service_clients.get_definitions_client().load_time_zone_database()
   for account in \
       service_clients.get_service_locator_client().load_all_accounts():
-    if account.name != 'kranar':
-      continue
     queue = beam.Queue()
     nexus.order_execution_service.query_daily_order_submissions(account, date,
       date, market_database, time_zone_database,
