@@ -13,6 +13,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  const auto GAP_DIVISOR = 2.95;
+
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -276,17 +278,19 @@ void ChartView::paintEvent(QPaintEvent* event) {
       candlestick.GetOpen()});
     auto close = convert_chart_to_pixels({candlestick.GetEnd(),
       candlestick.GetClose()});
-    auto start_x = open.x() - (close.x() - open.x()) / 3;
+    auto start_x = static_cast<int>(open.x() - (close.x() - open.x()) /
+      GAP_DIVISOR);
     if(candlestick.GetEnd() >= convert_pixels_to_chart({0, 0}).m_x &&
         start_x <= m_x_origin) {
       auto high = map_to(candlestick.GetHigh(), m_bottom_right.m_y,
         m_top_left.m_y, m_y_origin, 0);
       auto low = map_to(candlestick.GetLow(), m_bottom_right.m_y,
         m_top_left.m_y, m_y_origin, 0);
-      auto end_x = open.x() + (close.x() - open.x()) / 3;
+      auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
+        GAP_DIVISOR);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
-          QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#C8C8C8"));
+          QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
       }
       if(open.y() > close.y() && close.y() < m_y_origin) {
         painter.fillRect(QRect(QPoint(start_x, close.y()),
