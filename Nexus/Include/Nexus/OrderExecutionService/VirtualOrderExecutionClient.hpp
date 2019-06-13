@@ -1,5 +1,5 @@
-#ifndef NEXUS_VIRTUALORDEREXECUTIONCLIENT_HPP
-#define NEXUS_VIRTUALORDEREXECUTIONCLIENT_HPP
+#ifndef NEXUS_VIRTUAL_ORDER_EXECUTION_CLIENT_HPP
+#define NEXUS_VIRTUAL_ORDER_EXECUTION_CLIENT_HPP
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -8,12 +8,9 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class VirtualOrderExecutionClient
-      \brief Provides a pure virtual interface to an OrderExecutionClient.
-   */
+  /** Provides a pure virtual interface to an OrderExecutionClient. */
   class VirtualOrderExecutionClient : private boost::noncopyable {
     public:
       virtual ~VirtualOrderExecutionClient() = default;
@@ -36,6 +33,9 @@ namespace OrderExecutionService {
 
       virtual void Cancel(const Order& order) = 0;
 
+      virtual void Update(OrderId orderId,
+        const ExecutionReport& executionReport) = 0;
+
       virtual void Open() = 0;
 
       virtual void Close() = 0;
@@ -46,9 +46,7 @@ namespace OrderExecutionService {
       VirtualOrderExecutionClient() = default;
   };
 
-  /*! \class WrapperOrderExecutionClient
-      \brief Wraps an OrderExecutionClient providing it with a virtual
-             interface.
+  /** Wraps an OrderExecutionClient providing it with a virtual interface.
       \tparam ClientType The type of OrderExecutionClient to wrap.
    */
   template<typename ClientType>
@@ -65,33 +63,33 @@ namespace OrderExecutionService {
       template<typename OrderExecutionClientForward>
       WrapperOrderExecutionClient(OrderExecutionClientForward&& client);
 
-      virtual ~WrapperOrderExecutionClient() override = default;
-
-      virtual void QueryOrderRecords(const AccountQuery& query,
+      void QueryOrderRecords(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) override;
 
-      virtual void QueryOrderSubmissions(const AccountQuery& query,
+      void QueryOrderSubmissions(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue)
         override;
 
-      virtual void QueryOrderSubmissions(const AccountQuery& query,
+      void QueryOrderSubmissions(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue)
         override;
 
-      virtual void QueryExecutionReports(const AccountQuery& query,
+      void QueryExecutionReports(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
         override;
 
-      virtual const OrderExecutionPublisher& GetOrderSubmissionPublisher()
-        override;
+      const OrderExecutionPublisher& GetOrderSubmissionPublisher() override;
 
-      virtual const Order& Submit(const OrderFields& fields) override;
+      const Order& Submit(const OrderFields& fields) override;
 
-      virtual void Cancel(const Order& order) override;
+      void Cancel(const Order& order) override;
 
-      virtual void Open() override;
+      void Update(OrderId orderId,
+        const ExecutionReport& executionReport) override;
 
-      virtual void Close() override;
+      void Open() override;
+
+      void Close() override;
 
     private:
       Beam::GetOptionalLocalPtr<ClientType> m_client;
@@ -160,6 +158,12 @@ namespace OrderExecutionService {
   }
 
   template<typename ClientType>
+  void WrapperOrderExecutionClient<ClientType>::Update(OrderId orderId,
+      const ExecutionReport& executionReport) {
+    m_client->Update(orderId, executionReport);
+  }
+
+  template<typename ClientType>
   void WrapperOrderExecutionClient<ClientType>::Open() {
     m_client->Open();
   }
@@ -168,7 +172,6 @@ namespace OrderExecutionService {
   void WrapperOrderExecutionClient<ClientType>::Close() {
     m_client->Close();
   }
-}
 }
 
 #endif

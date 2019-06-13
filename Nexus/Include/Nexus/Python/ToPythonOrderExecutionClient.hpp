@@ -5,15 +5,14 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class ToPythonOrderExecutionClient
-      \brief Wraps an OrderExecutionClient for use with Python.
+  /** Wraps an OrderExecutionClient for use with Python.
       \tparam ClientType The type of OrderExecutionClient to wrap.
    */
   template<typename ClientType>
-  class ToPythonOrderExecutionClient : public VirtualOrderExecutionClient {
+  class ToPythonOrderExecutionClient final :
+      public VirtualOrderExecutionClient {
     public:
 
       //! The type of OrderExecutionClient to wrap.
@@ -25,34 +24,34 @@ namespace OrderExecutionService {
       */
       ToPythonOrderExecutionClient(std::unique_ptr<Client> client);
 
-      virtual ~ToPythonOrderExecutionClient() override final;
+      ~ToPythonOrderExecutionClient() override;
 
-      virtual void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue)
-        override final;
+      void QueryOrderRecords(const AccountQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) override;
 
-      virtual void QueryOrderSubmissions(const AccountQuery& query,
+      void QueryOrderSubmissions(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue)
-        override final;
+        override;
 
-      virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue)
-        override final;
+      void QueryOrderSubmissions(const AccountQuery& query,
+        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) override;
 
-      virtual void QueryExecutionReports(const AccountQuery& query,
+      void QueryExecutionReports(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
-        override final;
+        override;
 
-      virtual const OrderExecutionPublisher& GetOrderSubmissionPublisher()
-      override final;
+      const OrderExecutionPublisher& GetOrderSubmissionPublisher() override;
 
-      virtual const Order& Submit(const OrderFields& fields) override final;
+      const Order& Submit(const OrderFields& fields) override;
 
-      virtual void Cancel(const Order& order) override final;
+      void Cancel(const Order& order) override;
 
-      virtual void Open() override final;
+      void Update(OrderId orderId,
+        const ExecutionReport& executionReport) override;
 
-      virtual void Close() override final;
+      void Open() override;
+
+      void Close() override;
 
     private:
       std::unique_ptr<Client> m_client;
@@ -78,8 +77,8 @@ namespace OrderExecutionService {
 
   template<typename ClientType>
   ToPythonOrderExecutionClient<ClientType>::~ToPythonOrderExecutionClient() {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     Close();
     m_client.reset();
   }
@@ -88,8 +87,8 @@ namespace OrderExecutionService {
   void ToPythonOrderExecutionClient<ClientType>::QueryOrderRecords(
       const AccountQuery& query,
       const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     m_client->QueryOrderRecords(query, queue);
   }
 
@@ -97,8 +96,8 @@ namespace OrderExecutionService {
   void ToPythonOrderExecutionClient<ClientType>::QueryOrderSubmissions(
       const AccountQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     m_client->QueryOrderSubmissions(query, queue);
   }
 
@@ -106,8 +105,8 @@ namespace OrderExecutionService {
   void ToPythonOrderExecutionClient<ClientType>::QueryOrderSubmissions(
       const AccountQuery& query,
       const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     m_client->QueryOrderSubmissions(query, queue);
   }
 
@@ -115,8 +114,8 @@ namespace OrderExecutionService {
   void ToPythonOrderExecutionClient<ClientType>::QueryExecutionReports(
       const AccountQuery& query,
       const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     m_client->QueryExecutionReports(query, queue);
   }
 
@@ -129,22 +128,30 @@ namespace OrderExecutionService {
   template<typename ClientType>
   const Order& ToPythonOrderExecutionClient<ClientType>::Submit(
       const OrderFields& fields) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     return m_client->Submit(fields);
   }
 
   template<typename ClientType>
   void ToPythonOrderExecutionClient<ClientType>::Cancel(const Order& order) {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     m_client->Cancel(order);
   }
 
   template<typename ClientType>
+  void ToPythonOrderExecutionClient<ClientType>::Update(OrderId orderId,
+      const ExecutionReport& executionReport) {
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
+    m_client->Update(orderId, executionReport);
+  }
+
+  template<typename ClientType>
   void ToPythonOrderExecutionClient<ClientType>::Open() {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     if(m_openState.SetOpening()) {
       return;
     }
@@ -159,8 +166,8 @@ namespace OrderExecutionService {
 
   template<typename ClientType>
   void ToPythonOrderExecutionClient<ClientType>::Close() {
-    Beam::Python::GilRelease gil;
-    boost::lock_guard<Beam::Python::GilRelease> lock{gil};
+    auto gil = Beam::Python::GilRelease();
+    auto release = boost::lock_guard(gil);
     if(m_openState.SetClosing()) {
       return;
     }
@@ -172,7 +179,6 @@ namespace OrderExecutionService {
     m_client->Close();
     m_openState.SetClosed();
   }
-}
 }
 
 #endif
