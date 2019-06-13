@@ -17,6 +17,7 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   layout->addStretch(8);
   auto price_layout = new QHBoxLayout();
   price_layout->setContentsMargins({});
+  price_layout->setSpacing(0);
   layout->addLayout(price_layout);
   m_last_label = new QLabel(tr("N/A"), this);
   m_last_label->setStyleSheet(QString(R"(
@@ -27,10 +28,14 @@ ChartingTechnicalsPanel::ChartingTechnicalsPanel(TechnicalsModel& model)
   m_last_label->setFixedHeight(scale_height(19));
   price_layout->addWidget(m_last_label);
   price_layout->addSpacing(scale_width(4));
+  auto price_change_layout = new QVBoxLayout();
+  price_change_layout->setContentsMargins(0, scale_height(5), 0,
+    scale_height(3));
   m_change_label = new QLabel(this);
   update_change_label();
   m_change_label->setFixedHeight(scale_height(18));
-  price_layout->addWidget(m_change_label);
+  price_change_layout->addWidget(m_change_label);
+  price_layout->addLayout(price_change_layout);
   price_layout->addStretch(1);
   layout->addStretch(4);
   auto ohlc_layout = new QHBoxLayout();
@@ -208,13 +213,12 @@ void ChartingTechnicalsPanel::update_change_label() {
     }
     m_change_label->setText(change_text);
   } else {
-    m_change_label->setText(tr("N/A"));
+    m_change_label->setText(tr(""));
   }
   m_change_label->setStyleSheet(QString(R"(
     color: %1;
     font-family: Roboto;
     font-size: %2px;
-    font-weight: 550;
-    padding-top: %3px;)")
-      .arg(color.name()).arg(scale_height(10)).arg(scale_height(4)));
+    font-weight: 550;)")
+      .arg(color.name()).arg(scale_height(10)));
 }
