@@ -92,7 +92,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
-  m_lock_grid_button->setFixedSize(scale(26, 26));
+  m_lock_grid_button->setFixedSize(scale(16, 26));
   m_lock_grid_button->setToolTip(tr("Lock Grid"));
   m_lock_grid_button->setDisabled(true);
   button_header_layout->addWidget(m_lock_grid_button);
@@ -103,7 +103,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/Icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
-  m_auto_scale_button->setFixedSize(scale(26, 26));
+  m_auto_scale_button->setFixedSize(scale(16, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
   m_auto_scale_button->setDisabled(true);
@@ -123,7 +123,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
     imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
-  m_draw_line_button->setFixedSize(scale(26, 26));
+  m_draw_line_button->setFixedSize(scale(16, 26));
   m_draw_line_button->setToolTip(tr("Draw Line"));
   m_draw_line_button->setDisabled(true);
   m_draw_line_button->connect_clicked_signal([=] {

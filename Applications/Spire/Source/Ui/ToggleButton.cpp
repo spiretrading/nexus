@@ -118,10 +118,10 @@ void ToggleButton::paintEvent(QPaintEvent* event) {
   if(m_is_focused) {
     auto painter = QPainter(this);
     painter.setPen(QColor("#4B23A0"));
-    painter.drawLine(scale_width(5), event->rect().height() - 2,
-      event->rect().width() - scale_width(6), event->rect().height() - 2);
-    painter.drawLine(scale_width(5), event->rect().height() - 1,
-      event->rect().width() - scale_width(6), event->rect().height() - 1);
+    painter.drawLine(0, event->rect().height() - 2, event->rect().width(),
+      event->rect().height() - 2);
+    painter.drawLine(0, event->rect().height() - 1, event->rect().width(),
+      event->rect().height() - 1);
   }
   QWidget::paintEvent(event);
 }
