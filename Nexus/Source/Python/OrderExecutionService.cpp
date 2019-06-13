@@ -61,50 +61,51 @@ namespace {
     NullEncoder>, LiveTimer>;
   using Client = OrderExecutionClient<SessionBuilder>;
 
-  struct FromPythonOrderExecutionClient : VirtualOrderExecutionClient,
+  struct FromPythonOrderExecutionClient final : VirtualOrderExecutionClient,
       wrapper<VirtualOrderExecutionClient> {
-    virtual void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<QueueWriter<OrderRecord>>& queue) override final {
+    void QueryOrderRecords(const AccountQuery& query,
+        const std::shared_ptr<QueueWriter<OrderRecord>>& queue) override {
       get_override("query_order_records")(query, queue);
     }
 
-    virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<
-        QueueWriter<SequencedOrder>>& queue) override final {
+    void QueryOrderSubmissions(const AccountQuery& query,
+        const std::shared_ptr<QueueWriter<SequencedOrder>>& queue) override {
       get_override("query_sequenced_order_submissions")(query, queue);
     }
 
-    virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<
-        QueueWriter<const Order*>>& queue) override final {
+    void QueryOrderSubmissions(const AccountQuery& query, const std::shared_ptr<
+        QueueWriter<const Order*>>& queue) override {
       get_override("query_order_submissions")(query, queue);
     }
 
-    virtual void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<
-        QueueWriter<ExecutionReport>>& queue) override final {
+    void QueryExecutionReports(const AccountQuery& query, const std::shared_ptr<
+        QueueWriter<ExecutionReport>>& queue) override {
       get_override("query_execution_reports")(query, queue);
     }
 
-    virtual const OrderExecutionPublisher&
-        GetOrderSubmissionPublisher() override final {
+    const OrderExecutionPublisher& GetOrderSubmissionPublisher() override {
       return *static_cast<const OrderExecutionPublisher*>(
         get_override("get_order_submission_publisher")());
     }
 
-    virtual const Order& Submit(const OrderFields& fields) override final {
+    const Order& Submit(const OrderFields& fields) override {
       return *static_cast<const Order*>(get_override("submit")(fields));
     }
 
-    virtual void Cancel(const Order& order) override final {
+    void Cancel(const Order& order) override {
       get_override("cancel")(order);
     }
 
-    virtual void Open() override final {
+    void Update(OrderId orderId,
+        const ExecutionReport& executionReport) override {
+      get_override("update")(orderId, executionReport);
+    }
+
+    void Open() override {
       get_override("open")();
     }
 
-    virtual void Close() override final {
+    void Close() override {
       get_override("close")();
     }
   };
@@ -250,6 +251,7 @@ void Nexus::Python::ExportOrderExecutionClient() {
     .def("submit", pure_virtual(&VirtualOrderExecutionClient::Submit),
       return_internal_reference<>())
     .def("cancel", pure_virtual(&VirtualOrderExecutionClient::Cancel))
+    .def("update", pure_virtual(&VirtualOrderExecutionClient::Update))
     .def("open", pure_virtual(&VirtualOrderExecutionClient::Open))
     .def("close", pure_virtual(&VirtualOrderExecutionClient::Close));
   ExportRef<VirtualOrderExecutionClient>("RefOrderExecutionClient");
