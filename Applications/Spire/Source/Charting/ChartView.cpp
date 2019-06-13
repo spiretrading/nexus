@@ -288,15 +288,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
         painter.fillRect(QRect(QPoint(wick_pos, high),
           QPoint(wick_pos, std::min(low, m_y_origin - 1))), QColor("#C8C8C8"));
       }
-      if(open.y() > close.y()) {
-        if(close.y() < m_y_origin) {
-          painter.fillRect(QRect(QPoint(open.x(), close.y()),
-            QPoint(std::min(close.x() - 1, m_x_origin - 1),
-            std::min(open.y(), m_y_origin - 1))), QColor("#8AF5C0"));
-          painter.fillRect(QRect(QPoint(open.x() + 1, close.y() + 1),
-            QPoint(std::min(close.x() - 2, m_x_origin - 1),
-            std::min(open.y() - 1, m_y_origin - 1))), QColor("#1FD37A"));
-        }
+      if(open.y() > close.y() && close.y() < m_y_origin) {
+        painter.fillRect(QRect(QPoint(open.x(), close.y()),
+          QPoint(std::min(close.x() - 1, m_x_origin - 1),
+          std::min(open.y(), m_y_origin - 1))), QColor("#8AF5C0"));
+        painter.fillRect(QRect(QPoint(open.x() + 1, close.y() + 1),
+          QPoint(std::min(close.x() - 2, m_x_origin - 1),
+          std::min(open.y() - 1, m_y_origin - 1))), QColor("#1FD37A"));
       } else if(open.y() < m_y_origin) {
         painter.fillRect(QRect(open,
           QPoint(std::min(close.x() - 1, m_x_origin - 1),
