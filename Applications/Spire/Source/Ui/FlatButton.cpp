@@ -17,10 +17,11 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
     : QWidget(parent),
       m_clickable(true),
       m_last_focus_reason(Qt::MouseFocusReason) {
-  m_label = new QLabel(label, this);
+  setObjectName("flat_button");
+  m_label = new QLabel(this);
   m_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
+  set_label(label);
   layout->addWidget(m_label);
   setFocusPolicy(Qt::StrongFocus);
   m_default_style.m_background_color = Qt::white;
@@ -41,7 +42,13 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
   set_disabled_style(m_disabled_style);
 }
 
-void FlatButton::set_text(const QString& text) {
+void FlatButton::set_label(const QString& text) {
+  if(text.isEmpty()) {
+    layout()->setContentsMargins(scale_width(2), scale_height(2),
+      scale_width(2), scale_height(2));
+  } else {
+    layout()->setContentsMargins({});
+  }
   m_label->setText(text);
 }
 
@@ -153,31 +160,64 @@ void FlatButton::enable_button() {
 }
 
 QString FlatButton::get_stylesheet_properties(const Style& s) {
+  auto label_border_style = [&] {
+    if(!m_label->text().isEmpty()) {
+      return QString("border: %1px solid %2 %3px solid %2;")
+        .arg(scale_width(1))
+        .arg(s.m_border_color.name(QColor::HexArgb))
+        .arg(scale_height(1));
+    }
+    return QString();
+  }();
   return QString(R"(
-      background-color: %1;
-      border: %2px solid %3 %4px solid %3;
-      color: %5;
-      qproperty-alignment: AlignCenter;)")
-        .arg(s.m_background_color.name(QColor::HexArgb)).arg(scale_height(1))
-        .arg(s.m_border_color.name(QColor::HexArgb)).arg(scale_width(1))
-        .arg(s.m_text_color.name(QColor::HexArgb));
+    background-color: %1;
+    color: %2;
+    qproperty-alignment: AlignCenter;
+    %3)")
+    .arg(s.m_background_color.name(QColor::HexArgb))
+    .arg(s.m_text_color.name(QColor::HexArgb))
+    .arg(label_border_style);
 }
 
 void FlatButton::set_disabled_stylesheet() {
+  setStyleSheet(QString(R"(
+    #flat_button {
+      border: %1px solid %2 %3px solid %2;
+    })")
+    .arg(scale_height(1))
+    .arg(m_disabled_style.m_border_color.name(QColor::HexArgb))
+    .arg(scale_width(1)));
   m_label->setStyleSheet(get_stylesheet_properties(m_disabled_style));
 }
 
 void FlatButton::set_focus_stylesheet() {
+  setStyleSheet(QString(R"(
+    #flat_button {
+      border: %1px solid %2 %3px solid %2;
+    })")
+    .arg(scale_height(1))
+    .arg(m_focus_style.m_border_color.name(QColor::HexArgb))
+    .arg(scale_width(1)));
   m_label->setStyleSheet(
     QString(R"(QLabel { %1 })").arg(
-      get_stylesheet_properties(m_default_style)) +
+      get_stylesheet_properties(m_focus_style)) +
     QString(R"(QLabel:hover { %1 })").arg(
-      get_stylesheet_properties(m_hover_style)) +
-    QString(R"(QLabel { %1 })").arg(
-      get_stylesheet_properties(m_focus_style)));
+      get_stylesheet_properties(m_hover_style)));
 }
 
 void FlatButton::set_hover_stylesheet() {
+  setStyleSheet(QString(R"(
+    #flat_button {
+      background-color: #FFFFFF;
+      border: %1px solid %2 %3px solid %2;
+    }
+
+    #flat_button:hover {
+      border: %1px solid %4 %3px solid %4;
+    })").arg(scale_height(1))
+    .arg(m_default_style.m_border_color.name(QColor::HexArgb))
+    .arg(scale_width(1))
+    .arg(m_hover_style.m_border_color.name(QColor::HexArgb)));
   m_label->setStyleSheet(
     QString(R"(QLabel { %1 })").arg(
       get_stylesheet_properties(m_default_style)) +
