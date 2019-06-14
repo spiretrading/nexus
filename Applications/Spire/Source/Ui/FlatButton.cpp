@@ -188,11 +188,9 @@ void FlatButton::set_focus_stylesheet() {
     .arg(scale_width(1)));
   m_label->setStyleSheet(
     QString(R"(QLabel { %1 })").arg(
-      get_stylesheet_properties(m_default_style)) +
+      get_stylesheet_properties(m_focus_style)) +
     QString(R"(QLabel:hover { %1 })").arg(
-      get_stylesheet_properties(m_hover_style)) +
-    QString(R"(QLabel { %1 })").arg(
-      get_stylesheet_properties(m_focus_style)));
+      get_stylesheet_properties(m_hover_style)));
 }
 
 void FlatButton::set_hover_stylesheet() {
