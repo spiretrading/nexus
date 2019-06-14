@@ -170,7 +170,7 @@ QString FlatButton::get_stylesheet_properties(const Style& s) {
 void FlatButton::set_disabled_stylesheet() {
   setStyleSheet(QString(R"(
     #flat_button {
-      border: %1px solid %2 %3px solid %2
+      border: %1px solid %2 %3px solid %2;
     })")
     .arg(scale_height(1))
     .arg(m_disabled_style.m_border_color.name(QColor::HexArgb))
@@ -181,7 +181,7 @@ void FlatButton::set_disabled_stylesheet() {
 void FlatButton::set_focus_stylesheet() {
   setStyleSheet(QString(R"(
     #flat_button {
-      border: %1px solid %2 %3px solid %2
+      border: %1px solid %2 %3px solid %2;
     })")
     .arg(scale_height(1))
     .arg(m_focus_style.m_border_color.name(QColor::HexArgb))
