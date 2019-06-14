@@ -18,15 +18,10 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
       m_clickable(true),
       m_last_focus_reason(Qt::MouseFocusReason) {
   setObjectName("flat_button");
-  m_label = new QLabel(label, this);
+  m_label = new QLabel(this);
   m_label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   auto layout = new QHBoxLayout(this);
-  if(label.isEmpty()) {
-    layout->setContentsMargins(scale_width(2), scale_height(2),
-      scale_width(2), scale_height(2));
-  } else {
-    layout->setContentsMargins({});
-  }
+  set_label(label);
   layout->addWidget(m_label);
   setFocusPolicy(Qt::StrongFocus);
   m_default_style.m_background_color = Qt::white;
@@ -47,7 +42,13 @@ FlatButton::FlatButton(const QString& label, QWidget* parent)
   set_disabled_style(m_disabled_style);
 }
 
-void FlatButton::set_text(const QString& text) {
+void FlatButton::set_label(const QString& text) {
+  if(text.isEmpty()) {
+    layout()->setContentsMargins(scale_width(2), scale_height(2),
+      scale_width(2), scale_height(2));
+  } else {
+    layout()->setContentsMargins({});
+  }
   m_label->setText(text);
 }
 

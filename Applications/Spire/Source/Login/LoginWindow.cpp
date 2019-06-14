@@ -203,7 +203,7 @@ void LoginWindow::set_state(State s) {
       m_username_line_edit->setEnabled(false);
       m_password_line_edit->setEnabled(false);
       m_status_label->setText("");
-      m_sign_in_button->set_text(tr("Cancel"));
+      m_sign_in_button->set_label(tr("Cancel"));
       m_logo_widget->movie()->start();
       break;
     }
@@ -290,7 +290,7 @@ void LoginWindow::reset_visuals() {
   m_username_line_edit->setEnabled(true);
   m_password_line_edit->setEnabled(true);
   m_sign_in_button->setFocus();
-  m_sign_in_button->set_text(tr("Sign In"));
+  m_sign_in_button->set_label(tr("Sign In"));
   m_logo_widget->movie()->stop();
   m_logo_widget->movie()->jumpToFrame(0);
 }
