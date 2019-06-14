@@ -169,10 +169,10 @@ QString FlatButton::get_stylesheet_properties(const Style& s) {
     return QString();
   }();
   return QString(R"(
-      background-color: %1;
-      color: %2;
-      qproperty-alignment: AlignCenter;
-      %3)")
+    background-color: %1;
+    color: %2;
+    qproperty-alignment: AlignCenter;
+    %3)")
     .arg(s.m_background_color.name(QColor::HexArgb))
     .arg(s.m_text_color.name(QColor::HexArgb))
     .arg(label_border_style);
