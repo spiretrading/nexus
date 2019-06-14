@@ -159,12 +159,23 @@ void FlatButton::enable_button() {
 }
 
 QString FlatButton::get_stylesheet_properties(const Style& s) {
+  auto label_border_style = [&] {
+    if(!m_label->text().isEmpty()) {
+      return QString("border: %1px solid %2 %3px solid %2;")
+        .arg(scale_width(1))
+        .arg(s.m_border_color.name(QColor::HexArgb))
+        .arg(scale_height(1));
+    }
+    return QString();
+  }();
   return QString(R"(
       background-color: %1;
       color: %2;
-      qproperty-alignment: AlignCenter;)")
-        .arg(s.m_background_color.name(QColor::HexArgb))
-        .arg(s.m_text_color.name(QColor::HexArgb));
+      qproperty-alignment: AlignCenter;
+      %3)")
+    .arg(s.m_background_color.name(QColor::HexArgb))
+    .arg(s.m_text_color.name(QColor::HexArgb))
+    .arg(label_border_style);
 }
 
 void FlatButton::set_disabled_stylesheet() {
