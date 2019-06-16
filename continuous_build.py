@@ -144,7 +144,7 @@ def main():
     try:
       repo.git.pull()
     except:
-      print "Failed to pull: ", sys.exc_info()[0]
+      print('Failed to pull: ', sys.exc_info()[0])
     build_repo(repo, args.path, branch)
     time.sleep(args.period)
 
