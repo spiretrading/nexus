@@ -142,7 +142,7 @@ def main():
   makedirs(args.path)
   while True:
     try:
-      repo.git.checkout(branch)
+      repo.git.checkout(args.branch)
       repo.git.pull()
     except:
       print('Failed to pull: ', sys.exc_info()[0])
