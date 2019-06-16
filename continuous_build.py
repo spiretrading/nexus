@@ -55,8 +55,8 @@ def copy_build(applications, timestamp, name, source, path):
   except OSError:
     return
 
-def build_repo(repo, path):
-  commits = sorted([commit for commit in repo.iter_commits('master')],
+def build_repo(repo, path, branch):
+  commits = sorted([commit for commit in repo.iter_commits(branch)],
     key = lambda commit: -int(commit.committed_date))
   builds = [int(d) for d in os.listdir(path) if os.path.isdir(
     os.path.join(path, d))]
@@ -64,8 +64,7 @@ def build_repo(repo, path):
   if len(builds) == 0:
     builds.append(int(commits[1].committed_date))
   for i in range(len(commits)):
-    commit = commits[i]
-    timestamp = int(commit.committed_date)
+    timestamp = int(commits[i].committed_date)
     if timestamp in builds:
       commits = commits[0:i]
       commits.reverse()
@@ -132,6 +131,8 @@ def main():
     default='https://github.com/eidolonsystems/nexus.git')
   parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
+  parser.add_argument('-b', '--branch', type=str, help='Branch to build.',
+    default='master')
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
@@ -143,8 +144,8 @@ def main():
     try:
       repo.git.pull()
     except:
-      pass
-    build_repo(repo, args.path)
+      print "Failed to pull: ", sys.exc_info()[0]
+    build_repo(repo, args.path, branch)
     time.sleep(args.period)
 
 if __name__ == '__main__':
