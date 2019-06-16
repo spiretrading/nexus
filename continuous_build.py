@@ -106,9 +106,8 @@ def build_repo(repo, path):
       'UidServer']
     beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
     copy_build(beam_applications, timestamp, 'Beam', beam_path, path)
-    for file in ['reset.sql', 'setup.py']:
-      shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-        os.path.join(destination_path, file))
+    shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
+      os.path.join(destination_path, 'setup.py'))
     if sys.platform == 'win32':
       archive_path = os.path.join(path, 'nexus-%s.zip' % str(timestamp))
       make_zipfile(destination_path, archive_path)
