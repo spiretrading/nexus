@@ -50,13 +50,13 @@ def copy_build(applications, timestamp, name, source, path):
         if not os.path.isfile(file_path):
           continue
         extension = os.path.splitext(file_path)[1]
-        if extension in ['py', 'yml']:
+        if extension in ['.py', '.yml']:
           shutil.copy2(file_path, os.path.join(application_path, file))
         if sys.platform == 'win32':
-          if extension in ['bat', 'exe']:
+          if extension in ['.bat', '.exe']:
             shutil.copy2(file_path, os.path.join(application_path, file))
         else:
-          if extension in ['', 'sh']:
+          if extension in ['', '.sh']:
             shutil.copy2(file_path, os.path.join(application_path, file))
     library_destination_path = os.path.join(destination_path, 'Libraries')
     makedirs(library_destination_path)
