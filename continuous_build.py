@@ -126,7 +126,6 @@ def build_repo(repo, path, branch):
           os.path.join(destination_path, file))
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(timestamp))
       make_tarfile(destination_path, archive_path)
-    shutil.rmtree(beam_path)
     shutil.rmtree(destination_path)
     makedirs(destination_path)
     with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
