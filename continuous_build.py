@@ -44,8 +44,20 @@ def copy_build(applications, timestamp, name, source, path):
         'Application')
       for file in os.listdir(source_directory):
         file_path = os.path.join(source_directory, file)
-        if os.path.isfile(file_path):
+        if os.path.isdir(file_path):
+          shutil.copytree(file_path, os.path.join(application_path, file))
+          continue
+        if not os.path.isfile(file_path):
+          continue
+        extension = os.path.splitext(file_path)[1]
+        if extension in ['py', 'yml']:
           shutil.copy2(file_path, os.path.join(application_path, file))
+        if sys.platform == 'win32':
+          if extension in ['bat', 'exe']:
+            shutil.copy2(file_path, os.path.join(application_path, file))
+        else:
+          if extension in ['', 'sh']:
+            shutil.copy2(file_path, os.path.join(application_path, file))
     library_destination_path = os.path.join(destination_path, 'Libraries')
     makedirs(library_destination_path)
     library_source_path = os.path.join(source, name, 'Libraries', 'Release')
@@ -74,16 +86,14 @@ def build_repo(repo, path, branch):
   else:
     extension = 'sh'
   for commit in commits:
-    build_path = os.path.join(os.getcwd(), 'build')
-    shutil.rmtree(build_path, True)
-    makedirs(build_path)
     timestamp = int(commit.committed_date)
     repo.git.checkout(commit.hexsha)
     result = []
     result.append(call(os.path.join(repo.working_dir, 'configure.%s -DD=%s' %
-      (extension, os.path.join(os.getcwd(), 'Dependencies'))), build_path))
-    result.append(call(os.path.join(build_path, 'build.%s' % extension),
-      build_path))
+      (extension, os.path.join(os.getcwd(), 'Dependencies'))),
+      repo.working_dir))
+    result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
+      repo.working_dir))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
@@ -100,7 +110,7 @@ def build_repo(repo, path, branch):
       'UtpMarketDataFeedClient', 'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
-    copy_build(nexus_applications, timestamp, 'Nexus', build_path, path)
+    copy_build(nexus_applications, timestamp, 'Nexus', repo.working_dir, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
     beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
@@ -117,7 +127,6 @@ def build_repo(repo, path, branch):
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(timestamp))
       make_tarfile(destination_path, archive_path)
     shutil.rmtree(beam_path)
-    shutil.rmtree(build_path)
     shutil.rmtree(destination_path)
     makedirs(destination_path)
     with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
