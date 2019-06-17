@@ -7,11 +7,13 @@ using namespace Spire;
 BookViewProperties::BookViewProperties() {
   set_bbo_quote_font(QFont("Roboto", 14, QFont::Medium));
   set_book_quote_font(QFont("Roboto", 8, QFont::Medium));
-  QColor baseColor(75, 35, 160);
-  for(auto i = 0; i < 7; ++i) {
-    get_book_quote_background_colors().push_back(
-      baseColor.lighter(300 - i * (200 / 7)));
-  }
+  get_book_quote_background_colors().push_back(QColor("#FFFFFF"));
+  get_book_quote_background_colors().push_back(QColor("#EDE7FF"));
+  get_book_quote_background_colors().push_back(QColor("#DBCFFF"));
+  get_book_quote_background_colors().push_back(QColor("#C9B7FF"));
+  get_book_quote_background_colors().push_back(QColor("#AA8FFF"));
+  get_book_quote_background_colors().push_back(QColor("#9877FF"));
+  get_book_quote_background_colors().push_back(QColor("#8760FF"));
   set_book_quote_foreground_color(QColor(0, 0, 0));
   set_order_highlight_color(QColor(60, 225, 83));
   set_show_grid(false);
