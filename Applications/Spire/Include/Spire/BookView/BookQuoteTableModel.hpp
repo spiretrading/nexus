@@ -43,6 +43,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_quote_connection;
 
       void on_quote_signal(const BookViewModel::Quote& quote, int index);
+      void update_market_first_indexes(int index);
   };
 }
 

@@ -13,6 +13,9 @@ BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
       m_side(side),
       m_properties(properties),
       m_size(0) {
+  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+    m_market_first_index[entry.m_code] = INT_MAX;
+  }
   auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
     on_quote_signal(**i, std::distance(quotes.rbegin(), i));
@@ -73,6 +76,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
 void BookQuoteTableModel::set_properties(
     const BookViewProperties& properties) {
   m_properties = properties;
+  update_market_first_indexes(0);
 }
 
 void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
@@ -81,6 +85,7 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     return;
   }
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
+  update_market_first_indexes(index);
   auto test_price_levels = false;
   if(m_size > static_cast<int>(book.size())) {
     beginRemoveRows(QModelIndex(), index, index);
@@ -103,10 +108,17 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     dataChanged(createIndex(index, 0), createIndex(m_size - 1,
       columnCount(QModelIndex())));
   }
-  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
-    m_market_first_index[entry.m_code] = INT_MAX;
+}
+
+void BookQuoteTableModel::update_market_first_indexes(int index) {
+  auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
+  for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
+    if(m_market_first_index[(**i).m_quote.m_market] >
+        std::distance(book.rbegin(), book.rbegin() + index)) {
+      m_market_first_index[(**i).m_quote.m_market] = INT_MAX;
+    }
   }
-  for(auto i = book.rbegin(); i != book.rend(); ++i) {
+  for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
     auto dist = std::distance(book.rbegin(), i);
     if(dist < m_market_first_index[(**i).m_quote.m_market]) {
       m_market_first_index[(**i).m_quote.m_market] = dist;
