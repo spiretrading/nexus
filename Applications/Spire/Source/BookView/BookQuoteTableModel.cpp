@@ -103,4 +103,13 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     dataChanged(createIndex(index, 0), createIndex(m_size - 1,
       columnCount(QModelIndex())));
   }
+  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+    m_market_first_index[entry.m_code] = INT_MAX;
+  }
+  for(auto i = book.rbegin(); i != book.rend(); ++i) {
+    auto dist = std::distance(book.rbegin(), i);
+    if(dist < m_market_first_index[(**i).m_quote.m_market]) {
+      m_market_first_index[(**i).m_quote.m_market] = dist;
+    }
+  }
 }
