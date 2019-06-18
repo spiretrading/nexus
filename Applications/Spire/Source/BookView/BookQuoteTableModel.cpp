@@ -85,7 +85,6 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     return;
   }
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  update_market_first_indexes(index);
   auto test_price_levels = false;
   if(m_size > static_cast<int>(book.size())) {
     beginRemoveRows(QModelIndex(), index, index);
@@ -108,14 +107,15 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     dataChanged(createIndex(index, 0), createIndex(m_size - 1,
       columnCount(QModelIndex())));
   }
+  update_market_first_indexes(index);
 }
 
 void BookQuoteTableModel::update_market_first_indexes(int index) {
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
-    if(m_market_first_index[(**i).m_quote.m_market] >
+  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+    if(m_market_first_index[entry.m_code] >=
         std::distance(book.rbegin(), book.rbegin() + index)) {
-      m_market_first_index[(**i).m_quote.m_market] = INT_MAX;
+      m_market_first_index[entry.m_code] = INT_MAX;
     }
   }
   for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
