@@ -96,6 +96,8 @@ namespace Spire {
 
       QtPromise<void> load() override;
 
+      const Nexus::MarketDatabase& get_market_database() const;
+
       boost::signals2::connection connect_bbo_slot(
         const BboSignal::slot_type& slot) const override;
 
