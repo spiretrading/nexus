@@ -14,7 +14,7 @@ BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
       m_properties(properties),
       m_size(0) {
   for(auto& entry : m_model->get_market_database().GetEntries()) {
-    m_market_first_index[entry.m_code] = INT_MAX;
+    m_first_market_index[entry.m_code] = INT_MAX;
   }
   auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   for(auto i = quotes.rbegin(); i != quotes.rend(); ++i) {
@@ -56,7 +56,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
     if(highlight.is_initialized()) {
       if(highlight->m_highlight_all_levels) {
         return highlight->m_color;
-      } else if(index.row() == (*m_market_first_index.find(market)).second) {
+      } else if(index.row() == (*m_first_market_index.find(market)).second) {
         return highlight->m_color;
       }
     }
@@ -76,7 +76,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
 void BookQuoteTableModel::set_properties(
     const BookViewProperties& properties) {
   m_properties = properties;
-  update_market_first_indexes(0);
+  update_first_market_indexes(0);
 }
 
 void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
@@ -107,21 +107,21 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
     dataChanged(createIndex(index, 0), createIndex(m_size - 1,
       columnCount(QModelIndex())));
   }
-  update_market_first_indexes(index);
+  update_first_market_indexes(index);
 }
 
-void BookQuoteTableModel::update_market_first_indexes(int index) {
+void BookQuoteTableModel::update_first_market_indexes(int index) {
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   for(auto& entry : m_model->get_market_database().GetEntries()) {
-    if(m_market_first_index[entry.m_code] >=
+    if(m_first_market_index[entry.m_code] >=
         std::distance(book.rbegin(), book.rbegin() + index)) {
-      m_market_first_index[entry.m_code] = INT_MAX;
+      m_first_market_index[entry.m_code] = INT_MAX;
     }
   }
   for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
     auto dist = std::distance(book.rbegin(), i);
-    if(dist < m_market_first_index[(**i).m_quote.m_market]) {
-      m_market_first_index[(**i).m_quote.m_market] = dist;
+    if(dist < m_first_market_index[(**i).m_quote.m_market]) {
+      m_first_market_index[(**i).m_quote.m_market] = dist;
     }
   }
 }

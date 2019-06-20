@@ -38,12 +38,12 @@ namespace Spire {
       const BookViewModel* m_model;
       Nexus::Side m_side;
       BookViewProperties m_properties;
-      std::unordered_map<Nexus::MarketCode, int> m_market_first_index;
+      std::unordered_map<Nexus::MarketCode, int> m_first_market_index;
       int m_size;
       boost::signals2::scoped_connection m_quote_connection;
 
       void on_quote_signal(const BookViewModel::Quote& quote, int index);
-      void update_market_first_indexes(int index);
+      void update_first_market_indexes(int index);
   };
 }
 
