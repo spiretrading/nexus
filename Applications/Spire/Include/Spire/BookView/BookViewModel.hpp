@@ -86,6 +86,9 @@ namespace Spire {
       //! Loads the model.
       virtual QtPromise<void> load() = 0;
 
+      //! Returns the market database.
+      virtual const Nexus::MarketDatabase& get_market_database() const = 0;
+
       //! Connects a slot to the bbo signal.
       /*!
         \param slot The slot to connect.

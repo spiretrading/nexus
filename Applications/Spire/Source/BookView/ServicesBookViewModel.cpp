@@ -116,6 +116,10 @@ QtPromise<void> ServicesBookViewModel::load() {
   }, LaunchPolicy::ASYNC);
 }
 
+const MarketDatabase& ServicesBookViewModel::get_market_database() const {
+  return m_definitions.get_market_database();
+}
+
 connection ServicesBookViewModel::connect_bbo_slot(
     const BboSignal::slot_type& slot) const {
   return m_local_model.connect_bbo_slot(slot);

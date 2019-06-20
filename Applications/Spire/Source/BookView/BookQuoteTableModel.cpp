@@ -13,7 +13,7 @@ BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
       m_side(side),
       m_properties(properties),
       m_size(0) {
-  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+  for(auto& entry : m_model->get_market_database().GetEntries()) {
     m_market_first_index[entry.m_code] = INT_MAX;
   }
   auto& quotes = Pick(m_side, m_model->get_asks(), m_model->get_bids());
@@ -112,7 +112,7 @@ void BookQuoteTableModel::on_quote_signal(const BookViewModel::Quote& quote,
 
 void BookQuoteTableModel::update_market_first_indexes(int index) {
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
-  for(auto& entry : GetDefaultMarketDatabase().GetEntries()) {
+  for(auto& entry : m_model->get_market_database().GetEntries()) {
     if(m_market_first_index[entry.m_code] >=
         std::distance(book.rbegin(), book.rbegin() + index)) {
       m_market_first_index[entry.m_code] = INT_MAX;
