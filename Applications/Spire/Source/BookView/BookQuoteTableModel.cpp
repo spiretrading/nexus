@@ -56,7 +56,7 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
     if(highlight.is_initialized()) {
       if(highlight->m_highlight_all_levels) {
         return highlight->m_color;
-      } else if(index.row() == (*m_first_market_index.find(market)).second) {
+      } else if(index.row() == m_first_market_index.find(market)->second) {
         return highlight->m_color;
       }
     }
@@ -120,8 +120,9 @@ void BookQuoteTableModel::update_first_market_indexes(int index) {
   }
   for(auto i = book.rbegin() + index; i != book.rend(); ++i) {
     auto dist = std::distance(book.rbegin(), i);
-    if(dist < m_first_market_index[(**i).m_quote.m_market]) {
-      m_first_market_index[(**i).m_quote.m_market] = dist;
+    auto& index = m_first_market_index[(**i).m_quote.m_market];
+    if(dist < index) {
+      index = dist;
     }
   }
 }
