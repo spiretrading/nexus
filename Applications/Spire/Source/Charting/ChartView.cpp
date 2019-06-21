@@ -62,7 +62,9 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_draw_state(DrawState::OFF),
       m_mouse_buttons(Qt::NoButton),
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
-      m_is_multi_select_enabled(false) {
+      m_is_multi_select_enabled(false),
+      m_gap_slash_image(
+        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))){
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -393,6 +395,24 @@ ChartPoint ChartView::chart_delta(const QPoint& previous,
   auto present_value = convert_pixels_to_chart(present);
   return {previous_value.m_x - present_value.m_x,
     previous_value.m_y - present_value.m_y};
+}
+
+void ChartView::draw_gap(QPainter& painter, int start, int end) {
+  painter.fillRect(start, m_y_origin, end - start, scale_height(3),
+    QColor("#25212E"));
+  painter.save();
+  painter.setPen(Qt::white);
+  painter.drawLine(start, m_y_origin, start, m_y_origin + scale_height(2));
+  painter.drawLine(end, m_y_origin, end, m_y_origin + scale_height(2));
+  painter.setPen("#8C8C8C");
+  auto slash_count = (end - start) / scale_width(4) - 1;
+  auto padding = (slash_count % scale_width(6)) / 2 - 1;
+  auto x_pos = start + scale_width(2) + padding;
+  for(auto i = 0; i < slash_count; ++i) {
+    auto x = i * scale_width(4) + x_pos;
+    painter.drawImage(x, m_y_origin, m_gap_slash_image);
+  }
+  painter.restore();
 }
 
 void ChartView::draw_point(QPainter& painter, const QColor& border_color,
