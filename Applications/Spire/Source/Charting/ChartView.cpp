@@ -275,8 +275,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
       candlestick.GetOpen()});
     auto close = convert_chart_to_pixels({candlestick.GetEnd(),
       candlestick.GetClose()});
-    painter.drawLine(std::min(open.x(), m_x_origin), m_y_origin,
-      std::min(close.x(), m_x_origin), m_y_origin);
     const auto GAP_DIVISOR = 2.95;
     auto start_x = static_cast<int>(open.x() - (close.x() - open.x()) /
       GAP_DIVISOR);
@@ -288,6 +286,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
         m_top_left.m_y, m_y_origin, 0);
       auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
         GAP_DIVISOR);
+      painter.drawLine(std::min(start_x, m_x_origin), m_y_origin,
+        std::min(end_x, m_x_origin), m_y_origin);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
