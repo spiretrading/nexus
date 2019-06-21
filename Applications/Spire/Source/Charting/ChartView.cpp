@@ -244,6 +244,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setFont(m_label_font);
   painter.setPen(Qt::white);
   painter.drawLine(m_x_origin, 0, m_x_origin, m_y_origin);
+  painter.drawLine(0, m_y_origin, m_x_origin, m_y_origin);
   if(m_x_range <= ChartValue(0) || m_y_range <= ChartValue(0)) {
     return;
   }
@@ -286,8 +287,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
         m_top_left.m_y, m_y_origin, 0);
       auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
         GAP_DIVISOR);
-      painter.drawLine(std::min(start_x, m_x_origin), m_y_origin,
-        std::min(end_x, m_x_origin), m_y_origin);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
