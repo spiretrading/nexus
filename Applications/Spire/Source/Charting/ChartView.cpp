@@ -405,12 +405,14 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   painter.drawLine(start, m_y_origin, start, m_y_origin + scale_height(2));
   painter.drawLine(end, m_y_origin, end, m_y_origin + scale_height(2));
   painter.setPen("#8C8C8C");
-  auto slash_count = (end - start) / scale_width(4) - 1;
-  auto padding = (slash_count % scale_width(6)) / 2 - 1;
-  auto x_pos = start + scale_width(2) + padding;
+  auto slash_count = (static_cast<float>(end) - static_cast<float>(start)) /
+    (static_cast<float>(scale_width(4)) + static_cast<float>(scale_width(1))) -
+    1.0f;
+  auto padding = std::fmod(slash_count, scale_width(4) + scale_width(1)) / 2;
+  auto x = start + static_cast<int>(padding) + scale_width(1);
   for(auto i = 0; i < slash_count; ++i) {
-    auto x = i * scale_width(4) + x_pos;
     painter.drawImage(x, m_y_origin, m_gap_slash_image);
+    x += scale_width(4) + scale_width(1);
   }
   painter.restore();
 }
