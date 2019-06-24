@@ -64,7 +64,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
       m_is_multi_select_enabled(false),
       m_gap_slash_image(
-        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))){
+        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))),
+      m_is_no_activity(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -313,9 +314,15 @@ void ChartView::paintEvent(QPaintEvent* event) {
         std::next(i)->GetOpen()});
       auto close = convert_chart_to_pixels({std::next(i)->GetEnd(),
         std::next(i)->GetClose()});
-      auto next_start_x = static_cast<int>(open.x() - (close.x() - open.x()) /
-        GAP_DIVISOR);
-      draw_gap(painter, end_x, std::min(next_start_x, m_x_origin));
+      auto next_start_x = std::min(static_cast<int>(open.x() -
+        (close.x() - open.x()) / GAP_DIVISOR), m_x_origin);
+      draw_gap(painter, end_x, next_start_x);
+      if(m_crosshair_pos->x() >= end_x &&
+          m_crosshair_pos->x() <= next_start_x) {
+        m_is_no_activity = true;
+      } else {
+        m_is_no_activity = false;
+      }
     }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
@@ -333,18 +340,30 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
       m_crosshair_pos.value().y());
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
-    auto x_label = m_item_delegate->displayText(to_variant(
-      m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
-    auto x_label_width = m_font_metrics.width(x_label);
-    painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
-      scale_width(5), m_y_origin, x_label_width + scale_width(10),
-      scale_height(21), Qt::white);
-    painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
-      scale_height(3), Qt::black);
-    auto text_width = m_font_metrics.width(x_label);
-    painter.setPen(m_label_text_color);
-    painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
-      m_y_origin + m_font_metrics.height() + scale_height(2), x_label);
+    if(m_is_no_activity) {
+      painter.fillRect(m_crosshair_pos.value().x() - (scale_width(64) / 2),
+        m_y_origin, scale_width(64), scale_height(21), Qt::white);
+      painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
+        scale_height(3), Qt::black);
+      auto text_width = m_font_metrics.width(tr("No Activity"));
+      painter.setPen(m_label_text_color);
+      painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
+        m_y_origin + m_font_metrics.height() + scale_height(2),
+        tr("No Activity"));
+    } else {
+      auto x_label = m_item_delegate->displayText(to_variant(
+        m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
+      auto x_label_width = m_font_metrics.width(x_label);
+      painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
+        scale_width(5), m_y_origin, x_label_width + scale_width(10),
+        scale_height(21), Qt::white);
+      painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
+        scale_height(3), Qt::black);
+      auto text_width = m_font_metrics.width(x_label);
+      painter.setPen(m_label_text_color);
+      painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
+        m_y_origin + m_font_metrics.height() + scale_height(2), x_label);
+    }
     painter.fillRect(m_x_origin,
       m_crosshair_pos.value().y() - (scale_height(15) / 2),
       width() - m_x_origin, scale_height(15), Qt::white);

@@ -151,6 +151,7 @@ namespace Spire {
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
       QImage m_gap_slash_image;
+      bool m_is_no_activity;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void draw_gap(QPainter& paitner, int start, int end);
