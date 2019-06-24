@@ -273,22 +273,20 @@ void ChartView::paintEvent(QPaintEvent* event) {
       QLocale()));
   }
   painter.setPen(Qt::white);
-  for(auto& candlestick : m_candlesticks) {
-    auto open = convert_chart_to_pixels({candlestick.GetStart(),
-      candlestick.GetOpen()});
-    auto close = convert_chart_to_pixels({candlestick.GetEnd(),
-      candlestick.GetClose()});
+  for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
+    auto open = convert_chart_to_pixels({i->GetStart(), i->GetOpen()});
+    auto close = convert_chart_to_pixels({i->GetEnd(), i->GetClose()});
     const auto GAP_DIVISOR = 2.95;
     auto start_x = static_cast<int>(open.x() - (close.x() - open.x()) /
       GAP_DIVISOR);
-    if(candlestick.GetEnd() >= convert_pixels_to_chart({0, 0}).m_x &&
-        start_x <= m_x_origin) {
-      auto high = map_to(candlestick.GetHigh(), m_bottom_right.m_y,
-        m_top_left.m_y, m_y_origin, 0);
-      auto low = map_to(candlestick.GetLow(), m_bottom_right.m_y,
-        m_top_left.m_y, m_y_origin, 0);
-      auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
+    auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
         GAP_DIVISOR);
+    if(i->GetEnd() >= convert_pixels_to_chart({0, 0}).m_x &&
+        start_x <= m_x_origin) {
+      auto high = map_to(i->GetHigh(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
+      auto low = map_to(i->GetLow(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
@@ -308,6 +306,16 @@ void ChartView::paintEvent(QPaintEvent* event) {
           QPoint(std::min(end_x - 2, m_x_origin - 1),
           std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
       }
+    }
+    if(std::next(i) != m_candlesticks.end() &&
+        i->GetEnd() != std::next(i)->GetStart() && end_x < m_x_origin) {
+      auto open = convert_chart_to_pixels({std::next(i)->GetStart(),
+        std::next(i)->GetOpen()});
+      auto close = convert_chart_to_pixels({std::next(i)->GetEnd(),
+        std::next(i)->GetClose()});
+      auto next_start_x = static_cast<int>(open.x() - (close.x() - open.x()) /
+        GAP_DIVISOR);
+      draw_gap(painter, end_x, std::min(next_start_x, m_x_origin));
     }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
@@ -403,7 +411,9 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   painter.save();
   painter.setPen(Qt::white);
   painter.drawLine(start, m_y_origin, start, m_y_origin + scale_height(2));
-  painter.drawLine(end, m_y_origin, end, m_y_origin + scale_height(2));
+  if(end <= m_x_origin) {
+    painter.drawLine(end, m_y_origin, end, m_y_origin + scale_height(2));
+  }
   painter.setPen("#8C8C8C");
   auto slash_count = (static_cast<float>(end) - static_cast<float>(start)) /
     (static_cast<float>(scale_width(4)) + static_cast<float>(scale_width(1))) -
