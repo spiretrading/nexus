@@ -185,16 +185,7 @@ void ChartView::set_region(const ChartPoint& top_left,
     m_bottom_right.m_x);
   m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
-    for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
-      if(std::next(i) != m_candlesticks.end()) {
-        auto end = i->GetEnd();
-        auto next_start = std::next(i)->GetStart();
-        if(end != next_start) {
-          m_gaps.push_back({convert_chart_to_pixels({end, ChartValue(0)}).x(),
-            convert_chart_to_pixels({next_start, ChartValue(0)}).x()});
-        }
-      }
-    }
+    update_gaps();
     if(m_is_auto_scaled) {
       update_auto_scale();
     } else {
@@ -402,6 +393,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
 
 void ChartView::resizeEvent(QResizeEvent* event) {
   update_origins();
+  update_gaps();
   QWidget::resizeEvent(event);
 }
 
@@ -495,6 +487,20 @@ void ChartView::update_auto_scale() {
   }
   set_region({m_top_left.m_x, auto_scale_top},
     {m_bottom_right.m_x, auto_scale_bottom});
+}
+
+void ChartView::update_gaps() {
+  m_gaps.clear();
+  for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
+    if(std::next(i) != m_candlesticks.end()) {
+      auto end = i->GetEnd();
+      auto next_start = std::next(i)->GetStart();
+      if(end != next_start) {
+        m_gaps.push_back({convert_chart_to_pixels({end, ChartValue(0)}).x(),
+          convert_chart_to_pixels({next_start, ChartValue(0)}).x()});
+      }
+    }
+  }
 }
 
 int ChartView::update_intersection(const QPoint& mouse_pos) {

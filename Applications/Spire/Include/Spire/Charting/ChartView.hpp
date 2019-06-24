@@ -160,6 +160,7 @@ namespace Spire {
       void draw_points(int id, QPainter& painter);
       bool intersects_gap(int mouse_x);
       void update_auto_scale();
+      void update_gaps();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
       void update_selected_line_styles();
