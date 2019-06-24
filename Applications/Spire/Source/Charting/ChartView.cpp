@@ -64,8 +64,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
       m_is_multi_select_enabled(false),
       m_gap_slash_image(
-        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))),
-      m_is_no_activity(false) {
+        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -186,12 +185,23 @@ void ChartView::set_region(const ChartPoint& top_left,
     m_bottom_right.m_x);
   m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
+    for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
+      if(std::next(i) != m_candlesticks.end()) {
+        auto end = i->GetEnd();
+        auto next_start = std::next(i)->GetStart();
+        if(end != next_start) {
+          m_gaps.push_back({convert_chart_to_pixels({end, ChartValue(0)}).x(),
+            convert_chart_to_pixels({next_start, ChartValue(0)}).x()});
+        }
+      }
+    }
     if(m_is_auto_scaled) {
       update_auto_scale();
     } else {
       update();
     }
   });
+  m_gaps.clear();
   update();
 }
 
@@ -317,12 +327,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
       auto next_start_x = std::min(static_cast<int>(open.x() -
         (close.x() - open.x()) / GAP_DIVISOR), m_x_origin);
       draw_gap(painter, end_x, next_start_x);
-      if(m_crosshair_pos->x() >= end_x &&
-          m_crosshair_pos->x() <= next_start_x) {
-        m_is_no_activity = true;
-      } else {
-        m_is_no_activity = false;
-      }
     }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
@@ -340,17 +344,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.drawLine(0, m_crosshair_pos.value().y(), m_x_origin,
       m_crosshair_pos.value().y());
     auto crosshair_value = convert_pixels_to_chart(m_crosshair_pos.value());
-    if(m_is_no_activity) {
-      painter.fillRect(m_crosshair_pos.value().x() - (scale_width(64) / 2),
-        m_y_origin, scale_width(64), scale_height(21), Qt::white);
-      painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
-        scale_height(3), Qt::black);
-      auto text_width = m_font_metrics.width(tr("No Activity"));
-      painter.setPen(m_label_text_color);
-      painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
-        m_y_origin + m_font_metrics.height() + scale_height(2),
-        tr("No Activity"));
-    } else {
+    if(m_gaps.empty() || !intersects_gap(m_crosshair_pos->x())) {
       auto x_label = m_item_delegate->displayText(to_variant(
         m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
       auto x_label_width = m_font_metrics.width(x_label);
@@ -363,6 +357,16 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.setPen(m_label_text_color);
       painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
         m_y_origin + m_font_metrics.height() + scale_height(2), x_label);
+    } else {
+      painter.fillRect(m_crosshair_pos.value().x() - (scale_width(64) / 2),
+        m_y_origin, scale_width(64), scale_height(21), Qt::white);
+      painter.fillRect(m_crosshair_pos.value().x(), m_y_origin, scale_width(1),
+        scale_height(3), Qt::black);
+      auto text_width = m_font_metrics.width(tr("No Activity"));
+      painter.setPen(m_label_text_color);
+      painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
+        m_y_origin + m_font_metrics.height() + scale_height(2),
+        tr("No Activity"));
     }
     painter.fillRect(m_x_origin,
       m_crosshair_pos.value().y() - (scale_height(15) / 2),
@@ -470,6 +474,13 @@ void ChartView::draw_points(int id, QPainter& painter) {
   }
   draw_point(painter, first_color, first);
   draw_point(painter, second_color, second);
+}
+
+bool ChartView::intersects_gap(int mouse_x) {
+  return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
+    [=] (auto gap) {
+      return std::get<0>(gap) <= mouse_x && std::get<1>(gap) >= mouse_x;
+    });
 }
 
 void ChartView::update_auto_scale() {
