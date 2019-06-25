@@ -77,19 +77,27 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
-  return ChartPoint(
+  auto unadjusted = ChartPoint(
     map_to(static_cast<double>(point.x()), 0.0,
       static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x),
     map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
       0.0, m_bottom_right.m_y, m_top_left.m_y));
+  if(m_gaps.empty()) {
+    return unadjusted;
+  }
+  return gap_adjusted_point(unadjusted);
 }
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
-  return QPoint(
+  auto unadjusted = QPoint(
     static_cast<int>(map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
       static_cast<double>(m_x_origin))),
     static_cast<int>(map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
       static_cast<double>(m_y_origin), 0.0)));
+  if(m_gaps.empty()) {
+    return unadjusted;
+  }
+  return gap_adjusted_point(unadjusted);
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
@@ -192,7 +200,6 @@ void ChartView::set_region(const ChartPoint& top_left,
       update();
     }
   });
-  m_gaps.clear();
   update();
 }
 
@@ -285,10 +292,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
         GAP_DIVISOR);
     if(i->GetEnd() >= convert_pixels_to_chart({0, 0}).m_x &&
         start_x <= m_x_origin) {
-      auto high = map_to(i->GetHigh(), m_bottom_right.m_y,
-        m_top_left.m_y, m_y_origin, 0);
-      auto low = map_to(i->GetLow(), m_bottom_right.m_y,
-        m_top_left.m_y, m_y_origin, 0);
+      auto high = map_to(i->GetHigh(), m_bottom_right.m_y, m_top_left.m_y,
+        m_y_origin, 0);
+      auto low = map_to(i->GetLow(), m_bottom_right.m_y, m_top_left.m_y,
+        m_y_origin, 0);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
@@ -468,10 +475,41 @@ void ChartView::draw_points(int id, QPainter& painter) {
   draw_point(painter, second_color, second);
 }
 
-bool ChartView::intersects_gap(int mouse_x) {
+ChartPoint ChartView::gap_adjusted_point(const ChartPoint& point) const {
+  auto adjusted = point;
+  for(auto& gap : m_gaps) {
+    auto first = std::get<0>(gap);
+    auto second = std::get<1>(gap);
+    if(point.m_x >= second) {
+      adjusted.m_x -= second - first;
+    } else if(point.m_x > first && point.m_x < second) {
+      adjusted.m_x -= point.m_x - first;
+    }
+  }
+  return adjusted;
+}
+
+QPoint ChartView::gap_adjusted_point(const QPoint& point) const {
+  auto adjusted = point;
+  for(auto& gap : m_gaps) {
+    auto first = map_to(std::get<0>(gap), m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    auto second = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    if(point.x() >= second) {
+      adjusted.setX(adjusted.x() - second - first);
+    } else if(point.x() > first && point.x() < second) {
+      adjusted.setX(adjusted.x() - point.x() - first);
+    }
+  }
+  return adjusted;
+}
+
+bool ChartView::intersects_gap(int x) {
+  auto chart_x = map_to(x, 0, m_x_origin, m_top_left.m_x, m_bottom_right.m_x);
   return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
     [=] (auto gap) {
-      return std::get<0>(gap) <= mouse_x && std::get<1>(gap) >= mouse_x;
+      return std::get<0>(gap) <= chart_x && std::get<1>(gap) >= chart_x;
     });
 }
 
@@ -496,8 +534,7 @@ void ChartView::update_gaps() {
       auto end = i->GetEnd();
       auto next_start = std::next(i)->GetStart();
       if(end != next_start) {
-        m_gaps.push_back({convert_chart_to_pixels({end, ChartValue(0)}).x(),
-          convert_chart_to_pixels({next_start, ChartValue(0)}).x()});
+        m_gaps.push_back({end, next_start});
       }
     }
   }
