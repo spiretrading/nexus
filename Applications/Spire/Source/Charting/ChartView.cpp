@@ -534,7 +534,16 @@ void ChartView::update_gaps() {
       auto end = i->GetEnd();
       auto next_start = std::next(i)->GetStart();
       if(end != next_start) {
-        m_gaps.push_back({end, next_start});
+        // TODO: maybe precompute this
+        auto default_size = map_to(static_cast<double>(scale_width(35)),
+          static_cast<double>(0), static_cast<double>(m_x_origin),
+          m_top_left.m_x, m_bottom_right.m_x);
+        auto minimum_size = map_to(static_cast<double>(scale_width(20)),
+          static_cast<double>(0), static_cast<double>(m_x_origin),
+          m_top_left.m_x, m_bottom_right.m_x);
+        auto gap_size = std::max(std::min(default_size, end - next_start),
+          minimum_size);
+        m_gaps.push_back({end, next_start, gap_size});
       }
     }
   }
