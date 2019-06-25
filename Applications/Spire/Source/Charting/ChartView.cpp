@@ -497,9 +497,9 @@ QPoint ChartView::gap_adjusted_point(const QPoint& point) const {
     auto second = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
       0, m_x_origin);
     if(point.x() >= second) {
-      adjusted.setX(adjusted.x() - second - first);
+      adjusted.setX(adjusted.x() - (second - first));
     } else if(point.x() > first && point.x() < second) {
-      adjusted.setX(adjusted.x() - point.x() - first);
+      adjusted.setX(adjusted.x() - (point.x() - first));
     }
   }
   return adjusted;
