@@ -480,10 +480,11 @@ ChartPoint ChartView::gap_adjusted_point(const ChartPoint& point) const {
   for(auto& gap : m_gaps) {
     auto first = std::get<0>(gap);
     auto second = std::get<1>(gap);
+    auto gap_size = std::get<2>(gap);
     if(point.m_x >= second) {
-      adjusted.m_x -= second - first;
+      adjusted.m_x -= second - first + gap_size;
     } else if(point.m_x > first && point.m_x < second) {
-      adjusted.m_x -= point.m_x - first;
+      adjusted.m_x -= point.m_x - first + gap_size;
     }
   }
   return adjusted;
@@ -496,10 +497,12 @@ QPoint ChartView::gap_adjusted_point(const QPoint& point) const {
       0, m_x_origin);
     auto second = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
       0, m_x_origin);
+    auto gap_size = map_to(std::get<2>(gap), m_top_left.m_x,
+      m_bottom_right.m_x, 0, m_x_origin);
     if(point.x() >= second) {
-      adjusted.setX(adjusted.x() - (second - first));
+      adjusted.setX(adjusted.x() - (second - first) + gap_size);
     } else if(point.x() > first && point.x() < second) {
-      adjusted.setX(adjusted.x() - (point.x() - first));
+      adjusted.setX(adjusted.x() - (point.x() - first) + gap_size);
     }
   }
   return adjusted;
