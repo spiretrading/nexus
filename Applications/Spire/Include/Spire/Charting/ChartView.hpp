@@ -162,6 +162,8 @@ namespace Spire {
         ChartValue c, ChartValue d) const;
       double gap_adjusted_map_to(ChartValue value, ChartValue a, ChartValue b,
         double c, double d) const;
+      ChartValue gap_adjusted_value(ChartValue unadjusted) const;
+      double gap_adjusted_value(double unadjusted) const;
       bool intersects_gap(int x);
       void update_auto_scale();
       void update_gaps();

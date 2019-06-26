@@ -471,9 +471,16 @@ void ChartView::draw_points(int id, QPainter& painter) {
 ChartValue ChartView::gap_adjusted_map_to(double value, double a, double b,
     ChartValue c, ChartValue d) const {
   auto unadjusted = map_to(value, a, b, c, d);
-  if(m_gaps.empty()) {
-    return unadjusted;
-  }
+  return gap_adjusted_value(unadjusted);
+}
+
+double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
+    ChartValue b, double c, double d) const {
+  auto unadjusted = map_to(value, a, b, c, d);
+  return gap_adjusted_value(unadjusted);
+}
+
+ChartValue ChartView::gap_adjusted_value(ChartValue unadjusted) const {
   auto adjusted = unadjusted;
   for(auto& gap : m_gaps) {
     auto first = std::get<0>(gap);
@@ -490,10 +497,7 @@ ChartValue ChartView::gap_adjusted_map_to(double value, double a, double b,
   return adjusted;
 }
 
-double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
-    ChartValue b, double c, double d) const {
-  auto unadjusted = map_to(value, a, b, c, d);
-  qDebug() << "unadjusted: " << unadjusted;
+double ChartView::gap_adjusted_value(double unadjusted) const {
   auto adjusted = unadjusted;
   for(auto& gap : m_gaps) {
     auto first = map_to(std::get<0>(gap), m_top_left.m_x, m_bottom_right.m_x,
@@ -501,9 +505,6 @@ double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
     auto second = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
       0, m_x_origin);
     auto gap_size = std::get<3>(gap);
-    qDebug() << "first: " << first;
-    qDebug() << "second: " << second;
-    qDebug() << "size: " << gap_size;
     if(unadjusted >= second) {
       adjusted -= (second - first);
       adjusted += gap_size;
@@ -512,7 +513,6 @@ double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
       adjusted += gap_size;
     }
   }
-  qDebug() << "adjusted: " << adjusted;
   return adjusted;
 }
 
@@ -559,7 +559,6 @@ void ChartView::update_gaps() {
           map_to(end, m_top_left.m_x, m_bottom_right.m_x, 0, m_x_origin) -
           map_to(next_start, m_top_left.m_x, m_bottom_right.m_x, 0,
           m_x_origin), scale_width(35)), scale_width(20));
-        qDebug() << gap_pixel_size;
         m_gaps.push_back({end, next_start, gap_chart_size, gap_pixel_size});
       }
     }
