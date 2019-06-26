@@ -491,7 +491,6 @@ ChartValue ChartView::gap_adjusted_value(ChartValue unadjusted) const {
       adjusted += gap_size;
     } else if(unadjusted > first && unadjusted < second) {
       adjusted -= (unadjusted - first);
-      adjusted += gap_size;
     }
   }
   return adjusted;
@@ -510,7 +509,6 @@ double ChartView::gap_adjusted_value(double unadjusted) const {
       adjusted += gap_size;
     } else if(unadjusted > first && unadjusted < second) {
       adjusted -= (unadjusted - first);
-      adjusted += gap_size;
     }
   }
   return adjusted;
