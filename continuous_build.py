@@ -34,9 +34,9 @@ def make_zipfile(source, destination):
       archive.write(os.path.join(root, file))
   archive.close()
 
-def copy_build(applications, timestamp, name, source, path):
+def copy_build(applications, version, name, source, path):
   try:
-    destination_path = os.path.join(path, str(timestamp))
+    destination_path = os.path.join(path, str(version))
     for application in applications:
       application_path = os.path.join(destination_path, application)
       makedirs(application_path)
@@ -74,10 +74,12 @@ def build_repo(repo, path, branch):
     os.path.join(path, d))]
   builds.sort(reverse=True)
   if len(builds) == 0:
-    builds.append(int(commits[1].committed_date))
+    builds.append(
+      int(repo.git.rev_list('--count', '--first-parent', 'HEAD')) - 1)
   for i in range(len(commits)):
-    timestamp = int(commits[i].committed_date)
-    if timestamp in builds:
+    version = int(repo.git.rev_list('--count', '--first-parent',
+      commits[i].hexsha))
+    if version in builds:
       commits = commits[0:i]
       commits.reverse()
       break
@@ -86,7 +88,7 @@ def build_repo(repo, path, branch):
   else:
     extension = 'sh'
   for commit in commits:
-    timestamp = int(commit.committed_date)
+    version = int(repo.git.rev_list('--count', '--first-parent', commit.hexsha))
     repo.git.checkout(commit.hexsha)
     result = []
     result.append(call(os.path.join(repo.working_dir, 'configure.%s -DD=%s' %
@@ -99,7 +101,7 @@ def build_repo(repo, path, branch):
       terminal_output += output[0] + b'\n\n\n\n'
     for output in result:
       terminal_output += output[1] + b'\n\n\n\n'
-    destination_path = os.path.join(path, str(timestamp))
+    destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
       'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
@@ -110,21 +112,21 @@ def build_repo(repo, path, branch):
       'UtpMarketDataFeedClient', 'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
-    copy_build(nexus_applications, timestamp, 'Nexus', repo.working_dir, path)
+    copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
     beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
-    copy_build(beam_applications, timestamp, 'Beam', beam_path, path)
+    copy_build(beam_applications, version, 'Beam', beam_path, path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
       os.path.join(destination_path, 'setup.py'))
     if sys.platform == 'win32':
-      archive_path = os.path.join(path, 'nexus-%s.zip' % str(timestamp))
+      archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)
     else:
       for file in ['check.sh', 'copy_all.sh', 'start.sh', 'stop.sh']:
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           os.path.join(destination_path, file))
-      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(timestamp))
+      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
       make_tarfile(destination_path, archive_path)
     shutil.rmtree(destination_path)
     makedirs(destination_path)
