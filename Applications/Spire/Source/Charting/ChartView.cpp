@@ -473,7 +473,6 @@ ChartValue ChartView::gap_adjusted_map_to(int point_x) const {
     auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
       0, m_x_origin);
     if(gap_start < point_x && gap_end > point_x) {
-      // TODO: use gap_adjusted_map_to
       auto new_x = convert_pixels_to_chart({gap_start, point_x}).m_x;
       new_x += ((point_x - gap_start) / (gap_end - gap_start)) *
         (map_to(static_cast<double>(scale_width(35)), 0.0,
@@ -525,7 +524,7 @@ bool ChartView::intersects_gap(int x) {
   auto chart_x = gap_adjusted_map_to(x);
   return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
     [=] (auto gap) {
-      return gap.m_start <= chart_x && gap.m_end >= chart_x;
+      return gap.m_start < chart_x && gap.m_end > chart_x;
     });
 }
 
