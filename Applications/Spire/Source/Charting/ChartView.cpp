@@ -111,7 +111,8 @@ QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       auto new_point = convert_chart_to_pixels({gap.m_start, point.m_y});
       new_point.setX(new_point.x() + static_cast<int>((point.m_x -
-        gap.m_start) / (gap.m_end - gap.m_start)) * scale_width(35));
+        gap.m_start) / (gap.m_end - gap.m_start) *
+        static_cast<double>(scale_width(35))));
       return new_point;
     }
   }
