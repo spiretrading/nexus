@@ -77,19 +77,60 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
-  return ChartPoint(
-    gap_adjusted_map_to(static_cast<double>(point.x()), 0.0,
-      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x),
-    map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
-      0.0, m_bottom_right.m_y, m_top_left.m_y));
+  for(auto& gap : m_gaps) {
+    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    if(gap_start < point.x() && gap_end > point.x()) {
+      auto new_point = convert_pixels_to_chart({gap_start, point.x()});
+      new_point.m_x += ((point.x() - gap_start) / (gap_end - gap_start)) *
+        (map_to(static_cast<double>(scale_width(35)), 0.0,
+          static_cast<double>(m_x_origin), m_top_left.m_x,
+          m_bottom_right.m_x) - m_top_left.m_x);
+      return new_point;
+    }
+  }
+  auto x = map_to(static_cast<double>(point.x()), 0.0,
+    static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x);
+  for(auto& gap : m_gaps) {
+    if(x <= gap.m_start) {
+      break;
+    }
+    x -= gap.m_end - gap.m_start;
+    x += map_to(static_cast<double>(scale_width(35)), 0.0,
+      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x) -
+      m_top_left.m_x;
+  }
+  return {x, map_to(static_cast<double>(point.y()),
+    static_cast<double>(m_y_origin), 0.0, m_bottom_right.m_y, m_top_left.m_y)};
 }
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
-  return QPoint(
-    static_cast<int>(gap_adjusted_map_to(point.m_x, m_top_left.m_x,
-      m_bottom_right.m_x, 0.0, static_cast<double>(m_x_origin))),
-    static_cast<int>(map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
-      static_cast<double>(m_y_origin), 0.0)));
+  for(auto& gap : m_gaps) {
+    if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
+      auto new_point = convert_chart_to_pixels({gap.m_start, point.m_y});
+      new_point.setX(new_point.x() + static_cast<int>((point.m_x -
+        gap.m_start) / (gap.m_end - gap.m_start)) * scale_width(35));
+      return new_point;
+    }
+  }
+  auto x = map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
+    static_cast<double>(m_x_origin));
+  for(auto& gap : m_gaps) {
+    if(point.m_x <= gap.m_start) {
+      break;
+    }
+    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    x -= gap_end - gap_start;
+    x += scale_width(35);
+  }
+  return {static_cast<int>(x), static_cast<int>(map_to(point.m_y,
+    m_bottom_right.m_y, m_top_left.m_y, static_cast<double>(m_y_origin),
+    0.0))};
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
@@ -186,6 +227,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
     update_gaps();
+
     if(m_is_auto_scaled) {
       update_auto_scale();
     } else {
@@ -263,16 +305,16 @@ void ChartView::paintEvent(QPaintEvent* event) {
       to_variant(m_model->get_y_axis_type(), y), QLocale()));
   }
   for(auto x : m_x_axis_values) {
-    auto x_pos = static_cast<int>(gap_adjusted_map_to(x, m_top_left.m_x,
-      m_bottom_right.m_x, 0, m_x_origin));
-    painter.setPen("#3A3348");
-    painter.drawLine(x_pos, 0, x_pos, m_y_origin);
-    painter.setPen(Qt::white);
-    painter.drawLine(x_pos, m_y_origin, x_pos, m_y_origin + scale_height(2));
-    painter.drawText(x_pos - m_x_axis_text_width / 2,
-      m_y_origin + m_font_metrics.height() + scale_height(2),
-      m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
-      QLocale()));
+    //auto x_pos = static_cast<int>(gap_adjusted_map_to(x, m_top_left.m_x,
+    //  m_bottom_right.m_x, 0, m_x_origin));
+    //painter.setPen("#3A3348");
+    //painter.drawLine(x_pos, 0, x_pos, m_y_origin);
+    //painter.setPen(Qt::white);
+    //painter.drawLine(x_pos, m_y_origin, x_pos, m_y_origin + scale_height(2));
+    //painter.drawText(x_pos - m_x_axis_text_width / 2,
+    //  m_y_origin + m_font_metrics.height() + scale_height(2),
+    //  m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
+    //  QLocale()));
   }
   painter.setPen(Qt::white);
   for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
@@ -468,59 +510,14 @@ void ChartView::draw_points(int id, QPainter& painter) {
   draw_point(painter, second_color, second);
 }
 
-ChartValue ChartView::gap_adjusted_map_to(double value, double a, double b,
-    ChartValue c, ChartValue d) const {
-  auto unadjusted = map_to(value, a, b, c, d);
-  return gap_adjusted_value(unadjusted);
-}
-
-double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
-    ChartValue b, double c, double d) const {
-  auto unadjusted = map_to(value, a, b, c, d);
-  return gap_adjusted_value(unadjusted);
-}
-
-ChartValue ChartView::gap_adjusted_value(ChartValue unadjusted) const {
-  auto adjusted = unadjusted;
-  for(auto& gap : m_gaps) {
-    auto gap_start = std::get<0>(gap);
-    auto gap_end = std::get<1>(gap);
-    auto displayed_gap_size = std::get<2>(gap);
-    if(unadjusted >= gap_end) {
-      adjusted -= gap_end - gap_start;
-      adjusted += displayed_gap_size;
-    } else if(unadjusted > gap_start && unadjusted < gap_end) {
-      adjusted -= (unadjusted - gap_start);
-    }
-  }
-  return adjusted;
-}
-
-double ChartView::gap_adjusted_value(double unadjusted) const {
-  auto adjusted = unadjusted;
-  for(auto& gap : m_gaps) {
-    auto gap_start = map_to(std::get<0>(gap), m_top_left.m_x,
-      m_bottom_right.m_x, 0, m_x_origin);
-    auto gap_end = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    auto displayed_gap_size = std::get<3>(gap);
-    if(unadjusted >= gap_end) {
-      adjusted -= gap_end - gap_start;
-      adjusted += displayed_gap_size;
-    } else if(unadjusted > gap_start && unadjusted < gap_end) {
-      adjusted -= (unadjusted - gap_start);
-    }
-  }
-  return adjusted;
-}
-
 bool ChartView::intersects_gap(int x) {
-  auto chart_x = gap_adjusted_map_to(x, 0, m_x_origin, m_top_left.m_x,
-    m_bottom_right.m_x);
-  return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
-    [=] (auto gap) {
-      return std::get<0>(gap) <= chart_x && std::get<1>(gap) >= chart_x;
-    });
+  return false;
+  //auto chart_x = gap_adjusted_map_to(x, 0, m_x_origin, m_top_left.m_x,
+  //  m_bottom_right.m_x);
+  //return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
+  //  [=] (auto gap) {
+  //    return std::get<0>(gap) <= chart_x && std::get<1>(gap) >= chart_x;
+  //  });
 }
 
 void ChartView::update_auto_scale() {
@@ -544,20 +541,7 @@ void ChartView::update_gaps() {
       auto end = i->GetEnd();
       auto next_start = std::next(i)->GetStart();
       if(end != next_start) {
-        // TODO: maybe precompute this
-        auto default_size = map_to(static_cast<double>(scale_width(35)),
-          static_cast<double>(0), static_cast<double>(m_x_origin),
-          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x;
-        auto minimum_size = map_to(static_cast<double>(scale_width(20)),
-          static_cast<double>(0), static_cast<double>(m_x_origin),
-          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x;
-        auto gap_chart_size = std::max(
-          std::min(default_size, next_start - end), minimum_size);
-        auto gap_pixel_size = std::max(std::min(
-          map_to(end, m_top_left.m_x, m_bottom_right.m_x, 0, m_x_origin) -
-          map_to(next_start, m_top_left.m_x, m_bottom_right.m_x, 0,
-          m_x_origin), scale_width(35)), scale_width(20));
-        m_gaps.push_back({end, next_start, gap_chart_size, gap_pixel_size});
+        m_gaps.push_back({end, next_start});
       }
     }
   }

@@ -117,6 +117,11 @@ namespace Spire {
         POINT
       };
 
+      struct Gap {
+        ChartValue m_start;
+        ChartValue m_end;
+      };
+
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
@@ -151,19 +156,13 @@ namespace Spire {
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
       QImage m_gap_slash_image;
-      std::vector<std::tuple<ChartValue, ChartValue, ChartValue, int>> m_gaps;
+      std::vector<Gap> m_gaps;
 
       ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
-      ChartValue gap_adjusted_map_to(double value, double a, double b,
-        ChartValue c, ChartValue d) const;
-      double gap_adjusted_map_to(ChartValue value, ChartValue a, ChartValue b,
-        double c, double d) const;
-      ChartValue gap_adjusted_value(ChartValue unadjusted) const;
-      double gap_adjusted_value(double unadjusted) const;
       bool intersects_gap(int x);
       void update_auto_scale();
       void update_gaps();
