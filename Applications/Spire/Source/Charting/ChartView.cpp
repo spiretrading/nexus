@@ -483,14 +483,14 @@ double ChartView::gap_adjusted_map_to(ChartValue value, ChartValue a,
 ChartValue ChartView::gap_adjusted_value(ChartValue unadjusted) const {
   auto adjusted = unadjusted;
   for(auto& gap : m_gaps) {
-    auto first = std::get<0>(gap);
-    auto second = std::get<1>(gap);
+    auto gap_start = std::get<0>(gap);
+    auto gap_end = std::get<1>(gap);
     auto gap_size = std::get<2>(gap);
-    if(unadjusted >= second) {
-      adjusted -= (second - first);
+    if(unadjusted >= gap_end) {
+      adjusted -= gap_end - gap_start;
       adjusted += gap_size;
-    } else if(unadjusted > first && unadjusted < second) {
-      adjusted -= (unadjusted - first);
+    } else if(unadjusted > gap_start && unadjusted < gap_end) {
+      adjusted -= (unadjusted - gap_start);
     }
   }
   return adjusted;
@@ -499,16 +499,16 @@ ChartValue ChartView::gap_adjusted_value(ChartValue unadjusted) const {
 double ChartView::gap_adjusted_value(double unadjusted) const {
   auto adjusted = unadjusted;
   for(auto& gap : m_gaps) {
-    auto first = map_to(std::get<0>(gap), m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    auto second = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
+    auto gap_start = map_to(std::get<0>(gap), m_top_left.m_x,
+      m_bottom_right.m_x, 0, m_x_origin);
+    auto gap_end = map_to(std::get<1>(gap), m_top_left.m_x, m_bottom_right.m_x,
       0, m_x_origin);
     auto gap_size = std::get<3>(gap);
-    if(unadjusted >= second) {
-      adjusted -= (second - first);
+    if(unadjusted >= gap_end) {
+      adjusted -= gap_end - gap_start;
       adjusted += gap_size;
-    } else if(unadjusted > first && unadjusted < second) {
-      adjusted -= (unadjusted - first);
+    } else if(unadjusted > gap_start && unadjusted < gap_end) {
+      adjusted -= (unadjusted - gap_start);
     }
   }
   return adjusted;
