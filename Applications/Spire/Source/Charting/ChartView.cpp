@@ -182,7 +182,6 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
     update_gaps();
-
     if(m_is_auto_scaled) {
       update_auto_scale();
     } else {
@@ -398,11 +397,13 @@ void ChartView::showEvent(QShowEvent* event) {
   if(m_top_left.m_x == ChartValue() && m_top_left.m_y == ChartValue() &&
       m_bottom_right.m_x == ChartValue() &&
       m_bottom_right.m_y == ChartValue()) {
-    auto current_time = boost::posix_time::second_clock::local_time();
+    //auto current_time = boost::posix_time::second_clock::local_time();
+    auto current_time = Nexus::Money(100);
     auto bottom_right = ChartPoint(ChartValue(current_time),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
-      ChartValue(current_time - boost::posix_time::hours(1)),
+      //ChartValue(current_time - boost::posix_time::hours(1)),
+      ChartValue(Nexus::Money(0)),
       ChartValue(Nexus::Money(1)));
     set_region(top_left, bottom_right);
   }
@@ -521,13 +522,11 @@ double ChartView::gap_adjusted_map_to(ChartValue point_x) const {
 }
 
 bool ChartView::intersects_gap(int x) {
-  return false;
-  //auto chart_x = gap_adjusted_map_to(x, 0, m_x_origin, m_top_left.m_x,
-  //  m_bottom_right.m_x);
-  //return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
-  //  [=] (auto gap) {
-  //    return std::get<0>(gap) <= chart_x && std::get<1>(gap) >= chart_x;
-  //  });
+  auto chart_x = gap_adjusted_map_to(x);
+  return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
+    [=] (auto gap) {
+      return gap.m_start <= chart_x && gap.m_end >= chart_x;
+    });
 }
 
 void ChartView::update_auto_scale() {
