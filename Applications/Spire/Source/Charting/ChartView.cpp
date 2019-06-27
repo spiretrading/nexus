@@ -547,12 +547,12 @@ void ChartView::update_gaps() {
         // TODO: maybe precompute this
         auto default_size = map_to(static_cast<double>(scale_width(35)),
           static_cast<double>(0), static_cast<double>(m_x_origin),
-          m_top_left.m_x, m_bottom_right.m_x);
+          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x;
         auto minimum_size = map_to(static_cast<double>(scale_width(20)),
           static_cast<double>(0), static_cast<double>(m_x_origin),
-          m_top_left.m_x, m_bottom_right.m_x);
+          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x;
         auto gap_chart_size = std::max(
-          std::min(default_size, end - next_start), minimum_size);
+          std::min(default_size, next_start - end), minimum_size);
         auto gap_pixel_size = std::max(std::min(
           map_to(end, m_top_left.m_x, m_bottom_right.m_x, 0, m_x_origin) -
           map_to(next_start, m_top_left.m_x, m_bottom_right.m_x, 0,
