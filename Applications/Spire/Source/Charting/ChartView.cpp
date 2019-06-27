@@ -77,61 +77,15 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
 }
 
 ChartPoint ChartView::convert_pixels_to_chart(const QPoint& point) const {
-  for(auto& gap : m_gaps) {
-    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    if(gap_start < point.x() && gap_end > point.x()) {
-      auto new_point = convert_pixels_to_chart({gap_start, point.x()});
-      new_point.m_x += ((point.x() - gap_start) / (gap_end - gap_start)) *
-        (map_to(static_cast<double>(scale_width(35)), 0.0,
-          static_cast<double>(m_x_origin), m_top_left.m_x,
-          m_bottom_right.m_x) - m_top_left.m_x);
-      return new_point;
-    }
-  }
-  auto x = map_to(static_cast<double>(point.x()), 0.0,
-    static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x);
-  for(auto& gap : m_gaps) {
-    if(x <= gap.m_start) {
-      break;
-    }
-    x -= gap.m_end - gap.m_start;
-    x += map_to(static_cast<double>(scale_width(35)), 0.0,
-      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x) -
-      m_top_left.m_x;
-  }
-  return {x, map_to(static_cast<double>(point.y()),
+  return {gap_adjusted_map_to(point.x()),
+    map_to(static_cast<double>(point.y()),
     static_cast<double>(m_y_origin), 0.0, m_bottom_right.m_y, m_top_left.m_y)};
 }
 
 QPoint ChartView::convert_chart_to_pixels(const ChartPoint& point) const {
-  for(auto& gap : m_gaps) {
-    if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
-      auto new_point = convert_chart_to_pixels({gap.m_start, point.m_y});
-      new_point.setX(new_point.x() + static_cast<int>((point.m_x -
-        gap.m_start) / (gap.m_end - gap.m_start) *
-        static_cast<double>(scale_width(35))));
-      return new_point;
-    }
-  }
-  auto x = map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
-    static_cast<double>(m_x_origin));
-  for(auto& gap : m_gaps) {
-    if(point.m_x <= gap.m_start) {
-      break;
-    }
-    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    x -= gap_end - gap_start;
-    x += scale_width(35);
-  }
-  return {static_cast<int>(x), static_cast<int>(map_to(point.m_y,
-    m_bottom_right.m_y, m_top_left.m_y, static_cast<double>(m_y_origin),
-    0.0))};
+  return {static_cast<int>(gap_adjusted_map_to(point.m_x)),
+    static_cast<int>(map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
+    static_cast<double>(m_y_origin), 0.0))};
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
@@ -509,6 +463,61 @@ void ChartView::draw_points(int id, QPainter& painter) {
   }
   draw_point(painter, first_color, first);
   draw_point(painter, second_color, second);
+}
+
+ChartValue ChartView::gap_adjusted_map_to(int point_x) const {
+  for(auto& gap : m_gaps) {
+    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    if(gap_start < point_x && gap_end > point_x) {
+      // TODO: use gap_adjusted_map_to
+      auto new_x = convert_pixels_to_chart({gap_start, point_x}).m_x;
+      new_x += ((point_x - gap_start) / (gap_end - gap_start)) *
+        (map_to(static_cast<double>(scale_width(35)), 0.0,
+          static_cast<double>(m_x_origin), m_top_left.m_x,
+          m_bottom_right.m_x) - m_top_left.m_x);
+      return new_x;
+    }
+  }
+  auto x = map_to(static_cast<double>(point_x), 0.0,
+    static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x);
+  for(auto& gap : m_gaps) {
+    if(x <= gap.m_start) {
+      break;
+    }
+    x -= gap.m_end - gap.m_start;
+    x += map_to(static_cast<double>(scale_width(35)), 0.0,
+      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x) -
+      m_top_left.m_x;
+  }
+  return x;
+}
+
+double ChartView::gap_adjusted_map_to(ChartValue point_x) const {
+  for(auto& gap : m_gaps) {
+    if(gap.m_start < point_x && gap.m_end > point_x) {
+      auto new_x = gap_adjusted_map_to(gap.m_start);
+      new_x += static_cast<int>((point_x - gap.m_start) /
+        (gap.m_end - gap.m_start) * static_cast<double>(scale_width(35)));
+      return new_x;
+    }
+  }
+  auto x = map_to(point_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
+    static_cast<double>(m_x_origin));
+  for(auto& gap : m_gaps) {
+    if(point_x <= gap.m_start) {
+      break;
+    }
+    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
+      0, m_x_origin);
+    x -= gap_end - gap_start;
+    x += scale_width(35);
+  }
+  return x;
 }
 
 bool ChartView::intersects_gap(int x) {

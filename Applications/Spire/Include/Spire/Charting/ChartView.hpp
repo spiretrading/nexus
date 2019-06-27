@@ -163,6 +163,8 @@ namespace Spire {
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
+      ChartValue gap_adjusted_map_to(int point_x) const;
+      double gap_adjusted_map_to(ChartValue point_x) const;
       bool intersects_gap(int x);
       void update_auto_scale();
       void update_gaps();
