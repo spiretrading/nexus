@@ -26,14 +26,14 @@ namespace Spire {
         \param point The point in pixels to convert.
         \return The corresponding point on the chart.
       */
-      ChartPoint convert_pixels_to_chart(const QPoint& point) const;
+      ChartPoint to_chart_point(const QPoint& point) const;
 
       //! Converts a point on the chart to a point in pixels.
       /*!
         \param point The point on the chart to convert.
         \return The corresponding point in pixels.
       */
-      QPoint convert_chart_to_pixels(const ChartPoint& point) const;
+      QPoint to_pixel(const ChartPoint& point) const;
 
       //! Sets the position of the crosshair and sets the status of the mouse
       //! buttons.
@@ -163,9 +163,8 @@ namespace Spire {
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
-      ChartValue gap_adjusted_map_to(int point_x,
+      ChartPoint to_chart_point(const QPoint& point,
         const std::vector<Gap>& gaps) const;
-      double gap_adjusted_map_to(ChartValue point_x) const;
       bool intersects_gap(int x);
       void update_auto_scale();
       void update_gaps();
