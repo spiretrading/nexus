@@ -35,7 +35,7 @@ namespace {
       ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
       // TODO: compiler bug workaround
-      return ChartValue(Money::FromValue("0.1").get());
+      return ChartValue(Money::FromValue("1").get());
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
@@ -280,16 +280,17 @@ void ChartView::paintEvent(QPaintEvent* event) {
       to_variant(m_model->get_y_axis_type(), y), QLocale()));
   }
   for(auto x : m_x_axis_values) {
-    //auto x_pos = static_cast<int>(gap_adjusted_map_to(x, m_top_left.m_x,
-    //  m_bottom_right.m_x, 0, m_x_origin));
-    //painter.setPen("#3A3348");
-    //painter.drawLine(x_pos, 0, x_pos, m_y_origin);
-    //painter.setPen(Qt::white);
-    //painter.drawLine(x_pos, m_y_origin, x_pos, m_y_origin + scale_height(2));
-    //painter.drawText(x_pos - m_x_axis_text_width / 2,
-    //  m_y_origin + m_font_metrics.height() + scale_height(2),
-    //  m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
-    //  QLocale()));
+    auto x_pos = static_cast<int>(to_pixel({x, ChartValue()}).x());
+    if(!intersects_gap(x_pos)) {
+      painter.setPen("#3A3348");
+      painter.drawLine(x_pos, 0, x_pos, m_y_origin);
+      painter.setPen(Qt::white);
+      painter.drawLine(x_pos, m_y_origin, x_pos, m_y_origin + scale_height(2));
+      painter.drawText(x_pos - m_x_axis_text_width / 2,
+        m_y_origin + m_font_metrics.height() + scale_height(2),
+        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
+        QLocale()));
+    }
   }
   painter.setPen(Qt::white);
   for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
