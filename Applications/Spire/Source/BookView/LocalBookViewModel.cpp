@@ -149,6 +149,10 @@ QtPromise<void> LocalBookViewModel::load() {
   return QtPromise();
 }
 
+const MarketDatabase& LocalBookViewModel::get_market_database() const {
+  return m_definitions.get_market_database();
+}
+
 connection LocalBookViewModel::connect_bbo_slot(
     const BboSignal::slot_type& slot) const {
   return m_bbo_signal.connect(slot);

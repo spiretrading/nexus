@@ -5,6 +5,7 @@
 #include "Spire/Charting/StyleDropDownMenuList.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 TrendLineStyleDropDownMenu::TrendLineStyleDropDownMenu(
@@ -21,6 +22,11 @@ TrendLineStyleDropDownMenu::TrendLineStyleDropDownMenu(
 
 TrendLineStyle TrendLineStyleDropDownMenu::get_style() const {
   return m_current_style;
+}
+
+connection TrendLineStyleDropDownMenu::connect_style_signal(
+    const StyleSignal::slot_type& slot) const {
+  return m_style_signal.connect(slot);
 }
 
 bool TrendLineStyleDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
@@ -100,5 +106,6 @@ void TrendLineStyleDropDownMenu::on_clicked() {
 void TrendLineStyleDropDownMenu::on_item_selected(TrendLineStyle style) {
   m_menu_list->hide();
   m_current_style = style;
+  m_style_signal(m_current_style);
   update();
 }

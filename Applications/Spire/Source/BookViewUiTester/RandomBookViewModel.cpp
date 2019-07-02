@@ -104,6 +104,10 @@ QtPromise<void> RandomBookViewModel::load() {
   });
 }
 
+const MarketDatabase& RandomBookViewModel::get_market_database() const {
+  return m_model.get_market_database();
+}
+
 connection RandomBookViewModel::connect_bbo_slot(
     const BboSignal::slot_type& slot) const {
   return m_model.connect_bbo_slot(slot);

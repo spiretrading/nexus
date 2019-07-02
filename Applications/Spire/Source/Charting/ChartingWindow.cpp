@@ -92,7 +92,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/lock-grid-purple.svg", button_image_size),
     imageFromSvg(":/Icons/lock-grid-grey.svg", button_image_size),
     m_button_header_widget);
-  m_lock_grid_button->setFixedSize(scale(26, 26));
+  m_lock_grid_button->setFixedSize(scale(16, 26));
   m_lock_grid_button->setToolTip(tr("Lock Grid"));
   m_lock_grid_button->setDisabled(true);
   button_header_layout->addWidget(m_lock_grid_button);
@@ -103,7 +103,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/auto-scale-purple.svg", button_image_size),
     imageFromSvg(":/Icons/auto-scale-grey.svg", button_image_size),
     m_button_header_widget);
-  m_auto_scale_button->setFixedSize(scale(26, 26));
+  m_auto_scale_button->setFixedSize(scale(16, 26));
   m_auto_scale_button->setToolTip(tr("Auto Scale"));
   m_auto_scale_button->set_toggled(true);
   m_auto_scale_button->setDisabled(true);
@@ -123,7 +123,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
     imageFromSvg(":/Icons/draw-purple.svg", button_image_size),
     imageFromSvg(":/Icons/draw-grey.svg", button_image_size),
     m_button_header_widget);
-  m_draw_line_button->setFixedSize(scale(26, 26));
+  m_draw_line_button->setFixedSize(scale(16, 26));
   m_draw_line_button->setToolTip(tr("Draw Line"));
   m_draw_line_button->setDisabled(true);
   m_draw_line_button->connect_clicked_signal([=] {
@@ -156,6 +156,7 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   delete m_chart;
   delete m_security_widget_container;
   m_security_widget_container = new QWidget(this);
+  m_security_widget->installEventFilter(this);
   auto container_layout = new QVBoxLayout(m_security_widget_container);
   container_layout->setContentsMargins({});
   m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
@@ -166,8 +167,15 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_lock_grid_button->setEnabled(true);
   m_auto_scale_button->setEnabled(true);
   m_draw_line_button->setEnabled(true);
+  m_draw_line_button->set_toggled(false);
   m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
+  m_trend_line_editor_widget->connect_color_signal(
+    [=] { on_trend_line_color_selected(); });
+  m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
+  m_trend_line_editor_widget->connect_style_signal(
+    [=] { on_trend_line_style_selected(); });
+  m_chart->set_trend_line_style(m_trend_line_editor_widget->get_style());
   m_security_widget->set_widget(m_security_widget_container);
   m_chart->installEventFilter(this);
 }
@@ -181,7 +189,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
-      if(m_is_mouse_dragging) {
+      if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
         auto chart_delta = m_chart->convert_pixels_to_chart(e->pos());
         auto last_pos = m_chart->convert_pixels_to_chart(
           m_last_chart_mouse_pos);
@@ -193,18 +201,20 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
         m_chart->set_region(top_left, bottom_right);
         m_last_chart_mouse_pos = e->pos();
       }
-      m_chart->set_crosshair(e->pos());
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto e = static_cast<QMouseEvent*>(event);
       if(!m_is_mouse_dragging && e->button() == Qt::LeftButton) {
         m_is_mouse_dragging = true;
         m_last_chart_mouse_pos = e->pos();
       }
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::MouseButtonRelease) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->button() == Qt::LeftButton) {
         m_is_mouse_dragging = false;
       }
+      m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
       auto [top_left, bottom_right] = m_chart->get_region();
@@ -227,7 +237,21 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {
       auto e = static_cast<QHoverEvent*>(event);
-      m_chart->set_crosshair(e->pos());
+      m_chart->set_crosshair(e->pos(), Qt::NoButton);
+    }
+  } else if(object == m_security_widget) {
+   if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Delete) {
+        m_chart->remove_selected_trend_lines();
+      } else if(e->key() == Qt::Key_Shift) {
+        m_chart->set_multi_select(true);
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Shift) {
+        m_chart->set_multi_select(false);
+      }
     }
   }
   return QWidget::eventFilter(object, event);
@@ -245,11 +269,9 @@ void ChartingWindow::on_auto_scale_button_click() {
 }
 
 void ChartingWindow::on_draw_line_button_click() {
-  if(m_trend_line_editor_widget->isVisible()) {
-    m_trend_line_editor_widget->hide();
-  } else {
-    m_trend_line_editor_widget->show();
-  }
+  m_trend_line_editor_widget->setVisible(
+    !m_trend_line_editor_widget->isVisible());
+  m_chart->set_draw_mode(m_trend_line_editor_widget->isVisible());
 }
 
 void ChartingWindow::on_period_line_edit_changed() {
@@ -263,4 +285,12 @@ void ChartingWindow::on_period_line_edit_changed() {
 void ChartingWindow::on_security_change(const Security& security) {
   setWindowTitle(CustomVariantItemDelegate().displayText(
     QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
+}
+
+void ChartingWindow::on_trend_line_color_selected() {
+  m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
+}
+
+void ChartingWindow::on_trend_line_style_selected() {
+  m_chart->set_trend_line_style(m_trend_line_editor_widget->get_style());
 }
