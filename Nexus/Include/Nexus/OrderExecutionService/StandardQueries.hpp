@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVICESTANDARDQUERIES_HPP
-#define NEXUS_ORDEREXECUTIONSERVICESTANDARDQUERIES_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
+#define NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #include <unordered_map>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/MemberAccessExpression.hpp>
@@ -15,8 +15,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
   //! Builds Query Expression to filter Orders by MarketCode.
   /*!
@@ -25,16 +24,17 @@ namespace OrderExecutionService {
             specified <i>market</i>.
   */
   inline auto BuildMarketFilter(MarketCode market) {
-    Beam::Queries::StringValue queryMarketCode{market.GetData()};
-    Beam::Queries::ConstantExpression marketCodeExpression{queryMarketCode};
-    Beam::Queries::ParameterExpression infoParameterExpression{
-      0, Nexus::Queries::OrderInfoType()};
-    Beam::Queries::MemberAccessExpression fieldsAccessExpression{"fields",
-      Nexus::Queries::OrderFieldsType(), infoParameterExpression};
-    Beam::Queries::MemberAccessExpression securityAccessExpression{"security",
-      Nexus::Queries::SecurityType(), fieldsAccessExpression};
-    Beam::Queries::MemberAccessExpression marketAccessExpression{"market",
-      Beam::Queries::StringType(), securityAccessExpression};
+    auto queryMarketCode = Beam::Queries::StringValue(market.GetData());
+    auto marketCodeExpression = Beam::Queries::ConstantExpression(
+      queryMarketCode);
+    auto infoParameterExpression = Beam::Queries::ParameterExpression(
+      0, Nexus::Queries::OrderInfoType());
+    auto fieldsAccessExpression = Beam::Queries::MemberAccessExpression(
+      "fields", Nexus::Queries::OrderFieldsType(), infoParameterExpression);
+    auto securityAccessExpression = Beam::Queries::MemberAccessExpression(
+      "security", Nexus::Queries::SecurityType(), fieldsAccessExpression);
+    auto marketAccessExpression = Beam::Queries::MemberAccessExpression(
+      "market", Beam::Queries::StringType(), securityAccessExpression);
     auto equalExpression = Beam::Queries::MakeEqualsExpression(
       marketCodeExpression, marketAccessExpression);
     return equalExpression;
@@ -61,15 +61,16 @@ namespace OrderExecutionService {
       const boost::local_time::tz_database& timeZoneDatabase) {
     auto marketStartOfDay = MarketDateToUtc(market, startTime, marketDatabase,
       timeZoneDatabase);
-    boost::posix_time::ptime marketEndOfDay;
-    if(endTime == boost::posix_time::pos_infin) {
-      marketEndOfDay = boost::posix_time::pos_infin;
-    } else {
-      marketEndOfDay = MarketDateToUtc(market, endTime, marketDatabase,
-        timeZoneDatabase) + boost::gregorian::days(1);
-    }
+    auto marketEndOfDay = [&] () {
+      if(endTime == boost::posix_time::pos_infin) {
+        return boost::posix_time::ptime(boost::posix_time::pos_infin);
+      } else {
+        return MarketDateToUtc(market, endTime, marketDatabase,
+          timeZoneDatabase) + boost::gregorian::days(1);
+      }
+    }();
     auto marketFilter = BuildMarketFilter(market);
-    AccountQuery dailyOrderSubmissionQuery;
+    auto dailyOrderSubmissionQuery = AccountQuery();
     dailyOrderSubmissionQuery.SetIndex(account);
     dailyOrderSubmissionQuery.SetRange(marketStartOfDay, marketEndOfDay);
     dailyOrderSubmissionQuery.SetFilter(marketFilter);
@@ -92,16 +93,15 @@ namespace OrderExecutionService {
   template<typename OrderExecutionClient>
   void QueryDailyOrderSubmissions(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const boost::posix_time::ptime& startTime,
-      const boost::posix_time::ptime& endTime,
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       OrderExecutionClient& orderExecutionClient,
       const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
     Beam::Routines::Spawn(
       [=, &orderExecutionClient] {
-        std::unordered_map<std::string, std::vector<MarketCode>>
-          marketTimeZones;
+        auto marketTimeZones =
+          std::unordered_map<std::string, std::vector<MarketCode>>();
         for(auto& market : marketDatabase.GetEntries()) {
           marketTimeZones[market.m_timeZone].push_back(market.m_code);
         }
@@ -111,14 +111,13 @@ namespace OrderExecutionService {
           auto marketEndDate = MarketDateToUtc(marketTimeZone.second.front(),
             endTime, marketDatabase, timeZoneDatabase) +
             boost::gregorian::days(1);
-          std::vector<Beam::Queries::Expression> marketExpressions;
+          auto marketExpressions = std::vector<Beam::Queries::Expression>();
           for(auto& market : marketTimeZone.second) {
-            auto marketFilter = BuildMarketFilter(market);
-            marketExpressions.push_back(marketFilter);
+            marketExpressions.push_back(BuildMarketFilter(market));
           }
           auto marketFilter = Beam::Queries::MakeOrExpression(
             marketExpressions.begin(), marketExpressions.end());
-          AccountQuery dailyOrderSubmissionQuery;
+          auto dailyOrderSubmissionQuery = AccountQuery();
           dailyOrderSubmissionQuery.SetIndex(account);
           dailyOrderSubmissionQuery.SetRange(marketStartDate, marketEndDate);
           dailyOrderSubmissionQuery.SetFilter(marketFilter);
@@ -140,7 +139,6 @@ namespace OrderExecutionService {
         queue->Break();
       });
   }
-}
 }
 
 #endif
