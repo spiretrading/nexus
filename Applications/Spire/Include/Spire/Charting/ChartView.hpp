@@ -158,7 +158,6 @@ namespace Spire {
       QImage m_gap_slash_image;
       std::vector<Gap> m_gaps;
 
-      ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);

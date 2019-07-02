@@ -154,9 +154,17 @@ void ChartView::set_crosshair(const QPoint& position,
       auto line = m_trend_line_model.get(m_current_trend_line_id);
       auto first = std::get<0>(line.m_points);
       auto second = std::get<1>(line.m_points);
-      auto delta = chart_delta(m_last_crosshair_pos, *m_crosshair_pos);
-      line.m_points = {{first.m_x - delta.m_x, first.m_y - delta.m_y},
-        {second.m_x - delta.m_x, second.m_y - delta.m_y}};
+      auto delta = m_last_crosshair_pos - *m_crosshair_pos;
+      auto chart_delta = ChartPoint(
+        map_to(static_cast<double>(delta.x()), 0.0,
+          static_cast<double>(m_x_origin),
+          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x,
+        map_to(static_cast<double>(delta.y()), 0.0,
+          static_cast<double>(m_y_origin), m_top_left.m_y,
+          m_bottom_right.m_y) - m_top_left.m_y);
+      line.m_points = {
+        {first.m_x - chart_delta.m_x, first.m_y - chart_delta.m_y},
+        {second.m_x - chart_delta.m_x, second.m_y - chart_delta.m_y}};
       m_trend_line_model.update(line, m_current_trend_line_id);
     } else if(m_draw_state == DrawState::NEW) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
@@ -430,14 +438,6 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region(top_left, bottom_right);
   }
   QWidget::showEvent(event);
-}
-
-ChartPoint ChartView::chart_delta(const QPoint& previous,
-    const QPoint& present) {
-  auto previous_value = to_chart_point(previous);
-  auto present_value = to_chart_point(present);
-  return {previous_value.m_x - present_value.m_x,
-    previous_value.m_y - present_value.m_y};
 }
 
 void ChartView::draw_gap(QPainter& painter, int start, int end) {
