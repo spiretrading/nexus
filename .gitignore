@@ -18,6 +18,17 @@
 ## Ignore generated version.hpp file
 Version.hpp
 
+## Ignore the Dependencies folder.
+Dependencies/
+
+## Ignore the generated web-app files.
+mod_time.txt
+WebApi/library/
+Applications/WebPortal/Application/web_app/
+Applications/WebPortal/WebApp/tests/*/application/
+Applications/WebPortal/WebApp/application/application/
+Applications/WebPortal/WebApp/library/library/
+
 ## Ignore CMake files
 
 *.dir
