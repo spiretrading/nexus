@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
           ChartValue(time - Money::ONE/*time - boost::posix_time::minutes(1)*/), ChartValue(time),
             open, close, high, low));
         if(rand() % 2 == 1) {
-          //time -= boost::posix_time::minutes(rand() % 25);
-          time -= (rand() % 25) * Money::ONE;
+          //time -= boost::posix_time::minutes(rand() % 25 + 1);
+          time -= (rand() % 25) * Money::ONE + Money::ONE;
         } else {
           //time -= boost::posix_time::minutes(1);
           time -= Money::ONE;
