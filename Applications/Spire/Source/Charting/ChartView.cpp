@@ -480,10 +480,6 @@ ChartValue ChartView::gap_adjusted_map_to(int point_x,
       gap_adjusted_map_to(gaps.front().m_start),
       gap_adjusted_map_to(gaps.front().m_end),
       gaps.front().m_start, gaps.front().m_end);
-  } else if(m_gaps.back().m_end < m_bottom_right.m_x) {
-    return map_to(static_cast<double>(point_x),
-      gap_adjusted_map_to(gaps.back().m_end), static_cast<double>(m_x_origin),
-      gaps.back().m_end, m_bottom_right.m_x);
   }
   return gap_adjusted_map_to(point_x,
     std::vector<Gap>(std::next(gaps.begin()), gaps.end()));
