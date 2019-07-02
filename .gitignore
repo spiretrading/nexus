@@ -20,6 +20,7 @@ Version.hpp
 
 ## Ignore the Dependencies folder.
 Dependencies/
+**/Dependencies
 
 ## Ignore the generated web-app files.
 mod_time.txt
@@ -28,6 +29,58 @@ Applications/WebPortal/Application/web_app/
 Applications/WebPortal/WebApp/tests/*/application/
 Applications/WebPortal/WebApp/application/application/
 Applications/WebPortal/WebApp/library/library/
+
+## Ignore executable files on Linux.
+Applications/AdministrationServer/AdministrationServer
+Applications/AdministrationServer/Application/AdministrationServer
+Applications/AsxItchMarketDataFeedClient/Application/AsxItchMarketDataFeedClient
+Applications/AsxItchMarketDataFeedClient/AsxItchMarketDataFeedClient
+Applications/ChartingServer/Application/ChartingServer
+Applications/ChartingServer/ChartingServer
+Applications/ChiaMarketDataFeedClient/Application/ChiaMarketDataFeedClient
+Applications/ChiaMarketDataFeedClient/ChiaMarketDataFeedClient
+Applications/ComplianceServer/Application/ComplianceServer
+Applications/ComplianceServer/ComplianceServer
+Applications/CseMarketDataFeedClient/Application/CseMarketDataFeedClient
+Applications/CseMarketDataFeedClient/CseMarketDataFeedClient
+Applications/CtaMarketDataFeedClient/Application/CtaMarketDataFeedClient
+Applications/CtaMarketDataFeedClient/CtaMarketDataFeedClient
+Applications/DefinitionsServer/Application/DefinitionsServer
+Applications/DefinitionsServer/DefinitionsServer
+Applications/MarketDataRelayServer/Application/MarketDataRelayServer
+Applications/MarketDataRelayServer/MarketDataRelayServer
+Applications/MarketDataServer/Application/MarketDataServer
+Applications/MarketDataServer/MarketDataServer
+Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient
+Applications/ReplayMarketDataFeedClient/ReplayMarketDataFeedClient
+Applications/RiskServer/Application/RiskServer
+Applications/RiskServer/RiskServer
+Applications/SimulationMarketDataFeedClient/Application/SimulationMarketDataFeedClient
+Applications/SimulationMarketDataFeedClient/SimulationMarketDataFeedClient
+Applications/SimulationOrderExecutionServer/Application/SimulationOrderExecutionServer
+Applications/SimulationOrderExecutionServer/SimulationOrderExecutionServer
+Applications/TmxIpMarketDataFeedClient/Application/TmxIpMarketDataFeedClient
+Applications/TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient
+Applications/TmxTl1MarketDataFeedClient/Application/TmxTl1MarketDataFeedClient
+Applications/TmxTl1MarketDataFeedClient/TmxTl1MarketDataFeedClient
+Applications/UtpMarketDataFeedClient/Application/UtpMarketDataFeedClient
+Applications/UtpMarketDataFeedClient/UtpMarketDataFeedClient
+Applications/WebPortal/Application/WebPortal
+Applications/WebPortal/WebPortal
+Nexus/Config/Accounting/AccountingTests
+Nexus/Config/AdministrationService/AdministrationServiceTests
+Nexus/Config/Backtester/BacktesterTests
+Nexus/Config/ChartingService/ChartingServiceTests
+Nexus/Config/Compliance/ComplianceTests
+Nexus/Config/Definitions/DefinitionsTests
+Nexus/Config/FeeHandling/FeeHandlingTests
+Nexus/Config/InternalMatcher/InternalMatcherTests
+Nexus/Config/MarketDataService/MarketDataServiceTests
+Nexus/Config/OrderExecutionService/OrderExecutionServiceTests
+Nexus/Config/Parsers/ParsersTests
+Nexus/Config/Queries/QueriesTests
+Nexus/Config/RiskService/RiskServiceTests
+
 
 ## Ignore CMake files
 
