@@ -86,7 +86,9 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
       auto new_x = to_pixel({gap.m_start, ChartValue()}).x();
       new_x += static_cast<int>((point.m_x - gap.m_start) /
         (gap.m_end - gap.m_start) * static_cast<double>(scale_width(35)));
-      return QPoint(static_cast<int>(new_x), to_pixel(point).y());
+      return {static_cast<int>(new_x),static_cast<int>(map_to(point.m_y,
+        m_bottom_right.m_y, m_top_left.m_y, static_cast<double>(m_y_origin),
+        0.0))};
     }
   }
   auto x = map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
@@ -488,7 +490,10 @@ void ChartView::draw_points(int id, QPainter& painter) {
 ChartPoint ChartView::to_chart_point(const QPoint& point,
     const std::vector<Gap>& gaps) const {
   if(gaps.empty()) {
-    return to_chart_point(point);
+    return {map_to(static_cast<double>(point.x()), 0.0,
+      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x),
+      map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
+      0.0, m_bottom_right.m_y, m_top_left.m_y)};
   } else if(point.x() <= to_pixel({gaps.front().m_start, ChartValue()}).x()) {
     return {map_to(static_cast<double>(point.x()),
       static_cast<double>(to_pixel({m_top_left.m_x, ChartValue()}).x()),
