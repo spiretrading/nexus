@@ -123,8 +123,7 @@ namespace Spire {
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
-      int m_x_origin;
-      int m_y_origin;
+      QPoint m_bottom_right_pixel;
       ChartValue m_x_axis_step;
       ChartValue m_x_range;
       ChartValue m_y_axis_step;
