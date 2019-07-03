@@ -10,21 +10,11 @@ using namespace Spire;
 namespace {
   ChartPoint make_point(double x, double y) {
     return ChartPoint(ChartValue(x), ChartValue(y));
-  }  
+  }
 
   TrendLine make_line(int x1, int y1, int x2, int y2, const QColor& color,
       TrendLineStyle style) {
     return TrendLine{{make_point(x1, y1), make_point(x2, y2)}, color, style};
-  }
-
-  bool operator ==(const ChartPoint& lhs, const ChartPoint& rhs) {
-    return lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y;
-  }
-
-  bool operator ==(const TrendLine& lhs, const TrendLine& rhs) {
-    return std::get<0>(lhs.m_points) == std::get<0>(rhs.m_points) &&
-      std::get<1>(lhs.m_points) == std::get<1>(rhs.m_points) &&
-      lhs.m_color == rhs.m_color && lhs.m_style == rhs.m_style;
   }
 }
 

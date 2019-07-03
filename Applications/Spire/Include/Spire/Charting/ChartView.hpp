@@ -116,12 +116,10 @@ namespace Spire {
         OFF,
         POINT
       };
-
       struct Gap {
         ChartValue m_start;
         ChartValue m_end;
       };
-
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
@@ -134,7 +132,6 @@ namespace Spire {
       QFont m_label_font;
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
-      QCursor m_crosshair_cursor;
       std::optional<QPoint> m_crosshair_pos;
       QPoint m_last_crosshair_pos;
       Qt::MouseButtons m_mouse_buttons;
@@ -155,16 +152,13 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
-      QImage m_gap_slash_image;
       std::vector<Gap> m_gaps;
 
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
-      ChartPoint to_chart_point(const QPoint& point,
-        const std::vector<Gap>& gaps) const;
-      bool intersects_gap(int x);
+      bool intersects_gap(int x) const;
       void update_auto_scale();
       void update_gaps();
       int update_intersection(const QPoint& mouse_pos);

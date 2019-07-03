@@ -28,23 +28,44 @@ namespace {
 
   template<typename T, typename U>
   U map_to(T value, T a, T b, U c, U d) {
-    return static_cast<U>(((value - a) / (b - a)) * (d - c) + c);
+    return static_cast<U>((value - a) / (b - a) * (d - c) + c);
   }
 
-  ChartValue calculate_step(ChartValue::Type value_type,
-      ChartValue range) {
+  template<typename U>
+  U map_to(int value, int a, int b, U c, U d) {
+    return map_to(static_cast<double>(value), static_cast<double>(a),
+      static_cast<double>(b), c, d);
+  }
+
+  template<typename T>
+  int map_to(T value, T a, T b, int c, int d) {
+    return static_cast<int>(
+      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d)));
+  }
+
+  ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      // TODO: compiler bug workaround
-      return ChartValue(Money::FromValue("1").get());
+      return ChartValue(Money::ONE);
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
     return ChartValue();
   }
 
-  auto get_hand_cursor() {
+  const auto& HAND_CURSOR() {
     static auto cursor = QCursor(QPixmap::fromImage(
       imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
+    return cursor;
+  }
+
+  const auto& CROSSHAIR_CURSOR() {
+    static auto cursor = QCursor(QPixmap::fromImage(
+      imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
+    return cursor;
+  }
+
+  const auto& GAP_SLASH_IMAGE() {
+    static auto cursor = imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3));
     return cursor;
   }
 }
@@ -54,7 +75,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_model(&model),
       m_x_origin(0),
       m_label_font("Roboto"),
-      m_font_metrics(QFont()),
+      m_font_metrics(m_label_font),
       m_item_delegate(new CustomVariantItemDelegate(this)),
       m_dashed_line_pen(QColor("#E5E5E5"), scale_width(1), Qt::CustomDashLine),
       m_label_text_color(QColor("#25212E")),
@@ -62,9 +83,7 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_draw_state(DrawState::OFF),
       m_mouse_buttons(Qt::NoButton),
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
-      m_is_multi_select_enabled(false),
-      m_gap_slash_image(
-        imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3))) {
+      m_is_multi_select_enabled(false) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -72,41 +91,54 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
   m_font_metrics = QFontMetrics(m_label_font);
   m_dashed_line_pen.setDashPattern({static_cast<double>(scale_width(3)),
     static_cast<double>(scale_width(3))});
-  m_crosshair_cursor = QCursor(QPixmap::fromImage(
-    imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
 }
 
 ChartPoint ChartView::to_chart_point(const QPoint& point) const {
-  return to_chart_point(point, m_gaps);
+  auto y = map_to(point.y(), m_y_origin, 0, m_bottom_right.m_y, m_top_left.m_y);
+  auto lower_x_pixel = 0;
+  auto lower_x_chart_value = m_top_left.m_x;
+  auto x = [&] {
+    for(auto& gap : m_gaps) {
+      auto gap_start_pixel = to_pixel({gap.m_start, y}).x();
+      if(point.x() <= gap_start_pixel) {
+        return map_to(point.x(), lower_x_pixel, gap_start_pixel,
+          lower_x_chart_value, gap.m_start);
+      }
+      auto gap_end_pixel = to_pixel({gap.m_end, y}).x();
+      if(point.x() < gap_end_pixel) {
+        return map_to(point.x(), gap_start_pixel, gap_end_pixel,
+          gap.m_start, gap.m_end);
+      }
+      lower_x_pixel = gap_end_pixel;
+      lower_x_chart_value = gap.m_end;
+    }
+    return map_to(point.x(), lower_x_pixel, m_x_origin, lower_x_chart_value,
+      m_bottom_right.m_x);
+  }();
+  return {x, y};
 }
 
 QPoint ChartView::to_pixel(const ChartPoint& point) const {
+  auto x = map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0, m_x_origin);
   for(auto& gap : m_gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       auto new_x = to_pixel({gap.m_start, ChartValue()}).x();
       new_x += static_cast<int>((point.m_x - gap.m_start) /
         (gap.m_end - gap.m_start) * static_cast<double>(scale_width(35)));
-      return {static_cast<int>(new_x),static_cast<int>(map_to(point.m_y,
-        m_bottom_right.m_y, m_top_left.m_y, static_cast<double>(m_y_origin),
-        0.0))};
+      return {new_x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
+        m_y_origin, 0)};
+    }
+    if(point.m_x > gap.m_start) {
+      auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
+        0, m_x_origin);
+      auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
+        0, m_x_origin);
+      x -= gap_end - gap_start;
+      x += scale_width(35);
     }
   }
-  auto x = map_to(point.m_x, m_top_left.m_x, m_bottom_right.m_x, 0.0,
-    static_cast<double>(m_x_origin));
-  for(auto& gap : m_gaps) {
-    if(point.m_x <= gap.m_start) {
-      break;
-    }
-    auto gap_start = map_to(gap.m_start, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
-      0, m_x_origin);
-    x -= gap_end - gap_start;
-    x += scale_width(35);
-  }
-  return {static_cast<int>(x),
-    static_cast<int>(map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
-    static_cast<double>(m_y_origin), 0.0))};
+  return {x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y, m_y_origin,
+    0)};
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
@@ -156,12 +188,9 @@ void ChartView::set_crosshair(const QPoint& position,
       auto second = std::get<1>(line.m_points);
       auto delta = m_last_crosshair_pos - *m_crosshair_pos;
       auto chart_delta = ChartPoint(
-        map_to(static_cast<double>(delta.x()), 0.0,
-          static_cast<double>(m_x_origin),
-          m_top_left.m_x, m_bottom_right.m_x) - m_top_left.m_x,
-        map_to(static_cast<double>(delta.y()), 0.0,
-          static_cast<double>(m_y_origin), m_top_left.m_y,
-          m_bottom_right.m_y) - m_top_left.m_y);
+        map_to(delta.x(), 0, m_x_origin, m_top_left.m_x, m_bottom_right.m_x) -
+        m_top_left.m_x, map_to(delta.y(), 0, m_y_origin, m_top_left.m_y,
+        m_bottom_right.m_y) - m_top_left.m_y);
       line.m_points = {
         {first.m_x - chart_delta.m_x, first.m_y - chart_delta.m_y},
         {second.m_x - chart_delta.m_x, second.m_y - chart_delta.m_y}};
@@ -193,10 +222,7 @@ std::tuple<ChartPoint, ChartPoint> ChartView::get_region() const {
 
 void ChartView::set_region(const ChartPoint& top_left,
     const ChartPoint& bottom_right) {
-  if(std::tie(m_top_left.m_x, m_top_left.m_y) ==
-      std::tie(top_left.m_x, top_left.m_y) &&
-      std::tie(m_bottom_right.m_x, m_bottom_right.m_y) ==
-      std::tie(bottom_right.m_x, bottom_right.m_y)) {
+  if(top_left == m_top_left && bottom_right == m_bottom_right) {
     return;
   }
   m_top_left = top_left;
@@ -206,8 +232,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
-  m_candlestick_promise = m_model->load(m_top_left.m_x,
-    m_bottom_right.m_x);
+  m_candlestick_promise = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
   m_candlestick_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get());
     update_gaps();
@@ -277,8 +302,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     return;
   }
   for(auto y : m_y_axis_values) {
-    auto y_pos = map_to(y, m_bottom_right.m_y,
-      m_top_left.m_y, m_y_origin, 0);
+    auto y_pos = map_to(y, m_bottom_right.m_y, m_top_left.m_y, m_y_origin, 0);
     painter.setPen("#3A3348");
     painter.drawLine(0, y_pos, m_x_origin, y_pos);
     painter.setPen(Qt::white);
@@ -309,12 +333,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
       GAP_DIVISOR) + 1);
     auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
       GAP_DIVISOR);
-    if(i->GetEnd() >= to_chart_point({0, 0}).m_x &&
-        start_x <= m_x_origin) {
-      auto high = static_cast<int>(map_to(i->GetHigh(),
-        m_bottom_right.m_y, m_top_left.m_y, m_y_origin, 0));
-      auto low = static_cast<int>(map_to(i->GetLow(),
-        m_bottom_right.m_y, m_top_left.m_y, m_y_origin, 0));
+    if(i->GetEnd() >= m_top_left.m_x && start_x <= m_x_origin) {
+      auto high = map_to(i->GetHigh(), m_bottom_right.m_y, m_top_left.m_y,
+        m_y_origin, 0);
+      auto low = map_to(i->GetLow(), m_bottom_right.m_y, m_top_left.m_y,
+        m_y_origin, 0);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
@@ -335,12 +358,11 @@ void ChartView::paintEvent(QPaintEvent* event) {
           std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
       }
     }
-    if(std::next(i) != m_candlesticks.end() &&
-        i->GetEnd() != std::next(i)->GetStart() && end_x < m_x_origin) {
-      auto open = to_pixel({std::next(i)->GetStart(),
-        std::next(i)->GetOpen()});
-      auto close = to_pixel({std::next(i)->GetEnd(),
-        std::next(i)->GetClose()});
+    auto j = std::next(i);
+    if(j != m_candlesticks.end() && i->GetEnd() != j->GetStart() &&
+        end_x < m_x_origin) {
+      auto open = to_pixel({j->GetStart(), j->GetOpen()});
+      auto close = to_pixel({j->GetEnd(), j->GetClose()});
       auto next_start_x = std::min(static_cast<int>(open.x() -
         (close.x() - open.x()) / GAP_DIVISOR), m_x_origin);
       draw_gap(painter, end_x, next_start_x);
@@ -351,9 +373,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     if(m_draw_state == DrawState::OFF ||
         m_draw_state == DrawState::IDLE ||
         m_draw_state == DrawState::NEW) {
-      setCursor(m_crosshair_cursor);
+      setCursor(CROSSHAIR_CURSOR());
     } else {
-      setCursor(get_hand_cursor());
+      setCursor(HAND_CURSOR());
     }
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
@@ -456,7 +478,7 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   auto padding = std::fmod(slash_count, scale_width(4) + scale_width(1)) / 2;
   auto x = start + static_cast<int>(padding) + scale_width(1);
   for(auto i = 0; i < slash_count; ++i) {
-    painter.drawImage(x, m_y_origin, m_gap_slash_image);
+    painter.drawImage(x, m_y_origin, GAP_SLASH_IMAGE());
     x += scale_width(4) + scale_width(1);
   }
   painter.restore();
@@ -488,45 +510,13 @@ void ChartView::draw_points(int id, QPainter& painter) {
   draw_point(painter, second_color, second);
 }
 
-ChartPoint ChartView::to_chart_point(const QPoint& point,
-    const std::vector<Gap>& gaps) const {
-  if(gaps.empty()) {
-    return {map_to(static_cast<double>(point.x()), 0.0,
-      static_cast<double>(m_x_origin), m_top_left.m_x, m_bottom_right.m_x),
-      map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
-      0.0, m_bottom_right.m_y, m_top_left.m_y)};
-  } else if(point.x() <= to_pixel({gaps.front().m_start, ChartValue()}).x()) {
-    return {map_to(static_cast<double>(point.x()),
-      static_cast<double>(to_pixel({m_top_left.m_x, ChartValue()}).x()),
-      static_cast<double>(to_pixel({gaps.front().m_start, ChartValue()}).x()),
-      m_top_left.m_x, gaps.front().m_start),
-      map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
-      0.0, m_bottom_right.m_y, m_top_left.m_y)};
-  } else if(point.x() <= to_pixel({gaps.front().m_end, ChartValue()}).x()) {
-    return {map_to(static_cast<double>(point.x()),
-      static_cast<double>(to_pixel({gaps.front().m_start, ChartValue()}).x()),
-      static_cast<double>(to_pixel({gaps.front().m_end, ChartValue()}).x()),
-      gaps.front().m_start, gaps.front().m_end),
-      map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
-      0.0, m_bottom_right.m_y, m_top_left.m_y)};
-  } else if(point.x() >= to_pixel({gaps.back().m_end, ChartValue()}).x()) {
-    return {map_to(static_cast<double>(point.x()),
-      static_cast<double>(to_pixel({gaps.back().m_end, ChartValue()}).x()),
-      static_cast<double>(m_x_origin), gaps.back().m_end, m_bottom_right.m_x),
-      map_to(static_cast<double>(point.y()), static_cast<double>(m_y_origin),
-      0.0, m_bottom_right.m_y, m_top_left.m_y)};
-  }
-  return to_chart_point(point,
-    std::vector<Gap>(std::next(gaps.begin()), gaps.end()));
-}
-
-bool ChartView::intersects_gap(int x) {
+bool ChartView::intersects_gap(int x) const {
   if(m_gaps.empty()) {
     return false;
   }
-  auto chart_x = to_chart_point({x, 0}, m_gaps).m_x;
+  auto chart_x = to_chart_point({x, 0}).m_x;
   return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
-    [=] (auto gap) {
+    [&] (const auto& gap) {
       return gap.m_start < chart_x && gap.m_end > chart_x;
     });
 }

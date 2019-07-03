@@ -42,6 +42,12 @@ namespace Spire {
     */
     TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
       const QColor& color, TrendLineStyle style);
+
+    /** Returns <code>true</code> iff two TrendLines are equal. */
+    bool operator ==(const TrendLine& rhs) const;
+
+    /** Returns <code>true</code> iff two TrendLines are not equal. */
+    bool operator !=(const TrendLine& rhs) const;
   };
 
   //! Draws a TrendLine using the provided QPainter.

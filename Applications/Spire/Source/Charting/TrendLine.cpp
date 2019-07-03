@@ -12,6 +12,15 @@ TrendLine::TrendLine(const std::tuple<ChartPoint, ChartPoint>& points,
       m_color(color),
       m_style(style) {}
 
+bool TrendLine::operator ==(const TrendLine& rhs) const {
+  return m_points == rhs.m_points && m_color == rhs.m_color &&
+    m_style == rhs.m_style;
+}
+
+bool TrendLine::operator !=(const TrendLine& rhs) const {
+  return !(*this == rhs);
+}
+
 void Spire::draw_trend_line(QPainter& painter, TrendLineStyle style,
     const QColor& color, int x1, int y1, int x2, int y2) {
   auto pen = QPen();
