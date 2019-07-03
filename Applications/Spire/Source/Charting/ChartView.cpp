@@ -619,6 +619,13 @@ void ChartView::update_origins() {
   m_x_axis_values.clear();
   m_x_axis_text_width = 0;
   while(x_value <= m_bottom_right.m_x) {
+    if(intersects_gap(to_pixel({x_value, ChartValue()}).x())) {
+      for(auto& gap : m_gaps) {
+        if(gap.m_start > x_value && x_value < gap.m_end) {
+          x_value = gap.m_end;
+        }
+      }
+    }
     m_x_axis_values.push_back(x_value);
     auto text_width = m_font_metrics.width(m_item_delegate->displayText(
       to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
