@@ -335,16 +335,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
           std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
       }
     }
-    if(std::next(i) != m_candlesticks.end() &&
-        i->GetEnd() != std::next(i)->GetStart() && end_x < m_x_origin) {
-      auto open = to_pixel({std::next(i)->GetStart(),
-        std::next(i)->GetOpen()});
-      auto close = to_pixel({std::next(i)->GetEnd(),
-        std::next(i)->GetClose()});
-      auto next_start_x = std::min(static_cast<int>(open.x() -
-        (close.x() - open.x()) / GAP_DIVISOR), m_x_origin);
-      draw_gap(painter, end_x, next_start_x);
-    }
+  }
+  for(auto& gap : m_gaps) {
+    draw_gap(painter, to_pixel({gap.m_start, ChartValue()}).x(),
+      to_pixel({gap.m_end, ChartValue()}).x());
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
