@@ -621,8 +621,9 @@ void ChartView::update_origins() {
   while(x_value <= m_bottom_right.m_x) {
     if(intersects_gap(to_pixel({x_value, ChartValue()}).x())) {
       for(auto& gap : m_gaps) {
-        if(gap.m_start > x_value && x_value < gap.m_end) {
+        if(gap.m_start < x_value && x_value < gap.m_end) {
           x_value = gap.m_end;
+          break;
         }
       }
     }
