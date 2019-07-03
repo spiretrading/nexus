@@ -184,16 +184,12 @@ void ChartView::set_crosshair(const QPoint& position,
       }
     } else if(m_draw_state == DrawState::LINE) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
-      auto first = std::get<0>(line.m_points);
-      auto second = std::get<1>(line.m_points);
+      auto first = to_pixel(std::get<0>(line.m_points));
+      auto second = to_pixel(std::get<1>(line.m_points));
       auto delta = m_last_crosshair_pos - *m_crosshair_pos;
-      auto chart_delta = ChartPoint(
-        map_to(delta.x(), 0, m_x_origin, m_top_left.m_x, m_bottom_right.m_x) -
-        m_top_left.m_x, map_to(delta.y(), 0, m_y_origin, m_top_left.m_y,
-        m_bottom_right.m_y) - m_top_left.m_y);
-      line.m_points = {
-        {first.m_x - chart_delta.m_x, first.m_y - chart_delta.m_y},
-        {second.m_x - chart_delta.m_x, second.m_y - chart_delta.m_y}};
+      first -= delta;
+      second -= delta;
+      line.m_points = {to_chart_point(first), to_chart_point(second)};
       m_trend_line_model.update(line, m_current_trend_line_id);
     } else if(m_draw_state == DrawState::NEW) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
