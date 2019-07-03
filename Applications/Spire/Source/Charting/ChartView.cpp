@@ -320,7 +320,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.setPen(Qt::white);
       painter.drawLine(x_pos, m_bottom_right_pixel.y(), x_pos,
         m_bottom_right_pixel.y() + scale_height(2));
-      painter.drawText(x_pos - m_x_axis_text_width / 2,
+      auto text_width = m_font_metrics.width(m_item_delegate->displayText(
+        to_variant(m_model->get_x_axis_type(), x), QLocale()));
+      painter.drawText(x_pos - text_width / 2,
         m_bottom_right_pixel.y() + m_font_metrics.height() + scale_height(2),
         m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
         QLocale()));
@@ -617,7 +619,6 @@ void ChartView::update_origins() {
   auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
     m_x_axis_step;
   m_x_axis_values.clear();
-  m_x_axis_text_width = 0;
   while(x_value <= m_bottom_right.m_x) {
     if(intersects_gap(to_pixel({x_value, ChartValue()}).x())) {
       for(auto& gap : m_gaps) {
@@ -628,9 +629,6 @@ void ChartView::update_origins() {
       }
     }
     m_x_axis_values.push_back(x_value);
-    auto text_width = m_font_metrics.width(m_item_delegate->displayText(
-      to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
-    m_x_axis_text_width = std::max(m_x_axis_text_width, text_width);
     x_value += m_x_axis_step;
   }
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
