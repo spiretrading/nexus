@@ -34,9 +34,9 @@ def make_zipfile(source, destination):
       archive.write(os.path.join(root, file))
   archive.close()
 
-def copy_build(applications, timestamp, name, source, path):
+def copy_build(applications, version, name, source, path):
   try:
-    destination_path = os.path.join(path, str(timestamp))
+    destination_path = os.path.join(path, str(version))
     for application in applications:
       application_path = os.path.join(destination_path, application)
       makedirs(application_path)
@@ -44,8 +44,20 @@ def copy_build(applications, timestamp, name, source, path):
         'Application')
       for file in os.listdir(source_directory):
         file_path = os.path.join(source_directory, file)
-        if os.path.isfile(file_path):
+        if os.path.isdir(file_path):
+          shutil.copytree(file_path, os.path.join(application_path, file))
+          continue
+        if not os.path.isfile(file_path):
+          continue
+        extension = os.path.splitext(file_path)[1]
+        if extension in ['.py', '.yml']:
           shutil.copy2(file_path, os.path.join(application_path, file))
+        if sys.platform == 'win32':
+          if extension in ['.bat', '.exe']:
+            shutil.copy2(file_path, os.path.join(application_path, file))
+        else:
+          if extension in ['', '.sh']:
+            shutil.copy2(file_path, os.path.join(application_path, file))
     library_destination_path = os.path.join(destination_path, 'Libraries')
     makedirs(library_destination_path)
     library_source_path = os.path.join(source, name, 'Libraries', 'Release')
@@ -55,18 +67,19 @@ def copy_build(applications, timestamp, name, source, path):
   except OSError:
     return
 
-def build_repo(repo, path):
-  commits = sorted([commit for commit in repo.iter_commits('master')],
+def build_repo(repo, path, branch):
+  commits = sorted([commit for commit in repo.iter_commits(branch)],
     key = lambda commit: -int(commit.committed_date))
   builds = [int(d) for d in os.listdir(path) if os.path.isdir(
     os.path.join(path, d))]
   builds.sort(reverse=True)
   if len(builds) == 0:
-    builds.append(int(commits[1].committed_date))
+    builds.append(
+      int(repo.git.rev_list('--count', '--first-parent', 'HEAD')) - 1)
   for i in range(len(commits)):
-    commit = commits[i]
-    timestamp = int(commit.committed_date)
-    if timestamp in builds:
+    version = int(repo.git.rev_list('--count', '--first-parent',
+      commits[i].hexsha))
+    if version in builds:
       commits = commits[0:i]
       commits.reverse()
       break
@@ -75,22 +88,20 @@ def build_repo(repo, path):
   else:
     extension = 'sh'
   for commit in commits:
-    build_path = os.path.join(os.getcwd(), 'build')
-    shutil.rmtree(build_path, True)
-    makedirs(build_path)
-    timestamp = int(commit.committed_date)
+    version = int(repo.git.rev_list('--count', '--first-parent', commit.hexsha))
     repo.git.checkout(commit.hexsha)
     result = []
     result.append(call(os.path.join(repo.working_dir, 'configure.%s -DD=%s' %
-      (extension, os.path.join(os.getcwd(), 'Dependencies'))), build_path))
-    result.append(call(os.path.join(build_path, 'build.%s' % extension),
-      build_path))
+      (extension, os.path.join(os.getcwd(), 'Dependencies'))),
+      repo.working_dir))
+    result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
+      repo.working_dir))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
     for output in result:
       terminal_output += output[1] + b'\n\n\n\n'
-    destination_path = os.path.join(path, str(timestamp))
+    destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
     nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
       'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
@@ -101,25 +112,22 @@ def build_repo(repo, path):
       'UtpMarketDataFeedClient', 'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
-    copy_build(nexus_applications, timestamp, 'Nexus', build_path, path)
+    copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
     beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
-    copy_build(beam_applications, timestamp, 'Beam', beam_path, path)
-    for file in ['reset.sql', 'setup.py']:
-      shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-        os.path.join(destination_path, file))
+    copy_build(beam_applications, version, 'Beam', beam_path, path)
+    shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
+      os.path.join(destination_path, 'setup.py'))
     if sys.platform == 'win32':
-      archive_path = os.path.join(path, 'nexus-%s.zip' % str(timestamp))
+      archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)
     else:
       for file in ['check.sh', 'copy_all.sh', 'start.sh', 'stop.sh']:
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           os.path.join(destination_path, file))
-      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(timestamp))
+      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
       make_tarfile(destination_path, archive_path)
-    shutil.rmtree(beam_path)
-    shutil.rmtree(build_path)
     shutil.rmtree(destination_path)
     makedirs(destination_path)
     with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
@@ -133,6 +141,8 @@ def main():
     default='https://github.com/eidolonsystems/nexus.git')
   parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
+  parser.add_argument('-b', '--branch', type=str, help='Branch to build.',
+    default='master')
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
@@ -142,10 +152,11 @@ def main():
   makedirs(args.path)
   while True:
     try:
+      repo.git.checkout(args.branch)
       repo.git.pull()
     except:
-      pass
-    build_repo(repo, args.path)
+      print('Failed to pull: ', sys.exc_info()[0])
+    build_repo(repo, args.path, args.branch)
     time.sleep(args.period)
 
 if __name__ == '__main__':

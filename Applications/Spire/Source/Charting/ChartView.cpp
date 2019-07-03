@@ -325,19 +325,19 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
   }
   painter.setPen(Qt::white);
-  for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
-    auto open = to_pixel({i->GetStart(), i->GetOpen()});
-    auto close = to_pixel({i->GetEnd(), i->GetClose()});
+  for(auto& candlestick : m_candlesticks) {
+    auto open = to_pixel({candlestick.GetStart(), candlestick.GetOpen()});
+    auto close = to_pixel({candlestick.GetEnd(), candlestick.GetClose()});
     const auto GAP_DIVISOR = 2.95;
     auto start_x = static_cast<int>((open.x() - (close.x() - open.x()) /
       GAP_DIVISOR) + 1);
     auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
       GAP_DIVISOR);
-    if(i->GetEnd() >= m_top_left.m_x && start_x <= m_x_origin) {
-      auto high = map_to(i->GetHigh(), m_bottom_right.m_y, m_top_left.m_y,
-        m_y_origin, 0);
-      auto low = map_to(i->GetLow(), m_bottom_right.m_y, m_top_left.m_y,
-        m_y_origin, 0);
+    if(candlestick.GetEnd() >= m_top_left.m_x && start_x <= m_x_origin) {
+      auto high = map_to(candlestick.GetHigh(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
+      auto low = map_to(candlestick.GetLow(), m_bottom_right.m_y,
+        m_top_left.m_y, m_y_origin, 0);
       if(open.x() < m_x_origin && high < m_y_origin) {
         painter.fillRect(QRect(QPoint(open.x(), high),
           QPoint(open.x(), std::min(low, m_y_origin - 1))), QColor("#A0A0A0"));
@@ -358,15 +358,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
           std::min(close.y() - 1, m_y_origin - 1))), QColor("#EF5357"));
       }
     }
-    auto j = std::next(i);
-    if(j != m_candlesticks.end() && i->GetEnd() != j->GetStart() &&
-        end_x < m_x_origin) {
-      auto open = to_pixel({j->GetStart(), j->GetOpen()});
-      auto close = to_pixel({j->GetEnd(), j->GetClose()});
-      auto next_start_x = std::min(static_cast<int>(open.x() -
-        (close.x() - open.x()) / GAP_DIVISOR), m_x_origin);
-      draw_gap(painter, end_x, next_start_x);
-    }
+  }
+  for(auto& gap : m_gaps) {
+    draw_gap(painter, to_pixel({gap.m_start, ChartValue()}).x(),
+      to_pixel({gap.m_end, ChartValue()}).x());
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <= m_x_origin &&
       m_crosshair_pos.value().y() <= m_y_origin) {
