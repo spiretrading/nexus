@@ -312,19 +312,25 @@ void ChartView::paintEvent(QPaintEvent* event) {
       y_pos + (m_font_metrics.height() / 3), m_item_delegate->displayText(
       to_variant(m_model->get_y_axis_type(), y), QLocale()));
   }
-  for(auto x : m_x_axis_values) {
-    auto x_pos = static_cast<int>(to_pixel({x, ChartValue()}).x());
+  auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
+    m_x_axis_step;
+  while(x_value <= m_bottom_right.m_x) {
+    auto x_pos = to_pixel({x_value, ChartValue()}).x();
     if(!intersects_gap(x_pos)) {
       painter.setPen("#3A3348");
       painter.drawLine(x_pos, 0, x_pos, m_bottom_right_pixel.y());
       painter.setPen(Qt::white);
       painter.drawLine(x_pos, m_bottom_right_pixel.y(), x_pos,
         m_bottom_right_pixel.y() + scale_height(2));
-      painter.drawText(x_pos - m_x_axis_text_width / 2,
-        m_bottom_right_pixel.y() + m_font_metrics.height() + scale_height(2),
-        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
+      auto text_width = m_font_metrics.width(m_item_delegate->displayText(
+      to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
+      painter.drawText(x_pos - text_width / 2, m_bottom_right_pixel.y() +
+        m_font_metrics.height() + scale_height(2),
+        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(),
+          x_value),
         QLocale()));
     }
+    x_value += m_x_axis_step;
   }
   painter.setPen(Qt::white);
   for(auto& candlestick : m_candlesticks) {
@@ -614,21 +620,10 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
 }
 
 void ChartView::update_origins() {
-  auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
-    m_x_axis_step;
-  m_x_axis_values.clear();
-  m_x_axis_text_width = 0;
-  while(x_value <= m_bottom_right.m_x) {
-    m_x_axis_values.push_back(x_value);
-    auto text_width = m_font_metrics.width(m_item_delegate->displayText(
-      to_variant(m_model->get_x_axis_type(), x_value), QLocale()));
-    m_x_axis_text_width = std::max(m_x_axis_text_width, text_width);
-    x_value += m_x_axis_step;
-  }
   auto y_value = m_bottom_right.m_y - (m_bottom_right.m_y % m_y_axis_step) +
     m_y_axis_step;
   m_y_axis_values.clear();
-  auto old_x_origin = m_bottom_right_pixel.x();
+  auto old_chart_width = m_bottom_right_pixel.x();
   m_bottom_right_pixel.setX(INT_MAX);
   auto top_label = m_top_left.m_y - (m_top_left.m_y % m_y_axis_step);
   while(y_value <= top_label) {
@@ -640,7 +635,7 @@ void ChartView::update_origins() {
     y_value += m_y_axis_step;
   }
   if(m_bottom_right_pixel.x() == INT_MAX) {
-    m_bottom_right_pixel.setX(old_x_origin);
+    m_bottom_right_pixel.setX(old_chart_width);
   }
   m_bottom_right_pixel.setY(height() - (m_font_metrics.height() +
     scale_height(9)));

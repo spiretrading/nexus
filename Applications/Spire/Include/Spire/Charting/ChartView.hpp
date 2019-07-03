@@ -136,8 +136,6 @@ namespace Spire {
       Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
-      std::vector<ChartValue> m_x_axis_values;
-      int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
       bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
