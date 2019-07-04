@@ -371,8 +371,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
   }
   for(auto& gap : m_gaps) {
-    draw_gap(painter, to_pixel({gap.m_start, ChartValue()}).x(),
-      to_pixel({gap.m_end, ChartValue()}).x());
+    auto start = to_pixel({gap.m_start, ChartValue()}).x();
+    if(start < m_bottom_right_pixel.x()) {
+      draw_gap(painter, start, to_pixel({gap.m_end, ChartValue()}).x());
+    }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <=
       m_bottom_right_pixel.x() && m_crosshair_pos.value().y() <=
