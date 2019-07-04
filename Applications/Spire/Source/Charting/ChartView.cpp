@@ -128,8 +128,8 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
     m_bottom_right_pixel.x());
   for(auto& gap : m_gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
-      auto new_x = to_pixel({gap.m_start, ChartValue()}).x();
-      new_x += static_cast<int>((point.m_x - gap.m_start) /
+      auto new_x = to_pixel({gap.m_start, ChartValue()}).x() +
+        static_cast<int>((point.m_x - gap.m_start) /
         (gap.m_end - gap.m_start) * static_cast<double>(GAP_SIZE()));
       return {new_x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
         m_bottom_right_pixel.y(), 0)};
@@ -139,8 +139,7 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
         0, m_bottom_right_pixel.x());
       auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
         0, m_bottom_right_pixel.x());
-      x -= gap_end - gap_start;
-      x += GAP_SIZE();
+      x -= gap_end - gap_start - GAP_SIZE();
     }
   }
   return {x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
@@ -622,12 +621,10 @@ void ChartView::update_origins() {
     m_x_axis_step;
   m_x_axis_values.clear();
   while(x_value <= m_bottom_right.m_x) {
-    if(intersects_gap(to_pixel({x_value, ChartValue()}).x())) {
-      for(auto& gap : m_gaps) {
-        if(gap.m_start < x_value && x_value < gap.m_end) {
-          x_value = gap.m_end;
-          break;
-        }
+    for(auto& gap : m_gaps) {
+      if(gap.m_start < x_value && x_value < gap.m_end) {
+        x_value = gap.m_end;
+        break;
       }
     }
     m_x_axis_values.push_back(x_value);
