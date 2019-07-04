@@ -314,7 +314,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   for(auto x : m_x_axis_values) {
     auto x_pos = static_cast<int>(to_pixel({x, ChartValue()}).x());
-    if(!intersects_gap(x_pos)) {
+    if(x_pos < m_bottom_right_pixel.x() && !intersects_gap(x_pos)) {
       painter.setPen("#3A3348");
       painter.drawLine(x_pos, 0, x_pos, m_bottom_right_pixel.y());
       painter.setPen(Qt::white);
@@ -483,6 +483,7 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
     painter.drawLine(end, m_bottom_right_pixel.y(), end,
       m_bottom_right_pixel.y() + scale_height(2));
   }
+  end = std::min(end, m_bottom_right_pixel.x());
   painter.setPen("#8C8C8C");
   auto slash_count = (static_cast<float>(end) - static_cast<float>(start)) /
     (static_cast<float>(scale_width(4)) + static_cast<float>(scale_width(1))) -
