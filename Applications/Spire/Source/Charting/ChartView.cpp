@@ -68,6 +68,11 @@ namespace {
     static auto cursor = imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3));
     return cursor;
   }
+
+  const auto GAP_SIZE() {
+    static auto size = scale_width(35);
+    return size;
+  }
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
@@ -125,7 +130,7 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       auto new_x = to_pixel({gap.m_start, ChartValue()}).x();
       new_x += static_cast<int>((point.m_x - gap.m_start) /
-        (gap.m_end - gap.m_start) * static_cast<double>(scale_width(35)));
+        (gap.m_end - gap.m_start) * static_cast<double>(GAP_SIZE()));
       return {new_x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
         m_bottom_right_pixel.y(), 0)};
     }
@@ -135,7 +140,7 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
       auto gap_end = map_to(gap.m_end, m_top_left.m_x, m_bottom_right.m_x,
         0, m_bottom_right_pixel.x());
       x -= gap_end - gap_start;
-      x += scale_width(35);
+      x += GAP_SIZE();
     }
   }
   return {x, map_to(point.m_y, m_bottom_right.m_y, m_top_left.m_y,
@@ -534,6 +539,10 @@ bool ChartView::intersects_gap(int x) const {
     });
 }
 
+void ChartView::load_updated_region(int gaps_size) {
+
+}
+
 void ChartView::update_auto_scale() {
   if(m_candlesticks.empty()) {
     return;
@@ -556,6 +565,9 @@ void ChartView::update_gaps() {
     if(end != next_start) {
       m_gaps.push_back({end, next_start});
     }
+  }
+  if(!m_gaps.empty()) {
+    load_updated_region(GAP_SIZE() * m_gaps.size());
   }
 }
 
