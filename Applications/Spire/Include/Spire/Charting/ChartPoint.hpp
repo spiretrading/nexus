@@ -29,6 +29,12 @@ namespace Spire {
 
     /** Returns <code>true</code> iff two ChartPoints are not equal. */
     bool operator !=(const ChartPoint& rhs) const;
+
+    /** Returns the sum of two ChartPoints. */
+    ChartPoint operator +(const ChartPoint& rhs) const;
+
+    /** Returns the difference of two ChartPoints. */
+    ChartPoint operator -(const ChartPoint& rhs) const;
   };
 }
 

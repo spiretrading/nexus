@@ -185,12 +185,11 @@ void ChartView::set_crosshair(const QPoint& position,
       }
     } else if(m_draw_state == DrawState::LINE) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
-      auto first = to_pixel(std::get<0>(line.m_points));
-      auto second = to_pixel(std::get<1>(line.m_points));
-      auto delta = m_last_crosshair_pos - *m_crosshair_pos;
-      first -= delta;
-      second -= delta;
-      line.m_points = {to_chart_point(first), to_chart_point(second)};
+      auto delta = *m_crosshair_pos - m_last_crosshair_pos;
+      auto first = to_chart_point(to_pixel(std::get<0>(line.m_points)) +
+        delta);
+      auto chart_delta = first - std::get<0>(line.m_points);
+      line.m_points = {first, std::get<1>(line.m_points) + chart_delta};
       m_trend_line_model.update(line, m_current_trend_line_id);
     } else if(m_draw_state == DrawState::NEW) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
@@ -453,7 +452,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
 
 void ChartView::resizeEvent(QResizeEvent* event) {
   update_origins();
-  update_gaps();
   QWidget::resizeEvent(event);
 }
 
@@ -552,13 +550,11 @@ void ChartView::update_auto_scale() {
 
 void ChartView::update_gaps() {
   m_gaps.clear();
-  for(auto i = m_candlesticks.begin(); i != m_candlesticks.end(); ++i) {
-    if(std::next(i) != m_candlesticks.end()) {
-      auto end = i->GetEnd();
-      auto next_start = std::next(i)->GetStart();
-      if(end != next_start) {
-        m_gaps.push_back({end, next_start});
-      }
+  for(auto i = m_candlesticks.begin(); i < m_candlesticks.end() - 1; ++i) {
+    auto end = i->GetEnd();
+    auto next_start = std::next(i)->GetStart();
+    if(end != next_start) {
+      m_gaps.push_back({end, next_start});
     }
   }
 }

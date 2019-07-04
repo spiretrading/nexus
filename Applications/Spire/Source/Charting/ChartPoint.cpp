@@ -14,3 +14,11 @@ bool ChartPoint::operator ==(const ChartPoint& rhs) const {
 bool ChartPoint::operator !=(const ChartPoint& rhs) const {
   return !(*this == rhs);
 }
+
+ChartPoint ChartPoint::operator +(const ChartPoint& rhs) const {
+  return {m_x + rhs.m_x, m_y + rhs.m_y};
+}
+
+ChartPoint ChartPoint::operator -(const ChartPoint& rhs) const {
+  return {m_x - rhs.m_x, m_y - rhs.m_y};
+}
