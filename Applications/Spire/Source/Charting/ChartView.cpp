@@ -488,9 +488,9 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   }
   end = std::min(end, m_bottom_right_pixel.x());
   painter.setPen("#8C8C8C");
-  auto slash_count = (static_cast<float>(end) - static_cast<float>(start)) /
-    (static_cast<float>(scale_width(4)) + static_cast<float>(scale_width(1))) -
-    1.0f;
+  auto slash_count = (static_cast<double>(end) - static_cast<double>(start)) /
+    (static_cast<double>(scale_width(4)) +
+    static_cast<double>(scale_width(1))) - 1.0;
   auto padding = std::fmod(slash_count, scale_width(4) + scale_width(1)) / 2;
   auto x = start + static_cast<int>(padding) + scale_width(1);
   for(auto i = 0; i < slash_count; ++i) {
