@@ -190,9 +190,8 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
-        auto chart_delta = m_chart->convert_pixels_to_chart(e->pos());
-        auto last_pos = m_chart->convert_pixels_to_chart(
-          m_last_chart_mouse_pos);
+        auto chart_delta = m_chart->to_chart_point(e->pos());
+        auto last_pos = m_chart->to_chart_point(m_last_chart_mouse_pos);
         auto [top_left, bottom_right] = m_chart->get_region();
         top_left.m_x -= chart_delta.m_x - last_pos.m_x;
         top_left.m_y -= chart_delta.m_y - last_pos.m_y;

@@ -73,7 +73,11 @@ int main(int argc, char** argv) {
         candlesticks.push_back(Candlestick(
           ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
           open, close, high, low));
+        if(rand() % 5 == 1) {
+          time -= boost::posix_time::minutes(rand() % 25 + 1);
+        } else {
           time -= boost::posix_time::minutes(1);
+        }
       }
       auto chart_model = new LocalChartModel(
         ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);

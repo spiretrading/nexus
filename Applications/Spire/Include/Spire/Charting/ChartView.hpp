@@ -26,14 +26,14 @@ namespace Spire {
         \param point The point in pixels to convert.
         \return The corresponding point on the chart.
       */
-      ChartPoint convert_pixels_to_chart(const QPoint& point) const;
+      ChartPoint to_chart_point(const QPoint& point) const;
 
       //! Converts a point on the chart to a point in pixels.
       /*!
         \param point The point on the chart to convert.
         \return The corresponding point in pixels.
       */
-      QPoint convert_chart_to_pixels(const ChartPoint& point) const;
+      QPoint to_pixel(const ChartPoint& point) const;
 
       //! Sets the position of the crosshair and sets the status of the mouse
       //! buttons.
@@ -116,12 +116,14 @@ namespace Spire {
         OFF,
         POINT
       };
-
+      struct Gap {
+        ChartValue m_start;
+        ChartValue m_end;
+      };
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
-      int m_x_origin;
-      int m_y_origin;
+      QPoint m_bottom_right_pixel;
       ChartValue m_x_axis_step;
       ChartValue m_x_range;
       ChartValue m_y_axis_step;
@@ -129,14 +131,12 @@ namespace Spire {
       QFont m_label_font;
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
-      QCursor m_crosshair_cursor;
       std::optional<QPoint> m_crosshair_pos;
       QPoint m_last_crosshair_pos;
       Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
       std::vector<ChartValue> m_x_axis_values;
-      int m_x_axis_text_width;
       std::vector<ChartValue> m_y_axis_values;
       bool m_is_auto_scaled;
       QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
@@ -150,12 +150,15 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
+      std::vector<Gap> m_gaps;
 
-      ChartPoint chart_delta(const QPoint& previous, const QPoint& present);
+      void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
+      bool intersects_gap(int x) const;
       void update_auto_scale();
+      void update_gaps();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
       void update_selected_line_styles();

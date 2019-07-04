@@ -23,6 +23,18 @@ namespace Spire {
       \param y The position on the y-axis.
     */
     ChartPoint(ChartValue x, ChartValue y);
+
+    /** Returns <code>true</code> iff two ChartPoints are equal. */
+    bool operator ==(const ChartPoint& rhs) const;
+
+    /** Returns <code>true</code> iff two ChartPoints are not equal. */
+    bool operator !=(const ChartPoint& rhs) const;
+
+    /** Returns the sum of two ChartPoints. */
+    ChartPoint operator +(const ChartPoint& rhs) const;
+
+    /** Returns the difference of two ChartPoints. */
+    ChartPoint operator -(const ChartPoint& rhs) const;
   };
 }
 
