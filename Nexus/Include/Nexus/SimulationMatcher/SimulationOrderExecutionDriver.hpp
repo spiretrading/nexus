@@ -1,8 +1,9 @@
-#ifndef NEXUS_SIMULATIONORDEREXECUTIONDRIVER_HPP
-#define NEXUS_SIMULATIONORDEREXECUTIONDRIVER_HPP
+#ifndef NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
+#define NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -15,11 +16,9 @@
 #include "Nexus/SimulationMatcher/SecurityOrderSimulator.hpp"
 #include "Nexus/SimulationMatcher/SimulationMatcher.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class SimulationOrderExecutionDriver
-      \brief An OrderExecutionDriver that simulates transactions.
+  /** An OrderExecutionDriver that simulates transactions.
       \tparam MarketDataClientType The type of MarketDataClient to use.
       \tparam TimeClientType The type of TimeClient used for Order timestamps.
    */
@@ -40,8 +39,7 @@ namespace OrderExecutionService {
         \param timeClient Initializes the TimeClient.
       */
       template<typename MarketDataClientForward, typename TimeClientForward>
-      SimulationOrderExecutionDriver(
-        MarketDataClientForward&& marketDataClient,
+      SimulationOrderExecutionDriver(MarketDataClientForward&& marketDataClient,
         TimeClientForward&& timeClient);
 
       ~SimulationOrderExecutionDriver();
@@ -65,12 +63,13 @@ namespace OrderExecutionService {
       using Orders =
         std::unordered_map<OrderId, std::shared_ptr<PrimitiveOrder>>;
       using SecurityOrderSimulators = std::unordered_map<Security,
-        std::shared_ptr<SecurityOrderSimulator>>;
+        std::unique_ptr<SecurityOrderSimulator>>;
       Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
       Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
       Beam::SynchronizedMap<Orders> m_orders;
       OrderId m_nextOrderId;
-      Beam::SynchronizedMap<SecurityOrderSimulators> m_securityOrderSimulators;
+      Beam::SynchronizedMap<SecurityOrderSimulators, Beam::Threading::Mutex>
+        m_securityOrderSimulators;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -82,10 +81,10 @@ namespace OrderExecutionService {
   SimulationOrderExecutionDriver<MarketDataClientType, TimeClientType>::
       SimulationOrderExecutionDriver(MarketDataClientForward&& marketDataClient,
       TimeClientForward&& timeClient)
-      : m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
-        m_nextOrderId{1} {}
+      : m_marketDataClient(std::forward<MarketDataClientForward>(
+          marketDataClient)),
+        m_timeClient(std::forward<TimeClientForward>(timeClient)),
+        m_nextOrderId(1) {}
 
   template<typename MarketDataClientType, typename TimeClientType>
   SimulationOrderExecutionDriver<MarketDataClientType, TimeClientType>::
@@ -147,7 +146,7 @@ namespace OrderExecutionService {
     try {
       m_marketDataClient->Open();
       m_timeClient->Open();
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
     }
@@ -177,11 +176,10 @@ namespace OrderExecutionService {
       const Security& security) {
     return *m_securityOrderSimulators.GetOrInsert(security,
       [&] {
-        return std::make_shared<SecurityOrderSimulator>(*m_marketDataClient,
+        return std::make_unique<SecurityOrderSimulator>(*m_marketDataClient,
           security, Beam::Ref(*m_timeClient));
       });
   }
-}
 }
 
 #endif
