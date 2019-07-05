@@ -551,6 +551,9 @@ void ChartView::update_auto_scale() {
 }
 
 void ChartView::update_gaps() {
+  if(m_gaps.empty()) {
+    return;
+  }
   m_gaps.clear();
   for(auto i = m_candlesticks.begin(); i < m_candlesticks.end() - 1; ++i) {
     auto end = i->GetEnd();
