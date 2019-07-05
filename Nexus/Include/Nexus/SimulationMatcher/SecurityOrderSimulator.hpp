@@ -109,7 +109,7 @@ namespace Nexus::OrderExecutionService {
         order->With(
           [&] (auto status, auto& reports) {
             auto& lastReport = reports.back();
-            auto status = [&] {
+            auto nextStatus = [&] {
               if(m_bboQuote.m_bid.m_price == Money::ZERO ||
                   m_bboQuote.m_ask.m_price == Money::ZERO) {
                 isLive = false;
@@ -117,8 +117,8 @@ namespace Nexus::OrderExecutionService {
               }
               return OrderStatus::NEW;
             }();
-            auto updatedReport = ExecutionReport::BuildUpdatedReport(
-              lastReport, status, order->GetInfo().m_timestamp);
+            auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+              nextStatus, order->GetInfo().m_timestamp);
             order->Update(updatedReport);
           });
         if(isLive) {
