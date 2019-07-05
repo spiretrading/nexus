@@ -45,7 +45,7 @@ namespace {
 
   ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      return ChartValue(Money::ONE);
+      return ChartValue(10 * Money::ONE);
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
@@ -464,7 +464,7 @@ void ChartView::showEvent(QShowEvent* event) {
       m_bottom_right.m_x == ChartValue() &&
       m_bottom_right.m_y == ChartValue()) {
     //auto current_time = boost::posix_time::second_clock::local_time();
-    auto current_time = Nexus::Money(100);
+    auto current_time = Nexus::Money(50);
     auto bottom_right = ChartPoint(ChartValue(current_time),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
@@ -563,6 +563,10 @@ void ChartView::update_gaps() {
     if(end != next_start) {
       m_gaps.push_back({end, next_start});
     }
+  }
+  if(!m_gaps.empty() && m_bottom_right.m_x - m_x_axis_values.back() >
+      m_x_axis_step) {
+    reload_gaps(m_gaps.size());
   }
 }
 
@@ -715,4 +719,47 @@ void ChartView::on_right_mouse_button_press() {
     m_current_trend_line_id = -1;
     m_draw_state = DrawState::IDLE;
   }
+}
+
+void ChartView::reload_gaps(int new_gap_count) {
+  auto old_right_x = m_bottom_right.m_x;
+  auto total_gaps_size = 0;
+  for(auto& g: m_gaps) {
+    total_gaps_size += to_pixel({g.m_end - g.m_start, ChartValue()}).x();
+  }
+  m_bottom_right.m_x += to_chart_point({total_gaps_size, 0}).m_x -
+    m_top_left.m_x;
+  if(m_bottom_right.m_x < old_right_x) {
+    return;
+  }
+  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
+  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
+  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
+  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
+  update_origins();
+  m_candlestick_promise = m_model->load(old_right_x, m_bottom_right.m_x);
+  m_candlestick_promise.then([=] (auto result) {
+    auto r = result.Get();
+    if(r.empty()) {
+      return;
+    }
+    m_candlesticks.insert(m_candlesticks.end(), r.begin(), r.end());
+    auto old_gap_count = m_gaps.size();
+    for(auto i = r.begin(); i < r.end() - 1; ++i) {
+      auto end = i->GetEnd();
+      auto next_start = std::next(i)->GetStart();
+      if(end != next_start) {
+        m_gaps.push_back({end, next_start});
+      }
+    }
+    if(m_gaps.size() != old_gap_count) {
+      reload_gaps(m_gaps.size() - old_gap_count);
+    }
+    if(m_is_auto_scaled) {
+      update_auto_scale();
+    } else {
+      update();
+    }
+  });
+  update();
 }

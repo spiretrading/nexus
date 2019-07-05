@@ -165,6 +165,7 @@ namespace Spire {
       void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();
+      void reload_gaps(int new_gap_count);
   };
 }
 
