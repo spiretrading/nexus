@@ -639,7 +639,9 @@ void ChartView::update_origins() {
     m_y_axis_step;
   m_y_axis_values.clear();
   auto old_x_origin = m_bottom_right_pixel.x();
-  m_bottom_right_pixel.setX(INT_MAX);
+  m_bottom_right_pixel.setX(width() - (m_font_metrics.width("M") * (
+    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+    y_value), QLocale()).length()) - scale_width(4)));
   auto top_label = m_top_left.m_y - (m_top_left.m_y % m_y_axis_step);
   while(y_value <= top_label) {
     m_y_axis_values.push_back(y_value);
@@ -648,9 +650,6 @@ void ChartView::update_origins() {
       y_value), QLocale()).length()) - scale_width(4));
     m_bottom_right_pixel.setX(std::min(m_bottom_right_pixel.x(), origin));
     y_value += m_y_axis_step;
-  }
-  if(m_bottom_right_pixel.x() == INT_MAX) {
-    m_bottom_right_pixel.setX(old_x_origin);
   }
   m_bottom_right_pixel.setY(height() - (m_font_metrics.height() +
     scale_height(9)));
