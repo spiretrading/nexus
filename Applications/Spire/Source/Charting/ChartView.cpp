@@ -551,7 +551,7 @@ void ChartView::update_auto_scale() {
 }
 
 void ChartView::update_gaps() {
-  if(m_gaps.empty()) {
+  if(m_candlesticks.empty()) {
     return;
   }
   m_gaps.clear();
