@@ -10,7 +10,7 @@ namespace Nexus::Tests {
   class BacktesterMarketDataClientTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! Tests submitting a query for real time data.
+      //! Tests submitting a query for realtime data.
       void TestRealTimeQuery();
 
       //! Tests submitting a query for history market data from before the

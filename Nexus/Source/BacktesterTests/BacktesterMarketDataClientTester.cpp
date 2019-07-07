@@ -21,11 +21,11 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   auto dataStore = std::make_shared<LocalHistoricalDataStore>();
   auto security = Security("TST", DefaultMarkets::NYSE(),
     DefaultCountries::US());
-  auto COUNT = 3;
+  auto COUNT = 6;
   for(auto i = 0; i < COUNT; ++i) {
     auto bboQuote = MakeSequencedValue(MakeIndexedValue(
       BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE, 100, Side::ASK), startTime + seconds(i)), security),
+      Quote(Money::ONE, 100, Side::ASK), startTime + seconds(i - 3)), security),
       Beam::Queries::Sequence(
       static_cast<Beam::Queries::Sequence::Ordinal>(i)));
     dataStore->Store(bboQuote);
@@ -42,9 +42,9 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   serviceClients.Open();
   auto routines = RoutineTaskQueue();
   auto& marketDataClient = serviceClients.GetMarketDataClient();
-  auto query = BuildCurrentQuery(security);
+  auto query = BuildRealTimeQuery(security);
   auto expectedTimestamp = startTime;
-  auto finalTimestamp = startTime + seconds(COUNT - 1);
+  auto finalTimestamp = startTime + seconds(COUNT - 4);
   auto queryCompleteMutex = Mutex();
   auto queryCompleteCondition = ConditionVariable();
   auto testSucceeded = boost::optional<bool>();
@@ -73,11 +73,15 @@ void BacktesterMarketDataClientTester::TestHistoricalQuery() {
   auto dataStore = std::make_shared<LocalHistoricalDataStore>();
   auto security = Security("TST", DefaultMarkets::NYSE(),
     DefaultCountries::US());
-  auto bboQuote = MakeSequencedValue(MakeIndexedValue(
-    BboQuote(Quote(Money::ONE, 100, Side::BID),
-    Quote(Money::ONE, 100, Side::ASK), startTime - seconds(1)), security),
-    Beam::Queries::Sequence(5));
-  dataStore->Store(bboQuote);
+  auto COUNT = 6;
+  for(auto i = 0; i < COUNT; ++i) {
+    auto bboQuote = MakeSequencedValue(MakeIndexedValue(
+      BboQuote(Quote(Money::ONE, 100, Side::BID),
+      Quote(Money::ONE, 100, Side::ASK), startTime + seconds(i - 3)), security),
+      Beam::Queries::Sequence(
+      static_cast<Beam::Queries::Sequence::Ordinal>(i)));
+    dataStore->Store(bboQuote);
+  }
   auto testEnvironment = TestEnvironment(
     MakeVirtualHistoricalDataStore(dataStore));
   testEnvironment.Open();
@@ -89,8 +93,16 @@ void BacktesterMarketDataClientTester::TestHistoricalQuery() {
   auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
   serviceClients.Open();
   auto& marketDataClient = serviceClients.GetMarketDataClient();
-  auto snapshot = std::make_shared<Queue<SequencedValue<BboQuote>>>();
-  marketDataClient.QueryBboQuotes(BuildLatestQuery(security), snapshot);
-  CPPUNIT_ASSERT_NO_THROW(snapshot->Top());
-  CPPUNIT_ASSERT(snapshot->Top() == bboQuote);
+  auto snapshot = std::make_shared<Queue<SequencedBboQuote>>();
+  auto query = SecurityMarketDataQuery();
+  query.SetIndex(security);
+  query.SetRange(Range::Historical());
+  query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+  marketDataClient.QueryBboQuotes(query, snapshot);
+  auto received = std::vector<SequencedBboQuote>();
+  FlushQueue(snapshot, std::back_inserter(received));
+  CPPUNIT_ASSERT(received.size() == 3);
+  CPPUNIT_ASSERT(received[0].GetSequence() == Beam::Queries::Sequence(0));
+  CPPUNIT_ASSERT(received[1].GetSequence() == Beam::Queries::Sequence(1));
+  CPPUNIT_ASSERT(received[2].GetSequence() == Beam::Queries::Sequence(2));
 }

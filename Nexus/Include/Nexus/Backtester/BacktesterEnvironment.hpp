@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERENVIRONMENT_HPP
-#define NEXUS_BACKTESTERENVIRONMENT_HPP
+#ifndef NEXUS_BACKTESTER_ENVIRONMENT_HPP
+#define NEXUS_BACKTESTER_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
@@ -8,8 +8,10 @@
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
+#include "Nexus/Backtester/BacktesterHistoricalDataStore.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
@@ -208,9 +210,17 @@ namespace Nexus {
       auto marketDataAdministrationClient =
         m_administrationEnvironment->BuildClient(
         Beam::Ref(*marketDataServiceLocatorClient));
+      auto historicalDataStore =
+        MarketDataService::MakeVirtualHistoricalDataStore(
+        std::make_unique<BacktesterHistoricalDataStore<
+        MarketDataService::ClientHistoricalDataStore<
+        MarketDataService::VirtualMarketDataClient*>>>(
+        &m_serviceClients->GetMarketDataClient(),
+        m_eventHandler.GetStartTime()));
       m_marketDataEnvironment.emplace(
         std::move(marketDataServiceLocatorClient),
-        std::move(marketDataAdministrationClient));
+        std::move(marketDataAdministrationClient),
+        std::move(historicalDataStore));
       m_marketDataEnvironment->Open();
       m_marketDataService.emplace(Beam::Ref(m_eventHandler),
         Beam::Ref(*m_marketDataEnvironment),
