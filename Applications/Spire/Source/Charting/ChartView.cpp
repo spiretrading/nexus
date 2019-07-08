@@ -460,12 +460,12 @@ void ChartView::showEvent(QShowEvent* event) {
       m_bottom_right.m_x == ChartValue() &&
       m_bottom_right.m_y == ChartValue()) {
     //auto current_time = boost::posix_time::second_clock::local_time();
-    auto current_time = Nexus::Money(50);
+    auto current_time = Nexus::Money(950);
     auto bottom_right = ChartPoint(ChartValue(current_time),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
       //ChartValue(current_time - boost::posix_time::hours(1)),
-      ChartValue(Nexus::Money(0)),
+      ChartValue(Nexus::Money(900)),
       ChartValue(Nexus::Money(1)));
     set_region(top_left, bottom_right);
   }
@@ -725,7 +725,8 @@ void ChartView::reload_gaps(int new_gap_count) {
   auto old_right_x = m_bottom_right.m_x;
   auto total_gaps_size = 0;
   for(auto& g: m_gaps) {
-    total_gaps_size += to_pixel({g.m_end - g.m_start, ChartValue()}).x();
+    total_gaps_size += to_pixel({g.m_end, ChartValue()}).x() -
+      to_pixel({g.m_start, ChartValue()}).x();
   }
   m_bottom_right.m_x += to_chart_point({total_gaps_size, 0}).m_x -
     m_top_left.m_x;
