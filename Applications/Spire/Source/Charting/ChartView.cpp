@@ -548,8 +548,9 @@ void ChartView::update_auto_scale() {
     auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
     auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
   }
-  set_region({m_top_left.m_x, auto_scale_top},
-    {m_bottom_right.m_x, auto_scale_bottom});
+  //TODO: separate origin calculations from candlestick loading
+  //set_region({m_top_left.m_x, auto_scale_top},
+  //  {m_bottom_right.m_x, auto_scale_bottom});
 }
 
 void ChartView::update_gaps() {
