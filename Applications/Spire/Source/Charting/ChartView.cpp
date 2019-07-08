@@ -227,10 +227,6 @@ void ChartView::set_region(const ChartPoint& top_left,
   }
   m_top_left = top_left;
   m_bottom_right = bottom_right;
-  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
-  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
-  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
-  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
   m_candlestick_promise = m_model->load(m_top_left.m_x, m_bottom_right.m_x);
   m_candlestick_promise.then([=] (auto result) {
@@ -548,9 +544,9 @@ void ChartView::update_auto_scale() {
     auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
     auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
   }
-  //TODO: separate origin calculations from candlestick loading
-  //set_region({m_top_left.m_x, auto_scale_top},
-  //  {m_bottom_right.m_x, auto_scale_bottom});
+  m_top_left.m_y = auto_scale_top;
+  m_bottom_right.m_y = auto_scale_bottom;
+  update_origins();
 }
 
 void ChartView::update_gaps() {
@@ -565,8 +561,7 @@ void ChartView::update_gaps() {
       m_gaps.push_back({end, next_start});
     }
   }
-  if(!m_gaps.empty() && m_bottom_right.m_x - m_x_axis_values.back() <
-      m_x_axis_step) {
+  if(!m_gaps.empty()) {
     reload_gaps(m_gaps.size());
   }
 }
@@ -627,6 +622,10 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
 }
 
 void ChartView::update_origins() {
+  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
+  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
+  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
+  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
     m_x_axis_step;
   m_x_axis_values.clear();
@@ -733,10 +732,6 @@ void ChartView::reload_gaps(int new_gap_count) {
   if(m_bottom_right.m_x < old_right_x) {
     return;
   }
-  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
-  m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
-  m_y_range = m_top_left.m_y - m_bottom_right.m_y;
-  m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
   m_reload_promise = m_model->load(old_right_x, m_bottom_right.m_x);
   m_reload_promise.then([=] (auto result) {
