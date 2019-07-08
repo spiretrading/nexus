@@ -564,7 +564,7 @@ void ChartView::update_gaps() {
       m_gaps.push_back({end, next_start});
     }
   }
-  if(!m_gaps.empty() && m_bottom_right.m_x - m_x_axis_values.back() >
+  if(!m_gaps.empty() && m_bottom_right.m_x - m_x_axis_values.back() <
       m_x_axis_step) {
     reload_gaps(m_gaps.size());
   }
@@ -737,8 +737,8 @@ void ChartView::reload_gaps(int new_gap_count) {
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   update_origins();
-  m_candlestick_promise = m_model->load(old_right_x, m_bottom_right.m_x);
-  m_candlestick_promise.then([=] (auto result) {
+  m_reload_promise = m_model->load(old_right_x, m_bottom_right.m_x);
+  m_reload_promise.then([=] (auto result) {
     auto r = result.Get();
     if(r.empty()) {
       return;
