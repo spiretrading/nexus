@@ -247,13 +247,14 @@ void ChartView::set_region(const ChartPoint& top_left,
   }
   m_top_left = top_left;
   m_bottom_right = bottom_right;
-  auto w = (m_bottom_right.m_x - m_top_left.m_x) / width();
+  auto w = (m_bottom_right.m_x - m_top_left.m_x) / m_bottom_right_pixel.x();
   auto s = m_top_left.m_x;
   auto e = m_bottom_right.m_x;
   auto x = 0.0;
   auto gaps = std::vector<Gap>();
   auto candlesticks = std::vector<Candlestick>();
-  while (x < m_bottom_right_pixel.x() && s != e) {
+  m_candlesticks.clear();
+  while (x < m_bottom_right_pixel.x()) {
     auto c = wait(m_model->load(s, e));
     if(c.empty()) {
       break;
