@@ -102,6 +102,11 @@ namespace Spire {
       */
       void set_multi_select(bool on);
 
+      struct Gap {
+        ChartValue m_start;
+        ChartValue m_end;
+      };
+
     protected:
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -115,10 +120,6 @@ namespace Spire {
         NEW,
         OFF,
         POINT
-      };
-      struct Gap {
-        ChartValue m_start;
-        ChartValue m_end;
       };
       ChartModel* m_model;
       ChartPoint m_top_left;
@@ -159,14 +160,14 @@ namespace Spire {
       void draw_points(int id, QPainter& painter);
       bool intersects_gap(int x) const;
       void update_auto_scale();
-      void update_gaps();
+      //void update_gaps();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
       void update_selected_line_styles();
       void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();
-      void reload_gaps(int new_gap_count);
+      //void reload_gaps(int new_gap_count);
   };
 }
 
