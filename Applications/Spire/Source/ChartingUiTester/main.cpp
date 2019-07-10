@@ -18,6 +18,17 @@ using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
+void add_candle(int s, int e, double o, double c, double h, double l,
+    std::vector<Candlestick>& candles) {
+  candles.push_back(Candlestick(
+      ChartValue(s),
+      ChartValue(e),
+      ChartValue(o),
+      ChartValue(c),
+      ChartValue(h),
+      ChartValue(l)));
+}
+
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
   application->setOrganizationName(QObject::tr("Eidolon Systems Ltd"));
@@ -54,33 +65,55 @@ int main(int argc, char** argv) {
         QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
       auto candlesticks = std::vector<Candlestick>();
       auto rand = std::default_random_engine(std::random_device()());
-      auto time = 1000 * Money::ONE;//boost::posix_time::second_clock::local_time();
-      for(auto i = 0; i < 100; ++i) {
-        auto open = ChartValue(Money((rand() % 40 + 40) *
-          Money::FromValue("0.01").get()));
-        auto close = ChartValue(Money((rand() % 40 + 40) *
-          Money::FromValue("0.01").get()));
-        auto [high, low] = [&] {
-          if(open > close) {
-            return std::make_tuple(ChartValue(Money((rand() % 40) *
-              Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
-              (rand() % 40) * Money::FromValue("0.01").get())));
-          }
-          return std::make_tuple(ChartValue(Money((rand() % 40) *
-            Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
-            (rand() % 40) * Money::FromValue("0.01").get())));
-        }();
-        candlesticks.push_back(Candlestick(
-          ChartValue(time - Money::ONE/*boost::posix_time::minutes(1)*/), ChartValue(time),
-          open, close, high, low));
-        if(rand() % 5 == 1) {
-          //time -= boost::posix_time::minutes(rand() % 25 + 1);
-          time -= (rand() % 25) * Money::ONE + Money::ONE;
-        } else {
-          //time -= boost::posix_time::minutes(1);
-          time -= Money::ONE;
-        }
-      }
+      auto time = 100 * Money::ONE;//boost::posix_time::second_clock::local_time();
+      //for(auto i = 0; i < 100; ++i) {
+      //  auto open = ChartValue(Money((rand() % 40 + 40) *
+      //    Money::FromValue("0.01").get()));
+      //  auto close = ChartValue(Money((rand() % 40 + 40) *
+      //    Money::FromValue("0.01").get()));
+      //  auto [high, low] = [&] {
+      //    if(open > close) {
+      //      return std::make_tuple(ChartValue(Money((rand() % 40) *
+      //        Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+      //        (rand() % 40) * Money::FromValue("0.01").get())));
+      //    }
+      //    return std::make_tuple(ChartValue(Money((rand() % 40) *
+      //      Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+      //      (rand() % 40) * Money::FromValue("0.01").get())));
+      //  }();
+      //  candlesticks.push_back(Candlestick(
+      //    ChartValue(time - Money::ONE/*boost::posix_time::minutes(1))*/, ChartValue(time),
+      //    open, close, high, low));
+      //  if(rand() % 5 == 1) {
+      //    //time -= boost::posix_time::minutes(rand() % 25 + 1);
+      //    time -= (rand() % 25) * Money::ONE + Moey
+      //  } else {
+      //    time -= boost::posix_time::minutes(1);
+      //  }
+      //}
+      add_candle(965, 966, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(959, 960, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(958, 959, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(957, 958, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(956, 957, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(955, 956, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(954, 955, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(953, 954, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(952, 953, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(951, 952, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(950, 951, 0.4, 0.6, 0.8, 0.2, candlesticks);
+
+
+      add_candle(939, 940, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(938, 939, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(937, 938, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(936, 937, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(935, 936, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(934, 935, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(933, 934, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(932, 933, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(931, 932, 0.4, 0.6, 0.8, 0.2, candlesticks);
+      add_candle(930, 931, 0.4, 0.6, 0.8, 0.2, candlesticks);
       auto chart_model = new LocalChartModel(
         ChartValue::Type::MONEY, ChartValue::Type::MONEY, candlesticks);
       auto cached_model = std::make_shared<CachedChartModel>(*chart_model);

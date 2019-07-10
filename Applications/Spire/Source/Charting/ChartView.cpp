@@ -13,7 +13,7 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  struct LoadedGapsDesc {
+  struct GapInfo {
     int gap_count;
     ChartValue total_gaps_value;
   };
@@ -79,19 +79,19 @@ namespace {
     return size;
   }
 
-  LoadedGapsDesc update_gaps(std::vector<ChartView::Gap>& gaps,
-      std::vector<Candlestick>& candlesticks) {
-    auto old_gap_count = gaps.size();
-    auto total_gap_size = ChartValue(0);
-    for(auto i = candlesticks.begin(); i < candlesticks.end() - 1; ++i) {
-      auto end = i->GetEnd();
-      auto next_start = std::next(i)->GetStart();
-      if(end != next_start) {
-        gaps.push_back({end, next_start});
-        total_gap_size += next_start - end;
+  GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
+      std::vector<Candlestick>& candlesticks, ChartValue start) {
+    auto gap_info = GapInfo{0, ChartValue()};
+    for(auto& candlestick : candlesticks) {
+      auto end = candlestick.GetStart();
+      if(start != end) {
+        gaps.push_back({start, end});
+        gap_info.total_gaps_value += end - start;
+        ++gap_info.gap_count;
       }
+      start = candlestick.GetEnd();
     }
-    return {static_cast<int>(gaps.size() - old_gap_count), total_gap_size};
+    return gap_info;
   }
 }
 
@@ -245,28 +245,39 @@ void ChartView::set_region(const ChartPoint& top_left,
   if(top_left == m_top_left && bottom_right == m_bottom_right) {
     return;
   }
-  m_top_left = top_left;
-  m_bottom_right = bottom_right;
-  auto w = (m_bottom_right.m_x - m_top_left.m_x) / m_bottom_right_pixel.x();
-  auto s = m_top_left.m_x;
-  auto e = m_bottom_right.m_x;
-  auto x = 0.0;
+  auto bottom_right_pixel_x = m_bottom_right_pixel.x();
+  auto values_per_pixel = (bottom_right.m_x - top_left.m_x) / bottom_right_pixel_x;
+  auto s = top_left.m_x;
+  auto e = bottom_right.m_x;
+  auto x = 0;
   auto gaps = std::vector<Gap>();
   auto candlesticks = std::vector<Candlestick>();
-  m_candlesticks.clear();
-  while (x < m_bottom_right_pixel.x()) {
+  while (x < bottom_right_pixel_x) {
     auto c = wait(m_model->load(s, e));
-    if(c.empty()) {
-      break;
+    auto dups = 0;
+    while(!c.empty() && c.front().GetStart() <= s) {
+      dups += static_cast<int>((c.front().GetEnd() - c.front().GetStart()) / values_per_pixel);
+      c.erase(c.begin());
     }
-    auto desc = update_gaps(gaps, c);
-    m_candlesticks.insert(m_candlesticks.end(), c.begin(), c.end());
-    x += (e - s - desc.total_gaps_value) / w;
+    auto last = [&] {
+      if(candlesticks.empty() && c.empty()) {
+        return ChartValue();
+      } else if(candlesticks.empty()) {
+        return c.front().GetStart();
+      }
+      return candlesticks.back().GetEnd();
+    }();
+    auto gap_info = update_gaps(gaps, c, last);
+    candlesticks.insert(candlesticks.end(), c.begin(), c.end());
+    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) / values_per_pixel +
+      gap_info.gap_count * GAP_SIZE())) - dups;
     s = e;
-    e += (m_bottom_right_pixel.x() - x) * w;
+    e += (bottom_right_pixel_x - x) * values_per_pixel;
   }
   m_gaps = gaps;
-  m_bottom_right.m_x = e;
+  m_candlesticks = std::move(candlesticks);
+  m_top_left = top_left;
+  m_bottom_right = {e, bottom_right.m_y};
   if(m_is_auto_scaled) {
     update_auto_scale();
   } else {
