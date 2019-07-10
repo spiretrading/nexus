@@ -23,11 +23,12 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
     DefaultCountries::US());
   auto COUNT = 6;
   for(auto i = 0; i < COUNT; ++i) {
+    auto timestamp = startTime + seconds(i - 3);
     auto bboQuote = MakeSequencedValue(MakeIndexedValue(
       BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE, 100, Side::ASK), startTime + seconds(i - 3)), security),
-      Beam::Queries::Sequence(
-      static_cast<Beam::Queries::Sequence::Ordinal>(i)));
+      Quote(Money::ONE, 100, Side::ASK), timestamp), security),
+      EncodeTimestamp(timestamp, Beam::Queries::Sequence(
+      static_cast<Beam::Queries::Sequence::Ordinal>(i))));
     dataStore->Store(bboQuote);
   }
   auto testEnvironment = TestEnvironment(
@@ -75,11 +76,12 @@ void BacktesterMarketDataClientTester::TestHistoricalQuery() {
     DefaultCountries::US());
   auto COUNT = 6;
   for(auto i = 0; i < COUNT; ++i) {
+    auto timestamp = startTime + seconds(i - 3);
     auto bboQuote = MakeSequencedValue(MakeIndexedValue(
       BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE, 100, Side::ASK), startTime + seconds(i - 3)), security),
-      Beam::Queries::Sequence(
-      static_cast<Beam::Queries::Sequence::Ordinal>(i)));
+      Quote(Money::ONE, 100, Side::ASK), timestamp), security),
+      EncodeTimestamp(timestamp, Beam::Queries::Sequence(
+      static_cast<Beam::Queries::Sequence::Ordinal>(i))));
     dataStore->Store(bboQuote);
   }
   auto testEnvironment = TestEnvironment(
@@ -102,7 +104,7 @@ void BacktesterMarketDataClientTester::TestHistoricalQuery() {
   auto received = std::vector<SequencedBboQuote>();
   FlushQueue(snapshot, std::back_inserter(received));
   CPPUNIT_ASSERT(received.size() == 3);
-  CPPUNIT_ASSERT(received[0].GetSequence() == Beam::Queries::Sequence(0));
-  CPPUNIT_ASSERT(received[1].GetSequence() == Beam::Queries::Sequence(1));
-  CPPUNIT_ASSERT(received[2].GetSequence() == Beam::Queries::Sequence(2));
+  CPPUNIT_ASSERT(received[0]->m_timestamp == startTime - seconds(3));
+  CPPUNIT_ASSERT(received[1]->m_timestamp == startTime - seconds(2));
+  CPPUNIT_ASSERT(received[2]->m_timestamp == startTime - seconds(1));
 }
