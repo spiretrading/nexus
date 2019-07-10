@@ -261,11 +261,9 @@ void ChartView::set_region(const ChartPoint& top_left,
     }
     auto desc = update_gaps(gaps, c);
     m_candlesticks.insert(m_candlesticks.end(), c.begin(), c.end());
-    auto a = (e - s - desc.total_gaps_value);
-    auto b = a / w;
-    x += b + desc.gap_count * GAP_SIZE();
+    x += (e - s - desc.total_gaps_value) / w;
     s = e;
-    e = (m_bottom_right_pixel.x() - x) * w + s;
+    e += (m_bottom_right_pixel.x() - x) * w;
   }
   m_gaps = gaps;
   m_bottom_right.m_x = e;
