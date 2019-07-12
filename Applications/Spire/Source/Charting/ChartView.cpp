@@ -254,9 +254,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   auto candlesticks = std::vector<Candlestick>();
   while (x < bottom_right_pixel_x) {
     auto c = wait(m_model->load(s, e));
-    auto dups = 0;
     while(!c.empty() && c.front().GetStart() <= s) {
-      dups += static_cast<int>((c.front().GetEnd() - c.front().GetStart()) / values_per_pixel);
       c.erase(c.begin());
     }
     auto last = [&] {
@@ -269,8 +267,8 @@ void ChartView::set_region(const ChartPoint& top_left,
     }();
     auto gap_info = update_gaps(gaps, c, last);
     candlesticks.insert(candlesticks.end(), c.begin(), c.end());
-    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) / values_per_pixel +
-      gap_info.gap_count * GAP_SIZE())) - dups;
+    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) / values_per_pixel));// +
+      //gap_info.gap_count * GAP_SIZE()));
     s = e;
     e += (bottom_right_pixel_x - x) * values_per_pixel;
   }
@@ -595,23 +593,6 @@ void ChartView::update_auto_scale() {
   update_origins();
 }
 
-//void ChartView::update_gaps() {
-//  if(m_candlesticks.empty()) {
-//    return;
-//  }
-//  m_gaps.clear();
-//  for(auto i = m_candlesticks.begin(); i < m_candlesticks.end() - 1; ++i) {
-//    auto end = i->GetEnd();
-//    auto next_start = std::next(i)->GetStart();
-//    if(end != next_start) {
-//      m_gaps.push_back({end, next_start});
-//    }
-//  }
-//  if(!m_gaps.empty()) {
-//    reload_gaps(m_gaps.size());
-//  }
-//}
-
 int ChartView::update_intersection(const QPoint& mouse_pos) {
   auto id = m_trend_line_model.find_closest(
     to_chart_point(*m_crosshair_pos));
@@ -766,43 +747,3 @@ void ChartView::on_right_mouse_button_press() {
     m_draw_state = DrawState::IDLE;
   }
 }
-
-//void ChartView::reload_gaps(int new_gap_count) {
-//  auto old_right_x = m_bottom_right.m_x;
-//  auto total_gaps_size = 0;
-//  for(auto& g: m_gaps) {
-//    total_gaps_size += to_pixel({g.m_end, ChartValue()}).x() -
-//      to_pixel({g.m_start, ChartValue()}).x();
-//  }
-//  m_bottom_right.m_x += to_chart_point({total_gaps_size, 0}).m_x -
-//    m_top_left.m_x;
-//  if(m_bottom_right.m_x < old_right_x) {
-//    return;
-//  }
-//  update_origins();
-//  m_reload_promise = m_model->load(old_right_x, m_bottom_right.m_x);
-//  m_reload_promise.then([=] (auto result) {
-//    auto r = result.Get();
-//    if(r.empty()) {
-//      return;
-//    }
-//    m_candlesticks.insert(m_candlesticks.end(), r.begin(), r.end());
-//    auto old_gap_count = m_gaps.size();
-//    for(auto i = r.begin(); i < r.end() - 1; ++i) {
-//      auto end = i->GetEnd();
-//      auto next_start = std::next(i)->GetStart();
-//      if(end != next_start) {
-//        m_gaps.push_back({end, next_start});
-//      }
-//    }
-//    if(m_gaps.size() != old_gap_count) {
-//      reload_gaps(m_gaps.size() - old_gap_count);
-//    }
-//    if(m_is_auto_scaled) {
-//      update_auto_scale();
-//    } else {
-//      update();
-//    }
-//  });
-//  update();
-//}
