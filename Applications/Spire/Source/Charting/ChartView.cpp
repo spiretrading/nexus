@@ -268,10 +268,11 @@ void ChartView::set_region(const ChartPoint& top_left,
     }();
     auto gap_info = update_gaps(gaps, c, last);
     candlesticks.insert(candlesticks.end(), c.begin(), c.end());
-    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) / values_per_pixel));// +
-      //gap_info.gap_count * GAP_SIZE()));
+    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) /
+      values_per_pixel + gap_info.gap_count * GAP_SIZE()));
     s = e;
-    e += (bottom_right_pixel_x - x) * values_per_pixel;
+    e += (bottom_right_pixel_x + gap_info.gap_count * GAP_SIZE() - x) *
+      values_per_pixel;
   }
   m_gaps = gaps;
   m_candlesticks = std::move(candlesticks);
