@@ -1,11 +1,13 @@
 #ifndef SPIRE_CHARTING_WINDOW_HPP
 #define SPIRE_CHARTING_WINDOW_HPP
 #include <memory>
+#include <stack>
 #include <Beam/Pointers/Ref.hpp>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartView.hpp"
 #include "Spire/Charting/TrendLine.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
@@ -66,6 +68,8 @@ namespace Spire {
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
+      std::stack<ChartView::Region> m_zoom_in_stack;
+      std::stack<ChartView::Region> m_zoom_out_stack;
 
       void on_auto_scale_button_click();
       void on_draw_line_button_click();

@@ -14,6 +14,26 @@ namespace Spire {
   class ChartView : public QWidget {
     public:
 
+      //! Represents a region defined by two points.
+      struct Region {
+
+        /** The top left point of the region. */
+        ChartPoint m_top_left;
+
+        /** The bottom right point of the region. */
+        ChartPoint m_bottom_right;
+      };
+
+      //! Represents a non-contiguous gap between two ChartValues.
+      struct Gap {
+
+        /** The start value of the gap. */
+        ChartValue m_start;
+
+        /** The end value of the gap. */
+        ChartValue m_end;
+      };
+
       //! Constructs a ChartView.
       /*!
         \param model The model containing the data to display.
@@ -54,9 +74,8 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
-      //! Returns a pair (top left, bottom right) of ChartPoints
-      //! representing the region of the ChartView.
-      std::tuple<ChartPoint, ChartPoint> get_region() const;
+      //! Returns the region of the ChartView.
+      ChartView::Region get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
@@ -101,11 +120,6 @@ namespace Spire {
         \param on The on/off status of the multi-select feature.
       */
       void set_multi_select(bool on);
-
-      struct Gap {
-        ChartValue m_start;
-        ChartValue m_end;
-      };
 
     protected:
       void paintEvent(QPaintEvent* event) override;
@@ -160,14 +174,12 @@ namespace Spire {
       void draw_points(int id, QPainter& painter);
       bool intersects_gap(int x) const;
       void update_auto_scale();
-      //void update_gaps();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
       void update_selected_line_styles();
       void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();
-      //void reload_gaps(int new_gap_count);
   };
 }
 

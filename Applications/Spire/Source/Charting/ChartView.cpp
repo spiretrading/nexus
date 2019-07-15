@@ -236,7 +236,7 @@ void ChartView::reset_crosshair() {
   m_crosshair_pos.reset();
 }
 
-std::tuple<ChartPoint, ChartPoint> ChartView::get_region() const {
+ChartView::Region ChartView::get_region() const {
   return {m_top_left, m_bottom_right};
 }
 
