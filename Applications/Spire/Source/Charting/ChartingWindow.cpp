@@ -188,6 +188,8 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
+      // TODO: check if auto scale is enabled, if so, only change the x-values
+      // of the region to prevent the 'jumping' effect.
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
         auto chart_delta = m_chart->to_chart_point(e->pos());
         auto last_pos = m_chart->to_chart_point(m_last_chart_mouse_pos);
@@ -214,6 +216,14 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
+      // TODO: have the window maintain two stacks (or maybe one), of each
+      // zoom level. I believe it's the case that the window doesn't care
+      // about what the actual region is/was, only what it told the view to
+      // be. So the window will store the given regions in two stacks and
+      // will then restore them when the view is zoomed in and out.
+      // Also figure out how to integrate this with the panning; panning doesn't
+      // change the size of the region, only the location, so maybe store an
+      // offset for the panning that will be added to the popped regions.
       auto e = static_cast<QWheelEvent*>(event);
       auto region = m_chart->get_region();
       auto old_height = region.m_top_left.m_y - region.m_bottom_right.m_y;
