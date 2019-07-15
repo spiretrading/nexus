@@ -84,8 +84,7 @@ namespace {
     auto gap_info = GapInfo{0, ChartValue()};
     for(auto& candlestick : candlesticks) {
       auto end = candlestick.GetStart();
-      // TODO: fix this at the source
-      if(start != end && start < end) {
+      if(start != end) {
         gaps.push_back({start, end});
         gap_info.total_gaps_value += end - start;
         ++gap_info.gap_count;
@@ -255,7 +254,8 @@ void ChartView::set_region(const ChartPoint& top_left,
   auto candlesticks = std::vector<Candlestick>();
   while (x < bottom_right_pixel_x) {
     auto c = wait(m_model->load(s, e));
-    while(!c.empty() && c.front().GetStart() <= s) {
+    while(!c.empty() && !candlesticks.empty() &&
+        c.front().GetStart() <= candlesticks.back().GetStart()) {
       c.erase(c.begin());
     }
     auto last = [&] {
