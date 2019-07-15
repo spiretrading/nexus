@@ -84,7 +84,8 @@ namespace {
     auto gap_info = GapInfo{0, ChartValue()};
     for(auto& candlestick : candlesticks) {
       auto end = candlestick.GetStart();
-      if(start != end) {
+      // TODO: fix this at the source
+      if(start != end && start < end) {
         gaps.push_back({start, end});
         gap_info.total_gaps_value += end - start;
         ++gap_info.gap_count;
