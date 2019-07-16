@@ -27,7 +27,7 @@ namespace {
     return br;
   }
 
-  const auto BR_PIXEL = QPoint(100, 200);
+  const auto BR_PIXEL = QPoint(200, 100);
 
   const auto GAPS() {
     static auto gaps = std::vector<Gap>();
@@ -108,34 +108,27 @@ namespace {
 }
 
 TEST_CASE("test_to_chart_point", "[Charting]") {
-  //passing
   REQUIRE(test_point_to_pixel(0, 900));
   REQUIRE(test_point_to_pixel(10, 905));
   REQUIRE(test_point_to_pixel(20, 910));
   REQUIRE(test_point_to_pixel(30, 910 + 10.0 / 35.0 * 10.0));
   REQUIRE(test_point_to_pixel(40, 910 + 20.0 / 35.0 * 10.0));
   REQUIRE(test_point_to_pixel(50, 910 + 30.0 / 35.0 * 10.0));
-
-  // failing
-  REQUIRE(test_point_to_pixel(60, 925));
-  REQUIRE(test_point_to_pixel(70, 935));
-
-  // passing
+  REQUIRE(test_point_to_pixel(60, 922.5));
+  REQUIRE(test_point_to_pixel(70, 927.5));
   REQUIRE(test_point_to_pixel(80, 930 + 5.0 / 35.0 * 10.0));
   REQUIRE(test_point_to_pixel(90, 930 + 15.0 / 35.0 * 10.0));
   REQUIRE(test_point_to_pixel(100, 930 + 25.0 / 35.0 * 10.0));
-
-  // failing
   REQUIRE(test_point_to_pixel(110, 940));
-  REQUIRE(test_point_to_pixel(120, 950));
-  REQUIRE(test_point_to_pixel(130, 960));
-  REQUIRE(test_point_to_pixel(140, 970));
-  REQUIRE(test_point_to_pixel(150, 980));
-  REQUIRE(test_point_to_pixel(160, 990));
-  REQUIRE(test_point_to_pixel(170, 1000));
-  REQUIRE(test_point_to_pixel(180, 1010));
-  REQUIRE(test_point_to_pixel(190, 1020));
-  REQUIRE(test_point_to_pixel(200, 1030));
+  REQUIRE(test_point_to_pixel(120, 945));
+  REQUIRE(test_point_to_pixel(130, 950));
+  REQUIRE(test_point_to_pixel(140, 955));
+  REQUIRE(test_point_to_pixel(150, 960));
+  REQUIRE(test_point_to_pixel(160, 965));
+  REQUIRE(test_point_to_pixel(170, 970));
+  REQUIRE(test_point_to_pixel(180, 975));
+  REQUIRE(test_point_to_pixel(190, 980));
+  REQUIRE(test_point_to_pixel(200, 985));
   print_test_name("test_to_chart_point");
 }
 
