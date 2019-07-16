@@ -195,16 +195,16 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == m_chart) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
-      // TODO: check if auto scale is enabled, if so, only change the x-values
-      // of the region to prevent the 'jumping' effect.
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
         auto chart_delta = m_chart->to_chart_point(e->pos());
         auto last_pos = m_chart->to_chart_point(m_last_chart_mouse_pos);
         auto region = m_chart->get_region();
         region.m_top_left.m_x -= chart_delta.m_x - last_pos.m_x;
-        region.m_top_left.m_y -= chart_delta.m_y - last_pos.m_y;
         region.m_bottom_right.m_x -= chart_delta.m_x - last_pos.m_x;
-        region.m_bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
+        if(!m_chart->is_auto_scale_enabled()) {
+          region.m_top_left.m_y -= chart_delta.m_y - last_pos.m_y;
+          region.m_bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
+        }
         m_chart->set_region(region.m_top_left, region.m_bottom_right);
         m_last_chart_mouse_pos = e->pos();
       }

@@ -287,6 +287,10 @@ void ChartView::set_region(const ChartPoint& top_left,
   update();
 }
 
+bool ChartView::is_auto_scale_enabled() const {
+  return m_is_auto_scaled;
+}
+
 void ChartView::set_auto_scale(bool auto_scale) {
   m_is_auto_scaled = auto_scale;
   if(m_is_auto_scaled) {

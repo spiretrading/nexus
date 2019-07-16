@@ -85,6 +85,9 @@ namespace Spire {
       void set_region(const ChartPoint& top_left,
         const ChartPoint& bottom_right);
 
+      //! Returns true if auto scale is enabled, false otherwise.
+      bool is_auto_scale_enabled() const;
+
       //! Sets auto scale on or off.
       /*!
         \param auto_scale Sets the auto scale on (true) or off (false).
