@@ -1,5 +1,5 @@
-#ifndef NEXUS_SECURITYORDERSIMULATOR_HPP
-#define NEXUS_SECURITYORDERSIMULATOR_HPP
+#ifndef NEXUS_SECURITY_ORDER_SIMULATOR_HPP
+#define NEXUS_SECURITY_ORDER_SIMULATOR_HPP
 #include <unordered_set>
 #include <boost/noncopyable.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -13,11 +13,9 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SimulationMatcher.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class SecurityOrderSimulator
-      \brief Handles simulating Orders submitted for a specific Security.
+  /** Handles simulating Orders submitted for a specific Security.
       \tparam TimeClientType The type of TimeClient used for Order timestamps.
    */
   template<typename TimeClientType>
@@ -84,13 +82,20 @@ namespace OrderExecutionService {
   SecurityOrderSimulator<TimeClientType>::SecurityOrderSimulator(
       MarketDataClient& marketDataClient, const Security& security,
       Beam::Ref<TimeClient> timeClient)
-      : m_timeClient{timeClient.Get()} {
+      : m_timeClient(timeClient.Get()) {
     SetSessionTimestamps(m_timeClient->GetTime());
-    auto realTimeQuery = Beam::Queries::BuildCurrentQuery(security);
-    marketDataClient.QueryBboQuotes(realTimeQuery, m_tasks.GetSlot<BboQuote>(
+    auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
+    marketDataClient.QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
+      snapshot);
+    try {
+      m_bboQuote = snapshot->Top();
+    } catch(const std::exception&) {
+      return;
+    }
+    auto query = Beam::Queries::BuildCurrentQuery(security);
+    marketDataClient.QueryBboQuotes(query, m_tasks.GetSlot<BboQuote>(
       std::bind(&SecurityOrderSimulator::OnBbo, this, std::placeholders::_1)));
-    marketDataClient.QueryTimeAndSales(realTimeQuery,
-      m_tasks.GetSlot<TimeAndSale>(
+    marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
       std::bind(&SecurityOrderSimulator::OnTimeAndSale, this,
       std::placeholders::_1)));
   }
@@ -100,15 +105,26 @@ namespace OrderExecutionService {
       const std::shared_ptr<PrimitiveOrder>& order) {
     m_tasks.Push(
       [=] {
-        m_orders.insert(order);
+        auto isLive = true;
         order->With(
           [&] (auto status, auto& reports) {
             auto& lastReport = reports.back();
-            auto updatedReport = ExecutionReport::BuildUpdatedReport(
-              lastReport, OrderStatus::NEW, order->GetInfo().m_timestamp);
+            auto nextStatus = [&] {
+              if(m_bboQuote.m_bid.m_price == Money::ZERO ||
+                  m_bboQuote.m_ask.m_price == Money::ZERO) {
+                isLive = false;
+                return OrderStatus::REJECTED;
+              }
+              return OrderStatus::NEW;
+            }();
+            auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+              nextStatus, order->GetInfo().m_timestamp);
             order->Update(updatedReport);
           });
-        UpdateOrder(*order);
+        if(isLive) {
+          m_orders.insert(order);
+          UpdateOrder(*order);
+        }
       });
   }
 
@@ -200,8 +216,7 @@ namespace OrderExecutionService {
       [&] (auto status, auto& reports) {
         auto side = order.GetInfo().m_fields.m_side;
         finalStatus = status;
-        if(status == OrderStatus::PENDING_NEW || IsTerminal(status) ||
-            m_bboQuote.m_bid.m_price == Money::ZERO) {
+        if(status == OrderStatus::PENDING_NEW || IsTerminal(status)) {
           return;
         }
         if(order.GetInfo().m_fields.m_timeInForce.GetType() ==
@@ -266,7 +281,6 @@ namespace OrderExecutionService {
       }
     }
   }
-}
 }
 
 #endif

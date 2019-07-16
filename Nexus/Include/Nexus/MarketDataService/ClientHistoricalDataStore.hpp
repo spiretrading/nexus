@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATACLIENTHISTORICALDATASTORE_HPP
-#define NEXUS_MARKETDATACLIENTHISTORICALDATASTORE_HPP
+#ifndef NEXUS_MARKET_DATA_CLIENT_HISTORICAL_DATA_STORE_HPP
+#define NEXUS_MARKET_DATA_CLIENT_HISTORICAL_DATA_STORE_HPP
 #include <type_traits>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -9,11 +9,9 @@
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class ClientHistoricalDataStore
-      \brief Wraps a MarketDataClient for use as a HistoricalDataStore.
+  /** Wraps a MarketDataClient for use as a HistoricalDataStore.
       \tparam MarketDataClientType The type of MarketDataClient to wrap.
    */
   template<typename MarketDataClientType>
@@ -238,7 +236,6 @@ namespace MarketDataService {
   void ClientHistoricalDataStore<MarketDataClientType>::Shutdown() {
     m_openState.SetClosed();
   }
-}
 }
 
 #endif
