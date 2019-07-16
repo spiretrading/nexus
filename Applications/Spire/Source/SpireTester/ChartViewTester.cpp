@@ -6,6 +6,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -98,51 +99,43 @@ namespace {
     }();
     return {x, y};
   }
+
+  bool test_point_to_pixel(int x_pixel, double expected_value) {
+    auto cv_x = to_chart_point({x_pixel, 0}).m_x;
+    return Truncate(static_cast<Money>(cv_x), 6) ==
+      Truncate(Money(expected_value), 6);
+  }
 }
 
 TEST_CASE("test_to_chart_point", "[Charting]") {
-  //REQUIRE(to_chart_point({0, 0}) ==
-  //  ChartPoint(ChartValue(900), ChartValue(1)));
-  //REQUIRE(to_chart_point({10, 0}) ==
-  //  ChartPoint(ChartValue(905), ChartValue(1)));
-  //REQUIRE(to_chart_point({20, 0}) ==
-  //  ChartPoint(ChartValue(910), ChartValue(1)));
-  //REQUIRE(to_chart_point({30, 0}) ==
-  //  ChartPoint(ChartValue(915), ChartValue(1)));
-  //REQUIRE(to_chart_point({40, 0}) ==
-  //  ChartPoint(ChartValue(920), ChartValue(1)));
-  //REQUIRE(to_chart_point({50, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({60, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({70, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({80, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({90, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({100, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({110, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({120, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({130, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({140, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({150, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({160, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({170, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({180, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({190, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
-  //REQUIRE(to_chart_point({200, 0}) ==
-  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //passing
+  REQUIRE(test_point_to_pixel(0, 900));
+  REQUIRE(test_point_to_pixel(10, 905));
+  REQUIRE(test_point_to_pixel(20, 910));
+  REQUIRE(test_point_to_pixel(30, 910 + 10.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(40, 910 + 20.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(50, 910 + 30.0 / 35.0 * 10.0));
+
+  // failing
+  REQUIRE(test_point_to_pixel(60, 925));
+  REQUIRE(test_point_to_pixel(70, 935));
+
+  // passing
+  REQUIRE(test_point_to_pixel(80, 930 + 5.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(90, 930 + 15.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(100, 930 + 25.0 / 35.0 * 10.0));
+
+  // failing
+  REQUIRE(test_point_to_pixel(110, 940));
+  REQUIRE(test_point_to_pixel(120, 950));
+  REQUIRE(test_point_to_pixel(130, 960));
+  REQUIRE(test_point_to_pixel(140, 970));
+  REQUIRE(test_point_to_pixel(150, 980));
+  REQUIRE(test_point_to_pixel(160, 990));
+  REQUIRE(test_point_to_pixel(170, 1000));
+  REQUIRE(test_point_to_pixel(180, 1010));
+  REQUIRE(test_point_to_pixel(190, 1020));
+  REQUIRE(test_point_to_pixel(200, 1030));
   print_test_name("test_to_chart_point");
 }
 
