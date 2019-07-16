@@ -109,47 +109,49 @@ namespace {
 
 TEST_CASE("test_to_chart_point", "[Charting]") {
   REQUIRE(test_point_to_pixel(0, 900));
-  REQUIRE(test_point_to_pixel(10, 905));
-  REQUIRE(test_point_to_pixel(20, 910));
-  REQUIRE(test_point_to_pixel(30, 910 + 10.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(40, 910 + 20.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(50, 910 + 30.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(60, 922.5));
-  REQUIRE(test_point_to_pixel(70, 927.5));
-  REQUIRE(test_point_to_pixel(80, 930 + 5.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(90, 930 + 15.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(100, 930 + 25.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(110, 940));
-  REQUIRE(test_point_to_pixel(120, 945));
-  REQUIRE(test_point_to_pixel(130, 950));
-  REQUIRE(test_point_to_pixel(140, 955));
-  REQUIRE(test_point_to_pixel(150, 960));
-  REQUIRE(test_point_to_pixel(160, 965));
-  REQUIRE(test_point_to_pixel(170, 970));
-  REQUIRE(test_point_to_pixel(180, 975));
-  REQUIRE(test_point_to_pixel(190, 980));
-  REQUIRE(test_point_to_pixel(200, 985));
+  REQUIRE(test_point_to_pixel(10, 902.5));
+  REQUIRE(test_point_to_pixel(20, 905));
+  REQUIRE(test_point_to_pixel(30, 907.5));
+  REQUIRE(test_point_to_pixel(40, 910));
+  REQUIRE(test_point_to_pixel(50, 910 + 10.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(60, 910 + 20.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(70, 910 + 30.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(80, 921.25));
+  REQUIRE(test_point_to_pixel(90, 923.75));
+  REQUIRE(test_point_to_pixel(100, 926.25));
+  REQUIRE(test_point_to_pixel(110, 928.75));
+  REQUIRE(test_point_to_pixel(120, 930 + 5.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(130, 930 + 15.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(140, 930 + 25.0 / 35.0 * 10.0));
+  REQUIRE(test_point_to_pixel(150, 940));
+
+  // TODO: failing
+  REQUIRE(test_point_to_pixel(160, 942.5));
+  REQUIRE(test_point_to_pixel(170, 945));
+  REQUIRE(test_point_to_pixel(180, 947.5));
+  REQUIRE(test_point_to_pixel(190, 950));
+  REQUIRE(test_point_to_pixel(200, 952.5));
   print_test_name("test_to_chart_point");
 }
 
 TEST_CASE("test_to_pixel", "[Charting]") {
   REQUIRE(to_pixel({ChartValue(900), ChartValue(1)}) == QPoint(0, 0));
-  REQUIRE(to_pixel({ChartValue(905), ChartValue(1)}) == QPoint(10, 0));
-  REQUIRE(to_pixel({ChartValue(910), ChartValue(1)}) == QPoint(20, 0));
-  REQUIRE(to_pixel({ChartValue(915), ChartValue(1)}) == QPoint(37, 0));
-  REQUIRE(to_pixel({ChartValue(920), ChartValue(1)}) == QPoint(55, 0));
-  REQUIRE(to_pixel({ChartValue(925), ChartValue(1)}) == QPoint(65, 0));
-  REQUIRE(to_pixel({ChartValue(930), ChartValue(1)}) == QPoint(75, 0));
-  REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(92, 0));
-  REQUIRE(to_pixel({ChartValue(940), ChartValue(1)}) == QPoint(110, 0));
-  REQUIRE(to_pixel({ChartValue(945), ChartValue(1)}) == QPoint(120, 0));
-  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(130, 0));
-  REQUIRE(to_pixel({ChartValue(955), ChartValue(1)}) == QPoint(140, 0));
-  REQUIRE(to_pixel({ChartValue(960), ChartValue(1)}) == QPoint(150, 0));
-  REQUIRE(to_pixel({ChartValue(965), ChartValue(1)}) == QPoint(160, 0));
-  REQUIRE(to_pixel({ChartValue(970), ChartValue(1)}) == QPoint(170, 0));
-  REQUIRE(to_pixel({ChartValue(975), ChartValue(1)}) == QPoint(180, 0));
-  REQUIRE(to_pixel({ChartValue(980), ChartValue(1)}) == QPoint(190, 0));
-  REQUIRE(to_pixel({ChartValue(985), ChartValue(1)}) == QPoint(200, 0));
+  REQUIRE(to_pixel({ChartValue(905), ChartValue(1)}) == QPoint(20, 0));
+  REQUIRE(to_pixel({ChartValue(910), ChartValue(1)}) == QPoint(40, 0));
+  REQUIRE(to_pixel({ChartValue(915), ChartValue(1)}) == QPoint(57, 0));
+  REQUIRE(to_pixel({ChartValue(920), ChartValue(1)}) == QPoint(75, 0));
+  REQUIRE(to_pixel({ChartValue(925), ChartValue(1)}) == QPoint(95, 0));
+  REQUIRE(to_pixel({ChartValue(930), ChartValue(1)}) == QPoint(115, 0));
+
+  // TODO: failing
+  REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(133, 0));
+  
+  REQUIRE(to_pixel({ChartValue(940), ChartValue(1)}) == QPoint(150, 0));
+  REQUIRE(to_pixel({ChartValue(945), ChartValue(1)}) == QPoint(170, 0));
+  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(190, 0));
+  REQUIRE(to_pixel({ChartValue(952.5), ChartValue(1)}) == QPoint(200, 0));
+
+  // TODO: failing
+  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(210, 0));
   print_test_name("test_to_pixel");
 }
