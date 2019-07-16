@@ -1,7 +1,7 @@
 #ifndef SPIRE_CHARTING_WINDOW_HPP
 #define SPIRE_CHARTING_WINDOW_HPP
+#include <deque>
 #include <memory>
-#include <stack>
 #include <Beam/Pointers/Ref.hpp>
 #include <QComboBox>
 #include <QLabel>
@@ -68,8 +68,9 @@ namespace Spire {
       ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
-      std::stack<ChartView::Region> m_zoom_in_stack;
-      std::stack<ChartView::Region> m_zoom_out_stack;
+      int m_region_deque_index;
+      QPoint m_region_pan_offset;
+      std::deque<ChartView::Region> m_zoom_deque;
 
       void on_auto_scale_button_click();
       void on_draw_line_button_click();

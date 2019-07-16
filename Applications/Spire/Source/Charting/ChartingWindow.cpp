@@ -161,6 +161,13 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_technicals_panel = new ChartingTechnicalsPanel(*m_technicals_model);
   container_layout->addWidget(m_technicals_panel);
   m_chart = new ChartView(*m_model, m_security_widget_container);
+  m_zoom_deque.clear();
+  //TODO: Get the actual region
+  m_zoom_deque.push_back({
+    ChartPoint(ChartValue(Money(900)), ChartValue(Money(1))),
+    ChartPoint(ChartValue(Money(950)), ChartValue(Money(0)))});
+  m_region_deque_index = 0;
+  m_region_pan_offset = {0, 0};
   m_chart->set_auto_scale(m_is_chart_auto_scaled);
   container_layout->addWidget(m_chart);
   m_lock_grid_button->setEnabled(true);
@@ -216,32 +223,44 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
-      // TODO: have the window maintain two stacks (or maybe one), of each
-      // zoom level. I believe it's the case that the window doesn't care
-      // about what the actual region is/was, only what it told the view to
-      // be. So the window will store the given regions in two stacks and
-      // will then restore them when the view is zoomed in and out.
-      // Also figure out how to integrate this with the panning; panning doesn't
+      // TODO: figure out how to integrate this with the panning; panning doesn't
       // change the size of the region, only the location, so maybe store an
       // offset for the panning that will be added to the popped regions.
-      auto e = static_cast<QWheelEvent*>(event);
-      auto region = m_chart->get_region();
-      auto old_height = region.m_top_left.m_y - region.m_bottom_right.m_y;
-      auto old_width = region.m_top_left.m_x - region.m_bottom_right.m_x;
-      auto [new_width, new_height] = [&] {
-        if(e->angleDelta().y() < 0) {
-          return std::make_tuple(ZOOM_FACTOR * old_width,
-            ZOOM_FACTOR * old_height);
+
+      // TODO: may need to reset pan offset when adding new regions.
+      auto is_zoomed_in =
+        static_cast<QWheelEvent*>(event)->angleDelta().y() > 0;
+      auto new_region = [&] {
+        if(is_zoomed_in) {
+          if(m_region_deque_index != 0) {
+            m_region_deque_index--;
+            return m_zoom_deque[m_region_deque_index];
+          }
+          auto current_region = m_zoom_deque[m_region_deque_index];
+          auto new_region = ChartView::Region{
+            {ZOOM_FACTOR * current_region.m_top_left.m_x,
+            current_region.m_top_left.m_y / ZOOM_FACTOR},
+            {current_region.m_bottom_right.m_x / ZOOM_FACTOR,
+            ZOOM_FACTOR * current_region.m_bottom_right.m_y}};
+          m_zoom_deque.push_front(new_region);
+          return new_region;
         }
-        return std::make_tuple(old_width / ZOOM_FACTOR,
-          old_height / ZOOM_FACTOR);
+        auto iter = std::next(m_zoom_deque.begin() + m_region_deque_index);
+        if(iter != m_zoom_deque.end()) {
+          m_region_deque_index++;
+          return *iter;
+        }
+        auto current_region = m_zoom_deque[m_region_deque_index];
+        auto new_region = ChartView::Region{
+          {current_region.m_top_left.m_x / ZOOM_FACTOR,
+          ZOOM_FACTOR * current_region.m_top_left.m_y},
+          {ZOOM_FACTOR * current_region.m_bottom_right.m_x,
+          current_region.m_bottom_right.m_y / ZOOM_FACTOR}};
+        m_region_deque_index++;
+        m_zoom_deque.push_back(new_region);
+        return new_region;
       }();
-      auto width_change = (new_width - old_width) / 2;
-      auto height_change = (new_height - old_height) / 2;
-      m_chart->set_region({region.m_top_left.m_x + width_change,
-        region.m_top_left.m_y + height_change},
-        {region.m_bottom_right.m_x - width_change,
-        region.m_bottom_right.m_y - height_change});
+      m_chart->set_region(new_region.m_top_left, new_region.m_bottom_right);
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {
