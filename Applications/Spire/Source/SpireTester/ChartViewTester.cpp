@@ -26,7 +26,7 @@ namespace {
     return br;
   }
 
-  const auto BR_PIXEL = QPoint(100, 100);
+  const auto BR_PIXEL = QPoint(100, 200);
 
   const auto GAPS() {
     static auto gaps = std::vector<Gap>();
@@ -101,22 +101,69 @@ namespace {
 }
 
 TEST_CASE("test_to_chart_point", "[Charting]") {
-  REQUIRE(to_chart_point({0, 0}) ==
-    ChartPoint(ChartValue(900), ChartValue(1)));
-  REQUIRE(to_chart_point({10, 0}) ==
-    ChartPoint(ChartValue(905), ChartValue(1)));
-  REQUIRE(to_chart_point({20, 0}) ==
-    ChartPoint(ChartValue(910), ChartValue(1)));
-  REQUIRE(to_chart_point({75, 0}) ==
-    ChartPoint(ChartValue(930), ChartValue(1)));
-  REQUIRE(to_chart_point({110, 0}) ==
-    ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({0, 0}) ==
+  //  ChartPoint(ChartValue(900), ChartValue(1)));
+  //REQUIRE(to_chart_point({10, 0}) ==
+  //  ChartPoint(ChartValue(905), ChartValue(1)));
+  //REQUIRE(to_chart_point({20, 0}) ==
+  //  ChartPoint(ChartValue(910), ChartValue(1)));
+  //REQUIRE(to_chart_point({30, 0}) ==
+  //  ChartPoint(ChartValue(915), ChartValue(1)));
+  //REQUIRE(to_chart_point({40, 0}) ==
+  //  ChartPoint(ChartValue(920), ChartValue(1)));
+  //REQUIRE(to_chart_point({50, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({60, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({70, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({80, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({90, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({100, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({110, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({120, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({130, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({140, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({150, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({160, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({170, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({180, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({190, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
+  //REQUIRE(to_chart_point({200, 0}) ==
+  //  ChartPoint(ChartValue(940), ChartValue(1)));
   print_test_name("test_to_chart_point");
 }
 
 TEST_CASE("test_to_pixel", "[Charting]") {
   REQUIRE(to_pixel({ChartValue(900), ChartValue(1)}) == QPoint(0, 0));
-  auto a = to_pixel({ChartValue(930), ChartValue(1)});
+  REQUIRE(to_pixel({ChartValue(905), ChartValue(1)}) == QPoint(10, 0));
+  REQUIRE(to_pixel({ChartValue(910), ChartValue(1)}) == QPoint(20, 0));
+  REQUIRE(to_pixel({ChartValue(915), ChartValue(1)}) == QPoint(37, 0));
+  REQUIRE(to_pixel({ChartValue(920), ChartValue(1)}) == QPoint(55, 0));
+  REQUIRE(to_pixel({ChartValue(925), ChartValue(1)}) == QPoint(65, 0));
   REQUIRE(to_pixel({ChartValue(930), ChartValue(1)}) == QPoint(75, 0));
+  REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(92, 0));
+  REQUIRE(to_pixel({ChartValue(940), ChartValue(1)}) == QPoint(110, 0));
+  REQUIRE(to_pixel({ChartValue(945), ChartValue(1)}) == QPoint(120, 0));
+  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(130, 0));
+  REQUIRE(to_pixel({ChartValue(955), ChartValue(1)}) == QPoint(140, 0));
+  REQUIRE(to_pixel({ChartValue(960), ChartValue(1)}) == QPoint(150, 0));
+  REQUIRE(to_pixel({ChartValue(965), ChartValue(1)}) == QPoint(160, 0));
+  REQUIRE(to_pixel({ChartValue(970), ChartValue(1)}) == QPoint(170, 0));
+  REQUIRE(to_pixel({ChartValue(975), ChartValue(1)}) == QPoint(180, 0));
+  REQUIRE(to_pixel({ChartValue(980), ChartValue(1)}) == QPoint(190, 0));
+  REQUIRE(to_pixel({ChartValue(985), ChartValue(1)}) == QPoint(200, 0));
   print_test_name("test_to_pixel");
 }
