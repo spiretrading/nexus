@@ -223,11 +223,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
-      // TODO: figure out how to integrate this with the panning; panning doesn't
-      // change the size of the region, only the location, so maybe store an
-      // offset for the panning that will be added to the popped regions.
-
-      // TODO: may need to reset pan offset when adding new regions.
+      // TODO: panning
       auto is_zoomed_in =
         static_cast<QWheelEvent*>(event)->angleDelta().y() > 0;
       auto new_region = [&] {
@@ -236,28 +232,42 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
             m_region_deque_index--;
             return m_zoom_deque[m_region_deque_index];
           }
-          auto current_region = m_zoom_deque[m_region_deque_index];
-          auto new_region = ChartView::Region{
-            {ZOOM_FACTOR * current_region.m_top_left.m_x,
-            current_region.m_top_left.m_y / ZOOM_FACTOR},
-            {current_region.m_bottom_right.m_x / ZOOM_FACTOR,
-            ZOOM_FACTOR * current_region.m_bottom_right.m_y}};
-          m_zoom_deque.push_front(new_region);
-          return new_region;
-        }
-        auto iter = std::next(m_zoom_deque.begin() + m_region_deque_index);
-        if(iter != m_zoom_deque.end()) {
-          m_region_deque_index++;
-          return *iter;
+        } else {
+          auto iter = std::next(m_zoom_deque.begin() + m_region_deque_index);
+          if(iter != m_zoom_deque.end()) {
+            m_region_deque_index++;
+            return *iter;
+          }
         }
         auto current_region = m_zoom_deque[m_region_deque_index];
+        auto old_width = current_region.m_top_left.m_x -
+          current_region.m_bottom_right.m_x;
+        auto old_height = current_region.m_top_left.m_y -
+          current_region.m_bottom_right.m_y;
+        auto [new_width, new_height] = [&] {
+          if(is_zoomed_in) {
+            return std::make_tuple(old_width / ZOOM_FACTOR,
+              old_height / ZOOM_FACTOR);
+          }
+          return std::make_tuple(ZOOM_FACTOR * old_width,
+            ZOOM_FACTOR * old_height);
+        }();
+        auto width_change = (new_width - old_width) / 2;
+        auto height_change = (new_height - old_height) / 2;
         auto new_region = ChartView::Region{
-          {current_region.m_top_left.m_x / ZOOM_FACTOR,
-          ZOOM_FACTOR * current_region.m_top_left.m_y},
-          {ZOOM_FACTOR * current_region.m_bottom_right.m_x,
-          current_region.m_bottom_right.m_y / ZOOM_FACTOR}};
-        m_region_deque_index++;
-        m_zoom_deque.push_back(new_region);
+          {current_region.m_top_left.m_x + width_change,
+          current_region.m_top_left.m_y + height_change},
+          {current_region.m_bottom_right.m_x - width_change,
+          current_region.m_bottom_right.m_y - height_change}};
+        if(is_zoomed_in) {
+          if(m_region_deque_index != 0) {
+            m_region_deque_index--;
+          }
+          m_zoom_deque.push_front(new_region);
+        } else {
+          m_region_deque_index++;
+          m_zoom_deque.push_back(new_region);
+        }
         return new_region;
       }();
       m_chart->set_region(new_region.m_top_left, new_region.m_bottom_right);
