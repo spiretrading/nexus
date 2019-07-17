@@ -29,9 +29,12 @@ def make_tarfile(source, destination):
 
 def make_zipfile(source, destination):
   archive = zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED)
+  source = os.path.abspath(source)
   for root, dirs, files in os.walk(source):
     for file in files:
-      archive.write(os.path.join(root, file))
+      absolute_path = os.path.abspath(os.path.join(root, file))
+      archive.write(os.path.join(root, file),
+        arcname=absolute_path[len(source) + 1:])
   archive.close()
 
 def copy_build(applications, version, name, source, path):
@@ -68,32 +71,30 @@ def copy_build(applications, version, name, source, path):
     return
 
 def build_repo(repo, path, branch):
-  commits = sorted([commit for commit in repo.iter_commits(branch)],
-    key = lambda commit: -int(commit.committed_date))
+  commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
+  commits.reverse()
   builds = [int(d) for d in os.listdir(path) if os.path.isdir(
     os.path.join(path, d))]
   builds.sort(reverse=True)
   if len(builds) == 0:
-    builds.append(
-      int(repo.git.rev_list('--count', '--first-parent', 'HEAD')) - 1)
-  for i in range(len(commits)):
-    version = int(repo.git.rev_list('--count', '--first-parent',
-      commits[i].hexsha))
-    if version in builds:
-      commits = commits[0:i]
-      commits.reverse()
-      break
+    commits = commits[-1]
+  else:
+    for i in range(len(commits) - 1, -1, -1):
+      version = int(repo.git.rev_list('--count', '--first-parent', commits[i]))
+      if version in builds:
+        commits = commits[i + 1:]
+        break
   if sys.platform == 'win32':
     extension = 'bat'
   else:
     extension = 'sh'
   for commit in commits:
-    version = int(repo.git.rev_list('--count', '--first-parent', commit.hexsha))
-    repo.git.checkout(commit.hexsha)
+    version = int(repo.git.rev_list('--count', '--first-parent', commit))
+    repo.git.checkout(commit)
     result = []
-    result.append(call(os.path.join(repo.working_dir, 'configure.%s -DD=%s' %
-      (extension, os.path.join(os.getcwd(), 'Dependencies'))),
-      repo.working_dir))
+    result.append(call(
+      os.path.join(repo.working_dir, 'configure.%s' % extension) + ' -DD=%s' %
+      os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir)
     result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
       repo.working_dir))
     terminal_output = b''
