@@ -105,7 +105,7 @@ namespace {
     return {x, y};
   }
 
-  bool test_point_to_pixel(int x_pixel, double expected_value) {
+  bool test_pixel_to_point(int x_pixel, double expected_value) {
     auto cv_x = to_chart_point({x_pixel, 0}).m_x;
     return Truncate(static_cast<Money>(cv_x), 6) ==
       Truncate(Money(expected_value), 6);
@@ -113,27 +113,27 @@ namespace {
 }
 
 TEST_CASE("test_to_chart_point", "[Charting]") {
-  REQUIRE(test_point_to_pixel(0, 900));
-  REQUIRE(test_point_to_pixel(10, 902.5));
-  REQUIRE(test_point_to_pixel(20, 905));
-  REQUIRE(test_point_to_pixel(30, 907.5));
-  REQUIRE(test_point_to_pixel(40, 910));
-  REQUIRE(test_point_to_pixel(50, 910 + 10.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(60, 910 + 20.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(70, 910 + 30.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(80, 921.25));
-  REQUIRE(test_point_to_pixel(90, 923.75));
-  REQUIRE(test_point_to_pixel(100, 926.25));
-  REQUIRE(test_point_to_pixel(110, 928.75));
-  REQUIRE(test_point_to_pixel(120, 930 + 5.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(130, 930 + 15.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(140, 930 + 25.0 / 35.0 * 10.0));
-  REQUIRE(test_point_to_pixel(150, 940));
-  REQUIRE(test_point_to_pixel(160, 942.5));
-  REQUIRE(test_point_to_pixel(170, 945));
-  REQUIRE(test_point_to_pixel(180, 947.5));
-  REQUIRE(test_point_to_pixel(190, 950));
-  REQUIRE(test_point_to_pixel(200, 952.5));
+  REQUIRE(test_pixel_to_point(0, 900));
+  REQUIRE(test_pixel_to_point(10, 902.5));
+  REQUIRE(test_pixel_to_point(20, 905));
+  REQUIRE(test_pixel_to_point(30, 907.5));
+  REQUIRE(test_pixel_to_point(40, 910));
+  REQUIRE(test_pixel_to_point(50, 910 + 10.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(60, 910 + 20.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(70, 910 + 30.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(80, 921.25));
+  REQUIRE(test_pixel_to_point(90, 923.75));
+  REQUIRE(test_pixel_to_point(100, 926.25));
+  REQUIRE(test_pixel_to_point(110, 928.75));
+  REQUIRE(test_pixel_to_point(120, 930 + 5.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(130, 930 + 15.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(140, 930 + 25.0 / 35.0 * 10.0));
+  REQUIRE(test_pixel_to_point(150, 940));
+  REQUIRE(test_pixel_to_point(160, 942.5));
+  REQUIRE(test_pixel_to_point(170, 945));
+  REQUIRE(test_pixel_to_point(180, 947.5));
+  REQUIRE(test_pixel_to_point(190, 950));
+  REQUIRE(test_pixel_to_point(200, 952.5));
   print_test_name("test_to_chart_point");
 }
 
