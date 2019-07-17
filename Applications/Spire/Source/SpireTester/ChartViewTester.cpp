@@ -23,7 +23,7 @@ namespace {
   }
 
   const auto BR() {
-    static ChartPoint br = {ChartValue(950), ChartValue(0)};
+    static ChartPoint br = {ChartValue(952.5), ChartValue(0)};
     return br;
   }
 
