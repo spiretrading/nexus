@@ -92,9 +92,9 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call(
-      os.path.join(repo.working_dir, 'configure.%s' % extension) + ' -DD=%s' %
-      os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir)
+    result.append(call('%s -DD="%s"' % (
+      os.path.join(repo.working_dir, 'configure.%s' % extension),
+      os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir))
     result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
       repo.working_dir))
     terminal_output = b''
