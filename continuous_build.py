@@ -23,7 +23,7 @@ def makedirs(path):
       raise
 
 def make_tarfile(source, destination):
-  with tarfile.open(destination, "w:gz") as tar:
+  with tarfile.open(destination, 'w:gz') as tar:
     for file in os.listdir(source):
       tar.add(os.path.join(source, file), arcname=file)
 
@@ -92,7 +92,7 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call('%s -DD="%s"' % (
+    result.append(call('%s -DD=%s' % (
       os.path.join(repo.working_dir, 'configure.%s' % extension),
       os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir))
     result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
