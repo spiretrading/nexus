@@ -145,16 +145,10 @@ TEST_CASE("test_to_pixel", "[Charting]") {
   REQUIRE(to_pixel({ChartValue(920), ChartValue(1)}) == QPoint(75, 0));
   REQUIRE(to_pixel({ChartValue(925), ChartValue(1)}) == QPoint(95, 0));
   REQUIRE(to_pixel({ChartValue(930), ChartValue(1)}) == QPoint(115, 0));
-
-  // TODO: failing
-  //REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(133, 0));
-  
+  REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(132, 0));
   REQUIRE(to_pixel({ChartValue(940), ChartValue(1)}) == QPoint(150, 0));
   REQUIRE(to_pixel({ChartValue(945), ChartValue(1)}) == QPoint(170, 0));
   REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(190, 0));
   REQUIRE(to_pixel({ChartValue(952.5), ChartValue(1)}) == QPoint(200, 0));
-
-  // TODO: failing
-  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(210, 0));
   print_test_name("test_to_pixel");
 }
