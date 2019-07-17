@@ -77,7 +77,7 @@ def build_repo(repo, path, branch):
     os.path.join(path, d))]
   builds.sort(reverse=True)
   if len(builds) == 0:
-    commits = commits[-1]
+    commits = [commits[-1]]
   else:
     for i in range(len(commits) - 1, -1, -1):
       version = int(repo.git.rev_list('--count', '--first-parent', commits[i]))
