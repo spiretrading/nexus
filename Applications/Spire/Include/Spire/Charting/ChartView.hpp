@@ -141,6 +141,7 @@ namespace Spire {
       ChartModel* m_model;
       ChartPoint m_top_left;
       ChartPoint m_bottom_right;
+      ChartPoint m_gap_adjusted_bottom_right;
       QPoint m_bottom_right_pixel;
       ChartValue m_x_axis_step;
       ChartValue m_x_range;

@@ -138,7 +138,7 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
       lower_x_chart_value = gap.m_end;
     }
     return map_to(point.x(), lower_x_pixel, m_bottom_right_pixel.x(),
-      lower_x_chart_value, m_bottom_right.m_x);
+      lower_x_chart_value, m_gap_adjusted_bottom_right.m_x);
   }();
   return {x, y};
 }
@@ -271,13 +271,13 @@ void ChartView::set_region(const ChartPoint& top_left,
     x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) /
       values_per_pixel + gap_info.gap_count * GAP_SIZE()));
     s = e;
-    e += (bottom_right_pixel_x + gap_info.gap_count * GAP_SIZE() - x) *
-      values_per_pixel;
+    e += (bottom_right_pixel_x - x) * values_per_pixel;
   }
   m_gaps = gaps;
   m_candlesticks = std::move(candlesticks);
   m_top_left = top_left;
-  m_bottom_right = {e, bottom_right.m_y};
+  m_bottom_right = bottom_right;
+  m_gap_adjusted_bottom_right = {e, bottom_right.m_y};
   if(m_is_auto_scaled) {
     update_auto_scale();
   } else {
@@ -655,14 +655,14 @@ int ChartView::update_intersection(const QPoint& mouse_pos) {
 }
 
 void ChartView::update_origins() {
-  m_x_range = m_bottom_right.m_x - m_top_left.m_x;
+  m_x_range = m_gap_adjusted_bottom_right.m_x - m_top_left.m_x;
   m_x_axis_step = calculate_step(m_model->get_x_axis_type(), m_x_range);
   m_y_range = m_top_left.m_y - m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   auto x_value = m_top_left.m_x - (m_top_left.m_x % m_x_axis_step) +
     m_x_axis_step;
   m_x_axis_values.clear();
-  while(x_value <= m_bottom_right.m_x) {
+  while(x_value <= m_gap_adjusted_bottom_right.m_x) {
     for(auto& gap : m_gaps) {
       if(gap.m_start < x_value && x_value < gap.m_end) {
         x_value = gap.m_end;
