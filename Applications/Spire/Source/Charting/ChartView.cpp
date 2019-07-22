@@ -94,7 +94,7 @@ namespace {
     return gap_info;
   }
 
-  QtPromise<ChartView::LoadedData> reload_gaps(
+  QtPromise<ChartView::LoadedData> load_data(
       QtPromise<std::vector<Candlestick>>& promise,
       ChartView::LoadedData data, ChartModel* model) {
     return promise.then([=] (auto result) mutable {
@@ -120,7 +120,7 @@ namespace {
       data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
       if(data.m_current_x < data.m_end_x) {
         auto new_promise = model->load(data.m_start, data.m_end);
-        return reload_gaps(new_promise, data, model);
+        return load_data(new_promise, data, model);
       }
       return QtPromise<ChartView::LoadedData>([=] {
         return data;
@@ -291,7 +291,7 @@ void ChartView::set_region(const ChartPoint& top_left,
   reload_data.m_end_x = m_bottom_right_pixel.x();
   reload_data.m_values_per_pixel = (m_bottom_right.m_x - m_top_left.m_x) /
     bottom_right_pixel_x;
-  m_loaded_data_promise = reload_gaps(m_model->load(reload_data.m_start,
+  m_loaded_data_promise = load_data(m_model->load(reload_data.m_start,
     reload_data.m_end), reload_data, m_model);
   m_loaded_data_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get().m_candlesticks);
@@ -302,7 +302,6 @@ void ChartView::set_region(const ChartPoint& top_left,
     } else {
       update();
     }
-    update_origins();
     update();
   });
   update();
@@ -530,13 +529,11 @@ void ChartView::showEvent(QShowEvent* event) {
   if(m_top_left.m_x == ChartValue() && m_top_left.m_y == ChartValue() &&
       m_bottom_right.m_x == ChartValue() &&
       m_bottom_right.m_y == ChartValue()) {
-    //auto current_time = boost::posix_time::second_clock::local_time();
-    auto current_time = Nexus::Money(950);
+    auto current_time = boost::posix_time::second_clock::local_time();
     auto bottom_right = ChartPoint(ChartValue(current_time),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
-      //ChartValue(current_time - boost::posix_time::hours(1)),
-      ChartValue(Nexus::Money(900)),
+      ChartValue(current_time - boost::posix_time::hours(1)),
       ChartValue(Nexus::Money(1)));
     set_region(top_left, bottom_right);
   }
