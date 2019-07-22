@@ -50,7 +50,7 @@ namespace {
 
   ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      return ChartValue(10 * Money::ONE);
+      return ChartValue(Money::ONE);
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }

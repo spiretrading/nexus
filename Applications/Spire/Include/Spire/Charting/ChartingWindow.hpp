@@ -1,13 +1,11 @@
 #ifndef SPIRE_CHARTING_WINDOW_HPP
 #define SPIRE_CHARTING_WINDOW_HPP
-#include <deque>
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Charting/ChartView.hpp"
 #include "Spire/Charting/TrendLine.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"

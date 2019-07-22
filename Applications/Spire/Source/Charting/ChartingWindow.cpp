@@ -8,6 +8,7 @@
 #include <QListView>
 #include <QVBoxLayout>
 #include "Spire/Charting/ChartingTechnicalsPanel.hpp"
+#include "Spire/Charting/ChartView.hpp"
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
