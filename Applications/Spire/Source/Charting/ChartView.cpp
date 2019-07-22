@@ -18,6 +18,16 @@ namespace {
     ChartValue total_gaps_value;
   };
 
+  struct GapReloadData {
+    std::vector<Candlestick> m_candlesticks;
+    std::vector<ChartView::Gap> m_gaps;
+    ChartValue m_start;
+    ChartValue m_end;
+    int m_current_x;
+    int m_end_x;
+    ChartValue m_values_per_pixel;
+  };
+
   QVariant to_variant(ChartValue::Type type, ChartValue value) {
     if(type == ChartValue::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -79,7 +89,7 @@ namespace {
     return size;
   }
 
-  GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
+  GapInfo update_gaps(std::vector<ChartView::Gap> gaps,
       std::vector<Candlestick>& candlesticks, ChartValue start) {
     auto gap_info = GapInfo{0, ChartValue()};
     for(auto& candlestick : candlesticks) {
@@ -92,6 +102,40 @@ namespace {
       start = candlestick.GetEnd();
     }
     return gap_info;
+  }
+
+  QtPromise<std::vector<Candlestick>> reload_gaps(
+      QtPromise<std::vector<Candlestick>>& promise, GapReloadData data,
+      ChartModel* model) {
+    return promise.then([=] (auto result) mutable {
+      auto c = std::move(result.Get());
+      while(!c.empty() && !data.m_candlesticks.empty() &&
+          c.front().GetStart() <= data.m_candlesticks.back().GetStart()) {
+        c.erase(c.begin());
+      }
+      auto last = [&] {
+        if(data.m_candlesticks.empty() && c.empty()) {
+          return ChartValue();
+        } else if(data.m_candlesticks.empty()) {
+          return c.front().GetStart();
+        }
+        return data.m_candlesticks.back().GetEnd();
+      }();
+      auto gap_info = update_gaps(data.m_gaps, c, last);
+      data.m_candlesticks.insert(data.m_candlesticks.end(), c.begin(), c.end());
+      data.m_current_x += static_cast<int>(std::ceil((
+        data.m_end - data.m_start - gap_info.total_gaps_value) /
+        data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE()));
+      data.m_start = data.m_end;
+      data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
+      if(data.m_current_x < data.m_end_x) {
+        auto new_promise = model->load(data.m_start, data.m_end);
+        return reload_gaps(new_promise, data, model);
+      }
+      return QtPromise<std::vector<Candlestick>>([=] {
+        return data.m_candlesticks;
+      });
+    });
   }
 }
 
@@ -246,38 +290,26 @@ void ChartView::set_region(const ChartPoint& top_left,
     return;
   }
   auto bottom_right_pixel_x = m_bottom_right_pixel.x();
-  auto values_per_pixel = (bottom_right.m_x - top_left.m_x) / bottom_right_pixel_x;
-  auto s = top_left.m_x;
-  auto e = bottom_right.m_x;
-  auto x = 0;
-  auto gaps = std::vector<Gap>();
-  auto candlesticks = std::vector<Candlestick>();
-  while (x < bottom_right_pixel_x) {
-    auto c = wait(m_model->load(s, e));
-    while(!c.empty() && !candlesticks.empty() &&
-        c.front().GetStart() <= candlesticks.back().GetStart()) {
-      c.erase(c.begin());
-    }
-    auto last = [&] {
-      if(candlesticks.empty() && c.empty()) {
-        return ChartValue();
-      } else if(candlesticks.empty()) {
-        return c.front().GetStart();
-      }
-      return candlesticks.back().GetEnd();
-    }();
-    auto gap_info = update_gaps(gaps, c, last);
-    candlesticks.insert(candlesticks.end(), c.begin(), c.end());
-    x += static_cast<int>(std::ceil((e - s - gap_info.total_gaps_value) /
-      values_per_pixel + gap_info.gap_count * GAP_SIZE()));
-    s = e;
-    e += (bottom_right_pixel_x - x) * values_per_pixel;
-  }
-  m_gaps = gaps;
-  m_candlesticks = std::move(candlesticks);
+  auto reload_data = GapReloadData{};
+  reload_data.m_candlesticks = std::vector<Candlestick>();
+  reload_data.m_gaps = std::vector<Gap>();
+  reload_data.m_start = top_left.m_x;
+  reload_data.m_end = bottom_right.m_x;
+  reload_data.m_current_x = 0;
+  reload_data.m_values_per_pixel = (bottom_right.m_x - top_left.m_x) /
+    bottom_right_pixel_x;
+  m_candlestick_promise = reload_gaps(m_model->load(reload_data.m_start, reload_data.m_end),
+    reload_data, m_model);
+  m_candlestick_promise.then([&] (auto result) {
+    qDebug() << result.Get().size();
+    m_candlesticks = std::move(result.Get());
+  });
+  //m_gaps = gaps;
+  //m_candlesticks = std::move(candlesticks);
   m_top_left = top_left;
   m_bottom_right = bottom_right;
-  m_gap_adjusted_bottom_right = {e, bottom_right.m_y};
+  m_gap_adjusted_bottom_right = m_bottom_right;
+  //m_gap_adjusted_bottom_right = {e, bottom_right.m_y};
   if(m_is_auto_scaled) {
     update_auto_scale();
   } else {
