@@ -4,6 +4,24 @@
 
 using namespace Spire;
 
+namespace {
+  QtPromise<int> inc(int num, int end) {
+    if(num != end) {
+      return inc(num + 1, end);
+    }
+    return QtPromise<int>([=] { return num; });
+  }
+}
+
+TEST_CASE("test_arbitrary_chaining", "[QtPromise]") {
+  run_test([] {
+    auto end = 10;
+    auto p = inc(1, end);
+    auto r = wait(std::move(p));
+    REQUIRE(r == 10);
+  }, "test_arbitrary_chaining");
+}
+
 TEST_CASE("test_chaining_promise_then", "[QtPromise]") {
   run_test([] {
     auto p = QtPromise(
