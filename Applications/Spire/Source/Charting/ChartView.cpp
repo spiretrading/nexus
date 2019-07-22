@@ -282,17 +282,17 @@ void ChartView::set_region(const ChartPoint& top_left,
   m_top_left = top_left;
   m_bottom_right = bottom_right;
   auto bottom_right_pixel_x = m_bottom_right_pixel.x();
-  auto reload_data = LoadedData{};
-  reload_data.m_candlesticks = std::vector<Candlestick>();
-  reload_data.m_gaps = std::vector<Gap>();
-  reload_data.m_start = m_top_left.m_x;
-  reload_data.m_end = m_bottom_right.m_x;
-  reload_data.m_current_x = 0;
-  reload_data.m_end_x = m_bottom_right_pixel.x();
-  reload_data.m_values_per_pixel = (m_bottom_right.m_x - m_top_left.m_x) /
+  auto required_data = LoadedData{};
+  required_data.m_candlesticks = std::vector<Candlestick>();
+  required_data.m_gaps = std::vector<Gap>();
+  required_data.m_start = m_top_left.m_x;
+  required_data.m_end = m_bottom_right.m_x;
+  required_data.m_current_x = 0;
+  required_data.m_end_x = m_bottom_right_pixel.x();
+  required_data.m_values_per_pixel = (m_bottom_right.m_x - m_top_left.m_x) /
     bottom_right_pixel_x;
-  m_loaded_data_promise = load_data(m_model->load(reload_data.m_start,
-    reload_data.m_end), reload_data, m_model);
+  m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
+    required_data.m_end), required_data, m_model);
   m_loaded_data_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get().m_candlesticks);
     m_gaps = std::move(result.Get().m_gaps);
