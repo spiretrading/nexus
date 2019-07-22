@@ -34,6 +34,32 @@ namespace Spire {
         ChartValue m_end;
       };
 
+      //! Represents an accumulation of loaded data and gaps, and stores values
+      //! that determine what to load next.
+      struct LoadedData {
+
+        /** The previously loaded candlesticks. */
+        std::vector<Candlestick> m_candlesticks;
+
+        /** Gaps identified in the candlesticks. */
+        std::vector<ChartView::Gap> m_gaps;
+
+        /** The next starting value to load. */
+        ChartValue m_start;
+
+        /** The next last value to load. */
+        ChartValue m_end;
+
+        /** Pixel value of the last loaded value. */
+        int m_current_x;
+
+        /** Pixel value of the final value to load. */
+        int m_end_x;
+
+        /** ChartValues represented by a single pixel. */
+        ChartValue m_values_per_pixel;
+      };
+
       //! Constructs a ChartView.
       /*!
         \param model The model containing the data to display.
@@ -158,7 +184,7 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       std::vector<ChartValue> m_y_axis_values;
       bool m_is_auto_scaled;
-      QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
+      QtPromise<LoadedData> m_loaded_data_promise;
       std::vector<Candlestick> m_candlesticks;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
