@@ -199,7 +199,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
           region.m_top_left.m_y -= chart_delta.m_y - last_pos.m_y;
           region.m_bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
         }
-        m_chart->set_region(region.m_top_left, region.m_bottom_right);
+        m_chart->set_region(region);
         m_last_chart_mouse_pos = e->pos();
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
@@ -231,10 +231,10 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       }();
       auto width_change = (new_width - old_width) / 2;
       auto height_change = (new_height - old_height) / 2;
-      m_chart->set_region({region.m_top_left.m_x + width_change,
+      m_chart->set_region({{region.m_top_left.m_x + width_change,
         region.m_top_left.m_y + height_change},
         {region.m_bottom_right.m_x - width_change,
-        region.m_bottom_right.m_y - height_change});
+        region.m_bottom_right.m_y - height_change}});
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {

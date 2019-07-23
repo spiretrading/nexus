@@ -22,6 +22,16 @@ namespace Spire {
 
         /** The bottom right point of the region. */
         ChartPoint m_bottom_right;
+
+        bool operator ==(const Region& rhs) {
+          return m_top_left == rhs.m_top_left &&
+            m_bottom_right == rhs.m_bottom_right;
+        }
+
+        bool operator !=(const Region& rhs) {
+          return m_top_left != rhs.m_top_left ||
+            m_bottom_right != rhs.m_bottom_right;
+        }
       };
 
       //! Constructs a ChartView.
@@ -65,15 +75,13 @@ namespace Spire {
       void reset_crosshair();
 
       //! Returns the region of the ChartView.
-      ChartView::Region get_region() const;
+      const ChartView::Region& get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
-        \param top_left The top left point to display.
-        \param bottom_right The bottom right point to display.
+        \param region The region the chart will display.
       */
-      void set_region(const ChartPoint& top_left,
-        const ChartPoint& bottom_right);
+      void set_region(const Region& region);
 
       //! Returns true if auto scale is enabled, false otherwise.
       bool is_auto_scale_enabled() const;
