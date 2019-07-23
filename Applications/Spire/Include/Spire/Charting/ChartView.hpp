@@ -23,15 +23,9 @@ namespace Spire {
         /** The bottom right point of the region. */
         ChartPoint m_bottom_right;
 
-        bool operator ==(const Region& rhs) {
-          return m_top_left == rhs.m_top_left &&
-            m_bottom_right == rhs.m_bottom_right;
-        }
+        bool operator ==(const Region& rhs) const;
 
-        bool operator !=(const Region& rhs) {
-          return m_top_left != rhs.m_top_left ||
-            m_bottom_right != rhs.m_bottom_right;
-        }
+        bool operator !=(const Region& rhs) const;
       };
 
       //! Constructs a ChartView.

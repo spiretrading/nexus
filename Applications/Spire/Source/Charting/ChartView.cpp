@@ -76,6 +76,16 @@ namespace {
   }
 }
 
+bool ChartView::Region::operator ==(const Region& rhs) const {
+  return m_top_left == rhs.m_top_left &&
+    m_bottom_right == rhs.m_bottom_right;
+}
+
+bool ChartView::Region::operator !=(const Region& rhs) const {
+  return m_top_left != rhs.m_top_left ||
+    m_bottom_right != rhs.m_bottom_right;
+}
+
 ChartView::ChartView(ChartModel& model, QWidget* parent)
     : QWidget(parent),
       m_model(&model),
