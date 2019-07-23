@@ -184,71 +184,10 @@ namespace Spire {
       std::vector<Gap> m_gaps;
 
       static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
-          std::vector<Candlestick>& candlesticks, ChartValue start) {
-        auto gap_info = GapInfo{0, ChartValue()};
-        for(auto& candlestick : candlesticks) {
-          auto end = candlestick.GetStart();
-          if(start != end) {
-            gaps.push_back({start, end});
-            gap_info.total_gaps_value += end - start;
-            ++gap_info.gap_count;
-          }
-          start = candlestick.GetEnd();
-        }
-        return gap_info;
-      }
-
-      static const int GAP_SIZE() {
-        static auto size = scale_width(35);
-        return size;
-      }
-
+        std::vector<Candlestick>& candlesticks, ChartValue start);
       static QtPromise<ChartView::LoadedData> load_data(
-          QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
-          ChartModel* model) {
-        return promise.then([=] (auto result) mutable {
-          auto new_candlesticks = std::move(result.Get());
-          if(!new_candlesticks.empty() && !data.m_candlesticks.empty() &&
-              new_candlesticks.front().GetStart() <=
-              data.m_candlesticks.back().GetStart()) {
-            auto last = std::find_if(new_candlesticks.begin(),
-              new_candlesticks.end(), [&] (const auto& candlestick) {
-                return candlestick.GetStart() >=
-                  data.m_candlesticks.back().GetStart();
-              });
-            auto b = new_candlesticks.begin();
-            if(last != new_candlesticks.end()) {
-              last++;
-            }
-            new_candlesticks.erase(b, last);
-          }
-          auto last = [&] {
-            if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
-              return ChartValue();
-            } else if(data.m_candlesticks.empty()) {
-              return new_candlesticks.front().GetStart();
-            }
-            return data.m_candlesticks.back().GetEnd();
-          }();
-          auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
-          data.m_candlesticks.insert(data.m_candlesticks.end(),
-            new_candlesticks.begin(), new_candlesticks.end());
-          data.m_current_x += std::min(static_cast<int>(std::ceil((
-            data.m_end - data.m_start - gap_info.total_gaps_value) /
-            data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
-            data.m_end_x);
-          data.m_start = data.m_end;
-          data.m_end += (data.m_end_x - data.m_current_x) *
-            data.m_values_per_pixel;
-          if(data.m_current_x < data.m_end_x) {
-            auto new_promise = model->load(data.m_start, data.m_end);
-            return load_data(new_promise, std::move(data), model);
-          }
-          return QtPromise<LoadedData>([=] {
-            return std::move(data);
-          });
-        });
-      }
+        QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
+        ChartModel* model);
 
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,

@@ -53,6 +53,11 @@ namespace {
     return ChartValue();
   }
 
+  static const int GAP_SIZE() {
+    static auto size = scale_width(35);
+    return size;
+  }
+
   const auto& HAND_CURSOR() {
     static auto cursor = QCursor(QPixmap::fromImage(
       imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
@@ -560,6 +565,68 @@ void ChartView::update_auto_scale() {
   m_region.m_top_left.m_y = auto_scale_top;
   m_region.m_bottom_right.m_y = auto_scale_bottom;
   update_origins();
+}
+
+ChartView::GapInfo ChartView::update_gaps(std::vector<ChartView::Gap>& gaps,
+    std::vector<Candlestick>& candlesticks, ChartValue start) {
+  auto gap_info = GapInfo{0, ChartValue()};
+  for(auto& candlestick : candlesticks) {
+    auto end = candlestick.GetStart();
+    if(start != end) {
+      gaps.push_back({start, end});
+      gap_info.total_gaps_value += end - start;
+      ++gap_info.gap_count;
+    }
+    start = candlestick.GetEnd();
+  }
+  return gap_info;
+}
+
+QtPromise<ChartView::LoadedData> ChartView::load_data(
+    QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
+    ChartModel* model) {
+  return promise.then([=] (auto result) mutable {
+    auto new_candlesticks = std::move(result.Get());
+    if(!new_candlesticks.empty() && !data.m_candlesticks.empty() &&
+        new_candlesticks.front().GetStart() <=
+        data.m_candlesticks.back().GetStart()) {
+      auto last = std::find_if(new_candlesticks.begin(),
+        new_candlesticks.end(), [&] (const auto& candlestick) {
+          return candlestick.GetStart() >=
+            data.m_candlesticks.back().GetStart();
+        });
+      auto b = new_candlesticks.begin();
+      if(last != new_candlesticks.end()) {
+        last++;
+      }
+      new_candlesticks.erase(b, last);
+    }
+    auto last = [&] {
+      if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
+        return ChartValue();
+      } else if(data.m_candlesticks.empty()) {
+        return new_candlesticks.front().GetStart();
+      }
+      return data.m_candlesticks.back().GetEnd();
+    }();
+    auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
+    data.m_candlesticks.insert(data.m_candlesticks.end(),
+      new_candlesticks.begin(), new_candlesticks.end());
+    data.m_current_x += std::min(static_cast<int>(std::ceil((
+      data.m_end - data.m_start - gap_info.total_gaps_value) /
+      data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
+      data.m_end_x);
+    data.m_start = data.m_end;
+    data.m_end += (data.m_end_x - data.m_current_x) *
+      data.m_values_per_pixel;
+    if(data.m_current_x < data.m_end_x) {
+      auto new_promise = model->load(data.m_start, data.m_end);
+      return load_data(new_promise, std::move(data), model);
+    }
+    return QtPromise<LoadedData>([=] {
+      return std::move(data);
+    });
+  });
 }
 
 int ChartView::update_intersection(const QPoint& mouse_pos) {
