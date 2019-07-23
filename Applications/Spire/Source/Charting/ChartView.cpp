@@ -82,8 +82,7 @@ bool ChartView::Region::operator ==(const Region& rhs) const {
 }
 
 bool ChartView::Region::operator !=(const Region& rhs) const {
-  return m_top_left != rhs.m_top_left ||
-    m_bottom_right != rhs.m_bottom_right;
+  return !(*this == rhs);
 }
 
 ChartView::ChartView(ChartModel& model, QWidget* parent)
