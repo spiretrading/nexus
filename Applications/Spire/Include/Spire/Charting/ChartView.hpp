@@ -3,8 +3,10 @@
 #include <QPen>
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartModel.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/Charting/TrendLineModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -22,42 +24,6 @@ namespace Spire {
 
         /** The bottom right point of the region. */
         ChartPoint m_bottom_right;
-      };
-
-      //! Represents a non-contiguous gap between two ChartValues.
-      struct Gap {
-
-        /** The start value of the gap. */
-        ChartValue m_start;
-
-        /** The end value of the gap. */
-        ChartValue m_end;
-      };
-
-      //! Represents an accumulation of loaded data and gaps, and stores values
-      //! that determine what to load next.
-      struct LoadedData {
-
-        /** The previously loaded candlesticks. */
-        std::vector<Candlestick> m_candlesticks;
-
-        /** Gaps identified in the candlesticks. */
-        std::vector<ChartView::Gap> m_gaps;
-
-        /** The next starting value to load. */
-        ChartValue m_start;
-
-        /** The next last value to load. */
-        ChartValue m_end;
-
-        /** Pixel value of the last loaded value. */
-        int m_current_x;
-
-        /** Pixel value of the final value to load. */
-        int m_end_x;
-
-        /** ChartValues represented by a single pixel. */
-        ChartValue m_values_per_pixel;
       };
 
       //! Constructs a ChartView.
@@ -164,9 +130,29 @@ namespace Spire {
         OFF,
         POINT
       };
+
+      struct Gap {
+        ChartValue m_start;
+        ChartValue m_end;
+      };
+
+      struct GapInfo {
+        int gap_count;
+        ChartValue total_gaps_value;
+      };
+
+      struct LoadedData {
+        std::vector<Candlestick> m_candlesticks;
+        std::vector<ChartView::Gap> m_gaps;
+        ChartValue m_start;
+        ChartValue m_end;
+        int m_current_x;
+        int m_end_x;
+        ChartValue m_values_per_pixel;
+      };
+
       ChartModel* m_model;
-      ChartPoint m_top_left;
-      ChartPoint m_bottom_right;
+      Region m_region;
       ChartPoint m_gap_adjusted_bottom_right;
       QPoint m_bottom_right_pixel;
       ChartValue m_x_axis_step;
@@ -196,6 +182,73 @@ namespace Spire {
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
       std::vector<Gap> m_gaps;
+
+      static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
+          std::vector<Candlestick>& candlesticks, ChartValue start) {
+        auto gap_info = GapInfo{0, ChartValue()};
+        for(auto& candlestick : candlesticks) {
+          auto end = candlestick.GetStart();
+          if(start != end) {
+            gaps.push_back({start, end});
+            gap_info.total_gaps_value += end - start;
+            ++gap_info.gap_count;
+          }
+          start = candlestick.GetEnd();
+        }
+        return gap_info;
+      }
+
+      static const int GAP_SIZE() {
+        static auto size = scale_width(35);
+        return size;
+      }
+
+      static QtPromise<ChartView::LoadedData> load_data(
+          QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
+          ChartModel* model) {
+        return promise.then([=] (auto result) mutable {
+          auto new_candlesticks = std::move(result.Get());
+          if(!new_candlesticks.empty() && !data.m_candlesticks.empty() &&
+              new_candlesticks.front().GetStart() <=
+              data.m_candlesticks.back().GetStart()) {
+            auto last = std::find_if(new_candlesticks.begin(),
+              new_candlesticks.end(), [&] (const auto& candlestick) {
+                return candlestick.GetStart() >=
+                  data.m_candlesticks.back().GetStart();
+              });
+            auto b = new_candlesticks.begin();
+            if(last != new_candlesticks.end()) {
+              last++;
+            }
+            new_candlesticks.erase(b, last);
+          }
+          auto last = [&] {
+            if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
+              return ChartValue();
+            } else if(data.m_candlesticks.empty()) {
+              return new_candlesticks.front().GetStart();
+            }
+            return data.m_candlesticks.back().GetEnd();
+          }();
+          auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
+          data.m_candlesticks.insert(data.m_candlesticks.end(),
+            new_candlesticks.begin(), new_candlesticks.end());
+          data.m_current_x += std::min(static_cast<int>(std::ceil((
+            data.m_end - data.m_start - gap_info.total_gaps_value) /
+            data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
+            data.m_end_x);
+          data.m_start = data.m_end;
+          data.m_end += (data.m_end_x - data.m_current_x) *
+            data.m_values_per_pixel;
+          if(data.m_current_x < data.m_end_x) {
+            auto new_promise = model->load(data.m_start, data.m_end);
+            return load_data(new_promise, std::move(data), model);
+          }
+          return QtPromise<LoadedData>([=] {
+            return std::move(data);
+          });
+        });
+      }
 
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
