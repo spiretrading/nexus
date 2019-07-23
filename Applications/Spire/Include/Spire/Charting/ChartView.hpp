@@ -3,10 +3,8 @@
 #include <QPen>
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Charting/ChartModel.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/Charting/TrendLineModel.hpp"
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
