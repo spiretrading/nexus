@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/Charting/ChartModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -367,26 +368,26 @@ void ChartView::paintEvent(QPaintEvent* event) {
       if(open.x() < m_bottom_right_pixel.x() && high <
           m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(open.x(), high),
-          QPoint(open.x(), std::min(low, m_bottom_right_pixel.y() - 1))),
+          QPoint(open.x(), min(low, m_bottom_right_pixel.y() - 1))),
           QColor("#A0A0A0"));
       }
       if(open.y() > close.y() && close.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(start_x, close.y()),
-          QPoint(std::min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          std::min(open.y(), m_bottom_right_pixel.y() - 1))),
+          QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
+          min(open.y(), m_bottom_right_pixel.y() - 1))),
           QColor("#8AF5C0"));
         painter.fillRect(QRect(QPoint(start_x + 1, close.y() + 1),
-          QPoint(std::min(end_x - 2, m_bottom_right_pixel.x() - 1),
-          std::min(open.y() - 1, m_bottom_right_pixel.y() - 1))),
+          QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
+          min(open.y() - 1, m_bottom_right_pixel.y() - 1))),
           QColor("#1FD37A"));
       } else if(open.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect({start_x, open.y()},
-          QPoint(std::min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          std::min(close.y(), m_bottom_right_pixel.y() - 1))),
+          QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
+          min(close.y(), m_bottom_right_pixel.y() - 1))),
           QColor("#FFA7A0"));
         painter.fillRect(QRect(QPoint(start_x + 1, open.y() + 1),
-          QPoint(std::min(end_x - 2, m_bottom_right_pixel.x() - 1),
-          std::min(close.y() - 1, m_bottom_right_pixel.y() - 1))),
+          QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
+          min(close.y() - 1, m_bottom_right_pixel.y() - 1))),
           QColor("#EF5357"));
       }
     }
@@ -532,7 +533,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
     data.m_candlesticks.insert(data.m_candlesticks.end(),
       new_candlesticks.begin(), new_candlesticks.end());
-    data.m_current_x += std::min(static_cast<int>(std::ceil((
+    data.m_current_x += min(static_cast<int>(std::ceil((
       data.m_end - data.m_start - gap_info.total_gaps_value) /
       data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
       data.m_end_x);
@@ -560,7 +561,7 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
     painter.drawLine(end, m_bottom_right_pixel.y(), end,
       m_bottom_right_pixel.y() + scale_height(2));
   }
-  end = std::min(end, m_bottom_right_pixel.x());
+  end = min(end, m_bottom_right_pixel.x());
   painter.setPen("#8C8C8C");
   auto slash_count = (static_cast<double>(end) - static_cast<double>(start)) /
     (static_cast<double>(scale_width(4)) +
@@ -618,8 +619,8 @@ void ChartView::update_auto_scale() {
   auto auto_scale_top = m_candlesticks.front().GetHigh();
   auto auto_scale_bottom = m_candlesticks.front().GetLow();
   for(auto& candle : m_candlesticks) {
-    auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
-    auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
+    auto_scale_top = max(auto_scale_top, candle.GetHigh());
+    auto_scale_bottom = min(auto_scale_bottom, candle.GetLow());
   }
   m_region.m_top_left.m_y = auto_scale_top;
   m_region.m_bottom_right.m_y = auto_scale_bottom;
@@ -713,7 +714,7 @@ void ChartView::update_origins() {
     auto origin = width() - (m_font_metrics.width("M") * (
       m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
       y_value), QLocale()).length()) - scale_width(4));
-    m_bottom_right_pixel.setX(std::min(m_bottom_right_pixel.x(), origin));
+    m_bottom_right_pixel.setX(min(m_bottom_right_pixel.x(), origin));
     y_value += m_y_axis_step;
   }
   m_bottom_right_pixel.setY(height() - (m_font_metrics.height() +
