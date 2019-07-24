@@ -25,7 +25,7 @@ namespace Spire {
   */
   template<typename T>
   T max(const T& first, const T& second) {
-    if(second > first) {
+    if(first < second) {
       return second;
     }
     return first;
