@@ -151,6 +151,12 @@ namespace Spire {
         ChartValue m_values_per_pixel;
       };
 
+      // TODO: good name for this
+      struct MouseOffset {
+        QPoint m_first;
+        QPoint m_second;
+      };
+
       ChartModel* m_model;
       Region m_region;
       ChartPoint m_gap_adjusted_bottom_right;
@@ -163,6 +169,7 @@ namespace Spire {
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
       std::optional<QPoint> m_crosshair_pos;
+      // TODO: may not be required anymore
       QPoint m_last_crosshair_pos;
       Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
@@ -181,6 +188,8 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
+      // TODO: good name for this
+      std::optional<MouseOffset> m_mouse_offset;
       std::vector<Gap> m_gaps;
 
       static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
