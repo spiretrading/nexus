@@ -517,7 +517,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
             data.m_candlesticks.back().GetStart();
         });
       if(last != new_candlesticks.end()) {
-        last++;
+        ++last;
       }
       new_candlesticks.erase(new_candlesticks.begin(), last);
     }
