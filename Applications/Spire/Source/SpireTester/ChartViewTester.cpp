@@ -17,22 +17,23 @@ namespace {
 
   const auto GAP_SIZE = 35;
 
-  const auto TL() {
-    static auto tl = ChartPoint(ChartValue(900), ChartValue(1));
-    return tl;
+  const auto TOP_LEFT() {
+    static auto top_left = ChartPoint(ChartValue(900), ChartValue(1));
+    return top_left;
   }
 
-  const auto BR() {
-    static auto br = ChartPoint(ChartValue(950), ChartValue(0));
-    return br;
+  const auto BOTTOM_RIGHT() {
+    static auto bottom_right = ChartPoint(ChartValue(950), ChartValue(0));
+    return bottom_right;
   }
 
-  const auto ADJ_BR() {
-    static auto adj_br = ChartPoint(ChartValue(952.5), ChartValue(0));;
-    return adj_br;
+  const auto ADJUSTED_BOTTOM_RIGHT() {
+    static auto adjusted_bottom_right = ChartPoint(ChartValue(952.5),
+      ChartValue(0));
+    return adjusted_bottom_right;
   }
 
-  const auto BR_PIXEL = QPoint(200, 100);
+  const auto BOTTOM_RIGHT_PIXEL = QPoint(200, 100);
 
   const auto GAPS() {
     static auto gaps = std::vector<Gap>();
@@ -61,29 +62,34 @@ namespace {
   }
 
   QPoint to_pixel(const ChartPoint& point) {
-    auto x = map_to(point.m_x, TL().m_x, BR().m_x, 0, BR_PIXEL.x());
+    auto x = map_to(point.m_x, TOP_LEFT().m_x, BOTTOM_RIGHT().m_x, 0,
+      BOTTOM_RIGHT_PIXEL.x());
     auto gaps = GAPS();
     for(auto& gap : gaps) {
       if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
         auto new_x = to_pixel({gap.m_start, ChartValue()}).x() +
           static_cast<int>((point.m_x - gap.m_start) /
           (gap.m_end - gap.m_start) * static_cast<double>(GAP_SIZE));
-        return {new_x, map_to(point.m_y, BR().m_y, TL().m_y, BR_PIXEL.y(), 0)};
+        return {new_x, map_to(point.m_y, BOTTOM_RIGHT().m_y, TOP_LEFT().m_y,
+          BOTTOM_RIGHT_PIXEL.y(), 0)};
       }
       if(point.m_x > gap.m_start) {
-        auto gap_start = map_to(gap.m_start, TL().m_x, BR().m_x, 0,
-          BR_PIXEL.x());
-        auto gap_end = map_to(gap.m_end, TL().m_x, BR().m_x, 0, BR_PIXEL.x());
+        auto gap_start = map_to(gap.m_start, TOP_LEFT().m_x,
+          BOTTOM_RIGHT().m_x, 0, BOTTOM_RIGHT_PIXEL.x());
+        auto gap_end = map_to(gap.m_end, TOP_LEFT().m_x, BOTTOM_RIGHT().m_x, 0,
+          BOTTOM_RIGHT_PIXEL.x());
         x -= gap_end - gap_start - GAP_SIZE;
       }
     }
-    return {x, map_to(point.m_y, BR().m_y, TL().m_y, BR_PIXEL.y(), 0)};
+    return {x, map_to(point.m_y, BOTTOM_RIGHT().m_y, TOP_LEFT().m_y,
+      BOTTOM_RIGHT_PIXEL.y(), 0)};
   }
 
   ChartPoint to_chart_point(const QPoint& point) {
-    auto y = map_to(point.y(), BR_PIXEL.y(), 0, BR().m_y, TL().m_y);
+    auto y = map_to(point.y(), BOTTOM_RIGHT_PIXEL.y(), 0, BOTTOM_RIGHT().m_y,
+      TOP_LEFT().m_y);
     auto lower_x_pixel = 0;
-    auto lower_x_chart_value = TL().m_x;
+    auto lower_x_chart_value = TOP_LEFT().m_x;
     auto x = [&] {
       for(auto gap : GAPS()) {
         auto gap_start_pixel = to_pixel({gap.m_start, y}).x();
@@ -99,8 +105,8 @@ namespace {
         lower_x_pixel = gap_end_pixel;
         lower_x_chart_value = gap.m_end;
       }
-      return map_to(point.x(), lower_x_pixel, BR_PIXEL.x(),
-        lower_x_chart_value, ADJ_BR().m_x);
+      return map_to(point.x(), lower_x_pixel, BOTTOM_RIGHT_PIXEL.x(),
+        lower_x_chart_value, ADJUSTED_BOTTOM_RIGHT().m_x);
     }();
     return {x, y};
   }

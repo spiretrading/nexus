@@ -237,8 +237,6 @@ void ChartView::set_region(const Region& region) {
   m_region = region;
   auto bottom_right_pixel_x = m_bottom_right_pixel.x();
   auto required_data = LoadedData();
-  required_data.m_candlesticks = std::vector<Candlestick>();
-  required_data.m_gaps = std::vector<Gap>();
   required_data.m_start = m_region.m_top_left.m_x;
   required_data.m_end = m_region.m_bottom_right.m_x;
   required_data.m_current_x = 0;
@@ -255,8 +253,6 @@ void ChartView::set_region(const Region& region) {
       m_region.m_bottom_right.m_y};
     if(m_is_auto_scaled) {
       update_auto_scale();
-    } else {
-      update();
     }
     update();
   });
@@ -514,19 +510,16 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     ChartModel* model) {
   return promise.then([=] (auto result) mutable {
     auto new_candlesticks = std::move(result.Get());
-    if(!new_candlesticks.empty() && !data.m_candlesticks.empty() &&
-        new_candlesticks.front().GetStart() <=
-        data.m_candlesticks.back().GetStart()) {
+    if(!data.m_candlesticks.empty()) {
       auto last = std::find_if(new_candlesticks.begin(),
         new_candlesticks.end(), [&] (const auto& candlestick) {
           return candlestick.GetStart() >=
             data.m_candlesticks.back().GetStart();
         });
-      auto b = new_candlesticks.begin();
       if(last != new_candlesticks.end()) {
         last++;
       }
-      new_candlesticks.erase(b, last);
+      new_candlesticks.erase(new_candlesticks.begin(), last);
     }
     auto last = [&] {
       if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
@@ -547,11 +540,11 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     data.m_end += (data.m_end_x - data.m_current_x) *
       data.m_values_per_pixel;
     if(data.m_current_x < data.m_end_x) {
-      auto new_promise = model->load(data.m_start, data.m_end);
-      return load_data(new_promise, std::move(data), model);
+      return load_data(model->load(data.m_start, data.m_end), std::move(data),
+        model);
     }
-    return QtPromise<LoadedData>([data_copy = std::move(data)] {
-      return std::move(data_copy);
+    return QtPromise<LoadedData>([data = std::move(data)] () mutable {
+      return std::move(data);
     });
   });
 }
