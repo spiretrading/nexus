@@ -14,6 +14,20 @@ namespace Spire {
   class ChartView : public QWidget {
     public:
 
+      //! Represents a region defined by two points.
+      struct Region {
+
+        /** The top left point of the region. */
+        ChartPoint m_top_left;
+
+        /** The bottom right point of the region. */
+        ChartPoint m_bottom_right;
+
+        bool operator ==(const Region& rhs) const;
+
+        bool operator !=(const Region& rhs) const;
+      };
+
       //! Constructs a ChartView.
       /*!
         \param model The model containing the data to display.
@@ -54,17 +68,17 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
-      //! Returns a pair (top left, bottom right) of ChartPoints
-      //! representing the region of the ChartView.
-      std::tuple<ChartPoint, ChartPoint> get_region() const;
+      //! Returns the region of the ChartView.
+      const ChartView::Region& get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
-        \param top_left The top left point to display.
-        \param bottom_right The bottom right point to display.
+        \param region The region the chart will display.
       */
-      void set_region(const ChartPoint& top_left,
-        const ChartPoint& bottom_right);
+      void set_region(const Region& region);
+
+      //! Returns true if auto scale is enabled, false otherwise.
+      bool is_auto_scale_enabled() const;
 
       //! Sets auto scale on or off.
       /*!
@@ -116,13 +130,30 @@ namespace Spire {
         OFF,
         POINT
       };
+
       struct Gap {
         ChartValue m_start;
         ChartValue m_end;
       };
+
+      struct GapInfo {
+        int gap_count;
+        ChartValue total_gaps_value;
+      };
+
+      struct LoadedData {
+        std::vector<Candlestick> m_candlesticks;
+        std::vector<ChartView::Gap> m_gaps;
+        ChartValue m_start;
+        ChartValue m_end;
+        int m_current_x;
+        int m_end_x;
+        ChartValue m_values_per_pixel;
+      };
+
       ChartModel* m_model;
-      ChartPoint m_top_left;
-      ChartPoint m_bottom_right;
+      Region m_region;
+      ChartPoint m_gap_adjusted_bottom_right;
       QPoint m_bottom_right_pixel;
       ChartValue m_x_axis_step;
       ChartValue m_x_range;
@@ -139,7 +170,7 @@ namespace Spire {
       std::vector<ChartValue> m_x_axis_values;
       std::vector<ChartValue> m_y_axis_values;
       bool m_is_auto_scaled;
-      QtPromise<std::vector<Spire::Candlestick>> m_candlestick_promise;
+      QtPromise<LoadedData> m_loaded_data_promise;
       std::vector<Candlestick> m_candlesticks;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
@@ -152,13 +183,18 @@ namespace Spire {
       bool m_is_multi_select_enabled;
       std::vector<Gap> m_gaps;
 
+      static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
+        std::vector<Candlestick>& candlesticks, ChartValue start);
+      static QtPromise<ChartView::LoadedData> load_data(
+        QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
+        ChartModel* model);
+
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
       void draw_points(int id, QPainter& painter);
       bool intersects_gap(int x) const;
       void update_auto_scale();
-      void update_gaps();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
       void update_selected_line_styles();
