@@ -181,11 +181,6 @@ void ChartView::set_crosshair(const QPoint& position,
     }
   }
   m_mouse_buttons = buttons;
-  if(m_crosshair_pos) {
-    m_last_crosshair_pos = *m_crosshair_pos;
-  } else {
-    m_last_crosshair_pos = position;
-  }
   m_crosshair_pos = position;
   if(m_draw_state != DrawState::OFF) {
     if(m_draw_state == DrawState::IDLE) {
