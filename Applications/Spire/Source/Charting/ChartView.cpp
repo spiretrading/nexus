@@ -181,11 +181,6 @@ void ChartView::set_crosshair(const QPoint& position,
     }
   }
   m_mouse_buttons = buttons;
-  if(m_crosshair_pos) {
-    m_last_crosshair_pos = *m_crosshair_pos;
-  } else {
-    m_last_crosshair_pos = position;
-  }
   m_crosshair_pos = position;
   if(m_draw_state != DrawState::OFF) {
     if(m_draw_state == DrawState::IDLE) {
@@ -200,12 +195,16 @@ void ChartView::set_crosshair(const QPoint& position,
       }
     } else if(m_draw_state == DrawState::LINE) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
-      auto delta = *m_crosshair_pos - m_last_crosshair_pos;
-      auto first = to_chart_point(to_pixel(std::get<0>(line.m_points)) +
-        delta);
-      auto chart_delta = first - std::get<0>(line.m_points);
-      line.m_points = {first, std::get<1>(line.m_points) + chart_delta};
-      m_trend_line_model.update(line, m_current_trend_line_id);
+      if(!m_line_mouse_offset) {
+        m_line_mouse_offset = LineMouseOffset{
+          to_pixel(std::get<0>(line.m_points)) - *m_crosshair_pos,
+          to_pixel(std::get<1>(line.m_points)) - *m_crosshair_pos};
+      } else {
+        line.m_points = {
+          to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_first),
+          to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_second)};
+        m_trend_line_model.update(line, m_current_trend_line_id);
+      }
     } else if(m_draw_state == DrawState::NEW) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
       m_current_trend_line_point = to_chart_point(*m_crosshair_pos);
@@ -224,7 +223,7 @@ void ChartView::set_crosshair(const QPoint& position,
 }
 
 void ChartView::reset_crosshair() {
-  m_crosshair_pos.reset();
+  m_crosshair_pos = std::nullopt;
 }
 
 const ChartView::Region& ChartView::get_region() const {
@@ -538,8 +537,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
       data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
       data.m_end_x);
     data.m_start = data.m_end;
-    data.m_end += (data.m_end_x - data.m_current_x) *
-      data.m_values_per_pixel;
+    data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
     if(data.m_current_x < data.m_end_x) {
       return load_data(model->load(data.m_start, data.m_end), std::move(data),
         model);
@@ -771,6 +769,7 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
 
 void ChartView::on_left_mouse_button_release() {
   if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
+    m_line_mouse_offset = std::nullopt;
     m_draw_state = DrawState::IDLE;
   }
 }
