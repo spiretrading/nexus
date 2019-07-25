@@ -200,11 +200,10 @@ void ChartView::set_crosshair(const QPoint& position,
       }
     } else if(m_draw_state == DrawState::LINE) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
-      auto first = std::get<0>(line.m_points);
-      auto second = std::get<1>(line.m_points);
       if(!m_mouse_offset) {
-        m_mouse_offset = MouseOffset{to_pixel(first) - *m_crosshair_pos,
-          to_pixel(second) - *m_crosshair_pos};
+        m_mouse_offset = MouseOffset{
+          to_pixel(std::get<0>(line.m_points)) - *m_crosshair_pos,
+          to_pixel(std::get<1>(line.m_points)) - *m_crosshair_pos};
       } else {
         line.m_points = {
           to_chart_point(*m_crosshair_pos + m_mouse_offset->m_first),
