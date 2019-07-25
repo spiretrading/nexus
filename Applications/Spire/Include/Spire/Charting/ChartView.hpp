@@ -185,7 +185,6 @@ namespace Spire {
       TrendLineStyle m_current_trend_line_style;
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
-      // TODO: good name for this
       std::optional<LineMouseOffset> m_line_mouse_offset;
       std::vector<Gap> m_gaps;
 
