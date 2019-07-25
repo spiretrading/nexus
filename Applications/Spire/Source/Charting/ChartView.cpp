@@ -223,7 +223,7 @@ void ChartView::set_crosshair(const QPoint& position,
 }
 
 void ChartView::reset_crosshair() {
-  m_crosshair_pos.reset();
+  m_crosshair_pos = std::nullopt;
 }
 
 const ChartView::Region& ChartView::get_region() const {
@@ -769,7 +769,7 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
 
 void ChartView::on_left_mouse_button_release() {
   if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
-    m_line_mouse_offset.reset();
+    m_line_mouse_offset = std::nullopt;
     m_draw_state = DrawState::IDLE;
   }
 }
