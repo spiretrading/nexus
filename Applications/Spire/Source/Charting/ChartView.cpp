@@ -195,14 +195,14 @@ void ChartView::set_crosshair(const QPoint& position,
       }
     } else if(m_draw_state == DrawState::LINE) {
       auto line = m_trend_line_model.get(m_current_trend_line_id);
-      if(!m_mouse_offset) {
-        m_mouse_offset = MouseOffset{
+      if(!m_line_mouse_offset) {
+        m_line_mouse_offset = LineMouseOffset{
           to_pixel(std::get<0>(line.m_points)) - *m_crosshair_pos,
           to_pixel(std::get<1>(line.m_points)) - *m_crosshair_pos};
       } else {
         line.m_points = {
-          to_chart_point(*m_crosshair_pos + m_mouse_offset->m_first),
-          to_chart_point(*m_crosshair_pos + m_mouse_offset->m_second)};
+          to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_first),
+          to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_second)};
         m_trend_line_model.update(line, m_current_trend_line_id);
       }
     } else if(m_draw_state == DrawState::NEW) {
@@ -770,7 +770,7 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
 
 void ChartView::on_left_mouse_button_release() {
   if(m_draw_state == DrawState::LINE || m_draw_state == DrawState::POINT) {
-    m_mouse_offset.reset();
+    m_line_mouse_offset.reset();
     m_draw_state = DrawState::IDLE;
   }
 }
