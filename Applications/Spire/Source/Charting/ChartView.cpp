@@ -537,8 +537,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
       data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
       data.m_end_x);
     data.m_start = data.m_end;
-    data.m_end += (data.m_end_x - data.m_current_x) *
-      data.m_values_per_pixel;
+    data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
     if(data.m_current_x < data.m_end_x) {
       return load_data(model->load(data.m_start, data.m_end), std::move(data),
         model);
