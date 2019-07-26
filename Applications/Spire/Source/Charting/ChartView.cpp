@@ -235,14 +235,13 @@ void ChartView::set_region(const Region& region) {
     return;
   }
   m_region = region;
-  auto bottom_right_pixel_x = m_bottom_right_pixel.x();
   auto required_data = LoadedData();
   required_data.m_start = m_region.m_top_left.m_x;
   required_data.m_end = m_region.m_bottom_right.m_x;
   required_data.m_current_x = 0;
   required_data.m_end_x = m_bottom_right_pixel.x();
   required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
-    m_region.m_top_left.m_x) / bottom_right_pixel_x;
+    m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
   m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
     required_data.m_end), required_data, m_model);
   // TODO: Potential crash
@@ -254,6 +253,7 @@ void ChartView::set_region(const Region& region) {
     if(m_is_auto_scaled) {
       update_auto_scale();
     }
+    update_origins();
     update();
   });
   update();
@@ -267,6 +267,7 @@ void ChartView::set_auto_scale(bool auto_scale) {
   m_is_auto_scaled = auto_scale;
   if(m_is_auto_scaled) {
     update_auto_scale();
+    update_origins();
   }
 }
 
@@ -532,10 +533,9 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
     data.m_candlesticks.insert(data.m_candlesticks.end(),
       new_candlesticks.begin(), new_candlesticks.end());
-    data.m_current_x += min(static_cast<int>(std::ceil((
+    data.m_current_x += static_cast<int>(std::ceil((
       data.m_end - data.m_start - gap_info.total_gaps_value) /
-      data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE())),
-      data.m_end_x);
+      data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE()));
     data.m_start = data.m_end;
     data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
     if(data.m_current_x < data.m_end_x) {
@@ -622,7 +622,6 @@ void ChartView::update_auto_scale() {
   }
   m_region.m_top_left.m_y = auto_scale_top;
   m_region.m_bottom_right.m_y = auto_scale_bottom;
-  update_origins();
 }
 
 int ChartView::update_intersection(const QPoint& mouse_pos) {
