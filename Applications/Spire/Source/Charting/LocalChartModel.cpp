@@ -1,5 +1,4 @@
 #include "Spire/Charting/LocalChartModel.hpp"
-#include <iterator>
 
 using namespace Beam::Queries;
 using namespace boost;
