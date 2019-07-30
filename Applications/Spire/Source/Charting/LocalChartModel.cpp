@@ -1,5 +1,6 @@
 #include "Spire/Charting/LocalChartModel.hpp"
 
+using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -24,7 +25,7 @@ ChartValue::Type LocalChartModel::get_y_axis_type() const {
 }
 
 QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
-    ChartValue last) {
+    ChartValue last, const SnapshotLimit& limit) {
   return QtPromise([=, candlesticks = m_candlesticks] {
     auto start = std::lower_bound(candlesticks.begin(), candlesticks.end(),
       first, [] (const auto& lhs, const auto& rhs) {

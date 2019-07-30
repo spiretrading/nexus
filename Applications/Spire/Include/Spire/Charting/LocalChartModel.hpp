@@ -23,7 +23,7 @@ namespace Spire {
       ChartValue::Type get_y_axis_type() const override;
 
       QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last) override;
+        ChartValue last, const Beam::Queries::SnapshotLimit& limit) override;
 
       boost::signals2::connection connect_candlestick_slot(
         const CandlestickSignal::slot_type& slot) const override;

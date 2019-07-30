@@ -22,14 +22,19 @@ namespace Spire {
           /*!
             \param first The beginning of the range to load.
             \param last The end of the range to load.
+            \param limit The limit on the candlesticks to load.
           */
-          LoadEntry(ChartValue first, ChartValue end);
+          LoadEntry(ChartValue first, ChartValue end,
+            const Beam::Queries::SnapshotLimit& limit);
 
           //! Returns the beginning of the range to load.
           ChartValue get_first() const;
 
           //! Returns the end of the range to load.
           ChartValue get_last() const;
+
+          //! Returns the limit.
+          const Beam::Queries::SnapshotLimit& get_limit() const;
 
           //! Sets the result of the load operation.
           /*!
@@ -46,6 +51,7 @@ namespace Spire {
           mutable Beam::Threading::Mutex m_mutex;
           ChartValue m_first;
           ChartValue m_last;
+          Beam::Queries::SnapshotLimit m_limit;
           bool m_is_loaded;
           std::vector<Candlestick> m_result;
           Beam::Threading::ConditionVariable m_load_condition;
@@ -67,7 +73,7 @@ namespace Spire {
       ChartValue::Type get_y_axis_type() const override;
 
       QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last) override;
+        ChartValue last, const Beam::Queries::SnapshotLimit& limit) override;
 
       boost::signals2::connection connect_candlestick_slot(
         const CandlestickSignal::slot_type& slot) const override;

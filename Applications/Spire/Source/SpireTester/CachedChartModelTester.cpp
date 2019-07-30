@@ -5,6 +5,7 @@
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/SpireTester/TestChartModel.hpp"
 
+using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Spire;
 
@@ -25,7 +26,7 @@ namespace {
 
   std::vector<Candlestick> load(ChartModel* model, int first, int last) {
     return std::move(wait(model->load(ChartValue(first * Money::ONE),
-      ChartValue(last * Money::ONE))));
+      ChartValue(last * Money::ONE), SnapshotLimit::Unlimited())));
   }
 }
 
@@ -155,17 +156,19 @@ TEST_CASE("test_cache_functionality", "[CachedChartModel]") {
       model->get_y_axis_type());
     auto cache = CachedChartModel(test_model);
     auto pre_load1 = cache.load(ChartValue(40 * Money::ONE),
-      ChartValue(50 * Money::ONE));
+      ChartValue(50 * Money::ONE), SnapshotLimit::Unlimited());
     test_model.pop_load()->set_result(wait(
-      model->load(ChartValue(40 * Money::ONE), ChartValue(50 * Money::ONE))));
+      model->load(ChartValue(40 * Money::ONE), ChartValue(50 * Money::ONE),
+      SnapshotLimit::Unlimited())));
     wait(std::move(pre_load1));
     auto pre_load2 = cache.load(ChartValue(60 * Money::ONE),
-      ChartValue(70 * Money::ONE));
+      ChartValue(70 * Money::ONE), SnapshotLimit::Unlimited());
     test_model.pop_load()->set_result(wait(
-      model->load(ChartValue(60 * Money::ONE), ChartValue(70 * Money::ONE))));
+      model->load(ChartValue(60 * Money::ONE), ChartValue(70 * Money::ONE),
+      SnapshotLimit::Unlimited())));
     wait(std::move(pre_load2));
     auto cache_test_load = cache.load(ChartValue(45 * Money::ONE),
-      ChartValue(75 * Money::ONE));
+      ChartValue(75 * Money::ONE), SnapshotLimit::Unlimited());
     auto cache_load1 = test_model.pop_load();
     REQUIRE(cache_load1->get_first() == ChartValue(50 * Money::ONE));
     REQUIRE(cache_load1->get_last() == ChartValue(60 * Money::ONE));
@@ -184,21 +187,22 @@ TEST_CASE("test_load_ordering_b_before_a", "[CachedChartModel") {
       model->get_y_axis_type());
     auto cache = CachedChartModel(test_model);
     auto load_a = cache.load(ChartValue(40 * Money::ONE),
-      ChartValue(60 * Money::ONE));
+      ChartValue(60 * Money::ONE), SnapshotLimit::Unlimited());
     auto load_b = cache.load(ChartValue(50 * Money::ONE),
-      ChartValue(70 * Money::ONE));
+      ChartValue(70 * Money::ONE), SnapshotLimit::Unlimited());
     auto entry_a = test_model.pop_load();
     auto entry_b = test_model.pop_load();
     entry_b->set_result(wait(model->load(
-      ChartValue(50 * Money::ONE), ChartValue(70 * Money::ONE))));
+      ChartValue(50 * Money::ONE), ChartValue(70 * Money::ONE),
+      SnapshotLimit::Unlimited())));
     entry_a->set_result(wait(model->load(ChartValue(40 * Money::ONE),
-      ChartValue(60 * Money::ONE))));
+      ChartValue(60 * Money::ONE), SnapshotLimit::Unlimited())));
     auto result_a = wait(std::move(load_a));
     auto result_b = wait(std::move(load_b));
     REQUIRE(result_a == wait(model->load(ChartValue(40 * Money::ONE),
-      ChartValue(60 * Money::ONE))));
+      ChartValue(60 * Money::ONE), SnapshotLimit::Unlimited())));
     REQUIRE(result_b == wait(model->load(ChartValue(50 * Money::ONE),
-      ChartValue(70 * Money::ONE))));
+      ChartValue(70 * Money::ONE), SnapshotLimit::Unlimited())));
   }, "test_load_ordering_b_then_a");
 }
 
@@ -209,20 +213,21 @@ TEST_CASE("test_load_ordering_a_then_b_superset", "[CachedChartModel]") {
       model->get_y_axis_type());
     auto cache = CachedChartModel(test_model);
     auto load_a = cache.load(ChartValue(40 * Money::ONE),
-      ChartValue(60 * Money::ONE));
+      ChartValue(60 * Money::ONE), SnapshotLimit::Unlimited());
     test_model.pop_load()->set_result(wait(model->load(
-      ChartValue(40 * Money::ONE), ChartValue(60 * Money::ONE))));
+      ChartValue(40 * Money::ONE), ChartValue(60 * Money::ONE),
+      SnapshotLimit::Unlimited())));
     wait(std::move(load_a));
     auto load_b = cache.load(ChartValue(20 * Money::ONE),
-      ChartValue(80 * Money::ONE));
+      ChartValue(80 * Money::ONE), SnapshotLimit::Unlimited());
     auto entry1 = test_model.pop_load();
     auto entry2 = test_model.pop_load();
     entry2->set_result(wait(model->load(ChartValue(60 * Money::ONE),
-      ChartValue(80 * Money::ONE))));
+      ChartValue(80 * Money::ONE), SnapshotLimit::Unlimited())));
     entry1->set_result(wait(model->load(ChartValue(20 * Money::ONE),
-      ChartValue(40 * Money::ONE))));
+      ChartValue(40 * Money::ONE), SnapshotLimit::Unlimited())));
     auto result = wait(std::move(load_b));
     REQUIRE(result == wait(model->load(ChartValue(20 * Money::ONE),
-      ChartValue(80 * Money::ONE))));
+      ChartValue(80 * Money::ONE), SnapshotLimit::Unlimited())));
   }, "test_load_ordering_a_then_b_superset");
 }

@@ -9,6 +9,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 
+using namespace Beam::Queries;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -243,7 +244,7 @@ void ChartView::set_region(const Region& region) {
   required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
     m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
   m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
-    required_data.m_end), required_data, m_model);
+    required_data.m_end, SnapshotLimit::Unlimited()), required_data, m_model);
   // TODO: Potential crash
   m_loaded_data_promise.then([=] (auto result) {
     m_candlesticks = std::move(result.Get().m_candlesticks);
@@ -539,8 +540,8 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     data.m_start = data.m_end;
     data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
     if(data.m_current_x < data.m_end_x) {
-      return load_data(model->load(data.m_start, data.m_end), std::move(data),
-        model);
+      return load_data(model->load(data.m_start, data.m_end,
+        SnapshotLimit::Unlimited()), std::move(data), model);
     }
     return QtPromise<LoadedData>([data = std::move(data)] () mutable {
       return std::move(data);

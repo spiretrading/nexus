@@ -1,5 +1,6 @@
 #include "Spire/Charting/EmptyChartModel.hpp"
 
+using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -18,7 +19,7 @@ ChartValue::Type EmptyChartModel::get_y_axis_type() const {
 }
 
 QtPromise<std::vector<Candlestick>> EmptyChartModel::load(ChartValue first,
-    ChartValue last) {
+    ChartValue last, const SnapshotLimit& limit) {
   return QtPromise([] {
     return std::vector<Candlestick>();
   });

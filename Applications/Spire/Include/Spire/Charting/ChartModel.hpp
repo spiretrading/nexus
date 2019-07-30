@@ -1,6 +1,7 @@
 #ifndef SPIRE_CHART_MODEL_HPP
 #define SPIRE_CHART_MODEL_HPP
 #include <vector>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <boost/noncopyable.hpp>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
@@ -27,9 +28,10 @@ namespace Spire {
       /*!
         \param first The first candlestick in the range to load (inclusive).
         \param last The last candlestick in the range to load (inclusive).
+        \param limit Limits the number of candlesticks to load.
       */
       virtual QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last) = 0;
+        ChartValue last, const Beam::Queries::SnapshotLimit& limit) = 0;
 
       //! Connects a slot to the candlestick signal.
       /*!

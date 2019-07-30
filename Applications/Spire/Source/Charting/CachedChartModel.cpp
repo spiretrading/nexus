@@ -1,5 +1,6 @@
 #include "Spire/Charting/CachedChartModel.hpp"
 
+using namespace Beam::Queries;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -15,7 +16,7 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
-    ChartValue last) {
+    ChartValue last, const SnapshotLimit& limit) {
   for(auto& range : m_ranges)  {
     if(range.m_start <= first && range.m_end >= last) {
       return QtPromise([=] {
@@ -95,7 +96,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
     const std::vector<ChartRange>& gaps, ChartValue first, ChartValue last) {
   auto promises = std::vector<QtPromise<std::vector<Candlestick>>>();
   for(auto& gap : gaps) {
-    promises.push_back(m_chart_model->load(gap.m_start, gap.m_end));
+    promises.push_back(m_chart_model->load(gap.m_start, gap.m_end,
+      SnapshotLimit::Unlimited()));
   }
   return all(std::move(promises)).then(
     [=] (std::vector<std::vector<Candlestick>> result) {

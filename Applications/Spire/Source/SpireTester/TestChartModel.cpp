@@ -1,12 +1,15 @@
 #include "Spire/SpireTester/TestChartModel.hpp"
 #include <mutex>
 
+using namespace Beam::Queries;
 using namespace boost::signals2;
 using namespace Spire;
 
-TestChartModel::LoadEntry::LoadEntry(ChartValue first, ChartValue last)
+TestChartModel::LoadEntry::LoadEntry(ChartValue first, ChartValue last,
+    const SnapshotLimit& limit)
     : m_first(first),
       m_last(last),
+      m_limit(limit),
       m_is_loaded(false) {}
 
 ChartValue TestChartModel::LoadEntry::get_first() const {
@@ -15,6 +18,10 @@ ChartValue TestChartModel::LoadEntry::get_first() const {
 
 ChartValue TestChartModel::LoadEntry::get_last() const {
   return m_last;
+}
+
+const SnapshotLimit& TestChartModel::LoadEntry::get_limit() const {
+  return m_limit;
 }
 
 void TestChartModel::LoadEntry::set_result(std::vector<Candlestick> result) {
@@ -48,8 +55,8 @@ ChartValue::Type TestChartModel::get_y_axis_type() const {
 }
 
 QtPromise<std::vector<Candlestick>> TestChartModel::load(ChartValue first,
-    ChartValue last) {
-  auto load_entry = std::make_shared<LoadEntry>(first, last);
+    ChartValue last, const SnapshotLimit& limit) {
+  auto load_entry = std::make_shared<LoadEntry>(first, last, limit);
   m_load_entries.push_back(load_entry);
   return QtPromise([=] {
     auto lock = std::unique_lock(load_entry->m_mutex);
