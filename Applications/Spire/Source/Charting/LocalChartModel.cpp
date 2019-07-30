@@ -44,8 +44,7 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
     } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
       return std::vector<Candlestick>(start, start + limit.GetSize());
     }
-    return std::vector<Candlestick>(std::make_reverse_iterator(start),
-      std::make_reverse_iterator(end) + limit.GetSize());
+    return std::vector<Candlestick>(end - limit.GetSize(), end);
   });
 }
 
