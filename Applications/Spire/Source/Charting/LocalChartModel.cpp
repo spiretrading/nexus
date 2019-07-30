@@ -1,4 +1,5 @@
 #include "Spire/Charting/LocalChartModel.hpp"
+#include <iterator>
 
 using namespace Beam::Queries;
 using namespace boost;
@@ -38,7 +39,13 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
     if(end != candlesticks.end()) {
       ++end;
     }
-    return std::vector<Candlestick>(start, end);
+    if(std::distance(start, end) <= limit.GetSize()) {
+      return std::vector<Candlestick>(start, end);
+    } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+      return std::vector<Candlestick>(start, start + limit.GetSize());
+    }
+    return std::vector<Candlestick>(std::make_reverse_iterator(start),
+      std::make_reverse_iterator(end) + limit.GetSize());
   });
 }
 
