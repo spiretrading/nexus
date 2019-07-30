@@ -33,7 +33,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
         if(last_iterator != m_loaded_data.end()) {
           ++last_iterator;
         }
-        return limit_filtered_data(first_iterator, last_iterator, limit);
+        return get_limited_data(first_iterator, last_iterator, limit);
       });
     }
   }
@@ -74,6 +74,18 @@ std::vector<CachedChartModel::ChartRange> CachedChartModel::get_gaps(
   return gaps;
 }
 
+std::vector<Candlestick> CachedChartModel::get_limited_data(
+    const std::vector<Candlestick>::iterator& start,
+    const std::vector<Candlestick>::iterator& end,
+    const SnapshotLimit& limit) {
+  if(std::distance(start, end) <= limit.GetSize()) {
+    return std::vector<Candlestick>(start, end);
+  } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+    return std::vector<Candlestick>(start, start + limit.GetSize());
+  }
+  return std::vector<Candlestick>(end - limit.GetSize(), end);
+}
+
 void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
   if(data.empty()) {
     return;
@@ -90,18 +102,6 @@ void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
     });
   auto index = m_loaded_data.erase(first, last);
   m_loaded_data.insert(index, data.begin(), data.end());
-}
-
-std::vector<Candlestick> CachedChartModel::limit_filtered_data(
-    const std::vector<Candlestick>::iterator& start,
-    const std::vector<Candlestick>::iterator& end,
-    const SnapshotLimit& limit) {
-  if(std::distance(start, end) <= limit.GetSize()) {
-    return std::vector<Candlestick>(start, end);
-  } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
-    return std::vector<Candlestick>(start, start + limit.GetSize());
-  }
-  return std::vector<Candlestick>(end - limit.GetSize(), end);
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
@@ -130,7 +130,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
       if(last_index != m_loaded_data.end()) {
         ++last_index;
       }
-      return limit_filtered_data(first_index, last_index, limit);
+      return get_limited_data(first_index, last_index, limit);
     });
 }
 
