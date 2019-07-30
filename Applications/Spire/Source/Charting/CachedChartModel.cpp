@@ -33,11 +33,11 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
         if(last_iterator != m_loaded_data.end()) {
           ++last_iterator;
         }
-        return std::vector<Candlestick>(first_iterator, last_iterator);
+        return limit_filtered_data(first_iterator, last_iterator, limit);
       });
     }
   }
-  return load_data(get_gaps(first, last), first, last);
+  return load_data(get_gaps(first, last), first, last, limit);
 }
 
 connection CachedChartModel::connect_candlestick_slot(
@@ -92,8 +92,21 @@ void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
   m_loaded_data.insert(index, data.begin(), data.end());
 }
 
+std::vector<Candlestick> CachedChartModel::limit_filtered_data(
+    const std::vector<Candlestick>::iterator& start,
+    const std::vector<Candlestick>::iterator& end,
+    const SnapshotLimit& limit) {
+  if(std::distance(start, end) <= limit.GetSize()) {
+    return std::vector<Candlestick>(start, end);
+  } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+    return std::vector<Candlestick>(start, start + limit.GetSize());
+  }
+  return std::vector<Candlestick>(end - limit.GetSize(), end);
+}
+
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
-    const std::vector<ChartRange>& gaps, ChartValue first, ChartValue last) {
+    const std::vector<ChartRange>& gaps, ChartValue first, ChartValue last,
+    const SnapshotLimit& limit) {
   auto promises = std::vector<QtPromise<std::vector<Candlestick>>>();
   for(auto& gap : gaps) {
     promises.push_back(m_chart_model->load(gap.m_start, gap.m_end,
@@ -117,7 +130,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
       if(last_index != m_loaded_data.end()) {
         ++last_index;
       }
-      return std::vector<Candlestick>(first_index, last_index);
+      return limit_filtered_data(first_index, last_index, limit);
     });
 }
 
