@@ -43,6 +43,16 @@ void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
   m_loaded_data.insert(index, data.begin(), data.end());
 }
 
+QtPromise<std::vector<Candlestick>> load_from_cache(
+    ChartValue first, ChartValue last, Beam::Queries::SnapshotLimit& limit) {
+  return {};
+}
+
+QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
+    ChartValue first, ChartValue last, Beam::Queries::SnapshotLimit& limit) {
+  return {};
+}
+
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last) {
   for(auto& range : m_ranges) {

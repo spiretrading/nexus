@@ -1,6 +1,6 @@
 #ifndef SPIRE_CACHED_CHART_MODEL_HPP
 #define SPIRE_CACHED_CHART_MODEL_HPP
-#include "Spire/Charting/ChartModel.hpp"
+#include "Spire/Charting/LocalChartModel.hpp"
 
 namespace Spire {
 
@@ -41,9 +41,13 @@ namespace Spire {
       mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
       std::vector<ChartRange> m_ranges;
-      std::vector<Candlestick> m_loaded_data;
+      LocalChartModel m_cache;
 
       void insert_data(const std::vector<Candlestick>& data);
+      QtPromise<std::vector<Candlestick>> load_from_cache(ChartValue first,
+        ChartValue last, Beam::Queries::SnapshotLimit& limit);
+      QtPromise<std::vector<Candlestick>> load_from_model(ChartValue first,
+        ChartValue last, Beam::Queries::SnapshotLimit& limit);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
       void on_data_loaded(const std::vector<Candlestick>& data,
