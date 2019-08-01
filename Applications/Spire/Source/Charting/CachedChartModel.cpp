@@ -20,24 +20,54 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
   for(auto& range : m_ranges)  {
     if(range.m_start <= first && range.m_end >= last) {
       return QtPromise([=] {
-        auto first_iterator = std::lower_bound(m_loaded_data.begin(),
+        auto start = std::lower_bound(m_loaded_data.begin(),
           m_loaded_data.end(), first,
           [] (const auto& index, const auto& value) {
             return index.GetEnd() < value;
           });
-        auto last_iterator = std::lower_bound(m_loaded_data.begin(),
+        auto end = std::lower_bound(m_loaded_data.begin(),
           m_loaded_data.end(), last,
           [] (const auto& index, const auto& value) {
             return index.GetStart() < value;
           });
-        if(last_iterator != m_loaded_data.end()) {
-          ++last_iterator;
+        if(end != m_loaded_data.end()) {
+          ++end;
         }
-        return get_limited_data(first_iterator, last_iterator, limit);
+        if(std::distance(start, end) <= limit.GetSize()) {
+          return std::vector<Candlestick>(start, end);
+        } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+          return std::vector<Candlestick>(start, start + limit.GetSize());
+        }
+        return std::vector<Candlestick>(end - limit.GetSize(), end);
       });
     }
   }
-  return load_data(get_gaps(first, last), first, last, limit);
+  auto gap = get_gaps(first, last).front();
+  if(first < gap.m_start) {
+    auto start = std::lower_bound(m_loaded_data.begin(),
+      m_loaded_data.end(), first,
+      [] (const auto& index, const auto& value) {
+        return index.GetEnd() < value;
+      });
+    auto end = std::lower_bound(m_loaded_data.begin(),
+      m_loaded_data.end(), last,
+      [] (const auto& index, const auto& value) {
+        return index.GetStart() < value;
+      });
+    if(end != m_loaded_data.end()) {
+      ++end;
+    }
+    return m_chart_model->load(gap.m_start, gap.m_end,
+      {limit.GetType(), limit.GetSize() - std::distance(start, end)}).then(
+      [=] (auto result) {
+        on_data_loaded(result, first, last);
+        return load(first, last, limit);
+      });
+  }
+  return m_chart_model->load(first, last, limit).then([=] (auto result) {
+      on_data_loaded(result, first, last);
+      return load(first, last, limit);
+    });
 }
 
 connection CachedChartModel::connect_candlestick_slot(
@@ -74,18 +104,6 @@ std::vector<CachedChartModel::ChartRange> CachedChartModel::get_gaps(
   return gaps;
 }
 
-std::vector<Candlestick> CachedChartModel::get_limited_data(
-    const std::vector<Candlestick>::iterator& start,
-    const std::vector<Candlestick>::iterator& end,
-    const SnapshotLimit& limit) {
-  if(std::distance(start, end) <= limit.GetSize()) {
-    return std::vector<Candlestick>(start, end);
-  } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
-    return std::vector<Candlestick>(start, start + limit.GetSize());
-  }
-  return std::vector<Candlestick>(end - limit.GetSize(), end);
-}
-
 void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
   if(data.empty()) {
     return;
@@ -102,36 +120,6 @@ void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
     });
   auto index = m_loaded_data.erase(first, last);
   m_loaded_data.insert(index, data.begin(), data.end());
-}
-
-QtPromise<std::vector<Candlestick>> CachedChartModel::load_data(
-    const std::vector<ChartRange>& gaps, ChartValue first, ChartValue last,
-    const SnapshotLimit& limit) {
-  auto promises = std::vector<QtPromise<std::vector<Candlestick>>>();
-  for(auto& gap : gaps) {
-    promises.push_back(m_chart_model->load(gap.m_start, gap.m_end,
-      SnapshotLimit::Unlimited()));
-  }
-  return all(std::move(promises)).then(
-    [=] (std::vector<std::vector<Candlestick>> result) {
-      for(auto i = std::size_t(0); i < gaps.size(); ++i) {
-        on_data_loaded(result[i], gaps[i].m_start, gaps[i].m_end);
-      }
-      auto first_index = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), first,
-        [] (const auto& index, const auto& value) {
-          return index.GetEnd() < value;
-        });
-      auto last_index = std::lower_bound(m_loaded_data.begin(),
-        m_loaded_data.end(), last,
-        [] (const auto& index, const auto& value) {
-          return index.GetStart() < value;
-        });
-      if(last_index != m_loaded_data.end()) {
-        ++last_index;
-      }
-      return get_limited_data(first_index, last_index, limit);
-    });
 }
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,

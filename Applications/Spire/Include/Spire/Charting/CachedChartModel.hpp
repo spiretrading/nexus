@@ -44,14 +44,7 @@ namespace Spire {
       std::vector<Candlestick> m_loaded_data;
 
       std::vector<ChartRange> get_gaps(ChartValue first, ChartValue last);
-      std::vector<Candlestick> get_limited_data(
-        const std::vector<Candlestick>::iterator& start,
-        const std::vector<Candlestick>::iterator& end,
-        const Beam::Queries::SnapshotLimit& limit);
       void insert_data(const std::vector<Candlestick>& data);
-      QtPromise<std::vector<Candlestick>> load_data(
-        const std::vector<ChartRange>& gaps, ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
       void update_ranges(ChartValue first, ChartValue last);
