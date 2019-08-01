@@ -25,6 +25,14 @@ namespace Spire {
       QtPromise<std::vector<Candlestick>> load(ChartValue first,
         ChartValue last, const Beam::Queries::SnapshotLimit& limit) override;
 
+      //! Inserts candlesticks into the model in sorted order. Duplicate
+      //! candlesticks are erased.
+      /*
+        \param candlesticks A sorted vector of candlesticks to insert into the
+                            model.
+      */
+      void store(const std::vector<Candlestick>& candlesticks);
+
       boost::signals2::connection connect_candlestick_slot(
         const CandlestickSignal::slot_type& slot) const override;
 
