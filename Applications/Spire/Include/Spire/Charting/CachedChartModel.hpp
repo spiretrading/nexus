@@ -43,10 +43,12 @@ namespace Spire {
       std::vector<ChartRange> m_ranges;
       std::vector<Candlestick> m_loaded_data;
 
-      std::vector<ChartRange> get_gaps(ChartValue first, ChartValue last);
       void insert_data(const std::vector<Candlestick>& data);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
+      void on_data_loaded(const std::vector<Candlestick>& data,
+        ChartValue first, ChartValue last,
+        const Beam::Queries::SnapshotLimit& limit);
       void update_ranges(ChartValue first, ChartValue last);
   };
 }
