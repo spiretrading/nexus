@@ -48,10 +48,9 @@ void LocalChartModel::store(const std::vector<Candlestick>& candlesticks) {
   }
   m_candlesticks.insert(m_candlesticks.end(), candlesticks.begin(),
     candlesticks.end());
-  auto middle = m_candlesticks.begin() + (m_candlesticks.end() -
-    m_candlesticks.begin()) / 2;
-  std::inplace_merge(m_candlesticks.begin(), middle, m_candlesticks.end(),
-    [=] (auto first, auto second) {
+  std::inplace_merge(m_candlesticks.begin(), m_candlesticks.begin() +
+    (m_candlesticks.size() - candlesticks.size()), m_candlesticks.end(),
+    [=] (const auto& first, const auto& second) {
       return first.GetStart() < second.GetStart();
     });
 }

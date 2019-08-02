@@ -54,13 +54,19 @@ TEST_CASE("test_storing_and_loading", "[LocalChartModel]") {
 
 TEST_CASE("test_merging_data", "[LocalChartModel]") {
   run_test([=] {
-    auto model = LocalChartModel(ChartValue::Type::MONEY,
+    auto model1 = LocalChartModel(ChartValue::Type::MONEY,
       ChartValue::Type::MONEY, {});
-    model.store({make(0, 1), make(2, 3), make(4, 5), make(6, 7), make(8, 9)});
-    auto load1 = load(&model, 0, 10, SnapshotLimit::Unlimited());
+    model1.store({make(0, 1), make(2, 3), make(4, 5), make(6, 7), make(8, 9)});
+    auto load1 = load(&model1, 0, 10, SnapshotLimit::Unlimited());
     REQUIRE(load1.size() == 5);
-    model.store({make(1, 2), make(3, 4), make(5, 6), make(7, 8), make(9, 10)});
-    auto load2 = load(&model, 0, 10, SnapshotLimit::Unlimited());
+    model1.store({make(1, 2), make(3, 4), make(5, 6), make(7, 8), make(9, 10)});
+    auto load2 = load(&model1, 0, 10, SnapshotLimit::Unlimited());
     REQUIRE(load2 == generate_range(0, 10));
+    auto model2 = LocalChartModel(ChartValue::Type::MONEY,
+      ChartValue::Type::MONEY, {});
+    model2.store({make(4, 5), make(5, 6), make(6, 7), make(7, 8), make(8, 9)});
+    model2.store({make(1, 2), make(2, 3), make(3, 4)});
+    auto load3 = load(&model2, 1, 9, SnapshotLimit::Unlimited());
+    REQUIRE(load3 == generate_range(1, 9));
   }, "test_merging_data");
 }
