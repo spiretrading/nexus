@@ -62,5 +62,10 @@ TEST_CASE("test_merging_data", "[LocalChartModel]") {
     model.store({make(1, 2), make(3, 4), make(5, 6), make(7, 8), make(9, 10)});
     auto load2 = load(&model, 0, 10, SnapshotLimit::Unlimited());
     REQUIRE(load2.size() == 10);
+    REQUIRE(load2.front().GetStart() == ChartValue(0));
+    REQUIRE(load2[1].GetStart() == ChartValue(1));
+    REQUIRE(load2[2].GetStart() == ChartValue(2));
+    REQUIRE(load2[3].GetStart() == ChartValue(3));
+    REQUIRE(load2.back().GetEnd() == ChartValue(10));
   }, "test_merging_data");
 }
