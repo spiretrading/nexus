@@ -22,9 +22,14 @@ namespace {
     }
     return candlesticks;
   }
+
+  Candlestick make(int start, int end) {
+    return {ChartValue(start), ChartValue(end),
+      ChartValue(2), ChartValue(6), ChartValue(8), ChartValue(0)};
+  }
 }
 
-TEST_CASE("test_storing_and_loading", "") {
+TEST_CASE("test_storing_and_loading", "[LocalChartModel]") {
   run_test([=] {
     auto model = LocalChartModel(ChartValue::Type::MONEY,
       ChartValue::Type::MONEY, {});
@@ -45,4 +50,17 @@ TEST_CASE("test_storing_and_loading", "") {
     REQUIRE(load4.front().GetStart() == ChartValue(10));
     REQUIRE(load4.back().GetEnd() == ChartValue(40));
   }, "test_storing_and_loading");
+}
+
+TEST_CASE("test_merging_data", "[LocalChartModel]") {
+  run_test([=] {
+    auto model = LocalChartModel(ChartValue::Type::MONEY,
+      ChartValue::Type::MONEY, {});
+    model.store({make(0, 1), make(2, 3), make(4, 5), make(6, 7), make(8, 9)});
+    auto load1 = load(&model, 0, 10, SnapshotLimit::Unlimited());
+    REQUIRE(load1.size() == 5);
+    model.store({make(1, 2), make(3, 4), make(5, 6), make(7, 8), make(9, 10)});
+    auto load2 = load(&model, 0, 10, SnapshotLimit::Unlimited());
+    REQUIRE(load2.size() == 10);
+  }, "test_merging_data");
 }

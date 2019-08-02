@@ -46,18 +46,13 @@ void LocalChartModel::store(const std::vector<Candlestick>& candlesticks) {
   if(candlesticks.empty()) {
     return;
   }
-  auto first = std::lower_bound(m_candlesticks.begin(),
-    m_candlesticks.end(), candlesticks.front().GetStart(), [] (
-        const auto& index, const auto& value) {
-      return index.GetStart() < value;
+  auto updated_candlesticks = std::vector<Candlestick>();
+  std::set_union(m_candlesticks.begin(), m_candlesticks.end(), candlesticks.begin(),
+    candlesticks.end(), std::back_inserter(updated_candlesticks),
+    [=] (auto first, auto second) {
+      return first.GetStart() < second.GetStart();
     });
-  auto last = std::lower_bound(m_candlesticks.begin(),
-    m_candlesticks.end(), candlesticks.back().GetEnd(), [] (const auto& index,
-        const auto& value) {
-      return index.GetStart() < value;
-    });
-  auto index = m_candlesticks.erase(first, last);
-  m_candlesticks.insert(index, candlesticks.begin(), candlesticks.end());
+  m_candlesticks = std::move(updated_candlesticks);
 }
 
 connection LocalChartModel::connect_candlestick_slot(
