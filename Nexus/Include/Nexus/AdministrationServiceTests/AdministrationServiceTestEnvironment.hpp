@@ -148,25 +148,30 @@ namespace Nexus::AdministrationService::Tests {
         Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
       m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
         entitlementsDirectory);
-      MarketDataService::EntitlementDatabase::Entry globalEntitlement;
+      auto globalEntitlement = MarketDataService::EntitlementDatabase::Entry();
       globalEntitlement.m_name = "global";
       globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
       auto& marketDatabase = GetDefaultMarketDatabase();
-      for(auto& market : marketDatabase.GetEntries()) {
+      auto markets = std::vector<MarketCode>();
+      for(auto& entry : marketDatabase.GetEntries()) {
+        markets.push_back(entry.m_code);
+      }
+      markets.push_back(MarketCode());
+      for(auto& market : markets) {
         globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::EntitlementKey(market)].Set(
           MarketDataService::MarketDataType::TIME_AND_SALE);
         globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::EntitlementKey(market)].Set(
           MarketDataService::MarketDataType::BOOK_QUOTE);
         globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::EntitlementKey(market)].Set(
           MarketDataService::MarketDataType::MARKET_QUOTE);
         globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::EntitlementKey(market)].Set(
           MarketDataService::MarketDataType::BBO_QUOTE);
         globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey{market.m_code}].Set(
+          MarketDataService::EntitlementKey(market)].Set(
           MarketDataService::MarketDataType::ORDER_IMBALANCE);
       }
       m_entitlements.emplace();
