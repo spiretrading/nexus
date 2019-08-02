@@ -40,14 +40,13 @@ namespace Spire {
     private:
       mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
-      std::vector<ChartRange> m_ranges;
       LocalChartModel m_cache;
+      std::vector<ChartRange> m_ranges;
 
-      void insert_data(const std::vector<Candlestick>& data);
       QtPromise<std::vector<Candlestick>> load_from_cache(ChartValue first,
-        ChartValue last, Beam::Queries::SnapshotLimit& limit);
+        ChartValue last, const Beam::Queries::SnapshotLimit& limit);
       QtPromise<std::vector<Candlestick>> load_from_model(ChartValue first,
-        ChartValue last, Beam::Queries::SnapshotLimit& limit);
+        ChartValue last, const Beam::Queries::SnapshotLimit& limit);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
       void on_data_loaded(const std::vector<Candlestick>& data,

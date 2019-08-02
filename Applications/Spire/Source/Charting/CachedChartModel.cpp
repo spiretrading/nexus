@@ -5,7 +5,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 CachedChartModel::CachedChartModel(ChartModel& model)
-    : m_chart_model(&model) {}
+    : m_chart_model(&model),
+      m_cache(model.get_x_axis_type(), model.get_y_axis_type(), {}) {}
 
 ChartValue::Type CachedChartModel::get_x_axis_type() const {
   return m_chart_model->get_x_axis_type();
@@ -17,7 +18,9 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
-  
+  return load_from_cache(first, last, limit).then([=] (auto result) {
+      return QtPromise<std::vector<Candlestick>>();
+    });
 }
 
 connection CachedChartModel::connect_candlestick_slot(
@@ -25,32 +28,18 @@ connection CachedChartModel::connect_candlestick_slot(
   return m_chart_model->connect_candlestick_slot(slot);
 }
 
-void CachedChartModel::insert_data(const std::vector<Candlestick>& data) {
-  if(data.empty()) {
-    return;
-  }
-  auto first = std::lower_bound(m_loaded_data.begin(),
-    m_loaded_data.end(), data.front().GetStart(), [] (const auto& index,
-        const auto& value) {
-      return index.GetStart() < value;
-    });
-  auto last = std::lower_bound(m_loaded_data.begin(),
-    m_loaded_data.end(), data.back().GetEnd(), [] (const auto& index,
-        const auto& value) {
-      return index.GetStart() < value;
-    });
-  auto index = m_loaded_data.erase(first, last);
-  m_loaded_data.insert(index, data.begin(), data.end());
-}
-
 QtPromise<std::vector<Candlestick>> load_from_cache(
-    ChartValue first, ChartValue last, Beam::Queries::SnapshotLimit& limit) {
-  return {};
+    ChartValue first, ChartValue last, const SnapshotLimit& limit) {
+  return m_cache.load(first, last, limit).then([=] (auto result) {
+      return QtPromise<std::vector<Candlestick>>();
+    });
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
-    ChartValue first, ChartValue last, Beam::Queries::SnapshotLimit& limit) {
-  return {};
+    ChartValue first, ChartValue last, const SnapshotLimit& limit) {
+  return m_chart_model->load(first, last, limit).then([=] (auto result) {
+      return QtPromise<std::vector<Candlestick>>();
+    });
 }
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
@@ -60,7 +49,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       return;
     }
   }
-  insert_data(data);
+  m_cache.store(data);
   update_ranges(first, last);
 }
 
