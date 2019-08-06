@@ -44,9 +44,11 @@ namespace Spire {
       std::vector<ChartRange> m_ranges;
 
       QtPromise<std::vector<Candlestick>> load_from_cache(ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit);
+        ChartValue last, ChartValue requested_first, ChartValue requested_last,
+        const Beam::Queries::SnapshotLimit& limit);
       QtPromise<std::vector<Candlestick>> load_from_model(ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit);
+        ChartValue last, ChartValue requested_first, ChartValue requested_last,
+        const Beam::Queries::SnapshotLimit& limit);
       void on_data_loaded(const std::vector<Candlestick>& data,
         ChartValue first, ChartValue last);
       void on_data_loaded(const std::vector<Candlestick>& data,

@@ -1,4 +1,5 @@
 #include "Spire/Charting/CachedChartModel.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Beam::Queries;
 using namespace boost::signals2;
@@ -18,9 +19,7 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
-  return load_from_cache(first, last, limit).then([=] (auto result) {
-      return QtPromise<std::vector<Candlestick>>();
-    });
+  return load_from_cache(first, last, first, last, limit);
 }
 
 connection CachedChartModel::connect_candlestick_slot(
@@ -28,17 +27,44 @@ connection CachedChartModel::connect_candlestick_slot(
   return m_chart_model->connect_candlestick_slot(slot);
 }
 
-QtPromise<std::vector<Candlestick>> load_from_cache(
-    ChartValue first, ChartValue last, const SnapshotLimit& limit) {
-  return m_cache.load(first, last, limit).then([=] (auto result) {
-      return QtPromise<std::vector<Candlestick>>();
+QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
+    ChartValue first, ChartValue last, ChartValue requested_first,
+    ChartValue requested_last, const SnapshotLimit& limit) {
+  return m_cache.load(requested_first, requested_last, limit).then(
+    [=] (auto result) {
+      auto load_first = first;
+      auto load_last = last;
+      for(auto& range : m_ranges) {
+        if(range.m_start <= requested_first && requested_last <= range.m_end) {
+          return QtPromise<std::vector<Candlestick>>(
+            [data = std::move(result.Get())] () { 
+              return data; });
+        }
+        if(range.m_end < first) {
+          continue;
+        }
+        if(range.m_start >= load_last) {
+          break;
+        }
+        if(range.m_start <= load_first && load_first <= range.m_end) {
+          load_first = range.m_end;
+        } else if(range.m_start <= load_last && load_last <= range.m_end) {
+          load_last = range.m_start;
+        }
+      }
+      return load_from_model(load_first, load_last, requested_first,
+        requested_last, limit);
     });
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
-    ChartValue first, ChartValue last, const SnapshotLimit& limit) {
+    ChartValue first, ChartValue last, ChartValue requested_first,
+    ChartValue requested_last,const SnapshotLimit& limit) {
   return m_chart_model->load(first, last, limit).then([=] (auto result) {
-      return QtPromise<std::vector<Candlestick>>();
+      auto data_size = static_cast<int>(result.Get().size());
+      on_data_loaded(std::move(result.Get()), first, last, limit);
+      return load_from_cache(first, last, requested_first, requested_last,
+        limit);
     });
 }
 
@@ -49,13 +75,26 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       return;
     }
   }
-  m_cache.store(data);
+  auto sticks = data;
+  auto front = std::move(wait(m_cache.load(data.front().GetEnd(),
+    data.front().GetEnd(), SnapshotLimit::FromHead(1))));
+  auto back = std::move(wait(m_cache.load(data.back().GetStart(),
+    data.back().GetStart(), SnapshotLimit::FromHead(1))));
+  // TODO: this will fail if there a multiple values that end the given end.
+  //        also write a test for it.
+  if(!front.empty() && sticks.front() == front.front()) {
+    sticks.erase(sticks.begin());
+  }
+  if(!back.empty() && sticks.back() == back.front()) {
+    sticks.pop_back();
+  }
+  m_cache.store(std::move(sticks));
   update_ranges(first, last);
 }
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last, const SnapshotLimit& limit) {
-  if(data.size() < limit.GetSize()) {
+  if(static_cast<int>(data.size()) < limit.GetSize()) {
     on_data_loaded(data, first, last);
   } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
     on_data_loaded(data, first, data.back().GetStart());
