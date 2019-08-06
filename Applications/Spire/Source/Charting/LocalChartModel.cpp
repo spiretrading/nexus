@@ -47,6 +47,19 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
   });
 }
 
+void LocalChartModel::store(const std::vector<Candlestick>& candlesticks) {
+  if(candlesticks.empty()) {
+    return;
+  }
+  m_candlesticks.insert(m_candlesticks.end(), candlesticks.begin(),
+    candlesticks.end());
+  std::inplace_merge(m_candlesticks.begin(), m_candlesticks.begin() +
+    (m_candlesticks.size() - candlesticks.size()), m_candlesticks.end(),
+    [] (const auto& first, const auto& second) {
+      return first.GetStart() < second.GetStart();
+    });
+}
+
 connection LocalChartModel::connect_candlestick_slot(
     const CandlestickSignal::slot_type& slot) const {
   return m_candlestick_signal.connect(slot);
