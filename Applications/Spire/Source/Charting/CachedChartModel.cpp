@@ -19,6 +19,7 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
+  // TODO: create a struct to store these values
   return load_from_cache(first, last, first, last, limit);
 }
 
