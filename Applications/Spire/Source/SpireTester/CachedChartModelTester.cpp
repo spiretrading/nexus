@@ -280,3 +280,5 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
     REQUIRE(load4.back().GetEnd() == ChartValue(101));
   }, "test_cache_model_loads_from_tail");
 }
+
+// TODO: test coinciding values, e.g.: [50, 51] and [50, 55]

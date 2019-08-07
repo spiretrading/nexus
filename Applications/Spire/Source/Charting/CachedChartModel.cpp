@@ -76,19 +76,21 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     }
   }
   auto sticks = data;
-  auto front = std::move(wait(m_cache.load(data.front().GetEnd(),
-    data.front().GetEnd(), SnapshotLimit::FromHead(1))));
-  auto back = std::move(wait(m_cache.load(data.back().GetStart(),
-    data.back().GetStart(), SnapshotLimit::FromHead(1))));
-  // TODO: this will fail if there a multiple values that end the given end.
-  //        also write a test for it.
-  if(!front.empty() && sticks.front() == front.front()) {
-    sticks.erase(sticks.begin());
+  auto front = std::move(wait(m_cache.load(first, first,
+    SnapshotLimit::FromTail(std::numeric_limits<int>::max()))));
+  auto back = std::move(wait(m_cache.load(last, last,
+    SnapshotLimit::FromHead(std::numeric_limits<int>::max()))));
+  for(auto i = front.begin(); i != front.end(); ++i) {
+    if(*i == sticks.front()) {
+      sticks.erase(sticks.begin());
+    }
   }
-  if(!back.empty() && sticks.back() == back.front()) {
-    sticks.pop_back();
+  for(auto i = back.rbegin(); i != back.rend(); ++i) {
+    if(*i == sticks.back()) {
+      sticks.pop_back();
+    }
   }
-  m_cache.store(std::move(sticks));
+  m_cache.store(sticks);
   update_ranges(first, last);
 }
 
