@@ -37,7 +37,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       for(auto& range : m_ranges) {
         if(range.m_start <= requested_first && requested_last <= range.m_end) {
           return QtPromise<std::vector<Candlestick>>(
-            [data = std::move(result.Get())] () { 
+            [data = std::move(result.Get())] () {
               return data; });
         }
         if(range.m_end < first) {
@@ -82,6 +82,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     SnapshotLimit::FromHead(std::numeric_limits<int>::max()))));
   for(auto i = front.begin(); i != front.end(); ++i) {
     if(*i == sticks.front()) {
+      // TODO: use std::remove() instead of erase
       sticks.erase(sticks.begin());
     }
   }
