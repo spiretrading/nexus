@@ -62,7 +62,6 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
     ChartValue first, ChartValue last, ChartValue requested_first,
     ChartValue requested_last,const SnapshotLimit& limit) {
   return m_chart_model->load(first, last, limit).then([=] (auto result) {
-      auto data_size = static_cast<int>(result.Get().size());
       on_data_loaded(std::move(result.Get()), first, last, limit);
       return load_from_cache(first, last, requested_first, requested_last,
         limit);
