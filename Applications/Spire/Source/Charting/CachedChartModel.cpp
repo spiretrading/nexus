@@ -66,25 +66,24 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last) {
+  if(data.empty()) {
+    return;
+  }
+  auto sticks = data;
   for(auto& range : m_ranges) {
     if(range.m_start <= first && range.m_end >= last) {
       return;
     }
-  }
-  auto sticks = data;
-  auto front = std::move(wait(m_cache.load(first, first,
-    SnapshotLimit::FromTail(std::numeric_limits<int>::max()))));
-  auto back = std::move(wait(m_cache.load(last, last,
-    SnapshotLimit::FromHead(std::numeric_limits<int>::max()))));
-  for(auto i = front.begin(); i != front.end(); ++i) {
-    if(*i == sticks.front()) {
-      // TODO: use std::remove() instead of erase
-      sticks.erase(sticks.begin());
+    if(range.m_start <= first && first <= range.m_end) {
+      while(!sticks.empty() && sticks.front().GetStart() <= range.m_end) {
+        // TODO: use std::remove() instead of erase
+        sticks.erase(sticks.begin());
+      }
     }
-  }
-  for(auto i = back.rbegin(); i != back.rend(); ++i) {
-    if(*i == sticks.back()) {
-      sticks.pop_back();
+    if(range.m_start <= last && last <= range.m_end) {
+      while(!sticks.empty() && sticks.back().GetEnd() >= range.m_start) {
+        sticks.pop_back();
+      }
     }
   }
   m_cache.store(sticks);
