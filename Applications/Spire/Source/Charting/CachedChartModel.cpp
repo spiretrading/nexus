@@ -20,7 +20,7 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
   // TODO: create a struct to store these values
-  return load_from_cache(first, last, first, last, limit);
+  return load_from_cache({first, last, first, last, limit});
 }
 
 connection CachedChartModel::connect_candlestick_slot(
@@ -29,19 +29,20 @@ connection CachedChartModel::connect_candlestick_slot(
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
-    ChartValue first, ChartValue last, ChartValue requested_first,
-    ChartValue requested_last, const SnapshotLimit& limit) {
-  return m_cache.load(requested_first, requested_last, limit).then(
+    const LoadInfo& info) {
+  return m_cache.load(info.m_requested_first, info.m_requested_last,
+      info.m_limit).then(
     [=] (auto result) {
-      auto load_first = first;
-      auto load_last = last;
+      auto load_first = info.m_first;
+      auto load_last = info.m_last;
       for(auto& range : m_ranges) {
-        if(range.m_start <= requested_first && requested_last <= range.m_end) {
+        if(range.m_start <= info.m_requested_first &&
+            info.m_requested_last <= range.m_end) {
           return QtPromise<std::vector<Candlestick>>(
             [data = std::move(result.Get())] () {
               return data; });
         }
-        if(range.m_end < first) {
+        if(range.m_end < info.m_first) {
           continue;
         }
         if(range.m_start >= load_last) {
@@ -53,18 +54,18 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
           load_last = range.m_start;
         }
       }
-      return load_from_model(load_first, load_last, requested_first,
-        requested_last, limit);
+      return load_from_model({load_first, load_last, info.m_requested_first,
+        info.m_requested_last, info.m_limit});
     });
 }
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
-    ChartValue first, ChartValue last, ChartValue requested_first,
-    ChartValue requested_last,const SnapshotLimit& limit) {
-  return m_chart_model->load(first, last, limit).then([=] (auto result) {
-      on_data_loaded(std::move(result.Get()), first, last, limit);
-      return load_from_cache(first, last, requested_first, requested_last,
-        limit);
+    const LoadInfo& info) {
+  return m_chart_model->load(info.m_first, info.m_last, info.m_limit).then(
+    [=] (auto result) {
+      on_data_loaded(std::move(result.Get()), info.m_first, info.m_last,
+        info.m_limit);
+      return load_from_cache(info);
     });
 }
 
