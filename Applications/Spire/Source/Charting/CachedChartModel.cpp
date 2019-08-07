@@ -19,7 +19,6 @@ ChartValue::Type CachedChartModel::get_y_axis_type() const {
 
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
-  // TODO: create a struct to store these values
   return load_from_cache({first, last, first, last, limit});
 }
 
@@ -33,8 +32,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
   return m_cache.load(info.m_requested_first, info.m_requested_last,
       info.m_limit).then(
     [=] (auto result) {
-      auto load_first = info.m_first;
-      auto load_last = info.m_last;
+      auto load_first = info.m_requested_first;
+      auto load_last = info.m_requested_last;
       for(auto& range : m_ranges) {
         if(range.m_start <= info.m_requested_first &&
             info.m_requested_last <= range.m_end) {
@@ -42,16 +41,12 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
             [data = std::move(result.Get())] () {
               return data; });
         }
-        if(range.m_end < info.m_first) {
-          continue;
-        }
-        if(range.m_start >= load_last) {
-          break;
-        }
         if(range.m_start <= load_first && load_first <= range.m_end) {
           load_first = range.m_end;
-        } else if(range.m_start <= load_last && load_last <= range.m_end) {
-          load_last = range.m_start;
+        }
+        if(load_first < range.m_start) {
+          load_last = min(load_last, range.m_start);
+          break;
         }
       }
       return load_from_model({load_first, load_last, info.m_requested_first,
