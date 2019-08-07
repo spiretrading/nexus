@@ -168,11 +168,13 @@ TEST_CASE("test_cache_functionality", "[CachedChartModel]") {
       model->load(ChartValue(60 * Money::ONE), ChartValue(70 * Money::ONE),
       SnapshotLimit::Unlimited())));
     wait(std::move(pre_load2));
-    auto cache_test_load = cache.load(ChartValue(45 * Money::ONE),
-      ChartValue(75 * Money::ONE), SnapshotLimit::Unlimited());
+    cache.load(ChartValue(45 * Money::ONE),
+      ChartValue(65 * Money::ONE), SnapshotLimit::Unlimited());
     auto cache_load1 = wait(test_model.pop_load());
     REQUIRE(cache_load1->get_first() == ChartValue(50 * Money::ONE));
     REQUIRE(cache_load1->get_last() == ChartValue(60 * Money::ONE));
+    cache.load(ChartValue(65 * Money::ONE),
+      ChartValue(75 * Money::ONE), SnapshotLimit::Unlimited());
     auto cache_load2 = wait(test_model.pop_load());
     REQUIRE(cache_load2->get_first() == ChartValue(70 * Money::ONE));
     REQUIRE(cache_load2->get_last() == ChartValue(75 * Money::ONE));
