@@ -40,10 +40,17 @@ TestChartModel::TestChartModel(ChartValue::Type x_axis_type,
     : m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type) {}
 
-std::shared_ptr<TestChartModel::LoadEntry> TestChartModel::pop_load() {
-  auto entry = m_load_entries.front();
-  m_load_entries.pop_front();
-  return entry;
+QtPromise<std::shared_ptr<TestChartModel::LoadEntry>>
+    TestChartModel::pop_load() {
+  return QtPromise([=] {
+    auto lock = std::unique_lock(m_mutex);
+    while(m_load_entries.empty()) {
+      m_load_condition.wait(lock);
+    }
+    auto entry = m_load_entries.front();
+    m_load_entries.pop_front();
+    return entry;
+  }, LaunchPolicy::ASYNC);
 }
 
 ChartValue::Type TestChartModel::get_x_axis_type() const {
@@ -57,7 +64,11 @@ ChartValue::Type TestChartModel::get_y_axis_type() const {
 QtPromise<std::vector<Candlestick>> TestChartModel::load(ChartValue first,
     ChartValue last, const SnapshotLimit& limit) {
   auto load_entry = std::make_shared<LoadEntry>(first, last, limit);
-  m_load_entries.push_back(load_entry);
+  {
+    auto lock = std::lock_guard(m_mutex);
+    m_load_entries.push_back(load_entry);
+    m_load_condition.notify_all();
+  }
   return QtPromise([=] {
     auto lock = std::unique_lock(load_entry->m_mutex);
     while(!load_entry->m_is_loaded) {

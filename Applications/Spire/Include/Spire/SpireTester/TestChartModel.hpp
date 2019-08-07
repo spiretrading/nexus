@@ -66,7 +66,7 @@ namespace Spire {
         ChartValue::Type y_axis_type);
 
       //! Pops the oldest load request from this model's load operation stack.
-      std::shared_ptr<LoadEntry> pop_load();
+      QtPromise<std::shared_ptr<LoadEntry>> pop_load();
 
       ChartValue::Type get_x_axis_type() const override;
 
@@ -79,6 +79,8 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
+      Beam::Threading::Mutex m_mutex;
+      Beam::Threading::ConditionVariable m_load_condition;
       mutable CandlestickSignal m_candlestick_signal;
       ChartValue::Type m_x_axis_type;
       ChartValue::Type m_y_axis_type;
