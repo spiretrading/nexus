@@ -66,27 +66,26 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last) {
-  if(data.empty()) {
-    return;
-  }
-  auto sticks = data;
+  auto candlesticks = data;
   for(auto& range : m_ranges) {
     if(range.m_start <= first && range.m_end >= last) {
       return;
     }
     if(range.m_start <= first && first <= range.m_end) {
-      while(!sticks.empty() && sticks.front().GetStart() <= range.m_end) {
+      while(!candlesticks.empty() &&
+          candlesticks.front().GetStart() <= range.m_end) {
         // TODO: use std::remove() instead of erase
-        sticks.erase(sticks.begin());
+        candlesticks.erase(candlesticks.begin());
       }
     }
     if(range.m_start <= last && last <= range.m_end) {
-      while(!sticks.empty() && sticks.back().GetEnd() >= range.m_start) {
-        sticks.pop_back();
+      while(!candlesticks.empty() &&
+          candlesticks.back().GetEnd() >= range.m_start) {
+        candlesticks.pop_back();
       }
     }
   }
-  m_cache.store(sticks);
+  m_cache.store(candlesticks);
   update_ranges(first, last);
 }
 
