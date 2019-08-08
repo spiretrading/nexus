@@ -150,8 +150,6 @@ TEST_CASE("test_multiple_subsets_and_supersets", "[CachedChartModel]") {
   }, "test_multiple_subsets_and_supersets");
 }
 
-
-
 TEST_CASE("test_multiple_cache_hits", "[CachedChartModel]") {
   run_test([=] {
     auto model = create_model();
