@@ -24,21 +24,6 @@ namespace {
     return local_model;
   }
 
-  auto create_coincident_model() {
-    auto local_model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
-      [=] {
-        auto candlesticks = std::vector<Candlestick>();
-        for(auto i = 0; i < 101; ++i) {
-          auto candlestick = Candlestick(ChartValue(i * Money::ONE),
-            ChartValue((i + 1) * Money::ONE));
-          candlesticks.insert(candlesticks.end(), 5, candlestick);
-        }
-        return candlesticks;
-      }());
-    return local_model;
-  }
-
   std::vector<Candlestick> load(ChartModel* model, int first, int last,
       const SnapshotLimit& limit) {
     return std::move(wait(model->load(ChartValue(first * Money::ONE),
@@ -163,19 +148,6 @@ TEST_CASE("test_multiple_subsets_and_supersets", "[CachedChartModel]") {
     test_sticks = load(&cache, 40, 60, SnapshotLimit::Unlimited());
     REQUIRE(test_sticks == model_sticks);
   }, "test_multiple_subsets_and_supersets");
-}
-
-TEST_CASE("test_coincidental_values", "[CachedChartModel]") {
-  run_test([=] {
-    auto model = create_coincident_model();
-    auto cache = CachedChartModel(*model);
-    auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
-    auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::Unlimited());
-    REQUIRE(cache_sticks == model_sticks);
-    model_sticks = load(model.get(), 50, 60, SnapshotLimit::Unlimited());
-    cache_sticks = load(&cache, 50, 60, SnapshotLimit::Unlimited());
-    REQUIRE(cache_sticks == model_sticks);
-  }, "test_coincidental_values");
 }
 
 TEST_CASE("test_multiple_cache_hits", "[CachedChartModel]") {
