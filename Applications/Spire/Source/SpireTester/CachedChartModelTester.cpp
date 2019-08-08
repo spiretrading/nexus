@@ -29,6 +29,50 @@ namespace {
     return std::move(wait(model->load(ChartValue(first * Money::ONE),
       ChartValue(last * Money::ONE), limit)));
   }
+
+  Candlestick make(int start, int end) {
+    return {ChartValue(start), ChartValue(end)};
+  }
+
+  auto create_trivial_coincident_model() {
+    auto model = std::make_shared<LocalChartModel>(
+      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+      [=] {
+        auto candlesticks = std::vector<Candlestick>();
+        for(auto i = 0; i < 101; ++i) {
+          auto candlestick = Candlestick(ChartValue(i * Money::ONE),
+            ChartValue((i + 1) * Money::ONE));
+          candlesticks.insert(candlesticks.end(), 5, candlestick);
+        }
+        return candlesticks;
+      }());
+    return model;
+  }
+
+  auto create_nontrivial_coincident_model() {
+    auto model = std::make_shared<LocalChartModel>(
+      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+      [=] {
+        auto candlesticks = std::vector<Candlestick>();
+        candlesticks.push_back(make(1, 40));
+        candlesticks.push_back(make(10, 40));
+        candlesticks.push_back(make(20, 40));
+        candlesticks.push_back(make(30, 40));
+        candlesticks.push_back(make(39, 40));
+        candlesticks.push_back(make(40, 41));
+        candlesticks.push_back(make(41, 42));
+        candlesticks.push_back(make(42, 43));
+        candlesticks.push_back(make(43, 44));
+        candlesticks.push_back(make(44, 45));
+        candlesticks.push_back(make(45, 46));
+        candlesticks.push_back(make(45, 50));
+        candlesticks.push_back(make(45, 60));
+        candlesticks.push_back(make(45, 70));
+        candlesticks.push_back(make(45, 80));
+        return candlesticks;
+      }());
+    return model;
+  }
 }
 
 TEST_CASE("test_right_no_overlap", "[CachedChartModel]") {
@@ -227,4 +271,23 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
     REQUIRE(load4.front().GetStart() == ChartValue(94));
     REQUIRE(load4.back().GetEnd() == ChartValue(101));
   }, "test_cache_model_loads_from_tail");
+}
+
+TEST_CASE("test_cached_coincidental_values_with_limits", "[LocalChartModel]") {
+  run_test([=] {
+    auto model = create_nontrivial_coincident_model();
+    auto cache = CachedChartModel(*model);
+    auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(3));
+    auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(3));
+    REQUIRE(cache_sticks == model_sticks);
+    model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(5));
+    cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(5));
+    REQUIRE(cache_sticks == model_sticks);
+    model_sticks = load(model.get(), 45, 45, SnapshotLimit::FromTail(3));
+    cache_sticks = load(&cache, 45, 45, SnapshotLimit::FromTail(5));
+    REQUIRE(cache_sticks == model_sticks);
+    model_sticks = load(model.get(), 45, 45, SnapshotLimit::FromTail(5));
+    cache_sticks = load(&cache, 45, 45, SnapshotLimit::FromTail(5));
+    REQUIRE(cache_sticks == model_sticks);
+  }, "test_coincidental_values_with_limits");
 }
