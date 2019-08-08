@@ -66,26 +66,35 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last) {
-  // TODO: use iterators instead of copying data and removing candlesticks
-  auto candlesticks = data;
-  for(auto& range : m_ranges) {
-    if(range.m_start <= first && range.m_end >= last) {
-      return;
-    }
-    if(range.m_start <= first && first <= range.m_end) {
-      while(!candlesticks.empty() &&
-          candlesticks.front().GetStart() <= range.m_end) {
-        candlesticks.erase(candlesticks.begin());
+  auto first_iterator = data.begin();
+  auto last_iterator = data.end();
+  if(!data.empty()) {
+    for(auto& range : m_ranges) {
+      if(range.m_start <= first && range.m_end >= last) {
+        return;
       }
-    }
-    if(range.m_start <= last && last <= range.m_end) {
-      while(!candlesticks.empty() &&
-          candlesticks.back().GetEnd() >= range.m_start) {
-        candlesticks.pop_back();
+      if(range.m_start <= first && first <= range.m_end) {
+        first_iterator = std::upper_bound(data.begin(), data.end(),
+          range.m_end,
+          [] (const auto& value, const auto& index) {
+            return index.GetStart() >= value;
+          });
+          ++first_iterator;
+      }
+      if(range.m_start <= last && last <= range.m_end) {
+        last_iterator = std::lower_bound(data.begin(), data.end(),
+          range.m_start,
+          [] (const auto& index, const auto& value) {
+            return index.GetEnd() <= value;
+          });
+        if(data.size() > 1) {
+          --last_iterator;
+        }
       }
     }
   }
-  m_cache.store(candlesticks);
+  m_cache.store(std::move(
+    std::vector<Candlestick>(first_iterator, last_iterator)));
   update_ranges(first, last);
 }
 

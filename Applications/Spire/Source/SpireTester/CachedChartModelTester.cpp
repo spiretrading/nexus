@@ -150,7 +150,9 @@ TEST_CASE("test_multiple_subsets_and_supersets", "[CachedChartModel]") {
   }, "test_multiple_subsets_and_supersets");
 }
 
-TEST_CASE("test_cache_functionality", "[CachedChartModel]") {
+
+
+TEST_CASE("test_multiple_cache_hits", "[CachedChartModel]") {
   run_test([=] {
     auto model = create_model();
     auto test_model = TestChartModel(model->get_x_axis_type(),
@@ -173,13 +175,12 @@ TEST_CASE("test_cache_functionality", "[CachedChartModel]") {
     auto cache_load1 = wait(test_model.pop_load());
     REQUIRE(cache_load1->get_first() == ChartValue(50 * Money::ONE));
     REQUIRE(cache_load1->get_last() == ChartValue(60 * Money::ONE));
-    cache_load1->set_result(wait(model->load(ChartValue(60 * Money::ONE),
-      ChartValue(70 * Money::ONE), SnapshotLimit::Unlimited())));
+    cache_load1->set_result({});
     auto cache_load2 = wait(test_model.pop_load());
     REQUIRE(cache_load2->get_first() == ChartValue(70 * Money::ONE));
     REQUIRE(cache_load2->get_last() == ChartValue(75 * Money::ONE));
     cache_load2->set_result({});
-  }, "test_cache_functionality");
+  }, "test_multiple_cache_hits");
 }
 
 TEST_CASE("test_cached_model_loads_from_head", "[CachedChartModel]") {
