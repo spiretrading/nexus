@@ -279,10 +279,10 @@ TEST_CASE("test_cached_coincidental_values_with_limits", "[LocalChartModel]") {
     auto cache = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(3));
     auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(3));
-    //REQUIRE(cache_sticks == model_sticks);
+    REQUIRE(cache_sticks == model_sticks);
     model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(5));
     cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(5));
-    //REQUIRE(cache_sticks == model_sticks);
+    REQUIRE(cache_sticks == model_sticks);
     model_sticks = load(model.get(), 45, 45, SnapshotLimit::FromTail(3));
     cache_sticks = load(&cache, 45, 45, SnapshotLimit::FromTail(3));
     REQUIRE(cache_sticks == model_sticks);
