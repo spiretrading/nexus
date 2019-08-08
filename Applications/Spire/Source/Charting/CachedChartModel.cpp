@@ -66,6 +66,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     ChartValue first, ChartValue last) {
+  // TODO: use iterators instead of copying data and removing candlesticks
   auto candlesticks = data;
   for(auto& range : m_ranges) {
     if(range.m_start <= first && range.m_end >= last) {
@@ -74,7 +75,6 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     if(range.m_start <= first && first <= range.m_end) {
       while(!candlesticks.empty() &&
           candlesticks.front().GetStart() <= range.m_end) {
-        // TODO: use std::remove() instead of erase
         candlesticks.erase(candlesticks.begin());
       }
     }
