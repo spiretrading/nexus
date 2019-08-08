@@ -34,21 +34,6 @@ namespace {
     return {ChartValue(start), ChartValue(end)};
   }
 
-  auto create_trivial_coincident_model() {
-    auto model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
-      [=] {
-        auto candlesticks = std::vector<Candlestick>();
-        for(auto i = 0; i < 101; ++i) {
-          auto candlestick = Candlestick(ChartValue(i * Money::ONE),
-            ChartValue((i + 1) * Money::ONE));
-          candlesticks.insert(candlesticks.end(), 5, candlestick);
-        }
-        return candlesticks;
-      }());
-    return model;
-  }
-
   auto create_nontrivial_coincident_model() {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
