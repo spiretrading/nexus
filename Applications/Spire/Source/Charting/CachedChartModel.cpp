@@ -105,7 +105,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
   } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
     on_data_loaded(data, first, max(data.back().GetStart(), first));
   } else {
-    on_data_loaded(data, data.front().GetEnd(), last);
+    on_data_loaded(data, min(data.front().GetEnd(), last), last);
   }
 }
 
