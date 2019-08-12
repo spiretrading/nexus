@@ -12,16 +12,6 @@ namespace Spire {
       //! Signals an update to a candlestick.
       using CandlestickSignal = Signal<void (const Candlestick& candle)>;
 
-      //! Represents an inclusive range of ChartValues.
-      struct ChartRange {
-
-        /** The start value of the range. */
-        ChartValue m_start;
-
-        /** The end value of the range. */
-        ChartValue m_end;
-      };
-
       //! Constructs a CachedChartModel that uses the supplied model.
       /*!
         \param model The model that supplies the data.
@@ -39,6 +29,19 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
+      enum class RangeType : unsigned char {
+        LEFT_CLOSED = 0b0001,
+        LEFT_OPEN = 0b0010,
+        RIGHT_CLOSED = 0b0100,
+        RIGHT_OPEN = 0b1000,
+        CLOSED = LEFT_CLOSED | RIGHT_CLOSED,
+        OPEN = LEFT_OPEN | LEFT_CLOSED
+      };
+      struct ChartRange {
+        ChartValue m_start;
+        ChartValue m_end;
+        RangeType m_type;
+      };
       struct LoadInfo {
         ChartValue m_first;
         ChartValue m_last;
@@ -46,12 +49,16 @@ namespace Spire {
         ChartValue m_requested_last;
         Beam::Queries::SnapshotLimit m_limit;
       };
-
       mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
       LocalChartModel m_cache;
       std::vector<ChartRange> m_ranges;
 
+      static bool is_set(RangeType a, RangeType b);
+      static bool is_after_range(ChartValue value, const ChartRange& range);
+      static bool is_before_range(ChartValue value, const ChartRange& range);
+      static bool is_in_range(ChartValue start, ChartValue end,
+        const ChartRange& range);
       QtPromise<std::vector<Candlestick>> load_from_cache(
         const LoadInfo& info);
       QtPromise<std::vector<Candlestick>> load_from_model(

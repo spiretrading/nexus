@@ -27,6 +27,31 @@ connection CachedChartModel::connect_candlestick_slot(
   return m_chart_model->connect_candlestick_slot(slot);
 }
 
+bool CachedChartModel::is_set(RangeType a, RangeType b) {
+  return static_cast<unsigned char>(a) & static_cast<unsigned char>(b);
+}
+
+bool CachedChartModel::is_in_range(ChartValue start, ChartValue end,
+    const ChartRange& range) {
+  return !is_before_range(start, range) && !is_after_range(end, range);
+}
+
+bool CachedChartModel::is_before_range(ChartValue value,
+    const ChartRange& range) {
+  if(is_set(range.m_type, RangeType::LEFT_CLOSED)) {
+    return value <= range.m_start;
+  }
+  return value < range.m_start;
+}
+
+bool CachedChartModel::is_after_range(ChartValue value,
+    const ChartRange& range) {
+  if(is_set(range.m_type, RangeType::RIGHT_CLOSED)) {
+    return value >= range.m_end;
+  }
+  return value > range.m_end;
+}
+
 QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
     const LoadInfo& info) {
   return m_cache.load(info.m_requested_first, info.m_requested_last,
@@ -35,13 +60,13 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
       for(auto& range : m_ranges) {
-        if(range.m_start <= info.m_requested_first &&
-            info.m_requested_last <= range.m_end) {
+        if(is_in_range(info.m_requested_first, info.m_requested_last, range)) {
           return QtPromise<std::vector<Candlestick>>(
-            [data = std::move(result.Get())] () {
-              return data; });
+            [data = std::move(result.Get())] () mutable {
+              return std::move(data);
+            });
         }
-        if(range.m_start <= load_first && load_first <= range.m_end) {
+        if(is_in_range(load_first, load_first, range)) {
           load_first = range.m_end;
         }
         if(load_first < range.m_start) {
@@ -150,3 +175,4 @@ void CachedChartModel::update_ranges(ChartValue first, ChartValue last) {
   ranges.insert(index, ChartRange{new_first, new_last});
   m_ranges = ranges;
 }
+

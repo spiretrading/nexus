@@ -34,28 +34,10 @@ namespace {
     return {ChartValue(start), ChartValue(end)};
   }
 
-  auto create_nontrivial_coincident_model() {
+  auto create_head_limit_coincident_model() {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
-      [=] {
-        auto candlesticks = std::vector<Candlestick>();
-        candlesticks.push_back(make(1, 40));
-        candlesticks.push_back(make(10, 40));
-        candlesticks.push_back(make(20, 40));
-        candlesticks.push_back(make(30, 40));
-        candlesticks.push_back(make(39, 40));
-        candlesticks.push_back(make(40, 41));
-        candlesticks.push_back(make(41, 42));
-        candlesticks.push_back(make(42, 43));
-        candlesticks.push_back(make(43, 44));
-        candlesticks.push_back(make(44, 45));
-        candlesticks.push_back(make(45, 46));
-        candlesticks.push_back(make(45, 50));
-        candlesticks.push_back(make(45, 60));
-        candlesticks.push_back(make(45, 70));
-        candlesticks.push_back(make(45, 80));
-        return candlesticks;
-      }());
+      std::vector<Candlestick>({make(30, 40), make(39, 40)}));
     return model;
   }
 }
@@ -260,19 +242,13 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
 
 TEST_CASE("test_cached_coincidental_values_with_limits", "[LocalChartModel]") {
   run_test([=] {
-    auto model = create_nontrivial_coincident_model();
+    auto model = create_head_limit_coincident_model();
     auto cache = CachedChartModel(*model);
-    auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(3));
-    auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(3));
+    auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(1));
+    auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(1));
     REQUIRE(cache_sticks == model_sticks);
-    model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(5));
-    cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(5));
-    REQUIRE(cache_sticks == model_sticks);
-    model_sticks = load(model.get(), 45, 45, SnapshotLimit::FromTail(3));
-    cache_sticks = load(&cache, 45, 45, SnapshotLimit::FromTail(3));
-    REQUIRE(cache_sticks == model_sticks);
-    model_sticks = load(model.get(), 45, 45, SnapshotLimit::FromTail(5));
-    cache_sticks = load(&cache, 45, 45, SnapshotLimit::FromTail(5));
+    model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
+    cache_sticks = load(&cache, 40, 40, SnapshotLimit::Unlimited());
     REQUIRE(cache_sticks == model_sticks);
   }, "test_coincidental_values_with_limits");
 }
