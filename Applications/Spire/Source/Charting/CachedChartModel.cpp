@@ -33,7 +33,7 @@ bool CachedChartModel::is_set(RangeType a, RangeType b) {
 
 bool CachedChartModel::is_in_range(ChartValue start, ChartValue end,
     const ChartRange& range) {
-  return !is_before_range(start, range) && !is_after_range(end, range);
+  return range.m_start <= start && end <= range.m_end;
 }
 
 bool CachedChartModel::is_before_range(ChartValue value,
