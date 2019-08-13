@@ -33,7 +33,14 @@ bool CachedChartModel::is_set(RangeType a, RangeType b) {
 
 bool CachedChartModel::is_in_range(ChartValue start, ChartValue end,
     const ChartRange& range) {
-  return range.m_start <= start && end <= range.m_end;
+  if(range.m_type == RangeType::CLOSED) {
+    return range.m_start <= start && end <= range.m_end;
+  } else if(range.m_type == RangeType::OPEN) {
+    return range.m_start < start && end < range.m_end;
+  } else if(is_set(range.m_type, RangeType::LEFT_CLOSED)) {
+    return range.m_start <= start && end < range.m_end;
+  }
+  return range.m_start < start && end <= range.m_end;
 }
 
 bool CachedChartModel::is_before_range(ChartValue value,
@@ -60,8 +67,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
       for(auto& range : m_ranges) {
-        if(is_in_range(info.m_requested_first, info.m_requested_last,
-            {range.m_start, range.m_end, RangeType::OPEN})) {
+        if(is_in_range(info.m_requested_first, info.m_requested_last, range)) {
           return QtPromise<std::vector<Candlestick>>(
             [data = std::move(result.Get())] () mutable {
               return std::move(data);
