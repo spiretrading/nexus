@@ -191,4 +191,3 @@ void CachedChartModel::update_ranges(const ChartRange& new_range) {
   ranges.insert(index, {new_first, new_last, new_range.m_type});
   m_ranges = ranges;
 }
-
