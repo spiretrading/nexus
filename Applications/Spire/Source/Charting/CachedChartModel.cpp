@@ -106,21 +106,25 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       if(is_in_range(loaded_range.m_start, loaded_range.m_end, range)) {
         return;
       }
-      if(is_in_range(loaded_range.m_start, loaded_range.m_start, range)) {
+      if(is_in_range(loaded_range.m_start, loaded_range.m_start,
+          {range.m_start, range.m_end, RangeType::CLOSED})) {
         first_iterator = std::upper_bound(data.begin(), data.end(),
           range.m_end,
           [] (const auto& value, const auto& index) {
             return index.GetStart() >= value;
           });
+        if(first_iterator != data.end()) {
           ++first_iterator;
+        }
       }
-      if(is_in_range(loaded_range.m_end, loaded_range.m_end, range)) {
+      if(is_in_range(loaded_range.m_end, loaded_range.m_end,
+          {range.m_start, range.m_end, RangeType::CLOSED})) {
         last_iterator = std::lower_bound(data.begin(), data.end(),
           range.m_start,
           [] (const auto& index, const auto& value) {
             return index.GetEnd() <= value;
           });
-        if(data.size() > 1) {
+        if(data.size() > 1 && first_iterator != data.end()) {
           --last_iterator;
         }
       }

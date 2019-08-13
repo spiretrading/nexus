@@ -33,13 +33,6 @@ namespace {
   Candlestick make(int start, int end) {
     return {ChartValue(start), ChartValue(end)};
   }
-
-  auto create_head_limit_coincident_model() {
-    auto model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
-      std::vector<Candlestick>({make(30, 40), make(39, 40)}));
-    return model;
-  }
 }
 
 TEST_CASE("test_right_no_overlap", "[CachedChartModel]") {
@@ -242,7 +235,9 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
 
 TEST_CASE("test_cached_coincidental_values_with_limits", "[LocalChartModel]") {
   run_test([=] {
-    auto model = create_head_limit_coincident_model();
+    auto model = std::make_shared<LocalChartModel>(
+      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+      std::vector<Candlestick>({make(30, 40), make(39, 40)}));
     auto cache = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(1));
     auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromHead(1));
