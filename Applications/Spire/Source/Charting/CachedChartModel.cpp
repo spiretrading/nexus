@@ -67,8 +67,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
       for(auto& range : m_ranges) {
-        if(is_in_range(info.m_requested_first, info.m_requested_last, range) ||
-            result.Get().size() == info.m_limit.GetSize()) {
+        if(is_in_range(info.m_requested_first, info.m_requested_last, range)) {
           return QtPromise<std::vector<Candlestick>>(
             [data = std::move(result.Get())] () mutable {
               return std::move(data);
@@ -106,8 +105,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       if(is_in_range(loaded_range.m_start, loaded_range.m_end, range)) {
         return;
       }
-      if(is_in_range(loaded_range.m_start, loaded_range.m_start,
-          {range.m_start, range.m_end, RangeType::CLOSED})) {
+      if(is_in_range(loaded_range.m_start, loaded_range.m_start, range)) {
         first_iterator = std::upper_bound(data.begin(), data.end(),
           range.m_end,
           [] (const auto& value, const auto& index) {
@@ -117,8 +115,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
           ++first_iterator;
         }
       }
-      if(is_in_range(loaded_range.m_end, loaded_range.m_end,
-          {range.m_start, range.m_end, RangeType::CLOSED})) {
+      if(is_in_range(loaded_range.m_end, loaded_range.m_end, range)) {
         last_iterator = std::lower_bound(data.begin(), data.end(),
           range.m_start,
           [] (const auto& index, const auto& value) {
@@ -141,11 +138,24 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     on_data_loaded(data, {loaded_range.m_start, loaded_range.m_end,
       RangeType::CLOSED});
   } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+    auto range_type = [&] {
+        if(loaded_range.m_start != loaded_range.m_end) {
+          // TODO: implement | operator for RangeType
+          return RangeType::LEFT_CLOSED;// | RangeType::RIGHT_OPEN;
+        }
+        return RangeType::OPEN;
+      }();
     on_data_loaded(data, {loaded_range.m_start,
       max(data.back().GetStart(), loaded_range.m_start), RangeType::OPEN});
   } else {
+    auto range_type = [&] {
+        if(loaded_range.m_start != loaded_range.m_end) {
+          return RangeType::RIGHT_CLOSED; // | RangeType::LEFT_OPEN;
+        }
+        return RangeType::OPEN;
+      }();
     on_data_loaded(data, {min(data.front().GetEnd(), loaded_range.m_end),
-      loaded_range.m_end, RangeType::OPEN});
+      loaded_range.m_end, range_type});
   }
 }
 
@@ -154,40 +164,15 @@ void CachedChartModel::update_ranges(const ChartRange& new_range) {
     m_ranges.push_back(new_range);
     return;
   }
-  auto remove_range = [] (auto& ranges, auto& range) {
-    for(auto iter = ranges.begin(); iter != ranges.end(); ++iter) {
-      if((*iter).m_start == range.m_start && (*iter).m_end == range.m_end) {
-        ranges.erase(iter);
-        break;
-      }
-    }
-  };
-  auto ranges = m_ranges;
-  auto new_first = new_range.m_start;
-  auto new_last = new_range.m_end;
-  for(auto& range : m_ranges) {
-    if(range.m_end < new_range.m_start) {
-      continue;
-    }
-    if(range.m_start > new_range.m_end) {
-      break;
-    }
-    if(range.m_start <= new_range.m_start && range.m_end >= new_range.m_start) {
-      new_first = range.m_start;
-      remove_range(ranges, range);
-    } else if(range.m_start <= new_range.m_end &&
-        range.m_end >= new_range.m_end) {
-      new_last = range.m_end;
-      remove_range(ranges, range);
-    }
-    if(range.m_start >= new_range.m_start && range.m_end <= new_range.m_end) {
-      remove_range(ranges, range);
+  auto ranges = std::vector<ChartRange>();
+  for(auto i = m_ranges.begin(); i != m_ranges.end(); ++i) {
+    if(!is_in_range(new_range.m_start, new_range.m_end, *i)) {
+      ranges.push_back(*i);
+    } else if(is_before_range(i->m_start, new_range)) {
+      ranges.push_back({i->m_start, new_range.m_end});
+    } else if(is_after_range(i->m_end, new_range)) {
+      ranges.push_back({new_range.m_start, i->m_end});
     }
   }
-  auto index = std::lower_bound(ranges.begin(), ranges.end(), new_range.m_start,
-    [] (const auto& index, const auto& value) {
-      return index.m_start < value;
-    });
-  ranges.insert(index, {new_first, new_last, new_range.m_type});
   m_ranges = ranges;
 }
