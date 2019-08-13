@@ -35,7 +35,7 @@ namespace Spire {
         RIGHT_CLOSED = 0b0100,
         RIGHT_OPEN = 0b1000,
         CLOSED = LEFT_CLOSED | RIGHT_CLOSED,
-        OPEN = LEFT_OPEN | LEFT_CLOSED
+        OPEN = LEFT_OPEN | RIGHT_OPEN
       };
       struct ChartRange {
         ChartValue m_start;
@@ -64,11 +64,11 @@ namespace Spire {
       QtPromise<std::vector<Candlestick>> load_from_model(
         const LoadInfo& info);
       void on_data_loaded(const std::vector<Candlestick>& data,
-        ChartValue first, ChartValue last);
+        const ChartRange& loaded_range);
       void on_data_loaded(const std::vector<Candlestick>& data,
-        ChartValue first, ChartValue last,
+        const ChartRange& loaded_range,
         const Beam::Queries::SnapshotLimit& limit);
-      void update_ranges(ChartValue first, ChartValue last);
+      void update_ranges(const ChartRange& new_range);
   };
 }
 
