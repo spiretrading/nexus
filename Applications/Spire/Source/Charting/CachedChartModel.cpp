@@ -99,7 +99,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       if(is_in_range(loaded_range.m_start, loaded_range.m_end, range)) {
         return;
       }
-      if(is_in_range(loaded_range.m_start, loaded_range.m_end, range)) {
+      if(is_in_range(loaded_range.m_start, loaded_range.m_start, range)) {
         first_iterator = std::upper_bound(data.begin(), data.end(),
           range.m_end,
           [] (const auto& value, const auto& index) {
@@ -128,7 +128,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     const ChartRange& loaded_range, const SnapshotLimit& limit) {
   if(static_cast<int>(data.size()) < limit.GetSize()) {
     on_data_loaded(data, {loaded_range.m_start, loaded_range.m_end,
-      RangeType::OPEN});
+      RangeType::CLOSED});
   } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
     on_data_loaded(data, {loaded_range.m_start,
       max(data.back().GetStart(), loaded_range.m_start), RangeType::OPEN});
