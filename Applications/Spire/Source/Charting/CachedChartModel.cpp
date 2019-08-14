@@ -160,19 +160,5 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
 }
 
 void CachedChartModel::update_ranges(const ChartRange& new_range) {
-  if(m_ranges.empty()) {
-    m_ranges.push_back(new_range);
-    return;
-  }
-  auto ranges = std::vector<ChartRange>();
-  for(auto i = m_ranges.begin(); i != m_ranges.end(); ++i) {
-    if(!is_in_range(new_range.m_start, new_range.m_end, *i)) {
-      ranges.push_back(*i);
-    } else if(is_before_range(i->m_start, new_range)) {
-      ranges.push_back({i->m_start, new_range.m_end});
-    } else if(is_after_range(i->m_end, new_range)) {
-      ranges.push_back({new_range.m_start, i->m_end});
-    }
-  }
-  m_ranges = ranges;
+
 }
