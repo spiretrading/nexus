@@ -51,10 +51,6 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
         if(intersects(first, range)) {
           load_first = range.upper();
         }
-        //if(is_before_range(load_first, range)) {
-        //  load_last = min(load_last, range.lower());
-        //  break;
-        //}
         if(exclusive_less(first, range)) {
           load_last = min(load_last, range.lower());
           break;
