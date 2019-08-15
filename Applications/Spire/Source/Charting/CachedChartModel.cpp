@@ -42,9 +42,6 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       }
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
-      for(auto i = m_ranges.begin(); i != m_ranges.end(); ++i) {
-        
-      }
       for(auto range : m_ranges) {
         auto first = continuous_interval<ChartValue>::closed(
           load_first, load_first);
