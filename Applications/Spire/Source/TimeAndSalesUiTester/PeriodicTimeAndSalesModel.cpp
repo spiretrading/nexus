@@ -78,7 +78,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
       "NYSE"), sequence);
     return m_entries.insert(where, {value, m_price_range});
   };
-  std::vector<TimeAndSalesModel::Entry> snapshot;
+  auto snapshot = std::vector<TimeAndSalesModel::Entry>();
   if(m_load_duration == pos_infin) {
     return QtPromise(
       [=] {
@@ -114,14 +114,14 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     e = Decrement(e);
   }
   snapshot.insert(snapshot.begin(), i, i + count);
-  return QtPromise([d = m_load_duration, pool = m_timer_thread_pool,
+  return QtPromise([duration = m_load_duration, pool = m_timer_thread_pool,
       snapshot=std::move(snapshot), is_loaded = m_is_loaded] {
-    LiveTimer t(d, Ref(*pool));
-    t.Start();
-    t.Wait();
+    auto timer = LiveTimer(duration, Ref(*pool));
+    timer.Start();
+    timer.Wait();
     *is_loaded = true;
     return std::move(snapshot);
-  });
+  }, LaunchPolicy::ASYNC);
 }
 
 connection PeriodicTimeAndSalesModel::connect_time_and_sale_signal(

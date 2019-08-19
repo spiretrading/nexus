@@ -101,7 +101,7 @@ QtPromise<void> RandomBookViewModel::load() {
             second_clock::universal_time()));
         }
       });
-  });
+  }, LaunchPolicy::ASYNC);
 }
 
 const MarketDatabase& RandomBookViewModel::get_market_database() const {
