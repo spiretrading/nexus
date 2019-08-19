@@ -50,8 +50,7 @@ namespace Spire {
       void on_data_loaded(const std::vector<Candlestick>& data,
         const boost::icl::continuous_interval<ChartValue>& loaded_range);
       void on_data_loaded(const std::vector<Candlestick>& data,
-        const boost::icl::continuous_interval<ChartValue>& loaded_range,
-        const Beam::Queries::SnapshotLimit& limit);
+        const LoadInfo& info);
   };
 }
 

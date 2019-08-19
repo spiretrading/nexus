@@ -34,7 +34,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       info.m_limit).then(
     [=] (auto result) {
       if(contains(m_ranges, continuous_interval<ChartValue>::closed(
-          info.m_requested_first, info.m_requested_last))) {
+          info.m_requested_first, info.m_requested_last)) ||
+          static_cast<int>(result.Get().size()) == info.m_limit.GetSize()) {
         return QtPromise<std::vector<Candlestick>>(
           [data = std::move(result.Get())] () mutable {
             return std::move(data);
@@ -42,15 +43,29 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       }
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
-      for(auto range : m_ranges) {
-        auto first = continuous_interval<ChartValue>::closed(
-          load_first, load_first);
-        if(intersects(first, range)) {
-          load_first = range.upper();
+      if(info.m_limit.GetType() == SnapshotLimit::Type::HEAD) {
+        for(auto range : m_ranges) {
+          auto first = continuous_interval<ChartValue>::closed(
+            load_first, load_first);
+          if(intersects(first, range)) {
+            load_first = range.upper();
+          }
+          if(exclusive_less(first, range)) {
+            load_last = min(load_last, range.lower());
+            break;
+          }
         }
-        if(exclusive_less(first, range)) {
-          load_last = min(load_last, range.lower());
-          break;
+      } else {
+        for(auto i = m_ranges.rbegin(); i != m_ranges.rend(); ++i) {
+          auto last = continuous_interval<ChartValue>::closed(
+            load_last, load_last);
+          if(last > *i) {
+            load_first = max(load_first, i->upper());
+            break;
+          }
+          if(intersects(last, *i)) {
+            load_last = i->lower();
+          }
         }
       }
       return load_from_model({load_first, load_last, info.m_requested_first,
@@ -62,9 +77,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
     const LoadInfo& info) {
   return m_chart_model->load(info.m_first, info.m_last, info.m_limit).then(
     [=] (auto result) {
-      on_data_loaded(std::move(result.Get()),
-        continuous_interval<ChartValue>::open(info.m_first, info.m_last),
-        info.m_limit);
+      on_data_loaded(std::move(result.Get()), info);
       return load_from_cache(info);
     });
 }
@@ -110,30 +123,28 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
 }
 
 void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
-    const continuous_interval<ChartValue>& loaded_range,
-    const SnapshotLimit& limit) {
-  if(static_cast<int>(data.size()) < limit.GetSize()) {
+    const LoadInfo& info) {
+  if(static_cast<int>(data.size()) < info.m_limit.GetSize()) {
     on_data_loaded(data, continuous_interval<ChartValue>::closed(
-      loaded_range.lower(), loaded_range.upper()));
-  } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
-    auto range = [&] () {
-        if(loaded_range.lower() < loaded_range.upper()) {
-          return continuous_interval<ChartValue>::right_open(
-            loaded_range.lower(),
-            max(data.back().GetStart(), loaded_range.lower()));
+      info.m_first, info.m_last));
+  } else if(info.m_limit.GetType() == SnapshotLimit::Type::HEAD) {
+    auto range = [&] {
+        if(info.m_first < info.m_last) {
+          return continuous_interval<ChartValue>::right_open(info.m_first,
+            max(data.back().GetStart(), info.m_first));
         }
-        return continuous_interval<ChartValue>::open(
-          loaded_range.lower(), loaded_range.upper());
+        return continuous_interval<ChartValue>::open(info.m_first,
+          info.m_last);
       }();
     on_data_loaded(data, range);
   } else {
-    auto range = [&] () {
-        if(loaded_range.lower() < loaded_range.upper()) {
+    auto range = [&] {
+        if(info.m_first < info.m_last) {
           return continuous_interval<ChartValue>::left_open(
-            loaded_range.lower(), loaded_range.upper());
+            data.front().GetEnd(), info.m_last);
         }
-        return continuous_interval<ChartValue>::open(
-          loaded_range.lower(), loaded_range.upper());
+        return continuous_interval<ChartValue>::open(data.front().GetEnd(),
+          info.m_last);
       }();
     on_data_loaded(data, range);
   }
