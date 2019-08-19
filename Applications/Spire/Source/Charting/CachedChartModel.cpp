@@ -77,6 +77,13 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
     const LoadInfo& info) {
   return m_chart_model->load(info.m_first, info.m_last, info.m_limit).then(
     [=] (auto result) {
+      if(info.m_requested_first == info.m_requested_last &&
+          info.m_limit.GetSize() >= static_cast<int>(result.Get().size())) {
+        return QtPromise<std::vector<Candlestick>>(
+          [data = std::move(result.Get())] () mutable {
+            return std::move(data);
+          });
+      }
       on_data_loaded(std::move(result.Get()), info);
       return load_from_cache(info);
     });
