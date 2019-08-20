@@ -135,24 +135,12 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
     on_data_loaded(data, continuous_interval<ChartValue>::closed(
       info.m_first, info.m_last));
   } else if(info.m_limit.GetType() == SnapshotLimit::Type::HEAD) {
-    auto range = [&] {
-        if(info.m_first < info.m_last) {
-          return continuous_interval<ChartValue>::right_open(info.m_first,
-            max(data.back().GetStart(), info.m_first));
-        }
-        return continuous_interval<ChartValue>::open(info.m_first,
-          info.m_last);
-      }();
+    auto range = continuous_interval<ChartValue>::right_open(
+      info.m_first, min(data.back().GetEnd(), info.m_last));
     on_data_loaded(data, range);
   } else {
-    auto range = [&] {
-        if(info.m_first < info.m_last) {
-          return continuous_interval<ChartValue>::left_open(
-            data.front().GetEnd(), info.m_last);
-        }
-        return continuous_interval<ChartValue>::open(data.front().GetEnd(),
-          info.m_last);
-      }();
+    auto range = continuous_interval<ChartValue>::left_open(
+      max(data.front().GetStart(), info.m_first), info.m_last);
     on_data_loaded(data, range);
   }
 }

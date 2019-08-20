@@ -253,12 +253,29 @@ TEST_CASE("test_empty_intervals_with_tail_limit", "[CachedChartModel]") {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
       std::vector<Candlestick>({make(30, 40), make(39, 40)}));
-    auto cache1 = CachedChartModel(*model);
+    auto cache = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromTail(1));
-    auto cache_sticks = load(&cache1, 40, 40, SnapshotLimit::FromTail(1));
+    auto cache_sticks = load(&cache, 40, 40, SnapshotLimit::FromTail(1));
     REQUIRE(cache_sticks == model_sticks);
     model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
-    cache_sticks = load(&cache1, 40, 40, SnapshotLimit::Unlimited());
+    cache_sticks = load(&cache, 40, 40, SnapshotLimit::Unlimited());
     REQUIRE(cache_sticks == model_sticks);
   }, "test_empty_intervals_with_tail_limit");
+}
+
+TEST_CASE("test_coincident_open_intervals", "[CachedChartModel]") {
+  run_test([=] {
+    auto model = std::make_shared<LocalChartModel>(
+      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+      std::vector<Candlestick>({make(20, 39), make(39, 40), make(39, 40),
+        make(39, 40), make(49, 60)}));
+    auto cache = CachedChartModel(*model);
+    auto model_sticks = load(model.get(), 20, 40, SnapshotLimit::FromHead(1));
+    auto cache_sticks = load(&cache, 20, 40, SnapshotLimit::FromHead(1));
+    REQUIRE(cache_sticks == model_sticks);
+    model_sticks = load(model.get(), 40, 60, SnapshotLimit::FromTail(1));
+    cache_sticks = load(&cache, 40, 60, SnapshotLimit::FromTail(1));
+    REQUIRE(cache_sticks == model_sticks);
+
+  }, "test_coincident_open_intervals");
 }
