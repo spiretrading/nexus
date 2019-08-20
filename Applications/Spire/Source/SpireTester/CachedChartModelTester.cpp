@@ -233,7 +233,7 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
   }, "test_cache_model_loads_from_tail");
 }
 
-TEST_CASE("test_empty_intervals_with_head_limit", "[LocalChartModel]") {
+TEST_CASE("test_empty_intervals_with_head_limit", "[CachedChartModel]") {
   run_test([=] {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
@@ -248,7 +248,7 @@ TEST_CASE("test_empty_intervals_with_head_limit", "[LocalChartModel]") {
   }, "test_empty_intervals_with_head_limit");
 }
 
-TEST_CASE("test_empty_intervals_with_tail_limit", "[LocalChartModel]") {
+TEST_CASE("test_empty_intervals_with_tail_limit", "[CachedChartModel]") {
   run_test([=] {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
