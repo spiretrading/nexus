@@ -268,7 +268,7 @@ TEST_CASE("test_coincident_open_intervals", "[CachedChartModel]") {
     auto model = std::make_shared<LocalChartModel>(
       ChartValue::Type::MONEY, ChartValue::Type::MONEY,
       std::vector<Candlestick>({make(20, 39), make(39, 40), make(39, 40),
-        make(39, 40), make(49, 60)}));
+        make(39, 40), make(39, 60)}));
     auto cache = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 20, 40, SnapshotLimit::FromHead(1));
     auto cache_sticks = load(&cache, 20, 40, SnapshotLimit::FromHead(1));
@@ -276,6 +276,31 @@ TEST_CASE("test_coincident_open_intervals", "[CachedChartModel]") {
     model_sticks = load(model.get(), 40, 60, SnapshotLimit::FromTail(1));
     cache_sticks = load(&cache, 40, 60, SnapshotLimit::FromTail(1));
     REQUIRE(cache_sticks == model_sticks);
-
+    model_sticks = load(model.get(), 39, 39, SnapshotLimit::Unlimited());
+    cache_sticks = load(&cache, 39, 39, SnapshotLimit::Unlimited());
+    REQUIRE(cache_sticks == model_sticks);
   }, "test_coincident_open_intervals");
+}
+
+TEST_CASE("test_limits_with_no_data", "[CachedChartModel]") {
+  run_test([=] {
+    auto model = std::make_shared<LocalChartModel>(ChartValue::Type::MONEY,
+      ChartValue::Type::MONEY, std::vector<Candlestick>());
+    auto test_model = TestChartModel(model->get_x_axis_type(),
+      model->get_y_axis_type());
+    auto cache = CachedChartModel(test_model);
+    auto load1 = cache.load(ChartValue(40 * Money::ONE),
+      ChartValue(50 * Money::ONE), SnapshotLimit::FromHead(1));
+    auto cache_load1 = wait(test_model.pop_load());
+    REQUIRE(cache_load1->get_first() == ChartValue(40 * Money::ONE));
+    REQUIRE(cache_load1->get_last() == ChartValue(50 * Money::ONE));
+    cache_load1->set_result({});
+    wait(std::move(load1));
+    auto load2 = cache.load(ChartValue(30 * Money::ONE),
+      ChartValue(45 * Money::ONE), SnapshotLimit::FromHead(1));
+    auto cache_load2 = wait(test_model.pop_load());
+    REQUIRE(cache_load2->get_first() == ChartValue(30 * Money::ONE));
+    REQUIRE(cache_load2->get_last() == ChartValue(40 * Money::ONE));
+    cache_load2->set_result({});
+  }, "test_limits_with_no_data");
 }
