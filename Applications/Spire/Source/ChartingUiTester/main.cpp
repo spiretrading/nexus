@@ -53,34 +53,87 @@ int main(int argc, char** argv) {
       window->setWindowTitle(CustomVariantItemDelegate().displayText(
         QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
       auto candlesticks = std::vector<Candlestick>();
-      auto rand = std::default_random_engine(std::random_device()());
-      auto time = boost::posix_time::second_clock::local_time();
-      for(auto i = 0; i < 100; ++i) {
-        auto open = ChartValue(Money((rand() % 40 + 40) *
-          Money::FromValue("0.01").get()));
-        auto close = ChartValue(Money((rand() % 40 + 40) *
-          Money::FromValue("0.01").get()));
-        auto [high, low] = [&] {
-          if(open > close) {
-            return std::make_tuple(ChartValue(Money((rand() % 40) *
-              Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
-              (rand() % 40) * Money::FromValue("0.01").get())));
-          }
-          return std::make_tuple(ChartValue(Money((rand() % 40) *
-            Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
-            (rand() % 40) * Money::FromValue("0.01").get())));
-        }();
-        candlesticks.push_back(Candlestick(
-          ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
-          open, close, high, low));
-        if(rand() % 5 == 1) {
-          time -= boost::posix_time::minutes(rand() % 25 + 1);
-        } else {
-          time -= boost::posix_time::minutes(1);
-        }
-      }
+      auto up = [&] (auto start, auto end) {
+          candlesticks.push_back(Candlestick(
+          ChartValue(start), ChartValue(end),
+          ChartValue(0.4), ChartValue(0.6), ChartValue(0.8), ChartValue(0.2)));
+        };
+      auto down = [&] (auto start, auto end) {
+          candlesticks.push_back(Candlestick(
+          ChartValue(start), ChartValue(end),
+          ChartValue(0.6), ChartValue(0.4), ChartValue(0.8), ChartValue(0.2)));
+        };
+      up(0, 1);
+      down(1, 2);
+      up(2, 3);
+      down(3, 4);
+      up(4, 5);
+      down(5, 6);
+      up(6, 7);
+      down(7, 8);
+      up(8, 9);
+      down(9, 10);
+
+      up(20, 21);
+      down(21, 22);
+      up(22, 23);
+      down(23, 24);
+      up(24, 25);
+      down(25, 26);
+      up(26, 27);
+      down(27, 28);
+      up(28, 29);
+      down(29, 30);
+
+      up(40, 41);
+      down(41, 42);
+      up(42, 43);
+      down(43, 44);
+      up(44, 45);
+      down(45, 46);
+      up(46, 47);
+      down(47, 48);
+      up(48, 49);
+      down(49, 50);
+
+      up(60, 61);
+      down(61, 62);
+      up(62, 63);
+      down(63, 64);
+      up(64, 65);
+      down(65, 66);
+      up(66, 67);
+      down(67, 68);
+      up(68, 69);
+      down(69, 70);
+      //auto rand = std::default_random_engine(std::random_device()());
+      //auto time = boost::posix_time::second_clock::local_time();
+      //for(auto i = 0; i < 100; ++i) {
+      //  auto open = ChartValue(Money((rand() % 40 + 40) *
+      //    Money::FromValue("0.01").get()));
+      //  auto close = ChartValue(Money((rand() % 40 + 40) *
+      //    Money::FromValue("0.01").get()));
+      //  auto [high, low] = [&] {
+      //    if(open > close) {
+      //      return std::make_tuple(ChartValue(Money((rand() % 40) *
+      //        Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+      //        (rand() % 40) * Money::FromValue("0.01").get())));
+      //    }
+      //    return std::make_tuple(ChartValue(Money((rand() % 40) *
+      //      Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+      //      (rand() % 40) * Money::FromValue("0.01").get())));
+      //  }();
+      //  candlesticks.push_back(Candlestick(
+      //    ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
+      //    open, close, high, low));
+      //  if(rand() % 5 == 1) {
+      //    time -= boost::posix_time::minutes(rand() % 25 + 1);
+      //  } else {
+      //    time -= boost::posix_time::minutes(1);
+      //  }
+      //}
       auto chart_model = new LocalChartModel(
-        ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
+        ChartValue::Type::MONEY, ChartValue::Type::MONEY, candlesticks);
       auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
       test_timer.start(1500);
