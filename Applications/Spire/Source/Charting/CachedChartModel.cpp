@@ -33,9 +33,9 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
   return m_cache.load(info.m_requested_first, info.m_requested_last,
       info.m_limit).then(
     [=] (auto result) {
-      if(contains(m_ranges, continuous_interval<ChartValue>::closed(
-          info.m_requested_first, info.m_requested_last)) ||
-          static_cast<int>(result.Get().size()) == info.m_limit.GetSize()) {
+      if(static_cast<int>(result.Get().size()) == info.m_limit.GetSize() ||
+          contains(m_ranges, continuous_interval<ChartValue>::closed(
+          info.m_requested_first, info.m_requested_last))) {
         return QtPromise<std::vector<Candlestick>>(
           [data = std::move(result.Get())] () mutable {
             return std::move(data);
@@ -44,7 +44,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
       if(info.m_limit.GetType() == SnapshotLimit::Type::HEAD) {
-        for(auto range : m_ranges) {
+        for(auto& range : m_ranges) {
           auto first = continuous_interval<ChartValue>::closed(
             load_first, load_first);
           if(intersects(first, range)) {
@@ -124,8 +124,7 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       }
     }
   }
-  m_cache.store(std::move(
-    std::vector<Candlestick>(first_iterator, last_iterator)));
+  m_cache.store({first_iterator, last_iterator});
   m_ranges.add(loaded_range);
 }
 
