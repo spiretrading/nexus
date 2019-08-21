@@ -31,14 +31,16 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
       first, [] (const auto& lhs, const auto& rhs) {
         return lhs.GetEnd() < rhs;
       });
-    auto end = std::lower_bound(start, candlesticks.end(),
+    auto end = std::upper_bound(start, candlesticks.end(),
       last, [] (const auto& lhs, const auto& rhs) {
-        return lhs.GetStart() < rhs;
+        return lhs < rhs.GetStart();
       });
-    if(end != candlesticks.end()) {
-      ++end;
+    if(std::distance(start, end) <= limit.GetSize()) {
+      return std::vector<Candlestick>(start, end);
+    } else if(limit.GetType() == SnapshotLimit::Type::HEAD) {
+      return std::vector<Candlestick>(start, start + limit.GetSize());
     }
-    return std::vector<Candlestick>(start, end);
+    return std::vector<Candlestick>(end - limit.GetSize(), end);
   });
 }
 

@@ -1,6 +1,9 @@
 #ifndef SPIRE_CACHED_CHART_MODEL_HPP
 #define SPIRE_CACHED_CHART_MODEL_HPP
-#include "Spire/Charting/ChartModel.hpp"
+#include <boost/icl/continuous_interval.hpp>
+#include <boost/icl/interval_set.hpp>
+#include "Beam/Queries/SnapshotLimit.hpp"
+#include "Spire/Charting/LocalChartModel.hpp"
 
 namespace Spire {
 
@@ -10,16 +13,6 @@ namespace Spire {
 
       //! Signals an update to a candlestick.
       using CandlestickSignal = Signal<void (const Candlestick& candle)>;
-
-      //! Represents an inclusive range of ChartValues.
-      struct ChartRange {
-
-        /** The start value of the range. */
-        ChartValue m_start;
-
-        /** The end value of the range. */
-        ChartValue m_end;
-      };
 
       //! Constructs a CachedChartModel that uses the supplied model.
       /*!
@@ -38,19 +31,26 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
+      struct LoadInfo {
+        ChartValue m_first;
+        ChartValue m_last;
+        ChartValue m_requested_first;
+        ChartValue m_requested_last;
+        Beam::Queries::SnapshotLimit m_limit;
+      };
       mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
-      std::vector<ChartRange> m_ranges;
-      std::vector<Candlestick> m_loaded_data;
-
-      std::vector<ChartRange> get_gaps(ChartValue first, ChartValue last);
-      void insert_data(const std::vector<Candlestick>& data);
-      QtPromise<std::vector<Candlestick>> load_data(
-        const std::vector<ChartRange>& gaps, ChartValue first,
-        ChartValue last);
+      LocalChartModel m_cache;
+      boost::icl::interval_set<ChartValue> m_ranges;
+      
+      QtPromise<std::vector<Candlestick>> load_from_cache(
+        const LoadInfo& info);
+      QtPromise<std::vector<Candlestick>> load_from_model(
+        const LoadInfo& info);
       void on_data_loaded(const std::vector<Candlestick>& data,
-        ChartValue first, ChartValue last);
-      void update_ranges(ChartValue first, ChartValue last);
+        const boost::icl::continuous_interval<ChartValue>& loaded_range);
+      void on_data_loaded(const std::vector<Candlestick>& data,
+        const LoadInfo& info);
   };
 }
 
