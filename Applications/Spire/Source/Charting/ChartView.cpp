@@ -48,7 +48,7 @@ namespace {
 
   ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
-      return ChartValue(Money::ONE);
+      return ChartValue(10 * Money::ONE);
     } else if(value_type == ChartValue::Type::TIMESTAMP) {
       return ChartValue(minutes(10));
     }
@@ -251,11 +251,31 @@ void ChartView::set_region(const Region& region) {
     m_gaps = std::move(result.Get().m_gaps);
     m_gap_adjusted_bottom_right = {result.Get().m_end,
       m_region.m_bottom_right.m_y};
-    if(m_is_auto_scaled) {
-      update_auto_scale();
+    if(!m_candlesticks.empty()) {
+      if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+        m_gap_promise = m_model->load(ChartValue(0),
+          m_candlesticks.front().GetStart(),
+          SnapshotLimit::FromTail(2));
+        m_gap_promise.then([=] (auto& result) {
+          //qDebug() << static_cast<double>(static_cast<Quantity>(result.Get().front().GetStart()));
+          m_gaps.clear();
+          update_gaps(m_gaps, m_candlesticks, result.Get().front().GetStart());
+          m_candlesticks.insert(m_candlesticks.begin(), result.Get().front());
+          if(m_is_auto_scaled) {
+            update_auto_scale();
+          }
+          update_origins();
+          update();
+          //qDebug() << "left: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
+          //qDebug() << "right: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
+        });
+      }
     }
-    update_origins();
-    update();
+    //if(m_is_auto_scaled) {
+    //  update_auto_scale();
+    //}
+    //update_origins();
+    //update();
   });
   update();
 }
@@ -482,10 +502,12 @@ void ChartView::resizeEvent(QResizeEvent* event) {
 void ChartView::showEvent(QShowEvent* event) {
   if(m_region == Region{}) {
     auto current_time = boost::posix_time::second_clock::local_time();
-    auto bottom_right = ChartPoint(ChartValue(current_time),
+    auto bottom_right = ChartPoint(//ChartValue(current_time),
+      ChartValue(Nexus::Money(100)),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
-      ChartValue(current_time - boost::posix_time::hours(1)),
+      //ChartValue(current_time - boost::posix_time::hours(1)),
+      ChartValue(0),
       ChartValue(Nexus::Money(1)));
     set_region({top_left, bottom_right});
   }
