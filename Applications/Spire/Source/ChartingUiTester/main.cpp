@@ -106,6 +106,17 @@ int main(int argc, char** argv) {
       down(67, 68);
       up(68, 69);
       down(69, 70);
+
+      up(90, 91);
+      down(91, 92);
+      up(92, 93);
+      down(93, 94);
+      up(94, 95);
+      down(95, 96);
+      up(96, 97);
+      down(97, 98);
+      up(98, 99);
+      down(99, 100);
       //auto rand = std::default_random_engine(std::random_device()());
       //auto time = boost::posix_time::second_clock::local_time();
       //for(auto i = 0; i < 100; ++i) {
