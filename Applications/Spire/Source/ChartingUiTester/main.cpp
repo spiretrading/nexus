@@ -63,60 +63,9 @@ int main(int argc, char** argv) {
           ChartValue(start), ChartValue(end),
           ChartValue(0.6), ChartValue(0.4), ChartValue(0.8), ChartValue(0.2)));
         };
-      up(0, 1);
-      down(1, 2);
-      up(2, 3);
-      down(3, 4);
-      up(4, 5);
-      down(5, 6);
-      up(6, 7);
-      down(7, 8);
-      up(8, 9);
-      down(9, 10);
-
-      up(20, 21);
-      down(21, 22);
-      up(22, 23);
-      down(23, 24);
-      up(24, 25);
-      down(25, 26);
-      up(26, 27);
-      down(27, 28);
-      up(28, 29);
-      down(29, 30);
-
-      up(40, 41);
-      down(41, 42);
-      up(42, 43);
-      down(43, 44);
-      up(44, 45);
-      down(45, 46);
-      up(46, 47);
-      down(47, 48);
-      up(48, 49);
-      down(49, 50);
-
-      up(60, 61);
-      down(61, 62);
-      up(62, 63);
-      down(63, 64);
-      up(64, 65);
-      down(65, 66);
-      up(66, 67);
-      down(67, 68);
-      up(68, 69);
-      down(69, 70);
-
-      up(90, 91);
-      down(91, 92);
-      up(92, 93);
-      down(93, 94);
-      up(94, 95);
-      down(95, 96);
-      up(96, 97);
-      down(97, 98);
-      up(98, 99);
-      down(99, 100);
+      up(0, 25);
+      down(50, 75);
+      up(100, 125);
       //auto rand = std::default_random_engine(std::random_device()());
       //auto time = boost::posix_time::second_clock::local_time();
       //for(auto i = 0; i < 100; ++i) {
