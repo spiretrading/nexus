@@ -252,31 +252,42 @@ void ChartView::set_region(const Region& region) {
     m_gap_adjusted_bottom_right = {result.Get().m_end,
       m_region.m_bottom_right.m_y};
     if(!m_candlesticks.empty()) {
-      if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+    // The final version should check for this to avoid unnecessarily loading again,
+    // it's been removed so that the status of the left gap can be more easily monitored.
+    //  if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
         m_gap_promise = m_model->load(ChartValue(0),
           m_candlesticks.front().GetStart(),
           SnapshotLimit::FromTail(2));
         m_gap_promise.then([=] (auto& result) {
           //qDebug() << static_cast<double>(static_cast<Quantity>(result.Get().front().GetStart()));
-          static auto num = 0;
-          if(!result.Get().empty() && result.Get().front().GetStart() < m_region.m_top_left.m_x &&
+          if(!result.Get().empty() &&
+              result.Get().front().GetStart() < m_region.m_top_left.m_x &&
               m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
-            m_left_gap_start = result.Get().front().GetEnd();
-            qDebug() << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
-            qDebug() << num++;
-          } else {
-            m_left_gap_start.reset();
-            qDebug() << num++;
+            m_candlesticks.insert(m_candlesticks.begin(), result.Get().begin(), result.Get().end());
+            m_gaps.clear();
+            update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
+            //m_left_gap_start = result.Get().front().GetEnd();
+            //qDebug() << "left gap: " << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
+            //qDebug() << num++;
           }
-          if(m_is_auto_scaled) {
-            update_auto_scale();
-          }
-          update_origins();
-          update();
-          //qDebug() << "left: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-          //qDebug() << "right: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
+          m_gap_promise = m_model->load(m_candlesticks.back().GetEnd(), ChartValue(10000000),
+            SnapshotLimit::FromHead(2));
+          m_gap_promise.then([=] (auto& result) {
+            //if(!result.Get().empty()) {// &&
+                //result.Get().front().GetStart() < m_region.m_top_left.m_x &&
+                //m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+              m_candlesticks.insert(m_candlesticks.end(), result.Get().begin(), result.Get().end());
+              m_gaps.clear();
+              update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
+            //}
+            if(m_is_auto_scaled) {
+              update_auto_scale();
+            }
+            update_origins();
+            update();
+          });
         });
-      }
+      //}
     }
     //if(m_is_auto_scaled) {
     //  update_auto_scale();
