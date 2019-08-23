@@ -251,11 +251,38 @@ void ChartView::set_region(const Region& region) {
     m_gaps = std::move(result.Get().m_gaps);
     m_gap_adjusted_bottom_right = {result.Get().m_end,
       m_region.m_bottom_right.m_y};
-    if(m_is_auto_scaled) {
-      update_auto_scale();
+    if(!m_candlesticks.empty()) {
+      if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+        m_gap_promise = m_model->load(ChartValue(0),
+          m_candlesticks.front().GetStart(),
+          SnapshotLimit::FromTail(2));
+        m_gap_promise.then([=] (auto& result) {
+          //qDebug() << static_cast<double>(static_cast<Quantity>(result.Get().front().GetStart()));
+          static auto num = 0;
+          if(!result.Get().empty() && result.Get().front().GetStart() < m_region.m_top_left.m_x &&
+              m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+            m_left_gap_start = result.Get().front().GetEnd();
+            qDebug() << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
+            qDebug() << num++;
+          } else {
+            m_left_gap_start.reset();
+            qDebug() << num++;
+          }
+          if(m_is_auto_scaled) {
+            update_auto_scale();
+          }
+          update_origins();
+          update();
+          //qDebug() << "left: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
+          //qDebug() << "right: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
+        });
+      }
     }
-    update_origins();
-    update();
+    //if(m_is_auto_scaled) {
+    //  update_auto_scale();
+    //}
+    //update_origins();
+    //update();
   });
   update();
 }
@@ -356,22 +383,20 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto open = to_pixel({candlestick.GetStart(), candlestick.GetOpen()});
     auto close = to_pixel({candlestick.GetEnd(), candlestick.GetClose()});
     const auto GAP_DIVISOR = 2.95;
-    auto start_x = static_cast<int>((open.x() - (close.x() - open.x()) /
-      GAP_DIVISOR) + 1);
-    auto end_x = static_cast<int>(open.x() + (close.x() - open.x()) /
-      GAP_DIVISOR);
+    auto start_x = open.x();
+    auto end_x = close.x();
     if(candlestick.GetEnd() >= m_region.m_top_left.m_x && start_x <=
         m_bottom_right_pixel.x()) {
       auto high = map_to(candlestick.GetHigh(), m_region.m_bottom_right.m_y,
         m_region.m_top_left.m_y, m_bottom_right_pixel.y(), 0);
       auto low = map_to(candlestick.GetLow(), m_region.m_bottom_right.m_y,
         m_region.m_top_left.m_y, m_bottom_right_pixel.y(), 0);
-      if(open.x() < m_bottom_right_pixel.x() && high <
-          m_bottom_right_pixel.y()) {
-        painter.fillRect(QRect(QPoint(open.x(), high),
-          QPoint(open.x(), min(low, m_bottom_right_pixel.y() - 1))),
-          QColor("#A0A0A0"));
-      }
+      //if(open.x() < m_bottom_right_pixel.x() && high <
+      //    m_bottom_right_pixel.y()) {
+      //  painter.fillRect(QRect(QPoint(open.x(), high),
+      //    QPoint(open.x(), min(low, m_bottom_right_pixel.y() - 1))),
+      //    QColor("#A0A0A0"));
+      //}
       if(open.y() > close.y() && close.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(start_x, close.y()),
           QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),

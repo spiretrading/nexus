@@ -178,7 +178,6 @@ namespace Spire {
       QtPromise<std::vector<Candlestick>> m_gap_promise;
       std::vector<Candlestick> m_candlesticks;
       std::optional<ChartValue> m_left_gap_start;
-      ChartValue m_left_ref;
       std::optional<ChartValue> m_right_gap_start;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
