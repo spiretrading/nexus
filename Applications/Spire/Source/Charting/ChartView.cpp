@@ -113,13 +113,7 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
   auto y = map_to(point.y(), m_bottom_right_pixel.y(), 0,
     m_region.m_bottom_right.m_y, m_region.m_top_left.m_y);
   auto lower_x_pixel = 0;
-  //if(m_left_gap_start) {
-  //  lower_x_pixel = to_pixel({*m_left_gap_start, ChartValue(0)}).x();
-  //}
   auto lower_x_chart_value = m_region.m_top_left.m_x;
-  //if(m_left_gap_start) {
-  //  lower_x_chart_value = *m_left_gap_start;
-  //}
   auto x = [&] {
     for(auto& gap : m_gaps) {
       auto gap_start_pixel = to_pixel({gap.m_start, y}).x();
@@ -142,45 +136,8 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
 }
 
 QPoint ChartView::to_pixel(const ChartPoint& point) const {
-  //if(point.m_x == ChartValue(20)) {
-  //  qDebug() << "******************************************************";
-  //  for(auto g : m_gaps) {
-  //    qDebug() << "[" << static_cast<double>(static_cast<Quantity>(g.m_start)) << ", " <<
-  //      static_cast<double>(static_cast<Quantity>(g.m_end)) << "]";
-  //  }
-  //  qDebug() << "TL.x: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-  //  qDebug() << "BR.x: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
-  //  if(m_left_gap_start) {
-  //    qDebug() << "left_gap: " << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
-  //  } else {
-  //    qDebug() << "no left gap";
-  //  }
-  //}
-  //auto x = map_to(point.m_x, m_region.m_top_left.m_x,
-  //  m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-  //if(m_left_gap_start) {
-  //  // TODO: remove <=
-  //  if(m_left_gap_start < point.m_x && point.m_x <= m_candlesticks.front().GetStart()) {
-  //    auto new_x = to_pixel({*m_left_gap_start, ChartValue()}).x() +
-  //      static_cast<int>((point.m_x - *m_left_gap_start) /
-  //      (m_candlesticks.front().GetStart() - *m_left_gap_start) * static_cast<double>(GAP_SIZE()));
-  //    if(point.m_x == ChartValue(90)) {
-  //      qDebug() << "90";
-  //    }
-  //    static auto num = 0;
-  //    //qDebug() << "here: " << num++;
-  //    return {new_x, map_to(point.m_y, m_region.m_bottom_right.m_y,
-  //      m_region.m_top_left.m_y, m_bottom_right_pixel.y(), 0)};
-  //  }
-  //}
   auto x = map_to(point.m_x, m_region.m_top_left.m_x,
     m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-  if(m_left_gap_start) {
-    qDebug() << static_cast<double>(map_to(m_region.m_top_left.m_x, *m_left_gap_start,
-      m_left_ref, 0.0, 1.0)) * 100.0;
-    x -= static_cast<int>(static_cast<double>(GAP_SIZE()) * map_to(m_region.m_top_left.m_x, *m_left_gap_start,
-      m_left_ref, 0.0, 1.0));
-  }
   for(auto& gap : m_gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       auto new_x = to_pixel({gap.m_start, ChartValue()}).x() +
@@ -275,14 +232,10 @@ const ChartView::Region& ChartView::get_region() const {
 }
 
 void ChartView::set_region(const Region& region) {
-  //qDebug() << "set_region";
   if(m_region == region) {
     return;
   }
-  //qDebug() << "success";
   m_region = region;
-  //qDebug() << "TL.x: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-  //qDebug() << "BR.x: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
   auto required_data = LoadedData();
   required_data.m_start = m_region.m_top_left.m_x;
   required_data.m_end = m_region.m_bottom_right.m_x;
@@ -290,8 +243,6 @@ void ChartView::set_region(const Region& region) {
   required_data.m_end_x = m_bottom_right_pixel.x();
   required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
     m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
-  //qDebug() << "r_tl: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-  //qDebug() << "r_br: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
   m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
     required_data.m_end, SnapshotLimit::Unlimited()), required_data, m_model);
   // TODO: Potential crash
@@ -300,56 +251,11 @@ void ChartView::set_region(const Region& region) {
     m_gaps = std::move(result.Get().m_gaps);
     m_gap_adjusted_bottom_right = {result.Get().m_end,
       m_region.m_bottom_right.m_y};
-    if(!m_candlesticks.empty()) {
-      //if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
-        m_gap_promise = m_model->load(ChartValue(-10000),
-          m_candlesticks.front().GetStart(),
-          // TODO: should it be loaded from the Head(1) instead?
-          SnapshotLimit::FromTail(2));
-        m_gap_promise.then([=] (auto& result) {
-          //qDebug() << static_cast<double>(static_cast<Quantity>(result.Get().front().GetStart()));
-          //m_gaps.clear();
-          //update_gaps(m_gaps, m_candlesticks, result.Get().front().GetStart());
-          static auto num = 0;
-          //qDebug() << "there: " << num++;
-          if(!result.Get().empty()) {
-            //qDebug() << "size: " << m_candlesticks.size();
-            //qDebug() << "result: " << static_cast<double>(static_cast<Quantity>(result.Get().front().GetEnd()));
-            //m_gaps.insert(m_gaps.begin(), {m_region.m_top_left.m_x, m_candlesticks.front().GetStart()});
-            m_left_gap_start = result.Get().front().GetEnd();
-            m_left_ref = m_candlesticks.front().GetStart();
-            //qDebug() << "left_start: " << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
-          } else {
-            m_left_gap_start.reset();
-            //qDebug() << "left_start null";
-          }
-          //while(m_gaps.front().m_end < m_region.m_top_left.m_x) {
-          //  m_gaps.erase(m_gaps.begin());
-          //}
-          //qDebug() << "gap_count: " << m_gaps.size();
-          //m_candlesticks.insert(m_candlesticks.begin(), result.Get().front());
-          if(m_is_auto_scaled) {
-            update_auto_scale();
-          }
-          update_origins();
-          update();
-          //qDebug() << "left: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-          //qDebug() << "right: " << static_cast<double>(static_cast<Quantity>(m_region.m_bottom_right.m_x));
-        });
-      //} else {
-      //  // TODO: make this a function if it's used multiple times
-      //  if(m_is_auto_scaled) {
-      //    update_auto_scale();
-      //  }
-      //  update_origins();
-      //  update();
-      //}
+    if(m_is_auto_scaled) {
+      update_auto_scale();
     }
-    //if(m_is_auto_scaled) {
-    //  update_auto_scale();
-    //}
-    //update_origins();
-    //update();
+    update_origins();
+    update();
   });
   update();
 }
@@ -577,7 +483,7 @@ void ChartView::showEvent(QShowEvent* event) {
   if(m_region == Region{}) {
     auto current_time = boost::posix_time::second_clock::local_time();
     auto bottom_right = ChartPoint(//ChartValue(current_time),
-      ChartValue(Nexus::Money(100)),
+      ChartValue(100),
       ChartValue(Nexus::Money(0)));
     auto top_left = ChartPoint(
       //ChartValue(current_time - boost::posix_time::hours(1)),
@@ -782,10 +688,8 @@ void ChartView::update_origins() {
   m_y_range = m_region.m_top_left.m_y - m_region.m_bottom_right.m_y;
   m_y_axis_step = calculate_step(m_model->get_y_axis_type(), m_y_range);
   auto x_value = m_region.m_top_left.m_x - (m_region.m_top_left.m_x %
-    m_x_axis_step);// + m_x_axis_step;
+    m_x_axis_step) + m_x_axis_step;
   m_x_axis_values.clear();
-  //qDebug() << "TL: " << static_cast<double>(static_cast<Quantity>(m_region.m_top_left.m_x));
-  //qDebug() << "GABR: " << static_cast<double>(static_cast<Quantity>(m_gap_adjusted_bottom_right.m_x));
   while(x_value <= m_gap_adjusted_bottom_right.m_x) {
     for(auto& gap : m_gaps) {
       if(gap.m_start < x_value && x_value < gap.m_end) {
