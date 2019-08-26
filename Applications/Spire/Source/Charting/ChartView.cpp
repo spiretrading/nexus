@@ -263,6 +263,9 @@ void ChartView::set_region(const Region& region) {
           if(!result.Get().empty() &&
               result.Get().front().GetStart() < m_region.m_top_left.m_x &&
               m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+            if(m_candlesticks.front() == result.Get().back()) {
+              result.Get().pop_back();
+            }
             m_candlesticks.insert(m_candlesticks.begin(), result.Get().begin(), result.Get().end());
             m_gaps.clear();
             update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
@@ -276,6 +279,9 @@ void ChartView::set_region(const Region& region) {
             //if(!result.Get().empty()) {// &&
                 //result.Get().front().GetStart() < m_region.m_top_left.m_x &&
                 //m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
+              if(m_candlesticks.back() == result.Get().front()) {
+                m_candlesticks.pop_back();
+              }
               m_candlesticks.insert(m_candlesticks.end(), result.Get().begin(), result.Get().end());
               m_gaps.clear();
               update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
