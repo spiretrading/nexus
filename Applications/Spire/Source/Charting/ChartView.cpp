@@ -259,7 +259,6 @@ void ChartView::set_region(const Region& region) {
           m_candlesticks.front().GetStart(),
           SnapshotLimit::FromTail(2));
         m_gap_promise.then([=] (auto& result) {
-          //qDebug() << static_cast<double>(static_cast<Quantity>(result.Get().front().GetStart()));
           if(!result.Get().empty() &&
               result.Get().front().GetStart() < m_region.m_top_left.m_x &&
               m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
@@ -269,9 +268,6 @@ void ChartView::set_region(const Region& region) {
             m_candlesticks.insert(m_candlesticks.begin(), result.Get().begin(), result.Get().end());
             m_gaps.clear();
             update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
-            //m_left_gap_start = result.Get().front().GetEnd();
-            //qDebug() << "left gap: " << static_cast<double>(static_cast<Quantity>(*m_left_gap_start));
-            //qDebug() << num++;
           }
           m_gap_promise = m_model->load(m_candlesticks.back().GetEnd(), ChartValue(10000000),
             SnapshotLimit::FromHead(2));
