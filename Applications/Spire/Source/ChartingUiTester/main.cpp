@@ -92,9 +92,9 @@ int main(int argc, char** argv) {
       //    time -= boost::posix_time::minutes(1);
       //  }
       //}
-      auto chart_model = new LocalChartModel(
+      auto chart_model = std::make_shared<LocalChartModel>(
         ChartValue::Type::MONEY, ChartValue::Type::MONEY, candlesticks);
-      auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
+      //auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
       test_timer.start(1500);
       QObject::connect(&test_timer, &QTimer::timeout, [=] {
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
         technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
           Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
       });
-      window->set_models(std::move(cached_model), technicals_model);
+      window->set_models(chart_model, technicals_model);
     });
   window->show();
   application->exec();

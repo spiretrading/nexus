@@ -235,69 +235,46 @@ void ChartView::set_region(const Region& region) {
   if(m_region == region) {
     return;
   }
+  // TODO: no region in paint
   m_region = region;
-  auto required_data = LoadedData();
-  required_data.m_start = m_region.m_top_left.m_x;
-  required_data.m_end = m_region.m_bottom_right.m_x;
-  required_data.m_current_x = 0;
-  required_data.m_end_x = m_bottom_right_pixel.x();
-  required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
-    m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
-  m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
-    required_data.m_end, SnapshotLimit::Unlimited()), required_data, m_model);
-  // TODO: Potential crash
-  m_loaded_data_promise.then([=] (auto result) {
+  m_loaded_data_promise = m_model->load(
+    ChartValue(std::numeric_limits<Quantity>::min()),
+    region.m_top_left.m_x, SnapshotLimit::FromTail(1)).then(
+      [=] (auto& left_gap) {
+        return m_model->load(region.m_bottom_right.m_x,
+          ChartValue(std::numeric_limits<Quantity>::max()),
+          SnapshotLimit::FromHead(1)).then([=] (auto& right_gap) {
+            auto required_data = LoadedData();
+            if(left_gap.Get().empty()) {
+              required_data.m_start = region.m_top_left.m_x;
+            } else {
+              required_data.m_start = left_gap.Get().front().GetEnd();
+            }
+            if(right_gap.Get().empty()) {
+              required_data.m_end = region.m_bottom_right.m_x;
+            } else {
+              required_data.m_end = right_gap.Get().front().GetStart();
+            }
+            required_data.m_current_x = 0;
+            required_data.m_end_x = m_bottom_right_pixel.x();
+            required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
+              region.m_top_left.m_x) / m_bottom_right_pixel.x();
+            return load_data(m_model->load(required_data.m_start,
+              required_data.m_end, SnapshotLimit::Unlimited()),
+              required_data, m_model);
+          });
+      });
+  m_loaded_data_promise.then([=] (auto& result) {
     m_candlesticks = std::move(result.Get().m_candlesticks);
     m_gaps = std::move(result.Get().m_gaps);
     m_gap_adjusted_bottom_right = {result.Get().m_end,
       m_region.m_bottom_right.m_y};
-    if(!m_candlesticks.empty()) {
-    // The final version should check for this to avoid unnecessarily loading again,
-    // it's been removed so that the status of the left gap can be more easily monitored.
-    //  if(m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
-        m_gap_promise = m_model->load(ChartValue(0),
-          m_candlesticks.front().GetStart(),
-          SnapshotLimit::FromTail(2));
-        m_gap_promise.then([=] (auto& result) {
-          if(!result.Get().empty() &&
-              result.Get().front().GetStart() < m_region.m_top_left.m_x &&
-              m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
-            if(m_candlesticks.front() == result.Get().back()) {
-              result.Get().pop_back();
-            }
-            m_candlesticks.insert(m_candlesticks.begin(), result.Get().begin(), result.Get().end());
-            m_gaps.clear();
-            update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
-          }
-          m_gap_promise = m_model->load(m_candlesticks.back().GetEnd(), ChartValue(10000000),
-            SnapshotLimit::FromHead(2));
-          m_gap_promise.then([=] (auto& result) {
-            //if(!result.Get().empty()) {// &&
-                //result.Get().front().GetStart() < m_region.m_top_left.m_x &&
-                //m_candlesticks.front().GetStart() > m_region.m_top_left.m_x) {
-              if(m_candlesticks.back() == result.Get().front()) {
-                m_candlesticks.pop_back();
-              }
-              m_candlesticks.insert(m_candlesticks.end(), result.Get().begin(), result.Get().end());
-              m_gaps.clear();
-              update_gaps(m_gaps, m_candlesticks, m_candlesticks.front().GetStart());
-            //}
-            if(m_is_auto_scaled) {
-              update_auto_scale();
-            }
-            update_origins();
-            update();
-          });
-        });
-      //}
+    if(m_is_auto_scaled) {
+      update_auto_scale();
     }
-    //if(m_is_auto_scaled) {
-    //  update_auto_scale();
-    //}
-    //update_origins();
-    //update();
+    update_origins();
+    update();
   });
-  update();
 }
 
 bool ChartView::is_auto_scale_enabled() const {
