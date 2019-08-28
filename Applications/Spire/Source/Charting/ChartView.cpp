@@ -147,11 +147,21 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
         m_region.m_top_left.m_y, m_bottom_right_pixel.y(), 0)};
     }
     if(point.m_x > gap.m_start) {
+      // Relevant portion
       auto gap_start = map_to(gap.m_start, m_region.m_top_left.m_x,
         m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
       auto gap_end = map_to(gap.m_end, m_region.m_top_left.m_x,
         m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-      x -= gap_end - gap_start - GAP_SIZE();
+      if(gap_start < 0) {
+        // Find % of gap that would be off screen
+        auto a = map_to(0, gap_start, gap_end, 0.0, 1.0);
+        // Get size of invisible gap portion
+        auto b = static_cast<int>(GAP_SIZE() * a);
+        x -= gap_end - b;
+      } else {
+        // Normal case, gap is completely contained within the view
+        x -= gap_end - gap_start - GAP_SIZE();
+      }
     }
   }
   return {x, map_to(point.m_y, m_region.m_bottom_right.m_y,
