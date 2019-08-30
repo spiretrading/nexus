@@ -527,9 +527,12 @@ ChartView::GapInfo ChartView::update_gaps(std::vector<ChartView::Gap>& gaps,
 QtPromise<ChartView::LoadedData> ChartView::load_data(
     QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
     ChartModel* model) {
+  // TODO: fix the infinite loop somewhere in here.
   return promise.then([=] (auto result) mutable {
     auto new_candlesticks = std::move(result.Get());
-    if(!data.m_candlesticks.empty()) {
+    if(!data.m_candlesticks.empty() && !new_candlesticks.empty() &&
+        new_candlesticks.front().GetStart() <=
+        data.m_candlesticks.back().GetStart()) {
       auto last = std::find_if(new_candlesticks.begin(),
         new_candlesticks.end(), [&] (const auto& candlestick) {
           return candlestick.GetStart() >=
@@ -559,6 +562,16 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     if(data.m_current_x < data.m_end_x) {
       return load_data(model->load(data.m_start, data.m_end,
         SnapshotLimit::Unlimited()), std::move(data), model);
+    }
+    if(data.m_candlesticks.back().GetEnd() < data.m_end) {
+      // TODO: data.m_end needs to be set properly to adjust the bottom right
+      //  side of the region. This should also fix the 'phantom' gap issue,
+      // because currently it's skipping a candlestick because a limit of 1 is used.
+      auto end = data.m_end + data.m_end - data.m_candlesticks.back().GetEnd();
+      auto start = data.m_end;
+      data.m_end = end;
+      return load_data(model->load(start, end,
+        SnapshotLimit::FromHead(1)), data, model);
     }
     return QtPromise<LoadedData>([data = std::move(data)] () mutable {
       return std::move(data);

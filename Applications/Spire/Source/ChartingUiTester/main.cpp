@@ -63,9 +63,12 @@ int main(int argc, char** argv) {
           ChartValue(start), ChartValue(end),
           ChartValue(0.6), ChartValue(0.4), ChartValue(0.8), ChartValue(0.2)));
         };
-      up(-1000, -975);
-      down(0, 25);
-      up(1000, 1025);
+      up(0, 25);
+      down(100, 125);
+      up(200, 225);
+      up(225, 250);
+      up(250, 275);
+      up(275, 300);
       //auto rand = std::default_random_engine(std::random_device()());
       //auto time = boost::posix_time::second_clock::local_time();
       //for(auto i = 0; i < 100; ++i) {
