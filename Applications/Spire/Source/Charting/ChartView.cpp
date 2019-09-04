@@ -554,8 +554,9 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     data.m_candlesticks.insert(data.m_candlesticks.end(),
       new_candlesticks.begin(), new_candlesticks.end());
     data.m_current_x += static_cast<int>(std::ceil(
-      (data.m_end - data.m_candlesticks.back().GetEnd()) /
-      data.m_values_per_pixel));
+      (data.m_end - data.m_candlesticks.back().GetEnd() -
+      gap_info.total_gaps_value) / data.m_values_per_pixel +
+      gap_info.gap_count * GAP_SIZE()));
     data.m_start = data.m_end;
     // TODO: update this to reflect actual end/bottom_right
     data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
