@@ -528,6 +528,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
     ChartModel* model) {
   return promise.then([=] (auto result) mutable {
+    static auto tried = false;
     auto new_candlesticks = std::move(result.Get());
     if(!data.m_candlesticks.empty() && !new_candlesticks.empty() &&
         new_candlesticks.front().GetStart() <=
@@ -553,16 +554,35 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
     data.m_candlesticks.insert(data.m_candlesticks.end(),
       new_candlesticks.begin(), new_candlesticks.end());
-    data.m_current_x += static_cast<int>(std::ceil(
-      (data.m_end - data.m_candlesticks.back().GetEnd() -
-      gap_info.total_gaps_value) / data.m_values_per_pixel +
-      gap_info.gap_count * GAP_SIZE()));
-    data.m_start = data.m_end;
-    // TODO: update this to reflect actual end/bottom_right
-    data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
-    if(data.m_current_x < data.m_end_x) {
-      return load_data(model->load(data.m_start, data.m_end,
-        SnapshotLimit::Unlimited()), std::move(data), model);
+
+    if(!new_candlesticks.empty()) {
+      if(tried) {
+        // still need to set end here?
+        //data.m_end = ChartValue(230);//new_candlesticks.back().GetStart();
+        tried = false;
+      }
+      auto a = new_candlesticks.back().GetEnd() - new_candlesticks.front().GetStart() - gap_info.total_gaps_value;
+      auto z = std::ceil(a / data.m_values_per_pixel);
+      auto b = std::ceil(z + gap_info.gap_count * GAP_SIZE());
+      auto c = static_cast<int>(b);
+      data.m_current_x += c;
+
+      if(data.m_current_x < data.m_end_x) {
+        data.m_start = data.m_end;
+        data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
+        return load_data(model->load(data.m_start, data.m_end,
+          SnapshotLimit::Unlimited()), std::move(data), model);
+      }
+    } else if(!tried) {
+      tried = true;
+      if(data.m_current_x < data.m_end_x) {
+        data.m_start = data.m_end;
+        data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
+        // TODO: don't assume max(), find a proper end/last value
+        return load_data(model->load(data.m_start,
+          ChartValue(std::numeric_limits<Quantity>::max()),
+          SnapshotLimit::FromHead(1)), std::move(data), model);
+      }
     }
     return QtPromise<LoadedData>([data = std::move(data)] () mutable {
       return std::move(data);
