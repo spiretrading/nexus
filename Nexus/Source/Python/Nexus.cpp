@@ -6,5 +6,6 @@ using namespace Nexus::Python;
 using namespace pybind11;
 
 PYBIND11_MODULE(nexus, module) {
+  ExportAccounting(module);
   ExportDefinitions(module);
 }
