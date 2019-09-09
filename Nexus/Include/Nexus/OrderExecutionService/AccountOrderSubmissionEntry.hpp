@@ -107,8 +107,8 @@ namespace OrderExecutionService {
   inline SequencedAccountOrderInfo AccountOrderSubmissionEntry::Publish(
       const OrderInfo& orderInfo) {
     auto sequence = ++m_orderSequence;
-    auto sequencedOrderInfo = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(orderInfo, m_account),
+    auto sequencedOrderInfo = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(orderInfo, m_account),
       Beam::Queries::Sequence(sequence));
     return sequencedOrderInfo;
   }
@@ -116,8 +116,8 @@ namespace OrderExecutionService {
   inline SequencedAccountExecutionReport AccountOrderSubmissionEntry::Publish(
       const ExecutionReport& executionReport) {
     auto sequence = ++m_executionReportSequence;
-    auto sequencedExecutionReport = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(executionReport, m_account),
+    auto sequencedExecutionReport = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(executionReport, m_account),
       Beam::Queries::Sequence(sequence));
     return sequencedExecutionReport;
   }

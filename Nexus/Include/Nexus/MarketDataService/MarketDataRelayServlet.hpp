@@ -504,8 +504,8 @@ namespace Nexus::MarketDataService {
       MarketDataRelayServlet<ContainerType, MarketDataClientType,
       AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
-    auto indexedValue = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
+    auto indexedValue = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue,
       [&] (auto& clients) {
         Beam::Services::BroadcastRecordMessage<
@@ -522,8 +522,8 @@ namespace Nexus::MarketDataService {
       AdministrationClientType>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto key = EntitlementKey{index.GetMarket(), value.GetValue().m_market};
-    auto indexedValue = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
+    auto indexedValue = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue,
       [&] (auto& client) {
         return client.GetSession().GetEntitlements().HasEntitlement(key,

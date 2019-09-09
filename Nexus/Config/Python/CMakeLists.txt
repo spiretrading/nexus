@@ -1,16 +1,17 @@
-file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Beam/Python/*.hpp)
+file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/Python/*.hpp)
 file(GLOB source_files ${NEXUS_SOURCE_PATH}/Python/*.cpp)
 
-include_directories(${PYTHON_INCLUDE_PATH})
+include_directories(SYSTEM ${PYBIND11_INCLUDE_PATH})
+include_directories(SYSTEM ${PYTHON_INCLUDE_PATH})
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-  add_definitions(-DBOOST_PYTHON_NO_LIB)
 endif()
 
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
+add_definitions(-DASPEN_USE_DLL)
 add_definitions(-DBEAM_USE_DLL)
 add_definitions(-DBEAM_ENABLE_STACK_PRINT)
 
@@ -24,6 +25,8 @@ if(UNIX)
 endif()
 
 target_link_libraries(Python
+  debug ${ASPEN_PYTHON_LIBRARY_DEBUG_PATH}
+  optimized ${ASPEN_PYTHON_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${MYSQL_LIBRARY_DEBUG_PATH}
@@ -40,8 +43,6 @@ target_link_libraries(Python
   optimized ${PYTHON_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${BOOST_PYTHON_LIBRARY_DEBUG_PATH}
-  optimized ${BOOST_PYTHON_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 

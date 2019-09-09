@@ -193,7 +193,7 @@ namespace OrderExecutionService {
       [=] (const SequencedOrderRecord& orderRecord) {
         auto sequence = orderRecord.GetSequence();
         auto order = LoadOrder(orderRecord).get();
-        return Beam::Queries::MakeSequencedValue(std::move(order),
+        return Beam::Queries::SequencedValue(std::move(order),
           std::move(sequence));
       });
     m_orderSubmissionPublisher.SubmitQuery(query, conversionQueue);
@@ -245,8 +245,8 @@ namespace OrderExecutionService {
     }
     auto orderInfo = client->template SendRequest<NewOrderSingleService>(
       fields);
-    auto orderRecord = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(OrderRecord{std::move(**orderInfo), {}},
+    auto orderRecord = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(OrderRecord{std::move(**orderInfo), {}},
       orderInfo->GetIndex()), orderInfo.GetSequence());
     auto order = LoadOrder(**orderRecord);
     m_submissionPublisher.Push(order.get());

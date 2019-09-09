@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="d8a4faff21a9773f25607e8413da693613ca298f"
+SET beam_commit="74223e9cd0a1d2c8696d0767027e70c9020d5467"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -22,7 +22,7 @@ IF NOT "%ERRORLEVEL%" == "0" (
   SET BUILD_BEAM=1
 )
 IF "%BUILD_BEAM%" == "1" (
-  CALL configure.bat "-DD=%ROOT%"
+  CALL configure.bat -DD="%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
 ) ELSE (

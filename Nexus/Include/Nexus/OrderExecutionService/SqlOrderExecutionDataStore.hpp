@@ -182,7 +182,7 @@ namespace Nexus::OrderExecutionService {
       for(auto& executionReport : sequencedExecutionReports) {
         executionReports.push_back(std::move(*executionReport));
       }
-      orderRecords.push_back(Beam::Queries::MakeSequencedValue(
+      orderRecords.push_back(Beam::Queries::SequencedValue(
         OrderRecord(std::move(*order), std::move(executionReports)),
         order.GetSequence()));
     }
