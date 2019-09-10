@@ -1,5 +1,5 @@
-#ifndef NEXUS_TO_PYTHON_ADMINISTRATION_CLIENT_HPP
-#define NEXUS_TO_PYTHON_ADMINISTRATION_CLIENT_HPP
+#ifndef NEXUS_PYTHON_ADMINISTRATION_CLIENT_HPP
+#define NEXUS_PYTHON_ADMINISTRATION_CLIENT_HPP
 #include <pybind11/pybind11.h>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 
