@@ -11,4 +11,5 @@ PYBIND11_MODULE(nexus, module) {
   ExportBacktester(module);
   ExportCompliance(module);
   ExportDefinitions(module);
+  ExportDefinitionsService(module);
 }
