@@ -14,4 +14,5 @@ PYBIND11_MODULE(nexus, module) {
   ExportDefinitionsService(module);
   ExportFeeHandling(module);
   ExportMarketDataService(module);
+  ExportQueries(module);
 }
