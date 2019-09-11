@@ -433,12 +433,12 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
           std::move(serviceLocatorClient));
       }))
     .def("open", &AdministrationServiceTestEnvironment::Open,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("close", &AdministrationServiceTestEnvironment::Close,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("make_administrator",
       &AdministrationServiceTestEnvironment::MakeAdministrator,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("build_client",
       [] (AdministrationServiceTestEnvironment& self,
           VirtualServiceLocatorClient& serviceLocatorClient) {

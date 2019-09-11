@@ -91,7 +91,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   ToPythonHistoricalDataStore<D>::~ToPythonHistoricalDataStore() {
     Close();
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore.reset();
   }
 
@@ -99,14 +99,14 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedOrderImbalance>
       ToPythonHistoricalDataStore<D>::LoadOrderImbalances(
       const MarketWideDataQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadOrderImbalances(query);
   }
 
   template<typename D>
   std::vector<SequencedBboQuote> ToPythonHistoricalDataStore<D>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadBboQuotes(query);
   }
 
@@ -114,7 +114,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedBookQuote>
       ToPythonHistoricalDataStore<D>::LoadBookQuotes(
       const SecurityMarketDataQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadBookQuotes(query);
   }
 
@@ -122,7 +122,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedMarketQuote>
       ToPythonHistoricalDataStore<D>::LoadMarketQuotes(
       const SecurityMarketDataQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadMarketQuotes(query);
   }
 
@@ -130,89 +130,89 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedTimeAndSale>
       ToPythonHistoricalDataStore<D>::LoadTimeAndSales(
       const SecurityMarketDataQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadTimeAndSales(query);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(orderImbalance);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(orderImbalances);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const SequencedSecurityBboQuote& bboQuote) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(bboQuote);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(bboQuotes);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const SequencedSecurityMarketQuote& marketQuote) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(marketQuote);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(marketQuotes);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const SequencedSecurityBookQuote& bookQuote) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(bookQuote);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(bookQuotes);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const SequencedSecurityTimeAndSale& timeAndSale) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(timeAndSale);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Store(timeAndSales);
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Open() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Open();
   }
 
   template<typename D>
   void ToPythonHistoricalDataStore<D>::Close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_dataStore->Close();
   }
 }

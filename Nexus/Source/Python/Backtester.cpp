@@ -59,9 +59,9 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
       static_cast<BacktesterMarketDataService& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetMarketDataService),
       return_value_policy::reference_internal)
-    .def("open", &BacktesterEnvironment::Open, call_guard<gil_scoped_release>())
+    .def("open", &BacktesterEnvironment::Open, call_guard<GilRelease>())
     .def("close", &BacktesterEnvironment::Close,
-      call_guard<gil_scoped_release>());
+      call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
@@ -81,9 +81,9 @@ void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
         self.Add(std::move(e));
       })
     .def("open", &BacktesterEventHandler::Open,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("close", &BacktesterEventHandler::Close,
-      call_guard<gil_scoped_release>());
+      call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {

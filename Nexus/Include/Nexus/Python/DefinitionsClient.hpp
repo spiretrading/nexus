@@ -67,69 +67,69 @@ namespace Nexus::DefinitionsService {
   template<typename C>
   ToPythonDefinitionsClient<C>::~ToPythonDefinitionsClient() {
     Close();
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
   template<typename C>
   std::string ToPythonDefinitionsClient<C>::LoadMinimumSpireClientVersion() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadMinimumSpireClientVersion();
   }
 
   template<typename C>
   CountryDatabase ToPythonDefinitionsClient<C>::LoadCountryDatabase() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadCountryDatabase();
   }
 
   template<typename C>
   boost::local_time::tz_database
       ToPythonDefinitionsClient<C>::LoadTimeZoneDatabase() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadTimeZoneDatabase();
   }
 
   template<typename C>
   CurrencyDatabase ToPythonDefinitionsClient<C>::LoadCurrencyDatabase() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadCurrencyDatabase();
   }
 
   template<typename C>
   DestinationDatabase ToPythonDefinitionsClient<C>::LoadDestinationDatabase() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadDestinationDatabase();
   }
 
   template<typename C>
   MarketDatabase ToPythonDefinitionsClient<C>::LoadMarketDatabase() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadMarketDatabase();
   }
 
   template<typename C>
   std::vector<ExchangeRate> ToPythonDefinitionsClient<C>::LoadExchangeRates() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadExchangeRates();
   }
 
   template<typename C>
   std::vector<Compliance::ComplianceRuleSchema>
       ToPythonDefinitionsClient<C>::LoadComplianceRuleSchemas() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadComplianceRuleSchemas();
   }
 
   template<typename C>
   void ToPythonDefinitionsClient<C>::Open() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->Open();
   }
 
   template<typename C>
   void ToPythonDefinitionsClient<C>::Close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->Close();
   }
 }

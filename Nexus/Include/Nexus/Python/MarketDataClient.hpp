@@ -94,7 +94,7 @@ namespace Nexus::MarketDataService {
   template<typename C>
   ToPythonMarketDataClient<C>::~ToPythonMarketDataClient() {
     Close();
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
@@ -102,7 +102,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryOrderImbalances(
       const MarketWideDataQuery& query, const std::shared_ptr<
       Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryOrderImbalances(query, queue);
   }
 
@@ -110,7 +110,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryOrderImbalances(query, queue);
   }
 
@@ -118,7 +118,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryBboQuotes(query, queue);
   }
 
@@ -126,7 +126,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryBboQuotes(query, queue);
   }
 
@@ -134,7 +134,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryBookQuotes(query, queue);
   }
 
@@ -142,7 +142,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryBookQuotes(query, queue);
   }
 
@@ -150,7 +150,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryMarketQuotes(query, queue);
   }
 
@@ -158,7 +158,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryMarketQuotes(query, queue);
   }
 
@@ -166,7 +166,7 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryTimeAndSales(query, queue);
   }
 
@@ -174,40 +174,40 @@ namespace Nexus::MarketDataService {
   void ToPythonMarketDataClient<C>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->QueryTimeAndSales(query, queue);
   }
 
   template<typename C>
   SecuritySnapshot ToPythonMarketDataClient<C>::LoadSecuritySnapshot(
       const Security& security) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadSecuritySnapshot(security);
   }
 
   template<typename C>
   SecurityTechnicals ToPythonMarketDataClient<C>::
       LoadSecurityTechnicals(const Security& security) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadSecurityTechnicals(security);
   }
 
   template<typename C>
   std::vector<SecurityInfo> ToPythonMarketDataClient<C>::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->LoadSecurityInfoFromPrefix(prefix);
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::Open() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->Open();
   }
 
   template<typename C>
   void ToPythonMarketDataClient<C>::Close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->Close();
   }
 }

@@ -13,6 +13,7 @@ PYBIND11_MODULE(nexus, module) {
   ExportDefinitionsService(module);
   ExportFeeHandling(module);
   ExportMarketDataService(module);
+  ExportOrderExecutionService(module);
   ExportQueries(module);
   ExportRiskService(module);
   ExportServiceClients(module);

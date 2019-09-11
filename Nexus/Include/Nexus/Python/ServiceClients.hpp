@@ -136,7 +136,7 @@ namespace Python {
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
     Close();
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_timeClient.reset();
     m_orderExecutionClient.reset();
     m_complianceClient.reset();
@@ -232,14 +232,14 @@ namespace Python {
   std::unique_ptr<typename ToPythonServiceClients<C>::Timer>
       ToPythonServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return Beam::Threading::MakeVirtualTimer(
       Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry)));
   }
 
   template<typename C>
   void ToPythonServiceClients<C>::Open() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     if(m_openState.SetOpening()) {
       return;
     }
@@ -281,7 +281,7 @@ namespace Python {
 
   template<typename C>
   void ToPythonServiceClients<C>::Close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     if(m_openState.SetClosing()) {
       return;
     }

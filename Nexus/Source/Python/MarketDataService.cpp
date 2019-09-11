@@ -396,29 +396,29 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
           serviceLocatorClient, administrationClient);
       }))
     .def("open", &MarketDataServiceTestEnvironment::Open,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("close", &MarketDataServiceTestEnvironment::Close,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       MarketCode, const OrderImbalance&)>(
       &MarketDataServiceTestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const BboQuote&)>(
       &MarketDataServiceTestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const BookQuote&)>(
       &MarketDataServiceTestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const MarketQuote&)>(
       &MarketDataServiceTestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const TimeAndSale&)>(
       &MarketDataServiceTestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("build_client",
       [] (MarketDataServiceTestEnvironment& self,
           VirtualServiceLocatorClient& serviceLocatorClient) {

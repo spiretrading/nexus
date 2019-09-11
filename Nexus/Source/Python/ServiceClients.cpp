@@ -130,46 +130,46 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
     .def(init())
     .def(init<std::shared_ptr<VirtualHistoricalDataStore>>())
     .def("set_time", &TestEnvironment::SetTime,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("advance_time", &TestEnvironment::AdvanceTime,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(
       MarketCode, const OrderImbalance&)>(&TestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(
       const Security&, const BboQuote&)>(&TestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(
       const Security&, const BookQuote&)>(&TestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(
       const Security&, const MarketQuote&)>(&TestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(
       const Security&, const TimeAndSale&)>(&TestEnvironment::Publish),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("update_bbo_price", static_cast<void (TestEnvironment::*)(
       const Security&, Money, Money)>(&TestEnvironment::UpdateBboPrice),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("update_bbo_price", static_cast<void (TestEnvironment::*)(
       const Security&, Money, Money, const ptime&)>(
-      &TestEnvironment::UpdateBboPrice), call_guard<gil_scoped_release>())
+      &TestEnvironment::UpdateBboPrice), call_guard<GilRelease>())
     .def("monitor_order_submissions", &TestEnvironment::MonitorOrderSubmissions,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("accept_order", &TestEnvironment::AcceptOrder,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("reject_order", &TestEnvironment::RejectOrder,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("cancel_order", &TestEnvironment::CancelOrder,
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("fill_order", static_cast<void (TestEnvironment::*)(const Order&,
       Money, Quantity)>(&TestEnvironment::FillOrder),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("fill_order", static_cast<void (TestEnvironment::*)(const Order&,
-      Quantity)>(&TestEnvironment::FillOrder), call_guard<gil_scoped_release>())
+      Quantity)>(&TestEnvironment::FillOrder), call_guard<GilRelease>())
     .def("update", static_cast<void (TestEnvironment::*)(const Order&,
       const ExecutionReport&)>(&TestEnvironment::Update),
-      call_guard<gil_scoped_release>())
+      call_guard<GilRelease>())
     .def("get_time_environment", &TestEnvironment::GetTimeEnvironment,
       return_value_policy::reference_internal)
     .def("get_service_locator_environment",
@@ -186,8 +186,8 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
     .def("get_order_execution_environment",
       &TestEnvironment::GetOrderExecutionEnvironment,
       return_value_policy::reference_internal)
-    .def("open", &TestEnvironment::Open, call_guard<gil_scoped_release>())
-    .def("close", &TestEnvironment::Close, call_guard<gil_scoped_release>());
+    .def("open", &TestEnvironment::Open, call_guard<GilRelease>())
+    .def("close", &TestEnvironment::Close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportTestServiceClients(pybind11::module& module) {
