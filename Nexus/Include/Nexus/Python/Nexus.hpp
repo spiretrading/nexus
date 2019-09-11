@@ -9,6 +9,7 @@
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
+#include "Nexus/Python/FeeHandling.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
 #include "Nexus/Python/ServiceClients.hpp"
