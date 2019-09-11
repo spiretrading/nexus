@@ -459,15 +459,14 @@ void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
 void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
   using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
-  class_<PythonSqliteHistoricalDataStore,
-      std::shared_ptr<PythonSqliteHistoricalDataStore>,
-      VirtualHistoricalDataStore>(module, "SqliteHistoricalDataStore")
+  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore>(module,
+      "SqliteHistoricalDataStore")
     .def(init(
       [] (std::string path) {
-        return std::shared_ptr(MakeToPythonHistoricalDataStore(
+        return MakeToPythonHistoricalDataStore(
           std::make_unique<SqlHistoricalDataStore<Viper::Sqlite3::Connection>>(
           [=] {
             return Viper::Sqlite3::Connection(path);
-          })));
+          }));
       }));
 }

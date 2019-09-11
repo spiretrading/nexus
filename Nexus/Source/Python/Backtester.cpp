@@ -15,7 +15,7 @@ using namespace Nexus::Python;
 using namespace pybind11;
 
 namespace {
-  struct TrampolineBacktesterEnvironment : BacktesterEnvironment {
+  struct TrampolineBacktesterEnvironment final : BacktesterEnvironment {
     std::shared_ptr<VirtualServiceClients> m_serviceClients;
 
     TrampolineBacktesterEnvironment(ptime startTime,
@@ -37,12 +37,20 @@ void Nexus::Python::ExportBacktester(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
-  class_<TrampolineBacktesterEnvironment,
-      std::shared_ptr<TrampolineBacktesterEnvironment>>(module,
+  class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>>(module,
       "BacktesterEnvironment")
-    .def(init<const ptime&, std::shared_ptr<VirtualServiceClients>>())
-    .def(init<const ptime&, const ptime&,
-      std::shared_ptr<VirtualServiceClients>>())
+    .def(init(
+      [] (ptime startTime,
+          std::shared_ptr<VirtualServiceClients> serviceClients) {
+        return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
+          std::move(serviceClients));
+      }))
+    .def(init(
+      [] (ptime startTime, ptime endTime,
+          std::shared_ptr<VirtualServiceClients> serviceClients) {
+        return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
+          endTime, std::move(serviceClients));
+      }))
     .def_property_readonly("event_handler",
       static_cast<BacktesterEventHandler& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetEventHandler),
@@ -54,13 +62,10 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
     .def("open", &BacktesterEnvironment::Open, call_guard<gil_scoped_release>())
     .def("close", &BacktesterEnvironment::Close,
       call_guard<gil_scoped_release>());
-  implicitly_convertible<TrampolineBacktesterEnvironment,
-    BacktesterEnvironment>();
 }
 
 void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
-  class_<BacktesterEventHandler, std::shared_ptr<BacktesterEventHandler>>(
-    module, "BacktesterEventHandler")
+  class_<BacktesterEventHandler>(module, "BacktesterEventHandler")
     .def(init<ptime>())
     .def(init<ptime, ptime>())
     .def_property_readonly("start_time", &BacktesterEventHandler::GetStartTime)
@@ -83,6 +88,7 @@ void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
 
 void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
   class_<ToPythonServiceClients<BacktesterServiceClients>,
+      std::shared_ptr<ToPythonServiceClients<BacktesterServiceClients>>,
       VirtualServiceClients>(module, "BacktesterServiceClients")
     .def(init(
       [] (std::shared_ptr<BacktesterEnvironment> environment) {

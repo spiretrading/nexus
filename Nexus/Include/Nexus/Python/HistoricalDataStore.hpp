@@ -90,8 +90,8 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   ToPythonHistoricalDataStore<D>::~ToPythonHistoricalDataStore() {
-    auto release = pybind11::gil_scoped_release();
     Close();
+    auto release = pybind11::gil_scoped_release();
     m_dataStore.reset();
   }
 

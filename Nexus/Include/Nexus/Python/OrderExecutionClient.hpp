@@ -73,8 +73,8 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C>
   ToPythonOrderExecutionClient<C>::~ToPythonOrderExecutionClient() {
-    auto release = pybind11::gil_scoped_release();
     Close();
+    auto release = pybind11::gil_scoped_release();
     m_client.reset();
   }
 

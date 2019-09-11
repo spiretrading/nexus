@@ -14,13 +14,57 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
+namespace Python {
+
+  /**
+   * Exports the ApplicationServiceClients class.
+   * @param module The module to export to.
+   */
+  void ExportApplicationServiceClients(pybind11::module& module);
+
+  /**
+   * Exports the ServiceClients classes.
+   * @param module The module to export to.
+   */
+  void ExportServiceClients(pybind11::module& module);
+
+  /**
+   * Exports the TestEnvironment class.
+   * @param module The module to export to.
+   */
+  void ExportTestEnvironment(pybind11::module& module);
+
+  /**
+   * Exports the TestServiceClients class.
+   * @param module The module to export to.
+   */
+  void ExportTestServiceClients(pybind11::module& module);
+
+  /**
+   * Exports the TestTimeClient class.
+   * @param module The module to export to.
+   */
+  void ExportTestTimeClient(pybind11::module& module);
+
+  /**
+   * Exports the TestTimer class.
+   * @param module The module to export to.
+   */
+  void ExportTestTimer(pybind11::module& module);
+
+  /**
+   * Exports the VirtualServiceClients class.
+   * @param module The module to export to.
+   */
+  void ExportVirtualServiceClients(pybind11::module& module);
+}
 
   /**
    * Wraps a ServiceClients instance for use within Python.
    * @param <C> The type of ServiceClients to wrap.
    */
   template<typename C>
-  class ToPythonServiceClients final : public VirtualServiceClients {
+  class ToPythonServiceClients : public VirtualServiceClients {
     public:
 
       /** The type of ServiceClients to wrap. */
@@ -34,25 +78,25 @@ namespace Nexus {
 
       ~ToPythonServiceClients() override;
 
-      ServiceLocatorClient& GetServiceLocatorClient() override;
+      ServiceLocatorClient& GetServiceLocatorClient() override final;
 
-      RegistryClient& GetRegistryClient() override;
+      RegistryClient& GetRegistryClient() override final;
 
-      AdministrationClient& GetAdministrationClient() override;
+      AdministrationClient& GetAdministrationClient() override final;
 
-      DefinitionsClient& GetDefinitionsClient() override;
+      DefinitionsClient& GetDefinitionsClient() override final;
 
-      MarketDataClient& GetMarketDataClient() override;
+      MarketDataClient& GetMarketDataClient() override final;
 
-      ChartingClient& GetChartingClient() override;
+      ChartingClient& GetChartingClient() override final;
 
-      ComplianceClient& GetComplianceClient() override;
+      ComplianceClient& GetComplianceClient() override final;
 
-      OrderExecutionClient& GetOrderExecutionClient() override;
+      OrderExecutionClient& GetOrderExecutionClient() override final;
 
-      RiskClient& GetRiskClient() override;
+      RiskClient& GetRiskClient() override final;
 
-      TimeClient& GetTimeClient() override;
+      TimeClient& GetTimeClient() override final;
 
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
@@ -81,18 +125,18 @@ namespace Nexus {
    */
   template<typename Client>
   auto MakeToPythonServiceClients(std::unique_ptr<Client> client) {
-    return std::make_unique<ToPythonServiceClients<Client>>(std::move(client));
+    return std::make_shared<ToPythonServiceClients<Client>>(std::move(client));
   }
 
   template<typename C>
   ToPythonServiceClients<C>::ToPythonServiceClients(
     std::unique_ptr<Client> client)
-    : m_client{std::move(client)} {}
+    : m_client(std::move(client)) {}
 
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
-    auto release = pybind11::gil_scoped_release();
     Close();
+    auto release = pybind11::gil_scoped_release();
     m_timeClient.reset();
     m_orderExecutionClient.reset();
     m_complianceClient.reset();
