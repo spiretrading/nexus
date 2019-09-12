@@ -167,6 +167,8 @@ void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
   ExportQueueSuite<ExecutionReport>(module, "ExecutionReport");
   ExportQueueSuite<SequencedExecutionReport>(module,
     "SequencedExecutionReport");
+  ExportSnapshotPublisher<ExecutionReport, std::vector<ExecutionReport>>(module,
+    "ExecutionReport");
 }
 
 void Nexus::Python::ExportMockOrderExecutionDriver(pybind11::module& module) {
@@ -196,6 +198,8 @@ void Nexus::Python::ExportOrder(pybind11::module& module) {
       return_value_policy::reference_internal);
   ExportQueueSuite<const Order*>(module, "Order");
   ExportQueueSuite<SequencedOrder>(module, "SequencedOrder");
+  ExportSnapshotPublisher<const Order*, std::vector<const Order*>>(module,
+    "Order");
 }
 
 void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
@@ -277,39 +281,42 @@ void Nexus::Python::ExportOrderFields(pybind11::module& module) {
   class_<OrderFields>(module, "OrderFields")
     .def(init())
     .def(init<const OrderFields&>())
-    .def("build_limit_order", static_cast<OrderFields (*)(
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, CurrencyId, Side,
       const std::string&, Quantity, Money)>(&OrderFields::BuildLimitOrder))
-    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
-      CurrencyId, Side, const std::string&, Quantity, Money)>(
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
+      const Security&, CurrencyId, Side, const std::string&, Quantity, Money)>(
       &OrderFields::BuildLimitOrder))
-    .def("build_limit_order", static_cast<OrderFields (*)(
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, const std::string&,
       Quantity, Money)>(&OrderFields::BuildLimitOrder))
-    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
-      Side, const std::string&, Quantity, Money)>(
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
+      const Security&, Side, const std::string&, Quantity, Money)>(
       &OrderFields::BuildLimitOrder))
-    .def("build_limit_order", static_cast<OrderFields (*)(const Security&,
-      CurrencyId, Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
-    .def("build_limit_order", static_cast<OrderFields (*)(
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
+      const Security&, CurrencyId, Side, Quantity, Money)>(
+      &OrderFields::BuildLimitOrder))
+    .def_static("build_limit_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, Quantity, Money)>(
       &OrderFields::BuildLimitOrder))
     .def_static("build_limit_order", static_cast<OrderFields (*)(
       const Security&, Side, Quantity, Money)>(&OrderFields::BuildLimitOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(
+    .def_static("build_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, CurrencyId, Side,
       const std::string&, Quantity)>(&OrderFields::BuildMarketOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
-      CurrencyId, Side, const std::string&, Quantity)>(
+    .def_static("build_market_order", static_cast<OrderFields (*)(
+      const Security&, CurrencyId, Side, const std::string&, Quantity)>(
       &OrderFields::BuildMarketOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(
+    .def_static("build_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, const std::string&,
       Quantity)>(&OrderFields::BuildMarketOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
-      Side, const std::string&, Quantity)>(&OrderFields::BuildMarketOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(const Security&,
-      CurrencyId, Side, Quantity)>(&OrderFields::BuildMarketOrder))
-    .def("build_market_order", static_cast<OrderFields (*)(
+    .def_static("build_market_order", static_cast<OrderFields (*)(
+      const Security&, Side, const std::string&, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def_static("build_market_order", static_cast<OrderFields (*)(
+      const Security&, CurrencyId, Side, Quantity)>(
+      &OrderFields::BuildMarketOrder))
+    .def_static("build_market_order", static_cast<OrderFields (*)(
       const DirectoryEntry&, const Security&, Side, Quantity)>(
       &OrderFields::BuildMarketOrder))
     .def_static("build_market_order", static_cast<OrderFields (*)(
