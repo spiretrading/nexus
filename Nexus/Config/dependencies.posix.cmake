@@ -7,3 +7,9 @@ set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/beam.so")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/beam.so")
+set(LUA_INCLUDE_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/install/include")
+set(LUA_LIBRARY_DEBUG_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/install/lib/liblua.a")
+set(LUA_LIBRARY_OPTIMIZED_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/install/lib/liblua.a")

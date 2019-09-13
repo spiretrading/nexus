@@ -49,6 +49,19 @@ IF NOT EXIST qt-5.12.1 (
     POPD
   )
 )
+IF NOT EXIST lua-5.3.5 (
+  wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
+  IF EXIST lua-5.3.5.tar.gz (
+    gzip -d -c lua-5.3.5.tar.gz | tar -xf -
+    PUSHD lua-5.3.5\src
+    COPY %~dp0\Config\lua.cmake CMakeLists.txt
+    cmake .
+    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
+    POPD
+    DEL lua-5.3.5.tar.gz
+  )
+)
 IF NOT EXIST quickfix-v.1.15.1 (
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
   IF EXIST quickfix-v.1.15.1.zip (
