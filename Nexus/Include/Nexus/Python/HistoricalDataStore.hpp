@@ -1,6 +1,7 @@
 #ifndef NEXUS_PYTHON_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_PYTHON_HISTORICAL_DATA_STORE_HPP
 #include <memory>
+#include <Beam/Python/GilRelease.hpp>
 #include <pybind11/pybind11.h>
 #include "Nexus/MarketDataService/VirtualHistoricalDataStore.hpp"
 

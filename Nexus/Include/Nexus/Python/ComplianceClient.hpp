@@ -1,5 +1,6 @@
 #ifndef NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
 #define NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
+#include <Beam/Python/GilRelease.hpp>
 #include <pybind11/pybind11.h>
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 

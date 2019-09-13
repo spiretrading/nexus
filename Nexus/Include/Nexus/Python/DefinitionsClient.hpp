@@ -1,5 +1,6 @@
 #ifndef NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
 #define NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
+#include <Beam/Python/GilRelease.hpp>
 #include <pybind11/pybind11.h>
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
 

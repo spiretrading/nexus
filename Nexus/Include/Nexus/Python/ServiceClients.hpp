@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_SERVICE_CLIENTS_HPP
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>

@@ -1,5 +1,6 @@
 #ifndef NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
 #define NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
+#include <Beam/Python/GilRelease.hpp>
 #include <pybind11/pybind11.h>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 

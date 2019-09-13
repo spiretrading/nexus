@@ -219,7 +219,7 @@ namespace Nexus {
           return;
         }
         Beam::Queries::GetTimestamp(*item) = m_timeClient->GetTime();
-        publisher(Beam::Queries::MakeIndexedValue(*item, security));
+        publisher(Beam::Queries::IndexedValue(*item, security));
         auto updatedTime = m_timeClient->GetTime();
         replayTime += updatedTime - currentTime;
         currentTime = updatedTime;
