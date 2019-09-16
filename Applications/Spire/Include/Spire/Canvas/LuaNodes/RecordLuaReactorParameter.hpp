@@ -1,14 +1,12 @@
 #ifndef SPIRE_RECORDLUAREACTORPARAMETER_HPP
 #define SPIRE_RECORDLUAREACTORPARAMETER_HPP
-#include <Beam/Reactors/LuaReactorParameter.hpp>
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/LuaNodes/LuaReactorParameter.hpp"
 
 namespace Spire {
 
-  /*! \class RecordLuaReactorParameter
-      \brief Implements a LuaReactorParameter for a Record.
-  */
-  class RecordLuaReactorParameter : public Beam::Reactors::LuaReactorParameter {
+  /** Implements a LuaReactorParameter for a Record. */
+  class RecordLuaReactorParameter : public LuaReactorParameter {
     public:
 
       //! Constructs a RecordLuaReactorParameter.
@@ -16,11 +14,10 @@ namespace Spire {
         \param reactor The Reactor representing the Record parameter.
         \param recordType The type of Record represented.
       */
-      RecordLuaReactorParameter(
-        std::shared_ptr<Beam::Reactors::Reactor<Record>> reactor,
+      RecordLuaReactorParameter(Aspen::Box<Record>> reactor,
         const RecordType& recordType);
 
-      virtual void Push(lua_State& state) const;
+      void Push(lua_State& state) override const;
 
     private:
       std::shared_ptr<RecordType> m_recordType;

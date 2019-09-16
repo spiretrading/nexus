@@ -36,7 +36,7 @@ namespace {
       BuildOrderTaskNodeFromOrderFields(orderFields, userProfile);
     const BlotterTasksModel::TaskEntry& entry =
       blotterModel.GetTasksModel().Add(*orderNode);
-    entry.m_context->m_task->Execute();
+    entry.m_context->m_reactorMonitor.Open();
   }
 }
 
