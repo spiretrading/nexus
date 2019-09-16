@@ -4,22 +4,22 @@
 #include <boost/mpl/list.hpp>
 #include <boost/optional/optional.hpp>
 #include "Spire/Canvas/Records/Record.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 
 namespace Spire {
 
   //! Lists all native types.
   typedef boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-    Beam::Tasks::Task::State, Nexus::CurrencyId, Nexus::MarketCode,
-    Nexus::Money, Nexus::OrderType, Nexus::OrderStatus, Nexus::Security,
-    Nexus::Side, Nexus::TimeInForce, Record, Beam::Tasks::TaskFactory>
-    NativeTypes;
+    Task::State, Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money,
+    Nexus::OrderType, Nexus::OrderStatus, Nexus::Security, Nexus::Side,
+    Nexus::TimeInForce, Record> NativeTypes;
 
   //! Lists all value types.
   typedef boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-    Beam::Tasks::Task::State, Nexus::CurrencyId, Nexus::MarketCode,
-    Nexus::Money, Nexus::OrderType, Nexus::Security, Nexus::Side,
+    Task::State, Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money,
+    Nexus::OrderType, Nexus::OrderStatus, Nexus::Security, Nexus::Side,
     Nexus::TimeInForce, Record> ValueTypes;
 
   //! Lists types that can be compared.

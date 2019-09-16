@@ -6,7 +6,6 @@
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Serialization/ShuttleSharedPtr.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
-#include <Beam/Tasks/Tasks.hpp>
 #include <boost/optional/optional.hpp>
 #include <QKeySequence>
 #include "Nexus/Definitions/Market.hpp"

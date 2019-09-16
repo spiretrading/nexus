@@ -108,6 +108,7 @@ namespace Spire {
   class SingleOrderTaskNode;
   class SpawnNode;
   class SubtractionNode;
+  class Task;
   class TaskType;
   class TaskStateMonitorNode;
   class TaskStateNode;

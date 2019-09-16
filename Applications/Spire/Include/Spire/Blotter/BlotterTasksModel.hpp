@@ -5,8 +5,6 @@
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
-#include <Beam/Reactors/ReactorMonitor.hpp>
-#include <Beam/Tasks/Task.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
@@ -16,6 +14,7 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -65,11 +64,8 @@ namespace Spire {
         std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
           m_orderExecutionPublisher;
 
-        //! The TaskFactory for this entry.
-        Beam::Tasks::TaskFactory m_factory;
-
         //! The Task that was built.
-        std::shared_ptr<Beam::Tasks::Task> m_task;
+        std::shared_ptr<Task> m_task;
 
         //! Constructs a TaskContext.
         /*!
@@ -120,7 +116,7 @@ namespace Spire {
         std::shared_ptr<TaskContext> m_context;
 
         //! The current state of the Task.
-        Beam::Tasks::Task::State m_state;
+        Task::State m_state;
 
         //! The properties monitoring the Task.
         std::vector<std::unique_ptr<ObserverEntry>> m_monitors;
@@ -275,7 +271,7 @@ namespace Spire {
       void OnMonitorUpdate(std::weak_ptr<TaskEntry> weakEntry,
         const std::string& property, const boost::any& value);
       void OnTaskState(std::weak_ptr<TaskEntry> weakEntry,
-        const Beam::Tasks::Task::StateEntry& update);
+        const Task::StateEntry& update);
       void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnUpdateTimer();

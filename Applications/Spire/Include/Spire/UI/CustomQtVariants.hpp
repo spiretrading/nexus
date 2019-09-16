@@ -5,7 +5,6 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
-#include <Beam/Tasks/Task.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -15,6 +14,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -63,7 +63,7 @@ namespace UI {
 }
 }
 
-Q_DECLARE_METATYPE(Beam::Tasks::Task::State);
+Q_DECLARE_METATYPE(Spire::Task::State);
 Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
