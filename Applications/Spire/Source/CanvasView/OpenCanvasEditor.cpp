@@ -1,5 +1,6 @@
 #include "Spire/CanvasView/OpenCanvasEditor.hpp"
 #include <limits>
+#include <boost/lexical_cast.hpp>
 #include <QApplication>
 #include <QComboBox>
 #include <QEvent>
@@ -53,7 +54,6 @@
 #include "Spire/UI/QuantitySpinBox.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -530,7 +530,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TaskStateNode& node) {
   auto editor = new QComboBox();
   for(size_t i = 0; i < Task::State::COUNT; ++i) {
     editor->addItem(QString::fromStdString(
-      ToString(static_cast<Task::State>(i))));
+      lexical_cast<string>(static_cast<Task::State>(i))));
   }
   editor->setCurrentIndex(static_cast<int>(node.GetValue()));
   if(m_event != nullptr) {

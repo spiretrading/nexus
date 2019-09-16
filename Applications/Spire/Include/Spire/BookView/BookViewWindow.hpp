@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -106,7 +107,7 @@ namespace Spire {
       void OnLowUpdate(Nexus::Money low);
       void OnVolumeUpdate(Nexus::Quantity volume);
       void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
-        const Beam::Tasks::Task::StateEntry& update);
+        const Task::StateEntry& update);
       void OnContextMenu(const QPoint& position);
       void OnUpdateTimer();
   };

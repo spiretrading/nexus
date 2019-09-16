@@ -1,13 +1,13 @@
 #include "Spire/UI/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <boost/lexical_cast.hpp>
 #include <QDateTime>
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
@@ -157,7 +157,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     if(state == Task::State::NONE) {
       return tr("Ready");
     }
-    return QString::fromStdString(ToString(state));
+    return QString::fromStdString(lexical_cast<string>(state));
   } else if(value.canConvert<OrderType>()) {
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
@@ -200,8 +200,8 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return QSortFilterProxyModel::lessThan(left, right);
   }
   if(leftVariant.canConvert<Task::State>()) {
-    return Compare(ToString(leftVariant.value<Task::State>()),
-      ToString(rightVariant.value<Task::State>()), left, right);
+    return Compare(lexical_cast<string>(leftVariant.value<Task::State>()),
+      lexical_cast<string>(rightVariant.value<Task::State>()), left, right);
   } else if(leftVariant.canConvert<ptime>()) {
     return Compare(leftVariant.value<ptime>(), rightVariant.value<ptime>(),
       left, right);

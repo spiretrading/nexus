@@ -19,7 +19,6 @@
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;

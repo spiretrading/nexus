@@ -19,7 +19,6 @@
 #include "ui_BlotterWindow.h"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;

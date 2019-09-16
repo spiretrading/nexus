@@ -30,7 +30,6 @@
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;

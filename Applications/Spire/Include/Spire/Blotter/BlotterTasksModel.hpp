@@ -6,6 +6,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <boost/any.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
@@ -14,6 +15,7 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
+#include "Spire/Canvas/TaskNodes/ReactorMonitor.hpp"
 #include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -52,7 +54,7 @@ namespace Spire {
       struct TaskContext : private boost::noncopyable {
 
         //! The ReactorMonitor used by the Tasks.
-        Beam::Reactors::ReactorMonitor m_reactorMonitor;
+        ReactorMonitor m_reactorMonitor;
 
         //! The Task's context.
         CanvasNodeTranslationContext m_context;

@@ -9,6 +9,7 @@
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -87,8 +88,7 @@ namespace Spire {
       bool HandleCancelBindingEvent(
         const KeyBindings::CancelBinding& keyBinding);
       void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
-        const Nexus::Security& security,
-        const Beam::Tasks::Task::StateEntry& update);
+        const Nexus::Security& security, const Task::StateEntry& update);
   };
 }
 

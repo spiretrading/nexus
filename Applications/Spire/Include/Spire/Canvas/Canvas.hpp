@@ -92,6 +92,7 @@ namespace Spire {
   class ProxyNode;
   class QueryNode;
   class RangeNode;
+  class ReactorMonitor;
   class Record;
   class RecordLuaReactorParameter;
   class RecordNode;

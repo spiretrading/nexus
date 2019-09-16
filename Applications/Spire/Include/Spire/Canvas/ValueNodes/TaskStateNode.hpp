@@ -1,6 +1,7 @@
 #ifndef SPIRE_TASKSTATENODE_HPP
 #define SPIRE_TASKSTATENODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Canvas/Types/TaskStateType.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 
@@ -19,15 +20,14 @@ namespace Spire {
       /*!
         \param value The initial value.
       */
-      TaskStateNode(Beam::Tasks::Task::State value);
+      TaskStateNode(Task::State value);
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
-      std::unique_ptr<TaskStateNode> SetValue(
-        Beam::Tasks::Task::State value) const;
+      std::unique_ptr<TaskStateNode> SetValue(Task::State value) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 

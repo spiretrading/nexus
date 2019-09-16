@@ -1,7 +1,7 @@
 #ifndef SPIRE_TASKTYPE_HPP
 #define SPIRE_TASKTYPE_HPP
-#include <Beam/Tasks/Task.hpp>
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
 namespace Spire {
@@ -13,7 +13,7 @@ namespace Spire {
     public:
 
       //! Defines the native type being represented.
-      typedef Beam::Tasks::Task Type;
+      typedef Task Type;
 
       //! Returns an instance of this type.
       static const TaskType& GetInstance();

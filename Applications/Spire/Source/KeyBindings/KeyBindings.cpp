@@ -17,7 +17,6 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::uuids;
 using namespace Nexus;

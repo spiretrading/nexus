@@ -4,7 +4,6 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/Reactors.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Tasks/Tasks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/variant/variant.hpp>
@@ -15,22 +14,9 @@
 
 namespace Spire {
 
-  /*! \struct TaskTranslation
-      \brief Stores the CanvasNode translation of a Task.
-   */
-  struct TaskTranslation {
-
-    //! The factory that builds the Task.
-    Beam::Tasks::TaskFactory m_factory;
-
-    //! The OrderExecutionPublisher for all Orders executed by the factory.
-    std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
-      m_publisher;
-  };
-
   //! Defines the types of canvas translations.
-  typedef boost::variant<TaskTranslation,
-    std::shared_ptr<Beam::Reactors::BaseReactor>> Translation;
+  typedef boost::variant<std::shared_ptr<Task>, std::shared_ptr<void>>
+    Translation;
 
   /*! \struct CanvasNodeTranslationContext
       \brief Stores all the context needed to translate a CanvasNode.
@@ -45,7 +31,7 @@ namespace Spire {
         \param executingAccount The account used to execute Orders.
       */
       CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
-        Beam::Ref<Beam::Reactors::ReactorMonitor> reactorMonitor,
+        Beam::Ref<ReactorMonitor> reactorMonitor,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount);
 
       //! Constructs a CanvasNodeTranslationContext from a parent context.
@@ -62,10 +48,10 @@ namespace Spire {
       UserProfile& GetUserProfile();
 
       //! Returns the ReactorMonitor.
-      const Beam::Reactors::ReactorMonitor& GetReactorMonitor() const;
+      const ReactorMonitor& GetReactorMonitor() const;
 
       //! Returns the ReactorMonitor.
-      Beam::Reactors::ReactorMonitor& GetReactorMonitor();
+      ReactorMonitor& GetReactorMonitor();
 
       //! Returns the executing account.
       const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
@@ -113,7 +99,7 @@ namespace Spire {
       CanvasNodeTranslationContext* m_parent;
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
-      Beam::Reactors::ReactorMonitor* m_reactorMonitor;
+      ReactorMonitor* m_reactorMonitor;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
       std::unordered_map<const CanvasNode*,

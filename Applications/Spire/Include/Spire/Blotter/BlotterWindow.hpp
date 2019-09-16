@@ -6,6 +6,7 @@
 #include <QTimer>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
@@ -95,7 +96,7 @@ namespace Spire {
       void OnProfitAndLossUpdate(
         const SpirePortfolioMonitor::UpdateEntry& update);
       void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
-        const Beam::Tasks::Task::StateEntry& update);
+        const Task::StateEntry& update);
       void OnExecuteAction();
       void OnCancelAction();
       void OnActiveBlotterToggled(bool checked);
