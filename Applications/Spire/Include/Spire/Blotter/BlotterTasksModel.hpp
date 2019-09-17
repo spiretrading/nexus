@@ -2,6 +2,7 @@
 #define SPIRE_BLOTTERTASKSMODEL_HPP
 #include <set>
 #include <unordered_set>
+#include <Aspen/Shared.hpp>
 #include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
@@ -67,7 +68,7 @@ namespace Spire {
           m_orderExecutionPublisher;
 
         //! The Task that was built.
-        std::shared_ptr<Task> m_task;
+        Aspen::Shared<Task> m_task;
 
         //! Constructs a TaskContext.
         /*!

@@ -40,7 +40,7 @@ namespace Spire {
       */
       CanvasObserver(const CanvasNode& target, const CanvasNode& observer,
         Beam::Ref<CanvasNodeTranslationContext> context,
-        Beam::Ref<Beam::Reactors::ReactorMonitor> monitor,
+        Beam::Ref<ReactorMonitor> monitor,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
         Beam::Ref<UserProfile> userProfile);
 

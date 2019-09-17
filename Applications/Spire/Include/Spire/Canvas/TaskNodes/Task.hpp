@@ -5,6 +5,7 @@
 #include <string>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Collections/Enum.hpp>
+#include <Beam/Queues/SnapshotPublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -72,6 +73,8 @@ namespace Details {
         StateEntry(State state, const std::string& message);
       };
 
+      using Type = StateEntry;
+
       /**
        * Constructs a Task.
        * @param reactor The reactor to execute as part of this task.
@@ -83,6 +86,13 @@ namespace Details {
 
       /** Cancels this Task. */
       void Cancel();
+
+      /** Returns the Publisher indicating the State of this Task. */
+      const Beam::Publisher<StateEntry>& GetPublisher() const;
+
+      Aspen::State commit(int sequence) noexcept;
+
+      const StateEntry& eval() const noexcept;
 
     private:
       Aspen::Box<void> m_reactor;

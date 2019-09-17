@@ -33,6 +33,7 @@ namespace OrderExecutionService {
   class OrderExecutionSession;
   struct OrderFields;
   struct OrderInfo;
+  template<typename C> class OrderReactor;
   struct OrderRecord;
   class OrderSubmissionCheck;
   template<typename OrderExecutionDriverType> class OrderSubmissionCheckDriver;

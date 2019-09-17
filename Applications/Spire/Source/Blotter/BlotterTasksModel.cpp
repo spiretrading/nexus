@@ -1,11 +1,10 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include <Beam/Queues/StateQueue.hpp>
-#include <Beam/Tasks/ReactorMonitorTask.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/Tasks/OrderWrapperTask.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
@@ -33,14 +32,12 @@ using namespace Beam::Queries;
 using namespace Beam::Reactors;
 using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Tasks;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
