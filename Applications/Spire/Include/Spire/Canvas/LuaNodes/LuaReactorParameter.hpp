@@ -18,6 +18,10 @@ namespace Spire {
 
       /** Pushes the parameter onto the Lua stack */
       virtual void Push(lua_State& luaState) const = 0;
+
+      virtual Aspen::State commit(int sequence) noexcept = 0;
+
+      virtual void eval() const noexcept = 0;
   };
 }
 

@@ -5,19 +5,47 @@ extern "C" {
   #include <lualib.h>
   #include <lauxlib.h>
 }
-#include <algorithm>
 #include <cstdint>
 #include <string>
-#include <utility>
 #include <vector>
+#include <Aspen/Aspen.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/optional/optional.hpp>
-#include <boost/throw_exception.hpp>
 #include <Beam/Collections/Enum.hpp>
-#include <Beam/Utilities/FunctionObject.hpp>
 #include "Spire/Canvas/LuaNodes/LuaReactorParameter.hpp"
 
 namespace Spire {
+
+  /** Evaluates a reactor using a Lua defined function.
+   *  @param <T> The type to evaluate to.
+   */
+  template<typename T>
+  class LuaReactor {
+    public:
+      using Type = T;
+
+      /**
+       * Makes a LuaReactor.
+       * @param functionName The name of the Lua function to call.
+       * @param parameters The parameters to pass to the function.
+       * @param luaState The Lua interpreter state used to invoke the function.
+       */
+      LuaReactor(std::string functionName,
+        std::vector<Aspen::Unique<LuaReactorParameter>> parameters,
+        lua_State& luaState);
+
+      ~LuaReactor();
+
+      Aspen::State commit(int sequence) noexcept;
+
+      Type eval() const noexcept;
+
+    private:
+      std::string m_functionName;
+      std::vector<Aspen::Shared<LuaReactorParameter>> m_parameters;
+      lua_State* m_luaState;
+      Aspen::Maybe<Type> m_value;
+      Aspen::CommitHandler m_handler;
+  };
 
   /**
    * Pops a value from Lua's evaluation stack.
@@ -29,72 +57,67 @@ namespace Spire {
   };
 
   template<typename T>
-  struct LuaReactorCore {
-    using Type = T;
-    std::string m_functionName;
-    std::vector<std::unique_ptr<LuaReactorParameter>> m_parameters;
-    lua_State* m_luaState;
-
-    LuaReactorCore(std::string functionName,
-      std::vector<std::unique_ptr<LuaReactorParameter>> parameters,
+  LuaReactor<T>::LuaReactor(std::string functionName,
+      std::vector<Aspen::Unique<LuaReactorParameter>> parameters,
       lua_State& luaState)
-      : m_functionName{std::move(functionName)},
-        m_parameters{std::move(parameters)},
-        m_luaState{&luaState} {}
-
-    ~LuaReactorCore() {
-      lua_close(m_luaState);
-    }
-
-    boost::optional<Type> operator ()(
-        const std::vector<std::shared_ptr<BaseReactor>>& children) {
-      lua_getglobal(m_luaState, m_functionName.c_str());
-      auto parameterCount = 0;
-      for(auto& parameter : m_parameters) {
-        try {
-          parameter->Push(*m_luaState);
-        } catch(const std::exception& e) {
-          lua_pop(m_luaState, parameterCount + 1);
-          BOOST_THROW_EXCEPTION(ReactorError{e.what()});
-        }
-        ++parameterCount;
-      }
-      if(lua_pcall(m_luaState, children.size(), 1, 0) != 0) {
-        BOOST_THROW_EXCEPTION(ReactorError{lua_tostring(m_luaState, -1)});
-      } else {
-        if(!lua_isnil(m_luaState, -1)) {
-          try {
-            return PopLuaValue<Type>{}(*m_luaState);
-          } catch(const std::exception& e) {
-            lua_pop(m_luaState, 1);
-            BOOST_THROW_EXCEPTION(ReactorError{e.what()});
+      : m_functionName(std::move(functionName)),
+        m_parameters(std::move(parameters)),
+        m_luaState(&luaState),
+        m_handler([&] {
+          auto reactors = std::vector<Aspen::Box<void>>(parameters.size());
+          for(auto& parameter : m_parameters) {
+            reactors.push_back(Aspen::Box<void>(parameter));
           }
-        }
-      }
-      return boost::none;
-    }
-  };
+          return reactors;
+        }()) {}
 
-  /**
-   * Makes a LuaReactor.
-   * @param functionName The name of the Lua function to call.
-   * @param parameters The parameters to pass to the function.
-   * @param luaState The Lua interpreter state used to invoke the function.
-   */
   template<typename T>
-  auto MakeLuaReactor(std::string functionName,
-      std::vector<std::unique_ptr<LuaReactorParameter>> parameters,
-      lua_State& luaState) {
-    std::vector<std::shared_ptr<BaseReactor>> reactors(parameters.size());
-    std::transform(parameters.begin(), parameters.end(),
-      std::back_inserter(reactors),
-      [] (auto& parameter) {
-        return parameter->GetReactor();
-      });
-    auto core = MakeFunctionObject(std::make_unique<LuaReactorCore<T>>(
-      std::move(functionName), std::move(parameters), luaState));
-    auto reactor = MakeMultiReactor(std::move(core), std::move(reactors));
-    return reactor;
+  LuaReactor<T>::~LuaReactor() {
+    lua_close(m_luaState);
+  }
+
+  template<typename T>
+  Aspen::State LuaReactor<T>::commit(int sequence) noexcept {
+    auto state = m_handler.commit(sequence);
+    if(!Aspen::has_evaluation(state)) {
+      return state;
+    }
+    lua_getglobal(m_luaState, m_functionName.c_str());
+    auto parameterCount = 0;
+    for(auto& parameter : m_parameters) {
+      try {
+        parameter->Push(*m_luaState);
+      } catch(const std::exception& e) {
+        lua_pop(m_luaState, parameterCount + 1);
+        m_value = std::current_exception();
+        break;
+      }
+      ++parameterCount;
+    }
+    if(parameterCount != m_parameters.size()) {
+      return state;
+    }
+    if(lua_pcall(m_luaState, parameterCount, 1, 0) != 0) {
+      m_value = std::make_exception_ptr(std::runtime_error(
+        lua_tostring(m_luaState, -1)));
+    } else {
+      if(!lua_isnil(m_luaState, -1)) {
+        try {
+          return PopLuaValue<Type>()(*m_luaState);
+        } catch(const std::exception& e) {
+          lua_pop(m_luaState, 1);
+          m_value = std::current_exception();
+        }
+      } else {
+        state = Aspen::reset(state, Aspen::State::EVALUATED);
+      }
+    }
+    return state;
+  }
+
+  template<typename T>
+  typename LuaReactor<T>::Type LuaReactor<T>::eval() const noexcept {
+    return m_value;
   }
 
   template<>

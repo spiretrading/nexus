@@ -37,30 +37,32 @@ namespace Spire {
 
       void Push(lua_State& luaState) const override;
 
+      Aspen::State commit(int sequence) noexcept override;
+
+      void eval() const noexcept override;
+
     private:
       Aspen::Box<Type> m_reactor;
   };
 
-  /**
-   * Makes a NativeLuaReactorParameter.
-   * @param parameter The Reactor representing the parameter.
-   */
-  template<typename Parameter>
-  auto MakeNativeLuaReactorParameter(Parameter&& parameter) {
-    return std::make_unique<
-      NativeLuaReactorParameter<Aspen::reactor_result_t<
-      Aspen::to_reactor_t<Parameter>>>(
-      Aspen::Box(std::forward<Parameter>(parameter)));
-  }
-
   template<typename T>
   NativeLuaReactorParameter<T>::NativeLuaReactorParameter(
     Aspen::Box<Type> reactor)
-    : LuaReactorParameter(std::move(reactor)) {}
+    : m_reactor(std::move(reactor)) {}
 
   template<typename T>
   void NativeLuaReactorParameter<T>::Push(lua_State& luaState) const {
     PushLuaValue<Type>()(luaState, m_reactor.eval());
+  }
+
+  template<typename T>
+  Aspen::State NativeLuaReactorParameter<T>::commit(int sequence) noexcept {
+    return m_reactor.commit(sequence);
+  }
+
+  template<typename T>
+  void NativeLuaReactorParameter<T>::eval() const noexcept {
+    m_reactor.eval();
   }
 
   template<>
