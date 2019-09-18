@@ -315,7 +315,7 @@ void BlotterWindow::OnExecuteAction() {
   for(auto& index : m_ui->m_taskTable->selectionModel()->selectedRows()) {
     auto& entry = m_model->GetTasksModel().GetEntry(
       m_proxyModel->mapToSource(index).row());
-    entry.m_context->m_reactorMonitor.Open();
+    entry.m_context->m_task->Execute();
   }
 }
 
