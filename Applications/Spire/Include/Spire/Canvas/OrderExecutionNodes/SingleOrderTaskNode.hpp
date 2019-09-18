@@ -1,5 +1,6 @@
 #ifndef SPIRE_SINGLEORDERTASKNODE_HPP
 #define SPIRE_SINGLEORDERTASKNODE_HPP
+#include <string>
 #include <Beam/Serialization/ShuttleSharedPtr.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include "Spire/Canvas/Canvas.hpp"
@@ -13,11 +14,29 @@ namespace Spire {
   class SingleOrderTaskNode : public CanvasNode {
     public:
 
-      //! The name of the display property.
-      static const std::string DISPLAY_PROPERTY;
+      /** The name of the propert used to specify the Security. */
+      static const std::string SECURITY_PROPERTY;
 
-      //! The name of the volume property.
-      static const std::string VOLUME_PROPERTY;
+      /** The name of the propert used to specify the OrderType. */
+      static const std::string ORDER_TYPE_PROPERTY;
+
+      /** The name of the propert used to specify the Side. */
+      static const std::string SIDE_PROPERTY;
+
+      /** The name of the propert used to specify the destination. */
+      static const std::string DESTINATION_PROPERTY;
+
+      /** The name of the propert used to specify the price. */
+      static const std::string PRICE_PROPERTY;
+
+      /** The name of the propert used to specify the Quantity. */
+      static const std::string QUANTITY_PROPERTY;
+
+      /** The name of the propert used to specify the currency. */
+      static const std::string CURRENCY_PROPERTY;
+
+      /** The name of the propert used to specify the TimeInForce. */
+      static const std::string TIME_IN_FORCE_PROPERTY;
 
       /*! \struct FieldEntry
           \brief Stores the details of an additional field used to submit an
@@ -54,12 +73,6 @@ namespace Spire {
         \param text The display text to use.
       */
       SingleOrderTaskNode(std::string text);
-
-      //! Adds a child CanvasNode representing the quantity filled.
-      std::unique_ptr<SingleOrderTaskNode> AddVolumeNode() const;
-
-      //! Removes the child CanvasNode representing the filled quantity.
-      std::unique_ptr<SingleOrderTaskNode> RemoveVolumeNode() const;
 
       //! Returns the list of additional fields.
       const std::vector<FieldEntry>& GetFields() const;

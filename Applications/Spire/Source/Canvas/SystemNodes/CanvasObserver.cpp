@@ -1,5 +1,5 @@
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include <Beam/Reactors/FunctionReactor.hpp>
+#include <Aspen/Aspen.hpp>
 #include <Beam/Utilities/InstantiateTemplate.hpp>
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
@@ -27,14 +27,13 @@ namespace {
 
   struct ObserverTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& observer,
+    static Aspen::Box<void> Template(const Aspen::Box<void>& observer,
         const std::function<void (const any& value)>& callback) {
-      return MakeFunctionReactor(
+      return Aspen::Lift(
         [=] (const T& value) {
           callback(value);
           return value;
-        }, std::static_pointer_cast<Reactor<T>>(observer));
+        }, observer.cast<T>());
     }
 
     typedef ValueTypes SupportedTypes;
@@ -119,7 +118,7 @@ void CanvasObserver::Translate() {
           &*m_node->GetChildren().front().FindNode(fullName);
         Mirror(*rootDependency, *m_context, *monitorDependency, Store(context));
       }
-      auto observerReactor = boost::get<std::shared_ptr<BaseReactor>>(
+      auto observerReactor = boost::get<Aspen::Box<void>>(
         Spire::Translate(context, m_node->GetChildren().back()));
       auto reactor = Instantiate<ObserverTranslator>(
         observerReactor->GetType())(observerReactor, m_callbacks.GetCallback(

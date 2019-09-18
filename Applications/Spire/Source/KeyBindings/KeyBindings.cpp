@@ -187,7 +187,7 @@ void KeyBindings::CancelBinding::HandleCancel(
   if(tasks->empty()) {
     return;
   }
-  vector<std::shared_ptr<Task>> tasksToCancel;
+  vector<Aspen::Shared<Task>> tasksToCancel;
   if(cancelBinding.m_type == Type::MOST_RECENT) {
     tasksToCancel.push_back(tasks->back()->m_task);
     tasks->pop_back();

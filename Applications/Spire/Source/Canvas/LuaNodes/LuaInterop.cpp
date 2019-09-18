@@ -1,6 +1,6 @@
 #include "Spire/Canvas/LuaNodes/LuaInterop.hpp"
 
-using namespace Nexus
+using namespace Nexus;
 using namespace Spire;
 
 void Spire::ExportOrderStatus(lua_State& state) {

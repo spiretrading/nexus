@@ -6,7 +6,6 @@
 #include <Beam/Parsers/IntegralParser.hpp>
 #include <Beam/Parsers/StringParser.hpp>
 #include <Beam/Parsers/TimeDurationParser.hpp>
-#include <Beam/Tasks/TaskStateParser.hpp>
 #include "Nexus/Parsers/CurrencyParser.hpp"
 #include "Nexus/Parsers/MarketParser.hpp"
 #include "Nexus/Parsers/MoneyParser.hpp"
@@ -16,6 +15,7 @@
 #include "Nexus/Parsers/TimeInForceParser.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
+#include "Spire/Canvas/TaskNodes/TaskStateParser.hpp"
 
 namespace Spire {
 
@@ -57,8 +57,8 @@ namespace Spire {
   };
 
   template<>
-  struct ParserType<Beam::Tasks::Task::State> {
-    typedef Beam::Tasks::TaskStateParser type;
+  struct ParserType<Task::State> {
+    typedef TaskStateParser type;
   };
 
   template<>

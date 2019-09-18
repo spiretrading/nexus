@@ -1,9 +1,9 @@
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
@@ -18,7 +18,6 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -57,26 +56,27 @@ void OrderWrapperTaskNode::Initialize(string text,
     const UserProfile& userProfile) {
   SetText(std::move(text));
   SetType(TaskType::GetInstance());
-  AddChild(BaseSingleOrderTaskFactory::SECURITY,
+  AddChild(SingleOrderTaskNode::SECURITY_PROPERTY,
     make_unique<SecurityNode>(m_order->GetInfo().m_fields.m_security,
     userProfile.GetMarketDatabase()));
-  AddChild(BaseSingleOrderTaskFactory::ORDER_TYPE,
+  AddChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
     make_unique<OrderTypeNode>(m_order->GetInfo().m_fields.m_type));
-  AddChild(BaseSingleOrderTaskFactory::SIDE,
+  AddChild(SingleOrderTaskNode::SIDE_PROPERTY,
     make_unique<SideNode>(m_order->GetInfo().m_fields.m_side));
   unique_ptr<DestinationNode> destinationNode = LinkedNode::SetReferent(
     DestinationNode(m_order->GetInfo().m_fields.m_destination), "security");
-  AddChild(BaseSingleOrderTaskFactory::DESTINATION, std::move(destinationNode));
+  AddChild(SingleOrderTaskNode::DESTINATION_PROPERTY,
+    std::move(destinationNode));
   auto priceNode = LinkedNode::SetReferent(
     MoneyNode(m_order->GetInfo().m_fields.m_price), "security");
-  AddChild(BaseSingleOrderTaskFactory::PRICE, std::move(priceNode));
+  AddChild(SingleOrderTaskNode::PRICE_PROPERTY, std::move(priceNode));
   auto quantityNode = LinkedNode::SetReferent(
     IntegerNode(m_order->GetInfo().m_fields.m_quantity), "security");
-  AddChild(BaseSingleOrderTaskFactory::QUANTITY, std::move(quantityNode));
-  AddChild(BaseSingleOrderTaskFactory::CURRENCY,
+  AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
+  AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
     make_unique<CurrencyNode>(m_order->GetInfo().m_fields.m_currency,
     userProfile.GetCurrencyDatabase().FromId(
     m_order->GetInfo().m_fields.m_currency).m_code.GetData()));
-  AddChild(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+  AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
     make_unique<TimeInForceNode>(m_order->GetInfo().m_fields.m_timeInForce));
 }

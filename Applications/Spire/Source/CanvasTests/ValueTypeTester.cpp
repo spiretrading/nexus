@@ -24,7 +24,6 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;

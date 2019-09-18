@@ -1,6 +1,7 @@
 #ifndef SPIRE_CANVASNODETRANSLATIONCONTEXT_HPP
 #define SPIRE_CANVASNODETRANSLATIONCONTEXT_HPP
 #include <unordered_map>
+#include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/Reactors.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -10,13 +11,26 @@
 #include "Nexus/MarketDataService/RealTimeMarketDataPublisher.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
+  /*! \struct TaskTranslation
+      \brief Stores the CanvasNode translation of a Task.
+   */
+  struct TaskTranslation {
+
+    //! The factory that builds the Task.
+    Aspen::Shared<Task> m_task;
+
+    //! The OrderExecutionPublisher for all Orders executed by the factory.
+    std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      m_publisher;
+  };
+
   //! Defines the types of canvas translations.
-  typedef boost::variant<std::shared_ptr<Task>, std::shared_ptr<void>>
-    Translation;
+  typedef boost::variant<TaskTranslation, Aspen::Box<void>> Translation;
 
   /*! \struct CanvasNodeTranslationContext
       \brief Stores all the context needed to translate a CanvasNode.

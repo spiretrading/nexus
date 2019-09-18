@@ -24,6 +24,7 @@ namespace Spire {
       void eval() const noexcept override;
 
     private:
+      Aspen::Box<Record> m_reactor;
       std::shared_ptr<RecordType> m_recordType;
   };
 }

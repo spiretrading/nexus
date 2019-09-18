@@ -2,7 +2,6 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
@@ -23,9 +23,7 @@
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace Nexus;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -100,7 +98,8 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
 unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
     const CanvasNode& baseNode) {
   auto taskNode = CanvasNode::Clone(baseNode);
-  auto securityNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SECURITY);
+  auto securityNode = taskNode->FindNode(
+    SingleOrderTaskNode::SECURITY_PROPERTY);
   if(securityNode.is_initialized() && !securityNode->IsReadOnly()) {
     if(auto securityValueNode =
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
@@ -108,7 +107,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
       builder.Replace(*securityNode, securityValueNode->SetValue(
         *m_state->m_security, m_userProfile->GetMarketDatabase()));
       builder.SetReadOnly(*securityNode, true);
-      auto sideNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SIDE);
+      auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
         if(sideNode.is_initialized()) {
           if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
@@ -124,7 +123,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
           return *m_state->m_askPrice;
         }
       }();
-      auto priceNode = taskNode->FindNode(BaseSingleOrderTaskFactory::PRICE);
+      auto priceNode = taskNode->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
       if(priceNode.is_initialized() && !priceNode->IsReadOnly()) {
         if(auto moneyNode = dynamic_cast<const MoneyNode*>(&*priceNode)) {
           builder.Replace(*priceNode, moneyNode->SetValue(price));
@@ -134,13 +133,13 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
         }
       }
       auto quantityNode = taskNode->FindNode(
-        BaseSingleOrderTaskFactory::QUANTITY);
+        SingleOrderTaskNode::QUANTITY_PROPERTY);
       if(quantityNode.is_initialized() && !quantityNode->IsReadOnly()) {
         if(auto quantityValueNode = dynamic_cast<const IntegerNode*>(
             &*quantityNode)) {
           auto quantity = [&] {
             auto sideNode = taskNode->FindNode(
-              BaseSingleOrderTaskFactory::SIDE);
+              SingleOrderTaskNode::SIDE_PROPERTY);
             if(sideNode.is_initialized()) {
               if(auto sideValueNode = dynamic_cast<const SideNode*>(
                   &*sideNode)) {
