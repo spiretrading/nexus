@@ -1,6 +1,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 

@@ -112,7 +112,6 @@ namespace Spire {
   class TaskStateMonitorNode;
   class TaskStateNode;
   class TaskStateType;
-  struct TaskTranslation;
   class TextNode;
   class TextType;
   class TimeAndSaleQueryNode;
@@ -123,6 +122,7 @@ namespace Spire {
   class TimeRangeParameterNode;
   class TimeRangeType;
   class TimerNode;
+  class Translation;
   class UnequalNode;
   class UnionType;
   class UntilNode;

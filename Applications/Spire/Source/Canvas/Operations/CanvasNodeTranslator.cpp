@@ -1,35 +1,12 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
+#include <Aspen/Aspen.hpp>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/Parsers/ParserPublisher.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Reactors/AggregateReactor.hpp>
 #include <Beam/Reactors/AlarmReactor.hpp>
-#include <Beam/Reactors/BasicReactor.hpp>
-#include <Beam/Reactors/ChainReactor.hpp>
-#include <Beam/Reactors/ConstantReactor.hpp>
-#include <Beam/Reactors/Expressions.hpp>
-#include <Beam/Reactors/FilterReactor.hpp>
-#include <Beam/Reactors/FirstReactor.hpp>
-#include <Beam/Reactors/FoldReactor.hpp>
-#include <Beam/Reactors/LastReactor.hpp>
-#include <Beam/Reactors/LuaReactor.hpp>
-#include <Beam/Reactors/NativeLuaReactorParameter.hpp>
-#include <Beam/Reactors/NoneReactor.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
-#include <Beam/Reactors/RangeReactor.hpp>
-#include <Beam/Reactors/Reactor.hpp>
-#include <Beam/Reactors/ReactorError.hpp>
-#include <Beam/Reactors/SwitchReactor.hpp>
-#include <Beam/Reactors/ThrowReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
-#include <Beam/Tasks/AggregateTask.hpp>
-#include <Beam/Tasks/ChainedTask.hpp>
-#include <Beam/Tasks/IdleTask.hpp>
-#include <Beam/Tasks/ReactorTask.hpp>
-#include <Beam/Tasks/SpawnTask.hpp>
-#include <Beam/Tasks/UntilTask.hpp>
-#include <Beam/Tasks/WhenTask.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
@@ -44,10 +21,8 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/Tasks/OrderWrapperTask.hpp"
-#include "Nexus/Tasks/SingleOrderTask.hpp"
-#include "Nexus/Tasks/SingleRedisplayableOrderTask.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
@@ -68,6 +43,7 @@
 #include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
+#include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/ExecutionReportMonitorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
@@ -113,9 +89,7 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
 #include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/OrderExecutionPublisherTask.hpp"
 #include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
@@ -150,7 +124,6 @@ using namespace Beam::IO;
 using namespace Beam::Parsers;
 using namespace Beam::Queries;
 using namespace Beam::Reactors;
-using namespace Beam::Tasks;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace boost;
@@ -158,15 +131,18 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
 namespace {
+  auto MakeAggregateOrderExecutionPublisher() {
+    return std::make_shared<SpireAggregateOrderExecutionPublisher>(
+      Initialize(UniqueFilter<const Order*>(), Initialize()));
+  }
+
   class CanvasNodeTranslationVisitor : private CanvasNodeVisitor {
     public:
-      CanvasNodeTranslationVisitor(
-        Ref<CanvasNodeTranslationContext> context,
+      CanvasNodeTranslationVisitor(Ref<CanvasNodeTranslationContext> context,
         Ref<const CanvasNode> node);
 
       Translation Translate();
@@ -246,7 +222,7 @@ namespace {
     private:
       CanvasNodeTranslationContext* m_context;
       const CanvasNode* m_node;
-      Translation m_translation;
+      std::optional<Translation> m_translation;
 
       Translation InternalTranslation(const CanvasNode& node);
       template<typename Translator>
@@ -264,36 +240,33 @@ namespace {
 
   template<typename Translator>
   struct FunctionTranslator<Translator, 1> {
-    Translation operator ()(
-        const vector<std::shared_ptr<BaseReactor>>& parameters,
+    Translation operator ()(const vector<Translation>& arguments,
         const std::type_info& result,
         CanvasNodeTranslationContext& context) const {
-      return Instantiate<Translator>(parameters[0]->GetType(), result)(
-        parameters[0], context);
+      return Instantiate<Translator>(arguments[0].GetTypeInfo(), result)(
+        arguments[0], context);
     }
   };
 
   template<typename Translator>
   struct FunctionTranslator<Translator, 2> {
-    Translation operator ()(
-        const vector<std::shared_ptr<BaseReactor>>& parameters,
+    Translation operator ()(const vector<Translation>& arguments,
         const std::type_info& result,
         CanvasNodeTranslationContext& context) const {
-      return Instantiate<Translator>(parameters[0]->GetType(),
-        parameters[1]->GetType(), result)(parameters[0], parameters[1],
+      return Instantiate<Translator>(arguments[0].GetTypeInfo(),
+        arguments[1].GetTypeInfo(), result)(arguments[0], arguments[1],
         context);
     }
   };
 
   template<typename Translator>
   struct FunctionTranslator<Translator, 3> {
-    Translation operator ()(
-        const vector<std::shared_ptr<BaseReactor>>& parameters,
+    Translation operator ()(const vector<Translation>& arguments,
         const std::type_info& result,
         CanvasNodeTranslationContext& context) const {
-      return Instantiate<Translator>(parameters[0]->GetType(),
-        parameters[1]->GetType(), parameters[2]->GetType(), result)(
-        parameters[0], parameters[1], parameters[2], context);
+      return Instantiate<Translator>(arguments[0].GetTypeInfo(),
+        arguments[1].GetTypeInfo(), arguments[2].GetTypeInfo(), result)(
+        arguments[0], arguments[1], arguments[2], context);
     }
   };
 
@@ -320,11 +293,9 @@ namespace {
     };
 
     template<typename T, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& value,
+    static Translation Template(const Translation& value,
         CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T, R>(),
-        std::static_pointer_cast<Reactor<T>>(value));
+      return Aspen::Lift(Operation<T, R>(), value.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = AbsNodeSignatures::type;
@@ -353,13 +324,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = AdditionNodeSignatures::type;
@@ -389,26 +357,21 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
   struct ChainTranslator {
-    template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& initial,
-        const std::shared_ptr<BaseReactor>& continuation,
-        CanvasNodeTranslationContext& context) {
-      return MakeChainReactor(std::static_pointer_cast<Reactor<T>>(initial),
-        std::static_pointer_cast<Reactor<T>>(continuation));
+    template<typename T0, typename T1, typename R>
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::chain(initial.Extract<Aspen::Box<T>>(initial),
+        continuation.Extract<Aspen::Box<T>>(continuation));
     }
 
     using SupportedTypes = ValueTypes;
@@ -419,7 +382,7 @@ namespace {
     struct Operation {
       R operator ()(const T0& left, const T1& right) const {
         if(right == 0) {
-          BOOST_THROW_EXCEPTION(ReactorError("Division by 0."));
+          BOOST_THROW_EXCEPTION(std::runtime_error("Division by 0."));
         }
         return left / right;
       }
@@ -430,7 +393,7 @@ namespace {
       double operator ()(const Nexus::Money& left,
           const Nexus::Money& right) const {
         if(right == Nexus::Money::ZERO) {
-          BOOST_THROW_EXCEPTION(ReactorError("Division by 0."));
+          BOOST_THROW_EXCEPTION(std::runtime_error("Division by 0."));
         }
         return left / right;
       }
@@ -464,20 +427,17 @@ namespace {
       double operator ()(const boost::posix_time::time_duration& left,
           const boost::posix_time::time_duration& right) const {
         if(right.ticks() == 0) {
-          BOOST_THROW_EXCEPTION(ReactorError("Division by 0."));
+          BOOST_THROW_EXCEPTION(std::runtime_error("Division by 0."));
         }
         return static_cast<double>(left.ticks()) / right.ticks();
       }
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = DivisionNodeSignatures::type;
@@ -492,13 +452,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = EqualitySignatures::type;
@@ -512,52 +469,48 @@ namespace {
     }
 
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor,
-        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
-        const string& path) {
+    static Translation Template(const NativeType& nativeType,
+        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
+        ParserErrorPolicy errorPolicy, const string& path) {
       using BaseParser = ParserType<T>::type;
       auto parser = BuildParser(BaseParser());
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      return MakePublisherReactor(std::move(publisher));
+      return PublisherReactor(std::move(publisher));
     }
 
     template<>
-    static std::shared_ptr<BaseReactor> Template<CurrencyId>(
-        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
-        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
-        const string& path) {
+    static Translation Template<CurrencyId>(const NativeType& nativeType,
+        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
+        ParserErrorPolicy errorPolicy, const string& path) {
       using BaseParser = ParserType<CurrencyId>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetCurrencyDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      return MakePublisherReactor(std::move(publisher));
+      return PublisherReactor(std::move(publisher));
     }
 
     template<>
-    static std::shared_ptr<BaseReactor> Template<MarketCode>(
-        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
-        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
-        const string& path) {
+    static Translation Template<MarketCode>(const NativeType& nativeType,
+        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
+        ParserErrorPolicy errorPolicy, const string& path) {
       using BaseParser = ParserType<MarketCode>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      return MakePublisherReactor(std::move(publisher));
+      return PublisherReactor(std::move(publisher));
     }
 
     template<>
-    static std::shared_ptr<BaseReactor> Template<Record>(
-        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
-        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
-        const string& path) {
+    static Translation Template<Record>(const NativeType& nativeType,
+        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
+        ParserErrorPolicy errorPolicy, const string& path) {
       using BaseParser = ParserType<Record>::type;
       auto parser = BuildParser(BaseParser(
         static_cast<const RecordType&>(nativeType), Ref(userProfile)));
@@ -565,21 +518,20 @@ namespace {
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      return MakePublisherReactor(std::move(publisher));
+      return PublisherReactor(std::move(publisher));
     }
 
     template<>
-    static std::shared_ptr<BaseReactor> Template<Security>(
-        const NativeType& nativeType, Ref<ReactorMonitor> reactorMonitor,
-        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
-        const string& path) {
+    static Translation Template<Security>(const NativeType& nativeType,
+        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
+        ParserErrorPolicy errorPolicy, const string& path) {
       using BaseParser = ParserType<Security>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
         errorPolicy);
-      return MakePublisherReactor(std::move(publisher));
+      return PublisherReactor(std::move(publisher));
     }
 
     using SupportedTypes = ValueTypes;
@@ -587,11 +539,10 @@ namespace {
 
   struct FilterTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<Reactor<bool>>& filter,
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeFilterReactor(filter,
-        std::static_pointer_cast<Reactor<T>>(source));
+    static Translation Template(const Translation& filter,
+        const Translation& source) {
+      return MakeFilterReactor(filter.Extract<Aspen::Box<bool>>(),
+        source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -599,9 +550,8 @@ namespace {
 
   struct FirstTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeFirstReactor(std::static_pointer_cast<Reactor<T>>(source));
+    static Translation Template(const Translation& source) {
+      return Aspen::first(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -631,13 +581,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -645,8 +592,8 @@ namespace {
 
   struct FoldParameterTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template() {
-      return MakeFoldParameterReactor<T>();
+    static Translation Template() {
+      return Aspen::make_fold_argument<T>();
     }
 
     using SupportedTypes = ValueTypes;
@@ -654,18 +601,13 @@ namespace {
 
   struct FoldTranslator {
     template<typename CombinerType, typename SourceType, typename Unused>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& combiner,
-        const std::shared_ptr<BaseReactor>& leftTrigger,
-        const std::shared_ptr<BaseReactor>& rightTrigger,
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeFoldReactor(
-        std::static_pointer_cast<Reactor<CombinerType>>(combiner),
-        std::static_pointer_cast<FoldParameterReactor<CombinerType>>(
-          leftTrigger),
-        std::static_pointer_cast<FoldParameterReactor<SourceType>>(
-          rightTrigger),
-        std::static_pointer_cast<Reactor<SourceType>>(source));
+    static Translation Template(const Translation& combiner,
+        const Translation& leftTrigger, const Translation& rightTrigger,
+        const Translation& source) {
+      return Aspen::fold(combiner.Extract<Aspen::Box<CombinerType>>(),
+        leftTrigger.Extract<Aspen::Shared<Aspen::FoldArgument<CombinerType>>>(),
+        rightTrigger.Extract<Aspen::Shared<Aspen::FoldArgument<SourceType>>>(),
+        source.Extract<Aspen::Box<SourceType>>());
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -680,13 +622,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -701,13 +640,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -723,15 +659,13 @@ namespace {
     };
 
     template<typename T0, typename T1, typename T2, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& condition,
-        const std::shared_ptr<BaseReactor>& consequent,
-        const std::shared_ptr<BaseReactor>& default,
+    static Translation Template(const Translation& condition,
+        const Translation& consequent, const Translation& default,
         CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, T2, R>(),
-        std::static_pointer_cast<Reactor<T0>>(condition),
-        std::static_pointer_cast<Reactor<T1>>(consequent),
-        std::static_pointer_cast<Reactor<T2>>(default));
+      return Aspen::Lift(Operation<T0, T1, T2, R>(),
+        condition.Extract<Aspen::Box<T0>>(),
+        consequent.Extract<Aspen::Box<T1>>(),
+        default.Extract<Aspen::Box<T2>>());
     }
 
     using SupportedTypes = IfNodeSignatures::type;
@@ -739,9 +673,8 @@ namespace {
 
   struct LastTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& source) {
-      return MakeLastReactor(std::static_pointer_cast<Reactor<T>>(source));
+    static Translation Template(const Translation& source) {
+      return MakeLastReactor(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -756,13 +689,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -777,18 +707,16 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ComparisonSignatures::type;
   };
 
+#if 0
   struct LuaParameterTranslator {
     template<typename T>
     static std::unique_ptr<LuaReactorParameter> Template(
@@ -1126,6 +1054,7 @@ namespace {
       return marketDatabase.FromCode(security.GetMarket()).m_currency;
     }
   };
+#endif
 }
 
 Translation Spire::Translate(CanvasNodeTranslationContext& context,
@@ -1152,6 +1081,7 @@ void CanvasNodeTranslationVisitor::Visit(const AdditionNode& node) {
   m_translation = TranslateFunction<AdditionTranslator>(node);
 }
 
+#if 0
 void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
   vector<TaskFactory> factories;
   auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
@@ -1790,48 +1720,47 @@ void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
   m_translation = taskTranslation;
 }
 
+#endif
 Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
   auto isRootTask = false;
   if(existingTranslation.is_initialized()) {
     m_translation = *existingTranslation;
-    m_context->Add(Ref(node), m_translation);
+    m_context->Add(Ref(node), *m_translation);
   } else if(dynamic_cast<const ReferenceNode*>(&node) == nullptr &&
       node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
+
+    // TODO.
+#if 0
     auto publisher = MakeAggregateOrderExecutionPublisher();
-    TaskTranslation taskTranslation;
-    taskTranslation.m_publisher = publisher;
-    taskTranslation.m_factory = IndirectTaskFactory(
-      Ref(m_context->GetReactorMonitor()));
-    m_context->Add(Ref(node), taskTranslation);
+    auto proxyReactor = Aspen::Shared(Aspen::proxy<Task::State>());
+    auto selfTranslation = Translation(proxyReactor, publisher);
+    m_context->Add(Ref(node), selfTranslation);
     node.Apply(*this);
-    auto subtaskTranslation = get<TaskTranslation>(m_translation);
-    taskTranslation.m_factory.StaticCast<IndirectTaskFactory>().SetTaskFactory(
-      OrderExecutionPublisherTaskFactory(*subtaskTranslation.m_factory,
-      publisher));
-    publisher->Add(*subtaskTranslation.m_publisher);
-    m_translation = taskTranslation;
+    auto subTranslation = std::move(*m_translation);
+    m_translation = std::nullopt;
+    proxyReactor->set_reactor(
+      subTranslation.Extract<Aspen::Box<Task::State>>());
+    publisher->Add(subTranslation.GetPublisher());
+    m_translation = subTranslation;
+#endif
   } else {
     node.Apply(*this);
-    m_context->Add(Ref(node), m_translation);
+    m_context->Add(Ref(node), *m_translation);
   }
-  return m_translation;
+  return *m_translation;
 }
 
 template<typename Translator>
 Translation CanvasNodeTranslationVisitor::TranslateFunction(
     const CanvasNode& node) {
-  vector<std::shared_ptr<BaseReactor>> parameters;
+  auto arguments = std::vector<Translation>();
   for(const auto& child : node.GetChildren()) {
-    auto parameter = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(child));
-    parameters.push_back(parameter);
+    arguments.push_back(InternalTranslation(child));
   }
-  const auto& result = static_cast<const NativeType&>(
-    node.GetType()).GetNativeType();
-  const auto PARAMETERS = ParameterCount<Translator>::value;
-  return FunctionTranslator<Translator, PARAMETERS>()(parameters, result,
-    *m_context);
+  auto& result = static_cast<const NativeType&>(node.GetType()).GetNativeType();
+  return FunctionTranslator<Translator, ParameterCount<Translator>::value>()(
+    arguments, result, *m_context);
 }

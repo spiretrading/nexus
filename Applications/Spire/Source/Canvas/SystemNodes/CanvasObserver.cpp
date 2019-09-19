@@ -9,6 +9,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
+#include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/Types/TaskType.hpp"
