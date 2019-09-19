@@ -19,7 +19,6 @@
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 

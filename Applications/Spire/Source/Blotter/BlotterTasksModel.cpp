@@ -21,7 +21,6 @@
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"

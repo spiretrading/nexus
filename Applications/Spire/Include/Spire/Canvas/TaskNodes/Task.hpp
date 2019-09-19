@@ -84,6 +84,9 @@ namespace Details {
       /** Returns a unique id for this Task. */
       std::int32_t GetId() const;
 
+      /** TODO dummy method. */
+      void Execute();
+
       /** Cancels this Task. */
       void Cancel();
 

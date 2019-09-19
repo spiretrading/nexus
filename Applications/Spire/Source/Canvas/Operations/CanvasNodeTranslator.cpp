@@ -114,7 +114,6 @@
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
-#include "Spire/Canvas/TaskNodes/IndirectTask.hpp"
 #include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
 #include "Spire/Canvas/TaskNodes/OrderExecutionPublisherTask.hpp"
 #include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"

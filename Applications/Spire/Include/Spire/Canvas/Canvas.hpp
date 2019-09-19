@@ -59,8 +59,6 @@ namespace Spire {
   class GreaterNode;
   class GreaterOrEqualsNode;
   class IfNode;
-  class IndirectTask;
-  class IndirectTaskFactory;
   class IntegerNode;
   class IntegerType;
   class InteractionsNode;
