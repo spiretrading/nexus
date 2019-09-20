@@ -14,6 +14,8 @@ namespace Spire {
   /** Base class for a parameter passed into a Lua script. */
   class LuaReactorParameter {
     public:
+      using Type = void;
+
       virtual ~LuaReactorParameter() = default;
 
       /** Pushes the parameter onto the Lua stack */

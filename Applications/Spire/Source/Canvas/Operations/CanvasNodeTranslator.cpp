@@ -716,21 +716,20 @@ namespace {
     using SupportedTypes = ComparisonSignatures::type;
   };
 
-#if 0
   struct LuaParameterTranslator {
     template<typename T>
-    static std::unique_ptr<LuaReactorParameter> Template(
-        const std::shared_ptr<BaseReactor>& reactor, const CanvasType& type) {
-      return MakeNativeLuaReactorParameter(
-        std::static_pointer_cast<Reactor<T>>(reactor));
+    static Translation Template(const Translation& reactor,
+        const CanvasType& type) {
+      return Aspen::Unique(NativeLuaReactorParameter(
+        reactor.Extract<Aspen::Box<T>>()));
     }
 
     template<>
-    static std::unique_ptr<LuaReactorParameter> Template<Record>(
-        const std::shared_ptr<BaseReactor>& reactor, const CanvasType& type) {
-      return make_unique<RecordLuaReactorParameter>(
-        std::static_pointer_cast<Reactor<Record>>(reactor),
-        static_cast<const RecordType&>(type));
+    static Translation Template<Record>(const Translation& reactor,
+        const CanvasType& type) {
+      return Aspen::Unique(RecordLuaReactorParameter(
+        reactor.Extract<Aspen::Box<Record>>(),
+        static_cast<const RecordType&>(type)));
     }
 
     using SupportedTypes = ValueTypes;
@@ -738,11 +737,10 @@ namespace {
 
   struct LuaScriptTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(string name,
-        vector<unique_ptr<LuaReactorParameter>> parameters,
+    static Translation Template(string name,
+        vector<Aspen::Unique<LuaReactorParameter>> parameters,
         lua_State& luaState) {
-      return MakeLuaReactor<T>(std::move(name), std::move(parameters),
-        luaState);
+      return LuaReactor<T>(std::move(name), std::move(parameters), luaState);
     }
 
     using SupportedTypes = ValueTypes;
@@ -757,13 +755,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -778,13 +773,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -850,13 +842,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = MultiplicationNodeSignatures::type;
@@ -864,8 +853,8 @@ namespace {
 
   struct NoneTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template() {
-      return std::make_shared<NoneReactor<T>>();
+    static Translation Template() {
+      return Aspen::None<T>();
     }
 
     using SupportedTypes = ValueTypes;
@@ -887,11 +876,9 @@ namespace {
     };
 
     template<typename T0, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& value,
+    static Translation Template(const Translation& value,
         CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, R>(),
-        std::static_pointer_cast<Reactor<T0>>(value));
+      return Aspen::Lift(Operation<T0, R>(), value.Extract<Aspen::Box<T0>>());
     }
 
     using SupportedTypes = NotNodeSignatures::type;
@@ -903,7 +890,7 @@ namespace {
       int m_index;
 
       Operation(int index)
-          : m_index(index) {}
+        : m_index(index) {}
 
       T operator ()(const Record& record) const {
         return boost::get<T>(record.GetFields()[m_index]);
@@ -911,9 +898,9 @@ namespace {
     };
 
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<Reactor<Record>>& record, int index) {
-      return MakeFunctionReactor(Operation<T>(index), record);
+    static Translation Template(const Translation& record, int index) {
+      return Aspen::Lift(Operation<T>(index),
+        record.Extract<Aspen::Box<Record>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -943,13 +930,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -978,13 +962,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = SubtractionNodeSignatures::type;
@@ -992,9 +973,8 @@ namespace {
 
   struct ThrowTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        const ReactorException& exception) {
-      return MakeThrowReactor<T>(exception);
+    static Translation Template(std::exception_ptr exception) {
+      return Aspen::Throw<T>(std::move(exception));
     }
 
     using SupportedTypes = ValueTypes;
@@ -1009,13 +989,10 @@ namespace {
     };
 
     template<typename T0, typename T1, typename R>
-    static std::shared_ptr<BaseReactor> Template(
-        const std::shared_ptr<BaseReactor>& left,
-        const std::shared_ptr<BaseReactor>& right,
-        CanvasNodeTranslationContext& context) {
-      return MakeFunctionReactor(Operation<T0, T1, R>(),
-        std::static_pointer_cast<Reactor<T0>>(left),
-        std::static_pointer_cast<Reactor<T1>>(right));
+    static Translation Template(const Translation& left,
+        const Translation& right, CanvasNodeTranslationContext& context) {
+      return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>(right));
     }
 
     using SupportedTypes = EqualitySignatures::type;
@@ -1023,9 +1000,8 @@ namespace {
 
   struct VariableTranslator {
     template<typename T>
-    static std::shared_ptr<BaseReactor> Template(
-        CanvasNodeTranslationContext& context) {
-      return MakeBasicReactor<T>(Ref(context.GetReactorMonitor().GetTrigger()));
+    static Translation Template(CanvasNodeTranslationContext& context) {
+      return Aspen::Queue<T>();
     }
 
     using SupportedTypes = ValueTypes;
@@ -1037,6 +1013,7 @@ namespace {
     }
   };
 
+#if 0
   struct PropertyBuilder {
     template<typename T>
     static ReactorProperty Template(const string& name,
@@ -1047,6 +1024,7 @@ namespace {
 
     using SupportedTypes = ValueTypes;
   };
+#endif
 
   struct DefaultCurrency {
     CurrencyId operator ()(const Security& security,
@@ -1054,7 +1032,6 @@ namespace {
       return marketDatabase.FromCode(security.GetMarket()).m_currency;
     }
   };
-#endif
 }
 
 Translation Spire::Translate(CanvasNodeTranslationContext& context,

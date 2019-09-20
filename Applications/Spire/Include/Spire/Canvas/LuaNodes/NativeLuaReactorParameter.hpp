@@ -26,14 +26,11 @@ namespace Spire {
   class NativeLuaReactorParameter final : public LuaReactorParameter {
     public:
 
-      /** The native type represented. */
-      using Type = T;
-
       /**
        * Constructs a NativeLuaReactorParameter.
        * @param reactor The Reactor representing the parameter.
        */
-      explicit NativeLuaReactorParameter(Aspen::Box<Type> reactor);
+      explicit NativeLuaReactorParameter(Aspen::Box<T> reactor);
 
       void Push(lua_State& luaState) const override;
 
@@ -42,17 +39,16 @@ namespace Spire {
       void eval() const noexcept override;
 
     private:
-      Aspen::Box<Type> m_reactor;
+      Aspen::Box<T> m_reactor;
   };
 
   template<typename T>
-  NativeLuaReactorParameter<T>::NativeLuaReactorParameter(
-    Aspen::Box<Type> reactor)
+  NativeLuaReactorParameter<T>::NativeLuaReactorParameter(Aspen::Box<T> reactor)
     : m_reactor(std::move(reactor)) {}
 
   template<typename T>
   void NativeLuaReactorParameter<T>::Push(lua_State& luaState) const {
-    PushLuaValue<Type>()(luaState, m_reactor.eval());
+    PushLuaValue<T>()(luaState, m_reactor.eval());
   }
 
   template<typename T>

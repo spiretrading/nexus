@@ -20,6 +20,22 @@ using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
+const std::string SingleOrderTaskNode::SECURITY_PROPERTY = "security";
+
+const std::string SingleOrderTaskNode::ORDER_TYPE_PROPERTY = "type";
+
+const std::string SingleOrderTaskNode::SIDE_PROPERTY = "side";
+
+const std::string SingleOrderTaskNode::DESTINATION_PROPERTY = "destination";
+
+const std::string SingleOrderTaskNode::PRICE_PROPERTY = "price";
+
+const std::string SingleOrderTaskNode::QUANTITY_PROPERTY = "quantity";
+
+const std::string SingleOrderTaskNode::CURRENCY_PROPERTY = "currency";
+
+const std::string SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY = "time_in_force";
+
 SingleOrderTaskNode::FieldEntry::FieldEntry()
   : m_key(-1) {}
 

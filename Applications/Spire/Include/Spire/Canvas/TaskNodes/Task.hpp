@@ -5,6 +5,7 @@
 #include <string>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Collections/Enum.hpp>
+#include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/Queues/SnapshotPublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
@@ -104,6 +105,7 @@ namespace Details {
     private:
       Aspen::Box<void> m_reactor;
       std::int32_t m_id;
+      std::unique_ptr<Beam::SequencePublisher<StateEntry>> m_publisher;
 
       Task(const Task&) = delete;
       Task& operator =(const Task&) = delete;

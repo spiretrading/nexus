@@ -14,28 +14,28 @@ namespace Spire {
   class SingleOrderTaskNode : public CanvasNode {
     public:
 
-      /** The name of the propert used to specify the Security. */
+      /** The name of the property used to specify the Security. */
       static const std::string SECURITY_PROPERTY;
 
-      /** The name of the propert used to specify the OrderType. */
+      /** The name of the property used to specify the OrderType. */
       static const std::string ORDER_TYPE_PROPERTY;
 
-      /** The name of the propert used to specify the Side. */
+      /** The name of the property used to specify the Side. */
       static const std::string SIDE_PROPERTY;
 
-      /** The name of the propert used to specify the destination. */
+      /** The name of the property used to specify the destination. */
       static const std::string DESTINATION_PROPERTY;
 
-      /** The name of the propert used to specify the price. */
+      /** The name of the property used to specify the price. */
       static const std::string PRICE_PROPERTY;
 
-      /** The name of the propert used to specify the Quantity. */
+      /** The name of the property used to specify the Quantity. */
       static const std::string QUANTITY_PROPERTY;
 
-      /** The name of the propert used to specify the currency. */
+      /** The name of the property used to specify the currency. */
       static const std::string CURRENCY_PROPERTY;
 
-      /** The name of the propert used to specify the TimeInForce. */
+      /** The name of the property used to specify the TimeInForce. */
       static const std::string TIME_IN_FORCE_PROPERTY;
 
       /*! \struct FieldEntry

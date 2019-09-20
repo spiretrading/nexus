@@ -21,10 +21,28 @@ Task::StateEntry::StateEntry(State state, const std::string& message)
 
 Task::Task(Box<void> reactor)
   : m_reactor(std::move(reactor)),
-    m_id(++nextId) {}
+    m_id(++nextId),
+    m_publisher(std::make_unique<SequencePublisher<StateEntry>>()) {}
 
 std::int32_t Task::GetId() const {
   return m_id;
+}
+
+void Task::Execute() {}
+
+void Task::Cancel() {}
+
+const Publisher<Task::StateEntry>& Task::GetPublisher() const {
+  return *m_publisher;
+}
+
+State Task::commit(int sequence) noexcept {
+  return Aspen::State::NONE;
+}
+
+const Task::StateEntry& Task::eval() const noexcept {
+  static auto value = StateEntry();
+  return value;
 }
 
 std::ostream& Spire::operator <<(std::ostream& s, Task::State state) {
