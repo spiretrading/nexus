@@ -15,6 +15,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
+#include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
@@ -86,19 +87,26 @@ namespace {
 
 BlotterTasksModel::TaskContext::TaskContext(Ref<UserProfile> userProfile,
     const CanvasNode& node, const DirectoryEntry& executingAccount)
-    : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount) {
-  m_node = PreprocessTranslation(node);
-  if(m_node == nullptr) {
-    m_node = CanvasNode::Clone(node);
-  }
-  auto canvasNodeTaskFactory = CanvasNodeTaskFactory(Ref(m_context),
-    Ref(*m_node));
-  m_orderExecutionPublisher =
-    canvasNodeTaskFactory.GetOrderExecutionPublisher();
-  m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
-    canvasNodeTaskFactory);
-  m_task = m_factory->Create();
-}
+    : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount),
+      m_node([&] {
+        auto n = PreprocessTranslation(node);
+        if(n == nullptr) {
+          return CanvasNode::Clone(node);
+        }
+        return n;
+      }()),
+      m_task([&] {
+        #if 0 // TODO
+        auto canvasNodeTaskFactory = CanvasNodeTaskFactory(Ref(m_context),
+          Ref(*m_node));
+        m_orderExecutionPublisher =
+          canvasNodeTaskFactory.GetOrderExecutionPublisher();
+        m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
+          canvasNodeTaskFactory);
+        m_task = m_factory->Create();
+        #endif
+        return Task(Aspen::Box<void>(5));
+      }()) {}
 
 BlotterTasksModel::ObserverEntry::ObserverEntry(string name,
     unique_ptr<CanvasObserver> observer)

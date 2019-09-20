@@ -28,13 +28,13 @@ namespace {
 
   struct ObserverTranslator {
     template<typename T>
-    static Aspen::Box<void> Template(const Aspen::Box<void>& observer,
+    static Aspen::Box<void> Template(const Translation& translation,
         const std::function<void (const any& value)>& callback) {
-      return Aspen::Lift(
+      auto observer = translation.Extract<Aspen::Box<T>>();
+      return Aspen::Box(Aspen::Lift(
         [=] (const T& value) {
           callback(value);
-          return value;
-        }, observer.cast<T>());
+        }, observer));
     }
 
     typedef ValueTypes SupportedTypes;
@@ -119,10 +119,9 @@ void CanvasObserver::Translate() {
           &*m_node->GetChildren().front().FindNode(fullName);
         Mirror(*rootDependency, *m_context, *monitorDependency, Store(context));
       }
-      auto observerReactor = boost::get<Aspen::Box<void>>(
-        Spire::Translate(context, m_node->GetChildren().back()));
-      auto reactor = Instantiate<ObserverTranslator>(
-        observerReactor->GetType())(observerReactor, m_callbacks.GetCallback(
+      auto observer = Spire::Translate(context, m_node->GetChildren().back());
+      auto reactor = Instantiate<ObserverTranslator>(observer.GetTypeInfo())(
+        observer, m_callbacks.GetCallback(
         std::bind(&CanvasObserver::OnReactorUpdate, this,
         std::placeholders::_1)));
       m_context->GetReactorMonitor().Add(reactor);

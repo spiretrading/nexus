@@ -59,11 +59,13 @@ void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
     const Translation& translation) {
   boost::lock_guard<boost::mutex> lock(m_mutex);
   m_translations.insert(std::make_pair(node.Get(), translation));
+#if 0 // TODO
   auto taskTranslation = get<const TaskTranslation>(&translation);
   if(taskTranslation != nullptr) {
     m_orderExecutionPublishers.insert(std::make_pair(node.Get(),
       taskTranslation->m_publisher));
   }
+#endif
   if(m_parent != nullptr) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }

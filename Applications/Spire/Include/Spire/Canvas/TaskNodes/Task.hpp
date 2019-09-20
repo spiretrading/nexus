@@ -81,6 +81,8 @@ namespace Details {
        */
       explicit Task(Aspen::Box<void> reactor);
 
+      Task(Task&&) = default;
+
       /** Returns a unique id for this Task. */
       std::int32_t GetId() const;
 
@@ -96,6 +98,8 @@ namespace Details {
       Aspen::State commit(int sequence) noexcept;
 
       const StateEntry& eval() const noexcept;
+
+      Task& operator =(Task&&) = default;
 
     private:
       Aspen::Box<void> m_reactor;
