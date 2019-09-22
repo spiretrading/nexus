@@ -6,6 +6,7 @@ namespace Nexus {
   class CurrencyParser;
   class MarketParser;
   class MoneyParser;
+  class OrderStatusParser;
   class OrderTypeParser;
   class SecurityParser;
   class SideParser;

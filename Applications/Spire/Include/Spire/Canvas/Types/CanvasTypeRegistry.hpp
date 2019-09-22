@@ -19,7 +19,7 @@ namespace Spire {
   typedef boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Task::State, Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money,
-    Nexus::OrderType, Nexus::OrderStatus, Nexus::Security, Nexus::Side,
+    Nexus::OrderStatus, Nexus::OrderType, Nexus::Security, Nexus::Side,
     Nexus::TimeInForce, Record> ValueTypes;
 
   //! Lists types that can be compared.

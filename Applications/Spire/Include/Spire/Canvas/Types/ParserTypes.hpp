@@ -9,6 +9,7 @@
 #include "Nexus/Parsers/CurrencyParser.hpp"
 #include "Nexus/Parsers/MarketParser.hpp"
 #include "Nexus/Parsers/MoneyParser.hpp"
+#include "Nexus/Parsers/OrderStatusParser.hpp"
 #include "Nexus/Parsers/OrderTypeParser.hpp"
 #include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
@@ -74,6 +75,11 @@ namespace Spire {
   template<>
   struct ParserType<Nexus::Money> {
     typedef Nexus::MoneyParser type;
+  };
+
+  template<>
+  struct ParserType<Nexus::OrderStatus> {
+    typedef Nexus::OrderStatusParser type;
   };
 
   template<>

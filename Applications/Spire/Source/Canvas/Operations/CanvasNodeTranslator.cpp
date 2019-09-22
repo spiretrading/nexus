@@ -360,7 +360,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -370,8 +370,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::chain(initial.Extract<Aspen::Box<T>>(initial),
-        continuation.Extract<Aspen::Box<T>>(continuation));
+      return Aspen::chain(initial.Extract<Aspen::Box<T>>(),
+        continuation.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -437,7 +437,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = DivisionNodeSignatures::type;
@@ -455,7 +455,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = EqualitySignatures::type;
@@ -541,7 +541,7 @@ namespace {
     template<typename T>
     static Translation Template(const Translation& filter,
         const Translation& source) {
-      return MakeFilterReactor(filter.Extract<Aspen::Box<bool>>(),
+      return Aspen::discard(filter.Extract<Aspen::Box<bool>>(),
         source.Extract<Aspen::Box<T>>());
     }
 
@@ -584,7 +584,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -625,7 +625,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -643,7 +643,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -674,7 +674,7 @@ namespace {
   struct LastTranslator {
     template<typename T>
     static Translation Template(const Translation& source) {
-      return MakeLastReactor(source.Extract<Aspen::Box<T>>());
+      return Aspen::last(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -692,7 +692,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -710,7 +710,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -758,7 +758,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -776,7 +776,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -845,7 +845,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = MultiplicationNodeSignatures::type;
@@ -933,7 +933,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -965,7 +965,7 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = SubtractionNodeSignatures::type;
@@ -992,10 +992,20 @@ namespace {
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
       return Aspen::Lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
-        right.Extract<Aspen::Box<T1>>(right));
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = EqualitySignatures::type;
+  };
+
+  struct WhenTranslator {
+    template<typename T>
+    static Translation Template(Aspen::Box<bool> condition,
+        const Translation& series) {
+      return Aspen::when(condition, series.Extract<Aspen::Box<T>>());
+    }
+
+    using SupportedTypes = ValueTypes;
   };
 
   struct VariableTranslator {
@@ -1025,13 +1035,6 @@ namespace {
     using SupportedTypes = ValueTypes;
   };
 #endif
-
-  struct DefaultCurrency {
-    CurrencyId operator ()(const Security& security,
-        const MarketDatabase& marketDatabase) const {
-      return marketDatabase.FromCode(security.GetMarket()).m_currency;
-    }
-  };
 }
 
 Translation Spire::Translate(CanvasNodeTranslationContext& context,
@@ -1041,10 +1044,9 @@ Translation Spire::Translate(CanvasNodeTranslationContext& context,
 }
 
 CanvasNodeTranslationVisitor::CanvasNodeTranslationVisitor(
-    Ref<CanvasNodeTranslationContext> context,
-    Ref<const CanvasNode> node)
-    : m_context(context.Get()),
-      m_node(node.Get()) {}
+  Ref<CanvasNodeTranslationContext> context, Ref<const CanvasNode> node)
+  : m_context(context.Get()),
+    m_node(node.Get()) {}
 
 Translation CanvasNodeTranslationVisitor::Translate() {
   return InternalTranslation(*m_node);
@@ -1058,22 +1060,33 @@ void CanvasNodeTranslationVisitor::Visit(const AdditionNode& node) {
   m_translation = TranslateFunction<AdditionTranslator>(node);
 }
 
-#if 0
 void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
-  vector<TaskFactory> factories;
-  auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
+//  auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
+  auto publishers = std::vector<const Publisher<const Order*>*>();
   for(const auto& child : node.GetChildren()) {
     if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
-      auto translation = get<TaskTranslation>(InternalTranslation(child));
-      factories.push_back(translation.m_factory);
-      orderExecutionPublisher->Add(*translation.m_publisher);
+      auto translation = InternalTranslation(child);
+      if(translation.GetPublisher() != nullptr) {
+        publishers.push_back(translation.GetPublisher());
+      }
     }
   }
+/*
+  auto translation = [&] {
+    if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+        CanvasType::Compatibility::EQUAL) {
+      return Translation(Task(Aspen::box(Aspen::group(
+    }
+  }();
+*/
+/*
+  auto translation = Translation(
   TaskTranslation taskTranslation;
   taskTranslation.m_publisher = orderExecutionPublisher;
   taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
     AggregateTaskFactory(factories), orderExecutionPublisher);
-  m_translation = taskTranslation;
+  m_translation = std::move(translation);
+*/
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
@@ -1082,12 +1095,12 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
     return make_unique<LiveTimer>(interval,
       Ref(userProfile->GetTimerThreadPool()));
   };
-  auto expiry = boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(
-    node.GetChildren().front()));
-  auto reactor = MakeAlarmReactor(
+  auto expiry = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<ptime>>();
+  auto reactor = AlarmReactor(
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
-    timerFactory, std::static_pointer_cast<Reactor<ptime>>(expiry));
-  m_context->GetReactorMonitor().Add(reactor);
+    timerFactory, std::move(expiry));
+  m_context->GetReactorMonitor().Add(Aspen::Box<void>(std::move(reactor)));
   m_translation = reactor;
 }
 
@@ -1096,21 +1109,18 @@ void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BooleanNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CanvasNode& node) {
   if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    TaskTranslation taskTranslation;
-    taskTranslation.m_factory = IdleTaskFactory();
-    taskTranslation.m_publisher =
-      std::make_shared<SequencePublisher<const Order*>>();
-    m_translation = taskTranslation;
+    m_translation = Task(Aspen::Box<void>(Aspen::none<void>()));
   } else {
     auto& nativeType = static_cast<const NativeType&>(node.GetType());
     m_translation = Instantiate<ThrowTranslator>(nativeType.GetNativeType())(
-      ReactorError("Canvas node not supported."));
+      std::make_exception_ptr(
+      std::runtime_error("Canvas node not supported.")));
   }
 }
 
@@ -1119,6 +1129,7 @@ void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
+#if 0 // TODO
   if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     vector<TaskFactory> factories;
@@ -1153,32 +1164,36 @@ void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
     }
     m_translation = previousReactor;
   }
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentDateNode& node) {
-  auto currentDate = ptime(m_context->GetUserProfile().GetServiceClients().
-    GetTimeClient().GetTime().date(), microseconds(0));
-  m_translation = MakeConstantReactor(currentDate);
+#if 0 // TODO
+  m_translation = CurrentTimeReactor(
+    m_context->GetUserProfile().GetServiceClients().GetTimeClient());
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentDateTimeNode& node) {
-  auto currentDateTime = m_context->GetUserProfile().GetServiceClients().
-    GetTimeClient().GetTime();
-  m_translation = MakeConstantReactor(currentDateTime);
+  m_translation = CurrentTimeReactor(
+    &m_context->GetUserProfile().GetServiceClients().GetTimeClient());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentTimeNode& node) {
+#if 0 // TODO
   auto currentTime = m_context->GetUserProfile().GetServiceClients().
     GetTimeClient().GetTime().time_of_day();
   m_translation = MakeConstantReactor(currentTime);
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
   m_translation = InternalTranslation(node.GetChildren().front());
+#if 0 // TODO
   if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     auto baseTranslation = boost::get<TaskTranslation>(m_translation);
@@ -1197,27 +1212,29 @@ void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
       baseTranslation.m_factory);
     m_translation = taskTranslation;
   }
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DateTimeNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DecimalNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
-  auto source = std::static_pointer_cast<Reactor<Security>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front())));
-  m_translation = MakeFunctionReactor(
-    std::bind(DefaultCurrency(), std::placeholders::_1,
-    std::ref(m_context->GetUserProfile().GetMarketDatabase())), source);
+  auto source = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<Security>>();
+  m_translation = Aspen::lift(
+    [=] (const Security& security) {
+      return m_context->GetUserProfile().GetMarketDatabase().FromCode(
+        security.GetMarket()).m_currency;
+    }, source);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DestinationNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DivisionNode& node) {
@@ -1225,7 +1242,7 @@ void CanvasNodeTranslationVisitor::Visit(const DivisionNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DurationNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const EqualsNode& node) {
@@ -1234,48 +1251,37 @@ void CanvasNodeTranslationVisitor::Visit(const EqualsNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(
     const ExecutionReportMonitorNode& node) {
-  auto taskTranslation = boost::get<TaskTranslation>(InternalTranslation(
-    node.GetChildren().front()));
-  auto orderSubmissionReactor = MakePublisherReactor(
-    *taskTranslation.m_publisher);
-  auto executionReportReactor = MakeFunctionReactor(
+  auto taskTranslation = InternalTranslation(node.GetChildren().front());
+  m_translation = Aspen::lift(ExecutionReportToRecordConverter(),
+    Aspen::group(Aspen::lift(
     [] (const Order* order) {
-      return MakePublisherReactor(order->GetPublisher());
-    }, orderSubmissionReactor);
-  auto aggregateReactor = MakeAggregateReactor(executionReportReactor);
-  m_translation = MakeFunctionReactor(ExecutionReportToRecordConverter{},
-    aggregateReactor);
+      return Aspen::box(PublisherReactor(order->GetPublisher()));
+    }, PublisherReactor(*taskTranslation.GetPublisher()))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilePathNode& node) {
-  m_translation = MakeConstantReactor(node.GetPath());
+  m_translation = Aspen::constant(node.GetPath());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FileReaderNode& node) {
-  auto pathTranslation = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  auto path = std::dynamic_pointer_cast<ConstantReactor<string>>(
-    pathTranslation);
+  auto path = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<std::string>>();
   auto& nativeType = static_cast<const NativeType&>(node.GetType());
   m_translation = Instantiate<FileReaderTranslator>(nativeType.GetNativeType())(
     nativeType, Ref(m_context->GetReactorMonitor()),
-    Ref(m_context->GetUserProfile()), node.GetErrorPolicy(), path->Eval());
+    Ref(m_context->GetUserProfile()), node.GetErrorPolicy(), path.eval());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilterNode& node) {
-  auto filter = std::static_pointer_cast<Reactor<bool>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front())));
-  auto source = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().back()));
+  auto filter = InternalTranslation(node.GetChildren().front());
+  auto source = InternalTranslation(node.GetChildren().back());
   m_translation = Instantiate<FilterTranslator>(
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(filter,
     source);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FirstNode& node) {
-  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
+  auto reactor = InternalTranslation(node.GetChildren().front());
   m_translation = Instantiate<FirstTranslator>(
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
 }
@@ -1285,17 +1291,13 @@ void CanvasNodeTranslationVisitor::Visit(const FloorNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldNode& node) {
-  auto combiner = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  auto leftTrigger = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(*node.FindLeftOperand()));
-  auto rightTrigger = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(*node.FindRightOperand()));
-  auto source = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().back()));
-  m_translation = Instantiate<FoldTranslator>(combiner->GetType(),
-    source->GetType(), source->GetType())(combiner, leftTrigger, rightTrigger,
-    source);
+  auto combiner = InternalTranslation(node.GetChildren().front());
+  auto leftTrigger = InternalTranslation(*node.FindLeftOperand());
+  auto rightTrigger = InternalTranslation(*node.FindRightOperand());
+  auto source = InternalTranslation(node.GetChildren().back());
+  m_translation = Instantiate<FoldTranslator>(combiner.GetTypeInfo(),
+    source.GetTypeInfo(), source.GetTypeInfo())(combiner, leftTrigger,
+    rightTrigger, source);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FoldOperandNode& node) {
@@ -1316,21 +1318,19 @@ void CanvasNodeTranslationVisitor::Visit(const IfNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const IntegerNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const IsTerminalNode& node) {
-  auto state = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  m_translation = MakeFunctionReactor(Beam::Tasks::IsTerminal,
-    std::static_pointer_cast<Reactor<Task::State>>(state));
+  auto state = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<Task::State>>();
+  m_translation = Aspen::lift(Spire::IsTerminal, state);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LastNode& node) {
-  auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  m_translation = Instantiate<LastTranslator>(
-    static_cast<const NativeType&>(node.GetType()).GetNativeType())(reactor);
+  m_translation = Instantiate<LastTranslator>(static_cast<const NativeType&>(
+    node.GetType()).GetNativeType())(InternalTranslation(
+    node.GetChildren().front()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LesserNode& node) {
@@ -1342,6 +1342,7 @@ void CanvasNodeTranslationVisitor::Visit(const LesserOrEqualsNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LuaScriptNode& node) {
+#if 0 // TODO
   auto luaState = luaL_newstate();
   luaL_openlibs(luaState);
   ExportLuaTypes(*luaState);
@@ -1362,14 +1363,15 @@ void CanvasNodeTranslationVisitor::Visit(const LuaScriptNode& node) {
   }
   m_translation = Instantiate<LuaScriptTranslator>(nativeType.GetNativeType())(
     node.GetName(), std::move(parameters), *luaState);
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MarketNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MaxFloorNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MaxNode& node) {
@@ -1381,7 +1383,7 @@ void CanvasNodeTranslationVisitor::Visit(const MinNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MoneyNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MultiplicationNode& node) {
@@ -1389,17 +1391,8 @@ void CanvasNodeTranslationVisitor::Visit(const MultiplicationNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const NoneNode& node) {
-  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL) {
-    TaskTranslation taskTranslation;
-    taskTranslation.m_factory = IdleTaskFactory();
-    taskTranslation.m_publisher =
-      std::make_shared<SequencePublisher<const Order*>>();
-    m_translation = taskTranslation;
-  } else {
-    m_translation = Instantiate<NoneTranslator>(
-      static_cast<const NativeType&>(node.GetType()).GetNativeType())();
-  }
+  m_translation = Instantiate<NoneTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())();
 }
 
 void CanvasNodeTranslationVisitor::Visit(const NotNode& node) {
@@ -1407,10 +1400,11 @@ void CanvasNodeTranslationVisitor::Visit(const NotNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OptionalPriceNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
+#if 0 // TODO
   auto market = std::static_pointer_cast<Reactor<MarketCode>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
@@ -1432,17 +1426,19 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
     }, std::move(market), std::move(range));
   auto query = MakeSwitchReactor(orderImbalancePublisher);
   m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter{}, query);
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderStatusNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
+#if 0 // TODO
   auto orderExecutionPublisher =
     std::make_shared<SequencePublisher<const Order*>>();
   OrderWrapperTaskFactory<VirtualOrderExecutionClient> orderWrapperTaskFactory(
@@ -1463,9 +1459,11 @@ void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
     orderWrapperTaskFactory);
   orderExecutionPublisher->Push(&node.GetOrder());
   m_translation = taskTranslation;
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
+#if 0 // TODO
   auto& recordNode = node.GetChildren().front();
   auto recordReactor = std::static_pointer_cast<Reactor<Record>>(
     boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(recordNode)));
@@ -1479,20 +1477,19 @@ void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(
     recordReactor,
     std::distance(recordType.GetFields().begin(), fieldIterator));
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
-  auto lower = std::static_pointer_cast<Reactor<Quantity>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front())));
-  auto upper = std::static_pointer_cast<Reactor<Quantity>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().back())));
-  auto reactor = MakeRangeReactor(lower, upper);
-  m_translation = reactor;
+  auto lower = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<Quantity>>();
+  auto upper = InternalTranslation(
+    node.GetChildren().back()).Extract<Aspen::Box<Quantity>>();
+  m_translation = Aspen::range(lower, upper);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
+#if 0 // TODO
   auto& anchor = *FindAnchor(node);
   auto& referent = *node.FindReferent();
   m_translation = InternalTranslation(referent);
@@ -1508,6 +1505,7 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
       }
     }
   }
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RoundNode& node) {
@@ -1515,14 +1513,15 @@ void CanvasNodeTranslationVisitor::Visit(const RoundNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SecurityNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SideNode& node) {
-  m_translation = MakeConstantReactor(node.GetValue());
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
+#if 0 // TODO
   auto orderExecutionPublisher =
     std::make_shared<SequencePublisher<const Order*>>();
   SingleOrderTaskFactory<VirtualOrderExecutionClient> singleOrderTaskFactory(
@@ -1577,9 +1576,11 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     std::move(properties), singleRedisplayableOrderTaskFactory),
     orderExecutionPublisher);
   m_translation = taskTranslation;
+#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
+#if 0 // TODO
   auto trigger = boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren().front()));
   CanvasNodeTaskFactory taskFactory(Ref(*m_context),
@@ -1589,8 +1590,10 @@ void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
     Ref(m_context->GetReactorMonitor()), trigger, taskFactory);
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
+#endif
 }
 
+#if 0
 void CanvasNodeTranslationVisitor::Visit(const SubtractionNode& node) {
   m_translation = TranslateFunction<SubtractionTranslator>(node);
 }
@@ -1682,22 +1685,15 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
   taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
   m_translation = taskTranslation;
 }
-
+#endif
 void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
-  CanvasNodeTaskFactory taskFactory(Ref(*m_context),
-    Ref(node.GetChildren().back()));
-  auto condition = std::static_pointer_cast<Reactor<bool>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().Add(condition);
-  TaskTranslation taskTranslation;
-  taskTranslation.m_factory = WhenTaskFactory(
-    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
-  taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
-  m_translation = taskTranslation;
+  auto condition = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<bool>>();
+  auto series = InternalTranslation(node.GetChildren().back());
+  m_translation = Instantiate<WhenTranslator>(series.GetTypeInfo())(condition,
+    series);
 }
 
-#endif
 Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
