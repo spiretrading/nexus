@@ -60,7 +60,7 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
       }
       auto hasDestination = false;
       if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-        auto destination = FIX::ExDestination("SMRTXOPG-X");
+        auto destination = FIX::ExDestination("SMRTXOPG-X2");
         newOrderSingle->getHeader().setField(destination);
         if(info.m_fields.m_type == OrderType::PEGGED) {
           newOrderSingle->set(FIX::ExecInst("M"));
@@ -190,6 +190,8 @@ void ChixFixApplication::onMessage(const FIX42::ExecutionReport& message,
         update->m_liquidityFlag = "P";
       } else if(liquidityFlag == "R") {
         update->m_liquidityFlag = "A";
+      } else if(liquidityFlag == "O") {
+        update->m_liquidityFlag = "AO";
       } else if(execBroker == "CX2" || execBroker == "CHIX" ||
           execBroker == "CXD" || execBroker.getString().empty()) {
         update->m_liquidityFlag = liquidityFlag;
