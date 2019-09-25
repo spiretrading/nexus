@@ -10,6 +10,9 @@ namespace Nexus::MarketDataService {
   /** Stores a single HKEX message. */
   struct HkexMessage {
 
+    /** Message code for a trade. */
+    static constexpr auto TRADE = 50;
+
     /** The size of the message. */
     std::uint16_t m_size;
 
