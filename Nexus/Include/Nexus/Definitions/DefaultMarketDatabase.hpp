@@ -305,6 +305,17 @@ namespace Details {
       entry.m_displayName = "TSXV";
       database.Add(entry);
     }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XHKG";
+      entry.m_countryCode = DefaultCountries::HK();
+      entry.m_timeZone = "Asia/Hong_Kong";
+      entry.m_currency = DefaultCurrencies::HKD();
+      entry.m_boardLot = 100;
+      entry.m_description = "Hong Kong Stock Exchange";
+      entry.m_displayName = "HKEX";
+      database.Add(entry);
+    }
     return database;
   }
 }
@@ -318,6 +329,11 @@ namespace Details {
   }
 
   namespace DefaultMarkets {
+    inline MarketCode HKEX() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XHKG").m_code;
+      return value;
+    }
+
     inline MarketCode ASX() {
       static auto value = GetDefaultMarketDatabase().FromCode("XASX").m_code;
       return value;

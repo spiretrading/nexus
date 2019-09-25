@@ -16,15 +16,22 @@ namespace Details {
     }
     {
       CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{840};
-      entry.m_code = "USD";
+      entry.m_id = CurrencyId{124};
+      entry.m_code = "CAD";
       entry.m_sign = "$";
       database.Add(entry);
     }
     {
       CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{124};
-      entry.m_code = "CAD";
+      entry.m_id = CurrencyId{344};
+      entry.m_code = "HKD";
+      entry.m_sign = "$";
+      database.Add(entry);
+    }
+    {
+      CurrencyDatabase::Entry entry;
+      entry.m_id = CurrencyId{840};
+      entry.m_code = "USD";
       entry.m_sign = "$";
       database.Add(entry);
     }
@@ -54,6 +61,11 @@ namespace Details {
 
     inline CurrencyId CAD() {
       static auto value = GetDefaultCurrencyDatabase().FromCode("CAD").m_id;
+      return value;
+    }
+
+    inline CurrencyId HKD() {
+      static auto value = GetDefaultCurrencyDatabase().FromCode("HKD").m_id;
       return value;
     }
 
