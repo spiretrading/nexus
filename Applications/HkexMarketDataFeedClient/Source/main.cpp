@@ -171,18 +171,21 @@ int main(int argc, const char** argv) {
     return -1;
   }
   auto retransmissionHost = std::optional<IpAddress>();
-  auto retransmissionUsername = string();
-  auto retransmissionPassword = string();
   try {
     if(config["retransmission_host"]) {
       retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
-      retransmissionUsername = Extract<string>(config,
-        "retransmission_username");
-      retransmissionPassword = Extract<string>(config,
-        "retransmission_password");
     }
   } catch(const std::exception& e) {
     cerr << "Unable to initialize retransmission: " << e.what() << endl;
+    return -1;
+  }
+  auto snapshotHost = std::optional<IpAddress>();
+  try {
+    if(config["snapshot_host"]) {
+      retransmissionHost = Extract<IpAddress>(config, "snapshot_host");
+    }
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize snapshot: " << e.what() << endl;
     return -1;
   }
   auto feedChannel = ApplicationFeedChannel(&*multicastSocketChannel,
