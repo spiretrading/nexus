@@ -22,10 +22,9 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <tclap/CmdLine.h>
-#include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
-#include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
-#include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
-#include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
+#include "HkexMarketDataFeedClient/HkexConfiguration.hpp"
+#include "HkexMarketDataFeedClient/HkexMarketDataFeedClient.hpp"
+#include "HkexMarketDataFeedClient/HkexProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Version.hpp"
@@ -53,49 +52,24 @@ namespace {
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = ChiaMmdProtocolClient<
-    ApplicationFeedChannel*, TcpSocketChannel>;
-  using ApplicationMarketDataFeedClient = ChiaMarketDataFeedClient<
+  using ApplicationProtocolClient = HkexProtocolClient<ApplicationFeedChannel*>;
+  using ApplicationMarketDataFeedClient = HkexMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
   static const std::size_t DEFAULT_RECEIVE_BUFFER_SIZE = 16777216;
 
-  ChiaConfiguration ParseConfiguration(const YAML::Node& config,
+  HkexConfiguration ParseConfiguration(const YAML::Node& config,
       const MarketDatabase& marketDatabase, const ptime& currentTime,
       const local_time::tz_database& timeZones) {
-    ChiaConfiguration chiaConfig;
-    chiaConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
-      false);
-    auto primaryMarketEntry = marketDatabase.FromDisplayName(
-      Extract<string>(config, "market"));
-    chiaConfig.m_country = primaryMarketEntry.m_countryCode;
-    chiaConfig.m_primaryMarket = primaryMarketEntry.m_code;
-    auto disseminatingMarketEntry = marketDatabase.FromDisplayName(
-      Extract<string>(config, "disseminating_market"));
-    chiaConfig.m_disseminatingMarket = disseminatingMarketEntry.m_code;
-    chiaConfig.m_mpid = Extract<string>(config, "mpid",
-      disseminatingMarketEntry.m_displayName);
-    auto configTimezone = Extract<string>(config, "time_zone",
-      "Australian_Eastern_Standard_Time");
-    auto timeZone = timeZones.time_zone_from_region(configTimezone);
-    if(timeZone == nullptr) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Time zone not found."});
-    }
-    ptime serverDate{
-      AdjustDateTime(currentTime, "UTC", configTimezone, timeZones).date(),
-      seconds(0)};
-    chiaConfig.m_timeOrigin = AdjustDateTime(serverDate, configTimezone,
-      "UTC", timeZones);
-    chiaConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
-      false);
-    return chiaConfig;
+    auto hkexConfig = HkexConfiguration();
+    return hkexConfig;
   }
 }
 
 int main(int argc, const char** argv) {
   string configFile;
   try {
-    CmdLine cmd{"", ' ', "1.0-r" CHIA_MARKET_DATA_FEED_CLIENT_VERSION
+    CmdLine cmd{"", ' ', "1.0-r" HKEX_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2011 Eidolon Systems Inc."};
     ValueArg<string> configArg{"c", "config", "Configuration file", false,
       "config.yml", "path"};
@@ -107,7 +81,7 @@ int main(int argc, const char** argv) {
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
@@ -115,9 +89,9 @@ int main(int argc, const char** argv) {
     cerr << "Error parsing section 'service_locator': " << e.what() << endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto socketThreadPool = SocketThreadPool();
+  auto timerThreadPool = TimerThreadPool();
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -128,7 +102,7 @@ int main(int argc, const char** argv) {
     cerr << "Error logging in: " << e.what() << endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -137,7 +111,7 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
+  auto timeClient = unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
@@ -159,9 +133,9 @@ int main(int argc, const char** argv) {
     cerr << "NTP service unavailable." << endl;
     return -1;
   }
-  boost::optional<BaseMarketDataFeedClient> baseMarketDataFeedClient;
+  auto baseMarketDataFeedClient = std::optional<BaseMarketDataFeedClient>();
   try {
-    auto marketDataService = FindMarketDataFeedService(DefaultCountries::AU(),
+    auto marketDataService = FindMarketDataFeedService(DefaultCountries::HK(),
       *serviceLocatorClient);
     if(!marketDataService.is_initialized()) {
       cerr << "No market data services available." << endl;
@@ -172,15 +146,15 @@ int main(int argc, const char** argv) {
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
-      SessionAuthenticator<ApplicationServiceLocatorClient::Client>{
-        Ref(*serviceLocatorClient)},
+      SessionAuthenticator<ApplicationServiceLocatorClient::Client>(
+        Ref(*serviceLocatorClient)),
       Initialize(samplingTime, Ref(timerThreadPool)),
-      Initialize(seconds{10}, Ref(timerThreadPool)));
+      Initialize(seconds(10), Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     cerr << "Unable to initialize market data client: " << e.what() << endl;
     return -1;
   }
-  boost::optional<MulticastSocketChannel> multicastSocketChannel;
+  auto multicastSocketChannel = std::optional<MulticastSocketChannel>();
   try {
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");
@@ -196,9 +170,9 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize multicast socket: " << e.what() << endl;
     return -1;
   }
-  boost::optional<IpAddress> retransmissionHost;
-  string retransmissionUsername;
-  string retransmissionPassword;
+  auto retransmissionHost = std::optional<IpAddress>();
+  auto retransmissionUsername = string();
+  auto retransmissionPassword = string();
   try {
     if(config["retransmission_host"]) {
       retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
@@ -211,25 +185,16 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize retransmission: " << e.what() << endl;
     return -1;
   }
-  ApplicationFeedChannel feedChannel{multicastSocketChannel.get_ptr(),
-    &multicastSocketChannel->GetReader()};
-  ApplicationProtocolClient protocolClient{&feedChannel, retransmissionUsername,
-    retransmissionPassword,
-    [&] () -> std::unique_ptr<TcpSocketChannel> {
-      if(retransmissionHost.is_initialized()) {
-        return std::make_unique<TcpSocketChannel>(*retransmissionHost,
-          Ref(socketThreadPool));
-      }
-      return nullptr;
-    }
-  };
-  boost::optional<ApplicationMarketDataFeedClient> feedClient;
+  auto feedChannel = ApplicationFeedChannel(&*multicastSocketChannel,
+    &multicastSocketChannel->GetReader());
+  auto protocolClient = ApplicationProtocolClient(&feedChannel);
+  auto feedClient = std::optional<ApplicationMarketDataFeedClient>();
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto timeZones = definitionsClient->LoadTimeZoneDatabase();
     auto feedConfiguration = ParseConfiguration(config, marketDatabase,
       timeClient->GetTime(), timeZones);
-    feedClient.emplace(feedConfiguration, baseMarketDataFeedClient.get_ptr(),
+    feedClient.emplace(std::move(feedConfiguration), &*baseMarketDataFeedClient,
       &protocolClient);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize market data feed client: " << e.what() <<
