@@ -19,6 +19,7 @@ CALL:configure Applications\ComplianceServer %*
 CALL:configure Applications\CseMarketDataFeedClient %*
 CALL:configure Applications\CtaMarketDataFeedClient %*
 CALL:configure Applications\DefinitionsServer %*
+CALL:configure Applications\HkexMarketDataFeedClient %*
 CALL:configure Applications\MarketDataRelayServer %*
 CALL:configure Applications\MarketDataServer %*
 CALL:configure Applications\OasisOrderExecutionServer %*
