@@ -9,4 +9,7 @@ currencies:
   - code: CAD
     sign: $
     id: 124
+  - code: HKD
+    sign: $
+    id: 344
 ...
