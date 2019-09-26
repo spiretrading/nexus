@@ -203,4 +203,11 @@ markets:
     board_lot: 100
     description: BATS BYZ
     display_name: BATS
+  - code: XHKG
+    country_code: HK
+    time_zone: Asia/Hong_Kong
+    currency: HKD
+    board_lot: 100
+    description: Hong Kong Stock Exchange
+    display_name: HKEX
 ...
