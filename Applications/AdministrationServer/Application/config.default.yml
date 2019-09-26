@@ -198,13 +198,13 @@ entitlements:
     currency: HKD
     group: hkl1
     applicability:
-      - source: HKEX
+      - source: XHKG
         messages: [BBO, MQT, TAS, IMB]
   - name: Hong Kong L2
     price: 225.00
     currency: HKD
     group: hkl2
     applicability:
-      - source: HKEX
+      - source: XHKG
         messages: [BBO, MQT, BOOK, TAS, IMB]
 ...
