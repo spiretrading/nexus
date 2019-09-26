@@ -19,9 +19,6 @@ namespace Nexus::MarketDataService {
     /** The number of messages included in the packet. */
     std::uint8_t m_count;
 
-    /** Padding. */
-    std::uint8_t m_filler;
-
     /** The packet's sequence number. */
     std::uint32_t m_sequenceNumber;
 
@@ -50,15 +47,13 @@ namespace Nexus::MarketDataService {
     packet.m_count = Beam::FromLittleEndian(
       *reinterpret_cast<const std::uint8_t*>(source));
     source += sizeof(std::uint8_t);
-    packet.m_filler = Beam::FromLittleEndian(
-      *reinterpret_cast<const std::uint8_t*>(source));
     source += sizeof(std::uint8_t);
-    packet.m_sequenceNumber = Beam::FromBigEndian(
+    packet.m_sequenceNumber = Beam::FromLittleEndian(
       *reinterpret_cast<const std::uint32_t*>(source));
     source += sizeof(std::uint32_t);
-    packet.m_sendTime = Beam::FromBigEndian(
-      *reinterpret_cast<const std::uint32_t*>(source));
-    source += sizeof(std::uint32_t);
+    packet.m_sendTime = Beam::FromLittleEndian(
+      *reinterpret_cast<const std::uint64_t*>(source));
+    source += sizeof(std::uint64_t);
     packet.m_payload = source;
     return packet;
   }

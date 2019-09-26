@@ -91,7 +91,7 @@ namespace Nexus::MarketDataService {
         }
       }
     }
-    auto message = HkexMessage::Parse(m_source, m_remainingSize);
+    auto message = HkexMessage::Parse(&m_packet, m_source, m_remainingSize);
     m_remainingSize -= message.m_size;
     m_source += message.m_size;
     *sequenceNumber = m_sequenceNumber;

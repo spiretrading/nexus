@@ -62,6 +62,11 @@ namespace {
       const MarketDatabase& marketDatabase, const ptime& currentTime,
       const local_time::tz_database& timeZones) {
     auto hkexConfig = HkexConfiguration();
+    hkexConfig.m_enableLogging = false;
+    hkexConfig.m_market = GetDefaultMarketDatabase().FromCode(
+      DefaultMarkets::HKEX());
+    hkexConfig.m_disseminatingMarket = DefaultMarkets::HKEX();
+    hkexConfig.m_mpid = "HKEX";
     return hkexConfig;
   }
 }

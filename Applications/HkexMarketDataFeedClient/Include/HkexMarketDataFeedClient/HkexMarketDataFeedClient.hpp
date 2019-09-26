@@ -67,13 +67,18 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      Entry& GetEntry(const Security& security);
       Security ParseSecurity(Beam::Out<const char*> cursor) const;
       Money ParsePrice(Beam::Out<const char*> cursor) const;
-      Quantity ParseQuantity(Beam::Out<const char*> cursor) const;
+      Quantity ParseQuantity32(Beam::Out<const char*> cursor) const;
+      Quantity ParseQuantity64(Beam::Out<const char*> cursor) const;
+      Side ParseSide(Beam::Out<const char*> cursor) const;
+      boost::posix_time::ptime ToTimestamp(std::uint64_t ticks) const;
       boost::posix_time::ptime ParseTimestamp(
         Beam::Out<const char*> cursor) const;
       std::int16_t ParseShort(Beam::Out<const char*> cursor) const;
       void ParseTrade(const HkexMessage& message);
+      void ParseBookUpdate(const HkexMessage& message);
       void Dispatch(const HkexMessage& message);
       void ReadLoop();
   };
@@ -127,6 +132,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
+  typename HkexMarketDataFeedClient<C, P>::Entry&
+      HkexMarketDataFeedClient<C, P>::GetEntry(const Security& security) {
+    auto i = m_entries.find(security);
+    if(i == m_entries.end()) {
+      i = m_entries.insert(std::make_pair(security, Entry())).first;
+    }
+    return i->second;
+  }
+
+  template<typename C, typename P>
   Security HkexMarketDataFeedClient<C, P>::ParseSecurity(
       Beam::Out<const char*> cursor) const {
     auto security = Security(std::to_string(Beam::FromLittleEndian(
@@ -146,7 +161,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  Quantity HkexMarketDataFeedClient<C, P>::ParseQuantity(
+  Quantity HkexMarketDataFeedClient<C, P>::ParseQuantity32(
       Beam::Out<const char*> cursor) const {
     auto value = Beam::FromLittleEndian(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
@@ -155,13 +170,29 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  boost::posix_time::ptime HkexMarketDataFeedClient<C, P>::ParseTimestamp(
+  Quantity HkexMarketDataFeedClient<C, P>::ParseQuantity64(
       Beam::Out<const char*> cursor) const {
-    static const auto START_POINT = boost::posix_time::ptime(
-      boost::gregorian::date(1970, 1, 1), boost::posix_time::seconds(0));
     auto value = Beam::FromLittleEndian(
       *reinterpret_cast<const std::uint64_t*>(*cursor));
-    return START_POINT + boost::posix_time::microseconds(value / 1000);
+    *cursor += sizeof(std::uint64_t);
+    return Quantity(value);
+  }
+
+  template<typename C, typename P>
+  boost::posix_time::ptime HkexMarketDataFeedClient<C, P>::ToTimestamp(
+      std::uint64_t ticks) const {
+    static const auto START_POINT = boost::posix_time::ptime(
+      boost::gregorian::date(1970, 1, 1), boost::posix_time::seconds(0));
+    return START_POINT + boost::posix_time::microseconds(ticks / 1000);
+  }
+
+  template<typename C, typename P>
+  boost::posix_time::ptime HkexMarketDataFeedClient<C, P>::ParseTimestamp(
+      Beam::Out<const char*> cursor) const {
+    auto value = Beam::FromLittleEndian(
+      *reinterpret_cast<const std::uint64_t*>(*cursor));
+    *cursor += sizeof(std::uint64_t);
+    return ToTimestamp(value);
   }
 
   template<typename C, typename P>
@@ -174,12 +205,24 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
+  Side HkexMarketDataFeedClient<C, P>::ParseSide(
+      Beam::Out<const char*> cursor) const {
+    auto value = Beam::FromLittleEndian(
+      *reinterpret_cast<const std::int16_t*>(*cursor));
+    *cursor += sizeof(std::int16_t);
+    if(value == 0) {
+      return Side::BID;
+    }
+    return Side::ASK;
+  }
+
+  template<typename C, typename P>
   void HkexMarketDataFeedClient<C, P>::ParseTrade(const HkexMessage& message) {
     auto cursor = message.m_payload;
     auto security = ParseSecurity(Beam::Store(cursor));
     cursor += sizeof(std::uint32_t);
     auto price = ParsePrice(Beam::Store(cursor));
-    auto quantity = ParseQuantity(Beam::Store(cursor));
+    auto quantity = ParseQuantity32(Beam::Store(cursor));
     auto type = ParseShort(Beam::Store(cursor));
     auto code = [&] {
       switch(type) {
@@ -213,13 +256,45 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
+  void HkexMarketDataFeedClient<C, P>::ParseBookUpdate(
+      const HkexMessage& message) {
+    auto cursor = message.m_payload;
+    auto security = ParseSecurity(Beam::Store(cursor));
+    cursor += 3;
+    cursor += sizeof(std::uint8_t);
+    auto quantity = ParseQuantity64(Beam::Store(cursor));
+    auto price = ParsePrice(Beam::Store(cursor));
+    cursor += sizeof(std::uint32_t);
+    auto side = ParseSide(Beam::Store(cursor));
+    auto& entry = GetEntry(security);
+    auto update = false;
+    if(side == Side::BID && entry.m_bbo.m_bid.m_size == 0) {
+      entry.m_bbo.m_bid = Quote(price, quantity, Side::BID);
+      entry.m_bbo.m_timestamp = ToTimestamp(message.m_packet->m_sendTime);
+      update = true;
+    } else if(side == Side::ASK && entry.m_bbo.m_ask.m_size == 0) {
+      entry.m_bbo.m_ask = Quote(price, quantity, Side::ASK);
+      entry.m_bbo.m_timestamp = ToTimestamp(message.m_packet->m_sendTime);
+      update = true;
+    }
+    if(update) {
+      if(entry.m_bbo.m_bid.m_size != 0 && entry.m_bbo.m_ask.m_size != 0) {
+        m_marketDataFeedClient->PublishBboQuote(
+          SecurityBboQuote(entry.m_bbo, security));
+      }
+    }
+  }
+
+  template<typename C, typename P>
   void HkexMarketDataFeedClient<C, P>::Dispatch(const HkexMessage& message) {
     switch(message.m_type) {
       case HkexMessage::TRADE:
         ParseTrade(message);
         break;
+      case HkexMessage::BOOK_UPDATE:
+        ParseBookUpdate(message);
+        break;
     }
-    std::cout << message.m_type << " " << message.m_size << std::endl;
   }
 
   template<typename C, typename P>
