@@ -16,6 +16,10 @@ countries:
     two_letter_code: CN
     three_letter_code: CHN
     code: 156
+  - name: Hong Kong
+    two_letter_code: HK
+    three_letter_code: HKG
+    code: 344
   - name: United States
     two_letter_code: US
     three_letter_code: USA
