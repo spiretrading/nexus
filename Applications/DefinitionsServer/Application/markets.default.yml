@@ -210,4 +210,32 @@ markets:
     board_lot: 100
     description: Hong Kong Stock Exchange
     display_name: HKEX
+  - code: XFKA
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: Fukuoka Stock Exchange
+    display_name: XFKA
+  - code: XTKS
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: Tokyo Stock Exchange
+    display_name: TSE
+  - code: XOSE
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: Osaka Stock Exchange
+    display_name: OSE
+  - code: CHIJ
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: CHI-X Japan
+    display_name: CHIJ
 ...

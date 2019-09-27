@@ -30,6 +30,13 @@ namespace Details {
     }
     {
       CurrencyDatabase::Entry entry;
+      entry.m_id = CurrencyId{392};
+      entry.m_code = "JPY";
+      entry.m_sign = "¥";
+      database.Add(entry);
+    }
+    {
+      CurrencyDatabase::Entry entry;
       entry.m_id = CurrencyId{840};
       entry.m_code = "USD";
       entry.m_sign = "$";
@@ -66,6 +73,11 @@ namespace Details {
 
     inline CurrencyId HKD() {
       static auto value = GetDefaultCurrencyDatabase().FromCode("HKD").m_id;
+      return value;
+    }
+
+    inline CurrencyId JPY() {
+      static auto value = GetDefaultCurrencyDatabase().FromCode("JPY").m_id;
       return value;
     }
 
