@@ -223,8 +223,8 @@ namespace Nexus::MarketDataService {
   Side HkexMarketDataFeedClient<C, P>::ParseSide(
       Beam::Out<const char*> cursor) const {
     auto value = Beam::FromLittleEndian(
-      *reinterpret_cast<const std::int16_t*>(*cursor));
-    *cursor += sizeof(std::int16_t);
+      *reinterpret_cast<const std::uint16_t*>(*cursor));
+    *cursor += sizeof(std::uint16_t);
     if(value == 0) {
       return Side::BID;
     }
@@ -286,6 +286,7 @@ namespace Nexus::MarketDataService {
       auto side = ParseSide(Beam::Store(cursor));
       cursor += sizeof(std::uint8_t);
       auto action = ParseByte(Beam::Store(cursor));
+      cursor += 4;
       auto& levels = Pick(side, entry.m_asks, entry.m_bids);
       auto positionIterator = std::lower_bound(levels.begin(), levels.end(),
         price,
