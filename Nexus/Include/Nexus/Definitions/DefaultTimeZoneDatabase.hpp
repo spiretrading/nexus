@@ -527,7 +527,7 @@ namespace Details {
       "\"Pacific/Wallis\",\"WFT\",\"WFT\",\"\",\"\",\"+12:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Pacific/Yap\",\"CHUT\",\"CHUT\",\"\",\"\",\"+10:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Australian_Eastern_Standard_Time\",\"AEST\",\"AEST\",\"AEST\",\"AEST\",\"+10:00:00\",\"+01:00:00\",\"1;0;10\",\"+02:00:00\",\"1;0;4\",\"+03:00:00\"\n"
-      "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n"
+      "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n";
   }
 
   inline boost::local_time::tz_database BuildDefaultTimeZoneDatabase() {
