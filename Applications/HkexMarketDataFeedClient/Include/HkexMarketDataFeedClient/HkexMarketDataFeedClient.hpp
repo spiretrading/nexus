@@ -299,7 +299,7 @@ namespace Nexus::MarketDataService {
         });
       if(action == 0 || action == 1) {
         if(positionIterator == levels.end() ||
-            positionIterator->m_price == price) {
+            positionIterator->m_price != price) {
           positionIterator = levels.insert(positionIterator,
             PriceLevel{price, quantity});
         } else {
@@ -346,13 +346,13 @@ namespace Nexus::MarketDataService {
         entry.m_asks.clear();
         entry.m_bids.clear();
       }
-      if(updateBbo && !entry.m_asks.empty() && !entry.m_bids.empty()) {
-        m_marketDataFeedClient->PublishBboQuote(
-          SecurityBboQuote(BboQuote(Quote(entry.m_bids.back().m_price,
-          entry.m_bids.back().m_quantity, Side::BID),
-          Quote(entry.m_asks.back().m_price, entry.m_asks.back().m_quantity,
-          Side::ASK), ToTimestamp(message.m_packet->m_sendTime)), security));
-      }
+    }
+    if(updateBbo && !entry.m_asks.empty() && !entry.m_bids.empty()) {
+      m_marketDataFeedClient->PublishBboQuote(
+        SecurityBboQuote(BboQuote(Quote(entry.m_bids.back().m_price,
+        entry.m_bids.back().m_quantity, Side::BID),
+        Quote(entry.m_asks.back().m_price, entry.m_asks.back().m_quantity,
+        Side::ASK), ToTimestamp(message.m_packet->m_sendTime)), security));
     }
   }
 
