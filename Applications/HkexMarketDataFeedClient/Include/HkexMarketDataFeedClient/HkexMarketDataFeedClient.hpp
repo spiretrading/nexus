@@ -56,8 +56,13 @@ namespace Nexus::MarketDataService {
       void Close();
 
     private:
+      struct PriceLevel {
+        Money m_price;
+        Quantity m_quantity;
+      };
       struct Entry {
-        BboQuote m_bbo;
+        std::vector<PriceLevel> m_asks;
+        std::vector<PriceLevel> m_bids;
       };
       HkexConfiguration m_config;
       Beam::GetOptionalLocalPtr<C> m_marketDataFeedClient;
@@ -77,6 +82,7 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime ParseTimestamp(
         Beam::Out<const char*> cursor) const;
       std::int16_t ParseShort(Beam::Out<const char*> cursor) const;
+      std::uint8_t ParseByte(Beam::Out<const char*> cursor) const;
       void ParseTrade(const HkexMessage& message);
       void ParseBookUpdate(const HkexMessage& message);
       void Dispatch(const HkexMessage& message);
@@ -205,6 +211,15 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
+  std::uint8_t HkexMarketDataFeedClient<C, P>::ParseByte(
+      Beam::Out<const char*> cursor) const {
+    auto value = Beam::FromLittleEndian(*reinterpret_cast<const std::uint8_t*>(
+      *cursor));
+    *cursor += sizeof(std::uint8_t);
+    return value;
+  }
+
+  template<typename C, typename P>
   Side HkexMarketDataFeedClient<C, P>::ParseSide(
       Beam::Out<const char*> cursor) const {
     auto value = Beam::FromLittleEndian(
@@ -260,27 +275,83 @@ namespace Nexus::MarketDataService {
       const HkexMessage& message) {
     auto cursor = message.m_payload;
     auto security = ParseSecurity(Beam::Store(cursor));
-    cursor += 3;
-    cursor += sizeof(std::uint8_t);
-    auto quantity = ParseQuantity64(Beam::Store(cursor));
-    auto price = ParsePrice(Beam::Store(cursor));
-    cursor += sizeof(std::uint32_t);
-    auto side = ParseSide(Beam::Store(cursor));
     auto& entry = GetEntry(security);
-    auto update = false;
-    if(side == Side::BID && entry.m_bbo.m_bid.m_size == 0) {
-      entry.m_bbo.m_bid = Quote(price, quantity, Side::BID);
-      entry.m_bbo.m_timestamp = ToTimestamp(message.m_packet->m_sendTime);
-      update = true;
-    } else if(side == Side::ASK && entry.m_bbo.m_ask.m_size == 0) {
-      entry.m_bbo.m_ask = Quote(price, quantity, Side::ASK);
-      entry.m_bbo.m_timestamp = ToTimestamp(message.m_packet->m_sendTime);
-      update = true;
-    }
-    if(update) {
-      if(entry.m_bbo.m_bid.m_size != 0 && entry.m_bbo.m_ask.m_size != 0) {
+    cursor += 3;
+    auto entryCount = ParseByte(Beam::Store(cursor));
+    auto updateBbo = false;
+    for(auto i = 0; i != entryCount; ++i) {
+      auto quantity = ParseQuantity64(Beam::Store(cursor));
+      auto price = ParsePrice(Beam::Store(cursor));
+      cursor += sizeof(std::uint32_t);
+      auto side = ParseSide(Beam::Store(cursor));
+      cursor += sizeof(std::uint8_t);
+      auto action = ParseByte(Beam::Store(cursor));
+      auto& levels = Pick(side, entry.m_asks, entry.m_bids);
+      auto positionIterator = std::lower_bound(levels.begin(), levels.end(),
+        price,
+        [&] (const PriceLevel& lhs, Money rhs) {
+          if(side == Side::ASK) {
+            return lhs.m_price > rhs;
+          } else {
+            return lhs.m_price < rhs;
+          }
+        });
+      if(action == 0 || action == 1) {
+        if(positionIterator == levels.end() ||
+            positionIterator->m_price == price) {
+          levels.insert(positionIterator, PriceLevel{price, quantity});
+        } else {
+          positionIterator->m_quantity = quantity;
+        }
+        if(positionIterator == levels.end() - 1) {
+          updateBbo = true;
+        }
+        m_marketDataFeedClient->SetBookQuote(
+          SecurityBookQuote(BookQuote(m_config.m_mpid, true,
+          m_config.m_market.m_code, Quote(price, quantity, side),
+          ToTimestamp(message.m_packet->m_sendTime)), security));
+        while(positionIterator->m_quantity == 0 &&
+            positionIterator == levels.end() - 1) {
+          levels.pop_back();
+        }
+      } else if(action == 2) {
+        if(positionIterator != levels.end() &&
+            positionIterator->m_price == price) {
+          positionIterator->m_quantity = 0;
+          if(positionIterator == levels.end() - 1) {
+            updateBbo = true;
+            while(positionIterator->m_quantity == 0 &&
+                positionIterator == levels.end() - 1) {
+              levels.pop_back();
+            }
+          }
+          m_marketDataFeedClient->SetBookQuote(
+            SecurityBookQuote(BookQuote(m_config.m_mpid, true,
+            m_config.m_market.m_code, Quote(price, 0, side),
+            ToTimestamp(message.m_packet->m_sendTime)), security));
+        }
+      } else if(action == 74) {
+        for(auto& level : entry.m_asks) {
+          m_marketDataFeedClient->SetBookQuote(
+            SecurityBookQuote(BookQuote(m_config.m_mpid, true,
+            m_config.m_market.m_code, Quote(level.m_price, 0, Side::ASK),
+            ToTimestamp(message.m_packet->m_sendTime)), security));
+        }
+        for(auto& level : entry.m_bids) {
+          m_marketDataFeedClient->SetBookQuote(
+            SecurityBookQuote(BookQuote(m_config.m_mpid, true,
+            m_config.m_market.m_code, Quote(level.m_price, 0, Side::BID),
+            ToTimestamp(message.m_packet->m_sendTime)), security));
+        }
+        entry.m_asks.clear();
+        entry.m_bids.clear();
+      }
+      if(updateBbo && !entry.m_asks.empty() && !entry.m_bids.empty()) {
         m_marketDataFeedClient->PublishBboQuote(
-          SecurityBboQuote(entry.m_bbo, security));
+          SecurityBboQuote(BboQuote(Quote(entry.m_bids.back().m_price,
+          entry.m_bids.back().m_quantity, Side::BID),
+          Quote(entry.m_asks.back().m_price, entry.m_asks.back().m_quantity,
+          Side::ASK), ToTimestamp(message.m_packet->m_sendTime)), security));
       }
     }
   }
