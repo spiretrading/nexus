@@ -1,0 +1,15 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $password
+
+enable_logging: false
+market: XTKS
+disseminating_market: XTKS
+mpid: TSE
+time_zone: Asia/Tokyo
+sampling: 100ms
+host: 239.194.1.55:51055
+interface: $local_interface:51055
+...

@@ -1,0 +1,15 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $password
+
+enable_logging: false
+market: XFKA
+disseminating_market: XFKA
+mpid: FSE
+time_zone: Asia/Tokyo
+sampling: 100ms
+host: 239.194.1.74:51074
+interface: $local_interface:51074
+...

@@ -1,0 +1,15 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $password
+
+enable_logging: false
+market: XSAP
+disseminating_market: XSAP
+mpid: SSE
+time_zone: Asia/Tokyo
+sampling: 100ms
+host: 239.194.1.76:51076
+interface: $local_interface:51076
+...
