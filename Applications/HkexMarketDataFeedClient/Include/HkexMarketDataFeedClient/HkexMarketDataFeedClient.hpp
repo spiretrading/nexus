@@ -347,12 +347,24 @@ namespace Nexus::MarketDataService {
         entry.m_bids.clear();
       }
     }
-    if(updateBbo && !entry.m_asks.empty() && !entry.m_bids.empty()) {
+    if(updateBbo) {
+      auto bid = [&] {
+        if(entry.m_bids.empty()) {
+          return Quote(Money::ZERO, 0, Side::BID);
+        }
+        return Quote(entry.m_bids.back().m_price,
+          entry.m_bids.back().m_quantity, Side::BID);
+      }();
+      auto ask = [&] {
+        if(entry.m_asks.empty()) {
+          return Quote(Money::ZERO, 0, Side::ASK);
+        }
+        return Quote(entry.m_asks.back().m_price,
+          entry.m_asks.back().m_quantity, Side::ASK);
+      }();
       m_marketDataFeedClient->PublishBboQuote(
-        SecurityBboQuote(BboQuote(Quote(entry.m_bids.back().m_price,
-        entry.m_bids.back().m_quantity, Side::BID),
-        Quote(entry.m_asks.back().m_price, entry.m_asks.back().m_quantity,
-        Side::ASK), ToTimestamp(message.m_packet->m_sendTime)), security));
+        SecurityBboQuote(BboQuote(std::move(bid), std::move(ask),
+        ToTimestamp(message.m_packet->m_sendTime)), security));
     }
   }
 
