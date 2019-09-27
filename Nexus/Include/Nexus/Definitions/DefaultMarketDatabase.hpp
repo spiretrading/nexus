@@ -345,8 +345,30 @@ namespace Details {
       entry.m_timeZone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY();
       entry.m_boardLot = 100;
-      entry.m_description = "Osaka Stock Exchange";
+      entry.m_description = "Osaka Exchange";
       entry.m_displayName = "OSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XNGO";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Nagoya Stock Exchange";
+      entry.m_displayName = "NSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XSAP";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Sapporo Securities Exchange";
+      entry.m_displayName = "SSE";
       database.Add(entry);
     }
     {
@@ -519,12 +541,22 @@ namespace Details {
     }
 
     inline MarketCode TSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("TSE").m_code;
+      static auto value = GetDefaultMarketDatabase().FromCode("XTKS").m_code;
       return value;
     }
 
     inline MarketCode OSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("OSE").m_code;
+      static auto value = GetDefaultMarketDatabase().FromCode("XOSE").m_code;
+      return value;
+    }
+
+    inline MarketCode NSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XNGO").m_code;
+      return value;
+    }
+
+    inline MarketCode SSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XSAP").m_code;
       return value;
     }
 

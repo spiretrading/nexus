@@ -229,8 +229,22 @@ markets:
     time_zone: Asia/Tokyo
     currency: JPY
     board_lot: 100
-    description: Osaka Stock Exchange
+    description: Osaka Exchange
     display_name: OSE
+  - code: XNGO
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: Nagoya Stock Exchange
+    display_name: NSE
+  - code: XSAP
+    country_code: JP
+    time_zone: Asia/Tokyo
+    currency: JPY
+    board_lot: 100
+    description: Sapporo Securities Exchange
+    display_name: SSE
   - code: CHIJ
     country_code: JP
     time_zone: Asia/Tokyo
