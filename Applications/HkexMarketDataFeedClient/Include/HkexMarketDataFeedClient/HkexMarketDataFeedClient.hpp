@@ -300,29 +300,28 @@ namespace Nexus::MarketDataService {
       if(action == 0 || action == 1) {
         if(positionIterator == levels.end() ||
             positionIterator->m_price == price) {
-          levels.insert(positionIterator, PriceLevel{price, quantity});
+          positionIterator = levels.insert(positionIterator,
+            PriceLevel{price, quantity});
         } else {
           positionIterator->m_quantity = quantity;
         }
         if(positionIterator == levels.end() - 1) {
           updateBbo = true;
+          while(!levels.empty() && levels.back().m_quantity == 0) {
+            levels.pop_back();
+          }
         }
         m_marketDataFeedClient->SetBookQuote(
           SecurityBookQuote(BookQuote(m_config.m_mpid, true,
           m_config.m_market.m_code, Quote(price, quantity, side),
           ToTimestamp(message.m_packet->m_sendTime)), security));
-        while(positionIterator->m_quantity == 0 &&
-            positionIterator == levels.end() - 1) {
-          levels.pop_back();
-        }
       } else if(action == 2) {
         if(positionIterator != levels.end() &&
             positionIterator->m_price == price) {
           positionIterator->m_quantity = 0;
           if(positionIterator == levels.end() - 1) {
             updateBbo = true;
-            while(positionIterator->m_quantity == 0 &&
-                positionIterator == levels.end() - 1) {
+            while(!levels.empty() && levels.back().m_quantity == 0) {
               levels.pop_back();
             }
           }
