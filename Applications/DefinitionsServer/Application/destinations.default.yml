@@ -27,6 +27,10 @@ destinations:
     markets:
       - XTSE
       - XTSX
+  - id: HKEX
+    description: Hong Kong Stock Exchange
+    markets:
+      - XHKG
   - id: LYNX
     description: LYNX ATS
     markets:
@@ -130,6 +134,8 @@ preferred_destinations:
     destination: ASXT
   - market: XCNQ
     destination: CSE
+  - market: XHKG
+    destination: HKEX
   - market: XNAS
     destination: NASDAQ
   - market: XNYSE
@@ -147,6 +153,7 @@ manual_order_entry:
     - XASE
     - XASX
     - XCNQ
+    - XHKG
     - XNAS
     - XNYS
     - XTSE
