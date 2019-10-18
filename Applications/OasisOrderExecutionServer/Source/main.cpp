@@ -42,6 +42,7 @@
 #include "OasisOrderExecutionServer/FeeCalculatorOrderExecutionDriver.hpp"
 #include "OasisOrderExecutionServer/LekFixApplication.hpp"
 #include "OasisOrderExecutionServer/MatchNowFixApplication.hpp"
+#include "OasisOrderExecutionServer/MonexBoomFixApplication.hpp"
 #include "OasisOrderExecutionServer/OmegaFixApplication.hpp"
 #include "OasisOrderExecutionServer/TsxSorFixApplication.hpp"
 #include "Version.hpp"
@@ -294,6 +295,12 @@ int main(int argc, const char** argv) {
     lekEntry.m_destinations.push_back(DefaultDestinations::NYSE());
     lekEntry.m_destinations.push_back(DefaultDestinations::NASDAQ());
     fixApplicationEntries.push_back(lekEntry);
+    FixApplicationEntry boomEntry;
+    boomEntry.m_configPath = "boom.cfg";
+    boomEntry.m_application = std::make_shared<MonexBoomFixApplication>(
+      Ref(*timeClient));
+    boomEntry.m_destinations.push_back(DefaultDestinations::HKEX());
+    fixApplicationEntries.push_back(boomEntry);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize FIX entry: " << e.what() << endl;
     return -1;
