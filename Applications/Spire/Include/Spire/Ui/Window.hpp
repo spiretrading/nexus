@@ -74,7 +74,7 @@ namespace Spire {
       int m_resize_area_width;
       bool m_is_resizeable;
 
-      void set_resizeable(bool resizeable);
+      void set_window_attributes(bool is_resizeable);
   };
 }
 
