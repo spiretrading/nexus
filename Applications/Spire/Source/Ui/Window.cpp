@@ -74,7 +74,7 @@ void Window::closeEvent(QCloseEvent* event) {
 
 bool Window::event(QEvent* event) {
   if(event->type() == QEvent::WinIdChange) {
-    set_resizeable(m_is_resizeable);
+    set_window_attributes(m_is_resizeable, m_is_maximizeable);
   }
   return QWidget::event(event);
 }
@@ -167,13 +167,24 @@ void Window::resize_body(const QSize& size) {
 }
 
 void Window::set_fixed_body_size(const QSize& size) {
-  set_resizeable(false);
+  set_window_attributes(false, false);
   setFixedSize({size.width(), size.height() + m_title_bar->height()});
 }
 
-void Window::set_resizeable(bool resizeable) {
-  m_is_resizeable = resizeable;
-  if(m_is_resizeable) {
+void Window::set_maximizeable(bool is_maximizeable) {
+  m_is_maximizeable = is_maximizeable;
+  set_window_attributes(m_is_resizeable, m_is_maximizeable);
+}
+
+void Window::set_window_attributes(bool is_resizeable, bool is_maximizeable) {
+  m_is_resizeable = is_resizeable;
+  m_is_maximizeable = is_maximizeable;
+  if(m_is_resizeable && !m_is_maximizeable) {
+    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+    auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
+    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)
+      | WS_THICKFRAME | WS_CAPTION);
+  } else if(m_is_resizeable) {
     setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
     auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE)

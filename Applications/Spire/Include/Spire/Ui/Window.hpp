@@ -62,6 +62,8 @@ namespace Spire {
       */
       void set_fixed_body_size(const QSize& size);
 
+      void set_maximizeable(bool is_maximizeable);
+
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
@@ -73,8 +75,9 @@ namespace Spire {
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;
+      bool m_is_maximizeable;
 
-      void set_resizeable(bool resizeable);
+      void set_window_attributes(bool is_resizeable, bool is_maximizeable);
   };
 }
 
