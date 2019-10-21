@@ -1,6 +1,7 @@
-#ifndef NEXUS_FIXORDERLOG_HPP
-#define NEXUS_FIXORDERLOG_HPP
+#ifndef NEXUS_FIX_ORDER_LOG_HPP
+#define NEXUS_FIX_ORDER_LOG_HPP
 #include <string>
+#include <variant>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/SynchronizedList.hpp>
@@ -13,6 +14,9 @@
 #include <quickfix/fix42/ExecutionReport.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/OrderCancelRequest.h>
+#include <quickfix/fix44/ExecutionReport.h>
+#include <quickfix/fix44/NewOrderSingle.h>
+#include <quickfix/fix44/OrderCancelRequest.h>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
 #include "Nexus/FixUtilities/FixConversions.hpp"
@@ -20,76 +24,75 @@
 #include "Nexus/FixUtilities/FixOrderRejectedException.hpp"
 #include "Nexus/FixUtilities/FixUtilities.hpp"
 
-namespace Nexus {
-namespace FixUtilities {
+namespace Nexus::FixUtilities {
 
-  /*! \class FixOrderLog
-      \brief Used to create and update FIX Orders.
-   */
+  /** Used to create and update FIX Orders. */
   class FixOrderLog : private boost::noncopyable {
     public:
 
-      //! Returns an Order's id from a FIX ExecutionReport message.
-      /*!
-        \param message The message to extract the Order id from.
-        \return The Order id represented by the <i>message</i>.
-      */
+      /**
+       * Returns an Order's id from a FIX ExecutionReport message.
+       * @param message The message to extract the Order id from.
+       * @return The Order id represented by the <i>message</i>.
+       */
+      template<typename E>
       static boost::optional<OrderExecutionService::OrderId> GetOrderId(
-        const FIX42::ExecutionReport& message);
+        const E& message);
 
-      //! Returns information about a trade/fill from a FIX ExecutionReport
-      //! message.
-      /*!
-        \param message The message to extract the fill info from.
-        \param lastQuantity Stores the quantity of the last fill.
-        \param lastPrice Stores the price of the last fill.
-      */
-      static void GetFillInfo(const FIX42::ExecutionReport& message,
+      /**
+       * Returns information about a trade/fill from a FIX ExecutionReport
+       * message.
+       * @param message The message to extract the fill info from.
+       * @param lastQuantity Stores the quantity of the last fill.
+       * @param lastPrice Stores the price of the last fill.
+       */
+      template<typename E>
+      static void GetFillInfo(const E& message,
         Beam::Out<Quantity> lastQuantity, Beam::Out<Money> lastPrice);
 
-      //! Constructs a FixOrderLog.
+      /** Constructs a FixOrderLog. */
       FixOrderLog() = default;
 
-      //! Returns the Order with a specified id.
-      /*!
-        \param orderId The Order id to find.
-        \return The Order with the specified <i>orderId</i> or <code>null</code>
-                if no such Order exists.
-      */
+      /**
+       * Returns the Order with a specified id.
+       * @param orderId The Order id to find.
+       * @return The Order with the specified <i>orderId</i> or
+       *         <code>null</code> if no such Order exists.
+       */
       std::shared_ptr<OrderExecutionService::PrimitiveOrder> FindOrder(
         OrderExecutionService::OrderId orderId) const;
 
-      //! Recovers a previously unlogged Order.
-      /*!
-        \param orderRecord The OrderRecord to recover.
-        \return The recovered Order.
-      */
+      /**
+       * Recovers a previously unlogged Order.
+       * @param orderRecord The OrderRecord to recover.
+       * @return The recovered Order.
+       */
       const OrderExecutionService::Order& Recover(
         const OrderExecutionService::SequencedAccountOrderRecord& orderRecord);
 
-      //! Submits a NewOrderSingle message.
-      /*!
-        \param orderInfo The details of the Order to submit.
-        \param senderCompId The session's SenderCompID.
-        \param targetCompId The session's TargetCompID.
-        \param f Receives the NewOrderSingle message to be submitted.
-        \return The Order that was submitted.
-      */
+      /**
+       * Submits a NewOrderSingle message.
+       * @param orderInfo The details of the Order to submit.
+       * @param senderCompId The session's SenderCompID.
+       * @param targetCompId The session's TargetCompID.
+       * @param f Receives the NewOrderSingle message to be submitted.
+       * @return The Order that was submitted.
+       */
       template<typename F>
       const OrderExecutionService::Order& Submit(
         const OrderExecutionService::OrderInfo& orderInfo,
         const FIX::SenderCompID& senderCompId,
         const FIX::TargetCompID targetCompId, F f);
 
-      //! Submits a OrderCancelRequest message.
-      /*!
-        \param session The session canceling the Order.
-        \param orderId The Order id to cancel.
-        \param timestamp The timestamp of the cancel request.
-        \param senderCompId The session's SenderCompID.
-        \param targetCompId The session's TargetCompID.
-        \param f Receives the OrderCancelRequest message to be submitted.
-      */
+      /**
+       * Submits a OrderCancelRequest message.
+       * @param session The session canceling the Order.
+       * @param orderId The Order id to cancel.
+       * @param timestamp The timestamp of the cancel request.
+       * @param senderCompId The session's SenderCompID.
+       * @param targetCompId The session's TargetCompID.
+       * @param f Receives the OrderCancelRequest message to be submitted.
+       */
       template<typename F>
       void Cancel(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
@@ -97,40 +100,40 @@ namespace FixUtilities {
         const FIX::SenderCompID& senderCompId,
         const FIX::TargetCompID targetCompId, F f);
 
-      //! Updates an Order based on a FIX ExecutionReport message.
-      /*!
-        \param sessionId The session's id.
-        \param timestamp The updates timestamp.
-        \param f Receives the ExecutionReport that will be used to update the
-                 Order.
-      */
-      template<typename F>
-      void Update(const FIX42::ExecutionReport& message,
-        const FIX::SessionID& sessionId,
+      /**
+       * Updates an Order based on a FIX ExecutionReport message.
+       * @param message The ExecutionReport updating the order.
+       * @param sessionId The session's id.
+       * @param timestamp The updates timestamp.
+       * @param f Receives the ExecutionReport that will be used to update the
+       *          Order.
+       */
+      template<typename E, typename F>
+      void Update(const E& message, const FIX::SessionID& sessionId,
         const boost::posix_time::ptime& timestamp, F f);
 
-      //! Updates an Order based on an ExecutionReport.
-      /*!
-        \param sessionId The session's id.
-        \param orderId The id of the Order to update.
-        \param executionReport The ExecutionReport containing the update.
-        \param timestamp The current timestamp.
-      */
+      /**
+       * Updates an Order based on an ExecutionReport.
+       * @param sessionId The session's id.
+       * @param orderId The id of the Order to update.
+       * @param executionReport The ExecutionReport containing the update.
+       * @param timestamp The current timestamp.
+       */
       void Update(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport,
         const boost::posix_time::ptime& timestamp);
 
     private:
+      using FixExecutionReport = std::variant<FIX42::ExecutionReport,
+        FIX44::ExecutionReport>;
       struct RecoveredExecutionReport {
-        FIX42::ExecutionReport m_message;
+        FixExecutionReport m_message;
         std::function<void (const OrderExecutionService::Order&,
           Beam::Out<OrderExecutionService::ExecutionReport>)> m_callback;
 
-        RecoveredExecutionReport(const FIX42::ExecutionReport& message,
-          const std::function<
-          void (const OrderExecutionService::Order&,
-          Beam::Out<OrderExecutionService::ExecutionReport>)>& callback);
+        template<typename F>
+        RecoveredExecutionReport(FixExecutionReport message, F callback);
       };
       Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
         std::shared_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
@@ -145,42 +148,38 @@ namespace FixUtilities {
       std::shared_ptr<OrderExecutionService::PrimitiveOrder> RejectOrder(
         const OrderExecutionService::OrderInfo& orderInfo,
         const std::string& reason);
-      template<typename F>
-      void Update(const FIX42::ExecutionReport& message,
-        const boost::posix_time::ptime& timestamp,
+      template<typename E, typename F>
+      void Update(const E& message, const boost::posix_time::ptime& timestamp,
         const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
         F f);
   };
 
-  inline FixOrderLog::RecoveredExecutionReport::RecoveredExecutionReport(
-      const FIX42::ExecutionReport& message, const std::function<
-      void (const OrderExecutionService::Order&,
-      Beam::Out<OrderExecutionService::ExecutionReport>)>& callback)
-      : m_message(message),
-        m_callback(callback) {}
+  template<typename F>
+  FixOrderLog::RecoveredExecutionReport::RecoveredExecutionReport(
+    FixExecutionReport message, F callback)
+    : m_message(std::move(message)),
+      m_callback(std::move(callback)) {}
 
-  inline boost::optional<OrderExecutionService::OrderId> FixOrderLog::
-      GetOrderId(const FIX42::ExecutionReport& message) {
-    FIX::ClOrdID clOrdID;
+  template<typename E>
+  boost::optional<OrderExecutionService::OrderId> FixOrderLog::GetOrderId(
+      const E& message) {
+    auto clOrdID = FIX::ClOrdID();
     message.get(clOrdID);
     auto baseClOrdID = clOrdID.getString();
     auto delimiter = baseClOrdID.find('-');
-    OrderExecutionService::OrderId orderId;
     try {
       if(delimiter == std::string::npos) {
-        orderId = boost::lexical_cast<OrderExecutionService::OrderId>(
-          baseClOrdID);
-      } else {
-        orderId = boost::lexical_cast<OrderExecutionService::OrderId>(
-          baseClOrdID.substr(0, delimiter));
+        return boost::lexical_cast<OrderExecutionService::OrderId>(baseClOrdID);
       }
+      return boost::lexical_cast<OrderExecutionService::OrderId>(
+        baseClOrdID.substr(0, delimiter));
     } catch(const boost::bad_lexical_cast&) {
       return boost::none;
     }
-    return orderId;
   }
 
-  inline void FixOrderLog::GetFillInfo(const FIX42::ExecutionReport& message,
+  template<typename E>
+  void FixOrderLog::GetFillInfo(const E& message,
       Beam::Out<Quantity> lastQuantity, Beam::Out<Money> lastPrice) {
     if(!message.isSetField(FIX::FIELD::LastShares) ||
         !message.isSetField(FIX::FIELD::LastPx)) {
@@ -188,16 +187,29 @@ namespace FixUtilities {
       *lastPrice = Money::ZERO;
       return;
     }
-    FIX::LastShares lastSharesField;
-    message.get(lastSharesField);
-    try {
-      *lastQuantity = boost::lexical_cast<Quantity>(lastSharesField.getValue());
-    } catch(const boost::bad_lexical_cast&) {
-      *lastQuantity = 0;
-      *lastPrice = Money::ZERO;
-      return;
+    if constexpr(std::is_same_v<E, FIX42::ExecutionReport>) {
+      auto lastSharesField = FIX::LastShares();
+      message.get(lastSharesField);
+      try {
+        *lastQuantity = boost::lexical_cast<Quantity>(
+          lastSharesField.getValue());
+      } catch(const boost::bad_lexical_cast&) {
+        *lastQuantity = 0;
+        *lastPrice = Money::ZERO;
+        return;
+      }
+    } else {
+      auto lastQtyField = FIX::LastQty();
+      message.get(lastQtyField);
+      try {
+        *lastQuantity = boost::lexical_cast<Quantity>(lastQtyField.getValue());
+      } catch(const boost::bad_lexical_cast&) {
+        *lastQuantity = 0;
+        *lastPrice = Money::ZERO;
+        return;
+      }
     }
-    FIX::LastPx lastPxField;
+    auto lastPxField = FIX::LastPx();
     message.get(lastPxField);
     auto lastPxFieldValue = Money::FromValue(lastPxField.getString());
     if(lastPxFieldValue.is_initialized()) {
@@ -205,7 +217,6 @@ namespace FixUtilities {
     } else {
       *lastQuantity = 0;
       *lastPrice = Money::ZERO;
-      return;
     }
   }
 
@@ -246,20 +257,22 @@ namespace FixUtilities {
     if(recoveredExecutionReports.is_initialized()) {
       recoveredExecutionReports->ForEach(
         [&] (const RecoveredExecutionReport& recoveredExecutionReport) {
-          FIX::UtcTimeStamp fixTimestamp;
-          if(recoveredExecutionReport.m_message.isSetField(
-              FIX::FIELD::TransactTime)) {
-            FIX::TransactTime transactionTime;
-            recoveredExecutionReport.m_message.get(transactionTime);
-            fixTimestamp = static_cast<FIX::UtcTimeStamp>(transactionTime);
-          } else {
-            FIX::SendingTime sendingTime;
-            recoveredExecutionReport.m_message.getHeader().get(sendingTime);
-            fixTimestamp = static_cast<FIX::UtcTimeStamp>(sendingTime);
-          }
-          auto timestamp = GetTimestamp(fixTimestamp);
-          Update(recoveredExecutionReport.m_message, timestamp, order,
-            recoveredExecutionReport.m_callback);
+          auto fixTimestamp = FIX::UtcTimeStamp();
+          std::visit(
+            [&] (auto& message) {
+              if(message.isSetField(FIX::FIELD::TransactTime)) {
+                auto transactionTime = FIX::TransactTime();
+                message.get(transactionTime);
+                fixTimestamp = static_cast<FIX::UtcTimeStamp>(transactionTime);
+              } else {
+                auto sendingTime = FIX::SendingTime();
+                message.getHeader().get(sendingTime);
+                fixTimestamp = static_cast<FIX::UtcTimeStamp>(sendingTime);
+              }
+              auto timestamp = GetTimestamp(fixTimestamp);
+              Update(message, timestamp, order,
+                recoveredExecutionReport.m_callback);
+            }, recoveredExecutionReport.m_message);
         });
     }
     return *order;
@@ -278,11 +291,12 @@ namespace FixUtilities {
     if(!side.is_initialized()) {
       return *RejectOrder(orderInfo, "Invalid side.");
     }
-    FIX42::NewOrderSingle newOrderSingle;
-    FIX::ClOrdID clOrdId(boost::lexical_cast<std::string>(orderInfo.m_orderId));
+    auto newOrderSingle = FIX42::NewOrderSingle();
+    auto clOrdId = FIX::ClOrdID(boost::lexical_cast<std::string>(
+      orderInfo.m_orderId));
     newOrderSingle.set(FIX::HandlInst('1'));
     newOrderSingle.set(clOrdId);
-    FIX::Symbol symbol(orderInfo.m_fields.m_security.GetSymbol());
+    auto symbol = FIX::Symbol(orderInfo.m_fields.m_security.GetSymbol());
     newOrderSingle.set(symbol);
     newOrderSingle.set(*side);
     newOrderSingle.set(FIX::TransactTime(
@@ -325,11 +339,12 @@ namespace FixUtilities {
     if(order == nullptr) {
       return;
     }
-    FIX::OrigClOrdID origClOrdID(boost::lexical_cast<std::string>(orderId));
+    auto origClOrdID = FIX::OrigClOrdID(
+      boost::lexical_cast<std::string>(orderId));
     auto clOrdId = order->GetNextCancelId();
-    FIX42::OrderCancelRequest orderCancelRequest(origClOrdID, clOrdId,
+    auto orderCancelRequest = FIX42::OrderCancelRequest(origClOrdID, clOrdId,
       order->GetSymbol(), order->GetSide(), FIX::TransactTime());
-    FIX::OrderQty orderQty(
+    auto orderQty = FIX::OrderQty(
       static_cast<FIX::QTY>(order->GetInfo().m_fields.m_quantity));
     orderCancelRequest.set(orderQty);
     f(static_cast<const OrderExecutionService::Order&>(*order),
@@ -353,9 +368,8 @@ namespace FixUtilities {
     }
   }
 
-  template<typename F>
-  void FixOrderLog::Update(const FIX42::ExecutionReport& message,
-      const FIX::SessionID& sessionId,
+  template<typename E, typename F>
+  void FixOrderLog::Update(const E& message, const FIX::SessionID& sessionId,
       const boost::posix_time::ptime& timestamp, F f) {
     auto orderId = GetOrderId(message);
     if(!orderId.is_initialized()) {
@@ -365,12 +379,13 @@ namespace FixUtilities {
     // TODO: Turn this into a transaction to avoid possible race condition.
     auto order = FindOrder(*orderId);
     if(order == nullptr) {
-      RecoveredExecutionReport recoveredExecutionReport(message, std::move(f));
+      auto recoveredExecutionReport = RecoveredExecutionReport(message,
+        std::move(f));
       m_recoveredExecutionReports.Get(*orderId).PushBack(
         recoveredExecutionReport);
-      return;
+    } else {
+      Update(message, timestamp, order, std::move(f));
     }
-    Update(message, timestamp, order, std::move(f));
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
@@ -400,8 +415,7 @@ namespace FixUtilities {
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::RejectOrder(const OrderExecutionService::OrderInfo& info,
       const std::string& reason) {
-    std::shared_ptr<OrderExecutionService::PrimitiveOrder> order =
-      BuildRejectedOrder(info, reason);
+    auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
     Beam::Threading::With(m_orders,
       [&] (std::unordered_map<OrderExecutionService::OrderId,
           std::shared_ptr<OrderExecutionService::PrimitiveOrder>>& orders) {
@@ -410,18 +424,20 @@ namespace FixUtilities {
     return order;
   }
 
-  template<typename F>
-  void FixOrderLog::Update(const FIX42::ExecutionReport& message,
+  template<typename E, typename F>
+  void FixOrderLog::Update(const E& message,
       const boost::posix_time::ptime& timestamp,
       const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
       F f) {
-    FIX::ExecTransType execTransType;
-    message.get(execTransType);
-    if(execTransType != FIX::ExecTransType_NEW) {
-      std::cout << "Trade Revised: " << message.toString() << std::endl;
-      return;
+    if constexpr(std::is_same_v<E, FIX42::ExecutionReport>) {
+      auto execTransType = FIX::ExecTransType();
+      message.get(execTransType);
+      if(execTransType != FIX::ExecTransType_NEW) {
+        std::cout << "Trade Revised: " << message.toString() << std::endl;
+        return;
+      }
     }
-    FIX::OrdStatus ordStatus;
+    auto ordStatus = FIX::OrdStatus();
     message.get(ordStatus);
     auto orderStatus = GetOrderStatus(ordStatus);
     if(!orderStatus.is_initialized() ||
@@ -429,13 +445,13 @@ namespace FixUtilities {
       return;
     }
     auto isPendingCancel = *orderStatus == OrderStatus::PENDING_CANCEL;
-    Quantity lastQuantity;
-    Money lastPrice;
+    auto lastQuantity = Quantity();
+    auto lastPrice = Money();
     GetFillInfo(message, Beam::Store(lastQuantity), Beam::Store(lastPrice));
     if(isPendingCancel && lastQuantity == 0) {
       return;
     }
-    FIX::Text text;
+    auto text = FIX::Text();
     if(message.isSet(text)) {
       message.get(text);
     }
@@ -496,7 +512,7 @@ namespace FixUtilities {
           executionReports.back().m_sequence + 1;
         updatedExecutionReport.m_timestamp = updatedTimestamp;
         if(executionReport.m_lastQuantity != 0) {
-          Quantity filledQuantity = 0;
+          auto filledQuantity = Quantity(0);
           for(auto& executionReport : executionReports) {
             filledQuantity += executionReport.m_lastQuantity;
           }
@@ -513,7 +529,6 @@ namespace FixUtilities {
         order->Update(updatedExecutionReport);
       });
   }
-}
 }
 
 #endif
