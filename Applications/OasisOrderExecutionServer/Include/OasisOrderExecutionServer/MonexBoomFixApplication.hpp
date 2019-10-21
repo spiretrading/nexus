@@ -4,7 +4,7 @@
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
-#include "Nexus/FixUtilities/Fix44OrderLog.hpp"
+#include "Nexus/FixUtilities/FixOrderLog.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OasisOrderExecutionService {
@@ -49,18 +49,18 @@ namespace Nexus::OasisOrderExecutionService {
       void fromApp(const FIX::Message& message, const FIX::SessionID& sessionID)
          override;
 
-      void onMessage(const FIX42::ExecutionReport& message,
+      void onMessage(const FIX44::ExecutionReport& message,
         const FIX::SessionID& sessionId) override;
 
-      void onMessage(const FIX42::TradingSessionStatus& message,
+      void onMessage(const FIX44::TradingSessionStatus& message,
         const FIX::SessionID& sessionId) override;
 
-      void onMessage(const FIX42::OrderCancelReject& message,
+      void onMessage(const FIX44::OrderCancelReject& message,
         const FIX::SessionID& sessionId) override;
 
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
-      FixUtilities::Fix44OrderLog m_orderLog;
+      FixUtilities::FixOrderLog m_orderLog;
 
       std::string GetAccount() const;
       std::string GetPassword() const;

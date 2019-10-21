@@ -30,7 +30,7 @@ const Order& MonexBoomFixApplication::Recover(
 const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
   return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+    [&] (Out<FIX44::NewOrderSingle> newOrderSingle) {
       if(info.m_fields.m_destination == DefaultDestinations::HKEX()) {
         if(info.m_fields.m_security.GetCountry() != DefaultCountries::HK()) {
           BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
@@ -51,7 +51,7 @@ void MonexBoomFixApplication::Cancel(const OrderExecutionSession& session,
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
-        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+        Out<FIX44::OrderCancelRequest> orderCancelRequest) {
       auto& fields = order.GetInfo().m_fields;
       if(fields.m_security.GetMarket() == DefaultMarkets::HKEX()) {
         orderCancelRequest->set(FIX::SecurityExchange("XHKG"));
@@ -86,7 +86,7 @@ void MonexBoomFixApplication::fromApp(const FIX::Message& message,
   crack(message, sessionID);
 }
 
-void MonexBoomFixApplication::onMessage(const FIX42::ExecutionReport& message,
+void MonexBoomFixApplication::onMessage(const FIX44::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
@@ -98,10 +98,10 @@ void MonexBoomFixApplication::onMessage(const FIX42::ExecutionReport& message,
 }
 
 void MonexBoomFixApplication::onMessage(
-  const FIX42::TradingSessionStatus& message,
+  const FIX44::TradingSessionStatus& message,
   const FIX::SessionID& sessionId) {}
 
-void MonexBoomFixApplication::onMessage(const FIX42::OrderCancelReject& message,
+void MonexBoomFixApplication::onMessage(const FIX44::OrderCancelReject& message,
   const FIX::SessionID& sessionId) {}
 
 std::string MonexBoomFixApplication::GetAccount() const {
