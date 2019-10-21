@@ -307,6 +307,13 @@ int main(int argc, const char** argv) {
   }
   ApplicationFixOrderExecutionDriver fixOrderExecutionDriver{
     fixApplicationEntries};
+  auto marketDatabase = MarketDatabase();
+  try {
+    marketDatabase = definitionsClient->LoadMarketDatabase();
+  } catch(const std::exception& e) {
+    cerr << "Unable to load market database: " << e.what() << endl;
+    return -1;
+  }
   AsxtFeeTable asxtFeeTable;
   try {
     asxtFeeTable = ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
@@ -316,14 +323,14 @@ int main(int argc, const char** argv) {
   }
   HkexFeeTable hkexFeeTable;
   try {
-    hkexFeeTable = ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"));
+    hkexFeeTable = ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"),
+      marketDatabase);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize HKEX fee table: " << e.what() << endl;
     return -1;
   }
   ConsolidatedTmxFeeTable tmxFeeTable;
   try {
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
     tmxFeeTable = ParseConsolidatedTmxFeeTable(
       GetNode(feeTableConfig, "ca_equities"), marketDatabase);
   } catch(const std::exception& e) {
@@ -332,7 +339,6 @@ int main(int argc, const char** argv) {
   }
   ConsolidatedUsFeeTable usFeeTable;
   try {
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
     usFeeTable = ParseConsolidatedUsFeeTable(
       GetNode(feeTableConfig, "us_equities"), marketDatabase);
   } catch(const std::exception& e) {
