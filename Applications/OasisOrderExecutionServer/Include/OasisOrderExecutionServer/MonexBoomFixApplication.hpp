@@ -62,8 +62,8 @@ namespace Nexus::OasisOrderExecutionService {
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
       FixUtilities::FixOrderLog m_orderLog;
 
-      std::string GetAccount() const;
-      std::string GetPassword() const;
+      FIX::Username GetUsername() const;
+      FIX::Password GetPassword() const;
   };
 }
 

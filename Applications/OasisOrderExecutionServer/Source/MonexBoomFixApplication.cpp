@@ -1,5 +1,6 @@
 #include "OasisOrderExecutionServer/MonexBoomFixApplication.hpp"
 #include <boost/throw_exception.hpp>
+#include <quickfix/fix44/Logon.h>
 #include <quickfix/Session.h>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
@@ -73,7 +74,13 @@ void MonexBoomFixApplication::onLogon(const FIX::SessionID& sessionID) {}
 void MonexBoomFixApplication::onLogout(const FIX::SessionID& sessionID) {}
 
 void MonexBoomFixApplication::toAdmin(FIX::Message& message,
-  const FIX::SessionID& sessionID) {}
+    const FIX::SessionID& sessionID) {
+  if(message.getHeader().getField(FIX::FIELD::MsgType) == FIX::MsgType_Logon) {
+    auto& logon = static_cast<FIX44::Logon&>(message);
+    logon.setField(GetUsername());
+    logon.setField(GetPassword());
+  }
+}
 
 void MonexBoomFixApplication::toApp(FIX::Message& message,
   const FIX::SessionID& sessionID) {}
@@ -104,10 +111,10 @@ void MonexBoomFixApplication::onMessage(
 void MonexBoomFixApplication::onMessage(const FIX44::OrderCancelReject& message,
   const FIX::SessionID& sessionId) {}
 
-std::string MonexBoomFixApplication::GetAccount() const {
-  return GetSessionSettings().get(GetSessionId()).getString("Account");
+FIX::Username MonexBoomFixApplication::GetUsername() const {
+  return GetSessionSettings().get(GetSessionId()).getString("Username");
 }
 
-std::string MonexBoomFixApplication::GetPassword() const {
+FIX::Password MonexBoomFixApplication::GetPassword() const {
   return GetSessionSettings().get(GetSessionId()).getString("Password");
 }
