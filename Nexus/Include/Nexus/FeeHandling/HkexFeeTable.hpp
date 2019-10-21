@@ -84,10 +84,7 @@ namespace Nexus {
       tradeFee += feeTable.m_tradingFee * notionalValue;
       auto ccassFee = feeTable.m_ccassFee * notionalValue;
       tradeFee += std::max(ccassFee, feeTable.m_minimumCcassFee);
-      if(feeTable.m_stampApplicability.find(fields.m_security) !=
-          feeTable.m_stampApplicability.end()) {
-        tradeFee += feeTable.m_stampTax * notionalValue;
-      }
+      tradeFee += feeTable.m_stampTax * notionalValue;
       return tradeFee;
     }();
     return feesReport;

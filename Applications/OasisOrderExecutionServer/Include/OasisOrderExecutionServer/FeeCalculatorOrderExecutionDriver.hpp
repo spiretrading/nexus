@@ -1,5 +1,5 @@
-#ifndef OASIS_FEESCALCULATORORDEREXECUTIONDRIVER_HPP
-#define OASIS_FEESCALCULATORORDEREXECUTIONDRIVER_HPP
+#ifndef OASIS_FEES_CALCULATOR_ORDER_EXECUTION_DRIVER_HPP
+#define OASIS_FEES_CALCULATOR_ORDER_EXECUTION_DRIVER_HPP
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -11,38 +11,39 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
+#include "Nexus/FeeHandling/HkexFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace OasisOrderExecutionService {
+namespace Nexus::OasisOrderExecutionService {
 
-  /*! \class FeesCalculatorOrderExecutionDriver
-      \brief Calculates the fees for an ExecutionReport.
-      \tparam OrderExecutionDriverType The type of OrderExecutionDriver to pass
-              the orders to.
+  /**
+   * Calculates the fees for an ExecutionReport.
+   * @param <O> The type of OrderExecutionDriver to pass the orders to.
    */
-  template<typename OrderExecutionDriverType>
+  template<typename O>
   class FeesCalculatorOrderExecutionDriver : private boost::noncopyable {
     public:
 
-      //! The type of OrderExecutionDriver to pass the Orders to.
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<
-        OrderExecutionDriverType>;
+      /** The type of OrderExecutionDriver to pass the Orders to. */
+      using OrderExecutionDriver = Beam::GetTryDereferenceType<O>;
 
-      //! Constructs a FeesCalculatorOrderExecutionDriver.
-      /*!
-        \param orderExecutionDriver The OrderExecutionDriver to send the
-               submission to if all checks pass.
-        \param asxtFeeTable The fee table used by ASX TradeMatch.
-        \param tmxFeeTable The fee table used by TMX markets.
-      */
+      /**
+       * Constructs a FeesCalculatorOrderExecutionDriver.
+       * @param orderExecutionDriver The OrderExecutionDriver to send the
+                submission to if all checks pass.
+       * @param asxtFeeTable The fee table used by ASX TradeMatch.
+       * @param hkexFeeTable The fee table used by HKEX.
+       * @param tmxFeeTable The fee table used by TMX markets.
+       * @param usFeeTable The fee table used by US markets.
+       */
       template<typename OrderExecutionDriverForward>
       FeesCalculatorOrderExecutionDriver(
         OrderExecutionDriverForward&& orderExecutionDriver,
-        AsxtFeeTable asxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
+        AsxtFeeTable asxFeeTable, HkexFeeTable hkexFeeTable,
+        ConsolidatedTmxFeeTable tmxFeeTable,
         ConsolidatedUsFeeTable usFeeTable);
 
       ~FeesCalculatorOrderExecutionDriver();
@@ -65,9 +66,9 @@ namespace OasisOrderExecutionService {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<OrderExecutionDriverType>
-        m_orderExecutionDriver;
+      Beam::GetOptionalLocalPtr<O> m_orderExecutionDriver;
       AsxtFeeTable m_asxtFeeTable;
+      HkexFeeTable m_hkexFeeTable;
       ConsolidatedTmxFeeTable m_tmxFeeTable;
       ConsolidatedTmxFeeTable::State m_tmxState;
       ConsolidatedUsFeeTable m_usFeeTable;
@@ -83,6 +84,9 @@ namespace OasisOrderExecutionService {
       void HandleCanadianMarketFees(
         OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
+      void HandleHongKongMarketFees(
+        OrderExecutionService::PrimitiveOrder& order,
+        const OrderExecutionService::ExecutionReport& executionReport);
       void HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
       void OnExecutionReport(
@@ -90,27 +94,27 @@ namespace OasisOrderExecutionService {
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
-  template<typename OrderExecutionDriverType>
+  template<typename O>
   template<typename OrderExecutionDriverForward>
-  FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      FeesCalculatorOrderExecutionDriver(OrderExecutionDriverForward&&
-      orderExecutionDriver, AsxtFeeTable asxtFeeTable,
+  FeesCalculatorOrderExecutionDriver<O>::FeesCalculatorOrderExecutionDriver(
+      OrderExecutionDriverForward&& orderExecutionDriver,
+      AsxtFeeTable asxtFeeTable, HkexFeeTable hkexFeeTable,
       ConsolidatedTmxFeeTable tmxFeeTable, ConsolidatedUsFeeTable usFeeTable)
-      : m_orderExecutionDriver{std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)},
-        m_asxtFeeTable{std::move(asxtFeeTable)},
-        m_tmxFeeTable{std::move(tmxFeeTable)},
-        m_usFeeTable{std::move(usFeeTable)} {}
+      : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
+          orderExecutionDriver)),
+        m_asxtFeeTable(std::move(asxtFeeTable)),
+        m_hkexFeeTable(std::move(hkexFeeTable)),
+        m_tmxFeeTable(std::move(tmxFeeTable)),
+        m_usFeeTable(std::move(usFeeTable)) {}
 
-  template<typename OrderExecutionDriverType>
-  FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      ~FeesCalculatorOrderExecutionDriver() {
+  template<typename O>
+  FeesCalculatorOrderExecutionDriver<O>::~FeesCalculatorOrderExecutionDriver() {
     Close();
   }
 
-  template<typename OrderExecutionDriverType>
-  const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<
-      OrderExecutionDriverType>::Recover(
+  template<typename O>
+  const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<O>::
+      Recover(
       const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
     const auto& driverOrder = m_orderExecutionDriver->Recover(orderRecord);
     auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(
@@ -138,10 +142,9 @@ namespace OasisOrderExecutionService {
     return *order;
   }
 
-  template<typename OrderExecutionDriverType>
-  const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<
-      OrderExecutionDriverType>::Submit(
-      const OrderExecutionService::OrderInfo& info) {
+  template<typename O>
+  const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<O>::
+      Submit(const OrderExecutionService::OrderInfo& info) {
     const auto& driverOrder = m_orderExecutionDriver->Submit(info);
     auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(
       driverOrder.GetInfo());
@@ -153,23 +156,23 @@ namespace OasisOrderExecutionService {
     return *order;
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::Cancel(
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
     return m_orderExecutionDriver->Cancel(session, orderId);
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::Update(
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::Update(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
     return m_orderExecutionDriver->Update(session, orderId, executionReport);
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::Open() {
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -182,23 +185,22 @@ namespace OasisOrderExecutionService {
     m_openState.SetOpen();
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::Close() {
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      Shutdown() {
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::Shutdown() {
     m_openState.SetClosed();
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      HandleAustralianMarketFees(OrderExecutionService::PrimitiveOrder& order,
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::HandleAustralianMarketFees(
+      OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_asxtFeeTable, executionReport);
     order.With(
@@ -208,9 +210,9 @@ namespace OasisOrderExecutionService {
       });
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      HandleCanadianMarketFees(OrderExecutionService::PrimitiveOrder& order,
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::HandleCanadianMarketFees(
+      OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_tmxFeeTable, m_tmxState, order,
       executionReport);
@@ -221,9 +223,22 @@ namespace OasisOrderExecutionService {
       });
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::HandleHongKongMarketFees(
+      OrderExecutionService::PrimitiveOrder& order,
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    auto feesReport = CalculateFee(m_hkexFeeTable, order.GetInfo().m_fields,
+      executionReport);
+    order.With(
+      [&] (OrderStatus status,
+          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+        order.Update(feesReport);
+      });
+  }
+
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::HandleUsMarketFees(
+      OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_usFeeTable, order, executionReport);
     order.With(
@@ -233,9 +248,8 @@ namespace OasisOrderExecutionService {
       });
   }
 
-  template<typename OrderExecutionDriverType>
-  void FeesCalculatorOrderExecutionDriver<OrderExecutionDriverType>::
-      OnExecutionReport(
+  template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::OnExecutionReport(
       const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_status == OrderStatus::PENDING_NEW) {
@@ -247,11 +261,13 @@ namespace OasisOrderExecutionService {
     } else if(order->GetInfo().m_fields.m_security.GetCountry() ==
         DefaultCountries::CA()) {
       HandleCanadianMarketFees(*order, executionReport);
+    } else if(order->GetInfo().m_fields.m_security.GetCountry() ==
+        DefaultCountries::HK()) {
+      HandleHongKongMarketFees(*order, executionReport);
     }  else {
       HandleUsMarketFees(*order, executionReport);
     }
   }
-}
 }
 
 #endif

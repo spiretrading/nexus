@@ -314,6 +314,13 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize ASX fee table: " << e.what() << endl;
     return -1;
   }
+  HkexFeeTable hkexFeeTable;
+  try {
+    hkexFeeTable = ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"));
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize HKEX fee table: " << e.what() << endl;
+    return -1;
+  }
   ConsolidatedTmxFeeTable tmxFeeTable;
   try {
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
@@ -333,7 +340,8 @@ int main(int argc, const char** argv) {
     return -1;
   }
   ApplicationFeesCalculatorOrderExecutionDriver feesCalculator{
-    &fixOrderExecutionDriver, asxtFeeTable, tmxFeeTable, usFeeTable};
+    &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, tmxFeeTable,
+    usFeeTable};
   vector<unique_ptr<OrderSubmissionCheck>> checks;
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
