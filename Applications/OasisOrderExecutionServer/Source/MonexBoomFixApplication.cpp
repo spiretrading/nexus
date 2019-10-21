@@ -16,12 +16,16 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::FixUtilities;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
+using namespace Nexus::Queries;
 
 MonexBoomFixApplication::MonexBoomFixApplication(
-  Ref<LiveNtpTimeClient> timeClient)
-  : m_timeClient(timeClient.Get()) {}
+  Ref<LiveNtpTimeClient> timeClient,
+  Ref<ApplicationMarketDataClient::Client> marketDataClient)
+  : m_timeClient(timeClient.Get()),
+    m_marketDataClient(marketDataClient.Get()) {}
 
 const Order& MonexBoomFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
@@ -29,7 +33,18 @@ const Order& MonexBoomFixApplication::Recover(
 }
 
 const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
-  return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
+  auto modifiedInfo = info;
+  if(modifiedInfo.m_fields.m_type == OrderType::MARKET) {
+    modifiedInfo.m_fields.m_type = OrderType::LIMIT;
+    auto bboQuote = LoadBboQuote(modifiedInfo.m_fields.m_security);
+    if(modifiedInfo.m_fields.m_side == Side::BID) {
+      modifiedInfo.m_fields.m_price = bboQuote.m_ask.m_price;
+    } else {
+      modifiedInfo.m_fields.m_price = bboQuote.m_bid.m_price;
+    }
+  }
+  modifiedInfo.m_shortingFlag = false;
+  return m_orderLog.Submit(modifiedInfo, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX44::NewOrderSingle> newOrderSingle) {
       if(info.m_fields.m_destination == DefaultDestinations::HKEX()) {
@@ -45,14 +60,6 @@ const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
           "Invalid destination."));
       }
       newOrderSingle->set(GetAccount());
-      if(info.m_fields.m_type == OrderType::MARKET) {
-        newOrderSingle->set(FIX::OrdType('2'));
-        if(info.m_fields.m_side == Side::ASK) {
-          newOrderSingle->set(FIX::Price(0.01));
-        } else {
-          newOrderSingle->set(FIX::Price(10000));
-        }
-      }
     });
 }
 
@@ -122,6 +129,22 @@ void MonexBoomFixApplication::onMessage(
 
 void MonexBoomFixApplication::onMessage(const FIX44::OrderCancelReject& message,
   const FIX::SessionID& sessionId) {}
+
+BboQuote MonexBoomFixApplication::LoadBboQuote(const Security& security) {
+  auto publisher = m_bboQuotes.GetOrInsert(security,
+    [&] {
+      auto publisher = std::make_shared<StateQueue<BboQuote>>();
+      QueryRealTimeWithSnapshot(security, *m_marketDataClient, publisher);
+      return publisher;
+    });
+  try {
+    return publisher->Top();
+  } catch(const Beam::PipeBrokenException&) {
+    m_bboQuotes.Erase(security);
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException{"No BBO quote available."});
+  }
+}
 
 FIX::Account MonexBoomFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");

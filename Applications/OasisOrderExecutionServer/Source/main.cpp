@@ -298,7 +298,7 @@ int main(int argc, const char** argv) {
     FixApplicationEntry boomEntry;
     boomEntry.m_configPath = "boom.cfg";
     boomEntry.m_application = std::make_shared<MonexBoomFixApplication>(
-      Ref(*timeClient));
+      Ref(*timeClient), Ref(*marketDataClient));
     boomEntry.m_destinations.push_back(DefaultDestinations::HKEX());
     fixApplicationEntries.push_back(boomEntry);
   } catch(const std::exception& e) {
