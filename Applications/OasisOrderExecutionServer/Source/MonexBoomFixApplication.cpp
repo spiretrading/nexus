@@ -44,6 +44,7 @@ const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException(
           "Invalid destination."));
       }
+      newOrderSingle->set(GetAccount());
     });
 }
 
@@ -59,6 +60,9 @@ void MonexBoomFixApplication::Cancel(const OrderExecutionSession& session,
       } else {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid market."));
       }
+      orderCancelRequest->set(
+        FIX::Symbol(order.GetInfo().m_fields.m_security.GetSymbol()));
+      orderCancelRequest->set(GetAccount());
     });
 }
 
@@ -110,6 +114,10 @@ void MonexBoomFixApplication::onMessage(
 
 void MonexBoomFixApplication::onMessage(const FIX44::OrderCancelReject& message,
   const FIX::SessionID& sessionId) {}
+
+FIX::Account MonexBoomFixApplication::GetAccount() const {
+  return GetSessionSettings().get(GetSessionId()).getString("Account");
+}
 
 FIX::Username MonexBoomFixApplication::GetUsername() const {
   return GetSessionSettings().get(GetSessionId()).getString("Username");
