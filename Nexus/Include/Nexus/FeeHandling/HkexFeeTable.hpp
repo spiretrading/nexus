@@ -40,11 +40,30 @@ namespace Nexus {
   };
 
   /**
+   * Parses the set of HKEX symbols subject to the STAMP tax.
+   * @param path The path to the YAML file to parse.
+   * @param marketDatabase The MarketDatabase used to parse the symbols.
+   * @return The set of symbols subject to the STAMP tax.
+   */
+  inline std::unordered_set<Security> ParseHkexStampSecurities(
+      const std::string& path, const MarketDatabase& marketDatabase) {
+    auto config = Beam::LoadFile(path);
+    auto symbols = config["symbols"];
+    if(!symbols) {
+      BOOST_THROW_EXCEPTION(std::runtime_error(
+        "Interlisted symbols not found."));
+    }
+    return ParseSecuritySet(symbols, marketDatabase);
+  }
+
+  /**
    * Parses a HkexFeeTable from a YAML configuration.
    * @param config The configuration to parse the HkexFeeTable from.
+   * @param marketDatabase The MarketDatabase used to parse Securities.
    * @return The HkexFeeTable represented by the <i>config</i>.
    */
-  inline HkexFeeTable ParseHkexFeeTable(const YAML::Node& config) {
+  inline HkexFeeTable ParseHkexFeeTable(const YAML::Node& config,
+      const MarketDatabase& marketDatabase) {
     auto feeTable = HkexFeeTable();
     feeTable.m_spireFee = Beam::Extract<Money>(config, "spire_fee");
     feeTable.m_stampTax = Beam::Extract<boost::rational<int>>(config,
@@ -58,6 +77,9 @@ namespace Nexus {
       "ccass_fee");
     feeTable.m_minimumCcassFee = Beam::Extract<Money>(config,
       "minimum_ccass_fee");
+    auto stampPath = Beam::Extract<std::string>(config, "stamp_path");
+    feeTable.m_stampApplicability = ParseHkexStampSecurities(stampPath,
+      marketDatabase);
     return feeTable;
   }
 
