@@ -13,6 +13,7 @@ namespace Nexus {
   struct CseFeeTable;
   struct EdgaFeeTable;
   struct EdgxFeeTable;
+  struct HkexFeeTable;
   struct LynxFeeTable;
   enum class LiquidityFlag;
   struct MatnFeeTable;
