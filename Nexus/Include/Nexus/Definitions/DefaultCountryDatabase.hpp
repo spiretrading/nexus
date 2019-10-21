@@ -48,6 +48,14 @@ namespace Details {
     }
     {
       CountryDatabase::Entry entry;
+      entry.m_name = "Japan";
+      entry.m_twoLetterCode = "JP";
+      entry.m_threeLetterCode = "JPN";
+      entry.m_code = 392;
+      database.Add(entry);
+    }
+    {
+      CountryDatabase::Entry entry;
       entry.m_name = "United States";
       entry.m_twoLetterCode = "US";
       entry.m_threeLetterCode = "USA";
@@ -94,6 +102,12 @@ namespace Details {
     inline CountryCode HK() {
       static CountryCode value = GetDefaultCountryDatabase().FromTwoLetterCode(
         "HK").m_code;
+      return value;
+    }
+
+    inline CountryCode JP() {
+      static CountryCode value = GetDefaultCountryDatabase().FromTwoLetterCode(
+        "JP").m_code;
       return value;
     }
 

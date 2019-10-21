@@ -13,6 +13,7 @@ namespace Details {
       entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XASX");
       entry.m_markets.push_back("XCNQ");
+      entry.m_markets.push_back("XHKG");
       entry.m_markets.push_back("XNAS");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XTSE");
@@ -92,6 +93,13 @@ namespace Details {
       entry.m_markets.push_back("XASE");
       entry.m_markets.push_back("XNYS");
       entry.m_markets.push_back("XNAS");
+      database.Add(entry);
+    }
+    {
+      DestinationDatabase::Entry entry;
+      entry.m_id = "HKEX";
+      entry.m_description = "Hong Kong Stock Exchange";
+      entry.m_markets.push_back("XHKG");
       database.Add(entry);
     }
     {
@@ -265,6 +273,11 @@ namespace Details {
 
     inline const std::string& EDGX() {
       static auto value = std::string{"EDGX"};
+      return value;
+    }
+
+    inline const std::string& HKEX() {
+      static auto value = std::string{"HKEX"};
       return value;
     }
 

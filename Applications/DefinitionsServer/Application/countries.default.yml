@@ -20,6 +20,10 @@ countries:
     two_letter_code: HK
     three_letter_code: HKG
     code: 344
+  - name: Japan
+    two_letter_code: JP
+    three_letter_code: JPN
+    code: 392
   - name: United States
     two_letter_code: US
     three_letter_code: USA

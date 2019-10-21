@@ -316,6 +316,72 @@ namespace Details {
       entry.m_displayName = "HKEX";
       database.Add(entry);
     }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XFKA";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Fukuoka Stock Exchange";
+      entry.m_displayName = "XFKA";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XTKS";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Tokyo Stock Exchange";
+      entry.m_displayName = "TSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XOSE";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Osaka Exchange";
+      entry.m_displayName = "OSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XNGO";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Nagoya Stock Exchange";
+      entry.m_displayName = "NSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "XSAP";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "Sapporo Securities Exchange";
+      entry.m_displayName = "SSE";
+      database.Add(entry);
+    }
+    {
+      MarketDatabase::Entry entry;
+      entry.m_code = "CHIJ";
+      entry.m_countryCode = DefaultCountries::JP();
+      entry.m_timeZone = "Asia/Tokyo";
+      entry.m_currency = DefaultCurrencies::JPY();
+      entry.m_boardLot = 100;
+      entry.m_description = "CHI-X Japan";
+      entry.m_displayName = "CHIJ";
+      database.Add(entry);
+    }
     return database;
   }
 }
@@ -466,6 +532,36 @@ namespace Details {
 
     inline MarketCode XCX2() {
       static auto value = GetDefaultMarketDatabase().FromCode("XCX2").m_code;
+      return value;
+    }
+
+    inline MarketCode XFKA() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XFKA").m_code;
+      return value;
+    }
+
+    inline MarketCode TSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XTKS").m_code;
+      return value;
+    }
+
+    inline MarketCode OSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XOSE").m_code;
+      return value;
+    }
+
+    inline MarketCode NSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XNGO").m_code;
+      return value;
+    }
+
+    inline MarketCode SSE() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XSAP").m_code;
+      return value;
+    }
+
+    inline MarketCode CHIJ() {
+      static auto value = GetDefaultMarketDatabase().FromCode("CHIJ").m_code;
       return value;
     }
   }

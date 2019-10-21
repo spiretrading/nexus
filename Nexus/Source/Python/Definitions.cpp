@@ -190,6 +190,8 @@ void Nexus::Python::ExportDefaultCountries() {
     .add_static_property("BR", make_function(&DefaultCountries::BR))
     .add_static_property("CA", make_function(&DefaultCountries::CA))
     .add_static_property("CN", make_function(&DefaultCountries::CN))
+    .add_static_property("HK", make_function(&DefaultCountries::HK))
+    .add_static_property("JP", make_function(&DefaultCountries::JP))
     .add_static_property("US", make_function(&DefaultCountries::US));
 }
 
@@ -213,6 +215,8 @@ void Nexus::Python::ExportDefaultCurrencies() {
   class_<Dummy, noncopyable>("default_currencies", no_init)
     .add_static_property("AUD", make_function(&DefaultCurrencies::AUD))
     .add_static_property("CAD", make_function(&DefaultCurrencies::CAD))
+    .add_static_property("HKD", make_function(&DefaultCurrencies::HKD))
+    .add_static_property("JPY", make_function(&DefaultCurrencies::JPY))
     .add_static_property("USD", make_function(&DefaultCurrencies::USD))
     .add_static_property("XBT", make_function(&DefaultCurrencies::XBT));
 }
@@ -233,6 +237,8 @@ void Nexus::Python::ExportDefaultDestinations() {
     .add_static_property("NYSE", make_function(&DefaultDestinations::NYSE,
       return_value_policy<copy_const_reference>()))
     .add_static_property("NASDAQ", make_function(&DefaultDestinations::NASDAQ,
+      return_value_policy<copy_const_reference>()))
+    .add_static_property("HKEX", make_function(&DefaultDestinations::HKEX,
       return_value_policy<copy_const_reference>()))
     .add_static_property("ALPHA", make_function(&DefaultDestinations::ALPHA,
       return_value_policy<copy_const_reference>()))
@@ -259,6 +265,7 @@ void Nexus::Python::ExportDefaultDestinations() {
 void Nexus::Python::ExportDefaultMarkets() {
   struct Dummy {};
   class_<Dummy, noncopyable>("default_markets", no_init)
+    .add_static_property("HKEX", make_function(&DefaultMarkets::HKEX))
     .add_static_property("ASX", make_function(&DefaultMarkets::ASX))
     .add_static_property("CXA", make_function(&DefaultMarkets::CXA))
     .add_static_property("ASEX", make_function(&DefaultMarkets::ASEX))
@@ -284,7 +291,13 @@ void Nexus::Python::ExportDefaultMarkets() {
     .add_static_property("TSX", make_function(&DefaultMarkets::TSX))
     .add_static_property("TSXV", make_function(&DefaultMarkets::TSXV))
     .add_static_property("XATS", make_function(&DefaultMarkets::XATS))
-    .add_static_property("XCX2", make_function(&DefaultMarkets::XCX2));
+    .add_static_property("XCX2", make_function(&DefaultMarkets::XCX2))
+    .add_static_property("XFKA", make_function(&DefaultMarkets::XFKA))
+    .add_static_property("TSE", make_function(&DefaultMarkets::TSE))
+    .add_static_property("OSE", make_function(&DefaultMarkets::OSE))
+    .add_static_property("NSE", make_function(&DefaultMarkets::NSE))
+    .add_static_property("SSE", make_function(&DefaultMarkets::SSE))
+    .add_static_property("CHIJ", make_function(&DefaultMarkets::CHIJ));
 }
 
 void Nexus::Python::ExportDestination() {
