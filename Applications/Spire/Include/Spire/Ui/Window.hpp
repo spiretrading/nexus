@@ -62,13 +62,6 @@ namespace Spire {
       */
       void set_fixed_body_size(const QSize& size);
 
-      //! Sets whether the window can be maximized.
-      /*
-        \param is_maximizeable True if the window can be maximized, false
-                               otherwise.
-      */
-      void set_maximizeable(bool is_maximizeable);
-
       void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
@@ -80,9 +73,8 @@ namespace Spire {
       TitleBar* m_title_bar;
       int m_resize_area_width;
       bool m_is_resizeable;
-      bool m_is_maximizeable;
 
-      void set_window_attributes(bool is_resizeable, bool is_maximizeable);
+      void set_window_attributes(bool is_resizeable);
   };
 }
 
