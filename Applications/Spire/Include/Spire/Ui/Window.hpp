@@ -62,7 +62,7 @@ namespace Spire {
       */
       void set_fixed_body_size(const QSize& size);
 
-      //! Sets the whether the window can be maximized.
+      //! Sets whether the window can be maximized.
       /*
         \param is_maximizeable True if the window can be maximized, false
                                otherwise.
