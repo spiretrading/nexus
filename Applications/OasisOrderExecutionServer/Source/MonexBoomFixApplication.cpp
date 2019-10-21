@@ -45,6 +45,14 @@ const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
           "Invalid destination."));
       }
       newOrderSingle->set(GetAccount());
+      if(info.m_fields.m_type == OrderType::MARKET) {
+        newOrderSingle->set(FIX::OrdType('2'));
+        if(info.m_fields.m_side == Side::ASK) {
+          newOrderSingle->set(FIX::Price(0.01));
+        } else {
+          newOrderSingle->set(FIX::Price(10000));
+        }
+      }
     });
 }
 
