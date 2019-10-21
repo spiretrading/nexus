@@ -261,6 +261,7 @@ hk_equities:
   brokerage_fee: 0.00012
   ccass_fee: 0.00002
   minimum_ccass_fee: 2.0
+  stamp_path: "./hkex_stamp.yml"
 
 # The fees charged for U.S. equity markets.
 us_equities:
