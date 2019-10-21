@@ -1,9 +1,11 @@
 #ifndef NEXUS_FIX_ORDER_LOG_HPP
 #define NEXUS_FIX_ORDER_LOG_HPP
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/Functional.hpp>
 #include <Beam/Utilities/SynchronizedList.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/lexical_cast.hpp>
@@ -11,6 +13,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/type_traits.hpp>
 #include <quickfix/fix42/ExecutionReport.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/OrderCancelRequest.h>
@@ -25,6 +28,40 @@
 #include "Nexus/FixUtilities/FixUtilities.hpp"
 
 namespace Nexus::FixUtilities {
+namespace Details {
+  template<typename T>
+  struct GetOut {};
+
+  template<typename T1, typename T2, typename... T>
+  struct GetOut<Beam::TypeSequence<T1, T2, T...>> {
+    using type = typename GetOut<T2>::type;
+  };
+
+  template<typename T>
+  struct GetOut<Beam::Out<T>> {
+    using type = T;
+  };
+
+  template<typename F>
+  struct FixNewOrderSingle {
+    using type = typename GetOut<
+      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+  };
+
+  template<typename T>
+  struct GetOut2 {};
+
+  template<typename T1, typename T2, typename T3, typename... T>
+  struct GetOut2<Beam::TypeSequence<T1, T2, T3, T...>> {
+    using type = typename GetOut<T3>::type;
+  };
+
+  template<typename F>
+  struct FixCancelOrderRequest {
+    using type = typename GetOut2<
+      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+  };
+}
 
   /** Used to create and update FIX Orders. */
   class FixOrderLog : private boost::noncopyable {
@@ -291,7 +328,7 @@ namespace Nexus::FixUtilities {
     if(!side.is_initialized()) {
       return *RejectOrder(orderInfo, "Invalid side.");
     }
-    auto newOrderSingle = FIX42::NewOrderSingle();
+    auto newOrderSingle = typename Details::FixNewOrderSingle<F>::type();
     auto clOrdId = FIX::ClOrdID(boost::lexical_cast<std::string>(
       orderInfo.m_orderId));
     newOrderSingle.set(FIX::HandlInst('1'));
@@ -342,8 +379,16 @@ namespace Nexus::FixUtilities {
     auto origClOrdID = FIX::OrigClOrdID(
       boost::lexical_cast<std::string>(orderId));
     auto clOrdId = order->GetNextCancelId();
-    auto orderCancelRequest = FIX42::OrderCancelRequest(origClOrdID, clOrdId,
-      order->GetSymbol(), order->GetSide(), FIX::TransactTime());
+    auto orderCancelRequest = [&] {
+      using CancelRequest = typename Details::FixCancelOrderRequest<F>::type;
+      if constexpr(std::is_same_v<CancelRequest, FIX42::OrderCancelRequest>) {
+        return FIX42::OrderCancelRequest(origClOrdID, clOrdId,
+          order->GetSymbol(), order->GetSide(), FIX::TransactTime());
+      } else {
+        return FIX44::OrderCancelRequest(origClOrdID, clOrdId, order->GetSide(),
+          FIX::TransactTime());
+      }
+    }();
     auto orderQty = FIX::OrderQty(
       static_cast<FIX::QTY>(order->GetInfo().m_fields.m_quantity));
     orderCancelRequest.set(orderQty);
