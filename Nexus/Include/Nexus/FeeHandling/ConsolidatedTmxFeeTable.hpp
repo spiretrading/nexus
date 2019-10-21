@@ -112,22 +112,6 @@ namespace Nexus {
     std::unordered_set<Security> m_nexListed;
   };
 
-  //! Parses the set of symbols from a YAML config.
-  /*!
-    \param config The config to parse.
-    \param marketDatabase The MarketDatabase used to parse the symbols.
-    \return The set of symbols.
-  */
-  inline std::unordered_set<Security> ParseSecuritySet(const YAML::Node& config,
-      const MarketDatabase& marketDatabase) {
-    auto securities = std::unordered_set<Security>();
-    for(auto& item : config) {
-      auto security = ParseSecurity(item.as<std::string>(), marketDatabase);
-      securities.insert(security);
-    }
-    return securities;
-  }
-
   //! Parses the set of TMX interlisted symbols.
   /*!
     \param path The path to the YAML file to parse.
