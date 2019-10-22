@@ -654,6 +654,7 @@ void Nexus::Python::ExportSecurity() {
 
 void Nexus::Python::ExportSecurityInfo() {
   class_<SecurityInfo>("SecurityInfo", init<>())
+    .def(init<const Security&, std::string, std::string>())
     .def("__copy__", &MakeCopy<SecurityInfo>)
     .def("__deepcopy__", &MakeDeepCopy<SecurityInfo>)
     .def_readwrite("security", &SecurityInfo::m_security)
