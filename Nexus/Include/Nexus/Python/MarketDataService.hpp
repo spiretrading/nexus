@@ -7,11 +7,17 @@ namespace Nexus::Python {
   //! Exports the ApplicationMarketDataClient class.
   void ExportApplicationMarketDataClient();
 
+  //! Exports the ApplicationMarketDataFeedClient class.
+  void ExportApplicationMarketDataFeedClient();
+
   //! Exports the HistoricalDataStore class.
   void ExportHistoricalDataStore();
 
   //! Exports the MarketDataClient class.
   void ExportMarketDataClient();
+
+  //! Exports the MarketDataFeedClient class.
+  void ExportMarketDataFeedClient();
 
   //! Exports the MarketDataService namespace.
   void ExportMarketDataService();

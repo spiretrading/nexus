@@ -30,6 +30,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonHistoricalDataStore.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -58,6 +59,9 @@ namespace {
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>>,
     LiveTimer>;
   using Client = MarketDataClient<SessionBuilder>;
+  using FeedClient = MarketDataFeedClient<string, LiveTimer,
+    MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
+    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
 
   struct FromPythonHistoricalDataStore final : VirtualHistoricalDataStore,
       wrapper<VirtualHistoricalDataStore> {
@@ -245,6 +249,86 @@ namespace {
       sessionBuilder)).release();
   }
 
+  struct FromPythonMarketDataFeedClient final : VirtualMarketDataFeedClient,
+      wrapper<VirtualMarketDataFeedClient> {
+    void Add(const SecurityInfo& securityInfo) override {
+      get_override("add")(securityInfo);
+    }
+
+    void PublishOrderImbalance(
+        const MarketOrderImbalance& orderImbalance) override {
+      get_override("publish_order_imbalance")(orderImbalance);
+    }
+
+    void PublishBboQuote(const SecurityBboQuote& bboQuote) override {
+      get_override("publish_bbo_quote")(bboQuote);
+    }
+
+    void PublishMarketQuote(const SecurityMarketQuote& marketQuote) override {
+      get_override("publish_market_quote")(marketQuote);
+    }
+
+    void SetBookQuote(const SecurityBookQuote& bookQuote) override {
+      get_override("set_book_quote")(bookQuote);
+    }
+
+    void AddOrder(const Security& security, MarketCode market,
+        const std::string& mpid, bool isPrimaryMpid, const std::string& id,
+        Side side, Money price, Quantity size,
+        const boost::posix_time::ptime& timestamp) override {
+      get_override("add_order")(security, market, mpid, isPrimaryMpid, id, side,
+        price, size);
+    }
+
+    void ModifyOrderSize(const std::string& id, Quantity size,
+        const boost::posix_time::ptime& timestamp) override {
+      get_override("modify_order_size")(id, size, timestamp);
+    }
+
+    void OffsetOrderSize(const std::string& id, Quantity delta,
+        const boost::posix_time::ptime& timestamp) override {
+      get_override("offset_order_size")(id, delta, timestamp);
+    }
+
+    void ModifyOrderPrice(const std::string& id, Money price,
+        const boost::posix_time::ptime& timestamp) override {
+      get_override("modify_order_price")(id, price, timestamp);
+    }
+
+    void DeleteOrder(const std::string& id,
+        const boost::posix_time::ptime& timestamp) override {
+      get_override("delete_order")(id, timestamp);
+    }
+
+    void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale) override {
+      get_override("publish_time_and_sale")(timeAndSale);
+    }
+
+    void Open() override {
+      get_override("open")();
+    }
+
+    void Close() override {
+      get_override("close")();
+    }
+  };
+
+  auto BuildFeedClient(CountryCode country, time_duration samplingTime,
+      VirtualServiceLocatorClient& serviceLocatorClient) {
+    auto marketDataService = FindMarketDataFeedService(country,
+      serviceLocatorClient);
+    auto addresses = FromString<vector<IpAddress>>(
+      get<string>(marketDataService->GetProperties().At("addresses")));
+    auto marketDataFeedClient = std::make_unique<FeedClient>(
+      Initialize(addresses, Ref(*GetSocketThreadPool())),
+      SessionAuthenticator<VirtualServiceLocatorClient>(
+      Ref(serviceLocatorClient)),
+      Initialize(samplingTime, Ref(*GetTimerThreadPool())),
+      Initialize(seconds(10), Ref(*GetTimerThreadPool())));
+    return MakeToPythonMarketDataFeedClient(
+      std::move(marketDataFeedClient)).release();
+  }
+
   auto BuildMarketDataServiceTestEnvironment(
       const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
       const std::shared_ptr<VirtualAdministrationClient>&
@@ -285,6 +369,13 @@ void Nexus::Python::ExportApplicationMarketDataClient() {
   class_<ToPythonMarketDataClient<Client>, bases<VirtualMarketDataClient>,
     boost::noncopyable>("ApplicationMarketDataClient", no_init)
     .def("__init__", make_constructor(&BuildClient));
+}
+
+void Nexus::Python::ExportApplicationMarketDataFeedClient() {
+  class_<ToPythonMarketDataFeedClient<FeedClient>,
+    bases<VirtualMarketDataFeedClient>, boost::noncopyable>(
+    "ApplicationMarketDataFeedClient", no_init)
+    .def("__init__", make_constructor(&BuildFeedClient));
 }
 
 void Nexus::Python::ExportHistoricalDataStore() {
@@ -397,6 +488,34 @@ void Nexus::Python::ExportMarketDataClient() {
   ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
 }
 
+void Nexus::Python::ExportMarketDataFeedClient() {
+  class_<FromPythonMarketDataFeedClient, boost::noncopyable>(
+    "MarketDataFeedClient", no_init)
+    .def("add", pure_virtual(&VirtualMarketDataFeedClient::Add))
+    .def("publish_order_imbalance",
+      pure_virtual(&VirtualMarketDataFeedClient::PublishOrderImbalance))
+    .def("publish_bbo_quote",
+      pure_virtual(&VirtualMarketDataFeedClient::PublishBboQuote))
+    .def("publish_market_quote",
+      pure_virtual(&VirtualMarketDataFeedClient::PublishMarketQuote))
+    .def("set_book_quote",
+      pure_virtual(&VirtualMarketDataFeedClient::SetBookQuote))
+    .def("add_order", pure_virtual(&VirtualMarketDataFeedClient::AddOrder))
+    .def("modify_order_size",
+      pure_virtual(&VirtualMarketDataFeedClient::ModifyOrderSize))
+    .def("offset_order_size",
+      pure_virtual(&VirtualMarketDataFeedClient::OffsetOrderSize))
+    .def("modify_order_price",
+      pure_virtual(&VirtualMarketDataFeedClient::ModifyOrderPrice))
+    .def("delete_order",
+      pure_virtual(&VirtualMarketDataFeedClient::DeleteOrder))
+    .def("publish_time_and_sale",
+      pure_virtual(&VirtualMarketDataFeedClient::PublishTimeAndSale))
+    .def("open", pure_virtual(&VirtualMarketDataFeedClient::Open))
+    .def("close", pure_virtual(&VirtualMarketDataFeedClient::Close));
+  ExportUniquePtr<VirtualMarketDataFeedClient>();
+}
+
 void Nexus::Python::ExportMarketDataService() {
   string nestedName = extract<string>(scope().attr("__name__") +
     ".market_data_service");
@@ -407,6 +526,8 @@ void Nexus::Python::ExportMarketDataService() {
   ExportHistoricalDataStore();
   ExportMarketDataClient();
   ExportApplicationMarketDataClient();
+  ExportMarketDataFeedClient();
+  ExportApplicationMarketDataFeedClient();
   ExportBasicQuery<MarketCode>("MarketWideData");
   ExportBasicQuery<Security>("SecurityMarketData");
   ExportSecuritySnapshot();
