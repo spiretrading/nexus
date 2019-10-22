@@ -1,7 +1,8 @@
 import argparse
+import datetime
 import sys
-
 import urllib.request
+
 import xlrd
 import yaml
 
@@ -42,7 +43,8 @@ def main():
   address = parse_ip_address(config['service_locator'])
   username = config['username']
   password = config['password']
-  service_locator_client = beam.service_locator.ServiceLocatorClient(address)
+  service_locator_client = beam.service_locator.ApplicationServiceLocatorClient(
+    address)
   service_locator_client.set_credentials(username, password)
   service_locator_client.open()
   feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
@@ -71,7 +73,10 @@ def main():
     code = int(sheet.row_values(i)[STOCK_COLUMN])
     security = nexus.parse_security('%s.HKEX' % code)
     name = sheet.row_values(i)[NAME_COLUMN]
-    print(security, name)
+    security_info = nexus.SecurityInfo()
+    security_info.security = security
+    security_info.name = name
+    feed_client.add(security_info)
 
 if __name__ == '__main__':
   main()
