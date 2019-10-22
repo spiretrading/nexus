@@ -1,0 +1,77 @@
+import argparse
+import sys
+
+import urllib.request
+import xlrd
+import yaml
+
+import beam
+import nexus
+
+URL = 'https://www.hkex.com.hk/eng/services/trading/securities/securitieslists/ListOfSecurities.xlsx'
+
+def report_yaml_error(error):
+  if hasattr(error, 'problem_mark'):
+    sys.stderr.write('Invalid YAML at line %s, column %s: %s\n' % \
+      (error.problem_mark.line, error.problem_mark.column, str(error.problem)))
+  else:
+    sys.stderr.write('Invalid YAML provided\n')
+
+def parse_ip_address(source):
+  separator = source.find(':')
+  if separator == -1:
+    return beam.network.IpAddress(source, 0)
+  return beam.network.IpAddress(source[0:separator],
+    int(source[separator + 1 :]))
+
+def main():
+  parser = argparse.ArgumentParser(
+    description='v1.0 Copyright (C) 2019 Eidolon Systems Ltd.')
+  parser.add_argument('-c', '--config', type=str, help='Configuration file',
+    default='config.yml')
+  args = parser.parse_args()
+  try:
+    stream = open(args.config, 'r').read()
+    config = yaml.load(stream, yaml.SafeLoader)
+  except IOError:
+    sys.stderr.write('%s not found\n' % args.config)
+    exit(1)
+  except yaml.YAMLError as e:
+    report_yaml_error(e)
+    exit(1)
+  address = parse_ip_address(config['service_locator'])
+  username = config['username']
+  password = config['password']
+  service_locator_client = beam.service_locator.ServiceLocatorClient(address)
+  service_locator_client.set_credentials(username, password)
+  service_locator_client.open()
+  feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
+    nexus.default_countries.HK, datetime.timedelta(seconds=1),
+    service_locator_client)
+  feed_client.open()
+  with urllib.request.urlopen(URL) as response, open('hkex.xlsx', 'wb') as \
+      destination:
+    destination.write(response.read())
+  book = xlrd.open_workbook('hkex.xlsx')
+  sheet = book.sheet_by_index(0)
+  STOCK_COLUMN = None
+  NAME_COLUMN = None
+  for c in range(0, sheet.ncols):
+    if sheet.row_values(2)[c] == 'Stock Code':
+      STOCK_COLUMN = c
+    elif sheet.row_values(2)[c] == 'Name of Securities':
+      NAME_COLUMN = c
+  if STOCK_COLUMN is None:
+    print('Stock code column not found.')
+    sys.exit(-1)
+  elif NAME_COLUMN is None:
+    print('Name column not found.')
+    sys.exit(-1)
+  for i in range(3, sheet.nrows):
+    code = int(sheet.row_values(i)[STOCK_COLUMN])
+    security = nexus.parse_security('%s.HKEX' % code)
+    name = sheet.row_values(i)[NAME_COLUMN]
+    print(security, name)
+
+if __name__ == '__main__':
+  main()
