@@ -2,9 +2,16 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 
+export enum RuleMode{
+  ACTIVE,
+  ACTIVE_PER_ACCOUNT,
+  ACTIVE_CONSOLODATED,
+  PASSIVE
+}
+
 interface Properties {
-  onChange?: () => void;
-  value?: string;
+  onChange?: (newRuleMode: RuleMode) => void;
+  value: RuleMode;
   readonly?: boolean;
   displaySize: DisplaySize;
 }
@@ -15,8 +22,8 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
     onChange: () => {}
   };
 
-  constructor() {
-    super(null);
+  constructor(props: Properties) {
+    super(props);
     this.onChange = this.onChange.bind(this);
   }
 
@@ -33,15 +40,15 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
           className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
           style={{...sizeStyle,
             ...RuleExecutionDropDown.STYLE.selectionBoxStyle}}>
-        <option value=''>{'Active'}</option>
-        <option value=''>{'Active Per Account'}</option>
-        <option value=''>{'Active Consolodated'}</option>
-        <option value=''>{'Passive'}</option>
+        <option value={RuleMode.ACTIVE}>{'Active'}</option>
+        <option value={RuleMode.ACTIVE_PER_ACCOUNT}>{'Active Per Account'}</option>
+        <option value={RuleMode.ACTIVE_CONSOLODATED}>{'Active Consolodated'}</option>
+        <option value={RuleMode.PASSIVE}>{'Passive'}</option>
       </select>);
   }
 
   public onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
-    this.props.onChange();
+    this.props.onChange(parseInt(event.target.value));
   }
 
   private static readonly STYLE = {
