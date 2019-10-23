@@ -5,10 +5,16 @@ import { DisplaySize } from '../../../display_size';
 interface Properties {
   onChange?: () => void;
   value?: string;
+  readonly?: boolean;
   displaySize: DisplaySize;
 }
 
 export class RuleExecutionDropDown extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    readonly: false,
+    onChange: () => {}
+  };
+
   constructor() {
     super(null);
     this.onChange = this.onChange.bind(this);
@@ -24,6 +30,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
     })();
     return (
       <select onChange={this.onChange} value={this.props.value}
+          className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
           style={{...sizeStyle,
             ...RuleExecutionDropDown.STYLE.selectionBoxStyle}}>
         <option value=''>{'Active'}</option>
@@ -34,6 +41,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
   }
 
   public onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+    this.props.onChange();
   }
 
   private static readonly STYLE = {
