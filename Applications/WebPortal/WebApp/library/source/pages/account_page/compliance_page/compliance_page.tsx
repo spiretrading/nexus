@@ -4,6 +4,8 @@ import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
 import { DisplaySize } from '../../../display_size';
 
 interface Properties {
+  
+  /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 }
 
@@ -11,6 +13,7 @@ interface State {
   ruleMode: RuleMode;
 }
 
+/* Displays the compliance page.*/
 export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);

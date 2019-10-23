@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 
-export enum RuleMode{
+export enum RuleMode {
   ACTIVE,
   ACTIVE_PER_ACCOUNT,
   ACTIVE_CONSOLODATED,
@@ -10,12 +10,21 @@ export enum RuleMode{
 }
 
 interface Properties {
+  
+  /** The event handler called when the selection changes. */
   onChange?: (newRuleMode: RuleMode) => void;
+
+  /** The currently selected rule mode. */
   value: RuleMode;
+  
+  /** Whether the selection box is read only. */
   readonly?: boolean;
+
+  /** Determines the size of the element. */
   displaySize: DisplaySize;
 }
 
+/* Displays a drop down box that allows the user to select a rule mode.*/
 export class RuleExecutionDropDown extends React.Component<Properties> {
   public static readonly defaultProps = {
     readonly: false,
