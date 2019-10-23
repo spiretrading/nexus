@@ -1,8 +1,14 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
+import { RuleExecutionDropDown } from './rule_execution_drop_down';
+import { DisplaySize } from '../../../display_size';
 
-export class CompliancePage extends React.Component<> {
+interface Properties {
+  displaySize: DisplaySize;
+}
+
+export class CompliancePage extends React.Component<Properties> {
   public render(): JSX.Element {
-    return <div/>;
+    return <RuleExecutionDropDown displaySize={this.props.displaySize}/>;
   }
 }
