@@ -158,6 +158,13 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     } else if(msg->wParam == SIZE_RESTORED) {
       setContentsMargins({});
     }
+  } else if(msg->message == WM_GETMINMAXINFO) {
+    auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    mmi->ptMaxTrackSize.x = maximumSize().width();
+    mmi->ptMaxTrackSize.y = maximumSize().height();
+    mmi->ptMinTrackSize.x = minimumSize().width();
+    mmi->ptMinTrackSize.y = minimumSize().height();
+    return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
 }
