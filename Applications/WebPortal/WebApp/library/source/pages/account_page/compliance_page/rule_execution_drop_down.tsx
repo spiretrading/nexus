@@ -17,9 +17,6 @@ interface Properties {
   /** The currently selected rule mode. */
   value: RuleMode;
   
-  /** Whether the selection box is read only. */
-  readonly?: boolean;
-
   /** Determines the size of the element. */
   displaySize: DisplaySize;
 }
@@ -27,7 +24,6 @@ interface Properties {
 /* Displays a drop down box that allows the user to select a rule mode.*/
 export class RuleExecutionDropDown extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 
