@@ -1,7 +1,7 @@
 import * as React from 'react';
-import * as Nexus from 'nexus';
-import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
 import { DisplaySize } from '../../../display_size';
+import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
+
 
 interface Properties {
   
