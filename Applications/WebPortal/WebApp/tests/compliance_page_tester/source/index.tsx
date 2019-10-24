@@ -22,12 +22,10 @@ class TestApp extends React.Component<Properties> {
 
   private static readonly STYLE = {
     wrapper: {
-      width: '100%',
-      height: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
+      marginTop: '200px',
+      marginBottom: '200px',
+      marginLeft: '10px',
+      marginRight: '10px'
     }
   };
 }
