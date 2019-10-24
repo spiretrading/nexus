@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
-import { DropDownButton} from '../../../components';
+import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
 
 interface Properties {
@@ -49,26 +49,36 @@ export class RuleRow extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const line = (() => {
+      if(this.state.isExpanded) {
+        return <HLine/>
+      } else {
+        return null;
+      }
+    })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
     return(
-      <div style={boxStyle}>
-        {filler}
-        <div style={{...RuleRow.STYLE.prefix}}>
-          <DropDownButton
-            onClick={this.onRuleOpen}
-            size={buttonSize}
-            isExpanded={this.state.isExpanded}/>
-          <div style={prefixPaddingStyle}/>
-          <div>{'Some Rule'}</div>
+      <div>
+        <div style={boxStyle}>
+          {filler}
+          <div style={{...RuleRow.STYLE.prefix}}>
+            <DropDownButton
+              onClick={this.onRuleOpen}
+              size={buttonSize}
+              isExpanded={this.state.isExpanded}/>
+            <div style={prefixPaddingStyle}/>
+            <div>{'Some Rule'}</div>
+          </div>
+          {filler}
+          <div style={RuleRow.STYLE.paddingLeft}>
+            <RuleExecutionDropDown
+              onChange={this.onRuleModeChange}
+              value={this.state.ruleMode}
+              displaySize={this.props.displaySize}/>
+          </div>
+          {filler}
         </div>
-        {filler}
-        <div style={RuleRow.STYLE.paddingLeft}>
-          <RuleExecutionDropDown
-            onChange={this.onRuleModeChange}
-            value={this.state.ruleMode}
-            displaySize={this.props.displaySize}/>
-        </div>
-        {filler}
+        {line}
       </div>);
   }
 
