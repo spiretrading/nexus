@@ -9,9 +9,12 @@
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
+
+  /**
+   * Stores the result of a single CanvasNode translation.
+   */
   class Translation {
     public:
-
       template<typename R, typename=std::enable_if_t<Aspen::is_reactor_v<R>>>
       Translation(R&& reactor);
 
@@ -24,9 +27,12 @@ namespace Spire {
       T Extract() const;
   };
 
+  template<typename R, typename>
+  Translation::Translation(R&& reactor) {}
+
   template<typename T>
   T Translation::Extract() const {
-    return std::declval<T>();
+    return *static_cast<const T*>(nullptr);
   }
 }
 
