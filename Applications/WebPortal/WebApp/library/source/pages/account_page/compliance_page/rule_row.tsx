@@ -35,11 +35,11 @@ export class RuleRow extends React.Component<Properties, State> {
     })();
     const boxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return RuleRow.STYLE.boxSmall;
+        return RuleRow.STYLE.headerSmall;
       } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return RuleRow.STYLE.boxMedium;
+        return RuleRow.STYLE.headerMedium;
       } else {
-        return RuleRow.STYLE.boxLarge;
+        return RuleRow.STYLE.headerLarge;
       }
     })();
     const filler = (() => {
@@ -91,7 +91,9 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    boxSmall: {
+    wrapper: {
+    },
+    headerSmall: {
       minWidth: '284px',
       maxWidth: '424px',
       width: '100%',
@@ -99,7 +101,7 @@ export class RuleRow extends React.Component<Properties, State> {
       flexDirection: 'column' as 'column',
       height: '84px'
     },
-    boxMedium: {
+    headerMedium: {
       width: '732px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -107,7 +109,7 @@ export class RuleRow extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center'
     },
-    boxLarge: {
+    headerLarge: {
       width: '1000px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
