@@ -24,10 +24,11 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    return <RuleExecutionDropDown 
-      displaySize={this.props.displaySize}
-      value={this.state.ruleMode}
-      onChange={this.onChange}/>;
+    return( 
+      <RuleExecutionDropDown 
+        displaySize={this.props.displaySize}
+        value={this.state.ruleMode}
+        onChange={this.onChange}/>);
   }
 
   private onChange(newMode: RuleMode) {
