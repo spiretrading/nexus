@@ -2,6 +2,7 @@ import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
+import { RuleParameters } from './rule_parameters';
 
 interface Properties {
   
@@ -79,6 +80,7 @@ export class RuleRow extends React.Component<Properties, State> {
           {filler}
         </div>
         {line}
+        <RuleParameters displaySize={this.props.displaySize}/>
       </div>);
   }
 
@@ -91,8 +93,6 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    wrapper: {
-    },
     headerSmall: {
       minWidth: '284px',
       maxWidth: '424px',
