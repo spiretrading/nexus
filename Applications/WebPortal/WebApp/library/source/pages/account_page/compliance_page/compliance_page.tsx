@@ -22,10 +22,42 @@ export class CompliancePage extends React.Component<Properties> {
 
   public render(): JSX.Element {
     return(
-      <div>
-        <RuleRow displaySize={this.props.displaySize}/>
+      <div style={CompliancePage.STYLE.wrapper}>
+        <div style={CompliancePage.STYLE.filler}/>
+        <div style={CompliancePage.STYLE.content}>
+          <RuleRow displaySize={this.props.displaySize}/>
+          <div style={CompliancePage.STYLE.newRuleRow}>
+            <div>{'+'}</div>
+            <div>Add New Rule</div>
+          </div>
+        </div>
+        <div style={CompliancePage.STYLE.filler}/>
       </div>);
   }
 
+  private static readonly STYLE = {
+    wrapper: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row'
+    },
+    filler: {
+      flexGrow: 1,
+      flexShrink: 1,
+    },
+    content: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      width: '732px'
+    },
+    newRuleRow: {
+      height: '20px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row'
 
+    }
+  }
 }
