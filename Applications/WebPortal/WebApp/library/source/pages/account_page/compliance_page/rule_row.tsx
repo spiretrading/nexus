@@ -79,8 +79,10 @@ export class RuleRow extends React.Component<Properties, State> {
           </div>
           {filler}
         </div>
-        {line}
-        <RuleParameters displaySize={this.props.displaySize}/>
+        <div>
+          {line}
+          <RuleParameters displaySize={this.props.displaySize}/>
+        </div>
       </div>);
   }
 
@@ -99,7 +101,8 @@ export class RuleRow extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
-      height: '84px'
+      height: '84px',
+      font: '400 16px Roboto',
     },
     headerMedium: {
       width: '732px',
@@ -107,7 +110,8 @@ export class RuleRow extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       height: '54px',
       justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      font: '400 14px Roboto',
     },
     headerLarge: {
       width: '1000px',

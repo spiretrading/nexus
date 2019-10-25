@@ -21,8 +21,10 @@ export class CompliancePage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    return( 
-      <RuleRow displaySize={this.props.displaySize}/>);
+    return(
+      <div>
+        <RuleRow displaySize={this.props.displaySize}/>
+      </div>);
   }
 
 

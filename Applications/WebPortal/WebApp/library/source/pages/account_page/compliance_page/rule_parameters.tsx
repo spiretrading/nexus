@@ -20,20 +20,34 @@ export class RuleParameters extends React.Component<Properties> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return RuleParameters.STYLE.rowSmall;
       } else {
-        return null;
+        return RuleParameters.STYLE.rowLarge;
+      }
+    })();
+    const headerStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return RuleParameters.STYLE.headerSmall;
+      } else {
+        return RuleParameters.STYLE.headerLarge;
       }
     })();
     const labelStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return RuleParameters.STYLE.label;
       } else {
+        return RuleParameters.STYLE.label;
+      }
+    })();
+    const leftPadding = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
+      } else {
+        return RuleParameters.STYLE.largeWrapper;
       }
     })();
     return (
-      <div>
+      <div style={leftPadding}>
         <div id={'topFiller'}/>
-        <div is={'Add some margins'}>Parameters</div>
+        <div style={headerStyle}>Parameters</div>
         <div id={'moreFiller'}/>
         <div style={rowStyle}>
           <div style={labelStyle}>Currency</div>
@@ -56,11 +70,14 @@ export class RuleParameters extends React.Component<Properties> {
             displaySize={this.props.displaySize}/>
             </div>
         </div>
-        <div id={'bottomFiller'}/>
+        <div style={RuleParameters.STYLE.bottomFiller}/>
       </div>);
   }
 
     private static readonly STYLE = {
+      largeWrapper: {
+        paddingLeft: '38px'
+      },
       rowSmall: {
         display: 'flex' as 'flex',
         flexDirection: 'row' as 'row',
@@ -68,15 +85,38 @@ export class RuleParameters extends React.Component<Properties> {
         maxWidth: '424px',
         width: '100%',
         height: '34px',
-        //justifyContent: 'space-between' as 'space-between',
+        font: '400 16px Roboto',
+        alignItems: 'center' as 'center'
+      },
+      rowLarge: {
+        display: 'flex' as 'flex',
+        flexDirection: 'row' as 'row',
+        width: '100%',
+        height: '34px',
+        font: '400 14px Roboto',
         alignItems: 'center' as 'center'
       },
       fillerBetweenRows : {
         height: '10px',
         width: '100%'
       },
+      bottomFiller: {
+        height: '30px'
+      },
       label: {
         width: '100px'
+      },
+      headerSmall: {
+        color: '#4B23A0',
+        font: '400 16px Roboto',
+        marginTop: '10px',
+        marginBottom: '18px'
+      },
+      headerLarge: {
+        color: '#4B23A0',
+        font: '400 14px Roboto',
+        marginTop: '10px',
+        marginBottom: '18px'
       }
     };
 }
