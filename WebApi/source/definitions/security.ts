@@ -3,6 +3,12 @@ import { CountryCode, MarketCode } from '.';
 /** Identifies a financial security. */
 export class Security {
 
+  /** Makes a value from a JSON object. */
+  public static fromJson(value: any): Security {
+    return new Security(value.symbol, MarketCode.fromJson(value.market),
+      CountryCode.fromJson(value.country));
+  }
+
   /** Constructs a Security.
    * @param symbol - The security's ticker symbol.
    * @param market - The security's market code.
@@ -27,6 +33,15 @@ export class Security {
   /** Returns the country of origin. */
   public get country(): CountryCode {
     return this._country;
+  }
+
+  /** Converts this object to JSON. */
+  public toJson(): any {
+    return {
+      symbol: this._symbol,
+      market: this._market.toJson(),
+      country: this._country.toJson()
+    };
   }
 
   private _symbol: string;
