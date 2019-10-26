@@ -5,12 +5,15 @@ using namespace Beam;
 using namespace Beam::Routines;
 using namespace Spire;
 
+ReactorMonitor::ReactorMonitor()
+  : m_reactor(m_producer) {}
+
 ReactorMonitor::~ReactorMonitor() {
   Close();
 }
 
 void ReactorMonitor::Add(Aspen::Box<void> reactor) {
-  m_producer.push(std::move(reactor));
+  m_producer->push(std::move(reactor));
 }
 
 void ReactorMonitor::Wait() {
@@ -61,6 +64,7 @@ void ReactorMonitor::RunLoop() {
       m_has_update = false;
     }
   }
+  Close();
 }
 
 void ReactorMonitor::OnUpdate() {

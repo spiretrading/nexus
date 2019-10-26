@@ -1,7 +1,6 @@
 #ifndef SPIRE_REACTOR_MONITOR_HPP
 #define SPIRE_REACTOR_MONITOR_HPP
 #include <mutex>
-#include <vector>
 #include <Aspen/Aspen.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -16,7 +15,7 @@ namespace Spire {
     public:
 
       /** Constructs a ReactorMonitor. */
-      ReactorMonitor() = default;
+      ReactorMonitor();
 
       ~ReactorMonitor();
 
@@ -44,8 +43,8 @@ namespace Spire {
       std::mutex m_mutex;
       Beam::Routines::RoutineHandler m_reactorLoop;
       bool m_has_update;
-      Aspen::Queue<Aspen::Box<void>> m_producer;
-      Aspen::Group<void> m_reactor;
+      Aspen::Shared<Aspen::Queue<Aspen::Box<void>>> m_producer;
+      Aspen::Group<Aspen::Shared<Aspen::Queue<Aspen::Box<void>>>> m_reactor;
       Beam::Threading::ConditionVariable m_updateCondition;
       Beam::IO::OpenState m_openState;
 
@@ -56,7 +55,7 @@ namespace Spire {
 
   template<typename F>
   void ReactorMonitor::Do(F&& f) {
-    Add(Aspen::lift(std::move(f));
+    Add(Aspen::lift(std::move(f)));
   }
 }
 
