@@ -1,3 +1,4 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';
@@ -8,6 +9,9 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The database of currencies */
+  currencyDatabase: Nexus.CurrencyDatabase;
 }
 
 /* Displays the compliance page.*/
@@ -16,8 +20,7 @@ export class CompliancePage extends React.Component<Properties> {
     super(props);
     this.state = {
       ruleMode: RuleMode.PASSIVE
-    };
-    
+    };  
   }
 
   public render(): JSX.Element {
