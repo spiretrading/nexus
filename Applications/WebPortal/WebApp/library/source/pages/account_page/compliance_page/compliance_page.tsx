@@ -9,9 +9,6 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
-
-  /** The database of currencies */
-  currencyDatabase: Nexus.CurrencyDatabase;
 }
 
 /* Displays the compliance page.*/
@@ -81,10 +78,10 @@ export class CompliancePage extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       font: '400 16px Roboto',
     },
-    newRuleTextLarge: {
+    newRuleText: {
       font: '400 14px Roboto',
       height: '20px',
       paddingLeft: '18px'
-    },
+    }
   }
 }
