@@ -54,11 +54,11 @@ export class RuleRow extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const line = (() => {
+    const headerTextStyle = (() => {
       if(this.state.isExpanded) {
-        return <HLine color={'#E6E6E6'}/>
+        return RuleRow.STYLE.openText;
       } else {
-        return null;
+        return RuleRow.STYLE.closedText;
       }
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
@@ -72,7 +72,7 @@ export class RuleRow extends React.Component<Properties, State> {
               size={buttonSize}
               isExpanded={this.state.isExpanded}/>
             <div style={prefixPaddingStyle}/>
-            <div>{'Some Rule'}</div>
+            <div style={headerTextStyle}>{'Some Rule'}</div>
           </div>
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
@@ -124,6 +124,14 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '100%'
+    },
+    closedText: {
+      font: '400 14px Roboto',
+      color: '#333333'
+    },
+    openText: {
+      font: '500 14px Roboto',
+      color: '#4B23A0'
     },
     headerSmall: {
       minWidth: '284px',

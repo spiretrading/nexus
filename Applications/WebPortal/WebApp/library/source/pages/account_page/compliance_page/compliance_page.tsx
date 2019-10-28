@@ -11,7 +11,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The database of currencies */
-  currencyDatabase: Nexus.CurrencyDatabase;
+  currencyDatabase?: Nexus.CurrencyDatabase;
 }
 
 /* Displays the compliance page.*/
