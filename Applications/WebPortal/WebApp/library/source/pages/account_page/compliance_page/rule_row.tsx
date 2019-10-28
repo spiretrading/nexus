@@ -43,7 +43,7 @@ export class RuleRow extends React.Component<Properties, State> {
         return RuleRow.STYLE.headerLarge;
       }
     })();
-    const filler = (() => {
+    const spacing = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return <div style={RuleRow.STYLE.mobilePadding}/>;
       } else {
@@ -59,9 +59,9 @@ export class RuleRow extends React.Component<Properties, State> {
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
     return(
-      <div>
+      <div style={RuleRow.STYLE.wrapper}>
         <div style={boxStyle}>
-          {filler}
+          {spacing}
           <div style={{...RuleRow.STYLE.prefix}}>
             <DropDownButton
               onClick={this.onRuleOpen}
@@ -70,19 +70,17 @@ export class RuleRow extends React.Component<Properties, State> {
             <div style={prefixPaddingStyle}/>
             <div>{'Some Rule'}</div>
           </div>
-          {filler}
+          {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
               onChange={this.onRuleModeChange}
               value={this.state.ruleMode}
               displaySize={this.props.displaySize}/>
           </div>
-          {filler}
+          {spacing}
         </div>
-        <div>
-          {line}
-          <RuleParameters displaySize={this.props.displaySize}/>
-        </div>
+        {line}
+        <RuleParameters displaySize={this.props.displaySize}/>
       </div>);
   }
 
@@ -95,6 +93,11 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
+    wrapper : {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      width: '100%'
+    },
     headerSmall: {
       minWidth: '284px',
       maxWidth: '424px',
@@ -109,8 +112,8 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       height: '54px',
-      justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center',
+      justifyContent: 'space-between' as 'space-between',
       font: '400 14px Roboto',
     },
     headerLarge: {
@@ -118,8 +121,8 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       height: '54px',
-      justifyContent: 'space-between' as 'space-between',
       alignItems: 'center' as 'center',
+      justifyContent: 'space-between' as 'space-between',
       font: '400 14px Roboto',
     },
     prefix: {
@@ -127,11 +130,13 @@ export class RuleRow extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row'
     },
     paddingLeft: {
-      paddingLeft: '38px'
+      paddingLeft: '38px',
+      height: '34px',
+      boxSizing: 'border-box' as 'border-box'
     },
     prefixPadding: {
       height: '20px',
-      width: '18px'
+      width: '18px',
     },
     mobilePadding: {
       height: '10px'

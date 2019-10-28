@@ -21,11 +21,19 @@ export class CompliancePage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const newRuleTextStyle = CompliancePage.STYLE.newRuleTextLarge;
+    const content = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return CompliancePage.STYLE.smallContent;
+      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+        return CompliancePage.STYLE.mediumContent;
+      } else {
+        return CompliancePage.STYLE.largeContent;
+      }
+    })();
     return(
       <div style={CompliancePage.STYLE.wrapper}>
         <div style={CompliancePage.STYLE.filler}/>
-        <div style={CompliancePage.STYLE.content}>
+        <div style={content}>
           <RuleRow displaySize={this.props.displaySize}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>
@@ -45,10 +53,22 @@ export class CompliancePage extends React.Component<Properties> {
       flexGrow: 1,
       flexShrink: 1,
     },
-    content: {
+    smallContent: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      minWidth: '284px',
+      maxWidth: '424px',
+      width: '100%',
+    },
+    mediumContent: {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '732px'
+    },
+    largeContent: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      width: '1000px'
     },
     newRuleRow: {
       height: '20px',
