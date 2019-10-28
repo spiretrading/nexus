@@ -35,6 +35,8 @@ export class CompliancePage extends React.Component<Properties> {
         <div style={CompliancePage.STYLE.filler}/>
         <div style={content}>
           <RuleRow displaySize={this.props.displaySize}/>
+          <RuleRow displaySize={this.props.displaySize}/>
+          <RuleRow displaySize={this.props.displaySize}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>
       </div>);
