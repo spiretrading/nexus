@@ -14,10 +14,9 @@ class TestApp extends React.Component<Properties> {
 
   public render(): JSX.Element {
     return(
-    <div style={TestApp.STYLE.wrapper}>
-      <WebPortal.CompliancePage displaySize={this.props.displaySize}/>
-    </div> 
-    );
+      <div style={TestApp.STYLE.wrapper}>
+        <WebPortal.CompliancePage displaySize={this.props.displaySize}/>
+      </div> );
   }
 
   private static readonly STYLE = {
