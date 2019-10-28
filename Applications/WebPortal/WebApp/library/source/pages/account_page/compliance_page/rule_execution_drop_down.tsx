@@ -59,7 +59,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
   private static readonly STYLE = {
     boxSmall: {
       height: '34px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
       width: '100%',
       minWidth: '246px',
       maxWidth: '386px'

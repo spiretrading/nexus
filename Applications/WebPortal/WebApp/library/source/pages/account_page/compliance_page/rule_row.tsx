@@ -102,7 +102,7 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       height: '84px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
     },
     headerMedium: {
       width: '732px',
@@ -119,7 +119,8 @@ export class RuleRow extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       height: '54px',
       justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      font: '400 14px Roboto',
     },
     prefix: {
       display: 'flex' as 'flex',
