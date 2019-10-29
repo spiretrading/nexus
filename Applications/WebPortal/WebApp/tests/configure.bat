@@ -11,6 +11,7 @@ IF NOT EXIST build.bat (
 )
 CALL:configure account_directory_page_tester %*
 CALL:configure account_page_tester %*
+CALL:configure compliance_page_tester %*
 CALL:configure create_account_page_tester %*
 CALL:configure dashboard_page_tester %*
 CALL:configure entitlements_page_tester %*
