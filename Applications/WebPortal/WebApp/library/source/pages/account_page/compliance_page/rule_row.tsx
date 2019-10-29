@@ -4,12 +4,13 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
-import { RuleParameters } from './rule_parameters';
+import { RuleParameters } from './parameter_list';
 
 interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+  //on update
 }
 
 interface State {

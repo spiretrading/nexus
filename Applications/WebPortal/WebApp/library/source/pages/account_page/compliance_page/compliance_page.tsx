@@ -1,4 +1,3 @@
-import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';
@@ -9,9 +8,6 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
-
-  /** The database of currencies */
-  currencyDatabase?: Nexus.CurrencyDatabase;
 }
 
 /* Displays the compliance page.*/
