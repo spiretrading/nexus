@@ -109,13 +109,13 @@ export class RuleParameters extends React.Component<Properties> {
       },
       headerSmall: {
         color: '#4B23A0',
-        font: '400 14px Roboto',
+        font: '500 14px Roboto',
         marginTop: '10px',
         marginBottom: '18px'
       },
       headerLarge: {
         color: '#4B23A0',
-        font: '400 14px Roboto',
+        font: '500 14px Roboto',
         marginTop: '10px',
         marginBottom: '18px'
       }

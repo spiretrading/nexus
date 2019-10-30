@@ -1,4 +1,3 @@
-import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';

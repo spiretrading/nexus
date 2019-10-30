@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 
+/* The various modes a rule can be in. */
 export enum RuleMode {
   ACTIVE,
   ACTIVE_PER_ACCOUNT,

@@ -4,12 +4,13 @@ import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
-import { RuleParameters } from './rule_parameters';
+import { RuleParameters } from './parameter_list';
 
 interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+  //on update
 }
 
 interface State {
@@ -54,11 +55,11 @@ export class RuleRow extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const line = (() => {
+    const headerTextStyle = (() => {
       if(this.state.isExpanded) {
-        return <HLine color={'#E6E6E6'}/>
+        return RuleRow.STYLE.openText;
       } else {
-        return null;
+        return RuleRow.STYLE.closedText;
       }
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
@@ -72,7 +73,7 @@ export class RuleRow extends React.Component<Properties, State> {
               size={buttonSize}
               isExpanded={this.state.isExpanded}/>
             <div style={prefixPaddingStyle}/>
-            <div>{'Some Rule'}</div>
+            <div style={headerTextStyle}>{'Some Rule'}</div>
           </div>
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
@@ -125,6 +126,14 @@ export class RuleRow extends React.Component<Properties, State> {
       flexDirection: 'column' as 'column',
       width: '100%'
     },
+    closedText: {
+      font: '400 14px Roboto',
+      color: '#333333'
+    },
+    openText: {
+      font: '500 14px Roboto',
+      color: '#4B23A0'
+    },
     headerSmall: {
       minWidth: '284px',
       maxWidth: '424px',
@@ -154,7 +163,8 @@ export class RuleRow extends React.Component<Properties, State> {
     },
     prefix: {
       display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center'
     },
     paddingLeft: {
       paddingLeft: '38px',
