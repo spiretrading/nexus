@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';
 import { RuleRow } from './rule_row';
@@ -8,6 +9,7 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+  complianceList?: Nexus.ComplianceRuleEntry[];
 }
 
 /* Displays the compliance page.*/
