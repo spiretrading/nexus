@@ -14,10 +14,20 @@ export class NewRuleButton extends React.Component<Properties>{
   };
 
   public render(): JSX.Element {
-    return (<div style={NewRuleButton.STYLE.newRuleRow}>
-            <img src='resources/account_page/compliance_page/add.svg'
-              height={'20px'}
-              width={'20px'}/>
+    const imageSize = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return '20px';
+      } else {
+        return '16px';
+      }
+    })();
+    return (
+      <div style={NewRuleButton.STYLE.newRuleRow}>
+            <div style={NewRuleButton.STYLE.imageWrapper}>
+              <img src='resources/account_page/compliance_page/add.svg'
+                height={imageSize}
+                width={imageSize}/>
+            </div>
             <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
     </div>);
   }
@@ -27,12 +37,20 @@ export class NewRuleButton extends React.Component<Properties>{
       height: '20px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      font: '400 16px Roboto',
+      alignItems: 'center' as 'center'
     },
     newRuleText: {
       font: '400 14px Roboto',
-      height: '20px',
       paddingLeft: '18px'
+    },
+    imageWrapper: {
+      position: 'relative' as 'relative',
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      width: '20px',
+      height: '20px',
+      cursor: 'pointer'
     }
   }
 }

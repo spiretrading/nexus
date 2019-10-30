@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';
 import { RuleRow } from './rule_row';
+import { NewRuleButton } from '.';
 
 
 interface Properties {
@@ -37,6 +38,7 @@ export class CompliancePage extends React.Component<Properties> {
           <RuleRow displaySize={this.props.displaySize}/>
           <RuleRow displaySize={this.props.displaySize}/>
           <RuleRow displaySize={this.props.displaySize}/>
+          <NewRuleButton displaySize={this.props.displaySize} />
         </div>
         <div style={CompliancePage.STYLE.filler}/>
       </div>);
@@ -83,5 +85,5 @@ export class CompliancePage extends React.Component<Properties> {
       height: '20px',
       paddingLeft: '18px'
     }
-  }
+  };
 }
