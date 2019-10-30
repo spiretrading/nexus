@@ -15,18 +15,7 @@ class TestApp extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const list = (() => {
-      const thing = [] as Nexus.ComplianceRuleEntry[];
-      thing.push(
-        new ComplianceRuleEntry(
-          1,
-          Beam.DirectoryEntry.makeDirectory(0, 'something'),
-          Nexus.ComplianceRuleEntry.State.NONE,
-          new Nexus.ComplianceRuleSchema()
-        );
-      );
-
-    })();
+   
     return(
       <div style={TestApp.STYLE.wrapper}>
         <WebPortal.CompliancePage displaySize={this.props.displaySize}/>

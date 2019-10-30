@@ -39,7 +39,9 @@ export class CompliancePage extends React.Component<Properties> {
           <RuleRow displaySize={this.props.displaySize}/>
           <RuleRow displaySize={this.props.displaySize}/>
           <RuleRow displaySize={this.props.displaySize}/>
+          <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize} />
+          <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>
       </div>);
@@ -57,6 +59,14 @@ export class CompliancePage extends React.Component<Properties> {
     filler: {
       flexGrow: 1,
       flexShrink: 1,
+    },
+    paddingMedium: {
+      width: '100%',
+      height: '20px'
+    },
+    paddingLarge: {
+      width: '100%',
+      height: '30px'
     },
     smallContent: {
       display: 'flex' as 'flex',
