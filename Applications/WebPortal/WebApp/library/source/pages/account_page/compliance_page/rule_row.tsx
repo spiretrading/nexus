@@ -163,7 +163,8 @@ export class RuleRow extends React.Component<Properties, State> {
     },
     prefix: {
       display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center'
     },
     paddingLeft: {
       paddingLeft: '38px',
