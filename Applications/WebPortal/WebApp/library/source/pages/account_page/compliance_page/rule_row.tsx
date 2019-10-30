@@ -1,16 +1,18 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
-import { RuleParameters } from './parameter_list';
+import { ParametersList } from './parameter_list';
 
 interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
-  //on update
+  complianceRule?: Nexus.ComplianceRuleEntry;
+  onChange?:() => void;
 }
 
 interface State {
@@ -90,7 +92,9 @@ export class RuleRow extends React.Component<Properties, State> {
               <div ref={(divElement) => this.ruleParameters = divElement}
                   className={css((this.state.animationStyle as any)[state])}>
                 <HLine color='#E6E6E6'/>
-                <RuleParameters displaySize={this.props.displaySize}/>
+                <ParametersList 
+                  displaySize={this.props.displaySize}
+                  schema={this.props.complianceRule.schema}/>
               </div>)}
           </Transition>
 

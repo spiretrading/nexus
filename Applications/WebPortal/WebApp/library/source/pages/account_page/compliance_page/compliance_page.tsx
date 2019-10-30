@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
 import { RuleMode } from './rule_execution_drop_down';
 import { RuleRow } from './rule_row';
+import {RulesList} from './rules_list';
 import { NewRuleButton } from '.';
 
 
@@ -11,6 +12,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
   complianceList?: Nexus.ComplianceRuleEntry[];
+  currencyDatabase?: Nexus.CurrencyDatabase;
 }
 
 /* Displays the compliance page.*/
@@ -36,9 +38,8 @@ export class CompliancePage extends React.Component<Properties> {
       <div style={CompliancePage.STYLE.wrapper}>
         <div style={CompliancePage.STYLE.filler}/>
         <div style={content}>
-          <RuleRow displaySize={this.props.displaySize}/>
-          <RuleRow displaySize={this.props.displaySize}/>
-          <RuleRow displaySize={this.props.displaySize}/>
+          <RulesList displaySize={this.props.displaySize}
+            complianceList={this.props.complianceList}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize} />
           <div style={CompliancePage.STYLE.paddingLarge}/>

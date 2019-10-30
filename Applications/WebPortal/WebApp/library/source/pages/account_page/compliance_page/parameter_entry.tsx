@@ -6,9 +6,8 @@ import {CurrencySelectionBox, MoneyInputBox, TextInputField} from '../../../comp
 
 interface Properties {
   displaySize: DisplaySize;
-  name: string,
-  type: Nexus.ComplianceValue,
-  value: any,
+  parameter?: Nexus.ComplianceParameter;
+  currencyDatabase?: Nexus.CurrencyDatabase;
   onChange?: (newValue: any) => void
 }
 
@@ -19,11 +18,13 @@ export class ParameterEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const input = (() => {
-      switch(this.props.type.type) {
+      switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <div/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return <div/>
+          return (
+            <CurrencySelectionBox 
+              currencyDatabase={this.props.currencyDatabase}/>);
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <div/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
@@ -31,20 +32,26 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.DURATION:
           return <div/>;
         case Nexus.ComplianceValue.Type.MONEY:
-          return <MoneyInputBox value={this.props.value}/>;
+          return <MoneyInputBox value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.SECURITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.LIST:
-          return <div/>;
+          const list = [] as any[];
+          for(const thing of this.props.parameter.value.value) {
+            list.push(
+              <ParameterEntry 
+                displaySize={this.props.displaySize}
+                parameter={thing}/>);
+          }
         case Nexus.ComplianceValue.Type.NONE:
           return <div/>
       }
     })();
     return (
       <div>
-        <div>{this.props.name}</div>
+        <div>{'Label'}</div>
         {input}
       </div>
     );

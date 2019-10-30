@@ -3,14 +3,17 @@ import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, CurrencySelectionBox, MoneyInputBox, TextInputField}
   from '../../../components';
+import {ParameterEntry} from './parameter_entry';
+import { ComplianceRuleEntry, ComplianceRuleSchema } from 'nexus';
 
 interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+  schema: ComplianceRuleSchema;
 }
 
-export class RuleParameters extends React.Component<Properties> {
+export class ParametersList extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
   }
@@ -18,32 +21,36 @@ export class RuleParameters extends React.Component<Properties> {
   public render(): JSX.Element {
     const rowStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return RuleParameters.STYLE.rowSmall;
+        return ParametersList.STYLE.rowSmall;
       } else {
-        return RuleParameters.STYLE.rowLarge;
+        return ParametersList.STYLE.rowLarge;
       }
     })();
     const headerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return RuleParameters.STYLE.headerSmall;
+        return ParametersList.STYLE.headerSmall;
       } else {
-        return RuleParameters.STYLE.headerLarge;
+        return ParametersList.STYLE.headerLarge;
       }
     })();
     const labelStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return RuleParameters.STYLE.label;
+        return ParametersList.STYLE.label;
       } else {
-        return RuleParameters.STYLE.label;
+        return ParametersList.STYLE.label;
       }
     })();
     const leftPadding = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
-        return RuleParameters.STYLE.largeWrapper;
+        return ParametersList.STYLE.largeWrapper;
       }
     })();
+    const thing = [] as any[];
+    for(const rule of this.props.schema.parameters) {
+      thing.push(<ParameterEntry displaySize={this.props.displaySize}/>);
+    };
     return (
       <div style={leftPadding}>
         <div id={'topFiller'}/>
@@ -56,13 +63,13 @@ export class RuleParameters extends React.Component<Properties> {
             currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
           </div>
         </div>
-        <div style={RuleParameters.STYLE.fillerBetweenRows}/>
+        <div style={ParametersList.STYLE.fillerBetweenRows}/>
         <div style={rowStyle}>
           <div style={labelStyle}>Buying Power</div>
           <div style={{flexGrow: 1}}><MoneyInputBox/>
           </div>
         </div>
-        <div style={RuleParameters.STYLE.fillerBetweenRows}/>
+        <div style={ParametersList.STYLE.fillerBetweenRows}/>
         <div style={rowStyle}>
           <div style={labelStyle}>Symbols</div>
           <div style={{flexGrow: 1}}>
@@ -70,7 +77,7 @@ export class RuleParameters extends React.Component<Properties> {
             displaySize={this.props.displaySize}/>
             </div>
         </div>
-        <div style={RuleParameters.STYLE.bottomFiller}/>
+        <div style={ParametersList.STYLE.bottomFiller}/>
       </div>);
   }
 

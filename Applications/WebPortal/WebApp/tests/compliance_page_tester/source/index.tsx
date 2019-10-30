@@ -1,5 +1,4 @@
 import * as Beam from 'beam';
-import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -15,7 +14,18 @@ class TestApp extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-   
+    const complianceList = [] as Nexus.ComplianceRuleEntry[];
+    const sdir = Beam.DirectoryEntry.makeDirectory(34, 'Directory');
+    const someEntry = new Nexus.ComplianceRuleEntry(
+      124,
+      sdir,
+      Nexus.ComplianceRuleEntry.State.PASSIVE,
+      new Nexus.ComplianceRuleSchema(
+        'Some Rule',
+        [new Nexus.ComplianceParameter('Money', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.MONEY, 100))]
+      )
+    );
+    complianceList.push();
     return(
       <div style={TestApp.STYLE.wrapper}>
         <WebPortal.CompliancePage displaySize={this.props.displaySize}/>
