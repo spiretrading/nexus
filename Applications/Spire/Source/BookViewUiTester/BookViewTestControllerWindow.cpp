@@ -14,7 +14,7 @@ BookViewTestControllerWindow::BookViewTestControllerWindow(
       m_timer_thread_pool(&timer_thread_pool) {
   setFixedSize(scale(250, 300));
   m_window->installEventFilter(this);
-  m_security_change_connection = m_window->connect_security_change_signal(
+  m_window->connect_security_change_signal(
     [=] (const auto& s) { on_security_changed(s); });
   auto layout = new QGridLayout(this);
   auto loading_time_label = new QLabel("Loading Time (ms):", this);
