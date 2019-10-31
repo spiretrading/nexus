@@ -25,7 +25,7 @@ void BookViewController::open() {
   }
   m_window = std::make_unique<BookViewWindow>(BookViewProperties(),
     Ref(*m_security_input_model));
-  m_window->connect_security_change_signal(
+  m_security_change_connection; = m_window->connect_security_change_signal(
     [=] (const auto& security) { on_change_security(security); });
   // TODO
   //m_window->connect_closed_signal([=] { on_closed(); });
