@@ -45,6 +45,7 @@ namespace Spire {
       SecurityInputModel* m_security_input_model;
       Nexus::VirtualServiceClients* m_service_clients;
       std::unique_ptr<BookViewWindow> m_window;
+      boost::signals2::scoped_connection m_security_change_connection;
 
       void on_change_security(const Nexus::Security& security);
       void on_closed();

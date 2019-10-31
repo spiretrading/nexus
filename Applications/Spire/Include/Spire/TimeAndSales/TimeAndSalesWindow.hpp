@@ -55,6 +55,7 @@ namespace Spire {
     private:
       TimeAndSalesProperties m_properties;
       boost::optional<TimeAndSalesWindowModel> m_model;
+      boost::signals2::scoped_connection m_volume_connection;
       SecurityWidget* m_security_widget;
       QWidget* m_body;
       TimeAndSalesTableView* m_table;
