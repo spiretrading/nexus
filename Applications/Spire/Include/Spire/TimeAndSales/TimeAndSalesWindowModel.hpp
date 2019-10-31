@@ -61,6 +61,7 @@ namespace Spire {
       mutable BeginLoadingSignal m_begin_loading_signal;
       mutable EndLoadingSignal m_end_loading_signal;
       std::shared_ptr<TimeAndSalesModel> m_model;
+      boost::signals2::scoped_connection m_time_and_sale_connection;
       TimeAndSalesProperties m_properties;
       std::vector<TimeAndSalesModel::Entry> m_entries;
       bool m_is_loading;

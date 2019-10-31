@@ -110,8 +110,10 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->setStretchFactor(button_layout, 20);
   layout->addStretch(8);
   Window::layout()->addWidget(body);
-  m_model->connect_entry_added_signal([=] (auto& e) {entry_added(e);});
-  m_model->connect_entry_removed_signal([=] (auto e) {entry_removed(e);});
+  m_entry_added_connection = m_model->connect_entry_added_signal(
+    [=] (auto& e) {entry_added(e);});
+  m_entry_removed_connection = m_model->connect_entry_removed_signal(
+    [=] (auto e) {entry_removed(e);});
 }
 
 connection ToolbarWindow::connect_open_signal(

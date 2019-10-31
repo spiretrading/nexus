@@ -44,6 +44,8 @@ namespace Spire {
       QWidget* m_header_padding;
       QTableView* m_table;
       TimeAndSalesWindowModel* m_model;
+      boost::signals2::scoped_connection m_model_begin_loading_connection;
+      boost::signals2::scoped_connection m_model_end_loading_connection;
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
       std::unique_ptr<SnapshotLoadingWidget> m_loading_widget;

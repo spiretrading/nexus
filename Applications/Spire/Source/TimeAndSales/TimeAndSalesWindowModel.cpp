@@ -21,7 +21,7 @@ TimeAndSalesWindowModel::TimeAndSalesWindowModel(
       m_is_loading(false),
       m_is_fully_loaded(false) {
   set_properties(properties);
-  m_model.get()->connect_time_and_sale_signal(
+  m_time_and_sale_connection = m_model.get()->connect_time_and_sale_signal(
     [=] (auto e) { update_data(e); });
   load_snapshot(Beam::Queries::Sequence::Present());
 }
