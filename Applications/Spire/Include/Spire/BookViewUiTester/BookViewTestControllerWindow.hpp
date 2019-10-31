@@ -24,6 +24,7 @@ namespace Spire {
     private:
       BookViewWindow* m_window;
       std::shared_ptr<RandomBookViewModel> m_model;
+      boost::signals2::scoped_connection m_security_change_connection;
       Beam::Threading::TimerThreadPool* m_timer_thread_pool;
       QSpinBox* m_load_time_spin_box;
       QSpinBox* m_model_update_period_spin_box;
