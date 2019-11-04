@@ -11,6 +11,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
   schema: ComplianceRuleSchema;
+  currencyDatabase: Nexus.CurrencyDatabase;
 }
 
 export class ParametersList extends React.Component<Properties> {
@@ -49,12 +50,13 @@ export class ParametersList extends React.Component<Properties> {
     })();
     const thing = [] as any[];
     for(const rule of this.props.schema.parameters) {
+      if(this.props.schema.parameters.indexOf(rule) !== 0) {
+        thing.push(<div style={ParametersList.STYLE.fillerBetweenRows}/>);
+      }
       thing.push(<ParameterEntry 
+      currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
         parameter={rule}/>);
-      if(true) {
-        <div style={ParametersList.STYLE.fillerBetweenRows}/>
-      }
     };
     return (
       <div style={leftPadding}>

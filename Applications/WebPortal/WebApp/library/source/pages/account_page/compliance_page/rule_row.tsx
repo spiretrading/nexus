@@ -12,6 +12,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
   complianceRule?: Nexus.ComplianceRuleEntry;
+  currencyDatabase: Nexus.CurrencyDatabase;
   onChange?:() => void;
 }
 
@@ -75,7 +76,9 @@ export class RuleRow extends React.Component<Properties, State> {
               size={buttonSize}
               isExpanded={this.state.isExpanded}/>
             <div style={prefixPaddingStyle}/>
-            <div style={headerTextStyle}>{'Some Rule'}</div>
+            <div style={headerTextStyle}>
+              {this.props.complianceRule.schema.name}
+            </div>
           </div>
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
@@ -94,6 +97,7 @@ export class RuleRow extends React.Component<Properties, State> {
                 <HLine color='#E6E6E6'/>
                 <ParametersList 
                   displaySize={this.props.displaySize}
+                  currencyDatabase={this.props.currencyDatabase}
                   schema={this.props.complianceRule.schema}/>
               </div>)}
           </Transition>

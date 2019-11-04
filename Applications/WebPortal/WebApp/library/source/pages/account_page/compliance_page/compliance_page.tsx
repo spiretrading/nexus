@@ -43,8 +43,11 @@ export class CompliancePage extends React.Component<Properties, State> {
       if(this.state.complianceList === []) {
         return null;
       } else {
-        return (<RulesList displaySize={this.props.displaySize}
-          complianceList={this.state.complianceList}/>);
+        return (
+          <RulesList 
+            displaySize={this.props.displaySize}
+            currencyDatabase={this.props.currencyDatabase}
+            complianceList={this.state.complianceList}/>);
       }
     })();
     return(
