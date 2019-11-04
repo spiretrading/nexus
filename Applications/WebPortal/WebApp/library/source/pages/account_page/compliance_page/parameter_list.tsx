@@ -4,7 +4,7 @@ import { DisplaySize } from '../../../display_size';
 import { DropDownButton, CurrencySelectionBox, MoneyInputBox, TextInputField}
   from '../../../components';
 import {ParameterEntry} from './parameter_entry';
-import { ComplianceRuleEntry, ComplianceRuleSchema } from 'nexus';
+import { ComplianceRuleEntry, ComplianceRuleSchema, RiskClient } from 'nexus';
 
 interface Properties {
   
@@ -49,34 +49,19 @@ export class ParametersList extends React.Component<Properties> {
     })();
     const thing = [] as any[];
     for(const rule of this.props.schema.parameters) {
-      thing.push(<ParameterEntry displaySize={this.props.displaySize}/>);
+      thing.push(<ParameterEntry 
+        displaySize={this.props.displaySize}
+        parameter={rule}/>);
+      if(true) {
+        <div style={ParametersList.STYLE.fillerBetweenRows}/>
+      }
     };
     return (
       <div style={leftPadding}>
         <div id={'topFiller'}/>
         <div style={headerStyle}>Parameters</div>
         <div id={'moreFiller'}/>
-        <div style={rowStyle}>
-          <div style={labelStyle}>Currency</div>
-          <div style={{flexGrow: 1}}>
-          <CurrencySelectionBox
-            currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
-          </div>
-        </div>
-        <div style={ParametersList.STYLE.fillerBetweenRows}/>
-        <div style={rowStyle}>
-          <div style={labelStyle}>Buying Power</div>
-          <div style={{flexGrow: 1}}><MoneyInputBox/>
-          </div>
-        </div>
-        <div style={ParametersList.STYLE.fillerBetweenRows}/>
-        <div style={rowStyle}>
-          <div style={labelStyle}>Symbols</div>
-          <div style={{flexGrow: 1}}>
-          <TextInputField
-            displaySize={this.props.displaySize}/>
-            </div>
-        </div>
+        {thing}
         <div style={ParametersList.STYLE.bottomFiller}/>
       </div>);
   }

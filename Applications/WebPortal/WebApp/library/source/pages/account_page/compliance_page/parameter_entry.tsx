@@ -2,14 +2,16 @@ import * as React from 'react';
 import * as Nexus from 'nexus';
 import * as Beam from 'beam';
 import { DisplaySize } from '../../../display_size';
-import {CurrencySelectionBox, MoneyInputBox, TextInputField} from '../../../components';
+import {CurrencySelectionBox, MoneyInputBox, TextInputField, IntegerInputBox} from '../../../components';
 
 interface Properties {
   displaySize: DisplaySize;
   parameter?: Nexus.ComplianceParameter;
   currencyDatabase?: Nexus.CurrencyDatabase;
-  onChange?: (newValue: any) => void
+  onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
+
+
 
 export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
@@ -17,6 +19,34 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+     const rowStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ParameterEntry.STYLE.rowSmall;
+      } else {
+        return ParameterEntry.STYLE.rowLarge;
+      }
+    })();
+    const headerStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ParameterEntry.STYLE.headerSmall;
+      } else {
+        return ParameterEntry.STYLE.headerLarge;
+      }
+    })();
+    const labelStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ParameterEntry.STYLE.label;
+      } else {
+        return ParameterEntry.STYLE.label;
+      }
+    })();
+    const leftPadding = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return null;
+      } else {
+        return ParameterEntry.STYLE.largeWrapper;
+      }
+    })();
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
@@ -34,7 +64,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
-          return <div/>;
+          return <IntegerInputBox/>;
         case Nexus.ComplianceValue.Type.SECURITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.LIST:
@@ -50,11 +80,63 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     })();
     return (
-      <div>
-        <div>{'Label'}</div>
+      <div style={rowStyle}>
+        <div style={labelStyle}>{this.props.parameter.name}</div>
+        <div style={{flexGrow: 1}}>
         {input}
-      </div>
-    );
+        </div>
+      </div>);
   }
+
+  private onChange() {
+  
+  }
+
+    private static readonly STYLE = {
+      largeWrapper: {
+        paddingLeft: '38px'
+      },
+      rowSmall: {
+        display: 'flex' as 'flex',
+        flexDirection: 'row' as 'row',
+        minWidth: '284px',
+        maxWidth: '424px',
+        width: '100%',
+        height: '34px',
+        font: '400 16px Roboto',
+        alignItems: 'center' as 'center'
+      },
+      rowLarge: {
+        display: 'flex' as 'flex',
+        flexDirection: 'row' as 'row',
+        width: '100%',
+        height: '34px',
+        font: '400 14px Roboto',
+        alignItems: 'center' as 'center'
+      },
+      fillerBetweenRows : {
+        height: '10px',
+        width: '100%'
+      },
+      bottomFiller: {
+        height: '30px'
+      },
+      label: {
+        width: '100px',
+        font: '400 14px Roboto',
+      },
+      headerSmall: {
+        color: '#4B23A0',
+        font: '500 14px Roboto',
+        marginTop: '10px',
+        marginBottom: '18px'
+      },
+      headerLarge: {
+        color: '#4B23A0',
+        font: '500 14px Roboto',
+        marginTop: '10px',
+        marginBottom: '18px'
+      }
+    };
 }
 
