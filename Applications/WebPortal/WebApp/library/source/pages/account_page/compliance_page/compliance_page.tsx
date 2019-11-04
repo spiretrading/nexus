@@ -13,6 +13,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
   currencyDatabase?: Nexus.CurrencyDatabase;
+  complianceList: Nexus.ComplianceRuleEntry[];
 }
 
 interface State {
@@ -24,28 +25,9 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      complianceList: [] as Nexus.ComplianceRuleEntry[]
+      complianceList: this.props.complianceList.slice()
     };
   }
-
-  public componentDidMount() {
-    const fake = Beam.DirectoryEntry.makeDirectory(124, 'Directory');
-    const someEntry = new Nexus.ComplianceRuleEntry(
-      124,
-      fake,
-      Nexus.ComplianceRuleEntry.State.PASSIVE,
-      new Nexus.ComplianceRuleSchema(
-        'Some Rule',
-        [
-        new Nexus.ComplianceParameter('Money', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.MONEY, 100)),
-        new Nexus.ComplianceParameter('String', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.STRING, 100))
-        ]
-      )
-    );
-    this.state.complianceList.push(someEntry);
-    this.setState({complianceList: this.state.complianceList});  
-  }
-
 
   public render(): JSX.Element {
     const content = (() => {

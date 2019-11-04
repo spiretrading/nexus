@@ -14,9 +14,25 @@ class TestApp extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const list  = [] as Nexus.ComplianceRuleEntry[];
+    const fake = Beam.DirectoryEntry.makeDirectory(124, 'Directory');
+    const someEntry = new Nexus.ComplianceRuleEntry(
+      124,
+      fake,
+      Nexus.ComplianceRuleEntry.State.PASSIVE,
+      new Nexus.ComplianceRuleSchema(
+        'Some Rule',
+        [
+        new Nexus.ComplianceParameter('Money', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.MONEY, 100)),
+        new Nexus.ComplianceParameter('String', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.STRING, 100))
+        ]
+      )
+    );
+    list.push(someEntry);
+    list.push(someEntry);
     return(
       <div style={TestApp.STYLE.wrapper}>
-        <WebPortal.CompliancePage displaySize={this.props.displaySize}/>
+        <WebPortal.CompliancePage displaySize={this.props.displaySize} complianceList={list}/>
       </div> );
   }
 
