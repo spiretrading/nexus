@@ -21,7 +21,6 @@ interface Properties {
 /** Displays a selection box for currencies. */
 export class CurrencySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
-    displaySize: DisplaySize.SMALL,
     onChange: () => {}
   };
 

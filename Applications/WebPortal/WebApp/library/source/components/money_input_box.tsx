@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
@@ -25,6 +26,10 @@ interface State {
 
 /** Displays an input box for money values. */
 export class MoneyInputBox extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -36,23 +41,13 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const inputStyle = {
-      boxSizing: 'border-box',
-      width: '100%',
-      height: '34px',
-      font: '16px Roboto',
-      border: '1px solid #C8C8C8',
-      paddingLeft: '10px',
-      paddingRight: '10px'
-    } as any;
+
     return (
-      <div>
-        <input style={inputStyle} className={this.props.className} type='text'
+        <input className={css(MoneyInputBox.STYLE.boxSmall)} type='text'
           ref={(input) => { this._input = input; }}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-          onChange={this.onChange}/>
-      </div>);
+          onChange={this.onChange}/>);
   }
 
   public componentDidUpdate() {
@@ -151,6 +146,43 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       value: value
     });
   }
+ 
+  private static readonly STYLE = StyleSheet.create({
+    boxSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      font: '400 16px Roboto',
+      color: '#000000',
+      flexGrow: 1,
+      maxWidth: '246px',
+      width: '100%',
+      paddingLeft: '10px',
+      ':focus': {
+        ouline: 0,
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      ':active' : {
+        borderColor: '#684BC7'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
+      }
+    },
+  });
 
   private _input: HTMLInputElement;
   private _start: number;
