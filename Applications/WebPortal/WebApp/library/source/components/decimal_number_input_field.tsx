@@ -24,7 +24,7 @@ export class DecimalNumberInputField extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      return DecimalNumberInputField.STYLE.boxSmall;
+      return DecimalNumberInputField.STYLE.box;
     })();
     return (
       <input value={this.props.value}
@@ -37,7 +37,7 @@ export class DecimalNumberInputField extends React.Component<Properties> {
   }
 
   private static STYLE = StyleSheet.create({
-    boxSmall: {
+    box: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
@@ -50,12 +50,12 @@ export class DecimalNumberInputField extends React.Component<Properties> {
       font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
-      minWidth: '284px',
+      minWidth: '246px',
       width: '100%',
       paddingLeft: '10px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
+      WebkitAppearance: 'textfield',
       appearance: 'none' as 'none',
+      '-moz-appearance': 'textfield',
       ':focus': {
         ouline: 0,
         borderColor: '#684BC7',
@@ -72,6 +72,16 @@ export class DecimalNumberInputField extends React.Component<Properties> {
       },
       '::placeholder': {
         color: '#8C8C8C'
+      },
+      '::-webkit-inner-spin-button': {
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0,
+      },
+      '::-webkit-outer-spin-button': { 
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0,
       }
     },
     errorBox: {

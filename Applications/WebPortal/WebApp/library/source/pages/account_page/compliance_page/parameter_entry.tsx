@@ -59,7 +59,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return( 
             <DecimalNumberInputField 
               value={this.props.parameter.value.value}
-          onChange={(newValue: number) => this.onChange(newValue)}/>);
+              onChange={(newValue: number) => this.onChange(newValue)}/>);
         case Nexus.ComplianceValue.Type.DURATION:
           return <div/>;
         case Nexus.ComplianceValue.Type.MONEY:
