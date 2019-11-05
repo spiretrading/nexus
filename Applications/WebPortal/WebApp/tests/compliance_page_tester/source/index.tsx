@@ -59,7 +59,8 @@ class TestApp extends React.Component<Properties> {
       marginTop: '200px',
       marginBottom: '200px',
       marginLeft: '10px',
-      marginRight: '10px'
+      marginRight: '10px',
+      boxSizing: 'border-box' as 'border-box',
     }
   };
 }

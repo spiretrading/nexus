@@ -35,6 +35,13 @@ export class ParameterEntry extends React.Component<Properties> {
         return ParameterEntry.STYLE.label;
       }
     })();
+    const inputWrapper = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return ParameterEntry.STYLE.inputWrapperSmall;
+      } else {
+        return ParameterEntry.STYLE.inputWrapperBig;
+      }
+    })();
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
@@ -85,8 +92,8 @@ export class ParameterEntry extends React.Component<Properties> {
     return (
       <div style={rowStyle}>
         <div style={labelStyle}>{this.props.parameter.name}</div>
-        <div style={{flexGrow: 1}}>
-        {input}
+        <div style={inputWrapper}>
+          {input}
         </div>
       </div>);
   }
@@ -99,8 +106,16 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
     private static readonly STYLE = {
-      largeWrapper: {
-        paddingLeft: '38px'
+      inputWrapperSmall: {
+        minWidth: '184px',
+        maxWidth: '246px',
+        flexGrow: 1,
+        flexShrink: 1
+      },
+      inputWrapperBig: {
+        width: '246px',
+        flexGrow: 0,
+        flexShrink: 0
       },
       rowSmall: {
         display: 'flex' as 'flex',
