@@ -60,11 +60,10 @@ export class CountrySelectionBox extends React.Component<Properties> {
             displaySize={this.props.displaySize}/>);
       } else {
         return (
-          <select value={this.props.value.code}
+          <select onChange={this.onChange} value={this.props.value.code}
               className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
               style={{...boxSizing,
-                ...CountrySelectionBox.STYLE.selectionBoxStyle}}
-              onChange={this.onChange}>
+                ...CountrySelectionBox.STYLE.selectionBoxStyle}}>
             {options}
           </select>);
       }

@@ -24,7 +24,6 @@ class TestApp extends React.Component<Properties> {
         [
         new Nexus.ComplianceParameter('Money', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.MONEY, 100)),
         new Nexus.ComplianceParameter('Currency', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD)),
-        new Nexus.ComplianceParameter('Quantity', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.QUANTITY, 30)),
         new Nexus.ComplianceParameter('Note', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.STRING, 50000)),
         ]
       )
@@ -37,6 +36,7 @@ class TestApp extends React.Component<Properties> {
       new Nexus.ComplianceRuleSchema(
         'New Components',
         [
+        new Nexus.ComplianceParameter('Quantity', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.QUANTITY, 30)),
         new Nexus.ComplianceParameter('Double', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.DOUBLE, 12.34)),
         new Nexus.ComplianceParameter('Duration', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.DURATION, null)),
         new Nexus.ComplianceParameter('Date and Time', new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.DATE_TIME, null)),

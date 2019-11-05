@@ -1,5 +1,7 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
+import { DisplaySize } from '../display_size'
 
 interface Properties {
 
@@ -18,30 +20,17 @@ interface Properties {
 
 /** Displays a selection box for currencies. */
 export class CurrencySelectionBox extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    displaySize: DisplaySize.SMALL,
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
-    const selectStyle = {
-      boxSizing: 'border-box',
-      width: '100%',
-      height: '34px',
-      font: '16px Roboto',
-      border: '1px solid #C8C8C8',
-      appearance: 'none',
-      WebkitAppearance: 'none',
-      MozAppearance: 'none',
-      background: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' stroke='black' fill='none'><polyline points='0,0 4.5,5 9,0'/></svg>")`,
-      backgroundWidth: '10px',
-      backgroundHeight: '6px',
-      backgroundPosition: 'calc(100% - 10px) center',
-      backgroundRepeat: 'no-repeat',
-      paddingLeft: '6px',
-      paddingRight: '6px',
-      cursor: 'pointer'
-    } as any;
     const currencies = [];
     for(let currency of this.props.currencyDatabase) {
       currencies.push(
@@ -57,7 +46,9 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     })();
     return (
       <div>
-        <select style={selectStyle} className={this.props.className}
+        <select style={{
+          ...CurrencySelectionBox.STYLE.selectionBoxStyle}} 
+            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting)}
             onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
         </select>
@@ -70,4 +61,48 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         event.target.value).currency);
     }
   }
+    private static readonly STYLE = {
+    selectionBoxStyle: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      font: '400 14px Roboto',
+      paddingLeft: '7px',
+      color: '#000000',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#F2F2F2',
+      backgroundImage:
+        'url(resources/account_page/profile_page/arrow-down.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none',
+      minWidth: '246px',
+      width: '100%',
+      flexGrow: 1,
+      flexShrink: 1
+    }
+  };
+  public static readonly EXTRA_STYLE = StyleSheet.create({
+    noHighting: {
+      ':focus': {
+        ouline: 0,
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      ':-moz-focusring': {
+        color: 'transparent',
+        textShadow: '0 0 0 #000'
+      },
+      '-webkit-user-select': 'text',
+      '-moz-user-select': 'text',
+      '-ms-user-select': 'text',
+      'user-select': 'text'
+    }
+  });
 }
