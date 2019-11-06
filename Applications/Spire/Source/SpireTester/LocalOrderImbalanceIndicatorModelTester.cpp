@@ -30,3 +30,17 @@ TEST_CASE("test_basic_inserting_subscribing",
     REQUIRE(data == std::vector<OrderImbalance>({a, b, c}));
   }, "test_basic_inserting_subscribing");
 }
+
+TEST_CASE("test_subscribing_with_specific_range",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    
+  }, "test_subscribing_with_specific_range");
+}
+
+TEST_CASE("test_order_imbalance_signals",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    
+  }, "test_order_imbalance_signals");
+}
