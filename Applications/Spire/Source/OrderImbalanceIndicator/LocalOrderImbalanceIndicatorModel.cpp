@@ -24,7 +24,7 @@ std::tuple<boost::signals2::connection,
           }
         }
         return std::move(requested_imbalances);
-    }, LaunchPolicy::ASYNC));
+    }));
 }
 
 void LocalOrderImbalanceIndicatorModel::insert(
