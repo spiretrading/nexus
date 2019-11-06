@@ -1,5 +1,6 @@
 #ifndef SPIRE_RECORD_HPP
 #define SPIRE_RECORD_HPP
+#include <tuple>
 #include <vector>
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
@@ -25,11 +26,11 @@ namespace Spire {
     public:
 
       //! Defines the types allowed for a member of a Record.
-      typedef boost::variant<Record, bool, Nexus::Quantity, double,
+      using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Task::State, Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money,
         Nexus::OrderStatus, Nexus::OrderType, Nexus::Security, Nexus::Side,
-        Nexus::TimeInForce> Field;
+        Nexus::TimeInForce>;
 
       //! Constructs an empty Record.
       Record() = default;
@@ -44,8 +45,8 @@ namespace Spire {
       /*!
         \param fields The tuple containing the Fields of this Record.
       */
-      template<typename T>
-      explicit Record(const T& fields);
+      template<typename... T>
+      explicit Record(const std::tuple<T...>& fields);
 
       //! Returns the Fields.
       const std::vector<Field>& GetFields() const;
@@ -84,8 +85,8 @@ namespace Spire {
     m_fields.push_back(t);
   }
 
-  template<typename T>
-  Record::Record(const T& fields) {
+  template<typename... T>
+  Record::Record(const std::tuple<T...>& fields) {
     boost::fusion::for_each(fields, AddField(m_fields));
   }
 }

@@ -1097,11 +1097,9 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
   };
   auto expiry = InternalTranslation(
     node.GetChildren().front()).Extract<Aspen::Box<ptime>>();
-  auto reactor = AlarmReactor(
+  m_translation = AlarmReactor(
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
     timerFactory, std::move(expiry));
-  m_context->GetReactorMonitor().Add(Aspen::Box<void>(std::move(reactor)));
-  m_translation = reactor;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {
