@@ -16,13 +16,17 @@ auto make(const std::string& symbol, const ptime& timestamp) {
 
 TEST_CASE("test_basic_inserting_subscribing",
     "[LocalOrderImbalanceIndicatorModel]") {
-  auto model = LocalOrderImbalanceIndicatorModel();
-  model.insert(make("ABC", from_time_t(100)));
-  model.insert(make("DEF", from_time_t(200)));
-  model.insert(make("GHI", from_time_t(300)));
-  auto [connection, promise] = model.subscribe(from_time_t(0),
-    from_time_t(500), [] (auto& i) {});
-  auto data = wait(std::move(promise));
-  REQUIRE(data == std::vector<OrderImbalance>({make("ABC", from_time_t(100))}));
-  print_test_name("test_basic_inserting_subscribing");
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    auto a = make("ABC", from_time_t(100));
+    auto b = make("DEF", from_time_t(200));
+    auto c = make("GHI", from_time_t(300));
+    model.insert(a);
+    model.insert(b);
+    model.insert(c);
+    auto [connection, promise] = model.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({a, b, c}));
+  }, "test_basic_inserting_subscribing");
 }
