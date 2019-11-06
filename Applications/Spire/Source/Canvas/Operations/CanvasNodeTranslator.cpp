@@ -370,6 +370,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
+
+      // TODO: publisher
       return Aspen::chain(initial.Extract<Aspen::Box<T>>(),
         continuation.Extract<Aspen::Box<T>>());
     }
@@ -1002,7 +1004,9 @@ namespace {
     template<typename T>
     static Translation Template(Aspen::Box<bool> condition,
         const Translation& series) {
-      return Aspen::when(condition, series.Extract<Aspen::Box<T>>());
+      return Translation(
+        Aspen::when(condition, series.Extract<Aspen::Box<T>>()),
+        series.GetPublisher());
     }
 
     using SupportedTypes = ValueTypes;

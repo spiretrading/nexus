@@ -30,13 +30,16 @@ namespace Details {
   class Translation {
     public:
       template<typename R>
-      Translation(Aspen::Shared<R> reactor);
+      Translation(Aspen::Shared<R> reactor, const Beam::Publisher<
+        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
 
       template<typename T>
-      Translation(Aspen::Box<T> reactor);
+      Translation(Aspen::Box<T> reactor, const Beam::Publisher<
+        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
 
       template<typename R, typename=std::enable_if_t<Aspen::is_reactor_v<R>>>
-      Translation(R&& reactor);
+      Translation(R&& reactor, const Beam::Publisher<
+        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
 
       const std::type_info& GetTypeInfo() const;
 
@@ -69,19 +72,26 @@ namespace Details {
         void Extract(void* destination) const override;
       };
       std::shared_ptr<BaseHolder> m_holder;
+      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>*
+        m_publisher;
   };
 
   template<typename R>
-  Translation::Translation(Aspen::Shared<R> reactor)
-    : m_holder(std::make_shared<SharedHolder<R>>(std::move(reactor))) {}
+  Translation::Translation(Aspen::Shared<R> reactor, const Beam::Publisher<
+      const Nexus::OrderExecutionService::Order*>* publisher)
+    : m_holder(std::make_shared<SharedHolder<R>>(std::move(reactor))),
+      m_publisher(publisher) {}
 
   template<typename T>
-  Translation::Translation(Aspen::Box<T> reactor)
-    : m_holder(std::make_shared<BoxHolder<T>>(std::move(reactor))) {}
+  Translation::Translation(Aspen::Box<T> reactor, const Beam::Publisher<
+      const Nexus::OrderExecutionService::Order*>* publisher)
+    : m_holder(std::make_shared<BoxHolder<T>>(std::move(reactor))),
+      m_publisher(publisher) {}
 
   template<typename R, typename>
-  Translation::Translation(R&& reactor)
-    : Translation(Aspen::Shared(std::forward<R>(reactor))) {}
+  Translation::Translation(R&& reactor, const Beam::Publisher<
+      const Nexus::OrderExecutionService::Order*>* publisher)
+    : Translation(Aspen::Shared(std::forward<R>(reactor)), publisher) {}
 
   template<typename T>
   T Translation::Extract() const {
