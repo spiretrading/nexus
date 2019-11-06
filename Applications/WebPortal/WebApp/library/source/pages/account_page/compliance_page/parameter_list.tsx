@@ -1,10 +1,8 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
-import { DropDownButton, CurrencySelectionBox, MoneyInputBox, TextInputField}
-  from '../../../components';
 import {ParameterEntry} from './parameter_entry';
-import { ComplianceRuleEntry, ComplianceRuleSchema, RiskClient } from 'nexus';
+import { ComplianceRuleEntry, ComplianceRuleSchema} from 'nexus';
 
 interface Properties {
   
