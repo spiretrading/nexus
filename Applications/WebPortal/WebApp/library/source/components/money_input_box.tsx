@@ -16,6 +16,9 @@ interface Properties {
   /** The event handler for when a change is made. */
   onChange?: (value?: Nexus.Money) => (boolean | void);
 
+  /** Additional CSS styles. */
+  style?: any;
+
   /** The class name of the money input box. */
   className?: string;
 }
@@ -43,7 +46,11 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   public render(): JSX.Element {
 
     return (
-        <input className={css(MoneyInputBox.STYLE.boxSmall)} type='text'
+        <input
+          style={this.props.style} 
+          className={css(MoneyInputBox.STYLE.input) + ' ' +
+            MoneyInputBox.STYLE.input}
+          type='text'
           ref={(input) => { this._input = input; }}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
@@ -148,7 +155,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   }
  
   private static readonly STYLE = StyleSheet.create({
-    boxSmall: {
+    input: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
