@@ -1,9 +1,8 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import * as Beam from 'beam';
 import { DisplaySize } from '../../../display_size';
-import {CurrencySelectionBox, DecimalNumberInputField, 
-  MoneyInputBox, TextInputField, IntegerInputBox} from '../../../components';
+import {CurrencySelectionBox, MoneyInputBox, TextInputField, 
+  IntegerInputBox} from '../../../components';
 import { ComplianceParameter, ComplianceValue } from 'nexus';
 
 interface Properties {
@@ -20,7 +19,7 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-     const rowStyle = (() => {
+    const rowStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ParameterEntry.STYLE.rowSmall;
       } else {
@@ -54,10 +53,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <div/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
-          return( 
-            <DecimalNumberInputField 
-              value={this.props.parameter.value.value}
-              onChange={(newValue: number) => this.onChange(newValue)}/>);
+          return<div/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <div/>;
         case Nexus.ComplianceValue.Type.MONEY:
