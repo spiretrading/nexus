@@ -59,22 +59,22 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.MONEY:
           return (
             <MoneyInputBox
-              onChange={(newValue: Nexus.Money) => this.onChange(newValue)} 
-              value={this.props.parameter.value.value}/>);
+              value={this.props.parameter.value.value}
+              onChange={(newValue: Nexus.Money) => this.onChange(newValue)}/>);
         case Nexus.ComplianceValue.Type.QUANTITY:
           return (
             <IntegerInputBox
-              onChange={(newValue: number) => this.onChange(newValue)}
-              value={this.props.parameter.value.value}/>);
+              value={this.props.parameter.value.value}
+              onChange={(newValue: number) => this.onChange(newValue)}/>);
         case Nexus.ComplianceValue.Type.SECURITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.STRING:
           return (
             <TextInputField
-              style={inputWrapper}
               displaySize ={this.props.displaySize}
               value={this.props.parameter.value.value}
-              onInput={(newValue: string) => this.onChange(newValue)}/>);
+              onInput={(newValue: string) => this.onChange(newValue)}
+              style={inputWrapper}/>);
         case Nexus.ComplianceValue.Type.LIST:
           const list = [] as any[];
           for(const thing of this.props.parameter.value.value) {
@@ -162,4 +162,3 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     };
 }
-
