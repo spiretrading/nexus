@@ -176,3 +176,26 @@ TEST_CASE("test_side_filter", "[FilteredOrderImbalanceIndicatorModel]") {
     REQUIRE(data2 == std::vector<OrderImbalance>({c, d, e}));
   }, "test_side_filter");
 }
+
+TEST_CASE("test_size_filter", "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_size_filter({0}, {500})});
+    auto [connection1, promise1] = model1.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({a}));
+    auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_size_filter({0}, {10000})});
+    auto [connection2, promise2] = model2.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data2 = wait(std::move(promise2));
+    REQUIRE(data2 == std::vector<OrderImbalance>({a, b, c}));
+    auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_size_filter({100000000}, {100000000})});
+    auto [connection3, promise3] = model3.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data3 = wait(std::move(promise3));
+    REQUIRE(data3.empty());
+  }, "test_size_filter");
+}
