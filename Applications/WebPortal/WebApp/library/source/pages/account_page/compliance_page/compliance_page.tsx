@@ -1,9 +1,6 @@
 import * as React from 'react';
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
-import { RuleMode } from './rule_execution_drop_down';
-import { RuleRow } from './rule_row';
 import {RulesList} from './rules_list';
 import { NewRuleButton } from '.';
 
@@ -27,6 +24,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     this.state = {
       complianceList: this.props.complianceList.slice()
     };
+    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -47,7 +45,8 @@ export class CompliancePage extends React.Component<Properties, State> {
           <RulesList 
             displaySize={this.props.displaySize}
             currencyDatabase={this.props.currencyDatabase}
-            complianceList={this.state.complianceList}/>);
+            complianceList={this.state.complianceList}
+            onChange={this.onChange}/>);
       }
     })();
     return(
@@ -61,6 +60,12 @@ export class CompliancePage extends React.Component<Properties, State> {
         </div>
         <div style={CompliancePage.STYLE.filler}/>
       </div>);
+  }
+
+  private onChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
+    console.log('indexs', ruleIndex, newRule.toJson);
+    this.state.complianceList[ruleIndex] = newRule;
+    this.setState({complianceList: this.state.complianceList});
   }
 
   private static readonly STYLE = {

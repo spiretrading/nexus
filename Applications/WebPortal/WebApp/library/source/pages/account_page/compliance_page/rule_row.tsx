@@ -6,6 +6,7 @@ import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine} from '../../../components';
 import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
 import { ParametersList } from './parameter_list';
+import { ComplianceRuleEntry } from 'nexus';
 
 interface Properties {
   
@@ -13,7 +14,7 @@ interface Properties {
   displaySize: DisplaySize;
   complianceRule?: Nexus.ComplianceRuleEntry;
   currencyDatabase: Nexus.CurrencyDatabase;
-  onChange?:() => void;
+  onChange?:(parameter: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -32,6 +33,7 @@ export class RuleRow extends React.Component<Properties, State> {
     };
     this.onRuleModeChange = this.onRuleModeChange.bind(this);
     this.onRuleOpen = this.onRuleOpen.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -98,15 +100,10 @@ export class RuleRow extends React.Component<Properties, State> {
                 <ParametersList 
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
-                  schema={this.props.complianceRule.schema}/>
+                  schema={this.props.complianceRule.schema}
+                  onChange={this.onChange}/>
               </div>)}
           </Transition>
-
-
-        {
-        //{line}
-        //<RuleParameters displaySize={this.props.displaySize}/>
-        }
       </div>);
   }
 
@@ -127,6 +124,16 @@ export class RuleRow extends React.Component<Properties, State> {
   private onRuleOpen(event?: React.MouseEvent<any>) {
     this.setState({isExpanded: !this.state.isExpanded});
   }
+
+  private onChange(entryNumber: number, schema: Nexus.ComplianceRuleSchema) {
+    const newRule = new ComplianceRuleEntry(
+      this.props.complianceRule.id,
+      this.props.complianceRule.directoryEntry,
+      this.props.complianceRule.state,
+      schema
+    );
+    this.props.onChange(newRule);
+  };
 
   private static readonly STYLE = {
     wrapper : {

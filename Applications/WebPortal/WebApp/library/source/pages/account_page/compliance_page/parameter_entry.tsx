@@ -13,8 +13,6 @@ interface Properties {
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
 
-
-
 export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
@@ -103,6 +101,7 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private onChange(newValue: any) {
+    console.log('parameter change');
     this.props.onChange(
       new ComplianceParameter(
         this.props.parameter.name, 
