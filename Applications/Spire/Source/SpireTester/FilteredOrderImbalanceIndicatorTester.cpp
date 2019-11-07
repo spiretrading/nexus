@@ -225,3 +225,28 @@ TEST_CASE("test_reference_price_filter",
     REQUIRE(data3.empty());
   }, "test_reference_price_filter");
 }
+
+TEST_CASE("test_notional_value_filter",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_notional_value_filter(Money(Money::ONE), Money(100 * Money::ONE))});
+    auto [connection1, promise1] = model1.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({a}));
+    auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_notional_value_filter(Money(Money::ONE),
+      Money(1000000 * Money::ONE))});
+    auto [connection2, promise2] = model2.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data2 = wait(std::move(promise2));
+    REQUIRE(data2 == std::vector<OrderImbalance>({a, b, c}));
+    auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_notional_value_filter(Money(Money::ONE), Money(10 * Money::ONE))});
+    auto [connection3, promise3] = model3.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data3 = wait(std::move(promise3));
+    REQUIRE(data3.empty());
+  }, "test_notional_value_filter");
+}
