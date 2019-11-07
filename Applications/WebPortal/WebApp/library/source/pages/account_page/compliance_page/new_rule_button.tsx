@@ -22,16 +22,16 @@ export class NewRuleButton extends React.Component<Properties>{
     })();
     return (
       <div style={NewRuleButton.STYLE.newRuleRow}>
-            <div style={NewRuleButton.STYLE.imageWrapper}>
-              <img src='resources/account_page/compliance_page/add.svg'
-                height={imageSize}
-                width={imageSize}/>
-            </div>
-            <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
+        <div style={NewRuleButton.STYLE.imageWrapper}>
+          <img src='resources/account_page/compliance_page/add.svg'
+            height={imageSize}
+            width={imageSize}/>
+        </div>
+        <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
     </div>);
   }
 
-    private static readonly STYLE = {
+  private static readonly STYLE = {
     newRuleRow: {
       height: '20px',
       display: 'flex' as 'flex',
