@@ -64,7 +64,8 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         event.target.value).currency);
     }
   }
-    private static readonly STYLE = {
+
+  private static readonly STYLE = {
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
