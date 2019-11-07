@@ -98,7 +98,6 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private onChange(newValue: any) {
-    console.log('parameter change');
     this.props.onChange(
       new ComplianceParameter(
         this.props.parameter.name, 

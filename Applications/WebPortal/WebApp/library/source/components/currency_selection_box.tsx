@@ -50,7 +50,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         <select 
             style={{...CurrencySelectionBox.STYLE.selectionBoxStyle,
               ...this.props.style}} 
-            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting) +
+            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting) + ' ' +
               this.props.className}
             onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
