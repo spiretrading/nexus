@@ -11,9 +11,6 @@ interface Properties {
   /** Text to show if the value is empty. */
   placeholder?: string;
 
-  /** The size to display the component at. */
-  displaySize: DisplaySize;
-
   /** Indicates if there is an error with the value. */
   isError?: boolean;
 
@@ -27,6 +24,9 @@ interface Properties {
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
+  
+  /** The size to display the component at. */
+  displaySize: DisplaySize;
 }
 
 /** Displays a single text input field. */

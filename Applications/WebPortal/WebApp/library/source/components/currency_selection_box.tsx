@@ -1,7 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import { DisplaySize } from '../display_size'
 
 interface Properties {
 
@@ -9,13 +8,16 @@ interface Properties {
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The initial currency selected. */
-  value?: Nexus.Currency;
+  value: Nexus.Currency;
+
+  /** Additional CSS styles. */
+  style?: any;
+  
+  /** The class name of the currency selection box. */
+  className?: string;
 
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.Currency) => void;
-
-  /** The class name of the currency selection box. */
-  className?: string;
 }
 
 /** Displays a selection box for currencies. */
@@ -45,9 +47,11 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     })();
     return (
       <div>
-        <select style={{
-          ...CurrencySelectionBox.STYLE.selectionBoxStyle}} 
-            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting)}
+        <select 
+            style={{...CurrencySelectionBox.STYLE.selectionBoxStyle,
+              ...this.props.style}} 
+            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting) +
+              this.props.className}
             onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
         </select>
