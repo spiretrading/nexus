@@ -1,4 +1,5 @@
 #include "Spire/OrderImbalanceIndicator/FilteredOrderImbalanceIndicatorModel.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 
 using namespace Nexus;
@@ -8,7 +9,9 @@ FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
     std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
     const std::vector<std::function<bool (const OrderImbalance&)>>& filters)
     : m_source_model(source_model),
-      m_filters(filters) {}
+      m_filters(filters) {
+  auto a = 0;
+}
 
 std::tuple<boost::signals2::connection,
     QtPromise<std::vector<Nexus::OrderImbalance>>>
@@ -31,8 +34,9 @@ std::tuple<boost::signals2::connection,
     })};
 }
 
-std::function<bool (const Nexus::OrderImbalance&)> Spire::make_list_filter(
-    const std::set<std::string>& symbol_list) {
+std::function<bool (const Nexus::OrderImbalance&)>
+    Spire::make_security_list_filter(
+      const std::set<std::string>& symbol_list) {
   return {[=] (const Nexus::OrderImbalance& imbalance) {
       return symbol_list.find(imbalance.m_security.GetSymbol()) !=
         symbol_list.end();
@@ -46,10 +50,23 @@ std::function<bool (const Nexus::OrderImbalance&)> Spire::make_security_filter(
     }};
 }
 
+std::function<bool (const Nexus::OrderImbalance&)>
+    Spire::make_market_list_filter(
+      const std::set<std::string>& market_list) {
+  return {[=, market_database = GetDefaultMarketDatabase()] (
+        const Nexus::OrderImbalance& imbalance) {
+      return market_list.find(market_database.FromCode(
+          imbalance.m_security.GetMarket()).m_displayName) !=
+          market_list.end();
+    }};
+}
+
 std::function<bool (const Nexus::OrderImbalance&)> Spire::make_market_filter(
     const std::string& filter_string) {
-  return {[=] (const Nexus::OrderImbalance& imbalance) {
-      return std::string(imbalance.m_security.GetMarket().GetData())
+  return {[=, market_database = GetDefaultMarketDatabase()] (
+        const Nexus::OrderImbalance& imbalance) {
+      return std::string(market_database.FromCode(
+          imbalance.m_security.GetMarket()).m_displayName)
         .find(filter_string) == 0;
     }};
 }

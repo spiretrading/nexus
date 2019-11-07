@@ -44,7 +44,7 @@ namespace Spire {
   /*
     \param symbol_list The list of securities to preserve after filtering.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_list_filter(
+  std::function<bool (const Nexus::OrderImbalance&)> make_security_list_filter(
     const std::set<std::string>& symbol_list);
 
   //! Creates a filter that filters out symbols that do not start with
@@ -54,6 +54,14 @@ namespace Spire {
   */
   std::function<bool (const Nexus::OrderImbalance&)> make_security_filter(
     const std::string& filter_string);
+
+  //! Creates a filter that filters out markets that do not appear in the given
+  //! list.
+  /*
+    \param market_list The list of markets to preserve after filtering.
+  */
+  std::function<bool (const Nexus::OrderImbalance&)> make_market_list_filter(
+    const std::set<std::string>& market_list);
 
   //! Creates a filter that filters out markets that do not start with
   //! or match the given string.
