@@ -3,8 +3,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../../../display_size';
-import { DropDownButton, HLine} from '../../../components';
-import { RuleExecutionDropDown, RuleMode } from './rule_execution_drop_down';
+import { DropDownButton, HLine } from '../../../components';
+import { RuleExecutionDropDown } from './rule_execution_drop_down';
 import { ParametersList } from './parameter_list';
 import { ComplianceRuleEntry } from 'nexus';
 
@@ -18,7 +18,6 @@ interface Properties {
 }
 
 interface State {
-  ruleMode: RuleMode;
   isExpanded: boolean;
   animationStyle: any;
 }
@@ -27,13 +26,12 @@ export class RuleRow extends React.Component<Properties, State> {
   constructor(props: Properties){
     super(props);
     this.state = {
-      ruleMode: RuleMode.PASSIVE,
       isExpanded: false,
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     };
     this.onRuleModeChange = this.onRuleModeChange.bind(this);
     this.onRuleOpen = this.onRuleOpen.bind(this);
-    this.onChange = this.onChange.bind(this);
+    this.onParameterChange = this.onParameterChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -86,7 +84,7 @@ export class RuleRow extends React.Component<Properties, State> {
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
               onChange={this.onRuleModeChange}
-              value={this.state.ruleMode}
+              value={this.props.complianceRule.state}
               displaySize={this.props.displaySize}/>
           </div>
           {spacing}
@@ -101,7 +99,7 @@ export class RuleRow extends React.Component<Properties, State> {
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
                   schema={this.props.complianceRule.schema}
-                  onChange={this.onChange}/>
+                  onChange={this.onParameterChange}/>
               </div>)}
           </Transition>
       </div>);
@@ -117,15 +115,21 @@ export class RuleRow extends React.Component<Properties, State> {
     });
   }
 
-  private onRuleModeChange(newMode: RuleMode) {
-    this.setState({ruleMode: newMode});
+  private onRuleModeChange(newMode: Nexus.ComplianceRuleEntry.State) {
+    const newRule = new ComplianceRuleEntry(
+      this.props.complianceRule.id,
+      this.props.complianceRule.directoryEntry,
+      newMode,
+      this.props.complianceRule.schema
+    );
+    this.props.onChange(newRule);
   }
 
   private onRuleOpen(event?: React.MouseEvent<any>) {
     this.setState({isExpanded: !this.state.isExpanded});
   }
 
-  private onChange(entryNumber: number, schema: Nexus.ComplianceRuleSchema) {
+  private onParameterChange(schema: Nexus.ComplianceRuleSchema) {
     const newRule = new ComplianceRuleEntry(
       this.props.complianceRule.id,
       this.props.complianceRule.directoryEntry,
@@ -217,7 +221,5 @@ export class RuleRow extends React.Component<Properties, State> {
     }
   };
   private static readonly TRANSITION_LENGTH_MS = 600;
-  private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
-  private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
   private ruleParameters: HTMLDivElement;
 }

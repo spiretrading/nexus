@@ -1,22 +1,15 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
-
-/* The various modes a rule can be in. */
-export enum RuleMode {
-  ACTIVE,
-  ACTIVE_PER_ACCOUNT,
-  ACTIVE_CONSOLODATED,
-  PASSIVE
-}
 
 interface Properties {
   
   /** The event handler called when the selection changes. */
-  onChange?: (newRuleMode: RuleMode) => void;
+  onChange?: (newMode: Nexus.ComplianceRuleEntry.State) => void;
 
   /** The currently selected rule mode. */
-  value: RuleMode;
+  value: Nexus.ComplianceRuleEntry.State;
   
   /** Determines the size of the element. */
   displaySize: DisplaySize;
@@ -46,10 +39,21 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
           className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
           style={{...sizeStyle,
             ...RuleExecutionDropDown.STYLE.selectionBoxStyle}}>
-        <option value={RuleMode.ACTIVE}>{'Active'}</option>
-        <option value={RuleMode.ACTIVE_PER_ACCOUNT}>{'Active Per Account'}</option>
-        <option value={RuleMode.ACTIVE_CONSOLODATED}>{'Active Consolodated'}</option>
-        <option value={RuleMode.PASSIVE}>{'Passive'}</option>
+        <option value={Nexus.ComplianceRuleEntry.State.NONE}>
+          {'-'}
+        </option>
+        <option value={Nexus.ComplianceRuleEntry.State.ACTIVE}>
+          {'Active'}
+        </option>
+        <option value={Nexus.ComplianceRuleEntry.State.PASSIVE}>
+          {'Passive'}
+        </option>
+        <option value={Nexus.ComplianceRuleEntry.State.DISABLED}>
+          {'Disabled'}
+        </option>
+        <option value={Nexus.ComplianceRuleEntry.State.DELETED}>
+          {'Delete'}
+        </option>
       </select>);
   }
 

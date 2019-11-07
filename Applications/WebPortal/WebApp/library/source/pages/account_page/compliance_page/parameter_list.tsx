@@ -10,7 +10,7 @@ interface Properties {
   displaySize: DisplaySize;
   schema: ComplianceRuleSchema;
   currencyDatabase: Nexus.CurrencyDatabase;
-  onChange?:(parameterIndex: number, parameter: Nexus.ComplianceRuleSchema) => void;
+  onChange?:(parameter: Nexus.ComplianceRuleSchema) => void;
 }
 
 export class ParametersList extends React.Component<Properties> {
@@ -69,7 +69,7 @@ export class ParametersList extends React.Component<Properties> {
         this.props.schema.name,
         newParameters
     );
-    this.props.onChange(parameterIndex, newSchema);
+    this.props.onChange(newSchema);
   }
 
   private static readonly STYLE = {
