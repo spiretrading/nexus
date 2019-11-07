@@ -159,3 +159,20 @@ TEST_CASE("test_market_filter", "[FilteredOrderImbalanceIndicatorModel]") {
     REQUIRE(data3 == std::vector<OrderImbalance>({a, b, c, d, e}));
   }, "test_market_filter");
 }
+
+TEST_CASE("test_side_filter", "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_side_filter(Side::BID)});
+    auto [connection1, promise1] = model1.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({a, b}));
+    auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_side_filter(Side::ASK)});
+    auto [connection2, promise2] = model2.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data2 = wait(std::move(promise2));
+    REQUIRE(data2 == std::vector<OrderImbalance>({c, d, e}));
+  }, "test_side_filter");
+}
