@@ -33,6 +33,12 @@ namespace {
     100000, 1000.0, from_time_t(400));
   const auto e = make("E", market_db.FromDisplayName("NYSE").m_code, Side::ASK,
     1000000, 10000.0, from_time_t(500));
+  const auto f = make("F", market_db.FromDisplayName("TSX").m_code, Side::ASK,
+    100, 1.0, from_time_t(600));
+  const auto g = make("G", market_db.FromDisplayName("TSX").m_code, Side::ASK,
+    100, 1.0, from_time_t(700));
+  const auto h = make("H", market_db.FromDisplayName("TSX").m_code, Side::ASK,
+    100, 1.0, from_time_t(800));
 
   const auto market_database = GetDefaultMarketDatabase();
 }
@@ -249,4 +255,15 @@ TEST_CASE("test_notional_value_filter",
     auto data3 = wait(std::move(promise3));
     REQUIRE(data3.empty());
   }, "test_notional_value_filter");
+}
+
+TEST_CASE("test_filtered_signals",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto model = FilteredOrderImbalanceIndicatorModel(local_model,
+      {make_market_list_filter({"TSX"})});
+    // set up subscriptions
+    // test inserting a, b, c, f, g, h
+  }, "test_filtered_signals");
 }
