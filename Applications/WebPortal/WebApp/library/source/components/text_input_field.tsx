@@ -17,6 +17,12 @@ interface Properties {
   /** Indicates if there is an error with the value. */
   isError?: boolean;
 
+  /** Additional CSS styles. */
+  style?: any;
+
+  /** The class name of the input box. */
+  className?: string;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -51,11 +57,12 @@ export class TextInputField extends React.Component<Properties> {
     })();
     return (
       <input value={this.props.value}
+        style={this.props.style}
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.props.onInput(event.target.value);
         }}
-        className={css(boxStyle, errorStyle)}/>);
+        className={css(boxStyle, errorStyle) + ' ' + this.props.className}/>);
   }
 
   private static STYLE = StyleSheet.create({
