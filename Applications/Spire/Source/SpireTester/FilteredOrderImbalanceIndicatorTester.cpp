@@ -73,5 +73,34 @@ TEST_CASE("test_list_filter", "[FilteredOrderImbalanceIndicatorModel]") {
       from_time_t(500), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
     REQUIRE(data2 == std::vector<OrderImbalance>({a, c, e}));
+    auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_list_filter({})});
+    auto [connection3, promise3] = model3.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data3 = wait(std::move(promise3));
+    REQUIRE(data3.empty());
   }, "test_list_filter");
+}
+
+TEST_CASE("test_security_filter", "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_security_filter({"A"})});
+    auto [connection1, promise1] = model1.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({a}));
+    auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_security_filter({"AZ"})});
+    auto [connection2, promise2] = model2.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data2 = wait(std::move(promise2));
+    REQUIRE(data2.empty());
+    auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
+      {make_security_filter({""})});
+    auto [connection3, promise3] = model3.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto data3 = wait(std::move(promise3));
+    REQUIRE(data3 == std::vector<OrderImbalance>({a, b, c, d, e}));
+  }, "test_security_filter");
 }
