@@ -75,6 +75,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.STRING:
           return (
             <TextInputField
+              style={inputWrapper}
               displaySize ={this.props.displaySize}
               value={this.props.parameter.value.value}
               onInput={(newValue: string) => this.onChange(newValue)}/>);
@@ -117,6 +118,8 @@ export class ParameterEntry extends React.Component<Properties> {
       },
       inputWrapperBig: {
         width: '246px',
+        minWidth: '246px',
+        maxWidth: '246px',
         flexGrow: 0,
         flexShrink: 0
       },

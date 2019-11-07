@@ -89,7 +89,9 @@ export class ParametersList extends React.Component<Properties> {
     rowLarge: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      width: '100%',
+      width: '246px',
+      minWidth: '246px',
+      maxWidtH: '246px',
       height: '34px',
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
