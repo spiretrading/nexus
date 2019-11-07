@@ -10,6 +10,11 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  auto make(const std::string& symbol, const ptime& timestamp) {
+    return OrderImbalance(Security(symbol, 0), Side::BID, 100,
+      Money(1 * Money::ONE), timestamp);
+  }
+
   auto make(const std::string& symbol, const std::string& market, Side side,
       Quantity size, double ref_price, const ptime& timestamp) {
     return OrderImbalance(Security(symbol, market, 0), side, size,
@@ -33,6 +38,25 @@ auto make_local_model() {
     model->insert(d);
     model->insert(e);
     return model;
+}
+
+TEST_CASE("test_unfiltered_subscribing",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = FilteredOrderImbalanceIndicatorModel(make_local_model(), {});
+    auto [connection1, promise1] = model.subscribe(from_time_t(100),
+      from_time_t(300), [] (auto& i) {});
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({a, b, c}));
+    auto [connection2, promise2] = model.subscribe(from_time_t(200),
+      from_time_t(400), [] (auto& i) {});
+    auto data2 = wait(std::move(promise2));
+    REQUIRE(data2 == std::vector<OrderImbalance>({b, c, d}));
+    auto [connection3, promise3] = model.subscribe(from_time_t(300),
+      from_time_t(500), [] (auto& i) {});
+    auto data3 = wait(std::move(promise3));
+    REQUIRE(data3 == std::vector<OrderImbalance>({c, d, e}));
+  }, "test_unfiltered_subscribing");
 }
 
 TEST_CASE("test_list_filter", "[FilteredOrderImbalanceIndicatorModel]") {
