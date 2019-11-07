@@ -95,15 +95,6 @@ std::function<bool (const Nexus::OrderImbalance&)>
 }
 
 std::function<bool (const Nexus::OrderImbalance&)>
-    Spire::make_time_filter(const boost::posix_time::ptime& min,
-      const boost::posix_time::ptime& max) {
-  return {[=] (const Nexus::OrderImbalance& imbalance) {
-      return min <= imbalance.m_timestamp &&
-        imbalance.m_timestamp <= max;
-    }};
-}
-
-std::function<bool (const Nexus::OrderImbalance&)>
     Spire::make_notional_value_filter(const Nexus::Money& min,
       const Nexus::Money& max) {
   return {[=] (const Nexus::OrderImbalance& imbalance) {

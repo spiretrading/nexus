@@ -98,16 +98,6 @@ namespace Spire {
     make_reference_price_filter(const Nexus::Money& min,
       const Nexus::Money& max);
 
-  //! Creates a filter that filters out timestamps that are not in the interval
-  //! [min, max].
-  /*
-    \param min The earliest timestamp that will not be filtered out.
-    \param max The latest timestamp that will not be filtered out.
-  */
-  std::function<bool (const Nexus::OrderImbalance&)>
-    make_time_filter(const boost::posix_time::ptime& min,
-      const boost::posix_time::ptime& max);
-
   //! Creates a filter that filters out notional values that are not in the
   //! interval [min, max].
   /*
