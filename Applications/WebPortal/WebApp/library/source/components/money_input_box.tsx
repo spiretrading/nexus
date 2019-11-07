@@ -47,9 +47,10 @@ export class MoneyInputBox extends React.Component<Properties, State> {
 
     return (
         <input
-          style={this.props.style} 
-          className={css(MoneyInputBox.STYLE.input) + ' ' +
-            MoneyInputBox.STYLE.input}
+          style={{...MoneyInputBox.STYLE.input,
+            ...this.props.style}} 
+          className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
+            this.props.className}
           type='text'
           ref={(input) => { this._input = input; }}
           value={this.state.value.toString()}
@@ -153,8 +154,8 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       value: value
     });
   }
- 
-  private static readonly STYLE = StyleSheet.create({
+
+  private static readonly STYLE = {
     input: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -171,6 +172,11 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       maxWidth: '246px',
       width: '100%',
       paddingLeft: '10px',
+    }
+  }
+
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    effects: {
       ':focus': {
         ouline: 0,
         borderColor: '#684BC7',
@@ -188,7 +194,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       '::placeholder': {
         color: '#8C8C8C'
       }
-    },
+    }
   });
 
   private _input: HTMLInputElement;
