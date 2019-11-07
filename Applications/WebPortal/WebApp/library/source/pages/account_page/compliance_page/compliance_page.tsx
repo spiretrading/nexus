@@ -1,15 +1,18 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
-import {RulesList} from './rules_list';
 import { NewRuleButton } from '.';
-
+import { RulesList } from './rules_list';
 
 interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The set of available currencies to select. */
   currencyDatabase?: Nexus.CurrencyDatabase;
+
+  /** The list of compliance rules. */
   complianceList: Nexus.ComplianceRuleEntry[];
 }
 
@@ -28,7 +31,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const content = (() => {
+    const contentStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return CompliancePage.STYLE.smallContent;
       } else if(this.props.displaySize === DisplaySize.MEDIUM) {
@@ -37,23 +40,15 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
-    const rules = (() => {
-      if(this.state.complianceList === []) {
-        return null;
-      } else {
-        return (
+    return(
+      <div style={CompliancePage.STYLE.wrapper}>
+        <div style={CompliancePage.STYLE.filler}/>
+        <div style={contentStyle}>
           <RulesList 
             displaySize={this.props.displaySize}
             currencyDatabase={this.props.currencyDatabase}
             complianceList={this.state.complianceList}
-            onChange={this.onChange}/>);
-      }
-    })();
-    return(
-      <div style={CompliancePage.STYLE.wrapper}>
-        <div style={CompliancePage.STYLE.filler}/>
-        <div style={content}>
-          {rules}
+            onChange={this.onChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize} />
           <div style={CompliancePage.STYLE.paddingLarge}/>
@@ -63,7 +58,6 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private onChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
-    console.log('indexs', ruleIndex, newRule.toJson);
     this.state.complianceList[ruleIndex] = newRule;
     this.setState({complianceList: this.state.complianceList});
   }
