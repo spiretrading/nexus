@@ -9,26 +9,26 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
   /** Implements a reactor that wraps an existing Order and evaluates to its
       ExecutionReports.
       @param <C> The type of OrderExecutionClient used to submit the order.
    */
   template<typename C>
-  class OrderReactor {
+  class OrderWrapperReactor {
     public:
       using Type = ExecutionReport;
 
       /** The type of OrderExecutionClient used to submit the order. */
       using OrderExecutionClient = C;
 
-      /** Constructs an OrderReactor.
+      /** Constructs an OrderWrapperReactor.
           @param client The OrderExecutionClient used to submit the order.
           @param order The Order to monitor.
        */
-      OrderReactor(Beam::Ref<OrderExecutionClient> client, const Order& order);
+      OrderWrapperReactor(Beam::Ref<OrderExecutionClient> client,
+        const Order& order);
 
       /** Cancels the Order. */
       void Cancel();
@@ -44,27 +44,27 @@ namespace OrderExecutionService {
   };
 
   template<typename C>
-  OrderReactor<C>::OrderReactor(Beam::Ref<OrderExecutionClient> client,
-    const Order& order)
+  OrderWrapperReactor<C>::OrderWrapperReactor(
+    Beam::Ref<OrderExecutionClient> client, const Order& order)
     : m_client(client.Get()),
       m_order(&order),
       m_queue(Beam::PublisherReactor(m_order->GetPublisher())) {}
 
   template<typename C>
-  void OrderReactor<C>::Cancel() {
+  void OrderWrapperReactor<C>::Cancel() {
     m_client->Cancel(*m_order);
   }
 
   template<typename C>
-  Aspen::State OrderReactor<C>::commit(int sequence) noexcept {
+  Aspen::State OrderWrapperReactor<C>::commit(int sequence) noexcept {
     return m_queue.commit(sequence);
   }
 
   template<typename C>
-  const typename OrderReactor<C>::Type& OrderReactor<C>::eval() const noexcept {
+  const typename OrderWrapperReactor<C>::Type&
+      OrderWrapperReactor<C>::eval() const noexcept {
     return m_queue.eval();
   }
-}
 }
 
 #endif

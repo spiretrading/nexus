@@ -2,7 +2,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include "Nexus/OrderExecutionService/OrderReactor.hpp"
+#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"

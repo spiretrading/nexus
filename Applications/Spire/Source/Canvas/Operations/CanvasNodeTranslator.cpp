@@ -21,7 +21,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/OrderReactor.hpp"
+#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -1523,9 +1523,9 @@ void CanvasNodeTranslationVisitor::Visit(const SideNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
-#if 0 // TODO
   auto orderExecutionPublisher =
     std::make_shared<SequencePublisher<const Order*>>();
+#if 0 // TODO
   SingleOrderTaskFactory<VirtualOrderExecutionClient> singleOrderTaskFactory(
     Ref(m_context->GetUserProfile().GetServiceClients().
     GetOrderExecutionClient()), orderExecutionPublisher,
