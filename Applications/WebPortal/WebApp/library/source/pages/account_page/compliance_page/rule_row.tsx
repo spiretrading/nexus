@@ -4,9 +4,9 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../../../display_size';
 import { DropDownButton, HLine } from '../../../components';
-import { RuleExecutionDropDown } from './rule_execution_drop_down';
 import { ParametersList } from './parameter_list';
-import { ComplianceRuleEntry } from 'nexus';
+import { RuleExecutionDropDown } from './rule_execution_drop_down';
+
 
 interface Properties {
   
@@ -116,7 +116,7 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private onRuleModeChange(newMode: Nexus.ComplianceRuleEntry.State) {
-    const newRule = new ComplianceRuleEntry(
+    const newRule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id,
       this.props.complianceRule.directoryEntry,
       newMode,
@@ -130,7 +130,7 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   private onParameterChange(schema: Nexus.ComplianceRuleSchema) {
-    const newRule = new ComplianceRuleEntry(
+    const newRule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id,
       this.props.complianceRule.directoryEntry,
       this.props.complianceRule.state,
