@@ -44,15 +44,13 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-
     return (
         <input
-          style={{...MoneyInputBox.STYLE.input,
-            ...this.props.style}} 
+          style={{...MoneyInputBox.STYLE.input, ...this.props.style}} 
           className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           type='text'
-          ref={(input) => { this._input = input; }}
+          ref={(input) => {this._input = input;}}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
           onChange={this.onChange}/>);
