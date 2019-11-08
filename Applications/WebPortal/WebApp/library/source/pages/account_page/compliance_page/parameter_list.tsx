@@ -15,9 +15,10 @@ interface Properties {
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The event handler called when the schema changes. */
-  onChange?:(schema: Nexus.ComplianceRuleSchema) => void;
+  onChange?: (schema: Nexus.ComplianceRuleSchema) => void;
 }
 
+/** Displays the a list of parameters associated with a schema. */
 export class ParametersList extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
