@@ -33,13 +33,14 @@ namespace OrderExecutionService {
   class OrderExecutionSession;
   struct OrderFields;
   struct OrderInfo;
-  template<typename C> class OrderWrapperReactor;
+  template<typename C, typename O> class OrderReactor;
   struct OrderRecord;
   class OrderSubmissionCheck;
   template<typename OrderExecutionDriverType> class OrderSubmissionCheckDriver;
   class OrderSubmissionCheckException;
   class OrderSubmissionRegistry;
   class OrderUnrecoverableException;
+  template<typename C> class OrderWrapperReactor;
   class PrimitiveOrder;
   template<typename AdministrationClientType> class RiskStateCheck;
   template<typename C> class SqlOrderExecutionDataStore;

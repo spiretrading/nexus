@@ -21,6 +21,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
