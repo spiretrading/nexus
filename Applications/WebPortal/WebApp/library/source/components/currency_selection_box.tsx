@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
-import * as React from 'react';
 import * as Nexus from 'nexus';
+import * as React from 'react';
 
 interface Properties {
 
