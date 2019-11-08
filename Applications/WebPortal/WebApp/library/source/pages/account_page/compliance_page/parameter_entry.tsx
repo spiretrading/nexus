@@ -1,9 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, IntegerInputBox, MoneyInputBox, TextInputField }
-  from '../../../components';
-import { DisplaySize } from '../../../display_size';
-import { ComplianceParameter, ComplianceValue } from 'nexus';
+import { CurrencySelectionBox, DisplaySize, IntegerInputBox, MoneyInputBox,
+  TextInputField } from '../../..';
 
 interface Properties {
 
@@ -99,8 +97,8 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private onChange(newValue: any) {
-    this.props.onChange(new ComplianceParameter(this.props.parameter.name, 
-      new ComplianceValue(this.props.parameter.value.type, newValue)));
+    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name, 
+      new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 
   private static readonly STYLE = {
