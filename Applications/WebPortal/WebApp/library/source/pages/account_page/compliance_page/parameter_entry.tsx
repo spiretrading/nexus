@@ -6,9 +6,17 @@ import {CurrencySelectionBox, MoneyInputBox, TextInputField,
 import { ComplianceParameter, ComplianceValue } from 'nexus';
 
 interface Properties {
+
+  /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The parameter to be displayed. */
   parameter?: Nexus.ComplianceParameter;
+
+  /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+ /** The event handler called when the parameter changes. */
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
 

@@ -7,7 +7,7 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
-export class NewRuleButton extends React.Component<Properties>{
+export class NewRuleButton extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
   };

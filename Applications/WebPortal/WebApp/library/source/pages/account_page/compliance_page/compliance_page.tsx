@@ -40,7 +40,7 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
-    return(
+    return (
       <div style={CompliancePage.STYLE.wrapper}>
         <div style={CompliancePage.STYLE.filler}/>
         <div style={contentStyle}>
@@ -50,7 +50,7 @@ export class CompliancePage extends React.Component<Properties, State> {
             complianceList={this.state.complianceList}
             onChange={this.onChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize} />
+          <NewRuleButton displaySize={this.props.displaySize}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>
