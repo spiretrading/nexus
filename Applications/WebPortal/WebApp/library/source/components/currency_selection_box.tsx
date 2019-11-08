@@ -12,7 +12,7 @@ interface Properties {
 
   /** Additional CSS styles. */
   style?: any;
-  
+
   /** The class name of the currency selection box. */
   className?: string;
 
