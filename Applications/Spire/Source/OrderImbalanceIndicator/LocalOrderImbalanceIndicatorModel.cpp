@@ -12,7 +12,6 @@ std::tuple<boost::signals2::connection,
         const OrderImbalanceSignal::slot_type& slot) {
   m_signals.emplace_back(OrderImbalanceSignalConnection{
       OrderImbalanceSignal(), start, end});
-  qDebug() << &slot;
   return std::tuple<boost::signals2::connection,
     QtPromise<std::vector<OrderImbalance>>>(
       m_signals.back().m_imbalance_signal.connect(slot),

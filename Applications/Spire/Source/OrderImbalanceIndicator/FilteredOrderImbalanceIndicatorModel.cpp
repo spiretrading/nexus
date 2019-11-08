@@ -16,17 +16,18 @@ std::tuple<boost::signals2::connection,
     FilteredOrderImbalanceIndicatorModel::subscribe(
       const boost::posix_time::ptime& start,
       const boost::posix_time::ptime& end,
-      const OrderImbalanceSignal::slot_type& slot) {
-  m_signals.push_back(FilteredOrderImbalanceSignalConnection{
-    {OrderImbalanceSignal(), start, end}, {}});
-  auto callback = [&] (auto& imbalance) {
+      OrderImbalanceSignal::slot_type slot) {
+  auto signal = std::make_unique<FilteredOrderImbalanceSignalConnection>(
+    FilteredOrderImbalanceSignalConnection {{OrderImbalanceSignal(), start, end}, {}});
+  auto callback = [this, signal = signal.get()] (auto& imbalance) {
       if(is_imbalance_accepted(imbalance)) {
-        m_signals.back().m_imbalance_signal(imbalance);
+        signal->m_imbalance_signal(imbalance);
     }};
+  m_signals.push_back(std::move(signal));
   auto [connection, promise] = m_source_model->subscribe(start, end,
-    callback);
-  m_signals.back().m_source_signal_connection = connection;
-  return {m_signals.back().m_imbalance_signal.connect(slot),
+    std::move(callback));
+  m_signals.back()->m_source_signal_connection = connection;
+  return {m_signals.back()->m_imbalance_signal.connect(slot),
         promise.then([=] (auto& imbalances) {
       return filter_imbalances(imbalances);
     })};

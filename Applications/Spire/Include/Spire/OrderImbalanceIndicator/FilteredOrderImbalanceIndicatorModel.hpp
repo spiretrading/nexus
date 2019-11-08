@@ -36,7 +36,8 @@ namespace Spire {
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<FilteredOrderImbalanceSignalConnection> m_signals;
+      std::vector<std::unique_ptr<FilteredOrderImbalanceSignalConnection>>
+        m_signals;
       std::vector<std::function<bool (const Nexus::OrderImbalance&)>>
         m_filters;
 

@@ -262,24 +262,16 @@ TEST_CASE("test_filtered_signals",
     auto signal_data3 = OrderImbalance();
     auto signal_data4 = OrderImbalance();
     auto [connection1, promise1] = model.subscribe(from_time_t(100),
-      from_time_t(500), [&] (auto& i) {
-        qDebug() << "1";
-        signal_data1 = i; });
+      from_time_t(500), [&] (auto& i) { signal_data1 = i; });
     wait(std::move(promise1));
     auto [connection2, promise2] = model.subscribe(from_time_t(200),
-      from_time_t(300), [&] (auto& i) {
-      qDebug() << "2";
-      signal_data2 = i; });
+      from_time_t(300), [&] (auto& i) { signal_data2 = i; });
     wait(std::move(promise2));
     auto [connection3, promise3] = model.subscribe(from_time_t(300),
-      from_time_t(400), [&] (auto& i) {
-      qDebug() << "3";
-      signal_data3 = i; });
+      from_time_t(400), [&] (auto& i) { signal_data3 = i; });
     wait(std::move(promise3));
     auto [connection4, promise4] = model.subscribe(from_time_t(900),
-      from_time_t(1000), [&] (auto& i) {
-      qDebug() << "4";
-      signal_data4 = i; });
+      from_time_t(1000), [&] (auto& i) { signal_data4 = i; });
     wait(std::move(promise4));
     local_model->insert(a);
     REQUIRE(signal_data1 == a);
