@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '../../../display_size';
-import {ParameterEntry} from './parameter_entry';
-import {ComplianceRuleSchema, ComplianceParameter} from 'nexus';
+import { ParameterEntry } from './parameter_entry';
+import { ComplianceRuleSchema, ComplianceParameter } from 'nexus';
 
 interface Properties {
   
