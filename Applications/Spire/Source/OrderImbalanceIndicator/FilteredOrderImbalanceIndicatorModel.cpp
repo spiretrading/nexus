@@ -16,7 +16,7 @@ std::tuple<boost::signals2::connection,
     FilteredOrderImbalanceIndicatorModel::subscribe(
       const boost::posix_time::ptime& start,
       const boost::posix_time::ptime& end,
-      OrderImbalanceSignal::slot_type slot) {
+      const OrderImbalanceSignal::slot_type& slot) {
   auto signal = std::make_unique<FilteredOrderImbalanceSignalConnection>(
     FilteredOrderImbalanceSignalConnection {{OrderImbalanceSignal(), start, end}, {}});
   auto callback = [this, signal = signal.get()] (auto& imbalance) {
