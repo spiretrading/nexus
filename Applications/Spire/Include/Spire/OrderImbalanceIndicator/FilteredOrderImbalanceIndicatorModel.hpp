@@ -18,7 +18,7 @@ namespace Spire {
       */
       FilteredOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-        const std::vector<std::function<bool (const Nexus::OrderImbalance&)>>&
+        std::vector<std::function<bool (const Nexus::OrderImbalance&)>>
           filters);
 
       std::tuple<boost::signals2::connection,

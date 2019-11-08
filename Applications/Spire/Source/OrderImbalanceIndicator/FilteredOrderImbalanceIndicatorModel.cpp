@@ -7,11 +7,9 @@ using namespace Spire;
 
 FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
     std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-    const std::vector<std::function<bool (const OrderImbalance&)>>& filters)
-    : m_source_model(source_model),
-      m_filters(filters) {
-  auto a = 0;
-}
+    std::vector<std::function<bool (const OrderImbalance&)>> filters)
+    : m_source_model(std::move(source_model)),
+      m_filters(std::move(filters)) {}
 
 std::tuple<boost::signals2::connection,
     QtPromise<std::vector<Nexus::OrderImbalance>>>
@@ -19,7 +17,7 @@ std::tuple<boost::signals2::connection,
       const boost::posix_time::ptime& start,
       const boost::posix_time::ptime& end,
       const OrderImbalanceSignal::slot_type& slot) {
-  m_signals.emplace_back(OrderImbalanceSignalConnection{
+  m_signals.push_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   auto callback = [&] (auto& imbalance) {
       if(!filter_imbalances({imbalance}).empty()) {
@@ -30,7 +28,7 @@ std::tuple<boost::signals2::connection,
     callback);
   return {m_signals.back().m_imbalance_signal.connect(slot),
         promise.then([=] (auto& imbalances) {
-      return std::move(filter_imbalances(imbalances));
+      return filter_imbalances(imbalances);
     })};
 }
 
@@ -122,5 +120,5 @@ std::vector<Nexus::OrderImbalance>
       filtered_imbalances.emplace_back(std::move(imbalance));
     }
   }
-  return std::move(filtered_imbalances);
+  return filtered_imbalances;
 }
