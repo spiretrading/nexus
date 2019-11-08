@@ -12,9 +12,15 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The rule to display. */
   complianceRule?: Nexus.ComplianceRuleEntry;
+
+  /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
-  onChange?:(parameter: Nexus.ComplianceRuleEntry) => void;
+
+  /** The event handler called when the rule entry changes. */
+  onChange?:(ruleEntry: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -120,8 +126,7 @@ export class RuleRow extends React.Component<Properties, State> {
       this.props.complianceRule.id,
       this.props.complianceRule.directoryEntry,
       newMode,
-      this.props.complianceRule.schema
-    );
+      this.props.complianceRule.schema);
     this.props.onChange(newRule);
   }
 
@@ -134,8 +139,7 @@ export class RuleRow extends React.Component<Properties, State> {
       this.props.complianceRule.id,
       this.props.complianceRule.directoryEntry,
       this.props.complianceRule.state,
-      schema
-    );
+      schema);
     this.props.onChange(newRule);
   };
 
