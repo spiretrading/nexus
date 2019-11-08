@@ -20,7 +20,7 @@ interface Properties {
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The event handler called when the rule entry changes. */
-  onChange?:(ruleEntry: Nexus.ComplianceRuleEntry) => void;
+  onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -28,6 +28,7 @@ interface State {
   animationStyle: any;
 }
 
+/** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
   constructor(props: Properties){
     super(props);
@@ -72,7 +73,7 @@ export class RuleRow extends React.Component<Properties, State> {
       }
     })();
     const prefixPaddingStyle = RuleRow.STYLE.prefixPadding;
-    return(
+    return (
       <div style={RuleRow.STYLE.wrapper}>
         <div style={boxStyle}>
           {spacing}
@@ -202,6 +203,7 @@ export class RuleRow extends React.Component<Properties, State> {
       height: '10px'
     }
   };
+  private static readonly TRANSITION_LENGTH_MS = 600;
   private applicabilityStyleDefinition = {
     entering: {
       maxHeight: '0',
@@ -224,6 +226,5 @@ export class RuleRow extends React.Component<Properties, State> {
       overflow: 'hidden' as 'hidden'
     }
   };
-  private static readonly TRANSITION_LENGTH_MS = 600;
   private ruleParameters: HTMLDivElement;
 }

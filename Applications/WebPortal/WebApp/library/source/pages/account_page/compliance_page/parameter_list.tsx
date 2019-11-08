@@ -50,10 +50,9 @@ export class ParametersList extends React.Component<Properties> {
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
-        onChange={(newParameter: Nexus.ComplianceParameter) =>
-          this.onChange(i, newParameter)}
+        onChange={this.onChange.bind(i)}
         parameter={rule}/>);
-    };
+    }
     return (
       <div style={leftPadding}>
         <div id={'topFiller'}/>
@@ -64,7 +63,8 @@ export class ParametersList extends React.Component<Properties> {
       </div>);
   }
 
-  private onChange(parameterIndex: number, parameter: Nexus.ComplianceParameter) {
+  private onChange(parameterIndex: number, 
+      parameter: Nexus.ComplianceParameter) {
     const newParameters = [] as Nexus.ComplianceParameter[];
     for(let i = 0; i < this.props.schema.parameters.length; ++i) {
       if(parameterIndex === i) {
