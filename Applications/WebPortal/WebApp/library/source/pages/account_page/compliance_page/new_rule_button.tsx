@@ -7,10 +7,8 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
+/** Displays a componentt that allows a user to add a new rule. */
 export class NewRuleButton extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-  };
 
   public render(): JSX.Element {
     const imageSize = (() => {
@@ -51,5 +49,5 @@ export class NewRuleButton extends React.Component<Properties> {
       height: '20px',
       cursor: 'pointer'
     }
-  }
+  };
 }

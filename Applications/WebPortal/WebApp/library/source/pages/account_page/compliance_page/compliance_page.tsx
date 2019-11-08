@@ -1,5 +1,5 @@
-import * as React from 'react';
 import * as Nexus from 'nexus';
+import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { NewRuleButton } from '.';
 import { RulesList } from './rules_list';
