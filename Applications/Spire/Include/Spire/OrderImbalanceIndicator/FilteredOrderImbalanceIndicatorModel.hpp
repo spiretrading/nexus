@@ -4,12 +4,14 @@
 
 namespace Spire {
 
+  //! Represents an OrderImbalanceModel that applies custom filters to the
+  //! data it provides.
   class FilteredOrderImbalanceIndicatorModel :
       public OrderImbalanceIndicatorModel {
     public:
 
-      //! An OrderImbalanceModel that applies custom filters to the data it
-      //! provides.
+      //! Constructs a FilteredOrderImbalanceIndicatorModel with a given
+      //! source model and specific filters.
       /*
         \param source_model The model supplying data to the filtered model.
         \param filters The functions applied to order imbalances as filters.
