@@ -59,9 +59,9 @@ export class TextInputField extends React.Component<Properties> {
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onInput(event.target.value);
-        }}
-        className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' + this.props.className}/>);
+          this.props.onInput(event.target.value);}}
+        className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' +
+          this.props.className}/>);
   }
 
   private static readonly STYLE = {
