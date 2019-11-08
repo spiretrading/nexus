@@ -1,8 +1,8 @@
-import * as React from 'react';
 import * as Nexus from 'nexus';
+import * as React from 'react';
+import { CurrencySelectionBox, IntegerInputBox, MoneyInputBox, TextInputField }
+  from '../../../components';
 import { DisplaySize } from '../../../display_size';
-import { CurrencySelectionBox, MoneyInputBox, TextInputField, 
-  IntegerInputBox } from '../../../components';
 import { ComplianceParameter, ComplianceValue } from 'nexus';
 
 interface Properties {

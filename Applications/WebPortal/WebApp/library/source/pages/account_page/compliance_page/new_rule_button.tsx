@@ -26,7 +26,7 @@ export class NewRuleButton extends React.Component<Properties> {
             width={imageSize}/>
         </div>
         <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
-    </div>);
+      </div>);
   }
 
   private static readonly STYLE = {
