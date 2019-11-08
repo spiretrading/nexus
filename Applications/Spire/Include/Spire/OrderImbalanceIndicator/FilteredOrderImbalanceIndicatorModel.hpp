@@ -28,8 +28,15 @@ namespace Spire {
           const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
+
+      struct FilteredOrderImbalanceSignalConnection :
+          OrderImbalanceSignalConnection {
+        
+        boost::signals2::scoped_connection m_source_signal_connection;
+      };
+
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<OrderImbalanceSignalConnection> m_signals;
+      std::vector<FilteredOrderImbalanceSignalConnection> m_signals;
       std::vector<std::function<bool (const Nexus::OrderImbalance&)>>
         m_filters;
 

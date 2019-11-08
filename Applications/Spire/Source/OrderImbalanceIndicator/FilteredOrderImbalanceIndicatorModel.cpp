@@ -17,15 +17,15 @@ std::tuple<boost::signals2::connection,
       const boost::posix_time::ptime& start,
       const boost::posix_time::ptime& end,
       const OrderImbalanceSignal::slot_type& slot) {
-  m_signals.push_back(OrderImbalanceSignalConnection{
-    OrderImbalanceSignal(), start, end});
+  m_signals.push_back(FilteredOrderImbalanceSignalConnection{
+    {OrderImbalanceSignal(), start, end}, {}});
   auto callback = [&] (auto& imbalance) {
-      if(!filter_imbalances({imbalance}).empty()) {
+      if(is_imbalance_accepted(imbalance)) {
         m_signals.back().m_imbalance_signal(imbalance);
     }};
-  // should connection be stored?
   auto [connection, promise] = m_source_model->subscribe(start, end,
     callback);
+  m_signals.back().m_source_signal_connection = connection;
   return {m_signals.back().m_imbalance_signal.connect(slot),
         promise.then([=] (auto& imbalances) {
       return filter_imbalances(imbalances);
