@@ -8,9 +8,15 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The schema that provides the paramters. */
   schema: ComplianceRuleSchema;
+
+  /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
-  onChange?:(parameter: Nexus.ComplianceRuleSchema) => void;
+
+  /** The event handler called when the schema changes. */
+  onChange?:(schema: Nexus.ComplianceRuleSchema) => void;
 }
 
 export class ParametersList extends React.Component<Properties> {
@@ -34,16 +40,17 @@ export class ParametersList extends React.Component<Properties> {
         return ParametersList.STYLE.largeWrapper;
       }
     })();
-    const thing = [] as any[];
+    const parameterEntries = [] as JSX.Element[];
     for(let i = 0; i < this.props.schema.parameters.length; ++i) {
       const rule = this.props.schema.parameters[i];
       if(this.props.schema.parameters.indexOf(rule) !== 0) {
-        thing.push(<div style={ParametersList.STYLE.fillerBetweenRows}/>);
+        parameterEntries.push(<div style={ParametersList.STYLE.fillerBetweenRows}/>);
       }
-      thing.push(<ParameterEntry 
+      parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
-        onChange={(newParameter: Nexus.ComplianceParameter) => this.onChange(i, newParameter)}
+        onChange={(newParameter: Nexus.ComplianceParameter) =>
+          this.onChange(i, newParameter)}
         parameter={rule}/>);
     };
     return (
@@ -51,7 +58,7 @@ export class ParametersList extends React.Component<Properties> {
         <div id={'topFiller'}/>
         <div style={headerStyle}>Parameters</div>
         <div id={'moreFiller'}/>
-        {thing}
+        {parameterEntries}
         <div style={ParametersList.STYLE.bottomFiller}/>
       </div>);
   }
@@ -66,9 +73,7 @@ export class ParametersList extends React.Component<Properties> {
       }
     }
     const newSchema = new ComplianceRuleSchema(
-        this.props.schema.name,
-        newParameters
-    );
+      this.props.schema.name, newParameters);
     this.props.onChange(newSchema);
   }
 

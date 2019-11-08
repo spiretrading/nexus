@@ -39,9 +39,6 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
           className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
           style={{...sizeStyle,
             ...RuleExecutionDropDown.STYLE.selectionBoxStyle}}>
-        <option value={Nexus.ComplianceRuleEntry.State.NONE}>
-          {'-'}
-        </option>
         <option value={Nexus.ComplianceRuleEntry.State.ACTIVE}>
           {'Active'}
         </option>
