@@ -84,7 +84,7 @@ export class ParameterEntry extends React.Component<Properties> {
               style={inputWrapper}/>);
         case Nexus.ComplianceValue.Type.LIST:
           return <div/>;
-        case Nexus.ComplianceValue.Type.NONE:
+        default:
           return <div/>;
       }
     })();

@@ -1,8 +1,7 @@
-import * as React from 'react';
 import * as Nexus from 'nexus';
-import { DisplaySize } from '../../../display_size';
+import * as React from 'react';
+import { DisplaySize } from '../../..';
 import { ParameterEntry } from './parameter_entry';
-import { ComplianceRuleSchema, ComplianceParameter } from 'nexus';
 
 interface Properties {
   
@@ -10,7 +9,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The schema that provides the paramters. */
-  schema: ComplianceRuleSchema;
+  schema: Nexus.ComplianceRuleSchema;
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
@@ -44,7 +43,8 @@ export class ParametersList extends React.Component<Properties> {
     for(let i = 0; i < this.props.schema.parameters.length; ++i) {
       const rule = this.props.schema.parameters[i];
       if(this.props.schema.parameters.indexOf(rule) !== 0) {
-        parameterEntries.push(<div style={ParametersList.STYLE.fillerBetweenRows}/>);
+        parameterEntries.push(
+          <div style={ParametersList.STYLE.fillerBetweenRows}/>);
       }
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
@@ -64,7 +64,7 @@ export class ParametersList extends React.Component<Properties> {
   }
 
   private onChange(parameterIndex: number, parameter: Nexus.ComplianceParameter) {
-    const newParameters = [] as ComplianceParameter[];
+    const newParameters = [] as Nexus.ComplianceParameter[];
     for(let i = 0; i < this.props.schema.parameters.length; ++i) {
       if(parameterIndex === i) {
         newParameters[i] = parameter;
@@ -72,7 +72,7 @@ export class ParametersList extends React.Component<Properties> {
         newParameters[i] = this.props.schema.parameters[i];
       }
     }
-    const newSchema = new ComplianceRuleSchema(
+    const newSchema = new Nexus.ComplianceRuleSchema(
       this.props.schema.name, newParameters);
     this.props.onChange(newSchema);
   }
