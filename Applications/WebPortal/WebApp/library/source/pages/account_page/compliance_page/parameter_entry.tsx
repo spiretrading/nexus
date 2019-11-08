@@ -14,7 +14,7 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
- /** The event handler called when the parameter changes. */
+  /** The event handler called when the parameter changes. */
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
 
