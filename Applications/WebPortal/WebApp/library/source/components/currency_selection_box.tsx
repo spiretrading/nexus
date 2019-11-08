@@ -8,7 +8,7 @@ interface Properties {
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The initial currency selected. */
-  value: Nexus.Currency;
+  value?: Nexus.Currency;
 
   /** Additional CSS styles. */
   style?: any;
@@ -89,7 +89,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       flexShrink: 1
     }
   };
-  public static readonly EXTRA_STYLE = StyleSheet.create({
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     noHighting: {
       ':focus': {
         ouline: 0,
