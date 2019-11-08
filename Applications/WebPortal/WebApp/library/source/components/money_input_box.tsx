@@ -171,8 +171,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       width: '100%',
       paddingLeft: '10px',
     }
-  }
-
+  };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
@@ -183,7 +182,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
+      ':active': {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {

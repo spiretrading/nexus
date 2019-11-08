@@ -1,4 +1,3 @@
-
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
