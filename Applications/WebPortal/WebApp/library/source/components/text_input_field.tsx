@@ -65,7 +65,7 @@ export class TextInputField extends React.Component<Properties> {
         className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' + this.props.className}/>);
   }
 
-private static STYLE = {
+  private static readonly STYLE = {
     boxSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -115,7 +115,7 @@ private static STYLE = {
     }
   };
 
-  private static EXTRA_STYLE = StyleSheet.create({
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
         ouline: 0,
