@@ -18,6 +18,7 @@ interface Properties {
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
 
+/** Displays a specific parameter. */
 export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
