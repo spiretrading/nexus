@@ -164,7 +164,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
       maxWidth: '246px',
