@@ -65,55 +65,56 @@ TEST_CASE("test_signals",
   }, "test_signals");
 }
 
-TEST_CASE("test_right_no_overlap", "[CachedChartModel]") {
+TEST_CASE("test_right_no_overlap", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_right_no_overlap");
 }
 
-TEST_CASE("test_left_no_overlap", "[CachedChartModel]") {
+TEST_CASE("test_left_no_overlap", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_left_no_overlap");
 }
 
-TEST_CASE("test_right_overlap", "[CachedChartModel]") {
+TEST_CASE("test_right_overlap", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_right_overlap");
 }
 
-TEST_CASE("test_left_overlap", "[CachedChartModel]") {
+TEST_CASE("test_left_overlap", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_left_overlap");
 }
 
-TEST_CASE("test_subset", "[CachedChartModel]") {
+TEST_CASE("test_subset", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_subset");
 }
 
-TEST_CASE("test_single_superset", "[CachedChartModel]") {
+TEST_CASE("test_single_superset", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_single_superset");
 }
 
-TEST_CASE("test_multiple_supersets", "[CachedChartModel]") {
+TEST_CASE("test_multiple_supersets", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_multiple_supersets");
 }
 
-TEST_CASE("test_multiple_subsets_and_supersets", "[CachedChartModel]") {
+TEST_CASE("test_multiple_subsets_and_supersets",
+    "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "test_multiple_subsets_and_supersets");
 }
 
-TEST_CASE("test_multiple_cache_hits", "[CachedChartModel]") {
+TEST_CASE("test_multiple_cache_hits", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     
   }, "test_multiple_cache_hits");
