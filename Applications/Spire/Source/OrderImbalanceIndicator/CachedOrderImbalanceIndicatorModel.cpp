@@ -34,6 +34,29 @@ std::tuple<std::vector<Nexus::OrderImbalance>::const_iterator,
   return {lower, upper};
 }
 
+void CachedOrderImbalanceIndicatorModel::insert_imbalances(
+    const std::vector<OrderImbalance>& imbalances) {
+  if(imbalances.empty()) {
+    return;
+  }
+  if(m_imbalances.empty()) {
+    m_imbalances.insert(m_imbalances.end(), imbalances.begin(),
+      imbalances.end());
+  } else {
+    auto new_imbalances = std::vector<OrderImbalance>(m_imbalances.size() +
+      imbalances.size());
+    std::set_union(m_imbalances.begin(), m_imbalances.end(), imbalances.begin(),
+      imbalances.end(), new_imbalances.begin(),
+      [] (auto& first, auto& second) {
+          return first.m_timestamp < second.m_timestamp;
+        });
+    new_imbalances.shrink_to_fit();
+    m_imbalances = std::move(new_imbalances);
+  }
+  m_ranges.add(continuous_interval<ptime>::closed(
+    imbalances.front().m_timestamp, imbalances.back().m_timestamp));
+}
+
 std::tuple<boost::signals2::connection,
     QtPromise<std::vector<Nexus::OrderImbalance>>>
     CachedOrderImbalanceIndicatorModel::get_subscription(
@@ -43,6 +66,9 @@ std::tuple<boost::signals2::connection,
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   auto [lower, upper] = get_imbalance_iterators(start, end);
+  if(upper != m_imbalances.end()) {
+    ++upper;
+  }
   return {m_signals.back().m_imbalance_signal.connect(slot),
     QtPromise([=] { return std::vector<OrderImbalance>(lower, upper); })};
 }
@@ -60,7 +86,11 @@ std::tuple<boost::signals2::connection,
     OrderImbalanceSignal(), start, end});
   return {m_signals.back().m_imbalance_signal.connect(slot),
     promise.then([=] (auto& imbalances) {
+        insert_imbalances(imbalances);
         auto [lower, upper] = get_imbalance_iterators(start, end);
+        if(upper != m_imbalances.end()) {
+          ++upper;
+        }
         return std::vector<OrderImbalance>(lower, upper);
       })};
 }

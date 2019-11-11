@@ -32,6 +32,8 @@ namespace Spire {
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       std::vector<boost::signals2::scoped_connection> m_connections;
 
+      void insert_imbalances(
+        const std::vector<Nexus::OrderImbalance>& imbalances);
       std::tuple<std::vector<Nexus::OrderImbalance>::const_iterator,
         std::vector<Nexus::OrderImbalance>::const_iterator>
         get_imbalance_iterators(const boost::posix_time::ptime& start,
