@@ -75,7 +75,49 @@ TEST_CASE("atest_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
 TEST_CASE("atest_signals",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto signal_data1 = OrderImbalance();
+    auto signal_data2 = OrderImbalance();
+    auto signal_data3 = OrderImbalance();
+    auto signal_data4 = OrderImbalance();
+    auto [connection1, promise1] = cached_model.subscribe(from_time_t(100),
+      from_time_t(300), [&] (auto& i) { signal_data1 = i; });
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cached_model.subscribe(from_time_t(200),
+      from_time_t(400), [&] (auto& i) { signal_data2 = i; });
+    wait(std::move(promise2));
+    auto [connection3, promise3] = cached_model.subscribe(from_time_t(300),
+      from_time_t(500), [&] (auto& i) { signal_data3 = i; });
+    wait(std::move(promise3));
+    auto [connection4, promise4] = cached_model.subscribe(from_time_t(900),
+      from_time_t(1000), [&] (auto& i) { signal_data4 = i; });
+    wait(std::move(promise4));
+    local_model->insert(a);
+    REQUIRE(signal_data1 == a);
+    REQUIRE(signal_data2 == OrderImbalance());
+    REQUIRE(signal_data3 == OrderImbalance());
+    REQUIRE(signal_data4 == OrderImbalance());
+    local_model->insert(b);
+    REQUIRE(signal_data1 == b);
+    REQUIRE(signal_data2 == b);
+    REQUIRE(signal_data3 == OrderImbalance());
+    REQUIRE(signal_data4 == OrderImbalance());
+    local_model->insert(c);
+    REQUIRE(signal_data1 == c);
+    REQUIRE(signal_data2 == c);
+    REQUIRE(signal_data3 == c);
+    REQUIRE(signal_data4 == OrderImbalance());
+    local_model->insert(d);
+    REQUIRE(signal_data1 == c);
+    REQUIRE(signal_data2 == d);
+    REQUIRE(signal_data3 == d);
+    REQUIRE(signal_data4 == OrderImbalance());
+    local_model->insert(e);
+    REQUIRE(signal_data1 == c);
+    REQUIRE(signal_data2 == d);
+    REQUIRE(signal_data3 == e);
+    REQUIRE(signal_data4 == OrderImbalance());
   }, "test_signals");
 }
 
