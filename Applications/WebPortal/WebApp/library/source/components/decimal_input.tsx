@@ -6,6 +6,16 @@ interface Properties {
   /** The value to display in the field. */
   value?: number;
 
+
+  /** This specifies the interval between legal numbers. */
+  step?: number;
+
+  /** The minimum value that box can display.*/
+  min?: number;
+
+  /** The largest value that box can display.*/
+  max?: number;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -23,10 +33,12 @@ export class DecimalInput extends React.Component<Properties> {
       return DecimalInput.STYLE.box;
     })();
     return (
-      <input value={this.props.value}
+      <input 
         type={'number'}
+        value={this.props.value}
+        min={this.props.min}
+        step={this.props.step}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          console.log(event.target.valueAsNumber);
           this.props.onChange(event.target.valueAsNumber);}}
         className={css(boxStyle)}/>);
   }

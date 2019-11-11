@@ -41,7 +41,16 @@ class TestApp extends React.Component<Properties> {
       34,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.PASSIVE,
-      new Nexus.ComplianceRuleSchema('New Components',[]));
+      new Nexus.ComplianceRuleSchema('New Components',[
+        new Nexus.ComplianceParameter(
+            'Decimal',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.DOUBLE, 345.686868)),
+        new Nexus.ComplianceParameter(
+            'Quantity',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.QUANTITY, 500)),
+      ]));
     list.push(someEntry2);
     return(
       <div style={TestApp.STYLE.wrapper}>

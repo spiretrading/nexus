@@ -2,6 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, IntegerInputBox, MoneyInputBox,
   TextInputField } from '../../..';
+import { DecimalInput } from '../../../components';
 
 interface Properties {
 
@@ -60,7 +61,9 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <div/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
-          return <div/>;
+          return <DecimalInput 
+            value={this.props.parameter.value.value}
+            onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <div/>;
         case Nexus.ComplianceValue.Type.MONEY:
@@ -70,7 +73,9 @@ export class ParameterEntry extends React.Component<Properties> {
               onChange={this.onChange}/>);
         case Nexus.ComplianceValue.Type.QUANTITY:
           return (
-            <IntegerInputBox
+            <DecimalInput 
+              min={0}
+              step={1}
               value={this.props.parameter.value.value}
               onChange={this.onChange}/>);
         case Nexus.ComplianceValue.Type.SECURITY:
