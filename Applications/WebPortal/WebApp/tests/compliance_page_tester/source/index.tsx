@@ -25,7 +25,7 @@ class TestApp extends React.Component<Properties> {
           new Nexus.ComplianceParameter(
             'Money',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.MONEY, new Nexus.Money(60000000000))),
+              Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('1234.56'))),
           new Nexus.ComplianceParameter('Currency',
             new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY, 
               Nexus.DefaultCurrencies.CAD)),

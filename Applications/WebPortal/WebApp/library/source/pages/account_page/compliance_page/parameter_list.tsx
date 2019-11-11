@@ -50,7 +50,7 @@ export class ParametersList extends React.Component<Properties> {
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
-        onChange={this.onChange.bind(i)}
+        onChange={this.onChange.bind(this, i)}
         parameter={rule}/>);
     }
     return (
