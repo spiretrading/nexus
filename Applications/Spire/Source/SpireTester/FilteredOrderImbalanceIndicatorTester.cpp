@@ -35,16 +35,16 @@ namespace {
     1000000, 10000.0, from_time_t(500));
 
   const auto market_database = GetDefaultMarketDatabase();
-}
 
-auto make_local_model() {
-    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-    model->insert(a);
-    model->insert(b);
-    model->insert(c);
-    model->insert(d);
-    model->insert(e);
-    return model;
+  auto make_local_model() {
+      auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      model->insert(a);
+      model->insert(b);
+      model->insert(c);
+      model->insert(d);
+      model->insert(e);
+      return model;
+  }
 }
 
 TEST_CASE("test_unfiltered_subscribing",

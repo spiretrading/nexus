@@ -9,9 +9,12 @@ using boost::posix_time::from_time_t;
 using namespace Nexus;
 using namespace Spire;
 
-auto make(const std::string& symbol, const ptime& timestamp) {
-  return OrderImbalance(Security(symbol, 0), Side::BID, 100,
-    Money(1 * Money::ONE), timestamp);
+namespace {
+
+  auto make(const std::string& symbol, const ptime& timestamp) {
+    return OrderImbalance(Security(symbol, 0), Side::BID, 100,
+      Money(1 * Money::ONE), timestamp);
+  }
 }
 
 TEST_CASE("test_basic_inserting_subscribing",
