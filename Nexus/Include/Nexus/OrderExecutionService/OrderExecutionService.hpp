@@ -1,12 +1,11 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVICE_HPP
-#define NEXUS_ORDEREXECUTIONSERVICE_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVICE_HPP
+#define NEXUS_ORDER_EXECUTION_SERVICE_HPP
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <Beam/Queues/Queues.hpp>
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
   class AccountOrderSubmissionEntry;
   class ApplicationOrderExecutionClient;
   template<typename MarketDataClientType> class BoardLotCheck;
@@ -32,6 +31,9 @@ namespace OrderExecutionService {
     typename OrderExecutionDataStoreType> class OrderExecutionServlet;
   class OrderExecutionSession;
   struct OrderFields;
+  template<typename AR, typename SR, typename CR, typename OR, typename TR,
+    typename DR, typename QR, typename PR, typename FR, typename RR>
+    class OrderFieldsReactor;
   struct OrderInfo;
   template<typename C, typename O> class OrderReactor;
   struct OrderRecord;
@@ -53,7 +55,6 @@ namespace OrderExecutionService {
 
   // Standard name for the order execution service.
   static const std::string SERVICE_NAME = "order_execution_service";
-}
 }
 
 #endif

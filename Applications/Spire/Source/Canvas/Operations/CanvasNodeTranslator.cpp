@@ -21,6 +21,7 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/OrderFieldsReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -1526,60 +1527,58 @@ void CanvasNodeTranslationVisitor::Visit(const SideNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   auto orderExecutionPublisher =
     std::make_shared<SequencePublisher<const Order*>>();
-#if 0 // TODO
-  SingleOrderTaskFactory<VirtualOrderExecutionClient> singleOrderTaskFactory(
-    Ref(m_context->GetUserProfile().GetServiceClients().
-    GetOrderExecutionClient()), orderExecutionPublisher,
-    m_context->GetExecutingAccount());
+  auto additionalFields = std::vector<Aspen::Box<Tag>>();
   for(const auto& field : node.GetFields()) {
+    auto value = InternalTranslation(*node.FindChild(field.m_name));
     if(field.m_type->GetCompatibility(IntegerType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      singleOrderTaskFactory.AddField<Quantity>(field.m_name, field.m_key);
+      additionalFields.push_back(Aspen::box(Aspen::lift(
+        [key = field.m_key] (Quantity q) {
+          return Tag(key, q);
+        }, value.Extract<Aspen::Box<Quantity>>())));
     } else if(field.m_type->GetCompatibility(
         Spire::DecimalType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      singleOrderTaskFactory.AddField<double>(field.m_name, field.m_key);
+      additionalFields.push_back(Aspen::box(Aspen::lift(
+        [key = field.m_key] (double q) {
+          return Tag(key, q);
+        }, value.Extract<Aspen::Box<double>>())));
     } else if(field.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      singleOrderTaskFactory.AddField<Money>(field.m_name, field.m_key);
+      additionalFields.push_back(Aspen::box(Aspen::lift(
+        [key = field.m_key] (Money q) {
+          return Tag(key, q);
+        }, value.Extract<Aspen::Box<Money>>())));
     } else if(field.m_type->GetCompatibility(Spire::TextType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      singleOrderTaskFactory.AddField<string>(field.m_name, field.m_key);
+      additionalFields.push_back(Aspen::box(Aspen::lift(
+        [key = field.m_key] (std::string q) {
+          return Tag(key, q);
+        }, value.Extract<Aspen::Box<std::string>>())));
     }
   }
-  SingleRedisplayableOrderTaskFactory singleRedisplayableOrderTaskFactory(
-    singleOrderTaskFactory);
-  vector<ReactorProperty> properties;
-  std::shared_ptr<Reactor<Quantity>> quantityReactor;
-  for(const auto& child : node.GetChildren()) {
-    auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(child));
-    if(child.GetName() == BaseSingleOrderTaskFactory::QUANTITY) {
-      quantityReactor = std::static_pointer_cast<Reactor<Quantity>>(reactor);
-    }
-    string propertyName;
-    if(child.GetName() == SingleOrderTaskNode::VOLUME_PROPERTY) {
-      propertyName = SingleRedisplayableOrderTaskFactory::DISPLAY;
-      reactor = MakeFunctionReactor(MinOperation(),
-        std::static_pointer_cast<Reactor<Quantity>>(reactor),
-        std::static_pointer_cast<Reactor<Quantity>>(quantityReactor));
-    } else {
-      propertyName = child.GetName();
-    }
-    if(child.GetName() != SingleOrderTaskNode::DISPLAY_PROPERTY) {
-      auto property = Instantiate<PropertyBuilder>(reactor->GetType())(
-        propertyName, reactor);
-      properties.push_back(property);
-    }
-  }
-  TaskTranslation taskTranslation;
-  taskTranslation.m_publisher = orderExecutionPublisher;
-  taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
-    ReactorTaskFactory(Ref(m_context->GetReactorMonitor()),
-    std::move(properties), singleRedisplayableOrderTaskFactory),
-    orderExecutionPublisher);
-  m_translation = taskTranslation;
-#endif
+  auto& orderExecutionClient =
+    m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
+  m_translation = Translation(OrderReactor(Ref(orderExecutionClient),
+    OrderFieldsReactor(Aspen::constant(m_context->GetExecutingAccount()),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<Aspen::Box<CurrencyId>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::ORDER_TYPE_PROPERTY)).Extract<Aspen::Box<OrderType>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::SIDE_PROPERTY)).Extract<Aspen::Box<Side>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::DESTINATION_PROPERTY)).Extract<
+    Aspen::Box<std::string>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::QUANTITY_PROPERTY)).Extract<Aspen::Box<Quantity>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
+    InternalTranslation(*node.FindChild(
+    SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
+    Aspen::Box<TimeInForce>>(), std::move(additionalFields))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
