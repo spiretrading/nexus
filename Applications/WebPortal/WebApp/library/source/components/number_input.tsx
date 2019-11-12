@@ -37,6 +37,8 @@ export class NumberInput extends React.Component<Properties> {
     return (
       <input 
         type={'number'}
+        min={this.props.min}
+        max={this.props.max}
         value={this.props.value}
         style={{...NumberInput.STYLE.box, ...this.props.style}}
         onChange={this.onChange.bind(this)}

@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, IntegerInputBox, MoneyInputBox,
