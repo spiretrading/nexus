@@ -121,57 +121,64 @@ TEST_CASE("atest_signals",
   }, "test_signals");
 }
 
-TEST_CASE("atest_right_no_overlap", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_right_no_overlap");
-}
-
-TEST_CASE("atest_left_no_overlap", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_left_no_overlap");
-}
-
-TEST_CASE("atest_right_overlap", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_right_overlap");
-}
-
-TEST_CASE("atest_left_overlap", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_left_overlap");
-}
-
-TEST_CASE("atest_subset", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_subset");
-}
-
-TEST_CASE("atest_single_superset", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_single_superset");
-}
-
-TEST_CASE("atest_multiple_supersets", "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "test_multiple_supersets");
-}
-
-TEST_CASE("atest_multiple_subsets_and_supersets",
+TEST_CASE("imbalance_test_right_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
-  }, "test_multiple_subsets_and_supersets");
+  }, "imbalance_test_right_no_overlap");
 }
 
-TEST_CASE("atest_multiple_cache_hits", "[CachedOrderImbalanceIndicatorModel]") {
+TEST_CASE("imbalance_test_left_no_overlap",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_left_no_overlap");
+}
+
+TEST_CASE("imbalance_test_right_overlap", "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_right_overlap");
+}
+
+TEST_CASE("imbalance_test_left_overlap",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_left_overlap");
+}
+
+TEST_CASE("imbalance_test_subset",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_subset");
+}
+
+TEST_CASE("imbalance_test_single_superset",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_single_superset");
+}
+
+TEST_CASE("imbalance_test_multiple_supersets",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_multiple_supersets");
+}
+
+TEST_CASE("imbalance_test_multiple_subsets_and_supersets",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+
+  }, "imbalance_test_multiple_subsets_and_supersets");
+}
+
+TEST_CASE("imbalance_test_multiple_cache_hits",
+    "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     
-  }, "test_multiple_cache_hits");
+  }, "imbalance_test_multiple_cache_hits");
 }
