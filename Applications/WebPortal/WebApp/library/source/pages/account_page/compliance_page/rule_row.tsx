@@ -142,7 +142,7 @@ export class RuleRow extends React.Component<Properties, State> {
       this.props.complianceRule.state,
       schema);
     this.props.onChange(newRule);
-  };
+  }
 
   private static readonly STYLE = {
     wrapper : {
