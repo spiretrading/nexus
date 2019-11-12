@@ -25,22 +25,22 @@ interface Properties {
 }
 
 /** Displays a single text input field. */
-export class DecimalInput extends React.Component<Properties> {
+export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
   };
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      return DecimalInput.EXTRA_STYLE.customHighlighting;
+      return NumberInput.EXTRA_STYLE.customHighlighting;
     })();
     return (
       <input 
         type={'number'}
         value={this.props.value}
-        style={{...DecimalInput.STYLE.box, ...this.props.style}}
+        style={{...NumberInput.STYLE.box, ...this.props.style}}
         onChange={this.onChange.bind(this)}
-        className={css(DecimalInput.EXTRA_STYLE.customHighlighting) + ' ' + 
+        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' + 
           this.props.className}/>);
   }
 
