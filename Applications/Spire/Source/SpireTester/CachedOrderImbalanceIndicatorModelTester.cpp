@@ -33,7 +33,7 @@ namespace {
   }
 }
 
-TEST_CASE("atest_basic_subscribing",
+TEST_CASE("cached_imbalance_test_basic_subscribing",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto cached_model = CachedOrderImbalanceIndicatorModel(
@@ -41,7 +41,9 @@ TEST_CASE("atest_basic_subscribing",
     auto [connection1, promise1] = cached_model.subscribe(from_time_t(100),
       from_time_t(300), [] (auto& i) {});
     auto data1 = wait(std::move(promise1));
-    REQUIRE(data1 == std::vector<OrderImbalance>({a, b, c}));
+    auto expected1 = std::vector<OrderImbalance>({a, b, c});
+    REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
+      expected1.end()));
     auto [connection2, promise2] = cached_model.subscribe(from_time_t(200),
       from_time_t(400), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
@@ -53,7 +55,7 @@ TEST_CASE("atest_basic_subscribing",
   }, "test_basic_subscribing");
 }
 
-TEST_CASE("atest_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
+TEST_CASE("test_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto cached_model = CachedOrderImbalanceIndicatorModel(
       populated_local_model());
@@ -72,7 +74,7 @@ TEST_CASE("atest_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
   }, "test_empty_subscriptions");
 }
 
-TEST_CASE("atest_signals",
+TEST_CASE("cached_imbalance_test_signals",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
@@ -121,62 +123,63 @@ TEST_CASE("atest_signals",
   }, "test_signals");
 }
 
-TEST_CASE("imbalance_test_right_no_overlap",
+TEST_CASE("cached_imbalance_test_right_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_right_no_overlap");
 }
 
-TEST_CASE("imbalance_test_left_no_overlap",
+TEST_CASE("cached_imbalance_test_left_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_left_no_overlap");
 }
 
-TEST_CASE("imbalance_test_right_overlap", "[CachedOrderImbalanceIndicatorModel]") {
+TEST_CASE("cached_imbalance_test_right_overlap",
+    "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_right_overlap");
 }
 
-TEST_CASE("imbalance_test_left_overlap",
+TEST_CASE("cached_imbalance_test_left_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_left_overlap");
 }
 
-TEST_CASE("imbalance_test_subset",
+TEST_CASE("cached_imbalance_test_subset",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_subset");
 }
 
-TEST_CASE("imbalance_test_single_superset",
+TEST_CASE("cached_imbalance_test_single_superset",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_single_superset");
 }
 
-TEST_CASE("imbalance_test_multiple_supersets",
+TEST_CASE("cached_imbalance_test_multiple_supersets",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_multiple_supersets");
 }
 
-TEST_CASE("imbalance_test_multiple_subsets_and_supersets",
+TEST_CASE("cached_imbalance_test_multiple_subsets_and_supersets",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
 
   }, "imbalance_test_multiple_subsets_and_supersets");
 }
 
-TEST_CASE("imbalance_test_multiple_cache_hits",
+TEST_CASE("cached_imbalance_test_multiple_cache_hits",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     

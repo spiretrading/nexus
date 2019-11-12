@@ -1,5 +1,6 @@
 #ifndef SPIRE_CACHED_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_CACHED_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
+#include <unordered_set>
 #include <boost/icl/continuous_interval.hpp>
 #include <boost/icl/interval_set.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
@@ -26,18 +27,21 @@ namespace Spire {
           const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
+      struct OrderImbalanceHash {
+        size_t operator() (const Nexus::OrderImbalance& imbalance) const {
+          auto duration = imbalance.m_timestamp -
+            boost::posix_time::ptime(boost::gregorian::date(1970, 1, 1));
+          return static_cast<size_t>(duration.total_milliseconds());
+        }
+      };
+
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<Nexus::OrderImbalance> m_imbalances;
+      std::unordered_set<Nexus::OrderImbalance, OrderImbalanceHash>
+        m_imbalances;
       std::vector<OrderImbalanceSignalConnection> m_signals;
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       std::vector<boost::signals2::scoped_connection> m_connections;
 
-      void insert_imbalances(
-        const std::vector<Nexus::OrderImbalance>& imbalances);
-      std::tuple<std::vector<Nexus::OrderImbalance>::const_iterator,
-        std::vector<Nexus::OrderImbalance>::const_iterator>
-        get_imbalance_iterators(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end);
       std::tuple<boost::signals2::connection,
         QtPromise<std::vector<Nexus::OrderImbalance>>>
         get_subscription(const boost::posix_time::ptime& start,
@@ -48,7 +52,6 @@ namespace Spire {
         load_imbalances(const boost::posix_time::ptime& start,
           const boost::posix_time::ptime& end,
           const OrderImbalanceSignal::slot_type& slot);
-      void on_subcription_loaded(const Nexus::OrderImbalance& imbalance);
       void on_order_imbalance(const Nexus::OrderImbalance& imbalance);
   };
 }

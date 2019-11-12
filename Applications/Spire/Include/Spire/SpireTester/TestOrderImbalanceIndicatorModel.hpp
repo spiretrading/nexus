@@ -6,10 +6,14 @@
 
 namespace Spire {
 
+  //! Represents an OrderImbalanceIndicatorModel for testing, allowing for the
+  //! observation of subscription requests sent to the model and simulation
+  //! of asynchronous loads.
   class TestOrderImbalanceIndicatorModel :
       public OrderImbalanceIndicatorModel {
     public:
 
+      //! Stores a request to subscribe to an OrderImbalanceModel.
       class SubscribeEntry {
         public:
 

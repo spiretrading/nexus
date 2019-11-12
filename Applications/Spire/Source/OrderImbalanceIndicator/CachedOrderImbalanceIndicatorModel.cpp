@@ -22,41 +22,6 @@ std::tuple<boost::signals2::connection,
   return load_imbalances(start, end, slot);
 }
 
-std::tuple<std::vector<Nexus::OrderImbalance>::const_iterator,
-    std::vector<Nexus::OrderImbalance>::const_iterator>
-    CachedOrderImbalanceIndicatorModel::get_imbalance_iterators(
-      const boost::posix_time::ptime& start,
-      const boost::posix_time::ptime& end) {
-  auto lower = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (auto& imbalance) { return imbalance.m_timestamp == start; });
-  auto upper = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (auto& imbalance) { return imbalance.m_timestamp == end; });
-  return {lower, upper};
-}
-
-void CachedOrderImbalanceIndicatorModel::insert_imbalances(
-    const std::vector<OrderImbalance>& imbalances) {
-  if(imbalances.empty()) {
-    return;
-  }
-  if(m_imbalances.empty()) {
-    m_imbalances.insert(m_imbalances.end(), imbalances.begin(),
-      imbalances.end());
-  } else {
-    auto new_imbalances = std::vector<OrderImbalance>(m_imbalances.size() +
-      imbalances.size());
-    std::set_union(m_imbalances.begin(), m_imbalances.end(), imbalances.begin(),
-      imbalances.end(), new_imbalances.begin(),
-      [] (auto& first, auto& second) {
-          return first.m_timestamp < second.m_timestamp;
-        });
-    new_imbalances.shrink_to_fit();
-    m_imbalances = std::move(new_imbalances);
-  }
-  m_ranges.add(continuous_interval<ptime>::closed(
-    imbalances.front().m_timestamp, imbalances.back().m_timestamp));
-}
-
 std::tuple<boost::signals2::connection,
     QtPromise<std::vector<Nexus::OrderImbalance>>>
     CachedOrderImbalanceIndicatorModel::get_subscription(
@@ -65,12 +30,15 @@ std::tuple<boost::signals2::connection,
       const OrderImbalanceSignal::slot_type& slot) {
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
-  auto [lower, upper] = get_imbalance_iterators(start, end);
-  if(upper != m_imbalances.end()) {
-    ++upper;
-  }
+  auto imbalances = std::vector<OrderImbalance>();
+  std::copy_if(m_imbalances.begin(), m_imbalances.end(),
+    std::back_inserter(imbalances), [=] (auto& imbalance) {
+        return start <= imbalance.m_timestamp && imbalance.m_timestamp <= end;
+      });
   return {m_signals.back().m_imbalance_signal.connect(slot),
-    QtPromise([=] { return std::vector<OrderImbalance>(lower, upper); })};
+    QtPromise([requested_imbalances = std::move(imbalances)] {
+        return std::move(requested_imbalances);
+      })};
 }
 
 std::tuple<boost::signals2::connection,
@@ -79,34 +47,38 @@ std::tuple<boost::signals2::connection,
       const boost::posix_time::ptime& start,
       const boost::posix_time::ptime& end,
       const OrderImbalanceSignal::slot_type& slot) {
-  auto [connection, promise] = m_source_model->subscribe(start, end,
-    [=] (auto& imbalance) { on_order_imbalance(imbalance); });
-  m_connections.push_back(std::move(connection));
+  auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
+  auto ranges = interval_set<ptime>(
+    {continuous_interval(start, end)}) - m_ranges;
+  for(auto& range : ranges) {
+    auto [connection, promise] = m_source_model->subscribe(range.lower(),
+      range.upper(), [=] (auto& imbalance) { on_order_imbalance(imbalance); });
+    promises.push_back(std::move(promise));
+  }
+  ranges.add({start, end});
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   return {m_signals.back().m_imbalance_signal.connect(slot),
-    promise.then([=] (auto& imbalances) {
-        insert_imbalances(imbalances);
-        auto [lower, upper] = get_imbalance_iterators(start, end);
-        if(upper != m_imbalances.end()) {
-          ++upper;
-        }
-        return std::vector<OrderImbalance>(lower, upper);
-      })};
+    all(std::move(promises)).then(
+      [=, &imbalances = m_imbalances] (auto& imbalances_lists) {
+          for(auto& list : imbalances_lists.Get()) {
+            std::copy(list.begin(), list.end(), std::inserter(imbalances,
+              imbalances.end()));
+          }
+          auto requested_imbalances = std::vector<OrderImbalance>();
+          std::copy_if(imbalances.begin(), imbalances.end(),
+            std::back_inserter(requested_imbalances), [=] (auto& imbalance) {
+                return start <= imbalance.m_timestamp && 
+                  imbalance.m_timestamp <= end;
+              });
+          return std::move(requested_imbalances);
+        })};
 }
 
 void CachedOrderImbalanceIndicatorModel::on_order_imbalance(
     const OrderImbalance& imbalance) {
-  if(std::find(m_imbalances.rbegin(), m_imbalances.rend(), imbalance) !=
-      m_imbalances.rend()) {
-    return;
-  }
-  m_ranges.add(continuous_interval<ptime>::closed(imbalance.m_timestamp,
-    imbalance.m_timestamp));
-  m_imbalances.insert(std::lower_bound(m_imbalances.begin(),
-    m_imbalances.end(), imbalance,
-      [] (auto& current, auto& value) {
-        return current.m_timestamp < value.m_timestamp; }), imbalance);
+  m_imbalances.insert(imbalance);
+  m_ranges.add({imbalance.m_timestamp, imbalance.m_timestamp});
   for(auto& signal : m_signals) {
     if(signal.m_start_time <= imbalance.m_timestamp &&
         imbalance.m_timestamp <= signal.m_end_time) {
