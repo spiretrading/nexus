@@ -73,11 +73,7 @@ export class ParameterEntry extends React.Component<Properties> {
               onChange={this.onChange}/>);
         case Nexus.ComplianceValue.Type.QUANTITY:
           return (
-            <DecimalInput 
-              min={0}
-              step={1}
-              value={this.props.parameter.value.value}
-              onChange={this.onChange}/>);
+            <div/>);
         case Nexus.ComplianceValue.Type.SECURITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.STRING:

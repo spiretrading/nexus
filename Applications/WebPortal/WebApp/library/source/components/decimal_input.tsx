@@ -6,15 +6,17 @@ interface Properties {
   /** The value to display in the field. */
   value?: number;
 
+  /** Additional CSS styles. */
+  style?: any;
 
-  /** This specifies the interval between legal numbers. */
-  step?: number;
+  /** The class name of the input box. */
+  className?: string;
 
-  /** The minimum value that box can display.*/
   min?: number;
 
-  /** The largest value that box can display.*/
   max?: number;
+
+  isInteger?: boolean;
 
   /** Called when the value changes.
    * @param value - The updated value.
@@ -30,21 +32,23 @@ export class DecimalInput extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      return DecimalInput.STYLE.box;
+      return DecimalInput.EXTRA_STYLE.customHighlighting;
     })();
     return (
       <input 
         type={'number'}
         value={this.props.value}
-        min={this.props.min}
-        step={this.props.step}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onChange(event.target.valueAsNumber);}}
-        className={css(boxStyle)}/>);
+        style={{...DecimalInput.STYLE.box, ...this.props.style}}
+        onChange={this.onChange.bind(this)}
+        className={css(DecimalInput.EXTRA_STYLE.customHighlighting) + ' ' + 
+          this.props.className}/>);
   }
 
+  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.props.onChange(event.target.valueAsNumber);
+  }
 
-  private static STYLE = StyleSheet.create({
+  private static STYLE = {
     box: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -63,6 +67,11 @@ export class DecimalInput extends React.Component<Properties> {
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
       appearance: 'none' as 'none',
+    }
+  };
+
+  private static EXTRA_STYLE = StyleSheet.create({
+    customHighlighting: {
       '-moz-appearance': 'textfield',
       ':focus': {
         ouline: 0,
