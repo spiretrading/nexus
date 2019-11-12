@@ -12,11 +12,14 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
+  /** console.log */
+  step?: number;
+
+  /** The smallest number that the box accepts. */
   min?: number;
 
+  /** The largest number that the box accepts. */
   max?: number;
-
-  isInteger?: boolean;
 
   /** Called when the value changes.
    * @param value - The updated value.
@@ -27,13 +30,11 @@ interface Properties {
 /** Displays a single text input field. */
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
+    isIneger: false,
     onChange: () => {}
   };
 
   public render(): JSX.Element {
-    const boxStyle = (() => {
-      return NumberInput.EXTRA_STYLE.customHighlighting;
-    })();
     return (
       <input 
         type={'number'}
@@ -47,7 +48,8 @@ export class NumberInput extends React.Component<Properties> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.props.onChange(event.target.valueAsNumber);
+    const newNumber = event.target.valueAsNumber;
+    this.props.onChange(newNumber);
   }
 
   private static STYLE = {

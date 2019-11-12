@@ -1,9 +1,9 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, IntegerInputBox, MoneyInputBox,
+import { CurrencySelectionBox, DisplaySize, MoneyInputBox,
   TextInputField } from '../../..';
-import { NumberInput } from '../../../components';
+import { NumberInput, DurationInput } from '../../../components';
 
 interface Properties {
 
@@ -66,7 +66,7 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <div/>;
+          return <DurationInput/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return (
             <MoneyInputBox
