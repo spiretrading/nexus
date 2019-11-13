@@ -43,13 +43,17 @@ class TestApp extends React.Component<Properties> {
       Nexus.ComplianceRuleEntry.State.PASSIVE,
       new Nexus.ComplianceRuleSchema('New Components',[
         new Nexus.ComplianceParameter(
-            'Decimal',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.DOUBLE, 345.686868)),
+          'Decimal',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.DOUBLE, 345.686868)),
         new Nexus.ComplianceParameter(
-            'Duration',
+          'Duration',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(160000))),
+        new Nexus.ComplianceParameter(
+          'Quantity',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(160000))),
+              Nexus.ComplianceValue.Type.QUANTITY, 234.56))
       ]));
     list.push(someEntry2);
     return(
