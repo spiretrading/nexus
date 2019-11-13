@@ -30,7 +30,9 @@ TEST_CASE("test_basic_inserting_subscribing",
     auto [connection, promise] = model.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data = wait(std::move(promise));
-    REQUIRE(data == std::vector<OrderImbalance>({a, b, c}));
+    auto expected = std::vector<OrderImbalance>({a, b, c});
+    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
+      expected.end()));
   }, "test_basic_inserting_subscribing");
 }
 
@@ -51,15 +53,21 @@ TEST_CASE("test_subscribing_with_specific_range",
     auto [connection1, promise1] = model.subscribe(from_time_t(100),
       from_time_t(300), [] (auto& i) {});
     auto data1 = wait(std::move(promise1));
-    REQUIRE(data1 == std::vector<OrderImbalance>({a, b, c}));
+    auto expected1 = std::vector<OrderImbalance>({a, b, c});
+    REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
+      expected1.end()));
     auto [connection2, promise2] = model.subscribe(from_time_t(200),
       from_time_t(400), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
-    REQUIRE(data2 == std::vector<OrderImbalance>({b, c, d}));
+    auto expected2 = std::vector<OrderImbalance>({b, c, d});
+    REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
+      expected2.end()));
     auto [connection3, promise3] = model.subscribe(from_time_t(300),
       from_time_t(500), [] (auto& i) {});
     auto data3 = wait(std::move(promise3));
-    REQUIRE(data3 == std::vector<OrderImbalance>({c, d, e}));
+    auto expected3 = std::vector<OrderImbalance>({c, d, e});
+    REQUIRE(std::is_permutation(data3.begin(), data3.end(), expected3.begin(),
+      expected3.end()));
   }, "test_subscribing_with_specific_range");
 }
 
