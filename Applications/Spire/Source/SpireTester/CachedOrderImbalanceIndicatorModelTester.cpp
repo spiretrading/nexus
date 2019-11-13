@@ -3,6 +3,7 @@
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
+#include "Spire/SpireTester/TestOrderImbalanceIndicatorModel.hpp"
 
 using boost::posix_time::ptime;
 using boost::posix_time::from_time_t;
@@ -56,7 +57,7 @@ TEST_CASE("cached_imbalance_test_basic_subscribing",
     auto expected3 = std::vector<OrderImbalance>({c, d, e});
     REQUIRE(std::is_permutation(data3.begin(), data3.end(), expected3.begin(),
       expected3.end()));
-  }, "test_basic_subscribing");
+  }, "cached_imbalance_test_basic_subscribing");
 }
 
 TEST_CASE("test_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
@@ -75,7 +76,7 @@ TEST_CASE("test_empty_subscriptions", "[CachedOrderImbalanceIndicatorModel]") {
       from_time_t(199), [] (auto& i) {});
     auto data3 = wait(std::move(promise3));
     REQUIRE(data3 == std::vector<OrderImbalance>());
-  }, "test_empty_subscriptions");
+  }, "cached_imbalance_test_empty_subscriptions");
 }
 
 TEST_CASE("cached_imbalance_test_signals",
@@ -124,68 +125,129 @@ TEST_CASE("cached_imbalance_test_signals",
     REQUIRE(signal_data2 == d);
     REQUIRE(signal_data3 == e);
     REQUIRE(signal_data4 == OrderImbalance());
-  }, "test_signals");
+  }, "cached_imbalance_test_signals");
 }
 
 TEST_CASE("cached_imbalance_test_right_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_right_no_overlap");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
+      from_time_t(200), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({a, b});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(300),
+      from_time_t(400), [] (auto& i) {});
+    auto request = wait(test_model->pop_subscribe());
+    REQUIRE(request->get_start() == from_time_t(300));
+    REQUIRE(request->get_end() == from_time_t(400));
+    request->set_result({});
+  }, "cached_imbalance_test_right_no_overlap");
 }
 
 TEST_CASE("cached_imbalance_test_left_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_left_no_overlap");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
+      from_time_t(400), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({c, d});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
+      from_time_t(200), [] (auto& i) {});
+    auto request = wait(test_model->pop_subscribe());
+    REQUIRE(request->get_start() == from_time_t(100));
+    REQUIRE(request->get_end() == from_time_t(200));
+    request->set_result({});
+  }, "cached_imbalance_test_left_no_overlap");
 }
 
 TEST_CASE("cached_imbalance_test_right_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_right_overlap");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
+      from_time_t(300), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({a, b, c});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
+      from_time_t(500), [] (auto& i) {});
+    auto request = wait(test_model->pop_subscribe());
+    REQUIRE(request->get_start() == from_time_t(300));
+    REQUIRE(request->get_end() == from_time_t(500));
+    request->set_result({});
+  }, "cached_imbalance_test_right_overlap");
 }
 
 TEST_CASE("cached_imbalance_test_left_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_left_overlap");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
+      from_time_t(500), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({c, d, e});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
+      from_time_t(400), [] (auto& i) {});
+    auto request = wait(test_model->pop_subscribe());
+    REQUIRE(request->get_start() == from_time_t(100));
+    REQUIRE(request->get_end() == from_time_t(300));
+    request->set_result({});
+  }, "cached_imbalance_test_left_overlap");
 }
 
-TEST_CASE("cached_imbalance_test_subset",
+TEST_CASE("cached_imbalance_test_superset",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_subset");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(200),
+      from_time_t(400), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({b, c, d});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
+      from_time_t(500), [] (auto& i) {});
+    auto request1 = wait(test_model->pop_subscribe());
+    REQUIRE(request1->get_start() == from_time_t(100));
+    REQUIRE(request1->get_end() == from_time_t(200));
+    request1->set_result({});
+    auto request2 = wait(test_model->pop_subscribe());
+    REQUIRE(request2->get_start() == from_time_t(400));
+    REQUIRE(request2->get_end() == from_time_t(500));
+    request2->set_result({});
+  }, "cached_imbalance_test_superset");
 }
 
-TEST_CASE("cached_imbalance_test_single_superset",
+TEST_CASE("cached_imbalance_test_mixed_subsets_and_supersets",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
-
-  }, "imbalance_test_single_superset");
-}
-
-TEST_CASE("cached_imbalance_test_multiple_supersets",
-    "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "imbalance_test_multiple_supersets");
-}
-
-TEST_CASE("cached_imbalance_test_multiple_subsets_and_supersets",
-    "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-
-  }, "imbalance_test_multiple_subsets_and_supersets");
-}
-
-TEST_CASE("cached_imbalance_test_multiple_cache_hits",
-    "[CachedOrderImbalanceIndicatorModel]") {
-  run_test([=] {
-    
-  }, "imbalance_test_multiple_cache_hits");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(150),
+      from_time_t(250), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({b});
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(350),
+      from_time_t(450), [] (auto& i) {});
+    wait(test_model->pop_subscribe())->set_result({d});
+    wait(std::move(promise2));
+    auto [connection3, promise3] = cache_model.subscribe(from_time_t(0),
+      from_time_t(500), [] (auto& i) {});
+    auto request1 = wait(test_model->pop_subscribe());
+    REQUIRE(request1->get_start() == from_time_t(0));
+    REQUIRE(request1->get_end() == from_time_t(150));
+    request1->set_result({});
+    auto request2 = wait(test_model->pop_subscribe());
+    REQUIRE(request2->get_start() == from_time_t(250));
+    REQUIRE(request2->get_end() == from_time_t(350));
+    request2->set_result({});
+    auto request3 = wait(test_model->pop_subscribe());
+    REQUIRE(request3->get_start() == from_time_t(450));
+    REQUIRE(request3->get_end() == from_time_t(500));
+    request3->set_result({});
+  }, "cached_imbalance_test_mixed_subsets_and_supersets");
 }

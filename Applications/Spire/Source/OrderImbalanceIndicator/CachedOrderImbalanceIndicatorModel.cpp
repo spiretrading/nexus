@@ -55,7 +55,7 @@ std::tuple<boost::signals2::connection,
       range.upper(), [=] (auto& imbalance) { on_order_imbalance(imbalance); });
     promises.push_back(std::move(promise));
   }
-  ranges.add({start, end});
+  m_ranges.add({start, end});
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   return {m_signals.back().m_imbalance_signal.connect(slot),
