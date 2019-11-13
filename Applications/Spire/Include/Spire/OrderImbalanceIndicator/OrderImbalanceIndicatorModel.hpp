@@ -31,11 +31,8 @@ namespace Spire {
     protected:
 
       struct OrderImbalanceSignalConnection {
-
         OrderImbalanceSignal m_imbalance_signal;
-
         boost::posix_time::ptime m_start_time;
-
         boost::posix_time::ptime m_end_time;
       };
   };

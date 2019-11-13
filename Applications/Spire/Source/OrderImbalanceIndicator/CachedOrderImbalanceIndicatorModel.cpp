@@ -32,7 +32,7 @@ std::tuple<boost::signals2::connection,
     OrderImbalanceSignal(), start, end});
   auto imbalances = std::vector<OrderImbalance>();
   std::copy_if(m_imbalances.begin(), m_imbalances.end(),
-    std::back_inserter(imbalances), [=] (auto& imbalance) {
+    std::back_inserter(imbalances), [&] (auto& imbalance) {
         return start <= imbalance.m_timestamp && imbalance.m_timestamp <= end;
       });
   return {m_signals.back().m_imbalance_signal.connect(slot),
@@ -52,22 +52,23 @@ std::tuple<boost::signals2::connection,
     {continuous_interval(start, end)}) - m_ranges;
   for(auto& range : ranges) {
     auto [connection, promise] = m_source_model->subscribe(range.lower(),
-      range.upper(), [=] (auto& imbalance) { on_order_imbalance(imbalance); });
+      range.upper(), [this] (auto& imbalance) {
+        on_order_imbalance(imbalance); });
     promises.push_back(std::move(promise));
   }
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   return {m_signals.back().m_imbalance_signal.connect(slot),
     all(std::move(promises)).then(
-      [=, &imbalances = m_imbalances, &ranges = m_ranges] (
+      [this, start, end] (
         auto& imbalances_lists) {
-          ranges.add({start, end});
+          m_ranges.add({start, end});
           for(auto& list : imbalances_lists.Get()) {
-            std::copy(list.begin(), list.end(), std::inserter(imbalances,
-              imbalances.end()));
+            std::copy(list.begin(), list.end(), std::inserter(m_imbalances,
+              m_imbalances.end()));
           }
           auto requested_imbalances = std::vector<OrderImbalance>();
-          std::copy_if(imbalances.begin(), imbalances.end(),
+          std::copy_if(m_imbalances.begin(), m_imbalances.end(),
             std::back_inserter(requested_imbalances), [=] (auto& imbalance) {
                 return start <= imbalance.m_timestamp &&
                   imbalance.m_timestamp <= end;

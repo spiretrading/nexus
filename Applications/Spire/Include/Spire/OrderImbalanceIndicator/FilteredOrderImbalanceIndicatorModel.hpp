@@ -33,7 +33,6 @@ namespace Spire {
 
       struct FilteredOrderImbalanceSignalConnection :
           OrderImbalanceSignalConnection {
-        
         boost::signals2::scoped_connection m_source_signal_connection;
       };
 

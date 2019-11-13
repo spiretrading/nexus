@@ -7,11 +7,10 @@ using namespace Nexus;
 using namespace Spire;
 
 TestOrderImbalanceIndicatorModel::SubscribeEntry::SubscribeEntry(
-  const ptime& start,
-  const ptime& end)
-    : m_start(start),
-      m_end(end),
-      m_is_loaded(false) {}
+  const ptime& start, const ptime& end)
+  : m_start(start),
+    m_end(end),
+    m_is_loaded(false) {}
 
 const ptime&
     TestOrderImbalanceIndicatorModel::SubscribeEntry::get_start() const {

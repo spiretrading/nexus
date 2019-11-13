@@ -18,7 +18,8 @@ std::tuple<boost::signals2::connection,
       const boost::posix_time::ptime& end,
       const OrderImbalanceSignal::slot_type& slot) {
   auto signal = std::make_unique<FilteredOrderImbalanceSignalConnection>(
-    FilteredOrderImbalanceSignalConnection {{OrderImbalanceSignal(), start, end}, {}});
+    FilteredOrderImbalanceSignalConnection{
+      {OrderImbalanceSignal(), start, end}, {}});
   auto callback = [this, signal = signal.get()] (auto& imbalance) {
       if(is_imbalance_accepted(imbalance)) {
         signal->m_imbalance_signal(imbalance);
@@ -118,7 +119,7 @@ std::vector<Nexus::OrderImbalance>
   auto filtered_imbalances = std::vector<Nexus::OrderImbalance>();
   for(auto& imbalance : imbalances) {
     if(is_imbalance_accepted(imbalance)) {
-      filtered_imbalances.emplace_back(std::move(imbalance));
+      filtered_imbalances.push_back(imbalance);
     }
   }
   return filtered_imbalances;

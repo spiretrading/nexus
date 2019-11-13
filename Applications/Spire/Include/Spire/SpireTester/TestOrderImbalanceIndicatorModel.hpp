@@ -61,6 +61,7 @@ namespace Spire {
       //! operation stack.
       QtPromise<std::shared_ptr<SubscribeEntry>> pop_subscribe();
 
+      //! Returns the number of pending subscribe entries.
       int get_subscribe_entry_count() const;
 
     private:

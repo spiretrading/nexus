@@ -16,7 +16,7 @@ namespace Spire {
             const boost::posix_time::ptime& end,
             const OrderImbalanceSignal::slot_type& slot) override;
 
-      //! Inserts an imbalance into the model.
+      //! Inserts an order imbalance into the model.
       /*
         \param imbalance The order imbalance to insert into the model.
       */

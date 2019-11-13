@@ -15,15 +15,15 @@ std::tuple<boost::signals2::connection,
   return std::tuple<boost::signals2::connection,
     QtPromise<std::vector<OrderImbalance>>>(
       m_signals.back().m_imbalance_signal.connect(slot),
-      QtPromise([=, &imbalances = m_imbalances] {
+      QtPromise([start, end, this] {
         auto requested_imbalances = std::vector<OrderImbalance>();
-        for(auto& imbalance : imbalances) {
+        for(auto& imbalance : m_imbalances) {
           if(imbalance.m_timestamp >= start &&
               imbalance.m_timestamp <= end) {
             requested_imbalances.push_back(imbalance);
           }
         }
-        return std::move(requested_imbalances);
+        return requested_imbalances;
     }));
 }
 
