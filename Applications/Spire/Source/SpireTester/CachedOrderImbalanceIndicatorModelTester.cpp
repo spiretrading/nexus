@@ -261,6 +261,7 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
       from_time_t(300), [] (auto& i) {});
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
       from_time_t(500), [] (auto& i) {});
+    REQUIRE(test_model->get_subscribe_entry_count() == 2);
     auto subscribe1 = wait(test_model->pop_subscribe());
     auto subscribe2 = wait(test_model->pop_subscribe());
     REQUIRE(subscribe1->get_start() == from_time_t(100));
