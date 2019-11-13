@@ -274,9 +274,9 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
     wait(std::move(promise1));
     auto [connection3, promise3] = cache_model.subscribe(from_time_t(100),
       from_time_t(500), [] (auto& i) {});
+    REQUIRE(test_model->get_subscribe_entry_count() == 0);
     auto cached_data = wait(std::move(promise3));
     auto expected = std::vector<OrderImbalance>({a, b, c, d, e});
-    REQUIRE(test_model->get_subscribe_entry_count() == 0);
     REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),
       expected.begin(), expected.end()));
   }, "cached_imbalance_test_async_subscribes");
