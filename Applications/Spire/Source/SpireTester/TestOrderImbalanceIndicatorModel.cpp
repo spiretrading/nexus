@@ -67,3 +67,7 @@ QtPromise<std::shared_ptr<TestOrderImbalanceIndicatorModel::SubscribeEntry>>
     return entry;
   }, LaunchPolicy::ASYNC);
 }
+
+int TestOrderImbalanceIndicatorModel::get_subscribe_entry_count() const {
+  return static_cast<int>(m_subscribe_entries.size());
+}

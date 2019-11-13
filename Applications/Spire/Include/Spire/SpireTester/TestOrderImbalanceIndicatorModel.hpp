@@ -61,6 +61,8 @@ namespace Spire {
       //! operation stack.
       QtPromise<std::shared_ptr<SubscribeEntry>> pop_subscribe();
 
+      int get_subscribe_entry_count() const;
+
     private:
       Beam::Threading::Mutex m_mutex;
       Beam::Threading::ConditionVariable m_subscribe_condition;

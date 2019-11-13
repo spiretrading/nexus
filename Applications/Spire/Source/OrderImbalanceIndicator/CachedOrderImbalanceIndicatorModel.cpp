@@ -55,12 +55,13 @@ std::tuple<boost::signals2::connection,
       range.upper(), [=] (auto& imbalance) { on_order_imbalance(imbalance); });
     promises.push_back(std::move(promise));
   }
-  m_ranges.add({start, end});
   m_signals.emplace_back(OrderImbalanceSignalConnection{
     OrderImbalanceSignal(), start, end});
   return {m_signals.back().m_imbalance_signal.connect(slot),
     all(std::move(promises)).then(
-      [=, &imbalances = m_imbalances] (auto& imbalances_lists) {
+      [=, &imbalances = m_imbalances, &ranges = m_ranges] (
+        auto& imbalances_lists) {
+          ranges.add({start, end});
           for(auto& list : imbalances_lists.Get()) {
             std::copy(list.begin(), list.end(), std::inserter(imbalances,
               imbalances.end()));
@@ -68,7 +69,7 @@ std::tuple<boost::signals2::connection,
           auto requested_imbalances = std::vector<OrderImbalance>();
           std::copy_if(imbalances.begin(), imbalances.end(),
             std::back_inserter(requested_imbalances), [=] (auto& imbalance) {
-                return start <= imbalance.m_timestamp && 
+                return start <= imbalance.m_timestamp &&
                   imbalance.m_timestamp <= end;
               });
           return requested_imbalances;

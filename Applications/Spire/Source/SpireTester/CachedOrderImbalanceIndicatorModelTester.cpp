@@ -251,3 +251,32 @@ TEST_CASE("cached_imbalance_test_mixed_subsets_and_supersets",
     request3->set_result({});
   }, "cached_imbalance_test_mixed_subsets_and_supersets");
 }
+
+TEST_CASE("cached_imbalance_test_async_subscribes",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([=] {
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
+    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
+      from_time_t(300), [] (auto& i) {});
+    auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
+      from_time_t(500), [] (auto& i) {});
+    auto subscribe1 = wait(test_model->pop_subscribe());
+    auto subscribe2 = wait(test_model->pop_subscribe());
+    REQUIRE(subscribe1->get_start() == from_time_t(100));
+    REQUIRE(subscribe1->get_end() == from_time_t(300));
+    REQUIRE(subscribe2->get_start() == from_time_t(200));
+    REQUIRE(subscribe2->get_end() == from_time_t(500));
+    subscribe2->set_result({b, c, d, e});
+    subscribe1->set_result({a, b, c});
+    wait(std::move(promise2));
+    wait(std::move(promise1));
+    auto [connection3, promise3] = cache_model.subscribe(from_time_t(100),
+      from_time_t(500), [] (auto& i) {});
+    auto cached_data = wait(std::move(promise3));
+    auto expected = std::vector<OrderImbalance>({a, b, c, d, e});
+    REQUIRE(test_model->get_subscribe_entry_count() == 0);
+    REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),
+      expected.begin(), expected.end()));
+  }, "cached_imbalance_test_async_subscribes");
+}
