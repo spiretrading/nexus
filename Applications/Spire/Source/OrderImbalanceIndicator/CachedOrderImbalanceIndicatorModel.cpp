@@ -37,7 +37,7 @@ std::tuple<boost::signals2::connection,
       });
   return {m_signals.back().m_imbalance_signal.connect(slot),
     QtPromise([requested_imbalances = std::move(imbalances)] {
-        return std::move(requested_imbalances);
+        return requested_imbalances;
       })};
 }
 
@@ -71,7 +71,7 @@ std::tuple<boost::signals2::connection,
                 return start <= imbalance.m_timestamp && 
                   imbalance.m_timestamp <= end;
               });
-          return std::move(requested_imbalances);
+          return requested_imbalances;
         })};
 }
 

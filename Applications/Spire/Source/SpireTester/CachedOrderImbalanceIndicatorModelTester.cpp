@@ -47,11 +47,15 @@ TEST_CASE("cached_imbalance_test_basic_subscribing",
     auto [connection2, promise2] = cached_model.subscribe(from_time_t(200),
       from_time_t(400), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
-    REQUIRE(data2 == std::vector<OrderImbalance>({b, c, d}));
+    auto expected2 = std::vector<OrderImbalance>({b, c, d});
+    REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
+      expected2.end()));
     auto [connection3, promise3] = cached_model.subscribe(from_time_t(300),
       from_time_t(500), [] (auto& i) {});
     auto data3 = wait(std::move(promise3));
-    REQUIRE(data3 == std::vector<OrderImbalance>({c, d, e}));
+    auto expected3 = std::vector<OrderImbalance>({c, d, e});
+    REQUIRE(std::is_permutation(data3.begin(), data3.end(), expected3.begin(),
+      expected3.end()));
   }, "test_basic_subscribing");
 }
 
