@@ -16,20 +16,22 @@ namespace Spire {
       */
       void insert(const Nexus::OrderImbalance& imbalance);
 
-      std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
-        subscribe(const boost::posix_time::ptime& start,
+      SubscribeRequest subscribe(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-      struct OrderImbalanceSignalConnection {
+      struct Subscription {
         OrderImbalanceSignal m_imbalance_signal;
         boost::posix_time::ptime m_start_time;
         boost::posix_time::ptime m_end_time;
+
+        Subscription(const boost::posix_time::ptime& start,
+          const boost::posix_time::ptime& end)
+          : m_start_time(start), m_end_time(end) {}
       };
 
-      std::vector<OrderImbalanceSignalConnection> m_signals;
+      std::vector<Subscription> m_signals;
       std::vector<Nexus::OrderImbalance> m_imbalances;
   };
 }

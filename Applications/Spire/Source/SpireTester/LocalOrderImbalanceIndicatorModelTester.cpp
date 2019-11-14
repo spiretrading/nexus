@@ -10,17 +10,16 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-
-  auto make(const std::string& symbol, const ptime& timestamp) {
+  auto make_imbalance(const std::string& symbol, const ptime& timestamp) {
     return OrderImbalance(Security(symbol, 0), Side::BID, 100,
-      Money(1 * Money::ONE), timestamp);
+      Money(Money::ONE), timestamp);
   }
 
-  const auto a = make("A", from_time_t(100));
-  const auto b = make("B", from_time_t(200));
-  const auto c = make("C", from_time_t(300));
-  const auto d = make("D", from_time_t(400));
-  const auto e = make("E", from_time_t(500));
+  const auto a = make_imbalance("A", from_time_t(100));
+  const auto b = make_imbalance("B", from_time_t(200));
+  const auto c = make_imbalance("C", from_time_t(300));
+  const auto d = make_imbalance("D", from_time_t(400));
+  const auto e = make_imbalance("E", from_time_t(500));
 }
 
 TEST_CASE("test_basic_inserting_subscribing",
@@ -106,4 +105,19 @@ TEST_CASE("test_order_imbalance_signals",
     REQUIRE(signal_data2 == d);
     REQUIRE(signal_data3 == e);
   }, "test_order_imbalance_signals");
+}
+
+TEST_CASE("test_subscription_in_published_imbalance_callback",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    bool was_callback_called = false;
+    auto [connection, promise] = model.subscribe(from_time_t(0),
+      from_time_t(1000), [&] (auto& i) {
+        auto [c, p] = model.subscribe(from_time_t(0), from_time_t(1000),
+          [&] (const auto& i) { was_callback_called = true; });
+      });
+    model.insert(a);
+    REQUIRE(was_callback_called);
+  }, "test_subscription_in_published_imbalance_callback");
 }
