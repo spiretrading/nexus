@@ -7,5 +7,5 @@ export * from './hline';
 export * from './integer_input_box';
 export * from './money_input_box';
 export * from './number_input';
-export * from './security_input';
+export * from '../pages/account_page/compliance_page/security_input';
 export * from './text_input_field';
