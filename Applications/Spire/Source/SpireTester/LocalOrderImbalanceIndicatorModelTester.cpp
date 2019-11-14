@@ -15,15 +15,18 @@ namespace {
     return OrderImbalance(Security(symbol, 0), Side::BID, 100,
       Money(1 * Money::ONE), timestamp);
   }
+
+  const auto a = make("A", from_time_t(100));
+  const auto b = make("B", from_time_t(200));
+  const auto c = make("C", from_time_t(300));
+  const auto d = make("D", from_time_t(400));
+  const auto e = make("E", from_time_t(500));
 }
 
 TEST_CASE("test_basic_inserting_subscribing",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
-    auto a = make("A", from_time_t(100));
-    auto b = make("B", from_time_t(200));
-    auto c = make("C", from_time_t(300));
     model.insert(a);
     model.insert(b);
     model.insert(c);
@@ -40,11 +43,6 @@ TEST_CASE("test_subscribing_with_specific_range",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
-    auto a = make("A", from_time_t(100));
-    auto b = make("B", from_time_t(200));
-    auto c = make("C", from_time_t(300));
-    auto d = make("D", from_time_t(400));
-    auto e = make("E", from_time_t(500));
     model.insert(a);
     model.insert(b);
     model.insert(c);
@@ -75,11 +73,6 @@ TEST_CASE("test_order_imbalance_signals",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
-    auto a = make("A", from_time_t(100));
-    auto b = make("B", from_time_t(200));
-    auto c = make("C", from_time_t(300));
-    auto d = make("D", from_time_t(400));
-    auto e = make("E", from_time_t(500));
     auto signal_data1 = OrderImbalance();
     auto signal_data2 = OrderImbalance();
     auto signal_data3 = OrderImbalance();
