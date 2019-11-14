@@ -29,9 +29,8 @@ namespace Spire {
     private:
       struct OrderImbalanceHash {
         size_t operator() (const Nexus::OrderImbalance& imbalance) const {
-          auto duration = imbalance.m_timestamp -
-            boost::posix_time::ptime(boost::gregorian::date(1970, 1, 1));
-          return static_cast<size_t>(duration.total_milliseconds());
+          return std::hash<int64_t>{}(
+            imbalance.m_timestamp.time_of_day().total_milliseconds());
         }
       };
 
