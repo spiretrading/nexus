@@ -53,7 +53,12 @@ class TestApp extends React.Component<Properties> {
         new Nexus.ComplianceParameter(
           'Quantity',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.QUANTITY, 2345.23))
+              Nexus.ComplianceValue.Type.QUANTITY, 2345.23)),
+        new Nexus.ComplianceParameter(
+          'Security',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+                new Nexus.Security('A.TXS', Nexus.DefaultMarkets.TSX, Nexus.DefaultCountries.US),))
       ]));
     list.push(someEntry2);
     return(
