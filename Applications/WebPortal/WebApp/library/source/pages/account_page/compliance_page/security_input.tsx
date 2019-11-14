@@ -1,13 +1,13 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { HLine } from '../../../components';
-import { ComplianceValue } from 'nexus';
 
 
 interface Properties {
   displaySize: DisplaySize;
 
-  value?: ComplianceValue.Type.SECURITY | ComplianceValue.Type.LIST;
+  value?: Nexus.Security;
 }
 
 interface State {
@@ -54,8 +54,9 @@ export class SecurityInput extends React.Component<Properties, State>{
     return(
       <div>
         <input
+          readOnly
           style={SecurityInput.STYLE.textBox}
-          value ={'After how many characters do you do the ...'}
+          value ={this.props.value.symbol}
           onFocus={this.toggleEditing.bind(this)}
           onClick={this.toggleEditing.bind(this)}/>
         <div style={visibility}>
@@ -93,7 +94,20 @@ export class SecurityInput extends React.Component<Properties, State>{
 
   private static readonly STYLE = {
     textBox: {
-      textOverflow: 'ellipsis' as 'ellipsis'
+      textOverflow: 'ellipsis' as 'ellipsis',
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      flexGrow: 1,
+      width: '100%',
+      paddingLeft: '10px',
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
