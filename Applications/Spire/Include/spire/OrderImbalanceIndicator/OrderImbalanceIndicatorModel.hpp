@@ -1,7 +1,7 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 
 namespace Spire {
 
@@ -26,8 +26,8 @@ namespace Spire {
       virtual std::tuple<boost::signals2::connection,
         QtPromise<std::vector<Nexus::OrderImbalance>>>
         subscribe(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end,
-          const OrderImbalanceSignal::slot_type& slot) = 0;
+        const boost::posix_time::ptime& end,
+        const OrderImbalanceSignal::slot_type& slot) = 0;
   };
 }
 
