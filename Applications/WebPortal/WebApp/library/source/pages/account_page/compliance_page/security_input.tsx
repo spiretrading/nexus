@@ -76,8 +76,11 @@ export class SecurityInput extends React.Component<Properties, State>{
             <div style={selectedSecuritiesBox}/>
             <div style={SecurityInput.STYLE.iconBoxBig}/>
             <HLine color={'#e6e6e6'}/>
-            <button style={SecurityInput.STYLE.button}
-              value={'Submit Changes'}/>
+            <div style={SecurityInput.STYLE.buttonWrapper}>
+              <button style={SecurityInput.STYLE.button}>
+                {'Submit Changes'}
+              </button>
+            </div>
           </div>
         </div>
       </div>);
@@ -170,7 +173,9 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexGrow: 1
     },
     findSymbolBox: {
+      width: '100%',
       boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
       height: '34px',
       paddingLeft: '10px',
       border: '1px solid #C8C8C8',
@@ -206,9 +211,15 @@ export class SecurityInput extends React.Component<Properties, State>{
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       marginTop: '30px',
-
+      font: '400 16px Roboto',
+    },
+    buttonWrapper: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'wrap' as 'wrap',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
     }
-
   };
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
