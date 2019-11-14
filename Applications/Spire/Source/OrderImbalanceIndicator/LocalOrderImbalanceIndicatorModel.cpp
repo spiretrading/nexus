@@ -4,7 +4,7 @@
 using namespace Nexus;
 using namespace Spire;
 
-OrderImbalanceIndicatorModel::SubscribeResult
+OrderImbalanceIndicatorModel::SubscriptionResult
     LocalOrderImbalanceIndicatorModel::subscribe(
     const boost::posix_time::ptime& start, const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
