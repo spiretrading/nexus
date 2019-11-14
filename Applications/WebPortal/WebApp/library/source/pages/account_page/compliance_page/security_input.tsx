@@ -44,6 +44,13 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.bigOptionsBox;
       }
     })();
+    const selectedSecuritiesBox = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return SecurityInput.STYLE.scrollBoxSmall;
+      } else {
+        return SecurityInput.STYLE.scrollBoxBig;
+      }
+    })();
     return(
       <div>
         <input
@@ -55,12 +62,22 @@ export class SecurityInput extends React.Component<Properties, State>{
           <div style={SecurityInput.STYLE.overlay}/>
           <div style={shadowBox}/>
           <div style={optionsBox}>
-            <div>{'Edit Symbols'}</div>
-            <div>{'Search box'}</div>
-            <div>{'Scrolly box'}</div>
-            <div>{'trash and upload'}</div>
+            <div style={SecurityInput.STYLE.header}>
+              <div style={SecurityInput.STYLE.headerText}>
+                {SecurityInput.MODAL_HEADER}
+              </div>
+              <img src={'resources/account_page/compliance_page/close.svg'}
+                height='20px'
+                width='20px'/>
+            </div>
+            <input style={SecurityInput.STYLE.findSymbolBox}
+              placeholder={SecurityInput.PLACEHOLDER_TEXT}
+              value={''}/>
+            <div style={selectedSecuritiesBox}/>
+            <div style={SecurityInput.STYLE.iconBoxBig}/>
             <HLine color={'#e6e6e6'}/>
-            <div>{'Submit changes~~~'}</div>
+            <button style={SecurityInput.STYLE.button}
+              value={'Submit Changes'}/>
           </div>
         </div>
       </div>);
@@ -72,6 +89,9 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private static readonly STYLE = {
+    textBox: {
+      textOverflow: 'ellipsis' as 'ellipsis'
+    },
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
@@ -87,7 +107,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       opacity: 0.9
     },
     boxShadowSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box' as 'border-box', 
       opacity: 0.4,
       display: 'block',
       boxShadow: '0px 0px 6px #000000',
@@ -107,11 +127,11 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
-      height: '447px',
+      height: '559px',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)'
     },
-    smallOptionsBox: {
+    smallOptionsBox: { //uhhhhh as column and center the thing
       opacity: 1,
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
@@ -131,21 +151,65 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
-      height: '447px',
+      height: '559px',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)',
       padding: '18px',
-      marginTop: '20px',
-      marginBottom: '20px'
     },
-    label: {
+    header: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      flexWrap: 'no-wrap' as 'no-wrap'
+      justifyContent: 'space-between' as 'space-between',
+      height: '20px',
+      marginBottom: '30px'
     },
-    textBox: {
-      textOverflow: 'ellipsis' as 'ellipsis'
+    headerText: {
+      font: '400 16px Roboto',
+      flexGrow: 1
+    },
+    findSymbolBox: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      paddingLeft: '10px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      marginBottom: '18px'
+    },
+    scrollBoxSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '246px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      marginBottom: '30px'
+    },
+    scrollBoxBig: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '280px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      marginBottom: '30px'
+    },
+    iconBoxBig: {
+      height: '16px',
+      width: '100%',
+      marginBottom: '30px',
+      backgroundColor: '#ff0090'
+    },
+    button: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '246px',
+      backgroundColor: '#4B23A0',
+      color: '#FFFFFF',
+      border: '1px solid #4B23A0',
+      borderRadius: '1px',
+      marginTop: '30px',
+
     }
+
   };
-  private static readonly MIN_RANGE_VALUE = 0;
+  private static readonly MODAL_HEADER = 'Edit Symbols';
+  private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
 }
