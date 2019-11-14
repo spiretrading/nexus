@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Represents the result of a subscription.
-      struct SubscribeRequest {
+      struct SubscribeResult {
 
         //! Connection for the published order imbalance callback.
         boost::signals2::connection m_connection;
@@ -34,7 +34,7 @@ namespace Spire {
         \param end End timestamp of the loaded range.
         \param slot Slot called when a new imbalance is published.
       */
-      virtual SubscribeRequest subscribe(const boost::posix_time::ptime& start,
+      virtual SubscribeResult subscribe(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot) = 0;
   };

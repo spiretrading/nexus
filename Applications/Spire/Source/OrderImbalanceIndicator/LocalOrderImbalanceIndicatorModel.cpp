@@ -4,7 +4,7 @@
 using namespace Nexus;
 using namespace Spire;
 
-OrderImbalanceIndicatorModel::SubscribeRequest
+OrderImbalanceIndicatorModel::SubscribeResult
     LocalOrderImbalanceIndicatorModel::subscribe(
     const boost::posix_time::ptime& start, const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
@@ -17,7 +17,7 @@ OrderImbalanceIndicatorModel::SubscribeRequest
     }
   }
   return {m_signals.back().m_imbalance_signal.connect(slot),
-    QtPromise([imbalances = std::move(imbalances)] {
+    QtPromise([imbalances = std::move(imbalances)] () mutable {
       return std::move(imbalances);
   })};
 }
@@ -25,10 +25,15 @@ OrderImbalanceIndicatorModel::SubscribeRequest
 void LocalOrderImbalanceIndicatorModel::insert(
     const OrderImbalance& imbalance) {
   m_imbalances.push_back(imbalance);
-  for(auto i = 0; i < static_cast<int>(m_signals.size()); ++i) {
+  for(auto i = std::size_t(0); i < m_signals.size(); ++i) {
     if(m_signals[i].m_start_time <= imbalance.m_timestamp &&
         imbalance.m_timestamp <= m_signals[i].m_end_time) {
       m_signals[i].m_imbalance_signal(imbalance);
     }
   }
 }
+
+LocalOrderImbalanceIndicatorModel::Subscription::Subscription(
+  const boost::posix_time::ptime& start,
+  const boost::posix_time::ptime& end)
+  : m_start_time(start), m_end_time(end) {}
