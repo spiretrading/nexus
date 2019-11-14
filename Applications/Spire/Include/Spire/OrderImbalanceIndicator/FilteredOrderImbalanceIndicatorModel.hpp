@@ -32,7 +32,6 @@ namespace Spire {
           const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-
       struct OrderImbalanceSignalConnection {
         OrderImbalanceSignal m_imbalance_signal;
         boost::posix_time::ptime m_start_time;
@@ -40,8 +39,7 @@ namespace Spire {
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<std::unique_ptr<OrderImbalanceSignalConnection>>
-        m_signals;
+      std::vector<std::shared_ptr<OrderImbalanceSignalConnection>> m_signals;
       std::vector<boost::signals2::scoped_connection> m_connections;
       std::vector<Filter> m_filters;
 

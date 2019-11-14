@@ -27,7 +27,6 @@ namespace Spire {
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-
       struct OrderImbalanceHash {
         std::size_t operator ()(const Nexus::OrderImbalance& imbalance) const;
       };
@@ -47,12 +46,12 @@ namespace Spire {
 
       std::tuple<boost::signals2::connection,
       QtPromise<std::vector<Nexus::OrderImbalance>>>
-      get_subscription(const boost::posix_time::ptime& start,
+        get_subscription(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);
       std::tuple<boost::signals2::connection,
       QtPromise<std::vector<Nexus::OrderImbalance>>>
-      load_imbalances(const boost::posix_time::ptime& start,
+        load_imbalances(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);
       void on_order_imbalance(const Nexus::OrderImbalance& imbalance);
