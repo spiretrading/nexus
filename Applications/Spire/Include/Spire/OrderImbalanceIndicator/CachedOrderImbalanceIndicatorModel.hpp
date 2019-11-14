@@ -23,15 +23,19 @@ namespace Spire {
       std::tuple<boost::signals2::connection,
         QtPromise<std::vector<Nexus::OrderImbalance>>>
         subscribe(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end,
-          const OrderImbalanceSignal::slot_type& slot) override;
+        const boost::posix_time::ptime& end,
+        const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
+
       struct OrderImbalanceHash {
-        size_t operator() (const Nexus::OrderImbalance& imbalance) const {
-          return std::hash<int64_t>{}(
-            imbalance.m_timestamp.time_of_day().total_milliseconds());
-        }
+        std::size_t operator ()(const Nexus::OrderImbalance& imbalance) const;
+      };
+
+      struct OrderImbalanceSignalConnection {
+        OrderImbalanceSignal m_imbalance_signal;
+        boost::posix_time::ptime m_start_time;
+        boost::posix_time::ptime m_end_time;
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
@@ -42,15 +46,15 @@ namespace Spire {
       std::vector<boost::signals2::scoped_connection> m_connections;
 
       std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
-        get_subscription(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end,
-          const OrderImbalanceSignal::slot_type& slot);
+      QtPromise<std::vector<Nexus::OrderImbalance>>>
+      get_subscription(const boost::posix_time::ptime& start,
+        const boost::posix_time::ptime& end,
+        const OrderImbalanceSignal::slot_type& slot);
       std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
-        load_imbalances(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end,
-          const OrderImbalanceSignal::slot_type& slot);
+      QtPromise<std::vector<Nexus::OrderImbalance>>>
+      load_imbalances(const boost::posix_time::ptime& start,
+        const boost::posix_time::ptime& end,
+        const OrderImbalanceSignal::slot_type& slot);
       void on_order_imbalance(const Nexus::OrderImbalance& imbalance);
   };
 }

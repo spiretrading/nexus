@@ -10,6 +10,9 @@ namespace Spire {
       public OrderImbalanceIndicatorModel {
     public:
 
+      //! Defines the filter function return type and signature.
+      using Filter = std::function<bool (const Nexus::OrderImbalance&)>;
+
       //! Constructs a FilteredOrderImbalanceIndicatorModel with a given
       //! source model and specific filters.
       /*
@@ -20,8 +23,7 @@ namespace Spire {
       */
       FilteredOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-        std::vector<std::function<bool (const Nexus::OrderImbalance&)>>
-          filters);
+        std::vector<Filter> filters);
 
       std::tuple<boost::signals2::connection,
         QtPromise<std::vector<Nexus::OrderImbalance>>>
@@ -31,16 +33,17 @@ namespace Spire {
 
     private:
 
-      struct FilteredOrderImbalanceSignalConnection :
-          OrderImbalanceSignalConnection {
-        boost::signals2::scoped_connection m_source_signal_connection;
+      struct OrderImbalanceSignalConnection {
+        OrderImbalanceSignal m_imbalance_signal;
+        boost::posix_time::ptime m_start_time;
+        boost::posix_time::ptime m_end_time;
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<std::unique_ptr<FilteredOrderImbalanceSignalConnection>>
+      std::vector<std::unique_ptr<OrderImbalanceSignalConnection>>
         m_signals;
-      std::vector<std::function<bool (const Nexus::OrderImbalance&)>>
-        m_filters;
+      std::vector<boost::signals2::scoped_connection> m_connections;
+      std::vector<Filter> m_filters;
 
       bool is_imbalance_accepted(
         const Nexus::OrderImbalance& imbalance);
@@ -53,7 +56,7 @@ namespace Spire {
   /*
     \param symbol_list The list of securities to preserve after filtering.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_security_list_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_security_list_filter(
     const std::set<std::string>& symbol_list);
 
   //! Creates a filter that filters out symbols that do not start with
@@ -61,7 +64,7 @@ namespace Spire {
   /*
     \param filter_string The string to compare the order imbalances symbols to.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_security_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_security_filter(
     const std::string& filter_string);
 
   //! Creates a filter that filters out markets that do not appear in the given
@@ -69,7 +72,7 @@ namespace Spire {
   /*
     \param market_list The list of markets to preserve after filtering.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_market_list_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_market_list_filter(
     const std::set<std::string>& market_list);
 
   //! Creates a filter that filters out markets that do not start with
@@ -77,7 +80,7 @@ namespace Spire {
   /*
     \param filter_string The string to compare the order imbalance markets to.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_market_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_market_filter(
     const std::string& filter_string);
 
   //! Creates a filter that filters out sides that do not match the given
@@ -85,7 +88,7 @@ namespace Spire {
   /*
     \param side The given side to preserve after filtering.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_side_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_side_filter(
     Nexus::Side side);
 
   //! Creates a filter that filters out sizes that are not in the interval
@@ -94,7 +97,7 @@ namespace Spire {
     \param min The lowest size that will not be filtered out.
     \param max The largest size that will not be filtered out.
   */
-  std::function<bool (const Nexus::OrderImbalance&)> make_size_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_size_filter(
     const Nexus::Quantity& min, const Nexus::Quantity& max);
 
   //! Creates a filter that filters out reference prices that are not in the
@@ -103,9 +106,8 @@ namespace Spire {
     \param min The lowest reference price that will not be filtered out.
     \param max The highest reference price that will not be filtered out.
   */
-  std::function<bool (const Nexus::OrderImbalance&)>
-    make_reference_price_filter(const Nexus::Money& min,
-      const Nexus::Money& max);
+  FilteredOrderImbalanceIndicatorModel::Filter make_reference_price_filter(
+    const Nexus::Money& min, const Nexus::Money& max);
 
   //! Creates a filter that filters out notional values that are not in the
   //! interval [min, max].
@@ -113,9 +115,8 @@ namespace Spire {
     \param min The lowest notional value that will not be filtered out.
     \param max The high notional value that willnot be filtered out.
   */
-  std::function<bool (const Nexus::OrderImbalance&)>
-    make_notional_value_filter(const Nexus::Money& min,
-      const Nexus::Money& max);
+  FilteredOrderImbalanceIndicatorModel::Filter make_notional_value_filter(
+    const Nexus::Money& min, const Nexus::Money& max);
 }
 
 #endif

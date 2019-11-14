@@ -6,6 +6,12 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
+std::size_t CachedOrderImbalanceIndicatorModel::OrderImbalanceHash::operator
+    ()(const OrderImbalance& imbalance) const {
+  return std::hash<std::int64_t>{}(
+    imbalance.m_timestamp.time_of_day().total_milliseconds());
+}
+
 CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
   std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model)
   : m_source_model(std::move(m_source_model)) {}
@@ -54,6 +60,7 @@ std::tuple<boost::signals2::connection,
     auto [connection, promise] = m_source_model->subscribe(range.lower(),
       range.upper(), [this] (auto& imbalance) {
         on_order_imbalance(imbalance); });
+    m_connections.push_back(connection);
     promises.push_back(std::move(promise));
   }
   m_signals.emplace_back(OrderImbalanceSignalConnection{

@@ -5,6 +5,7 @@
 
 namespace Spire {
 
+  //! Provides a source for published order imbalances.
   class OrderImbalanceIndicatorModel {
     public:
 
@@ -27,14 +28,6 @@ namespace Spire {
         subscribe(const boost::posix_time::ptime& start,
           const boost::posix_time::ptime& end,
           const OrderImbalanceSignal::slot_type& slot) = 0;
-
-    protected:
-
-      struct OrderImbalanceSignalConnection {
-        OrderImbalanceSignal m_imbalance_signal;
-        boost::posix_time::ptime m_start_time;
-        boost::posix_time::ptime m_end_time;
-      };
   };
 }
 
