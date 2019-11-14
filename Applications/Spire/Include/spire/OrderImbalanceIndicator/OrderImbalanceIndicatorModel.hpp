@@ -2,12 +2,23 @@
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
+#include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
 
   //! Provides a source for published order imbalances.
   class OrderImbalanceIndicatorModel {
     public:
+
+      //! Represents the result of a subscription.
+      struct SubscriptionResult {
+
+        //! Connection for the published order imbalance callback.
+        boost::signals2::connection m_connection;
+
+        //! Promise for the requested data.
+        QtPromise<std::vector<Nexus::OrderImbalance>> m_snapshot;
+      };
 
       //! Signals that an order imbalance has been published.
       /*!
@@ -23,9 +34,8 @@ namespace Spire {
         \param end End timestamp of the loaded range.
         \param slot Slot called when a new imbalance is published.
       */
-      virtual std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
-        subscribe(const boost::posix_time::ptime& start,
+      virtual SubscriptionResult subscribe(
+        const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot) = 0;
   };
