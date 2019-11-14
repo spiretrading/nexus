@@ -17,10 +17,24 @@ namespace Nexus::OrderExecutionService::Tests {
       /** Tests an OrderFields reactor that produces only a single value. */
       void TestSingleOrderFields();
 
+      /** Tests updating the OrderFields. */
+      void TestOrderFieldsUpdate();
+
+      /** Tests a partial fill followed by an update to the OrderFields. */
+      void TestPartialFillAndUpdate();
+
+      /** Tests a terminal order along with an update to the OrderFields on the
+          same commit.
+       */
+      void TestTerminalOrderAndUpdate();
+
     private:
       CPPUNIT_TEST_SUITE(OrderReactorTester);
         CPPUNIT_TEST(TestEmptyOrderFields);
         CPPUNIT_TEST(TestSingleOrderFields);
+        CPPUNIT_TEST(TestOrderFieldsUpdate);
+        CPPUNIT_TEST(TestPartialFillAndUpdate);
+        CPPUNIT_TEST(TestTerminalOrderAndUpdate);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }
