@@ -22,8 +22,10 @@ void OrderReactorTester::TestEmptyOrderFields() {
   environment.Open();
   auto serviceClients = TestServiceClients(Ref(environment));
   serviceClients.Open();
-  auto reactor = OrderReactor(Ref(serviceClients.GetOrderExecutionClient()),
-    Aspen::none<OrderFields>());
+  auto reactor = MakeLimitOrderReactor(
+    Ref(serviceClients.GetOrderExecutionClient()), Aspen::none<Security>(),
+    Aspen::constant(Side::BID), Aspen::constant(100),
+    Aspen::constant(Money::ONE));
   CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::COMPLETE);
   Trigger::set_trigger(nullptr);
 }
@@ -41,17 +43,17 @@ void OrderReactorTester::TestSingleOrderFields() {
   serviceClients.Open();
   auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
   environment.MonitorOrderSubmissions(orderSubmissions);
-  auto testFields = OrderFields::BuildLimitOrder(TEST_SECURITY, Side::BID, 100,
-    Money::ONE);
-  auto reactor = OrderReactor(Ref(serviceClients.GetOrderExecutionClient()),
-    Aspen::constant(testFields));
+  auto reactor = MakeLimitOrderReactor(
+    Ref(serviceClients.GetOrderExecutionClient()),
+    Aspen::constant(TEST_SECURITY), Aspen::constant(Side::BID),
+    Aspen::constant(100), Aspen::constant(Money::ONE));
   CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
   auto order = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == testFields.m_security);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == testFields.m_side);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == testFields.m_quantity);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == testFields.m_price);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == Side::BID);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == 100);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);
@@ -62,7 +64,7 @@ void OrderReactorTester::TestSingleOrderFields() {
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::EVALUATED);
   CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  environment.FillOrder(*order, testFields.m_quantity);
+  environment.FillOrder(*order, 100);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::COMPLETE_EVALUATED);
@@ -84,19 +86,19 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
   serviceClients.Open();
   auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
   environment.MonitorOrderSubmissions(orderSubmissions);
-  auto testFields = OrderFields::BuildLimitOrder(TEST_SECURITY, Side::BID, 100,
-    Money::ONE);
   auto fieldsReactor = Aspen::Shared<Aspen::Queue<OrderFields>>();
-  auto reactor = OrderReactor(Ref(serviceClients.GetOrderExecutionClient()),
-    fieldsReactor);
+  auto reactor = MakeLimitOrderReactor(
+    Ref(serviceClients.GetOrderExecutionClient()),
+    Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+    Aspen::constant(300), Aspen::constant(Money::CENT));
   fieldsReactor->push(testFields);
   CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
   auto order = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == testFields.m_security);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == testFields.m_side);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == testFields.m_quantity);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == testFields.m_price);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == Money::CENT);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);

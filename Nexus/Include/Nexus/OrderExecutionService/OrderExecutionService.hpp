@@ -18,24 +18,23 @@ namespace Nexus::OrderExecutionService {
   template<typename OrderExecutionDriverType, typename AdministrationClientType>
     class ManualOrderEntryDriver;
   class Order;
-  typedef std::uint64_t OrderId;
+  using OrderId = std::uint64_t;
   template<typename ServiceProtocolClientBuilderType>
     class OrderExecutionClient;
   struct OrderExecutionDataStore;
   class OrderExecutionDataStoreException;
-  typedef Beam::SnapshotPublisher<const Order*, std::vector<const Order*>>
-    OrderExecutionPublisher;
+  using OrderExecutionPublisher = Beam::SnapshotPublisher<const Order*,
+    std::vector<const Order*>>;
   template<typename ContainerType, typename TimeClientType,
     typename ServiceLocatorClientType, typename UidClientType,
     typename AdministrationClientType, typename OrderExecutionDriverType,
     typename OrderExecutionDataStoreType> class OrderExecutionServlet;
   class OrderExecutionSession;
   struct OrderFields;
-  template<typename AR, typename SR, typename CR, typename OR, typename TR,
-    typename DR, typename QR, typename PR, typename FR, typename RR>
-    class OrderFieldsReactor;
   struct OrderInfo;
-  template<typename C, typename O> class OrderReactor;
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR> class OrderReactor;
   struct OrderRecord;
   class OrderSubmissionCheck;
   template<typename OrderExecutionDriverType> class OrderSubmissionCheckDriver;

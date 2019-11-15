@@ -18,9 +18,21 @@ namespace Nexus::OrderExecutionService {
   /** Implements a reactor that resubmits Orders when given an updated
       OrderFields.
       @param <C> The type of OrderExecutionClient used to submit the order.
-      @param <O> The type of reactor producing OrderFields.
+      @param <AR> The type of reactor producing the account submitting the
+                  order.
+      @param <SR> The type of reactor producing the order's security.
+      @param <CR> The type of reactor producing the order's currency.
+      @param <OR> The type of reactor producing the order's type.
+      @param <TR> The type of reactor producing the order's side.
+      @param <DR> The type of reactor producing the order's destination.
+      @param <QR> The type of reactor producing the order's quantity.
+      @param <PR> The type of reactor producing the order's price.
+      @param <FR> The type of reactor producing the order's time in force.
+      @param <RR> The type of reactor producing the order's additional fields.
    */
-  template<typename C, typename O>
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR>
   class OrderReactor {
     public:
       using Type = ExecutionReportEntry;
@@ -28,15 +40,58 @@ namespace Nexus::OrderExecutionService {
       /** The type of OrderExecutionClient used to submit the order. */
       using OrderExecutionClient = C;
 
-      /** The type of reactor producing OrderFields. */
-      using OrderFieldsReactor = O;
+      /** The type of reactor producing the account submitting the order. */
+      using AccountReactor = AR;
+
+      /** The type of reactor producing the order's security. */
+      using SecurityReactor = SR;
+
+      /** The type of reactor producing the order's currency. */
+      using CurrencyReactor = CR;
+
+      /** The type of reactor producing the order's type. */
+      using OrderTypeReactor = OR;
+
+      /** The type of reactor producing the order's side. */
+      using SideReactor = TR;
+
+      /** The type of reactor producing the order's destination. */
+      using DestinationReactor = DR;
+
+      /** The type of reactor producing the order's quantity. */
+      using QuantityReactor = QR;
+
+      /** The type of reactor producing the order's price. */
+      using PriceReactor = PR;
+
+      /** The type of reactor producing the order's time in force. */
+      using TimeInForceReactor = FR;
+
+      /** The type of reactor producing the order's additional fields. */
+      using AdditionalFieldsReactor = RR;
 
       /** Constructs an OrderReactor.
           @param client The OrderExecutionClient used to submit the order.
-          @param orderFields The reactor producing OrderFields.
+          @param account The type of reactor producing the account field.
+          @param security The type of reactor producing the security field.
+          @param currency The type of reactor producing the currency field.
+          @param orderType The type of reactor producing the order type field.
+          @param side The type of reactor producing the side field.
+          @param destination The type of reactor producing the destination
+                 field.
+          @param quantity The type of reactor producing the quantity field.
+          @param price The type of reactor producing the price field.
+          @param timeInForce The type of reactor producing the time in force
+                 field.
+          @param additionalFields The type of reactor producing the additional
+                 fields.
        */
       OrderReactor(Beam::Ref<OrderExecutionClient> client,
-        OrderFieldsReactor orderFields);
+        AccountReactor account, SecurityReactor security,
+        CurrencyReactor currency, OrderTypeReactor orderType, SideReactor side,
+        DestinationReactor destination, QuantityReactor quantity,
+        PriceReactor price, TimeInForceReactor timeInForce,
+        AdditionalFieldsReactor additionalFields);
 
       /** Cancels the Order. */
       void Cancel();
@@ -47,7 +102,16 @@ namespace Nexus::OrderExecutionService {
 
     private:
       OrderExecutionClient* m_client;
-      std::optional<OrderFieldsReactor> m_orderFields;
+      std::optional<AccountReactor> m_account;
+      std::optional<SecurityReactor> m_security;
+      std::optional<CurrencyReactor> m_currency;
+      std::optional<OrderTypeReactor> m_orderType;
+      std::optional<SideReactor> m_side;
+      std::optional<DestinationReactor> m_destination;
+      std::optional<Aspen::collapse_shared<QuantityReactor>> m_quantity;
+      std::optional<PriceReactor> m_price;
+      std::optional<TimeInForceReactor> m_timeInForce;
+      std::optional<AdditionalFieldsReactor> m_additionalFields;
       Aspen::Maybe<OrderFields> m_lastOrderFields;
       const Order* m_order;
       bool m_isPendingCancel;
@@ -59,11 +123,34 @@ namespace Nexus::OrderExecutionService {
       Beam::Reactors::QueueReactor<ExecutionReportEntry> m_queue;
   };
 
-  template<typename C, typename O>
-  OrderReactor<C, O>::OrderReactor(Beam::Ref<OrderExecutionClient> client,
-    OrderFieldsReactor orderFields)
+  template<typename C, typename S, typename T, typename Q, typename M>
+  auto MakeLimitOrderReactor(Beam::Ref<C> client, S security, T side,
+      Q quantity, M price) {
+    return OrderReactor(Beam::Ref(client),
+      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      std::move(security), Aspen::constant(CurrencyId::NONE()),
+      Aspen::constant(OrderType::LIMIT), std::move(side),
+      Aspen::constant(std::string()), std::move(quantity), std::move(price),
+      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
+      Aspen::constant(std::vector<Tag>()));
+  }
+
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR>
+  OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::OrderReactor(
+    Beam::Ref<OrderExecutionClient> client, AccountReactor account,
+    SecurityReactor security, CurrencyReactor currency,
+    OrderTypeReactor orderType, SideReactor side,
+    DestinationReactor destination, QuantityReactor quantity,
+    PriceReactor price, TimeInForceReactor timeInForce,
+    AdditionalFieldsReactor additionalFields)
     : m_client(client.Get()),
-      m_orderFields(std::move(orderFields)),
+      m_quantity(std::move(quantity)),
+      m_orderFields(std::move(account), std::move(security),
+        std::move(currency), std::move(orderType), std::move(side),
+        std::move(destination), m_quantity, std::move(price),
+        std::move(timeInForce), std::move(additionalFields)),
       m_order(nullptr),
       m_isPendingCancel(true),
       m_status(OrderStatus::CANCELED),
@@ -71,8 +158,11 @@ namespace Nexus::OrderExecutionService {
         std::make_shared<Beam::MultiQueueReader<ExecutionReportEntry>>()),
       m_queue(m_executionReports) {}
 
-  template<typename C, typename O>
-  Aspen::State OrderReactor<C, O>::commit(int sequence) noexcept {
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR>
+  Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
+      int sequence) noexcept {
     auto queueState = m_queue.commit(sequence);
     if(Aspen::has_evaluation(queueState)) {
       const auto& report = m_queue.eval().m_executionReport;
@@ -136,8 +226,11 @@ namespace Nexus::OrderExecutionService {
     return Aspen::State::NONE;
   }
 
-  template<typename C, typename O>
-  const ExecutionReportEntry& OrderReactor<C, O>::eval() const {
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR>
+  const ExecutionReportEntry& OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR,
+      FR, RR>::eval() const {
     return m_queue.eval();
   }
 }
