@@ -9,9 +9,9 @@ enum TimeUnit {
 }
 
 interface Properties { 
-  display: DisplaySize;
-  duration: Beam.Duration;
-  onChange:() => {}
+  display?: DisplaySize;
+  value: Beam.Duration;
+  onChange:(newValue: Beam.Duration) => void;
 }
 
 export class DurationInput extends React.Component<Properties> {
@@ -22,7 +22,6 @@ export class DurationInput extends React.Component<Properties> {
   }
 
   private onChange() {
-    
   }
 
   private static readonly STYLE = {
