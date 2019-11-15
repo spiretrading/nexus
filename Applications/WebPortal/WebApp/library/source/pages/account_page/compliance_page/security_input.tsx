@@ -123,6 +123,10 @@ export class SecurityInput extends React.Component<Properties, State>{
       backgroundColor: '#FFFFFF',
       opacity: 0.9
     },
+    overlayMarginsBig: {
+      width: '100%',
+      height: '20px'
+    },
     boxShadowSmall: {
       boxSizing: 'border-box' as 'border-box', 
       opacity: 0.4,
@@ -145,10 +149,10 @@ export class SecurityInput extends React.Component<Properties, State>{
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '559px',
-      top: 'calc(50% - 223.5px)',
-      left: 'calc(50% - 180px)'
+      top: 'calc(50% - 279.5px + 30px)',
+      left: 'calc(50% - 180px)',
     },
-    smallOptionsBox: { //uhhhhh as column and center the thing
+    smallOptionsBox: {
       opacity: 1,
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
@@ -169,7 +173,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '559px',
-      top: 'calc(50% - 223.5px)',
+      top: 'calc(50% - 279.5px + 30px)',
       left: 'calc(50% - 180px)',
       padding: '18px',
     },
