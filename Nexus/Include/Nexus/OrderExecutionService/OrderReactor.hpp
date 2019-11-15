@@ -1,9 +1,8 @@
 #ifndef NEXUS_ORDER_REACTOR_HPP
 #define NEXUS_ORDER_REACTOR_HPP
-#include <optional>
 #include <type_traits>
-#include <Aspen/State.hpp>
-#include <Aspen/Traits.hpp>
+#include <Aspen/MultiSync.hpp>
+#include <Aspen/Sync.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/Queues/MultiQueueReader.hpp>
@@ -102,17 +101,19 @@ namespace Nexus::OrderExecutionService {
 
     private:
       OrderExecutionClient* m_client;
-      std::optional<AccountReactor> m_account;
-      std::optional<SecurityReactor> m_security;
-      std::optional<CurrencyReactor> m_currency;
-      std::optional<OrderTypeReactor> m_orderType;
-      std::optional<SideReactor> m_side;
-      std::optional<DestinationReactor> m_destination;
-      std::optional<Aspen::collapse_shared<QuantityReactor>> m_quantity;
-      std::optional<PriceReactor> m_price;
-      std::optional<TimeInForceReactor> m_timeInForce;
-      std::optional<AdditionalFieldsReactor> m_additionalFields;
-      Aspen::Maybe<OrderFields> m_lastOrderFields;
+      OrderFields m_lastOrderFields;
+      Aspen::Shared<QuantityReactor> m_quantity;
+      std::optional<Aspen::MultiSync<OrderFields,
+        Aspen::Sync<AccountReactor, Beam::ServiceLocator::DirectoryEntry>,
+        Aspen::Sync<SecurityReactor, Security>,
+        Aspen::Sync<CurrencyReactor, CurrencyId>,
+        Aspen::Sync<OrderTypeReactor, OrderType>,
+        Aspen::Sync<SideReactor, Side>,
+        Aspen::Sync<DestinationReactor, Destination>,
+        Aspen::Sync<Aspen::Shared<QuantityReactor>, Quantity>,
+        Aspen::Sync<PriceReactor, Money>,
+        Aspen::Sync<TimeInForceReactor, TimeInForce>,
+        Aspen::Sync<AdditionalFieldsReactor, std::vector<Tag>>>> m_orderFields;
       const Order* m_order;
       bool m_isPendingCancel;
       Quantity m_filled;
@@ -129,9 +130,9 @@ namespace Nexus::OrderExecutionService {
     return OrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
       std::move(security), Aspen::constant(CurrencyId::NONE()),
-      Aspen::constant(OrderType::LIMIT), std::move(side),
-      Aspen::constant(std::string()), std::move(quantity), std::move(price),
-      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
+      Aspen::constant(static_cast<OrderType>(OrderType::LIMIT)),
+      std::move(side), Aspen::constant(std::string()), std::move(quantity),
+      std::move(price), Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
       Aspen::constant(std::vector<Tag>()));
   }
 
@@ -147,10 +148,18 @@ namespace Nexus::OrderExecutionService {
     AdditionalFieldsReactor additionalFields)
     : m_client(client.Get()),
       m_quantity(std::move(quantity)),
-      m_orderFields(std::move(account), std::move(security),
-        std::move(currency), std::move(orderType), std::move(side),
-        std::move(destination), m_quantity, std::move(price),
-        std::move(timeInForce), std::move(additionalFields)),
+      m_orderFields(std::in_place, m_lastOrderFields,
+        Aspen::Sync(m_lastOrderFields.m_account, std::move(account)),
+        Aspen::Sync(m_lastOrderFields.m_security, std::move(security)),
+        Aspen::Sync(m_lastOrderFields.m_currency, std::move(currency)),
+        Aspen::Sync(m_lastOrderFields.m_type, std::move(orderType)),
+        Aspen::Sync(m_lastOrderFields.m_side, std::move(side)),
+        Aspen::Sync(m_lastOrderFields.m_destination, std::move(destination)),
+        Aspen::Sync(m_lastOrderFields.m_quantity, m_quantity),
+        Aspen::Sync(m_lastOrderFields.m_price, std::move(price)),
+        Aspen::Sync(m_lastOrderFields.m_timeInForce, std::move(timeInForce)),
+        Aspen::Sync(m_lastOrderFields.m_additionalFields,
+          std::move(additionalFields))),
       m_order(nullptr),
       m_isPendingCancel(true),
       m_status(OrderStatus::CANCELED),
@@ -181,20 +190,10 @@ namespace Nexus::OrderExecutionService {
     }
     if(m_orderFields.has_value()) {
       auto fieldsState = m_orderFields->commit(sequence);
-      if(Aspen::has_evaluation(fieldsState)) {
-        m_lastOrderFields = Aspen::try_call(
-          [&] {
-            if(m_filled == 0) {
-              return m_orderFields->eval();
-            }
-            auto modifiedFields = m_orderFields->eval();
-            modifiedFields.m_quantity -= m_filled;
-            return modifiedFields;
-          });
-        if(!m_isPendingCancel && !IsTerminal(m_status)) {
-          m_client->Cancel(*m_order);
-          m_isPendingCancel = true;
-        }
+      if(Aspen::has_evaluation(fieldsState) && !m_isPendingCancel &&
+          !IsTerminal(m_status)) {
+        m_client->Cancel(*m_order);
+        m_isPendingCancel = true;
       }
       if(Aspen::has_continuation(fieldsState)) {
         return Aspen::combine(queueState, Aspen::State::CONTINUE);
@@ -208,9 +207,10 @@ namespace Nexus::OrderExecutionService {
     if(IsTerminal(m_status)) {
       try {
         m_isPendingCancel = false;
-        const auto& orderFields = *m_lastOrderFields;
-        if(orderFields.m_quantity > 0) {
-          m_order = &m_client->Submit(orderFields);
+        if(m_lastOrderFields.m_quantity - m_filled > 0) {
+          auto orderFields = m_orderFields->eval();
+          orderFields.m_quantity -= m_filled;
+          m_order = &m_client->Submit(m_orderFields->eval());
           m_orderQueue = Beam::MakeConverterWriterQueue<ExecutionReport>(
             m_executionReports->GetWriter(),
             [order = m_order] (const auto& executionReport) {

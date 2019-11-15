@@ -86,12 +86,12 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
   serviceClients.Open();
   auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
   environment.MonitorOrderSubmissions(orderSubmissions);
-  auto fieldsReactor = Aspen::Shared<Aspen::Queue<OrderFields>>();
+  auto price = Aspen::Shared<Aspen::Queue<Money>>();
+  price->push(Money::CENT);
   auto reactor = MakeLimitOrderReactor(
     Ref(serviceClients.GetOrderExecutionClient()),
     Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
-    Aspen::constant(300), Aspen::constant(Money::CENT));
-  fieldsReactor->push(testFields);
+    Aspen::constant(300), price);
   CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
   auto order = orderSubmissions->Top();
   orderSubmissions->Pop();
@@ -109,9 +109,7 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::EVALUATED);
   CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  auto testFieldsUpdate = OrderFields::BuildLimitOrder(TEST_SECURITY, Side::BID,
-    100, 2 * Money::ONE);
-  fieldsReactor->set_complete(testFieldsUpdate);
+  price->set_complete(2 * Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::NONE);
@@ -128,14 +126,10 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
     OrderStatus::CANCELED);
   auto updatedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security ==
-    testFieldsUpdate.m_security);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side ==
-    testFieldsUpdate.m_side);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity ==
-    testFieldsUpdate.m_quantity);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price ==
-    testFieldsUpdate.m_price);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price == 2 * Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(6) == Aspen::State::EVALUATED);
@@ -146,7 +140,7 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(7) == Aspen::State::EVALUATED);
   CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  environment.FillOrder(*updatedOrder, testFieldsUpdate.m_quantity);
+  environment.FillOrder(*updatedOrder, 300);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(8) == Aspen::State::COMPLETE_EVALUATED);
@@ -171,12 +165,12 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
   serviceClients.Open();
   auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
   environment.MonitorOrderSubmissions(orderSubmissions);
-  auto testFields = OrderFields::BuildLimitOrder(TEST_SECURITY, Side::BID, 100,
-    Money::ONE);
-  auto fieldsReactor = Aspen::Shared<Aspen::Queue<OrderFields>>();
-  auto reactor = OrderReactor(Ref(serviceClients.GetOrderExecutionClient()),
-    fieldsReactor);
-  fieldsReactor->push(testFields);
+  auto price = Aspen::Shared<Aspen::Queue<Money>>();
+  price->push(Money::CENT);
+  auto reactor = MakeLimitOrderReactor(
+    Ref(serviceClients.GetOrderExecutionClient()),
+    Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+    Aspen::constant(300), price);
   CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
   auto order = orderSubmissions->Top();
   orderSubmissions->Pop();
@@ -193,9 +187,7 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
   environment.RejectOrder(*order);
   commits.Top();
   commits.Pop();
-  auto testFieldsUpdate = OrderFields::BuildLimitOrder(TEST_SECURITY, Side::BID,
-    100, 2 * Money::ONE);
-  fieldsReactor->set_complete(testFieldsUpdate);
+  price->set_complete(2 * Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::EVALUATED);
@@ -203,13 +195,9 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
     OrderStatus::REJECTED);
   auto updatedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security ==
-    testFieldsUpdate.m_security);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side ==
-    testFieldsUpdate.m_side);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity ==
-    testFieldsUpdate.m_quantity);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price ==
-    testFieldsUpdate.m_price);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price == 2 * Money::ONE);
   Trigger::set_trigger(nullptr);
 }
