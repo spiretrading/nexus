@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
+import { IntegerInputBox } from './integer_input_box';
 
 enum TimeUnit {
   HOURS,
@@ -18,6 +19,10 @@ export class DurationInput extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
       <div style={DurationInput.STYLE.wrapper}>
+          <IntegerInputBox
+            padding={2}/>
+          <IntegerInputBox padding={2}/>
+          <IntegerInputBox padding={2}/>
       </div>);
   }
 
@@ -28,6 +33,9 @@ export class DurationInput extends React.Component<Properties> {
     wrapper: {
       display: 'flex' as 'flex',
       flexDirection: 'row'  as 'row'
-    }
+    },
+    integerBox: {
+    },
+
   };
 }
