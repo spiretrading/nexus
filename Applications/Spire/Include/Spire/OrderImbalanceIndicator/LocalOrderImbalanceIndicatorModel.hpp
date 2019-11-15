@@ -32,6 +32,9 @@ namespace Spire {
 
       std::vector<Subscription> m_signals;
       std::vector<Nexus::OrderImbalance> m_imbalances;
+
+      void update_signals(std::size_t current_index, std::size_t swap_index,
+        std::size_t end_index, const Nexus::OrderImbalance& imbalance);
   };
 }
 

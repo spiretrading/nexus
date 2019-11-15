@@ -25,11 +25,8 @@ OrderImbalanceIndicatorModel::SubscriptionResult
 void LocalOrderImbalanceIndicatorModel::insert(
     const OrderImbalance& imbalance) {
   m_imbalances.push_back(imbalance);
-  for(auto i = std::size_t(0); i < m_signals.size(); ++i) {
-    if(m_signals[i].m_start_time <= imbalance.m_timestamp &&
-        imbalance.m_timestamp <= m_signals[i].m_end_time) {
-      m_signals[i].m_imbalance_signal(imbalance);
-    }
+  if(!m_signals.empty()) {
+    update_signals(0, m_signals.size(), m_signals.size() - 1, imbalance);
   }
 }
 
@@ -37,3 +34,24 @@ LocalOrderImbalanceIndicatorModel::Subscription::Subscription(
   const boost::posix_time::ptime& start,
   const boost::posix_time::ptime& end)
   : m_start_time(start), m_end_time(end) {}
+
+void LocalOrderImbalanceIndicatorModel::update_signals(
+    std::size_t current_index, std::size_t swap_index, std::size_t end_index,
+    const OrderImbalance& imbalance) {
+  if(m_signals[current_index].m_start_time <= imbalance.m_timestamp &&
+      imbalance.m_timestamp <= m_signals[current_index].m_end_time) {
+    m_signals[current_index].m_imbalance_signal(imbalance);
+  }
+  if(current_index == swap_index || current_index == end_index) {
+    if(swap_index <= end_index ||
+        m_signals[end_index].m_imbalance_signal.num_slots() == 0) {
+      m_signals.erase(m_signals.begin() + current_index,
+        m_signals.begin() + end_index + 1);
+    }
+    return;
+  } else if(m_signals[current_index].m_imbalance_signal.num_slots() == 0) {
+    std::swap(m_signals[current_index], m_signals[--swap_index]);
+    --current_index;
+  }
+  update_signals(++current_index, swap_index, end_index, imbalance);
+}
