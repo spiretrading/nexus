@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
@@ -51,11 +52,33 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.scrollBoxBig;
       }
     })();
+    const iconRowStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return SecurityInput.STYLE.iconRowSmall;
+      } else {
+        return SecurityInput.STYLE.iconRowBig;
+      }
+    })();
+    const imageSize = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return SecurityInput.IMAGE_SIZE_SMALL;
+      } else {
+        return SecurityInput.IMAGE_SIZE_BIG;
+      }
+    })();
+    const imageWrapperStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return SecurityInput.STYLE.iconWrapperSmall;
+      } else {
+        return SecurityInput.STYLE.iconWrapperLarge;
+      }
+    })();
     return(
       <div>
         <input
           readOnly
           style={SecurityInput.STYLE.textBox}
+          className={css(SecurityInput.EXTRA_STYLE.effects)}
           value ={this.props.value.symbol}
           onFocus={this.toggleEditing.bind(this)}
           onClick={this.toggleEditing.bind(this)}/>
@@ -67,15 +90,24 @@ export class SecurityInput extends React.Component<Properties, State>{
               <div style={SecurityInput.STYLE.headerText}>
                 {SecurityInput.MODAL_HEADER}
               </div>
-              <img src={'resources/account_page/compliance_page/close.svg'}
+              <img src={'resources/account_page/compliance_page/security_input/close.svg'}
                 height='20px'
                 width='20px'/>
             </div>
-            <input style={SecurityInput.STYLE.findSymbolBox}
+            <input
+              className={css(SecurityInput.EXTRA_STYLE.effects)}
+              style={SecurityInput.STYLE.findSymbolBox}
               placeholder={SecurityInput.PLACEHOLDER_TEXT}
               value={''}/>
             <div style={selectedSecuritiesBox}/>
-            <div style={SecurityInput.STYLE.iconBoxBig}/>
+            <div style={iconRowStyle}>
+              <div style={imageWrapperStyle}>
+                <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
+              </div>
+              <div style={imageWrapperStyle}>
+                <img src={'resources/account_page/compliance_page/security_input/upload.svg'}/>
+              </div>
+            </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
               <button style={SecurityInput.STYLE.button}>
@@ -214,11 +246,29 @@ export class SecurityInput extends React.Component<Properties, State>{
       borderRadius: '1px',
       marginBottom: '30px'
     },
-    iconBoxBig: {
+    iconWrapperSmall: {
+      height: '24px',
+      width: '24px'
+    },
+    iconWrapperLarge: {
+      height: '16px',
+      width: '16px'
+    },
+    iconRowSmall: {
+      height: '24px',
+      width: '100%',
+      marginBottom: '30px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      justifyContent: 'space-evenly' as 'space-evenly' 
+    },
+    iconRowBig: {
       height: '16px',
       width: '100%',
       marginBottom: '30px',
-      backgroundColor: '#ff0090'
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      justifyContent: 'space-evenly' as 'space-evenly' 
     },
     button: {
       boxSizing: 'border-box' as 'border-box',
@@ -239,6 +289,31 @@ export class SecurityInput extends React.Component<Properties, State>{
       alignItems: 'center' as 'center',
     }
   };
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    effects: {
+      ':focus': {
+        ouline: 0,
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      ':active' : {
+        borderColor: '#684BC7'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
+      }
+    }
+  });
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
+  private static readonly PATH =
+    'resources/account_page/compliance_page/security_input/';
+  private static readonly IMAGE_SIZE_SMALL = '20px';
+  private static readonly IMAGE_SIZE_BIG = '16px';
 }
