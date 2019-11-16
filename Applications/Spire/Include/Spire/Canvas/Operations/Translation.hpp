@@ -5,7 +5,6 @@
 #include <typeinfo>
 #include <type_traits>
 #include <Aspen/Aspen.hpp>
-#include <Beam/Queues/Publisher.hpp>
 #include <Nexus/OrderExecutionService/Order.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
@@ -29,23 +28,29 @@ namespace Details {
    */
   class Translation {
     public:
+
+      /** Constructs a Translation for a shared reactor.
+       *  @param reactor The reactor that was translated.
+       */
       template<typename R>
-      Translation(Aspen::Shared<R> reactor, const Beam::Publisher<
-        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
+      Translation(Aspen::Shared<R> reactor);
 
+      /** Constructs a Translation for a boxed reactor.
+       *  @param reactor The reactor that was translated.
+       */
       template<typename T>
-      Translation(Aspen::Box<T> reactor, const Beam::Publisher<
-        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
+      Translation(Aspen::Box<T> reactor);
 
+      /** Constructs a Translation for a reactor.
+       *  @param reactor The reactor that was translated.
+       */
       template<typename R, typename=std::enable_if_t<Aspen::is_reactor_v<R>>>
-      Translation(R&& reactor, const Beam::Publisher<
-        const Nexus::OrderExecutionService::Order*>* publisher = nullptr);
+      Translation(R&& reactor);
 
+      /** Returns the type of value produced by the translated reactor. */
       const std::type_info& GetTypeInfo() const;
 
-      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>*
-        GetPublisher() const;
-
+      /** Extracts the translated reactor. */
       template<typename T>
       T Extract() const;
 
@@ -71,27 +76,23 @@ namespace Details {
         void ExtractBox(void* destination) const override;
         void Extract(void* destination) const override;
       };
+      const std::type_info* m_type;
       std::shared_ptr<BaseHolder> m_holder;
-      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>*
-        m_publisher;
   };
 
   template<typename R>
-  Translation::Translation(Aspen::Shared<R> reactor, const Beam::Publisher<
-      const Nexus::OrderExecutionService::Order*>* publisher)
-    : m_holder(std::make_shared<SharedHolder<R>>(std::move(reactor))),
-      m_publisher(publisher) {}
+  Translation::Translation(Aspen::Shared<R> reactor)
+    : m_type(&typeid(Aspen::reactor_result_t<R>)),
+      m_holder(std::make_shared<SharedHolder<R>>(std::move(reactor))) {}
 
   template<typename T>
-  Translation::Translation(Aspen::Box<T> reactor, const Beam::Publisher<
-      const Nexus::OrderExecutionService::Order*>* publisher)
-    : m_holder(std::make_shared<BoxHolder<T>>(std::move(reactor))),
-      m_publisher(publisher) {}
+  Translation::Translation(Aspen::Box<T> reactor)
+    : m_type(&typeid(T)),
+      m_holder(std::make_shared<BoxHolder<T>>(std::move(reactor))) {}
 
   template<typename R, typename>
-  Translation::Translation(R&& reactor, const Beam::Publisher<
-      const Nexus::OrderExecutionService::Order*>* publisher)
-    : Translation(Aspen::Shared(std::forward<R>(reactor)), publisher) {}
+  Translation::Translation(R&& reactor)
+    : Translation(Aspen::Shared(std::forward<R>(reactor))) {}
 
   template<typename T>
   T Translation::Extract() const {

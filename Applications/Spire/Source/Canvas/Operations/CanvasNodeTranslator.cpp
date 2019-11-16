@@ -368,13 +368,20 @@ namespace {
   };
 
   struct ChainTranslator {
-    template<typename T0, typename T1, typename R>
-    static Translation Template(const Translation& left,
-        const Translation& right, CanvasNodeTranslationContext& context) {
-
-      // TODO: publisher
-      return Aspen::chain(initial.Extract<Aspen::Box<T>>(),
-        continuation.Extract<Aspen::Box<T>>());
+    template<typename T>
+    static Translation Template(const std::vector<Translation>& translations) {
+      if(translations.empty()) {
+        return Aspen::box(Aspen::none<T>());
+      } else if(translations.size() == 1) {
+        return translations.front().Extract<Aspen::Box<T>>();
+      } else {
+        auto reactor = translations.back().Extract<Aspen::Box<T>>();
+        for(auto i = std::size_t(translations.size() - 1); i-- > 0;) {
+          reactor = Aspen::box(Aspen::chain(
+            translations[i].Extract<Aspen::Box<T>>(), std::move(reactor)));
+        }
+        return reactor;
+      }
     }
 
     using SupportedTypes = ValueTypes;
@@ -721,15 +728,15 @@ namespace {
 
   struct LuaParameterTranslator {
     template<typename T>
-    static Translation Template(const Translation& reactor,
-        const CanvasType& type) {
+    static Aspen::Unique<LuaReactorParameter> Template(
+        const Translation& reactor, const CanvasType& type) {
       return Aspen::Unique(NativeLuaReactorParameter(
         reactor.Extract<Aspen::Box<T>>()));
     }
 
     template<>
-    static Translation Template<Record>(const Translation& reactor,
-        const CanvasType& type) {
+    static Aspen::Unique<LuaReactorParameter> Template<Record>(
+        const Translation& reactor, const CanvasType& type) {
       return Aspen::Unique(RecordLuaReactorParameter(
         reactor.Extract<Aspen::Box<Record>>(),
         static_cast<const RecordType&>(type)));
@@ -1006,8 +1013,7 @@ namespace {
     static Translation Template(Aspen::Box<bool> condition,
         const Translation& series) {
       return Translation(
-        Aspen::when(condition, series.Extract<Aspen::Box<T>>()),
-        series.GetPublisher());
+        Aspen::when(condition, series.Extract<Aspen::Box<T>>()));
     }
 
     using SupportedTypes = ValueTypes;
@@ -1066,16 +1072,24 @@ void CanvasNodeTranslationVisitor::Visit(const AdditionNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
-//  auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
-  auto publishers = std::vector<const Publisher<const Order*>*>();
-  for(const auto& child : node.GetChildren()) {
+/*
+  auto publisher = MakeAggregateOrderExecutionPublisher();
+  auto existingPublishers =
+    std::set<std::shared_ptr<Publisher<const Order*>>>();
+  for(auto& child : node.GetChildren()) {
     if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
       auto translation = InternalTranslation(child);
       if(translation.GetPublisher() != nullptr) {
-        publishers.push_back(translation.GetPublisher());
+        auto& translationPublisher = translation.GetPublisher();
+        if(existingPublishers.insert(translationPublisher).second) {
+          publisher->Add(*translationPublisher);
+        }
       }
     }
   }
+  auto publisher = MakeAggregateOrderExecutionPublisher();
+  publisher->
+*/
 /*
   auto translation = [&] {
     if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
@@ -1132,42 +1146,15 @@ void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
-#if 0 // TODO
-  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL) {
-    vector<TaskFactory> factories;
-    auto orderExecutionPublisher = MakeAggregateOrderExecutionPublisher();
-    for(auto& child : node.GetChildren()) {
-      if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
-        auto translation = get<TaskTranslation>(InternalTranslation(child));
-        factories.push_back(translation.m_factory);
-        orderExecutionPublisher->Add(*translation.m_publisher);
-      }
+  auto translations = std::vector<Translation>();
+  for(auto& child : node.GetChildren()) {
+    if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
+      translations.push_back(InternalTranslation(child));
     }
-    TaskTranslation taskTranslation;
-    taskTranslation.m_publisher = orderExecutionPublisher;
-    taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
-      ChainedTaskFactory(factories), orderExecutionPublisher);
-    m_translation = taskTranslation;
-  } else {
-    auto previousReactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(node.GetChildren().front()));
-    if(node.GetChildren().size() == 1) {
-      m_translation = previousReactor;
-      return;
-    }
-    auto& nativeType = static_cast<const NativeType&>(node.GetType());
-    for(auto i = std::size_t{1}; i < node.GetChildren().size() - 1; ++i) {
-      auto currentReactor = boost::get<std::shared_ptr<BaseReactor>>(
-        InternalTranslation(node.GetChildren()[i]));
-      auto chainReactor = Instantiate<ChainTranslator>(
-        nativeType.GetNativeType())(previousReactor, currentReactor,
-        *m_context);
-      previousReactor = chainReactor;
-    }
-    m_translation = previousReactor;
   }
-#endif
+  auto& nativeType = static_cast<const NativeType&>(node.GetType());
+  m_translation = Instantiate<ChainTranslator>(nativeType.GetNativeType())(
+    translations);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
@@ -1175,10 +1162,11 @@ void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentDateNode& node) {
-#if 0 // TODO
-  m_translation = CurrentTimeReactor(
-    m_context->GetUserProfile().GetServiceClients().GetTimeClient());
-#endif
+  m_translation = Aspen::lift(
+    [] (ptime time) {
+      return ptime(time.date(), seconds(0));
+    }, CurrentTimeReactor(
+    &m_context->GetUserProfile().GetServiceClients().GetTimeClient()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentDateTimeNode& node) {
@@ -1187,11 +1175,11 @@ void CanvasNodeTranslationVisitor::Visit(const CurrentDateTimeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrentTimeNode& node) {
-#if 0 // TODO
-  auto currentTime = m_context->GetUserProfile().GetServiceClients().
-    GetTimeClient().GetTime().time_of_day();
-  m_translation = MakeConstantReactor(currentTime);
-#endif
+  m_translation = Aspen::lift(
+    [] (ptime time) {
+      return time.time_of_day();
+    }, CurrentTimeReactor(
+    &m_context->GetUserProfile().GetServiceClients().GetTimeClient()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
@@ -1254,12 +1242,14 @@ void CanvasNodeTranslationVisitor::Visit(const EqualsNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(
     const ExecutionReportMonitorNode& node) {
+/* TODO
   auto taskTranslation = InternalTranslation(node.GetChildren().front());
   m_translation = Aspen::lift(ExecutionReportToRecordConverter(),
     Aspen::group(Aspen::lift(
     [] (const Order* order) {
       return Aspen::box(PublisherReactor(order->GetPublisher()));
     }, PublisherReactor(*taskTranslation.GetPublisher()))));
+*/
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilePathNode& node) {
@@ -1345,28 +1335,26 @@ void CanvasNodeTranslationVisitor::Visit(const LesserOrEqualsNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LuaScriptNode& node) {
-#if 0 // TODO
   auto luaState = luaL_newstate();
   luaL_openlibs(luaState);
   ExportLuaTypes(*luaState);
   auto& nativeType = static_cast<const NativeType&>(node.GetType());
   if(luaL_dofile(luaState, node.GetPath().string().c_str()) != 0) {
     m_translation = Instantiate<ThrowTranslator>(nativeType.GetNativeType())(
-      ReactorException(lua_tostring(luaState, -1)));
+      std::make_exception_ptr(std::runtime_error(lua_tostring(luaState, -1))));
     lua_close(luaState);
     return;
   }
-  vector<unique_ptr<LuaReactorParameter>> parameters;
-  for(const auto& child : node.GetChildren()) {
-    auto reactor = boost::get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(child));
-    auto parameter = Instantiate<LuaParameterTranslator>(reactor->GetType())(
-      reactor, child.GetType());
-    parameters.emplace_back(std::move(parameter));
+  auto parameters = std::vector<Aspen::Unique<LuaReactorParameter>>();
+  for(auto& child : node.GetChildren()) {
+    auto& childNativeType = static_cast<const NativeType&>(child.GetType());
+    auto parameter = Instantiate<LuaParameterTranslator>(
+      childNativeType.GetNativeType())(InternalTranslation(child),
+      child.GetType());
+    parameters.push_back(std::move(parameter));
   }
   m_translation = Instantiate<LuaScriptTranslator>(nativeType.GetNativeType())(
     node.GetName(), std::move(parameters), *luaState);
-#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const MarketNode& node) {
