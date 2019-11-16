@@ -21,7 +21,6 @@
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/OrderFieldsReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -1560,7 +1559,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   auto& orderExecutionClient =
     m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
   m_translation = Translation(OrderReactor(Ref(orderExecutionClient),
-    OrderFieldsReactor(Aspen::constant(m_context->GetExecutingAccount()),
+    Aspen::constant(m_context->GetExecutingAccount()),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
     InternalTranslation(*node.FindChild(
@@ -1578,7 +1577,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
-    Aspen::Box<TimeInForce>>(), std::move(additionalFields))));
+    Aspen::Box<TimeInForce>>(), std::move(additionalFields)));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {

@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <Aspen/MultiSync.hpp>
 #include <Aspen/Sync.hpp>
+#include <Aspen/VectorSync.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/Queues/MultiQueueReader.hpp>
@@ -102,7 +103,7 @@ namespace Nexus::OrderExecutionService {
     private:
       OrderExecutionClient* m_client;
       OrderFields m_lastOrderFields;
-      Aspen::Shared<QuantityReactor> m_quantity;
+      std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
       std::optional<Aspen::MultiSync<OrderFields,
         Aspen::Sync<AccountReactor, Beam::ServiceLocator::DirectoryEntry>,
         Aspen::Sync<SecurityReactor, Security>,
@@ -113,7 +114,8 @@ namespace Nexus::OrderExecutionService {
         Aspen::Sync<Aspen::Shared<QuantityReactor>, Quantity>,
         Aspen::Sync<PriceReactor, Money>,
         Aspen::Sync<TimeInForceReactor, TimeInForce>,
-        Aspen::Sync<AdditionalFieldsReactor, std::vector<Tag>>>> m_orderFields;
+        Aspen::VectorSync<typename AdditionalFieldsReactor::value_type,
+        std::vector<Tag>>>> m_orderFields;
       const Order* m_order;
       bool m_isPendingCancel;
       Quantity m_filled;
@@ -130,10 +132,10 @@ namespace Nexus::OrderExecutionService {
     return OrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
       std::move(security), Aspen::constant(CurrencyId::NONE()),
-      Aspen::constant(static_cast<OrderType>(OrderType::LIMIT)),
-      std::move(side), Aspen::constant(std::string()), std::move(quantity),
-      std::move(price), Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
-      Aspen::constant(std::vector<Tag>()));
+      Aspen::constant(OrderType::LIMIT), std::move(side),
+      Aspen::constant(std::string()), std::move(quantity), std::move(price),
+      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
+      std::vector<Aspen::Constant<Tag>>());
   }
 
   template<typename C, typename AR, typename SR, typename CR, typename OR,
@@ -155,10 +157,10 @@ namespace Nexus::OrderExecutionService {
         Aspen::Sync(m_lastOrderFields.m_type, std::move(orderType)),
         Aspen::Sync(m_lastOrderFields.m_side, std::move(side)),
         Aspen::Sync(m_lastOrderFields.m_destination, std::move(destination)),
-        Aspen::Sync(m_lastOrderFields.m_quantity, m_quantity),
+        Aspen::Sync(m_lastOrderFields.m_quantity, *m_quantity),
         Aspen::Sync(m_lastOrderFields.m_price, std::move(price)),
         Aspen::Sync(m_lastOrderFields.m_timeInForce, std::move(timeInForce)),
-        Aspen::Sync(m_lastOrderFields.m_additionalFields,
+        Aspen::VectorSync(m_lastOrderFields.m_additionalFields,
           std::move(additionalFields))),
       m_order(nullptr),
       m_isPendingCancel(true),
@@ -195,13 +197,16 @@ namespace Nexus::OrderExecutionService {
         m_client->Cancel(*m_order);
         m_isPendingCancel = true;
       }
-      if(Aspen::has_continuation(fieldsState)) {
-        return Aspen::combine(queueState, Aspen::State::CONTINUE);
-      } else if(Aspen::is_complete(fieldsState)) {
+      if(m_filled == (*m_quantity)->eval() &&
+          Aspen::is_complete((*m_quantity)->commit(sequence)) ||
+          Aspen::is_complete(fieldsState)) {
         m_orderFields.reset();
+        m_quantity.reset();
         if(m_order == nullptr && !Aspen::has_evaluation(fieldsState)) {
           return Aspen::State::COMPLETE;
         }
+      } else if(Aspen::has_continuation(fieldsState)) {
+        return Aspen::combine(queueState, Aspen::State::CONTINUE);
       }
     }
     if(IsTerminal(m_status)) {

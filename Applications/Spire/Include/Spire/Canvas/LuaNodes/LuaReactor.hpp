@@ -41,10 +41,9 @@ namespace Spire {
 
     private:
       std::string m_functionName;
-      std::vector<Aspen::Shared<LuaReactorParameter>> m_parameters;
+      Aspen::CommitHandler<Aspen::Shared<LuaReactorParameter>> m_parameters;
       lua_State* m_luaState;
       Aspen::Maybe<Type> m_value;
-      Aspen::CommitHandler m_handler;
   };
 
   /**
@@ -62,14 +61,7 @@ namespace Spire {
       lua_State& luaState)
       : m_functionName(std::move(functionName)),
         m_parameters(std::move(parameters)),
-        m_luaState(&luaState),
-        m_handler([&] {
-          auto reactors = std::vector<Aspen::Box<void>>(parameters.size());
-          for(auto& parameter : m_parameters) {
-            reactors.push_back(Aspen::Box<void>(parameter));
-          }
-          return reactors;
-        }()) {}
+        m_luaState(&luaState) {}
 
   template<typename T>
   LuaReactor<T>::~LuaReactor() {
@@ -78,13 +70,14 @@ namespace Spire {
 
   template<typename T>
   Aspen::State LuaReactor<T>::commit(int sequence) noexcept {
-    auto state = m_handler.commit(sequence);
+    auto state = m_parameters.commit(sequence);
     if(!Aspen::has_evaluation(state)) {
       return state;
     }
     lua_getglobal(m_luaState, m_functionName.c_str());
     auto parameterCount = 0;
-    for(auto& parameter : m_parameters) {
+    for(auto i = std::size_t(0); i != m_parameters.size(); ++i) {
+      auto& parameter = m_parameters.get(i);
       try {
         parameter->Push(*m_luaState);
       } catch(const std::exception& e) {
