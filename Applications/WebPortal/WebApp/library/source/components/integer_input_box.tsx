@@ -86,7 +86,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       if(event.target.value.length === 0) {
         return 0;
       } else {
-        return parseInt(event.target.value);
+        return parseInt(event.target.value, 10);
       }
     })();
     if(isNaN(value)) {
@@ -96,7 +96,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       return;
     }
     if(this.props.max != null && value > this.props.max) {
-      value = Math.trunc(value / 10);
+      //value = Math.trunc(value / 10);
     }
     if(this.props.min != null && value < this.props.min ||
         this.props.max != null && value > this.props.max) {

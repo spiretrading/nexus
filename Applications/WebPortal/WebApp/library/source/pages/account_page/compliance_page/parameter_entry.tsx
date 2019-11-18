@@ -67,6 +67,7 @@ export class ParameterEntry extends React.Component<Properties> {
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <DurationInput
+            displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:

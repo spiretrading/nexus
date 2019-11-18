@@ -11,13 +11,20 @@ enum TimeUnit {
 }
 
 interface Properties { 
-  displaySize?: DisplaySize;
+  displaySize: DisplaySize;
   value: Beam.Duration;
   onChange:(newValue: Beam.Duration) => void;
 }
 
 export class DurationInput extends React.Component<Properties> {
   public render(): JSX.Element {
+    const wrapperStyle = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return DurationInput.STYLE.wrapperSmall;
+      } else {
+        return DurationInput.STYLE.wrapper;
+      }
+    })();
     const integerInputStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationInput.STYLE.integerBoxSmall;
@@ -26,8 +33,9 @@ export class DurationInput extends React.Component<Properties> {
       }
     })();
     return (
-      <div style={DurationInput.STYLE.wrapper}>
+      <div style={wrapperStyle}>
           <IntegerInputBox
+            min={0} max={59}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
             padding={2}/>
@@ -35,6 +43,7 @@ export class DurationInput extends React.Component<Properties> {
             :
           </div>
           <IntegerInputBox
+            min={0} max={59}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
             padding={2}/>
@@ -42,6 +51,7 @@ export class DurationInput extends React.Component<Properties> {
             :
           </div>
           <IntegerInputBox
+            min={0} max={59}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
             padding={2}/>
@@ -64,12 +74,15 @@ export class DurationInput extends React.Component<Properties> {
       display: 'flex' as 'flex',
       flexDirection: 'row'  as 'row',
       minWidth: '184px',
-      maxWidth: '246px'
+      width: '100%',
+      flexShrink: 1,
+      flexGrow: 1
     },
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       minWidth: '44px',
-      //maxWidth: '64px',
+      maxWidth: '64px',
+      width: '100%',
       height: '34px',
       flexGrow: 1,
       flexShrink: 1
