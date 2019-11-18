@@ -115,3 +115,8 @@ std::vector<Nexus::OrderImbalance>
   }
   return filtered_imbalances;
 }
+
+FilteredOrderImbalanceIndicatorModel::Subscription::Subscription(
+  const boost::posix_time::ptime& start,
+  const boost::posix_time::ptime& end)
+  : m_start_time(start), m_end_time(end) {}
