@@ -127,7 +127,7 @@ TEST_CASE("test_market_list_filter",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_list_filter({"TSX"})});
+      {make_market_list_filter({"TSX"}, GetDefaultMarketDatabase())});
     auto [connection1, promise1] = model1.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data1 = wait(std::move(promise1));
@@ -135,7 +135,7 @@ TEST_CASE("test_market_list_filter",
     REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
       expected1.end()));
     auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_list_filter({"TSX", "NYSE"})});
+      {make_market_list_filter({"TSX", "NYSE"}, GetDefaultMarketDatabase())});
     auto [connection2, promise2] = model2.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
@@ -143,7 +143,7 @@ TEST_CASE("test_market_list_filter",
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
     auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_list_filter({})});
+      {make_market_list_filter({}, GetDefaultMarketDatabase())});
     auto [connection3, promise3] = model3.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data3 = wait(std::move(promise3));
@@ -154,7 +154,7 @@ TEST_CASE("test_market_list_filter",
 TEST_CASE("test_market_filter", "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model1 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_filter({"T"})});
+      {make_market_filter({"T"}, GetDefaultMarketDatabase())});
     auto [connection1, promise1] = model1.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data1 = wait(std::move(promise1));
@@ -162,7 +162,7 @@ TEST_CASE("test_market_filter", "[FilteredOrderImbalanceIndicatorModel]") {
     REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
       expected1.end()));
     auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_filter({"N"})});
+      {make_market_filter({"N"}, GetDefaultMarketDatabase())});
     auto [connection2, promise2] = model2.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data2 = wait(std::move(promise2));
@@ -170,7 +170,7 @@ TEST_CASE("test_market_filter", "[FilteredOrderImbalanceIndicatorModel]") {
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
     auto model3 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-      {make_market_filter({})});
+      {make_market_filter({}, GetDefaultMarketDatabase())});
     auto [connection3, promise3] = model3.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data3 = wait(std::move(promise3));
@@ -286,7 +286,7 @@ TEST_CASE("test_filtered_signals",
   run_test([] {
     auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto model = FilteredOrderImbalanceIndicatorModel(local_model,
-      {make_market_list_filter({"TSX"})});
+      {make_market_list_filter({"TSX"}, GetDefaultMarketDatabase())});
     auto signal_data1 = OrderImbalance();
     auto signal_data2 = OrderImbalance();
     auto signal_data3 = OrderImbalance();

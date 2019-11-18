@@ -45,7 +45,7 @@ namespace Spire {
       bool is_imbalance_accepted(
         const Nexus::OrderImbalance& imbalance) const;
       std::vector<Nexus::OrderImbalance> filter_imbalances(
-        const std::vector<Nexus::OrderImbalance>& imbalances);
+        const std::vector<Nexus::OrderImbalance>& imbalances) const;
   };
 
   //! Creates a filter that filters out symbols that do not appear in the
@@ -79,9 +79,12 @@ namespace Spire {
   //! or match the given string.
   /*
     \param filter_string The string to compare the order imbalance markets to.
+    \param market_database Market database used for converting display names
+                           to market codes.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_market_filter(
-    const std::string& filter_string);
+    const std::string& filter_string,
+    const Nexus::MarketDatabase& market_database);
 
   //! Creates a filter that filters out sides that do not match the given
   //! order imbalance side.

@@ -49,15 +49,16 @@ Filter Spire::make_security_filter(const std::string& filter_string) {
 
 Filter Spire::make_market_list_filter(
     const std::set<std::string>& market_list,
-      const Nexus::MarketDatabase& market_database) {
+    const MarketDatabase& market_database) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return market_list.find(market_database.FromCode(
       imbalance.m_security.GetMarket()).m_displayName) != market_list.end();
   };
 }
 
-Filter Spire::make_market_filter(const std::string& filter_string) {
-  return [=, market_database = GetDefaultMarketDatabase()] (
+Filter Spire::make_market_filter(const std::string& filter_string,
+    const MarketDatabase& market_database) {
+  return [=] (
       const Nexus::OrderImbalance& imbalance) {
     return std::string(market_database.FromCode(
       imbalance.m_security.GetMarket()).m_displayName)
@@ -106,7 +107,7 @@ bool FilteredOrderImbalanceIndicatorModel::is_imbalance_accepted(
 
 std::vector<Nexus::OrderImbalance>
     FilteredOrderImbalanceIndicatorModel::filter_imbalances(
-    const std::vector<Nexus::OrderImbalance>& imbalances) {
+    const std::vector<Nexus::OrderImbalance>& imbalances) const {
   auto filtered_imbalances = std::vector<Nexus::OrderImbalance>();
   for(auto& imbalance : imbalances) {
     if(is_imbalance_accepted(imbalance)) {
