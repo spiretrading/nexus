@@ -325,11 +325,3 @@ TEST_CASE("test_filtered_signals",
     REQUIRE(signal_data4 == OrderImbalance());
   }, "test_filtered_signals");
 }
-
-TEST_CASE(
-    "filtered_imbalance_test_subscription_in_published_imbalance_callback",
-    "[FilteredOrderImbalanceIndicatorModel]") {
-  run_test([] {
-    
-  }, "filtered_imbalance_test_subscription_in_published_imbalance_callback");
-}
