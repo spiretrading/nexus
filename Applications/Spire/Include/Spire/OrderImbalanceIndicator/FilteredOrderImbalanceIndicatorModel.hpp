@@ -40,11 +40,10 @@ namespace Spire {
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<boost::signals2::scoped_connection> m_connections;
       std::vector<Filter> m_filters;
 
       bool is_imbalance_accepted(
-        const Nexus::OrderImbalance& imbalance);
+        const Nexus::OrderImbalance& imbalance) const;
       std::vector<Nexus::OrderImbalance> filter_imbalances(
         const std::vector<Nexus::OrderImbalance>& imbalances);
   };
@@ -69,9 +68,12 @@ namespace Spire {
   //! list.
   /*
     \param market_list The list of markets to preserve after filtering.
+    \param market_database Market database used for converting display names
+                           to market codes.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_market_list_filter(
-    const std::set<std::string>& market_list);
+    const std::set<std::string>& market_list,
+    const Nexus::MarketDatabase& market_database);
 
   //! Creates a filter that filters out markets that do not start with
   //! or match the given string.

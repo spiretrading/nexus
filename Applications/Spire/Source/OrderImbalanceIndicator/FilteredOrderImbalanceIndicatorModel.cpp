@@ -17,17 +17,17 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& start,
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
-  auto signal = std::make_shared<Subscription>(start, end);
+  auto subscription = std::make_shared<Subscription>(start, end);
+  subscription->m_imbalance_signal.connect(slot);
   auto callback = [=] (const auto& imbalance) {
     if(is_imbalance_accepted(imbalance)) {
-      signal->m_imbalance_signal(imbalance);
+      subscription->m_imbalance_signal(imbalance);
     }
   };
   auto [connection, promise] = m_source_model->subscribe(start, end,
     std::move(callback));
-  m_connections.push_back(connection);
-  return {signal->m_imbalance_signal.connect(slot),
-    promise.then([=] (auto& imbalances) {
+  return {connection,
+    promise.then([=] (const auto& imbalances) {
       return filter_imbalances(imbalances);
     })
   };
@@ -48,9 +48,9 @@ Filter Spire::make_security_filter(const std::string& filter_string) {
 }
 
 Filter Spire::make_market_list_filter(
-    const std::set<std::string>& market_list) {
-  return [=, market_database = GetDefaultMarketDatabase()] (
-      const Nexus::OrderImbalance& imbalance) {
+    const std::set<std::string>& market_list,
+      const Nexus::MarketDatabase& market_database) {
+  return [=] (const Nexus::OrderImbalance& imbalance) {
     return market_list.find(market_database.FromCode(
       imbalance.m_security.GetMarket()).m_displayName) != market_list.end();
   };
@@ -95,7 +95,7 @@ Filter Spire::make_notional_value_filter(const Nexus::Money& min,
 }
 
 bool FilteredOrderImbalanceIndicatorModel::is_imbalance_accepted(
-    const Nexus::OrderImbalance& imbalance) {
+    const Nexus::OrderImbalance& imbalance) const {
   for(auto& filter : m_filters) {
     if(!filter(imbalance)) {
       return false;

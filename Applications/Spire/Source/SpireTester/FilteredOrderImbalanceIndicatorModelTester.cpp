@@ -37,13 +37,13 @@ namespace {
   const auto market_database = GetDefaultMarketDatabase();
 
   auto make_local_model() {
-      auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-      model->insert(A);
-      model->insert(B);
-      model->insert(C);
-      model->insert(D);
-      model->insert(E);
-      return model;
+    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    model->insert(A);
+    model->insert(B);
+    model->insert(C);
+    model->insert(D);
+    model->insert(E);
+    return model;
   }
 }
 
