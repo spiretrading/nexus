@@ -302,6 +302,20 @@ namespace {
     using SupportedTypes = AbsNodeSignatures::type;
   };
 
+  struct AggregateTranslator {
+    template<typename T>
+    static Translation Template(const std::vector<Translation>& children) {
+      auto queue = Aspen::Queue<Aspen::Box<T>>();
+      for(auto& child : children) {
+        queue.push(child.Extract<Aspen::Box<T>>());
+      }
+      queue.set_complete();
+      return Aspen::group(std::move(queue));
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
   struct AdditionTranslator {
     template<typename T0, typename T1, typename R>
     struct Operation {
@@ -730,14 +744,14 @@ namespace {
     template<typename T>
     static Aspen::Unique<LuaReactorParameter> Template(
         const Translation& reactor, const CanvasType& type) {
-      return Aspen::Unique(NativeLuaReactorParameter(
+      return Aspen::Unique<LuaReactorParameter>(new NativeLuaReactorParameter(
         reactor.Extract<Aspen::Box<T>>()));
     }
 
     template<>
     static Aspen::Unique<LuaReactorParameter> Template<Record>(
         const Translation& reactor, const CanvasType& type) {
-      return Aspen::Unique(RecordLuaReactorParameter(
+      return Aspen::Unique<LuaReactorParameter>(new RecordLuaReactorParameter(
         reactor.Extract<Aspen::Box<Record>>(),
         static_cast<const RecordType&>(type)));
     }
@@ -1072,40 +1086,15 @@ void CanvasNodeTranslationVisitor::Visit(const AdditionNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
-/*
-  auto publisher = MakeAggregateOrderExecutionPublisher();
-  auto existingPublishers =
-    std::set<std::shared_ptr<Publisher<const Order*>>>();
+  auto children = std::vector<Translation>();
   for(auto& child : node.GetChildren()) {
-    if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
-      auto translation = InternalTranslation(child);
-      if(translation.GetPublisher() != nullptr) {
-        auto& translationPublisher = translation.GetPublisher();
-        if(existingPublishers.insert(translationPublisher).second) {
-          publisher->Add(*translationPublisher);
-        }
-      }
+    if(dynamic_cast<const NoneNode*>(&child) != nullptr) {
+      children.push_back(InternalTranslation(child));
     }
   }
-  auto publisher = MakeAggregateOrderExecutionPublisher();
-  publisher->
-*/
-/*
-  auto translation = [&] {
-    if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
-        CanvasType::Compatibility::EQUAL) {
-      return Translation(Task(Aspen::box(Aspen::group(
-    }
-  }();
-*/
-/*
-  auto translation = Translation(
-  TaskTranslation taskTranslation;
-  taskTranslation.m_publisher = orderExecutionPublisher;
-  taskTranslation.m_factory = OrderExecutionPublisherTaskFactory(
-    AggregateTaskFactory(factories), orderExecutionPublisher);
-  m_translation = std::move(translation);
-*/
+  auto& nativeType = static_cast<const NativeType&>(node.GetType());
+  m_translation = Instantiate<AggregateTranslator>(nativeType.GetNativeType())(
+    children);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
@@ -1480,10 +1469,10 @@ void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
-#if 0 // TODO
   auto& anchor = *FindAnchor(node);
   auto& referent = *node.FindReferent();
   m_translation = InternalTranslation(referent);
+#if 0 // TODO
   if(referent.GetType().GetCompatibility(TaskType::GetInstance()) !=
       CanvasType::Compatibility::EQUAL) {
     auto parent = referent.GetParent();
@@ -1649,23 +1638,17 @@ void CanvasNodeTranslationVisitor::Visit(const TimeRangeParameterNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
-#if 0
-  auto period = std::static_pointer_cast<Reactor<time_duration>>(
-    boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(
-    node.GetChildren().front())));
+  auto period = InternalTranslation(node.GetChildren().front());
   auto timerThreadPool = &m_context->GetUserProfile().GetTimerThreadPool();
   auto timerFactory = [=] (time_duration interval) {
-    return make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
+    return std::make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
   };
-  auto reactor = MakeTimerReactor<Quantity>(timerFactory, period);
-  m_translation = reactor;
-#endif
+  m_translation = TimerReactor<Quantity>(timerFactory,
+    period.Extract<Aspen::Box<time_duration>>());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UnequalNode& node) {
-#if 0
   m_translation = TranslateFunction<UnequalTranslator>(node);
-#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
@@ -1702,6 +1685,8 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
   } else if(dynamic_cast<const ReferenceNode*>(&node) == nullptr &&
       node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
+    node.Apply(*this);
+    m_context->Add(Ref(node), *m_translation);
 
     // TODO.
 #if 0

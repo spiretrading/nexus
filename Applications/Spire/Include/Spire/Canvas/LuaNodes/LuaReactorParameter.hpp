@@ -24,6 +24,13 @@ namespace Spire {
       virtual Aspen::State commit(int sequence) noexcept = 0;
 
       virtual void eval() const noexcept = 0;
+
+    protected:
+      LuaReactorParameter() = default;
+
+    private:
+      LuaReactorParameter(const LuaReactorParameter&) = delete;
+      LuaReactorParameter(LuaReactorParameter&&) = delete;
   };
 }
 

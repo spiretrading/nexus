@@ -33,15 +33,19 @@ namespace Spire {
         std::vector<Aspen::Unique<LuaReactorParameter>> parameters,
         lua_State& luaState);
 
+      LuaReactor(LuaReactor&&) = default;
+
       ~LuaReactor();
 
       Aspen::State commit(int sequence) noexcept;
 
       Type eval() const noexcept;
 
+      LuaReactor& operator =(LuaReactor&&) = default;
+
     private:
       std::string m_functionName;
-      Aspen::CommitHandler<Aspen::Shared<LuaReactorParameter>> m_parameters;
+      Aspen::CommitHandler<Aspen::Unique<LuaReactorParameter>> m_parameters;
       lua_State* m_luaState;
       Aspen::Maybe<Type> m_value;
   };
@@ -80,7 +84,7 @@ namespace Spire {
       auto& parameter = m_parameters.get(i);
       try {
         parameter->Push(*m_luaState);
-      } catch(const std::exception& e) {
+      } catch(...) {
         lua_pop(m_luaState, parameterCount + 1);
         m_value = std::current_exception();
         break;
@@ -96,8 +100,8 @@ namespace Spire {
     } else {
       if(!lua_isnil(m_luaState, -1)) {
         try {
-          return PopLuaValue<Type>()(*m_luaState);
-        } catch(const std::exception& e) {
+          m_value = PopLuaValue<Type>()(*m_luaState);
+        } catch(...) {
           lua_pop(m_luaState, 1);
           m_value = std::current_exception();
         }

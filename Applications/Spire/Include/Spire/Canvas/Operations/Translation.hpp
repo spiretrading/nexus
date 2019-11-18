@@ -30,7 +30,7 @@ namespace Details {
     public:
 
       /** Constructs a Translation for a shared reactor.
-       *  @param reactor The reactor that was translated.
+       * @param reactor The reactor that was translated.
        */
       template<typename R>
       Translation(Aspen::Shared<R> reactor);
@@ -114,13 +114,13 @@ namespace Details {
   void Translation::SharedHolder<R>::ExtractBox(void* destination) const {
     using Type = Aspen::reactor_result_t<Aspen::Shared<R>>;
     static_cast<std::optional<Aspen::Box<Type>>*>(destination)->emplace(
-      Aspen::Box(std::move(m_reactor)));
+      Aspen::Box(m_reactor));
   }
 
   template<typename R>
   void Translation::SharedHolder<R>::Extract(void* destination) const {
     static_cast<std::optional<Aspen::Shared<R>>*>(destination)->emplace(
-      std::move(m_reactor));
+      m_reactor);
   }
 
   template<typename T>
