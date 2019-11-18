@@ -25,16 +25,6 @@ namespace Spire {
        */
       void Add(Aspen::Box<void> reactor);
 
-      /**
-       * Invokes a function from within a reactor.
-       * @param f The callback to invoke.
-       */
-      template<typename F>
-      void Do(F&& f);
-
-      /** Waits for all Reactors to complete. */
-      void Wait();
-
       void Open();
 
       void Close();
@@ -52,11 +42,6 @@ namespace Spire {
       void RunLoop();
       void OnUpdate();
   };
-
-  template<typename F>
-  void ReactorMonitor::Do(F&& f) {
-    Add(Aspen::lift(std::move(f)));
-  }
 }
 
 #endif

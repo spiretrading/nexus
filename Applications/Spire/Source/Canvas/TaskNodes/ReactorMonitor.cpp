@@ -16,13 +16,6 @@ void ReactorMonitor::Add(Aspen::Box<void> reactor) {
   m_producer->push(std::move(reactor));
 }
 
-void ReactorMonitor::Wait() {
-  auto lock = std::unique_lock(m_mutex);
-  while(m_openState.IsRunning()) {
-    m_updateCondition.wait(lock);
-  }
-}
-
 void ReactorMonitor::Open() {
   if(m_openState.SetOpening()) {
     return;

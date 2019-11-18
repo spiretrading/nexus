@@ -28,8 +28,6 @@ std::int32_t Task::GetId() const {
   return m_id;
 }
 
-void Task::Execute() {}
-
 void Task::Cancel() {}
 
 const Publisher<Task::StateEntry>& Task::GetPublisher() const {

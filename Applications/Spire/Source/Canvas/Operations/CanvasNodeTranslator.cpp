@@ -1418,35 +1418,16 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
-#if 0 // TODO
-  auto orderExecutionPublisher =
-    std::make_shared<SequencePublisher<const Order*>>();
-  OrderWrapperTaskFactory<VirtualOrderExecutionClient> orderWrapperTaskFactory(
-    Ref(m_context->GetUserProfile().GetServiceClients().
-    GetOrderExecutionClient()), node.GetOrder());
-  vector<ReactorProperty> properties;
-  for(const auto& child : node.GetChildren()) {
-    auto reactor = get<std::shared_ptr<BaseReactor>>(
-      InternalTranslation(child));
-    auto property = Instantiate<PropertyBuilder>(reactor->GetType())(
-      child.GetName(), reactor);
-    properties.push_back(property);
-  }
-  TaskTranslation taskTranslation;
-  taskTranslation.m_publisher = orderExecutionPublisher;
-  taskTranslation.m_factory = ReactorTaskFactory(
-    Ref(m_context->GetReactorMonitor()), std::move(properties),
-    orderWrapperTaskFactory);
-  orderExecutionPublisher->Push(&node.GetOrder());
-  m_translation = taskTranslation;
-#endif
+  auto& orderExecutionClient =
+    m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
+  m_translation = Translation(OrderWrapperReactor(Ref(orderExecutionClient),
+    node.GetOrder()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
-#if 0 // TODO
   auto& recordNode = node.GetChildren().front();
-  auto recordReactor = std::static_pointer_cast<Reactor<Record>>(
-    boost::get<std::shared_ptr<BaseReactor>>(InternalTranslation(recordNode)));
+  auto recordReactor = InternalTranslation(
+    recordNode).Extract<Aspen::Box<Record>>();
   auto& recordType = static_cast<const RecordType&>(recordNode.GetType());
   auto fieldIterator = find_if(recordType.GetFields().begin(),
     recordType.GetFields().end(),
@@ -1457,7 +1438,6 @@ void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(
     recordReactor,
     std::distance(recordType.GetFields().begin(), fieldIterator));
-#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {

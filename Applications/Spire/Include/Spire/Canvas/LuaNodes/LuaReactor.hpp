@@ -33,7 +33,7 @@ namespace Spire {
         std::vector<Aspen::Unique<LuaReactorParameter>> parameters,
         lua_State& luaState);
 
-      LuaReactor(LuaReactor&&) = default;
+      LuaReactor(LuaReactor&& reactor);
 
       ~LuaReactor();
 
@@ -41,7 +41,7 @@ namespace Spire {
 
       Type eval() const noexcept;
 
-      LuaReactor& operator =(LuaReactor&&) = default;
+      LuaReactor& operator =(LuaReactor&& reactor);
 
     private:
       std::string m_functionName;
@@ -68,8 +68,19 @@ namespace Spire {
         m_luaState(&luaState) {}
 
   template<typename T>
+  LuaReactor<T>::LuaReactor(LuaReactor&& reactor)
+    : m_functionName(std::move(reactor.m_functionName)),
+      m_parameters(std::move(reactor.m_parameters)),
+      m_luaState(std::move(reactor.m_luaState)),
+      m_value(std::move(reactor.m_value)) {
+    reactor.m_luaState = nullptr;
+  }
+
+  template<typename T>
   LuaReactor<T>::~LuaReactor() {
-    lua_close(m_luaState);
+    if(m_luaState != nullptr) {
+      lua_close(m_luaState);
+    }
   }
 
   template<typename T>
@@ -115,6 +126,19 @@ namespace Spire {
   template<typename T>
   typename LuaReactor<T>::Type LuaReactor<T>::eval() const noexcept {
     return m_value;
+  }
+
+  template<typename T>
+  LuaReactor<T>& LuaReactor<T>::operator =(LuaReactor&& reactor) {
+    if(m_luaClose != nullptr) {
+      lua_close(m_luaState);
+    }
+    m_functionName = std::move(reactor.m_functionName);
+    m_parameters = std::move(reactor.m_parameters);
+    m_luaState = std::move(reactor.m_luaState);
+    m_value = std::move(reactor.m_value);
+    reactor.m_luaState = nullptr;
+    return *this;
   }
 
   template<>

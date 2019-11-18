@@ -30,6 +30,8 @@ namespace Nexus::OrderExecutionService {
       OrderWrapperReactor(Beam::Ref<OrderExecutionClient> client,
         const Order& order);
 
+      OrderWrapperReactor(OrderWrapperReactor&& reactor);
+
       ~OrderWrapperReactor();
 
       /** Cancels the Order. */
@@ -38,6 +40,8 @@ namespace Nexus::OrderExecutionService {
       Aspen::State commit(int sequence) noexcept;
 
       Aspen::eval_result_t<Type> eval() const noexcept;
+
+      OrderWrapperReactor& operator =(OrderWrapperReactor&& reactor);
 
     private:
       OrderExecutionClient* m_client;
@@ -50,11 +54,22 @@ namespace Nexus::OrderExecutionService {
     Beam::Ref<OrderExecutionClient> client, const Order& order)
     : m_client(client.Get()),
       m_order(&order),
-      m_queue(Beam::PublisherReactor(m_order->GetPublisher())) {}
+      m_queue(Beam::Reactors::PublisherReactor(m_order->GetPublisher())) {}
+
+  template<typename C>
+  OrderWrapperReactor<C>::OrderWrapperReactor(OrderWrapperReactor&& reactor)
+      : m_client(reactor.m_client),
+        m_order(reactor.m_order),
+        m_queue(std::move(reactor.m_queue)) {
+    reactor.m_client = nullptr;
+    reactor.m_order = nullptr;
+  }
 
   template<typename C>
   OrderWrapperReactor<C>::~OrderWrapperReactor() {
-    Cancel();
+    if(m_order != nullptr) {
+      Cancel();
+    }
   }
 
   template<typename C>
@@ -71,6 +86,17 @@ namespace Nexus::OrderExecutionService {
   const typename OrderWrapperReactor<C>::Type&
       OrderWrapperReactor<C>::eval() const noexcept {
     return m_queue.eval();
+  }
+
+  template<typename C>
+  OrderWrapperReactor<C>& OrderWrapperReactor<C>::operator =(
+      OrderWrapperReactor&& reactor) {
+    m_client = reactor.m_client;
+    m_order = reactor.m_order;
+    m_queue = std::move(reactor.m_queue);
+    reactor.m_client = nullptr;
+    reactor.m_order = nullptr;
+    return *this;
   }
 }
 
