@@ -25,12 +25,23 @@ OrderImbalanceIndicatorModel::SubscriptionResult
 void LocalOrderImbalanceIndicatorModel::insert(
     const OrderImbalance& imbalance) {
   m_imbalances.push_back(imbalance);
-  for(auto i = std::size_t(0); i < m_signals.size(); ++i) {
-    if(m_signals[i].m_start_time <= imbalance.m_timestamp &&
-        imbalance.m_timestamp <= m_signals[i].m_end_time) {
-      m_signals[i].m_imbalance_signal(imbalance);
+  auto end_index = m_signals.size();
+  auto swap_index = end_index;
+  auto current_index = std::size_t(0);
+  while(current_index != swap_index) {
+    auto& signal = m_signals[current_index];
+    if(signal.m_imbalance_signal.num_slots() != 0) {
+      if(signal.m_start_time <= imbalance.m_timestamp &&
+          imbalance.m_timestamp <= signal.m_end_time) {
+        signal.m_imbalance_signal(imbalance);
+      }
+      ++current_index;
+    } else {
+      std::swap(signal, m_signals[--swap_index]);
     }
   }
+  m_signals.erase(m_signals.begin() + swap_index,
+    m_signals.begin() + end_index);
 }
 
 LocalOrderImbalanceIndicatorModel::Subscription::Subscription(
