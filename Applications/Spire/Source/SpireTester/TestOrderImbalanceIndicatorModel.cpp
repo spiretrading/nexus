@@ -35,10 +35,9 @@ std::vector<Nexus::OrderImbalance>&
   return m_result;
 }
 
-std::tuple<boost::signals2::connection,
-    QtPromise<std::vector<Nexus::OrderImbalance>>>
+OrderImbalanceIndicatorModel::SubscriptionResult
     TestOrderImbalanceIndicatorModel::subscribe(const ptime& start,
-      const ptime& end, const OrderImbalanceSignal::slot_type& slot) {
+    const ptime& end, const OrderImbalanceSignal::slot_type& slot) {
   auto subscribe_entry = std::make_shared<SubscribeEntry>(start, end);
   {
     auto lock = std::lock_guard(m_mutex);

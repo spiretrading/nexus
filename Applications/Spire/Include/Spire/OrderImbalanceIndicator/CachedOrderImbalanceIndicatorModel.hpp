@@ -20,9 +20,8 @@ namespace Spire {
       CachedOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model);
 
-      std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
-        subscribe(const boost::posix_time::ptime& start,
+      OrderImbalanceIndicatorModel::SubscriptionResult subscribe(
+        const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
@@ -31,26 +30,27 @@ namespace Spire {
         std::size_t operator ()(const Nexus::OrderImbalance& imbalance) const;
       };
 
-      struct OrderImbalanceSignalConnection {
+      struct Subscription {
         OrderImbalanceSignal m_imbalance_signal;
         boost::posix_time::ptime m_start_time;
         boost::posix_time::ptime m_end_time;
+
+        Subscription(const boost::posix_time::ptime& start,
+          const boost::posix_time::ptime& end);
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       std::unordered_set<Nexus::OrderImbalance, OrderImbalanceHash>
         m_imbalances;
-      std::vector<OrderImbalanceSignalConnection> m_signals;
+      std::vector<Subscription> m_subscriptions;
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       std::vector<boost::signals2::scoped_connection> m_connections;
 
-      std::tuple<boost::signals2::connection,
-      QtPromise<std::vector<Nexus::OrderImbalance>>>
+      OrderImbalanceIndicatorModel::SubscriptionResult
         get_subscription(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);
-      std::tuple<boost::signals2::connection,
-      QtPromise<std::vector<Nexus::OrderImbalance>>>
+      OrderImbalanceIndicatorModel::SubscriptionResult
         load_imbalances(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);

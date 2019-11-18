@@ -51,11 +51,10 @@ namespace Spire {
           Beam::Threading::ConditionVariable m_subscribe_condition;
       };
 
-      std::tuple<boost::signals2::connection,
-        QtPromise<std::vector<Nexus::OrderImbalance>>>
+      OrderImbalanceIndicatorModel::SubscriptionResult
         subscribe(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end,
-          const OrderImbalanceSignal::slot_type& slot) override;
+        const boost::posix_time::ptime& end,
+        const OrderImbalanceSignal::slot_type& slot) override;
 
       //! Pops the oldest subscribe request from this model's subcribe
       //! operation stack.
