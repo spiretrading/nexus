@@ -17,11 +17,11 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& start,
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
-  auto subscription = std::make_shared<Subscription>(start, end);
-  subscription->m_imbalance_signal.connect(slot);
+  auto signal = std::make_shared<OrderImbalanceSignal>();
+  signal->connect(slot);
   auto callback = [=] (const auto& imbalance) {
     if(is_imbalance_accepted(imbalance)) {
-      subscription->m_imbalance_signal(imbalance);
+      (*signal)(imbalance);
     }
   };
   auto [connection, promise] = m_source_model->subscribe(start, end,
@@ -58,11 +58,10 @@ Filter Spire::make_market_list_filter(
 
 Filter Spire::make_market_filter(const std::string& filter_string,
     const MarketDatabase& market_database) {
-  return [=] (
-      const Nexus::OrderImbalance& imbalance) {
+  return [=] (const Nexus::OrderImbalance& imbalance) {
     return std::string(market_database.FromCode(
-      imbalance.m_security.GetMarket()).m_displayName)
-      .find(filter_string) == 0;
+      imbalance.m_security.GetMarket()).m_displayName).find(
+      filter_string) == 0;
   };
 }
 
@@ -72,23 +71,20 @@ Filter Spire::make_side_filter(Nexus::Side side) {
   };
 }
 
-Filter Spire::make_size_filter(const Nexus::Quantity& min,
-    const Nexus::Quantity& max) {
+Filter Spire::make_size_filter(Quantity min, Quantity max) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return min <= imbalance.m_size && imbalance.m_size <= max;
   };
 }
 
-Filter Spire::make_reference_price_filter(const Nexus::Money& min,
-    const Nexus::Money& max) {
+Filter Spire::make_reference_price_filter(Money min, Money max) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return min <= imbalance.m_referencePrice &&
       imbalance.m_referencePrice <= max;
   };
 }
 
-Filter Spire::make_notional_value_filter(const Nexus::Money& min,
-    const Nexus::Money& max) {
+Filter Spire::make_notional_value_filter(Money min, Money max) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return min <= imbalance.m_size * imbalance.m_referencePrice &&
       imbalance.m_size * imbalance.m_referencePrice <= max;
@@ -116,8 +112,3 @@ std::vector<Nexus::OrderImbalance>
   }
   return filtered_imbalances;
 }
-
-FilteredOrderImbalanceIndicatorModel::Subscription::Subscription(
-  const boost::posix_time::ptime& start,
-  const boost::posix_time::ptime& end)
-  : m_start_time(start), m_end_time(end) {}

@@ -30,15 +30,6 @@ namespace Spire {
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-      struct Subscription {
-        OrderImbalanceSignal m_imbalance_signal;
-        boost::posix_time::ptime m_start_time;
-        boost::posix_time::ptime m_end_time;
-
-        Subscription(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end);
-      };
-
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       std::vector<Filter> m_filters;
 
@@ -101,7 +92,7 @@ namespace Spire {
     \param max The largest size that will not be filtered out.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_size_filter(
-    const Nexus::Quantity& min, const Nexus::Quantity& max);
+    Nexus::Quantity min, Nexus::Quantity max);
 
   //! Creates a filter that filters out reference prices that are not in the
   //! interval [min, max].
@@ -110,7 +101,7 @@ namespace Spire {
     \param max The highest reference price that will not be filtered out.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_reference_price_filter(
-    const Nexus::Money& min, const Nexus::Money& max);
+    Nexus::Money min, Nexus::Money max);
 
   //! Creates a filter that filters out notional values that are not in the
   //! interval [min, max].
@@ -119,7 +110,7 @@ namespace Spire {
     \param max The high notional value that willnot be filtered out.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_notional_value_filter(
-    const Nexus::Money& min, const Nexus::Money& max);
+    Nexus::Money min, Nexus::Money max);
 }
 
 #endif
