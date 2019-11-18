@@ -57,6 +57,7 @@ namespace Details {
     private:
       struct BaseHolder {
         virtual ~BaseHolder() = default;
+        virtual void ExtractVoidBox(void* destination) const = 0;
         virtual void ExtractBox(void* destination) const = 0;
         virtual void Extract(void* destination) const = 0;
       };
@@ -65,6 +66,7 @@ namespace Details {
         Aspen::Shared<R> m_reactor;
 
         SharedHolder(Aspen::Shared<R> reactor);
+        void ExtractVoidBox(void* destination) const override;
         void ExtractBox(void* destination) const override;
         void Extract(void* destination) const override;
       };
@@ -73,6 +75,7 @@ namespace Details {
         Aspen::Box<T> m_reactor;
 
         BoxHolder(Aspen::Box<T> reactor);
+        void ExtractVoidBox(void* destination) const override;
         void ExtractBox(void* destination) const override;
         void Extract(void* destination) const override;
       };
@@ -99,7 +102,11 @@ namespace Details {
     static_assert(Details::IsBox<T>::value || Details::IsShared<T>::value);
     auto destination = std::optional<T>();
     if constexpr(Details::IsBox<T>::value) {
-      m_holder->ExtractBox(&destination);
+      if constexpr(std::is_same_v<Aspen::reactor_result_t<T>, void>) {
+        m_holder->ExtractVoidBox(&destination);
+      } else {
+        m_holder->ExtractBox(&destination);
+      }
     } else if constexpr(Details::IsShared<T>::value) {
       m_holder->Extract(&destination);
     }
@@ -109,6 +116,12 @@ namespace Details {
   template<typename R>
   Translation::SharedHolder<R>::SharedHolder(Aspen::Shared<R> reactor)
     : m_reactor(std::move(reactor)) {}
+
+  template<typename R>
+  void Translation::SharedHolder<R>::ExtractVoidBox(void* destination) const {
+    static_cast<std::optional<Aspen::Box<void>>*>(destination)->emplace(
+      Aspen::Box<void>(m_reactor));
+  }
 
   template<typename R>
   void Translation::SharedHolder<R>::ExtractBox(void* destination) const {
@@ -128,14 +141,23 @@ namespace Details {
     : m_reactor(std::move(reactor)) {}
 
   template<typename T>
+  void Translation::BoxHolder<T>::ExtractVoidBox(void* destination) const {
+    if constexpr(std::is_same_v<T, void>) {
+      Extract(destination);
+    } else {
+      static_cast<std::optional<Aspen::Box<void>>*>(destination)->emplace(
+        Aspen::Box<void>(m_reactor));
+    }
+  }
+
+  template<typename T>
   void Translation::BoxHolder<T>::ExtractBox(void* destination) const {
     Extract(destination);
   }
 
   template<typename T>
   void Translation::BoxHolder<T>::Extract(void* destination) const {
-    static_cast<std::optional<Aspen::Box<T>>*>(destination)->emplace(
-      std::move(m_reactor));
+    static_cast<std::optional<Aspen::Box<T>>*>(destination)->emplace(m_reactor);
   }
 }
 

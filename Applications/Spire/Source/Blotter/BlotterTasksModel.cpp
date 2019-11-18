@@ -1,28 +1,16 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
-#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
-#include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
-#include "Spire/Canvas/Common/CustomNode.hpp"
-#include "Spire/Canvas/Common/NoneNode.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeRefresh.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
@@ -86,32 +74,21 @@ namespace {
 }
 
 BlotterTasksModel::TaskContext::TaskContext(Ref<UserProfile> userProfile,
-    const CanvasNode& node, const DirectoryEntry& executingAccount)
-    : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount),
-      m_node([&] {
-        auto n = PreprocessTranslation(node);
-        if(n == nullptr) {
-          return CanvasNode::Clone(node);
-        }
-        return n;
-      }()),
-      m_task([&] {
-        #if 0 // TODO
-        auto canvasNodeTaskFactory = CanvasNodeTaskFactory(Ref(m_context),
-          Ref(*m_node));
-        m_orderExecutionPublisher =
-          canvasNodeTaskFactory.GetOrderExecutionPublisher();
-        m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
-          canvasNodeTaskFactory);
-        m_task = m_factory->Create();
-        #endif
-        return Task(Aspen::Box<void>(5));
-      }()) {}
+  const CanvasNode& node, const DirectoryEntry& executingAccount)
+  : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount),
+    m_node([&] {
+      auto n = PreprocessTranslation(node);
+      if(n == nullptr) {
+        return CanvasNode::Clone(node);
+      }
+      return n;
+    }()),
+    m_task(Task(Translate(m_context, *m_node).Extract<Aspen::Box<void>>())) {}
 
 BlotterTasksModel::ObserverEntry::ObserverEntry(string name,
-    unique_ptr<CanvasObserver> observer)
-    : m_name(std::move(name)),
-      m_observer(std::move(observer)) {}
+  unique_ptr<CanvasObserver> observer)
+  : m_name(std::move(name)),
+    m_observer(std::move(observer)) {}
 
 BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& executingAccount, bool isConsolidated,
@@ -181,8 +158,10 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Adopt(
     std::unique_ptr<TaskContext> context) {
   std::shared_ptr<TaskContext> adoptedContext = std::move(context);
   m_contexts.push_back(adoptedContext);
+/* TODO
   m_properOrderExecutionPublisher.Add(
     *adoptedContext->m_orderExecutionPublisher);
+*/
   Monitor(adoptedContext);
   return *m_entries.back();
 }
