@@ -17,11 +17,9 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& start,
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
-  auto signal = std::make_shared<OrderImbalanceSignal>();
-  signal->connect(slot);
   auto callback = [=] (const auto& imbalance) {
     if(is_imbalance_accepted(imbalance)) {
-      (*signal)(imbalance);
+      slot(imbalance);
     }
   };
   auto [connection, promise] = m_source_model->subscribe(start, end,
