@@ -17,13 +17,12 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& start,
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
-  auto callback = [=] (const auto& imbalance) {
-    if(is_imbalance_accepted(imbalance)) {
-      slot(imbalance);
-    }
-  };
   auto [connection, promise] = m_source_model->subscribe(start, end,
-    std::move(callback));
+    [=] (const auto& imbalance) {
+      if(is_imbalance_accepted(imbalance)) {
+        slot(imbalance);
+      }
+    });
   return {connection,
     promise.then([=] (const auto& imbalances) {
       return filter_imbalances(imbalances);
