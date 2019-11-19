@@ -77,14 +77,15 @@ export class NewRuleButton extends React.Component<Properties, State> {
         if(option.type === this.state.selection) {
           options.push(<div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}>{option.option}</div>);
         } else {
-          options.push(<div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}>{option.option}</div>);
+          options.push(<div onClick={this.onClickRule.bind(this, option.type)} 
+            className={css(NewRuleButton.EXTRA_STYLE.optionRow)}>{option.option}</div>);
         }
       }
     }
     return (
       <div>
         <div style={NewRuleButton.STYLE.newRuleRow}
-            onClick={this.onClick.bind(this)}>
+            onClick={this.onClickClose.bind(this)}>
           <div style={NewRuleButton.STYLE.imageWrapper}>
             <img src='resources/account_page/compliance_page/add.svg'
               height={imageSize}
@@ -97,24 +98,35 @@ export class NewRuleButton extends React.Component<Properties, State> {
           <div style={shadowBoxStyle}/>
           <div style={contentBoxStyle}>
             <div style={NewRuleButton.STYLE.header}>
-              <div style={NewRuleButton.STYLE.headerText}>Add New Rule</div>
+              <div style={NewRuleButton.STYLE.headerText}>{NewRuleButton.MODAL_HEADER}</div>
               <img height={imageSize} width={imageSize}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
             <div style={NewRuleButton.STYLE.ruleItemWraper}>
               {options}
             </div>
-            <HLine color='#E6E6E6'/>
-            <div style={NewRuleButton.STYLE.buttonWrapper}>
-
+            <div style={NewRuleButton.STYLE.footerWrapper}>
+              <HLine color='#E6E6E6'/>
+              <div style={NewRuleButton.STYLE.buttonWrapper}>
+                <button 
+                  className={css(NewRuleButton.EXTRA_STYLE.bacon)}
+                  //style={NewRuleButton.STYLE.button}
+                  onClick={()=>{}}>
+                  {NewRuleButton.BUTTON_TEXT}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>);
   }
 
-  private onClick() {
+  private onClickClose() {
     this.setState({isOpen: !this.state.isOpen});
+  }
+
+  private onClickRule(ruleType: NewRuleType) {
+    this.setState({selection: ruleType});
   }
 
   private static readonly STYLE = {
@@ -210,6 +222,11 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingTop: '18px',
       paddingBottom: '30px '
     },
+    footerWrapper: {
+      boxSizing: 'border-box' as 'border-box',
+      paddingLeft: '18px',
+      paddingRight: '18px'
+    },
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1
@@ -224,25 +241,35 @@ export class NewRuleButton extends React.Component<Properties, State> {
     },
     ruleItemWraper: {
       paddingTop: '30px',
-      paddingBottom: '18px'
+      paddingBottom: '30px'
     },
     button: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
-      backgroundColor: '#4B23A0',
+      backgroundColor: '#684BC7',
       color: '#FFFFFF',
-      border: '1px solid #4B23A0',
+      border: '0px solid #4B23A0',
       borderRadius: '1px',
-      marginTop: '30px',
       font: '400 16px Roboto',
     },
-    buttonWrapper: {
+    buttonWrapperSmall: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
+      paddingTop: '30px',
+      paddingBottom: '40px'
+    },
+      buttonWrapper: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'wrap' as 'wrap',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      paddingTop: '30px',
+      paddingBottom: '18px',
     }
   };
 
@@ -271,17 +298,22 @@ export class NewRuleButton extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
     },
-    effects: {
+    bacon: { //fix this up, k thanks
+      ':active' : {
+        backgroundColor: '#4B23A0'
+      },
       ':focus': {
         ouline: 0,
-        borderColor: '#684BC7',
+        borderColor: '#4B23A0',
+        backgroundColor: '#4B23A0',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
-        borderColor: '#684BC7'
+      ':hover':{
+        backgroundColor: '#4B23A0',
+        color: 'pink'
       },
       '::moz-focus-inner': {
         border: 0
@@ -302,6 +334,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     {type:NewRuleType.SYMBOL_RESTRITION, option:'Symbol Restriction'}
   ] as Labels[];
   private static readonly MODAL_HEADER = 'Add New Rule';
+  private static readonly BUTTON_TEXT = 'Select';
   private static readonly IMAGE_SIZE_SMALL = '20px';
   private static readonly IMAGE_SIZE_BIG = '16px';
 }
