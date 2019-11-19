@@ -34,7 +34,7 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     });
   return {m_subscriptions.back().m_imbalance_signal.connect(slot),
     QtPromise([requested_imbalances = std::move(imbalances)] {
-      return requested_imbalances;
+      return std::move(requested_imbalances);
     })};
 }
 
@@ -48,10 +48,10 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     {continuous_interval(start, end)}) - m_ranges;
   for(auto& range : ranges) {
     auto [connection, promise] = m_source_model->subscribe(range.lower(),
-        range.upper(), [this] (auto& imbalance) {
-      on_order_imbalance(imbalance);
-    });
-    m_connections.push_back(connection);
+      range.upper(), [=] (auto& imbalance) {
+        on_order_imbalance(imbalance);
+      });
+    m_connections.push_back(std::move(connection));
     promises.push_back(std::move(promise));
   }
   m_subscriptions.push_back(Subscription(start, end));
@@ -68,7 +68,7 @@ OrderImbalanceIndicatorModel::SubscriptionResult
           return start <= imbalance.m_timestamp &&
             imbalance.m_timestamp <= end;
         });
-      return requested_imbalances;
+      return std::move(requested_imbalances);
     })};
 }
 
@@ -76,18 +76,29 @@ void CachedOrderImbalanceIndicatorModel::on_order_imbalance(
     const OrderImbalance& imbalance) {
   m_imbalances.insert(imbalance);
   m_ranges.add({imbalance.m_timestamp, imbalance.m_timestamp});
-  for(auto& subscription : m_subscriptions) {
-    if(subscription.m_start_time <= imbalance.m_timestamp &&
-        imbalance.m_timestamp <= subscription.m_end_time) {
-      subscription.m_imbalance_signal(imbalance);
+  auto end_index = m_subscriptions.size();
+  auto swap_index = end_index;
+  auto current_index = std::size_t(0);
+  while(current_index != swap_index) {
+    auto& subscription = m_subscriptions[current_index];
+    if(subscription.m_imbalance_signal.num_slots() != 0) {
+      if(subscription.m_start_time <= imbalance.m_timestamp &&
+          imbalance.m_timestamp <= subscription.m_end_time) {
+        subscription.m_imbalance_signal(imbalance);
+      }
+      ++current_index;
+    } else {
+      std::swap(subscription, m_subscriptions[--swap_index]);
     }
   }
+  m_subscriptions.erase(m_subscriptions.begin() + swap_index,
+    m_subscriptions.begin() + end_index);
 }
 
 std::size_t CachedOrderImbalanceIndicatorModel::OrderImbalanceHash::operator
     ()(const OrderImbalance& imbalance) const {
-  return std::hash<std::int64_t>{}(
-    imbalance.m_timestamp.time_of_day().total_milliseconds());
+  return std::hash<std::size_t>{}(static_cast<std::size_t>(
+    imbalance.m_timestamp.time_of_day().total_milliseconds()));
 }
 
 CachedOrderImbalanceIndicatorModel::Subscription::Subscription(
