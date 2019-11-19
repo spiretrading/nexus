@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
+import { HLine } from '../../../components';
 
 interface Properties {
   
@@ -71,7 +72,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     })();
     const options = [];
-    for(let option of NewRuleButton.OPTS) {
+    for(let option of NewRuleButton.RULE_ITEM) {
       if(option.type !== NewRuleType.NONE){
         if(option.type === this.state.selection) {
           options.push(<div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}>{option.option}</div>);
@@ -100,8 +101,12 @@ export class NewRuleButton extends React.Component<Properties, State> {
               <img height={imageSize} width={imageSize}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
-            <div>
+            <div style={NewRuleButton.STYLE.ruleItemWraper}>
               {options}
+            </div>
+            <HLine color='#E6E6E6'/>
+            <div style={NewRuleButton.STYLE.buttonWrapper}>
+
             </div>
           </div>
         </div>
@@ -176,7 +181,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
       position: 'absolute' as 'absolute',
-      border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
       width: '282px',
       height: '100%',
@@ -201,7 +205,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between',
       height: '20px',
-      marginBottom: '30px',
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingTop: '18px',
@@ -218,6 +221,10 @@ export class NewRuleButton extends React.Component<Properties, State> {
     iconWrapperLarge: {
       height: '16px',
       width: '16px'
+    },
+    ruleItemWraper: {
+      paddingTop: '30px',
+      paddingBottom: '18px'
     },
     button: {
       boxSizing: 'border-box' as 'border-box',
@@ -284,7 +291,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly OPTS = [
+  private static readonly RULE_ITEM = [
     {type: NewRuleType.NONE, option: ''},
     {type:NewRuleType.BUYING_POWER, option:'Buying Power'},
     {type:NewRuleType.CANCEL_RESTRICTION_PERIOD, option:'Cancel Restriction Period'},
