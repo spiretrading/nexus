@@ -3,7 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, MoneyInputBox,
   TextInputField } from '../../..';
-import { NumberInput, DurationInput, SecurityInput } from '../../../components';
+import { NumberInput, SecurityInput } from '../../../components';
 
 interface Properties {
 
@@ -66,9 +66,7 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <DurationInput
-            value={this.props.parameter.value.value}
-            onChange={this.onChange}/>;
+          return <div/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
               value={this.props.parameter.value.value}
