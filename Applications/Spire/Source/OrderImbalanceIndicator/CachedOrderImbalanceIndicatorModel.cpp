@@ -58,7 +58,8 @@ OrderImbalanceIndicatorModel::SubscriptionResult
   return {m_subscriptions.back().m_imbalance_signal.connect(slot),
     all(std::move(promises)).then([=] (auto& imbalances_lists) {
       m_ranges.add({start, end});
-      for(auto& list : imbalances_lists.Get()) {
+      auto loaded_imbalances_lists = imbalances_lists.Get();
+      for(auto& list : loaded_imbalances_lists) {
         std::copy(list.begin(), list.end(), std::inserter(m_imbalances,
           m_imbalances.end()));
       }
