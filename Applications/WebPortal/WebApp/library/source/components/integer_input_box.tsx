@@ -60,6 +60,10 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       this._start = null;
       this._end = null;
     }
+    if(this.state.value < 10) {
+      console.log('shove selected!', this.state.value );
+      this._input.setSelectionRange(2, 2);
+    }
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -82,6 +86,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+    console.log(event.target.value);
     let value = (() => {
       if(event.target.value.length === 0) {
         return 0;
@@ -96,7 +101,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       return;
     }
     if(this.props.max != null && value > this.props.max) {
-      //value = Math.trunc(value / 10);
+      value = Math.trunc(value / 10);
     }
     if(this.props.min != null && value < this.props.min ||
         this.props.max != null && value > this.props.max) {
