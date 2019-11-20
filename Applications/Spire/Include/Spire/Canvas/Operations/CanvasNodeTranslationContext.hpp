@@ -1,7 +1,6 @@
-#ifndef SPIRE_CANVASNODETRANSLATIONCONTEXT_HPP
-#define SPIRE_CANVASNODETRANSLATIONCONTEXT_HPP
+#ifndef SPIRE_CANVAS_NODE_TRANSLATION_CONTEXT_HPP
+#define SPIRE_CANVAS_NODE_TRANSLATION_CONTEXT_HPP
 #include <unordered_map>
-#include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Reactors/Reactors.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -11,26 +10,24 @@
 #include "Nexus/MarketDataService/RealTimeMarketDataPublisher.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /*! \struct CanvasNodeTranslationContext
-      \brief Stores all the context needed to translate a CanvasNode.
-   */
+  /** Stores all the context needed to translate a CanvasNode. */
   class CanvasNodeTranslationContext : private boost::noncopyable {
     public:
 
       //! Constructs a CanvasNodeTranslationContext.
       /*!
         \param userProfile The user's profile.
-        \param reactorMonitor The ReactorMonitor.
+        \param executor The executor used on the translated reactor.
         \param executingAccount The account used to execute Orders.
       */
       CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
-        Beam::Ref<ReactorMonitor> reactorMonitor,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount);
+        Beam::Ref<Executor> executor,
+        Beam::ServiceLocator::DirectoryEntry executingAccount);
 
       //! Constructs a CanvasNodeTranslationContext from a parent context.
       /*!
@@ -45,11 +42,11 @@ namespace Spire {
       //! Returns the UserProfile.
       UserProfile& GetUserProfile();
 
-      //! Returns the ReactorMonitor.
-      const ReactorMonitor& GetReactorMonitor() const;
+      //! Returns the executor.
+      const Executor& GetExecutor() const;
 
-      //! Returns the ReactorMonitor.
-      ReactorMonitor& GetReactorMonitor();
+      //! Returns the executor.
+      Executor& GetExecutor();
 
       //! Returns the executing account.
       const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
@@ -97,7 +94,7 @@ namespace Spire {
       CanvasNodeTranslationContext* m_parent;
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
-      ReactorMonitor* m_reactorMonitor;
+      Executor* m_executor;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
       std::unordered_map<const CanvasNode*,

@@ -15,22 +15,19 @@
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 
 namespace Spire {
 
-  /*! \class Record
-      \brief Represents a basic data structure.
-   */
+  /** Represents a basic data structure. */
   class Record {
     public:
 
       //! Defines the types allowed for a member of a Record.
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-        Task::State, Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money,
-        Nexus::OrderStatus, Nexus::OrderType, Nexus::Security, Nexus::Side,
-        Nexus::TimeInForce>;
+        Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
+        Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce>;
 
       //! Constructs an empty Record.
       Record() = default;

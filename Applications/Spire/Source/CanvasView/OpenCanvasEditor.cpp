@@ -33,7 +33,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -89,7 +88,6 @@ namespace {
       virtual void Visit(const ReferenceNode& node);
       virtual void Visit(const SecurityNode& node);
       virtual void Visit(const SideNode& node);
-      virtual void Visit(const TaskStateNode& node);
       virtual void Visit(const TextNode& node);
       virtual void Visit(const TimeInForceNode& node);
       virtual void Visit(const TimeNode& node);
@@ -520,19 +518,6 @@ void OpenEditorCanvasNodeVisitor::Visit(const SideNode& node) {
   } else {
     editor->setCurrentIndex(0);
   }
-  if(m_event != nullptr) {
-    QApplication::sendEvent(editor, m_event);
-  }
-  m_editVariant = editor;
-}
-
-void OpenEditorCanvasNodeVisitor::Visit(const TaskStateNode& node) {
-  auto editor = new QComboBox();
-  for(size_t i = 0; i < Task::State::COUNT; ++i) {
-    editor->addItem(QString::fromStdString(
-      lexical_cast<string>(static_cast<Task::State>(i))));
-  }
-  editor->setCurrentIndex(static_cast<int>(node.GetValue()));
   if(m_event != nullptr) {
     QApplication::sendEvent(editor, m_event);
   }

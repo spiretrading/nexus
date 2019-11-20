@@ -14,7 +14,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 
@@ -113,10 +112,6 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SecurityType& type) {
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SideType& type) {
   m_node = make_unique<SideNode>();
-}
-
-void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TaskStateType& type) {
-  m_node = make_unique<TaskStateNode>();
 }
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TextType& type) {

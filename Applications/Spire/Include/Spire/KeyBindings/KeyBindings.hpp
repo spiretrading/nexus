@@ -10,7 +10,6 @@
 #include <QKeySequence>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -132,8 +131,7 @@ namespace Details {
           \param tasks The Tasks to cancel.
         */
         static void HandleCancel(const CancelBinding& cancelBinding,
-          Beam::Out<std::vector<
-          std::shared_ptr<BlotterTasksModel::TaskContext>>> tasks);
+          Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
 
         //! Performs the steps needed to carry out a CancelBinding.
         /*!

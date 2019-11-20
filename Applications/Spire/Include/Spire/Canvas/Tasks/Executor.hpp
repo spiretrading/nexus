@@ -1,27 +1,26 @@
-#ifndef SPIRE_REACTOR_MONITOR_HPP
-#define SPIRE_REACTOR_MONITOR_HPP
+#ifndef SPIRE_EXECUTOR_HPP
+#define SPIRE_EXECUTOR_HPP
 #include <mutex>
 #include <Aspen/Aspen.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
-#include <boost/noncopyable.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
 
-  /** Used to synchronously monitor multiple Reactors. */
-  class ReactorMonitor : private boost::noncopyable {
+  /** Executes multiple Aspen reactors from within a Beam routine. */
+  class Executor {
     public:
 
-      /** Constructs a ReactorMonitor. */
-      ReactorMonitor();
+      /** Constructs an Executor. */
+      Executor();
 
-      ~ReactorMonitor();
+      ~Executor();
 
       /**
-       * Adds a Reactor to monitor.
-       * @param reactor The reactor to monitor.
+       * Adds a Reactor to execute.
+       * @param reactor The reactor to execute.
        */
       void Add(Aspen::Box<void> reactor);
 

@@ -17,12 +17,12 @@ using namespace Spire;
 using namespace std;
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
-    Ref<UserProfile> userProfile, Ref<ReactorMonitor> reactorMonitor,
-    const DirectoryEntry& executingAccount)
+    Ref<UserProfile> userProfile, Ref<Executor> executor,
+    DirectoryEntry executingAccount)
     : m_parent(nullptr),
       m_userProfile(userProfile.Get()),
-      m_reactorMonitor(reactorMonitor.Get()),
-      m_executingAccount(executingAccount),
+      m_executor(executor.Get()),
+      m_executingAccount(std::move(executingAccount)),
       m_marketDataPublisher(std::make_unique<
         RealTimeMarketDataPublisher<VirtualMarketDataClient*>>(
         &m_userProfile->GetServiceClients().GetMarketDataClient())) {}
@@ -32,7 +32,7 @@ CanvasNodeTranslationContext::CanvasNodeTranslationContext(
     : m_parent(parent.Get()),
       m_userProfile(m_parent->m_userProfile),
       m_executingAccount(m_parent->m_executingAccount),
-      m_reactorMonitor(m_parent->m_reactorMonitor) {}
+      m_executor(m_parent->m_executor) {}
 
 const UserProfile& CanvasNodeTranslationContext::GetUserProfile() const {
   return *m_userProfile;
@@ -42,12 +42,12 @@ UserProfile& CanvasNodeTranslationContext::GetUserProfile() {
   return *m_userProfile;
 }
 
-const ReactorMonitor& CanvasNodeTranslationContext::GetReactorMonitor() const {
-  return *m_reactorMonitor;
+const Executor& CanvasNodeTranslationContext::GetExecutor() const {
+  return *m_executor;
 }
 
-ReactorMonitor& CanvasNodeTranslationContext::GetReactorMonitor() {
-  return *m_reactorMonitor;
+Executor& CanvasNodeTranslationContext::GetExecutor() {
+  return *m_executor;
 }
 
 const DirectoryEntry& CanvasNodeTranslationContext::

@@ -1,8 +1,11 @@
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
+#include "Spire/Canvas/Common/CanvasNode.hpp"
+#include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include <atomic>
 
 using namespace Aspen;
 using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 namespace {
@@ -19,28 +22,29 @@ Task::StateEntry::StateEntry(State state, const std::string& message)
   : m_state(state),
     m_message(message) {}
 
-Task::Task(Box<void> reactor)
-  : m_reactor(std::move(reactor)),
-    m_id(++nextId),
-    m_publisher(std::make_unique<SequencePublisher<StateEntry>>()) {}
+Task::Task(const CanvasNode& node, DirectoryEntry executingAccount,
+  Ref<UserProfile> userProfile)
+  : m_node(
+      [&] {
+        auto n = PreprocessTranslation(node);
+        if(n == nullptr) {
+          return CanvasNode::Clone(node);
+        }
+        return n;
+      }()),
+    m_context(Ref(userProfile), Ref(m_executor), std::move(executingAccount)),
+    m_id(++nextId) {}
 
-std::int32_t Task::GetId() const {
+int Task::GetId() const {
   return m_id;
 }
+
+void Task::Execute() {}
 
 void Task::Cancel() {}
 
 const Publisher<Task::StateEntry>& Task::GetPublisher() const {
-  return *m_publisher;
-}
-
-State Task::commit(int sequence) noexcept {
-  return Aspen::State::NONE;
-}
-
-const Task::StateEntry& Task::eval() const noexcept {
-  static auto value = StateEntry();
-  return value;
+  return m_publisher;
 }
 
 std::ostream& Spire::operator <<(std::ostream& s, Task::State state) {

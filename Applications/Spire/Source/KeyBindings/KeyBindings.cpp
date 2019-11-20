@@ -183,21 +183,21 @@ KeyBindings::CancelBinding KeyBindings::CancelBinding::GetCancelBindingFromType(
 
 void KeyBindings::CancelBinding::HandleCancel(
     const CancelBinding& cancelBinding,
-    Out<vector<std::shared_ptr<BlotterTasksModel::TaskContext>>> tasks) {
+    Out<vector<std::shared_ptr<Task>>> tasks) {
   if(tasks->empty()) {
     return;
   }
-  vector<Aspen::Shared<Task>> tasksToCancel;
+  vector<std::shared_ptr<Task>> tasksToCancel;
   if(cancelBinding.m_type == Type::MOST_RECENT) {
-    tasksToCancel.push_back(tasks->back()->m_task);
+    tasksToCancel.push_back(tasks->back());
     tasks->pop_back();
   } else if(cancelBinding.m_type == Type::MOST_RECENT_ASK) {
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::ASK) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           tasks->erase((i + 1).base());
           break;
         }
@@ -205,26 +205,26 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::MOST_RECENT_BID) {
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::BID) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           tasks->erase((i + 1).base());
           break;
         }
       }
     }
   } else if(cancelBinding.m_type == Type::OLDEST) {
-    tasksToCancel.push_back(tasks->front()->m_task);
+    tasksToCancel.push_back(tasks->front());
     tasks->erase(tasks->begin());
   } else if(cancelBinding.m_type == Type::OLDEST_ASK) {
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::ASK) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           tasks->erase(i);
           break;
         }
@@ -232,11 +232,11 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::OLDEST_BID) {
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::BID) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           tasks->erase(i);
           break;
         }
@@ -244,17 +244,17 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::ALL) {
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
-      tasksToCancel.push_back((*i)->m_task);
+      tasksToCancel.push_back(*i);
     }
     tasks->clear();
   } else if(cancelBinding.m_type == Type::ALL_ASKS) {
     auto i = tasks->begin();
     while(i != tasks->end()) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::ASK) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           i = tasks->erase(i);
           continue;
         }
@@ -264,11 +264,11 @@ void KeyBindings::CancelBinding::HandleCancel(
   } else if(cancelBinding.m_type == Type::ALL_BIDS) {
     auto i = tasks->begin();
     while(i != tasks->end()) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::BID) {
-          tasksToCancel.push_back((*i)->m_task);
+          tasksToCancel.push_back(*i);
           i = tasks->erase(i);
           continue;
         }
@@ -279,11 +279,11 @@ void KeyBindings::CancelBinding::HandleCancel(
     auto closestIterator = tasks->rend();
     boost::optional<Money> closestPrice;
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::ASK) {
-          auto basePriceNode = (*i)->m_node->FindChild("price");
+          auto basePriceNode = (*i)->GetNode().FindChild("price");
           if(basePriceNode.is_initialized()) {
             auto priceNode = dynamic_cast<const MoneyNode*>(&*basePriceNode);
             if(priceNode != nullptr && (!closestPrice.is_initialized() ||
@@ -296,18 +296,18 @@ void KeyBindings::CancelBinding::HandleCancel(
       }
     }
     if(closestIterator != tasks->rend()) {
-      tasksToCancel.push_back((*closestIterator)->m_task);
+      tasksToCancel.push_back(*closestIterator);
       tasks->erase((closestIterator + 1).base());
     }
   } else if(cancelBinding.m_type == Type::CLOSEST_BID) {
     auto closestIterator = tasks->rend();
     boost::optional<Money> closestPrice;
     for(auto i = tasks->rbegin(); i != tasks->rend(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::BID) {
-          auto basePriceNode = (*i)->m_node->FindChild("price");
+          auto basePriceNode = (*i)->GetNode().FindChild("price");
           if(basePriceNode.is_initialized()) {
             auto priceNode = dynamic_cast<const MoneyNode*>(&*basePriceNode);
             if(priceNode != nullptr && (!closestPrice.is_initialized() ||
@@ -320,18 +320,18 @@ void KeyBindings::CancelBinding::HandleCancel(
       }
     }
     if(closestIterator != tasks->rend()) {
-      tasksToCancel.push_back((*closestIterator)->m_task);
+      tasksToCancel.push_back(*closestIterator);
       tasks->erase((closestIterator + 1).base());
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_ASK) {
     auto closestIterator = tasks->end();
     boost::optional<Money> closestPrice;
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::ASK) {
-          auto basePriceNode = (*i)->m_node->FindChild("price");
+          auto basePriceNode = (*i)->GetNode().FindChild("price");
           if(basePriceNode.is_initialized()) {
             auto priceNode = dynamic_cast<const MoneyNode*>(&*basePriceNode);
             if(priceNode != nullptr && (!closestPrice.is_initialized() ||
@@ -344,18 +344,18 @@ void KeyBindings::CancelBinding::HandleCancel(
       }
     }
     if(closestIterator != tasks->end()) {
-      tasksToCancel.push_back((*closestIterator)->m_task);
+      tasksToCancel.push_back(*closestIterator);
       tasks->erase(closestIterator);
     }
   } else if(cancelBinding.m_type == Type::FURTHEST_BID) {
     auto closestIterator = tasks->end();
     boost::optional<Money> closestPrice;
     for(auto i = tasks->begin(); i != tasks->end(); ++i) {
-      auto baseSideNode = (*i)->m_node->FindChild("side");
+      auto baseSideNode = (*i)->GetNode().FindChild("side");
       if(baseSideNode.is_initialized()) {
         auto sideNode = dynamic_cast<const SideNode*>(&*baseSideNode);
         if(sideNode != nullptr && sideNode->GetValue() == Side::BID) {
-          auto basePriceNode = (*i)->m_node->FindChild("price");
+          auto basePriceNode = (*i)->GetNode().FindChild("price");
           if(basePriceNode.is_initialized()) {
             auto priceNode = dynamic_cast<const MoneyNode*>(&*basePriceNode);
             if(priceNode != nullptr && (!closestPrice.is_initialized() ||
@@ -368,12 +368,12 @@ void KeyBindings::CancelBinding::HandleCancel(
       }
     }
     if(closestIterator != tasks->end()) {
-      tasksToCancel.push_back((*closestIterator)->m_task);
+      tasksToCancel.push_back(*closestIterator);
       tasks->erase(closestIterator);
     }
   }
-  for(auto i = tasksToCancel.begin(); i != tasksToCancel.end(); ++i) {
-    (*i)->Cancel();
+  for(auto& i : tasksToCancel) {
+    i->Cancel();
   }
 }
 

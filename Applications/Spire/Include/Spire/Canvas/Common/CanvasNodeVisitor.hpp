@@ -147,10 +147,6 @@ namespace Spire {
 
       virtual void Visit(const SubtractionNode& node);
 
-      virtual void Visit(const TaskStateMonitorNode& node);
-
-      virtual void Visit(const TaskStateNode& node);
-
       virtual void Visit(const TextNode& node);
 
       virtual void Visit(const TimeAndSaleQueryNode& node);

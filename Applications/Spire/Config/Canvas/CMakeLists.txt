@@ -37,9 +37,8 @@ file(GLOB system_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/SystemNodes/*.hpp)
 file(GLOB system_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/SystemNodes/*.cpp)
-file(GLOB task_nodes_header_files
-  ${SPIRE_INCLUDE_PATH}/Spire/Canvas/TaskNodes/*.hpp)
-file(GLOB task_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/TaskNodes/*.cpp)
+file(GLOB tasks_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Tasks/*.hpp)
+file(GLOB tasks_source_files ${SPIRE_SOURCE_PATH}/Canvas/Tasks/*.cpp)
 file(GLOB types_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Types/*.hpp)
 file(GLOB types_source_files ${SPIRE_SOURCE_PATH}/Canvas/Types/*.cpp)
 file(GLOB value_nodes_header_files
@@ -50,14 +49,14 @@ set(header_files ${common_header_files} ${control_nodes_header_files}
   ${market_data_nodes_header_files} ${operations_header_files}
   ${order_execution_nodes_header_files} ${records_header_files}
   ${reference_nodes_header_files} ${standard_nodes_header_files}
-  ${system_nodes_header_files} ${task_nodes_header_files}
+  ${system_nodes_header_files} ${tasks_header_files}
   ${types_header_files} ${value_nodes_header_files})
 set(source_files ${common_source_files} ${control_nodes_source_files}
   ${io_nodes_source_files} ${lua_nodes_source_files}
   ${market_data_nodes_source_files} ${operations_source_files}
   ${order_execution_nodes_source_files} ${records_source_files}
   ${reference_nodes_source_files} ${standard_nodes_source_files}
-  ${system_nodes_source_files} ${task_nodes_source_files}
+  ${system_nodes_source_files} ${tasks_source_files}
   ${types_source_files} ${value_nodes_source_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
@@ -92,8 +91,8 @@ source_group("Standard Nodes\\Source Files"
   FILES ${standard_nodes_source_files})
 source_group("System Nodes\\Header Files" FILES ${system_nodes_header_files})
 source_group("System Nodes\\Source Files" FILES ${system_nodes_source_files})
-source_group("Task Nodes\\Header Files" FILES ${task_nodes_header_files})
-source_group("Task Nodes\\Source Files" FILES ${task_nodes_source_files})
+source_group("Tasks\\Header Files" FILES ${tasks_header_files})
+source_group("Tasks\\Source Files" FILES ${tasks_source_files})
 source_group("Types\\Header Files" FILES ${types_header_files})
 source_group("Types\\Source Files" FILES ${types_source_files})
 source_group("Value Nodes\\Header Files" FILES ${value_nodes_header_files})

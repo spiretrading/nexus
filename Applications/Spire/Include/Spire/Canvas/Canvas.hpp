@@ -48,6 +48,7 @@ namespace Spire {
   class DurationType;
   class EqualsNode;
   class ExecutionReportMonitorNode;
+  class Executor;
   class FilePathNode;
   class FileReaderNode;
   class FilterNode;
@@ -90,7 +91,6 @@ namespace Spire {
   class ProxyNode;
   class QueryNode;
   class RangeNode;
-  class ReactorMonitor;
   class Record;
   class RecordLuaReactorParameter;
   class RecordNode;
@@ -109,9 +109,6 @@ namespace Spire {
   class SubtractionNode;
   class Task;
   class TaskType;
-  class TaskStateMonitorNode;
-  class TaskStateNode;
-  class TaskStateType;
   class TextNode;
   class TextType;
   class TimeAndSaleQueryNode;

@@ -1,19 +1,17 @@
-#ifndef SPIRE_TASKTYPE_HPP
-#define SPIRE_TASKTYPE_HPP
+#ifndef SPIRE_TASK_TYPE_HPP
+#define SPIRE_TASK_TYPE_HPP
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
 namespace Spire {
 
-  /*! \class TaskType
-      \brief Represents a Task type.
-   */
+  /** Represents a Task type. */
   class TaskType : public NativeType {
     public:
 
       //! Defines the native type being represented.
-      typedef Task Type;
+      using Type = Task;
 
       //! Returns an instance of this type.
       static const TaskType& GetInstance();

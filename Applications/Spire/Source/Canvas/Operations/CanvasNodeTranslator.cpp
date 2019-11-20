@@ -91,7 +91,6 @@
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/ParserTypes.hpp"
@@ -111,7 +110,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -207,8 +205,6 @@ namespace {
       void Visit(const SingleOrderTaskNode& node) override;
       void Visit(const SpawnNode& node) override;
       void Visit(const SubtractionNode& node) override;
-      void Visit(const TaskStateMonitorNode& node) override;
-      void Visit(const TaskStateNode& node) override;
       void Visit(const TextNode& node) override;
       void Visit(const TimeAndSaleQueryNode& node) override;
       void Visit(const TimeInForceNode& node) override;
@@ -1553,21 +1549,6 @@ void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const SubtractionNode& node) {
   m_translation = TranslateFunction<SubtractionTranslator>(node);
-}
-
-void CanvasNodeTranslationVisitor::Visit(const TaskStateMonitorNode& node) {
-#if 0
-  auto translation = boost::get<TaskTranslation>(
-    InternalTranslation(node.GetChildren().front()));
-  auto task =
-    translation.m_factory.DynamicCast<IndirectTaskFactory>()->GetTask();
-  auto publisher = MakePublisherReactor(task->GetPublisher());
-  m_translation = publisher;
-#endif
-}
-
-void CanvasNodeTranslationVisitor::Visit(const TaskStateNode& node) {
-  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TextNode& node) {

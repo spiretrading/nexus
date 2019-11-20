@@ -1,5 +1,5 @@
-#ifndef SPIRE_CANVASOBSERVER_HPP
-#define SPIRE_CANVASOBSERVER_HPP
+#ifndef SPIRE_CANVAS_OBSERVER_HPP
+#define SPIRE_CANVAS_OBSERVER_HPP
 #include <memory>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
@@ -16,9 +16,7 @@
 
 namespace Spire {
 
-  /*! \class CanvasObserver
-      \brief Emits changes produced from a translated CanvasNode.
-   */
+  /** Emits changes produced from a translated CanvasNode. */
   class CanvasObserver : private boost::noncopyable {
     public:
 
@@ -31,18 +29,10 @@ namespace Spire {
 
       //! Constructs a CanvasObserver.
       /*!
-        \param target The CanvasNode to observe.
+        \param task The task the <i>target</i> belongs to.
         \param observer The operation to perform on the <i>target</i>.
-        \param context The <i>target</i>'s CanvasNodeTranslationContext.
-        \param monitor The <i>target</i>'s ReactorMonitor.
-        \param executingAccount The DirectoryEntry executing Orders.
-        \param userProfile The user's profile.
       */
-      CanvasObserver(const CanvasNode& target, const CanvasNode& observer,
-        Beam::Ref<CanvasNodeTranslationContext> context,
-        Beam::Ref<ReactorMonitor> monitor,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount,
-        Beam::Ref<UserProfile> userProfile);
+      CanvasObserver(std::shared_ptr<Task> task, const CanvasNode& observer);
 
       //! Returns the current value of the CanvasNode.
       const boost::any& GetValue() const;
@@ -56,9 +46,6 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const;
 
     private:
-      CanvasNodeTranslationContext* m_context;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
-      UserProfile* m_userProfile;
       std::vector<const CanvasNode*> m_dependencies;
       std::vector<const CanvasNode*> m_remainingDependencies;
       std::unique_ptr<CanvasNode> m_node;

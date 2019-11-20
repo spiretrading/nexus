@@ -60,8 +60,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -76,7 +74,6 @@
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskStateType.hpp"
 #include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
@@ -95,7 +92,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -201,10 +197,6 @@ namespace Spire {
     (BlotterTaskMonitorNode, "Spire.BlotterTaskMonitorNode"),
     (InteractionsNode, "Spire.InteractionsNode"));
 
-  BEAM_REGISTER_TYPES(RegisterCanvasTaskNodeTypes,
-    (IsTerminalNode, "Spire.IsTerminalNode"),
-    (TaskStateMonitorNode, "Spire.TaskStateMonitorNode"));
-
   BEAM_REGISTER_TYPES(RegisterCanvasTypeTypes,
     (BooleanType, "Spire.BooleanType"),
     (CurrencyType, "Spire.CurrencyType"),
@@ -220,7 +212,6 @@ namespace Spire {
     (RecordType, "Spire.RecordType"),
     (SecurityType, "Spire.SecurityType"),
     (SideType, "Spire.SideType"),
-    (TaskStateType, "Spire.TaskStateType"),
     (TaskType, "Spire.TaskType"),
     (TextType, "Spire.TextType"),
     (TimeInForceType, "Spire.TimeInForceType"),
@@ -241,7 +232,6 @@ namespace Spire {
     (OrderTypeNode, "Spire.OrderTypeNode"),
     (SecurityNode, "Spire.SecurityNode"),
     (SideNode, "Spire.SideNode"),
-    (TaskStateNode, "Spire.TaskStateNode"),
     (TextNode, "Spire.TextNode"),
     (TimeInForceNode, "Spire.TimeInForceNode"),
     (TimeNode, "Spire.TimeNode"),
@@ -294,7 +284,6 @@ namespace Spire {
     RegisterCanvasReferenceTypes(Beam::Store(registry));
     RegisterCanvasStandardTypes(Beam::Store(registry));
     RegisterCanvasSystemNodeTypes(Beam::Store(registry));
-    RegisterCanvasTaskNodeTypes(Beam::Store(registry));
     RegisterCanvasTypeTypes(Beam::Store(registry));
     RegisterCanvasValueNodeTypes(Beam::Store(registry));
     RegisterDashboardTypes(Beam::Store(registry));

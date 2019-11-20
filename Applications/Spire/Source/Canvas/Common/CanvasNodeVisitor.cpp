@@ -58,7 +58,6 @@
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -72,7 +71,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -349,14 +347,6 @@ void CanvasNodeVisitor::Visit(const SpawnNode& node) {
 
 void CanvasNodeVisitor::Visit(const SubtractionNode& node) {
   Visit(static_cast<const FunctionNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const TaskStateMonitorNode& node) {
-  Visit(static_cast<const CanvasNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const TaskStateNode& node) {
-  Visit(static_cast<const BaseValueNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const TextNode& node) {

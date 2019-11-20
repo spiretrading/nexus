@@ -1,22 +1,21 @@
-#include "Spire/Canvas/TaskNodes/ReactorMonitor.hpp"
+#include "Spire/Canvas/Tasks/Executor.hpp"
 
-using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Routines;
 using namespace Spire;
 
-ReactorMonitor::ReactorMonitor()
+Executor::Executor()
   : m_reactor(m_producer) {}
 
-ReactorMonitor::~ReactorMonitor() {
+Executor::~Executor() {
   Close();
 }
 
-void ReactorMonitor::Add(Aspen::Box<void> reactor) {
+void Executor::Add(Aspen::Box<void> reactor) {
   m_producer->push(std::move(reactor));
 }
 
-void ReactorMonitor::Open() {
+void Executor::Open() {
   if(m_openState.SetOpening()) {
     return;
   }
@@ -27,22 +26,22 @@ void ReactorMonitor::Open() {
   m_openState.SetOpen();
 }
 
-void ReactorMonitor::Close() {
+void Executor::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
   Shutdown();
 }
 
-void ReactorMonitor::Shutdown() {
+void Executor::Shutdown() {
   m_updateCondition.notify_all();
   m_openState.SetClosed();
 }
 
-void ReactorMonitor::RunLoop() {
+void Executor::RunLoop() {
   m_has_update = false;
-  auto trigger = Trigger([=] { OnUpdate(); });
-  Trigger::set_trigger(trigger);
+  auto trigger = Aspen::Trigger([=] { OnUpdate(); });
+  Aspen::Trigger::set_trigger(trigger);
   auto sequence = 0;
   while(m_openState.IsRunning()) {
     auto state = m_reactor.commit(sequence);
@@ -60,7 +59,7 @@ void ReactorMonitor::RunLoop() {
   Close();
 }
 
-void ReactorMonitor::OnUpdate() {
+void Executor::OnUpdate() {
   {
     auto lock = std::lock_guard(m_mutex);
     m_has_update = true;

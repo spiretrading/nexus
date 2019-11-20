@@ -1,13 +1,14 @@
 #ifndef SPIRE_TASK_HPP
 #define SPIRE_TASK_HPP
-#include <cstdint>
 #include <ostream>
 #include <string>
-#include <Aspen/Aspen.hpp>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/Queues/SnapshotPublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
+#include "Spire/Canvas/Tasks/Executor.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 namespace Details {
@@ -78,14 +79,34 @@ namespace Details {
 
       /**
        * Constructs a Task.
-       * @param reactor The reactor to execute as part of this task.
+       * @param node The CanvasNode to translate and execute.
+       * @param executingAccount The account used to submit orders.
+       * @param userProfile The user's profile.
        */
-      explicit Task(Aspen::Box<void> reactor);
+      Task(const CanvasNode& node,
+        Beam::ServiceLocator::DirectoryEntry executingAccount,
+        Beam::Ref<UserProfile> userProfile);
 
-      Task(Task&&) = default;
+      /** Returns the CanvasNode used to execute this task. */
+      const CanvasNode& GetNode() const;
+
+      /** Returns the context used to translate the node into a reactor. */
+      CanvasNodeTranslationContext& GetContext();
+
+      /** Returns the context used to translate the node into a reactor. */
+      const CanvasNodeTranslationContext& GetContext() const;
+
+      /** Returns the executor used by the translated reactor. */
+      Executor& GetExecutor();
+
+      /** Returns the executor used by the translated reactor. */
+      const Executor& GetExecutor() const;
 
       /** Returns a unique id for this Task. */
-      std::int32_t GetId() const;
+      int GetId() const;
+
+      /** Executes this Task. */
+      void Execute();
 
       /** Cancels this Task. */
       void Cancel();
@@ -93,16 +114,12 @@ namespace Details {
       /** Returns the Publisher indicating the State of this Task. */
       const Beam::Publisher<StateEntry>& GetPublisher() const;
 
-      Aspen::State commit(int sequence) noexcept;
-
-      const StateEntry& eval() const noexcept;
-
-      Task& operator =(Task&&) = default;
-
     private:
-      Aspen::Box<void> m_reactor;
-      std::int32_t m_id;
-      std::unique_ptr<Beam::SequencePublisher<StateEntry>> m_publisher;
+      std::unique_ptr<CanvasNode> m_node;
+      CanvasNodeTranslationContext m_context;
+      Executor m_executor;
+      int m_id;
+      Beam::SequencePublisher<StateEntry> m_publisher;
 
       Task(const Task&) = delete;
       Task& operator =(const Task&) = delete;
