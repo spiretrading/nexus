@@ -27,14 +27,13 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
   m_subscriptions.push_back(Subscription(start, end));
-  auto imbalances = std::vector<OrderImbalance>();
-  std::copy_if(m_imbalances.begin(), m_imbalances.end(),
-    std::back_inserter(imbalances), [=] (auto& imbalance) {
-      return start <= imbalance.m_timestamp && imbalance.m_timestamp <= end;
-    });
+  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) { return start <= imbalance.m_timestamp; });
+  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
   return {m_subscriptions.back().m_imbalance_signal.connect(slot),
-    QtPromise([requested_imbalances = std::move(imbalances)] {
-      return std::move(requested_imbalances);
+    QtPromise([=] {
+      return std::vector<OrderImbalance>(first, last);
     })};
 }
 
@@ -45,7 +44,7 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const OrderImbalanceSignal::slot_type& slot) {
   auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
   auto ranges = interval_set<ptime>(
-    {continuous_interval(start, end)}) - m_ranges;
+    {continuous_interval<ptime>::closed(start, end)}) - m_ranges;
   for(auto& range : ranges) {
     auto [connection, promise] = m_source_model->subscribe(range.lower(),
       range.upper(), [=] (auto& imbalance) {
@@ -57,26 +56,46 @@ OrderImbalanceIndicatorModel::SubscriptionResult
   m_subscriptions.push_back(Subscription(start, end));
   return {m_subscriptions.back().m_imbalance_signal.connect(slot),
     all(std::move(promises)).then([=] (auto& imbalances_lists) {
-      m_ranges.add({start, end});
-      auto loaded_imbalances_lists = imbalances_lists.Get();
-      for(auto& list : loaded_imbalances_lists) {
-        std::copy(list.begin(), list.end(), std::inserter(m_imbalances,
-          m_imbalances.end()));
+      m_ranges.add(continuous_interval<ptime>::closed(start, end));
+      if(m_imbalances.empty()) {
+        auto lists = imbalances_lists.Get();
+        if(lists.empty()) {
+          return std::vector<OrderImbalance>();
+        }
+        auto list = lists[0];
+        m_imbalances.insert(m_imbalances.begin(), list.begin(), list.end());
+        return m_imbalances;
       }
-      auto requested_imbalances = std::vector<OrderImbalance>();
-      std::copy_if(m_imbalances.begin(), m_imbalances.end(),
-        std::back_inserter(requested_imbalances), [=] (auto& imbalance) {
-          return start <= imbalance.m_timestamp &&
-            imbalance.m_timestamp <= end;
+      for(auto& list : imbalances_lists.Get()) {
+        auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return start < imbalance.m_timestamp;
+          });
+        auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return end < imbalance.m_timestamp;
+          });
+        auto iter = m_imbalances.erase(first, last);
+        m_imbalances.insert(iter, list.begin(), list.end());
+      }
+      auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+        [=] (const auto& imbalance) {
+          return start <= imbalance.m_timestamp;
         });
-      return std::move(requested_imbalances);
+      auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+        [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
+      return std::vector<OrderImbalance>(first, last);
     })};
 }
 
 void CachedOrderImbalanceIndicatorModel::on_order_imbalance(
     const OrderImbalance& imbalance) {
-  m_imbalances.insert(imbalance);
-  m_ranges.add({imbalance.m_timestamp, imbalance.m_timestamp});
+  m_ranges.add(continuous_interval<ptime>::closed(imbalance.m_timestamp,
+    imbalance.m_timestamp));
+  auto index = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& cached_imbalance) {
+      return imbalance.m_timestamp < cached_imbalance.m_timestamp;
+    });
   auto end_index = m_subscriptions.size();
   auto swap_index = end_index;
   auto current_index = std::size_t(0);
@@ -94,12 +113,6 @@ void CachedOrderImbalanceIndicatorModel::on_order_imbalance(
   }
   m_subscriptions.erase(m_subscriptions.begin() + swap_index,
     m_subscriptions.begin() + end_index);
-}
-
-std::size_t CachedOrderImbalanceIndicatorModel::OrderImbalanceHash::operator
-    ()(const OrderImbalance& imbalance) const {
-  return std::hash<std::size_t>{}(static_cast<std::size_t>(
-    imbalance.m_timestamp.time_of_day().total_milliseconds()));
 }
 
 CachedOrderImbalanceIndicatorModel::Subscription::Subscription(

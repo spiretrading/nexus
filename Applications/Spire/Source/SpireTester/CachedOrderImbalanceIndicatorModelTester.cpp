@@ -128,6 +128,41 @@ TEST_CASE("cached_imbalance_test_signals",
   }, "cached_imbalance_test_signals");
 }
 
+TEST_CASE("cached_imbalance_test_signals_for_older_imbalances",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto signal_data = OrderImbalance();
+    auto [connection1, promise1] = cached_model.subscribe(from_time_t(100),
+      from_time_t(100), [&] (auto& i) { signal_data = i; });
+    wait(std::move(promise1));
+    auto [connection2, promise2] = cached_model.subscribe(from_time_t(200),
+      from_time_t(200), [&] (auto& i) { signal_data = i; });
+    wait(std::move(promise2));
+    auto [connection3, promise3] = cached_model.subscribe(from_time_t(300),
+      from_time_t(300), [&] (auto& i) { signal_data = i; });
+    wait(std::move(promise3));
+    auto [connection4, promise4] = cached_model.subscribe(from_time_t(400),
+      from_time_t(400), [&] (auto& i) { signal_data = i; });
+    wait(std::move(promise4));
+    auto [connection5, promise5] = cached_model.subscribe(from_time_t(500),
+      from_time_t(500), [&] (auto& i) { signal_data = i; });
+    wait(std::move(promise5));
+    REQUIRE(signal_data == OrderImbalance());
+    local_model->insert(E);
+    REQUIRE(signal_data == E);
+    local_model->insert(A);
+    REQUIRE(signal_data == A);
+    local_model->insert(B);
+    REQUIRE(signal_data == B);
+    local_model->insert(C);
+    REQUIRE(signal_data == C);
+    local_model->insert(D);
+    REQUIRE(signal_data == D);
+  }, "cached_imbalance_test_signals_for_older_imbalances");
+}
+
 TEST_CASE("cached_imbalance_test_right_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
@@ -281,6 +316,3 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
       expected.begin(), expected.end()));
   }, "cached_imbalance_test_async_subscribes");
 }
-
-// TODO:
-// Cached model potentially reentrant?

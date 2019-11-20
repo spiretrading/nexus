@@ -20,16 +20,12 @@ namespace Spire {
       CachedOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model);
 
-      OrderImbalanceIndicatorModel::SubscriptionResult subscribe(
+      SubscriptionResult subscribe(
         const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-      struct OrderImbalanceHash {
-        std::size_t operator ()(const Nexus::OrderImbalance& imbalance) const;
-      };
-
       struct Subscription {
         OrderImbalanceSignal m_imbalance_signal;
         boost::posix_time::ptime m_start_time;
@@ -40,8 +36,7 @@ namespace Spire {
       };
 
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::unordered_set<Nexus::OrderImbalance, OrderImbalanceHash>
-        m_imbalances;
+      std::vector<Nexus::OrderImbalance> m_imbalances;
       std::vector<Subscription> m_subscriptions;
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       std::vector<boost::signals2::scoped_connection> m_connections;
