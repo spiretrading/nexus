@@ -14,15 +14,15 @@ namespace Spire {
     public:
 
       //! Stores a request to subscribe to an OrderImbalanceModel.
-      class SubscribeEntry {
+      class SubscriptionEntry {
         public:
 
-          //! Constructs a SubscribeEntry.
+          //! Constructs a SubscriptionEntry.
           /*
             \param start The start time to begin loading from.
             \param end The end time to load until.
           */
-          SubscribeEntry(const boost::posix_time::ptime& start,
+          SubscriptionEntry(const boost::posix_time::ptime& start,
             const boost::posix_time::ptime& end);
 
           //! Returns the start time of the range to load.
@@ -48,7 +48,7 @@ namespace Spire {
           boost::posix_time::ptime m_end;
           bool m_is_loaded;
           std::vector<Nexus::OrderImbalance> m_result;
-          Beam::Threading::ConditionVariable m_subscribe_condition;
+          Beam::Threading::ConditionVariable m_subscription_condition;
       };
 
       OrderImbalanceIndicatorModel::SubscriptionResult
@@ -58,15 +58,15 @@ namespace Spire {
 
       //! Pops the oldest subscribe request from this model's subcribe
       //! operation stack.
-      QtPromise<std::shared_ptr<SubscribeEntry>> pop_subscribe();
+      QtPromise<std::shared_ptr<SubscriptionEntry>> pop_subscription();
 
       //! Returns the number of pending subscribe entries.
-      int get_subscribe_entry_count() const;
+      int get_subscription_entry_count() const;
 
     private:
       Beam::Threading::Mutex m_mutex;
-      Beam::Threading::ConditionVariable m_subscribe_condition;
-      std::deque<std::shared_ptr<SubscribeEntry>> m_subscribe_entries;
+      Beam::Threading::ConditionVariable m_subscription_condition;
+      std::deque<std::shared_ptr<SubscriptionEntry>> m_subscription_entries;
   };
 }
 

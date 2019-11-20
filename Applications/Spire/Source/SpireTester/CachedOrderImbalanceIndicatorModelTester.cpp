@@ -170,11 +170,11 @@ TEST_CASE("cached_imbalance_test_right_no_overlap",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
       from_time_t(200), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({A, B});
+    wait(test_model->pop_subscription())->set_result({A, B});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(300),
       from_time_t(400), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscribe());
+    auto request = wait(test_model->pop_subscription());
     REQUIRE(request->get_start() == from_time_t(300));
     REQUIRE(request->get_end() == from_time_t(400));
     request->set_result({});
@@ -188,11 +188,11 @@ TEST_CASE("cached_imbalance_test_left_no_overlap",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
       from_time_t(400), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({C, D});
+    wait(test_model->pop_subscription())->set_result({C, D});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
       from_time_t(200), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscribe());
+    auto request = wait(test_model->pop_subscription());
     REQUIRE(request->get_start() == from_time_t(100));
     REQUIRE(request->get_end() == from_time_t(200));
     request->set_result({});
@@ -206,11 +206,11 @@ TEST_CASE("cached_imbalance_test_right_overlap",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
       from_time_t(300), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({A, B, C});
+    wait(test_model->pop_subscription())->set_result({A, B, C});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
       from_time_t(500), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscribe());
+    auto request = wait(test_model->pop_subscription());
     REQUIRE(request->get_start() == from_time_t(300));
     REQUIRE(request->get_end() == from_time_t(500));
     request->set_result({});
@@ -224,11 +224,11 @@ TEST_CASE("cached_imbalance_test_left_overlap",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
       from_time_t(500), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({C, D, E});
+    wait(test_model->pop_subscription())->set_result({C, D, E});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
       from_time_t(400), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscribe());
+    auto request = wait(test_model->pop_subscription());
     REQUIRE(request->get_start() == from_time_t(100));
     REQUIRE(request->get_end() == from_time_t(300));
     request->set_result({});
@@ -242,15 +242,15 @@ TEST_CASE("cached_imbalance_test_superset",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(200),
       from_time_t(400), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({B, C, D});
+    wait(test_model->pop_subscription())->set_result({B, C, D});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
       from_time_t(500), [] (auto& i) {});
-    auto request1 = wait(test_model->pop_subscribe());
+    auto request1 = wait(test_model->pop_subscription());
     REQUIRE(request1->get_start() == from_time_t(100));
     REQUIRE(request1->get_end() == from_time_t(200));
     request1->set_result({});
-    auto request2 = wait(test_model->pop_subscribe());
+    auto request2 = wait(test_model->pop_subscription());
     REQUIRE(request2->get_start() == from_time_t(400));
     REQUIRE(request2->get_end() == from_time_t(500));
     request2->set_result({});
@@ -264,23 +264,23 @@ TEST_CASE("cached_imbalance_test_mixed_subsets_and_supersets",
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
     auto [connection1, promise1] = cache_model.subscribe(from_time_t(150),
       from_time_t(250), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({B});
+    wait(test_model->pop_subscription())->set_result({B});
     wait(std::move(promise1));
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(350),
       from_time_t(450), [] (auto& i) {});
-    wait(test_model->pop_subscribe())->set_result({D});
+    wait(test_model->pop_subscription())->set_result({D});
     wait(std::move(promise2));
     auto [connection3, promise3] = cache_model.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
-    auto request1 = wait(test_model->pop_subscribe());
+    auto request1 = wait(test_model->pop_subscription());
     REQUIRE(request1->get_start() == from_time_t(0));
     REQUIRE(request1->get_end() == from_time_t(150));
     request1->set_result({});
-    auto request2 = wait(test_model->pop_subscribe());
+    auto request2 = wait(test_model->pop_subscription());
     REQUIRE(request2->get_start() == from_time_t(250));
     REQUIRE(request2->get_end() == from_time_t(350));
     request2->set_result({});
-    auto request3 = wait(test_model->pop_subscribe());
+    auto request3 = wait(test_model->pop_subscription());
     REQUIRE(request3->get_start() == from_time_t(450));
     REQUIRE(request3->get_end() == from_time_t(500));
     request3->set_result({});
@@ -296,9 +296,9 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
       from_time_t(300), [] (auto& i) {});
     auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
       from_time_t(500), [] (auto& i) {});
-    REQUIRE(test_model->get_subscribe_entry_count() == 2);
-    auto subscribe1 = wait(test_model->pop_subscribe());
-    auto subscribe2 = wait(test_model->pop_subscribe());
+    REQUIRE(test_model->get_subscription_entry_count() == 2);
+    auto subscribe1 = wait(test_model->pop_subscription());
+    auto subscribe2 = wait(test_model->pop_subscription());
     REQUIRE(subscribe1->get_start() == from_time_t(100));
     REQUIRE(subscribe1->get_end() == from_time_t(300));
     REQUIRE(subscribe2->get_start() == from_time_t(200));
@@ -309,7 +309,7 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
     wait(std::move(promise1));
     auto [connection3, promise3] = cache_model.subscribe(from_time_t(100),
       from_time_t(500), [] (auto& i) {});
-    REQUIRE(test_model->get_subscribe_entry_count() == 0);
+    REQUIRE(test_model->get_subscription_entry_count() == 0);
     auto cached_data = wait(std::move(promise3));
     auto expected = std::vector<OrderImbalance>({A, B, C, D, E});
     REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),

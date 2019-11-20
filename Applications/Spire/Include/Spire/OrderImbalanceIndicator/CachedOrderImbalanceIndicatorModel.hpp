@@ -41,12 +41,11 @@ namespace Spire {
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       std::vector<boost::signals2::scoped_connection> m_connections;
 
-      OrderImbalanceIndicatorModel::SubscriptionResult
-        get_subscription(const boost::posix_time::ptime& start,
+      SubscriptionResult make_subscription(
+        const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);
-      OrderImbalanceIndicatorModel::SubscriptionResult
-        load_imbalances(const boost::posix_time::ptime& start,
+      SubscriptionResult load_imbalances(const boost::posix_time::ptime& start,
         const boost::posix_time::ptime& end,
         const OrderImbalanceSignal::slot_type& slot);
       void on_order_imbalance(const Nexus::OrderImbalance& imbalance);

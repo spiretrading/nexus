@@ -16,13 +16,13 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
   if(contains(m_ranges, continuous_interval<ptime>::closed(start, end))) {
-    return get_subscription(start, end, slot);
+    return make_subscription(start, end, slot);
   }
   return load_imbalances(start, end, slot);
 }
 
 OrderImbalanceIndicatorModel::SubscriptionResult
-    CachedOrderImbalanceIndicatorModel::get_subscription(
+    CachedOrderImbalanceIndicatorModel::make_subscription(
     const boost::posix_time::ptime& start,
     const boost::posix_time::ptime& end,
     const OrderImbalanceSignal::slot_type& slot) {
@@ -44,7 +44,7 @@ OrderImbalanceIndicatorModel::SubscriptionResult
     const OrderImbalanceSignal::slot_type& slot) {
   auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
   auto ranges = interval_set<ptime>(
-    {continuous_interval<ptime>::closed(start, end)}) - m_ranges;
+    continuous_interval<ptime>::closed(start, end)) - m_ranges;
   for(auto& range : ranges) {
     auto [connection, promise] = m_source_model->subscribe(range.lower(),
       range.upper(), [=] (auto& imbalance) {
