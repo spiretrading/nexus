@@ -109,9 +109,8 @@ export class NewRuleButton extends React.Component<Properties, State> {
               <HLine color='#E6E6E6'/>
               <div style={NewRuleButton.STYLE.buttonWrapper}>
                 <button 
-                  className={css(NewRuleButton.EXTRA_STYLE.bacon)}
-                  //style={NewRuleButton.STYLE.button}
-                  onClick={()=>{}}>
+                    className={css(NewRuleButton.EXTRA_STYLE.bacon)}
+                    onClick={()=>{}}>
                   {NewRuleButton.BUTTON_TEXT}
                 </button>
               </div>
@@ -243,16 +242,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingTop: '30px',
       paddingBottom: '30px'
     },
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #4B23A0',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-    },
     buttonWrapperSmall: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -299,8 +288,16 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingLeft: '18px',
     },
     bacon: { //fix this up, k thanks
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '246px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      border: '0px solid #684BC7',
+      borderRadius: '1px',
+      font: '400 16px Roboto',
       ':active' : {
-        backgroundColor: '#4B23A0'
+        backgroundColor: 'red'
       },
       ':focus': {
         ouline: 0,
@@ -312,8 +309,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
         outlineStyle: 'none'
       },
       ':hover':{
-        backgroundColor: '#4B23A0',
-        color: 'pink'
+        backgroundColor: '#4B23A0'
       },
       '::moz-focus-inner': {
         border: 0
