@@ -102,7 +102,7 @@ namespace Nexus::OrderExecutionService {
 
     private:
       OrderExecutionClient* m_client;
-      OrderFields m_lastOrderFields;
+      std::unique_ptr<OrderFields> m_lastOrderFields;
       std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
       std::optional<Aspen::MultiSync<OrderFields,
         Aspen::Sync<AccountReactor, Beam::ServiceLocator::DirectoryEntry>,
@@ -150,17 +150,18 @@ namespace Nexus::OrderExecutionService {
     AdditionalFieldsReactor additionalFields)
     : m_client(client.Get()),
       m_quantity(std::move(quantity)),
-      m_orderFields(std::in_place, m_lastOrderFields,
-        Aspen::Sync(m_lastOrderFields.m_account, std::move(account)),
-        Aspen::Sync(m_lastOrderFields.m_security, std::move(security)),
-        Aspen::Sync(m_lastOrderFields.m_currency, std::move(currency)),
-        Aspen::Sync(m_lastOrderFields.m_type, std::move(orderType)),
-        Aspen::Sync(m_lastOrderFields.m_side, std::move(side)),
-        Aspen::Sync(m_lastOrderFields.m_destination, std::move(destination)),
-        Aspen::Sync(m_lastOrderFields.m_quantity, *m_quantity),
-        Aspen::Sync(m_lastOrderFields.m_price, std::move(price)),
-        Aspen::Sync(m_lastOrderFields.m_timeInForce, std::move(timeInForce)),
-        Aspen::VectorSync(m_lastOrderFields.m_additionalFields,
+      m_lastOrderFields(std::make_unique<OrderFields>()),
+      m_orderFields(std::in_place, *m_lastOrderFields,
+        Aspen::Sync(m_lastOrderFields->m_account, std::move(account)),
+        Aspen::Sync(m_lastOrderFields->m_security, std::move(security)),
+        Aspen::Sync(m_lastOrderFields->m_currency, std::move(currency)),
+        Aspen::Sync(m_lastOrderFields->m_type, std::move(orderType)),
+        Aspen::Sync(m_lastOrderFields->m_side, std::move(side)),
+        Aspen::Sync(m_lastOrderFields->m_destination, std::move(destination)),
+        Aspen::Sync(m_lastOrderFields->m_quantity, *m_quantity),
+        Aspen::Sync(m_lastOrderFields->m_price, std::move(price)),
+        Aspen::Sync(m_lastOrderFields->m_timeInForce, std::move(timeInForce)),
+        Aspen::VectorSync(m_lastOrderFields->m_additionalFields,
           std::move(additionalFields))),
       m_order(nullptr),
       m_isPendingCancel(true),
@@ -212,7 +213,7 @@ namespace Nexus::OrderExecutionService {
     if(IsTerminal(m_status)) {
       try {
         m_isPendingCancel = false;
-        if(m_lastOrderFields.m_quantity - m_filled > 0) {
+        if(m_lastOrderFields->m_quantity - m_filled > 0) {
           auto orderFields = m_orderFields->eval();
           orderFields.m_quantity -= m_filled;
           m_order = &m_client->Submit(m_orderFields->eval());

@@ -1201,8 +1201,8 @@ void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
   auto source = InternalTranslation(
     node.GetChildren().front()).Extract<Aspen::Box<Security>>();
   m_translation = Aspen::lift(
-    [=] (const Security& security) {
-      return m_context->GetUserProfile().GetMarketDatabase().FromCode(
+    [userProfile = &m_context->GetUserProfile()] (const Security& security) {
+      return userProfile->GetMarketDatabase().FromCode(
         security.GetMarket()).m_currency;
     }, source);
 }

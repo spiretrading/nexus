@@ -117,12 +117,15 @@ namespace Details {
     private:
       std::unique_ptr<CanvasNode> m_node;
       CanvasNodeTranslationContext m_context;
+      bool m_isRunning;
       Executor m_executor;
       int m_id;
       Beam::SequencePublisher<StateEntry> m_publisher;
 
       Task(const Task&) = delete;
+      Task(Task&&) = delete;
       Task& operator =(const Task&) = delete;
+      Task& operator =(Task&&) = delete;
   };
 
   /** Streams a string representation of a Task's State. */

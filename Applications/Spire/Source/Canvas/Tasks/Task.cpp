@@ -1,6 +1,6 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
-#include <atomic>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 
 using namespace Beam;
@@ -8,7 +8,7 @@ using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 namespace {
-  std::atomic_int nextId = 0;
+  auto nextId = 0;
 }
 
 Task::StateEntry::StateEntry(State state)
@@ -32,7 +32,8 @@ Task::Task(const CanvasNode& node, DirectoryEntry executingAccount,
         return n;
       }()),
     m_context(Ref(userProfile), Ref(m_executor), std::move(executingAccount)),
-    m_id(++nextId) {}
+    m_id(++nextId),
+    m_isRunning(false) {}
 
 const CanvasNode& Task::GetNode() const {
   return *m_node;
@@ -58,7 +59,15 @@ int Task::GetId() const {
   return m_id;
 }
 
-void Task::Execute() {}
+void Task::Execute() {
+  if(m_isRunning) {
+    return;
+  }
+  m_isRunning = true;
+  auto translation = Translate(m_context, *m_node).Extract<Aspen::Box<void>>();
+  m_executor.Add(std::move(translation));
+  m_executor.Open();
+}
 
 void Task::Cancel() {}
 
