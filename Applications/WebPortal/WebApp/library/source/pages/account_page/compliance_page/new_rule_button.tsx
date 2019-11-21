@@ -11,21 +11,30 @@ interface Properties {
 
   /** A list of rule Schemas */
   ruleSchemas: Nexus.ComplianceRuleSchema[];
+
+  isOpen?: boolean;
+
+  onToggleModal?: () => void;
+
+  onAddNewRule?: (newRule: Nexus.ComplianceRuleSchema) => void;
 }
 
 interface State {
-  /** Indicates if the modal should be open ot not. */
-  isOpen: boolean;
 
   selection: number;
 }
 
 /** Displays a component that allows a user to add a new rule. */
 export class NewRuleButton extends React.Component<Properties, State> {
+  public static defaultProps = {
+    isOpen: false,
+    onToggleModal: () => {},
+    onAddNewRule: () => {}
+  };
+
   public constructor(props: Properties) {
     super(props);
     this.state = {
-      isOpen: false,
       selection: -1
     }
   }
@@ -46,7 +55,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     })();
     const modalStyle = (() => {
-      if(this.state.isOpen) {
+      if(this.props.isOpen) {
         return null;
       } else {
         return NewRuleButton.STYLE.hidden;
@@ -85,7 +94,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     return (
       <div>
         <div style={NewRuleButton.STYLE.newRuleRow}
-            onClick={this.onClickClose.bind(this)}>
+            onClick={this.props.onToggleModal}>
           <div style={NewRuleButton.STYLE.imageWrapper}>
             <img src='resources/account_page/compliance_page/add.svg'
               height={imageSize}
@@ -102,6 +111,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
                 {NewRuleButton.MODAL_HEADER}
               </div>
               <img height={imageSize} width={imageSize}
+                onClick={this.props.onToggleModal}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
             <div style={NewRuleButton.STYLE.ruleItemWraper}>
@@ -112,7 +122,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
               <div style={buttonWrapper}>
                 <button 
                     className={css(NewRuleButton.EXTRA_STYLE.bacon)}
-                    onClick={()=>{}}>
+                    onClick={this.addNewRule.bind(this)}>
                   {NewRuleButton.BUTTON_TEXT}
                 </button>
               </div>
@@ -122,16 +132,17 @@ export class NewRuleButton extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onClickClose() {
-    this.setState({isOpen: !this.state.isOpen});
-  }
-
   private onClickRule(index: number) {
     if(index === this.state.selection) {
       this.setState({selection: -1});
     } else {
       this.setState({selection: index});
     }
+  }
+
+  private addNewRule() {
+    this.props.onAddNewRule(this.props.ruleSchemas[this.state.selection]);
+    this.props.onToggleModal();
   }
 
   private static readonly STYLE = {

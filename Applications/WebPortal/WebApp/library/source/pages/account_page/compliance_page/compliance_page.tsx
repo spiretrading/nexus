@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
@@ -20,6 +21,8 @@ interface Properties {
 
 interface State {
   complianceList: Nexus.ComplianceRuleEntry[];
+
+  isAddNewRulewModalOpen: boolean;
 }
 
 /* Displays the compliance page.*/
@@ -27,9 +30,10 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      complianceList: this.props.complianceList.slice()
+      complianceList: this.props.complianceList.slice(),
+      isAddNewRulewModalOpen: false
     };
-    this.onChange = this.onChange.bind(this);
+    this.onRuleChange = this.onRuleChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -50,9 +54,12 @@ export class CompliancePage extends React.Component<Properties, State> {
             displaySize={this.props.displaySize}
             currencyDatabase={this.props.currencyDatabase}
             complianceList={this.state.complianceList}
-            onChange={this.onChange}/>
+            onChange={this.onRuleChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize}
+            isOpen={this.state.isAddNewRulewModalOpen}
+            onToggleModal={this.onToggleAddNewRule.bind(this)}
+            onAddNewRule={this.onAddNewRow.bind(this)}
             ruleSchemas={this.props.ruleSchemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
@@ -60,8 +67,24 @@ export class CompliancePage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
+  private onRuleChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
     this.state.complianceList[ruleIndex] = newRule;
+    this.setState({complianceList: this.state.complianceList});
+  }
+
+  private onToggleAddNewRule() {
+    this.setState({isAddNewRulewModalOpen: !this.state.isAddNewRulewModalOpen});
+  }
+
+  private onAddNewRow(schema: Nexus.ComplianceRuleSchema) {
+    this.state.complianceList.push(
+      new Nexus.ComplianceRuleEntry (
+        0,
+        Beam.DirectoryEntry.makeDirectory(0, 'empty'),
+        Nexus.ComplianceRuleEntry.State.DISABLED,
+        schema
+      )
+    );
     this.setState({complianceList: this.state.complianceList});
   }
 
