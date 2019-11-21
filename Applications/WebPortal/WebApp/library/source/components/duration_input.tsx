@@ -18,6 +18,7 @@ interface Properties {
 
 export class DurationInput extends React.Component<Properties> {
   public render(): JSX.Element {
+    const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationInput.STYLE.wrapperSmall;
@@ -36,29 +37,51 @@ export class DurationInput extends React.Component<Properties> {
       <div style={wrapperStyle}>
           <IntegerInputBox
             min={0} max={59}
+            value={splitTransitionTime.hours}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
             padding={2}/>
           <div style={DurationInput.STYLE.padding}>
             :
           </div>
           <IntegerInputBox
             min={0} max={59}
+            value={splitTransitionTime.minutes}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.MINUITES)}
             padding={2}/>
           <div style={DurationInput.STYLE.padding}>
             :
           </div>
           <IntegerInputBox
             min={0} max={59}
+            value={splitTransitionTime.seconds}
             className={css(DurationInput.EXTRA_STYLE.effects)}
             style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
             padding={2}/>
       </div>);
   }
 
-  private onChange() {
+  private onChange(timeUnit: TimeUnit, 
+      event: React.ChangeEvent<HTMLInputElement>) {
+    const oldDuration = this.props.value.split();
+    switch (timeUnit) {
+      case TimeUnit.HOURS:
+        return Beam.Duration.HOUR.multiply(event.target.valueAsNumber).add(
+          Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
+          Beam.Duration.SECOND.multiply(oldDuration.seconds));
+      case TimeUnit.MINUITES:
+        return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
+          Beam.Duration.MINUTE.multiply(event.target.valueAsNumber)).add(
+          Beam.Duration.SECOND.multiply(oldDuration.seconds));
+      case TimeUnit.SECONDS:
+        return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
+          Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
+          Beam.Duration.SECOND.multiply(event.target.valueAsNumber));
+    }
   }
 
   private static readonly STYLE = {
