@@ -66,22 +66,25 @@ export class DurationInput extends React.Component<Properties> {
   }
 
   private onChange(timeUnit: TimeUnit, 
-      event: React.ChangeEvent<HTMLInputElement>) {
+      newNumber: number) {
     const oldDuration = this.props.value.split();
-    switch (timeUnit) {
+    const NewValue = (() => {
+      switch (timeUnit) {
       case TimeUnit.HOURS:
-        return Beam.Duration.HOUR.multiply(event.target.valueAsNumber).add(
+        return Beam.Duration.HOUR.multiply(newNumber).add(
           Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
           Beam.Duration.SECOND.multiply(oldDuration.seconds));
       case TimeUnit.MINUITES:
         return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-          Beam.Duration.MINUTE.multiply(event.target.valueAsNumber)).add(
+          Beam.Duration.MINUTE.multiply(newNumber)).add(
           Beam.Duration.SECOND.multiply(oldDuration.seconds));
       case TimeUnit.SECONDS:
         return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
           Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-          Beam.Duration.SECOND.multiply(event.target.valueAsNumber));
+          Beam.Duration.SECOND.multiply(newNumber));
     }
+  })();
+  this.props.onChange(NewValue);
   }
 
   private static readonly STYLE = {
