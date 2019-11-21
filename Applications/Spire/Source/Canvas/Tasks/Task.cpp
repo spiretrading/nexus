@@ -1,9 +1,8 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
+#include <atomic>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
-#include <atomic>
 
-using namespace Aspen;
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Spire;
@@ -34,6 +33,26 @@ Task::Task(const CanvasNode& node, DirectoryEntry executingAccount,
       }()),
     m_context(Ref(userProfile), Ref(m_executor), std::move(executingAccount)),
     m_id(++nextId) {}
+
+const CanvasNode& Task::GetNode() const {
+  return *m_node;
+}
+
+CanvasNodeTranslationContext& Task::GetContext() {
+  return m_context;
+}
+
+const CanvasNodeTranslationContext& Task::GetContext() const {
+  return m_context;
+}
+
+Executor& Task::GetExecutor() {
+  return m_executor;
+}
+
+const Executor& Task::GetExecutor() const {
+  return m_executor;
+}
 
 int Task::GetId() const {
   return m_id;

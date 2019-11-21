@@ -141,8 +141,10 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   if(taskIterator != m_taskIds.end()) {
     return *(taskIterator->second);
   }
+  auto index = static_cast<int>(m_entries.size());
+  beginInsertRows(QModelIndex(), index, index);
   auto entry = std::make_unique<TaskEntry>();
-  entry->m_index = static_cast<int>(m_entries.size());
+  entry->m_index = index;
   entry->m_sticky = false;
   entry->m_task = std::move(task);
   entry->m_task->GetPublisher().Monitor(
@@ -150,7 +152,7 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
     [=, entry = entry.get()] (const Task::StateEntry& state) {
       OnTaskState(*entry, state);
     }));
-  m_taskIds.insert(std::make_pair(task->GetId(), entry.get()));
+  m_taskIds.insert(std::make_pair(entry->m_task->GetId(), entry.get()));
   for(auto& taskMonitor : m_taskMonitors) {
     auto observer = std::make_unique<CanvasObserver>(entry->m_task,
       taskMonitor.GetMonitor());

@@ -24,7 +24,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
+  constexpr auto UPDATE_INTERVAL = 100;
 
   struct ObserverTranslator {
     template<typename T>
@@ -37,7 +37,7 @@ namespace {
         }, observer));
     }
 
-    typedef ValueTypes SupportedTypes;
+    using SupportedTypes = ValueTypes;
   };
 }
 
@@ -62,7 +62,7 @@ CanvasObserver::CanvasObserver(std::shared_ptr<Task> task,
       auto& referent = *reference->FindReferent();
       if(IsParent(taskNode, referent) || &referent == &taskNode) {
         auto path = GetPath(taskNode, referent);
-        auto& dependency = *task->GetNode().FindNode(path);
+        auto& dependency = *m_task->GetNode().FindNode(path);
         m_dependencies.push_back(&dependency);
         m_remainingDependencies.push_back(&dependency);
       }
