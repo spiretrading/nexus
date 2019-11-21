@@ -1,26 +1,27 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../../display_size';
-import { HLine } from '../../../components';
+import { DisplaySize,  HLine } from '../../../';
 
 interface Properties {
-  
+
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** A list of rule Schemas */
+  /** A list of rule schemas */
   ruleSchemas: Nexus.ComplianceRuleSchema[];
 
+  /** Determines if the modal should be open or not. */
   isOpen?: boolean;
 
+  /** A callback to hide or show the uploader. */
   onToggleModal?: () => void;
 
+  /** A callback to add a rule with the following schema. */
   onAddNewRule?: (newRule: Nexus.ComplianceRuleSchema) => void;
 }
 
 interface State {
-
   selection: number;
 }
 
@@ -61,7 +62,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
         return NewRuleButton.STYLE.hidden;
       }
     })();
-    const imageSize = (() => {
+    const plusSignImageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return '20px';
       } else {
@@ -97,8 +98,8 @@ export class NewRuleButton extends React.Component<Properties, State> {
             onClick={this.props.onToggleModal}>
           <div style={NewRuleButton.STYLE.imageWrapper}>
             <img src='resources/account_page/compliance_page/add.svg'
-              height={imageSize}
-              width={imageSize}/>
+              height={plusSignImageSize}
+              width={plusSignImageSize}/>
           </div>
           <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
         </div>
@@ -110,7 +111,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
               <div style={NewRuleButton.STYLE.headerText}>
                 {NewRuleButton.MODAL_HEADER}
               </div>
-              <img height={imageSize} width={imageSize}
+              <img height={plusSignImageSize} width={plusSignImageSize}
                 onClick={this.props.onToggleModal}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
@@ -141,6 +142,9 @@ export class NewRuleButton extends React.Component<Properties, State> {
   }
 
   private addNewRule() {
+    if(this.state.selection === -1) {
+      return;
+    }
     this.props.onAddNewRule(this.props.ruleSchemas[this.state.selection]);
     this.props.onToggleModal();
   }
@@ -337,6 +341,5 @@ export class NewRuleButton extends React.Component<Properties, State> {
   });
   private static readonly MODAL_HEADER = 'Add New Rule';
   private static readonly BUTTON_TEXT = 'Select';
-  private static readonly IMAGE_SIZE_SMALL = '20px';
-  private static readonly IMAGE_SIZE_BIG = '16px';
+  private static readonly IMAGE_SIZE = '20px';
 }

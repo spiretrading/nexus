@@ -21,7 +21,6 @@ interface Properties {
 
 interface State {
   complianceList: Nexus.ComplianceRuleEntry[];
-
   isAddNewRulewModalOpen: boolean;
 }
 
@@ -58,8 +57,8 @@ export class CompliancePage extends React.Component<Properties, State> {
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize}
             isOpen={this.state.isAddNewRulewModalOpen}
-            onToggleModal={this.onToggleAddNewRule.bind(this)}
-            onAddNewRule={this.onAddNewRow.bind(this)}
+            onToggleModal={this.onToggleAddNewRuleModal.bind(this)}
+            onAddNewRule={this.onAddNewRule.bind(this)}
             ruleSchemas={this.props.ruleSchemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
@@ -72,11 +71,11 @@ export class CompliancePage extends React.Component<Properties, State> {
     this.setState({complianceList: this.state.complianceList});
   }
 
-  private onToggleAddNewRule() {
+  private onToggleAddNewRuleModal() {
     this.setState({isAddNewRulewModalOpen: !this.state.isAddNewRulewModalOpen});
   }
 
-  private onAddNewRow(schema: Nexus.ComplianceRuleSchema) {
+  private onAddNewRule(schema: Nexus.ComplianceRuleSchema) {
     this.state.complianceList.push(
       new Nexus.ComplianceRuleEntry (
         0,
