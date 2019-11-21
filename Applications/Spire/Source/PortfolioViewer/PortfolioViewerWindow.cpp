@@ -44,7 +44,7 @@ namespace {
     auto orderNode = BuildOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
-    taskEntry.m_context->m_task->Execute();
+    taskEntry.m_task->Execute();
   }
 }
 

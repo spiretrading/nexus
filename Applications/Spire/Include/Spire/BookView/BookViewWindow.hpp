@@ -1,5 +1,5 @@
-#ifndef SPIRE_BOOKVIEWWINDOW_HPP
-#define SPIRE_BOOKVIEWWINDOW_HPP
+#ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
+#define SPIRE_BOOK_VIEW_WINDOW_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -82,8 +82,7 @@ namespace Spire {
       bool m_isTaskEntryWidgetForInteractionsProperties;
       std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
       Beam::SignalHandling::ConnectionGroup m_securityTechnicalsConnections;
-      std::unordered_map<Nexus::Security,
-        std::vector<std::shared_ptr<BlotterTasksModel::TaskContext>>>
+      std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       bool m_bidPanelGuard;
       bool m_askPanelGuard;
@@ -106,7 +105,7 @@ namespace Spire {
       void OnHighUpdate(Nexus::Money high);
       void OnLowUpdate(Nexus::Money low);
       void OnVolumeUpdate(Nexus::Quantity volume);
-      void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
+      void OnTaskState(const std::shared_ptr<Task>& task,
         const Task::StateEntry& update);
       void OnContextMenu(const QPoint& position);
       void OnUpdateTimer();

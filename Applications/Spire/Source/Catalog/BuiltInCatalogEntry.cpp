@@ -60,7 +60,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
@@ -325,8 +324,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/symbol_questionmark.png", "", IfNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Integer",
     INTEGER_UUID, ":/icons/weight.png", "", IntegerNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(IS_TERMINAL_UUID,
-    ":/icons/logic_not.png", "", IsTerminalNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LAST_UUID,
     ":/icons/note_pinned.png", "", LastNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LESS_EQUAL_UUID,

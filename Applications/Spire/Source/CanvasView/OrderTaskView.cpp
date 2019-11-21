@@ -86,13 +86,13 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
     m_parent->raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[*m_state->m_security].push_back(entry.m_context);
-  entry.m_context->m_task->GetPublisher().Monitor(
-    m_slotHandler.GetSlot<Task::StateEntry>(std::bind(
-    &OrderTaskView::OnTaskState, this,
-    std::weak_ptr<BlotterTasksModel::TaskContext>(entry.m_context),
-    *m_state->m_security, std::placeholders::_1)));
-  entry.m_context->m_task->Execute();
+  m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
+  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+    [=, security = *m_state->m_security, task = entry.m_task] (
+        const Task::StateEntry& update) {
+      OnTaskState(task, security, update);
+    }));
+  entry.m_task->Execute();
 }
 
 unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
@@ -249,13 +249,8 @@ bool OrderTaskView::HandleCancelBindingEvent(
   return true;
 }
 
-void OrderTaskView::OnTaskState(
-    std::weak_ptr<BlotterTasksModel::TaskContext> weakTask,
+void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
     const Security& security, const Task::StateEntry& update) {
-  auto task = weakTask.lock();
-  if(task == nullptr) {
-    return;
-  }
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted[security], task);
   }

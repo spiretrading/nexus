@@ -9,7 +9,6 @@
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -69,8 +68,7 @@ namespace Spire {
       QWidget* m_parent;
       UserProfile* m_userProfile;
       bool m_isTaskEntryWidgetForInteractionsProperties;
-      std::unordered_map<Nexus::Security,
-        std::vector<std::shared_ptr<BlotterTasksModel::TaskContext>>>
+      std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       State* m_state;
       CondensedCanvasWidget* m_taskEntryWidget;
@@ -87,7 +85,7 @@ namespace Spire {
       void HandleInteractionsPropertiesEvent();
       bool HandleCancelBindingEvent(
         const KeyBindings::CancelBinding& keyBinding);
-      void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
+      void OnTaskState(const std::shared_ptr<Task>& task,
         const Nexus::Security& security, const Task::StateEntry& update);
   };
 }

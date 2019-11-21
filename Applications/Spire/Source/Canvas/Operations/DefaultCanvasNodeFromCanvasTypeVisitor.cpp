@@ -43,7 +43,6 @@ namespace {
       virtual void Visit(const OrderTypeType& type);
       virtual void Visit(const SecurityType& type);
       virtual void Visit(const SideType& type);
-      virtual void Visit(const TaskStateType& type);
       virtual void Visit(const TextType& type);
       virtual void Visit(const TimeInForceType& type);
       virtual void Visit(const TimeRangeType& type);

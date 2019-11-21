@@ -16,7 +16,6 @@
 #include "Nexus/Parsers/TimeInForceParser.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateParser.hpp"
 
 namespace Spire {
 

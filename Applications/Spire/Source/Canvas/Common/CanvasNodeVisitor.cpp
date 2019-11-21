@@ -57,7 +57,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -222,10 +221,6 @@ void CanvasNodeVisitor::Visit(const IntegerNode& node) {
 }
 
 void CanvasNodeVisitor::Visit(const InteractionsNode& node) {
-  Visit(static_cast<const CanvasNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const IsTerminalNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
 }
 

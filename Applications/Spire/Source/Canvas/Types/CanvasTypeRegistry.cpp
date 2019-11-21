@@ -19,7 +19,6 @@
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskStateType.hpp"
 #include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
@@ -51,7 +50,6 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(GetQuoteRecordType());
   Register(SecurityType::GetInstance());
   Register(SideType::GetInstance());
-  Register(TaskStateType::GetInstance());
   Register(TaskType::GetInstance());
   Register(TextType::GetInstance());
   Register(TimeInForceType::GetInstance());

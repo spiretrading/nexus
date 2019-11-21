@@ -83,10 +83,6 @@ void CanvasTypeVisitor::Visit(const SideType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
 
-void CanvasTypeVisitor::Visit(const TaskStateType& type) {
-  Visit(static_cast<const NativeType&>(type));
-}
-
 void CanvasTypeVisitor::Visit(const TaskType& type) {
   Visit(static_cast<const NativeType&>(type));
 }

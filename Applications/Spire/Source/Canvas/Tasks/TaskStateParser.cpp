@@ -1,4 +1,4 @@
-#include "Spire/Canvas/TaskNodes/TaskStateParser.hpp"
+#include "Spire/Canvas/Tasks/TaskStateParser.hpp"
 #include <Beam/Collections/EnumIterator.hpp>
 #include <boost/lexical_cast.hpp>
 

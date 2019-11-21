@@ -2,7 +2,7 @@
 #define SPIRE_TASK_STATE_PARSER_HPP
 #include <Beam/Parsers/EnumeratorParser.hpp>
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 
 namespace Spire {
 

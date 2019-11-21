@@ -46,9 +46,10 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const;
 
     private:
+      std::shared_ptr<Task> m_task;
+      std::unique_ptr<CanvasNode> m_observer;
       std::vector<const CanvasNode*> m_dependencies;
       std::vector<const CanvasNode*> m_remainingDependencies;
-      std::unique_ptr<CanvasNode> m_node;
       bool m_isTranslated;
       boost::any m_value;
       mutable UpdateSignal m_updateSignal;

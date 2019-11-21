@@ -356,13 +356,12 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
     raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[m_security].push_back(entry.m_context);
-  entry.m_context->m_task->GetPublisher().Monitor(
-    m_slotHandler.GetSlot<Task::StateEntry>(std::bind(
-    &BookViewWindow::OnTaskState, this,
-    std::weak_ptr<BlotterTasksModel::TaskContext>(entry.m_context),
-    std::placeholders::_1)));
-  entry.m_context->m_task->Execute();
+  m_tasksExecuted[m_security].push_back(entry.m_task);
+  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+    [=, task = entry.m_task] (const Task::StateEntry& update) {
+      OnTaskState(task, update);
+    }));
+  entry.m_task->Execute();
 }
 
 void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
@@ -503,13 +502,8 @@ void BookViewWindow::OnVolumeUpdate(Quantity volume) {
   m_ui->m_volumeValue->SetValue(static_cast<int>(volume));
 }
 
-void BookViewWindow::OnTaskState(
-    std::weak_ptr<BlotterTasksModel::TaskContext> weakTask,
+void BookViewWindow::OnTaskState(const std::shared_ptr<Task>& task,
     const Task::StateEntry& update) {
-  auto task = weakTask.lock();
-  if(task == nullptr) {
-    return;
-  }
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted[m_security], task);
   }

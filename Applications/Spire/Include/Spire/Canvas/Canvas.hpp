@@ -63,7 +63,6 @@ namespace Spire {
   class IntegerNode;
   class IntegerType;
   class InteractionsNode;
-  class IsTerminalNode;
   class LastNode;
   class LesserNode;
   class LesserOrEqualsNode;
@@ -108,6 +107,7 @@ namespace Spire {
   class SpawnNode;
   class SubtractionNode;
   class Task;
+  class TaskStateParser;
   class TaskType;
   class TextNode;
   class TextType;

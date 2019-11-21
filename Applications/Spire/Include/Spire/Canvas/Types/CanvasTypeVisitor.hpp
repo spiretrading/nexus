@@ -1,12 +1,10 @@
-#ifndef SPIRE_CANVASTYPEVISITOR_HPP
-#define SPIRE_CANVASTYPEVISITOR_HPP
+#ifndef SPIRE_CANVAS_TYPE_VISITOR_HPP
+#define SPIRE_CANVAS_TYPE_VISITOR_HPP
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
 
-  /*! \class CanvasTypeVisitor
-      \brief Implements a single dispatch visitor pattern for CanvasTypes.
-   */
+  /** Implements a single dispatch visitor pattern for CanvasTypes. */
   class CanvasTypeVisitor {
     public:
       virtual ~CanvasTypeVisitor() = default;
@@ -42,8 +40,6 @@ namespace Spire {
       virtual void Visit(const SecurityType& type);
 
       virtual void Visit(const SideType& type);
-
-      virtual void Visit(const TaskStateType& type);
 
       virtual void Visit(const TaskType& type);
 

@@ -90,7 +90,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/ParserTypes.hpp"
@@ -178,7 +177,6 @@ namespace {
       void Visit(const GreaterOrEqualsNode& node) override;
       void Visit(const IfNode& node) override;
       void Visit(const IntegerNode& node) override;
-      void Visit(const IsTerminalNode& node) override;
       void Visit(const LastNode& node) override;
       void Visit(const LesserNode& node) override;
       void Visit(const LesserOrEqualsNode& node) override;
@@ -490,8 +488,8 @@ namespace {
 
     template<typename T>
     static Translation Template(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
-        ParserErrorPolicy errorPolicy, const string& path) {
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const string& path) {
       using BaseParser = ParserType<T>::type;
       auto parser = BuildParser(BaseParser());
       using Parser = decltype(parser);
@@ -503,8 +501,8 @@ namespace {
 
     template<>
     static Translation Template<CurrencyId>(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
-        ParserErrorPolicy errorPolicy, const string& path) {
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const string& path) {
       using BaseParser = ParserType<CurrencyId>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetCurrencyDatabase()));
       using Parser = decltype(parser);
@@ -516,8 +514,8 @@ namespace {
 
     template<>
     static Translation Template<MarketCode>(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
-        ParserErrorPolicy errorPolicy, const string& path) {
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const string& path) {
       using BaseParser = ParserType<MarketCode>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
@@ -529,8 +527,8 @@ namespace {
 
     template<>
     static Translation Template<Record>(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
-        ParserErrorPolicy errorPolicy, const string& path) {
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const string& path) {
       using BaseParser = ParserType<Record>::type;
       auto parser = BuildParser(BaseParser(
         static_cast<const RecordType&>(nativeType), Ref(userProfile)));
@@ -543,8 +541,8 @@ namespace {
 
     template<>
     static Translation Template<Security>(const NativeType& nativeType,
-        Ref<ReactorMonitor> reactorMonitor, Ref<UserProfile> userProfile,
-        ParserErrorPolicy errorPolicy, const string& path) {
+        Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
+        const string& path) {
       using BaseParser = ParserType<Security>::type;
       auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
@@ -1117,7 +1115,7 @@ void CanvasNodeTranslationVisitor::Visit(const BooleanNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const CanvasNode& node) {
   if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    m_translation = Task(Aspen::Box<void>(Aspen::none<void>()));
+// TODO    m_translation = Task(Aspen::Box<void>(Aspen::none<void>()));
   } else {
     auto& nativeType = static_cast<const NativeType&>(node.GetType());
     m_translation = Instantiate<ThrowTranslator>(nativeType.GetNativeType())(
@@ -1246,8 +1244,8 @@ void CanvasNodeTranslationVisitor::Visit(const FileReaderNode& node) {
     node.GetChildren().front()).Extract<Aspen::Box<std::string>>();
   auto& nativeType = static_cast<const NativeType&>(node.GetType());
   m_translation = Instantiate<FileReaderTranslator>(nativeType.GetNativeType())(
-    nativeType, Ref(m_context->GetReactorMonitor()),
-    Ref(m_context->GetUserProfile()), node.GetErrorPolicy(), path.eval());
+    nativeType, Ref(m_context->GetUserProfile()), node.GetErrorPolicy(),
+    path.eval());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilterNode& node) {
@@ -1297,12 +1295,6 @@ void CanvasNodeTranslationVisitor::Visit(const IfNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const IntegerNode& node) {
   m_translation = Aspen::constant(node.GetValue());
-}
-
-void CanvasNodeTranslationVisitor::Visit(const IsTerminalNode& node) {
-  auto state = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::Box<Task::State>>();
-  m_translation = Aspen::lift(Spire::IsTerminal, state);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const LastNode& node) {
