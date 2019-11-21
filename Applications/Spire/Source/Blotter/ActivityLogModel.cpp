@@ -33,7 +33,7 @@ ActivityLogModel::ActivityLogModel()
 ActivityLogModel::~ActivityLogModel() {}
 
 void ActivityLogModel::SetOrderExecutionPublisher(
-    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
   m_slotHandler.Reset();
   m_slotHandler.Initialize();
   if(!m_entries.empty()) {

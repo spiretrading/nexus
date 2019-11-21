@@ -1,12 +1,12 @@
-#ifndef SPIRE_BLOTTERWINDOW_HPP
-#define SPIRE_BLOTTERWINDOW_HPP
+#ifndef SPIRE_BLOTTER_WINDOW_HPP
+#define SPIRE_BLOTTER_WINDOW_HPP
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QFrame>
 #include <QTimer>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
-#include "Spire/Canvas/TaskNodes/Task.hpp"
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
@@ -19,47 +19,43 @@ class Ui_BlotterWindow;
 
 namespace Spire {
 
-  /*! \class BlotterWindow
-      \brief Displays a BlotterModel.
-   */
+  /** Displays a BlotterModel. */
   class BlotterWindow : public QFrame, public UI::PersistentWindow {
     public:
 
-      //! Returns the BlotterWindow for a specified BlotterModel.
-      /*!
-        \param userProfile The user's profile.
-        \param model The model to display.
-      */
-      static BlotterWindow& GetBlotterWindow(
-        Beam::Ref<UserProfile> userProfile,
+      /**
+       * Returns the BlotterWindow for a specified BlotterModel.
+       * @param userProfile The user's profile.
+       * @param model The model to display.
+       */
+      static BlotterWindow& GetBlotterWindow(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<BlotterModel> model);
 
-      //! Returns the BlotterWindow for a specified BlotterModel.
-      /*!
-        \param userProfile The user's profile.
-        \param model The model to display.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
-      static BlotterWindow& GetBlotterWindow(
-        Beam::Ref<UserProfile> userProfile,
+      /**
+       * Returns the BlotterWindow for a specified BlotterModel.
+       * @param userProfile The user's profile.
+       * @param model The model to display.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
+      static BlotterWindow& GetBlotterWindow(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<BlotterModel> model, QWidget* parent,
         Qt::WindowFlags flags = 0);
 
-      virtual ~BlotterWindow();
+      ~BlotterWindow() = default;
 
-      //! Returns the blotter model being displayed.
+      /** Returns the blotter model being displayed. */
       const BlotterModel& GetModel() const;
 
-      //! Returns the blotter model being displayed.
+      /** Returns the blotter model being displayed. */
       BlotterModel& GetModel();
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
 
     protected:
-      virtual void showEvent(QShowEvent* event);
-      virtual void closeEvent(QCloseEvent* event);
-      virtual bool eventFilter(QObject* object, QEvent* event);
+      void showEvent(QShowEvent* event) override;
+      void closeEvent(QCloseEvent* event) override;
+      bool eventFilter(QObject* object, QEvent* event) override;
 
     private:
       friend class BlotterWindowSettings;
@@ -80,8 +76,7 @@ namespace Spire {
       QAction* m_cancelAction;
       QAction* m_toggleActiveBlotterAction;
       QAction* m_pinBlotterAction;
-      std::vector<std::shared_ptr<BlotterTasksModel::TaskContext>>
-        m_tasksExecuted;
+      std::vector<std::shared_ptr<Task>> m_tasksExecuted;
       boost::signals2::scoped_connection m_taskAddedConnection;
       boost::signals2::scoped_connection m_taskRemovedConnection;
       QTimer m_updateTimer;
@@ -95,7 +90,7 @@ namespace Spire {
       void OnActiveBlotterChanged(BlotterModel& blotter);
       void OnProfitAndLossUpdate(
         const SpirePortfolioMonitor::UpdateEntry& update);
-      void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
+      void OnTaskState(const std::shared_ptr<Task>& task,
         const Task::StateEntry& update);
       void OnExecuteAction();
       void OnCancelAction();

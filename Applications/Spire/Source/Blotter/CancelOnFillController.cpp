@@ -21,7 +21,7 @@ CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
 }
 
 void CancelOnFillController::SetOrderExecutionPublisher(
-    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
   m_slotHandler.Reset();
   m_slotHandler.Initialize();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();

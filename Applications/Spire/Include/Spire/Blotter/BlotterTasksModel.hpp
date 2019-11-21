@@ -13,6 +13,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
+#include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 

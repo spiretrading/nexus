@@ -120,7 +120,7 @@ namespace Spire {
                are to be logged.
       */
       void SetOrderExecutionPublisher(
-        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
         orderExecutionPublisher);
 
       //! Connects a slot to the OrderAddedSignal.
@@ -151,7 +151,7 @@ namespace Spire {
     private:
       QTimer m_updateTimer;
       OrderLogProperties m_properties;
-      Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::vector<OrderEntry> m_entries;
       mutable OrderAddedSignal m_orderAddedSignal;

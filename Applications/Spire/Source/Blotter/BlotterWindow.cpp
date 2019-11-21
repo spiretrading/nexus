@@ -26,14 +26,12 @@ using namespace Spire::UI;
 using namespace std;
 
 namespace {
-  const auto UPDATE_INTERVAL = 100;
+  constexpr auto UPDATE_INTERVAL = 100;
   std::unordered_map<BlotterModel*, BlotterWindow*> blotterWindows;
 
   class LinkBlotterAction : public QAction {
     public:
       LinkBlotterAction(Ref<BlotterModel> blotterModel, QObject* parent);
-
-      virtual ~LinkBlotterAction();
 
       BlotterModel& GetBlotterModel();
 
@@ -43,11 +41,9 @@ namespace {
 }
 
 LinkBlotterAction::LinkBlotterAction(Ref<BlotterModel> blotterModel,
-    QObject* parent)
-    : QAction(parent),
-      m_blotterModel(blotterModel.Get()) {}
-
-LinkBlotterAction::~LinkBlotterAction() {}
+  QObject* parent)
+  : QAction(parent),
+    m_blotterModel(blotterModel.Get()) {}
 
 BlotterModel& LinkBlotterAction::GetBlotterModel() {
   return *m_blotterModel;
@@ -70,8 +66,6 @@ BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
   }
   return *windowIterator->second;
 }
-
-BlotterWindow::~BlotterWindow() {}
 
 const BlotterModel& BlotterWindow::GetModel() const {
   return *m_model;
@@ -239,7 +233,7 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
 }
 
 void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
-  m_tasksExecuted.push_back(entry.m_context);
+  m_tasksExecuted.push_back(entry.m_task);
   auto index = m_model->GetTasksModel().index(entry.m_index,
     BlotterTasksModel::STICKY_COLUMN);
   auto editorTimer = std::make_shared<QTimer>();
@@ -251,15 +245,14 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
       editorTimer.reset();
     });
   editorTimer->start(0);
-  entry.m_context->m_task->GetPublisher().Monitor(
-    m_slotHandler.GetSlot<Task::StateEntry>(std::bind(
-    &BlotterWindow::OnTaskState, this,
-    std::weak_ptr<BlotterTasksModel::TaskContext>(entry.m_context),
-    std::placeholders::_1)));
+  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+    [=, task = entry.m_task] (const Task::StateEntry& update) {
+      OnTaskState(task, update);
+    }));
 }
 
 void BlotterWindow::OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry) {
-  RemoveFirst(m_tasksExecuted, entry.m_context);
+  RemoveFirst(m_tasksExecuted, entry.m_task);
 }
 
 void BlotterWindow::SetActive(bool isActive) {
@@ -299,13 +292,8 @@ void BlotterWindow::OnProfitAndLossUpdate(
     update.m_currencyInventory.m_position.m_costBasis));
 }
 
-void BlotterWindow::OnTaskState(
-    std::weak_ptr<BlotterTasksModel::TaskContext> weakTask,
+void BlotterWindow::OnTaskState(const std::shared_ptr<Task>& task,
     const Task::StateEntry& update) {
-  auto task = weakTask.lock();
-  if(task == nullptr) {
-    return;
-  }
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted, task);
   }
@@ -315,7 +303,7 @@ void BlotterWindow::OnExecuteAction() {
   for(auto& index : m_ui->m_taskTable->selectionModel()->selectedRows()) {
     auto& entry = m_model->GetTasksModel().GetEntry(
       m_proxyModel->mapToSource(index).row());
-    entry.m_context->m_task->Execute();
+    entry.m_task->Execute();
   }
 }
 
@@ -323,17 +311,15 @@ void BlotterWindow::OnCancelAction() {
   for(auto& index : m_ui->m_taskTable->selectionModel()->selectedRows()) {
     auto& entry = m_model->GetTasksModel().GetEntry(
       m_proxyModel->mapToSource(index).row());
-    entry.m_context->m_task->Cancel();
+    entry.m_task->Cancel();
   }
 }
 
 void BlotterWindow::OnActiveBlotterToggled(bool checked) {
   if(checked) {
     m_userProfile->GetBlotterSettings().SetActiveBlotter(*m_model);
-    SetActive(true);
-  } else {
-    SetActive(false);
   }
+  SetActive(checked);
 }
 
 void BlotterWindow::OnPinBlotterToggled(bool checked) {
@@ -346,8 +332,8 @@ void BlotterWindow::OnCurrentChanged(const QModelIndex& current,
     m_ui->m_taskTab->ResetDisplayedNode();
     return;
   }
-  m_ui->m_taskTab->SetDisplayedNode(*m_model->GetTasksModel().GetEntry(
-    m_proxyModel->mapToSource(current).row()).m_context->m_node);
+  m_ui->m_taskTab->SetDisplayedNode(m_model->GetTasksModel().GetEntry(
+    m_proxyModel->mapToSource(current).row()).m_task->GetNode());
 }
 
 void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
