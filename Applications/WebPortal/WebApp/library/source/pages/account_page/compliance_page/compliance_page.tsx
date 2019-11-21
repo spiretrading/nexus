@@ -13,6 +13,9 @@ interface Properties {
 
   /** The list of compliance rules. */
   complianceList: Nexus.ComplianceRuleEntry[];
+
+  /** A list of rule Schemas */
+  ruleSchemas: Nexus.ComplianceRuleSchema[];
 }
 
 interface State {
@@ -49,7 +52,8 @@ export class CompliancePage extends React.Component<Properties, State> {
             complianceList={this.state.complianceList}
             onChange={this.onChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize}/>
+          <NewRuleButton displaySize={this.props.displaySize}
+            ruleSchemas={this.props.ruleSchemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>

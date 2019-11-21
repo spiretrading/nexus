@@ -14,7 +14,7 @@ class TestApp extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const list  = [] as Nexus.ComplianceRuleEntry[];
+    const ruleEntries  = [] as Nexus.ComplianceRuleEntry[];
     const someEntry = new Nexus.ComplianceRuleEntry(
       56,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
@@ -36,7 +36,7 @@ class TestApp extends React.Component<Properties> {
         ]
       )
     );
-    list.push(someEntry);
+    ruleEntries.push(someEntry);
     const someEntry2 = new Nexus.ComplianceRuleEntry(
       34,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
@@ -51,13 +51,92 @@ class TestApp extends React.Component<Properties> {
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.QUANTITY, 234.56))
       ]));
-    list.push(someEntry2);
+    ruleEntries.push(someEntry2);
+    const ruleSchemas = [];
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Buying Power',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Max Payout',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Payout Range',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Min Payout',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Some Rule',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Timeout Period',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
+    ruleSchemas.push(
+      new Nexus.ComplianceRuleSchema('Last Rule',[
+        new Nexus.ComplianceParameter(
+          'Currency',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+        new Nexus.ComplianceParameter(
+          'Money',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+      ]));
     return(
       <div style={TestApp.STYLE.wrapper}>
         <WebPortal.CompliancePage 
           displaySize={this.props.displaySize} 
+          ruleSchemas={ruleSchemas}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-          complianceList={list}/>
+          complianceList={ruleEntries}/>
       </div> );
   }
 

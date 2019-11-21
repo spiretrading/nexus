@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { HLine } from '../../../components';
@@ -7,29 +8,16 @@ interface Properties {
   
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** A list of rule Schemas */
+  ruleSchemas: Nexus.ComplianceRuleSchema[];
 }
 
 interface State {
   /** Indicates if the modal should be open ot not. */
   isOpen: boolean;
 
-  selection: NewRuleType;
-}
-
-enum NewRuleType {
-  NONE,
-  BUYING_POWER,
-  CANCEL_RESTRICTION_PERIOD,
-  OPPOSING_ORDER_CANCELLATION,
-  OPPOSING_ORDER_SUBMISSION,
-  ORDER_PER_SIDE_LIMIT,
-  SUBMISSION_RESTRICTION_PERIOD,
-  SYMBOL_RESTRITION
-}
-
-interface Labels {
-  type: NewRuleType,
-  option: string
+  selection: number;
 }
 
 /** Displays a component that allows a user to add a new rule. */
@@ -38,7 +26,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isOpen: false,
-      selection: NewRuleType.CANCEL_RESTRICTION_PERIOD
+      selection: -1
     }
   }
 
@@ -71,15 +59,27 @@ export class NewRuleButton extends React.Component<Properties, State> {
         return '16px';
       }
     })();
+    const buttonWrapper = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return NewRuleButton.STYLE.buttonWrapperSmall;
+      } else {
+        return NewRuleButton.STYLE.buttonWrapper;
+      }
+    })();
     const options = [];
-    for(let option of NewRuleButton.RULE_ITEM) {
-      if(option.type !== NewRuleType.NONE){
-        if(option.type === this.state.selection) {
-          options.push(<div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}>{option.option}</div>);
+    for(let i = 0; i < this.props.ruleSchemas.length; ++i) {
+        if(i === this.state.selection) {
+          options.push(
+            <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
+                onClick={this.onClickRule.bind(this, i)}>
+              {this.props.ruleSchemas[i].name}
+            </div>);
         } else {
-          options.push(<div onClick={this.onClickRule.bind(this, option.type)} 
-            className={css(NewRuleButton.EXTRA_STYLE.optionRow)}>{option.option}</div>);
-        }
+          options.push(
+            <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
+              onClick={this.onClickRule.bind(this, i)}>
+              {this.props.ruleSchemas[i].name}
+            </div>);
       }
     }
     return (
@@ -98,7 +98,9 @@ export class NewRuleButton extends React.Component<Properties, State> {
           <div style={shadowBoxStyle}/>
           <div style={contentBoxStyle}>
             <div style={NewRuleButton.STYLE.header}>
-              <div style={NewRuleButton.STYLE.headerText}>{NewRuleButton.MODAL_HEADER}</div>
+              <div style={NewRuleButton.STYLE.headerText}>
+                {NewRuleButton.MODAL_HEADER}
+              </div>
               <img height={imageSize} width={imageSize}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
@@ -107,7 +109,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
             </div>
             <div style={NewRuleButton.STYLE.footerWrapper}>
               <HLine color='#E6E6E6'/>
-              <div style={NewRuleButton.STYLE.buttonWrapper}>
+              <div style={buttonWrapper}>
                 <button 
                     className={css(NewRuleButton.EXTRA_STYLE.bacon)}
                     onClick={()=>{}}>
@@ -124,8 +126,12 @@ export class NewRuleButton extends React.Component<Properties, State> {
     this.setState({isOpen: !this.state.isOpen});
   }
 
-  private onClickRule(ruleType: NewRuleType) {
-    this.setState({selection: ruleType});
+  private onClickRule(index: number) {
+    if(index === this.state.selection) {
+      this.setState({selection: -1});
+    } else {
+      this.setState({selection: index});
+    }
   }
 
   private static readonly STYLE = {
@@ -183,7 +189,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
-      height: '559px',
+      height: '461px',
       top: 'calc(50% - 279.5px)',
       left: 'calc(50% - 180px)',
     },
@@ -205,7 +211,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
-      height: '559px',
+      height: '461px',
       top: 'calc(50% - 279.5px)',
       left: 'calc(50% - 180px)'
     },
@@ -215,11 +221,10 @@ export class NewRuleButton extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between',
-      height: '20px',
+      height: '38px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      paddingTop: '18px',
-      paddingBottom: '30px '
+      paddingTop: '18px'
     },
     footerWrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -228,7 +233,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     },
     headerText: {
       font: '400 16px Roboto',
-      flexGrow: 1
+      height: '20px',
     },
     iconWrapperSmall: {
       height: '24px',
@@ -287,7 +292,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
     },
-    bacon: { //fix this up, k thanks
+    bacon: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
@@ -319,16 +324,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly RULE_ITEM = [
-    {type: NewRuleType.NONE, option: ''},
-    {type:NewRuleType.BUYING_POWER, option:'Buying Power'},
-    {type:NewRuleType.CANCEL_RESTRICTION_PERIOD, option:'Cancel Restriction Period'},
-    {type:NewRuleType.OPPOSING_ORDER_CANCELLATION, option:'Opposing Order Cancellation'},
-    {type:NewRuleType.OPPOSING_ORDER_SUBMISSION, option:'Opposing Order Submission'},
-    {type:NewRuleType.ORDER_PER_SIDE_LIMIT, option:'Order Per Side Limit'},
-    {type:NewRuleType.SUBMISSION_RESTRICTION_PERIOD, option:'Submission Restriction Period'},
-    {type:NewRuleType.SYMBOL_RESTRITION, option:'Symbol Restriction'}
-  ] as Labels[];
   private static readonly MODAL_HEADER = 'Add New Rule';
   private static readonly BUTTON_TEXT = 'Select';
   private static readonly IMAGE_SIZE_SMALL = '20px';
