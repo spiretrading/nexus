@@ -67,7 +67,7 @@ namespace MarketDataService {
         \param channel Stores the Channel to build.
       */
       using RetransmissionClientChannelBuilder = std::function<void (
-        Beam::Out<Beam::DelayPtr<RetransmissionClientChannel>> channel)>;
+        Beam::Out<std::optional<RetransmissionClientChannel>> channel)>;
 
       //! Constructs a TmxIpServiceAccessClient.
       /*!
@@ -346,7 +346,7 @@ namespace MarketDataService {
       retransmissionRequestBuffer;
     BuildRetransmissionRequestBuffer(Beam::Store(retransmissionRequestBuffer),
       startSequenceNumber, endSequenceNumber);
-    Beam::DelayPtr<RetransmissionClientChannel> retransmissionClientChannel;
+    std::optional<RetransmissionClientChannel> retransmissionClientChannel;
     m_retransmissionClientChannelBuilder(
       Beam::Store(retransmissionClientChannel));
     retransmissionClientChannel->GetConnection().Open();

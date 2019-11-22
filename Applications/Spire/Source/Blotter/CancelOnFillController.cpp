@@ -17,13 +17,13 @@ CancelOnFillController::OrderEntry::OrderEntry(const Order& order)
 
 CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
 }
 
 void CancelOnFillController::SetOrderExecutionPublisher(
     Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
   m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
     std::bind(&CancelOnFillController::OnOrderExecuted, this,

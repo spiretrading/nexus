@@ -193,4 +193,18 @@ entitlements:
     applicability:
       - source: OMGA
         messages: [TAS, BOOK]
+  - name: Hong Kong L1
+    price: 130.00
+    currency: HKD
+    group: hkl1
+    applicability:
+      - source: XHKG
+        messages: [BBO, MQT, TAS, IMB]
+  - name: Hong Kong L2
+    price: 225.00
+    currency: HKD
+    group: hkl2
+    applicability:
+      - source: XHKG
+        messages: [BBO, MQT, BOOK, TAS, IMB]
 ...

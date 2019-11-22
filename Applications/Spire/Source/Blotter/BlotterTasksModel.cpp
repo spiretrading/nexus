@@ -197,6 +197,7 @@ void BlotterTasksModel::Refresh() {
     entries.swap(m_entries);
     m_pendingExpiryEntries.clear();
     m_expiredEntries.clear();
+    m_taskSlotHandler = std::nullopt;
     m_taskSlotHandler.emplace();
     m_taskIds.clear();
     endRemoveRows();
@@ -335,8 +336,8 @@ bool BlotterTasksModel::setData(const QModelIndex& index,
 }
 
 void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
-  m_linkedOrderExecutionPublisher.emplace(Initialize(
-    UniqueFilter<const Order*>(), Initialize()));
+  m_linkedOrderExecutionPublisher.emplace(
+    Initialize(UniqueFilter<const Order*>(), Initialize()));
   m_linkedOrderExecutionPublisher->Add(m_properOrderExecutionPublisher);
   if(m_isConsolidated && m_accountOrderPublisher != nullptr) {
     m_linkedOrderExecutionPublisher->Add(*m_accountOrderPublisher);

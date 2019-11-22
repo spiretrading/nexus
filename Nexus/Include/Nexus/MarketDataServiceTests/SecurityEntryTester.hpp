@@ -1,6 +1,6 @@
 #ifndef NEXUS_SECURITYENTRYTESTER_HPP
 #define NEXUS_SECURITYENTRYTESTER_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/Queries/Queries.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
@@ -31,7 +31,7 @@ namespace Tests {
       void TestAddAndRemoveBookQuote();
 
     private:
-      Beam::DelayPtr<Beam::TimeService::IncrementalTimeClient> m_timeClient;
+      std::optional<Beam::TimeService::IncrementalTimeClient> m_timeClient;
 
       SequencedSecurityBboQuote PublishBboQuote(SecurityEntry& entry,
         Money bidPrice, Quantity bidQuantity, Money askPrice,
