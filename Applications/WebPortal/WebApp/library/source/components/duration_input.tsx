@@ -31,14 +31,14 @@ export class DurationInput extends React.Component<Properties> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationInput.STYLE.wrapperSmall;
       } else {
-        return DurationInput.STYLE.wrapper;
+        return DurationInput.STYLE.wrapperLarge;
       }
     })();
     const integerInputStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationInput.STYLE.integerBoxSmall;
       } else {
-        return DurationInput.STYLE.integerBox;
+        return DurationInput.STYLE.integerBoxLarge;
       }
     })();
     return (
@@ -91,13 +91,6 @@ export class DurationInput extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    wrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexGrow: 1,
-      maxWidth: '246px'
-    },
     wrapperSmall: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
@@ -106,6 +99,13 @@ export class DurationInput extends React.Component<Properties> {
       width: '100%',
       flexShrink: 1,
       flexGrow: 1
+    },
+    wrapperLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexGrow: 1,
+      maxWidth: '246px'
     },
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -116,7 +116,7 @@ export class DurationInput extends React.Component<Properties> {
       flexGrow: 1,
       flexShrink: 1
     },
-    integerBox: {
+    integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       width: '64px',
       height: '34px'
