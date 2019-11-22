@@ -27,7 +27,7 @@ interface Properties {
 /** A component that displays and lets a user edit a duration. */
 export class DurationInput extends React.Component<Properties> {
   public static readonly defaultProps = {
-    value: '',
+    value: new Beam.Duration(0),
     onChange: () => {}
   };
 
@@ -75,25 +75,25 @@ export class DurationInput extends React.Component<Properties> {
       </div>);
   }
 
-  private onChange(timeUnit: TimeUnit, newValue: number) {
+  private onChange(timeUnit: TimeUnit, value: number) {
     const oldDuration = this.props.value.split();
-    const NewValue = (() => {
+    const newValue = (() => {
       switch(timeUnit) {
         case TimeUnit.HOURS:
-          return Beam.Duration.HOUR.multiply(newValue).add(
+          return Beam.Duration.HOUR.multiply(value).add(
             Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
             Beam.Duration.SECOND.multiply(oldDuration.seconds));
         case TimeUnit.MINUTES:
           return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-            Beam.Duration.MINUTE.multiply(newValue)).add(
+            Beam.Duration.MINUTE.multiply(value)).add(
             Beam.Duration.SECOND.multiply(oldDuration.seconds));
         case TimeUnit.SECONDS:
           return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
             Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-            Beam.Duration.SECOND.multiply(newValue));
+            Beam.Duration.SECOND.multiply(value));
       }
     })();
-    this.props.onChange(NewValue);
+    this.props.onChange(newValue);
   }
 
   private static readonly STYLE = {
