@@ -39,14 +39,9 @@ export class NumberInput extends React.Component<Properties> {
         max={this.props.max}
         value={this.props.value}
         style={{...NumberInput.STYLE.box, ...this.props.style}}
-        onChange={this.onChange.bind(this)}
+        onChange={(event) => this.props.onChange(event.target.valueAsNumber)}
         className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
-  }
-
-  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const newNumber = event.target.valueAsNumber;
-    this.props.onChange(newNumber);
   }
 
   private static STYLE = {

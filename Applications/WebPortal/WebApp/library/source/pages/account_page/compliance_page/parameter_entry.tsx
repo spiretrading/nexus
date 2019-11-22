@@ -79,7 +79,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return <div/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
-            displaySize ={this.props.displaySize}
+            displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onInput={this.onChange}
             style={inputWrapper}/>;
