@@ -67,6 +67,7 @@ export class ParameterEntry extends React.Component<Properties> {
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <DurationInput
+            displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
@@ -108,8 +109,7 @@ export class ParameterEntry extends React.Component<Properties> {
 
   private static readonly STYLE = {
     inputWrapperSmall: {
-      minWidth: '184px',
-      maxWidth: '246px',
+      flexBasis: '184px',
       flexGrow: 1,
       flexShrink: 1
     },
@@ -123,7 +123,9 @@ export class ParameterEntry extends React.Component<Properties> {
     rowSmall: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      minWidth: '284px',
+      flexBasis: '284px',
+      flexGrow: 1,
+      flexShrink: 1,
       maxWidth: '424px',
       width: '100%',
       height: '34px',
@@ -148,18 +150,8 @@ export class ParameterEntry extends React.Component<Properties> {
     label: {
       width: '100px',
       font: '400 14px Roboto',
-    },
-    headerSmall: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px'
-    },
-    headerLarge: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px'
+      flexGrow: 0,
+      flexShrink: 0
     }
   };
 }
