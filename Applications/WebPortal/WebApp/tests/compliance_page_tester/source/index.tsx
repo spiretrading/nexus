@@ -20,8 +20,7 @@ class TestApp extends React.Component<Properties> {
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.ACTIVE,
       new Nexus.ComplianceRuleSchema(
-        'Old Components',
-        [
+        'Old Components', [
           new Nexus.ComplianceParameter(
             'Money',
             new Nexus.ComplianceValue(
@@ -32,7 +31,7 @@ class TestApp extends React.Component<Properties> {
           new Nexus.ComplianceParameter(
             'Note',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.STRING, 'Keep an eye on this.')),
+              Nexus.ComplianceValue.Type.STRING, 'Keep an eye on this.'))
         ]
       )
     );
@@ -41,15 +40,31 @@ class TestApp extends React.Component<Properties> {
       34,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.PASSIVE,
-      new Nexus.ComplianceRuleSchema('New Components',[]));
+      new Nexus.ComplianceRuleSchema(
+        'New Components', [
+          new Nexus.ComplianceParameter(
+            'Decimal',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.DOUBLE, 345.686868)),
+          new Nexus.ComplianceParameter(
+            'Duration',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(160000))),
+          new Nexus.ComplianceParameter(
+            'Quantity',
+              new Nexus.ComplianceValue(
+                Nexus.ComplianceValue.Type.QUANTITY, 200))
+        ]
+      )
+    );
     list.push(someEntry2);
     return(
       <div style={TestApp.STYLE.wrapper}>
-        <WebPortal.CompliancePage 
+        <WebPortal.CompliancePage
           displaySize={this.props.displaySize} 
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           complianceList={list}/>
-      </div> );
+      </div>);
   }
 
   private static readonly STYLE = {
