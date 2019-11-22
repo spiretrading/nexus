@@ -114,6 +114,7 @@ export class DurationInput extends React.Component<Properties> {
     },
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
       minWidth: '44px',
       maxWidth: '64px',
       width: '100%',
@@ -123,6 +124,7 @@ export class DurationInput extends React.Component<Properties> {
     },
     integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
       width: '64px',
       height: '34px'
     },
