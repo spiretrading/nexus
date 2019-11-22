@@ -6,7 +6,7 @@ import { IntegerInputBox } from './integer_input_box';
 
 enum TimeUnit {
   HOURS,
-  MINUITES,
+  MINUTES,
   SECONDS
 }
 
@@ -23,7 +23,7 @@ interface Properties {
    */
   onChange:(value: Beam.Duration) => void;
 }
-
+/** A component that displays and lets a user edit a duration. */
 export class DurationInput extends React.Component<Properties> {
   public render(): JSX.Element {
     const splitTransitionTime = this.props.value.split();
@@ -43,53 +43,48 @@ export class DurationInput extends React.Component<Properties> {
     })();
     return (
       <div style={wrapperStyle}>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.hours}
-            className={css(DurationInput.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
-            padding={2}/>
-          <div style={DurationInput.STYLE.padding}>
-            :
-          </div>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.minutes}
-            className={css(DurationInput.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.MINUITES)}
-            padding={2}/>
-          <div style={DurationInput.STYLE.padding}>
-            :
-          </div>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.seconds}
-            className={css(DurationInput.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
-            padding={2}/>
+        <IntegerInputBox
+          min={0} max={59}
+          value={splitTransitionTime.hours}
+          className={css(DurationInput.EXTRA_STYLE.effects)}
+          style={integerInputStyle}
+          onChange={this.onChange.bind(this, TimeUnit.HOURS)}
+          padding={2}/>
+        <div style={DurationInput.STYLE.colon}>{':'}</div>
+        <IntegerInputBox
+          min={0} max={59}
+          value={splitTransitionTime.minutes}
+          className={css(DurationInput.EXTRA_STYLE.effects)}
+          style={integerInputStyle}
+          onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
+          padding={2}/>
+        <div style={DurationInput.STYLE.colon}>{':'}</div>
+        <IntegerInputBox
+          min={0} max={59}
+          value={splitTransitionTime.seconds}
+          className={css(DurationInput.EXTRA_STYLE.effects)}
+          style={integerInputStyle}
+          onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
+          padding={2}/>
       </div>);
   }
 
-  private onChange(timeUnit: TimeUnit, 
-      newNumber: number) {
+  private onChange(timeUnit: TimeUnit, newValue: number) {
     const oldDuration = this.props.value.split();
     const NewValue = (() => {
       switch (timeUnit) {
       case TimeUnit.HOURS:
-        return Beam.Duration.HOUR.multiply(newNumber).add(
+        return Beam.Duration.HOUR.multiply(newValue).add(
           Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
           Beam.Duration.SECOND.multiply(oldDuration.seconds));
-      case TimeUnit.MINUITES:
+      case TimeUnit.MINUTES:
         return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-          Beam.Duration.MINUTE.multiply(newNumber)).add(
+          Beam.Duration.MINUTE.multiply(newValue)).add(
           Beam.Duration.SECOND.multiply(oldDuration.seconds));
       case TimeUnit.SECONDS:
         return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
           Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-          Beam.Duration.SECOND.multiply(newNumber));
+          Beam.Duration.SECOND.multiply(newValue));
     }
   })();
   this.props.onChange(NewValue);
@@ -99,14 +94,14 @@ export class DurationInput extends React.Component<Properties> {
     wrapper: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
-      flexDirection: 'row'  as 'row',
+      flexDirection: 'row' as 'row',
       flexGrow: 1,
       maxWidth: '246px'
     },
     wrapperSmall: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
-      flexDirection: 'row'  as 'row',
+      flexDirection: 'row' as 'row',
       minWidth: '184px',
       width: '100%',
       flexShrink: 1,
@@ -126,7 +121,7 @@ export class DurationInput extends React.Component<Properties> {
       width: '64px',
       height: '34px'
     },
-    padding: {
+    colon: {
       width: '27px',
       flexShrink: 0,
       display: 'flex' as 'flex',
