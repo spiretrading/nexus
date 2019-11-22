@@ -40,8 +40,6 @@ namespace Nexus::OrderExecutionService {
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
         override;
 
-      const OrderExecutionPublisher& GetOrderSubmissionPublisher() override;
-
       const Order& Submit(const OrderFields& fields) override;
 
       void Cancel(const Order& order) override;
@@ -109,12 +107,6 @@ namespace Nexus::OrderExecutionService {
       const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
     auto release = Beam::Python::GilRelease();
     m_client->QueryExecutionReports(query, queue);
-  }
-
-  template<typename C>
-  const OrderExecutionPublisher& ToPythonOrderExecutionClient<
-      C>::GetOrderSubmissionPublisher() {
-    return m_client->GetOrderSubmissionPublisher();
   }
 
   template<typename C>

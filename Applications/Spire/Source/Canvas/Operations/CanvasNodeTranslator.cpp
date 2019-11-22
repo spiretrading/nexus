@@ -1026,34 +1026,6 @@ namespace {
 
     using SupportedTypes = ValueTypes;
   };
-
-  struct VariableTranslator {
-    template<typename T>
-    static Translation Template(CanvasNodeTranslationContext& context) {
-      return Aspen::Queue<T>();
-    }
-
-    using SupportedTypes = ValueTypes;
-  };
-
-  struct MinOperation {
-    Quantity operator()(const Quantity& left, const Quantity& right) const {
-      return min(left, right);
-    }
-  };
-
-#if 0
-  struct PropertyBuilder {
-    template<typename T>
-    static ReactorProperty Template(const string& name,
-        std::shared_ptr<BaseReactor> reactor) {
-      return MakeReactorProperty(name, std::static_pointer_cast<Reactor<T>>(
-        reactor));
-    }
-
-    using SupportedTypes = ValueTypes;
-  };
-#endif
 }
 
 Translation Spire::Translate(CanvasNodeTranslationContext& context,
@@ -1115,7 +1087,7 @@ void CanvasNodeTranslationVisitor::Visit(const BooleanNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const CanvasNode& node) {
   if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-// TODO    m_translation = Task(Aspen::Box<void>(Aspen::none<void>()));
+    m_translation = Aspen::none<void>();
   } else {
     auto& nativeType = static_cast<const NativeType&>(node.GetType());
     m_translation = Instantiate<ThrowTranslator>(nativeType.GetNativeType())(
@@ -1167,26 +1139,6 @@ void CanvasNodeTranslationVisitor::Visit(const CurrentTimeNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const CustomNode& node) {
   m_translation = InternalTranslation(node.GetChildren().front());
-#if 0 // TODO
-  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL) {
-    auto baseTranslation = boost::get<TaskTranslation>(m_translation);
-    vector<ReactorProperty> properties;
-    for(auto i = node.GetChildren().begin() + 1;
-        i != node.GetChildren().end(); ++i) {
-      auto reactor = get<std::shared_ptr<BaseReactor>>(InternalTranslation(*i));
-      auto property = Instantiate<PropertyBuilder>(reactor->GetType())(
-        i->GetName(), reactor);
-      properties.push_back(property);
-    }
-    TaskTranslation taskTranslation;
-    taskTranslation.m_publisher = baseTranslation.m_publisher;
-    taskTranslation.m_factory = ReactorTaskFactory(
-      Ref(m_context->GetReactorMonitor()), properties,
-      baseTranslation.m_factory);
-    m_translation = taskTranslation;
-  }
-#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DateTimeNode& node) {
@@ -1503,7 +1455,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   }
   auto& orderExecutionClient =
     m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
-  m_translation = Translation(OrderReactor(Ref(orderExecutionClient),
+  m_translation = OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
@@ -1522,7 +1474,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
-    Aspen::Box<TimeInForce>>(), std::move(additionalFields)));
+    Aspen::Box<TimeInForce>>(), std::move(additionalFields));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {

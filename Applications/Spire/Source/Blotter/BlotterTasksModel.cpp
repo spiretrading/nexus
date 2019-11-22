@@ -86,11 +86,6 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
   m_taskSlotHandler.emplace();
   SetupLinkedOrderExecutionMonitor();
   if(m_isConsolidated) {
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().
-      GetOrderSubmissionPublisher().Monitor(
-      m_orderSlotHandler.GetSlot<const Order*>(
-      std::bind(&BlotterTasksModel::OnOrderSubmitted, this,
-      std::placeholders::_1)));
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     QueryDailyOrderSubmissions(*m_userProfile, m_executingAccount, orderQueue);
     m_accountOrderPublisher =

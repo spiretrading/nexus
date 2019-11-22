@@ -74,12 +74,6 @@ namespace {
         "query_execution_reports", QueryExecutionReports, query, queue);
     }
 
-    const OrderExecutionPublisher& GetOrderSubmissionPublisher() override {
-      PYBIND11_OVERLOAD_PURE_NAME(const OrderExecutionPublisher&,
-        VirtualOrderExecutionClient, "get_order_submission_publisher",
-        GetOrderSubmissionPublisher);
-    }
-
     const Order& Submit(const OrderFields& fields) override {
       PYBIND11_OVERLOAD_PURE_NAME(const Order&, VirtualOrderExecutionClient,
         "submit", Submit, fields);
@@ -216,9 +210,6 @@ void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
       &VirtualOrderExecutionClient::QueryOrderSubmissions))
     .def("query_execution_reports",
       &VirtualOrderExecutionClient::QueryExecutionReports)
-    .def("get_order_submission_publisher",
-      &VirtualOrderExecutionClient::GetOrderSubmissionPublisher,
-      return_value_policy::reference_internal)
     .def("submit", &VirtualOrderExecutionClient::Submit,
       return_value_policy::reference_internal)
     .def("cancel", &VirtualOrderExecutionClient::Cancel)
