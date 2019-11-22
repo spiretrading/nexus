@@ -10,10 +10,18 @@ enum TimeUnit {
   SECONDS
 }
 
-interface Properties { 
+interface Properties {
+
+  /** The size to display the component at. */
   displaySize: DisplaySize;
+
+  /** The value to display in the field. */
   value: Beam.Duration;
-  onChange:(newValue: Beam.Duration) => void;
+
+  /** Called when the value changes.
+   * @param value - The updated value.
+   */
+  onChange:(value: Beam.Duration) => void;
 }
 
 export class DurationInput extends React.Component<Properties> {
