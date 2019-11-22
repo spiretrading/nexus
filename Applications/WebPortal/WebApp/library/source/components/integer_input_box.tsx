@@ -31,7 +31,7 @@ interface State {
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: '',
+    value: 0,
     onChange: () => {}
   };
 
@@ -88,7 +88,6 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    console.log(event.target.value);
     let value = (() => {
       if(event.target.value.length === 0) {
         return 0;
