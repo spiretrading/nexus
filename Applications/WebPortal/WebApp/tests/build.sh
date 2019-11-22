@@ -12,6 +12,7 @@ root=$(pwd)
 projects=""
 projects+=" account_directory_page_tester"
 projects+=" account_page_tester"
+projects+=" compliance_page_tester"
 projects+=" create_account_page_tester"
 projects+=" dashboard_page_tester"
 projects+=" entitlements_page_tester"

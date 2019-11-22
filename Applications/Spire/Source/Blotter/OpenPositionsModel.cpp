@@ -20,7 +20,7 @@ OpenPositionsModel::Entry::Entry(int index, const SpireBookkeeper::Key& key)
 
 OpenPositionsModel::OpenPositionsModel()
     : m_portfolioMonitor(nullptr) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &OpenPositionsModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -36,8 +36,8 @@ void OpenPositionsModel::SetPortfolioMonitor(
     m_entries.clear();
     endRemoveRows();
   }
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_portfolioMonitor = portfolioMonitor.Get();
   m_portfolioMonitor->GetPublisher().Monitor(
     m_slotHandler->GetSlot<SpirePortfolioMonitor::UpdateEntry>(

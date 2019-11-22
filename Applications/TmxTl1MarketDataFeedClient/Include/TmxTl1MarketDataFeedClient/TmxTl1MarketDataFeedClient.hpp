@@ -251,12 +251,12 @@ namespace MarketDataService {
   void TmxTl1MarketDataFeedClient<MarketDataFeedClientType,
       ServiceAccessClientType>::ReadLoop() {
     while(true) {
-      Beam::DelayPtr<StampProtocol::StampPacket> message;
+      auto message = std::optional<StampProtocol::StampPacket>();
       try {
-        message.Initialize(m_serviceAccessClient->Read());
-      } catch(Beam::IO::NotConnectedException&) {
+        message.emplace(m_serviceAccessClient->Read());
+      } catch(const Beam::IO::NotConnectedException&) {
         break;
-      } catch(Beam::IO::EndOfFileException&) {
+      } catch(const Beam::IO::EndOfFileException&) {
         break;
       }
       if(m_config.m_isLoggingMessages) {

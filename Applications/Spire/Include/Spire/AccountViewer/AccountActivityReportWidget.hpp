@@ -1,7 +1,7 @@
 #ifndef SPIRE_ACCOUNTACTIVITYREPORTWIDGET_HPP
 #define SPIRE_ACCOUNTACTIVITYREPORTWIDGET_HPP
+#include <optional>
 #include <QWidget>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
@@ -51,7 +51,7 @@ namespace Spire {
       std::unique_ptr<Ui_AccountActivityReportWidget> m_ui;
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_account;
-      Beam::DelayPtr<ReportModel> m_model;
+      std::optional<ReportModel> m_model;
 
       void OnUpdate(bool checked);
   };

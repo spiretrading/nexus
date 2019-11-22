@@ -1,16 +1,13 @@
-#ifndef NEXUS_FIXUTILITIES_HPP
-#define NEXUS_FIXUTILITIES_HPP
+#ifndef NEXUS_FIX_UTILITIES_HPP
+#define NEXUS_FIX_UTILITIES_HPP
 
-namespace Nexus {
-namespace FixUtilities {
-  class Fix44OrderLog;
+namespace Nexus::FixUtilities {
   class FixApplication;
   struct FixApplicationEntry;
   class FixOrder;
   class FixOrderLog;
   class FixOrderRejectedException;
   class FixOrderExecutionDriver;
-}
 }
 
 #endif

@@ -1,6 +1,6 @@
 #ifndef SPIRE_BOOKVIEWPANEL_HPP
 #define SPIRE_BOOKVIEWPANEL_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QMetaObject>
 #include <QTimer>
@@ -63,7 +63,7 @@ namespace Spire {
       friend class BookViewWindowSettings;
       std::unique_ptr<Ui_BookViewPanel> m_ui;
       UserProfile* m_userProfile;
-      Beam::DelayPtr<UI::CustomVariantItemDelegate> m_itemDelegate;
+      std::optional<UI::CustomVariantItemDelegate> m_itemDelegate;
       BookViewProperties m_properties;
       Nexus::Security m_security;
       Nexus::Side m_side;
@@ -77,7 +77,7 @@ namespace Spire {
       QMetaObject::Connection m_rowsModifiedConnection;
       QMetaObject::Connection m_rowsAboutToBeRemovedConnection;
       QMetaObject::Connection m_rowsRemovedConnection;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void ConnectModel();
       void DisconnectModel();

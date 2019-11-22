@@ -18,11 +18,11 @@ namespace {
 }
 
 void LocalHistoricalDataStoreTester::setUp() {
-  m_timeClient.Initialize();
+  m_timeClient.emplace();
 }
 
 void LocalHistoricalDataStoreTester::tearDown() {
-  m_timeClient.Reset();
+  m_timeClient = std::nullopt;
 }
 
 void LocalHistoricalDataStoreTester::TestStoreAndLoadBboQuote() {

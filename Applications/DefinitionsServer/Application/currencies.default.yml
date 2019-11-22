@@ -3,10 +3,16 @@ currencies:
   - code: AUD
     sign: $
     id: 36
-  - code: USD
-    sign: $
-    id: 840
   - code: CAD
     sign: $
     id: 124
+  - code: HKD
+    sign: $
+    id: 344
+  - code: JPY
+    sign: ¥
+    id: 392
+  - code: USD
+    sign: $
+    id: 840
 ...
