@@ -16,13 +16,14 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The value to display in the field. */
-  value: Beam.Duration;
+  value?: Beam.Duration;
 
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange:(value: Beam.Duration) => void;
+  onChange: (value: Beam.Duration) => void;
 }
+
 /** A component that displays and lets a user edit a duration. */
 export class DurationInput extends React.Component<Properties> {
   public static readonly defaultProps = {
