@@ -77,19 +77,19 @@ export class DurationInput extends React.Component<Properties> {
   private onChange(timeUnit: TimeUnit, newValue: number) {
     const oldDuration = this.props.value.split();
     const NewValue = (() => {
-      switch (timeUnit) {
-      case TimeUnit.HOURS:
-        return Beam.Duration.HOUR.multiply(newValue).add(
-          Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-          Beam.Duration.SECOND.multiply(oldDuration.seconds));
-      case TimeUnit.MINUTES:
-        return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-          Beam.Duration.MINUTE.multiply(newValue)).add(
-          Beam.Duration.SECOND.multiply(oldDuration.seconds));
-      case TimeUnit.SECONDS:
-        return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-          Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-          Beam.Duration.SECOND.multiply(newValue));
+      switch(timeUnit) {
+        case TimeUnit.HOURS:
+          return Beam.Duration.HOUR.multiply(newValue).add(
+            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
+            Beam.Duration.SECOND.multiply(oldDuration.seconds));
+        case TimeUnit.MINUTES:
+          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
+            Beam.Duration.MINUTE.multiply(newValue)).add(
+            Beam.Duration.SECOND.multiply(oldDuration.seconds));
+        case TimeUnit.SECONDS:
+          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
+            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
+            Beam.Duration.SECOND.multiply(newValue));
     }
   })();
   this.props.onChange(NewValue);
