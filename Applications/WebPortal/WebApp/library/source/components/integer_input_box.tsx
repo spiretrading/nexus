@@ -30,6 +30,11 @@ interface State {
 
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    value: '',
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {

@@ -12,9 +12,6 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
-  /** console.log */
-  step?: number;
-
   /** The smallest number that the box accepts. */
   min?: number;
 
@@ -27,10 +24,10 @@ interface Properties {
   onChange?: (value: number) => void;
 }
 
-/** Displays a single text input field. */
+/** Displays a single number input field. */
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
-    isIneger: false,
+    value: 0,
     onChange: () => {}
   };
 
@@ -43,7 +40,7 @@ export class NumberInput extends React.Component<Properties> {
         value={this.props.value}
         style={{...NumberInput.STYLE.box, ...this.props.style}}
         onChange={this.onChange.bind(this)}
-        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' + 
+        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
   }
 
@@ -71,10 +68,9 @@ export class NumberInput extends React.Component<Properties> {
       width: '100%',
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
-      appearance: 'none' as 'none',
+      appearance: 'none' as 'none'
     }
   };
-
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
       '-moz-appearance': 'textfield',
@@ -98,12 +94,12 @@ export class NumberInput extends React.Component<Properties> {
       '::-webkit-inner-spin-button': {
         '-webkit-appearance': 'none',
         'appearance': 'none',
-        margin: 0,
+        margin: 0
       },
       '::-webkit-outer-spin-button': { 
         '-webkit-appearance': 'none',
         'appearance': 'none',
-        margin: 0,
+        margin: 0
       }
     },
     errorBox: {

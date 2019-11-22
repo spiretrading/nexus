@@ -25,6 +25,11 @@ interface Properties {
 }
 /** A component that displays and lets a user edit a duration. */
 export class DurationInput extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    value: '',
+    onChange: () => {}
+  };
+
   public render(): JSX.Element {
     const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
