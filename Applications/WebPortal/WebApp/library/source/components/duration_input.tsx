@@ -92,8 +92,8 @@ export class DurationInput extends React.Component<Properties> {
             Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
             Beam.Duration.SECOND.multiply(newValue));
     }
-  })();
-  this.props.onChange(NewValue);
+    })();
+    this.props.onChange(NewValue);
   }
 
   private static readonly STYLE = {
