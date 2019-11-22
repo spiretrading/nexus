@@ -53,7 +53,7 @@ class TestApp extends React.Component<Properties> {
         new Nexus.ComplianceParameter(
           'Quantity',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000000))),
+              Nexus.ComplianceValue.Type.QUANTITY, 200))
       ]));
     list.push(someEntry2);
     return(
