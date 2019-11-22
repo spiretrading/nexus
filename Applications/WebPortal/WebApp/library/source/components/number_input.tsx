@@ -35,6 +35,7 @@ export class NumberInput extends React.Component<Properties> {
     super(props);
     this.onChange = this.onChange.bind(this);
   }
+
   public render(): JSX.Element {
     return (
       <input type={'number'}
