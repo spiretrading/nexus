@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
+#include <optional>
 #include <string>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
@@ -8,7 +9,6 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -79,7 +79,7 @@ namespace Details {
       const Client* Get() const;
 
     private:
-      Beam::DelayPtr<Client> m_client;
+      std::optional<Client> m_client;
   };
 
   //! Builds a SessionBuilder for a standard MarketDataClient.
@@ -169,23 +169,23 @@ namespace Details {
       Client> serviceLocatorClient, Beam::Ref<Beam::Network::
       SocketThreadPool> socketThreadPool, Beam::Ref<
       Beam::Threading::TimerThreadPool> timerThreadPool) {
-    if(m_client.IsInitialized()) {
+    if(m_client.has_value()) {
       m_client->Close();
-      m_client.Reset();
+      m_client = std::nullopt;
     }
-    m_client.Initialize(BuildMarketDataClientSessionBuilder(
+    m_client.emplace(BuildMarketDataClientSessionBuilder(
       Beam::Ref(serviceLocatorClient), Beam::Ref(socketThreadPool),
       Beam::Ref(timerThreadPool)));
   }
 
   inline ApplicationMarketDataClient::Client&
       ApplicationMarketDataClient::operator *() {
-    return m_client.Get();
+    return *m_client;
   }
 
   inline const ApplicationMarketDataClient::Client&
       ApplicationMarketDataClient::operator *() const {
-    return m_client.Get();
+    return *m_client;
   }
 
   inline ApplicationMarketDataClient::Client*

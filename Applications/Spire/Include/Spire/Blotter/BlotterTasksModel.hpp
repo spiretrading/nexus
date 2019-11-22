@@ -1,8 +1,8 @@
 #ifndef SPIRE_BLOTTERTASKSMODEL_HPP
 #define SPIRE_BLOTTERTASKSMODEL_HPP
+#include <optional>
 #include <set>
 #include <unordered_set>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Reactors/ReactorMonitor.hpp>
@@ -252,7 +252,7 @@ namespace Spire {
       QTimer m_expiryTimer;
       bool m_isRefreshing;
       SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
-      Beam::DelayPtr<SpireAggregateOrderExecutionPublisher>
+      std::optional<SpireAggregateOrderExecutionPublisher>
         m_linkedOrderExecutionPublisher;
       std::vector<std::shared_ptr<TaskContext>> m_contexts;
       std::unordered_set<long long> m_taskIds;
@@ -269,7 +269,7 @@ namespace Spire {
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;
       Beam::TaskQueue m_orderSlotHandler;
-      Beam::DelayPtr<Beam::TaskQueue> m_taskSlotHandler;
+      std::optional<Beam::TaskQueue> m_taskSlotHandler;
 
       void SetupLinkedOrderExecutionMonitor();
       void OnMonitorUpdate(std::weak_ptr<TaskEntry> weakEntry,

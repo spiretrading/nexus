@@ -156,7 +156,7 @@ void BlotterModel::Unlink(BlotterModel& blotter) {
 
 void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
-  m_portfolioMonitor.Initialize(Initialize(m_userProfile->GetMarketDatabase()),
+  m_portfolioMonitor.emplace(Initialize(m_userProfile->GetMarketDatabase()),
     &m_userProfile->GetServiceClients().GetMarketDataClient(),
     orderExecutionPublisher);
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));

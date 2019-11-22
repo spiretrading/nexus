@@ -75,7 +75,7 @@ namespace RiskService {
       std::placeholders::_2));
     m_publisher.SetInitializationFunction(
       [=] (auto& publisher) {
-        publisher.Initialize();
+        publisher.emplace();
         m_tasks.Push(
           [=] {
             std::vector<RiskPortfolioInventoryEntry> entries;
