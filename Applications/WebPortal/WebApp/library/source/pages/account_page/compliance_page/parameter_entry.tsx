@@ -1,9 +1,7 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, MoneyInputBox,
-  TextInputField } from '../../..';
-import { NumberInput, DurationInput } from '../../../components';
+import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
+  NumberInput, TextInputField } from '../../..';
 
 interface Properties {
 
@@ -54,11 +52,10 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <div/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return (
-            <CurrencySelectionBox
-              value={this.props.parameter.value.value}
-              onChange={this.onChange}
-              currencyDatabase={this.props.currencyDatabase}/>);
+          return <CurrencySelectionBox
+            value={this.props.parameter.value.value}
+            onChange={this.onChange}
+            currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <div/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
@@ -81,12 +78,11 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.SECURITY:
           return <div/>;
         case Nexus.ComplianceValue.Type.STRING:
-          return (
-            <TextInputField
-              displaySize ={this.props.displaySize}
-              value={this.props.parameter.value.value}
-              onInput={this.onChange}
-              style={inputWrapper}/>);
+          return <TextInputField
+            displaySize ={this.props.displaySize}
+            value={this.props.parameter.value.value}
+            onInput={this.onChange}
+            style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
           return <div/>;
         default:
