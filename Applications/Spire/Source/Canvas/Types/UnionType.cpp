@@ -11,12 +11,12 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
@@ -37,12 +37,12 @@ namespace {
     types.push_back(IntegerType::GetInstance());
     types.push_back(MarketType::GetInstance());
     types.push_back(MoneyType::GetInstance());
+    types.push_back(OrderReferenceType::GetInstance());
     types.push_back(OrderStatusType::GetInstance());
     types.push_back(OrderTypeType::GetInstance());
     types.push_back(RecordType::GetEmptyRecordType());
     types.push_back(SecurityType::GetInstance());
     types.push_back(SideType::GetInstance());
-    types.push_back(TaskType::GetInstance());
     types.push_back(TextType::GetInstance());
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
