@@ -52,7 +52,7 @@ namespace Spire {
   /*
     \param filter_string The string to compare the order imbalances symbols to.
   */
-  FilteredOrderImbalanceIndicatorModel::Filter make_security_filter(
+  FilteredOrderImbalanceIndicatorModel::Filter make_symbol_filter(
     const std::string& filter_string);
 
   //! Creates a filter that filters out markets that do not appear in the given

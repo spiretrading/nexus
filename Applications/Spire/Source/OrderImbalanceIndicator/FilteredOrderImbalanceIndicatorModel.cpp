@@ -38,7 +38,7 @@ Filter Spire::make_security_list_filter(
   };
 }
 
-Filter Spire::make_security_filter(const std::string& filter_string) {
+Filter Spire::make_symbol_filter(const std::string& filter_string) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return imbalance.m_security.GetSymbol().find(filter_string) == 0;
   };
