@@ -50,10 +50,10 @@ namespace Spire {
   //! Creates a filter that filters out symbols that do not start with
   //! or match the given string.
   /*
-    \param filter_string The string to compare the order imbalances symbols to.
+    \param prefix The string to compare the order imbalances symbols to.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_symbol_filter(
-    const std::string& filter_string);
+    const std::string& prefix);
 
   //! Creates a filter that filters out markets that do not appear in the given
   //! list.
@@ -69,12 +69,12 @@ namespace Spire {
   //! Creates a filter that filters out markets that do not start with
   //! or match the given string.
   /*
-    \param filter_string The string to compare the order imbalance markets to.
+    \param prefix The string to compare the order imbalance markets to.
     \param market_database Market database used for converting display names
                            to market codes.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_market_filter(
-    const std::string& filter_string,
+    const std::string& prefix,
     const Nexus::MarketDatabase& market_database);
 
   //! Creates a filter that filters out sides that do not match the given

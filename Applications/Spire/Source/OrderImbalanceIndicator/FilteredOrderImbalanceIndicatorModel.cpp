@@ -38,9 +38,9 @@ Filter Spire::make_security_list_filter(
   };
 }
 
-Filter Spire::make_symbol_filter(const std::string& filter_string) {
+Filter Spire::make_symbol_filter(const std::string& prefix) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
-    return imbalance.m_security.GetSymbol().find(filter_string) == 0;
+    return imbalance.m_security.GetSymbol().find(prefix) == 0;
   };
 }
 
@@ -53,12 +53,11 @@ Filter Spire::make_market_list_filter(
   };
 }
 
-Filter Spire::make_market_filter(const std::string& filter_string,
+Filter Spire::make_market_filter(const std::string& prefix,
     const MarketDatabase& market_database) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return std::string(market_database.FromCode(
-      imbalance.m_security.GetMarket()).m_displayName).find(
-      filter_string) == 0;
+      imbalance.m_security.GetMarket()).m_displayName).find(prefix) == 0;
   };
 }
 
