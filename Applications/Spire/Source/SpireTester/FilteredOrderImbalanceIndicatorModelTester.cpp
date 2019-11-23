@@ -115,8 +115,7 @@ TEST_CASE("test_security_list_filter_with_duplicate_symbols",
     local_model->insert(first_imbalance);
     local_model->insert(second_imbalance);
     auto filtered_model = FilteredOrderImbalanceIndicatorModel(local_model,
-      {make_security_list_filter({first_imbalance.m_security,
-      second_imbalance.m_security})});
+      {make_security_list_filter({first_imbalance.m_security})});
     auto [connection, promise] = filtered_model.subscribe(from_time_t(0),
       from_time_t(500), [] (auto& i) {});
     auto data = wait(std::move(promise));
