@@ -47,29 +47,25 @@ void OrderReactorTester::TestSingleOrderFields() {
     Ref(serviceClients.GetOrderExecutionClient()),
     Aspen::constant(TEST_SECURITY), Aspen::constant(Side::BID),
     Aspen::constant(100), Aspen::constant(Money::ONE));
-  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
-  auto order = orderSubmissions->Top();
+  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::EVALUATED);
+  auto sentOrder = reactor.eval();
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_side == Side::BID);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_quantity == 100);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_price == Money::ONE);
+  auto receivedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == TEST_SECURITY);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == Side::BID);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == 100);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == Money::ONE);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::PENDING_NEW);
-  environment.AcceptOrder(*order);
+  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::NONE);
+  environment.AcceptOrder(*receivedOrder);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  environment.FillOrder(*order, 100);
+  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::NONE);
+  environment.FillOrder(*receivedOrder, 100);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::COMPLETE_EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::FILLED);
+  CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::COMPLETE);
   Trigger::set_trigger(nullptr);
 }
 
@@ -92,60 +88,52 @@ void OrderReactorTester::TestOrderFieldsUpdate() {
     Ref(serviceClients.GetOrderExecutionClient()),
     Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
     Aspen::constant(300), price);
-  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
-  auto order = orderSubmissions->Top();
+  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::EVALUATED);
+  auto sentOrder = reactor.eval();
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_price == Money::CENT);
+  auto receivedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_security == TEST_SECURITY);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_side == Side::ASK);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_quantity == 300);
-  CPPUNIT_ASSERT(order->GetInfo().m_fields.m_price == Money::CENT);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::PENDING_NEW);
-  environment.AcceptOrder(*order);
+  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::NONE);
+  environment.AcceptOrder(*receivedOrder);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
+  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::NONE);
   price->set_complete(2 * Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::NONE);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(4) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::PENDING_CANCEL);
-  environment.CancelOrder(*order);
+  environment.CancelOrder(*receivedOrder);
   commits.Top();
   commits.Pop();
+  CPPUNIT_ASSERT(reactor.commit(4) == Aspen::State::CONTINUE);
   CPPUNIT_ASSERT(reactor.commit(5) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::CANCELED);
-  auto updatedOrder = orderSubmissions->Top();
+  auto updatedSentOrder = reactor.eval();
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_security ==
+    TEST_SECURITY);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_price ==
+    2 * Money::ONE);
+  auto updatedReceivedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side == Side::ASK);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity == 300);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price == 2 * Money::ONE);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(6) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::PENDING_NEW);
-  environment.AcceptOrder(*updatedOrder);
+  CPPUNIT_ASSERT(reactor.commit(6) == Aspen::State::NONE);
+  environment.AcceptOrder(*updatedReceivedOrder);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(7) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  environment.FillOrder(*updatedOrder, 300);
+  CPPUNIT_ASSERT(reactor.commit(7) == Aspen::State::NONE);
+  environment.FillOrder(*updatedReceivedOrder, 300);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(8) == Aspen::State::COMPLETE_EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::FILLED);
+  CPPUNIT_ASSERT(reactor.commit(8) == Aspen::State::COMPLETE);
   Trigger::set_trigger(nullptr);
 }
 
@@ -171,33 +159,28 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
     Ref(serviceClients.GetOrderExecutionClient()),
     Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
     Aspen::constant(300), price);
-  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
-  auto order = orderSubmissions->Top();
+  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::EVALUATED);
+  auto sentOrder = reactor.eval();
+  auto receivedOrder = orderSubmissions->Top();
   orderSubmissions->Pop();
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::PENDING_NEW);
-  environment.AcceptOrder(*order);
+  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::NONE);
+  environment.AcceptOrder(*receivedOrder);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status == OrderStatus::NEW);
-  environment.RejectOrder(*order);
-  commits.Top();
-  commits.Pop();
+  CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::NONE);
+  environment.RejectOrder(*receivedOrder);
   price->set_complete(2 * Money::ONE);
   commits.Top();
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::EVALUATED);
-  CPPUNIT_ASSERT(reactor.eval().m_executionReport.m_status ==
-    OrderStatus::REJECTED);
-  auto updatedOrder = orderSubmissions->Top();
-  orderSubmissions->Pop();
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_security == TEST_SECURITY);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_side == Side::ASK);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_quantity == 300);
-  CPPUNIT_ASSERT(updatedOrder->GetInfo().m_fields.m_price == 2 * Money::ONE);
+  auto updatedSentOrder = reactor.eval();
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_security ==
+    TEST_SECURITY);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_side == Side::ASK);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
+  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_price ==
+    2 * Money::ONE);
   Trigger::set_trigger(nullptr);
 }

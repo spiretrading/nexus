@@ -5,10 +5,8 @@
 #include <Aspen/Sync.hpp>
 #include <Aspen/VectorSync.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/ConverterWriterQueue.hpp>
 #include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
-#include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -35,7 +33,7 @@ namespace Nexus::OrderExecutionService {
     typename RR>
   class OrderReactor {
     public:
-      using Type = ExecutionReportEntry;
+      using Type = const Order*;
 
       /** The type of OrderExecutionClient used to submit the order. */
       using OrderExecutionClient = C;
@@ -93,12 +91,12 @@ namespace Nexus::OrderExecutionService {
         PriceReactor price, TimeInForceReactor timeInForce,
         AdditionalFieldsReactor additionalFields);
 
-      /** Cancels the Order. */
+      /** Stops this reactor and cancels any live orders it has submitted. */
       void Cancel();
 
       Aspen::State commit(int sequence) noexcept;
 
-      const ExecutionReportEntry& eval() const;
+      const Order* eval() const;
 
     private:
       OrderExecutionClient* m_client;
@@ -120,10 +118,9 @@ namespace Nexus::OrderExecutionService {
       bool m_isPendingCancel;
       Quantity m_filled;
       OrderStatus m_status;
-      std::shared_ptr<Beam::MultiQueueReader<ExecutionReportEntry>>
+      std::shared_ptr<Beam::MultiQueueReader<ExecutionReport>>
         m_executionReports;
-      std::shared_ptr<Beam::QueueWriter<ExecutionReport>> m_orderQueue;
-      Beam::Reactors::QueueReactor<ExecutionReportEntry> m_queue;
+      Beam::Reactors::QueueReactor<ExecutionReport> m_queue;
   };
 
   template<typename C, typename S, typename T, typename Q, typename M>
@@ -167,7 +164,7 @@ namespace Nexus::OrderExecutionService {
       m_isPendingCancel(true),
       m_status(OrderStatus::CANCELED),
       m_executionReports(
-        std::make_shared<Beam::MultiQueueReader<ExecutionReportEntry>>()),
+        std::make_shared<Beam::MultiQueueReader<ExecutionReport>>()),
       m_queue(m_executionReports) {}
 
   template<typename C, typename AR, typename SR, typename CR, typename OR,
@@ -175,20 +172,19 @@ namespace Nexus::OrderExecutionService {
     typename RR>
   Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
       int sequence) noexcept {
-    auto queueState = m_queue.commit(sequence);
-    if(Aspen::has_evaluation(queueState)) {
-      const auto& report = m_queue.eval().m_executionReport;
+    auto state = m_queue.commit(sequence);
+    if(Aspen::has_evaluation(state)) {
+      auto& report = m_queue.eval();
       m_status = report.m_status;
       m_filled += report.m_lastQuantity;
       if(!IsTerminal(m_status)) {
-        if(Aspen::has_continuation(queueState)) {
-          return Aspen::State::CONTINUE_EVALUATED;
+        if(Aspen::has_continuation(state)) {
+          return Aspen::State::CONTINUE;
         }
-        return Aspen::State::EVALUATED;
       } else if(!m_isPendingCancel && !m_orderFields.has_value()) {
-        return Aspen::State::COMPLETE_EVALUATED;
+        return Aspen::State::COMPLETE;
       }
-    } else if(Aspen::has_continuation(queueState)) {
+    } else if(Aspen::has_continuation(state)) {
       return Aspen::State::CONTINUE;
     }
     if(m_orderFields.has_value()) {
@@ -207,27 +203,23 @@ namespace Nexus::OrderExecutionService {
           return Aspen::State::COMPLETE;
         }
       } else if(Aspen::has_continuation(fieldsState)) {
-        return Aspen::combine(queueState, Aspen::State::CONTINUE);
+        return Aspen::State::CONTINUE;
       }
     }
     if(IsTerminal(m_status)) {
       try {
         m_isPendingCancel = false;
         if(m_lastOrderFields->m_quantity - m_filled > 0) {
+          m_status = OrderStatus::PENDING_NEW;
           auto orderFields = m_orderFields->eval();
           orderFields.m_quantity -= m_filled;
           m_order = &m_client->Submit(m_orderFields->eval());
-          m_orderQueue = Beam::MakeConverterWriterQueue<ExecutionReport>(
-            m_executionReports->GetWriter(),
-            [order = m_order] (const auto& executionReport) {
-              return ExecutionReportEntry{order, executionReport};
-            });
-          m_order->GetPublisher().Monitor(m_orderQueue);
+          m_order->GetPublisher().Monitor(m_executionReports->GetWriter());
+          return Aspen::State::EVALUATED;
         }
       } catch(const std::exception&) {
         return Aspen::State::COMPLETE;
       }
-      return queueState;
     }
     return Aspen::State::NONE;
   }
@@ -235,9 +227,9 @@ namespace Nexus::OrderExecutionService {
   template<typename C, typename AR, typename SR, typename CR, typename OR,
     typename TR, typename DR, typename QR, typename PR, typename FR,
     typename RR>
-  const ExecutionReportEntry& OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR,
-      FR, RR>::eval() const {
-    return m_queue.eval();
+  const Order* OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR,
+      RR>::eval() const {
+    return m_order;
   }
 }
 
