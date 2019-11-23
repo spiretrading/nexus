@@ -39,21 +39,21 @@ namespace Spire {
         const std::vector<Nexus::OrderImbalance>& imbalances) const;
   };
 
-  //! Creates a filter that filters out symbols that do not appear in the
+  //! Creates a filter that filters out securities that do not appear in the
   //! given list.
   /*
-    \param symbol_list The list of securities to preserve after filtering.
+    \param security_list The list of securities to preserve after filtering.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_security_list_filter(
-    const std::set<std::string>& symbol_list);
+    const std::set<Nexus::Security>& security_list);
 
   //! Creates a filter that filters out symbols that do not start with
   //! or match the given string.
   /*
-    \param filter_string The string to compare the order imbalances symbols to.
+    \param prefix The string to compare the order imbalances symbols to.
   */
-  FilteredOrderImbalanceIndicatorModel::Filter make_security_filter(
-    const std::string& filter_string);
+  FilteredOrderImbalanceIndicatorModel::Filter make_symbol_filter(
+    const std::string& prefix);
 
   //! Creates a filter that filters out markets that do not appear in the given
   //! list.
@@ -69,12 +69,12 @@ namespace Spire {
   //! Creates a filter that filters out markets that do not start with
   //! or match the given string.
   /*
-    \param filter_string The string to compare the order imbalance markets to.
+    \param prefix The string to compare the order imbalance markets to.
     \param market_database Market database used for converting display names
                            to market codes.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_market_filter(
-    const std::string& filter_string,
+    const std::string& prefix,
     const Nexus::MarketDatabase& market_database);
 
   //! Creates a filter that filters out sides that do not match the given

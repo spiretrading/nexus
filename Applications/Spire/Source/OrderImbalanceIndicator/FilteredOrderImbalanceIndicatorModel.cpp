@@ -31,16 +31,16 @@ OrderImbalanceIndicatorModel::SubscriptionResult
 }
 
 Filter Spire::make_security_list_filter(
-    const std::set<std::string>& symbol_list) {
+    const std::set<Security>& security_list) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
-    return symbol_list.find(imbalance.m_security.GetSymbol()) !=
-      symbol_list.end();
+    return security_list.find(imbalance.m_security) !=
+      security_list.end();
   };
 }
 
-Filter Spire::make_security_filter(const std::string& filter_string) {
+Filter Spire::make_symbol_filter(const std::string& prefix) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
-    return imbalance.m_security.GetSymbol().find(filter_string) == 0;
+    return imbalance.m_security.GetSymbol().find(prefix) == 0;
   };
 }
 
@@ -53,12 +53,11 @@ Filter Spire::make_market_list_filter(
   };
 }
 
-Filter Spire::make_market_filter(const std::string& filter_string,
+Filter Spire::make_market_filter(const std::string& prefix,
     const MarketDatabase& market_database) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
     return std::string(market_database.FromCode(
-      imbalance.m_security.GetMarket()).m_displayName).find(
-      filter_string) == 0;
+      imbalance.m_security.GetMarket()).m_displayName).find(prefix) == 0;
   };
 }
 
