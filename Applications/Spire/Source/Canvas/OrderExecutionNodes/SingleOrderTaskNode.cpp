@@ -5,7 +5,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/TaskVolumeNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
@@ -50,7 +50,7 @@ SingleOrderTaskNode::SingleOrderTaskNode()
 
 SingleOrderTaskNode::SingleOrderTaskNode(string text) {
   SetText(std::move(text));
-  SetType(TaskType::GetInstance());
+  SetType(OrderReferenceType::GetInstance());
   AddChild(SECURITY_PROPERTY, make_unique<SecurityNode>());
   AddChild(ORDER_TYPE_PROPERTY, make_unique<OrderTypeNode>(OrderType::LIMIT));
   AddChild(SIDE_PROPERTY, make_unique<SideNode>());

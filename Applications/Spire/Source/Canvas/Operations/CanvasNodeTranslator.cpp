@@ -92,9 +92,9 @@
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/ParserTypes.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TimeAndSaleRecordType.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
@@ -1085,7 +1085,7 @@ void CanvasNodeTranslationVisitor::Visit(const BooleanNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CanvasNode& node) {
-  if(node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+  if(node.GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     m_translation = Aspen::none<void>();
   } else {
@@ -1393,7 +1393,7 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
   auto& referent = *node.FindReferent();
   m_translation = InternalTranslation(referent);
 #if 0 // TODO
-  if(referent.GetType().GetCompatibility(TaskType::GetInstance()) !=
+  if(referent.GetType().GetCompatibility(OrderReferenceType::GetInstance()) !=
       CanvasType::Compatibility::EQUAL) {
     auto parent = referent.GetParent();
     if(parent.is_initialized() &&
@@ -1588,7 +1588,7 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
     m_translation = *existingTranslation;
     m_context->Add(Ref(node), *m_translation);
   } else if(dynamic_cast<const ReferenceNode*>(&node) == nullptr &&
-      node.GetType().GetCompatibility(TaskType::GetInstance()) ==
+      node.GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     node.Apply(*this);
     m_context->Add(Ref(node), *m_translation);

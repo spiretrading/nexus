@@ -1,20 +1,20 @@
-#ifndef SPIRE_TASK_TYPE_HPP
-#define SPIRE_TASK_TYPE_HPP
+#ifndef SPIRE_ORDER_REFERENCE_TYPE_HPP
+#define SPIRE_ORDER_REFERENCE_TYPE_HPP
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
 namespace Spire {
 
-  /** Represents a Task type. */
-  class TaskType : public NativeType {
+  /** Represents an Order. */
+  class OrderReferenceType : public NativeType {
     public:
 
       //! Defines the native type being represented.
-      using Type = Task;
+      using Type = const Nexus::OrderExecutionService::Order*;
 
       //! Returns an instance of this type.
-      static const TaskType& GetInstance();
+      static const OrderReferenceType& GetInstance();
 
       virtual std::string GetName() const;
 
@@ -27,13 +27,13 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      TaskType() = default;
+      OrderReferenceType() = default;
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void TaskType::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void OrderReferenceType::Shuttle(Shuttler& shuttle, unsigned int version) {
     NativeType::Shuttle(shuttle, version);
   }
 }

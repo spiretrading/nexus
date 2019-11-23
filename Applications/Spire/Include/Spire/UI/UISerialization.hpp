@@ -69,12 +69,12 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
@@ -207,12 +207,12 @@ namespace Spire {
     (IntegerType, "Spire.IntegerType"),
     (MarketType, "Spire.MarketType"),
     (MoneyType, "Spire.MoneyType"),
+    (OrderReferenceType, "Spire.OrderReferenceType"),
     (OrderStatusType, "Spire.OrderStatusType"),
     (OrderTypeType, "Spire.OrderTypeType"),
     (RecordType, "Spire.RecordType"),
     (SecurityType, "Spire.SecurityType"),
     (SideType, "Spire.SideType"),
-    (TaskType, "Spire.TaskType"),
     (TextType, "Spire.TextType"),
     (TimeInForceType, "Spire.TimeInForceType"),
     (TimeRangeType, "Spire.TimeRangeType"),

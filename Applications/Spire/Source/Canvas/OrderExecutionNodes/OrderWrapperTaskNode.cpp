@@ -4,7 +4,7 @@
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
@@ -55,7 +55,7 @@ unique_ptr<CanvasNode> OrderWrapperTaskNode::Clone() const {
 void OrderWrapperTaskNode::Initialize(string text,
     const UserProfile& userProfile) {
   SetText(std::move(text));
-  SetType(TaskType::GetInstance());
+  SetType(OrderReferenceType::GetInstance());
   AddChild(SingleOrderTaskNode::SECURITY_PROPERTY,
     make_unique<SecurityNode>(m_order->GetInfo().m_fields.m_security,
     userProfile.GetMarketDatabase()));

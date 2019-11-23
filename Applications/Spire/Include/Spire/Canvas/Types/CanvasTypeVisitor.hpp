@@ -31,6 +31,8 @@ namespace Spire {
 
       virtual void Visit(const NativeType& type);
 
+      virtual void Visit(const OrderReferenceType& type);
+
       virtual void Visit(const OrderStatusType& type);
 
       virtual void Visit(const OrderTypeType& type);
@@ -40,8 +42,6 @@ namespace Spire {
       virtual void Visit(const SecurityType& type);
 
       virtual void Visit(const SideType& type);
-
-      virtual void Visit(const TaskType& type);
 
       virtual void Visit(const TextType& type);
 

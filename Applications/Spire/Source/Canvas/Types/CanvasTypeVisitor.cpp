@@ -8,12 +8,12 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
@@ -63,6 +63,10 @@ void CanvasTypeVisitor::Visit(const NativeType& type) {
   Visit(static_cast<const CanvasType&>(type));
 }
 
+void CanvasTypeVisitor::Visit(const OrderReferenceType& type) {
+  Visit(static_cast<const NativeType&>(type));
+}
+
 void CanvasTypeVisitor::Visit(const OrderStatusType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
@@ -80,10 +84,6 @@ void CanvasTypeVisitor::Visit(const SecurityType& type) {
 }
 
 void CanvasTypeVisitor::Visit(const SideType& type) {
-  Visit(static_cast<const NativeType&>(type));
-}
-
-void CanvasTypeVisitor::Visit(const TaskType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
 

@@ -12,6 +12,7 @@
 #include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
@@ -19,7 +20,6 @@
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
@@ -44,13 +44,13 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(MarketType::GetInstance());
   Register(MoneyType::GetInstance());
   Register(GetOrderFieldsRecordType());
+  Register(OrderReferenceType::GetInstance());
   Register(OrderStatusType::GetInstance());
   Register(OrderTypeType::GetInstance());
   Register(GetPortfolioEntryRecordType());
   Register(GetQuoteRecordType());
   Register(SecurityType::GetInstance());
   Register(SideType::GetInstance());
-  Register(TaskType::GetInstance());
   Register(TextType::GetInstance());
   Register(TimeInForceType::GetInstance());
   Register(TimeRangeType::GetInstance());

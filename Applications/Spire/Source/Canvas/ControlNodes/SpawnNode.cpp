@@ -1,7 +1,7 @@
 #include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
@@ -17,8 +17,8 @@ namespace {
     for(const auto& type : valueTypes) {
       SpawnNode::Signature signature;
       signature.emplace_back(type);
-      signature.emplace_back(TaskType::GetInstance());
-      signature.emplace_back(TaskType::GetInstance());
+      signature.emplace_back(OrderReferenceType::GetInstance());
+      signature.emplace_back(OrderReferenceType::GetInstance());
       signatures.emplace_back(std::move(signature));
     }
     return signatures;
@@ -27,9 +27,9 @@ namespace {
 
 SpawnNode::SpawnNode() {
   SetText("Spawn");
-  SetType(TaskType::GetInstance());
+  SetType(OrderReferenceType::GetInstance());
   AddChild("trigger", make_unique<NoneNode>(UnionType::GetAnyValueType()));
-  AddChild("task", make_unique<NoneNode>(TaskType::GetInstance()));
+  AddChild("task", make_unique<NoneNode>(OrderReferenceType::GetInstance()));
 }
 
 void SpawnNode::Apply(CanvasNodeVisitor& visitor) const {

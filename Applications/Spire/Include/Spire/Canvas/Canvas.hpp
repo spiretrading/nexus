@@ -82,6 +82,7 @@ namespace Spire {
   class OptionalPriceNode;
   class OrderExecutionPublisherTaskFactory;
   class OrderImbalanceQueryNode;
+  class OrderReferenceType;
   class OrderStatusNode;
   class OrderStatusType;
   class OrderTypeNode;
@@ -108,7 +109,6 @@ namespace Spire {
   class SubtractionNode;
   class Task;
   class TaskStateParser;
-  class TaskType;
   class TextNode;
   class TextType;
   class TimeAndSaleQueryNode;

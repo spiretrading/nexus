@@ -10,12 +10,12 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
@@ -26,6 +26,7 @@ using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Tests;
 using namespace std;
@@ -40,11 +41,11 @@ void ValueTypeTester::TestNames() {
   CPPUNIT_ASSERT(IntegerType::GetInstance().GetName() == "Integer");
   CPPUNIT_ASSERT(MarketType::GetInstance().GetName() == "Market");
   CPPUNIT_ASSERT(MoneyType::GetInstance().GetName() == "Money");
+  CPPUNIT_ASSERT(OrderReferenceType::GetInstance().GetName() == "Order");
   CPPUNIT_ASSERT(OrderStatusType::GetInstance().GetName() == "Order Status");
   CPPUNIT_ASSERT(OrderTypeType::GetInstance().GetName() == "Order Type");
   CPPUNIT_ASSERT(SecurityType::GetInstance().GetName() == "Security");
   CPPUNIT_ASSERT(SideType::GetInstance().GetName() == "Side");
-  CPPUNIT_ASSERT(TaskType::GetInstance().GetName() == "Task");
   CPPUNIT_ASSERT(TextType::GetInstance().GetName() == "Text");
   CPPUNIT_ASSERT(TimeInForceType::GetInstance().GetName() == "Time In Force");
   CPPUNIT_ASSERT(TimeRangeType::GetInstance().GetName() == "Time Range");
@@ -65,6 +66,8 @@ void ValueTypeTester::TestNativeTypes() {
   CPPUNIT_ASSERT(MarketType::GetInstance().GetNativeType() ==
     typeid(MarketCode));
   CPPUNIT_ASSERT(MoneyType::GetInstance().GetNativeType() == typeid(Money));
+  CPPUNIT_ASSERT(OrderReferenceType::GetInstance().GetNativeType() ==
+    typeid(const Order*));
   CPPUNIT_ASSERT(OrderStatusType::GetInstance().GetNativeType() ==
     typeid(OrderStatus));
   CPPUNIT_ASSERT(OrderTypeType::GetInstance().GetNativeType() ==
@@ -72,7 +75,6 @@ void ValueTypeTester::TestNativeTypes() {
   CPPUNIT_ASSERT(SecurityType::GetInstance().GetNativeType() ==
     typeid(Security));
   CPPUNIT_ASSERT(SideType::GetInstance().GetNativeType() == typeid(Side));
-  CPPUNIT_ASSERT(TaskType::GetInstance().GetNativeType() == typeid(Task));
   CPPUNIT_ASSERT(TextType::GetInstance().GetNativeType() == typeid(string));
   CPPUNIT_ASSERT(TimeInForceType::GetInstance().GetNativeType() ==
     typeid(TimeInForce));

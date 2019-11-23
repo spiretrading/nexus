@@ -6,7 +6,7 @@
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 
 using namespace Beam;
 using namespace Beam::Serialization;
@@ -15,8 +15,8 @@ using namespace Spire;
 using namespace std;
 
 AggregateNode::AggregateNode() {
-  AddChild("i0", make_unique<NoneNode>(TaskType::GetInstance()));
-  SetType(TaskType::GetInstance());
+  AddChild("i0", make_unique<NoneNode>(OrderReferenceType::GetInstance()));
+  SetType(OrderReferenceType::GetInstance());
   SetText("Aggregate");
 }
 
@@ -29,8 +29,8 @@ AggregateNode::AggregateNode(vector<unique_ptr<CanvasNode>> nodes) {
     ++index;
   }
   AddChild("i" + boost::lexical_cast<std::string>(GetChildren().size()),
-    make_unique<NoneNode>(TaskType::GetInstance()));
-  SetType(TaskType::GetInstance());
+    make_unique<NoneNode>(OrderReferenceType::GetInstance()));
+  SetType(OrderReferenceType::GetInstance());
   SetText("Aggregate");
 }
 

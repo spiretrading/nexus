@@ -3,7 +3,7 @@
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 
 using namespace Beam;
 using namespace Beam::Serialization;
@@ -13,9 +13,9 @@ using namespace std;
 
 WhenNode::WhenNode() {
   AddChild("condition", BuildDefaultCanvasNode(BooleanType::GetInstance()));
-  AddChild("task", BuildDefaultCanvasNode(TaskType::GetInstance()));
+  AddChild("task", BuildDefaultCanvasNode(OrderReferenceType::GetInstance()));
   SetText("When");
-  SetType(TaskType::GetInstance());
+  SetType(OrderReferenceType::GetInstance());
 }
 
 void WhenNode::Apply(CanvasNodeVisitor& visitor) const {

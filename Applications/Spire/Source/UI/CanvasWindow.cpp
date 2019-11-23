@@ -12,7 +12,7 @@
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeActivator.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/CanvasView/AddRootCommand.hpp"
 #include "Spire/CanvasView/CopyNodeCommand.hpp"
 #include "Spire/CanvasView/CustomNodeDialog.hpp"
@@ -57,7 +57,7 @@ namespace {
     bool foundTask = false;
     for(const auto& node : selection) {
       if(IsRoot(*node) &&
-          node->GetType().GetCompatibility(TaskType::GetInstance()) ==
+          node->GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
           CanvasType::Compatibility::EQUAL) {
         if(foundTask) {
           action->setEnabled(true);
@@ -753,7 +753,8 @@ void CanvasWindow::OnAggregateAction() {
   MacroUndoCommand* command = new MacroUndoCommand();
   for(auto i = selectedNodes.begin(); i != selectedNodes.end(); ++i) {
     if(IsRoot(**i) && (*i)->GetType().GetCompatibility(
-        TaskType::GetInstance()) == CanvasType::Compatibility::EQUAL) {
+        OrderReferenceType::GetInstance()) ==
+        CanvasType::Compatibility::EQUAL) {
       CanvasNodeModel::Coordinate coordinate =
         m_ui->m_canvasTable->GetCoordinate(**i);
       if(coordinate < topLeftCoordinate) {

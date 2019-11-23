@@ -12,7 +12,6 @@
 #include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;
