@@ -31,10 +31,10 @@ OrderImbalanceIndicatorModel::SubscriptionResult
 }
 
 Filter Spire::make_security_list_filter(
-    const std::set<std::string>& symbol_list) {
+    const std::set<Security>& security_list) {
   return [=] (const Nexus::OrderImbalance& imbalance) {
-    return symbol_list.find(imbalance.m_security.GetSymbol()) !=
-      symbol_list.end();
+    return security_list.find(imbalance.m_security) !=
+      security_list.end();
   };
 }
 

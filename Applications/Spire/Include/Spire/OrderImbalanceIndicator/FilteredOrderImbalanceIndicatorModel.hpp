@@ -39,13 +39,13 @@ namespace Spire {
         const std::vector<Nexus::OrderImbalance>& imbalances) const;
   };
 
-  //! Creates a filter that filters out symbols that do not appear in the
+  //! Creates a filter that filters out securities that do not appear in the
   //! given list.
   /*
-    \param symbol_list The list of securities to preserve after filtering.
+    \param security_list The list of securities to preserve after filtering.
   */
   FilteredOrderImbalanceIndicatorModel::Filter make_security_list_filter(
-    const std::set<std::string>& symbol_list);
+    const std::set<Nexus::Security>& security_list);
 
   //! Creates a filter that filters out symbols that do not start with
   //! or match the given string.
