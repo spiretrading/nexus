@@ -5,7 +5,6 @@
 #include <typeinfo>
 #include <type_traits>
 #include <Aspen/Aspen.hpp>
-#include <Nexus/OrderExecutionService/Order.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {

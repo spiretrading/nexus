@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
+#include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -89,7 +90,7 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     QueryDailyOrderSubmissions(*m_userProfile, m_executingAccount, orderQueue);
     m_accountOrderPublisher =
-      std::make_shared<QueuePublisher<SequencePublisher<const Order*>>>(
+      std::make_unique<QueuePublisher<SequencePublisher<const Order*>>>(
       orderQueue);
     m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
       std::bind(&BlotterTasksModel::OnOrderExecuted, this,
@@ -168,10 +169,8 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   for(auto& link : m_outgoingLinks) {
     link->Add(entryReference.m_task);
   }
-/* TODO
   m_properOrderExecutionPublisher.Add(
-    *adoptedContext->m_orderExecutionPublisher);
-*/
+    entryReference.m_task->GetContext().GetOrderPublisher());
   return entryReference;
 }
 
@@ -355,15 +354,7 @@ void BlotterTasksModel::OnTaskState(TaskEntry& entry,
   }
 }
 
-void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
-  m_submittedOrders.insert(order->GetInfo().m_orderId);
-}
-
 void BlotterTasksModel::OnOrderExecuted(const Order* order) {
-  if(m_submittedOrders.find(order->GetInfo().m_orderId) !=
-      m_submittedOrders.end()) {
-    return;
-  }
   m_properOrderExecutionPublisher.Push(order);
   auto stateQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(stateQueue);

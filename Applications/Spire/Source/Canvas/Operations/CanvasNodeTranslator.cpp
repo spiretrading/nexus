@@ -48,6 +48,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/ExecutionReportMonitorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/OrderPublisherReactor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
@@ -1437,7 +1438,10 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   }
   auto& orderExecutionClient =
     m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
-  m_translation = OrderReactor(Ref(orderExecutionClient),
+  m_translation = OrderPublisherReactor(
+    dynamic_cast<QueueWriter<const Order*>&>(
+    const_cast<Publisher<const Order*>&>(m_context->GetOrderPublisher())),
+    OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
@@ -1456,7 +1460,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
     InternalTranslation(*node.FindChild(
     SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
-    Aspen::Box<TimeInForce>>(), std::move(additionalFields));
+    Aspen::Box<TimeInForce>>(), std::move(additionalFields)));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {

@@ -206,11 +206,9 @@ namespace Spire {
       std::vector<BlotterTaskMonitor> m_taskMonitors;
       std::set<TaskEntry*> m_pendingExpiryEntries;
       std::vector<TaskEntry*> m_expiredEntries;
-      std::unordered_set<Nexus::OrderExecutionService::OrderId>
-        m_submittedOrders;
       std::vector<BlotterTasksModel*> m_incomingLinks;
       std::vector<BlotterTasksModel*> m_outgoingLinks;
-      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      std::unique_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         m_accountOrderPublisher;
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;

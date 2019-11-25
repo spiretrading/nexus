@@ -4,7 +4,6 @@
 #include <string>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
-#include <Beam/Queues/SnapshotPublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Tasks/Executor.hpp"

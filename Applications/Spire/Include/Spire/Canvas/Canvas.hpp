@@ -80,8 +80,8 @@ namespace Spire {
   class NoneNode;
   class NotNode;
   class OptionalPriceNode;
-  class OrderExecutionPublisherTaskFactory;
   class OrderImbalanceQueryNode;
+  template<typename R> class OrderPublisherReactor;
   class OrderReferenceType;
   class OrderStatusNode;
   class OrderStatusType;

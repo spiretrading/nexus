@@ -2,14 +2,10 @@
 #define SPIRE_CANVAS_NODE_TRANSLATION_CONTEXT_HPP
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Reactors/Reactors.hpp>
+#include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/variant/variant.hpp>
-#include "Nexus/MarketDataService/RealTimeMarketDataPublisher.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Spire/Canvas/Canvas.hpp"
+#include <boost/thread/mutex.hpp>
 #include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -19,75 +15,68 @@ namespace Spire {
   class CanvasNodeTranslationContext : private boost::noncopyable {
     public:
 
-      //! Constructs a CanvasNodeTranslationContext.
-      /*!
-        \param userProfile The user's profile.
-        \param executor The executor used on the translated reactor.
-        \param executingAccount The account used to execute Orders.
-      */
+      /**
+       * Constructs a CanvasNodeTranslationContext.
+       * @param userProfile The user's profile.
+       * @param executor The executor used on the translated reactor.
+       * @param executingAccount The account used to execute Orders.
+       */
       CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<Executor> executor,
         Beam::ServiceLocator::DirectoryEntry executingAccount);
 
-      //! Constructs a CanvasNodeTranslationContext from a parent context.
-      /*!
-        \param parent The parent CanvasNodeTranslationContext.
-      */
+      /**
+       * Constructs a CanvasNodeTranslationContext from a parent context.
+       * @param parent The parent CanvasNodeTranslationContext.
+       */
       CanvasNodeTranslationContext(
         Beam::Ref<CanvasNodeTranslationContext> parent);
 
-      //! Returns the UserProfile.
+      /** Returns the UserProfile. */
       const UserProfile& GetUserProfile() const;
 
-      //! Returns the UserProfile.
+      /** Returns the UserProfile. */
       UserProfile& GetUserProfile();
 
-      //! Returns the executor.
+      /** Returns the executor. */
       const Executor& GetExecutor() const;
 
-      //! Returns the executor.
+      /** Returns the executor. */
       Executor& GetExecutor();
 
-      //! Returns the executing account.
+      /** Returns the executing account. */
       const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
 
-      //! Associates a Translation with a CanvasNode.
-      /*!
-        \param node The CanvasNode that was translated.
-        \param translation The Translation to associate with the <i>node</i>.
-      */
+      /**
+       * Returns the publisher for all orders submitted by the translated
+       * node.
+       */
+      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>&
+        GetOrderPublisher() const;
+
+      /**
+       * Associates a Translation with a CanvasNode.
+       * @param node The CanvasNode that was translated.
+       * @param translation The Translation to associate with the <i>node</i>.
+       */
       void Add(Beam::Ref<const CanvasNode> node,
         const Translation& translation);
 
-      //! Finds a Translation.
-      /*!
-        \param node The CanvasNode to find the Translation for.
-        \return The specified <i>node</i>'s Translation.
-      */
+      /**
+       * Finds a Translation.
+       * @param node The CanvasNode to find the Translation for.
+       * @return The specified <i>node</i>'s Translation.
+       */
       boost::optional<Translation> FindTranslation(
         const CanvasNode& node) const;
 
-      //! Finds a Translation that was either added directly or to a child node.
-      /*!
-        \param node The CanvasNode to find the Translation for.
-        \return The specified <i>node</i>'s Translation.
-      */
+      /**
+       * Finds a Translation that was either added directly or to a child node.
+       * @param node The CanvasNode to find the Translation for.
+       * @return The specified <i>node</i>'s Translation.
+       */
       boost::optional<Translation> FindSubTranslation(
         const CanvasNode& node) const;
-
-      //! Finds an OrderExecutionPublisher.
-      /*!
-        \param node The CanvasNode to find the OrderExecutionPublisher for.
-        \return The publisher for the <i>node</i> or <code>nullptr</code> iff no
-                such publisher exists.
-      */
-      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
-        FindOrderExecutionPublisher(const CanvasNode& node) const;
-
-      //! Returns the MarketDataPublisher used for real time data.
-      Nexus::MarketDataService::RealTimeMarketDataPublisher<
-        Nexus::MarketDataService::VirtualMarketDataClient*>&
-        GetRealTimeMarketDataPublisher() const;
 
     private:
       mutable boost::mutex m_mutex;
@@ -95,28 +84,24 @@ namespace Spire {
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
       Executor* m_executor;
+      std::shared_ptr<Beam::SequencePublisher<
+        const Nexus::OrderExecutionService::Order*>> m_orderPublisher;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
-      std::unordered_map<const CanvasNode*,
-        std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>>
-        m_orderExecutionPublishers;
-      std::unique_ptr<Nexus::MarketDataService::RealTimeMarketDataPublisher<
-        Nexus::MarketDataService::VirtualMarketDataClient*>>
-        m_marketDataPublisher;
 
       void AddSubtranslation(Beam::Ref<const CanvasNode> node,
         const Translation& translation);
   };
 
-  //! Mirrors the translation of a node in one context, into a node of another
-  //! context.
-  /*!
-    \param sourceNode The node previously translated and to be mirrored.
-    \param sourceContext The context containing the <i>sourceNode</i>'s
-           translations.
-    \param mirrorNode The node to duplicate the translation into.
-    \param mirrorContext The context to store the mirrored translation.
-  */
+  /**
+   * Mirrors the translation of a node in one context, into a node of another
+   * context.
+   * @param sourceNode The node previously translated and to be mirrored.
+   * @param sourceContext The context containing the <i>sourceNode</i>'s
+   *        translations.
+   * @param mirrorNode The node to duplicate the translation into.
+   * @param mirrorContext The context to store the mirrored translation.
+   */
   void Mirror(const CanvasNode& sourceNode,
     const CanvasNodeTranslationContext& sourceContext,
     const CanvasNode& mirrorNode,

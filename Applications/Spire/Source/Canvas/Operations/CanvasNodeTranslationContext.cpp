@@ -1,38 +1,30 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
-#include <boost/range/adaptor/map.hpp>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Spire/Canvas/Operations/Translation.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Reactors;
 using namespace Beam::ServiceLocator;
 using namespace boost;
-using namespace boost::adaptors;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
-    Ref<UserProfile> userProfile, Ref<Executor> executor,
-    DirectoryEntry executingAccount)
-    : m_parent(nullptr),
-      m_userProfile(userProfile.Get()),
-      m_executor(executor.Get()),
-      m_executingAccount(std::move(executingAccount)),
-      m_marketDataPublisher(std::make_unique<
-        RealTimeMarketDataPublisher<VirtualMarketDataClient*>>(
-        &m_userProfile->GetServiceClients().GetMarketDataClient())) {}
+  Ref<UserProfile> userProfile, Ref<Executor> executor,
+  DirectoryEntry executingAccount)
+  : m_parent(nullptr),
+    m_userProfile(userProfile.Get()),
+    m_executingAccount(std::move(executingAccount)),
+    m_executor(executor.Get()),
+    m_orderPublisher(std::make_shared<SequencePublisher<const Order*>>()) {}
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
-    Ref<CanvasNodeTranslationContext> parent)
-    : m_parent(parent.Get()),
-      m_userProfile(m_parent->m_userProfile),
-      m_executingAccount(m_parent->m_executingAccount),
-      m_executor(m_parent->m_executor) {}
+  Ref<CanvasNodeTranslationContext> parent)
+  : m_parent(parent.Get()),
+    m_userProfile(m_parent->m_userProfile),
+    m_executingAccount(m_parent->m_executingAccount),
+    m_executor(m_parent->m_executor),
+    m_orderPublisher(m_parent->m_orderPublisher) {}
 
 const UserProfile& CanvasNodeTranslationContext::GetUserProfile() const {
   return *m_userProfile;
@@ -55,17 +47,15 @@ const DirectoryEntry& CanvasNodeTranslationContext::
   return m_executingAccount;
 }
 
+const Publisher<const Order*>&
+    CanvasNodeTranslationContext::GetOrderPublisher() const {
+  return *m_orderPublisher;
+}
+
 void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
     const Translation& translation) {
-  boost::lock_guard<boost::mutex> lock(m_mutex);
+  auto lock = boost::lock_guard(m_mutex);
   m_translations.insert(std::make_pair(node.Get(), translation));
-#if 0 // TODO
-  auto taskTranslation = get<const TaskTranslation>(&translation);
-  if(taskTranslation != nullptr) {
-    m_orderExecutionPublishers.insert(std::make_pair(node.Get(),
-      taskTranslation->m_publisher));
-  }
-#endif
   if(m_parent != nullptr) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }
@@ -73,7 +63,7 @@ void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
 
 boost::optional<Translation> CanvasNodeTranslationContext::FindTranslation(
     const CanvasNode& node) const {
-  boost::lock_guard<boost::mutex> lock(m_mutex);
+  auto lock = boost::lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
     if(m_parent == nullptr) {
@@ -86,7 +76,7 @@ boost::optional<Translation> CanvasNodeTranslationContext::FindTranslation(
 
 boost::optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
     const CanvasNode& node) const {
-  boost::lock_guard<boost::mutex> lock(m_mutex);
+  auto lock = boost::lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
     auto subTranslationIterator = m_subTranslations.find(&node);
@@ -101,31 +91,9 @@ boost::optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
   return translationIterator->second;
 }
 
-std::shared_ptr<OrderExecutionPublisher>
-    CanvasNodeTranslationContext::FindOrderExecutionPublisher(
-    const CanvasNode& node) const {
-  boost::lock_guard<boost::mutex> lock(m_mutex);
-  auto publisherIterator = m_orderExecutionPublishers.find(&node);
-  if(publisherIterator == m_orderExecutionPublishers.end()) {
-    if(m_parent == nullptr) {
-      return nullptr;
-    }
-    return m_parent->FindOrderExecutionPublisher(node);
-  }
-  return publisherIterator->second;
-}
-
-RealTimeMarketDataPublisher<VirtualMarketDataClient*>&
-    CanvasNodeTranslationContext::GetRealTimeMarketDataPublisher() const {
-  if(m_parent == nullptr) {
-    return *m_marketDataPublisher;
-  }
-  return m_parent->GetRealTimeMarketDataPublisher();
-}
-
 void CanvasNodeTranslationContext::AddSubtranslation(
     Beam::Ref<const CanvasNode> node, const Translation& translation) {
-  boost::lock_guard<boost::mutex> lock(m_mutex);
+  auto lock = boost::lock_guard(m_mutex);
   m_subTranslations.insert(std::make_pair(node.Get(), translation));
   if(m_parent != nullptr) {
     m_parent->AddSubtranslation(Ref(node), translation);
