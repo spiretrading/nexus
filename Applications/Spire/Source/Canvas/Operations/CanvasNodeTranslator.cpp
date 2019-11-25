@@ -22,7 +22,6 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
-#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -1358,10 +1357,7 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
-  auto& orderExecutionClient =
-    m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
-  m_translation = Translation(OrderWrapperReactor(Ref(orderExecutionClient),
-    node.GetOrder()));
+  m_translation = Aspen::constant(&node.GetOrder());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {

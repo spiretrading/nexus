@@ -91,9 +91,6 @@ namespace Nexus::OrderExecutionService {
         PriceReactor price, TimeInForceReactor timeInForce,
         AdditionalFieldsReactor additionalFields);
 
-      /** Stops this reactor and cancels any live orders it has submitted. */
-      void Cancel();
-
       Aspen::State commit(int sequence) noexcept;
 
       const Order* eval() const;

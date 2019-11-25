@@ -41,7 +41,6 @@ namespace Nexus::OrderExecutionService {
   class OrderSubmissionCheckException;
   class OrderSubmissionRegistry;
   class OrderUnrecoverableException;
-  template<typename C> class OrderWrapperReactor;
   class PrimitiveOrder;
   template<typename AdministrationClientType> class RiskStateCheck;
   template<typename C> class SqlOrderExecutionDataStore;
