@@ -48,7 +48,11 @@ class TestApp extends React.Component<Properties> {
         new Nexus.ComplianceParameter(
           'Quantity',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.QUANTITY, 234.56))
+              Nexus.ComplianceValue.Type.QUANTITY, 234.56)),
+        new Nexus.ComplianceParameter(
+          'Duration',
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000)))
       ]));
     ruleEntries.push(someEntry2);
     const ruleSchemas = [];
