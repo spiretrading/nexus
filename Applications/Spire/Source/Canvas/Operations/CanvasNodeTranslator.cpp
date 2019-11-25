@@ -132,11 +132,6 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  auto MakeAggregateOrderExecutionPublisher() {
-    return std::make_shared<SpireAggregateOrderExecutionPublisher>(
-      Initialize(UniqueFilter<const Order*>(), Initialize()));
-  }
-
   class CanvasNodeTranslationVisitor final : private CanvasNodeVisitor {
     public:
       CanvasNodeTranslationVisitor(Ref<CanvasNodeTranslationContext> context,
@@ -1084,15 +1079,8 @@ void CanvasNodeTranslationVisitor::Visit(const BooleanNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CanvasNode& node) {
-  if(node.GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL) {
-    m_translation = Aspen::none<void>();
-  } else {
-    auto& nativeType = static_cast<const NativeType&>(node.GetType());
-    m_translation = Instantiate<ThrowTranslator>(nativeType.GetNativeType())(
-      std::make_exception_ptr(
-      std::runtime_error("Canvas node not supported.")));
-  }
+  m_translation = Instantiate<NoneTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())();
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CeilNode& node) {
@@ -1176,14 +1164,12 @@ void CanvasNodeTranslationVisitor::Visit(const EqualsNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(
     const ExecutionReportMonitorNode& node) {
-/* TODO
-  auto taskTranslation = InternalTranslation(node.GetChildren().front());
+  auto source = InternalTranslation(node.GetChildren().front());
   m_translation = Aspen::lift(ExecutionReportToRecordConverter(),
     Aspen::group(Aspen::lift(
     [] (const Order* order) {
       return Aspen::box(PublisherReactor(order->GetPublisher()));
-    }, PublisherReactor(*taskTranslation.GetPublisher()))));
-*/
+    }, source.Extract<Aspen::Box<const Order*>>())));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilePathNode& node) {
@@ -1579,34 +1565,12 @@ void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
 Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
-  auto isRootTask = false;
   if(existingTranslation.is_initialized()) {
     m_translation = *existingTranslation;
-    m_context->Add(Ref(node), *m_translation);
-  } else if(dynamic_cast<const ReferenceNode*>(&node) == nullptr &&
-      node.GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL) {
-    node.Apply(*this);
-    m_context->Add(Ref(node), *m_translation);
-
-    // TODO.
-#if 0
-    auto publisher = MakeAggregateOrderExecutionPublisher();
-    auto proxyReactor = Aspen::Shared(Aspen::proxy<Task::State>());
-    auto selfTranslation = Translation(proxyReactor, publisher);
-    m_context->Add(Ref(node), selfTranslation);
-    node.Apply(*this);
-    auto subTranslation = std::move(*m_translation);
-    m_translation = std::nullopt;
-    proxyReactor->set_reactor(
-      subTranslation.Extract<Aspen::Box<Task::State>>());
-    publisher->Add(subTranslation.GetPublisher());
-    m_translation = subTranslation;
-#endif
   } else {
     node.Apply(*this);
-    m_context->Add(Ref(node), *m_translation);
   }
+  m_context->Add(Ref(node), *m_translation);
   return *m_translation;
 }
 
