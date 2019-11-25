@@ -1,7 +1,7 @@
 #ifndef SPIRE_VALUELABEL_HPP
 #define SPIRE_VALUELABEL_HPP
+#include <optional>
 #include <string>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <QLabel>
 #include "Spire/UI/CustomQtVariants.hpp"
@@ -56,7 +56,7 @@ namespace UI {
 
     private:
       std::string m_label;
-      Beam::DelayPtr<CustomVariantItemDelegate> m_converter;
+      std::optional<CustomVariantItemDelegate> m_converter;
   };
 }
 }

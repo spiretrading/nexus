@@ -1,6 +1,6 @@
 #ifndef NEXUS_MARKETDATALOCALHISTORICALDATASTORETESTER_HPP
 #define NEXUS_MARKETDATALOCALHISTORICALDATASTORETESTER_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <cppunit/extensions/HelperMacros.h>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -23,7 +23,7 @@ namespace Tests {
       void TestStoreAndLoadBboQuote();
 
     private:
-      Beam::DelayPtr<Beam::TimeService::IncrementalTimeClient> m_timeClient;
+      std::optional<Beam::TimeService::IncrementalTimeClient> m_timeClient;
 
       SequencedSecurityBboQuote StoreBboQuote(
         LocalHistoricalDataStore& dataStore, Money bidPrice,

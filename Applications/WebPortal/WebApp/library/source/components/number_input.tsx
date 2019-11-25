@@ -12,9 +12,6 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
-  /** console.log */
-  step?: number;
-
   /** The smallest number that the box accepts. */
   min?: number;
 
@@ -27,29 +24,32 @@ interface Properties {
   onChange?: (value: number) => void;
 }
 
-/** Displays a single text input field. */
+/** Displays a single number input field. */
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
-    isIneger: false,
+    value: 0,
     onChange: () => {}
   };
 
+  constructor(props: Properties) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
   public render(): JSX.Element {
     return (
-      <input 
-        type={'number'}
+      <input type={'number'}
         min={this.props.min}
         max={this.props.max}
         value={this.props.value}
         style={{...NumberInput.STYLE.box, ...this.props.style}}
-        onChange={this.onChange.bind(this)}
-        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' + 
+        onChange={this.onChange}
+        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const newNumber = event.target.valueAsNumber;
-    this.props.onChange(newNumber);
+    this.props.onChange(event.target.valueAsNumber);
   }
 
   private static STYLE = {
@@ -66,14 +66,14 @@ export class NumberInput extends React.Component<Properties> {
       font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
-      minWidth: '246px',
+      minWidth: '184px',
+      maxWidth: '246px',
       width: '100%',
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
-      appearance: 'none' as 'none',
+      appearance: 'none' as 'none'
     }
   };
-
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
       '-moz-appearance': 'textfield',
@@ -97,12 +97,12 @@ export class NumberInput extends React.Component<Properties> {
       '::-webkit-inner-spin-button': {
         '-webkit-appearance': 'none',
         'appearance': 'none',
-        margin: 0,
+        margin: 0
       },
       '::-webkit-outer-spin-button': { 
         '-webkit-appearance': 'none',
         'appearance': 'none',
-        margin: 0,
+        margin: 0
       }
     },
     errorBox: {

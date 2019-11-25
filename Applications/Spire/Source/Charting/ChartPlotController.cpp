@@ -102,7 +102,7 @@ void ChartPlotController::SetLockGrid(bool lockGrid) {
   }
   m_isLockGridEnabled = lockGrid;
   if(m_isLockGridEnabled) {
-    m_lastValue.Reset();
+    m_lastValue = std::nullopt;
     ++m_lastValueIndex;
   }
   UpdateLockGrid();
@@ -129,7 +129,7 @@ void ChartPlotController::Add(const std::shared_ptr<ChartPlotSeries>& series) {
 }
 
 void ChartPlotController::Clear() {
-  m_lastValue.Reset();
+  m_lastValue = std::nullopt;
   ++m_lastValueIndex;
   m_view->Clear();
   m_series.clear();
@@ -140,7 +140,7 @@ void ChartPlotController::Clear() {
 }
 
 boost::optional<ChartValue> ChartPlotController::LoadLastValue() {
-  if(m_lastValue.IsInitialized()) {
+  if(m_lastValue.has_value()) {
     return *m_lastValue;
   }
   auto series = m_series;
@@ -251,10 +251,10 @@ void ChartPlotController::OnChartPlotAdded(
     std::bind(&ChartPlotController::OnPlotUpdated, this,
     std::weak_ptr<ChartPlot>(plot))));
   UpdateAutoScale();
-  if(m_lastValue.IsInitialized()) {
+  if(m_lastValue.has_value()) {
     *m_lastValue = std::max(*m_lastValue, GetRightViewPoint(*plot));
   } else {
-    m_lastValue.Initialize(GetRightViewPoint(*plot));
+    m_lastValue.emplace(GetRightViewPoint(*plot));
   }
   UpdateLockGrid();
 }
@@ -270,10 +270,10 @@ void ChartPlotController::OnPlotUpdated(std::weak_ptr<ChartPlot> weakPlot) {
       GetRightViewPoint(*plot) <= m_xAxisParameters.m_max) {
     UpdateAutoScale();
   }
-  if(m_lastValue.IsInitialized()) {
+  if(m_lastValue.has_value()) {
     *m_lastValue = std::max(*m_lastValue, GetRightViewPoint(*plot));
   } else {
-    m_lastValue.Initialize(GetRightViewPoint(*plot));
+    m_lastValue.emplace(GetRightViewPoint(*plot));
   }
 }
 
@@ -299,10 +299,10 @@ void ChartPlotController::OnUpdateTimer() {
   for(const std::tuple<uint64_t, ChartValue>& lastValueLoaded :
       lastValuesLoaded) {
     if(std::get<0>(lastValueLoaded) == m_lastValueIndex) {
-      if(m_lastValue.IsInitialized()) {
+      if(m_lastValue.has_value()) {
         *m_lastValue = std::max(*m_lastValue, std::get<1>(lastValueLoaded));
       } else {
-        m_lastValue.Initialize(std::get<1>(lastValueLoaded));
+        m_lastValue.emplace(std::get<1>(lastValueLoaded));
       }
       update = true;
     }

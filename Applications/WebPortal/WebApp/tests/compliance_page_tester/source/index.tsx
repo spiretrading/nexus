@@ -20,8 +20,7 @@ class TestApp extends React.Component<Properties> {
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.ACTIVE,
       new Nexus.ComplianceRuleSchema(
-        'Old Components',
-        [
+        'Old Components', [
           new Nexus.ComplianceParameter(
             'Money',
             new Nexus.ComplianceValue(
@@ -32,7 +31,7 @@ class TestApp extends React.Component<Properties> {
           new Nexus.ComplianceParameter(
             'Note',
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.STRING, 'Keep an eye on this.')),
+              Nexus.ComplianceValue.Type.STRING, 'Keep an eye on this.'))
         ]
       )
     );
@@ -132,7 +131,7 @@ class TestApp extends React.Component<Properties> {
       ]));
     return(
       <div style={TestApp.STYLE.wrapper}>
-        <WebPortal.CompliancePage 
+        <WebPortal.CompliancePage
           displaySize={this.props.displaySize} 
           ruleSchemas={ruleSchemas}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}

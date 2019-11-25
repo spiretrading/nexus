@@ -1,10 +1,10 @@
 #ifndef NEXUS_FIXORDEREXECUTIONDRIVER_HPP
 #define NEXUS_FIXORDEREXECUTIONDRIVER_HPP
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <boost/noncopyable.hpp>
@@ -78,10 +78,10 @@ namespace FixUtilities {
         std::shared_ptr<FixApplication> m_application;
         std::string m_configPath;
         bool m_isConnected;
-        Beam::DelayPtr<FIX::SessionSettings> m_settings;
-        Beam::DelayPtr<FIX::FileStoreFactory> m_storeFactory;
-        Beam::DelayPtr<FIX::FileLogFactory> m_logFactory;
-        Beam::DelayPtr<FIX::SocketInitiator> m_initiator;
+        std::optional<FIX::SessionSettings> m_settings;
+        std::optional<FIX::FileStoreFactory> m_storeFactory;
+        std::optional<FIX::FileLogFactory> m_logFactory;
+        std::optional<FIX::SocketInitiator> m_initiator;
 
         Application(const std::shared_ptr<FixApplication>& application,
           const std::string& configPath);
@@ -216,15 +216,15 @@ namespace FixUtilities {
         }
         try {
           auto& entry = *(fixApplication.second);
-          entry.m_settings.Initialize(entry.m_configPath);
+          entry.m_settings.emplace(entry.m_configPath);
           if(entry.m_settings->getSessions().size() != 1) {
             BOOST_THROW_EXCEPTION(std::runtime_error(
               "Only one session per application is permitted."));
           }
           auto sessionId = *entry.m_settings->getSessions().begin();
-          entry.m_storeFactory.Initialize(*entry.m_settings);
-          entry.m_logFactory.Initialize(*entry.m_settings);
-          entry.m_initiator.Initialize(*entry.m_application,
+          entry.m_storeFactory.emplace(*entry.m_settings);
+          entry.m_logFactory.emplace(*entry.m_settings);
+          entry.m_initiator.emplace(*entry.m_application,
             *entry.m_storeFactory, *entry.m_settings, *entry.m_logFactory);
           entry.m_application->SetSessionSettings(sessionId, *entry.m_settings);
           for(const auto& sessionId : entry.m_settings->getSessions()) {
