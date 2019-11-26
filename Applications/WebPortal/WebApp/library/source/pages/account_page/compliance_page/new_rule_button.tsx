@@ -147,6 +147,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     }
     this.props.onAddNewRule(this.props.ruleSchemas[this.state.selection]);
     this.props.onToggleModal();
+    this.setState({selection: -1});
   }
 
   private static readonly STYLE = {

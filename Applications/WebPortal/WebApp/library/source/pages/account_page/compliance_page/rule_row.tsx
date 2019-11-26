@@ -113,24 +113,10 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   public componentDidMount(): void {
-    console.log('mounting!!!');
-    console.log(this.ruleParameters.scrollHeight);
     this.applicabilityStyleDefinition.entering.maxHeight =
       `${this.ruleParameters.scrollHeight}px`;
     this.applicabilityStyleDefinition.entered.maxHeight =
       `${this.ruleParameters.scrollHeight}px`;
-    this.setState({
-      animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
-    });
-  }
-
-  public conpo(): void {
-    console.log('mounting!!!');
-    console.log(this.ruleParameters.offsetHeight);
-    this.applicabilityStyleDefinition.entering.maxHeight =
-      `${this.ruleParameters.offsetHeight}px`;
-    this.applicabilityStyleDefinition.entered.maxHeight =
-      `${this.ruleParameters.offsetHeight}px`;
     this.setState({
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     });
