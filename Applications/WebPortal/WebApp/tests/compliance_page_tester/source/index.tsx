@@ -134,24 +134,12 @@ class TestApp extends React.Component<Properties> {
               Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     return(
-      <div style={TestApp.STYLE.wrapper}>
-        <WebPortal.CompliancePage
-          displaySize={this.props.displaySize} 
-          ruleSchemas={ruleSchemas}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-          complianceList={ruleEntries}/>
-      </div> );
+      <WebPortal.CompliancePage
+        displaySize={this.props.displaySize} 
+        ruleSchemas={ruleSchemas}
+        currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+        complianceList={ruleEntries}/>);
   }
-
-  private static readonly STYLE = {
-    wrapper: {
-      marginTop: '200px',
-      marginBottom: '200px',
-      marginLeft: '10px',
-      marginRight: '10px',
-      boxSizing: 'border-box' as 'border-box',
-    }
-  };
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);

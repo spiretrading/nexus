@@ -93,6 +93,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingBottom: '60px',
+      height: '100vh',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row'
     },
