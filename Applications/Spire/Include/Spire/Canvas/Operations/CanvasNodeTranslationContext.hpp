@@ -55,6 +55,13 @@ namespace Spire {
         GetOrderPublisher() const;
 
       /**
+       * Returns the publisher for all orders submitted by the translated
+       * node.
+       */
+      Beam::SequencePublisher<const Nexus::OrderExecutionService::Order*>&
+        GetOrderPublisher();
+
+      /**
        * Associates a Translation with a CanvasNode.
        * @param node The CanvasNode that was translated.
        * @param translation The Translation to associate with the <i>node</i>.

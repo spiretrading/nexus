@@ -355,7 +355,6 @@ void BlotterTasksModel::OnTaskState(TaskEntry& entry,
 }
 
 void BlotterTasksModel::OnOrderExecuted(const Order* order) {
-  m_properOrderExecutionPublisher.Push(order);
   auto stateQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(stateQueue);
   if(stateQueue->IsEmpty() || IsTerminal(stateQueue->Top().m_status)) {

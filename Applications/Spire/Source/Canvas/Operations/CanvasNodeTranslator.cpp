@@ -1344,7 +1344,8 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
-  m_translation = Aspen::constant(&node.GetOrder());
+  m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
+    Aspen::constant(&node.GetOrder()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
@@ -1438,9 +1439,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   }
   auto& orderExecutionClient =
     m_context->GetUserProfile().GetServiceClients().GetOrderExecutionClient();
-  m_translation = OrderPublisherReactor(
-    dynamic_cast<QueueWriter<const Order*>&>(
-    const_cast<Publisher<const Order*>&>(m_context->GetOrderPublisher())),
+  m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
     OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
     InternalTranslation(*node.FindChild(

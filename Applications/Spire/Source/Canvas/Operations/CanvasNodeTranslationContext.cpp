@@ -52,6 +52,11 @@ const Publisher<const Order*>&
   return *m_orderPublisher;
 }
 
+SequencePublisher<const Order*>&
+    CanvasNodeTranslationContext::GetOrderPublisher() {
+  return *m_orderPublisher;
+}
+
 void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
     const Translation& translation) {
   auto lock = boost::lock_guard(m_mutex);

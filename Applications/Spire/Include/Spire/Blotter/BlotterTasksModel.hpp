@@ -219,7 +219,6 @@ namespace Spire {
       void OnMonitorUpdate(TaskEntry& entry, const std::string& property,
         const boost::any& value);
       void OnTaskState(TaskEntry& entry, const Task::StateEntry& update);
-      void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnUpdateTimer();
       void OnExpiryTimer();
