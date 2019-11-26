@@ -8,5 +8,6 @@ using namespace boost;
 using namespace Spire;
 
 TaskStateParser::TaskStateParser()
-  : EnumeratorParser<Task::State>(begin(MakeRange<Task::State>()),
-      end(MakeRange<Task::State>()), lexical_cast<std::string, Task::State>) {}
+  : EnumeratorParser<Task::State>(EnumIterator(Task::State::READY),
+      EnumIterator(static_cast<Task::State>(7)),
+      lexical_cast<std::string, Task::State>) {}

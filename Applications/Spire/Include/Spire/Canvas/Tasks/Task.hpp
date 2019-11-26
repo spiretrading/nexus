@@ -1,8 +1,9 @@
 #ifndef SPIRE_TASK_HPP
 #define SPIRE_TASK_HPP
+#include <atomic>
 #include <ostream>
 #include <string>
-#include <Beam/Collections/Enum.hpp>
+#include <Aspen/Aspen.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
@@ -10,37 +11,35 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-namespace Details {
-  BEAM_ENUM(TaskState,
-
-    //! The Task is initializing, no sub-Tasks may be executed.
-    INITIALIZING,
-
-    //! Task is active, sub-Tasks may be executed.
-    ACTIVE,
-
-    //! Task is pending cancel, no new sub-Tasks may be executed.
-    PENDING_CANCEL,
-
-    //! Task is canceled.
-    CANCELED,
-
-    //! Task encountered an error.
-    FAILED,
-
-    //! The Task has expired.
-    EXPIRED,
-
-    //! Task has completed.
-    COMPLETE);
-}
 
   /** Executes and manages an asynchronous operation and sub-Tasks. */
   class Task {
     public:
 
       /** Enumerates Task states. */
-      using State = Details::TaskState;
+      enum class State {
+
+        /** The Task is ready to be executed. */
+        READY,
+
+        /** The Task is initializing, no sub-Tasks may be executed. */
+        INITIALIZING,
+
+        /** Task is active, sub-Tasks may be executed. */
+        ACTIVE,
+
+        /** Task is pending cancel, no new sub-Tasks may be executed. */
+        PENDING_CANCEL,
+
+        /** Task is canceled. */
+        CANCELED,
+
+        /** Task encountered an error. */
+        FAILED,
+
+        /** Task has completed. */
+        COMPLETE
+      };
 
       /** Records a change in a Task's State. */
       struct StateEntry {
@@ -59,12 +58,6 @@ namespace Details {
          * @param state The Task's State.
          */
         explicit StateEntry(State state);
-
-        /**
-         * Constructs a StateEntry with an empty message.
-         * @param state The Task's State.
-         */
-        explicit StateEntry(State::Type state);
 
         /**
          * Constructs a StateEntry.
@@ -116,7 +109,11 @@ namespace Details {
     private:
       std::unique_ptr<CanvasNode> m_node;
       CanvasNodeTranslationContext m_context;
-      bool m_isRunning;
+      bool m_isExecutable;
+      bool m_isFailed;
+      std::atomic_bool m_isCancelable;
+      State m_state;
+      Aspen::Shared<Aspen::Cell<bool>> m_cancelToken;
       Executor m_executor;
       int m_id;
       Beam::SequencePublisher<StateEntry> m_publisher;
@@ -135,12 +132,6 @@ namespace Details {
    * A terminal state is one of CANCELED, FAILED, EXPIRED, or COMPLETE.
    */
   bool IsTerminal(Task::State state);
-}
-
-namespace Beam {
-  template<>
-  struct EnumeratorCount<Spire::Task::State> :
-    std::integral_constant<int, 7> {};
 }
 
 #endif

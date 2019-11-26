@@ -83,29 +83,26 @@ void Spire::ExportSide(lua_State& state) {
 
 void Spire::ExportTaskState(lua_State& state) {
   lua_newtable(&state);
-  lua_pushliteral(&state, "NONE");
-  lua_pushnumber(&state, Task::State::NONE);
+  lua_pushliteral(&state, "READY");
+  lua_pushnumber(&state, static_cast<int>(Task::State::READY));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "INITIALIZING");
-  lua_pushnumber(&state, Task::State::INITIALIZING);
+  lua_pushnumber(&state, static_cast<int>(Task::State::INITIALIZING));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "ACTIVE");
-  lua_pushnumber(&state, Task::State::ACTIVE);
+  lua_pushnumber(&state, static_cast<int>(Task::State::ACTIVE));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "PENDING_CANCEL");
-  lua_pushnumber(&state, Task::State::PENDING_CANCEL);
+  lua_pushnumber(&state, static_cast<int>(Task::State::PENDING_CANCEL));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "CANCELED");
-  lua_pushnumber(&state, Task::State::CANCELED);
+  lua_pushnumber(&state, static_cast<int>(Task::State::CANCELED));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "FAILED");
-  lua_pushnumber(&state, Task::State::FAILED);
-  lua_settable(&state, -3);
-  lua_pushliteral(&state, "EXPIRED");
-  lua_pushnumber(&state, Task::State::EXPIRED);
+  lua_pushnumber(&state, static_cast<int>(Task::State::FAILED));
   lua_settable(&state, -3);
   lua_pushliteral(&state, "COMPLETE");
-  lua_pushnumber(&state, Task::State::COMPLETE);
+  lua_pushnumber(&state, static_cast<int>(Task::State::COMPLETE));
   lua_settable(&state, -3);
   lua_setglobal(&state, "TaskState");
 }
@@ -116,4 +113,3 @@ void Spire::ExportLuaTypes(lua_State& state) {
   ExportSide(state);
   ExportTaskState(state);
 }
-

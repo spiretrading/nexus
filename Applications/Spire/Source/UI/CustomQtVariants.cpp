@@ -152,12 +152,9 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       lexical_cast<std::string>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
-  } else if(value.canConvert<Task::State>()) {
-    Task::State state = value.value<Task::State>();
-    if(state == Task::State::NONE) {
-      return tr("Ready");
-    }
-    return QString::fromStdString(lexical_cast<string>(state));
+  } else if(value.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
+    return QString::fromStdString(lexical_cast<string>(
+      value.value<Task::State>()));
   } else if(value.canConvert<OrderType>()) {
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
@@ -196,10 +193,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   if(rightVariant.canConvert<any>()) {
     rightVariant = AnyToVariant(rightVariant.value<any>());
   }
-  if(leftVariant.type() != rightVariant.type()) {
+  if(leftVariant.userType() != rightVariant.userType()) {
     return QSortFilterProxyModel::lessThan(left, right);
   }
-  if(leftVariant.canConvert<Task::State>()) {
+  if(leftVariant.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
     return Compare(lexical_cast<string>(leftVariant.value<Task::State>()),
       lexical_cast<string>(rightVariant.value<Task::State>()), left, right);
   } else if(leftVariant.canConvert<ptime>()) {
