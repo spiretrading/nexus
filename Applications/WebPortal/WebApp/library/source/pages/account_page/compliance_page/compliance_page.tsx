@@ -12,16 +12,16 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase?: Nexus.CurrencyDatabase;
 
-  /** The list of compliance rules. */
+  /** The list of compliance rules to display and edit. */
   complianceList: Nexus.ComplianceRuleEntry[];
 
-  /** A list of rule Schemas */
+  /** A list of rule schemas. Used in adding new rules. */
   ruleSchemas: Nexus.ComplianceRuleSchema[];
 }
 
 interface State {
   complianceList: Nexus.ComplianceRuleEntry[];
-  isAddNewRulewModalOpen: boolean;
+  isAddRulewModalOpen: boolean;
 }
 
 /* Displays the compliance page.*/
@@ -30,7 +30,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       complianceList: this.props.complianceList.slice(),
-      isAddNewRulewModalOpen: false
+      isAddRulewModalOpen: false
     };
     this.onRuleChange = this.onRuleChange.bind(this);
   }
@@ -56,8 +56,8 @@ export class CompliancePage extends React.Component<Properties, State> {
             onChange={this.onRuleChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize}
-            isOpen={this.state.isAddNewRulewModalOpen}
-            onToggleModal={this.onToggleAddNewRuleModal.bind(this)}
+            isOpen={this.state.isAddRulewModalOpen}
+            onToggleModal={this.onToggleAddRuleModal.bind(this)}
             onAddNewRule={this.onAddNewRule.bind(this)}
             ruleSchemas={this.props.ruleSchemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
@@ -71,8 +71,8 @@ export class CompliancePage extends React.Component<Properties, State> {
     this.setState({complianceList: this.state.complianceList});
   }
 
-  private onToggleAddNewRuleModal() {
-    this.setState({isAddNewRulewModalOpen: !this.state.isAddNewRulewModalOpen});
+  private onToggleAddRuleModal() {
+    this.setState({isAddRulewModalOpen: !this.state.isAddRulewModalOpen});
   }
 
   private onAddNewRule(schema: Nexus.ComplianceRuleSchema) {
@@ -98,7 +98,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     },
     filler: {
       flexGrow: 1,
-      flexShrink: 1,
+      flexShrink: 1
     },
     paddingMedium: {
       width: '100%',
@@ -113,7 +113,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       flexDirection: 'column' as 'column',
       minWidth: '284px',
       maxWidth: '424px',
-      width: '100%',
+      width: '100%'
     },
     mediumContent: {
       display: 'flex' as 'flex',
@@ -124,17 +124,6 @@ export class CompliancePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px'
-    },
-    newRuleRow: {
-      height: '20px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      font: '400 16px Roboto',
-    },
-    newRuleText: {
-      font: '400 14px Roboto',
-      height: '20px',
-      paddingLeft: '18px'
     }
   };
 }
