@@ -206,7 +206,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '461px',
-      top: 'calc(50% - 279.5px)',
+            top: 'calc(50% - 230.5px)',
       left: 'calc(50% - 180px)',
     },
     smallOptionsBox: {
@@ -228,7 +228,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '461px',
-      top: 'calc(50% - 279.5px)',
+      top: 'calc(50% - 230.5px)',
       left: 'calc(50% - 180px)'
     },
     header: {
