@@ -47,12 +47,12 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.DOUBLE, 345.686868)),
         new Nexus.ComplianceParameter(
           'Quantity',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.QUANTITY, 234.56)),
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.QUANTITY, 234.56)),
         new Nexus.ComplianceParameter(
           'Duration',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000)))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000)))
       ]));
     ruleEntries.push(someEntry2);
     const ruleSchemas = [];
@@ -61,77 +61,81 @@ class TestApp extends React.Component<Properties> {
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000'))),
         new Nexus.ComplianceParameter(
           'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
       new Nexus.ComplianceRuleSchema('Max Payout',[
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000'))),
         new Nexus.ComplianceParameter(
           'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
       new Nexus.ComplianceRuleSchema('Payout Range',[
         new Nexus.ComplianceParameter(
-          'Currency',
+          'Min',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000'))),
         new Nexus.ComplianceParameter(
-          'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          'Max',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000')))
       ]));
     ruleSchemas.push(
       new Nexus.ComplianceRuleSchema('Min Payout',[
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000'))),
         new Nexus.ComplianceParameter(
           'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
       new Nexus.ComplianceRuleSchema('Some Rule',[
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(23424))),
         new Nexus.ComplianceParameter(
           'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
       new Nexus.ComplianceRuleSchema('Timeout Period',[
         new Nexus.ComplianceParameter(
-          'Currency',
+          'Time Out Duration',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
-        new Nexus.ComplianceParameter(
-          'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(2342)))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Last Rule',[
+      new Nexus.ComplianceRuleSchema('Rule with many Parameters',[
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.CURRENCY, Nexus.Money.parse('10000'))),
+            Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000'))),
         new Nexus.ComplianceParameter(
           'Money',
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD)),
+        new Nexus.ComplianceParameter(
+          'Some Number',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.QUANTITY, 2423)),
+        new Nexus.ComplianceParameter(
+          'Some Double',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.DOUBLE, 123.4567)),
       ]));
     return(
       <WebPortal.CompliancePage
