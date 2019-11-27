@@ -8,7 +8,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** A list of rule schemas */
+  /** A list of rule schemas that define the new rules. */
   ruleSchemas: Nexus.ComplianceRuleSchema[];
 
   /** Determines if the modal should be open or not. */
@@ -45,14 +45,14 @@ export class NewRuleButton extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return NewRuleButton.STYLE.smallOptionsBox;
       } else {
-        return NewRuleButton.STYLE.bigOptionsBox;
+        return NewRuleButton.STYLE.largeOptionsBox;
       }
     })();
     const shadowBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return NewRuleButton.STYLE.boxShadowSmall;
       } else {
-        return NewRuleButton.STYLE.boxShadowBig;
+        return NewRuleButton.STYLE.boxShadowLarge;
       }
     })();
     const modalStyle = (() => {
@@ -101,7 +101,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
               height={plusSignImageSize}
               width={plusSignImageSize}/>
           </div>
-          <div style={NewRuleButton.STYLE.newRuleText}>Add New Rule</div>
+          <div style={NewRuleButton.STYLE.newRuleText}>{'Add New Rule'}</div>
         </div>
         <div style={modalStyle}>
           <div style={NewRuleButton.STYLE.overlay}/>
@@ -109,7 +109,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
           <div style={contentBoxStyle}>
             <div style={NewRuleButton.STYLE.header}>
               <div style={NewRuleButton.STYLE.headerText}>
-                {NewRuleButton.MODAL_HEADER}
+                {'Add New Rule'}
               </div>
               <img height={plusSignImageSize} width={plusSignImageSize}
                 onClick={this.props.onToggleModal}
@@ -124,7 +124,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
                 <button 
                     className={css(NewRuleButton.EXTRA_STYLE.bacon)}
                     onClick={this.addNewRule.bind(this)}>
-                  {NewRuleButton.BUTTON_TEXT}
+                  {'Select'}
                 </button>
               </div>
             </div>
@@ -198,7 +198,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       top: '0%',
       right: '0%'
     },
-    boxShadowBig: {
+    boxShadowLarge: {
       boxSizing: 'border-box' as 'border-box',
       opacity: 0.4,
       boxShadow: '0px 0px 6px #000000',
@@ -221,7 +221,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       top: '0%',
       right: '0%'
     },
-    bigOptionsBox: {
+    largeOptionsBox: {
       opacity: 1,
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
@@ -341,7 +341,4 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly MODAL_HEADER = 'Add New Rule';
-  private static readonly BUTTON_TEXT = 'Select';
-  private static readonly IMAGE_SIZE = '20px';
 }

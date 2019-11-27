@@ -8,11 +8,8 @@ interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
 
+/** Displays a sample CompliancePage for testing. */
 class TestApp extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render(): JSX.Element {
     const ruleEntries  = [] as Nexus.ComplianceRuleEntry[];
     const someEntry = new Nexus.ComplianceRuleEntry(
@@ -25,7 +22,8 @@ class TestApp extends React.Component<Properties> {
             'Money',
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('1234.56'))),
-          new Nexus.ComplianceParameter('Currency',
+          new Nexus.ComplianceParameter(
+            'Currency',
             new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY, 
               Nexus.DefaultCurrencies.CAD)),
           new Nexus.ComplianceParameter(
@@ -40,7 +38,7 @@ class TestApp extends React.Component<Properties> {
       34,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.PASSIVE,
-      new Nexus.ComplianceRuleSchema('New Components',[
+      new Nexus.ComplianceRuleSchema('New Components', [
         new Nexus.ComplianceParameter(
           'Decimal',
           new Nexus.ComplianceValue(
@@ -57,7 +55,7 @@ class TestApp extends React.Component<Properties> {
     ruleEntries.push(someEntry2);
     const ruleSchemas = [];
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Buying Power',[
+      new Nexus.ComplianceRuleSchema('Buying Power', [
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
@@ -68,7 +66,7 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Max Payout',[
+      new Nexus.ComplianceRuleSchema('Max Payout', [
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
@@ -79,7 +77,7 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Payout Range',[
+      new Nexus.ComplianceRuleSchema('Payout Range', [
         new Nexus.ComplianceParameter(
           'Min',
           new Nexus.ComplianceValue(
@@ -90,7 +88,7 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('10000')))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Min Payout',[
+      new Nexus.ComplianceRuleSchema('Min Payout', [
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
@@ -101,7 +99,7 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Some Rule',[
+      new Nexus.ComplianceRuleSchema('Some Rule', [
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
@@ -112,14 +110,14 @@ class TestApp extends React.Component<Properties> {
             Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Timeout Period',[
+      new Nexus.ComplianceRuleSchema('Timeout Period', [
         new Nexus.ComplianceParameter(
           'Time Out Duration',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(2342)))
       ]));
     ruleSchemas.push(
-      new Nexus.ComplianceRuleSchema('Rule with many Parameters',[
+      new Nexus.ComplianceRuleSchema('Rule with many Parameters', [
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(
