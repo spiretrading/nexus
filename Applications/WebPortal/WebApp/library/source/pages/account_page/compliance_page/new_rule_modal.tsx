@@ -181,6 +181,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       position: 'fixed' as 'fixed',
       width: '100%',
       height: '100%',
+      minHeight: '501px',
       backgroundColor: '#FFFFFF',
       opacity: 0.9
     },
