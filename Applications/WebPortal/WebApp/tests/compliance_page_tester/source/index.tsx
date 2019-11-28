@@ -187,4 +187,4 @@ class TestApp extends React.Component<Properties, State> {
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage />, document.getElementById('main'));
+ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));

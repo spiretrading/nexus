@@ -21,6 +21,7 @@ interface Properties {
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
+  /** The callback for updating a changed rule. */
   onRuleChanged?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
 
