@@ -15,7 +15,7 @@ interface Properties {
   complianceList: Nexus.ComplianceRuleEntry[];
 
   /** The event handler called when a rule entry changes. */
-  onChange?: (ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) => void;
+  onChange?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
 
 /** Displays a list of rules. */
@@ -33,15 +33,12 @@ export class RulesList extends React.Component<Properties> {
           displaySize={this.props.displaySize}
           complianceRule={rule}
           currencyDatabase={this.props.currencyDatabase}
-          onChange={this.onChange.bind(this, i)}/>);
+          onChange={(updatedRule: Nexus.ComplianceRuleEntry) => 
+            this.props.onChange(updatedRule)}/>);
     }
     return (
       <div>
         {rules}
       </div>);
-  }
-
-  private onChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
-    this.props.onChange(ruleIndex, newRule);
   }
 }

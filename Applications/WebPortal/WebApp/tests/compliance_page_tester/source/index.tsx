@@ -163,12 +163,17 @@ class TestApp extends React.Component<Properties, State> {
         schemas: this.state.schemas
       });
   }
-   private onRuleChange(index: number, newRule: Nexus.ComplianceRuleEntry) {
-     this.state.entries[index] = newRule;
-     this.setState({entries: this.state.entries});
-   }
 
-   private onRuleAdd(newSchema: Nexus.ComplianceRuleSchema) {
+  private onRuleChange(updatedRule: Nexus.ComplianceRuleEntry) {
+    for(let i = 0; i< this.state.entries.length; ++i) {
+      if(this.state.entries[i].id === updatedRule.id) {
+        this.state.entries[i] = updatedRule;
+        this.setState({entries: this.state.entries});
+      }
+    }
+  }
+
+  private onRuleAdd(newSchema: Nexus.ComplianceRuleSchema) {
       this.state.entries.push(
       new Nexus.ComplianceRuleEntry(
         0,
@@ -178,7 +183,7 @@ class TestApp extends React.Component<Properties, State> {
       )
     );
     this.setState({entries: this.state.entries});
-   }
+  }
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);

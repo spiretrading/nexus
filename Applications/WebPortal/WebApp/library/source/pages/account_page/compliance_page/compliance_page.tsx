@@ -18,10 +18,10 @@ interface Properties {
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
 
-  /** */
+  /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
-  onRuleChanged?: (index: number, newRule: Nexus.ComplianceRuleEntry) => void;
+  onRuleChanged?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -71,12 +71,11 @@ export class CompliancePage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onRuleChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
-    this.props.onRuleChanged(ruleIndex, newRule);
+  private onRuleChange(newRule: Nexus.ComplianceRuleEntry) {
+    this.props.onRuleChanged(newRule);
   }
 
   private onToggleAddRuleModal() {
-    ///put callback here 
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
 
