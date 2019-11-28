@@ -8,16 +8,16 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** A list of rule schemas that define the new rules. */
-  ruleSchemas: Nexus.ComplianceRuleSchema[];
+  /** The list of rule schemas that define the new rules. */
+  schemas: Nexus.ComplianceRuleSchema[];
 
   /** Determines if the modal should be open or not. */
   isOpen?: boolean;
 
-  /** A callback to hide or show the uploader. */
+  /** The callback to hide or show the uploader. */
   onToggleModal?: () => void;
 
-  /** A callback to add a rule with the following schema. */
+  /** The callback to add a rule with the following schema. */
   onAddNewRule?: (newRule: Nexus.ComplianceRuleSchema) => void;
 }
 
@@ -77,18 +77,18 @@ export class NewRuleButton extends React.Component<Properties, State> {
       }
     })();
     const options = [];
-    for(let i = 0; i < this.props.ruleSchemas.length; ++i) {
+    for(let i = 0; i < this.props.schemas.length; ++i) {
         if(i === this.state.selection) {
           options.push(
             <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
                 onClick={this.onClickRule.bind(this, i)}>
-              {this.props.ruleSchemas[i].name}
+              {this.props.schemas[i].name}
             </div>);
         } else {
           options.push(
             <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
               onClick={this.onClickRule.bind(this, i)}>
-              {this.props.ruleSchemas[i].name}
+              {this.props.schemas[i].name}
             </div>);
       }
     }
@@ -145,7 +145,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     if(this.state.selection === -1) {
       return;
     }
-    this.props.onAddNewRule(this.props.ruleSchemas[this.state.selection]);
+    this.props.onAddNewRule(this.props.schemas[this.state.selection]);
     this.props.onToggleModal();
     this.setState({selection: -1});
   }

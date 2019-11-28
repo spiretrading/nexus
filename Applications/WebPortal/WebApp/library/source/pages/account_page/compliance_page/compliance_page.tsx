@@ -13,15 +13,19 @@ interface Properties {
   currencyDatabase?: Nexus.CurrencyDatabase;
 
   /** The list of compliance rules to display and edit. */
-  complianceList: Nexus.ComplianceRuleEntry[];
+  entries: Nexus.ComplianceRuleEntry[];
 
-  /** A list of rule schemas. Used in adding new rules. */
-  ruleSchemas: Nexus.ComplianceRuleSchema[];
+  /** The list of rule schemas. Used in adding new rules. */
+  schemas: Nexus.ComplianceRuleSchema[];
+
+  /** */
+  onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
+
+  onRuleChanged?: (index: number, newRule: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
-  complianceList: Nexus.ComplianceRuleEntry[];
-  isAddRulewModalOpen: boolean;
+  isAddRuleModalOpen: boolean;
 }
 
 /* Displays the compliance page.*/
@@ -29,8 +33,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      complianceList: this.props.complianceList.slice(),
-      isAddRulewModalOpen: false
+      isAddRuleModalOpen: false
     };
     this.onRuleChange = this.onRuleChange.bind(this);
     this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
@@ -54,14 +57,14 @@ export class CompliancePage extends React.Component<Properties, State> {
           <RulesList
             displaySize={this.props.displaySize}
             currencyDatabase={this.props.currencyDatabase}
-            complianceList={this.state.complianceList}
+            complianceList={this.props.entries}
             onChange={this.onRuleChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize}
-            isOpen={this.state.isAddRulewModalOpen}
+            isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
             onAddNewRule={this.onAddNewRule}
-            ruleSchemas={this.props.ruleSchemas}/>
+            schemas={this.props.schemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
         <div style={CompliancePage.STYLE.filler}/>
@@ -69,24 +72,16 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private onRuleChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
-    this.state.complianceList[ruleIndex] = newRule;
-    this.setState({complianceList: this.state.complianceList});
+    this.props.onRuleChanged(ruleIndex, newRule);
   }
 
   private onToggleAddRuleModal() {
-    this.setState({isAddRulewModalOpen: !this.state.isAddRulewModalOpen});
+    ///put callback here 
+    this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
 
   private onAddNewRule(schema: Nexus.ComplianceRuleSchema) {
-    this.state.complianceList.push(
-      new Nexus.ComplianceRuleEntry(
-        0,
-        Beam.DirectoryEntry.makeDirectory(0, 'empty'),
-        Nexus.ComplianceRuleEntry.State.DISABLED,
-        schema
-      )
-    );
-    this.setState({complianceList: this.state.complianceList});
+    this.props.onRuleAdd(schema);
   }
 
   private static readonly STYLE = {
@@ -95,7 +90,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       paddingLeft: '18px',
       paddingRight: '18px',
       paddingBottom: '60px',
-      height: '100vh',
+      height: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row'
     },
