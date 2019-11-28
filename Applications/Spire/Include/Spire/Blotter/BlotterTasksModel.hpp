@@ -210,6 +210,8 @@ namespace Spire {
       std::vector<BlotterTasksModel*> m_outgoingLinks;
       std::unique_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         m_accountOrderPublisher;
+      std::set<const Nexus::OrderExecutionService::Order*> m_submittedOrders;
+      std::set<const Nexus::OrderExecutionService::Order*> m_taskOrders;
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;
       Beam::TaskQueue m_orderSlotHandler;
@@ -219,7 +221,9 @@ namespace Spire {
       void OnMonitorUpdate(TaskEntry& entry, const std::string& property,
         const boost::any& value);
       void OnTaskState(TaskEntry& entry, const Task::StateEntry& update);
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
+      void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
+      void OnTaskOrderSubmitted(
+        const Nexus::OrderExecutionService::Order* order);
       void OnUpdateTimer();
       void OnExpiryTimer();
   };

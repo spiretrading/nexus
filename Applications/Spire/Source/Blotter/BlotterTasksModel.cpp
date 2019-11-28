@@ -93,8 +93,7 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
       std::make_unique<QueuePublisher<SequencePublisher<const Order*>>>(
       orderQueue);
     m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
-      std::bind(&BlotterTasksModel::OnOrderExecuted, this,
-      std::placeholders::_1)));
+      [=] (const Order* order) { OnOrderSubmitted(order); }));
   }
   connect(&m_updateTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnUpdateTimer);
@@ -171,6 +170,9 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   }
   m_properOrderExecutionPublisher.Add(
     entryReference.m_task->GetContext().GetOrderPublisher());
+  entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
+    m_orderSlotHandler.GetSlot<const Order*>(
+    [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
   return entryReference;
 }
 
@@ -194,6 +196,8 @@ void BlotterTasksModel::Refresh() {
     m_taskSlotHandler = std::nullopt;
     m_taskSlotHandler.emplace();
     m_taskIds.clear();
+    m_submittedOrders.clear();
+    m_taskOrders.clear();
     endRemoveRows();
     for(auto& entry : entries) {
       m_taskRemovedSignal(*entry);
@@ -354,13 +358,29 @@ void BlotterTasksModel::OnTaskState(TaskEntry& entry,
   }
 }
 
-void BlotterTasksModel::OnOrderExecuted(const Order* order) {
+void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
+  if(m_taskOrders.count(order) != 0) {
+    m_taskOrders.erase(order);
+    return;
+  } else if(m_submittedOrders.insert(order).second) {
+    m_orderSlotHandler.Push([=] {
+      OnOrderSubmitted(order);
+    });
+    return;
+  }
+  m_submittedOrders.erase(order);
   auto stateQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(stateQueue);
   if(stateQueue->IsEmpty() || IsTerminal(stateQueue->Top().m_status)) {
+    m_properOrderExecutionPublisher.Push(order);
     return;
   }
-  Add(OrderWrapperTaskNode(*order, *m_userProfile));
+  auto& entry = Add(OrderWrapperTaskNode(*order, *m_userProfile));
+  entry.m_task->Execute();
+}
+
+void BlotterTasksModel::OnTaskOrderSubmitted(const Order* order) {
+  m_taskOrders.insert(order);
 }
 
 void BlotterTasksModel::OnUpdateTimer() {

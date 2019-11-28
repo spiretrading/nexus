@@ -54,7 +54,6 @@
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
-#include "Spire/Canvas/ReferenceNodes/ProxyNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/StandardNodes/AbsNode.hpp"
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
@@ -1373,23 +1372,8 @@ void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
-  auto& anchor = *FindAnchor(node);
   auto& referent = *node.FindReferent();
   m_translation = InternalTranslation(referent);
-#if 0 // TODO
-  if(referent.GetType().GetCompatibility(OrderReferenceType::GetInstance()) !=
-      CanvasType::Compatibility::EQUAL) {
-    auto parent = referent.GetParent();
-    if(parent.is_initialized() &&
-        dynamic_cast<const SpawnNode*>(&*parent) != nullptr) {
-      if(&referent == &parent->GetChildren().front()) {
-        m_translation = Instantiate<FirstTranslator>(
-          static_cast<const NativeType&>(node.GetType()).GetNativeType())(
-          boost::get<std::shared_ptr<BaseReactor>>(m_translation));
-      }
-    }
-  }
-#endif
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RoundNode& node) {
