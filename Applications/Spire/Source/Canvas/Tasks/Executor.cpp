@@ -12,7 +12,7 @@ Executor::~Executor() {
 }
 
 void Executor::Add(Aspen::Box<void> reactor) {
-  m_producer->push(std::move(reactor));
+  m_producer->push(Aspen::Shared(std::move(reactor)));
 }
 
 void Executor::Open() {
@@ -46,9 +46,9 @@ void Executor::RunLoop() {
   while(m_openState.IsRunning()) {
     auto state = m_reactor.commit(sequence);
     ++sequence;
-    if(is_complete(state)) {
+    if(Aspen::is_complete(state)) {
       break;
-    } else if(!has_continuation(state)) {
+    } else if(!Aspen::has_continuation(state)) {
       auto lock = std::unique_lock(m_mutex);
       while(!m_has_update && m_openState.IsRunning()) {
         m_updateCondition.wait(lock);

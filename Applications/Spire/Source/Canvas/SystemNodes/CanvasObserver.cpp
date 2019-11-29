@@ -29,11 +29,10 @@ namespace {
     template<typename T>
     static Aspen::Box<void> Template(const Translation& translation,
         const std::function<void (const any& value)>& callback) {
-      auto observer = translation.Extract<Aspen::Box<T>>();
-      return Aspen::Box(Aspen::Lift(
+      return Aspen::box(Aspen::lift(
         [=] (const T& value) {
           callback(value);
-        }, observer));
+        }, translation.Extract<Aspen::SharedBox<T>>()));
     }
 
     using SupportedTypes = ValueTypes;
@@ -118,7 +117,7 @@ void CanvasObserver::Translate() {
         [=] (const any& value) {
           OnReactorUpdate(value);
         }));
-      m_task->GetExecutor().Add(reactor);
+      m_task->GetExecutor().Add(std::move(reactor));
       monitorTranslated = true;
       m_isTranslated = true;
     }

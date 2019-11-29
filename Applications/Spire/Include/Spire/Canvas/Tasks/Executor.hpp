@@ -32,8 +32,9 @@ namespace Spire {
       std::mutex m_mutex;
       Beam::Routines::RoutineHandler m_reactorLoop;
       bool m_has_update;
-      Aspen::Shared<Aspen::Queue<Aspen::Box<void>>> m_producer;
-      Aspen::Group<Aspen::Shared<Aspen::Queue<Aspen::Box<void>>>> m_reactor;
+      Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;
+      Aspen::Group<Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>>>
+        m_reactor;
       Beam::Threading::ConditionVariable m_updateCondition;
       Beam::IO::OpenState m_openState;
 

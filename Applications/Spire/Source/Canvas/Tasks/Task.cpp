@@ -64,7 +64,8 @@ void Task::Execute() {
     return;
   }
   m_isExecutable = false;
-  auto translation = Translate(m_context, *m_node).Extract<Aspen::Box<void>>();
+  auto translation = Translate(m_context,
+    *m_node).Extract<Aspen::SharedBox<void>>();
   m_executor.Add(Aspen::box(
     Aspen::chain(
       Aspen::lift([=] {
