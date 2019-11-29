@@ -1890,6 +1890,66 @@ namespace {
     neoSell.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
     neoSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(neoSell.Build());
+    CanvasNodeBuilder neoIocBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Book IOC Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoIocBid.SetReadOnly("ex_destination", true);
+    neoIocBid.SetVisible("ex_destination", false);
+    neoIocBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoIocBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoIocBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoIocBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::IOC)));
+    neoIocBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoIocBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoIocBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoIocBid.Build());
+    CanvasNodeBuilder neoIocAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Book IOC Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoIocAsk.SetReadOnly("ex_destination", true);
+    neoIocAsk.SetVisible("ex_destination", false);
+    neoIocAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoIocAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoIocAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoIocAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::IOC)));
+    neoIocAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoIocAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoIocAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoIocAsk.Build());
+    CanvasNodeBuilder neoFokBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Book FOK Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoFokBid.SetReadOnly("ex_destination", true);
+    neoFokBid.SetVisible("ex_destination", false);
+    neoFokBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoFokBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoFokBid.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoFokBid.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::FOK)));
+    neoFokBid.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoFokBid.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoFokBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoFokBid.Build());
+    CanvasNodeBuilder neoFokAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Book FOK Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoFokAsk.SetReadOnly("ex_destination", true);
+    neoFokAsk.SetVisible("ex_destination", false);
+    neoFokAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoFokAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
+    neoFokAsk.SetReadOnly(BaseSingleOrderTaskFactory::DESTINATION, true);
+    neoFokAsk.Replace(BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::FOK)));
+    neoFokAsk.SetVisible(BaseSingleOrderTaskFactory::TIME_IN_FORCE, false);
+    neoFokAsk.SetReadOnly(BaseSingleOrderTaskFactory::TIME_IN_FORCE, true);
+    neoFokAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoFokAsk.Build());
     CanvasNodeBuilder neoMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NEOE Book Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M"))->AddField("ex_destination", 100,
