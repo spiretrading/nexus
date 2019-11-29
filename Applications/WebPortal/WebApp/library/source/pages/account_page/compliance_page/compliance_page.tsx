@@ -1,4 +1,3 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
@@ -22,7 +21,7 @@ interface Properties {
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
   /** The callback for updating a changed rule. */
-  onRuleChanged?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
+  onRuleChange?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
@@ -73,7 +72,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private onRuleChange(newRule: Nexus.ComplianceRuleEntry) {
-    this.props.onRuleChanged(newRule);
+    this.props.onRuleChange(newRule);
   }
 
   private onToggleAddRuleModal() {
