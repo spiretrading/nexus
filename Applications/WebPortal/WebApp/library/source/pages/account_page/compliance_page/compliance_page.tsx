@@ -35,9 +35,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     this.state = {
       isAddRuleModalOpen: false
     };
-    this.onRuleChange = this.onRuleChange.bind(this);
     this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
-    this.onAddNewRule = this.onAddNewRule.bind(this);
   }
 
   public render(): JSX.Element {
@@ -58,12 +56,12 @@ export class CompliancePage extends React.Component<Properties, State> {
             displaySize={this.props.displaySize}
             currencyDatabase={this.props.currencyDatabase}
             complianceList={this.props.entries}
-            onChange={this.onRuleChange}/>
+            onChange={this.props.onRuleChange}/>
           <div style={CompliancePage.STYLE.paddingMedium}/>
           <NewRuleButton displaySize={this.props.displaySize}
             isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
-            onAddNewRule={this.onAddNewRule}
+            onAddNewRule={this.props.onRuleAdd}
             schemas={this.props.schemas}/>
           <div style={CompliancePage.STYLE.paddingLarge}/>
         </div>
@@ -71,16 +69,8 @@ export class CompliancePage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onRuleChange(newRule: Nexus.ComplianceRuleEntry) {
-    this.props.onRuleChange(newRule);
-  }
-
   private onToggleAddRuleModal() {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
-  }
-
-  private onAddNewRule(schema: Nexus.ComplianceRuleSchema) {
-    this.props.onRuleAdd(schema);
   }
 
   private static readonly STYLE = {

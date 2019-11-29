@@ -30,7 +30,7 @@ class TestApp extends React.Component<Properties, State> {
     return(
       <WebPortal.CompliancePage
         onRuleAdd={this.onRuleAdd}
-        onRuleChanged={this.onRuleChange}
+        onRuleChange={this.onRuleChange}
         displaySize={this.props.displaySize} 
         schemas={this.state.schemas}
         currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
