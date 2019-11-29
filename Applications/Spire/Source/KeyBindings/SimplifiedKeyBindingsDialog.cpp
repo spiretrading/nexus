@@ -582,7 +582,10 @@ namespace {
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
-      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
+      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    chixSmartXDarkLimitBid.SetReadOnly("long_life", true);
+    chixSmartXDarkLimitBid.SetVisible("long_life", false);
     chixSmartXDarkLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::CHIX()));
     chixSmartXDarkLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
@@ -603,7 +606,10 @@ namespace {
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
-      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
+      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    chixSmartXDarkLimitAsk.SetReadOnly("long_life", true);
+    chixSmartXDarkLimitAsk.SetVisible("long_life", false);
     chixSmartXDarkLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::CHIX()));
     chixSmartXDarkLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION,
@@ -2153,7 +2159,10 @@ namespace {
   void PopulateTsxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder tsxLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "TSX Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    tsxLimitBid.SetReadOnly("long_life", true);
+    tsxLimitBid.SetVisible("long_life", false);
     tsxLimitBid.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::TSX()));
     tsxLimitBid.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
@@ -2166,7 +2175,10 @@ namespace {
     orderTypes.emplace_back(tsxLimitBid.Build());
     CanvasNodeBuilder tsxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSX Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    tsxLimitAsk.SetReadOnly("long_life", true);
+    tsxLimitAsk.SetVisible("long_life", false);
     tsxLimitAsk.Replace(BaseSingleOrderTaskFactory::DESTINATION,
       make_unique<DestinationNode>(DefaultDestinations::TSX()));
     tsxLimitAsk.SetVisible(BaseSingleOrderTaskFactory::DESTINATION, false);
