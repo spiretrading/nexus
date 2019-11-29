@@ -5,4 +5,5 @@ export * from './application_model';
 export * from './dashboard_page';
 export * from './loading_page';
 export * from './login_page';
+export * from './page_wrapper';
 export * from './web_application_model';
