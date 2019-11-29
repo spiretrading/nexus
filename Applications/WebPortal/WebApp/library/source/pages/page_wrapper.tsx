@@ -16,8 +16,8 @@ export function pageWrapper(BaseComponent: React.ComponentType<any>) {
     STYLE = {
       page: {
         //boxSizing: 'border-box' as 'border-box',
-        //width: '100%',
-        //height: '100%',
+        width: '100%',
+        height: '100%',
         display: 'flex' as 'flex',
         flex: 'column' as 'column',
         flexWrap: 'nowrap' as 'nowrap',
@@ -27,8 +27,7 @@ export function pageWrapper(BaseComponent: React.ComponentType<any>) {
         alignItems: 'flex-start' as 'flex-start',
         margin: 0,
         padding: 0,
-        minWidth: 0
-      //minWidth: '320px'
+        minWidth: '320px'
       }
     };
   };
