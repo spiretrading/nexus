@@ -109,8 +109,8 @@ ca_equities:
   #   < $1.00     X       X
   lynx:
     fee_table:
-      [[ 0.00017,  0.00017],
-       [ 0.00023, -0.00010]]
+      [[ 0.00023, 0.0000],
+       [ 0.00023, 0.0000]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
