@@ -42,10 +42,10 @@ const Order& OmegaFixApplication::Recover(
 }
 
 const Order& OmegaFixApplication::Submit(const OrderInfo& info) {
-  DelayPtr<OrderInfo> modifiedInfo;
+  auto modifiedInfo = std::optional<OrderInfo>();
   const OrderInfo* submissionInfo;
   if(info.m_fields.m_type == OrderType::MARKET) {
-    modifiedInfo.Initialize(info);
+    modifiedInfo.emplace(info);
     submissionInfo = &*modifiedInfo;
     modifiedInfo->m_fields.m_type = OrderType::LIMIT;
     auto bboQuote = LoadBboQuote(modifiedInfo->m_fields.m_security);
