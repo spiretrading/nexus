@@ -7,18 +7,16 @@ using namespace Nexus;
 using namespace Spire;
 
 TestOrderImbalanceIndicatorModel::SubscriptionEntry::SubscriptionEntry(
-  const ptime& start, const ptime& end)
+    ptime start, ptime end)
   : m_start(start),
     m_end(end),
     m_is_loaded(false) {}
 
-const ptime&
-    TestOrderImbalanceIndicatorModel::SubscriptionEntry::get_start() const {
+ptime TestOrderImbalanceIndicatorModel::SubscriptionEntry::get_start() const {
   return m_start;
 }
 
-const ptime&
-    TestOrderImbalanceIndicatorModel::SubscriptionEntry::get_end() const {
+ptime TestOrderImbalanceIndicatorModel::SubscriptionEntry::get_end() const {
   return m_end;
 }
 
@@ -36,8 +34,8 @@ std::vector<Nexus::OrderImbalance>&
 }
 
 OrderImbalanceIndicatorModel::SubscriptionResult
-    TestOrderImbalanceIndicatorModel::subscribe(const ptime& start,
-    const ptime& end, const OrderImbalanceSignal::slot_type& slot) {
+    TestOrderImbalanceIndicatorModel::subscribe(ptime start, ptime end,
+    const OrderImbalanceSignal::slot_type& slot) {
   auto subscription_entry = std::make_shared<SubscriptionEntry>(start, end);
   {
     auto lock = std::lock_guard(m_mutex);

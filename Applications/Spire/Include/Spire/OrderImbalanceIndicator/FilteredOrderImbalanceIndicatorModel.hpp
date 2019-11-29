@@ -16,25 +16,24 @@ namespace Spire {
       //! Constructs a FilteredOrderImbalanceIndicatorModel with a given
       //! source model and specific filters.
       /*
-        \param source_model The model supplying data to the filtered model.
+        \param source The model supplying data to the filtered model.
         \param filters The functions applied to order imbalances as filters.
                        Filter functions return true if an imbalance should not
                        be filtered out.
       */
       FilteredOrderImbalanceIndicatorModel(
-        std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
+        std::shared_ptr<OrderImbalanceIndicatorModel> source,
         std::vector<Filter> filters);
 
-      SubscriptionResult subscribe(const boost::posix_time::ptime& start,
-        const boost::posix_time::ptime& end,
+      SubscriptionResult subscribe(boost::posix_time::ptime start,
+        boost::posix_time::ptime end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
-      std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
+      std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       std::vector<Filter> m_filters;
 
-      bool is_imbalance_accepted(
-        const Nexus::OrderImbalance& imbalance) const;
+      bool is_imbalance_accepted(const Nexus::OrderImbalance& imbalance) const;
       std::vector<Nexus::OrderImbalance> filter_imbalances(
         const std::vector<Nexus::OrderImbalance>& imbalances) const;
   };

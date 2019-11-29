@@ -9,8 +9,7 @@ namespace Spire {
   //! Represents an OrderImbalanceIndicatorModel for testing, allowing for the
   //! observation of subscription requests sent to the model and simulation
   //! of asynchronous loads.
-  class TestOrderImbalanceIndicatorModel :
-      public OrderImbalanceIndicatorModel {
+  class TestOrderImbalanceIndicatorModel : public OrderImbalanceIndicatorModel {
     public:
 
       //! Stores a request to subscribe to an OrderImbalanceModel.
@@ -22,14 +21,14 @@ namespace Spire {
             \param start The start time to begin loading from.
             \param end The end time to load until.
           */
-          SubscriptionEntry(const boost::posix_time::ptime& start,
-            const boost::posix_time::ptime& end);
+          SubscriptionEntry(boost::posix_time::ptime start,
+            boost::posix_time::ptime end);
 
           //! Returns the start time of the range to load.
-          const boost::posix_time::ptime& get_start() const;
+          boost::posix_time::ptime get_start() const;
 
           //! Returns the end time of the range to load.
-          const boost::posix_time::ptime& get_end() const;
+          boost::posix_time::ptime get_end() const;
 
           //! Sets the result of the subscribe operation.
           /*
@@ -51,9 +50,8 @@ namespace Spire {
           Beam::Threading::ConditionVariable m_subscription_condition;
       };
 
-      OrderImbalanceIndicatorModel::SubscriptionResult
-        subscribe(const boost::posix_time::ptime& start,
-        const boost::posix_time::ptime& end,
+      SubscriptionResult subscribe(boost::posix_time::ptime start,
+        boost::posix_time::ptime end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
       //! Pops the oldest subscribe request from this model's subcribe

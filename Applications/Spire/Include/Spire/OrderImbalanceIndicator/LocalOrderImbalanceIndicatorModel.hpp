@@ -16,20 +16,19 @@ namespace Spire {
       */
       void insert(const Nexus::OrderImbalance& imbalance);
 
-      SubscriptionResult subscribe(const boost::posix_time::ptime& start,
-        const boost::posix_time::ptime& end,
+      SubscriptionResult subscribe(boost::posix_time::ptime start,
+        boost::posix_time::ptime end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
       struct Subscription {
         OrderImbalanceSignal m_imbalance_signal;
-        boost::posix_time::ptime m_start_time;
-        boost::posix_time::ptime m_end_time;
+        boost::posix_time::ptime m_start;
+        boost::posix_time::ptime m_end;
 
-        Subscription(const boost::posix_time::ptime& start,
-          const boost::posix_time::ptime& end);
+        Subscription(boost::posix_time::ptime start,
+          boost::posix_time::ptime end);
       };
-
       std::vector<Subscription> m_signals;
       std::vector<Nexus::OrderImbalance> m_imbalances;
   };
