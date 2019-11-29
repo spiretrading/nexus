@@ -1,4 +1,4 @@
-file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Beam/Python/*.hpp)
+file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/Python/*.hpp)
 file(GLOB source_files ${NEXUS_SOURCE_PATH}/Python/*.cpp)
 
 include_directories(${PYTHON_INCLUDE_PATH})
