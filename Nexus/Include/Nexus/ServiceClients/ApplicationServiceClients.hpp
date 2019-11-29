@@ -139,82 +139,82 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         m_socketThreadPool{socketThreadPool.Get()},
         m_timerThreadPool{timerThreadPool.Get()},
         m_registryClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               Beam::RegistryService::ApplicationRegistryClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_administrationClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               AdministrationService::ApplicationAdministrationClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_definitionsClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               DefinitionsService::ApplicationDefinitionsClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_marketDataClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               MarketDataService::ApplicationMarketDataClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_chartingClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               ChartingService::ApplicationChartingClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_complianceClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               Compliance::ApplicationComplianceClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_orderExecutionClient{
-          [=] (Beam::DelayPtr<
+          [=] (std::optional<
               OrderExecutionService::ApplicationOrderExecutionClient>& client) {
-            client.Initialize();
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_riskClient{
-          [=] (Beam::DelayPtr<RiskService::ApplicationRiskClient>& client) {
-            client.Initialize();
+          [=] (std::optional<RiskService::ApplicationRiskClient>& client) {
+            client.emplace();
             client->BuildSession(Beam::Ref(*m_serviceLocatorClient),
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool));
             (*client)->Open();
           }
         },
         m_timeClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<TimeClient>>& client) {
+          [=] (std::optional<std::unique_ptr<TimeClient>>& client) {
             auto timeServices = m_serviceLocatorClient->Locate(
               Beam::TimeService::SERVICE_NAME);
             if(timeServices.empty()) {
-              client.Initialize(Beam::TimeService::MakeLiveNtpTimeClient({},
+              client.emplace(Beam::TimeService::MakeLiveNtpTimeClient({},
                 Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool)));
               BOOST_THROW_EXCEPTION(
                 Beam::IO::ConnectException{"No time services available."});
@@ -223,7 +223,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             auto ntpPool = Beam::FromString<
               std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
               timeService.GetProperties().At("addresses")));
-            client.Initialize(Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
+            client.emplace(Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
               Beam::Ref(*m_socketThreadPool), Beam::Ref(*m_timerThreadPool)));
             try {
               (*client)->Open();

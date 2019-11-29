@@ -3,7 +3,6 @@
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/UniquePointerPolicy.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>

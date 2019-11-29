@@ -87,8 +87,8 @@ const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
 }
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
-  if(!m_entitlementDatabase.IsInitialized()) {
-    m_entitlementDatabase.Initialize(
+  if(!m_entitlementDatabase.has_value()) {
+    m_entitlementDatabase.emplace(
       GetServiceClients().GetAdministrationClient().LoadEntitlements());
   }
   return *m_entitlementDatabase;

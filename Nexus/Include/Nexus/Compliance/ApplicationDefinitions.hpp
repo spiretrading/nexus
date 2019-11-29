@@ -1,10 +1,10 @@
 #ifndef NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_COMPLIANCE_APPLICATION_DEFINITIONS_HPP
+#include <optional>
 #include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -75,7 +75,7 @@ namespace Details {
       const Client* Get() const;
 
     private:
-      Beam::DelayPtr<Client> m_client;
+      std::optional<Client> m_client;
   };
 
   inline void ApplicationComplianceClient::BuildSession(Beam::Ref<
@@ -83,9 +83,9 @@ namespace Details {
       serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
       socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
       timerThreadPool) {
-    if(m_client.IsInitialized()) {
+    if(m_client.has_value()) {
       m_client->Close();
-      m_client.Reset();
+      m_client = std::nullopt;
     }
     auto serviceLocatorClientHandle = serviceLocatorClient.Get();
     auto socketThreadPoolHandle = socketThreadPool.Get();
@@ -110,17 +110,17 @@ namespace Details {
         return std::make_unique<Beam::Threading::LiveTimer>(
           boost::posix_time::seconds(10), Beam::Ref(*timerThreadPoolHandle));
       });
-    m_client.Initialize(sessionBuilder);
+    m_client.emplace(sessionBuilder);
   }
 
   inline ApplicationComplianceClient::Client&
       ApplicationComplianceClient::operator *() {
-    return m_client.Get();
+    return *m_client;
   }
 
   inline const ApplicationComplianceClient::Client&
       ApplicationComplianceClient::operator *() const {
-    return m_client.Get();
+    return *m_client;
   }
 
   inline ApplicationComplianceClient::Client*

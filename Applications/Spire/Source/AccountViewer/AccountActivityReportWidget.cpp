@@ -67,8 +67,8 @@ void AccountActivityReportWidget::OnUpdate(bool checked) {
     m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
   auto orderPublisher = std::make_shared<QueuePublisher<
     SequencePublisher<const Order*>>>(orderQueue);
-  m_model.Reset();
-  m_model.Initialize(Ref(*m_userProfile), orderPublisher);
+  m_model = std::nullopt;
+  m_model.emplace(Ref(*m_userProfile), orderPublisher);
   m_ui->m_profitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_model->m_profitAndLossModel));
 }

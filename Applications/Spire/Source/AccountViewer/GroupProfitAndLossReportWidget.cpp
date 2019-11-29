@@ -93,8 +93,8 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
     m_groupModels.push_back(std::move(reportModel));
     totalsPublisher->Add(*orderPublisher);
   }
-  m_totalsModel.Reset();
-  m_totalsModel.Initialize(Ref(*m_userProfile), totalsPublisher);
+  m_totalsModel = std::nullopt;
+  m_totalsModel.emplace(Ref(*m_userProfile), totalsPublisher);
   auto totalsProfitAndLossWidget = new ProfitAndLossWidget();
   totalsProfitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_totalsModel->m_profitAndLossModel));

@@ -1,6 +1,7 @@
 #ifndef SPIRE_USERPROFILE_HPP
 #define SPIRE_USERPROFILE_HPP
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
@@ -252,7 +253,7 @@ namespace Spire {
       Nexus::ExchangeRateTable m_exchangeRates;
       Nexus::MarketDatabase m_marketDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
-      mutable Beam::DelayPtr<Nexus::MarketDataService::EntitlementDatabase>
+      mutable std::optional<Nexus::MarketDataService::EntitlementDatabase>
         m_entitlementDatabase;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
       ServiceClients* m_serviceClients;

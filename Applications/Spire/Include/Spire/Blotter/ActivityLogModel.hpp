@@ -1,6 +1,6 @@
 #ifndef SPIRE_ACTIVITYLOGMODEL_HPP
 #define SPIRE_ACTIVITYLOGMODEL_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
@@ -99,7 +99,7 @@ namespace Spire {
       Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,

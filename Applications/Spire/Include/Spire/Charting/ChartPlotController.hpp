@@ -1,8 +1,8 @@
 #ifndef SPIRE_CHARTPLOTCONTROLLER_HPP
 #define SPIRE_CHARTPLOTCONTROLLER_HPP
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
@@ -69,7 +69,7 @@ namespace Spire {
       bool m_isAutoScaleEnabled;
       bool m_isLockGridEnabled;
       std::vector<std::shared_ptr<ChartPlotSeries>> m_series;
-      Beam::DelayPtr<ChartValue> m_lastValue;
+      std::optional<ChartValue> m_lastValue;
       std::uint64_t m_lastValueIndex;
       Beam::SynchronizedList<std::vector<std::tuple<std::uint64_t, ChartValue>>>
         m_lastValuesLoaded;

@@ -1,7 +1,7 @@
 #ifndef SPIRE_OPENPOSITIONSMODEL_HPP
 #define SPIRE_OPENPOSITIONSMODEL_HPP
+#include <optional>
 #include <unordered_map>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
@@ -111,7 +111,7 @@ namespace Spire {
       QTimer m_updateTimer;
       std::vector<std::unique_ptr<Entry>> m_entries;
       std::unordered_map<Nexus::Security, Entry*> m_securityToEntry;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void OnPortfolioUpdate(const SpirePortfolioMonitor::UpdateEntry& update);
       void OnUpdateTimer();

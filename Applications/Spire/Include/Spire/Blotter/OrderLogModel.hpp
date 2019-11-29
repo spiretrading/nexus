@@ -1,6 +1,6 @@
 #ifndef SPIRE_ORDERLOGMODEL_HPP
 #define SPIRE_ORDERLOGMODEL_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/signal.hpp>
@@ -156,7 +156,7 @@ namespace Spire {
       std::vector<OrderEntry> m_entries;
       mutable OrderAddedSignal m_orderAddedSignal;
       mutable OrderRemovedSignal m_orderRemovedSignal;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnExecutionReport(std::size_t entryIndex,

@@ -63,7 +63,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   m_ui->m_chart->SetYAxisParameters(yAxisParameters);
   connect(&m_updateTimer, &QTimer::timeout, this, &ChartWindow::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
-  m_controller.Initialize();
+  m_controller.emplace();
   m_controller->SetView(Ref(*m_ui->m_chart));
   m_verticalSliderConnection =
     m_ui->m_verticalScrollBar->ConnectSliderChangedSignal(

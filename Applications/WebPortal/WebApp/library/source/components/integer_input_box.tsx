@@ -30,6 +30,11 @@ interface State {
 
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    value: 0,
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -41,20 +46,12 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const style = Object.assign(this.props.style || {},
-      {
-        boxSizing: 'border-box',
-        font: '16px Roboto',
-        width: '66px',
-        height: '34px',
-        border: '1px solid #C8C8C8',
-        textAlign: 'center'
-      });
     const value = this.state.value.toString().padStart(
       this.props.padding || 0, '0');
     return (
       <div>
-        <input style={style} type='text'
+        <input style={{...IntegerInputBox.STYLE.input, ...this.props.style}} 
+          type='text'
           className={this.props.className}
           ref={(input) => { this._input = input; }} value={value}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
@@ -68,6 +65,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       this._start = null;
       this._end = null;
     }
+    this._input.setSelectionRange(this.props.padding, this.props.padding);
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -94,7 +92,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       if(event.target.value.length === 0) {
         return 0;
       } else {
-        return parseInt(event.target.value);
+        return parseInt(event.target.value, 10);
       }
     })();
     if(isNaN(value)) {
@@ -143,6 +141,16 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     });
   }
 
+  private static readonly STYLE = {
+    input: {
+      boxSizing: 'border-box' as 'border-box',
+      font: '16px Roboto',
+      width: '66px',
+      height: '34px',
+      border: '1px solid #C8C8C8',
+      textAlign: 'center' as 'center'
+    }
+  };
   private _input: HTMLInputElement;
   private _start: number;
   private _end: number;

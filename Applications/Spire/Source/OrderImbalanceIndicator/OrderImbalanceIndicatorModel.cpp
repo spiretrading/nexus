@@ -142,15 +142,15 @@ bool OrderImbalanceIndicatorModel::IsDisplayed(
 
 void OrderImbalanceIndicatorModel::Reset() {
   beginResetModel();
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_displayedOrderImbalances.clear();
   m_orderImbalances.clear();
   endResetModel();
 }
 
 void OrderImbalanceIndicatorModel::InitializePublishers() {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   Beam::Queries::Range timeRange = m_properties.GetTimeRange(
     m_userProfile->GetServiceClients().GetTimeClient());
   for(const MarketDatabase::Entry& market :

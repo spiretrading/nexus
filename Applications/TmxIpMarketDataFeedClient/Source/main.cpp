@@ -227,8 +227,8 @@ int main(int argc, const char** argv) {
   }
   auto retransmissionClientChannelBuilder =
     [&socketThreadPool, retransmissionClientAddress] (
-        Out<DelayPtr<TcpSocketChannel>> channel) {
-      channel->Initialize(retransmissionClientAddress, Ref(socketThreadPool));
+        Out<std::optional<TcpSocketChannel>> channel) {
+      channel->emplace(retransmissionClientAddress, Ref(socketThreadPool));
     };
   TmxIpServiceAccessConfiguration serviceAccessConfig;
   serviceAccessConfig.m_enableRetransmission =

@@ -119,7 +119,7 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
       m_isRefreshing(false),
       m_properOrderExecutionPublisher(
         Initialize(UniqueFilter<const Order*>(), Initialize())) {
-  m_taskSlotHandler.Initialize();
+  m_taskSlotHandler.emplace();
   SetupLinkedOrderExecutionMonitor();
   if(m_isConsolidated) {
     m_userProfile->GetServiceClients().GetOrderExecutionClient().
@@ -163,7 +163,8 @@ void BlotterTasksModel::SetProperties(const BlotterTaskProperties& properties) {
 }
 
 OrderExecutionPublisher& BlotterTasksModel::GetOrderExecutionPublisher() const {
-  return *m_linkedOrderExecutionPublisher;
+  return const_cast<SpireAggregateOrderExecutionPublisher&>(
+    *m_linkedOrderExecutionPublisher);
 }
 
 const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
@@ -238,8 +239,8 @@ void BlotterTasksModel::Refresh() {
     entries.swap(m_entries);
     m_pendingExpiryEntries.clear();
     m_expiredEntries.clear();
-    m_taskSlotHandler.Reset();
-    m_taskSlotHandler.Initialize();
+    m_taskSlotHandler = std::nullopt;
+    m_taskSlotHandler.emplace();
     m_taskIds.clear();
     endRemoveRows();
     for(const auto& entry : entries) {
@@ -373,7 +374,7 @@ bool BlotterTasksModel::setData(const QModelIndex& index,
 }
 
 void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
-  m_linkedOrderExecutionPublisher.Initialize(
+  m_linkedOrderExecutionPublisher.emplace(
     Initialize(UniqueFilter<const Order*>(), Initialize()));
   m_linkedOrderExecutionPublisher->Add(m_properOrderExecutionPublisher);
   if(m_isConsolidated && m_accountOrderPublisher != nullptr) {

@@ -29,7 +29,7 @@ BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
       m_boardLot(0),
       m_topRow(-1),
       m_currentRow(-1) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   m_ui->setupUi(this);
   m_ui->m_bookView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_bookView->verticalHeader()->setMinimumSectionSize(0);
@@ -48,7 +48,7 @@ BookViewPanel::~BookViewPanel() {}
 void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, Side side) {
   m_userProfile = userProfile.Get();
-  m_itemDelegate.Initialize(Ref(*m_userProfile));
+  m_itemDelegate.emplace(Ref(*m_userProfile));
   m_boardLot = 0;
   SetProperties(properties);
   m_side = side;
@@ -102,8 +102,8 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
     m_ui->m_bookView->setColumnWidth(i, widths[i]);
   }
   ConnectModel();
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   if(m_security == Security()) {
     m_boardLot = 0;
     return;

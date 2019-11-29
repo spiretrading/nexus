@@ -24,7 +24,7 @@ ActivityLogModel::UpdateEntry::UpdateEntry(const Order* order,
 
 ActivityLogModel::ActivityLogModel()
     : m_orderExecutionPublisher(nullptr) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &ActivityLogModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -34,8 +34,8 @@ ActivityLogModel::~ActivityLogModel() {}
 
 void ActivityLogModel::SetOrderExecutionPublisher(
     Ref<OrderExecutionPublisher> orderExecutionPublisher) {
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     m_entries.clear();
