@@ -1,26 +1,18 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #include <vector>
-#include <boost/signals2/connection.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/optional.hpp>
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Intervals.hpp"
+#include "Spire/Spire/SubscriptionResult.hpp"
 
 namespace Spire {
 
-  //! Provides a source for published order imbalances.
-  class OrderImbalanceIndicatorModel {
+  //! Model used to publish order imbalances.
+  class OrderImbalanceIndicatorModel : private boost::noncopyable {
     public:
-
-      //! Stores the result of a subscription.
-      struct SubscriptionResult {
-
-        //! Connection to the order imbalance subscription.
-        boost::signals2::connection m_connection;
-
-        //! Stores a subscription's initial snapshot.
-        QtPromise<std::vector<Nexus::OrderImbalance>> m_snapshot;
-      };
 
       //! Signals that an order imbalance has been published.
       /*!
@@ -31,16 +23,30 @@ namespace Spire {
 
       virtual ~OrderImbalanceIndicatorModel() = default;
 
-      //! Establishes a new subscription for order imbalances published within
-      //! a time range.
+      //! Loads a list of historical order imbalances.
       /*
-        \param start The start of the time range (inclusive).
-        \param end The end of the time range (inclusive).
-        \param slot Slot called when an imbalance is published.
+        \param interval The time interval to load.
+        \return The list of order imbalances within the specified interval.
       */
-      virtual SubscriptionResult subscribe(boost::posix_time::ptime start,
-        boost::posix_time::ptime end,
-        const OrderImbalanceSignal::slot_type& slot) = 0;
+      virtual QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const TimeInterval& interval) = 0;
+
+      //! Subscribes to real time order imbalances.
+      /*!
+        \param slot The slot receiving new order imbalances.
+        \return A SubscriptionResult containing the last published imbalance.
+      */
+      virtual SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
+        subscribe(const OrderImbalanceSignal::slot_type& slot) = 0;
+
+      //! Subscribes to all order imbalances published on or after a start time.
+      /*!
+        \param start The start time to load order imbalances.
+        \param slot The slot receiving new order imbalances.
+        \return A SubscriptionResult containing the last published imbalance.
+      */
+      virtual SubscriptionResult<std::vector<Nexus::OrderImbalance>> subscribe(
+        const TimeBound& start, OrderImbalanceSignal::slot_type& slot);
 
     protected:
       OrderImbalanceIndicatorModel() = default;

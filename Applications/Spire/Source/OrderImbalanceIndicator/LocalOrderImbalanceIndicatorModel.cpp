@@ -1,12 +1,11 @@
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
-#include "Spire/Spire/QtPromise.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
-OrderImbalanceIndicatorModel::SubscriptionResult
+SubscriptionResult<std::vector<OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::subscribe(ptime start, ptime end,
     const OrderImbalanceSignal::slot_type& slot) {
   m_signals.push_back(Subscription(start, end));

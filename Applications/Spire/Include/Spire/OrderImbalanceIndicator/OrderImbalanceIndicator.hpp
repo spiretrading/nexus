@@ -3,9 +3,8 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class CachedOrderImbalanceIndicator;
-  class FilteredOrderImbalanceIndicator;
   class LocalOrderImbalanceIndicatorModel;
+  class OrderImbalanceChartModel;
   class OrderImbalanceIndicatorModel;
 }
 

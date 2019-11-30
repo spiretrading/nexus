@@ -16,8 +16,8 @@ namespace Spire {
       */
       void insert(const Nexus::OrderImbalance& imbalance);
 
-      SubscriptionResult subscribe(boost::posix_time::ptime start,
-        boost::posix_time::ptime end,
+      SubscriptionResult<std::vector<Nexus::OrderImbalance>> subscribe(
+        boost::posix_time::ptime start, boost::posix_time::ptime end,
         const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
