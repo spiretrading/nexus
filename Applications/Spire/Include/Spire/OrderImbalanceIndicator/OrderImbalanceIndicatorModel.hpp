@@ -39,15 +39,6 @@ namespace Spire {
       virtual SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         subscribe(const OrderImbalanceSignal::slot_type& slot) = 0;
 
-      //! Subscribes to all order imbalances published on or after a start time.
-      /*!
-        \param start The start time to load order imbalances.
-        \param slot The slot receiving new order imbalances.
-        \return A SubscriptionResult containing the last published imbalance.
-      */
-      virtual SubscriptionResult<std::vector<Nexus::OrderImbalance>> subscribe(
-        const TimeBound& start, OrderImbalanceSignal::slot_type& slot);
-
     protected:
       OrderImbalanceIndicatorModel() = default;
   };

@@ -4,33 +4,28 @@
 
 namespace Spire {
 
-  //! Represents an OrderImbalanceIndicatorModel that accepts insertion of
-  //! new order imbalances.
+  //! Implements the OrderImbalanceIndicatorModel in memory.
   class LocalOrderImbalanceIndicatorModel :
       public OrderImbalanceIndicatorModel {
     public:
 
-      //! Inserts an order imbalance into the model.
+      //! Publishes a new order imbalance.
+      /*
+        \param imbalance The order imbalance to publish.
+      */
+      void publish(const Nexus::OrderImbalance& imbalance);
+
+      //! Inserts an order imbalance into the model, does not publish it.
       /*
         \param imbalance The order imbalance to insert into the model.
       */
       void insert(const Nexus::OrderImbalance& imbalance);
 
-      SubscriptionResult<std::vector<Nexus::OrderImbalance>> subscribe(
-        boost::posix_time::ptime start, boost::posix_time::ptime end,
+      QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const TimeInterval& interval) override;
+
+      SubscriptionResult<boost::optional<Nexus::OrderImbalance>> subscribe(
         const OrderImbalanceSignal::slot_type& slot) override;
-
-    private:
-      struct Subscription {
-        OrderImbalanceSignal m_imbalance_signal;
-        boost::posix_time::ptime m_start;
-        boost::posix_time::ptime m_end;
-
-        Subscription(boost::posix_time::ptime start,
-          boost::posix_time::ptime end);
-      };
-      std::vector<Subscription> m_signals;
-      std::vector<Nexus::OrderImbalance> m_imbalances;
   };
 }
 
