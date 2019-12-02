@@ -1,5 +1,6 @@
 #ifndef SPIRE_BLOTTERMODEL_HPP
 #define SPIRE_BLOTTERMODEL_HPP
+#include <optional>
 #include <string>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
@@ -108,7 +109,7 @@ namespace Spire {
       UserProfile* m_userProfile;
       bool m_isPersistent;
       BlotterTasksModel m_tasksModel;
-      Beam::DelayPtr<SpirePortfolioMonitor> m_portfolioMonitor;
+      std::optional<SpirePortfolioMonitor> m_portfolioMonitor;
       OrderLogModel m_orderLogModel;
       OpenPositionsModel m_openPositionsModel;
       ProfitAndLossModel m_profitAndLossModel;

@@ -15,7 +15,7 @@ ValueLabel::ValueLabel(const string& label, Ref<UserProfile> userProfile) {
 void ValueLabel::Initialize(const string& label,
     Ref<UserProfile> userProfile) {
   m_label = label;
-  m_converter.Initialize(Ref(userProfile));
+  m_converter.emplace(Ref(userProfile));
   QSizePolicy sizePolicy(QSizePolicy::Maximum, sizePolicy().verticalPolicy());
   sizePolicy.setHorizontalStretch(1);
   setSizePolicy(sizePolicy);

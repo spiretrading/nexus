@@ -30,6 +30,11 @@ interface State {
 
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    value: 0,
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -60,6 +65,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       this._start = null;
       this._end = null;
     }
+    this._input.setSelectionRange(this.props.padding, this.props.padding);
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -86,7 +92,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       if(event.target.value.length === 0) {
         return 0;
       } else {
-        return parseInt(event.target.value);
+        return parseInt(event.target.value, 10);
       }
     })();
     if(isNaN(value)) {

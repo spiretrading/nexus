@@ -1,9 +1,7 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, MoneyInputBox,
-  TextInputField } from '../../..';
-import { NumberInput, SecurityInput } from '../../../components';
+import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
+  NumberInput, TextInputField } from '../../..';
 
 interface Properties {
 
@@ -43,9 +41,12 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     })();
     const inputWrapper = (() => {
+      console.log('Howdy!');
+      console.log(this.props.displaySize);
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ParameterEntry.STYLE.inputWrapperSmall;
       } else {
+        console.log('Big and medium');
         return ParameterEntry.STYLE.inputWrapperBig;
       }
     })();
@@ -54,11 +55,11 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <div/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return (
-            <CurrencySelectionBox
-              value={this.props.parameter.value.value}
-              onChange={this.onChange}
-              currencyDatabase={this.props.currencyDatabase}/>);
+          return <CurrencySelectionBox
+            value={this.props.parameter.value.value}
+            style={inputWrapper}
+            onChange={this.onChange}
+            currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <div/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
@@ -66,7 +67,10 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <div/>;
+          return <DurationInput
+            displaySize={this.props.displaySize}
+            value={this.props.parameter.value.value}
+            onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
               value={this.props.parameter.value.value}
@@ -80,12 +84,11 @@ export class ParameterEntry extends React.Component<Properties> {
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.STRING:
-          return (
-            <TextInputField
-              displaySize ={this.props.displaySize}
-              value={this.props.parameter.value.value}
-              onInput={this.onChange}
-              style={inputWrapper}/>);
+          return <TextInputField
+            displaySize={this.props.displaySize}
+            value={this.props.parameter.value.value}
+            onInput={this.onChange}
+            style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
           return <div/>;
         default:
@@ -109,6 +112,7 @@ export class ParameterEntry extends React.Component<Properties> {
   private static readonly STYLE = {
     inputWrapperSmall: {
       minWidth: '184px',
+      flexBasis: '184px',
       maxWidth: '246px',
       flexGrow: 1,
       flexShrink: 1
@@ -117,13 +121,16 @@ export class ParameterEntry extends React.Component<Properties> {
       width: '246px',
       minWidth: '246px',
       maxWidth: '246px',
+      flexBasis: '246px',
       flexGrow: 0,
       flexShrink: 0
     },
     rowSmall: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      minWidth: '284px',
+      flexBasis: '284px',
+      flexGrow: 1,
+      flexShrink: 1,
       maxWidth: '424px',
       width: '100%',
       height: '34px',
@@ -138,28 +145,11 @@ export class ParameterEntry extends React.Component<Properties> {
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
-    fillerBetweenRows : {
-      height: '10px',
-      width: '100%'
-    },
-    bottomFiller: {
-      height: '30px'
-    },
     label: {
       width: '100px',
       font: '400 14px Roboto',
-    },
-    headerSmall: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px'
-    },
-    headerLarge: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px'
+      flexGrow: 0,
+      flexShrink: 0
     }
   };
 }

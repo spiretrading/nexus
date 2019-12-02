@@ -22,7 +22,7 @@ ProfitAndLossModel::ProfitAndLossModel(
       m_exchangeRates(exchangeRates.Get()),
       m_showUnrealized{showUnrealized},
       m_portfolioMonitor(nullptr) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &ProfitAndLossModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -40,8 +40,8 @@ void ProfitAndLossModel::SetPortfolioMonitor(
   m_update = SpirePortfolioMonitor::UpdateEntry();
   m_update.m_currencyInventory.m_position.m_key.m_currency = m_currency;
   m_update.m_securityInventory.m_position.m_key.m_currency = m_currency;
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_portfolioMonitor = portfolioMonitor.Get();
   m_portfolioMonitor->GetPublisher().Monitor(
     m_slotHandler->GetSlot<SpirePortfolioMonitor::UpdateEntry>(
