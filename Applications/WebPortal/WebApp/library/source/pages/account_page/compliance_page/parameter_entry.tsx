@@ -143,7 +143,6 @@ export class ParameterEntry extends React.Component<Properties> {
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
-
     label: {
       width: '100px',
       font: '400 14px Roboto',
