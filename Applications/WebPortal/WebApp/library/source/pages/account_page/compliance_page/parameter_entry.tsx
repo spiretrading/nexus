@@ -54,6 +54,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.CURRENCY:
           return <CurrencySelectionBox
             value={this.props.parameter.value.value}
+            style={inputWrapper}
             onChange={this.onChange}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
@@ -105,6 +106,7 @@ export class ParameterEntry extends React.Component<Properties> {
 
   private static readonly STYLE = {
     inputWrapperSmall: {
+      minWidth: '184px',
       flexBasis: '184px',
       flexGrow: 1,
       flexShrink: 1
