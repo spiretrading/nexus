@@ -39,6 +39,24 @@ TEST_CASE("test_local_publishing_subscribing",
   }, "test_local_publishing_subscribing");
 }
 
+TEST_CASE("test_local_subscribing_last_value",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    auto result1 = model.subscribe([=] (const auto& imbalance) {});
+    auto snapshot1 = wait(std::move(result1.m_snapshot));
+    REQUIRE(!snapshot1.is_initialized());
+    model.publish(A);
+    auto result2 = model.subscribe([=] (const auto& imbalance) {});
+    auto snapshot2 = wait(std::move(result2.m_snapshot));
+    REQUIRE(*snapshot2 == A);
+    model.publish(B);
+    auto result3 = model.subscribe([=] (const auto& imbalance) {});
+    auto snapshot3 = wait(std::move(result3.m_snapshot));
+    REQUIRE(*snapshot3 == B);
+  }, "test_local_subscribing_last_value");
+}
+
 TEST_CASE("test_local_inserting_loading",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
@@ -59,4 +77,20 @@ TEST_CASE("test_local_inserting_loading",
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
   }, "test_local_inserting_loading");
+}
+
+TEST_CASE("test_local_disconnection",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    auto slot_data1 = OrderImbalance();
+    auto slot_data2 = OrderImbalance();
+    model.subscribe([&] (const auto& imbalance) { slot_data1 = imbalance; });
+    auto result = model.subscribe([&] (const auto& imbalance) {
+      slot_data2 = imbalance; });
+    result.m_connection.disconnect();
+    model.publish(A);
+    REQUIRE(slot_data1 == A);
+    REQUIRE(slot_data2 == OrderImbalance());
+  }, "test_local_disconnection");
 }
