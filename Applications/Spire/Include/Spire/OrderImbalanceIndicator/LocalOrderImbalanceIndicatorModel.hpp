@@ -29,6 +29,11 @@ namespace Spire {
 
       std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
         const Nexus::Security& security) override;
+
+    private:
+      std::vector<Nexus::OrderImbalance> m_imbalances;
+      OrderImbalanceSignal m_imbalance_published_signal;
+      boost::optional<Nexus::OrderImbalance> m_last_published_imbalance;
   };
 }
 
