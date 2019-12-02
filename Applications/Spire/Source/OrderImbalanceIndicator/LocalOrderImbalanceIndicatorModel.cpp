@@ -19,13 +19,12 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
   auto imbalances = std::vector<OrderImbalance>();
   for(auto& imbalance : m_imbalances) {
-    if(imbalance.m_timestamp >= interval.left_open &&
-        imbalance.m_timestamp <= interval.right_open) {
+    if(boost::icl::contains(interval, imbalance.m_timestamp)) {
       imbalances.push_back(imbalance);
     }
   }
   return QtPromise([imbalances = std::move(imbalances)] () mutable {
-      return std::move(imbalances);
+    return std::move(imbalances);
   });
 }
 
@@ -33,7 +32,8 @@ SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
   return {m_imbalance_published_signal.connect(slot),
-    QtPromise([=] { return m_last_published_imbalance; })};
+    QtPromise([imbalance = m_last_published_imbalance] () mutable {
+      return std::move(imbalance); })};
 }
 
 std::shared_ptr<OrderImbalanceChartModel>
