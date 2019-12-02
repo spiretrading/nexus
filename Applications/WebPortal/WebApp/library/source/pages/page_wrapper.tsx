@@ -22,7 +22,6 @@ export function pageWrapper(BaseComponent: React.ComponentType<any>) {
         flex: 'column' as 'column',
         flexWrap: 'nowrap' as 'nowrap',
         overflowY: 'auto' as 'auto',
-        overflowX: 'hidden' as 'hidden',
         justifyContent: 'center' as 'center',
         alignItems: 'flex-start' as 'flex-start',
         margin: 0,
