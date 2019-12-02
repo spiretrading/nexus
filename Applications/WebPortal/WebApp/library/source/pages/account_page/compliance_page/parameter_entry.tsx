@@ -41,9 +41,12 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     })();
     const inputWrapper = (() => {
+      console.log('Howdy!');
+      console.log(this.props.displaySize);
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ParameterEntry.STYLE.inputWrapperSmall;
       } else {
+        console.log('Big and medium');
         return ParameterEntry.STYLE.inputWrapperBig;
       }
     })();
@@ -108,6 +111,7 @@ export class ParameterEntry extends React.Component<Properties> {
     inputWrapperSmall: {
       minWidth: '184px',
       flexBasis: '184px',
+      maxWidth: '246px',
       flexGrow: 1,
       flexShrink: 1
     },
@@ -115,6 +119,7 @@ export class ParameterEntry extends React.Component<Properties> {
       width: '246px',
       minWidth: '246px',
       maxWidth: '246px',
+      flexBasis: '246px',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -138,13 +143,7 @@ export class ParameterEntry extends React.Component<Properties> {
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
-    fillerBetweenRows : {
-      height: '10px',
-      width: '100%'
-    },
-    bottomFiller: {
-      height: '30px'
-    },
+
     label: {
       width: '100px',
       font: '400 14px Roboto',
