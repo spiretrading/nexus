@@ -49,14 +49,14 @@ TEST_CASE("test_local_inserting_loading",
     auto promise1 = model.load({from_time_t(0), from_time_t(1000)});
     auto data1 = wait(std::move(promise1));
     auto expected1 = std::vector<OrderImbalance>({A, B, C});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected1.begin(),
+    REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
       expected1.end()));
     model.insert(D);
     model.insert(E);
     auto promise2 = model.load({from_time_t(250), from_time_t(1000)});
     auto data2 = wait(std::move(promise2));
     auto expected2 = std::vector<OrderImbalance>({C, D, E});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected2.begin(),
+    REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
   }, "test_local_inserting_loading");
 }
