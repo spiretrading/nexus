@@ -27,7 +27,7 @@ interface State {
 
 /** Displays a component that allows a user to add a new rule. */
 export class NewRuleButton extends React.Component<Properties, State> {
-  public static defaultProps = {
+  public static readonly defaultProps = {
     isOpen: false,
     onToggleModal: () => {},
     onAddNewRule: () => {}
