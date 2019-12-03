@@ -280,7 +280,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
       paddingTop: '30px',
-      paddingBottom: '18px',
+      paddingBottom: '18px'
     }
   };
 
@@ -295,7 +295,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
       ':hover': {
-        backgroundColor: '#F8F8F8',
+        backgroundColor: '#F8F8F8'
       }
     },
     selectedRow: {
@@ -307,7 +307,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#684BC7',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
-      paddingLeft: '18px',
+      paddingLeft: '18px'
     },
     button: {
       boxSizing: 'border-box' as 'border-box',
@@ -321,7 +321,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       ':active' : {
-        backgroundColor: '#4B23A0',
+        backgroundColor: '#4B23A0'
       },
       ':focus': {
         border: 0,
@@ -332,7 +332,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none',
-        MozAppearance: 'none' as 'none',
+        MozAppearance: 'none' as 'none'
       },
       ':hover':{
         backgroundColor: '#4B23A0'
@@ -343,9 +343,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       },
       ':-moz-focusring': {
         outline: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       }
     }
   });

@@ -33,8 +33,7 @@ export class RulesList extends React.Component<Properties> {
           displaySize={this.props.displaySize}
           complianceRule={rule}
           currencyDatabase={this.props.currencyDatabase}
-          onChange={(updatedRule: Nexus.ComplianceRuleEntry) => 
-            this.props.onChange(updatedRule)}/>);
+          onChange={this.props.onChange}/>);
     }
     return (
       <div>
