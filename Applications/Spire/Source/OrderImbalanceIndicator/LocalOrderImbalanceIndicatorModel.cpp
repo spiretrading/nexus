@@ -6,7 +6,6 @@ using namespace Spire;
 
 void LocalOrderImbalanceIndicatorModel::publish(
     const OrderImbalance& imbalance) {
-  m_last_published_imbalance = imbalance;
   insert_sorted(imbalance);
   m_imbalance_published_signal(imbalance);
 }
@@ -18,14 +17,30 @@ void LocalOrderImbalanceIndicatorModel::insert(
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
-  auto first = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
-    interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
-      return imbalance.m_timestamp < timestamp;
-    });
-  auto last = std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
-    interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
-      return imbalance.m_timestamp > timestamp;
-    });
+  auto first = std::vector<OrderImbalance>::iterator();
+  auto last = std::vector<OrderImbalance>::iterator();
+  if(boost::icl::is_left_closed(interval.bounds())) {
+    first = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
+        return imbalance.m_timestamp < timestamp;
+      });
+  } else {
+    first = std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.lower(), [] (const auto& timestamp, const auto& imbalance) {
+        return imbalance.m_timestamp > timestamp;
+      });
+  }
+  if(boost::icl::is_right_closed(interval.bounds())) {
+    last = std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
+        return imbalance.m_timestamp > timestamp;
+      });
+  } else {
+    last = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.upper(), [] (const auto& imbalance, const auto& timestamp) {
+        return imbalance.m_timestamp < timestamp;
+      });
+  }
   return QtPromise(
     [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
       return std::move(imbalances);
@@ -35,8 +50,14 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
+  auto last_imbalance = [&] () -> boost::optional<Nexus::OrderImbalance> {
+    if(m_imbalances.empty()) {
+      return boost::none;
+    }
+    return m_imbalances.back();
+  }();
   return {m_imbalance_published_signal.connect(slot),
-    QtPromise([imbalance = m_last_published_imbalance] () mutable {
+    QtPromise([imbalance = std::move(last_imbalance)] () mutable {
       return std::move(imbalance); })};
 }
 

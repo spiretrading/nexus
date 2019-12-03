@@ -4,6 +4,7 @@
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace boost;
+using namespace boost::icl;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -31,7 +32,8 @@ TEST_CASE("test_local_publishing_subscribing",
     REQUIRE(slot_data == A);
     model.publish(B);
     REQUIRE(slot_data == B);
-    auto promise = model.load({from_time_t(0), from_time_t(1000)});
+    auto promise = model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(200)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({A, B});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
@@ -64,14 +66,16 @@ TEST_CASE("test_local_inserting_loading",
     model.insert(A);
     model.insert(B);
     model.insert(C);
-    auto promise1 = model.load({from_time_t(0), from_time_t(1000)});
+    auto promise1 = model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(300)));
     auto data1 = wait(std::move(promise1));
     auto expected1 = std::vector<OrderImbalance>({A, B, C});
     REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
       expected1.end()));
     model.insert(D);
     model.insert(E);
-    auto promise2 = model.load({from_time_t(250), from_time_t(1000)});
+    auto promise2 = model.load(TimeInterval::closed(from_time_t(250),
+      from_time_t(500)));
     auto data2 = wait(std::move(promise2));
     auto expected2 = std::vector<OrderImbalance>({C, D, E});
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
@@ -103,10 +107,59 @@ TEST_CASE("test_local_out_of_order_inserting",
     model.insert(B);
     model.insert(A);
     model.insert(C);
-    auto promise = model.load({from_time_t(0), from_time_t(1000)});
+    auto promise = model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(400)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({A, B, C, D});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
   }, "test_local_out_of_order_inserting");
+}
+
+TEST_CASE("test_local_loading_left_open_interval",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    model.insert(A);
+    model.insert(B);
+    model.insert(C);
+    auto promise = model.load(continuous_interval<ptime>::left_open(
+      from_time_t(100), from_time_t(300)));
+    auto data = wait(std::move(promise));
+    auto expected = std::vector<OrderImbalance>({B, C});
+    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
+      expected.end()));
+  }, "test_local_loading_left_open_interval");
+}
+
+TEST_CASE("test_local_loading_right_open_interval",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    model.insert(A);
+    model.insert(B);
+    model.insert(C);
+    auto promise = model.load(continuous_interval<ptime>::right_open(
+      from_time_t(100), from_time_t(300)));
+    auto data = wait(std::move(promise));
+    auto expected = std::vector<OrderImbalance>({A, B});
+    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
+      expected.end()));
+  }, "test_local_loading_right_open_interval");
+}
+
+TEST_CASE("test_local_loading_open_interval",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    model.insert(A);
+    model.insert(B);
+    model.insert(C);
+    auto promise = model.load(continuous_interval<ptime>::open(
+      from_time_t(100), from_time_t(300)));
+    auto data = wait(std::move(promise));
+    auto expected = std::vector<OrderImbalance>({B});
+    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
+      expected.end()));
+  }, "test_local_loading_open_interval");
 }
