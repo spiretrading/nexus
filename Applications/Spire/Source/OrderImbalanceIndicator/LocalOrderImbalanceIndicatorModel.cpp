@@ -18,17 +18,14 @@ void LocalOrderImbalanceIndicatorModel::insert(
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
-  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [&] (const auto& imbalance) {
-      return interval.lower() < imbalance.m_timestamp;
+  auto first = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+    interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
+      return imbalance.m_timestamp < timestamp;
     });
-  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [&] (const auto& imbalance) {
-      return interval.upper() < imbalance.m_timestamp;
+  auto last = std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
+    interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
+      return imbalance.m_timestamp > timestamp;
     });
-  if(last != m_imbalances.end()) {
-    ++last;
-  }
   return QtPromise(
     [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
       return std::move(imbalances);
@@ -51,9 +48,10 @@ std::shared_ptr<OrderImbalanceChartModel>
 
 void LocalOrderImbalanceIndicatorModel::insert_sorted(
     const OrderImbalance& imbalance) {
-  auto index = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& stored_imbalance) {
-      return imbalance.m_timestamp < stored_imbalance.m_timestamp;
+  auto index = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+    imbalance.m_timestamp,
+    [] (const auto& stored_imbalance, const auto& timestamp) {
+      return stored_imbalance.m_timestamp < timestamp;
     });
   m_imbalances.insert(index, imbalance);
 }
