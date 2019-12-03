@@ -33,7 +33,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     onAddNewRule: () => {}
   };
 
-  public constructor(props: Properties) {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       selection: -1
