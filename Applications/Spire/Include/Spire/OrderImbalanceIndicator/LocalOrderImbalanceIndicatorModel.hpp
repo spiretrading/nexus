@@ -34,6 +34,8 @@ namespace Spire {
       std::vector<Nexus::OrderImbalance> m_imbalances;
       OrderImbalanceSignal m_imbalance_published_signal;
       boost::optional<Nexus::OrderImbalance> m_last_published_imbalance;
+
+      void insert_sorted(const Nexus::OrderImbalance& imbalance);
   };
 }
 

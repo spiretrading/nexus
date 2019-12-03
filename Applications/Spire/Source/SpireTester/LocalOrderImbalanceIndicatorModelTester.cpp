@@ -94,3 +94,19 @@ TEST_CASE("test_local_disconnection",
     REQUIRE(slot_data2 == OrderImbalance());
   }, "test_local_disconnection");
 }
+
+TEST_CASE("test_local_out_of_order_inserting",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    model.insert(D);
+    model.insert(B);
+    model.insert(A);
+    model.insert(C);
+    auto promise = model.load({from_time_t(0), from_time_t(1000)});
+    auto data = wait(std::move(promise));
+    auto expected = std::vector<OrderImbalance>({A, B, C, D});
+    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
+      expected.end()));
+  }, "test_local_out_of_order_inserting");
+}

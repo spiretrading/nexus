@@ -12,7 +12,7 @@ namespace Spire {
 
   //! The generic type used to specify an interval.
   template<typename T>
-  using Interval = typename boost::icl::interval<T>::interval_type;
+  using Interval = boost::icl::continuous_interval<T>;
 
   //! Specifies a time boundary.
   using TimeBound = Bound<boost::posix_time::ptime>;
