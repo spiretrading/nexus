@@ -41,12 +41,9 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     })();
     const inputWrapper = (() => {
-      console.log('Howdy!');
-      console.log(this.props.displaySize);
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ParameterEntry.STYLE.inputWrapperSmall;
       } else {
-        console.log('Big and medium');
         return ParameterEntry.STYLE.inputWrapperBig;
       }
     })();
