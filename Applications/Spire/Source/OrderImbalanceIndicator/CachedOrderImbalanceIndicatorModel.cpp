@@ -1,12 +1,13 @@
 #include "Spire/OrderImbalanceIndicator/CachedOrderImbalanceIndicatorModel.hpp"
 
+using namespace boost;
+using namespace boost::icl;
 using namespace Nexus;
 using namespace Spire;
 
 CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
     std::shared_ptr<OrderImbalanceIndicatorModel> source)
     : m_source_model(std::move(source)) {
-  // TODO: capture
   m_source_model->subscribe([=] (const auto& imbalance) {
     on_imbalance_published(imbalance);
   });
@@ -15,13 +16,13 @@ CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-  if(boost::icl::contains(m_ranges, interval)) {
+  if(contains(m_ranges, interval)) {
     return load_from_model(interval);
   }
   return load_from_cache(interval);
 }
 
-SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
+SubscriptionResult<optional<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
   return m_source_model->subscribe(slot);
@@ -42,7 +43,16 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
-  
+  auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
+  auto load_ranges = interval - m_ranges;
+  for(auto& range : load_ranges) {
+    promises.push_back(m_source_model->load(range));
+  }
+  return all(promises).then([=] (const auto& loaded_imbalances) {
+    m_ranges.insert(interval);
+    // insert into cache
+    return load_from_cache(interval);
+  });
 }
 
 void CachedOrderImbalanceIndicatorModel::on_imbalance_published(
