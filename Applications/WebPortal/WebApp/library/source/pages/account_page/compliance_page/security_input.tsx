@@ -21,6 +21,7 @@ export class SecurityInput extends React.Component<Properties, State>{
     this.state = {
       isEditing: false
     }
+    this.toggleEditing = this.toggleEditing.bind(this);
   }
 
   public render() {
@@ -92,7 +93,8 @@ export class SecurityInput extends React.Component<Properties, State>{
               </div>
               <img src={'resources/account_page/compliance_page/security_input/close.svg'}
                 height='20px'
-                width='20px'/>
+                width='20px'
+                onClick={this.toggleEditing}/>
             </div>
             <input
               className={css(SecurityInput.EXTRA_STYLE.effects)}
@@ -120,7 +122,6 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private toggleEditing(){
-    console.log('TOGGLE!!!', this.state.isEditing);
     this.setState({isEditing: !this.state.isEditing});
   }
 

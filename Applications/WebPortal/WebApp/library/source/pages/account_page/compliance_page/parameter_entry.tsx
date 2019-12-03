@@ -41,12 +41,9 @@ export class ParameterEntry extends React.Component<Properties> {
       }
     })();
     const inputWrapper = (() => {
-      console.log('Howdy!');
-      console.log(this.props.displaySize);
       if(this.props.displaySize === DisplaySize.SMALL) {
         return ParameterEntry.STYLE.inputWrapperSmall;
       } else {
-        console.log('Big and medium');
         return ParameterEntry.STYLE.inputWrapperBig;
       }
     })();
@@ -90,6 +87,13 @@ export class ParameterEntry extends React.Component<Properties> {
             onInput={this.onChange}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
+          if(this.props.parameter.value.value[0].type ===
+              Nexus.ComplianceValue.Type.SECURITY) {
+            return <SecurityInput
+            displaySize={this.props.displaySize}
+            value={this.props.parameter.value.value}/>;
+          }
+          
           return <div/>;
         default:
           return <div/>;
