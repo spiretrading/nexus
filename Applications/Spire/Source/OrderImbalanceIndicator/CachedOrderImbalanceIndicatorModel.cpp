@@ -2,6 +2,7 @@
 
 using namespace boost;
 using namespace boost::icl;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
@@ -16,10 +17,10 @@ CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-  if(contains(m_ranges, interval)) {
-    return load_from_model(interval);
+  if(m_ranges.find(interval) != m_ranges.end()) {
+    return load_from_cache(interval);
   }
-  return load_from_cache(interval);
+  return load_from_model(interval);
 }
 
 SubscriptionResult<optional<Nexus::OrderImbalance>>
@@ -37,20 +38,40 @@ std::shared_ptr<OrderImbalanceChartModel>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_cache(
     const TimeInterval& interval) {
-  
+  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) {
+      return start <= imbalance.m_timestamp;
+    });
+  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
+  return QtPromise(
+    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
+      return std::move(imbalances);
+    });
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
   auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
-  auto load_ranges = interval - m_ranges;
+  auto load_ranges = m_ranges.subtract(interval);
   for(auto& range : load_ranges) {
     promises.push_back(m_source_model->load(range));
   }
   return all(promises).then([=] (const auto& loaded_imbalances) {
-    m_ranges.insert(interval);
-    // insert into cache
+    m_ranges.add(interval);
+    for(auto& list : loaded_imbalances.Get()) {
+        auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return start < imbalance.m_timestamp;
+          });
+        auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return end < imbalance.m_timestamp;
+          });
+        auto iter = m_imbalances.erase(first, last);
+        m_imbalances.insert(iter, list.begin(), list.end());
+    }
     return load_from_cache(interval);
   });
 }
