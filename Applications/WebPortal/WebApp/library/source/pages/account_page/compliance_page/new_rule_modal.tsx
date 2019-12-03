@@ -78,18 +78,18 @@ export class NewRuleButton extends React.Component<Properties, State> {
     })();
     const options = [];
     for(let i = 0; i < this.props.schemas.length; ++i) {
-        if(i === this.state.selection) {
-          options.push(
-            <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
-                onClick={this.onClickRule.bind(this, i)}>
-              {this.props.schemas[i].name}
-            </div>);
-        } else {
-          options.push(
-            <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
+      if(i === this.state.selection) {
+        options.push(
+          <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
               onClick={this.onClickRule.bind(this, i)}>
-              {this.props.schemas[i].name}
-            </div>);
+            {this.props.schemas[i].name}
+          </div>);
+      } else {
+        options.push(
+          <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
+            onClick={this.onClickRule.bind(this, i)}>
+            {this.props.schemas[i].name}
+          </div>);
       }
     }
     return (
@@ -273,7 +273,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingTop: '30px',
       paddingBottom: '40px'
     },
-      buttonWrapper: {
+    buttonWrapper: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
