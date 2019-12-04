@@ -278,7 +278,14 @@ TEST_CASE("test_notional_value_filter",
 TEST_CASE("test_unfiltered_signals",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
-    
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto model = FilteredOrderImbalanceIndicatorModel(local_model, {});
+    auto slot_data = OrderImbalance();
+    model.subscribe([&] (const auto& imbalance) { slot_data = imbalance; });
+    local_model->publish(A);
+    REQUIRE(slot_data == A);
+    local_model->publish(B);
+    REQUIRE(slot_data == B);
   }, "test_unfiltered_signals");
 }
 
@@ -304,22 +311,22 @@ TEST_CASE("test_filtered_signals",
     auto [connection4, promise4] = model.subscribe([&] (auto& i) {
       signal_data4 = i; });
     wait(std::move(promise4));
-    local_model->insert(A);
+    local_model->publish(A);
     REQUIRE(signal_data1 == A);
     REQUIRE(signal_data2 == OrderImbalance());
     REQUIRE(signal_data3 == OrderImbalance());
     REQUIRE(signal_data4 == OrderImbalance());
-    local_model->insert(B);
+    local_model->publish(B);
     REQUIRE(signal_data1 == B);
     REQUIRE(signal_data2 == B);
     REQUIRE(signal_data3 == OrderImbalance());
     REQUIRE(signal_data4 == OrderImbalance());
-    local_model->insert(C);
+    local_model->publish(C);
     REQUIRE(signal_data1 == C);
     REQUIRE(signal_data2 == B);
     REQUIRE(signal_data3 == C);
     REQUIRE(signal_data4 == OrderImbalance());
-    local_model->insert(D);
+    local_model->publish(D);
     REQUIRE(signal_data1 == C);
     REQUIRE(signal_data2 == B);
     REQUIRE(signal_data3 == C);
