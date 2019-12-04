@@ -22,7 +22,7 @@ namespace {
   const auto E = make_imbalance("E", from_time_t(500));
 }
 
-TEST_CASE("test_local_publishing_subscribing",
+TEST_CASE("test_cached_publishing_subscribing",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -38,10 +38,10 @@ TEST_CASE("test_local_publishing_subscribing",
     auto expected = std::vector<OrderImbalance>({A, B});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
-  }, "test_local_publishing_subscribing");
+  }, "test_cached_publishing_subscribing");
 }
 
-TEST_CASE("test_local_subscribing_last_value",
+TEST_CASE("test_cached_subscribing_last_value",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -56,10 +56,10 @@ TEST_CASE("test_local_subscribing_last_value",
     auto result3 = model.subscribe([=] (const auto& imbalance) {});
     auto snapshot3 = wait(std::move(result3.m_snapshot));
     REQUIRE(*snapshot3 == B);
-  }, "test_local_subscribing_last_value");
+  }, "test_cached_subscribing_last_value");
 }
 
-TEST_CASE("test_local_inserting_loading",
+TEST_CASE("test_cached_inserting_loading",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -80,10 +80,10 @@ TEST_CASE("test_local_inserting_loading",
     auto expected2 = std::vector<OrderImbalance>({C, D, E});
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
-  }, "test_local_inserting_loading");
+  }, "test_cached_inserting_loading");
 }
 
-TEST_CASE("test_local_disconnection",
+TEST_CASE("test_cached_disconnection",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -96,10 +96,10 @@ TEST_CASE("test_local_disconnection",
     model.publish(A);
     REQUIRE(slot_data1 == A);
     REQUIRE(slot_data2 == OrderImbalance());
-  }, "test_local_disconnection");
+  }, "test_cached_disconnection");
 }
 
-TEST_CASE("test_local_out_of_order_inserting",
+TEST_CASE("test_cached_out_of_order_inserting",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -113,10 +113,10 @@ TEST_CASE("test_local_out_of_order_inserting",
     auto expected = std::vector<OrderImbalance>({A, B, C, D});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
-  }, "test_local_out_of_order_inserting");
+  }, "test_cached_out_of_order_inserting");
 }
 
-TEST_CASE("test_local_loading_left_open_interval",
+TEST_CASE("test_cached_loading_left_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -129,10 +129,10 @@ TEST_CASE("test_local_loading_left_open_interval",
     auto expected = std::vector<OrderImbalance>({B, C});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
-  }, "test_local_loading_left_open_interval");
+  }, "test_cached_loading_left_open_interval");
 }
 
-TEST_CASE("test_local_loading_right_open_interval",
+TEST_CASE("test_cached_loading_right_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -145,10 +145,10 @@ TEST_CASE("test_local_loading_right_open_interval",
     auto expected = std::vector<OrderImbalance>({A, B});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
-  }, "test_local_loading_right_open_interval");
+  }, "test_cached_loading_right_open_interval");
 }
 
-TEST_CASE("test_local_loading_open_interval",
+TEST_CASE("test_cached_loading_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto model = LocalOrderImbalanceIndicatorModel();
@@ -161,10 +161,10 @@ TEST_CASE("test_local_loading_open_interval",
     auto expected = std::vector<OrderImbalance>({B});
     REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
       expected.end()));
-  }, "test_local_loading_open_interval");
+  }, "test_cached_loading_open_interval");
 }
 
-TEST_CASE("cached_imbalance_test_right_no_overlap",
+TEST_CASE("test_cached_imbalance_right_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -179,10 +179,10 @@ TEST_CASE("cached_imbalance_test_right_no_overlap",
     REQUIRE(request->get_start() == from_time_t(300));
     REQUIRE(request->get_end() == from_time_t(400));
     request->set_result({});
-  }, "cached_imbalance_test_right_no_overlap");
+  }, "test_cached_imbalance_right_no_overlap");
 }
 
-TEST_CASE("cached_imbalance_test_left_no_overlap",
+TEST_CASE("test_cached_imbalance_left_no_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -197,10 +197,10 @@ TEST_CASE("cached_imbalance_test_left_no_overlap",
     REQUIRE(request->get_start() == from_time_t(100));
     REQUIRE(request->get_end() == from_time_t(200));
     request->set_result({});
-  }, "cached_imbalance_test_left_no_overlap");
+  }, "test_cached_imbalance_left_no_overlap");
 }
 
-TEST_CASE("cached_imbalance_test_right_overlap",
+TEST_CASE("test_cached_imbalance_right_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -215,10 +215,10 @@ TEST_CASE("cached_imbalance_test_right_overlap",
     REQUIRE(request->get_start() == from_time_t(300));
     REQUIRE(request->get_end() == from_time_t(500));
     request->set_result({});
-  }, "cached_imbalance_test_right_overlap");
+  }, "test_cached_imbalance_right_overlap");
 }
 
-TEST_CASE("cached_imbalance_test_left_overlap",
+TEST_CASE("test_cached_imbalance_left_overlap",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -233,10 +233,10 @@ TEST_CASE("cached_imbalance_test_left_overlap",
     REQUIRE(request->get_start() == from_time_t(100));
     REQUIRE(request->get_end() == from_time_t(300));
     request->set_result({});
-  }, "cached_imbalance_test_left_overlap");
+  }, "test_cached_imbalance_left_overlap");
 }
 
-TEST_CASE("cached_imbalance_test_superset",
+TEST_CASE("test_cached_imbalance_superset",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -255,10 +255,10 @@ TEST_CASE("cached_imbalance_test_superset",
     REQUIRE(request2->get_start() == from_time_t(400));
     REQUIRE(request2->get_end() == from_time_t(500));
     request2->set_result({});
-  }, "cached_imbalance_test_superset");
+  }, "test_cached_imbalance_superset");
 }
 
-TEST_CASE("cached_imbalance_test_mixed_subsets_and_supersets",
+TEST_CASE("test_cached_imbalance_mixed_subsets_and_supersets",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -285,10 +285,10 @@ TEST_CASE("cached_imbalance_test_mixed_subsets_and_supersets",
     REQUIRE(request3->get_start() == from_time_t(450));
     REQUIRE(request3->get_end() == from_time_t(500));
     request3->set_result({});
-  }, "cached_imbalance_test_mixed_subsets_and_supersets");
+  }, "test_cached_imbalance_mixed_subsets_and_supersets");
 }
 
-TEST_CASE("cached_imbalance_test_async_subscribes",
+TEST_CASE("test_cached_imbalance_async_subscribes",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -315,5 +315,5 @@ TEST_CASE("cached_imbalance_test_async_subscribes",
     auto expected = std::vector<OrderImbalance>({A, B, C, D, E});
     REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),
       expected.begin(), expected.end()));
-  }, "cached_imbalance_test_async_subscribes");
+  }, "test_cached_imbalance_async_subscribes");
 }
