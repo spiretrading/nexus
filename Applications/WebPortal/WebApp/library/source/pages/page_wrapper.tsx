@@ -1,11 +1,10 @@
 import * as React from 'react';
 
-/** Returns a component that monitors the resize event.
- * @param BaseComponent - A component that needs some scrolly stuff
+/** Returns a page wrapped in basic
+ * @param BaseComponent - A component that needs proper scrolling behavior.
  */
 export function pageWrapper(BaseComponent: React.ComponentType<any>) {
   return class extends React.Component {
-
     public render() {
       return (
         <div style={this.STYLE.page}> 
@@ -13,14 +12,15 @@ export function pageWrapper(BaseComponent: React.ComponentType<any>) {
         </div>);
     }
   
-    STYLE = {
+    readonly STYLE = {
       page: {
-        //boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box' as 'border-box',
         width: '100%',
         height: '100%',
         display: 'flex' as 'flex',
         flex: 'column' as 'column',
         flexWrap: 'nowrap' as 'nowrap',
+        overflowX: 'auto' as 'auto',
         overflowY: 'auto' as 'auto',
         justifyContent: 'center' as 'center',
         alignItems: 'flex-start' as 'flex-start',
