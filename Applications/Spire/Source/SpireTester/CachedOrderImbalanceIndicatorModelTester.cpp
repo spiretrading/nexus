@@ -1,6 +1,8 @@
 #include <catch.hpp>
+#include "Spire/OrderImbalanceIndicator/CachedOrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/SpireTester/TestOrderImbalanceIndicatorModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace boost;
@@ -25,14 +27,16 @@ namespace {
 TEST_CASE("test_cached_publishing_subscribing",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
     auto slot_data = OrderImbalance();
-    model.subscribe([&] (const auto& imbalance) { slot_data = imbalance; });
-    model.publish(A);
+    cached_model.subscribe([&] (const auto& imbalance) {
+      slot_data = imbalance; });
+    local_model->publish(A);
     REQUIRE(slot_data == A);
-    model.publish(B);
+    local_model->publish(B);
     REQUIRE(slot_data == B);
-    auto promise = model.load(TimeInterval::closed(from_time_t(100),
+    auto promise = cached_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(200)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({A, B});
@@ -44,56 +48,60 @@ TEST_CASE("test_cached_publishing_subscribing",
 TEST_CASE("test_cached_subscribing_last_value",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    auto result1 = model.subscribe([=] (const auto& imbalance) {});
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto result1 = cached_model.subscribe([=] (const auto& imbalance) {});
     auto snapshot1 = wait(std::move(result1.m_snapshot));
     REQUIRE(!snapshot1.is_initialized());
-    model.publish(A);
-    auto result2 = model.subscribe([=] (const auto& imbalance) {});
+    local_model->publish(A);
+    auto result2 = cached_model.subscribe([=] (const auto& imbalance) {});
     auto snapshot2 = wait(std::move(result2.m_snapshot));
     REQUIRE(*snapshot2 == A);
-    model.publish(B);
-    auto result3 = model.subscribe([=] (const auto& imbalance) {});
+    local_model->publish(B);
+    auto result3 = cached_model.subscribe([=] (const auto& imbalance) {});
     auto snapshot3 = wait(std::move(result3.m_snapshot));
     REQUIRE(*snapshot3 == B);
   }, "test_cached_subscribing_last_value");
 }
 
-TEST_CASE("test_cached_inserting_loading",
+TEST_CASE("test_cached_loading",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    model.insert(A);
-    model.insert(B);
-    model.insert(C);
-    auto promise1 = model.load(TimeInterval::closed(from_time_t(100),
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise1 = cached_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(300)));
     auto data1 = wait(std::move(promise1));
     auto expected1 = std::vector<OrderImbalance>({A, B, C});
     REQUIRE(std::is_permutation(data1.begin(), data1.end(), expected1.begin(),
       expected1.end()));
-    model.insert(D);
-    model.insert(E);
-    auto promise2 = model.load(TimeInterval::closed(from_time_t(250),
+    local_model->insert(D);
+    local_model->insert(E);
+    auto promise2 = cached_model.load(TimeInterval::closed(from_time_t(250),
       from_time_t(500)));
     auto data2 = wait(std::move(promise2));
     auto expected2 = std::vector<OrderImbalance>({C, D, E});
     REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
       expected2.end()));
-  }, "test_cached_inserting_loading");
+  }, "test_cached_loading");
 }
 
 TEST_CASE("test_cached_disconnection",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
     auto slot_data1 = OrderImbalance();
     auto slot_data2 = OrderImbalance();
-    model.subscribe([&] (const auto& imbalance) { slot_data1 = imbalance; });
-    auto result = model.subscribe([&] (const auto& imbalance) {
+    cached_model.subscribe([&] (const auto& imbalance) {
+      slot_data1 = imbalance; });
+    auto result = cached_model.subscribe([&] (const auto& imbalance) {
       slot_data2 = imbalance; });
     result.m_connection.disconnect();
-    model.publish(A);
+    local_model->publish(A);
     REQUIRE(slot_data1 == A);
     REQUIRE(slot_data2 == OrderImbalance());
   }, "test_cached_disconnection");
@@ -102,12 +110,13 @@ TEST_CASE("test_cached_disconnection",
 TEST_CASE("test_cached_out_of_order_inserting",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    model.insert(D);
-    model.insert(B);
-    model.insert(A);
-    model.insert(C);
-    auto promise = model.load(TimeInterval::closed(from_time_t(100),
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(D);
+    local_model->insert(B);
+    local_model->insert(A);
+    local_model->insert(C);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise = cached_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(400)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({A, B, C, D});
@@ -119,11 +128,12 @@ TEST_CASE("test_cached_out_of_order_inserting",
 TEST_CASE("test_cached_loading_left_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    model.insert(A);
-    model.insert(B);
-    model.insert(C);
-    auto promise = model.load(continuous_interval<ptime>::left_open(
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise = cached_model.load(continuous_interval<ptime>::left_open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({B, C});
@@ -135,11 +145,12 @@ TEST_CASE("test_cached_loading_left_open_interval",
 TEST_CASE("test_cached_loading_right_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    model.insert(A);
-    model.insert(B);
-    model.insert(C);
-    auto promise = model.load(continuous_interval<ptime>::right_open(
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise = cached_model.load(continuous_interval<ptime>::right_open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({A, B});
@@ -151,11 +162,12 @@ TEST_CASE("test_cached_loading_right_open_interval",
 TEST_CASE("test_cached_loading_open_interval",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto model = LocalOrderImbalanceIndicatorModel();
-    model.insert(A);
-    model.insert(B);
-    model.insert(C);
-    auto promise = model.load(continuous_interval<ptime>::open(
+    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise = cached_model.load(continuous_interval<ptime>::open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
     auto expected = std::vector<OrderImbalance>({B});
@@ -169,15 +181,15 @@ TEST_CASE("test_cached_imbalance_right_no_overlap",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
-      from_time_t(200), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({A, B});
+    auto promise1 = cache_model.load(TimeInterval::closed(
+      from_time_t(100), from_time_t(200)));
+    wait(test_model->pop_load())->set_result({A, B});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(300),
-      from_time_t(400), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscription());
-    REQUIRE(request->get_start() == from_time_t(300));
-    REQUIRE(request->get_end() == from_time_t(400));
+    auto promise2 = cache_model.load(TimeInterval::closed(
+      from_time_t(300), from_time_t(400)));
+    auto request = wait(test_model->pop_load());
+    REQUIRE(request->get_interval().lower() == from_time_t(300));
+    REQUIRE(request->get_interval().upper() == from_time_t(400));
     request->set_result({});
   }, "test_cached_imbalance_right_no_overlap");
 }
@@ -187,15 +199,15 @@ TEST_CASE("test_cached_imbalance_left_no_overlap",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
-      from_time_t(400), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({C, D});
+    auto promise1 = cache_model.load(TimeInterval::closed(
+      from_time_t(300), from_time_t(400)));
+    wait(test_model->pop_load())->set_result({C, D});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
-      from_time_t(200), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscription());
-    REQUIRE(request->get_start() == from_time_t(100));
-    REQUIRE(request->get_end() == from_time_t(200));
+    auto promise2 = cache_model.load(TimeInterval::closed(
+      from_time_t(100), from_time_t(200)));
+    auto request = wait(test_model->pop_load());
+    REQUIRE(request->get_interval().lower() == from_time_t(100));
+    REQUIRE(request->get_interval().upper() == from_time_t(200));
     request->set_result({});
   }, "test_cached_imbalance_left_no_overlap");
 }
@@ -205,15 +217,15 @@ TEST_CASE("test_cached_imbalance_right_overlap",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
-      from_time_t(300), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({A, B, C});
+    auto promise1 = cache_model.load(TimeInterval::closed(
+      from_time_t(100), from_time_t(300)));
+    wait(test_model->pop_load())->set_result({A, B, C});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
-      from_time_t(500), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscription());
-    REQUIRE(request->get_start() == from_time_t(300));
-    REQUIRE(request->get_end() == from_time_t(500));
+    auto promise2 = cache_model.load(TimeInterval::closed(
+      from_time_t(200), from_time_t(500)));
+    auto request = wait(test_model->pop_load());
+    REQUIRE(request->get_interval().lower() == from_time_t(300));
+    REQUIRE(request->get_interval().upper() == from_time_t(500));
     request->set_result({});
   }, "test_cached_imbalance_right_overlap");
 }
@@ -223,15 +235,15 @@ TEST_CASE("test_cached_imbalance_left_overlap",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(300),
-      from_time_t(500), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({C, D, E});
+    auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(300),
+      from_time_t(500)));
+    wait(test_model->pop_load())->set_result({C, D, E});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
-      from_time_t(400), [] (auto& i) {});
-    auto request = wait(test_model->pop_subscription());
-    REQUIRE(request->get_start() == from_time_t(100));
-    REQUIRE(request->get_end() == from_time_t(300));
+    auto promise2 = cache_model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(400)));
+    auto request = wait(test_model->pop_load());
+    REQUIRE(request->get_interval().lower() == from_time_t(100));
+    REQUIRE(request->get_interval().upper() == from_time_t(300));
     request->set_result({});
   }, "test_cached_imbalance_left_overlap");
 }
@@ -241,19 +253,19 @@ TEST_CASE("test_cached_imbalance_superset",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(200),
-      from_time_t(400), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({B, C, D});
+    auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(200),
+      from_time_t(400)));
+    wait(test_model->pop_load())->set_result({B, C, D});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(100),
-      from_time_t(500), [] (auto& i) {});
-    auto request1 = wait(test_model->pop_subscription());
-    REQUIRE(request1->get_start() == from_time_t(100));
-    REQUIRE(request1->get_end() == from_time_t(200));
+    auto promise2 = cache_model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(500)));
+    auto request1 = wait(test_model->pop_load());
+    REQUIRE(request1->get_interval().lower() == from_time_t(100));
+    REQUIRE(request1->get_interval().upper() == from_time_t(200));
     request1->set_result({});
-    auto request2 = wait(test_model->pop_subscription());
-    REQUIRE(request2->get_start() == from_time_t(400));
-    REQUIRE(request2->get_end() == from_time_t(500));
+    auto request2 = wait(test_model->pop_load());
+    REQUIRE(request2->get_interval().lower() == from_time_t(400));
+    REQUIRE(request2->get_interval().upper() == from_time_t(500));
     request2->set_result({});
   }, "test_cached_imbalance_superset");
 }
@@ -263,57 +275,57 @@ TEST_CASE("test_cached_imbalance_mixed_subsets_and_supersets",
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(150),
-      from_time_t(250), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({B});
+    auto promise1 = cache_model.load(TimeInterval::closed(
+      from_time_t(150), from_time_t(250)));
+    wait(test_model->pop_load())->set_result({B});
     wait(std::move(promise1));
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(350),
-      from_time_t(450), [] (auto& i) {});
-    wait(test_model->pop_subscription())->set_result({D});
+    auto promise2 = cache_model.load(TimeInterval::closed(
+      from_time_t(350), from_time_t(450)));
+    wait(test_model->pop_load())->set_result({D});
     wait(std::move(promise2));
-    auto [connection3, promise3] = cache_model.subscribe(from_time_t(0),
-      from_time_t(500), [] (auto& i) {});
-    auto request1 = wait(test_model->pop_subscription());
-    REQUIRE(request1->get_start() == from_time_t(0));
-    REQUIRE(request1->get_end() == from_time_t(150));
+    auto promise3 = cache_model.load(TimeInterval::closed(
+      from_time_t(0), from_time_t(500)));
+    auto request1 = wait(test_model->pop_load());
+    REQUIRE(request1->get_interval().lower() == from_time_t(0));
+    REQUIRE(request1->get_interval().upper() == from_time_t(150));
     request1->set_result({});
-    auto request2 = wait(test_model->pop_subscription());
-    REQUIRE(request2->get_start() == from_time_t(250));
-    REQUIRE(request2->get_end() == from_time_t(350));
+    auto request2 = wait(test_model->pop_load());
+    REQUIRE(request2->get_interval().lower() == from_time_t(250));
+    REQUIRE(request2->get_interval().upper() == from_time_t(350));
     request2->set_result({});
-    auto request3 = wait(test_model->pop_subscription());
-    REQUIRE(request3->get_start() == from_time_t(450));
-    REQUIRE(request3->get_end() == from_time_t(500));
+    auto request3 = wait(test_model->pop_load());
+    REQUIRE(request3->get_interval().lower() == from_time_t(450));
+    REQUIRE(request3->get_interval().upper() == from_time_t(500));
     request3->set_result({});
   }, "test_cached_imbalance_mixed_subsets_and_supersets");
 }
 
-TEST_CASE("test_cached_imbalance_async_subscribes",
+TEST_CASE("test_cached_imbalance_async_loads",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([=] {
     auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
     auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
-    auto [connection1, promise1] = cache_model.subscribe(from_time_t(100),
-      from_time_t(300), [] (auto& i) {});
-    auto [connection2, promise2] = cache_model.subscribe(from_time_t(200),
-      from_time_t(500), [] (auto& i) {});
-    REQUIRE(test_model->get_subscription_entry_count() == 2);
-    auto subscribe1 = wait(test_model->pop_subscription());
-    auto subscribe2 = wait(test_model->pop_subscription());
-    REQUIRE(subscribe1->get_start() == from_time_t(100));
-    REQUIRE(subscribe1->get_end() == from_time_t(300));
-    REQUIRE(subscribe2->get_start() == from_time_t(200));
-    REQUIRE(subscribe2->get_end() == from_time_t(500));
-    subscribe2->set_result({B, C, D, E});
-    subscribe1->set_result({A, B, C});
+    auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(100),
+      from_time_t(300)));
+    auto promise2 = cache_model.load(TimeInterval::closed(from_time_t(200),
+      from_time_t(500)));
+    REQUIRE(test_model->get_load_entry_count() == 2);
+    auto load1 = wait(test_model->pop_load());
+    auto load2 = wait(test_model->pop_load());
+    REQUIRE(load1->get_interval().lower() == from_time_t(100));
+    REQUIRE(load1->get_interval().upper() == from_time_t(300));
+    REQUIRE(load2->get_interval().lower() == from_time_t(200));
+    REQUIRE(load2->get_interval().upper() == from_time_t(500));
+    load2->set_result({B, C, D, E});
+    load1->set_result({A, B, C});
     wait(std::move(promise2));
     wait(std::move(promise1));
-    auto [connection3, promise3] = cache_model.subscribe(from_time_t(100),
-      from_time_t(500), [] (auto& i) {});
-    REQUIRE(test_model->get_subscription_entry_count() == 0);
+    auto promise3 = cache_model.load(TimeInterval::closed(
+      from_time_t(100), from_time_t(500)));
+    REQUIRE(test_model->get_load_entry_count() == 0);
     auto cached_data = wait(std::move(promise3));
     auto expected = std::vector<OrderImbalance>({A, B, C, D, E});
     REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),
       expected.begin(), expected.end()));
-  }, "test_cached_imbalance_async_subscribes");
+  }, "test_cached_imbalance_async_loads");
 }
