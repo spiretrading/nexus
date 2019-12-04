@@ -9,9 +9,11 @@ using namespace Spire;
 CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
     std::shared_ptr<OrderImbalanceIndicatorModel> source)
     : m_source_model(std::move(source)) {
-  m_source_model->subscribe([=] (const auto& imbalance) {
-    on_imbalance_published(imbalance);
-  });
+  auto [connection, promise] = m_source_model->subscribe(
+    [=] (const auto& imbalance) {
+      on_imbalance_published(imbalance);
+    });
+  m_subscription_connection = std::move(connection);
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
