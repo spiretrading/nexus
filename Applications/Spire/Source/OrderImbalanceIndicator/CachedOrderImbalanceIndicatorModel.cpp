@@ -17,7 +17,7 @@ CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-  if(m_ranges.find(interval) != m_ranges.end()) {
+  if(boost::icl::contains(m_ranges, interval)) {
     return load_from_cache(interval);
   }
   return load_from_model(interval);
@@ -38,43 +38,59 @@ std::shared_ptr<OrderImbalanceChartModel>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_cache(
     const TimeInterval& interval) {
-  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& imbalance) {
-      //TODO: less than and equal to, or less than?
-      return interval.lower() <= imbalance.m_timestamp;
-    });
-  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& imbalance) {
-      return interval.upper() < imbalance.m_timestamp;
-    });
+  auto first = [&] {
+    if(is_left_closed(interval.bounds())) {
+      return std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+        interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
+          return imbalance.m_timestamp < timestamp;
+        });
+    }
+    return std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.lower(), [] (const auto& timestamp, const auto& imbalance) {
+        return imbalance.m_timestamp > timestamp;
+      });
+  }();
+  auto last = [&] {
+    if(is_right_closed(interval.bounds())) {
+     return std::upper_bound(first, m_imbalances.end(),
+        interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
+          return imbalance.m_timestamp > timestamp;
+        });
+    }
+    return std::lower_bound(first, m_imbalances.end(),
+      interval.upper(), [] (const auto& imbalance, const auto& timestamp) {
+        return imbalance.m_timestamp < timestamp;
+      });
+  }();
   return QtPromise(
     [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
       return std::move(imbalances);
     });
-  return QtPromise([] { return std::vector<OrderImbalance>(); });
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
   auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
-  auto load_ranges = m_ranges.subtract(interval);
+  auto load_ranges = interval_set<ptime>(interval);
+  load_ranges = load_ranges - m_ranges;
   for(auto& range : load_ranges) {
-    promises.push_back(m_source_model->load(range));
+    promises.push_back(m_source_model->load(TimeInterval::closed(range.lower(),
+      range.upper())));
   }
   return all(std::move(promises)).then([=] (const auto& loaded_imbalances) {
     m_ranges.add(interval);
     for(auto& list : loaded_imbalances.Get()) {
-        auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-          [=] (const auto& imbalance) {
-            return interval.lower() < imbalance.m_timestamp;
-          });
-        auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-          [=] (const auto& imbalance) {
-            return interval.upper() < imbalance.m_timestamp;
-          });
-        auto iter = m_imbalances.erase(first, last);
-        m_imbalances.insert(iter, list.begin(), list.end());
+      auto first = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+        interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
+          return imbalance.m_timestamp < timestamp;
+        });
+      auto last = std::upper_bound(first, m_imbalances.end(),
+        interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
+          return imbalance.m_timestamp > timestamp;
+        });
+      auto iter = m_imbalances.erase(first, last);
+      m_imbalances.insert(iter, list.begin(), list.end());
     }
     return load_from_cache(interval);
   });
@@ -82,10 +98,17 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
 
 void CachedOrderImbalanceIndicatorModel::on_imbalance_published(
     const OrderImbalance& imbalance) {
-  m_ranges.add({imbalance.m_timestamp, imbalance.m_timestamp});
-  auto index = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& cached_imbalance) {
-      return imbalance.m_timestamp < cached_imbalance.m_timestamp;
+  m_ranges.add(TimeInterval::closed(imbalance.m_timestamp,
+    imbalance.m_timestamp));
+  if(m_imbalances.empty() ||
+      m_imbalances.back().m_timestamp < imbalance.m_timestamp) {
+    m_imbalances.push_back(imbalance);
+    return;
+  }
+  auto index = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+    imbalance.m_timestamp,
+    [] (const auto& stored_imbalance, const auto& timestamp) {
+      return stored_imbalance.m_timestamp < timestamp;
     });
   m_imbalances.insert(index, imbalance);
 }

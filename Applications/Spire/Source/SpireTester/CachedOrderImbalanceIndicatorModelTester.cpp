@@ -27,7 +27,7 @@ namespace {
 TEST_CASE("test_cached_publishing_subscribing",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
     auto slot_data = OrderImbalance();
     cached_model.subscribe([&] (const auto& imbalance) {
@@ -48,7 +48,7 @@ TEST_CASE("test_cached_publishing_subscribing",
 TEST_CASE("test_cached_subscribing_last_value",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
     auto result1 = cached_model.subscribe([=] (const auto& imbalance) {});
     auto snapshot1 = wait(std::move(result1.m_snapshot));
@@ -67,7 +67,7 @@ TEST_CASE("test_cached_subscribing_last_value",
 TEST_CASE("test_cached_loading",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     local_model->insert(A);
     local_model->insert(B);
     local_model->insert(C);
@@ -92,7 +92,7 @@ TEST_CASE("test_cached_loading",
 TEST_CASE("test_cached_disconnection",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
     auto slot_data1 = OrderImbalance();
     auto slot_data2 = OrderImbalance();
@@ -110,7 +110,7 @@ TEST_CASE("test_cached_disconnection",
 TEST_CASE("test_cached_out_of_order_inserting",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     local_model->insert(D);
     local_model->insert(B);
     local_model->insert(A);
@@ -128,7 +128,7 @@ TEST_CASE("test_cached_out_of_order_inserting",
 TEST_CASE("test_cached_loading_left_open_interval",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     local_model->insert(A);
     local_model->insert(B);
     local_model->insert(C);
@@ -145,7 +145,7 @@ TEST_CASE("test_cached_loading_left_open_interval",
 TEST_CASE("test_cached_loading_right_open_interval",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     local_model->insert(A);
     local_model->insert(B);
     local_model->insert(C);
@@ -162,7 +162,7 @@ TEST_CASE("test_cached_loading_right_open_interval",
 TEST_CASE("test_cached_loading_open_interval",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto local_model = std::shared_ptr<LocalOrderImbalanceIndicatorModel>();
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     local_model->insert(A);
     local_model->insert(B);
     local_model->insert(C);
