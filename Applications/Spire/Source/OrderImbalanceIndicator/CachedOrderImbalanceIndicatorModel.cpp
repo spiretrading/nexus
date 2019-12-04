@@ -38,16 +38,19 @@ std::shared_ptr<OrderImbalanceChartModel>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_cache(
     const TimeInterval& interval) {
-  //auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-  //  [=] (const auto& imbalance) {
-  //    return start <= imbalance.m_timestamp;
-  //  });
-  //auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-  //  [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
-  //return QtPromise(
-  //  [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
-  //    return std::move(imbalances);
-  //  });
+  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) {
+      //TODO: less than and equal to, or less than?
+      return interval.lower() <= imbalance.m_timestamp;
+    });
+  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+    [=] (const auto& imbalance) {
+      return interval.upper() < imbalance.m_timestamp;
+    });
+  return QtPromise(
+    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
+      return std::move(imbalances);
+    });
   return QtPromise([] { return std::vector<OrderImbalance>(); });
 }
 
@@ -60,19 +63,19 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     promises.push_back(m_source_model->load(range));
   }
   return all(std::move(promises)).then([=] (const auto& loaded_imbalances) {
-    //m_ranges.add(interval);
-    //for(auto& list : loaded_imbalances.Get()) {
-    //    auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    //      [=] (const auto& imbalance) {
-    //        return start < imbalance.m_timestamp;
-    //      });
-    //    auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    //      [=] (const auto& imbalance) {
-    //        return end < imbalance.m_timestamp;
-    //      });
-    //    auto iter = m_imbalances.erase(first, last);
-    //    m_imbalances.insert(iter, list.begin(), list.end());
-    //}
+    m_ranges.add(interval);
+    for(auto& list : loaded_imbalances.Get()) {
+        auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return interval.lower() < imbalance.m_timestamp;
+          });
+        auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+          [=] (const auto& imbalance) {
+            return interval.upper() < imbalance.m_timestamp;
+          });
+        auto iter = m_imbalances.erase(first, last);
+        m_imbalances.insert(iter, list.begin(), list.end());
+    }
     return load_from_cache(interval);
   });
 }
