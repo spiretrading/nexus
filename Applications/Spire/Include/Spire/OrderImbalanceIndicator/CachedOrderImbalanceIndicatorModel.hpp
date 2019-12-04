@@ -1,16 +1,19 @@
 #ifndef SPIRE_CACHED_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_CACHED_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #include <boost/icl/interval_set.hpp>
+#include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 
 namespace Spire {
 
+  //! Represents an OrderImbalanceModel that caches loaded order imbalances
+  //! from a source model.
   class CachedOrderImbalanceIndicatorModel :
       public OrderImbalanceIndicatorModel {
     public:
 
-      //! Represents an OrderImbalanceModel that caches loaded order imbalances
-      //! from a source model.
+      //! Constructs a CachedOrderImbalanceIndicatorModel that loads from
+      //! the given source model.
       /*
         \param source The model supplying data to the cached model.
       */
@@ -28,9 +31,10 @@ namespace Spire {
 
     private:
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<Nexus::OrderImbalance> m_imbalances;
+      LocalOrderImbalanceIndicatorModel m_cache;
       boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
       boost::signals2::scoped_connection m_subscription_connection;
+      QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscribe_promise;
 
       QtPromise<std::vector<Nexus::OrderImbalance>> load_from_cache(
         const TimeInterval& interval);

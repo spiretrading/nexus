@@ -62,6 +62,20 @@ TEST_CASE("test_cached_subscribing_last_value",
   }, "test_cached_subscribing_last_value");
 }
 
+TEST_CASE("test_cached_duplicate_timestamps_value",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    // Publish an imbalance with timestamp X.
+    // Load all imbalances within range [X - 1s, X + 1s]
+    // Expect the list [X]
+    // Publish an imbalance with timestamp X.
+    // Load all imbalances within range [X - 1s, X + 1s]
+    // Expect the list [X, X]
+  }, "test_cached_duplicate_timestamps_value");
+}
+
+
+
 TEST_CASE("test_cached_loading",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
