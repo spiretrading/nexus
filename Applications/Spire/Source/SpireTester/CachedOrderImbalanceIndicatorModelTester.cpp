@@ -39,9 +39,7 @@ TEST_CASE("test_cached_publishing_subscribing",
     auto promise = cached_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(200)));
     auto data = wait(std::move(promise));
-    auto expected = std::vector<OrderImbalance>({A, B});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
-      expected.end()));
+    REQUIRE(data == std::vector<OrderImbalance>({A, B}));
   }, "test_cached_publishing_subscribing");
 }
 
@@ -83,9 +81,7 @@ TEST_CASE("test_cached_loading",
     auto promise2 = cached_model.load(TimeInterval::closed(from_time_t(250),
       from_time_t(500)));
     auto data2 = wait(std::move(promise2));
-    auto expected2 = std::vector<OrderImbalance>({C, D, E});
-    REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
-      expected2.end()));
+    REQUIRE(data2 == std::vector<OrderImbalance>({C, D, E}));
   }, "test_cached_loading");
 }
 
@@ -119,9 +115,7 @@ TEST_CASE("test_cached_out_of_order_inserting",
     auto promise = cached_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(400)));
     auto data = wait(std::move(promise));
-    auto expected = std::vector<OrderImbalance>({A, B, C, D});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
-      expected.end()));
+    REQUIRE(data == std::vector<OrderImbalance>({A, B, C, D}));
   }, "test_cached_out_of_order_inserting");
 }
 
@@ -136,9 +130,7 @@ TEST_CASE("test_cached_loading_left_open_interval",
     auto promise = cached_model.load(continuous_interval<ptime>::left_open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
-    auto expected = std::vector<OrderImbalance>({B, C});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
-      expected.end()));
+    REQUIRE(data == std::vector<OrderImbalance>({B, C}));
   }, "test_cached_loading_left_open_interval");
 }
 
@@ -153,9 +145,7 @@ TEST_CASE("test_cached_loading_right_open_interval",
     auto promise = cached_model.load(continuous_interval<ptime>::right_open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
-    auto expected = std::vector<OrderImbalance>({A, B});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
-      expected.end()));
+    REQUIRE(data == std::vector<OrderImbalance>({A, B}));
   }, "test_cached_loading_right_open_interval");
 }
 
@@ -170,9 +160,7 @@ TEST_CASE("test_cached_loading_open_interval",
     auto promise = cached_model.load(continuous_interval<ptime>::open(
       from_time_t(100), from_time_t(300)));
     auto data = wait(std::move(promise));
-    auto expected = std::vector<OrderImbalance>({B});
-    REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
-      expected.end()));
+    REQUIRE(data == std::vector<OrderImbalance>({B}));
   }, "test_cached_loading_open_interval");
 }
 
@@ -188,8 +176,8 @@ TEST_CASE("test_cached_imbalance_right_no_overlap",
     auto promise2 = cache_model.load(TimeInterval::closed(
       from_time_t(300), from_time_t(400)));
     auto request = wait(test_model->pop_load());
-    REQUIRE(request->get_interval().lower() == from_time_t(300));
-    REQUIRE(request->get_interval().upper() == from_time_t(400));
+    REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
+      from_time_t(400)));
     request->set_result({});
   }, "test_cached_imbalance_right_no_overlap");
 }
@@ -206,8 +194,8 @@ TEST_CASE("test_cached_imbalance_left_no_overlap",
     auto promise2 = cache_model.load(TimeInterval::closed(
       from_time_t(100), from_time_t(200)));
     auto request = wait(test_model->pop_load());
-    REQUIRE(request->get_interval().lower() == from_time_t(100));
-    REQUIRE(request->get_interval().upper() == from_time_t(200));
+    REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
+      from_time_t(200)));
     request->set_result({});
   }, "test_cached_imbalance_left_no_overlap");
 }
@@ -224,8 +212,8 @@ TEST_CASE("test_cached_imbalance_right_overlap",
     auto promise2 = cache_model.load(TimeInterval::closed(
       from_time_t(200), from_time_t(500)));
     auto request = wait(test_model->pop_load());
-    REQUIRE(request->get_interval().lower() == from_time_t(300));
-    REQUIRE(request->get_interval().upper() == from_time_t(500));
+    REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
+      from_time_t(500)));
     request->set_result({});
   }, "test_cached_imbalance_right_overlap");
 }
@@ -242,8 +230,8 @@ TEST_CASE("test_cached_imbalance_left_overlap",
     auto promise2 = cache_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(400)));
     auto request = wait(test_model->pop_load());
-    REQUIRE(request->get_interval().lower() == from_time_t(100));
-    REQUIRE(request->get_interval().upper() == from_time_t(300));
+    REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
+      from_time_t(300)));
     request->set_result({});
   }, "test_cached_imbalance_left_overlap");
 }
@@ -260,12 +248,12 @@ TEST_CASE("test_cached_imbalance_superset",
     auto promise2 = cache_model.load(TimeInterval::closed(from_time_t(100),
       from_time_t(500)));
     auto request1 = wait(test_model->pop_load());
-    REQUIRE(request1->get_interval().lower() == from_time_t(100));
-    REQUIRE(request1->get_interval().upper() == from_time_t(200));
+    REQUIRE(request1->get_interval() == TimeInterval::closed(from_time_t(100),
+      from_time_t(200)));
     request1->set_result({});
     auto request2 = wait(test_model->pop_load());
-    REQUIRE(request2->get_interval().lower() == from_time_t(400));
-    REQUIRE(request2->get_interval().upper() == from_time_t(500));
+    REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(400),
+      from_time_t(500)));
     request2->set_result({});
   }, "test_cached_imbalance_superset");
 }
@@ -286,16 +274,16 @@ TEST_CASE("test_cached_imbalance_mixed_subsets_and_supersets",
     auto promise3 = cache_model.load(TimeInterval::closed(
       from_time_t(0), from_time_t(500)));
     auto request1 = wait(test_model->pop_load());
-    REQUIRE(request1->get_interval().lower() == from_time_t(0));
-    REQUIRE(request1->get_interval().upper() == from_time_t(150));
+    REQUIRE(request1->get_interval() == TimeInterval::closed(from_time_t(0),
+      from_time_t(150)));
     request1->set_result({});
     auto request2 = wait(test_model->pop_load());
-    REQUIRE(request2->get_interval().lower() == from_time_t(250));
-    REQUIRE(request2->get_interval().upper() == from_time_t(350));
+    REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(250),
+      from_time_t(350)));
     request2->set_result({});
     auto request3 = wait(test_model->pop_load());
-    REQUIRE(request3->get_interval().lower() == from_time_t(450));
-    REQUIRE(request3->get_interval().upper() == from_time_t(500));
+    REQUIRE(request3->get_interval() == TimeInterval::closed(from_time_t(450),
+      from_time_t(500)));
     request3->set_result({});
   }, "test_cached_imbalance_mixed_subsets_and_supersets");
 }
@@ -312,10 +300,10 @@ TEST_CASE("test_cached_imbalance_async_loads",
     REQUIRE(test_model->get_load_entry_count() == 2);
     auto load1 = wait(test_model->pop_load());
     auto load2 = wait(test_model->pop_load());
-    REQUIRE(load1->get_interval().lower() == from_time_t(100));
-    REQUIRE(load1->get_interval().upper() == from_time_t(300));
-    REQUIRE(load2->get_interval().lower() == from_time_t(200));
-    REQUIRE(load2->get_interval().upper() == from_time_t(500));
+    REQUIRE(load1->get_interval() == TimeInterval::closed(from_time_t(100),
+      from_time_t(300)));
+    REQUIRE(load2->get_interval() == TimeInterval::closed(from_time_t(200),
+      from_time_t(500)));
     load2->set_result({B, C, D, E});
     load1->set_result({A, B, C});
     wait(std::move(promise2));
@@ -324,8 +312,6 @@ TEST_CASE("test_cached_imbalance_async_loads",
       from_time_t(100), from_time_t(500)));
     REQUIRE(test_model->get_load_entry_count() == 0);
     auto cached_data = wait(std::move(promise3));
-    auto expected = std::vector<OrderImbalance>({A, B, C, D, E});
-    REQUIRE(std::is_permutation(cached_data.begin(), cached_data.end(),
-      expected.begin(), expected.end()));
+    REQUIRE(cached_data == std::vector<OrderImbalance>({A, B, C, D, E}));
   }, "test_cached_imbalance_async_loads");
 }
