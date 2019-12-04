@@ -24,6 +24,7 @@ namespace Spire {
           */
           LoadEntry(const TimeInterval& interval);
 
+          //! Returns the load entry's requested time interval.
           const TimeInterval& get_interval() const;
 
           //! Sets the result of the load operation.
