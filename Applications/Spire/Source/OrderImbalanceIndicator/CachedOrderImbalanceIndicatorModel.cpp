@@ -38,16 +38,17 @@ std::shared_ptr<OrderImbalanceChartModel>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_cache(
     const TimeInterval& interval) {
-  auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& imbalance) {
-      return start <= imbalance.m_timestamp;
-    });
-  auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-    [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
-  return QtPromise(
-    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
-      return std::move(imbalances);
-    });
+  //auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+  //  [=] (const auto& imbalance) {
+  //    return start <= imbalance.m_timestamp;
+  //  });
+  //auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+  //  [=] (const auto& imbalance) { return end < imbalance.m_timestamp; });
+  //return QtPromise(
+  //  [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
+  //    return std::move(imbalances);
+  //  });
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
@@ -58,22 +59,23 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
   for(auto& range : load_ranges) {
     promises.push_back(m_source_model->load(range));
   }
-  return all(promises).then([=] (const auto& loaded_imbalances) {
-    m_ranges.add(interval);
-    for(auto& list : loaded_imbalances.Get()) {
-        auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-          [=] (const auto& imbalance) {
-            return start < imbalance.m_timestamp;
-          });
-        auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
-          [=] (const auto& imbalance) {
-            return end < imbalance.m_timestamp;
-          });
-        auto iter = m_imbalances.erase(first, last);
-        m_imbalances.insert(iter, list.begin(), list.end());
-    }
-    return load_from_cache(interval);
-  });
+  //return all(promises).then([=] (const auto& loaded_imbalances) {
+  //  m_ranges.add(interval);
+  //  for(auto& list : loaded_imbalances.Get()) {
+  //      auto first = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+  //        [=] (const auto& imbalance) {
+  //          return start < imbalance.m_timestamp;
+  //        });
+  //      auto last = std::find_if(m_imbalances.begin(), m_imbalances.end(),
+  //        [=] (const auto& imbalance) {
+  //          return end < imbalance.m_timestamp;
+  //        });
+  //      auto iter = m_imbalances.erase(first, last);
+  //      m_imbalances.insert(iter, list.begin(), list.end());
+  //  }
+  //  return load_from_cache(interval);
+  //});
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
 }
 
 void CachedOrderImbalanceIndicatorModel::on_imbalance_published(
