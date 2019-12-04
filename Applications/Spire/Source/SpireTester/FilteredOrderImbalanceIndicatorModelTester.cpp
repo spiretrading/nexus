@@ -295,41 +295,20 @@ TEST_CASE("test_filtered_signals",
     auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto model = FilteredOrderImbalanceIndicatorModel(local_model,
       {make_market_list_filter({"TSX"}, GetDefaultMarketDatabase())});
-    auto signal_data1 = OrderImbalance();
-    auto signal_data2 = OrderImbalance();
-    auto signal_data3 = OrderImbalance();
-    auto signal_data4 = OrderImbalance();
-    auto [connection1, promise1] = model.subscribe([&] (auto& i) {
-      signal_data1 = i; });
-    wait(std::move(promise1));
-    auto [connection2, promise2] = model.subscribe([&] (auto& i) {
-      signal_data2 = i; });
-    wait(std::move(promise2));
-    auto [connection3, promise3] = model.subscribe([&] (auto& i) {
-      signal_data3 = i; });
-    wait(std::move(promise3));
-    auto [connection4, promise4] = model.subscribe([&] (auto& i) {
-      signal_data4 = i; });
-    wait(std::move(promise4));
+    auto signal_data = OrderImbalance();
+    auto [connection, promise] = model.subscribe([&] (auto& i) {
+      signal_data = i; });
+    wait(std::move(promise));
+    REQUIRE(signal_data == OrderImbalance());
     local_model->publish(A);
-    REQUIRE(signal_data1 == A);
-    REQUIRE(signal_data2 == OrderImbalance());
-    REQUIRE(signal_data3 == OrderImbalance());
-    REQUIRE(signal_data4 == OrderImbalance());
+    REQUIRE(signal_data == A);
     local_model->publish(B);
-    REQUIRE(signal_data1 == B);
-    REQUIRE(signal_data2 == B);
-    REQUIRE(signal_data3 == OrderImbalance());
-    REQUIRE(signal_data4 == OrderImbalance());
+    REQUIRE(signal_data == B);
     local_model->publish(C);
-    REQUIRE(signal_data1 == C);
-    REQUIRE(signal_data2 == B);
-    REQUIRE(signal_data3 == C);
-    REQUIRE(signal_data4 == OrderImbalance());
+    REQUIRE(signal_data == C);
     local_model->publish(D);
-    REQUIRE(signal_data1 == C);
-    REQUIRE(signal_data2 == B);
-    REQUIRE(signal_data3 == C);
-    REQUIRE(signal_data4 == OrderImbalance());
+    REQUIRE(signal_data == C);
+    local_model->publish(E);
+    REQUIRE(signal_data == C);
   }, "test_filtered_signals");
 }

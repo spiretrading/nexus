@@ -13,13 +13,19 @@ FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
 QtPromise<std::vector<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-
+  return m_source_model->load(interval).then([=] (const auto& imbalances) {
+    return filter_imbalances(imbalances.Get());
+  });
 }
 
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
-  
+  return m_source_model->subscribe([=] (const auto& imbalance) {
+    if(is_imbalance_accepted(imbalance)) {
+      slot(imbalance);
+    }
+  });
 }
 
 std::shared_ptr<OrderImbalanceChartModel>
@@ -87,11 +93,22 @@ Filter Spire::make_notional_value_filter(Money min, Money max) {
 
 bool FilteredOrderImbalanceIndicatorModel::is_imbalance_accepted(
     const Nexus::OrderImbalance& imbalance) const {
-  
+  for(auto& filter : m_filters) {
+    if(!filter(imbalance)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 std::vector<Nexus::OrderImbalance>
     FilteredOrderImbalanceIndicatorModel::filter_imbalances(
     const std::vector<Nexus::OrderImbalance>& imbalances) const {
-  
+  auto filtered_imbalances = std::vector<Nexus::OrderImbalance>();
+  for(auto& imbalance : imbalances) {
+    if(is_imbalance_accepted(imbalance)) {
+      filtered_imbalances.push_back(imbalance);
+    }
+  }
+  return filtered_imbalances;
 }
