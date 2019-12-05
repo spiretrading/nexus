@@ -1,10 +1,9 @@
 #include "Spire/Spire/UserProfile.hpp"
 #include <QStandardPaths>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 using namespace Beam;
@@ -27,7 +26,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     Ref<TimerThreadPool> timerThreadPool,
-    Ref<ServiceClients> serviceClients)
+    Ref<VirtualServiceClients> serviceClients)
     : m_username(username),
       m_isAdministrator{isAdministrator},
       m_isManager{isManager},
@@ -98,11 +97,11 @@ TimerThreadPool& UserProfile::GetTimerThreadPool() {
   return *m_timerThreadPool;
 }
 
-const ServiceClients& UserProfile::GetServiceClients() const {
+const VirtualServiceClients& UserProfile::GetServiceClients() const {
   return *m_serviceClients;
 }
 
-ServiceClients& UserProfile::GetServiceClients() {
+VirtualServiceClients& UserProfile::GetServiceClients() {
   return *m_serviceClients;
 }
 

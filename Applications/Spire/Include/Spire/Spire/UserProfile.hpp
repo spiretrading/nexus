@@ -14,6 +14,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Nexus/ServiceClients/ServiceClients.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -60,7 +61,7 @@ namespace Spire {
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool,
-        Beam::Ref<ServiceClients> serviceClients);
+        Beam::Ref<Nexus::VirtualServiceClients> serviceClients);
 
       virtual ~UserProfile();
 
@@ -100,10 +101,10 @@ namespace Spire {
       Beam::Threading::TimerThreadPool& GetTimerThreadPool();
 
       //! Returns the set of clients connected to Spire services.
-      const ServiceClients& GetServiceClients() const;
+      const Nexus::VirtualServiceClients& GetServiceClients() const;
 
       //! Returns the set of clients connected to Spire services.
-      ServiceClients& GetServiceClients();
+      Nexus::VirtualServiceClients& GetServiceClients();
 
       //! Creates the profile path.
       void CreateProfilePath() const;
@@ -256,7 +257,7 @@ namespace Spire {
       mutable std::optional<Nexus::MarketDataService::EntitlementDatabase>
         m_entitlementDatabase;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
-      ServiceClients* m_serviceClients;
+      Nexus::VirtualServiceClients* m_serviceClients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;

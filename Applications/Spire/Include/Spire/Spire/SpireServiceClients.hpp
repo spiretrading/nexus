@@ -1,5 +1,5 @@
-#ifndef SPIRE_SERVICECLIENTS_HPP
-#define SPIRE_SERVICECLIENTS_HPP
+#ifndef SPIRE_SERVICE_CLIENTS_HPP
+#define SPIRE_SERVICE_CLIENTS_HPP
 #include <memory>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Pointers/Ref.hpp>
@@ -19,26 +19,24 @@
 
 namespace Spire {
 
-  /*! \class ServiceClients
-      \brief Manages the set of clients connected to Spire services.
-   */
-  class ServiceClients : private boost::noncopyable {
+  /* Manages the set of clients connected to Spire services. */
+  class SpireServiceClients : private boost::noncopyable {
     public:
 
-      //! Constructs a ServiceClients instance.
+      //! Constructs a SpireServiceClients instance.
       /*!
         \param serviceLocatorClient The ServiceLocatorClient logged into the
                Spire services.
         \param socketThreadPool The SocketThreadPool the clients will use.
         \param timerThreadPool The TimerThreadPool the clients will use.
       */
-      ServiceClients(
+      SpireServiceClients(
         std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
         serviceLocatorClient,
         Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
-      ~ServiceClients();
+      ~SpireServiceClients();
 
       //! Returns the ServiceLocatorClient.
       Beam::ServiceLocator::VirtualServiceLocatorClient&

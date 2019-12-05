@@ -1,4 +1,4 @@
-#include "Spire/Spire/ServiceClients.hpp"
+#include "Spire/Spire/SpireServiceClients.hpp"
 #include <stdexcept>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
@@ -69,7 +69,7 @@ namespace {
   }
 }
 
-ServiceClients::ServiceClients(
+SpireServiceClients::SpireServiceClients(
     std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient,
     Ref<SocketThreadPool> socketThreadPool,
     Ref<TimerThreadPool> timerThreadPool)
@@ -79,49 +79,52 @@ ServiceClients::ServiceClients(
       m_socketThreadPool{socketThreadPool.Get()},
       m_timerThreadPool{timerThreadPool.Get()} {}
 
-ServiceClients::~ServiceClients() {}
+SpireServiceClients::~SpireServiceClients() {}
 
-VirtualServiceLocatorClient& ServiceClients::GetServiceLocatorClient() const {
+VirtualServiceLocatorClient&
+    SpireServiceClients::GetServiceLocatorClient() const {
   return *m_serviceLocatorClient;
 }
 
-VirtualRegistryClient& ServiceClients::GetRegistryClient() const {
+VirtualRegistryClient& SpireServiceClients::GetRegistryClient() const {
   return *m_registryClient;
 }
 
-VirtualAdministrationClient& ServiceClients::GetAdministrationClient() const {
+VirtualAdministrationClient&
+    SpireServiceClients::GetAdministrationClient() const {
   return *m_administrationClient;
 }
 
-VirtualDefinitionsClient& ServiceClients::GetDefinitionsClient() const {
+VirtualDefinitionsClient& SpireServiceClients::GetDefinitionsClient() const {
   return *m_definitionsClient;
 }
 
-VirtualChartingClient& ServiceClients::GetChartingClient() const {
+VirtualChartingClient& SpireServiceClients::GetChartingClient() const {
   return *m_chartingClient;
 }
 
-VirtualComplianceClient& ServiceClients::GetComplianceClient() const {
+VirtualComplianceClient& SpireServiceClients::GetComplianceClient() const {
   return *m_complianceClient;
 }
 
-VirtualMarketDataClient& ServiceClients::GetMarketDataClient() const {
+VirtualMarketDataClient& SpireServiceClients::GetMarketDataClient() const {
   return *m_marketDataClient;
 }
 
-VirtualOrderExecutionClient& ServiceClients::GetOrderExecutionClient() const {
+VirtualOrderExecutionClient&
+    SpireServiceClients::GetOrderExecutionClient() const {
   return *m_orderExecutionClient;
 }
 
-VirtualRiskClient& ServiceClients::GetRiskClient() const {
+VirtualRiskClient& SpireServiceClients::GetRiskClient() const {
   return *m_riskClient;
 }
 
-VirtualTimeClient& ServiceClients::GetTimeClient() const {
+VirtualTimeClient& SpireServiceClients::GetTimeClient() const {
   return *m_timeClient;
 }
 
-void ServiceClients::Open() {
+void SpireServiceClients::Open() {
   auto& serviceLocatorClient = *(m_applicationServiceLocatorClient->Get());
   auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
   try {
@@ -238,7 +241,7 @@ void ServiceClients::Open() {
   m_riskClient = MakeVirtualRiskClient(MakeByPassPtr(std::move(riskClient)));
 }
 
-void ServiceClients::Close() {
+void SpireServiceClients::Close() {
   m_timeClient->Close();
   m_riskClient->Close();
   m_orderExecutionClient->Close();
