@@ -27,13 +27,13 @@ interface State {
 
 /** Displays a component that allows a user to add a new rule. */
 export class NewRuleButton extends React.Component<Properties, State> {
-  public static defaultProps = {
+  public static readonly defaultProps = {
     isOpen: false,
     onToggleModal: () => {},
     onAddNewRule: () => {}
   };
 
-  public constructor(props: Properties) {
+  constructor(props: Properties) {
     super(props);
     this.state = {
       selection: -1
@@ -78,18 +78,18 @@ export class NewRuleButton extends React.Component<Properties, State> {
     })();
     const options = [];
     for(let i = 0; i < this.props.schemas.length; ++i) {
-        if(i === this.state.selection) {
-          options.push(
-            <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
-                onClick={this.onClickRule.bind(this, i)}>
-              {this.props.schemas[i].name}
-            </div>);
-        } else {
-          options.push(
-            <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
+      if(i === this.state.selection) {
+        options.push(
+          <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
               onClick={this.onClickRule.bind(this, i)}>
-              {this.props.schemas[i].name}
-            </div>);
+            {this.props.schemas[i].name}
+          </div>);
+      } else {
+        options.push(
+          <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
+            onClick={this.onClickRule.bind(this, i)}>
+            {this.props.schemas[i].name}
+          </div>);
       }
     }
     return (
@@ -122,7 +122,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
               <HLine color='#E6E6E6'/>
               <div style={buttonWrapper}>
                 <button 
-                    className={css(NewRuleButton.EXTRA_STYLE.bacon)}
+                    className={css(NewRuleButton.EXTRA_STYLE.button)}
                     onClick={this.addNewRule.bind(this)}>
                   {'Select'}
                 </button>
@@ -207,7 +207,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '461px',
-            top: 'calc(50% - 230.5px)',
+      top: 'calc(50% - 230.5px)',
       left: 'calc(50% - 180px)',
     },
     smallOptionsBox: {
@@ -273,14 +273,14 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingTop: '30px',
       paddingBottom: '40px'
     },
-      buttonWrapper: {
+    buttonWrapper: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
       paddingTop: '30px',
-      paddingBottom: '18px',
+      paddingBottom: '18px'
     }
   };
 
@@ -295,7 +295,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
       ':hover': {
-        backgroundColor: '#F8F8F8',
+        backgroundColor: '#F8F8F8'
       }
     },
     selectedRow: {
@@ -307,9 +307,9 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#684BC7',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
-      paddingLeft: '18px',
+      paddingLeft: '18px'
     },
-    bacon: {
+    button: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
@@ -318,26 +318,31 @@ export class NewRuleButton extends React.Component<Properties, State> {
       border: '0px solid #684BC7',
       borderRadius: '1px',
       font: '400 16px Roboto',
+      outline: 'none',
+      MozAppearance: 'none' as 'none',
       ':active' : {
-        backgroundColor: 'red'
+        backgroundColor: '#4B23A0'
       },
       ':focus': {
-        ouline: 0,
+        border: 0,
+        outline: 'none',
         borderColor: '#4B23A0',
         backgroundColor: '#4B23A0',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
-        outlineStyle: 'none'
+        outlineStyle: 'none',
+        MozAppearance: 'none' as 'none'
       },
       ':hover':{
         backgroundColor: '#4B23A0'
       },
-      '::moz-focus-inner': {
-        border: 0
+      '::-moz-focus-inner': {
+        border: 0,
+        outline: 0
       },
-      '::placeholder': {
-        color: '#8C8C8C'
+      ':-moz-focusring': {
+        outline: 0
       }
     }
   });
