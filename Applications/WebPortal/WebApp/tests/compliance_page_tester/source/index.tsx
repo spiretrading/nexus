@@ -77,9 +77,16 @@ class TestApp extends React.Component<Properties, State> {
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000))),
         new Nexus.ComplianceParameter(
-          'Security',
+          'Securities',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.SECURITY, new Nexus.Security('AST', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)))
+            Nexus.ComplianceValue.Type.LIST, [
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('PST.TSX', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('AST.NYC', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+            ]))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [
@@ -160,7 +167,7 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Some Double',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DOUBLE, 123.4567)),
+            Nexus.ComplianceValue.Type.LIST, 123.4567)),
       ]));
       this.setState({
         entries: this.state.entries,

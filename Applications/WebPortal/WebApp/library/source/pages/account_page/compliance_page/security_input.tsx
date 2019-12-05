@@ -4,11 +4,10 @@ import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { HLine } from '../../../components';
 
-
 interface Properties {
   displaySize: DisplaySize;
 
-  value?: Nexus.Security;
+  value?: Nexus.ComplianceValue[];
 }
 
 interface State {
@@ -74,13 +73,24 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.iconWrapperLarge;
       }
     })();
+    let displayValue  = '';
+    const entries = [];
+    for(let i = 0; i < this.props.value.length; ++i) {
+      const sec = this.props.value[i].value as Nexus.Security;
+      displayValue = displayValue.concat(sec.symbol.toString());
+      entries.push();
+      if(i >= 0 && i < this.props.value.length - 1 && this.props.value.length > 1) {
+        displayValue = displayValue.concat(', ');
+      }
+    }
+    
     return(
       <div>
         <input
           readOnly
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
-          value ={this.props.value.symbol}
+          value ={displayValue}
           onFocus={this.toggleEditing.bind(this)}
           onClick={this.toggleEditing.bind(this)}/>
         <div style={visibility}>
@@ -101,7 +111,11 @@ export class SecurityInput extends React.Component<Properties, State>{
               style={SecurityInput.STYLE.findSymbolBox}
               placeholder={SecurityInput.PLACEHOLDER_TEXT}
               value={''}/>
-            <div style={selectedSecuritiesBox}/>
+            <div style={selectedSecuritiesBox}>
+              <div style={SecurityInput.STYLE.scrollBoxHeader}>
+                {'Added Symbols'}
+              </div>
+            </div>
             <div style={iconRowStyle}>
               <div style={imageWrapperStyle}>
                 <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
@@ -246,6 +260,21 @@ export class SecurityInput extends React.Component<Properties, State>{
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       marginBottom: '30px'
+    },
+    scrollBoxHeader: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '40px',
+      width: '100%',
+      backgroundColor: '#F8F8F8',
+      font: '400 14px Roboto',
+      paddingLeft: '10px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center'
+    },
+    scrollBoxEntry: {
+    },
+    scrollBoxEntrySelected: {
     },
     iconWrapperSmall: {
       height: '24px',
