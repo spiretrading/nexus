@@ -162,7 +162,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
       paddingLeft: '18px'
     },
     imageWrapper: {
-      position: 'relative' as 'relative',
       display: 'flex' as 'flex',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',

@@ -12,13 +12,16 @@ interface Properties {
 
 interface State {
   isEditing: boolean;
+
+  selection: number;
 }
 
 export class SecurityInput extends React.Component<Properties, State>{
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isEditing: false
+      isEditing: false,
+      selection: -1
     }
     this.toggleEditing = this.toggleEditing.bind(this);
   }
@@ -73,12 +76,37 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.iconWrapperLarge;
       }
     })();
+    const removeImgSrc = (() => {
+      if(this.state.selection !== -1) {
+        return (
+          <div style={imageWrapperStyle} onClick={this.removeEntry}>
+            <img src={'resources/account_page/compliance_page/security_input/remove-purple.svg'}/>
+          </div>);
+      } else {
+        return  (          
+          <div style={imageWrapperStyle}>
+            <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
+          </div>);
+      }
+    })();
     let displayValue  = '';
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
       const sec = this.props.value[i].value as Nexus.Security;
       displayValue = displayValue.concat(sec.symbol.toString());
-      entries.push();
+      if(this.state.selection === i) {
+        entries.push(
+          <div style={SecurityInput.STYLE.scrollBoxEntrySelected}
+              onClick={this.selectEntry.bind(this, i)}>
+            {sec.symbol.toString()}
+          </div>);
+      } else {
+        entries.push(
+          <div style={SecurityInput.STYLE.scrollBoxEntry}
+              onClick={this.selectEntry.bind(this, i)}>
+            {sec.symbol.toString()}
+          </div>);
+      }
       if(i >= 0 && i < this.props.value.length - 1 && this.props.value.length > 1) {
         displayValue = displayValue.concat(', ');
       }
@@ -115,11 +143,10 @@ export class SecurityInput extends React.Component<Properties, State>{
               <div style={SecurityInput.STYLE.scrollBoxHeader}>
                 {'Added Symbols'}
               </div>
+             {entries}
             </div>
             <div style={iconRowStyle}>
-              <div style={imageWrapperStyle}>
-                <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
-              </div>
+              {removeImgSrc}
               <div style={imageWrapperStyle}>
                 <img src={'resources/account_page/compliance_page/security_input/upload.svg'}/>
               </div>
@@ -137,6 +164,18 @@ export class SecurityInput extends React.Component<Properties, State>{
 
   private toggleEditing(){
     this.setState({isEditing: !this.state.isEditing});
+  }
+
+  private selectEntry(index: number) {
+   if(index === this.state.selection) {
+      this.setState({selection: -1});
+    } else {
+      this.setState({selection: index});
+    }
+  }
+
+  private removeEntry() {
+
   }
 
   private static readonly STYLE = {
@@ -273,8 +312,28 @@ export class SecurityInput extends React.Component<Properties, State>{
       alignItems: 'center' as 'center'
     },
     scrollBoxEntry: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '100%',
+      backgroundColor: '#FFFFFF',
+      color: '#000000',
+      font: '400 14px Roboto',
+      paddingLeft: '10px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center'
     },
     scrollBoxEntrySelected: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '100%',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      font: '400 14px Roboto',
+      paddingLeft: '10px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center'
     },
     iconWrapperSmall: {
       height: '24px',
