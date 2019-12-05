@@ -580,7 +580,10 @@ namespace {
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Bid")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
-      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
+      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    chixSmartXDarkLimitBid.SetReadOnly("long_life", true);
+    chixSmartXDarkLimitBid.SetVisible("long_life", false);
     chixSmartXDarkLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       make_unique<DestinationNode>(DefaultDestinations::CHIX()));
     chixSmartXDarkLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -601,9 +604,12 @@ namespace {
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Ask")->AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
-      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR")));
+      "ex_destination", 100, make_unique<TextNode>("SMRTXDARKNR"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
     chixSmartXDarkLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       make_unique<DestinationNode>(DefaultDestinations::CHIX()));
+    chixSmartXDarkLimitAsk.SetReadOnly("long_life", true);
+    chixSmartXDarkLimitAsk.SetVisible("long_life", false);
     chixSmartXDarkLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
       false);
     chixSmartXDarkLimitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
@@ -1888,6 +1894,66 @@ namespace {
     neoSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
     neoSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
     orderTypes.emplace_back(neoSell.Build());
+    CanvasNodeBuilder neoIocBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Book IOC Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoIocBid.SetReadOnly("ex_destination", true);
+    neoIocBid.SetVisible("ex_destination", false);
+    neoIocBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoIocBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    neoIocBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    neoIocBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::IOC)));
+    neoIocBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    neoIocBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    neoIocBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoIocBid.Build());
+    CanvasNodeBuilder neoIocAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Book IOC Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoIocAsk.SetReadOnly("ex_destination", true);
+    neoIocAsk.SetVisible("ex_destination", false);
+    neoIocAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoIocAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    neoIocAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    neoIocAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::IOC)));
+    neoIocAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    neoIocAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    neoIocAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoIocAsk.Build());
+    CanvasNodeBuilder neoFokBid(*GetLimitBidOrderTaskNode()->Rename(
+      "NEO Book FOK Bid")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoFokBid.SetReadOnly("ex_destination", true);
+    neoFokBid.SetVisible("ex_destination", false);
+    neoFokBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoFokBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    neoFokBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    neoFokBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::FOK)));
+    neoFokBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    neoFokBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    neoFokBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoFokBid.Build());
+    CanvasNodeBuilder neoFokAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "NEO Book FOK Ask")->AddField("ex_destination", 100,
+      make_unique<TextNode>("N")));
+    neoFokAsk.SetReadOnly("ex_destination", true);
+    neoFokAsk.SetVisible("ex_destination", false);
+    neoFokAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::NEOE()));
+    neoFokAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    neoFokAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    neoFokAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::FOK)));
+    neoFokAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    neoFokAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    neoFokAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(neoFokAsk.Build());
     CanvasNodeBuilder neoMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
       "NEOE Book Mid Peg Bid")->AddField("exec_inst", 18,
       make_unique<TextNode>("M"))->AddField("ex_destination", 100,
@@ -2091,7 +2157,10 @@ namespace {
   void PopulateTsxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder tsxLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "TSX Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    tsxLimitBid.SetReadOnly("long_life", true);
+    tsxLimitBid.SetVisible("long_life", false);
     tsxLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       make_unique<DestinationNode>(DefaultDestinations::TSX()));
     tsxLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2104,7 +2173,10 @@ namespace {
     orderTypes.emplace_back(tsxLimitBid.Build());
     CanvasNodeBuilder tsxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSX Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "long_life", 7735, make_unique<TextNode>("Y")));
+    tsxLimitAsk.SetReadOnly("long_life", true);
+    tsxLimitAsk.SetVisible("long_life", false);
     tsxLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       make_unique<DestinationNode>(DefaultDestinations::TSX()));
     tsxLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
