@@ -212,7 +212,6 @@ namespace {
       CanvasNodeTranslationContext* m_context;
       const CanvasNode* m_node;
       std::optional<Translation> m_translation;
-      std::vector<Translation> m_translations;
 
       Translation InternalTranslation(const CanvasNode& node);
       template<typename Translator>
@@ -921,7 +920,7 @@ namespace {
   struct ReferenceTranslator {
     template<typename T>
     static Translation Template(const Translation& source) {
-      return source.ToWeak().Extract<Aspen::Box<T>>();
+      return source.Extract<Aspen::Box<T>>();
     }
 
     using SupportedTypes = NativeTypes;
@@ -1053,9 +1052,7 @@ CanvasNodeTranslationVisitor::CanvasNodeTranslationVisitor(
     m_node(node.Get()) {}
 
 Translation CanvasNodeTranslationVisitor::Translate() {
-  auto translation = InternalTranslation(*m_node);
-  m_translations.clear();
-  return translation;
+  return InternalTranslation(*m_node);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AbsNode& node) {
@@ -1578,12 +1575,11 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
   if(existingTranslation.is_initialized()) {
-    m_translation = existingTranslation->ToShared();
+    m_translation = *existingTranslation;
   } else {
     node.Apply(*this);
-    m_translations.push_back(*m_translation);
   }
-  m_context->Add(Ref(node), m_translation->ToWeak());
+  m_context->Add(Ref(node), *m_translation);
   return *m_translation;
 }
 
