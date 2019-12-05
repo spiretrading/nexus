@@ -212,6 +212,7 @@ namespace {
       CanvasNodeTranslationContext* m_context;
       const CanvasNode* m_node;
       std::optional<Translation> m_translation;
+      std::vector<Translation> m_translations;
 
       Translation InternalTranslation(const CanvasNode& node);
       template<typename Translator>
@@ -284,8 +285,7 @@ namespace {
     template<typename T, typename R>
     static Translation Template(const Translation& value,
         CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T, R>(),
-        value.Extract<Aspen::SharedBox<T>>());
+      return Aspen::lift(Operation<T, R>(), value.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = AbsNodeSignatures::type;
@@ -296,7 +296,7 @@ namespace {
     static Translation Template(const std::vector<Translation>& children) {
       auto queue = Aspen::Queue<Aspen::SharedBox<T>>();
       for(auto& child : children) {
-        queue.push(child.Extract<Aspen::SharedBox<T>>());
+        queue.push(Aspen::Shared(child.Extract<Aspen::Box<T>>()));
       }
       queue.set_complete();
       return Aspen::group(std::move(queue));
@@ -330,9 +330,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = AdditionNodeSignatures::type;
@@ -364,9 +363,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -376,17 +374,16 @@ namespace {
     template<typename T>
     static Translation Template(const std::vector<Translation>& translations) {
       if(translations.empty()) {
-        return Aspen::shared_box(Aspen::none<T>());
+        return Aspen::box(Aspen::none<T>());
       } else if(translations.size() == 1) {
-        return translations.front().Extract<Aspen::SharedBox<T>>();
+        return translations.front().Extract<Aspen::Box<T>>();
       } else {
-        auto reactor = translations.back().Extract<Aspen::SharedBox<T>>();
+        auto reactor = translations.back().Extract<Aspen::Box<T>>();
         for(auto i = std::size_t(translations.size() - 1); i-- > 0;) {
-          reactor = Aspen::shared_box(Aspen::chain(
-            translations[i].Extract<Aspen::SharedBox<T>>(),
-            std::move(reactor)));
+          reactor = Aspen::box(Aspen::chain(
+            translations[i].Extract<Aspen::Box<T>>(), std::move(reactor)));
         }
-        return reactor;
+        return Translation(std::move(reactor));
       }
     }
 
@@ -452,9 +449,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = DivisionNodeSignatures::type;
@@ -471,9 +467,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = EqualitySignatures::type;
@@ -559,8 +554,8 @@ namespace {
     template<typename T>
     static Translation Template(const Translation& filter,
         const Translation& source) {
-      return Aspen::discard(filter.Extract<Aspen::SharedBox<bool>>(),
-        source.Extract<Aspen::SharedBox<T>>());
+      return Aspen::discard(filter.Extract<Aspen::Box<bool>>(),
+        source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -569,7 +564,7 @@ namespace {
   struct FirstTranslator {
     template<typename T>
     static Translation Template(const Translation& source) {
-      return Aspen::first(source.Extract<Aspen::SharedBox<T>>());
+      return Aspen::first(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -601,9 +596,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -623,10 +617,10 @@ namespace {
     static Translation Template(const Translation& combiner,
         const Translation& leftTrigger, const Translation& rightTrigger,
         const Translation& source) {
-      return Aspen::fold(combiner.Extract<Aspen::SharedBox<CombinerType>>(),
+      return Aspen::fold(combiner.Extract<Aspen::Box<CombinerType>>(),
         leftTrigger.Extract<Aspen::Shared<Aspen::FoldArgument<CombinerType>>>(),
         rightTrigger.Extract<Aspen::Shared<Aspen::FoldArgument<SourceType>>>(),
-        source.Extract<Aspen::SharedBox<SourceType>>());
+        source.Extract<Aspen::Box<SourceType>>());
     }
 
     using SupportedTypes = FoldSignatures::type;
@@ -643,9 +637,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -662,9 +655,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -684,9 +676,9 @@ namespace {
         const Translation& consequent, const Translation& default,
         CanvasNodeTranslationContext& context) {
       return Aspen::lift(Operation<T0, T1, T2, R>(),
-        condition.Extract<Aspen::SharedBox<T0>>(),
-        consequent.Extract<Aspen::SharedBox<T1>>(),
-        default.Extract<Aspen::SharedBox<T2>>());
+        condition.Extract<Aspen::Box<T0>>(),
+        consequent.Extract<Aspen::Box<T1>>(),
+        default.Extract<Aspen::Box<T2>>());
     }
 
     using SupportedTypes = IfNodeSignatures::type;
@@ -695,7 +687,7 @@ namespace {
   struct LastTranslator {
     template<typename T>
     static Translation Template(const Translation& source) {
-      return Aspen::last(source.Extract<Aspen::SharedBox<T>>());
+      return Aspen::last(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -712,9 +704,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -731,9 +722,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::Lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ComparisonSignatures::type;
@@ -744,14 +734,14 @@ namespace {
     static Aspen::Unique<LuaReactorParameter> Template(
         const Translation& reactor, const CanvasType& type) {
       return Aspen::Unique<LuaReactorParameter>(new NativeLuaReactorParameter(
-        Aspen::box(reactor.Extract<Aspen::SharedBox<T>>())));
+        reactor.Extract<Aspen::Box<T>>()));
     }
 
     template<>
     static Aspen::Unique<LuaReactorParameter> Template<Record>(
         const Translation& reactor, const CanvasType& type) {
       return Aspen::Unique<LuaReactorParameter>(new RecordLuaReactorParameter(
-        Aspen::box(reactor.Extract<Aspen::SharedBox<Record>>()),
+        reactor.Extract<Aspen::Box<Record>>(),
         static_cast<const RecordType&>(type)));
     }
 
@@ -780,9 +770,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -799,9 +788,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = ExtremaNodeSignatures::type;
@@ -869,9 +857,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = MultiplicationNodeSignatures::type;
@@ -904,8 +891,7 @@ namespace {
     template<typename T0, typename R>
     static Translation Template(const Translation& value,
         CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, R>(),
-        value.Extract<Aspen::SharedBox<T0>>());
+      return Aspen::lift(Operation<T0, R>(), value.Extract<Aspen::Box<T0>>());
     }
 
     using SupportedTypes = NotNodeSignatures::type;
@@ -925,9 +911,8 @@ namespace {
     };
 
     template<typename T>
-    static Translation Template(const Translation& record, int index) {
-      return Aspen::lift(Operation<T>(index),
-        record.Extract<Aspen::SharedBox<Record>>());
+    static Translation Template(Aspen::Box<Record> record, int index) {
+      return Aspen::lift(Operation<T>(index), std::move(record));
     }
 
     using SupportedTypes = ValueTypes;
@@ -936,7 +921,7 @@ namespace {
   struct ReferenceTranslator {
     template<typename T>
     static Translation Template(const Translation& source) {
-      return Aspen::Weak(source.Extract<Aspen::SharedBox<T>>());
+      return source.ToWeak().Extract<Aspen::Box<T>>();
     }
 
     using SupportedTypes = NativeTypes;
@@ -968,9 +953,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = RoundingNodeSignatures::type;
@@ -1001,9 +985,8 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = SubtractionNodeSignatures::type;
@@ -1029,20 +1012,29 @@ namespace {
     template<typename T0, typename T1, typename R>
     static Translation Template(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) {
-      return Aspen::lift(Operation<T0, T1, R>(),
-        left.Extract<Aspen::SharedBox<T0>>(),
-        right.Extract<Aspen::SharedBox<T1>>());
+      return Aspen::lift(Operation<T0, T1, R>(), left.Extract<Aspen::Box<T0>>(),
+        right.Extract<Aspen::Box<T1>>());
     }
 
     using SupportedTypes = EqualitySignatures::type;
   };
 
+  struct UntilTranslator {
+    template<typename T>
+    static Translation Template(Aspen::Box<bool> condition,
+        const Translation& series) {
+      return Aspen::until(std::move(condition),
+        series.Extract<Aspen::Box<T>>());
+    }
+
+    using SupportedTypes = ValueTypes;
+  };
+
   struct WhenTranslator {
     template<typename T>
-    static Translation Template(Aspen::SharedBox<bool> condition,
+    static Translation Template(Aspen::Box<bool> condition,
         const Translation& series) {
-      return Translation(Aspen::when(std::move(condition),
-        series.Extract<Aspen::SharedBox<T>>()));
+      return Aspen::when(std::move(condition), series.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = ValueTypes;
@@ -1061,7 +1053,9 @@ CanvasNodeTranslationVisitor::CanvasNodeTranslationVisitor(
     m_node(node.Get()) {}
 
 Translation CanvasNodeTranslationVisitor::Translate() {
-  return InternalTranslation(*m_node);
+  auto translation = InternalTranslation(*m_node);
+  m_translations.clear();
+  return translation;
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AbsNode& node) {
@@ -1091,7 +1085,7 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
       Ref(userProfile->GetTimerThreadPool()));
   };
   auto expiry = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::SharedBox<ptime>>();
+    node.GetChildren().front()).Extract<Aspen::Box<ptime>>();
   m_translation = AlarmReactor(
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
     timerFactory, std::move(expiry));
@@ -1165,12 +1159,12 @@ void CanvasNodeTranslationVisitor::Visit(const DecimalNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
   auto source = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::SharedBox<Security>>();
+    node.GetChildren().front()).Extract<Aspen::Box<Security>>();
   m_translation = Aspen::lift(
     [userProfile = &m_context->GetUserProfile()] (const Security& security) {
       return userProfile->GetMarketDatabase().FromCode(
         security.GetMarket()).m_currency;
-    }, source);
+    }, std::move(source));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const DestinationNode& node) {
@@ -1196,7 +1190,7 @@ void CanvasNodeTranslationVisitor::Visit(
     Aspen::group(Aspen::lift(
     [] (const Order* order) {
       return Aspen::shared_box(PublisherReactor(order->GetPublisher()));
-    }, source.Extract<Aspen::SharedBox<const Order*>>())));
+    }, source.Extract<Aspen::Box<const Order*>>())));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const FilePathNode& node) {
@@ -1205,7 +1199,7 @@ void CanvasNodeTranslationVisitor::Visit(const FilePathNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const FileReaderNode& node) {
   auto path = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::SharedBox<std::string>>();
+    node.GetChildren().front()).Extract<Aspen::Box<std::string>>();
   auto& nativeType = static_cast<const NativeType&>(node.GetType());
   m_translation = Instantiate<FileReaderTranslator>(nativeType.GetNativeType())(
     nativeType, Ref(m_context->GetUserProfile()), node.GetErrorPolicy(),
@@ -1377,7 +1371,7 @@ void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
   auto& recordNode = node.GetChildren().front();
   auto recordReactor = InternalTranslation(
-    recordNode).Extract<Aspen::SharedBox<Record>>();
+    recordNode).Extract<Aspen::Box<Record>>();
   auto& recordType = static_cast<const RecordType&>(recordNode.GetType());
   auto fieldIterator = find_if(recordType.GetFields().begin(),
     recordType.GetFields().end(),
@@ -1386,16 +1380,16 @@ void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {
     });
   m_translation = Instantiate<QueryTranslator>(
     static_cast<const NativeType&>(node.GetType()).GetNativeType())(
-    recordReactor,
+    std::move(recordReactor),
     std::distance(recordType.GetFields().begin(), fieldIterator));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RangeNode& node) {
   auto lower = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::SharedBox<Quantity>>();
+    node.GetChildren().front()).Extract<Aspen::Box<Quantity>>();
   auto upper = InternalTranslation(
-    node.GetChildren().back()).Extract<Aspen::SharedBox<Quantity>>();
-  m_translation = Aspen::range(lower, upper);
+    node.GetChildren().back()).Extract<Aspen::Box<Quantity>>();
+  m_translation = Aspen::range(std::move(lower), std::move(upper));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
@@ -1436,26 +1430,26 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
       additionalFields.push_back(Aspen::box(Aspen::lift(
         [key = field.m_key] (Quantity q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::SharedBox<Quantity>>())));
+        }, value.Extract<Aspen::Box<Quantity>>())));
     } else if(field.m_type->GetCompatibility(
         Spire::DecimalType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::lift(
         [key = field.m_key] (double q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::SharedBox<double>>())));
+        }, value.Extract<Aspen::Box<double>>())));
     } else if(field.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::lift(
         [key = field.m_key] (Money q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::SharedBox<Money>>())));
+        }, value.Extract<Aspen::Box<Money>>())));
     } else if(field.m_type->GetCompatibility(Spire::TextType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::lift(
         [key = field.m_key] (std::string q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::SharedBox<std::string>>())));
+        }, value.Extract<Aspen::Box<std::string>>())));
     }
   }
   auto& orderExecutionClient =
@@ -1464,28 +1458,25 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
     InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<
-      Aspen::SharedBox<Security>>(),
+      SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
     InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<
-      Aspen::SharedBox<CurrencyId>>(),
+      Aspen::Box<CurrencyId>>(),
     InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY)).Extract<
-      Aspen::SharedBox<OrderType>>(),
+      Aspen::Box<OrderType>>(),
     InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::SIDE_PROPERTY)).Extract<
-      Aspen::SharedBox<Side>>(),
+      SingleOrderTaskNode::SIDE_PROPERTY)).Extract<Aspen::Box<Side>>(),
     InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::DESTINATION_PROPERTY)).Extract<
-      Aspen::SharedBox<std::string>>(),
+      Aspen::Box<std::string>>(),
     InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::QUANTITY_PROPERTY)).Extract<
-      Aspen::SharedBox<Quantity>>(),
+      SingleOrderTaskNode::QUANTITY_PROPERTY)).Extract<Aspen::Box<Quantity>>(),
     InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::SharedBox<Money>>(),
+      SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
     InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
-      Aspen::SharedBox<TimeInForce>>(), std::move(additionalFields)));
+      Aspen::Box<TimeInForce>>(), std::move(additionalFields)));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
@@ -1560,7 +1551,7 @@ void CanvasNodeTranslationVisitor::Visit(const TimerNode& node) {
     return std::make_unique<LiveTimer>(interval, Ref(*timerThreadPool));
   };
   m_translation = TimerReactor<Quantity>(timerFactory,
-    period.Extract<Aspen::SharedBox<time_duration>>());
+    period.Extract<Aspen::Box<time_duration>>());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UnequalNode& node) {
@@ -1568,38 +1559,31 @@ void CanvasNodeTranslationVisitor::Visit(const UnequalNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
-#if 0
-  CanvasNodeTaskFactory taskFactory(Ref(*m_context),
-    Ref(node.GetChildren().back()));
-  auto condition = std::static_pointer_cast<Reactor<bool>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front())));
-  m_context->GetReactorMonitor().Add(condition);
-  TaskTranslation taskTranslation;
-  taskTranslation.m_factory = UntilTaskFactory(
-    Ref(m_context->GetReactorMonitor()), condition, taskFactory);
-  taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
-  m_translation = taskTranslation;
-#endif
+  auto condition = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<bool>>();
+  auto series = InternalTranslation(node.GetChildren().back());
+  m_translation = Instantiate<UntilTranslator>(series.GetTypeInfo())(
+    std::move(condition), series);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
   auto condition = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::SharedBox<bool>>();
+    node.GetChildren().front()).Extract<Aspen::Box<bool>>();
   auto series = InternalTranslation(node.GetChildren().back());
-  m_translation = Instantiate<WhenTranslator>(series.GetTypeInfo())(condition,
-    series);
+  m_translation = Instantiate<WhenTranslator>(series.GetTypeInfo())(
+    std::move(condition), series);
 }
 
 Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
   if(existingTranslation.is_initialized()) {
-    m_translation = *existingTranslation;
+    m_translation = existingTranslation->ToShared();
   } else {
     node.Apply(*this);
+    m_translations.push_back(*m_translation);
   }
-  m_context->Add(Ref(node), *m_translation);
+  m_context->Add(Ref(node), m_translation->ToWeak());
   return *m_translation;
 }
 
