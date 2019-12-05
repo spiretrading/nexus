@@ -446,7 +446,7 @@ int TestOrderImbalanceIndicatorModel::get_load_entry_count() const {
   return static_cast<int>(m_load_entries.size());
 }
 
-TEST_CASE("test_filtered_model_crashes_when_filtered_model_destroyed",
+TEST_CASE("crash_test_1",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto T = std::make_shared<TestOrderImbalanceIndicatorModel>();
@@ -457,17 +457,16 @@ TEST_CASE("test_filtered_model_crashes_when_filtered_model_destroyed",
     auto O = wait(T->pop_load());
     O->set_result({});
     O->get_result();
-  }, "test_filtered_model_crashes_when_filtered_model_destroyed");
+  }, "crash_test_");
 }
 
-TEST_CASE("asdf", "[FilteredOrderImbalanceIndicatorModel]") {
+TEST_CASE("crash_test_2", "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto L = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     auto F = std::make_unique<FilteredOrderImbalanceIndicatorModel>(L,
       std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
     F->subscribe([=] (const auto& imbalance) {});
     F.reset();
-    F->subscribe([=] (const auto& imbalance) {});
     L->publish(A);
-  }, "asfd");
+  }, "crash_test_2");
 }
