@@ -8,6 +8,8 @@ interface Properties {
   displaySize: DisplaySize;
 
   value?: Nexus.ComplianceValue[];
+
+  onChange?: (newValue: Nexus.ComplianceValue[]) => void;
 }
 
 interface State {
@@ -79,7 +81,7 @@ export class SecurityInput extends React.Component<Properties, State>{
     const removeImgSrc = (() => {
       if(this.state.selection !== -1) {
         return (
-          <div style={imageWrapperStyle} onClick={this.removeEntry}>
+          <div style={imageWrapperStyle} onClick={this.removeEntry.bind(this)}>
             <img src={'resources/account_page/compliance_page/security_input/remove-purple.svg'}/>
           </div>);
       } else {
@@ -175,7 +177,10 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private removeEntry() {
-
+    if(this.state.selection !== -1) {
+      this.props.onChange(this.props.value.slice(0, this.state.selection).concat(this.props.value.slice(this.state.selection+1)));
+    }
+    this.setState({selection: -1});
   }
 
   private static readonly STYLE = {

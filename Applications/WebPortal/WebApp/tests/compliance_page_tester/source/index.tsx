@@ -82,7 +82,13 @@ class TestApp extends React.Component<Properties, State> {
             Nexus.ComplianceValue.Type.LIST, [
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('PST.TSX', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              new Nexus.Security('AST.XASX', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('PST.CSE', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY, 
               new Nexus.Security('AST.NYC', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
