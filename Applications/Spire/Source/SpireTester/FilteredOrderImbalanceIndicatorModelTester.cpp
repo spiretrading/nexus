@@ -312,3 +312,162 @@ TEST_CASE("test_filtered_signals",
     REQUIRE(signal_data == C);
   }, "test_filtered_signals");
 }
+
+// TODO: remove this
+#include <mutex>
+
+class TestOrderImbalanceIndicatorModel :
+    public OrderImbalanceIndicatorModel {
+  public:
+
+    //! Stores a request to load from an OrderImbalanceModel.
+    class LoadEntry {
+      public:
+
+        //! Constructs a LoadEntry.
+        /*
+          \param interval The time interval to load.
+        */
+        LoadEntry(const TimeInterval& interval);
+
+        //! Returns the load entry's requested time interval.
+        const TimeInterval& get_interval() const;
+
+        //! Sets the result of the load operation.
+        /*
+          \param result The list of imbalances that the promise loading the
+                  specified range should evalute to.
+        */
+        void set_result(std::vector<Nexus::OrderImbalance> result);
+
+        //! Returns the order imbalances to load.
+        std::vector<Nexus::OrderImbalance>& get_result();
+
+      private:
+        friend class TestOrderImbalanceIndicatorModel;
+        mutable Beam::Threading::Mutex m_mutex;
+        TimeInterval m_interval;
+        bool m_is_loaded;
+        std::vector<Nexus::OrderImbalance> m_result;
+        Beam::Threading::ConditionVariable m_load_condition;
+    };
+
+    QtPromise<std::vector<Nexus::OrderImbalance>> load(
+      const TimeInterval& interval) override;
+
+    SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
+      subscribe(const OrderImbalanceSignal::slot_type& slot) override;
+
+    std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
+      const Nexus::Security& security) override;
+
+    //! Pops the oldest load request from this model's load
+    //! operation stack.
+    QtPromise<std::shared_ptr<LoadEntry>> pop_load();
+
+    //! Returns the number of pending load entries.
+    int get_load_entry_count() const;
+
+  private:
+    Beam::Threading::Mutex m_mutex;
+    Beam::Threading::ConditionVariable m_load_condition;
+    std::deque<std::shared_ptr<LoadEntry>> m_load_entries;
+};
+
+TestOrderImbalanceIndicatorModel::LoadEntry::LoadEntry(
+  const TimeInterval& interval)
+  : m_interval(interval),
+    m_is_loaded(false) {}
+
+const TimeInterval&
+    TestOrderImbalanceIndicatorModel::LoadEntry::get_interval() const {
+  return m_interval;
+}
+
+void TestOrderImbalanceIndicatorModel::LoadEntry::set_result(
+    std::vector<OrderImbalance> result) {
+  auto lock = std::lock_guard(m_mutex);
+  m_is_loaded = true;
+  m_load_condition.notify_one();
+  m_result = std::move(result);
+}
+
+std::vector<Nexus::OrderImbalance>&
+    TestOrderImbalanceIndicatorModel::LoadEntry::get_result() {
+  return m_result;
+}
+
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    TestOrderImbalanceIndicatorModel::load(
+    const TimeInterval& interval) {
+  auto load_entry = std::make_shared<LoadEntry>(interval);
+  {
+    auto lock = std::lock_guard(m_mutex);
+    m_load_entries.push_back(load_entry);
+    m_load_condition.notify_all();
+  }
+  return QtPromise([=] {
+    auto lock = std::unique_lock(load_entry->m_mutex);
+    while(!load_entry->m_is_loaded) {
+      load_entry->m_load_condition.wait(lock);
+    }
+    return std::move(load_entry->get_result());
+  }, LaunchPolicy::ASYNC);
+}
+
+SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
+    TestOrderImbalanceIndicatorModel::subscribe(
+    const OrderImbalanceSignal::slot_type& slot) {
+  return {boost::signals2::connection(), QtPromise([] {
+    return boost::optional<OrderImbalance>();
+  })};
+}
+
+std::shared_ptr<OrderImbalanceChartModel>
+    TestOrderImbalanceIndicatorModel::get_chart_model(
+    const Nexus::Security& security) {
+  throw std::runtime_error("method not implemented");
+}
+
+QtPromise<std::shared_ptr<TestOrderImbalanceIndicatorModel::LoadEntry>>
+    TestOrderImbalanceIndicatorModel::pop_load() {
+  return QtPromise([=] {
+    auto lock = std::unique_lock(m_mutex);
+    while(m_load_entries.empty()) {
+      m_load_condition.wait(lock);
+    }
+    auto entry = m_load_entries.front();
+    m_load_entries.pop_front();
+    return entry;
+  }, LaunchPolicy::ASYNC);
+}
+
+int TestOrderImbalanceIndicatorModel::get_load_entry_count() const {
+  return static_cast<int>(m_load_entries.size());
+}
+
+TEST_CASE("test_filtered_model_crashes_when_filtered_model_destroyed",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto T = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto F = std::make_unique<FilteredOrderImbalanceIndicatorModel>(T,
+      std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
+    F->load(TimeInterval::closed(from_time_t(0), from_time_t(1000)));
+    F.reset();
+    auto O = wait(T->pop_load());
+    O->set_result({});
+    O->get_result();
+  }, "test_filtered_model_crashes_when_filtered_model_destroyed");
+}
+
+TEST_CASE("asdf", "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto L = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto F = std::make_unique<FilteredOrderImbalanceIndicatorModel>(L,
+      std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
+    F->subscribe([=] (const auto& imbalance) {});
+    F.reset();
+    F->subscribe([=] (const auto& imbalance) {});
+    L->publish(A);
+  }, "asfd");
+}

@@ -37,6 +37,11 @@ namespace Spire {
     private:
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       std::vector<Filter> m_filters;
+      int m_next_promise_id;
+      std::map<int, QtPromise<std::vector<Nexus::OrderImbalance>>>
+        m_pending_load_promises;
+      std::map<int, QtPromise<SubscriptionResult<boost::optional<
+        Nexus::OrderImbalance>>>> m_pending_subscribe_promises;
 
       bool is_imbalance_accepted(
         const Nexus::OrderImbalance& imbalance) const;

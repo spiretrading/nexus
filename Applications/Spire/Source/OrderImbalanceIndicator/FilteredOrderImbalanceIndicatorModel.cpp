@@ -8,14 +8,20 @@ FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
   std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
   std::vector<Filter> filters)
   : m_source_model(std::move(source_model)),
-    m_filters(std::move(filters)) {}
+    m_filters(std::move(filters)),
+    m_next_promise_id(0) {}
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-  return m_source_model->load(interval).then([=] (const auto& imbalances) {
+  auto load_promise = m_source_model->load(interval);
+  auto id = ++m_next_promise_id;
+  auto filtered_result = load_promise.then([=] (const auto& imbalances) {
+    m_pending_load_promises.erase(id);
     return filter_imbalances(imbalances.Get());
   });
+  m_pending_load_promises.insert(std::make_pair(id, std::move(load_promise)));
+  return filtered_result;
 }
 
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
