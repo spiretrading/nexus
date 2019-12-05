@@ -178,10 +178,20 @@ export class SecurityInput extends React.Component<Properties, State>{
 
   private removeEntry() {
     if(this.state.selection !== -1) {
-      this.props.onChange(this.props.value.slice(0, this.state.selection).concat(this.props.value.slice(this.state.selection+1)));
+      this.props.onChange(
+        this.props.value.slice(0, this.state.selection).concat(
+        this.props.value.slice(this.state.selection+1)));
     }
     this.setState({selection: -1});
   }
+
+  private addEntry(symbol: string) {
+    const newParameter = new Nexus.ComplianceValue( Nexus.ComplianceValue.Type.SECURITY, new Nexus.Security(symbol, Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA));
+    this.props.onChange(
+      this.props.value.slice().concat(
+      this.props.value.slice(this.state.selection+1)));
+  }
+
 
   private static readonly STYLE = {
     textBox: {
