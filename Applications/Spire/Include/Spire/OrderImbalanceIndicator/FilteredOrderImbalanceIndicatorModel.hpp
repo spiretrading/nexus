@@ -11,6 +11,8 @@ namespace Spire {
     public:
 
       //! Defines the filter function return type and signature.
+      //! Filter functions return true if an imbalance should not be filtered
+      //! out.
       using Filter = std::function<bool (const Nexus::OrderImbalance&)>;
 
       //! Constructs a FilteredOrderImbalanceIndicatorModel with a given
@@ -18,12 +20,10 @@ namespace Spire {
       /*
         \param source_model The model supplying data to the filtered model.
         \param filters The functions applied to order imbalances as filters.
-                       Filter functions return true if an imbalance should not
-                       be filtered out.
       */
       FilteredOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-        std::vector<Filter> filters);
+        std::shared_ptr<std::vector<Filter>> filters);
 
       QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) override;
@@ -36,18 +36,27 @@ namespace Spire {
 
     private:
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
-      std::vector<Filter> m_filters;
-      int m_next_promise_id;
-      std::map<int, QtPromise<std::vector<Nexus::OrderImbalance>>>
-        m_pending_load_promises;
-      std::map<int, QtPromise<SubscriptionResult<boost::optional<
-        Nexus::OrderImbalance>>>> m_pending_subscribe_promises;
-
-      bool is_imbalance_accepted(
-        const Nexus::OrderImbalance& imbalance) const;
-      std::vector<Nexus::OrderImbalance> filter_imbalances(
-        const std::vector<Nexus::OrderImbalance>& imbalances) const;
+      std::shared_ptr<std::vector<Filter>> m_filters;
   };
+
+  //! Returns true if the imbalance is filtered out.
+  /*
+    \param filters The filters to apply to the imbalance.
+    \param imbalance The imbalance to apply the filters to.
+  */
+  bool is_imbalance_accepted(
+    const std::vector<FilteredOrderImbalanceIndicatorModel::Filter>& filters,
+    const Nexus::OrderImbalance& imbalance);
+
+  //! Returns the accepted imbalances from the provided imbalances, after
+  //! applying the given filters.
+  /*
+    \param imbalances The imbalances to have filters applied to.
+    \param filters The filters to apply.
+  */
+  std::vector<Nexus::OrderImbalance> filter_imbalances(
+    const std::vector<FilteredOrderImbalanceIndicatorModel::Filter>& filters,
+    const std::vector<Nexus::OrderImbalance>& imbalances);
 
   //! Creates a filter that filters out securities that do not appear in the
   //! given list.

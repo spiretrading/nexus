@@ -6,32 +6,28 @@ using namespace Spire;
 
 FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
   std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-  std::vector<Filter> filters)
+  std::shared_ptr<std::vector<Filter>> filters)
   : m_source_model(std::move(source_model)),
-    m_filters(std::move(filters)),
-    m_next_promise_id(0) {}
+    m_filters(std::move(filters)) {}
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
-  auto load_promise = m_source_model->load(interval);
-  auto id = ++m_next_promise_id;
-  auto filtered_result = load_promise.then([=] (const auto& imbalances) {
-    m_pending_load_promises.erase(id);
-    return filter_imbalances(imbalances.Get());
-  });
-  m_pending_load_promises.insert(std::make_pair(id, std::move(load_promise)));
-  return filtered_result;
+  return m_source_model->load(interval).then(
+    [&filters = *m_filters] (const auto& imbalances) {
+      return filter_imbalances(filters, imbalances.Get());
+    });
 }
 
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
-  return m_source_model->subscribe([=] (const auto& imbalance) {
-    if(is_imbalance_accepted(imbalance)) {
-      slot(imbalance);
-    }
-  });
+  return m_source_model->subscribe(
+    [=, &filters = *m_filters] (const auto& imbalance) {
+      if(is_imbalance_accepted(filters, imbalance)) {
+        slot(imbalance);
+      }
+    });
 }
 
 std::shared_ptr<OrderImbalanceChartModel>
@@ -97,9 +93,9 @@ Filter Spire::make_notional_value_filter(Money min, Money max) {
   };
 }
 
-bool FilteredOrderImbalanceIndicatorModel::is_imbalance_accepted(
-    const Nexus::OrderImbalance& imbalance) const {
-  for(auto& filter : m_filters) {
+bool Spire::is_imbalance_accepted(const std::vector<Filter>& filters,
+    const OrderImbalance& imbalance) {
+  for(auto& filter : filters) {
     if(!filter(imbalance)) {
       return false;
     }
@@ -107,12 +103,12 @@ bool FilteredOrderImbalanceIndicatorModel::is_imbalance_accepted(
   return true;
 }
 
-std::vector<Nexus::OrderImbalance>
-    FilteredOrderImbalanceIndicatorModel::filter_imbalances(
-    const std::vector<Nexus::OrderImbalance>& imbalances) const {
-  auto filtered_imbalances = std::vector<Nexus::OrderImbalance>();
-  for(auto& imbalance : imbalances) {
-    if(is_imbalance_accepted(imbalance)) {
+std::vector<Nexus::OrderImbalance> Spire::filter_imbalances(
+    const std::vector<Filter>& filters,
+    const std::vector<OrderImbalance>& imbalances) {
+  auto filtered_imbalances = std::vector<OrderImbalance>();
+  for(const auto& imbalance : imbalances) {
+    if(is_imbalance_accepted(filters, imbalance)) {
       filtered_imbalances.push_back(imbalance);
     }
   }
