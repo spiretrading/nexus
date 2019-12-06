@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-interface Properties {
-  children: Element | React.Component;
-}
 
+/** This is a component that wraps every subpage so that the scrolling behavior 
+    is consistent within all pages.*/
 export class PageWrapper extends React.Component {
   public render(): JSX.Element {
     return (
