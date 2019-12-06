@@ -123,7 +123,10 @@ install(TARGETS CanvasTests CONFIGURATIONS Debug
 install(TARGETS CanvasTests CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
 add_executable(CanvasTester ${SPIRE_SOURCE_PATH}/CanvasTester/main.cpp)
-target_link_libraries(CanvasTester CanvasTests Canvas
+target_link_libraries(CanvasTester Dashboard Charting PortfolioViewer
+  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
+  TimeAndSales OrderImbalanceIndicator InputWidgets CanvasTests CanvasView
+  Canvas UI Resources
   debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
   optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
@@ -134,12 +137,28 @@ target_link_libraries(CanvasTester CanvasTests Canvas
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_CORE_LIBRARY_DEBUG_PATH}
   optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_GUI_LIBRARY_DEBUG_PATH}
   optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
   optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
   optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_THEME_LIBRARY_DEBUG_PATH}
+  optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(MSVC)
@@ -147,9 +166,12 @@ if(MSVC)
 endif()
 if(WIN32)
   target_link_libraries(CanvasTester
+    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    imm32.lib winmm.lib ws2_32.lib opengl32.lib)
+    dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib version.lib
+    winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(CanvasTester

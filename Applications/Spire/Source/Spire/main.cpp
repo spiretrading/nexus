@@ -26,11 +26,11 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LoginDialog.hpp"
 #include "Spire/UI/Toolbar.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 #include "Version.hpp"
 #include <QtPlugin>

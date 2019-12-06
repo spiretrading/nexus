@@ -20,8 +20,8 @@
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LineInputDialog.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;

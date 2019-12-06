@@ -5,8 +5,8 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CanvasWindow.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_TaskKeyBindingsDialog.h"
 
 using namespace Beam;

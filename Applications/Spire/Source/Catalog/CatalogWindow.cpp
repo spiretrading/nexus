@@ -15,7 +15,7 @@
 #include "Spire/Catalog/CatalogTabView.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_CatalogWindow.h"
 
 using namespace Beam;

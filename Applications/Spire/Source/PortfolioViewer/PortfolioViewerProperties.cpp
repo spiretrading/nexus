@@ -9,8 +9,8 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <QMessageBox>
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

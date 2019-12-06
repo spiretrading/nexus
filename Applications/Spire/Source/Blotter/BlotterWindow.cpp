@@ -14,7 +14,7 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/ValueLabel.hpp"
 #include "ui_BlotterWindow.h"
 

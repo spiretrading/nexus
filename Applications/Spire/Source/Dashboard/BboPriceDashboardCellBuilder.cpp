@@ -2,7 +2,7 @@
 #include <Beam/Queues/ConverterReaderQueue.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

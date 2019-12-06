@@ -7,7 +7,7 @@
 #include "Spire/Canvas/Types/NativeType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/CanvasView/LuaScriptDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;

@@ -13,8 +13,8 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;

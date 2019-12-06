@@ -46,11 +46,11 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/MaxFloorSpinBox.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
 #include "Spire/UI/QuantitySpinBox.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

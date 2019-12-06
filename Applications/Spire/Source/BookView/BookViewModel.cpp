@@ -11,8 +11,8 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

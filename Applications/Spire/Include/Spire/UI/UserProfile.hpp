@@ -67,6 +67,8 @@ namespace Spire {
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool,
         Beam::Ref<Nexus::VirtualServiceClients> serviceClients);
 
+      ~UserProfile();
+
       //! Returns the username.
       const std::string& GetUsername() const;
 
@@ -103,10 +105,7 @@ namespace Spire {
       Beam::Threading::TimerThreadPool& GetTimerThreadPool();
 
       //! Returns the set of clients connected to Spire services.
-      const Nexus::VirtualServiceClients& GetServiceClients() const;
-
-      //! Returns the set of clients connected to Spire services.
-      Nexus::VirtualServiceClients& GetServiceClients();
+      Nexus::VirtualServiceClients& GetServiceClients() const;
 
       //! Creates the profile path.
       void CreateProfilePath() const;
@@ -258,7 +257,7 @@ namespace Spire {
       Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
-      Nexus::VirtualServiceClients* m_serviceClients;
+      mutable Nexus::VirtualServiceClients* m_serviceClients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;

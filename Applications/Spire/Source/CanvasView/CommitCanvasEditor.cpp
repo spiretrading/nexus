@@ -23,10 +23,10 @@
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/MaxFloorSpinBox.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

@@ -14,8 +14,8 @@
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

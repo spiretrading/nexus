@@ -1,4 +1,4 @@
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include <QStandardPaths>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
@@ -49,6 +49,8 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
   m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
 }
 
+UserProfile::~UserProfile() = default;
+
 const string& UserProfile::GetUsername() const {
   return m_username;
 }
@@ -93,11 +95,7 @@ TimerThreadPool& UserProfile::GetTimerThreadPool() {
   return *m_timerThreadPool;
 }
 
-const VirtualServiceClients& UserProfile::GetServiceClients() const {
-  return *m_serviceClients;
-}
-
-VirtualServiceClients& UserProfile::GetServiceClients() {
+VirtualServiceClients& UserProfile::GetServiceClients() const {
   return *m_serviceClients;
 }
 

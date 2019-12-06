@@ -21,13 +21,6 @@ namespace Details {
     public:
 
       /**
-       * Constructs a Translation for a boxed reactor.
-       * @param reactor The reactor that was translated.
-       */
-      template<typename T>
-      Translation(Aspen::Box<T> reactor);
-
-      /**
        * Constructs a Translation for a weak observer reactor.
        * @param reactor The reactor that was translated.
        */
@@ -92,29 +85,12 @@ namespace Details {
         std::shared_ptr<const BaseHolder> ToShared() const override;
         std::shared_ptr<const BaseHolder> ToWeak() const override;
       };
-      template<typename T>
-      struct BoxHolder final : BaseHolder {
-        Aspen::SharedBox<T> m_reactor;
-
-        BoxHolder(Aspen::Box<T> reactor);
-        BoxHolder(Aspen::SharedBox<T> reactor);
-        void ExtractVoidBox(void* destination) const override;
-        void ExtractBox(void* destination) const override;
-        void Extract(void* destination) const override;
-        std::shared_ptr<const BaseHolder> ToShared() const override;
-        std::shared_ptr<const BaseHolder> ToWeak() const override;
-      };
       const std::type_info* m_type;
       std::shared_ptr<const BaseHolder> m_holder;
 
       Translation(const std::type_info& type,
         std::shared_ptr<const BaseHolder> holder);
   };
-
-  template<typename T>
-  Translation::Translation(Aspen::Box<T> reactor)
-    : m_type(&typeid(T)),
-      m_holder(std::make_shared<BoxHolder<T>>(std::move(reactor))) {}
 
   template<typename R>
   Translation::Translation(Aspen::Weak<R> reactor)
@@ -207,18 +183,14 @@ namespace Details {
     using Type = Aspen::reactor_result_t<R>;
     auto reactor = m_reactor.lock();
     if(reactor.has_value()) {
-      if constexpr(Details::IsBox<R>::value) {
-        return std::make_shared<BoxHolder<Type>>(std::move(*reactor));
-      } else {
-        return std::make_shared<Holder<R>>(std::move(*reactor));
-      }
+      return std::make_shared<Holder<R>>(std::move(*reactor));
     } else {
       if constexpr(Details::IsBox<R>::value) {
         try {
-          return std::make_shared<BoxHolder<Type>>(Aspen::box(
+          return std::make_shared<Holder<Aspen::Box<Type>>>(Aspen::box(
             Aspen::constant(m_reactor.eval())));
         } catch(...) {
-          return std::make_shared<BoxHolder<Type>>(Aspen::box(
+          return std::make_shared<Holder<Aspen::Box<Type>>>(Aspen::box(
             Aspen::throws<Type>(std::current_exception())));
         }
       } else {
@@ -237,47 +209,6 @@ namespace Details {
   std::shared_ptr<const Translation::BaseHolder>
       Translation::WeakHolder<R>::ToWeak() const {
     return shared_from_this();
-  }
-
-  template<typename T>
-  Translation::BoxHolder<T>::BoxHolder(Aspen::Box<T> reactor)
-    : m_reactor(std::move(reactor)) {}
-
-  template<typename T>
-  Translation::BoxHolder<T>::BoxHolder(Aspen::SharedBox<T> reactor)
-    : m_reactor(std::move(reactor)) {}
-
-  template<typename T>
-  void Translation::BoxHolder<T>::ExtractVoidBox(void* destination) const {
-    if constexpr(std::is_same_v<T, void>) {
-      Extract(destination);
-    } else {
-      static_cast<std::optional<Aspen::Box<void>>*>(destination)->emplace(
-        m_reactor);
-    }
-  }
-
-  template<typename T>
-  void Translation::BoxHolder<T>::ExtractBox(void* destination) const {
-    Extract(destination);
-  }
-
-  template<typename T>
-  void Translation::BoxHolder<T>::Extract(void* destination) const {
-    static_cast<std::optional<Aspen::Box<T>>*>(destination)->emplace(
-      m_reactor);
-  }
-
-  template<typename T>
-  std::shared_ptr<const Translation::BaseHolder>
-      Translation::BoxHolder<T>::ToShared() const {
-    return shared_from_this();
-  }
-
-  template<typename T>
-  std::shared_ptr<const Translation::BaseHolder>
-      Translation::BoxHolder<T>::ToWeak() const {
-    return std::make_shared<WeakHolder<Aspen::Box<T>>>(Aspen::Weak(m_reactor));
   }
 }
 

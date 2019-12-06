@@ -2,7 +2,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_TimeInputDialog.h"
 
 using namespace Beam;

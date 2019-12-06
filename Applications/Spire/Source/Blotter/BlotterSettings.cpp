@@ -13,8 +13,8 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

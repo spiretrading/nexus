@@ -11,8 +11,8 @@
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

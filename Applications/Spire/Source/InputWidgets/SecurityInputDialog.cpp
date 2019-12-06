@@ -3,7 +3,7 @@
 #include <QScrollBar>
 #include <QTableView>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/Utilities/SecurityInfoCompleter.hpp"
 #include "Spire/Utilities/SecurityInfoModel.hpp"
 #include "ui_SecurityInputDialog.h"

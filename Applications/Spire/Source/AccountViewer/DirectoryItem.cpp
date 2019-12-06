@@ -3,7 +3,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/ManagerItem.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

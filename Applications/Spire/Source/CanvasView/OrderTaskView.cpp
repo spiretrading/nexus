@@ -20,7 +20,7 @@
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;

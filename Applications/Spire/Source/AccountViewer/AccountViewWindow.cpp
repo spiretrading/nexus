@@ -17,7 +17,7 @@
 #include "Spire/AccountViewer/ServiceItemWidget.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
 #include "Spire/AccountViewer/TraderItemWidget.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_AccountViewWindow.h"
 
 using namespace Beam;

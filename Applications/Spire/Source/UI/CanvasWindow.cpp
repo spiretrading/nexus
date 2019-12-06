@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QStatusBar>
 #include <QToolBar>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
@@ -29,10 +30,10 @@
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CanvasWindowSettings.hpp"
 #include "Spire/UI/IgnoreCommandException.hpp"
 #include "Spire/UI/MacroUndoCommand.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_CanvasWindow.h"
 
 using namespace Beam;

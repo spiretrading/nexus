@@ -25,13 +25,13 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/UI/CanvasWindow.hpp"
 #include "Spire/UI/FunctionalAction.hpp"
 #include "Spire/UI/ImportExportDialog.hpp"
 #include "Spire/UI/LineInputDialog.hpp"
 #include "Spire/UI/ToolbarWindowSettings.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_Toolbar.h"
 
 using namespace Beam;

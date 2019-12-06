@@ -1,8 +1,8 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CollapsibleWidget.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_OrderImbalanceIndicatorWindow.h"
 
 using namespace Beam;

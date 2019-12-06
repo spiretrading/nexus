@@ -4,8 +4,8 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Blotter/OrderLogPropertiesDialog.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_OrderLogWidget.h"
 
 using namespace Beam;

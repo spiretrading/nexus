@@ -8,8 +8,8 @@
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_OpenPositionsWidget.h"
 
