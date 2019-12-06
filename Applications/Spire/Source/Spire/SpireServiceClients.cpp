@@ -4,6 +4,7 @@
 #include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
+#include <Beam/Threading/VirtualTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/throw_exception.hpp>
@@ -30,6 +31,8 @@ using namespace Beam::RegistryService;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::ChartingService;
@@ -62,22 +65,17 @@ namespace {
       return &**m_value;
     }
   };
-
-  template<typename T>
-  ByPassPtr<T> MakeByPassPtr(std::unique_ptr<T> value) {
-    return ByPassPtr<T>{std::move(value)};
-  }
 }
 
 SpireServiceClients::SpireServiceClients(
-    std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient,
-    Ref<SocketThreadPool> socketThreadPool,
-    Ref<TimerThreadPool> timerThreadPool)
-    : m_applicationServiceLocatorClient{std::move(serviceLocatorClient)},
-      m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
-        &**m_applicationServiceLocatorClient)},
-      m_socketThreadPool{socketThreadPool.Get()},
-      m_timerThreadPool{timerThreadPool.Get()} {}
+  std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient,
+  Ref<SocketThreadPool> socketThreadPool,
+  Ref<TimerThreadPool> timerThreadPool)
+  : m_applicationServiceLocatorClient{std::move(serviceLocatorClient)},
+    m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
+      &**m_applicationServiceLocatorClient)},
+    m_socketThreadPool{socketThreadPool.Get()},
+    m_timerThreadPool{timerThreadPool.Get()} {}
 
 SpireServiceClients::~SpireServiceClients() {}
 
@@ -124,6 +122,12 @@ VirtualTimeClient& SpireServiceClients::GetTimeClient() const {
   return *m_timeClient;
 }
 
+std::unique_ptr<VirtualTimer> SpireServiceClients::BuildTimer(
+    time_duration expiry) {
+  return MakeVirtualTimer(
+    std::make_unique<LiveTimer>(expiry, Ref(*m_timerThreadPool)));
+}
+
 void SpireServiceClients::Open() {
   auto& serviceLocatorClient = *(m_applicationServiceLocatorClient->Get());
   auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
@@ -143,8 +147,8 @@ void SpireServiceClients::Open() {
       minimumVersion + ("\n"
       "Current version installed: ") + string{SPIRE_VERSION}});
   }
-  m_definitionsClient = MakeVirtualDefinitionsClient(
-    MakeByPassPtr(std::move(definitionsClient)));
+  m_definitionsClient = MakeVirtualDefinitionsClient(ByPassPtr(
+    std::move(definitionsClient)));
   auto registryClient = std::make_unique<ApplicationRegistryClient>();
   try {
     registryClient->BuildSession(Ref(serviceLocatorClient),
@@ -154,8 +158,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the registry service."});
   }
-  m_registryClient = MakeVirtualRegistryClient(
-    MakeByPassPtr(std::move(registryClient)));
+  m_registryClient = MakeVirtualRegistryClient(ByPassPtr(
+    std::move(registryClient)));
   auto administrationClient =
     std::make_unique<ApplicationAdministrationClient>();
   try {
@@ -166,8 +170,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the administration service."});
   }
-  m_administrationClient = MakeVirtualAdministrationClient(
-    MakeByPassPtr(std::move(administrationClient)));
+  m_administrationClient = MakeVirtualAdministrationClient(ByPassPtr(
+    std::move(administrationClient)));
   auto marketDataClient = std::make_unique<ApplicationMarketDataClient>();
   try {
     marketDataClient->BuildSession(Ref(serviceLocatorClient),
@@ -177,8 +181,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the market data service."});
   }
-  m_marketDataClient = MakeVirtualMarketDataClient(
-    MakeByPassPtr(std::move(marketDataClient)));
+  m_marketDataClient = MakeVirtualMarketDataClient(ByPassPtr(
+    std::move(marketDataClient)));
   auto chartingClient = std::make_unique<ApplicationChartingClient>();
   try {
     chartingClient->BuildSession(Ref(serviceLocatorClient),
@@ -188,8 +192,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the charting service."});
   }
-  m_chartingClient = MakeVirtualChartingClient(
-    MakeByPassPtr(std::move(chartingClient)));
+  m_chartingClient = MakeVirtualChartingClient(ByPassPtr(
+    std::move(chartingClient)));
   auto complianceClient = std::make_unique<ApplicationComplianceClient>();
   try {
     complianceClient->BuildSession(Ref(serviceLocatorClient),
@@ -199,8 +203,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the compliance service."});
   }
-  m_complianceClient = MakeVirtualComplianceClient(
-    MakeByPassPtr(std::move(complianceClient)));
+  m_complianceClient = MakeVirtualComplianceClient(ByPassPtr(
+    std::move(complianceClient)));
   auto timeServices = serviceLocatorClient.Locate(TimeService::SERVICE_NAME);
   if(timeServices.empty()) {
     BOOST_THROW_EXCEPTION(ConnectException{"No time services available."});
@@ -227,8 +231,8 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the order execution service."});
   }
-  m_orderExecutionClient = MakeVirtualOrderExecutionClient(
-    MakeByPassPtr(std::move(orderExecutionClient)));
+  m_orderExecutionClient = MakeVirtualOrderExecutionClient(ByPassPtr(
+    std::move(orderExecutionClient)));
   auto riskClient = std::make_unique<ApplicationRiskClient>();
   try {
     riskClient->BuildSession(Ref(serviceLocatorClient),
@@ -238,7 +242,7 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{
       "Unable to connect to the risk service."});
   }
-  m_riskClient = MakeVirtualRiskClient(MakeByPassPtr(std::move(riskClient)));
+  m_riskClient = MakeVirtualRiskClient(ByPassPtr(std::move(riskClient)));
 }
 
 void SpireServiceClients::Close() {

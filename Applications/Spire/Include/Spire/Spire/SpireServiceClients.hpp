@@ -73,6 +73,9 @@ namespace Spire {
       //! Returns the TimeClient.
       Beam::TimeService::VirtualTimeClient& GetTimeClient() const;
 
+      std::unique_ptr<Beam::Threading::VirtualTimer> BuildTimer(
+        boost::posix_time::time_duration expiry);
+
       //! Opens all the clients.
       void Open();
 

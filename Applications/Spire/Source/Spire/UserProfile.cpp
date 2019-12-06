@@ -25,29 +25,29 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
     const vector<ExchangeRate>& exchangeRates,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
+    const EntitlementDatabase& entitlementDatabase,
     Ref<TimerThreadPool> timerThreadPool,
     Ref<VirtualServiceClients> serviceClients)
     : m_username(username),
-      m_isAdministrator{isAdministrator},
-      m_isManager{isManager},
-      m_countryDatabase{countryDatabase},
-      m_timeZoneDatabase{timeZoneDatabase},
-      m_currencyDatabase{currencyDatabase},
-      m_marketDatabase{marketDatabase},
-      m_destinationDatabase{destinationDatabase},
-      m_timerThreadPool{timerThreadPool.Get()},
-      m_serviceClients{serviceClients.Get()},
-      m_profilePath{path(QStandardPaths::writableLocation(
-        QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username},
-      m_catalogSettings{m_profilePath / "Catalog", isAdministrator},
-      m_interactionProperties{InteractionsProperties::GetDefaultProperties()} {
+      m_isAdministrator(isAdministrator),
+      m_isManager(isManager),
+      m_countryDatabase(countryDatabase),
+      m_timeZoneDatabase(timeZoneDatabase),
+      m_currencyDatabase(currencyDatabase),
+      m_marketDatabase(marketDatabase),
+      m_destinationDatabase(destinationDatabase),
+      m_entitlementDatabase(entitlementDatabase),
+      m_timerThreadPool(timerThreadPool.Get()),
+      m_serviceClients(serviceClients.Get()),
+      m_profilePath(path(QStandardPaths::writableLocation(
+        QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
+      m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
+      m_interactionProperties(InteractionsProperties::GetDefaultProperties()) {
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.Add(exchangeRate);
   }
   m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
 }
-
-UserProfile::~UserProfile() {}
 
 const string& UserProfile::GetUsername() const {
   return m_username;
@@ -86,11 +86,7 @@ const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
 }
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
-  if(!m_entitlementDatabase.has_value()) {
-    m_entitlementDatabase.emplace(
-      GetServiceClients().GetAdministrationClient().LoadEntitlements());
-  }
-  return *m_entitlementDatabase;
+  return m_entitlementDatabase;
 }
 
 TimerThreadPool& UserProfile::GetTimerThreadPool() {
@@ -274,8 +270,8 @@ Quantity UserProfile::GetDefaultQuantity(const Security& security,
   return defaultQuantity;
 }
 
-const boost::optional<PortfolioViewerWindowSettings>& UserProfile::
-    GetInitialPortfolioViewerWindowSettings() const {
+const boost::optional<PortfolioViewerWindowSettings>&
+    UserProfile::GetInitialPortfolioViewerWindowSettings() const {
   return m_initialPortfolioViewerWindowSettings;
 }
 

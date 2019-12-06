@@ -50,6 +50,8 @@ namespace Spire {
         \param exchangeRates The list of ExchangeRates to use.
         \param marketDatabase Stores the database of all markets.
         \param destinationDatabase Stores the database of all destinations.
+        \param entitlementDatabase Stores the database of market data
+               entitlements.
         \param timerThreadPool The ThreadPool used for LiveTimers.
         \param serviceClients The set of clients connected to Spire services.
       */
@@ -60,10 +62,10 @@ namespace Spire {
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
+        const Nexus::MarketDataService::EntitlementDatabase&
+          entitlementDatabase,
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool,
         Beam::Ref<Nexus::VirtualServiceClients> serviceClients);
-
-      virtual ~UserProfile();
 
       //! Returns the username.
       const std::string& GetUsername() const;
@@ -254,8 +256,7 @@ namespace Spire {
       Nexus::ExchangeRateTable m_exchangeRates;
       Nexus::MarketDatabase m_marketDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
-      mutable std::optional<Nexus::MarketDataService::EntitlementDatabase>
-        m_entitlementDatabase;
+      Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
       Beam::Threading::TimerThreadPool* m_timerThreadPool;
       Nexus::VirtualServiceClients* m_serviceClients;
       std::filesystem::path m_profilePath;
