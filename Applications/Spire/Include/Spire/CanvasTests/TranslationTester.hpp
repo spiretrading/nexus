@@ -12,9 +12,13 @@ namespace Spire::Tests {
       /** Tests translating a constant. */
       void TestTranslatingConstant();
 
+      /** Tests translating a chain. */
+      void TestTranslatingChain();
+
     private:
       CPPUNIT_TEST_SUITE(TranslationTester);
         CPPUNIT_TEST(TestTranslatingConstant);
+        CPPUNIT_TEST(TestTranslatingChain);
       CPPUNIT_TEST_SUITE_END();
   };
 }
