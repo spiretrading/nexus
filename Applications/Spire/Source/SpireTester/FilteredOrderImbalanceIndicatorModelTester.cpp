@@ -446,27 +446,33 @@ int TestOrderImbalanceIndicatorModel::get_load_entry_count() const {
   return static_cast<int>(m_load_entries.size());
 }
 
-TEST_CASE("crash_test_1",
+TEST_CASE("test_filtered_cleans_up_load_promises",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto T = std::make_shared<TestOrderImbalanceIndicatorModel>();
-    auto F = std::make_unique<FilteredOrderImbalanceIndicatorModel>(T,
-      std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
-    F->load(TimeInterval::closed(from_time_t(0), from_time_t(1000)));
-    F.reset();
-    auto O = wait(T->pop_load());
-    O->set_result({});
-    O->get_result();
-  }, "crash_test_");
+    auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
+    auto filtered_model = std::make_unique<FilteredOrderImbalanceIndicatorModel>(
+      test_model, std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
+    auto promise = filtered_model->load(TimeInterval::closed(from_time_t(0),
+      from_time_t(1000)));
+    filtered_model.reset();
+    auto test_load = wait(test_model->pop_load());
+    test_load->set_result({A, B, C});
+    wait(std::move(promise));
+  }, "test_filtered_cleans_up_load_promises");
 }
 
-TEST_CASE("crash_test_2", "[FilteredOrderImbalanceIndicatorModel]") {
+TEST_CASE("test_filtered_cleans_up_subscribe_promises",
+    "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
-    auto L = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-    auto F = std::make_unique<FilteredOrderImbalanceIndicatorModel>(L,
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto filtered_model =
+      std::make_unique<FilteredOrderImbalanceIndicatorModel>(local_model,
       std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
-    F->subscribe([=] (const auto& imbalance) {});
-    F.reset();
-    L->publish(A);
-  }, "crash_test_2");
+    auto signal_data = OrderImbalance();
+    auto promise = filtered_model->subscribe([&] (const auto& imbalance) {
+      signal_data = imbalance; });
+    filtered_model.reset();
+    local_model->publish(A);
+    wait(std::move(promise.m_snapshot));
+  }, "test_filtered_cleans_up_subscribe_promises");
 }
