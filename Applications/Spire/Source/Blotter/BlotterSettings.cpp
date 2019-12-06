@@ -7,13 +7,12 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <QMessageBox>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
 

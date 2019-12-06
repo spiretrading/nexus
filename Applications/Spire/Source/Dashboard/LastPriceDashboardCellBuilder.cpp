@@ -1,10 +1,7 @@
 #include "Spire/Dashboard/LastPriceDashboardCellBuilder.hpp"
 #include <Beam/Queues/ConverterReaderQueue.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

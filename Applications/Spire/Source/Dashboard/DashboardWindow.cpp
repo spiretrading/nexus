@@ -7,8 +7,7 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <QMessageBox>
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/OrderTaskView.hpp"
@@ -21,7 +20,6 @@
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LineInputDialog.hpp"
 #include "ui_DashboardWindow.h"

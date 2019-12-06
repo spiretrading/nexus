@@ -1,9 +1,8 @@
 #include "Spire/AccountViewer/DirectoryItem.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <QIcon>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/ManagerItem.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

@@ -4,18 +4,16 @@
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/RegistryService/RegistryClient.hpp>
-#include <Beam/RegistryService/VirtualRegistryClient.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <QMessageBox>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
 

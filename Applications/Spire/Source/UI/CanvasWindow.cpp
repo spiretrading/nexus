@@ -29,7 +29,6 @@
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CanvasWindowSettings.hpp"
 #include "Spire/UI/IgnoreCommandException.hpp"

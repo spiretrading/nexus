@@ -1,8 +1,7 @@
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "Spire/Spire/ServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "ui_DateTimeInputDialog.h"

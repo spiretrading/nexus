@@ -3,18 +3,14 @@
   #undef slots
 #endif
 #include <tuple>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <QCoreApplication>
 #include "Nexus/Definitions/QuoteConversions.hpp"
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 

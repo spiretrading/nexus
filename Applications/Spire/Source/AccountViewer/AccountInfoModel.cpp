@@ -1,6 +1,5 @@
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

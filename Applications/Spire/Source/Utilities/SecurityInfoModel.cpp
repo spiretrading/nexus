@@ -2,8 +2,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 

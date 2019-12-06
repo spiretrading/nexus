@@ -1,14 +1,12 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 

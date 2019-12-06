@@ -1,10 +1,7 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
 #include "Spire/RiskTimer/RiskTimerDialog.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

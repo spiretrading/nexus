@@ -1,8 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QCoreApplication>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 

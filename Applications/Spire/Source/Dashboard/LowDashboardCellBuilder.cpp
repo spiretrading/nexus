@@ -1,10 +1,7 @@
 #include "Spire/Dashboard/LowDashboardCellBuilder.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

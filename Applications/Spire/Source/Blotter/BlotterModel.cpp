@@ -1,12 +1,9 @@
 #include "Spire/Blotter/BlotterModel.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/DateTime.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/CancelOnFillController.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;

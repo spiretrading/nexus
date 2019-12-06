@@ -1,9 +1,6 @@
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
 #include "Spire/Spire/UserProfile.hpp"
 
 using namespace Beam;
