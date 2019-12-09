@@ -65,16 +65,23 @@ TEST_CASE("test_cached_subscribing_last_value",
 TEST_CASE("test_cached_duplicate_timestamps_value",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {
-    // Publish an imbalance with timestamp X.
-    // Load all imbalances within range [X - 1s, X + 1s]
-    // Expect the list [X]
-    // Publish an imbalance with timestamp X.
-    // Load all imbalances within range [X - 1s, X + 1s]
-    // Expect the list [X, X]
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    local_model->publish(A);
+    auto promise1 = cached_model.load(TimeInterval::closed(from_time_t(99),
+      from_time_t(101)));
+    auto data1 = wait(std::move(promise1));
+    REQUIRE(data1 == std::vector<OrderImbalance>({A}));
+    auto A2 = make_imbalance("A2", from_time_t(100));
+    local_model->publish(A2);
+    auto promise2 = cached_model.load(TimeInterval::closed(from_time_t(99),
+      from_time_t(101)));
+    auto data2 = wait(std::move(promise2));
+    auto expected2 = std::vector<OrderImbalance>({A, A2});
+    REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
+      expected2.end()));
   }, "test_cached_duplicate_timestamps_value");
 }
-
-
 
 TEST_CASE("test_cached_loading",
     "[CachedOrderImbalanceIndicatorModel]") {
