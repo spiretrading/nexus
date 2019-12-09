@@ -14,6 +14,8 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  schemas: Nexus.ComplianceRuleSchema[];
+
   /** The event handler called when the schema changes. */
   onChange?: (schema: Nexus.ComplianceRuleSchema) => void;
 }
@@ -49,6 +51,7 @@ export class ParametersList extends React.Component<Properties> {
       }
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
+        schemas={this.props.schemas}
         displaySize={this.props.displaySize}
         onChange={this.onChange.bind(this, i)}
         parameter={rule}/>);

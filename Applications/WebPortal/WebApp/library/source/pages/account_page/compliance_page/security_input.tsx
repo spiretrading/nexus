@@ -14,7 +14,6 @@ interface Properties {
 
 interface State {
   isEditing: boolean;
-
   selection: number;
 }
 
@@ -306,14 +305,16 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '246px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      marginBottom: '30px'
+      marginBottom: '30px',
+      overflowY: 'scroll' as 'scroll'
     },
     scrollBoxBig: {
       boxSizing: 'border-box' as 'border-box',
       height: '280px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      marginBottom: '30px'
+      marginBottom: '30px',
+      overflowY: 'scroll' as 'scroll'
     },
     scrollBoxHeader: {
       boxSizing: 'border-box' as 'border-box',

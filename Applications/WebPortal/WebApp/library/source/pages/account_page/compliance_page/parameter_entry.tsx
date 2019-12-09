@@ -14,6 +14,11 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** */
+  schemas: Nexus.ComplianceRuleSchema[];
+
+  //ruleName: string;
+
   /** The event handler called when the parameter changes. */
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
@@ -87,14 +92,26 @@ export class ParameterEntry extends React.Component<Properties> {
             onInput={this.onChange}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
-          if(this.props.parameter.value.value[0].type ===
-              Nexus.ComplianceValue.Type.SECURITY) {
-            return <SecurityInput
-            displaySize={this.props.displaySize}
-            onChange={this.onChange}
-            value={this.props.parameter.value.value}/>;
+          if(this.props.parameter.value.value.length > 0) {
+            if(this.props.parameter.value.value[0].type ===
+                Nexus.ComplianceValue.Type.SECURITY) {
+              return <SecurityInput
+              displaySize={this.props.displaySize}
+              onChange={this.onChange}
+              value={this.props.parameter.value.value}/>;
+            }
+          } else {
+            let bacon = null;
+            const label = this.props.parameter.name;
+            let i = 0;
+            while(bacon === null && this.props.schemas.length > 0
+              && i < this.props.schemas.length) {
+              if(label === this.props.schemas[i].name) {
+                return 'BOOOOP';
+              }
+              ++i;
+            }
           }
-          
           return <div/>;
         default:
           return <div/>;

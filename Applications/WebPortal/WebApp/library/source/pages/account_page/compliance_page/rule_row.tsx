@@ -18,6 +18,8 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+  
+  schemas: Nexus.ComplianceRuleSchema[];
 
   /** The event handler called when the rule entry changes. */
   onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
@@ -105,6 +107,7 @@ export class RuleRow extends React.Component<Properties, State> {
                 <ParametersList 
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
+                  schemas={this.props.schemas}
                   schema={this.props.complianceRule.schema}
                   onChange={this.onParameterChange}/>
               </div>)}

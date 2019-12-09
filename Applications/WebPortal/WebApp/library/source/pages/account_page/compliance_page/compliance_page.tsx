@@ -54,6 +54,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.currencyDatabase}
           complianceList={this.props.entries}
+          schemas={this.props.schemas}
           onChange={this.props.onRuleChange}/>
         <div style={CompliancePage.STYLE.paddingMedium}/>
         <NewRuleButton displaySize={this.props.displaySize}
@@ -66,10 +67,6 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private onToggleAddRuleModal() {
-    this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
-  }
-
-  private onToggleSecurityModal() {
     this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
 
