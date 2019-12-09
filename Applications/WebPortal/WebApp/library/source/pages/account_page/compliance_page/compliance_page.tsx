@@ -49,23 +49,19 @@ export class CompliancePage extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={CompliancePage.STYLE.wrapper}>
-        <div style={CompliancePage.STYLE.filler}/>
-        <div style={contentStyle}>
-          <RulesList
-            displaySize={this.props.displaySize}
-            currencyDatabase={this.props.currencyDatabase}
-            complianceList={this.props.entries}
-            onChange={this.props.onRuleChange}/>
-          <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize}
-            isOpen={this.state.isAddRuleModalOpen}
-            onToggleModal={this.onToggleAddRuleModal}
-            onAddNewRule={this.props.onRuleAdd}
-            schemas={this.props.schemas}/>
-          <div style={CompliancePage.STYLE.paddingLarge}/>
-        </div>
-        <div style={CompliancePage.STYLE.filler}/>
+      <div style={contentStyle}>
+        <RulesList
+          displaySize={this.props.displaySize}
+          currencyDatabase={this.props.currencyDatabase}
+          complianceList={this.props.entries}
+          onChange={this.props.onRuleChange}/>
+        <div style={CompliancePage.STYLE.paddingMedium}/>
+        <NewRuleButton displaySize={this.props.displaySize}
+          isOpen={this.state.isAddRuleModalOpen}
+          onToggleModal={this.onToggleAddRuleModal}
+          onAddNewRule={this.props.onRuleAdd}
+          schemas={this.props.schemas}/>
+        <div style={CompliancePage.STYLE.paddingLarge}/>
       </div>);
   }
 
@@ -74,19 +70,6 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    wrapper: {
-      paddingTop: '18px',
-      paddingLeft: '18px',
-      paddingRight: '18px',
-      paddingBottom: '60px',
-      height: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
-    },
-    filler: {
-      flexGrow: 1,
-      flexShrink: 1
-    },
     paddingMedium: {
       width: '100%',
       height: '20px'
@@ -96,18 +79,31 @@ export class CompliancePage extends React.Component<Properties, State> {
       height: '30px'
     },
     smallContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
+      flexBasis: '284px',
+      flexGrow: 1,
       minWidth: '284px',
-      maxWidth: '424px',
-      width: '100%'
+      maxWidth: '424px'
     },
     mediumContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '732px'
     },
     largeContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px'
