@@ -1,17 +1,16 @@
 import * as React from 'react';
 
-
 /** This is a component that wraps every subpage so that the scrolling behavior 
     is consistent within all pages.*/
 export class PageWrapper extends React.Component {
   public render(): JSX.Element {
     return (
-      <div style={this.STYLE.page}>
+      <div style={PageWrapper.STYLE.page}>
         {this.props.children}
       </div>);
   }
 
-  readonly STYLE = {
+  private static readonly STYLE = {
     page: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
