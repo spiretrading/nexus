@@ -32,7 +32,7 @@ namespace Spire {
     private:
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       LocalOrderImbalanceIndicatorModel m_cache;
-      boost::icl::interval_set<boost::posix_time::ptime> m_ranges;
+      boost::icl::interval_set<boost::posix_time::ptime> m_intervals;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscribe_promise;
 
