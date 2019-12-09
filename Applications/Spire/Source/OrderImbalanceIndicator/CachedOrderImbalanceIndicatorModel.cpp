@@ -81,7 +81,12 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
               TimeInterval::closed(last->m_timestamp, last->m_timestamp))) {
             --last;
           }
-          for(auto i = first; i <= last; ++i) {
+          //TODO: use lambdas to init first and last
+          // first = list.begin() if list.front().m_timestamp is not in
+          //            m_intervals
+          //        else,
+          //          first equals upper bound of unique_interval.lower()
+          for(auto i = first; i < last; ++i) {
             m_cache.insert(std::move(*i));
           }
         }
