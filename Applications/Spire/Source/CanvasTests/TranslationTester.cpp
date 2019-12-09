@@ -6,9 +6,16 @@
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
-#include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/Tasks/Executor.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
+#include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
+#include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
+#include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
+#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -16,6 +23,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Tests;
 
@@ -27,17 +35,24 @@ namespace {
     UserProfile m_userProfile;
 
     Environment()
-      : m_serviceClients(MakeVirtualServiceClients(
-          std::make_unique<TestServiceClients>(Ref(m_environment)))),
+BEAM_SUPPRESS_THIS_INITIALIZER()
+      : m_serviceClients(
+          [&] {
+            m_environment.Open();
+            return MakeVirtualServiceClients(
+              std::make_unique<TestServiceClients>(Ref(m_environment)));
+          }()),
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
           EntitlementDatabase(), Ref(m_timerThreadPool),
           Ref(*m_serviceClients)) {
-      m_environment.Open();
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_serviceClients->Open();
     }
   };
+
+  const auto TEST_SECURITY = ParseSecurity("TST.TSX");
 }
 
 void TranslationTester::TestTranslatingConstant() {
@@ -64,6 +79,98 @@ void TranslationTester::TestTranslatingChain() {
   auto result = translation.Extract<Aspen::Box<Quantity>>();
   CPPUNIT_ASSERT(result.commit(0) == Aspen::State::CONTINUE_EVALUATED);
   CPPUNIT_ASSERT(result.eval() == 123);
-  CPPUNIT_ASSERT(result.commit(1) == Aspen::State::CONTINUE_EVALUATED);
+  CPPUNIT_ASSERT(result.commit(1) == Aspen::State::COMPLETE_EVALUATED);
   CPPUNIT_ASSERT(result.eval() == 456);
+}
+
+void TranslationTester::TestTranslatingChainWithTailReference() {
+  auto environment = Environment();
+  auto chain = std::unique_ptr<CanvasNode>(std::make_unique<ChainNode>());
+  chain = chain->Replace("i0", std::make_unique<IntegerNode>(123));
+  chain = chain->Replace("i1", std::make_unique<ReferenceNode>("i0"));
+  auto executor = Executor();
+  auto context = CanvasNodeTranslationContext(Ref(environment.m_userProfile),
+    Ref(executor), DirectoryEntry());
+  auto translation = Translate(context, *chain);
+  auto result = translation.Extract<Aspen::Box<Quantity>>();
+  CPPUNIT_ASSERT(result.commit(0) == Aspen::State::CONTINUE_EVALUATED);
+  CPPUNIT_ASSERT(result.eval() == 123);
+  CPPUNIT_ASSERT(result.commit(1) == Aspen::State::COMPLETE_EVALUATED);
+  CPPUNIT_ASSERT(result.eval() == 123);
+}
+
+void TranslationTester::TestTranslatingChainWithHeadReference() {
+  auto environment = Environment();
+  auto chain = std::unique_ptr<CanvasNode>(std::make_unique<ChainNode>());
+  chain = chain->Replace("i0", std::make_unique<ReferenceNode>("i1"));
+  chain = chain->Replace("i1", std::make_unique<IntegerNode>(123));
+  chain = chain->Convert(IntegerType::GetInstance());
+  auto executor = Executor();
+  auto context = CanvasNodeTranslationContext(Ref(environment.m_userProfile),
+    Ref(executor), DirectoryEntry());
+  auto translation = Translate(context, *chain);
+  auto result = translation.Extract<Aspen::Box<Quantity>>();
+  CPPUNIT_ASSERT(result.commit(0) == Aspen::State::CONTINUE_EVALUATED);
+  CPPUNIT_ASSERT(result.eval() == 123);
+  CPPUNIT_ASSERT(result.commit(1) == Aspen::State::COMPLETE_EVALUATED);
+  CPPUNIT_ASSERT(result.eval() == 123);
+}
+
+void TranslationTester::TestTranslatingOrder() {
+  auto environment = Environment();
+  auto orderNode = std::unique_ptr<CanvasNode>(
+    std::make_unique<SingleOrderTaskNode>());
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
+    std::make_unique<SecurityNode>(TEST_SECURITY,
+    environment.m_userProfile.GetMarketDatabase()));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
+    std::make_unique<IntegerNode>(100));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
+    std::make_unique<SideNode>(Side::BID));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::PRICE_PROPERTY,
+    std::make_unique<MoneyNode>(Money::ONE));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
+    std::make_unique<OrderTypeNode>(OrderType::LIMIT));
+  auto executor = Executor();
+  auto context = CanvasNodeTranslationContext(Ref(environment.m_userProfile),
+    Ref(executor), DirectoryEntry());
+  auto translation = Translate(context, *orderNode);
+  auto result = translation.Extract<Aspen::Box<const Order*>>();
+  CPPUNIT_ASSERT(result.commit(0) == Aspen::State::EVALUATED);
+  auto order1 = result.eval();
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_quantity == 100);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_side == Side::BID);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_price == Money::ONE);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_type == OrderType::LIMIT);
+}
+
+void TranslationTester::TestTranslatingOrderTask() {
+  auto environment = Environment();
+  auto orderNode = std::unique_ptr<CanvasNode>(
+    std::make_unique<SingleOrderTaskNode>());
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
+    std::make_unique<SecurityNode>(TEST_SECURITY,
+    environment.m_userProfile.GetMarketDatabase()));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
+    std::make_unique<IntegerNode>(100));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
+    std::make_unique<SideNode>(Side::BID));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::PRICE_PROPERTY,
+    std::make_unique<MoneyNode>(Money::ONE));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
+    std::make_unique<OrderTypeNode>(OrderType::LIMIT));
+  auto executor = Executor();
+  auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
+    Ref(environment.m_userProfile));
+  auto orders = std::make_shared<Queue<const Order*>>();
+  task->GetContext().GetOrderPublisher().Monitor(orders);
+  task->Execute();
+  auto order1 = orders->Top();
+  orders->Pop();
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_security == TEST_SECURITY);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_quantity == 100);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_side == Side::BID);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_price == Money::ONE);
+  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_type == OrderType::LIMIT);
 }

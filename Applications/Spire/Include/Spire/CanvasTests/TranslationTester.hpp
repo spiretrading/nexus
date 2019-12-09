@@ -15,10 +15,32 @@ namespace Spire::Tests {
       /** Tests translating a chain. */
       void TestTranslatingChain();
 
+      /**
+       * Tests translating a chain containing a reference from the last child
+       * to the first child.
+       */
+      void TestTranslatingChainWithTailReference();
+
+      /**
+       * Tests translating a chain containing a reference from the first child
+       * to the last child.
+       */
+      void TestTranslatingChainWithHeadReference();
+
+      /** Tests translation an order. */
+      void TestTranslatingOrder();
+
+      /** Tests translation an order as a Task. */
+      void TestTranslatingOrderTask();
+
     private:
       CPPUNIT_TEST_SUITE(TranslationTester);
         CPPUNIT_TEST(TestTranslatingConstant);
         CPPUNIT_TEST(TestTranslatingChain);
+        CPPUNIT_TEST(TestTranslatingChainWithTailReference);
+        CPPUNIT_TEST(TestTranslatingChainWithHeadReference);
+        CPPUNIT_TEST(TestTranslatingOrder);
+        CPPUNIT_TEST(TestTranslatingOrderTask);
       CPPUNIT_TEST_SUITE_END();
   };
 }
