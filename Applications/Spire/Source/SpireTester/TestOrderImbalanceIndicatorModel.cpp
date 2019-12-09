@@ -1,10 +1,5 @@
 #include "Spire/SpireTester/TestOrderImbalanceIndicatorModel.hpp"
-#include <mutex>
-#include "Spire/Spire/SubscriptionResult.hpp"
-#include "Spire/Spire/QtPromise.hpp"
 
-using namespace boost::posix_time;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -52,7 +47,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     TestOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
-  return {connection(), QtPromise([] {
+  return {boost::signals2::connection(), QtPromise([] {
     return boost::optional<OrderImbalance>();
   })};
 }

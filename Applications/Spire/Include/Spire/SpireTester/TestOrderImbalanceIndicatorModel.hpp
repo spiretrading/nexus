@@ -1,9 +1,7 @@
 #ifndef SPIRE_TEST_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_TEST_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
+#include <mutex>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
-#include "Spire/Spire/Intervals.hpp"
 
 namespace Spire {
 
@@ -30,7 +28,7 @@ namespace Spire {
           //! Sets the result of the load operation.
           /*
             \param result The list of imbalances that the promise loading the
-                   specified range should evalute to.
+                    specified range should evalute to.
           */
           void set_result(std::vector<Nexus::OrderImbalance> result);
 
