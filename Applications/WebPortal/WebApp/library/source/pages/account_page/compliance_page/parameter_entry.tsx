@@ -101,18 +101,11 @@ export class ParameterEntry extends React.Component<Properties> {
               value={this.props.parameter.value.value}/>;
             }
           } else {
-            let bacon = null;
-            const label = this.props.parameter.name;
-            let i = 0;
-            while(bacon === null && this.props.schemas.length > 0
-              && i < this.props.schemas.length) {
-              if(label === this.props.schemas[i].name) {
-                return 'BOOOOP';
-              }
-              ++i;
-            }
+            return <SecurityInput
+              displaySize={this.props.displaySize}
+              onChange={this.onChange}
+              value={[]}/>;
           }
-          return <div/>;
         default:
           return <div/>;
       }
