@@ -23,7 +23,7 @@ namespace Spire {
       */
       FilteredOrderImbalanceIndicatorModel(
         std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-        std::shared_ptr<std::vector<Filter>> filters);
+        std::vector<Filter> filters);
 
       QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) override;

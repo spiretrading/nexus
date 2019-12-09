@@ -6,16 +6,16 @@ using namespace Spire;
 
 FilteredOrderImbalanceIndicatorModel::FilteredOrderImbalanceIndicatorModel(
   std::shared_ptr<OrderImbalanceIndicatorModel> source_model,
-  std::shared_ptr<std::vector<Filter>> filters)
+  std::vector<Filter> filters)
   : m_source_model(std::move(source_model)),
-    m_filters(std::move(filters)) {}
+    m_filters(std::make_shared<std::vector<Filter>>(std::move(filters))) {}
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::load(
     const TimeInterval& interval) {
   return m_source_model->load(interval).then(
-    [&filters = *m_filters] (const auto& imbalances) {
-      return filter_imbalances(filters, imbalances.Get());
+    [filters = m_filters] (const auto& imbalances) {
+      return filter_imbalances(*filters, imbalances.Get());
     });
 }
 
@@ -23,8 +23,8 @@ SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
   return m_source_model->subscribe(
-    [=, &filters = *m_filters] (const auto& imbalance) {
-      if(is_imbalance_accepted(filters, imbalance)) {
+    [=, filters = m_filters] (const auto& imbalance) {
+      if(is_imbalance_accepted(*filters, imbalance)) {
         slot(imbalance);
       }
     });
