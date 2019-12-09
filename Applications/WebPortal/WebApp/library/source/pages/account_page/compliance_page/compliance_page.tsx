@@ -49,21 +49,20 @@ export class CompliancePage extends React.Component<Properties, State> {
       }
     })();
     return (
-
-        <div style={contentStyle}>
-          <RulesList
-            displaySize={this.props.displaySize}
-            currencyDatabase={this.props.currencyDatabase}
-            complianceList={this.props.entries}
-            onChange={this.props.onRuleChange}/>
-          <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize}
-            isOpen={this.state.isAddRuleModalOpen}
-            onToggleModal={this.onToggleAddRuleModal}
-            onAddNewRule={this.props.onRuleAdd}
-            schemas={this.props.schemas}/>
-          <div style={CompliancePage.STYLE.paddingLarge}/>
-        </div>);
+      <div style={contentStyle}>
+        <RulesList
+          displaySize={this.props.displaySize}
+          currencyDatabase={this.props.currencyDatabase}
+          complianceList={this.props.entries}
+          onChange={this.props.onRuleChange}/>
+        <div style={CompliancePage.STYLE.paddingMedium}/>
+        <NewRuleButton displaySize={this.props.displaySize}
+          isOpen={this.state.isAddRuleModalOpen}
+          onToggleModal={this.onToggleAddRuleModal}
+          onAddNewRule={this.props.onRuleAdd}
+          schemas={this.props.schemas}/>
+        <div style={CompliancePage.STYLE.paddingLarge}/>
+      </div>);
   }
 
   private onToggleAddRuleModal() {

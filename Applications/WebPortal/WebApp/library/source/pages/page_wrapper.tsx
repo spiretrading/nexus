@@ -1,33 +1,30 @@
 import * as React from 'react';
 
-/** Returns a component that monitors the resize event.
- * @param BaseComponent - A component that needs some scrolly stuff
- */
-export function pageWrapper(BaseComponent: React.ComponentType<any>) {
-  return class extends React.Component {
+/** This is a component that wraps every subpage so that the scrolling behavior 
+    is consistent within all pages.*/
+export class PageWrapper extends React.Component {
+  public render(): JSX.Element {
+    return (
+      <div style={PageWrapper.STYLE.page}>
+        {this.props.children}
+      </div>);
+  }
 
-    public render() {
-      return (
-        <div style={this.STYLE.page}> 
-          <BaseComponent {...this.props}/>
-        </div>);
+  private static readonly STYLE = {
+    page: {
+      boxSizing: 'border-box' as 'border-box',
+      width: '100%',
+      height: '100%',
+      display: 'flex' as 'flex',
+      flex: 'column' as 'column',
+      flexWrap: 'nowrap' as 'nowrap',
+      overflowX: 'auto' as 'auto',
+      overflowY: 'auto' as 'auto',
+      justifyContent: 'center' as 'center',
+      alignItems: 'flex-start' as 'flex-start',
+      margin: 0,
+      padding: 0,
+      minWidth: '320px'
     }
-  
-    STYLE = {
-      page: {
-        //boxSizing: 'border-box' as 'border-box',
-        width: '100%',
-        height: '100%',
-        display: 'flex' as 'flex',
-        flex: 'column' as 'column',
-        flexWrap: 'nowrap' as 'nowrap',
-        overflowY: 'auto' as 'auto',
-        justifyContent: 'center' as 'center',
-        alignItems: 'flex-start' as 'flex-start',
-        margin: 0,
-        padding: 0,
-        minWidth: '320px'
-      }
-    };
   };
 }

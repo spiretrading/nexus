@@ -28,13 +28,15 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
 
     return(
-      <WebPortal.CompliancePage
-        onRuleAdd={this.onRuleAdd}
-        onRuleChange={this.onRuleChange}
-        displaySize={this.props.displaySize} 
-        schemas={this.state.schemas}
-        currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-        entries={this.state.entries}/>);
+      <WebPortal.PageWrapper>
+        <WebPortal.CompliancePage
+          onRuleAdd={this.onRuleAdd}
+          onRuleChange={this.onRuleChange}
+          displaySize={this.props.displaySize} 
+          schemas={this.state.schemas}
+          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          entries={this.state.entries}/>
+      </WebPortal.PageWrapper>);
   }
 
   public componentDidMount() {
@@ -203,5 +205,5 @@ class TestApp extends React.Component<Properties, State> {
   }
 }
 
-const ResponsivePage = WebPortal.pageWrapper(WebPortal.displaySizeRenderer(TestApp));
+const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
 ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));

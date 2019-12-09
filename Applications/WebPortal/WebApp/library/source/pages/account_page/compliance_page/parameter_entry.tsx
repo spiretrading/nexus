@@ -42,9 +42,9 @@ export class ParameterEntry extends React.Component<Properties> {
     })();
     const inputWrapper = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParameterEntry.STYLE.inputWrapperSmall;
+        return ParameterEntry.STYLE.inputSmall;
       } else {
-        return ParameterEntry.STYLE.inputWrapperBig;
+        return ParameterEntry.STYLE.inputLarge;
       }
     })();
     const input = (() => {
@@ -70,8 +70,8 @@ export class ParameterEntry extends React.Component<Properties> {
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
-              value={this.props.parameter.value.value}
-              onChange={this.onChange}/>;
+            value={this.props.parameter.value.value}
+            onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
           return <NumberInput 
             value={this.props.parameter.value.value}
@@ -115,14 +115,14 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    inputWrapperSmall: {
+    inputSmall: {
       minWidth: '184px',
       flexBasis: '184px',
       maxWidth: '246px',
       flexGrow: 1,
       flexShrink: 1
     },
-    inputWrapperBig: {
+    inputLarge: {
       width: '246px',
       minWidth: '246px',
       maxWidth: '246px',
