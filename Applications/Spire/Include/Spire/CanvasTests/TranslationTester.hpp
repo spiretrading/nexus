@@ -33,6 +33,9 @@ namespace Spire::Tests {
       /** Tests translation an order as a Task. */
       void TestTranslatingOrderTask();
 
+      /** Tests translating an UntilNode. */
+      void TestTranslatingUntil();
+
     private:
       CPPUNIT_TEST_SUITE(TranslationTester);
         CPPUNIT_TEST(TestTranslatingConstant);
@@ -41,6 +44,7 @@ namespace Spire::Tests {
         CPPUNIT_TEST(TestTranslatingChainWithHeadReference);
         CPPUNIT_TEST(TestTranslatingOrder);
         CPPUNIT_TEST(TestTranslatingOrderTask);
+        CPPUNIT_TEST(TestTranslatingUntil);
       CPPUNIT_TEST_SUITE_END();
   };
 }

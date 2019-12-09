@@ -1,23 +1,32 @@
-#ifndef SPIRE_UNTILNODE_HPP
-#define SPIRE_UNTILNODE_HPP
+#ifndef SPIRE_UNTIL_NODE_HPP
+#define SPIRE_UNTIL_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Common/CanvasNode.hpp"
+#include "Spire/Canvas/Common/FunctionNode.hpp"
 
 namespace Spire {
 
-  /*! \class UntilNode
-      \brief Evaluates a CanvasNode until a condition is true.
-   */
-  class UntilNode : public CanvasNode {
+  /** Evaluates a CanvasNode until a condition is true. */
+  class UntilNode : public FunctionNode {
     public:
 
-      //! Constructs an UntilNode.
+      /** Specifies an UntilNode's signatures. */
+      struct Signatures {
+        template<typename T>
+        struct MakeSignature {
+          using type = typename boost::mpl::vector<bool, T, T>::type;
+        };
+
+        using type = boost::mpl::transform<NativeTypes,
+          MakeSignature<boost::mpl::placeholders::_1>>::type;
+      };
+
+      /** Constructs an UntilNode. */
       UntilNode();
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -29,15 +38,13 @@ namespace Spire {
 
   template<typename Shuttler>
   void UntilNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
+    FunctionNode::Shuttle(shuttle, version);
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsDefaultConstructable<Spire::UntilNode> : std::false_type {};
-}
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
+#include "Spire/Canvas/ControlNodes/UntilNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
@@ -163,6 +164,63 @@ void TranslationTester::TestTranslatingOrderTask() {
   auto executor = Executor();
   auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
     Ref(environment.m_userProfile));
+  auto submittedOrders = std::make_shared<Queue<const Order*>>();
+  task->GetContext().GetOrderPublisher().Monitor(submittedOrders);
+  auto taskState = std::make_shared<Queue<Task::StateEntry>>();
+  task->GetPublisher().Monitor(taskState);
+  task->Execute();
+  CPPUNIT_ASSERT(taskState->Top().m_state == Task::State::INITIALIZING);
+  taskState->Pop();
+  auto submittedOrder1 = submittedOrders->Top();
+  submittedOrders->Pop();
+  CPPUNIT_ASSERT(taskState->Top().m_state == Task::State::ACTIVE);
+  taskState->Pop();
+  CPPUNIT_ASSERT(submittedOrder1->GetInfo().m_fields.m_security ==
+    TEST_SECURITY);
+  CPPUNIT_ASSERT(submittedOrder1->GetInfo().m_fields.m_quantity == 100);
+  CPPUNIT_ASSERT(submittedOrder1->GetInfo().m_fields.m_side == Side::BID);
+  CPPUNIT_ASSERT(submittedOrder1->GetInfo().m_fields.m_price == Money::ONE);
+  CPPUNIT_ASSERT(submittedOrder1->GetInfo().m_fields.m_type ==
+    OrderType::LIMIT);
+  auto receivedOrders = std::make_shared<Queue<const Order*>>();
+  environment.m_environment.MonitorOrderSubmissions(receivedOrders);
+  auto receivedOrder1 = receivedOrders->Top();
+  receivedOrders->Pop();
+  environment.m_environment.AcceptOrder(*receivedOrder1);
+  auto executionReports = std::make_shared<Queue<ExecutionReport>>();
+  submittedOrder1->GetPublisher().Monitor(executionReports);
+  CPPUNIT_ASSERT(executionReports->Top().m_status == OrderStatus::PENDING_NEW);
+  executionReports->Pop();
+  CPPUNIT_ASSERT(executionReports->Top().m_status == OrderStatus::NEW);
+  executionReports->Pop();
+  task->Cancel();
+  CPPUNIT_ASSERT(taskState->Top().m_state == Task::State::PENDING_CANCEL);
+  taskState->Pop();
+  CPPUNIT_ASSERT(executionReports->Top().m_status ==
+    OrderStatus::PENDING_CANCEL);
+  environment.m_environment.CancelOrder(*receivedOrder1);
+  CPPUNIT_ASSERT(taskState->Top().m_state == Task::State::CANCELED);
+  taskState->Pop();
+}
+
+void TranslationTester::TestTranslatingUntil() {
+/*
+  auto environment = Environment();
+  auto untilNode = std::unique_ptr<CanvasNode>(std::make_unique<UntilNode>());
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
+    std::make_unique<SecurityNode>(TEST_SECURITY,
+    environment.m_userProfile.GetMarketDatabase()));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
+    std::make_unique<IntegerNode>(100));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
+    std::make_unique<SideNode>(Side::BID));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::PRICE_PROPERTY,
+    std::make_unique<MoneyNode>(Money::ONE));
+  orderNode = orderNode->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
+    std::make_unique<OrderTypeNode>(OrderType::LIMIT));
+  auto executor = Executor();
+  auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
+    Ref(environment.m_userProfile));
   auto orders = std::make_shared<Queue<const Order*>>();
   task->GetContext().GetOrderPublisher().Monitor(orders);
   task->Execute();
@@ -173,4 +231,5 @@ void TranslationTester::TestTranslatingOrderTask() {
   CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_side == Side::BID);
   CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_price == Money::ONE);
   CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_type == OrderType::LIMIT);
+*/
 }
