@@ -27,5 +27,4 @@ export class PageWrapper extends React.Component {
       minWidth: '320px'
     }
   };
-};
-
+}
