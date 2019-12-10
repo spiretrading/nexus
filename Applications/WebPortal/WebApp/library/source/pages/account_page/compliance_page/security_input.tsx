@@ -15,6 +15,7 @@ interface Properties {
 interface State {
   isEditing: boolean;
   selection: number;
+  inputString: string;
 }
 
 export class SecurityInput extends React.Component<Properties, State>{
@@ -22,9 +23,12 @@ export class SecurityInput extends React.Component<Properties, State>{
     super(props);
     this.state = {
       isEditing: false,
-      selection: -1
+      selection: -1,
+      inputString: ''
     }
     this.toggleEditing = this.toggleEditing.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
+    this.addEntry = this.addEntry.bind(this);
   }
 
   public render() {
@@ -32,7 +36,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(!this.state.isEditing) {
         return SecurityInput.STYLE.hidden;
       } else {
-        return null;
+        return SecurityInput.STYLE.modal;
       }
     })();
     const shadowBox = (() => {
@@ -116,7 +120,6 @@ export class SecurityInput extends React.Component<Properties, State>{
     return(
       <div>
         <input
-          readOnly
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
           value ={displayValue}
@@ -139,12 +142,14 @@ export class SecurityInput extends React.Component<Properties, State>{
               className={css(SecurityInput.EXTRA_STYLE.effects)}
               style={SecurityInput.STYLE.findSymbolBox}
               placeholder={SecurityInput.PLACEHOLDER_TEXT}
-              value={''}/>
+              onChange={this.onInputChange}
+              onKeyDown={this.addEntry}
+              value={this.state.inputString}/>
             <div style={selectedSecuritiesBox}>
               <div style={SecurityInput.STYLE.scrollBoxHeader}>
                 {'Added Symbols'}
               </div>
-             {entries}
+              {entries}
             </div>
             <div style={iconRowStyle}>
               {removeImgSrc}
@@ -168,7 +173,7 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private selectEntry(index: number) {
-   if(index === this.state.selection) {
+    if(index === this.state.selection) {
       this.setState({selection: -1});
     } else {
       this.setState({selection: index});
@@ -184,11 +189,23 @@ export class SecurityInput extends React.Component<Properties, State>{
     this.setState({selection: -1});
   }
 
-  private addEntry(symbol: string) {
-    const newParameter = new Nexus.ComplianceValue( Nexus.ComplianceValue.Type.SECURITY, new Nexus.Security(symbol, Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA));
-    this.props.onChange(
-      this.props.value.slice().concat(
-      this.props.value.slice(this.state.selection+1)));
+  private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({inputString: event.target.value});
+  }
+
+  private addEntry(event: React.KeyboardEvent<HTMLInputElement>) {
+    if(event.keyCode === 13) {
+      const newParameter = 
+        new Nexus.ComplianceValue( 
+          Nexus.ComplianceValue.Type.SECURITY, 
+          new Nexus.Security(
+            this.state.inputString,
+            Nexus.MarketCode.NONE,
+            Nexus.DefaultCountries.CA));
+      this.props.onChange(
+        this.props.value.slice().concat(newParameter));
+      this.setState({inputString: ''});
+    }
   }
 
 
@@ -212,6 +229,11 @@ export class SecurityInput extends React.Component<Properties, State>{
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
+    },
+    modal: {
+      boxSizing: 'border-box' as 'border-box',
+      minHeight: '559px',
+      overflow: 'scroll',
     },
     overlay: {
       boxSizing: 'border-box' as 'border-box',
