@@ -201,34 +201,3 @@ void TranslationTester::TestTranslatingOrderTask() {
   CPPUNIT_ASSERT(taskState->Top().m_state == Task::State::CANCELED);
   taskState->Pop();
 }
-
-void TranslationTester::TestTranslatingUntil() {
-/*
-  auto environment = Environment();
-  auto untilNode = std::unique_ptr<CanvasNode>(std::make_unique<UntilNode>());
-  orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
-    std::make_unique<SecurityNode>(TEST_SECURITY,
-    environment.m_userProfile.GetMarketDatabase()));
-  orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
-    std::make_unique<IntegerNode>(100));
-  orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
-    std::make_unique<SideNode>(Side::BID));
-  orderNode = orderNode->Replace(SingleOrderTaskNode::PRICE_PROPERTY,
-    std::make_unique<MoneyNode>(Money::ONE));
-  orderNode = orderNode->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
-    std::make_unique<OrderTypeNode>(OrderType::LIMIT));
-  auto executor = Executor();
-  auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
-    Ref(environment.m_userProfile));
-  auto orders = std::make_shared<Queue<const Order*>>();
-  task->GetContext().GetOrderPublisher().Monitor(orders);
-  task->Execute();
-  auto order1 = orders->Top();
-  orders->Pop();
-  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_security == TEST_SECURITY);
-  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_quantity == 100);
-  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_side == Side::BID);
-  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_price == Money::ONE);
-  CPPUNIT_ASSERT(order1->GetInfo().m_fields.m_type == OrderType::LIMIT);
-*/
-}
