@@ -5,7 +5,8 @@ using namespace Beam::Routines;
 using namespace Spire;
 
 Executor::Executor()
-  : m_reactor(m_producer) {}
+  : m_trigger([=] { OnUpdate(); }),
+    m_reactor(m_producer) {}
 
 Executor::~Executor() {
   Close();
@@ -40,10 +41,9 @@ void Executor::Shutdown() {
 
 void Executor::RunLoop() {
   m_has_update = false;
-  auto trigger = Aspen::Trigger([=] { OnUpdate(); });
-  Aspen::Trigger::set_trigger(trigger);
   auto sequence = 0;
   while(m_openState.IsRunning()) {
+    Aspen::Trigger::set_trigger(m_trigger);
     auto state = m_reactor.commit(sequence);
     ++sequence;
     if(Aspen::is_complete(state)) {

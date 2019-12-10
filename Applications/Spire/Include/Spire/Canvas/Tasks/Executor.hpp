@@ -30,6 +30,7 @@ namespace Spire {
 
     private:
       std::mutex m_mutex;
+      Aspen::Trigger m_trigger;
       Beam::Routines::RoutineHandler m_reactorLoop;
       bool m_has_update;
       Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;

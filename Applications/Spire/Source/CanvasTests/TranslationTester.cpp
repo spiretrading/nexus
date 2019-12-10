@@ -161,7 +161,6 @@ void TranslationTester::TestTranslatingOrderTask() {
     std::make_unique<MoneyNode>(Money::ONE));
   orderNode = orderNode->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
     std::make_unique<OrderTypeNode>(OrderType::LIMIT));
-  auto executor = Executor();
   auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
     Ref(environment.m_userProfile));
   auto submittedOrders = std::make_shared<Queue<const Order*>>();

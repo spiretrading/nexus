@@ -108,13 +108,13 @@ namespace Spire {
 
     private:
       std::unique_ptr<CanvasNode> m_node;
+      Executor m_executor;
       CanvasNodeTranslationContext m_context;
       bool m_isExecutable;
       bool m_isFailed;
       std::atomic_bool m_isCancelable;
       State m_state;
       Aspen::Shared<Aspen::Cell<bool>> m_cancelToken;
-      Executor m_executor;
       int m_id;
       Beam::SequencePublisher<StateEntry> m_publisher;
 
