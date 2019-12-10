@@ -28,6 +28,13 @@ namespace Details {
       Translation(Aspen::Weak<R> reactor);
 
       /**
+       * Constructs a Translation for a shared reactor.
+       * @param reactor The reactor that was translated.
+       */
+      template<typename R>
+      Translation(Aspen::Shared<R> reactor);
+
+      /**
        * Constructs a Translation for a reactor.
        * @param reactor The reactor that was translated.
        */
@@ -96,6 +103,11 @@ namespace Details {
   Translation::Translation(Aspen::Weak<R> reactor)
     : m_type(&typeid(Aspen::reactor_result_t<Aspen::Weak<R>>)),
       m_holder(std::make_shared<WeakHolder<R>>(std::move(reactor))) {}
+
+  template<typename R>
+  Translation::Translation(Aspen::Shared<R> reactor)
+    : m_type(&typeid(Aspen::reactor_result_t<Aspen::Shared<R>>)),
+      m_holder(std::make_shared<Holder<R>>(std::move(reactor))) {}
 
   template<typename R, typename>
   Translation::Translation(R&& reactor)
