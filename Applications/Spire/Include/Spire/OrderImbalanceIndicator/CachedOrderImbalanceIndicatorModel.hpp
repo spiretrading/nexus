@@ -34,7 +34,7 @@ namespace Spire {
       LocalOrderImbalanceIndicatorModel m_cache;
       boost::icl::interval_set<boost::posix_time::ptime> m_intervals;
       boost::signals2::scoped_connection m_subscription_connection;
-      QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscribe_promise;
+      QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscription_promise;
 
       QtPromise<std::vector<Nexus::OrderImbalance>> load_from_cache(
         const TimeInterval& interval);

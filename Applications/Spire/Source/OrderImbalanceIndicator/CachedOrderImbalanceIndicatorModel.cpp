@@ -14,7 +14,7 @@ CachedOrderImbalanceIndicatorModel::CachedOrderImbalanceIndicatorModel(
       on_imbalance_published(imbalance);
     });
   m_subscription_connection = std::move(connection);
-  m_subscribe_promise = std::move(promise);
+  m_subscription_promise = std::move(promise);
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
@@ -48,11 +48,10 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
   auto promises = std::vector<QtPromise<std::vector<OrderImbalance>>>();
-  auto load_intervals = interval_set<ptime>(interval);
-  load_intervals = load_intervals - m_intervals;
-  for(auto& range : load_intervals) {
-    promises.push_back(m_source_model->load(TimeInterval::closed(range.lower(),
-      range.upper())));
+  auto unloaded_intervals = interval_set<ptime>(interval) - m_intervals;
+  for(auto& interval : unloaded_intervals) {
+    promises.push_back(m_source_model->load(TimeInterval::closed(
+      interval.lower(), interval.upper())));
   }
   return all(std::move(promises)).then([=] (const auto& loaded_imbalances) {
     for(auto& list : loaded_imbalances.Get()) {
