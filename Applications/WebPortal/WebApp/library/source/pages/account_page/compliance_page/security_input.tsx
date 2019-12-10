@@ -285,7 +285,10 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '100%',
       top: '0%',
       right: '0%',
-      padding: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingTop: '18px',
+      paddingBottom: '40px',
       overflowY: 'auto' as 'auto'
     },
     bigOptionsBox: {
