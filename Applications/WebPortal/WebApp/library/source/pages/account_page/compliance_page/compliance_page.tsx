@@ -2,6 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 import { NewRuleButton, RulesList } from '.';
+import { HLine } from '../../../components';
 
 interface Properties {
   
@@ -62,6 +63,11 @@ export class CompliancePage extends React.Component<Properties, State> {
           onAddNewRule={this.props.onRuleAdd}
           schemas={this.props.schemas}/>
         <div style={CompliancePage.STYLE.paddingLarge}/>
+        <HLine/>
+        <div style={CompliancePage.STYLE.paddingLarge}/>
+        <button/>
+        <div style={CompliancePage.STYLE.paddingMedium}/>
+        <div>{'STATUS!'}</div>
       </div>);
   }
 
