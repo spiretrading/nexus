@@ -61,10 +61,10 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
           list.back().m_timestamp}) - m_intervals;
         for(auto& unique_interval : unique_intervals) {
           auto first = [&] {
-            if(boost::icl::contains(m_intervals, TimeInterval::closed(
-                unique_interval.lower(), unique_interval.upper()))) {
-              return std::upper_bound(list.begin(), list.end(),
-                unique_interval.lower(),
+            auto lower = unique_interval.lower();
+            if(boost::icl::contains(m_intervals, TimeInterval::closed(lower,
+                lower))) {
+              return std::upper_bound(list.begin(), list.end(), lower,
                 [] (const auto& timestamp, const auto& imbalance) {
                   return imbalance.m_timestamp > timestamp;
                 });
@@ -72,23 +72,23 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
             return list.begin();
           }();
           auto last = [&] {
-            auto upper_interval = TimeInterval::closed(unique_interval.upper(),
-              unique_interval.upper());
-            if(boost::icl::contains(m_intervals, upper_interval)) {
-              auto last_iter = std::lower_bound(first, list.end(),
-                unique_interval.upper(),
+            auto upper =  unique_interval.upper();
+            if(boost::icl::contains(m_intervals, TimeInterval::closed(upper,
+                upper))) {
+              return std::lower_bound(first, list.end(), upper,
                 [] (const auto& imbalance, const auto& timestamp) {
                   return timestamp < imbalance.m_timestamp;
                 });
-              if(last_iter != list.end()) {
-                ++last_iter;
-              }
-              return last_iter;
             }
             return list.end();
           }();
-          for(auto i = first; i < last; ++i) {
-            m_cache.insert(std::move(*i));
+          if(first == last && !boost::icl::contains(m_intervals,
+              TimeInterval::closed(first->m_timestamp, first->m_timestamp))) {
+            m_cache.insert(std::move(*first));
+          } else {
+            for(auto i = first; i < last; ++i) {
+              m_cache.insert(std::move(*i));
+            }
           }
         }
       }
