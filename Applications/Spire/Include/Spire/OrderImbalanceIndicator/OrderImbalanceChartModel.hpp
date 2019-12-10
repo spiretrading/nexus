@@ -14,12 +14,6 @@ namespace Spire {
   class OrderImbalanceChartModel : private boost::noncopyable {
     public:
 
-      //! Signals an update to the security's price.
-      /*!
-        \param price The security's current price.
-      */
-      using PriceSignal = Signal<void (Nexus::Money price)>;
-
       //! Signals an order imbalance.
       /*!
         \param imbalance The published order imbalance.
