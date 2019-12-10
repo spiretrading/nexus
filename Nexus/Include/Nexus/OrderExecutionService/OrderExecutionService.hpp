@@ -18,6 +18,7 @@ namespace Nexus::OrderExecutionService {
   template<typename OrderExecutionDriverType, typename AdministrationClientType>
     class ManualOrderEntryDriver;
   class Order;
+  template<typename C, typename S> class OrderCancellationReactor;
   using OrderId = std::uint64_t;
   template<typename ServiceProtocolClientBuilderType>
     class OrderExecutionClient;

@@ -1,10 +1,18 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
+#include <Beam/Reactors/PublisherReactor.hpp>
+#include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
+using namespace Beam::Reactors;
 using namespace Beam::ServiceLocator;
+using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
@@ -88,13 +96,22 @@ void Task::Execute() {
         if(!m_isCancelable) {
           m_state = State::PENDING_CANCEL;
           m_publisher.Push(StateEntry(m_state));
-        } else if(m_isFailed) {
+        }
+        m_context.GetOrderPublisher().Break();
+      }),
+      Aspen::Box<void>(Aspen::Unique(new OrderCancellationReactor(
+        Ref(m_context.GetUserProfile().GetServiceClients().
+        GetOrderExecutionClient()), PublisherReactor(
+        m_context.GetOrderPublisher())))),
+      Aspen::lift([=] {
+        if(m_isFailed) {
           m_state = State::FAILED;
-          m_publisher.Push(StateEntry(m_state));
+        } else if(m_state == State::PENDING_CANCEL) {
+          m_state = State::CANCELED;
         } else {
           m_state = State::COMPLETE;
-          m_publisher.Push(StateEntry(m_state));
         }
+        m_publisher.Push(StateEntry(m_state));
       }))));
   m_executor.Open();
 }
