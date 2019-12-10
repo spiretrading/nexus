@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/SubscriptionResult.hpp"
+#include "Spire/Spire/Intervals.hpp"
 
 namespace Spire {
 
@@ -28,12 +29,16 @@ namespace Spire {
 
       virtual ~OrderImbalanceChartModel() = default;
 
-      //! Subscribes to the security's price feed.
-      /*!
-        \param slot The slot to call when a new price is published.
+      //! Subscribes to the security's published imbalances and returns the
+      //! security's order imbalances within the given time interval.
+      /*
+        \param time_interval The requested time interval of the initial order
+                             imbalances.
+        \param slot The slot to call when a new order imbalance is published.
       */
-      virtual SubscriptionResult<boost::optional<Nexus::Money>> subscribe_price(
-        const PriceSignal::slot_type& slot) = 0;
+      virtual SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
+        subscribe_order_imbalance(const TimeInterval& time_interval,
+        const OrderImbalanceSignal::slot_type& slot) = 0;
 
     protected:
       OrderImbalanceChartModel() = default;
