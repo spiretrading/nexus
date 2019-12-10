@@ -58,34 +58,35 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     for(auto& list : loaded_imbalances.Get()) {
       if(!list.empty()) {
         auto unique_intervals = interval_set<ptime>({list.front().m_timestamp,
-          list.back().m_timestamp});
+          list.back().m_timestamp}) - m_intervals;
         for(auto& unique_interval : unique_intervals) {
-          auto first = std::lower_bound(list.begin(), list.end(),
-            unique_interval.lower(),
-            [] (const auto& imbalance, const auto& timestamp) {
-              return imbalance.m_timestamp < timestamp;
-            });
-          while(first != list.end() && boost::icl::contains(m_intervals,
-              TimeInterval::closed(first->m_timestamp, first->m_timestamp))) {
-            ++first;
-          }
-          auto last = std::upper_bound(list.begin(), list.end(),
-            unique_interval.upper(),
-            [] (const auto& timestamp, const auto& imbalance) {
-              return imbalance.m_timestamp > timestamp;
-            });
-          if(last == list.end()) {
-            --last;
-          }
-          while(last != list.begin() && boost::icl::contains(m_intervals,
-              TimeInterval::closed(last->m_timestamp, last->m_timestamp))) {
-            --last;
-          }
-          //TODO: use lambdas to init first and last
-          // first = list.begin() if list.front().m_timestamp is not in
-          //            m_intervals
-          //        else,
-          //          first equals upper bound of unique_interval.lower()
+          auto first = [&] {
+            if(boost::icl::contains(m_intervals, TimeInterval::closed(
+                unique_interval.lower(), unique_interval.upper()))) {
+              return std::upper_bound(list.begin(), list.end(),
+                unique_interval.lower(),
+                [] (const auto& timestamp, const auto& imbalance) {
+                  return imbalance.m_timestamp > timestamp;
+                });
+            }
+            return list.begin();
+          }();
+          auto last = [&] {
+            auto upper_interval = TimeInterval::closed(unique_interval.upper(),
+              unique_interval.upper());
+            if(boost::icl::contains(m_intervals, upper_interval)) {
+              auto last_iter = std::lower_bound(first, list.end(),
+                unique_interval.upper(),
+                [] (const auto& imbalance, const auto& timestamp) {
+                  return timestamp < imbalance.m_timestamp;
+                });
+              if(last_iter != list.end()) {
+                ++last_iter;
+              }
+              return last_iter;
+            }
+            return list.end();
+          }();
           for(auto i = first; i < last; ++i) {
             m_cache.insert(std::move(*i));
           }
