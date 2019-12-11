@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queues.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"

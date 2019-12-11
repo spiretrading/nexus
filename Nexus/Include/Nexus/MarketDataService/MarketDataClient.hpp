@@ -6,7 +6,6 @@
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/range/adaptor/map.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
