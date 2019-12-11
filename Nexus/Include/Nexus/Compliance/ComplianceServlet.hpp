@@ -10,6 +10,7 @@
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
