@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
+import { CurrencySelectionBox, DisplaySize, DurationInputField, MoneyInputBox,
   NumberInput, TextInputField } from '../../..';
 import { Checkmark } from '../../../components';
 
@@ -69,7 +69,7 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <DurationInput
+          return <DurationInputField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;

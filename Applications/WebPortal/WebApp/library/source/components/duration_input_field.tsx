@@ -25,8 +25,7 @@ interface Properties {
 }
 
 /** A component that displays and lets a user edit a duration. */
-/** Depreciated.  */
-export class DurationInput extends React.Component<Properties> {
+export class DurationInputField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
     onChange: () => {}
@@ -36,16 +35,16 @@ export class DurationInput extends React.Component<Properties> {
     const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInput.STYLE.wrapperSmall;
+        return DurationInputField.STYLE.wrapperSmall;
       } else {
-        return DurationInput.STYLE.wrapperLarge;
+        return DurationInputField.STYLE.wrapperLarge;
       }
     })();
     const integerInputStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInput.STYLE.integerBoxSmall;
+        return DurationInputField.STYLE.integerBoxSmall;
       } else {
-        return DurationInput.STYLE.integerBoxLarge;
+        return DurationInputField.STYLE.integerBoxLarge;
       }
     })();
     return (
@@ -53,23 +52,23 @@ export class DurationInput extends React.Component<Properties> {
         <IntegerInputBox
           min={0} max={59}
           value={splitTransitionTime.hours}
-          className={css(DurationInput.EXTRA_STYLE.effects)}
+          className={css(DurationInputField.EXTRA_STYLE.effects)}
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.HOURS)}
           padding={2}/>
-        <div style={DurationInput.STYLE.colon}>{':'}</div>
+        <div style={DurationInputField.STYLE.colon}>{':'}</div>
         <IntegerInputBox
           min={0} max={59}
           value={splitTransitionTime.minutes}
-          className={css(DurationInput.EXTRA_STYLE.effects)}
+          className={css(DurationInputField.EXTRA_STYLE.effects)}
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
           padding={2}/>
-        <div style={DurationInput.STYLE.colon}>{':'}</div>
+        <div style={DurationInputField.STYLE.colon}>{':'}</div>
         <IntegerInputBox
           min={0} max={59}
           value={splitTransitionTime.seconds}
-          className={css(DurationInput.EXTRA_STYLE.effects)}
+          className={css(DurationInputField.EXTRA_STYLE.effects)}
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
           padding={2}/>
@@ -105,14 +104,16 @@ export class DurationInput extends React.Component<Properties> {
       minWidth: '184px',
       width: '100%',
       flexShrink: 1,
-      flexGrow: 1
+      flexGrow: 1,
+      backgroundColor: '#ffffff'
     },
     wrapperLarge: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexGrow: 1,
-      maxWidth: '246px'
+      maxWidth: '246px',
+      backgroundColor: '#ffffff'
     },
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -122,13 +123,15 @@ export class DurationInput extends React.Component<Properties> {
       width: '100%',
       height: '34px',
       flexGrow: 1,
-      flexShrink: 1
+      flexShrink: 1,
+      border: '0px solid #ffffff',
     },
     integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
       width: '64px',
-      height: '34px'
+      height: '34px',
+      border: '0px solid #ffffff',
     },
     colon: {
       width: '26px',
