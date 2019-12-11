@@ -37,7 +37,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
       imbalances.push_back(*i);
     }
   }
-  return QtPromise([imbalances = std::move(imbalances)] {
+  return QtPromise([imbalances = std::move(imbalances)] () mutable {
     return std::move(imbalances);
   });
 }
