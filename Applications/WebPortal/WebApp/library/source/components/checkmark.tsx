@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
 
@@ -42,13 +42,15 @@ export class Checkmark extends React.Component<Properties> {
       }
     })();
     return (
-      <div style={wrapperStyle} onClick={this.props.onClick}>
+      <div style={wrapperStyle}
+          className={css(Checkmark.EXTRA_STYLE.removingDefaults)} onClick={this.props.onClick}>
         <img height={size} width={size} src={imgSrc}/> 
       </div>);
   }
 
   private static readonly STYLE = {
     wrapper: {
+      boxSizing: 'border-box' as 'border-box',
       height: '20px',
       width: '20px',
       display: 'flex' as 'flex',
@@ -58,6 +60,7 @@ export class Checkmark extends React.Component<Properties> {
       cursor: 'pointer' as 'pointer'
     },
     wrapperReadonly: {
+      boxSizing: 'border-box' as 'border-box',
       height: '20px',
       width: '20px',
       display: 'flex' as 'flex',
@@ -69,39 +72,27 @@ export class Checkmark extends React.Component<Properties> {
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     removingDefaults: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none' as 'none',
-      ':active' : {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
+      '-webkit-appearance': 'none',
+      ':active': {
+        ouline: 'none',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
+        outlineStyle: 'none'
       },
-      ':hover':{
-        backgroundColor: '#4B23A0'
+      ':focus': {
+        ouline: 'none',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
       },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
+      '::moz-focus-inner': {
+        border: 0
       },
       ':-moz-focusring': {
-        outline: 0
+        color: 'transparent',
+        textShadow: '0 0 0 #000'
       }
     }
   });
