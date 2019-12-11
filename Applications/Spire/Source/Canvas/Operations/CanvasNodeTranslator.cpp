@@ -1396,9 +1396,14 @@ void CanvasNodeTranslationVisitor::Visit(const ReferenceNode& node) {
       return;
     }
   }
-  m_translation = Instantiate<ReferenceTranslator>(
+  auto translation = Instantiate<ReferenceTranslator>(
     static_cast<const NativeType&>(referent->GetType()).GetNativeType())(
     InternalTranslation(*referent));
+  if(dynamic_cast<const SingleOrderTaskNode*>(referent)) {
+    m_translation = translation.ToWeak();
+  } else {
+    m_translation = std::move(translation);
+  }
 }
 
 void CanvasNodeTranslationVisitor::Visit(const RoundNode& node) {
@@ -1496,7 +1501,7 @@ void CanvasNodeTranslationVisitor::Visit(const TextNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
-#if 0
+#if 0 // TODO
   auto security = std::static_pointer_cast<Reactor<Security>>(
     boost::get<std::shared_ptr<BaseReactor>>(
     InternalTranslation(node.GetChildren()[0])));
@@ -1572,11 +1577,15 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
     const CanvasNode& node) {
   auto existingTranslation = m_context->FindTranslation(node);
   if(existingTranslation.is_initialized()) {
-    m_translation = *existingTranslation;
+    m_translation = std::move(*existingTranslation);
   } else {
     node.Apply(*this);
+    if(dynamic_cast<const SingleOrderTaskNode*>(&node)) {
+      m_context->Add(Ref(node), m_translation->ToWeak());
+    } else {
+      m_context->Add(Ref(node), *m_translation);
+    }
   }
-  m_context->Add(Ref(node), *m_translation);
   return *m_translation;
 }
 
