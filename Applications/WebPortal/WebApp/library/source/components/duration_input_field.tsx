@@ -56,7 +56,7 @@ export class DurationInputField extends React.Component<Properties> {
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.HOURS)}
           padding={2}/>
-        <div style={DurationInputField.STYLE.colon}>{':'}</div>
+        <div style={DurationInputField.STYLE.colon}>{'/'}</div>
         <IntegerInputBox
           min={0} max={59}
           value={splitTransitionTime.minutes}
@@ -64,7 +64,7 @@ export class DurationInputField extends React.Component<Properties> {
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
           padding={2}/>
-        <div style={DurationInputField.STYLE.colon}>{':'}</div>
+        <div style={DurationInputField.STYLE.colon}>{'/'}</div>
         <IntegerInputBox
           min={0} max={59}
           value={splitTransitionTime.seconds}
@@ -72,6 +72,9 @@ export class DurationInputField extends React.Component<Properties> {
           style={integerInputStyle}
           onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
           padding={2}/>
+          <div>
+            {"~placeholder text~"}
+          </div>
       </div>);
   }
 
@@ -118,8 +121,8 @@ export class DurationInputField extends React.Component<Properties> {
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      minWidth: '44px',
-      maxWidth: '64px',
+      minWidth: '17px',
+      maxWidth: '17px',
       width: '100%',
       height: '34px',
       flexGrow: 1,
@@ -129,12 +132,12 @@ export class DurationInputField extends React.Component<Properties> {
     integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      width: '64px',
+      width: '17px',
       height: '34px',
       border: '0px solid #ffffff',
     },
     colon: {
-      width: '26px',
+      width: '5px',
       flexShrink: 0,
       display: 'flex' as 'flex',
       justifyContent: 'center',
