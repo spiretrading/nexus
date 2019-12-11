@@ -1501,29 +1501,23 @@ void CanvasNodeTranslationVisitor::Visit(const TextNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
-#if 0 // TODO
-  auto security = std::static_pointer_cast<Reactor<Security>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren()[1])));
-  auto marketDataClient = &m_context->GetUserProfile().GetServiceClients().
-    GetMarketDataClient();
-  auto reactorMonitor = &m_context->GetReactorMonitor();
-  auto timeAndSalePublisher = MakeFunctionReactor(
-    [=] (const Security& security, const Queries::Range& range) {
-      SecurityMarketDataQuery query;
+  auto security = InternalTranslation(
+    node.GetChildren()[0]).Extract<Aspen::Box<Security>>();
+  auto range = InternalTranslation(
+    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Queries::Range>>();
+  auto marketDataClient =
+    &m_context->GetUserProfile().GetServiceClients().GetMarketDataClient();
+  m_translation = Aspen::lift(TimeAndSaleToRecordConverter{}, Aspen::override(
+    Aspen::lift(
+    [=] (const Security& security, const Beam::Queries::Range& range) {
+      auto query = SecurityMarketDataQuery();
       query.SetIndex(security);
       query.SetRange(range);
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       marketDataClient->QueryTimeAndSales(query, queue);
-      return MakeQueueReactor(queue);
-    }, std::move(security), std::move(range));
-  auto query = MakeSwitchReactor(timeAndSalePublisher);
-  m_translation = MakeFunctionReactor(TimeAndSaleToRecordConverter{}, query);
-#endif
+      return Aspen::Shared(QueueReactor(queue));
+    }, std::move(security), std::move(range))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeInForceNode& node) {
