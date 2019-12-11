@@ -56,12 +56,6 @@ SubscriptionResult<optional<Nexus::OrderImbalance>>
       return std::move(imbalance); })};
 }
 
-std::shared_ptr<OrderImbalanceChartModel>
-    LocalOrderImbalanceIndicatorModel::get_chart_model(
-    const Security& security) {
-  throw std::runtime_error("method not implemented");
-}
-
 void LocalOrderImbalanceIndicatorModel::insert_sorted(
     const OrderImbalance& imbalance) {
   if(m_imbalances.empty() ||

@@ -36,12 +36,6 @@ SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     });
 }
 
-std::shared_ptr<OrderImbalanceChartModel>
-    FilteredOrderImbalanceIndicatorModel::get_chart_model(
-    const Nexus::Security& security) {
-  throw std::runtime_error("method not implemented");
-}
-
 Filter Spire::make_security_list_filter(
     const std::set<Security>& security_list) {
   return [=] (const Nexus::OrderImbalance& imbalance) {

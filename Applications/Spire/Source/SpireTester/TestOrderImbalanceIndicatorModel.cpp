@@ -58,12 +58,6 @@ SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
   })};
 }
 
-std::shared_ptr<OrderImbalanceChartModel>
-    TestOrderImbalanceIndicatorModel::get_chart_model(
-    const Nexus::Security& security) {
-  throw std::runtime_error("method not implemented");
-}
-
 QtPromise<std::shared_ptr<TestOrderImbalanceIndicatorModel::LoadEntry>>
     TestOrderImbalanceIndicatorModel::pop_load() {
   return QtPromise([=] {

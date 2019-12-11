@@ -35,9 +35,6 @@ namespace Spire {
       SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         subscribe(const OrderImbalanceSignal::slot_type& slot) override;
 
-      std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
-        const Nexus::Security& security) override;
-
     private:
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       std::shared_ptr<std::vector<Filter>> m_filters;

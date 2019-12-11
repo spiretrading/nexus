@@ -39,12 +39,6 @@ SubscriptionResult<optional<Nexus::OrderImbalance>>
   return m_source_model->subscribe(slot);
 }
 
-std::shared_ptr<OrderImbalanceChartModel>
-    CachedOrderImbalanceIndicatorModel::get_chart_model(
-    const Security& security) {
-  throw std::runtime_error("method not implemented");
-}
-
 QtPromise<std::vector<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::load_from_cache(
     const TimeInterval& interval) {
