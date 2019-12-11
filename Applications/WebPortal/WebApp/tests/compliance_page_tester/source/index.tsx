@@ -77,7 +77,11 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Duration',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000)))
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000))),
+        new Nexus.ComplianceParameter(
+          'Boolean',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.BOOLEAN, true))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [
