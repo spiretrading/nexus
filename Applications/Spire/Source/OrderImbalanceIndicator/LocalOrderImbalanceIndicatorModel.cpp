@@ -1,4 +1,5 @@
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
+#include "Spire/OrderImbalanceIndicator/FilteredOrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 using namespace boost;
@@ -19,33 +20,25 @@ void LocalOrderImbalanceIndicatorModel::insert(
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
-  auto first = [&] {
-    if(is_left_closed(interval.bounds())) {
-      return std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
-        interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
-          return imbalance.m_timestamp < timestamp;
-        });
-    }
-    return std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
-      interval.lower(), [] (const auto& timestamp, const auto& imbalance) {
-        return imbalance.m_timestamp > timestamp;
-      });
-  }();
-  auto last = [&] {
-    if(is_right_closed(interval.bounds())) {
-     return std::upper_bound(first, m_imbalances.end(),
-        interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
-          return imbalance.m_timestamp > timestamp;
-        });
-    }
-    return std::lower_bound(first, m_imbalances.end(),
-      interval.upper(), [] (const auto& imbalance, const auto& timestamp) {
-        return imbalance.m_timestamp < timestamp;
-      });
-  }();
+  auto [first, last] = get_iterators_from_interval(interval);
   return QtPromise(
     [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
       return std::move(imbalances);
+  });
+}
+
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    LocalOrderImbalanceIndicatorModel::load(const Security& security,
+    const TimeInterval& interval) {
+  auto imbalances = std::vector<OrderImbalance>();
+  auto [first, last] = get_iterators_from_interval(interval);
+  for(auto i = first; i < last; ++i) {
+    if(i->m_security == security) {
+      imbalances.push_back(*i);
+    }
+  }
+  return QtPromise([imbalances = std::move(imbalances)] {
+    return std::move(imbalances);
   });
 }
 
@@ -82,4 +75,35 @@ void LocalOrderImbalanceIndicatorModel::insert_sorted(
       return stored_imbalance.m_timestamp < timestamp;
     });
   m_imbalances.insert(index, imbalance);
+}
+
+std::tuple<std::vector<OrderImbalance>::iterator,
+    std::vector<OrderImbalance>::iterator>
+    LocalOrderImbalanceIndicatorModel::get_iterators_from_interval(
+    const TimeInterval& interval) {
+  auto first = [&] {
+    if(is_left_closed(interval.bounds())) {
+      return std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+        interval.lower(), [] (const auto& imbalance, const auto& timestamp) {
+          return imbalance.m_timestamp < timestamp;
+        });
+    }
+    return std::upper_bound(m_imbalances.begin(), m_imbalances.end(),
+      interval.lower(), [] (const auto& timestamp, const auto& imbalance) {
+        return imbalance.m_timestamp > timestamp;
+      });
+  }();
+  auto last = [&] {
+    if(is_right_closed(interval.bounds())) {
+     return std::upper_bound(first, m_imbalances.end(),
+        interval.upper(), [] (const auto& timestamp, const auto& imbalance) {
+          return imbalance.m_timestamp > timestamp;
+        });
+    }
+    return std::lower_bound(first, m_imbalances.end(),
+      interval.upper(), [] (const auto& imbalance, const auto& timestamp) {
+        return imbalance.m_timestamp < timestamp;
+      });
+  }();
+  return {first, last};
 }

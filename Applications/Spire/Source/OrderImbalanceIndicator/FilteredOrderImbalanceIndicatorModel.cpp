@@ -19,6 +19,12 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     });
 }
 
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    FilteredOrderImbalanceIndicatorModel::load(const Security& security,
+    const TimeInterval& interval) {
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
+}
+
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {

@@ -44,6 +44,12 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
   }, LaunchPolicy::ASYNC);
 }
 
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    TestOrderImbalanceIndicatorModel::load(
+    const Security& security, const TimeInterval& interval) {
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
+}
+
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     TestOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {

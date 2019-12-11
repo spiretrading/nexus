@@ -28,6 +28,10 @@ namespace Spire {
       QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) override;
 
+      QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const Nexus::Security& security,
+        const TimeInterval& interval) override;
+
       SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         subscribe(const OrderImbalanceSignal::slot_type& slot) override;
 

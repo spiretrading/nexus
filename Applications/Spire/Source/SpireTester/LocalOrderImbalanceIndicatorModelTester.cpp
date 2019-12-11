@@ -41,6 +41,28 @@ TEST_CASE("test_local_publishing_subscribing",
   }, "test_local_publishing_subscribing");
 }
 
+TEST_CASE("test_local_single_security_load",
+    "[LocalOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto model = LocalOrderImbalanceIndicatorModel();
+    model.insert(A);
+    model.insert(B);
+    model.insert(C);
+    model.insert(D);
+    model.insert(E);
+    auto A2 = make_imbalance("A", from_time_t(200));
+    auto A3 = make_imbalance("A", from_time_t(300));
+    auto A4 = make_imbalance("A", from_time_t(400));
+    model.insert(A2);
+    model.insert(A3);
+    model.insert(A4);
+    auto promise = model.load(Security("A", 0), TimeInterval::closed(
+      from_time_t(0), from_time_t(1000)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
+  }, "test_local_single_security_load");
+}
+
 TEST_CASE("test_local_subscribing_last_value",
     "[LocalOrderImbalanceIndicatorModel]") {
   run_test([] {
