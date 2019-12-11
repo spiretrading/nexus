@@ -53,7 +53,7 @@ export class CompliancePage extends React.Component<Properties, State> {
     const status = (() => {
       if(true) {
         return(
-          <div style={CompliancePage.EXTRA_STYLE.button}>
+          <div style={CompliancePage.STYLE.statusBox}>
             Saved
           </div>);
       }
@@ -110,7 +110,6 @@ export class CompliancePage extends React.Component<Properties, State> {
       flexGrow: 1,
       minWidth: '284px',
       maxWidth: '424px',
-      //alignItems: 'center' as 'center'
     },
     mediumContent: {
       paddingTop: '18px',
@@ -120,7 +119,6 @@ export class CompliancePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '732px',
-      //alignItems: 'center' as 'center'
     },
     largeContent: {
       paddingTop: '18px',
@@ -130,11 +128,11 @@ export class CompliancePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px',
-      //alignItems: 'center' as 'center'
     },
     statusBox: {
       height: '19px',
       width: '100%',
+      display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       font: '400 14px Roboto',
