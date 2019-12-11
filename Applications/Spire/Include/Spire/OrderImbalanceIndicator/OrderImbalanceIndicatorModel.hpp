@@ -31,6 +31,16 @@ namespace Spire {
       virtual QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) = 0;
 
+      //! Loads a list of historical order imbalances for a single security.
+      /*
+        \param security The security whose order imbalances will be returned.
+        \param interval The time interval to load.
+        \return The list of order imbalances within the specified interval for
+                the given security.
+      */
+      virtual QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const Nexus::Security& security, const TimeInterval& interval) = 0;
+
       //! Subscribes to real time order imbalances.
       /*!
         \param slot The slot receiving new order imbalances.
