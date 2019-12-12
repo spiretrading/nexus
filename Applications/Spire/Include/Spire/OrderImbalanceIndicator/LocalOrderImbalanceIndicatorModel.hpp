@@ -24,17 +24,21 @@ namespace Spire {
       QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) override;
 
+      QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const Nexus::Security& security,
+        const TimeInterval& interval) override;
+
       SubscriptionResult<boost::optional<Nexus::OrderImbalance>> subscribe(
         const OrderImbalanceSignal::slot_type& slot) override;
-
-      std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
-        const Nexus::Security& security) override;
 
     private:
       std::vector<Nexus::OrderImbalance> m_imbalances;
       OrderImbalanceSignal m_imbalance_published_signal;
 
       void insert_sorted(const Nexus::OrderImbalance& imbalance);
+      std::tuple<std::vector<Nexus::OrderImbalance>::iterator,
+        std::vector<Nexus::OrderImbalance>::iterator>
+        get_iterators_from_interval(const TimeInterval& interval);
   };
 }
 

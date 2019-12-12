@@ -19,6 +19,12 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     });
 }
 
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    FilteredOrderImbalanceIndicatorModel::load(const Security& security,
+    const TimeInterval& interval) {
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
+}
+
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     FilteredOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
@@ -28,12 +34,6 @@ SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         slot(imbalance);
       }
     });
-}
-
-std::shared_ptr<OrderImbalanceChartModel>
-    FilteredOrderImbalanceIndicatorModel::get_chart_model(
-    const Nexus::Security& security) {
-  throw std::runtime_error("method not implemented");
 }
 
 Filter Spire::make_security_list_filter(

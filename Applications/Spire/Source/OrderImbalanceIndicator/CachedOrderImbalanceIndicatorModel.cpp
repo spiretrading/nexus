@@ -26,16 +26,17 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
   return load_from_model(interval);
 }
 
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    CachedOrderImbalanceIndicatorModel::load(
+    const Nexus::Security& security,
+    const TimeInterval& interval) {
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
+}
+
 SubscriptionResult<optional<Nexus::OrderImbalance>>
     CachedOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
   return m_source_model->subscribe(slot);
-}
-
-std::shared_ptr<OrderImbalanceChartModel>
-    CachedOrderImbalanceIndicatorModel::get_chart_model(
-    const Security& security) {
-  throw std::runtime_error("method not implemented");
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>

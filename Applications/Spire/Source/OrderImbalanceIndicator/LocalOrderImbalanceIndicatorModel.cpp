@@ -19,6 +19,61 @@ void LocalOrderImbalanceIndicatorModel::insert(
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
+  auto [first, last] = get_iterators_from_interval(interval);
+  return QtPromise(
+    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
+      return std::move(imbalances);
+  });
+}
+
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    LocalOrderImbalanceIndicatorModel::load(const Security& security,
+    const TimeInterval& interval) {
+  auto imbalances = std::vector<OrderImbalance>();
+  auto [first, last] = get_iterators_from_interval(interval);
+  for(auto i = first; i != last; ++i) {
+    if(i->m_security == security) {
+      imbalances.push_back(*i);
+    }
+  }
+  return QtPromise([imbalances = std::move(imbalances)] () mutable {
+    return std::move(imbalances);
+  });
+}
+
+SubscriptionResult<optional<Nexus::OrderImbalance>>
+    LocalOrderImbalanceIndicatorModel::subscribe(
+    const OrderImbalanceSignal::slot_type& slot) {
+  auto last_imbalance = [&] () -> optional<Nexus::OrderImbalance> {
+    if(m_imbalances.empty()) {
+      return none;
+    }
+    return m_imbalances.back();
+  }();
+  return {m_imbalance_published_signal.connect(slot),
+    QtPromise([imbalance = std::move(last_imbalance)] () mutable {
+      return std::move(imbalance); })};
+}
+
+void LocalOrderImbalanceIndicatorModel::insert_sorted(
+    const OrderImbalance& imbalance) {
+  if(m_imbalances.empty() ||
+      m_imbalances.back().m_timestamp < imbalance.m_timestamp) {
+    m_imbalances.push_back(imbalance);
+    return;
+  }
+  auto index = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
+    imbalance.m_timestamp,
+    [] (const auto& stored_imbalance, const auto& timestamp) {
+      return stored_imbalance.m_timestamp < timestamp;
+    });
+  m_imbalances.insert(index, imbalance);
+}
+
+std::tuple<std::vector<OrderImbalance>::iterator,
+    std::vector<OrderImbalance>::iterator>
+    LocalOrderImbalanceIndicatorModel::get_iterators_from_interval(
+    const TimeInterval& interval) {
   auto first = [&] {
     if(is_left_closed(interval.bounds())) {
       return std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
@@ -43,43 +98,5 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
         return imbalance.m_timestamp < timestamp;
       });
   }();
-  return QtPromise(
-    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
-      return std::move(imbalances);
-  });
-}
-
-SubscriptionResult<optional<Nexus::OrderImbalance>>
-    LocalOrderImbalanceIndicatorModel::subscribe(
-    const OrderImbalanceSignal::slot_type& slot) {
-  auto last_imbalance = [&] () -> optional<Nexus::OrderImbalance> {
-    if(m_imbalances.empty()) {
-      return none;
-    }
-    return m_imbalances.back();
-  }();
-  return {m_imbalance_published_signal.connect(slot),
-    QtPromise([imbalance = std::move(last_imbalance)] () mutable {
-      return std::move(imbalance); })};
-}
-
-std::shared_ptr<OrderImbalanceChartModel>
-    LocalOrderImbalanceIndicatorModel::get_chart_model(
-    const Security& security) {
-  throw std::runtime_error("method not implemented");
-}
-
-void LocalOrderImbalanceIndicatorModel::insert_sorted(
-    const OrderImbalance& imbalance) {
-  if(m_imbalances.empty() ||
-      m_imbalances.back().m_timestamp < imbalance.m_timestamp) {
-    m_imbalances.push_back(imbalance);
-    return;
-  }
-  auto index = std::lower_bound(m_imbalances.begin(), m_imbalances.end(),
-    imbalance.m_timestamp,
-    [] (const auto& stored_imbalance, const auto& timestamp) {
-      return stored_imbalance.m_timestamp < timestamp;
-    });
-  m_imbalances.insert(index, imbalance);
+  return {first, last};
 }

@@ -44,18 +44,18 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
   }, LaunchPolicy::ASYNC);
 }
 
+QtPromise<std::vector<Nexus::OrderImbalance>>
+    TestOrderImbalanceIndicatorModel::load(
+    const Security& security, const TimeInterval& interval) {
+  return QtPromise([] { return std::vector<OrderImbalance>(); });
+}
+
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
     TestOrderImbalanceIndicatorModel::subscribe(
     const OrderImbalanceSignal::slot_type& slot) {
   return {boost::signals2::connection(), QtPromise([] {
     return boost::optional<OrderImbalance>();
   })};
-}
-
-std::shared_ptr<OrderImbalanceChartModel>
-    TestOrderImbalanceIndicatorModel::get_chart_model(
-    const Nexus::Security& security) {
-  throw std::runtime_error("method not implemented");
 }
 
 QtPromise<std::shared_ptr<TestOrderImbalanceIndicatorModel::LoadEntry>>

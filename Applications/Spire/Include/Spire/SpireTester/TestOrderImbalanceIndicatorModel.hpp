@@ -47,11 +47,12 @@ namespace Spire {
       QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) override;
 
+      QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const Nexus::Security& security,
+        const TimeInterval& interval) override;
+
       SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         subscribe(const OrderImbalanceSignal::slot_type& slot) override;
-
-      std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
-        const Nexus::Security& security) override;
 
       //! Pops the oldest load request from this model's load
       //! operation stack.

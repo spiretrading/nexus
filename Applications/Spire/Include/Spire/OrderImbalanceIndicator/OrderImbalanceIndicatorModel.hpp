@@ -31,6 +31,16 @@ namespace Spire {
       virtual QtPromise<std::vector<Nexus::OrderImbalance>> load(
         const TimeInterval& interval) = 0;
 
+      //! Loads a list of historical order imbalances for a single security.
+      /*
+        \param security The security whose order imbalances will be returned.
+        \param interval The time interval to load.
+        \return The list of order imbalances within the specified interval for
+                the given security.
+      */
+      virtual QtPromise<std::vector<Nexus::OrderImbalance>> load(
+        const Nexus::Security& security, const TimeInterval& interval) = 0;
+
       //! Subscribes to real time order imbalances.
       /*!
         \param slot The slot receiving new order imbalances.
@@ -38,14 +48,6 @@ namespace Spire {
       */
       virtual SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
         subscribe(const OrderImbalanceSignal::slot_type& slot) = 0;
-
-      //! Returns the OrderImbalanceChartModel for a given security.
-      /*!
-        \param security The security being charted.
-        \return The OrderImbalanceChartModel for the given <i>security</i>.
-      */
-      virtual std::shared_ptr<OrderImbalanceChartModel> get_chart_model(
-        const Nexus::Security& security) = 0;
 
     protected:
       OrderImbalanceIndicatorModel() = default;
