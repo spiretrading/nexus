@@ -2,6 +2,7 @@ export * from './burger_button';
 export * from './checkmark';
 export * from './country_selection_box';
 export * from './currency_selection_box';
+export * from './date_time_field';
 export * from './drop_down_button';
 export * from './duration_input';
 export * from './duration_input_field';

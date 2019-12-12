@@ -2,13 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
-import { IntegerInputBox } from './integer_input_box';
-
-enum TimeUnit {
-  HOURS,
-  MINUTES,
-  SECONDS
-}
+import { DurationInputField } from './duration_input_field';
 
 interface Properties {
 
@@ -18,87 +12,37 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
+  newValue?: Beam.DateTime;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange?: (value: Beam.Duration) => void;
+  onChange: (value: Beam.DateTime) => void;
 }
 
 /** A component that displays and lets a user edit a duration. */
-export class DurationInputField extends React.Component<Properties> {
+export class DateTimeField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
     onChange: () => {}
   };
 
   public render(): JSX.Element {
-    const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.wrapperSmall;
+        return DateTimeField.STYLE.wrapperSmall;
       } else {
-        return DurationInputField.STYLE.wrapperLarge;
-      }
-    })();
-    const integerInputStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.integerBoxSmall;
-      } else {
-        return DurationInputField.STYLE.integerBoxLarge;
+        return DateTimeField.STYLE.wrapperLarge;
       }
     })();
     return (
       <div style={wrapperStyle}>
-        <div style={DurationInputField.STYLE.inner}>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.hours}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
-            padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.minutes}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
-            padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
-          <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.seconds}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
-            padding={2}/>
-          </div>
-          <div style={DurationInputField.STYLE.placeholder}>
-            {'Hr : Min : Sec'}
-          </div>
+        <div>{'DATE'}</div>
+        <DurationInputField 
+          displaySize={this.props.displaySize}
+          value={this.props.newValue.timeOfDay()}
+          />
       </div>);
-  }
-
-  private onChange(timeUnit: TimeUnit, value: number) {
-    const oldDuration = this.props.value.split();
-    const newValue = (() => {
-      switch(timeUnit) {
-        case TimeUnit.HOURS:
-          return Beam.Duration.HOUR.multiply(value).add(
-            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-            Beam.Duration.SECOND.multiply(oldDuration.seconds));
-        case TimeUnit.MINUTES:
-          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-            Beam.Duration.MINUTE.multiply(value)).add(
-            Beam.Duration.SECOND.multiply(oldDuration.seconds));
-        case TimeUnit.SECONDS:
-          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-            Beam.Duration.SECOND.multiply(value));
-      }
-    })();
-    this.props.onChange(newValue);
   }
 
   private static readonly STYLE = {
