@@ -1,5 +1,4 @@
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
-#include "Spire/OrderImbalanceIndicator/FilteredOrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 using namespace boost;
@@ -32,7 +31,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     const TimeInterval& interval) {
   auto imbalances = std::vector<OrderImbalance>();
   auto [first, last] = get_iterators_from_interval(interval);
-  for(auto i = first; i < last; ++i) {
+  for(auto i = first; i != last; ++i) {
     if(i->m_security == security) {
       imbalances.push_back(*i);
     }
