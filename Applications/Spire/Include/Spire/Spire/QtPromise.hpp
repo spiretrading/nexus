@@ -114,6 +114,9 @@ namespace Spire {
       });
   }
 
+  /** Specialization of all for QtPromise<void>. */
+  QtPromise<void> all(std::vector<QtPromise<void>> promises);
+
   //! Waits for a promise to complete and returns its result.
   /*!
     \param promise The promise to wait for.
@@ -123,13 +126,17 @@ namespace Spire {
   T wait(QtPromise<T>& promise) {
     auto future = std::optional<Beam::Expect<T>>();
     promise.then(
-      [&] (auto result) {
-        future.emplace(std::move(result));
+      [&] (auto&& result) {
+        future.emplace(std::forward<decltype(result)>(result));
       });
     while(!future.has_value()) {
       QApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
-    return std::move(future->Get());
+    if constexpr(std::is_same_v<T, void>) {
+      return future->Get();
+    } else {
+      return std::move(future->Get());
+    }
   }
 
   //! Waits for a promise to complete and returns its result.

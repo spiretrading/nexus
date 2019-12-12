@@ -110,3 +110,25 @@ TEST_CASE("test_move_only_type", "[QtPromise]") {
       }));
   }, "test_move_only_type");
 }
+
+TEST_CASE("test_void_all", "[QtPromise]") {
+  run_test([] {
+    auto value = 0;
+    auto promises = std::vector<QtPromise<void>>();
+    promises.push_back(QtPromise([&] {
+      ++value;
+    }));
+    promises.push_back(QtPromise([&] {
+      ++value;
+    }));
+    promises.push_back(QtPromise([&] {
+      ++value;
+    }));
+    promises.push_back(QtPromise([&] {
+      ++value;
+    }));
+    auto all_promise = all(std::move(promises));
+    wait(std::move(all_promise));
+    REQUIRE(value == 4);
+  }, "test_void_all");
+}
