@@ -31,19 +31,29 @@ namespace Spire {
         subscribe(const OrderImbalanceSignal::slot_type& slot) override;
 
     private:
+      struct SecurityInterval {
+        Nexus::Security m_security;
+        boost::icl::interval_set<boost::posix_time::ptime> m_intervals;
+      };
+
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       LocalOrderImbalanceIndicatorModel m_cache;
       boost::icl::interval_set<boost::posix_time::ptime> m_intervals;
+      std::vector<SecurityInterval> m_security_intervals;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscription_promise;
 
-      QtPromise<std::vector<Nexus::OrderImbalance>> load_from_cache(
+      QtPromise<void> load_from_model(const TimeInterval& interval);
+      QtPromise<void> load_from_model(const Nexus::Security& security,
         const TimeInterval& interval);
-      QtPromise<std::vector<std::vector<Nexus::OrderImbalance>>>
-        load_from_model(const TimeInterval& interval);
+      //bool is_security_data_loaded(const Nexus::Security& security,
+      //  const TimeInterval& interval) const;
+      //void update_security_intervals(const Nexus::Security& security,
+      //  const TimeInterval& interval);
       void on_imbalance_published(const Nexus::OrderImbalance& imbalance);
-      void on_imbalances_loaded(const TimeInterval& interval,
-        const std::vector<std::vector<Nexus::OrderImbalance>>& imbalances);
+      //void on_imbalances_loaded(const Nexus::Security& security,
+      //  const TimeInterval& interval,
+      //  const std::vector<std::vector<Nexus::OrderImbalance>>& imbalances);
   };
 }
 
