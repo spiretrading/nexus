@@ -49,31 +49,33 @@ export class DurationInputField extends React.Component<Properties> {
     })();
     return (
       <div style={wrapperStyle}>
-        <IntegerInputBox
-          min={0} max={59}
-          value={splitTransitionTime.hours}
-          className={css(DurationInputField.EXTRA_STYLE.effects)}
-          style={integerInputStyle}
-          onChange={this.onChange.bind(this, TimeUnit.HOURS)}
-          padding={2}/>
-        <div style={DurationInputField.STYLE.colon}>{'/'}</div>
-        <IntegerInputBox
-          min={0} max={59}
-          value={splitTransitionTime.minutes}
-          className={css(DurationInputField.EXTRA_STYLE.effects)}
-          style={integerInputStyle}
-          onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
-          padding={2}/>
-        <div style={DurationInputField.STYLE.colon}>{'/'}</div>
-        <IntegerInputBox
-          min={0} max={59}
-          value={splitTransitionTime.seconds}
-          className={css(DurationInputField.EXTRA_STYLE.effects)}
-          style={integerInputStyle}
-          onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
-          padding={2}/>
-          <div>
-            {"~placeholder text~"}
+        <div style={DurationInputField.STYLE.inner}>
+          <IntegerInputBox
+            min={0} max={59}
+            value={splitTransitionTime.hours}
+            className={css(DurationInputField.EXTRA_STYLE.effects)}
+            style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
+            padding={2}/>
+          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <IntegerInputBox
+            min={0} max={59}
+            value={splitTransitionTime.minutes}
+            className={css(DurationInputField.EXTRA_STYLE.effects)}
+            style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
+            padding={2}/>
+          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <IntegerInputBox
+            min={0} max={59}
+            value={splitTransitionTime.seconds}
+            className={css(DurationInputField.EXTRA_STYLE.effects)}
+            style={integerInputStyle}
+            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
+            padding={2}/>
+          </div>
+          <div style={DurationInputField.STYLE.placeholder}>
+            {'Hr : Min : Sec'}
           </div>
       </div>);
   }
@@ -108,7 +110,10 @@ export class DurationInputField extends React.Component<Properties> {
       width: '100%',
       flexShrink: 1,
       flexGrow: 1,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
     },
     wrapperLarge: {
       boxSizing: 'border-box' as 'border-box',
@@ -116,13 +121,23 @@ export class DurationInputField extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       flexGrow: 1,
       maxWidth: '246px',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+    },
+    inner: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexGrow: 1,
+      justifyContent: 'flex-start' as 'flex-start',
+      marginLeft: '9px' 
     },
     integerBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      minWidth: '17px',
-      maxWidth: '17px',
+      minWidth: '16px',
+      maxWidth: '16px',
       width: '100%',
       height: '34px',
       flexGrow: 1,
@@ -132,16 +147,25 @@ export class DurationInputField extends React.Component<Properties> {
     integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      width: '17px',
+      minWidth: '16px',
+      maxWidth: '16px',
       height: '34px',
       border: '0px solid #ffffff',
     },
     colon: {
-      width: '5px',
+      width: '10px',
       flexShrink: 0,
       display: 'flex' as 'flex',
       justifyContent: 'center',
       alignItems: 'center'
+    },
+    placeholder: {
+      font: '500 11px Roboto',
+      color: '#8C8C8C',
+      display: 'flex' as 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: '10px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
