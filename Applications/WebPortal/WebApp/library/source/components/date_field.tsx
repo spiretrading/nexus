@@ -4,19 +4,13 @@ import * as React from 'react';
 import { DisplaySize } from '../display_size';
 import { IntegerInputBox } from './integer_input_box';
 
-enum TimeUnit {
-  HOURS,
-  MINUTES,
-  SECONDS
-}
-
 interface Properties {
 
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
   /** The value to display in the field. */
-  value?: Beam.Duration;
+  value?: Beam.Date;
 
   /** Called when the value changes.
    * @param value - The updated value.
@@ -25,80 +19,48 @@ interface Properties {
 }
 
 /** A component that displays and lets a user edit a duration. */
-export class DurationInputField extends React.Component<Properties> {
+export class DateField extends React.Component<Properties> {
   public static readonly defaultProps = {
-    value: new Beam.Duration(0),
+    value: new Beam.Date(0, 0, 0),
     onChange: () => {}
   };
 
   public render(): JSX.Element {
-    const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.wrapperSmall;
+        return DateField.STYLE.wrapperSmall;
       } else {
-        return DurationInputField.STYLE.wrapperLarge;
-      }
-    })();
-    const integerInputStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.integerBoxSmall;
-      } else {
-        return DurationInputField.STYLE.integerBoxLarge;
+        return DateField.STYLE.wrapperLarge;
       }
     })();
     return (
       <div style={wrapperStyle}>
-        <div style={DurationInputField.STYLE.inner}>
+        <div style={DateField.STYLE.inner}>
           <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.hours}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.HOURS)}
+            min={1} max={31}
+            value={this.props.value.day()}
+            className={css(DateField.EXTRA_STYLE.effects)}
+            style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <div style={DateField.STYLE.colon}>{'/'}</div>
           <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.minutes}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
+            min={1} max={12}
+            value={this.props.value.month()}
+            className={css(DateField.EXTRA_STYLE.effects)}
+            style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <div style={DateField.STYLE.colon}>{'/'}</div>
           <IntegerInputBox
-            min={0} max={59}
-            value={splitTransitionTime.seconds}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
-            onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
-            padding={2}/>
+            min={0} max={3000}
+            value={this.props.value.year()}
+            className={css(DateField.EXTRA_STYLE.effects)}
+            style={DateField.STYLE.yearBox}
+            padding={4}/>
           </div>
-          <div style={DurationInputField.STYLE.placeholder}>
-            {'Hr : Min : Sec'}
+          <div style={DateField.STYLE.placeholder}>
+            {'Day / Month / Year'}
           </div>
       </div>);
-  }
-
-  private onChange(timeUnit: TimeUnit, value: number) {
-    const oldDuration = this.props.value.split();
-    const newValue = (() => {
-      switch(timeUnit) {
-        case TimeUnit.HOURS:
-          return Beam.Duration.HOUR.multiply(value).add(
-            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-            Beam.Duration.SECOND.multiply(oldDuration.seconds));
-        case TimeUnit.MINUTES:
-          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-            Beam.Duration.MINUTE.multiply(value)).add(
-            Beam.Duration.SECOND.multiply(oldDuration.seconds));
-        case TimeUnit.SECONDS:
-          return Beam.Duration.HOUR.multiply(oldDuration.hours).add(
-            Beam.Duration.MINUTE.multiply(oldDuration.minutes)).add(
-            Beam.Duration.SECOND.multiply(value));
-      }
-    })();
-    this.props.onChange(newValue);
   }
 
   private static readonly STYLE = {
@@ -137,23 +99,19 @@ export class DurationInputField extends React.Component<Properties> {
       alignItems: 'center',
       marginLeft: '9px' 
     },
-    integerBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      font: '400 14px Roboto',
-      minWidth: '16px',
-      maxWidth: '16px',
-      width: '100%',
-      height: '17px',
-      flexGrow: 1,
-      flexShrink: 1,
-      border: '0px solid #ffffff',
-      padding: 0
-    },
     integerBoxLarge: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
       minWidth: '16px',
       maxWidth: '16px',
+      height: '17px',
+      border: '0px solid #ffffff',
+      padding: 0
+    },
+    yearBox: {
+      boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
+      width: '32px',
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0

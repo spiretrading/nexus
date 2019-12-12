@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { DateTimeField } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -81,7 +82,12 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Boolean',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.BOOLEAN, true))
+            Nexus.ComplianceValue.Type.BOOLEAN, true)),
+        new Nexus.ComplianceParameter(
+          'Date/Time',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.DATE_TIME, 
+            new Beam.DateTime(new Beam.Date(0, 0, 0), new Beam.Duration(0))))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [

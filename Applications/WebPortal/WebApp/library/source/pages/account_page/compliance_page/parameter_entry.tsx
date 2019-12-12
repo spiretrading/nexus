@@ -2,7 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, DurationInputField, MoneyInputBox,
   NumberInput, TextInputField } from '../../..';
-import { Checkmark } from '../../../components';
+import { Checkmark, DateTimeField } from '../../../components';
 
 interface Properties {
 
@@ -29,10 +29,14 @@ export class ParameterEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const rowStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParameterEntry.STYLE.rowSmall;
+      if(this.props.parameter.value.type !== Nexus.ComplianceValue.Type.DATE_TIME) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return ParameterEntry.STYLE.rowSmall;
+        } else {
+          return ParameterEntry.STYLE.rowLarge;
+        }
       } else {
-        return ParameterEntry.STYLE.rowLarge;
+        return ParameterEntry.STYLE.dateTimeRow;
       }
     })();
     const labelStyle = (() => {
@@ -63,7 +67,8 @@ export class ParameterEntry extends React.Component<Properties> {
             onChange={this.onChange}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
-          return <div/>;
+          return <DateTimeField
+            displaySize={this.props.displaySize}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
           return <NumberInput 
             value={this.props.parameter.value.value}
@@ -149,11 +154,26 @@ export class ParameterEntry extends React.Component<Properties> {
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
+    dateTimeRow: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      width: '100%',
+      height: '78px',
+      font: '400 14px Roboto',
+      alignItems: 'center' as 'center'
+    },
     label: {
+      boxSizing: 'border-box' as 'border-box',
       width: '100px',
       font: '400 14px Roboto',
       flexGrow: 0,
-      flexShrink: 0
-    }
+      flexShrink: 0,
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      height: '34px',
+      alignSelf: 'flex-start' as 'flex-start'
+    },
   };
 }
