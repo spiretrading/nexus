@@ -191,7 +191,7 @@ namespace Nexus::OrderExecutionService {
         m_client->Cancel(*m_order);
         m_isPendingCancel = true;
       }
-      if(m_filled == (*m_quantity)->eval() &&
+      if(m_filled == m_lastOrderFields->m_quantity &&
           Aspen::is_complete((*m_quantity)->commit(sequence)) ||
           Aspen::is_complete(fieldsState)) {
         m_orderFields.reset();

@@ -184,3 +184,33 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
     2 * Money::ONE);
   Trigger::set_trigger(nullptr);
 }
+
+void OrderReactorTester::TestDelayedQuantity() {
+  auto commits = Beam::Queue<bool>();
+  auto trigger = Trigger(
+    [&] {
+      commits.Push(true);
+    });
+  Trigger::set_trigger(trigger);
+  auto environment = TestEnvironment();
+  environment.Open();
+  auto serviceClients = TestServiceClients(Ref(environment));
+  serviceClients.Open();
+  auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
+  environment.MonitorOrderSubmissions(orderSubmissions);
+  auto quantity = Aspen::Shared<Aspen::Queue<Quantity>>();
+  auto reactor = MakeLimitOrderReactor(
+    Ref(serviceClients.GetOrderExecutionClient()),
+    Aspen::constant(TEST_SECURITY), Aspen::constant(Side::ASK),
+    quantity, Aspen::constant(Money::ONE));
+  CPPUNIT_ASSERT(reactor.commit(0) == Aspen::State::NONE);
+  quantity->push(1200);
+  CPPUNIT_ASSERT(reactor.commit(1) == Aspen::State::EVALUATED);
+  auto sentOrder = reactor.eval();
+  auto receivedOrder = orderSubmissions->Top();
+  orderSubmissions->Pop();
+  commits.Top();
+  commits.Pop();
+  CPPUNIT_ASSERT(sentOrder->GetInfo().m_fields.m_quantity == 1200);
+  Trigger::set_trigger(nullptr);
+}

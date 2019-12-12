@@ -24,9 +24,12 @@ namespace Nexus::OrderExecutionService::Tests {
       void TestPartialFillAndUpdate();
 
       /** Tests a terminal order along with an update to the OrderFields on the
-          same commit.
+       *  same commit.
        */
       void TestTerminalOrderAndUpdate();
+
+      /** Tests delaying the quantity field. */
+      void TestDelayedQuantity();
 
     private:
       CPPUNIT_TEST_SUITE(OrderReactorTester);
@@ -35,6 +38,7 @@ namespace Nexus::OrderExecutionService::Tests {
         CPPUNIT_TEST(TestOrderFieldsUpdate);
         CPPUNIT_TEST(TestPartialFillAndUpdate);
         CPPUNIT_TEST(TestTerminalOrderAndUpdate);
+        CPPUNIT_TEST(TestDelayedQuantity);
       BEAM_CPPUNIT_TEST_SUITE_END();
   };
 }
