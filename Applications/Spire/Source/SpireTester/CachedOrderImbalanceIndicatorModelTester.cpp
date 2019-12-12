@@ -43,6 +43,55 @@ TEST_CASE("test_cached_publishing_subscribing",
   }, "test_cached_publishing_subscribing");
 }
 
+TEST_CASE("test_cached_single_security_load",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    local_model->insert(D);
+    local_model->insert(E);
+    auto A2 = make_imbalance("A", from_time_t(200));
+    auto A3 = make_imbalance("A", from_time_t(300));
+    auto A4 = make_imbalance("A", from_time_t(400));
+    local_model->insert(A2);
+    local_model->insert(A3);
+    local_model->insert(A4);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise = cached_model.load(Security("A", 0), TimeInterval::closed(
+      from_time_t(0), from_time_t(1000)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
+  }, "test_cached_single_security_load");
+}
+
+TEST_CASE("test_cached_single_security_load_imbalances_pre_cached",
+    "[CachedOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    local_model->insert(A);
+    local_model->insert(B);
+    local_model->insert(C);
+    local_model->insert(D);
+    local_model->insert(E);
+    auto A2 = make_imbalance("A", from_time_t(200));
+    auto A3 = make_imbalance("A", from_time_t(300));
+    auto A4 = make_imbalance("A", from_time_t(400));
+    local_model->insert(A2);
+    local_model->insert(A3);
+    local_model->insert(A4);
+    auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
+    auto promise1 = cached_model.load(TimeInterval::closed(from_time_t(0),
+      from_time_t(1000)));
+    wait(std::move(promise1));
+    auto promise2 = cached_model.load(Security("A", 0), TimeInterval::closed(
+      from_time_t(0), from_time_t(1000)));
+    auto data = wait(std::move(promise2));
+    REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
+  }, "test_cached_single_security_load_imbalances_pre_cached");
+}
+
 TEST_CASE("test_cached_subscribing_last_value",
     "[CachedOrderImbalanceIndicatorModel]") {
   run_test([] {

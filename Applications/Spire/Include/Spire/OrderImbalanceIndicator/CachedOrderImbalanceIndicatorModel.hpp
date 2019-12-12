@@ -39,9 +39,11 @@ namespace Spire {
 
       QtPromise<std::vector<Nexus::OrderImbalance>> load_from_cache(
         const TimeInterval& interval);
-      QtPromise<std::vector<Nexus::OrderImbalance>> load_from_model(
-        const TimeInterval& interval);
+      QtPromise<std::vector<std::vector<Nexus::OrderImbalance>>>
+        load_from_model(const TimeInterval& interval);
       void on_imbalance_published(const Nexus::OrderImbalance& imbalance);
+      void on_imbalances_loaded(const TimeInterval& interval,
+        const std::vector<std::vector<Nexus::OrderImbalance>>& imbalances);
   };
 }
 
