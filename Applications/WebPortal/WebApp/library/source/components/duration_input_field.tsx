@@ -18,18 +18,36 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
+  /** Additional CSS styles. */
+  style?: any;
+
+  /** The class name of the input box. */
+  className?: string;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onChange?: (value: Beam.Duration) => void;
 }
 
+interface State {
+  isInFocus: boolean
+}
+
+
 /** A component that displays and lets a user edit a duration. */
-export class DurationInputField extends React.Component<Properties> {
+export class DurationInputField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
     onChange: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isInFocus: false
+    }
+  } 
 
   public render(): JSX.Element {
     const splitTransitionTime = this.props.value.split();
@@ -40,8 +58,18 @@ export class DurationInputField extends React.Component<Properties> {
         return DurationInputField.STYLE.wrapperLarge;
       }
     })();
+    const focusClassName = (() => {
+      if(this.state.isInFocus) {
+        return DurationInputField.STYLE.focused;
+      } else {
+        return null;
+      }
+    })();
     return (
-      <div style={wrapperStyle}>
+      <div style={{...wrapperStyle, ...focusClassName}} 
+          className={this.props.className}
+          onFocus={() => this.setState({isInFocus: true})}
+          onBlur={() => this.setState({isInFocus: false})}>
         <div style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
             min={0} max={59}
@@ -154,6 +182,13 @@ export class DurationInputField extends React.Component<Properties> {
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: '10px'
+    },
+    focused: {
+      ouline: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      border: '1px solid #684BC7',
+      borderRadius: '1px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({

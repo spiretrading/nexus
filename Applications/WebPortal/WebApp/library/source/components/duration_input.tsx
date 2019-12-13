@@ -25,7 +25,7 @@ interface Properties {
 }
 
 /** A component that displays and lets a user edit a duration. */
-/** Depreciated.  */
+/** Depreciated ~ Please use DurationInputField instead. */
 export class DurationInput extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),

@@ -12,6 +12,12 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
+  /** Additional CSS styles. */
+  style?: any;
+
+  /** The class name of the input box. */
+  className?: string;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -34,7 +40,7 @@ export class DateField extends React.Component<Properties> {
       }
     })();
     return (
-      <div style={wrapperStyle}>
+      <div style={wrapperStyle} className={this.props.className}>
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
             min={1} max={31}
