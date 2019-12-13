@@ -40,6 +40,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscription_promise;
 
+      QtPromise<void> make_security_load_promise(
+        const Nexus::Security& security, const TimeInterval& interval);
       QtPromise<void> load_from_model(const TimeInterval& interval);
       QtPromise<void> load_from_model(const Nexus::Security& security,
         const TimeInterval& interval);

@@ -22,6 +22,7 @@ QtPromise<std::vector<OrderImbalance>>
   if(boost::icl::contains(m_intervals, interval)) {
     return m_cache.load(interval);
   }
+  // TODO: review capture parameters, probably change to non-const
   return load_from_model(interval).then([=] (const auto& loaded_imbalances) {
     return m_cache.load(interval);
   });
@@ -45,6 +46,25 @@ SubscriptionResult<optional<Nexus::OrderImbalance>>
   return m_source_model->subscribe(slot);
 }
 
+QtPromise<void> CachedOrderImbalanceIndicatorModel::make_security_load_promise(
+    const Security& security, const TimeInterval& interval) {
+  auto unloaded_intervals = interval_set<ptime>(interval) -
+    m_security_intervals[security];
+  auto promises = std::vector<QtPromise<void>>();
+  for(const auto& interval : unloaded_intervals) {
+    auto promise = m_source_model->load(security,
+      TimeInterval::closed(interval.lower(), interval.upper())).then(
+      [=, security = security] (const auto& imbalances) {
+        on_imbalances_loaded(security, interval, imbalances.Get());
+
+        //TODO:
+        return QtPromise([] {});
+      });
+    promises.push_back(std::move(promise));
+  }
+  return all(std::move(promises));
+}
+
 QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
   if(m_intervals.empty()) {
@@ -57,26 +77,14 @@ QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
   }
   auto promises = std::vector<QtPromise<void>>();
   for(auto& security : m_security_intervals) {
-    auto unloaded_intervals = interval_set<ptime>(interval) -
-      security.second;
-    for(const auto& interval : unloaded_intervals) {
-      auto promise = m_source_model->load(security.first,
-        TimeInterval::closed(interval.lower(), interval.upper())).then(
-        [=, security = security.first] (const auto& imbalances) {
-          on_imbalances_loaded(security, interval, imbalances.Get());
-
-          //TODO:
-          return QtPromise([] {});
-        });
-      promises.push_back(std::move(promise));
-    }
+    make_security_load_promise(security.first, interval);
   }
   return all(std::move(promises));
 }
 
 QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
     const Security& security, const TimeInterval& interval) {
-  return QtPromise([] {});
+  return make_security_load_promise(security, interval);
 }
 
 void CachedOrderImbalanceIndicatorModel::on_imbalance_published(
