@@ -18,12 +18,6 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
-  /** Additional CSS styles. */
-  style?: any;
-
-  /** The class name of the input box. */
-  className?: string;
-
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -67,7 +61,6 @@ export class DurationInputField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusClassName}} 
-          className={this.props.className}
           onFocus={() => this.setState({isInFocus: true})}
           onBlur={() => this.setState({isInFocus: false})}>
         <div style={DurationInputField.STYLE.inner}>

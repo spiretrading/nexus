@@ -12,24 +12,29 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
-  /** Additional CSS styles. */
-  style?: any;
-
-  /** The class name of the input box. */
-  className?: string;
-
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onChange?: (value: Beam.Duration) => void;
 }
 
+interface State {
+  isInFocus: boolean
+}
+
 /** A component that displays and lets a user edit a duration. */
-export class DateField extends React.Component<Properties> {
+export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Date(0, 0, 0),
     onChange: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isInFocus: false
+    }
+  } 
 
   public render(): JSX.Element {
     const wrapperStyle = (() => {
@@ -39,8 +44,17 @@ export class DateField extends React.Component<Properties> {
         return DateField.STYLE.wrapperLarge;
       }
     })();
+    const focusClassName = (() => {
+      if(this.state.isInFocus) {
+        return DateField.STYLE.focused;
+      } else {
+        return null;
+      }
+    })();
     return (
-      <div style={wrapperStyle} className={this.props.className}>
+      <div style={{...wrapperStyle, ...focusClassName}}
+          onFocus={() => this.setState({isInFocus: true})}
+          onBlur={() => this.setState({isInFocus: false})}> 
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
             min={1} max={31}
@@ -138,6 +152,13 @@ export class DateField extends React.Component<Properties> {
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: '10px'
+    },
+    focused: {
+      ouline: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      border: '1px solid #684BC7',
+      borderRadius: '1px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({

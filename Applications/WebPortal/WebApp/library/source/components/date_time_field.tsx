@@ -21,50 +21,29 @@ interface Properties {
   onChange: (value: Beam.DateTime) => void;
 }
 
-interface State {
-  isInFocus: boolean
-}
-
 /** A component that displays and lets a user edit a duration. */
-export class DateTimeField extends React.Component<Properties, State> {
+export class DateTimeField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
     newValue: new Beam.DateTime(new Beam.Date(0, 0, 0), new Beam.Duration(0)),
     onChange: () => {}
   };
 
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      isInFocus: false
-    }
-  } 
-
   public render(): JSX.Element {
-    const focusClassName = (() => {
-      if(this.state.isInFocus) {
-        return DateTimeField.EXTRA_STYLE.focusEffects;
-      } else {
-        return null;
-      }
-    })();
-    console.log('should purple?: ', this.state.isInFocus);
     return (
       <div style={DateTimeField.STYLE.outerWrapper}
         onFocus={() => this.setState({isInFocus: true})}
         onBlur={() => this.setState({isInFocus: false})}>
         <DateField
-          className={css(focusClassName)}
           displaySize={this.props.displaySize}
           value={this.props.newValue.date()}/>
         <div style={DateTimeField.STYLE.filler}/>  
         <div style={DateTimeField.STYLE.durationWrapper}>
           <DurationInputField 
             displaySize={this.props.displaySize}
-            value={this.props.newValue.timeOfDay()}
-            className={css(focusClassName)}/>
+            value={this.props.newValue.timeOfDay()}/>
           <select style={DateTimeField.STYLE.select}
-            className={css(DateTimeField.EXTRA_STYLE.noHighlighting, focusClassName)}>
+            className={css(DateTimeField.EXTRA_STYLE.noHighlighting)}>
             <option>{'AM'}</option>
             <option>{'PM'}</option>
           </select>
@@ -90,6 +69,8 @@ export class DateTimeField extends React.Component<Properties, State> {
       paddingLeft: '7px',
       width: '64px',
       height: '34px',
+      flexGrow: 0,
+      flexShrink: 0,
       color: '#000000',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
