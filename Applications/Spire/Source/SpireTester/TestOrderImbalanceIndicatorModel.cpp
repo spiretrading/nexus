@@ -47,7 +47,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     TestOrderImbalanceIndicatorModel::load(
     const Security& security, const TimeInterval& interval) {
-  return QtPromise([] { return std::vector<OrderImbalance>(); });
+  return load(interval);
 }
 
 SubscriptionResult<boost::optional<Nexus::OrderImbalance>>
