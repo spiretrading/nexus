@@ -93,7 +93,9 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',
-        outlineStyle: 'none'
+        outlineStyle: 'none',
+        border: '1px solid #684BC7',
+        borderRadius: '1px'
       },
       '::moz-focus-inner': {
         border: 0

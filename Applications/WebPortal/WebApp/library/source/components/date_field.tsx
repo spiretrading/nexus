@@ -42,14 +42,14 @@ export class DateField extends React.Component<Properties> {
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
-          <div style={DateField.STYLE.colon}>{'/'}</div>
+          <div style={DateField.STYLE.slash}>{'/'}</div>
           <IntegerInputBox
             min={1} max={12}
             value={this.props.value.month()}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
-          <div style={DateField.STYLE.colon}>{'/'}</div>
+          <div style={DateField.STYLE.slash}>{'/'}</div>
           <IntegerInputBox
             min={0} max={3000}
             value={this.props.value.year()}
@@ -111,12 +111,12 @@ export class DateField extends React.Component<Properties> {
     yearBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      width: '32px',
+      width: '34px',
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0
     },
-    colon: {
+    slash: {
       width: '10px',
       height: '16px',
       flexGrow: 0,

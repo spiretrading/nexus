@@ -40,13 +40,6 @@ export class DurationInputField extends React.Component<Properties> {
         return DurationInputField.STYLE.wrapperLarge;
       }
     })();
-    const integerInputStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.integerBoxSmall;
-      } else {
-        return DurationInputField.STYLE.integerBoxLarge;
-      }
-    })();
     return (
       <div style={wrapperStyle}>
         <div style={DurationInputField.STYLE.inner}>
@@ -54,7 +47,7 @@ export class DurationInputField extends React.Component<Properties> {
             min={0} max={59}
             value={splitTransitionTime.hours}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
+            style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
@@ -62,7 +55,7 @@ export class DurationInputField extends React.Component<Properties> {
             min={0} max={59}
             value={splitTransitionTime.minutes}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
+            style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
@@ -70,7 +63,7 @@ export class DurationInputField extends React.Component<Properties> {
             min={0} max={59}
             value={splitTransitionTime.seconds}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={integerInputStyle}
+            style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
             padding={2}/>
           </div>
@@ -137,23 +130,10 @@ export class DurationInputField extends React.Component<Properties> {
       alignItems: 'center',
       marginLeft: '9px' 
     },
-    integerBoxSmall: {
+    integerBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
-      minWidth: '16px',
-      maxWidth: '16px',
-      width: '100%',
-      height: '17px',
-      flexGrow: 1,
-      flexShrink: 1,
-      border: '0px solid #ffffff',
-      padding: 0
-    },
-    integerBoxLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      font: '400 14px Roboto',
-      minWidth: '16px',
-      maxWidth: '16px',
+      width: '18px',
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0
@@ -180,7 +160,7 @@ export class DurationInputField extends React.Component<Properties> {
     effects: {
       ':focus': {
         ouline: 0,
-        borderColor: '#684BC7',
+        border: '0px solid #000000',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
