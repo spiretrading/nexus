@@ -225,6 +225,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexGrow: 1,
       width: '100%',
       paddingLeft: '10px',
+      cursor: 'pointer' as 'pointer'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
