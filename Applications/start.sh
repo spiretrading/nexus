@@ -13,10 +13,6 @@ services+=" RiskServer"
 services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
 
-pushd AdministrationServer
-python3 reset_risk_states.py
-popd
-
 for directory in $services; do
   sleep 5
   cd $directory
@@ -24,3 +20,7 @@ for directory in $services; do
   ./start_server.sh
   cd ..
 done
+
+pushd AdministrationServer
+python3 reset_risk_states.py
+popd
