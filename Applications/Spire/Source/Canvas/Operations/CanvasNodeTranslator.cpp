@@ -298,7 +298,7 @@ namespace {
       return Aspen::group(std::move(queue));
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct AdditionTranslator {
@@ -383,7 +383,7 @@ namespace {
       }
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct DivisionTranslator {
@@ -563,7 +563,7 @@ namespace {
       return Aspen::first(source.Extract<Aspen::Box<T>>());
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct FloorTranslator {
@@ -686,7 +686,7 @@ namespace {
       return Aspen::last(source.Extract<Aspen::Box<T>>());
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct LesserTranslator {
@@ -866,7 +866,7 @@ namespace {
       return Aspen::none<T>();
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct NotTranslator {
@@ -1010,7 +1010,7 @@ namespace {
       return Aspen::throws<T>(std::move(exception));
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct UnequalTranslator {

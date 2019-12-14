@@ -337,7 +337,7 @@ void CanvasNodeVisitor::Visit(const SingleOrderTaskNode& node) {
 }
 
 void CanvasNodeVisitor::Visit(const SpawnNode& node) {
-  Visit(static_cast<const SignatureNode&>(node));
+  Visit(static_cast<const CanvasNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const SubtractionNode& node) {
@@ -377,9 +377,9 @@ void CanvasNodeVisitor::Visit(const UnequalNode& node) {
 }
 
 void CanvasNodeVisitor::Visit(const UntilNode& node) {
-  Visit(static_cast<const CanvasNode&>(node));
+  Visit(static_cast<const FunctionNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const WhenNode& node) {
-  Visit(static_cast<const CanvasNode&>(node));
+  Visit(static_cast<const FunctionNode&>(node));
 }
