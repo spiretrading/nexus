@@ -19,6 +19,7 @@
 #include <boost/fusion/include/transform.hpp>
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
@@ -1034,9 +1035,18 @@ namespace {
   struct UntilTranslator {
     template<typename T>
     static Translation Template(Aspen::Box<bool> condition,
-        const Translation& series) {
+        const Translation& series, CanvasNodeTranslationContext& context) {
       return Aspen::until(std::move(condition),
         series.Extract<Aspen::Box<T>>());
+    }
+
+    template<>
+    static Translation Template<const Order*>(Aspen::Box<bool> condition,
+        const Translation& series, CanvasNodeTranslationContext& context) {
+      return Aspen::Unique(new OrderCancellationReactor(Ref(
+        context.GetUserProfile().GetServiceClients().GetOrderExecutionClient()),
+        Aspen::until(std::move(condition),
+        series.Extract<Aspen::Box<const Order*>>())));
     }
 
     using SupportedTypes = NativeTypes;
@@ -1561,7 +1571,7 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
     node.GetChildren().front()).Extract<Aspen::Box<bool>>();
   auto series = InternalTranslation(node.GetChildren().back());
   m_translation = Instantiate<UntilTranslator>(series.GetTypeInfo())(
-    std::move(condition), series);
+    std::move(condition), series, *m_context);
 }
 
 void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {
