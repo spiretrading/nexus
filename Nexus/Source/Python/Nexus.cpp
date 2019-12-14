@@ -5,7 +5,7 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
 
-PYBIND11_MODULE(nexus, module) {
+PYBIND11_MODULE(_nexus, module) {
   ExportAccounting(module);
   ExportAdministrationService(module);
   ExportCompliance(module);
