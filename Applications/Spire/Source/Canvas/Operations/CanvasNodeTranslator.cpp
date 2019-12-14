@@ -956,6 +956,22 @@ namespace {
     using SupportedTypes = RoundingNodeSignatures::type;
   };
 
+  struct SpawnTranslator {
+    template<typename T>
+    static Translation Template(CanvasNodeTranslationContext& context,
+        Aspen::Box<void> trigger, const CanvasNode& series) {
+      return Aspen::group(Aspen::lift(
+        [context = &context, series = &series] (
+            const Aspen::Maybe<void>& value) {
+          auto localContext = new CanvasNodeTranslationContext(Ref(*context));
+          auto translation = Spire::Translate(*localContext, *series);
+          return Aspen::Shared(translation.Extract<Aspen::Box<T>>());
+        }, std::move(trigger)));
+    }
+
+    using SupportedTypes = NativeTypes;
+  };
+
   struct SubtractionTranslator {
     template<typename T0, typename T1, typename R>
     struct Operation {
@@ -1023,7 +1039,7 @@ namespace {
         series.Extract<Aspen::Box<T>>());
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 
   struct WhenTranslator {
@@ -1033,7 +1049,7 @@ namespace {
       return Aspen::when(std::move(condition), series.Extract<Aspen::Box<T>>());
     }
 
-    using SupportedTypes = ValueTypes;
+    using SupportedTypes = NativeTypes;
   };
 }
 
@@ -1473,17 +1489,12 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {
-#if 0 // TODO
-  auto trigger = boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren().front()));
-  CanvasNodeTaskFactory taskFactory(Ref(*m_context),
-    Ref(node.GetChildren().back()));
-  TaskTranslation taskTranslation;
-  taskTranslation.m_factory = SpawnTaskFactory(
-    Ref(m_context->GetReactorMonitor()), trigger, taskFactory);
-  taskTranslation.m_publisher = taskFactory.GetOrderExecutionPublisher();
-  m_translation = taskTranslation;
-#endif
+  auto trigger = InternalTranslation(
+    node.GetChildren().front()).Extract<Aspen::Box<void>>();
+  auto& seriesType = static_cast<const NativeType&>(
+    node.GetChildren().back().GetType());
+  m_translation = Instantiate<SpawnTranslator>(seriesType.GetNativeType())(
+    *m_context, std::move(trigger), node.GetChildren().back());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SubtractionNode& node) {
