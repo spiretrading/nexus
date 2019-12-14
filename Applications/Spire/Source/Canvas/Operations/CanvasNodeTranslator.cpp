@@ -777,7 +777,7 @@ namespace {
     template<typename T0, typename T1, typename R>
     struct Operation {
       R operator()(const T0& left, const T1& right) const {
-        return std::max(left, right);
+        return std::min(left, right);
       }
     };
 
@@ -1324,29 +1324,23 @@ void CanvasNodeTranslationVisitor::Visit(const OptionalPriceNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
-#if 0 // TODO
-  auto market = std::static_pointer_cast<Reactor<MarketCode>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren()[0])));
-  auto range = std::static_pointer_cast<Reactor<Queries::Range>>(
-    boost::get<std::shared_ptr<BaseReactor>>(
-    InternalTranslation(node.GetChildren()[1])));
+  auto market = InternalTranslation(
+    node.GetChildren()[0]).Extract<Aspen::Box<MarketCode>>();
+  auto range = InternalTranslation(
+    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Queries::Range>>();
   auto marketDataClient =
     &m_context->GetUserProfile().GetServiceClients().GetMarketDataClient();
-  auto reactorMonitor = &m_context->GetReactorMonitor();
-  auto orderImbalancePublisher = MakeFunctionReactor(
-    [=] (MarketCode market, const Queries::Range& range) {
-      MarketWideDataQuery query;
+  m_translation = Aspen::lift(OrderImbalanceToRecordConverter{},
+    Aspen::override(Aspen::lift(
+    [=] (MarketCode market, const Beam::Queries::Range& range) {
+      auto query = MarketWideDataQuery();
       query.SetIndex(market);
       query.SetRange(range);
       query.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedOrderImbalance>>();
       marketDataClient->QueryOrderImbalances(query, queue);
-      return MakeQueueReactor(queue);
-    }, std::move(market), std::move(range));
-  auto query = MakeSwitchReactor(orderImbalancePublisher);
-  m_translation = MakeFunctionReactor(OrderImbalanceToRecordConverter{}, query);
-#endif
+      return Aspen::Shared(QueueReactor(queue));
+    }, std::move(market), std::move(range))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderStatusNode& node) {
