@@ -1043,10 +1043,10 @@ namespace {
     template<>
     static Translation Template<const Order*>(Aspen::Box<bool> condition,
         const Translation& series, CanvasNodeTranslationContext& context) {
-      return Aspen::Unique(new OrderCancellationReactor(Ref(
+      return OrderCancellationReactor(Ref(
         context.GetUserProfile().GetServiceClients().GetOrderExecutionClient()),
         Aspen::until(std::move(condition),
-        series.Extract<Aspen::Box<const Order*>>())));
+        series.Extract<Aspen::Box<const Order*>>()));
     }
 
     using SupportedTypes = NativeTypes;

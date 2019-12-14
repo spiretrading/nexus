@@ -99,10 +99,10 @@ void Task::Execute() {
         }
         m_context.GetOrderPublisher().Break();
       }),
-      Aspen::Box<void>(Aspen::Unique(new OrderCancellationReactor(
+      Aspen::Box<void>(OrderCancellationReactor(
         Ref(m_context.GetUserProfile().GetServiceClients().
         GetOrderExecutionClient()), PublisherReactor(
-        m_context.GetOrderPublisher())))),
+        m_context.GetOrderPublisher()))),
       Aspen::lift([=] {
         if(m_isFailed) {
           m_state = State::FAILED;

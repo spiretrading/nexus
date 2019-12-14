@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDER_CANCELLATION_REACTOR_HPP
 #define NEXUS_ORDER_CANCELLATION_REACTOR_HPP
+#include <atomic>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -44,9 +45,9 @@ namespace Nexus::OrderExecutionService {
       Series m_series;
       bool m_is_series_complete;
       std::vector<const Order*> m_orders;
-      int m_cancel_count;
+      std::unique_ptr<std::atomic_int> m_cancel_count;
       Aspen::Trigger* m_trigger;
-      Beam::RoutineTaskQueue m_tasks;
+      std::unique_ptr<Beam::RoutineTaskQueue> m_tasks;
   };
 
   template<typename C, typename S>
@@ -55,7 +56,8 @@ namespace Nexus::OrderExecutionService {
     : m_client(client.Get()),
       m_series(std::move(series)),
       m_is_series_complete(false),
-      m_cancel_count(0) {}
+      m_cancel_count(std::make_unique<std::atomic_int>(0)),
+      m_tasks(std::make_unique<Beam::RoutineTaskQueue>()) {}
 
   template<typename C, typename S>
   Aspen::State OrderCancellationReactor<C, S>::commit(int sequence) noexcept {
@@ -68,19 +70,19 @@ namespace Nexus::OrderExecutionService {
       }
       if(Aspen::is_complete(state)) {
         m_is_series_complete = true;
-        m_cancel_count = static_cast<int>(m_orders.size());
-        if(m_cancel_count == 0) {
+        *m_cancel_count = static_cast<int>(m_orders.size());
+        if(*m_cancel_count == 0) {
           return state;
         }
         m_trigger = Aspen::Trigger::get_trigger();
         for(auto& order : m_orders) {
           m_client->Cancel(*order);
-          order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
-            [=] (const ExecutionReport& report) {
+          order->GetPublisher().Monitor(m_tasks->GetSlot<ExecutionReport>(
+            [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
+                const ExecutionReport& report) {
               if(IsTerminal(report.m_status)) {
-                --m_cancel_count;
-                if(m_cancel_count == 0) {
-                  m_trigger->signal();
+                if(--*cancel_count == 0) {
+                  trigger->signal();
                 }
               }
             }));
@@ -91,7 +93,7 @@ namespace Nexus::OrderExecutionService {
       } else {
         return state;
       }
-    } else if(m_cancel_count == 0) {
+    } else if(*m_cancel_count == 0) {
       return Aspen::State::COMPLETE;
     }
     return Aspen::State::NONE;
