@@ -1,5 +1,6 @@
 #ifndef NEXUS_ORDER_REACTOR_HPP
 #define NEXUS_ORDER_REACTOR_HPP
+#include <cstdint>
 #include <type_traits>
 #include <Aspen/MultiSync.hpp>
 #include <Aspen/Sync.hpp>
@@ -96,6 +97,9 @@ namespace Nexus::OrderExecutionService {
       const Order* eval() const;
 
     private:
+      enum class State {
+        INITIAL
+      };
       OrderExecutionClient* m_client;
       std::unique_ptr<OrderFields> m_lastOrderFields;
       std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
@@ -111,7 +115,8 @@ namespace Nexus::OrderExecutionService {
         Aspen::Sync<TimeInForceReactor, TimeInForce>,
         Aspen::VectorSync<typename AdditionalFieldsReactor::value_type,
         std::vector<Tag>>>> m_orderFields;
-      const Order* m_order;
+      Aspen::Maybe<const Order*> m_order;
+      State m_state;
       bool m_isPendingCancel;
       Quantity m_filled;
       OrderStatus m_status;
@@ -158,6 +163,7 @@ namespace Nexus::OrderExecutionService {
         Aspen::VectorSync(m_lastOrderFields->m_additionalFields,
           std::move(additionalFields))),
       m_order(nullptr),
+      m_state(State::INITIAL),
       m_isPendingCancel(true),
       m_status(OrderStatus::CANCELED),
       m_executionReports(
@@ -169,16 +175,87 @@ namespace Nexus::OrderExecutionService {
     typename RR>
   Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
       int sequence) noexcept {
+    if(m_state == State::INITIAL) {
+      auto fieldsState = m_orderFields->commit(sequence);
+      if(Aspen::has_continuation(fieldsState)) {
+        if(Aspen::has_evaluation(fieldsState)) {
+          m_state = State::FLUSH_FIELDS;
+        }
+        return Aspen::State::CONTINUE;
+      } else if(Aspen::has_evaluation(fieldsState)) {
+        m_state = State::SUBMIT_ORDER;
+      } else if(Aspen::is_complete(fieldsState) ||
+          m_filled == m_lastOrderFields->m_quantity &&
+          Aspen::is_complete((*m_quantity)->commit(sequence))) {
+        m_orderFields.reset();
+        m_quantity.reset();
+        return Aspen::State::COMPLETE;
+      }
+    } else if(m_state == State::FLUSH_FIELDS) {
+      auto fieldsState = m_orderFields->commit(sequence);
+      if(Aspen::has_continuation(fieldsState)) {
+        return Aspen::State::CONTINUE;
+      }
+      m_state = State::SUBMIT_ORDER;
+    } else if(m_state == State::HUB) {
+      auto queueState = m_queue.commit(sequence);
+      if(Aspen::has_evaluation(queueState)) {
+        auto& report = m_queue.eval();
+        m_filled += report.m_lastQuantity;
+        if(IsTerminal(report.m_status)) {
+          m_state = State::INITIAL;
+          return commit(sequence);
+        }
+      }
+      if(Aspen::has_continuation(queueState)) {
+        return Aspen::State::CONTINUE;
+      }
+      auto fieldsState = m_orderFields->commit(sequence);
+      if(Aspen::has_evaluation(fieldsState)) {
+        m_state = State::CANCEL_ORDER;
+        if(Aspen::has_continuation(fieldsState)) {
+          m_state = State::PREPARE_FIELDS;
+          return Aspen::State::CONTINUE;
+        }
+      }
+    }
+
+    if(m_state == State::CANCEL_ORDER) {
+    }
+    if(m_state == State::SUBMIT_ORDER) {
+      try {
+        auto orderFields = m_orderFields->eval();
+        orderFields.m_quantity -= m_filled;
+        m_order = &m_client->Submit(orderFields);
+        (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
+        m_state = State::HUB;
+        return Aspen::State::EVALUATED;
+      } catch(const std::exception&) {
+        m_orderFields.reset();
+        m_quantity.reset();
+        m_order = std::current_exception();
+        return Aspen::State::COMPLETE_EVALUATED;
+      }
+    }
+
+
+
+
     auto state = m_queue.commit(sequence);
     if(Aspen::has_evaluation(state)) {
       auto& report = m_queue.eval();
       m_status = report.m_status;
       m_filled += report.m_lastQuantity;
-      if(!IsTerminal(m_status)) {
+      if(!IsTerminal(report.m_status)) {
         if(Aspen::has_continuation(state)) {
           return Aspen::State::CONTINUE;
         }
-      } else if(!m_isPendingCancel && !m_orderFields.has_value()) {
+      } else if(!m_isPendingCancel) {
+        if(!m_orderFields.has_value()) {
+          return Aspen::State::COMPLETE;
+        }
+        if(m_filled != m_lastOrderFields->m_quantity) {
+        }
         return Aspen::State::COMPLETE;
       }
     } else if(Aspen::has_continuation(state)) {
@@ -188,7 +265,7 @@ namespace Nexus::OrderExecutionService {
       auto fieldsState = m_orderFields->commit(sequence);
       if(Aspen::has_evaluation(fieldsState) && !m_isPendingCancel &&
           !IsTerminal(m_status)) {
-        m_client->Cancel(*m_order);
+        m_client->Cancel(**m_order);
         m_isPendingCancel = true;
       }
       if(m_filled == m_lastOrderFields->m_quantity &&
@@ -196,7 +273,7 @@ namespace Nexus::OrderExecutionService {
           Aspen::is_complete(fieldsState)) {
         m_orderFields.reset();
         m_quantity.reset();
-        if(m_order == nullptr && !Aspen::has_evaluation(fieldsState)) {
+        if(*m_order == nullptr && !Aspen::has_evaluation(fieldsState)) {
           return Aspen::State::COMPLETE;
         }
       } else if(Aspen::has_continuation(fieldsState)) {
@@ -211,10 +288,13 @@ namespace Nexus::OrderExecutionService {
           auto orderFields = m_orderFields->eval();
           orderFields.m_quantity -= m_filled;
           m_order = &m_client->Submit(m_orderFields->eval());
-          m_order->GetPublisher().Monitor(m_executionReports->GetWriter());
+          (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
           return Aspen::State::EVALUATED;
         }
       } catch(const std::exception&) {
+        m_orderFields.reset();
+        m_quantity.reset();
+        m_order = std::current_exception();
         return Aspen::State::COMPLETE;
       }
     }
@@ -226,7 +306,7 @@ namespace Nexus::OrderExecutionService {
     typename RR>
   const Order* OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR,
       RR>::eval() const {
-    return m_order;
+    return *m_order;
   }
 }
 
