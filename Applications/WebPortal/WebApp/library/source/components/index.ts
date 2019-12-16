@@ -11,4 +11,5 @@ export * from './hline';
 export * from './integer_input_box';
 export * from './money_input_box';
 export * from './number_input';
+export * from './padded_integer_field';
 export * from './text_input_field';

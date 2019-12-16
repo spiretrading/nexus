@@ -87,7 +87,7 @@ class TestApp extends React.Component<Properties, State> {
           'Date/Time',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DATE_TIME, 
-            new Beam.DateTime(new Beam.Date(0, 0, 0), new Beam.Duration(0)))),
+            new Beam.DateTime(new Beam.Date(2004, 2, 4), new Beam.Duration(456452)))),
         new Nexus.ComplianceParameter(    
           'Securities',
           new Nexus.ComplianceValue(

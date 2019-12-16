@@ -69,6 +69,7 @@ export class ParameterEntry extends React.Component<Properties> {
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <DateTimeField
+            value={this.props.parameter.value.value}
             displaySize={this.props.displaySize}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
           return <NumberInput 
