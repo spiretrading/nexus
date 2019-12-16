@@ -67,17 +67,16 @@ QtPromise<void> CachedOrderImbalanceIndicatorModel::make_security_load_promise(
 
 QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
     const TimeInterval& interval) {
-  if(m_intervals.empty()) {
-    return m_source_model->load(interval).then([=] (const auto& imbalances) {
+  auto unloaded_intervals = interval_set<ptime>(interval) - m_intervals;
+  auto promises = std::vector<QtPromise<void>>();
+  for(auto& interval : unloaded_intervals) {
+    auto promise = m_source_model->load(interval).then([=] (auto& imbalances) {
       on_imbalances_loaded(interval, imbalances.Get());
 
       // TODO:
       return QtPromise([] {});
     });
-  }
-  auto promises = std::vector<QtPromise<void>>();
-  for(auto& security : m_security_intervals) {
-    make_security_load_promise(security.first, interval);
+    promises.push_back(std::move(promise));
   }
   return all(std::move(promises));
 }
