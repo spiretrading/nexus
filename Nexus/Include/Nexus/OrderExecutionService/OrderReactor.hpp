@@ -185,13 +185,7 @@ namespace Nexus::OrderExecutionService {
         m_filled += report.m_lastQuantity;
         if(IsTerminal(report.m_status)) {
           m_state &= ~WAITING;
-          if(m_state & FIELDS_COMPLETE) {
-            m_orderFields.reset();
-            m_quantity.reset();
-            return Aspen::State::COMPLETE;
-          } else {
-            m_state |= PENDING_FIELDS;
-          }
+          m_state |= PENDING_FIELDS;
         }
       }
       if(Aspen::has_continuation(queueState)) {
@@ -199,6 +193,11 @@ namespace Nexus::OrderExecutionService {
       }
     }
     if(m_state & PENDING_FIELDS) {
+      if(m_state & FIELDS_COMPLETE) {
+        m_orderFields.reset();
+        m_quantity.reset();
+        return Aspen::State::COMPLETE;
+      }
       auto fieldsState = m_orderFields->commit(sequence);
       if(Aspen::has_continuation(fieldsState)) {
         if(Aspen::has_evaluation(fieldsState)) {
