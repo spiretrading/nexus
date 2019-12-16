@@ -22,7 +22,6 @@ QtPromise<std::vector<OrderImbalance>>
   if(boost::icl::contains(m_intervals, interval)) {
     return m_cache.load(interval);
   }
-  // TODO: review capture parameters, probably change to non-const
   return load_from_model(interval).then([=] (const auto& loaded_imbalances) {
     return m_cache.load(interval);
   });
@@ -34,9 +33,8 @@ QtPromise<std::vector<OrderImbalance>>
   if(boost::icl::contains(m_security_intervals[security], interval)) {
     return m_cache.load(security, interval);
   }
-  return load_from_model(security, interval).then(
-    [=] (const auto& loaded_imbalances) {
-      return m_cache.load(security, interval);
+  return load_from_model(security, interval).then([=] (auto i) {
+    return m_cache.load(security, interval);
   });
 }
 
@@ -94,8 +92,13 @@ void CachedOrderImbalanceIndicatorModel::on_imbalances_loaded(
     const TimeInterval& interval,
     const std::vector<Nexus::OrderImbalance>& imbalances) {
   for(auto& imbalance : imbalances) {
-    m_security_intervals[imbalance.m_security].add(interval);
-    m_cache.insert(std::move(imbalance));
+    if(!boost::icl::contains(m_security_intervals[imbalance.m_security],
+        TimeInterval::closed(imbalance.m_timestamp, imbalance.m_timestamp))) {
+      m_cache.insert(std::move(imbalance));
+    }
+  }
+  for(auto& pair : m_security_intervals) {
+    pair.second.add(interval);
   }
   m_intervals.add(interval);
 }
