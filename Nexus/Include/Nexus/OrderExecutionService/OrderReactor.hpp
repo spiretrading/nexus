@@ -97,9 +97,12 @@ namespace Nexus::OrderExecutionService {
       const Order* eval() const;
 
     private:
-      enum class State {
-        INITIAL
-      };
+      static constexpr auto NONE = std::uint8_t(0b00);
+      static constexpr auto PENDING_FIELDS = std::uint8_t(0b01);
+      static constexpr auto FLUSHING_FIELDS = std::uint8_t(0b10);
+      static constexpr auto SUBMITTING_ORDER = std::uint8_t(0b100);
+      static constexpr auto WAITING = std::uint8_t(0b1000);
+      static constexpr auto FIELDS_COMPLETE = std::uint8_t(0b10000);
       OrderExecutionClient* m_client;
       std::unique_ptr<OrderFields> m_lastOrderFields;
       std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
@@ -116,7 +119,7 @@ namespace Nexus::OrderExecutionService {
         Aspen::VectorSync<typename AdditionalFieldsReactor::value_type,
         std::vector<Tag>>>> m_orderFields;
       Aspen::Maybe<const Order*> m_order;
-      State m_state;
+      std::uint8_t m_state;
       bool m_isPendingCancel;
       Quantity m_filled;
       OrderStatus m_status;
@@ -163,7 +166,7 @@ namespace Nexus::OrderExecutionService {
         Aspen::VectorSync(m_lastOrderFields->m_additionalFields,
           std::move(additionalFields))),
       m_order(nullptr),
-      m_state(State::INITIAL),
+      m_state(PENDING_FIELDS),
       m_isPendingCancel(true),
       m_status(OrderStatus::CANCELED),
       m_executionReports(
@@ -175,15 +178,37 @@ namespace Nexus::OrderExecutionService {
     typename RR>
   Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
       int sequence) noexcept {
-    if(m_state == State::INITIAL) {
+    if(m_state & WAITING) {
+      auto queueState = m_queue.commit(sequence);
+      if(Aspen::has_evaluation(queueState)) {
+        auto& report = m_queue.eval();
+        m_filled += report.m_lastQuantity;
+        if(IsTerminal(report.m_status)) {
+          m_state &= ~WAITING;
+          if(m_state & FIELDS_COMPLETE) {
+            m_orderFields.reset();
+            m_quantity.reset();
+            return Aspen::State::COMPLETE;
+          } else {
+            m_state |= PENDING_FIELDS;
+          }
+        }
+      }
+      if(Aspen::has_continuation(queueState)) {
+        return Aspen::State::CONTINUE;
+      }
+    }
+    if(m_state & PENDING_FIELDS) {
       auto fieldsState = m_orderFields->commit(sequence);
       if(Aspen::has_continuation(fieldsState)) {
         if(Aspen::has_evaluation(fieldsState)) {
-          m_state = State::FLUSH_FIELDS;
+          m_state &= ~PENDING_FIELDS;
+          m_state |= FLUSHING_FIELDS;
         }
         return Aspen::State::CONTINUE;
       } else if(Aspen::has_evaluation(fieldsState)) {
-        m_state = State::SUBMIT_ORDER;
+        m_state &= ~PENDING_FIELDS;
+        m_state |= SUBMITTING_ORDER;
       } else if(Aspen::is_complete(fieldsState) ||
           m_filled == m_lastOrderFields->m_quantity &&
           Aspen::is_complete((*m_quantity)->commit(sequence))) {
@@ -191,111 +216,35 @@ namespace Nexus::OrderExecutionService {
         m_quantity.reset();
         return Aspen::State::COMPLETE;
       }
-    } else if(m_state == State::FLUSH_FIELDS) {
+    } else if(m_state & FLUSHING_FIELDS) {
       auto fieldsState = m_orderFields->commit(sequence);
       if(Aspen::has_continuation(fieldsState)) {
         return Aspen::State::CONTINUE;
+      } else if(Aspen::is_complete(fieldsState)) {
       }
-      m_state = State::SUBMIT_ORDER;
-    } else if(m_state == State::HUB) {
-      auto queueState = m_queue.commit(sequence);
-      if(Aspen::has_evaluation(queueState)) {
-        auto& report = m_queue.eval();
-        m_filled += report.m_lastQuantity;
-        if(IsTerminal(report.m_status)) {
-          m_state = State::INITIAL;
-          return commit(sequence);
-        }
-      }
-      if(Aspen::has_continuation(queueState)) {
-        return Aspen::State::CONTINUE;
-      }
-      auto fieldsState = m_orderFields->commit(sequence);
-      if(Aspen::has_evaluation(fieldsState)) {
-        m_state = State::CANCEL_ORDER;
-        if(Aspen::has_continuation(fieldsState)) {
-          m_state = State::PREPARE_FIELDS;
-          return Aspen::State::CONTINUE;
-        }
-      }
+      m_state &= ~FLUSHING_FIELDS;
+      m_state |= SUBMITTING_ORDER;
     }
-
-    if(m_state == State::CANCEL_ORDER) {
-    }
-    if(m_state == State::SUBMIT_ORDER) {
+    if(m_state & SUBMITTING_ORDER) {
       try {
         auto orderFields = m_orderFields->eval();
         orderFields.m_quantity -= m_filled;
+
+        // TODO quantity == 0, no submission.
         m_order = &m_client->Submit(orderFields);
         (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
-        m_state = State::HUB;
+        if(m_state | FIELDS_COMPLETE) {
+          m_orderFields.reset();
+          m_quantity.reset();
+        }
+        m_state &= ~SUBMITTING_ORDER;
+        m_state |= WAITING;
         return Aspen::State::EVALUATED;
       } catch(const std::exception&) {
         m_orderFields.reset();
         m_quantity.reset();
         m_order = std::current_exception();
         return Aspen::State::COMPLETE_EVALUATED;
-      }
-    }
-
-
-
-
-    auto state = m_queue.commit(sequence);
-    if(Aspen::has_evaluation(state)) {
-      auto& report = m_queue.eval();
-      m_status = report.m_status;
-      m_filled += report.m_lastQuantity;
-      if(!IsTerminal(report.m_status)) {
-        if(Aspen::has_continuation(state)) {
-          return Aspen::State::CONTINUE;
-        }
-      } else if(!m_isPendingCancel) {
-        if(!m_orderFields.has_value()) {
-          return Aspen::State::COMPLETE;
-        }
-        if(m_filled != m_lastOrderFields->m_quantity) {
-        }
-        return Aspen::State::COMPLETE;
-      }
-    } else if(Aspen::has_continuation(state)) {
-      return Aspen::State::CONTINUE;
-    }
-    if(m_orderFields.has_value()) {
-      auto fieldsState = m_orderFields->commit(sequence);
-      if(Aspen::has_evaluation(fieldsState) && !m_isPendingCancel &&
-          !IsTerminal(m_status)) {
-        m_client->Cancel(**m_order);
-        m_isPendingCancel = true;
-      }
-      if(m_filled == m_lastOrderFields->m_quantity &&
-          Aspen::is_complete((*m_quantity)->commit(sequence)) ||
-          Aspen::is_complete(fieldsState)) {
-        m_orderFields.reset();
-        m_quantity.reset();
-        if(*m_order == nullptr && !Aspen::has_evaluation(fieldsState)) {
-          return Aspen::State::COMPLETE;
-        }
-      } else if(Aspen::has_continuation(fieldsState)) {
-        return Aspen::State::CONTINUE;
-      }
-    }
-    if(IsTerminal(m_status)) {
-      try {
-        m_isPendingCancel = false;
-        if(m_lastOrderFields->m_quantity - m_filled > 0) {
-          m_status = OrderStatus::PENDING_NEW;
-          auto orderFields = m_orderFields->eval();
-          orderFields.m_quantity -= m_filled;
-          m_order = &m_client->Submit(m_orderFields->eval());
-          (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
-          return Aspen::State::EVALUATED;
-        }
-      } catch(const std::exception&) {
-        m_orderFields.reset();
-        m_quantity.reset();
-        m_order = std::current_exception();
-        return Aspen::State::COMPLETE;
       }
     }
     return Aspen::State::NONE;
