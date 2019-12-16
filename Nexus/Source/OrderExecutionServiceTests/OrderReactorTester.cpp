@@ -171,17 +171,10 @@ void OrderReactorTester::TestTerminalOrderAndUpdate() {
   commits.Pop();
   CPPUNIT_ASSERT(reactor.commit(2) == Aspen::State::NONE);
   environment.RejectOrder(*receivedOrder);
-  price->set_complete(2 * Money::ONE);
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::EVALUATED);
-  auto updatedSentOrder = reactor.eval();
-  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_security ==
-    TEST_SECURITY);
-  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_side == Side::ASK);
-  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
-  CPPUNIT_ASSERT(updatedSentOrder->GetInfo().m_fields.m_price ==
-    2 * Money::ONE);
+  CPPUNIT_ASSERT(reactor.commit(3) == Aspen::State::COMPLETE_EVALUATED);
+  CPPUNIT_ASSERT_THROW(reactor.eval(), std::runtime_error);
   Trigger::set_trigger(nullptr);
 }
 
