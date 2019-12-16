@@ -49,12 +49,13 @@ QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
   auto unloaded_intervals = interval_set<ptime>(interval) - m_intervals;
   auto promises = std::vector<QtPromise<void>>();
   for(auto& interval : unloaded_intervals) {
-    auto promise = m_source_model->load(interval).then([=] (auto& imbalances) {
-      on_imbalances_loaded(interval, imbalances.Get());
+    auto promise = m_source_model->load(TimeInterval::closed(interval.lower(),
+      interval.upper())).then([=] (auto& imbalances) {
+        on_imbalances_loaded(interval, imbalances.Get());
 
-      // TODO:
-      return QtPromise([] {});
-    });
+        // TODO:
+        return QtPromise([] {});
+      });
     promises.push_back(std::move(promise));
   }
   return all(std::move(promises));
