@@ -78,6 +78,9 @@ namespace Spire {
       Beam::Threading::Mutex m_mutex;
       Beam::Threading::ConditionVariable m_load_condition;
       std::deque<std::shared_ptr<LoadEntry>> m_load_entries;
+
+      QtPromise<std::vector<Nexus::OrderImbalance>> add_load_entry(
+        std::shared_ptr<LoadEntry> load_entry);
   };
 }
 
