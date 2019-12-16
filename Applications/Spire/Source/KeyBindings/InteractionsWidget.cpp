@@ -1,6 +1,6 @@
 #include "Spire/KeyBindings/InteractionsWidget.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_InteractionsWidget.h"
 
 using namespace Beam;

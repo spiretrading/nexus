@@ -3,7 +3,7 @@
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

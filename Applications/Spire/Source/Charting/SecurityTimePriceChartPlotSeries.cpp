@@ -1,10 +1,8 @@
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
-#include "Nexus/ChartingService/VirtualChartingClient.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

@@ -1,4 +1,3 @@
-#define BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP // TODO: MSVC Workaround
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/Canvas/Records/Record.hpp"

@@ -7,8 +7,8 @@
 #include <QMouseEvent>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_ValueListInputDialog.h"
 
 using namespace Beam;

@@ -1,10 +1,10 @@
 #include "Spire/Charting/ChartWindow.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QToolButton>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
@@ -13,13 +13,11 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;

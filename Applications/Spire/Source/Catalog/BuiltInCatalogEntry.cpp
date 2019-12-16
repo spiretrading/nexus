@@ -60,8 +60,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
@@ -79,7 +77,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -327,8 +324,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/symbol_questionmark.png", "", IfNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Integer",
     INTEGER_UUID, ":/icons/weight.png", "", IntegerNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(IS_TERMINAL_UUID,
-    ":/icons/logic_not.png", "", IsTerminalNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LAST_UUID,
     ":/icons/note_pinned.png", "", LastNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LESS_EQUAL_UUID,
@@ -412,11 +407,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/flash_yellow.png", "", SpawnNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(SUBTRACTION_UUID,
     ":/icons/calculator.png", "", SubtractionNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Task State",
-    TASK_STATE_UUID, ":/icons/trafficlight_green.png", "", TaskStateNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
-    TASK_STATE_MONITOR_UUID, ":/icons/magnifying_glass.png", "",
-    TaskStateMonitorNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Text", TEXT_UUID,
     ":/icons/window_font.png", "", TextNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(

@@ -68,8 +68,7 @@ namespace Spire {
       QWidget* m_parent;
       UserProfile* m_userProfile;
       bool m_isTaskEntryWidgetForInteractionsProperties;
-      std::unordered_map<Nexus::Security,
-        std::vector<std::shared_ptr<BlotterTasksModel::TaskContext>>>
+      std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       State* m_state;
       CondensedCanvasWidget* m_taskEntryWidget;
@@ -86,9 +85,8 @@ namespace Spire {
       void HandleInteractionsPropertiesEvent();
       bool HandleCancelBindingEvent(
         const KeyBindings::CancelBinding& keyBinding);
-      void OnTaskState(std::weak_ptr<BlotterTasksModel::TaskContext> task,
-        const Nexus::Security& security,
-        const Beam::Tasks::Task::StateEntry& update);
+      void OnTaskState(const std::shared_ptr<Task>& task,
+        const Nexus::Security& security, const Task::StateEntry& update);
   };
 }
 

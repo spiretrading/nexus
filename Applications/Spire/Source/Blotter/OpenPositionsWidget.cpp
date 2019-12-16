@@ -8,8 +8,8 @@
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_OpenPositionsWidget.h"
 
@@ -25,18 +25,17 @@ namespace {
   void FlattenPosition(BlotterModel& blotterModel,
       const OpenPositionsModel::Entry& position,
       const UserProfile& userProfile) {
-    OrderFields orderFields = OrderFields::BuildMarketOrder(
+    auto orderFields = OrderFields::BuildMarketOrder(
       blotterModel.GetExecutingAccount(), position.m_key.m_index,
       position.m_key.m_currency,
       GetOpposite(GetSide(position.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().GetPreferredDestination(
       position.m_key.m_index.GetMarket()).m_id,
       Abs(position.m_inventory.m_position.m_quantity));
-    unique_ptr<SingleOrderTaskNode> orderNode =
-      BuildOrderTaskNodeFromOrderFields(orderFields, userProfile);
-    const BlotterTasksModel::TaskEntry& entry =
-      blotterModel.GetTasksModel().Add(*orderNode);
-    entry.m_context->m_task->Execute();
+    auto orderNode = BuildOrderTaskNodeFromOrderFields(orderFields,
+      userProfile);
+    auto& entry = blotterModel.GetTasksModel().Add(*orderNode);
+    entry.m_task->Execute();
   }
 }
 
@@ -53,8 +52,6 @@ OpenPositionsWidget::OpenPositionsWidget(QWidget* parent, Qt::WindowFlags flags)
   connect(m_ui->m_flattenSelectionButton, &QPushButton::clicked, this,
     &OpenPositionsWidget::OnFlattenSelection);
 }
-
-OpenPositionsWidget::~OpenPositionsWidget() {}
 
 OpenPositionsWidget::UIState OpenPositionsWidget::GetUIState() const {
   UIState state;

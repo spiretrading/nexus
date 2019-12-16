@@ -1,7 +1,6 @@
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

@@ -77,7 +77,7 @@ void MarketDataClientTester::TestRealTimeBboQuoteQuery() {
     Quote{Money::ONE + Money::CENT, 200, Side::ASK},
     second_clock::universal_time()};
   SendRecordMessage<BboQuoteMessage>(requestToken->GetClient(),
-    MakeSequencedValue(MakeIndexedValue(bbo, SECURITY_A),
+    SequencedValue(IndexedValue(bbo, SECURITY_A),
     Beam::Queries::Sequence(1)));
   auto updatedBbo = bboQuotes->Top();
   CPPUNIT_ASSERT(updatedBbo == bbo);

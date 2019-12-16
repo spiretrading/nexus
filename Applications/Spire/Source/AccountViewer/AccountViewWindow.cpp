@@ -1,8 +1,7 @@
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <QItemDelegate>
 #include <QMessageBox>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
 #include "Spire/AccountViewer/AccountViewItem.hpp"
@@ -18,8 +17,7 @@
 #include "Spire/AccountViewer/ServiceItemWidget.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
 #include "Spire/AccountViewer/TraderItemWidget.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_AccountViewWindow.h"
 
 using namespace Beam;

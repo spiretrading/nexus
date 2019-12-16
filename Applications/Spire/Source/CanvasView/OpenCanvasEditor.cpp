@@ -1,5 +1,6 @@
 #include "Spire/CanvasView/OpenCanvasEditor.hpp"
 #include <limits>
+#include <boost/lexical_cast.hpp>
 #include <QApplication>
 #include <QComboBox>
 #include <QEvent>
@@ -32,7 +33,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -46,14 +46,13 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/MaxFloorSpinBox.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
 #include "Spire/UI/QuantitySpinBox.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -89,7 +88,6 @@ namespace {
       virtual void Visit(const ReferenceNode& node);
       virtual void Visit(const SecurityNode& node);
       virtual void Visit(const SideNode& node);
-      virtual void Visit(const TaskStateNode& node);
       virtual void Visit(const TextNode& node);
       virtual void Visit(const TimeInForceNode& node);
       virtual void Visit(const TimeNode& node);
@@ -520,19 +518,6 @@ void OpenEditorCanvasNodeVisitor::Visit(const SideNode& node) {
   } else {
     editor->setCurrentIndex(0);
   }
-  if(m_event != nullptr) {
-    QApplication::sendEvent(editor, m_event);
-  }
-  m_editVariant = editor;
-}
-
-void OpenEditorCanvasNodeVisitor::Visit(const TaskStateNode& node) {
-  auto editor = new QComboBox();
-  for(size_t i = 0; i < Task::State::COUNT; ++i) {
-    editor->addItem(QString::fromStdString(
-      ToString(static_cast<Task::State>(i))));
-  }
-  editor->setCurrentIndex(static_cast<int>(node.GetValue()));
   if(m_event != nullptr) {
     QApplication::sendEvent(editor, m_event);
   }

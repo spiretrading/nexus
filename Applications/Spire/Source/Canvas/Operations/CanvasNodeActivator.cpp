@@ -6,8 +6,8 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;
@@ -21,7 +21,7 @@ void Spire::Activate(const CanvasNode& node, UserProfile& userProfile,
       QString::fromStdString("Node contains errors."));
     return;
   }
-  if(IsCompatible(TaskType::GetInstance(), node.GetType())) {
+  if(IsCompatible(OrderReferenceType::GetInstance(), node.GetType())) {
     userProfile.GetBlotterSettings().GetActiveBlotter().GetTasksModel().Add(
       node);
   }

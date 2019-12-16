@@ -1,11 +1,10 @@
-#ifndef SPIRE_CANVASTESTS_HPP
-#define SPIRE_CANVASTESTS_HPP
+#ifndef SPIRE_CANVAS_TESTS_HPP
+#define SPIRE_CANVAS_TESTS_HPP
 
-namespace Spire {
-namespace Tests {
+namespace Spire::Tests {
   class RecordTypeTester;
+  class TranslationTester;
   class ValueTypeTester;
-}
 }
 
 #endif

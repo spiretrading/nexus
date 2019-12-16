@@ -34,7 +34,7 @@ namespace Spire {
                are checked for fills.
       */
       void SetOrderExecutionPublisher(
-        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
         orderExecutionPublisher);
 
     private:
@@ -48,7 +48,7 @@ namespace Spire {
       typedef std::array<std::deque<std::shared_ptr<OrderEntry>>,
         Nexus::Side::COUNT> SideToOrderEntryList;
       UserProfile* m_userProfile;
-      Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::unordered_map<Nexus::Security, SideToOrderEntryList>
         m_securityToOrderEntryList;
