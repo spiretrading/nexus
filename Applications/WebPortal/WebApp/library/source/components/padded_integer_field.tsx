@@ -27,7 +27,6 @@ interface Properties {
 
 interface State {
   value: number;
-  isEditing: boolean;
 }
 
 /** Displays an input box for modifying integer values. */
@@ -41,7 +40,6 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
     super(props);
     this.state = {
       value: props.value || 0,
-      isEditing: false
     }
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
@@ -50,46 +48,18 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const displayedValue = (() => {
-      if(this.state.isEditing) {
-        console.log('Is editing!');
-        return this.state.value;
-      } else {
-        console.log('Disssplay');
-        const zeros = this.props.padding - this.state.value.toString().length;
-        return '0'.repeat(zeros).concat(this.state.value.toString());
-      }
-    })();
     const shownValue = (() => {
       return ('0'.repeat(this.props.padding) + this.state.value).slice(-1 * (this.props.padding));
     })();
-    const type = (() => {
-      if(this.state.isEditing) {
-        return 'number';
-      } else {
-        return 'text';
-      }
-    })();
-    const boxStyle = (() => {
-      if(this.state.isEditing) {
-        return PaddedIntegerField.STYLE.editBox;
-      } else {
-        return PaddedIntegerField.STYLE.displayBox;
-      }
-    })();
-    console.log('display number', displayedValue, shownValue);
     return (
         <input
-          onFocus={()=>this.setState({isEditing: true})}
           onBlur={this.onBlur}
-          style={boxStyle} 
+          style={{...PaddedIntegerField.STYLE.editBox, ...this.props.style}} 
           value={shownValue}
+          min={0}
           onChange={this.onChange}
           className={css(PaddedIntegerField.EXTRA_STYLE.customHighlighting)}
-          type={type}/>);
-  }
-
-  public componentDidUpdate() {
+          type={'number'}/>);
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -138,7 +108,6 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
       return this.state.value;
     }
     })();
-    this.setState({isEditing: false});
     this.update(value);
   }
 
@@ -170,25 +139,7 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
     });
   }
 
-
   private static readonly STYLE = {
-    hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
-    displayBox: {
-      boxSizing: 'border-box' as 'border-box',
-      width: '18px',
-      height: '17px',
-      padding: 0,
-      margin: 0,
-      font: '400 14px Roboto',
-      border: '0px solid #ffffff',
-      color: 'red',
-      textAlign: 'right'as 'right',
-      WebkitAppearance: 'none' as 'none',
-      MozAppearance: 'textfield' as 'textfield'
-    },
     editBox: {
       boxSizing: 'border-box' as 'border-box',
       width: '18px',
@@ -197,12 +148,12 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
       margin: 0,
       font: '400 14px Roboto',
       border: '0px solid #ffffff',
-      color: 'green',
+      color: '#000000',
       textAlign: 'right'as 'right',
       WebkitAppearance: 'none' as 'none',
       MozAppearance: 'textfield' as 'textfield'
-    },
-  }
+    }
+  };
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
       '-moz-appearance': 'textfield',
