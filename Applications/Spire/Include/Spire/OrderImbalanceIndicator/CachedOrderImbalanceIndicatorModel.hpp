@@ -34,14 +34,21 @@ namespace Spire {
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source_model;
       LocalOrderImbalanceIndicatorModel m_cache;
       boost::icl::interval_set<boost::posix_time::ptime> m_intervals;
+      std::map<Nexus::Security,
+        boost::icl::interval_set<boost::posix_time::ptime>>
+        m_security_intervals;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<boost::optional<Nexus::OrderImbalance>> m_subscription_promise;
 
-      QtPromise<std::vector<Nexus::OrderImbalance>> load_from_cache(
-        const TimeInterval& interval);
-      QtPromise<std::vector<Nexus::OrderImbalance>> load_from_model(
+      QtPromise<void> load_from_model(const TimeInterval& interval);
+      QtPromise<void> load_from_model(const Nexus::Security& security,
         const TimeInterval& interval);
       void on_imbalance_published(const Nexus::OrderImbalance& imbalance);
+      void on_imbalances_loaded(const TimeInterval& interval,
+        const std::vector<Nexus::OrderImbalance>& imbalances);
+      void on_imbalances_loaded(const Nexus::Security& security,
+        const TimeInterval& interval,
+        const std::vector<Nexus::OrderImbalance>& imbalances);
   };
 }
 

@@ -16,14 +16,26 @@ namespace Spire {
       class LoadEntry {
         public:
 
-          //! Constructs a LoadEntry.
+          //! Constructs a general LoadEntry.
           /*
             \param interval The time interval to load.
           */
           LoadEntry(const TimeInterval& interval);
 
+          //! Constructs a LoadEntry for a specific Security.
+          /*
+            \param security The security whose order imbalances will be loaded.
+            \param interval The time interval to load.
+          */
+          LoadEntry(const Nexus::Security security,
+            const TimeInterval& interval);
+
           //! Returns the load entry's requested time interval.
           const TimeInterval& get_interval() const;
+
+          //! Returns the security, if the original request was for a single
+          //! security.
+          const std::optional<Nexus::Security>& get_security() const;
 
           //! Sets the result of the load operation.
           /*
@@ -39,6 +51,7 @@ namespace Spire {
           friend class TestOrderImbalanceIndicatorModel;
           mutable Beam::Threading::Mutex m_mutex;
           TimeInterval m_interval;
+          std::optional<Nexus::Security> m_security;
           bool m_is_loaded;
           std::vector<Nexus::OrderImbalance> m_result;
           Beam::Threading::ConditionVariable m_load_condition;
@@ -65,6 +78,9 @@ namespace Spire {
       Beam::Threading::Mutex m_mutex;
       Beam::Threading::ConditionVariable m_load_condition;
       std::deque<std::shared_ptr<LoadEntry>> m_load_entries;
+
+      QtPromise<std::vector<Nexus::OrderImbalance>> add_load_entry(
+        std::shared_ptr<LoadEntry> load_entry);
   };
 }
 
