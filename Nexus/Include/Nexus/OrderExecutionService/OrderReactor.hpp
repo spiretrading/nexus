@@ -209,28 +209,28 @@ namespace Nexus::OrderExecutionService {
         m_state |= FIELDS_COMPLETE;
       }
     }
-    if(m_state & FIELDS_AVAILABLE) {
-      if(m_state & WAITING && !(m_state & CANCELLING_ORDER)) {
+    if(m_state & FIELDS_AVAILABLE && !(m_state & CANCELLING_ORDER)) {
+      if(m_state & WAITING) {
         m_client->Cancel(**m_order);
         m_state |= CANCELLING_ORDER;
       } else {
         try {
           auto orderFields = m_orderFields->eval();
           orderFields.m_quantity -= m_filled;
-
-          // TODO quantity == 0, no submission.
           if(m_order.has_value() && *m_order == nullptr) {
             m_queue.commit(sequence);
           }
-          m_order = &m_client->Submit(orderFields);
-          (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
+          m_state &= ~FIELDS_AVAILABLE;
           if(m_state & FIELDS_COMPLETE) {
             m_orderFields.reset();
             m_quantity.reset();
           }
-          m_state &= ~FIELDS_AVAILABLE;
-          m_state |= WAITING;
-          return Aspen::State::EVALUATED;
+          if(orderFields.m_quantity != 0) {
+            m_order = &m_client->Submit(orderFields);
+            (*m_order)->GetPublisher().Monitor(m_executionReports->GetWriter());
+            m_state |= WAITING;
+            return Aspen::State::EVALUATED;
+          }
         } catch(const std::exception&) {
           m_orderFields.reset();
           m_quantity.reset();
