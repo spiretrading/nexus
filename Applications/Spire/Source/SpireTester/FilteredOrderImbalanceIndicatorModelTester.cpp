@@ -363,7 +363,7 @@ TEST_CASE("test_unfiltered_single_security_loading",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto local_model = make_local_model();
-    auto S = Security("TEST", 0);
+    const auto S = Security("TEST", 0);
     const auto F = make_imbalance(S, from_time_t(100));
     const auto G = make_imbalance(S, from_time_t(200));
     const auto H = make_imbalance(S, from_time_t(300));
@@ -383,7 +383,7 @@ TEST_CASE("test_filtered_single_security_loading",
     "[FilteredOrderImbalanceIndicatorModel]") {
   run_test([] {
     auto local_model = make_local_model();
-    auto S = Security("TEST", 0);
+    const auto S = Security("TEST", 0);
     const auto F = make_imbalance(S, "", Side::ASK, 100, 10.0,
       from_time_t(100));
     const auto G = make_imbalance(S, "", Side::ASK, 200, 10.0,
