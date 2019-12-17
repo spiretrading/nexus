@@ -17,6 +17,17 @@ namespace {
       Money(1 * Money::ONE), timestamp);
   }
 
+  auto make_imbalance(const Security& security, const ptime& timestamp) {
+    return OrderImbalance(security, Side::BID, 100,
+      Money(1 * Money::ONE), timestamp);
+  }
+
+  auto make_imbalance(const Security& security, const MarketCode& market,
+      Side side, Quantity size, double ref_price, const ptime& timestamp) {
+    return OrderImbalance(security, side, size,
+      Money(Quantity(ref_price)), timestamp);
+  }
+
   auto make_imbalance(const std::string& symbol, const MarketCode& market,
       Side side, Quantity size, double ref_price, const ptime& timestamp) {
     return OrderImbalance(Security(symbol, market, 0), side, size,
@@ -346,4 +357,47 @@ TEST_CASE("test_filtered_subscribes_don't_crash_on_model_destruction",
     local_model->publish(A);
     wait(std::move(promise.m_snapshot));
   }, "test_filtered_subscribes_don't_crash_on_model_destruction");
+}
+
+TEST_CASE("test_unfiltered_single_security_loading",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = make_local_model();
+    auto S = Security("TEST", 0);
+    const auto F = make_imbalance(S, from_time_t(100));
+    const auto G = make_imbalance(S, from_time_t(200));
+    const auto H = make_imbalance(S, from_time_t(300));
+    local_model->insert(F);
+    local_model->insert(G);
+    local_model->insert(H);
+    auto filtered_model = FilteredOrderImbalanceIndicatorModel(local_model,
+      {});
+    auto promise = filtered_model.load(S, TimeInterval::closed(
+      from_time_t(100), from_time_t(500)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({F, G, H}));
+  }, "test_unfiltered_single_security_loading");
+}
+
+TEST_CASE("test_filtered_single_security_loading",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = make_local_model();
+    auto S = Security("TEST", 0);
+    const auto F = make_imbalance(S, "", Side::ASK, 100, 10.0,
+      from_time_t(100));
+    const auto G = make_imbalance(S, "", Side::ASK, 200, 10.0,
+      from_time_t(100));
+    const auto H = make_imbalance(S, "", Side::ASK, 300, 10.0,
+      from_time_t(100));
+    local_model->insert(F);
+    local_model->insert(G);
+    local_model->insert(H);
+    auto filtered_model = FilteredOrderImbalanceIndicatorModel(local_model,
+      {make_size_filter(150, 250)});
+    auto promise = filtered_model.load(S, TimeInterval::closed(
+      from_time_t(100), from_time_t(500)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({G}));
+  }, "test_filtered_single_security_loading");
 }
