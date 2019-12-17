@@ -69,7 +69,7 @@ QtPromise<void> CachedOrderImbalanceIndicatorModel::load_from_model(
   for(const auto& interval : unloaded_intervals) {
     auto promise = m_source_model->load(security,
       TimeInterval::closed(interval.lower(), interval.upper())).then(
-      [=, security = security] (const auto& imbalances) {
+      [=] (const auto& imbalances) {
         on_imbalances_loaded(security, interval, imbalances.Get());
 
         //TODO:
@@ -95,7 +95,7 @@ void CachedOrderImbalanceIndicatorModel::on_imbalances_loaded(
   for(auto& imbalance : imbalances) {
     if(!boost::icl::contains(m_security_intervals[imbalance.m_security],
         TimeInterval::closed(imbalance.m_timestamp, imbalance.m_timestamp))) {
-      m_cache.insert(std::move(imbalance));
+      m_cache.insert(imbalance);
     }
   }
   for(auto& pair : m_security_intervals) {
@@ -110,7 +110,7 @@ void CachedOrderImbalanceIndicatorModel::on_imbalances_loaded(
   auto& intervals = m_security_intervals[security];
   if(intervals.empty()) {
     for(auto& imbalance : imbalances) {
-      m_cache.insert(std::move(imbalance));
+      m_cache.insert(imbalance);
     }
   } else {
     if(!imbalances.empty()) {
@@ -145,7 +145,7 @@ void CachedOrderImbalanceIndicatorModel::on_imbalances_loaded(
           m_cache.insert(std::move(*first));
         } else {
           for(auto i = first; i < last; ++i) {
-            m_cache.insert(std::move(*i));
+            m_cache.insert(*i);
           }
         }
       }
