@@ -13,28 +13,37 @@ using namespace Spire;
 
 namespace {
   auto make_imbalance(const std::string& symbol, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, 0), Side::BID, 100,
-      Money(1 * Money::ONE), timestamp);
+    return OrderImbalance(Security(symbol, 0), Side::BID, 100, Money::ONE,
+      timestamp);
+  }
+
+  auto make_imbalance(const Security& security, const ptime& timestamp) {
+    return OrderImbalance(security, Side::BID, 100, Money::ONE, timestamp);
+  }
+
+  auto make_imbalance(const Security& security, const MarketCode& market,
+      Side side, Quantity size, Money ref_price, const ptime& timestamp) {
+    return OrderImbalance(security, side, size, ref_price, timestamp);
   }
 
   auto make_imbalance(const std::string& symbol, const MarketCode& market,
-      Side side, Quantity size, double ref_price, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, market, 0), side, size,
-      Money(Quantity(ref_price)), timestamp);
+      Side side, Quantity size, Money ref_price, const ptime& timestamp) {
+    return OrderImbalance(Security(symbol, market, 0), side, size, ref_price,
+      timestamp);
   }
 
   auto market_db = GetDefaultMarketDatabase();
 
   const auto A = make_imbalance("A", market_db.FromDisplayName("TSX").m_code,
-    Side::BID, 100, 1.0, from_time_t(100));
+    Side::BID, 100, Money::ONE, from_time_t(100));
   const auto B = make_imbalance("B", market_db.FromDisplayName("TSX").m_code,
-    Side::BID, 1000, 10.0, from_time_t(200));
+    Side::BID, 1000, 10 * Money::ONE, from_time_t(200));
   const auto C = make_imbalance("C", market_db.FromDisplayName("TSX").m_code,
-    Side::ASK, 10000, 100.0, from_time_t(300));
+    Side::ASK, 10000, 100 * Money::ONE, from_time_t(300));
   const auto D = make_imbalance("D", market_db.FromDisplayName("NYSE").m_code,
-    Side::ASK, 100000, 1000.0, from_time_t(400));
+    Side::ASK, 100000, 1000 * Money::ONE, from_time_t(400));
   const auto E = make_imbalance("E", market_db.FromDisplayName("NYSE").m_code,
-    Side::ASK, 1000000, 10000.0, from_time_t(500));
+    Side::ASK, 1000000, 10000 * Money::ONE, from_time_t(500));
 
   const auto market_database = GetDefaultMarketDatabase();
 
@@ -346,4 +355,47 @@ TEST_CASE("test_filtered_subscribes_don't_crash_on_model_destruction",
     local_model->publish(A);
     wait(std::move(promise.m_snapshot));
   }, "test_filtered_subscribes_don't_crash_on_model_destruction");
+}
+
+TEST_CASE("test_unfiltered_single_security_loading",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = make_local_model();
+    const auto S = Security("TEST", 0);
+    const auto F = make_imbalance(S, from_time_t(100));
+    const auto G = make_imbalance(S, from_time_t(200));
+    const auto H = make_imbalance(S, from_time_t(300));
+    local_model->insert(F);
+    local_model->insert(G);
+    local_model->insert(H);
+    auto filtered_model = FilteredOrderImbalanceIndicatorModel(local_model,
+      {});
+    auto promise = filtered_model.load(S, TimeInterval::closed(
+      from_time_t(100), from_time_t(500)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({F, G, H}));
+  }, "test_unfiltered_single_security_loading");
+}
+
+TEST_CASE("test_filtered_single_security_loading",
+    "[FilteredOrderImbalanceIndicatorModel]") {
+  run_test([] {
+    auto local_model = make_local_model();
+    const auto S = Security("TEST", 0);
+    const auto F = make_imbalance(S, "", Side::ASK, 100, 10 * Money::ONE,
+      from_time_t(100));
+    const auto G = make_imbalance(S, "", Side::ASK, 200, 10 * Money::ONE,
+      from_time_t(100));
+    const auto H = make_imbalance(S, "", Side::ASK, 300, 10 * Money::ONE,
+      from_time_t(100));
+    local_model->insert(F);
+    local_model->insert(G);
+    local_model->insert(H);
+    auto filtered_model = FilteredOrderImbalanceIndicatorModel(local_model,
+      {make_size_filter(150, 250)});
+    auto promise = filtered_model.load(S, TimeInterval::closed(
+      from_time_t(100), from_time_t(500)));
+    auto data = wait(std::move(promise));
+    REQUIRE(data == std::vector<OrderImbalance>({G}));
+  }, "test_filtered_single_security_loading");
 }
