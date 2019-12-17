@@ -49,7 +49,8 @@ export class PaddedIntegerField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const shownValue = (() => {
-      return ('0'.repeat(this.props.padding) + this.state.value).slice(-1 * (this.props.padding));
+      return ('0'.repeat(this.props.padding) + 
+        this.state.value).slice(-1 * (this.props.padding));
     })();
     return (
         <input
