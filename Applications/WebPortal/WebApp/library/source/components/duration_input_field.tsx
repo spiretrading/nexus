@@ -28,7 +28,6 @@ interface State {
   isInFocus: boolean
 }
 
-
 /** A component that displays and lets a user edit a duration. */
 export class DurationInputField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
@@ -120,7 +119,7 @@ export class DurationInputField extends React.Component<Properties, State> {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      minWidth: '184px',
+      minWidth: '164px',
       width: '100%',
       flexShrink: 1,
       flexGrow: 1,
