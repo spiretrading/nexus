@@ -15,7 +15,7 @@
 #include "Spire/Canvas/IONodes/FilePathNode.hpp"
 #include "Spire/Canvas/IONodes/FileReaderNode.hpp"
 #include "Spire/Canvas/LuaNodes/LuaScriptNode.hpp"
-#include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
+#include "Spire/Canvas/MarketDataNodes/BboQuoteQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
@@ -141,7 +141,7 @@ namespace Spire {
     (LuaScriptNode, "Spire.LuaScriptNode"));
 
   BEAM_REGISTER_TYPES(RegisterCanvasMarketDataNodeTypes,
-    (BboQuoteNode, "Spire.BboQuoteNode"),
+    (BboQuoteQueryNode, "Spire.BboQuoteQueryNode"),
     (OrderImbalanceQueryNode, "Spire.OrderImbalanceQueryNode"),
     (TimeAndSaleQueryNode, "Spire.TimeAndSaleQueryNode"));
 

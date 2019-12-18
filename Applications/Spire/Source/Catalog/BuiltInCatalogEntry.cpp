@@ -13,7 +13,7 @@
 #include "Spire/Canvas/IONodes/FilePathNode.hpp"
 #include "Spire/Canvas/IONodes/FileReaderNode.hpp"
 #include "Spire/Canvas/LuaNodes/LuaScriptNode.hpp"
-#include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
+#include "Spire/Canvas/MarketDataNodes/BboQuoteQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
@@ -103,7 +103,7 @@ const uuid BuiltInCatalogEntry::ALARM_UUID = stringUuidGenerator(
   "{5e93981b-6d91-49e9-8c67-c28f2848e297}");
 const uuid BuiltInCatalogEntry::ASK_ORDER_TASK_UUID = stringUuidGenerator(
   "{cd1091ac-d8be-47c0-830d-2521edde18af}");
-const uuid BuiltInCatalogEntry::BBO_UUID = stringUuidGenerator(
+const uuid BuiltInCatalogEntry::BBO_QUOTE_QUERY_UUID = stringUuidGenerator(
   "{5337c510-7c4f-11e1-b0c4-0800200c9a66}");
 const uuid BuiltInCatalogEntry::BID_ORDER_TASK_UUID = stringUuidGenerator(
   "{96c62c40-1cae-4c9e-8824-f1ca989a4e25}");
@@ -265,8 +265,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/hourglass.png", "", AlarmNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(ASK_ORDER_TASK_UUID,
     ":/icons/flash_yellow.png", "", *GetAskOrderTaskNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(BBO_UUID,
-    ":/icons/chart_line.png", "", BboQuoteNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(BBO_QUOTE_QUERY_UUID,
+    ":/icons/chart_line.png", "", BboQuoteQueryNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(BID_ORDER_TASK_UUID,
     ":/icons/flash_yellow.png", "", *GetBidOrderTaskNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Boolean",

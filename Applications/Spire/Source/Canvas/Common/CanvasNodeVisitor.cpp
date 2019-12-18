@@ -11,7 +11,7 @@
 #include "Spire/Canvas/IONodes/FilePathNode.hpp"
 #include "Spire/Canvas/IONodes/FileReaderNode.hpp"
 #include "Spire/Canvas/LuaNodes/LuaScriptNode.hpp"
-#include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
+#include "Spire/Canvas/MarketDataNodes/BboQuoteQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/DefaultCurrencyNode.hpp"
@@ -98,7 +98,7 @@ void CanvasNodeVisitor::Visit(const BaseValueNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
 }
 
-void CanvasNodeVisitor::Visit(const BboQuoteNode& node) {
+void CanvasNodeVisitor::Visit(const BboQuoteQueryNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
 }
 

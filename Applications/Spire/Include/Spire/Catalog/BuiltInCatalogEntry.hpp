@@ -15,7 +15,7 @@ namespace Spire {
       static const boost::uuids::uuid AGGREGATE_TASK_UUID;
       static const boost::uuids::uuid ALARM_UUID;
       static const boost::uuids::uuid ASK_ORDER_TASK_UUID;
-      static const boost::uuids::uuid BBO_UUID;
+      static const boost::uuids::uuid BBO_QUOTE_QUERY_UUID;
       static const boost::uuids::uuid BID_ORDER_TASK_UUID;
       static const boost::uuids::uuid BOOLEAN_UUID;
       static const boost::uuids::uuid CEIL_UUID;

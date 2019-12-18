@@ -39,7 +39,7 @@
 #include "Spire/Canvas/LuaNodes/LuaInterop.hpp"
 #include "Spire/Canvas/LuaNodes/LuaScriptNode.hpp"
 #include "Spire/Canvas/LuaNodes/RecordLuaReactorParameter.hpp"
-#include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
+#include "Spire/Canvas/MarketDataNodes/BboQuoteQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
 #include "Spire/Canvas/Operations/Translation.hpp"
@@ -92,6 +92,7 @@
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/ParserTypes.hpp"
+#include "Spire/Canvas/Types/QuoteRecordType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/TimeAndSaleRecordType.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
@@ -140,6 +141,7 @@ namespace {
       void Visit(const AdditionNode& node) override;
       void Visit(const AggregateNode& node) override;
       void Visit(const AlarmNode& node) override;
+      void Visit(const BboQuoteQueryNode& node) override;
       void Visit(const BlotterTaskMonitorNode& node) override;
       void Visit(const BooleanNode& node) override;
       void Visit(const CanvasNode& node) override;
@@ -1089,7 +1091,7 @@ void CanvasNodeTranslationVisitor::Visit(const AdditionNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
   auto children = std::vector<Translation>();
   for(auto& child : node.GetChildren()) {
-    if(dynamic_cast<const NoneNode*>(&child) != nullptr) {
+    if(dynamic_cast<const NoneNode*>(&child) == nullptr) {
       children.push_back(InternalTranslation(child));
     }
   }
@@ -1099,8 +1101,8 @@ void CanvasNodeTranslationVisitor::Visit(const AggregateNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
-  auto userProfile = &m_context->GetUserProfile();
-  auto timerFactory = [=] (time_duration interval) {
+  auto timerFactory = [userProfile = &m_context->GetUserProfile()] (
+      time_duration interval) {
     return make_unique<LiveTimer>(interval,
       Ref(userProfile->GetTimerThreadPool()));
   };
@@ -1109,6 +1111,31 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
   m_translation = AlarmReactor(
     &m_context->GetUserProfile().GetServiceClients().GetTimeClient(),
     timerFactory, std::move(expiry));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
+  auto security = InternalTranslation(
+    node.GetChildren()[0]).Extract<Aspen::Box<Security>>();
+  auto side = InternalTranslation(
+    node.GetChildren()[1]).Extract<Aspen::Box<Side>>();
+  auto range = InternalTranslation(
+    node.GetChildren()[2]).Extract<Aspen::Box<Beam::Queries::Range>>();
+  auto marketDataClient =
+    &m_context->GetUserProfile().GetServiceClients().GetMarketDataClient();
+  m_translation = Aspen::lift(QuoteToRecordConverter{},
+    Aspen::lift(
+      [] (Side side, const SequencedBboQuote& quote) {
+        return Pick(side, quote->m_ask, quote->m_bid);
+      }, std::move(side), Aspen::override(Aspen::lift(
+      [=] (const Security& security, const Beam::Queries::Range& range) {
+        auto query = SecurityMarketDataQuery();
+        query.SetIndex(security);
+        query.SetRange(range);
+        query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+        auto queue = std::make_shared<Queue<SequencedBboQuote>>();
+        marketDataClient->QueryBboQuotes(query, queue);
+        return Aspen::Shared(QueueReactor(queue));
+      }, std::move(security), std::move(range)))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {

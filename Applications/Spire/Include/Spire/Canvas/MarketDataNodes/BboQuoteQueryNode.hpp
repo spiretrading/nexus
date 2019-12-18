@@ -5,14 +5,14 @@
 
 namespace Spire {
 
-  /*! \class BboQuoteNode
+  /*! \class BboQuoteQueryNode
       \brief Provides a Security's real time BboQuote.
    */
-  class BboQuoteNode : public CanvasNode {
+  class BboQuoteQueryNode : public CanvasNode {
     public:
 
-      //! Constructs a BboQuoteNode.
-      BboQuoteNode();
+      //! Constructs a BboQuoteQueryNode.
+      BboQuoteQueryNode();
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -22,13 +22,13 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      BboQuoteNode(Beam::Serialization::ReceiveBuilder);
+      BboQuoteQueryNode(Beam::Serialization::ReceiveBuilder);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void BboQuoteNode::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void BboQuoteQueryNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     CanvasNode::Shuttle(shuttle, version);
   }
 }
@@ -36,7 +36,7 @@ namespace Spire {
 namespace Beam {
 namespace Serialization {
   template<>
-  struct IsDefaultConstructable<Spire::BboQuoteNode> : std::false_type {};
+  struct IsDefaultConstructable<Spire::BboQuoteQueryNode> : std::false_type {};
 }
 }
 

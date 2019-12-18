@@ -7,7 +7,7 @@ namespace Spire {
   class AggregateNode;
   class AlarmNode;
   class BaseValueNode;
-  class BboQuoteNode;
+  class BboQuoteQueryNode;
   class BlotterTaskMonitorNode;
   class BooleanNode;
   class BooleanType;

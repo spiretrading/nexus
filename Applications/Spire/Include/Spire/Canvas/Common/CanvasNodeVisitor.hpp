@@ -21,7 +21,7 @@ namespace Spire {
 
       virtual void Visit(const BaseValueNode& node);
 
-      virtual void Visit(const BboQuoteNode& node);
+      virtual void Visit(const BboQuoteQueryNode& node);
 
       virtual void Visit(const BlotterTaskMonitorNode& node);
 
