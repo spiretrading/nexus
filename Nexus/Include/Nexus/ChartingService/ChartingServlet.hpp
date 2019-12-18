@@ -299,8 +299,8 @@ namespace Details {
   void ChartingServlet<ContainerType, MarketDataClientType>::OnQueryUpdate(
       const Index& index, const MarketDataType& value,
       QueryEntry<MarketDataType>& queries) {
-    auto indexedValue = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(*value, index), value.GetSequence());
+    auto indexedValue = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     m_dataStore.Store(indexedValue);
     queries.m_queries.Publish(indexedValue,
       [&] (auto& client, auto id, auto& value) {

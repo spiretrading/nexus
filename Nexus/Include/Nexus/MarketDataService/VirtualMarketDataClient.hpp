@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queues.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
@@ -152,6 +153,112 @@ namespace MarketDataService {
       MarketDataClient&& client) {
     return std::make_unique<WrapperMarketDataClient<MarketDataClient>>(
       std::forward<MarketDataClient>(client));
+  }
+
+  //! Submits a query for a Security's real-time BookQuotes with snapshot.
+  /*!
+    \param marketDataClient The MarketDataClient used to submit the query.
+    \param security The Security to query for.
+    \param queue The queue that will store the result of the query.
+    \param interruptionPolicy The policy used when the query is interrupted.
+  */
+  template<typename MarketDataClient>
+  Beam::Routines::Routine::Id QueryRealTimeBookQuotesWithSnapshot(
+      MarketDataClient& marketDataClient, const Security& security,
+      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue,
+      Beam::Queries::InterruptionPolicy interruptionPolicy =
+      Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
+    return Beam::Routines::Spawn(
+      [&marketDataClient, security, queue, interruptionPolicy] {
+        SecuritySnapshot snapshot;
+        try {
+          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+        } catch(const std::exception& e) {
+          queue->Break(e);
+          return;
+        }
+        if(snapshot.m_askBook.empty() && snapshot.m_bidBook.empty()) {
+          SecurityMarketDataQuery bookQuoteQuery;
+          bookQuoteQuery.SetIndex(security);
+          bookQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
+          bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
+          marketDataClient.QueryBookQuotes(bookQuoteQuery, queue);
+        } else {
+          auto startPoint = Beam::Queries::Sequence::First();
+          try {
+            for(auto& bookQuote : snapshot.m_askBook) {
+              startPoint = std::max(startPoint, bookQuote.GetSequence());
+              queue->Push(std::move(*bookQuote));
+            }
+            for(auto& bookQuote : snapshot.m_bidBook) {
+              startPoint = std::max(startPoint, bookQuote.GetSequence());
+              queue->Push(std::move(*bookQuote));
+            }
+          } catch(const std::exception&) {
+            return;
+          }
+          startPoint = Beam::Queries::Increment(startPoint);
+          SecurityMarketDataQuery bookQuoteQuery;
+          bookQuoteQuery.SetIndex(security);
+          bookQuoteQuery.SetRange(startPoint, Beam::Queries::Sequence::Last());
+          bookQuoteQuery.SetSnapshotLimit(
+            Beam::Queries::SnapshotLimit::Unlimited());
+          bookQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
+          marketDataClient.QueryBookQuotes(bookQuoteQuery, queue);
+        }
+      });
+  }
+
+  //! Submits a query for a Security's real-time MarketQuotes with snapshot.
+  /*!
+    \param marketDataClient The MarketDataClient used to submit the query.
+    \param security The Security to query for.
+    \param queue The queue that will store the result of the query.
+    \param interruptionPolicy The policy used when the query is interrupted.
+  */
+  template<typename MarketDataClient>
+  Beam::Routines::Routine::Id QueryRealTimeMarketQuotesWithSnapshot(
+      MarketDataClient& marketDataClient, const Security& security,
+      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue,
+      Beam::Queries::InterruptionPolicy interruptionPolicy =
+      Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE) {
+    return Beam::Routines::Spawn(
+      [&marketDataClient, security, queue, interruptionPolicy] {
+        SecuritySnapshot snapshot;
+        try {
+          snapshot = marketDataClient.LoadSecuritySnapshot(security);
+        } catch(const std::exception& e) {
+          queue->Break(e);
+          return;
+        }
+        if(snapshot.m_marketQuotes.empty()) {
+          SecurityMarketDataQuery marketQuoteQuery;
+          marketQuoteQuery.SetIndex(security);
+          marketQuoteQuery.SetRange(Beam::Queries::Range::RealTime());
+          marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
+          marketDataClient.QueryMarketQuotes(marketQuoteQuery, queue);
+        } else {
+          auto startPoint = Beam::Queries::Sequence::First();
+          try {
+            for(auto& marketQuote : snapshot.m_marketQuotes |
+                boost::adaptors::map_values) {
+              startPoint = std::max(startPoint, marketQuote.GetSequence());
+              queue->Push(std::move(*marketQuote));
+            }
+          } catch(const std::exception&) {
+            return;
+          }
+          startPoint = Beam::Queries::Increment(startPoint);
+          SecurityMarketDataQuery marketQuoteQuery;
+          marketQuoteQuery.SetIndex(security);
+          marketQuoteQuery.SetRange(startPoint,
+            Beam::Queries::Sequence::Last());
+          marketQuoteQuery.SetSnapshotLimit(
+            Beam::Queries::SnapshotLimit::Unlimited());
+          marketQuoteQuery.SetInterruptionPolicy(interruptionPolicy);
+          marketDataClient.QueryMarketQuotes(marketQuoteQuery, queue);
+        }
+      });
   }
 
   inline VirtualMarketDataClient::~VirtualMarketDataClient() {}
