@@ -3,7 +3,6 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
 import { IntegerInputBox } from './integer_input_box';
-import { PaddedIntegerField } from './padded_integer_field';
 
 interface Properties {
 
@@ -20,7 +19,8 @@ interface Properties {
 }
 
 interface State {
-  isInFocus: boolean
+  isInFocus: boolean,
+  componentWidth: number
 }
 
 /** A component that displays and lets a user edit a duration. */
@@ -33,8 +33,10 @@ export class DateField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isInFocus: false
+      isInFocus: false,
+      componentWidth: 0
     }
+    this.handleResize = this.handleResize.bind(this);
   } 
 
   public render(): JSX.Element {
@@ -52,36 +54,65 @@ export class DateField extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const hintText = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        console.log(this.state.componentWidth);
+        if(this.state.componentWidth >= 227) {
+          return 'Day / Month / Year';
+        } else if(this.state.componentWidth >= 161){
+          return 'D / M / Y';
+        } else {
+          return '';
+        }
+      } else {
+        return 'Day / Month / Year';
+      }
+    })();
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
+          ref={(input) => { this.reference = input; }}
           onFocus={() => this.setState({isInFocus: true})}
           onBlur={() => this.setState({isInFocus: false})}> 
         <div style={DateField.STYLE.inner}>
-          <PaddedIntegerField
+          <IntegerInputBox
             min={1} max={31}
             value={this.props.value.day()}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
-          <PaddedIntegerField
+          <IntegerInputBox
             min={1} max={12}
             value={this.props.value.month()}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.integerBoxLarge}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
-          <PaddedIntegerField
-            min={0} max={3000}
+          <IntegerInputBox
+            min={2000} max={3000}
             value={this.props.value.year()}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.yearBox}
             padding={4}/>
           </div>
           <div style={DateField.STYLE.placeholder}>
-            {'Day / Month / Year'}
+            {hintText}
           </div>
       </div>);
+  }
+
+  private handleResize() {
+    if(this.props.displaySize === DisplaySize.SMALL) {
+      if(this.state.componentWidth !== this.reference.clientWidth) {
+        this.setState({componentWidth: this.reference.clientWidth});
+      }
+    }
+  }
+
+  public componentDidMount() {
+    console.log('mount');
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
   }
 
   private static readonly STYLE = {
@@ -183,4 +214,5 @@ export class DateField extends React.Component<Properties, State> {
       }
     }
   });
+  private reference: HTMLDivElement;
 }

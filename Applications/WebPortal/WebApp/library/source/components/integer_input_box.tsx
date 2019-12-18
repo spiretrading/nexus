@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 
 interface Properties {
@@ -38,34 +39,28 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value || 0
-    };
+      value: props.value || this.props.min || 0,
+    }
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
     this.onChange = this.onChange.bind(this);
+    this.onBlur = this.onBlur.bind(this);
   }
 
   public render(): JSX.Element {
-    const value = this.state.value.toString().padStart(
-      this.props.padding || 0, '0');
+    const shownValue = (() => {
+      return ('0'.repeat(this.props.padding) + 
+        this.state.value).slice(-1 * (this.props.padding));
+    })();
     return (
-      <div>
-        <input style={{...IntegerInputBox.STYLE.input, ...this.props.style}} 
-          type='text'
-          className={this.props.className}
-          ref={(input) => { this._input = input; }} value={value}
-          onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-          onChange={this.onChange}/>
-      </div>);
-  }
-
-  public componentDidUpdate() {
-    if(this._start != null) {
-      this._input.setSelectionRange(this._start, this._end);
-      this._start = null;
-      this._end = null;
-    }
-    this._input.setSelectionRange(this.props.padding, this.props.padding);
+      <input
+        onBlur={this.onBlur}
+        style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}} 
+        value={shownValue}
+        onChange={this.onChange}
+        onKeyDown={this.onKeyDown} onWheel={this.onWheel}
+        className={css(IntegerInputBox.EXTRA_STYLE.customHighlighting)}
+        type={'text'}/>);
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -88,26 +83,32 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+    console.log('BOOP BOPP');
     let value = (() => {
       if(event.target.value.length === 0) {
         return 0;
       } else {
-        return parseInt(event.target.value, 10);
+        return parseInt(event.target.value.slice(-1 * this.props.padding), 10);
       }
     })();
     if(isNaN(value)) {
-      this._start = this._input.selectionStart - 1;
-      this._end = this._input.selectionEnd - 1;
       this.forceUpdate();
       return;
     }
-    if(this.props.max != null && value > this.props.max) {
-      value = Math.trunc(value / 10);
+    console.log(value);
+    this.setState({value: value});
+  }
+
+  private onBlur() {
+    let value = (() => {
+    if(this.state.value < this.props.min) {
+      return this.props.min;
+    } else if(this.state.value > this.props.max) {
+      return this.props.max;
+    } else {
+      return this.state.value;
     }
-    if(this.props.min != null && value < this.props.min ||
-        this.props.max != null && value > this.props.max) {
-      return;
-    }
+    })();
     this.update(value);
   }
 
@@ -134,15 +135,13 @@ export class IntegerInputBox extends React.Component<Properties, State> {
         return;
       }
     }
-    this._start = this._input.selectionStart;
-    this._end = this._input.selectionEnd;
     this.setState({
       value: value
     });
   }
 
   private static readonly STYLE = {
-    input: {
+    editBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '16px Roboto',
       width: '66px',
@@ -151,7 +150,36 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       textAlign: 'center' as 'center'
     }
   };
-  private _input: HTMLInputElement;
-  private _start: number;
-  private _end: number;
+  private static EXTRA_STYLE = StyleSheet.create({
+    customHighlighting: {
+      '-moz-appearance': 'textfield',
+      ':focus': {
+        ouline: 0,
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      ':active' : {
+        borderColor: '#684BC7'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::placeholder': {
+        color: '#8C8C8C'
+      },
+      '::-webkit-inner-spin-button': {
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0
+      },
+      '::-webkit-outer-spin-button': { 
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0
+      }
+    }
+  });
 }

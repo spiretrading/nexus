@@ -25,7 +25,8 @@ interface Properties {
 }
 
 interface State {
-  isInFocus: boolean
+  isInFocus: boolean,
+  componentWidth: number
 }
 
 /** A component that displays and lets a user edit a duration. */
@@ -38,11 +39,14 @@ export class DurationInputField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isInFocus: false
+      isInFocus: false,
+      componentWidth: 0
     }
-  } 
+    this.handleResize = this.handleResize.bind(this);
+  }
 
   public render(): JSX.Element {
+    console.log('do a render plox');
     const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -58,11 +62,27 @@ export class DurationInputField extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const hintText = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        console.log(this.state.componentWidth);
+        if(this.state.componentWidth >= 165) {
+          return 'Hr : Min : Sec';
+        } else if(this.state.componentWidth >= 141){
+          return 'H : M : S';
+        } else {
+          return '';
+        }
+      } else {
+        return 'Hr : Min : Sec';
+      }
+    })();
     return (
-      <div style={{...wrapperStyle, ...focusClassName}} 
+      <div style={{...wrapperStyle, ...focusClassName}}
+          ref={(input) => { this.reference = input; }}
           onFocus={() => this.setState({isInFocus: true})}
           onBlur={() => this.setState({isInFocus: false})}>
-        <div style={DurationInputField.STYLE.inner}>
+        <div
+        style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
             min={0} max={59}
             value={splitTransitionTime.hours}
@@ -88,9 +108,23 @@ export class DurationInputField extends React.Component<Properties, State> {
             padding={2}/>
           </div>
           <div style={DurationInputField.STYLE.placeholder}>
-            {'Hr : Min : Sec'}
+            {hintText}
           </div>
       </div>);
+  }
+  
+  private handleResize() {
+    if(this.props.displaySize === DisplaySize.SMALL) {
+      if(this.state.componentWidth !== this.reference.clientWidth) {
+        this.setState({componentWidth: this.reference.clientWidth});
+      }
+    }
+  }
+
+  public componentDidMount() {
+    console.log('mount');
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
   }
 
   private onChange(timeUnit: TimeUnit, value: number) {
@@ -119,7 +153,7 @@ export class DurationInputField extends React.Component<Properties, State> {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      minWidth: '164px',
+      minWidth: '110px',
       width: '100%',
       flexShrink: 1,
       flexGrow: 1,
@@ -204,4 +238,5 @@ export class DurationInputField extends React.Component<Properties, State> {
       }
     }
   });
+  private reference: HTMLDivElement;
 }

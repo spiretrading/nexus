@@ -18,6 +18,8 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
+  maxHourValue?: number;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -51,7 +53,7 @@ export class DurationInput extends React.Component<Properties> {
     return (
       <div style={wrapperStyle}>
         <IntegerInputBox
-          min={0} max={59}
+          min={0} max={this.props.maxHourValue}
           value={splitTransitionTime.hours}
           className={css(DurationInput.EXTRA_STYLE.effects)}
           style={integerInputStyle}
