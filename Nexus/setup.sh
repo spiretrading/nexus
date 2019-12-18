@@ -1,7 +1,7 @@
 #!/bin/bash
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="9f4e2be7f86b795b14a2c5e13feac90ed1a3b57f"
+beam_commit="0132cda028b3a75c47be00d28af2ba481b70db89"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/eidolonsystems/beam.git Beam
@@ -15,7 +15,9 @@ if ! git merge-base --is-ancestor "$beam_commit" HEAD; then
   build_beam=1
 fi
 if [ "$build_beam" == "1" ]; then
-  ./configure.sh "-DD=$root"
+  ./configure.sh "-DD=$root" Debug
+  ./build.sh
+  ./configure.sh "-DD=$root" Release
   ./build.sh
 else
   pushd "$root"
