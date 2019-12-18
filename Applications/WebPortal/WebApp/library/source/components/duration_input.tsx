@@ -130,7 +130,7 @@ export class DurationInput extends React.Component<Properties> {
       height: '34px'
     },
     colon: {
-      width: '27px',
+      width: '26px',
       flexShrink: 0,
       display: 'flex' as 'flex',
       justifyContent: 'center',

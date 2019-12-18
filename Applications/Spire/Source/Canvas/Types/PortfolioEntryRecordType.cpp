@@ -1,4 +1,3 @@
-#define BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP // TODO: MSVC Workaround
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"

@@ -1,8 +1,8 @@
 #include "Spire/UI/LinkSecurityContextAction.hpp"
 #include <QApplication>
 #include <QWidget>
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/SecurityContext.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;

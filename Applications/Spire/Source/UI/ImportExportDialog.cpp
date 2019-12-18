@@ -1,9 +1,9 @@
 #include "Spire/UI/ImportExportDialog.hpp"
 #include <QStandardPaths>
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/EnvironmentSettings.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/Toolbar.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_ImportExportDialog.h"
 
 using namespace Beam;

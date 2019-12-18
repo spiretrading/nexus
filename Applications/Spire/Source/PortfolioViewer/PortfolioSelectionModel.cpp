@@ -1,11 +1,9 @@
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Utilities/VariantLambdaVisitor.hpp>
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

@@ -8,7 +8,7 @@
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 
 using namespace Beam;
@@ -17,7 +17,7 @@ using namespace std;
 
 unique_ptr<CanvasNode> Spire::BuildTaskVolumeNode() {
   auto taskReference = make_unique<ReferenceNode>("<<<<task",
-    TaskType::GetInstance());
+    OrderReferenceType::GetInstance());
   unique_ptr<CanvasNode> executionReportMonitor =
     make_unique<ExecutionReportMonitorNode>();
   executionReportMonitor = executionReportMonitor->Replace(
@@ -42,9 +42,9 @@ unique_ptr<CanvasNode> Spire::BuildTaskVolumeNode() {
   chainNode = chainNode->Replace(chainNode->GetChildren().back(),
     std::move(foldNode));
   unique_ptr<CanvasNode> sourceParameter = make_unique<ReferenceNode>("",
-    TaskType::GetInstance());
+    OrderReferenceType::GetInstance());
   CustomNode::Child volumeChild("volume", IntegerType::GetInstance());
-  CustomNode::Child taskChild("task", TaskType::GetInstance());
+  CustomNode::Child taskChild("task", OrderReferenceType::GetInstance());
   unique_ptr<CanvasNode> customNode = make_unique<CustomNode>(
     string{"Volume"}, vector<CustomNode::Child>{volumeChild, taskChild});
   customNode = customNode->Replace(customNode->GetChildren().front(),

@@ -3,10 +3,10 @@
 #include <QStandardItemModel>
 #include <QTableView>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CanvasWindow.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_TaskKeyBindingsDialog.h"
 
 using namespace Beam;
@@ -138,7 +138,7 @@ void TaskKeyBindingsDialog::Commit() {
   auto roots = canvasWindow->GetCanvasNodeModel().GetRoots();
   boost::optional<KeyBindings::TaskBinding> taskBinding;
   for(const auto& root : roots) {
-    if(root->GetType().GetCompatibility(TaskType::GetInstance()) ==
+    if(root->GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       taskBinding = KeyBindings::TaskBinding();
       auto name = m_ui->m_taskNameInput->text().trimmed();

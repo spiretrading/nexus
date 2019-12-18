@@ -5,7 +5,6 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
-#include <Beam/Tasks/Task.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -15,11 +14,11 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
-namespace Spire {
-namespace UI {
+namespace Spire::UI {
 
   /*! \struct MarketToken
       \brief Wraps a MarketCode so that it can be displayed in a model.
@@ -61,9 +60,8 @@ namespace UI {
     QString ToString() const;
   };
 }
-}
 
-Q_DECLARE_METATYPE(Beam::Tasks::Task::State);
+Q_DECLARE_METATYPE(Spire::Task::State);
 Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
@@ -78,8 +76,7 @@ Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::UI::MarketToken);
 Q_DECLARE_METATYPE(Spire::UI::PositionSideToken);
 
-namespace Spire {
-namespace UI {
+namespace Spire::UI {
 
   //! Converts a posix time duration into a QTime.
   QTime ToQTime(const boost::posix_time::time_duration& time);
@@ -142,7 +139,6 @@ namespace UI {
     private:
       UserProfile* m_userProfile;
   };
-}
 }
 
 #endif

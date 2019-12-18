@@ -11,12 +11,21 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase?: Nexus.CurrencyDatabase;
 
-  /** The list of compliance rules. */
-  complianceList: Nexus.ComplianceRuleEntry[];
+  /** The list of compliance rules to display and edit. */
+  entries: Nexus.ComplianceRuleEntry[];
+
+  /** The list of rule schemas. Used in adding new rules. */
+  schemas: Nexus.ComplianceRuleSchema[];
+
+  /** The callback for adding the rule.*/
+  onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
+
+  /** The callback for updating a changed rule. */
+  onRuleChange?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
 
 interface State {
-  complianceList: Nexus.ComplianceRuleEntry[];
+  isAddRuleModalOpen: boolean;
 }
 
 /* Displays the compliance page.*/
@@ -24,9 +33,9 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      complianceList: this.props.complianceList.slice()
+      isAddRuleModalOpen: false
     };
-    this.onChange = this.onChange.bind(this);
+    this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
   }
 
   public render(): JSX.Element {
@@ -40,40 +49,27 @@ export class CompliancePage extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={CompliancePage.STYLE.wrapper}>
-        <div style={CompliancePage.STYLE.filler}/>
-        <div style={contentStyle}>
-          <RulesList 
-            displaySize={this.props.displaySize}
-            currencyDatabase={this.props.currencyDatabase}
-            complianceList={this.state.complianceList}
-            onChange={this.onChange}/>
-          <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize}/>
-          <div style={CompliancePage.STYLE.paddingLarge}/>
-        </div>
-        <div style={CompliancePage.STYLE.filler}/>
+      <div style={contentStyle}>
+        <RulesList
+          displaySize={this.props.displaySize}
+          currencyDatabase={this.props.currencyDatabase}
+          complianceList={this.props.entries}
+          onChange={this.props.onRuleChange}/>
+        <div style={CompliancePage.STYLE.paddingMedium}/>
+        <NewRuleButton displaySize={this.props.displaySize}
+          isOpen={this.state.isAddRuleModalOpen}
+          onToggleModal={this.onToggleAddRuleModal}
+          onAddNewRule={this.props.onRuleAdd}
+          schemas={this.props.schemas}/>
+        <div style={CompliancePage.STYLE.paddingLarge}/>
       </div>);
   }
 
-  private onChange(ruleIndex: number, newRule: Nexus.ComplianceRuleEntry) {
-    this.state.complianceList[ruleIndex] = newRule;
-    this.setState({complianceList: this.state.complianceList});
+  private onToggleAddRuleModal() {
+    this.setState({isAddRuleModalOpen: !this.state.isAddRuleModalOpen});
   }
 
   private static readonly STYLE = {
-    wrapper: {
-      paddingTop: '18px',
-      paddingLeft: '18px',
-      paddingRight: '18px',
-      paddingBottom: '60px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
-    },
-    filler: {
-      flexGrow: 1,
-      flexShrink: 1,
-    },
     paddingMedium: {
       width: '100%',
       height: '20px'
@@ -83,32 +79,34 @@ export class CompliancePage extends React.Component<Properties, State> {
       height: '30px'
     },
     smallContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
+      flexBasis: '284px',
+      flexGrow: 1,
       minWidth: '284px',
-      maxWidth: '424px',
-      width: '100%',
+      maxWidth: '424px'
     },
     mediumContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '732px'
     },
     largeContent: {
+      paddingTop: '18px',
+      paddingLeft: '18px',
+      paddingRight: '18px',
+      paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px'
-    },
-    newRuleRow: {
-      height: '20px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      font: '400 16px Roboto',
-    },
-    newRuleText: {
-      font: '400 14px Roboto',
-      height: '20px',
-      paddingLeft: '18px'
     }
   };
 }

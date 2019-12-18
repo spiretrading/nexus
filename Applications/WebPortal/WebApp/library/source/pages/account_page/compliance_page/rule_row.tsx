@@ -114,9 +114,9 @@ export class RuleRow extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     this.applicabilityStyleDefinition.entering.maxHeight =
-      `${this.ruleParameters.offsetHeight}px`;
+      `${this.ruleParameters.scrollHeight}px`;
     this.applicabilityStyleDefinition.entered.maxHeight =
-      `${this.ruleParameters.offsetHeight}px`;
+      `${this.ruleParameters.scrollHeight}px`;
     this.setState({
       animationStyle: StyleSheet.create(this.applicabilityStyleDefinition)
     });

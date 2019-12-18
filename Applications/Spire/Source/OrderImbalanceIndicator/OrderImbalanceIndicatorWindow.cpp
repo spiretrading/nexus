@@ -3,8 +3,8 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_OrderImbalanceIndicatorWindow.h"
 
 using namespace Beam;

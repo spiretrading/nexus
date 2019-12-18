@@ -1,6 +1,6 @@
 #include "Spire/Dashboard/DashboardWindowSettings.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;

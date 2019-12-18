@@ -27,5 +27,6 @@ done
 python_directory=$(python3 -m site --user-site)
 cp Nexus/Applications/WebPortal/Application/WebPortal WebPortal
 cp -R Nexus/Applications/WebPortal/Application/web_app WebPortal
+cp nexus/Dependencies/aspen/Libraries/Release/aspen.so $python_directory
 cp Nexus/Dependencies/Beam/Beam/Libraries/Release/beam.so $python_directory
 cp Nexus/Nexus/Libraries/Release/nexus.so $python_directory

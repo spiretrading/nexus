@@ -11,7 +11,6 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/range/adaptor/map.hpp>
 #include "Nexus/Accounting/PortfolioMonitor.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"

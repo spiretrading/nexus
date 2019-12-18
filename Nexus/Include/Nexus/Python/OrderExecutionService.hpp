@@ -1,46 +1,80 @@
-#ifndef NEXUS_PYTHONORDEREXECUTIONSERVICE_HPP
-#define NEXUS_PYTHONORDEREXECUTIONSERVICE_HPP
-#include "Nexus/Python/Python.hpp"
+#ifndef NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
+#define NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
+#include <pybind11/pybind11.h>
 
-namespace Nexus {
-namespace Python {
+namespace Nexus::Python {
 
-  //! Exports the ApplicationOrderExecutionClient class.
-  void ExportApplicationOrderExecutionClient();
+  /**
+   * Exports the ApplicationOrderExecutionClient class.
+   * @param module The module to export to.
+   */
+  void ExportApplicationOrderExecutionClient(pybind11::module& module);
 
-  //! Exports the ExecutionReport struct.
-  void ExportExecutionReport();
+  /**
+   * Exports the ExecutionReport struct.
+   * @param module The module to export to.
+   */
+  void ExportExecutionReport(pybind11::module& module);
 
-  //! Exports the MockOrderExecutionDriver.
-  void ExportMockOrderExecutionDriver();
+  /**
+   * Exports the MockOrderExecutionDriver class.
+   * @param module The module to export to.
+   */
+  void ExportMockOrderExecutionDriver(pybind11::module& module);
 
-  //! Exports the Order class.
-  void ExportOrder();
+  /**
+   * Exports the Order class.
+   * @param module The module to export to.
+   */
+  void ExportOrder(pybind11::module& module);
 
-  //! Exports the OrderExecutionClient class.
-  void ExportOrderExecutionClient();
+  /**
+   * Exports the OrderExecutionClient class.
+   * @param module The module to export to.
+   */
+  void ExportOrderExecutionClient(pybind11::module& module);
 
-  //! Exports the OrderExecutionService namespace.
-  void ExportOrderExecutionService();
+  /**
+   * Exports the OrderExecutionService namespace.
+   * @param module The module to export to.
+   */
+  void ExportOrderExecutionService(pybind11::module& module);
 
-  //! Exports the OrderExecutionServiceTestEnvironment class.
-  void ExportOrderExecutionServiceTestEnvironment();
+  /**
+   * Exports the OrderExecutionServiceTestEnvironment class.
+   * @param module The module to export to.
+   */
+  void ExportOrderExecutionServiceTestEnvironment(pybind11::module& module);
 
-  //! Exports the OrderFields struct.
-  void ExportOrderFields();
+  /**
+   * Exports the OrderFields struct.
+   * @param module The module to export to.
+   */
+  void ExportOrderFields(pybind11::module& module);
 
-  //! Exports the OrderInfo struct.
-  void ExportOrderInfo();
+  /**
+   * Exports the OrderInfo struct.
+   * @param module The module to export to.
+   */
+  void ExportOrderInfo(pybind11::module& module);
 
-  //! Exports the OrderRecord struct.
-  void ExportOrderRecord();
+  /**
+   * Exports the OrderRecord struct.
+   * @param module The module to export to.
+   */
+  void ExportOrderRecord(pybind11::module& module);
 
-  //! Exports the PrimitiveOrder class.
-  void ExportPrimitiveOrder();
+  /**
+   * Exports the PrimitiveOrder class.
+   * @param module The module to export to.
+   */
+  void ExportPrimitiveOrder(pybind11::module& module);
 
-  //! Exports standard queries.
-  void ExportStandardQueries();
-}
+  /**
+   * Exports the standard queries.
+   * @param module The module to export to.
+   */
+  void ExportStandardQueries(pybind11::module& module);
 }
 
 #endif

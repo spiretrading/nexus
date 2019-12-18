@@ -1,18 +1,15 @@
-#ifndef SPIRE_RECORDTYPETESTER_HPP
-#define SPIRE_RECORDTYPETESTER_HPP
+#ifndef SPIRE_RECORD_TYPE_TESTER_HPP
+#define SPIRE_RECORD_TYPE_TESTER_HPP
 #include <cppunit/extensions/HelperMacros.h>
 #include "Spire/CanvasTests/CanvasTests.hpp"
 
-namespace Spire {
-namespace Tests {
+namespace Spire::Tests {
 
-  /*  \class RecordTypeTester
-      \brief Tests the RecordType class.
-   */
+  /** Tests the RecordType class. */
   class RecordTypeTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! Tests an empty RecordType.
+      /** Tests an empty RecordType. */
       void TestEmptyRecord();
 
     private:
@@ -20,7 +17,6 @@ namespace Tests {
         CPPUNIT_TEST(TestEmptyRecord);
       CPPUNIT_TEST_SUITE_END();
   };
-}
 }
 
 #endif

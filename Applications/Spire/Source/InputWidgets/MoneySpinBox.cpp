@@ -3,7 +3,7 @@
 #include <QDoubleSpinBox>
 #include <QKeyEvent>
 #include <QVBoxLayout>
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

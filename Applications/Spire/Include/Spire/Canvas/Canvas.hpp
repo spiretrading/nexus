@@ -7,7 +7,7 @@ namespace Spire {
   class AggregateNode;
   class AlarmNode;
   class BaseValueNode;
-  class BboQuoteNode;
+  class BboQuoteQueryNode;
   class BlotterTaskMonitorNode;
   class BooleanNode;
   class BooleanType;
@@ -48,6 +48,7 @@ namespace Spire {
   class DurationType;
   class EqualsNode;
   class ExecutionReportMonitorNode;
+  class Executor;
   class FilePathNode;
   class FileReaderNode;
   class FilterNode;
@@ -59,12 +60,9 @@ namespace Spire {
   class GreaterNode;
   class GreaterOrEqualsNode;
   class IfNode;
-  class IndirectTask;
-  class IndirectTaskFactory;
   class IntegerNode;
   class IntegerType;
   class InteractionsNode;
-  class IsTerminalNode;
   class LastNode;
   class LesserNode;
   class LesserOrEqualsNode;
@@ -82,8 +80,9 @@ namespace Spire {
   class NoneNode;
   class NotNode;
   class OptionalPriceNode;
-  class OrderExecutionPublisherTaskFactory;
   class OrderImbalanceQueryNode;
+  template<typename R> class OrderPublisherReactor;
+  class OrderReferenceType;
   class OrderStatusNode;
   class OrderStatusType;
   class OrderTypeNode;
@@ -108,11 +107,8 @@ namespace Spire {
   class SingleOrderTaskNode;
   class SpawnNode;
   class SubtractionNode;
-  class TaskType;
-  class TaskStateMonitorNode;
-  class TaskStateNode;
-  class TaskStateType;
-  struct TaskTranslation;
+  class Task;
+  class TaskStateParser;
   class TextNode;
   class TextType;
   class TimeAndSaleQueryNode;
@@ -123,6 +119,7 @@ namespace Spire {
   class TimeRangeParameterNode;
   class TimeRangeType;
   class TimerNode;
+  class Translation;
   class UnequalNode;
   class UnionType;
   class UntilNode;

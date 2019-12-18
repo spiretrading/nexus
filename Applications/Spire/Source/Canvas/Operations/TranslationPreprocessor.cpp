@@ -22,7 +22,6 @@ namespace {
 
       virtual void Visit(const CanvasNode& node);
       virtual void Visit(const FoldNode& node);
-      virtual void Visit(const SingleOrderTaskNode& node);
 
     private:
       unique_ptr<CanvasNode> m_result;
@@ -65,14 +64,6 @@ void TranslationPreprocessor::Visit(const FoldNode& node) {
   builder.Replace(GetPath(*translatedNode, *translatedNode->FindRightOperand()),
     std::move(rightOperand));
   m_result = builder.Build();
-}
-
-void TranslationPreprocessor::Visit(const SingleOrderTaskNode& node) {
-  auto translatedNode = node.AddVolumeNode();
-  m_result = DefaultTranslation(*translatedNode);
-  if(m_result == nullptr) {
-    m_result = std::move(translatedNode);
-  }
 }
 
 unique_ptr<CanvasNode> TranslationPreprocessor::DefaultTranslation(

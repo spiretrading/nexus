@@ -497,7 +497,7 @@ namespace Nexus::MarketDataService {
       isPrimaryMpid, side, price, size)));
     auto bookQuote = BookQuote(mpid, isPrimaryMpid, market,
       Quote(price, size, side), timestamp);
-    UpdateBookSampling(Beam::Queries::MakeIndexedValue(
+    UpdateBookSampling(Beam::Queries::IndexedValue(
       std::move(bookQuote), security));
   }
 
@@ -511,7 +511,7 @@ namespace Nexus::MarketDataService {
     auto bookQuote = BookQuote(entry.m_mpid, entry.m_isPrimaryMpid,
       entry.m_market, Quote(entry.m_price, -entry.m_size, entry.m_side),
       timestamp);
-    UpdateBookSampling(Beam::Queries::MakeIndexedValue(
+    UpdateBookSampling(Beam::Queries::IndexedValue(
       std::move(bookQuote), entry.m_security));
     m_orders.erase(orderIterator);
   }

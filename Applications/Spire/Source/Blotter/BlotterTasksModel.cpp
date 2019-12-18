@@ -1,48 +1,27 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
+#include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
-#include <Beam/Tasks/ReactorMonitorTask.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Nexus/Tasks/OrderWrapperTask.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
-#include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
-#include "Spire/Canvas/Common/CustomNode.hpp"
-#include "Spire/Canvas/Common/NoneNode.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeRefresh.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
-#include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include "Spire/Canvas/TaskNodes/CanvasNodeTask.hpp"
-#include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::Reactors;
 using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Tasks;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Tasks;
 using namespace Spire;
-using namespace std;
 
 namespace {
   const auto UPDATE_INTERVAL = 100;
@@ -56,9 +35,9 @@ namespace {
         auto currentTime = userProfile.GetServiceClients().GetTimeClient().
           GetTime();
         auto lastSequence = Beam::Queries::Sequence::First();
+        auto timeOfDay =
+          userProfile.GetServiceClients().GetTimeClient().GetTime();
         for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
-          auto timeOfDay = userProfile.GetServiceClients().GetTimeClient().
-            GetTime();
           auto snapshotQuery = BuildDailyOrderSubmissionQuery(market.m_code,
             account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
             userProfile.GetTimeZoneDatabase());
@@ -74,7 +53,7 @@ namespace {
             }
           } catch(const std::exception&) {}
         }
-        AccountQuery query;
+        auto query = AccountQuery();
         query.SetIndex(account);
         query.SetSnapshotLimit(SnapshotLimit::Unlimited());
         if(lastSequence == Beam::Queries::Sequence::First()) {
@@ -88,26 +67,10 @@ namespace {
   }
 }
 
-BlotterTasksModel::TaskContext::TaskContext(Ref<UserProfile> userProfile,
-    const CanvasNode& node, const DirectoryEntry& executingAccount)
-    : m_context(Ref(userProfile), Ref(m_reactorMonitor), executingAccount) {
-  m_node = PreprocessTranslation(node);
-  if(m_node == nullptr) {
-    m_node = CanvasNode::Clone(node);
-  }
-  auto canvasNodeTaskFactory = CanvasNodeTaskFactory(Ref(m_context),
-    Ref(*m_node));
-  m_orderExecutionPublisher =
-    canvasNodeTaskFactory.GetOrderExecutionPublisher();
-  m_factory = ReactorMonitorTaskFactory(Ref(m_context.GetReactorMonitor()),
-    canvasNodeTaskFactory);
-  m_task = m_factory->Create();
-}
-
-BlotterTasksModel::ObserverEntry::ObserverEntry(string name,
-    unique_ptr<CanvasObserver> observer)
-    : m_name(std::move(name)),
-      m_observer(std::move(observer)) {}
+BlotterTasksModel::ObserverEntry::ObserverEntry(std::string name,
+  std::unique_ptr<CanvasObserver> observer)
+  : m_name(std::move(name)),
+    m_observer(std::move(observer)) {}
 
 BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& executingAccount, bool isConsolidated,
@@ -122,19 +85,13 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
   m_taskSlotHandler.emplace();
   SetupLinkedOrderExecutionMonitor();
   if(m_isConsolidated) {
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().
-      GetOrderSubmissionPublisher().Monitor(
-      m_orderSlotHandler.GetSlot<const Order*>(
-      std::bind(&BlotterTasksModel::OnOrderSubmitted, this,
-      std::placeholders::_1)));
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     QueryDailyOrderSubmissions(*m_userProfile, m_executingAccount, orderQueue);
     m_accountOrderPublisher =
-      std::make_shared<QueuePublisher<SequencePublisher<const Order*>>>(
+      std::make_unique<QueuePublisher<SequencePublisher<const Order*>>>(
       orderQueue);
     m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
-      std::bind(&BlotterTasksModel::OnOrderExecuted, this,
-      std::placeholders::_1)));
+      [=] (const Order* order) { OnOrderSubmitted(order); }));
   }
   connect(&m_updateTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnUpdateTimer);
@@ -142,12 +99,10 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
   connect(&m_expiryTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnExpiryTimer);
   m_expiryTimer.start(EXPIRY_INTERVAL);
-  for(const auto& monitor : m_properties.GetMonitors()) {
+  for(auto& monitor : m_properties.GetMonitors()) {
     m_taskMonitors.push_back(monitor);
   }
 }
-
-BlotterTasksModel::~BlotterTasksModel() {}
 
 const BlotterTaskProperties& BlotterTasksModel::GetProperties() const {
   return m_properties;
@@ -156,74 +111,71 @@ const BlotterTaskProperties& BlotterTasksModel::GetProperties() const {
 void BlotterTasksModel::SetProperties(const BlotterTaskProperties& properties) {
   m_properties = properties;
   m_taskMonitors.clear();
-  for(const auto& monitor : m_properties.GetMonitors()) {
+  for(auto& monitor : m_properties.GetMonitors()) {
     m_taskMonitors.push_back(monitor);
   }
   Refresh();
 }
 
-OrderExecutionPublisher& BlotterTasksModel::GetOrderExecutionPublisher() const {
-  return const_cast<SpireAggregateOrderExecutionPublisher&>(
-    *m_linkedOrderExecutionPublisher);
+const OrderExecutionPublisher&
+    BlotterTasksModel::GetOrderExecutionPublisher() const {
+  return *m_linkedOrderExecutionPublisher;
 }
 
 const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
     const CanvasNode& node) {
-  auto context = make_unique<TaskContext>(Ref(*m_userProfile), node,
-    m_executingAccount);
-  return Adopt(std::move(context));
+  return Add(std::make_shared<Task>(node, m_executingAccount,
+    Ref(*m_userProfile)));
 }
 
-const BlotterTasksModel::TaskEntry& BlotterTasksModel::Adopt(
-    std::unique_ptr<TaskContext> context) {
-  std::shared_ptr<TaskContext> adoptedContext = std::move(context);
-  m_contexts.push_back(adoptedContext);
-  m_properOrderExecutionPublisher.Add(
-    *adoptedContext->m_orderExecutionPublisher);
-  Monitor(adoptedContext);
-  return *m_entries.back();
-}
-
-void BlotterTasksModel::Monitor(const std::shared_ptr<TaskContext>& context) {
-  if(!m_taskIds.insert(context->m_task->GetId()).second) {
-    return;
+const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
+    std::shared_ptr<Task> task) {
+  auto taskIterator = m_taskIds.find(task->GetId());
+  if(taskIterator != m_taskIds.end()) {
+    return *(taskIterator->second);
   }
   auto index = static_cast<int>(m_entries.size());
   beginInsertRows(QModelIndex(), index, index);
-  auto entry = std::make_shared<TaskEntry>();
+  auto entry = std::make_unique<TaskEntry>();
   entry->m_index = index;
   entry->m_sticky = false;
-  entry->m_context = context;
-  entry->m_context->m_task->GetPublisher().Monitor(
+  entry->m_task = std::move(task);
+  entry->m_task->GetPublisher().Monitor(
     m_taskSlotHandler->GetSlot<Task::StateEntry>(
-    std::bind(&BlotterTasksModel::OnTaskState, this,
-    std::weak_ptr<TaskEntry>(entry), std::placeholders::_1)));
-  for(const auto& taskMonitor : m_taskMonitors) {
-    auto observer = make_unique<CanvasObserver>(*entry->m_context->m_node,
-      taskMonitor.GetMonitor(), Ref(context->m_context),
-      Ref(context->m_reactorMonitor), m_executingAccount, Ref(*m_userProfile));
-    auto monitor = make_unique<ObserverEntry>(taskMonitor.GetName(),
+    [=, entry = entry.get()] (const Task::StateEntry& state) {
+      OnTaskState(*entry, state);
+    }));
+  m_taskIds.insert(std::make_pair(entry->m_task->GetId(), entry.get()));
+  for(auto& taskMonitor : m_taskMonitors) {
+    auto observer = std::make_unique<CanvasObserver>(entry->m_task,
+      taskMonitor.GetMonitor());
+    auto observerEntry = std::make_unique<ObserverEntry>(taskMonitor.GetName(),
       std::move(observer));
-    monitor->m_connection = monitor->m_observer->ConnectUpdateSignal(
-      std::bind(&BlotterTasksModel::OnMonitorUpdate, this,
-      std::weak_ptr<TaskEntry>(entry), taskMonitor.GetName(),
-      std::placeholders::_1));
-    entry->m_monitors.push_back(std::move(monitor));
+    observerEntry->m_connection =
+      observerEntry->m_observer->ConnectUpdateSignal(
+      [=, entry = entry.get(), name = taskMonitor.GetName()]
+          (const boost::any& value) {
+        OnMonitorUpdate(*entry, name, value);
+      });
+    entry->m_monitors.push_back(std::move(observerEntry));
   }
-  m_entries.push_back(entry);
+  auto& entryReference = *entry;
+  m_entries.push_back(std::move(entry));
   endInsertRows();
-  m_taskAddedSignal(*entry);
-  for(const auto& link : m_outgoingLinks) {
-    link->Monitor(context);
+  m_taskAddedSignal(entryReference);
+  for(auto& link : m_outgoingLinks) {
+    link->Add(entryReference.m_task);
   }
+  m_properOrderExecutionPublisher.Add(
+    entryReference.m_task->GetContext().GetOrderPublisher());
+  entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
+    m_orderSlotHandler.GetSlot<const Order*>(
+    [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
+  return entryReference;
 }
 
-const vector<std::shared_ptr<BlotterTasksModel::TaskContext>>&
-    BlotterTasksModel::GetContexts() const {
-  return m_contexts;
-}
-
-const vector<BlotterTasksModel*>& BlotterTasksModel::GetIncomingLinks() const {
+const std::vector<BlotterTasksModel*>&
+    BlotterTasksModel::GetIncomingLinks() const {
   return m_incomingLinks;
 }
 
@@ -235,26 +187,30 @@ void BlotterTasksModel::Refresh() {
   m_isRefreshing = true;
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
-    vector<std::shared_ptr<TaskEntry>> entries;
+    auto entries = std::vector<std::unique_ptr<TaskEntry>>();
     entries.swap(m_entries);
     m_pendingExpiryEntries.clear();
     m_expiredEntries.clear();
     m_taskSlotHandler = std::nullopt;
     m_taskSlotHandler.emplace();
     m_taskIds.clear();
+    m_submittedOrders.clear();
+    m_taskOrders.clear();
     endRemoveRows();
-    for(const auto& entry : entries) {
+    for(auto& entry : entries) {
       m_taskRemovedSignal(*entry);
     }
   }
-  for(const auto& link : m_outgoingLinks) {
+  for(auto& link : m_outgoingLinks) {
     link->Refresh();
   }
   WithModels(*this,
     [&] (const BlotterTasksModel& model) {
       m_linkedOrderExecutionPublisher->Add(model.GetOrderExecutionPublisher());
-      for(const auto& context : model.GetContexts()) {
-        Monitor(context);
+      auto size = model.rowCount();
+      for(auto i = 0; i != size; ++i) {
+        auto& entry = model.GetEntry(i);
+        Add(entry.m_task);
       }
     });
   m_isRefreshing = false;
@@ -270,8 +226,10 @@ void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
   }
   WithModels(*model.Get(),
     [&] (const BlotterTasksModel& model) {
-      for(const auto& context : model.GetContexts()) {
-        Monitor(context);
+      auto size = model.rowCount();
+      for(auto i = 0; i != size; ++i) {
+        auto& entry = model.GetEntry(i);
+        Add(entry.m_task);
       }
     });
 }
@@ -319,9 +277,9 @@ QVariant BlotterTasksModel::data(const QModelIndex& index, int role) const {
     if(index.column() == STICKY_COLUMN) {
       return entry.m_sticky;
     } else if(index.column() == NAME_COLUMN) {
-      return QString::fromStdString(entry.m_context->m_node->GetText());
+      return QString::fromStdString(entry.m_task->GetNode().GetText());
     } else if(index.column() == ID_COLUMN) {
-      return entry.m_context->m_task->GetId();
+      return entry.m_task->GetId();
     } else if(index.column() == STATE_COLUMN) {
       return QVariant::fromValue(entry.m_state);
     } else if(index.column() - STANDARD_COLUMN_COUNT >= 0 &&
@@ -367,7 +325,7 @@ bool BlotterTasksModel::setData(const QModelIndex& index,
   auto& entry = m_entries[index.row()];
   entry->m_sticky = value.value<bool>();
   if(!entry->m_sticky && IsTerminal(entry->m_state)) {
-    m_pendingExpiryEntries.insert(entry);
+    m_pendingExpiryEntries.insert(entry.get());
   }
   Q_EMIT dataChanged(index, index);
   return true;
@@ -382,51 +340,45 @@ void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
   }
 }
 
-void BlotterTasksModel::OnMonitorUpdate(std::weak_ptr<TaskEntry> weakEntry,
-    const string& property, const any& value) {
-  auto entry = weakEntry.lock();
-  if(entry == nullptr) {
-    return;
-  }
-  Q_EMIT dataChanged(index(entry->m_index, 0),
-    index(entry->m_index, columnCount(QModelIndex()) - 1));
+void BlotterTasksModel::OnMonitorUpdate(TaskEntry& entry,
+    const std::string& property, const any& value) {
+  Q_EMIT dataChanged(index(entry.m_index, 0),
+    index(entry.m_index, columnCount(QModelIndex()) - 1));
 }
 
-void BlotterTasksModel::OnTaskState(std::weak_ptr<TaskEntry> weakEntry,
+void BlotterTasksModel::OnTaskState(TaskEntry& entry,
     const Task::StateEntry& update) {
-  auto entry = weakEntry.lock();
-  if(entry == nullptr) {
-    return;
-  }
-  entry->m_state = update.m_state;
-  Q_EMIT dataChanged(index(entry->m_index, 0),
-    index(entry->m_index, columnCount(QModelIndex()) - 1));
-  if(!entry->m_sticky && IsTerminal(entry->m_state)) {
-    m_pendingExpiryEntries.insert(entry);
+  entry.m_state = update.m_state;
+  Q_EMIT dataChanged(index(entry.m_index, 0),
+    index(entry.m_index, columnCount(QModelIndex()) - 1));
+  if(!entry.m_sticky && IsTerminal(entry.m_state)) {
+    m_pendingExpiryEntries.insert(&entry);
   }
 }
 
 void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
-  m_submittedOrders.insert(order->GetInfo().m_orderId);
-}
-
-void BlotterTasksModel::OnOrderExecuted(const Order* order) {
-  if(m_submittedOrders.find(order->GetInfo().m_orderId) !=
-      m_submittedOrders.end()) {
+  if(m_taskOrders.count(order) != 0) {
+    m_taskOrders.erase(order);
+    return;
+  } else if(m_submittedOrders.insert(order).second) {
+    m_orderSlotHandler.Push([=] {
+      OnOrderSubmitted(order);
+    });
     return;
   }
-  m_properOrderExecutionPublisher.Push(order);
+  m_submittedOrders.erase(order);
   auto stateQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(stateQueue);
   if(stateQueue->IsEmpty() || IsTerminal(stateQueue->Top().m_status)) {
+    m_properOrderExecutionPublisher.Push(order);
     return;
   }
-  auto node = make_unique<OrderWrapperTaskNode>(*order, *m_userProfile);
-  auto context = make_unique<TaskContext>(Ref(*m_userProfile), *node,
-    m_executingAccount);
-  auto translation = Translate(context->m_context, *context->m_node);
-  context->m_task->Execute();
-  Adopt(std::move(context));
+  auto& entry = Add(OrderWrapperTaskNode(*order, *m_userProfile));
+  entry.m_task->Execute();
+}
+
+void BlotterTasksModel::OnTaskOrderSubmitted(const Order* order) {
+  m_taskOrders.insert(order);
 }
 
 void BlotterTasksModel::OnUpdateTimer() {
@@ -435,22 +387,16 @@ void BlotterTasksModel::OnUpdateTimer() {
 }
 
 void BlotterTasksModel::OnExpiryTimer() {
-  for(const auto& entry : m_expiredEntries) {
-    int index = entry->m_index;
+  for(auto& entry : m_expiredEntries) {
+    auto index = entry->m_index;
     if(index == -1) {
       continue;
     }
     entry->m_index = -1;
     beginRemoveRows(QModelIndex(), index, index);
-    for(size_t j = index + 1; j < m_entries.size(); ++j) {
+    for(auto j = std::size_t(index + 1); j < m_entries.size(); ++j) {
       assert(m_entries[j]->m_index > 0);
       --(m_entries[j]->m_index);
-    }
-    for(auto j = m_contexts.begin(); j != m_contexts.end(); ++j) {
-      if(*j == entry->m_context) {
-        Erase(m_contexts, j);
-        break;
-      }
     }
     m_entries.erase(m_entries.begin() + index);
     endRemoveRows();

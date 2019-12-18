@@ -42,9 +42,9 @@ export class ParameterEntry extends React.Component<Properties> {
     })();
     const inputWrapper = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParameterEntry.STYLE.inputWrapperSmall;
+        return ParameterEntry.STYLE.inputSmall;
       } else {
-        return ParameterEntry.STYLE.inputWrapperBig;
+        return ParameterEntry.STYLE.inputLarge;
       }
     })();
     const input = (() => {
@@ -54,6 +54,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.CURRENCY:
           return <CurrencySelectionBox
             value={this.props.parameter.value.value}
+            style={inputWrapper}
             onChange={this.onChange}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
@@ -69,8 +70,8 @@ export class ParameterEntry extends React.Component<Properties> {
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
-              value={this.props.parameter.value.value}
-              onChange={this.onChange}/>;
+            value={this.props.parameter.value.value}
+            onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
           return <NumberInput 
             value={this.props.parameter.value.value}
@@ -104,15 +105,18 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    inputWrapperSmall: {
+    inputSmall: {
+      minWidth: '184px',
       flexBasis: '184px',
+      maxWidth: '246px',
       flexGrow: 1,
       flexShrink: 1
     },
-    inputWrapperBig: {
+    inputLarge: {
       width: '246px',
       minWidth: '246px',
       maxWidth: '246px',
+      flexBasis: '246px',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -135,13 +139,6 @@ export class ParameterEntry extends React.Component<Properties> {
       height: '34px',
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
-    },
-    fillerBetweenRows : {
-      height: '10px',
-      width: '100%'
-    },
-    bottomFiller: {
-      height: '30px'
     },
     label: {
       width: '100px',

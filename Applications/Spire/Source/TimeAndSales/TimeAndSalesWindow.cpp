@@ -10,12 +10,12 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/ValueLabel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"

@@ -75,7 +75,7 @@ namespace Spire {
         \param publisher Publishes the Orders to model.
       */
       void SetOrderExecutionPublisher(
-        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
         publisher);
 
       int rowCount(const QModelIndex& parent) const;
@@ -96,7 +96,7 @@ namespace Spire {
           const Nexus::OrderExecutionService::ExecutionReport& report);
       };
       QTimer m_updateTimer;
-      Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
       std::optional<Beam::TaskQueue> m_slotHandler;

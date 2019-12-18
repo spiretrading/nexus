@@ -1,13 +1,12 @@
 #include "Spire/UI/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
+#include <boost/lexical_cast.hpp>
 #include <QDateTime>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
@@ -152,12 +151,9 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       lexical_cast<std::string>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
-  } else if(value.canConvert<Task::State>()) {
-    Task::State state = value.value<Task::State>();
-    if(state == Task::State::NONE) {
-      return tr("Ready");
-    }
-    return QString::fromStdString(ToString(state));
+  } else if(value.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
+    return QString::fromStdString(lexical_cast<string>(
+      value.value<Task::State>()));
   } else if(value.canConvert<OrderType>()) {
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
@@ -196,12 +192,12 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   if(rightVariant.canConvert<any>()) {
     rightVariant = AnyToVariant(rightVariant.value<any>());
   }
-  if(leftVariant.type() != rightVariant.type()) {
+  if(leftVariant.userType() != rightVariant.userType()) {
     return QSortFilterProxyModel::lessThan(left, right);
   }
-  if(leftVariant.canConvert<Task::State>()) {
-    return Compare(ToString(leftVariant.value<Task::State>()),
-      ToString(rightVariant.value<Task::State>()), left, right);
+  if(leftVariant.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
+    return Compare(lexical_cast<string>(leftVariant.value<Task::State>()),
+      lexical_cast<string>(rightVariant.value<Task::State>()), left, right);
   } else if(leftVariant.canConvert<ptime>()) {
     return Compare(leftVariant.value<ptime>(), rightVariant.value<ptime>(),
       left, right);

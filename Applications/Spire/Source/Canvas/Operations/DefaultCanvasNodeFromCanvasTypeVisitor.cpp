@@ -14,7 +14,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 
@@ -44,7 +43,6 @@ namespace {
       virtual void Visit(const OrderTypeType& type);
       virtual void Visit(const SecurityType& type);
       virtual void Visit(const SideType& type);
-      virtual void Visit(const TaskStateType& type);
       virtual void Visit(const TextType& type);
       virtual void Visit(const TimeInForceType& type);
       virtual void Visit(const TimeRangeType& type);
@@ -113,10 +111,6 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SecurityType& type) {
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SideType& type) {
   m_node = make_unique<SideNode>();
-}
-
-void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TaskStateType& type) {
-  m_node = make_unique<TaskStateNode>();
 }
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TextType& type) {

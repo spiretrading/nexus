@@ -1,16 +1,13 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVICETESTS_HPP
-#define NEXUS_ORDEREXECUTIONSERVICETESTS_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVICE_TESTS_HPP
+#define NEXUS_ORDER_EXECUTION_SERVICE_TESTS_HPP
 
-namespace Nexus {
-namespace OrderExecutionService {
-namespace Tests {
+namespace Nexus::OrderExecutionService::Tests {
   class BoardLotCheckTester;
   class MockOrderExecutionDriver;
   class OrderExecutionClientTester;
   class OrderExecutionServiceTestEnvironment;
   class OrderExecutionServletTester;
-}
-}
+  class OrderReactorTester;
 }
 
 #endif

@@ -68,7 +68,7 @@ namespace OrderExecutionService {
       OrderRecord orderRecord{*submission,
         m_executionReports.Get((*submission)->m_orderId).Acquire()};
       orderRecords.emplace_back(
-        Beam::Queries::MakeIndexedValue(orderRecord, submission->GetIndex()),
+        Beam::Queries::IndexedValue(orderRecord, submission->GetIndex()),
         submission.GetSequence());
     }
     return orderRecords;

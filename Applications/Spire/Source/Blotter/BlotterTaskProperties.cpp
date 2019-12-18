@@ -3,7 +3,7 @@
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/TaskVolumeNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 
 using namespace Beam;
@@ -14,7 +14,8 @@ namespace {
   unique_ptr<CanvasNode> BuildVolumeNode() {
     auto volumeNode = BuildTaskVolumeNode();
     volumeNode = volumeNode->Replace(volumeNode->GetChildren().back(),
-      make_unique<ReferenceNode>("<<target", TaskType::GetInstance()));
+      make_unique<ReferenceNode>("<<target",
+      OrderReferenceType::GetInstance()));
     return volumeNode;
   }
 }

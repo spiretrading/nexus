@@ -7,6 +7,7 @@
 #include "Nexus/OrderExecutionServiceTests/BuyingPowerCheckTester.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionClientTester.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServletTester.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderReactorTester.hpp"
 
 using namespace Nexus::OrderExecutionService::Tests;
 
@@ -17,6 +18,7 @@ int main() {
   runner.addTest(BuyingPowerCheckTester::suite());
   runner.addTest(OrderExecutionClientTester::suite());
   runner.addTest(OrderExecutionServletTester::suite());
+  runner.addTest(OrderReactorTester::suite());
   runner.eventManager().addListener(&listener);
   runner.setOutputter(new CPPUNIT_NS::CompilerOutputter(&runner.result(),
     CPPUNIT_NS::stdCOut()));

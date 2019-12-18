@@ -1,6 +1,5 @@
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include <boost/lexical_cast.hpp>
-#include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
@@ -27,12 +26,13 @@ ChainNode::ChainNode(vector<unique_ptr<CanvasNode>> nodes) {
     }
     ++index;
   }
-  std::shared_ptr<CanvasType> type;
-  if(nodes.empty()) {
-    type = UnionType::GetAnyType();
-  } else {
-    type = GetChildren().front().GetType();
-  }
+  auto type = [&] {
+    if(nodes.empty()) {
+      return static_cast<const CanvasType*>(&UnionType::GetAnyType());
+    } else {
+      return &GetChildren().front().GetType();
+    }
+  }();
   AddChild("i" + boost::lexical_cast<std::string>(GetChildren().size()),
     make_unique<NoneNode>(*type));
   SetType(*type);
@@ -45,7 +45,7 @@ unique_ptr<CanvasNode> ChainNode::Convert(const CanvasType& type) const {
     clone->SetChild(child, child.Convert(type));
   }
   clone->SetType(type);
-  return std::move(clone);
+  return clone;
 }
 
 unique_ptr<CanvasNode> ChainNode::Replace(const CanvasNode& child,

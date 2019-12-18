@@ -1,11 +1,11 @@
+import aspen
 import beam
-import copy
 import nexus
 
 class PeggedOrder:
   def __init__(self, service_clients, order_fields, offset):
     self.service_clients = service_clients
-    self.order_fields = copy.deepcopy(order_fields)
+    self.order_fields = nexus.order_execution_service.OrderFields(order_fields)
     self.submission_price = None
     self.offset = offset
     self.order = None
@@ -34,7 +34,7 @@ class PeggedOrder:
   def s1(self):
     self.state = 1
     self.submission_price = self.calculate_expected_price()
-    order_fields = copy.deepcopy(self.order_fields)
+    order_fields = nexus.order_execution_service.OrderFields(self.order_fields)
     order_fields.price = self.submission_price
     order_fields.quantity = self.order_fields.quantity - self.filled_quantity
     self.order = self.service_clients.get_order_execution_client().submit(

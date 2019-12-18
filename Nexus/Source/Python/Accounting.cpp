@@ -1,11 +1,5 @@
 #include "Nexus/Python/Accounting.hpp"
-#include <Beam/Python/BoostPython.hpp>
-#include <Beam/Python/Collections.hpp>
-#include <Beam/Python/Copy.hpp>
-#include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/Pair.hpp>
-#include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/Vector.hpp>
+#include <Beam/Python/Beam.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -15,20 +9,19 @@ using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
 using namespace boost::posix_time;
-using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
-using namespace std;
+using namespace pybind11;
 
 namespace {
   template<typename IndexType>
-  void ExportKey(const char* name) {
-    class_<Accounting::Details::Key<IndexType>>(name, init<>())
+  void ExportKey(pybind11::object& module, const std::string& name) {
+    class_<Accounting::Details::Key<IndexType>>(module, name.c_str())
+      .def(init())
       .def(init<const IndexType&, CurrencyId>())
-      .def("__copy__", &MakeCopy<Accounting::Details::Key<IndexType>>)
-      .def("__deepcopy__", &MakeDeepCopy<Accounting::Details::Key<IndexType>>)
+      .def(init<const Accounting::Details::Key<IndexType>&>())
       .def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index)
       .def_readwrite("currency",
         &Accounting::Details::Key<IndexType>::m_currency);
@@ -41,69 +34,51 @@ namespace {
   }
 }
 
-void Nexus::Python::ExportAccounting() {
-  string nestedName = extract<string>(scope().attr("__name__") + ".accounting");
-  object nestedModule{handle<>(
-    borrowed(PyImport_AddModule(nestedName.c_str())))};
-  scope().attr("accounting") = nestedModule;
-  scope parent = nestedModule;
-  ExportPositionOrderBook();
-  ExportPosition();
-  ExportSecurityInventory();
-  ExportTrueAverageBookkeeper();
-  ExportTrueAveragePortfolio();
+void Nexus::Python::ExportAccounting(pybind11::module& module) {
+  auto submodule = module.def_submodule("accounting");
+  ExportPositionOrderBook(submodule);
+  ExportPosition(submodule);
+  ExportSecurityInventory(submodule);
+  ExportTrueAverageBookkeeper(submodule);
+  ExportTrueAveragePortfolio(submodule);
 }
 
-void Nexus::Python::ExportPositionOrderBook() {
-  {
-    scope outer =
-      class_<PositionOrderBook, noncopyable>("PositionOrderBook", init<>())
-        .add_property("live_orders",
-          make_function(&PositionOrderBook::GetLiveOrders,
-          return_value_policy<return_by_value>()))
-        .add_property("opening_orders",
-          make_function(&PositionOrderBook::GetOpeningOrders,
-          return_value_policy<return_by_value>()))
-        .add_property("positions",
-          make_function(&PositionOrderBook::GetPositions,
-          return_value_policy<return_by_value>()))
-        .def("test_opening_order_submission",
-          &PositionOrderBook::TestOpeningOrderSubmission)
-        .def("add", &PositionOrderBook::Add)
-        .def("update", &PositionOrderBook::Update);
-      class_<PositionOrderBook::PositionEntry>("Entry",
-        init<Security, Quantity>())
-        .def_readwrite("security",
-          &PositionOrderBook::PositionEntry::m_security)
-        .def_readwrite("quantity",
-          &PositionOrderBook::PositionEntry::m_quantity);
-      ExportVector<vector<PositionOrderBook::PositionEntry>>(
-        "VectorPositionEntry");
-  }
+void Nexus::Python::ExportPositionOrderBook(pybind11::module& module) {
+  auto outer = class_<PositionOrderBook>(module, "PositionOrderBook")
+    .def(init())
+    .def_property_readonly("live_orders", &PositionOrderBook::GetLiveOrders)
+    .def_property_readonly("opening_orders",
+      &PositionOrderBook::GetOpeningOrders)
+    .def_property_readonly("positions", &PositionOrderBook::GetPositions)
+    .def("test_opening_order_submission",
+      &PositionOrderBook::TestOpeningOrderSubmission)
+    .def("add", &PositionOrderBook::Add)
+    .def("update", &PositionOrderBook::Update);
+  class_<PositionOrderBook::PositionEntry>(outer, "Entry")
+    .def(init<Security, Quantity>())
+    .def_readwrite("security", &PositionOrderBook::PositionEntry::m_security)
+    .def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
 }
 
-void Nexus::Python::ExportPosition() {
-  {
-    scope outer =
-      class_<Position<Security>>("Position", init<>())
-        .def(init<const Position<Security>::Key&>())
-        .def("__copy__", &MakeCopy<Position<Security>>)
-        .def("__deepcopy__", &MakeDeepCopy<Position<Security>>)
-        .def_readwrite("key", &Position<Security>::m_key)
-        .def_readwrite("quantity", &Position<Security>::m_quantity)
-        .def_readwrite("cost_basis", &Position<Security>::m_costBasis);
-      ExportKey<Security>("Key");
-  }
-  def("average_price", &GetAveragePrice<Security>);
-  def("side", &Accounting::GetSide<Security>);
-}
-
-void Nexus::Python::ExportSecurityInventory() {
-  using Inventory = Accounting::Inventory<Position<Security>>;
-  class_<Inventory>("SecurityInventory", init<>())
+void Nexus::Python::ExportPosition(pybind11::module& module) {
+  auto outer = class_<Position<Security>>(module, "Position")
+    .def(init())
     .def(init<const Position<Security>::Key&>())
-    .def("__copy__", &MakeCopy<Inventory>)
-    .def("__deepcopy__", &MakeDeepCopy<Inventory>)
+    .def(init<const Position<Security>&>())
+    .def_readwrite("key", &Position<Security>::m_key)
+    .def_readwrite("quantity", &Position<Security>::m_quantity)
+    .def_readwrite("cost_basis", &Position<Security>::m_costBasis);
+  ExportKey<Security>(outer, "Key");
+  module.def("average_price", &GetAveragePrice<Security>);
+  module.def("side", &Accounting::GetSide<Security>);
+}
+
+void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
+  using Inventory = Accounting::Inventory<Position<Security>>;
+  class_<Inventory>(module, "SecurityInventory")
+    .def(init())
+    .def(init<const Position<Security>::Key&>())
+    .def(init<const Inventory&>())
     .def_readwrite("position", &Inventory::m_position)
     .def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss)
     .def_readwrite("fees", &Inventory::m_fees)
@@ -111,63 +86,48 @@ void Nexus::Python::ExportSecurityInventory() {
     .def_readwrite("transaction_count", &Inventory::m_transactionCount);
 }
 
-void Nexus::Python::ExportTrueAverageBookkeeper() {
-  ExportPair<const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
-    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>();
-  ExportPair<const CurrencyId,
-    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>();
+void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {
   ExportView<std::pair<
     const TrueAverageBookkeeper<Inventory<Position<Security>>>::Key,
-    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(module,
     "KeyInventoryView");
   ExportView<std::pair<const CurrencyId,
-    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(
+    TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>>(module,
     "CurrencyInventoryView");
-  class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
-      "TrueAverageBookkeeper", init<>())
-    .def("__copy__", &MakeCopy<TrueAverageBookkeeper<
-      Inventory<Position<Security>>>>)
-    .def("__deepcopy__", &MakeDeepCopy<TrueAverageBookkeeper<
-      Inventory<Position<Security>>>>)
+  class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(module,
+      "TrueAverageBookkeeper")
+    .def(init())
+    .def(init<const TrueAverageBookkeeper<Inventory<Position<Security>>>&>())
     .def("record_transaction", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::RecordTransaction)
     .def("get_inventory", &TrueAverageBookkeeper<
-      Inventory<Position<Security>>>::GetInventory,
-      return_value_policy<copy_const_reference>())
+      Inventory<Position<Security>>>::GetInventory)
     .def("get_total", &TrueAverageBookkeeper<
-      Inventory<Position<Security>>>::GetTotal,
-      return_value_policy<copy_const_reference>());
+      Inventory<Position<Security>>>::GetTotal);
 }
 
-void Nexus::Python::ExportTrueAveragePortfolio() {
+void Nexus::Python::ExportTrueAveragePortfolio(pybind11::module& module) {
   using Inventory = Accounting::Inventory<Position<Security>>;
   using Portfolio = Accounting::Portfolio<TrueAverageBookkeeper<Inventory>>;
-  {
-    scope outer =
-      class_<Portfolio>("TrueAveragePortfolio", init<const MarketDatabase&>())
-        .def("__copy__", &MakeCopy<Portfolio>)
-        .def("__deepcopy__", &MakeDeepCopy<Portfolio>)
-        .add_property("bookkeeper", make_function(&Portfolio::GetBookkeeper,
-        return_value_policy<copy_const_reference>()))
-        .add_property("security_entries", make_function(
-          &Portfolio::GetSecurityEntries,
-          return_value_policy<copy_const_reference>()))
-        .add_property("unrealized_profit_and_losses", make_function(
-          &Portfolio::GetUnrealizedProfitAndLosses,
-          return_value_policy<copy_const_reference>()))
-        .def("update", static_cast<void (Portfolio::*)(const OrderFields&,
-          const ExecutionReport& executionReport)>(&Portfolio::Update))
-        .def("update_ask", &Portfolio::UpdateAsk)
-        .def("update_bid", &Portfolio::UpdateBid)
-        .def("update", static_cast<void (Portfolio::*)(const Security&, Money,
-          Money)>(&Portfolio::Update));
-  }
-  def("get_realized_profit_and_loss", &GetRealizedProfitAndLoss<
+  auto outer = class_<Portfolio>(module, "TrueAveragePortfolio")
+    .def(init<const MarketDatabase&>())
+    .def(init<const Portfolio&>())
+    .def_property_readonly("bookkeeper", &Portfolio::GetBookkeeper)
+    .def_property_readonly("security_entries", &Portfolio::GetSecurityEntries)
+    .def_property_readonly("unrealized_profit_and_losses",
+      &Portfolio::GetUnrealizedProfitAndLosses)
+    .def("update", static_cast<void (Portfolio::*)(const OrderFields&,
+      const ExecutionReport& executionReport)>(&Portfolio::Update))
+    .def("update_ask", &Portfolio::UpdateAsk)
+    .def("update_bid", &Portfolio::UpdateBid)
+    .def("update", static_cast<void (Portfolio::*)(const Security&, Money,
+      Money)>(&Portfolio::Update));
+  module.def("get_realized_profit_and_loss", &GetRealizedProfitAndLoss<
     Inventory::Position>);
-  def("get_unrealized_profit_and_loss", &GetUnrealizedProfitAndLoss<
+  module.def("get_unrealized_profit_and_loss", &GetUnrealizedProfitAndLoss<
     Inventory::Position>);
-  def("get_total_profit_and_loss", static_cast<
+  module.def("get_total_profit_and_loss", static_cast<
     boost::optional<Money> (*)(const Inventory&, const SecurityValuation&)>(
     &GetTotalProfitAndLoss<Inventory::Position>));
-  def("get_total_profit_and_loss", &PythonGetTotalProfitAndLoss);
+  module.def("get_total_profit_and_loss", &PythonGetTotalProfitAndLoss);
 }

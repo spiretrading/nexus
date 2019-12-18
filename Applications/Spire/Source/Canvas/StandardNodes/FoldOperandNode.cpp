@@ -1,7 +1,7 @@
 #include "Spire/Canvas/StandardNodes/FoldOperandNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
@@ -17,7 +17,7 @@ FoldOperandNode::FoldOperandNode(Side side)
 }
 
 unique_ptr<CanvasNode> FoldOperandNode::Convert(const CanvasType& type) const {
-  if(type.GetCompatibility(TaskType::GetInstance()) ==
+  if(type.GetCompatibility(OrderReferenceType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }

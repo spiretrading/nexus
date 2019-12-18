@@ -8,8 +8,8 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QMessageBox>
 #include "Nexus/Definitions/Country.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

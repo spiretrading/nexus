@@ -1,4 +1,3 @@
-#define BOOST_NO_ARGUMENT_DEPENDENT_LOOKUP // TODO: MSVC Workaround
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
