@@ -1,8 +1,7 @@
 #include "Spire/Blotter/CancelOnFillController.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -21,7 +20,7 @@ CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
 }
 
 void CancelOnFillController::SetOrderExecutionPublisher(
-    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();

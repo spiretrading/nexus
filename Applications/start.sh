@@ -13,27 +13,6 @@ services+=" RiskServer"
 services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
 
-hostname=$(egrep -A10 "data_store:" < \
-  ./AdministrationServer/config.yml | \
-  egrep "address:\s*([^:]*)" | \
-  head -1 | \
-  egrep -o ":\s*([^:]*)" | 
-  head -1 | \
-  egrep -o "[^: ]+(.*)")
-username=$(egrep -A10 "data_store:" < \
-  ./AdministrationServer/config.yml | \
-  egrep "username:\s*(.*)" | \
-  head -1 | \
-  egrep -o ":\s*(.*)" | \
-  egrep -o "[^: ]+(.*)")
-password=$(egrep -A10 "data_store:" < \
-  ./AdministrationServer/config.yml | \
-  egrep "password:(\s|\")*([^\"]*)" | \
-  head -1 | \
-  egrep -o ":(\s|\")*([^\"]*)" | \
-  egrep -o "[^: \"]+(.*)")
-mysql -h $hostname -u$username -p$password -Dspire < ./reset.sql
-
 for directory in $services; do
   sleep 5
   cd $directory
@@ -41,3 +20,7 @@ for directory in $services; do
   ./start_server.sh
   cd ..
 done
+
+pushd AdministrationServer
+python3 reset_risk_states.py
+popd

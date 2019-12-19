@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Spire {
-  class ServiceClients;
+  class SpireServiceClients;
   using SpirePosition = Nexus::Accounting::Position<Nexus::Security>;
   using SpireInventory = Nexus::Accounting::Inventory<SpirePosition>;
   using SpireBookkeeper = Nexus::Accounting::TrueAverageBookkeeper<

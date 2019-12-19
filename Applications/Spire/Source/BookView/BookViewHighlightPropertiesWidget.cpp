@@ -1,7 +1,7 @@
 #include "Spire/BookView/BookViewHighlightPropertiesWidget.hpp"
 #include <QColorDialog>
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_BookViewHighlightPropertiesWidget.h"
 
 using namespace Beam;

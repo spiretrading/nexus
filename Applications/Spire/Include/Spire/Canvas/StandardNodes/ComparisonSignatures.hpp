@@ -16,7 +16,7 @@ namespace Spire {
       typedef typename boost::mpl::vector<T, T, bool>::type type;
     };
 
-    typedef boost::mpl::transform<ValueTypes,
+    typedef boost::mpl::transform<NativeTypes,
       MakeSignature<boost::mpl::placeholders::_1>>::type UniformTypes;
 
     typedef boost::mpl::list<

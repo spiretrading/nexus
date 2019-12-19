@@ -1,8 +1,8 @@
 #include "Spire/AccountViewer/RiskWidget.hpp"
 #include <QMessageBox>
 #include "Spire/AccountViewer/RiskModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_RiskWidget.h"
 
 using namespace Beam;

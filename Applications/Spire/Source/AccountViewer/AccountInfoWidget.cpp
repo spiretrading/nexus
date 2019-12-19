@@ -1,10 +1,9 @@
 #include "Spire/AccountViewer/AccountInfoWidget.hpp"
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <QMessageBox>
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_AccountInfoWidget.h"
 
 using namespace Beam;

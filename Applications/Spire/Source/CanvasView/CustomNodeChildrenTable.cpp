@@ -6,7 +6,7 @@
 #include "Spire/Canvas/Types/CanvasType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/CanvasView/CustomNodeDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;

@@ -4,7 +4,7 @@
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUniquePtr.hpp>
-#include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 
 namespace Spire {

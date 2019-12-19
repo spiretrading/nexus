@@ -20,17 +20,15 @@
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/MaxFloorSpinBox.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -61,7 +59,6 @@ namespace {
       virtual void Visit(const QueryNode& node);
       virtual void Visit(const ReferenceNode& node);
       virtual void Visit(const SideNode& node);
-      virtual void Visit(const TaskStateNode& node);
       virtual void Visit(const TextNode& node);
       virtual void Visit(const TimeInForceNode& node);
 
@@ -290,18 +287,6 @@ void CommitEditorCanvasNodeVisitor::Visit(const SideNode& node) {
   } else {
     newValue = Side::ASK;
   }
-  if(previousValue == newValue) {
-    return;
-  }
-  auto coordinate = m_model->GetCoordinate(node);
-  m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *node.SetValue(newValue));
-}
-
-void CommitEditorCanvasNodeVisitor::Visit(const TaskStateNode& node) {
-  auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto previousValue = node.GetValue();
-  auto newValue = static_cast<Task::State>(comboEditor->currentIndex());
   if(previousValue == newValue) {
     return;
   }

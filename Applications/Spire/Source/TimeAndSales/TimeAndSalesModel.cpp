@@ -1,10 +1,8 @@
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <QCoreApplication>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

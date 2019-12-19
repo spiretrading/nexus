@@ -3,7 +3,7 @@
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 
 using namespace Beam;
 using namespace Beam::Serialization;
@@ -13,7 +13,8 @@ using namespace std;
 ExecutionReportMonitorNode::ExecutionReportMonitorNode() {
   SetText("Execution Report Monitor");
   SetType(GetExecutionReportRecordType());
-  AddChild("source", make_unique<ReferenceNode>("", TaskType::GetInstance()));
+  AddChild("source", make_unique<ReferenceNode>("",
+    OrderReferenceType::GetInstance()));
 }
 
 unique_ptr<CanvasNode> ExecutionReportMonitorNode::Replace(
