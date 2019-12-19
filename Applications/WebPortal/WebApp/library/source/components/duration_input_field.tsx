@@ -18,8 +18,10 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
+  /** The largest value the hours field can hold. */
   maxHourValue?: number;
 
+  /** The smallest value the hours field can hold. */
   minHourValue?: number;
 
   /** Called when the value changes.
@@ -52,7 +54,7 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const splitTransitionTime = this.props.value.split();
+    const splitTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationInputField.STYLE.wrapperSmall;
@@ -89,7 +91,7 @@ export class DurationInputField extends React.Component<Properties, State> {
         style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
             min={this.props.minHourValue} max={this.props.maxHourValue}
-            value={splitTransitionTime.hours}
+            value={splitTime.hours}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
@@ -97,7 +99,7 @@ export class DurationInputField extends React.Component<Properties, State> {
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
           <IntegerInputBox
             min={0} max={59}
-            value={splitTransitionTime.minutes}
+            value={splitTime.minutes}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
@@ -105,7 +107,7 @@ export class DurationInputField extends React.Component<Properties, State> {
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
           <IntegerInputBox
             min={0} max={59}
-            value={splitTransitionTime.seconds}
+            value={splitTime.seconds}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}

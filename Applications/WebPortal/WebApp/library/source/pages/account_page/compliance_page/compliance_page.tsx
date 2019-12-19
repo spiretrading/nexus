@@ -50,14 +50,6 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
-    const status = (() => {
-      if(true) {
-        return(
-          <div style={CompliancePage.STYLE.statusBox}>
-            Saved
-          </div>);
-      }
-    })();
     return (
       <div style={contentStyle}>
         <RulesList
@@ -78,7 +70,9 @@ export class CompliancePage extends React.Component<Properties, State> {
           {'Save Changes'}
         </button>
         <div style={CompliancePage.STYLE.paddingSmall}/>
-        {status}
+          <div style={CompliancePage.STYLE.statusBox}>
+            {'Saved'}
+          </div>
       </div>);
   }
 

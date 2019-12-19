@@ -75,7 +75,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   public componentDidMount() {
     this.setState({
       period: this.getPeriod(),
-      displayedTime: this.getTimeIn12Hour()
+      displayedTime: this.getTimeIn12HourFormat()
     });
   }
 
@@ -90,7 +90,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private getTimeIn12Hour() {
+  private getTimeIn12HourFormat() {
     const sourceTime = this.props.value.timeOfDay().split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24 ) {
       return Beam.Duration.HOUR.multiply(12).add(
@@ -109,7 +109,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private getTimeIn24Hour() {
+  private getTimeIn24HourFormat() {
     const sourceTime = this.state.displayedTime.split();
     if(this.state.period === Periods.PM) {
       if(sourceTime.hours === 12) {
@@ -138,10 +138,10 @@ export class DateTimeField extends React.Component<Properties, State> {
     const period = parseInt(event.target.value);
     this.setState({
       period: period,
-      displayedTime: this.getTimeIn12Hour()
+      displayedTime: this.getTimeIn12HourFormat()
     });
     this.props.onChange(new Beam.DateTime(
-      this.props.value.date(), this.getTimeIn24Hour()));
+      this.props.value.date(), this.getTimeIn24HourFormat()));
   }
 
   private onDateChange(newDate: Beam.Date) {
@@ -152,7 +152,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   private onTimeChange(newTime: Beam.Duration) {
     this.setState({displayedTime: newTime});
     this.props.onChange(new Beam.DateTime(
-      this.props.value.date(), this.getTimeIn24Hour()));
+      this.props.value.date(), this.getTimeIn24HourFormat()));
   }
 
   private static readonly STYLE = {

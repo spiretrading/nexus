@@ -4,15 +4,22 @@ import { DisplaySize } from '../display_size';
 
 interface Properties {
 
+  /** The size to display the component at. */
   displaySize?: DisplaySize;
 
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  /** Determines if the box is checked. */
+  isChecked: boolean;
 
-  isSelected: boolean;
-
+  /** Determines if the component can be edited. */
   readonly: boolean;
+
+  /** Called when the checkmark is clicked on.
+   * @param value - Any mouse event.
+   */
+  onClick?: (event?: React.MouseEvent<any>) => void;
 }
 
+/** A checkmark component. */
 export class Checkmark extends React.Component<Properties> {
   public static readonly defaultProps = {
     onClick: () => {},
@@ -21,7 +28,7 @@ export class Checkmark extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const imgSrc = (() => {
-      if(this.props.isSelected) {
+      if(this.props.isChecked) {
         return 'resources/components/check-green.svg';
       } else {
         return 'resources/components/check-grey.svg';
@@ -43,7 +50,8 @@ export class Checkmark extends React.Component<Properties> {
     })();
     return (
       <div style={wrapperStyle}
-          className={css(Checkmark.EXTRA_STYLE.removingDefaults)} onClick={this.props.onClick}>
+          className={css(Checkmark.EXTRA_STYLE.noDefaults)} 
+          onClick={this.props.onClick}>
         <img height={size} width={size} src={imgSrc}/> 
       </div>);
   }
@@ -71,7 +79,7 @@ export class Checkmark extends React.Component<Properties> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    removingDefaults: {
+    noDefaults: {
       '-webkit-appearance': 'none',
       ':active': {
         ouline: 'none',
