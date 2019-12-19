@@ -54,7 +54,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       </select>);
   }
 
-  public onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+  private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
     this.props.onChange(parseInt(event.target.value));
   }
 

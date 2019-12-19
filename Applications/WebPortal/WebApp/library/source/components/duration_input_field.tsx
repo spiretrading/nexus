@@ -18,6 +18,10 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Duration;
 
+  maxHourValue?: number;
+
+  minHourValue?: number;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -33,6 +37,8 @@ interface State {
 export class DurationInputField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
+    minHourValue: 0,
+    maxHourValue: 99,
     onChange: () => {}
   };
 
@@ -46,7 +52,6 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    console.log('do a render plox');
     const splitTransitionTime = this.props.value.split();
     const wrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -64,7 +69,6 @@ export class DurationInputField extends React.Component<Properties, State> {
     })();
     const hintText = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        console.log(this.state.componentWidth);
         if(this.state.componentWidth >= 165) {
           return 'Hr : Min : Sec';
         } else if(this.state.componentWidth >= 141){
@@ -84,7 +88,7 @@ export class DurationInputField extends React.Component<Properties, State> {
         <div
         style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
-            min={0} max={59}
+            min={this.props.minHourValue} max={this.props.maxHourValue}
             value={splitTransitionTime.hours}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
@@ -122,7 +126,6 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
-    console.log('mount');
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
   }

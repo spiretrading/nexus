@@ -15,7 +15,7 @@ interface Properties {
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange?: (value: Beam.Duration) => void;
+  onChange?: (value: Beam.Date) => void;
 }
 
 interface State {
@@ -56,7 +56,6 @@ export class DateField extends React.Component<Properties, State> {
     })();
     const hintText = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        console.log(this.state.componentWidth);
         if(this.state.componentWidth >= 227) {
           return 'Day / Month / Year';
         } else if(this.state.componentWidth >= 161){
@@ -110,9 +109,12 @@ export class DateField extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
-    console.log('mount');
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
+  }
+
+  public componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResize);
   }
 
   private static readonly STYLE = {

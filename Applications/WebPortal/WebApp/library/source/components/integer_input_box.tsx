@@ -39,7 +39,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value || this.props.min || 0,
+      value: props.value || this.props.min
     }
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
@@ -83,7 +83,6 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    console.log('BOOP BOPP');
     let value = (() => {
       if(event.target.value.length === 0) {
         return 0;
@@ -95,7 +94,6 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       this.forceUpdate();
       return;
     }
-    console.log(value);
     this.setState({value: value});
   }
 

@@ -5,15 +5,18 @@ import { DisplaySize } from '../display_size';
 import { DurationInputField } from './duration_input_field';
 import { DateField } from './date_field';
 
+enum Periods {
+  AM,
+  PM
+}
+
 interface Properties {
 
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
   /** The value to display in the field. */
-  value?: Beam.Duration;
-
-  newValue?: Beam.DateTime;
+  value?: Beam.DateTime;
 
   /** Called when the value changes.
    * @param value - The updated value.
@@ -21,34 +24,139 @@ interface Properties {
   onChange: (value: Beam.DateTime) => void;
 }
 
+interface State {
+  localTime: Beam.Duration;
+  period: Periods;
+}
+
 /** A component that displays and lets a user edit a duration. */
-export class DateTimeField extends React.Component<Properties> {
+export class DateTimeField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: new Beam.Duration(0),
-    newValue: new Beam.DateTime(new Beam.Date(0, 0, 0), new Beam.Duration(0)),
+    newValue: new Beam.DateTime(new Beam.Date(1, 1, 0), new Beam.Duration(0)),
     onChange: () => {}
   };
 
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      period: Periods.AM,
+      localTime: this.props.value.timeOfDay(),
+    }
+    this.onPeriodChange = this.onPeriodChange.bind(this);
+    this.onDateChange = this.onDateChange.bind(this);
+    this.onTimeChange = this.onTimeChange.bind(this);
+  }
+
   public render(): JSX.Element {
+    console.log('rendering', 
+      this.state.period, 
+      this.state.localTime.split(), 
+      this.getTimeIn24Hour().split());
     return (
-      <div style={DateTimeField.STYLE.outerWrapper}
-        onFocus={() => this.setState({isInFocus: true})}
-        onBlur={() => this.setState({isInFocus: false})}>
+      <div style={DateTimeField.STYLE.outerWrapper}>
         <DateField
           displaySize={this.props.displaySize}
-          value={this.props.newValue.date()}/>
+          value={this.props.value.date()}
+          onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>  
         <div style={DateTimeField.STYLE.durationWrapper}>
           <DurationInputField 
             displaySize={this.props.displaySize}
-            value={this.props.newValue.timeOfDay()}/>
+            value={this.state.localTime}
+            maxHourValue={12}
+            minHourValue={1}
+            onChange={this.onTimeChange}/>
           <select style={DateTimeField.STYLE.select}
-            className={css(DateTimeField.EXTRA_STYLE.noHighlighting)}>
-            <option>{'AM'}</option>
-            <option>{'PM'}</option>
+              onChange={this.onPeriodChange}
+              value={this.state.period}
+              className={css(DateTimeField.EXTRA_STYLE.noHighlighting)}>
+            <option value={Periods.AM}>{'AM'}</option>
+            <option value={Periods.PM}>{'PM'}</option>
           </select>
         </div>
       </div>);
+  }
+
+  private getTimeIn12Hour(period: Periods) {
+    const sourceTime = this.props.value.timeOfDay().split();
+    if(sourceTime.hours === 0 || sourceTime.hours === 24 ) {
+      return (Beam.Duration.HOUR.multiply(12).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+    } else if(sourceTime.hours > 12) {
+      return(Beam.Duration.HOUR.multiply(sourceTime.hours-12).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+    } else if(sourceTime.hours === 12) {
+      return( Beam.Duration.HOUR.multiply(12).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+    } else {
+      return this.props.value.timeOfDay();
+    }
+  }
+
+  private getPeriod() {
+    const sourceTime = this.props.value.timeOfDay().split();
+    if(sourceTime.hours === 0 || sourceTime.hours === 24 ) {
+      return Periods.AM;
+    } else if(sourceTime.hours >= 12) {
+      return Periods.PM;
+    } else {
+      return Periods.AM;
+    }
+  }
+
+  private getTimeIn24Hour() {
+    const sourceTime = this.state.localTime.split();
+    if(this.state.period === Periods.PM) {
+      if(sourceTime.hours === 12) {
+        return (Beam.Duration.HOUR.multiply(sourceTime.hours).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+      } else {
+        return (Beam.Duration.HOUR.multiply(sourceTime.hours + 12).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+      }
+    } else {
+      if(sourceTime.hours === 12) {
+        return (Beam.Duration.HOUR.multiply(0).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+      } else {
+        return (Beam.Duration.HOUR.multiply(sourceTime.hours).add(
+            Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
+            Beam.Duration.SECOND.multiply(sourceTime.seconds)));
+      }
+    }
+  }
+
+  public componentDidMount() {
+    this.setState({
+      period: this.getPeriod(),
+      localTime: this.getTimeIn12Hour(this.getPeriod())
+    });
+  }
+
+  private onPeriodChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+    const period = parseInt(event.target.value);
+    this.setState({
+      period: period,
+      localTime: this.getTimeIn12Hour(period)
+    });
+    this.onTimeChange(this.getTimeIn24Hour());
+  }
+
+  private onDateChange(newDate: Beam.Date) {
+    this.props.onChange(new Beam.DateTime(
+      newDate, this.props.value.timeOfDay()));
+  }
+
+  private onTimeChange(newTime: Beam.Duration) {
+    this.setState({localTime: newTime});
+    this.props.onChange(new Beam.DateTime(this.props.value.date(), 
+      this.getTimeIn24Hour()));
   }
 
   private static readonly STYLE = {
