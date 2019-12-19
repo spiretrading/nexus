@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="cdf9bf448e6e835c4730646f69b83a610d802298"
+SET beam_commit="0132cda028b3a75c47be00d28af2ba481b70db89"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -22,7 +22,7 @@ IF NOT "%ERRORLEVEL%" == "0" (
   SET BUILD_BEAM=1
 )
 IF "%BUILD_BEAM%" == "1" (
-  CALL configure.bat "-DD=%ROOT%"
+  CALL configure.bat -DD="%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
 ) ELSE (
@@ -47,6 +47,19 @@ IF NOT EXIST qt-5.12.1 (
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
+  )
+)
+IF NOT EXIST lua-5.3.5 (
+  wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
+  IF EXIST lua-5.3.5.tar.gz (
+    gzip -d -c lua-5.3.5.tar.gz | tar -xf -
+    PUSHD lua-5.3.5\src
+    COPY %~dp0\Config\lua.cmake CMakeLists.txt
+    cmake .
+    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
+    POPD
+    DEL lua-5.3.5.tar.gz
   )
 )
 IF NOT EXIST quickfix-v.1.15.1 (

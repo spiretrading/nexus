@@ -3,7 +3,7 @@
 #include <QCheckBox>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_OrderLogPropertiesDialog.h"
 
 using namespace Beam;

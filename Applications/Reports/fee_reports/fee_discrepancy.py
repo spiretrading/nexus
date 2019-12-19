@@ -1,6 +1,5 @@
 import argparse
 import beam
-import copy
 import datetime
 import nexus
 import sys
@@ -46,7 +45,8 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
       continue
     execution_reports = order.get_publisher().get_snapshot()
     for execution_report in execution_reports:
-      calculated_fee = copy.deepcopy(execution_report)
+      calculated_fee = nexus.order_execution_service.ExecutionReport(
+        execution_report)
       calculated_fee.execution_fee = nexus.Money.ZERO
       calculated_fee.processing_fee = nexus.Money.ZERO
       calculated_fee.commission = nexus.Money.ZERO

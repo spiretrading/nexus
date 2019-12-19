@@ -34,4 +34,7 @@ popd
 if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
   ln -s "$dependencies" Dependencies
 fi
-cmake "$directory"
+if [[ "$@" != "" ]]; then
+  configuration="-DCMAKE_BUILD_TYPE=$@"
+fi
+cmake "$directory" $configuration

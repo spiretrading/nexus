@@ -1,22 +1,32 @@
-#ifndef NEXUS_PYTHONBACKTESTER_HPP
-#define NEXUS_PYTHONBACKTESTER_HPP
-#include "Nexus/Python/Python.hpp"
+#ifndef NEXUS_PYTHON_BACKTESTER_HPP
+#define NEXUS_PYTHON_BACKTESTER_HPP
+#include <pybind11/pybind11.h>
 
-namespace Nexus {
-namespace Python {
+namespace Nexus::Python {
 
-  //! Exports all of the backtester classes.
-  void ExportBacktester();
+  /**
+   * Exports all of the backtester classes.
+   * @param module The module to export to.
+   */
+  void ExportBacktester(pybind11::module& module);
 
-  //! Exports the BacktesterEnvironment class.
-  void ExportBacktesterEnvironment();
+  /**
+   * Exports the BacktesterEnvironment class.
+   * @param module The module to export to.
+   */
+  void ExportBacktesterEnvironment(pybind11::module& module);
 
-  //! Exports the BacktesterEventHandler class.
-  void ExportBacktesterEventHandler();
+  /**
+   * Exports the BacktesterEventHandler class.
+   * @param module The module to export to.
+   */
+  void ExportBacktesterEventHandler(pybind11::module& module);
 
-  //! Exports the BacktesterServiceClients class.
-  void ExportBacktesterServiceClients();
-}
+  /**
+   * Exports the BacktesterServiceClients class.
+   * @param module The module to export to.
+   */
+  void ExportBacktesterServiceClients(pybind11::module& module);
 }
 
 #endif

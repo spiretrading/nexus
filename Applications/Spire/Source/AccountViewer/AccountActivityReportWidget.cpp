@@ -2,13 +2,10 @@
 #include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_AccountActivityReportWidget.h"
 
 using namespace Beam;

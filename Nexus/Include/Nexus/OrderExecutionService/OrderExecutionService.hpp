@@ -1,12 +1,11 @@
-#ifndef NEXUS_ORDEREXECUTIONSERVICE_HPP
-#define NEXUS_ORDEREXECUTIONSERVICE_HPP
+#ifndef NEXUS_ORDER_EXECUTION_SERVICE_HPP
+#define NEXUS_ORDER_EXECUTION_SERVICE_HPP
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <Beam/Queues/Queues.hpp>
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
   class AccountOrderSubmissionEntry;
   class ApplicationOrderExecutionClient;
   template<typename MarketDataClientType> class BoardLotCheck;
@@ -19,13 +18,14 @@ namespace OrderExecutionService {
   template<typename OrderExecutionDriverType, typename AdministrationClientType>
     class ManualOrderEntryDriver;
   class Order;
-  typedef std::uint64_t OrderId;
+  template<typename C, typename S> class OrderCancellationReactor;
+  using OrderId = std::uint64_t;
   template<typename ServiceProtocolClientBuilderType>
     class OrderExecutionClient;
   struct OrderExecutionDataStore;
   class OrderExecutionDataStoreException;
-  typedef Beam::SnapshotPublisher<const Order*, std::vector<const Order*>>
-    OrderExecutionPublisher;
+  using OrderExecutionPublisher = Beam::SnapshotPublisher<const Order*,
+    std::vector<const Order*>>;
   template<typename ContainerType, typename TimeClientType,
     typename ServiceLocatorClientType, typename UidClientType,
     typename AdministrationClientType, typename OrderExecutionDriverType,
@@ -33,6 +33,9 @@ namespace OrderExecutionService {
   class OrderExecutionSession;
   struct OrderFields;
   struct OrderInfo;
+  template<typename C, typename AR, typename SR, typename CR, typename OR,
+    typename TR, typename DR, typename QR, typename PR, typename FR,
+    typename RR> class OrderReactor;
   struct OrderRecord;
   class OrderSubmissionCheck;
   template<typename OrderExecutionDriverType> class OrderSubmissionCheckDriver;
@@ -51,7 +54,6 @@ namespace OrderExecutionService {
 
   // Standard name for the order execution service.
   static const std::string SERVICE_NAME = "order_execution_service";
-}
 }
 
 #endif

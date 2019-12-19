@@ -1,24 +1,21 @@
-#ifndef SPIRE_VALUETYPETESTER_HPP
-#define SPIRE_VALUETYPETESTER_HPP
+#ifndef SPIRE_VALUE_TYPE_TESTER_HPP
+#define SPIRE_VALUE_TYPE_TESTER_HPP
 #include <cppunit/extensions/HelperMacros.h>
 #include "Spire/CanvasTests/CanvasTests.hpp"
 
-namespace Spire {
-namespace Tests {
+namespace Spire::Tests {
 
-  /*  \class ValueTypeTester
-      \brief Tests the ValueType class.
-   */
+  /** Tests the ValueType class. */
   class ValueTypeTester : public CPPUNIT_NS::TestFixture {
     public:
 
-      //! Tests the names of all ValueTypes.
+      /** Tests the names of all ValueTypes. */
       void TestNames();
 
-      //! Tests the type ids of all ValueTypes.
+      /** Tests the type ids of all ValueTypes. */
       void TestNativeTypes();
 
-      //! Tests type compatibility among ValueTypes.
+      /** Tests type compatibility among ValueTypes. */
       void TestCompatibility();
 
     private:
@@ -28,7 +25,6 @@ namespace Tests {
         CPPUNIT_TEST(TestCompatibility);
       CPPUNIT_TEST_SUITE_END();
   };
-}
 }
 
 #endif

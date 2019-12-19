@@ -77,12 +77,6 @@ namespace OrderExecutionService {
       void QueryExecutionReports(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue);
 
-      //! Returns the Publisher for Orders submitted by this client.
-      /*!
-        \return The Publisher used for Orders submitted by this client.
-      */
-      const OrderExecutionPublisher& GetOrderSubmissionPublisher();
-
       //! Submits a new single Order.
       /*!
         \param fields The OrderFields to submit.
@@ -128,7 +122,6 @@ namespace OrderExecutionService {
       QueryClientPublisher<ExecutionReport, AccountQuery,
         QueryExecutionReportsService, EndExecutionReportQueryMessage>
         m_executionReportPublisher;
-      Beam::SequencePublisher<const Order*> m_submissionPublisher;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry,
@@ -193,7 +186,7 @@ namespace OrderExecutionService {
       [=] (const SequencedOrderRecord& orderRecord) {
         auto sequence = orderRecord.GetSequence();
         auto order = LoadOrder(orderRecord).get();
-        return Beam::Queries::MakeSequencedValue(std::move(order),
+        return Beam::Queries::SequencedValue(std::move(order),
           std::move(sequence));
       });
     m_orderSubmissionPublisher.SubmitQuery(query, conversionQueue);
@@ -220,12 +213,6 @@ namespace OrderExecutionService {
   }
 
   template<typename ServiceProtocolClientBuilderType>
-  const OrderExecutionPublisher& OrderExecutionClient<
-      ServiceProtocolClientBuilderType>::GetOrderSubmissionPublisher() {
-    return m_submissionPublisher;
-  }
-
-  template<typename ServiceProtocolClientBuilderType>
   const Order& OrderExecutionClient<ServiceProtocolClientBuilderType>::Submit(
       const OrderFields& fields) {
     auto client = m_clientHandler.GetClient();
@@ -245,11 +232,10 @@ namespace OrderExecutionService {
     }
     auto orderInfo = client->template SendRequest<NewOrderSingleService>(
       fields);
-    auto orderRecord = Beam::Queries::MakeSequencedValue(
-      Beam::Queries::MakeIndexedValue(OrderRecord{std::move(**orderInfo), {}},
+    auto orderRecord = Beam::Queries::SequencedValue(
+      Beam::Queries::IndexedValue(OrderRecord{std::move(**orderInfo), {}},
       orderInfo->GetIndex()), orderInfo.GetSequence());
     auto order = LoadOrder(**orderRecord);
-    m_submissionPublisher.Push(order.get());
     m_orderSubmissionPublisher.Publish(orderRecord);
     return *order;
   }

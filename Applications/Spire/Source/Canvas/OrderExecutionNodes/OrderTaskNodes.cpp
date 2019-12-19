@@ -1,6 +1,5 @@
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
@@ -12,12 +11,11 @@
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -171,23 +169,23 @@ unique_ptr<SingleOrderTaskNode> Spire::GetPeggedBidOrderTaskNode(
 unique_ptr<SingleOrderTaskNode> Spire::BuildOrderTaskNodeFromOrderFields(
     const OrderFields& orderFields, const UserProfile& userProfile) {
   auto node = SingleOrderTaskNode().Replace(
-    BaseSingleOrderTaskFactory::SECURITY, make_unique<SecurityNode>(
+    SingleOrderTaskNode::SECURITY_PROPERTY, make_unique<SecurityNode>(
       orderFields.m_security, userProfile.GetMarketDatabase()))->Replace(
-      BaseSingleOrderTaskFactory::ORDER_TYPE,
+      SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
       make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
-      BaseSingleOrderTaskFactory::SIDE,
+      SingleOrderTaskNode::SIDE_PROPERTY,
       make_unique<SideNode>(orderFields.m_side))->Replace(
-      BaseSingleOrderTaskFactory::DESTINATION,
+      SingleOrderTaskNode::DESTINATION_PROPERTY,
       make_unique<DestinationNode>(orderFields.m_destination))->Replace(
-      BaseSingleOrderTaskFactory::QUANTITY,
+      SingleOrderTaskNode::QUANTITY_PROPERTY,
       make_unique<IntegerNode>(orderFields.m_quantity))->Replace(
-      BaseSingleOrderTaskFactory::PRICE,
+      SingleOrderTaskNode::PRICE_PROPERTY,
       make_unique<MoneyNode>(orderFields.m_price))->Replace(
-      BaseSingleOrderTaskFactory::CURRENCY,
+      SingleOrderTaskNode::CURRENCY_PROPERTY,
       make_unique<CurrencyNode>(orderFields.m_currency,
       userProfile.GetCurrencyDatabase().FromId(
       orderFields.m_currency).m_code.GetData()))->Replace(
-      BaseSingleOrderTaskFactory::TIME_IN_FORCE,
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       make_unique<TimeInForceNode>(orderFields.m_timeInForce));
   return UniqueStaticCast<SingleOrderTaskNode>(std::move(node));
 }

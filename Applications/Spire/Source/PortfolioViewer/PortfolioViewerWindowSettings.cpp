@@ -1,6 +1,6 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Ui_PortfolioViewerWindow.h"
 
 using namespace Beam;

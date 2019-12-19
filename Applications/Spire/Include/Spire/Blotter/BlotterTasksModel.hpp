@@ -1,13 +1,11 @@
-#ifndef SPIRE_BLOTTERTASKSMODEL_HPP
-#define SPIRE_BLOTTERTASKSMODEL_HPP
+#ifndef SPIRE_BLOTTER_TASKS_MODEL_HPP
+#define SPIRE_BLOTTER_TASKS_MODEL_HPP
 #include <optional>
 #include <set>
-#include <unordered_set>
+#include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
-#include <Beam/Reactors/ReactorMonitor.hpp>
-#include <Beam/Tasks/Task.hpp>
-#include <Beam/Threading/Sync.hpp>
+#include <boost/any.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
@@ -15,233 +13,182 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
+#include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /*! \class BlotterTasksModel
-      \brief Model used for a BlotterWindow's Tasks.
-   */
+  /** Model used for a BlotterWindow's Tasks. */
   class BlotterTasksModel : public QAbstractTableModel {
     public:
 
-      /*! \enum Columns
-          \brief Enumerates the standard columns displayed in the Tasks table.
-       */
+      /** Enumerates the standard columns displayed in the Tasks table. */
       enum Columns {
 
-        //! Whether the Task is sticky.
+        /** Whether the Task is sticky. */
         STICKY_COLUMN,
 
-        //! The Task's name.
+        /** The Task's name. */
         NAME_COLUMN,
 
-        //! The Task's id.
+        /** The Task's id. */
         ID_COLUMN,
 
-        //! The State of the Task.
+        /** The State of the Task. */
         STATE_COLUMN
       };
 
-      //! The number of standard columns.
-      static const unsigned int STANDARD_COLUMN_COUNT = 4;
+      /** The number of standard columns. */
+      static constexpr unsigned int STANDARD_COLUMN_COUNT = 4;
 
-      /*! \struct TaskContext
-          \brief Stores a Task and the context needed to execute.
-       */
-      struct TaskContext : private boost::noncopyable {
-
-        //! The ReactorMonitor used by the Tasks.
-        Beam::Reactors::ReactorMonitor m_reactorMonitor;
-
-        //! The Task's context.
-        CanvasNodeTranslationContext m_context;
-
-        //! The node used to build the Task.
-        std::unique_ptr<CanvasNode> m_node;
-
-        //! The Task's OrderExecutionPublisher.
-        std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
-          m_orderExecutionPublisher;
-
-        //! The TaskFactory for this entry.
-        Beam::Tasks::TaskFactory m_factory;
-
-        //! The Task that was built.
-        std::shared_ptr<Beam::Tasks::Task> m_task;
-
-        //! Constructs a TaskContext.
-        /*!
-          \param userProfile The user's profile.
-          \param node The node used to build the Task.
-          \param executingAccount The account executing Orders.
-        */
-        TaskContext(Beam::Ref<UserProfile> userProfile,
-          const CanvasNode& node,
-          const Beam::ServiceLocator::DirectoryEntry& executingAccount);
-      };
-
-      /*! \struct ObserverEntry
-          \brief Stores a CanvasObserver for an executing Task.
-       */
+      /** Stores a CanvasObserver for an executing Task. */
       struct ObserverEntry : private boost::noncopyable {
 
-        //! The name of the monitor.
+        /** The name of the monitor. */
         std::string m_name;
 
-        //! The observer monitoring the Task.
+        /** The observer monitoring the Task. */
         std::unique_ptr<CanvasObserver> m_observer;
 
-        //! The connection to the CanvasObserver.
+        /** The connection to the CanvasObserver. */
         boost::signals2::scoped_connection m_connection;
 
-        //! Constructs an ObserverEntry.
-        /*!
-          \param name The name of the monitor.
-          \param observer The CanvasObserver monitoring the CanvasNode.
-        */
+        /**
+         * Constructs an ObserverEntry.
+         * @param name The name of the monitor.
+         * @param observer The CanvasObserver monitoring the CanvasNode.
+         */
         ObserverEntry(std::string name,
           std::unique_ptr<CanvasObserver> observer);
       };
 
-      /*! \struct TaskEntry
-          \brief Stores information about a single Task entry.
-       */
-      struct TaskEntry : private boost::noncopyable {
+      /** Stores information about a single Task entry. */
+      struct TaskEntry {
 
-        //! The index of this entry.
+        /** The index of this entry. */
         int m_index;
 
-        //! Whether the Task is sticky.
+        /** Whether the Task is sticky. */
         bool m_sticky;
 
-        //! The Task and its context.
-        std::shared_ptr<TaskContext> m_context;
+        /** The Task represented. */
+        std::shared_ptr<Task> m_task;
 
-        //! The current state of the Task.
-        Beam::Tasks::Task::State m_state;
+        /** The current state of the Task. */
+        Task::State m_state;
 
-        //! The properties monitoring the Task.
+        /** The properties monitoring the Task. */
         std::vector<std::unique_ptr<ObserverEntry>> m_monitors;
       };
 
-      //! Signals a Task was added to this model.
-      /*!
-        \param entry The TaskEntry that was added.
-      */
-      typedef boost::signals2::signal<void (const TaskEntry& entry)>
-        TaskAddedSignal;
+      /**
+       * Signals a Task was added to this model.
+       * @param entry The TaskEntry that was added.
+       */
+      using TaskAddedSignal = boost::signals2::signal<
+        void (const TaskEntry& entry)>;
 
-      //! Signals a Task was removed from this model.
-      /*!
-        \param entry The TaskEntry that was removed.
-      */
-      typedef boost::signals2::signal<void (const TaskEntry& entry)>
-        TaskRemovedSignal;
+      /**
+       * Signals a Task was removed from this model.
+       * @param entry The TaskEntry that was removed.
+       */
+      using TaskRemovedSignal = boost::signals2::signal<
+        void (const TaskEntry& entry)>;
 
-      //! Constructs a BlotterTasksModel.
-      /*!
-        \param userProfile The user's profile.
-        \param executingAccount The account used to execute new Orders.
-        \param isConsolidated Whether this model consolidates all of the
-               <i>executingAccount<i>'s Orders.
-        \param properties The properties used to display Tasks.
-      */
+      /**
+       * Constructs a BlotterTasksModel.
+       * @param userProfile The user's profile.
+       * @param executingAccount The account used to execute new Orders.
+       * @param isConsolidated Whether this model consolidates all of the
+       *        <i>executingAccount<i>'s Orders.
+       * @param properties The properties used to display Tasks.
+       */
       BlotterTasksModel(Beam::Ref<UserProfile> userProfile,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
         bool isConsolidated, const BlotterTaskProperties& properties);
 
-      virtual ~BlotterTasksModel();
+      ~BlotterTasksModel() = default;
 
-      //! Returns the BlotterTaskProperties used by this model.
+      /** Returns the BlotterTaskProperties used by this model. */
       const BlotterTaskProperties& GetProperties() const;
 
-      //! Sets the BlotterTaskProperties to use.
-      /*!
-        \param properties The BlotterTaskProperties to use.
-      */
+      /**
+       * Sets the BlotterTaskProperties to use.
+       * @param properties The BlotterTaskProperties to use.
+       */
       void SetProperties(const BlotterTaskProperties& properties);
 
-      //! Returns the OrderExecutionPublisher.
-      Nexus::OrderExecutionService::OrderExecutionPublisher&
+      /** Returns the OrderExecutionPublisher. */
+      const Nexus::OrderExecutionService::OrderExecutionPublisher&
         GetOrderExecutionPublisher() const;
 
-      //! Adds a CanvasNode to the model.
-      /*!
-        \param node The node to add.
-        \return The TaskEntry for the newly entered node.
-      */
+      /**
+       * Adds a new task defined by a canvas node to the model.
+       * @param node The node used to add the new task.
+       * @return The TaskEntry for the newly created task.
+       */
       const TaskEntry& Add(const CanvasNode& node);
 
-      //! Adopts an existing TaskContext, assuming ownership of it.
-      /*!
-        \param context The context to adopt.
-        \return The TaskEntry for the adopted <i>context</i>.
-      */
-      const TaskEntry& Adopt(std::unique_ptr<TaskContext> context);
+      /**
+       * Adds an existing Task to the model.
+       * @param task The task to add.
+       * @return The TaskEntry representing the added task.
+       */
+      const TaskEntry& Add(std::shared_ptr<Task> task);
 
-      //! Monitors a Task.
-      /*!
-        \param context The TaskContext containing the Task to monitor.
-      */
-      void Monitor(const std::shared_ptr<TaskContext>& context);
-
-      //! Returns all TaskContexts strictly belonging to this model.
-      const std::vector<std::shared_ptr<TaskContext>>& GetContexts() const;
-
-      //! Returns all models linking into this one.
+      /** Returns all models linking into this one. */
       const std::vector<BlotterTasksModel*>& GetIncomingLinks() const;
 
-      //! Rebuilds the contents of this model.
+      /** Rebuilds the contents of this model. */
       void Refresh();
 
-      //! Links another BlotterTasksModel to this.
-      /*!
-        \param model The BlotterTasksModel to link to this one.
-      */
+      /**
+       * Links another BlotterTasksModel to this.
+       * @param model The BlotterTasksModel to link to this one.
+       */
       void Link(Beam::Ref<BlotterTasksModel> model);
 
-      //! Unlinks an BlotterTasksModel from this one.
-      /*!
-        \param model The BlotterTasksModel to unlink from this.
-      */
+      /**
+       * Unlinks an BlotterTasksModel from this one.
+       * @param model The BlotterTasksModel to unlink from this.
+       */
       void Unlink(BlotterTasksModel& model);
 
-      //! Returns the TaskEntry at a specified index.
-      /*!
-        \param index The index.
-        \return The TaskEntry at the specified <i>index</i>.
-      */
+      /**
+       * Returns the TaskEntry at a specified index.
+       * @param index The index.
+       * @return The TaskEntry at the specified <i>index</i>.
+       */
       const TaskEntry& GetEntry(int index) const;
 
-      //! Connects a slot to the TaskAddedSignal.
-      /*!
-        \param slot The slot to connect to the TaskAddedSignal.
-        \return A connection to the specified signal.
-      */
+      /**
+       * Connects a slot to the TaskAddedSignal.
+       * @param slot The slot to connect to the TaskAddedSignal.
+       * @return A connection to the specified signal.
+       */
       boost::signals2::connection ConnectTaskAddedSignal(
         const TaskAddedSignal::slot_function_type& slot) const;
 
-      //! Connects a slot to the TaskRemovedSignal.
-      /*!
-        \param slot The slot to connect to the TaskRemovedSignal.
-        \return A connection to the specified signal.
-      */
+      /**
+       * Connects a slot to the TaskRemovedSignal.
+       * @param slot The slot to connect to the TaskRemovedSignal.
+       * @return A connection to the specified signal.
+       */
       boost::signals2::connection ConnectTaskRemovedSignal(
         const TaskRemovedSignal::slot_function_type& slot) const;
 
-      virtual int rowCount(const QModelIndex& parent) const;
+      int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
-      virtual int columnCount(const QModelIndex& parent) const;
+      int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
-      virtual QVariant data(const QModelIndex& index, int role) const;
+      QVariant data(const QModelIndex& index, int role) const override;
 
-      virtual QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const;
+      QVariant headerData(int section, Qt::Orientation orientation,
+        int role) const override;
 
-      virtual bool setData(const QModelIndex& index, const QVariant& value,
-        int role = Qt::EditRole);
+      bool setData(const QModelIndex& index, const QVariant& value,
+        int role = Qt::EditRole) override;
 
     private:
       UserProfile* m_userProfile;
@@ -254,30 +201,29 @@ namespace Spire {
       SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
       std::optional<SpireAggregateOrderExecutionPublisher>
         m_linkedOrderExecutionPublisher;
-      std::vector<std::shared_ptr<TaskContext>> m_contexts;
-      std::unordered_set<long long> m_taskIds;
+      std::vector<std::unique_ptr<TaskEntry>> m_entries;
+      std::unordered_map<int, TaskEntry*> m_taskIds;
       std::vector<BlotterTaskMonitor> m_taskMonitors;
-      std::vector<std::shared_ptr<TaskEntry>> m_entries;
-      std::set<std::shared_ptr<TaskEntry>> m_pendingExpiryEntries;
-      std::vector<std::shared_ptr<TaskEntry>> m_expiredEntries;
-      std::unordered_set<Nexus::OrderExecutionService::OrderId>
-        m_submittedOrders;
+      std::set<TaskEntry*> m_pendingExpiryEntries;
+      std::vector<TaskEntry*> m_expiredEntries;
       std::vector<BlotterTasksModel*> m_incomingLinks;
       std::vector<BlotterTasksModel*> m_outgoingLinks;
-      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      std::unique_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         m_accountOrderPublisher;
+      std::set<const Nexus::OrderExecutionService::Order*> m_submittedOrders;
+      std::set<const Nexus::OrderExecutionService::Order*> m_taskOrders;
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;
       Beam::TaskQueue m_orderSlotHandler;
       std::optional<Beam::TaskQueue> m_taskSlotHandler;
 
       void SetupLinkedOrderExecutionMonitor();
-      void OnMonitorUpdate(std::weak_ptr<TaskEntry> weakEntry,
-        const std::string& property, const boost::any& value);
-      void OnTaskState(std::weak_ptr<TaskEntry> weakEntry,
-        const Beam::Tasks::Task::StateEntry& update);
+      void OnMonitorUpdate(TaskEntry& entry, const std::string& property,
+        const boost::any& value);
+      void OnTaskState(TaskEntry& entry, const Task::StateEntry& update);
       void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
+      void OnTaskOrderSubmitted(
+        const Nexus::OrderExecutionService::Order* order);
       void OnUpdateTimer();
       void OnExpiryTimer();
   };

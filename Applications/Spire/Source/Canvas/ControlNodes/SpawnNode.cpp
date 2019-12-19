@@ -1,7 +1,6 @@
 #include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
@@ -10,26 +9,30 @@ using namespace boost;
 using namespace Spire;
 using namespace std;
 
-namespace {
-  vector<SpawnNode::Signature> BuildSpawnSignatures() {
-    vector<SpawnNode::Signature> signatures;
-    const auto& valueTypes = UnionType::GetAnyValueType().GetCompatibleTypes();
-    for(const auto& type : valueTypes) {
-      SpawnNode::Signature signature;
-      signature.emplace_back(type);
-      signature.emplace_back(TaskType::GetInstance());
-      signature.emplace_back(TaskType::GetInstance());
-      signatures.emplace_back(std::move(signature));
-    }
-    return signatures;
-  }
-}
-
 SpawnNode::SpawnNode() {
   SetText("Spawn");
-  SetType(TaskType::GetInstance());
-  AddChild("trigger", make_unique<NoneNode>(UnionType::GetAnyValueType()));
-  AddChild("task", make_unique<NoneNode>(TaskType::GetInstance()));
+  SetType(UnionType::GetAnyType());
+  AddChild("trigger", make_unique<NoneNode>(UnionType::GetAnyType()));
+  AddChild("series", make_unique<NoneNode>(UnionType::GetAnyType()));
+}
+
+std::unique_ptr<CanvasNode> SpawnNode::Convert(const CanvasType& type) const {
+  auto clone = CanvasNode::Clone(*this);
+  auto& clonedSeries = clone->GetChildren().back();
+  clone->SetChild(clonedSeries, clonedSeries.Convert(type));
+  clone->SetType(type);
+  return clone;
+}
+
+std::unique_ptr<CanvasNode> SpawnNode::Replace(const CanvasNode& child,
+    std::unique_ptr<CanvasNode> replacement) const {
+  if(&child == &GetChildren().back()) {
+    auto clone = CanvasNode::Clone(*this);
+    clone->SetChild(clone->GetChildren().back(), std::move(replacement));
+    clone->SetType(clone->GetChildren().back().GetType());
+    return clone;
+  }
+  return CanvasNode::Replace(child, std::move(replacement));
 }
 
 void SpawnNode::Apply(CanvasNodeVisitor& visitor) const {
@@ -38,11 +41,6 @@ void SpawnNode::Apply(CanvasNodeVisitor& visitor) const {
 
 unique_ptr<CanvasNode> SpawnNode::Clone() const {
   return make_unique<SpawnNode>(*this);
-}
-
-const vector<SpawnNode::Signature>& SpawnNode::GetSignatures() const {
-  static auto signatures = BuildSpawnSignatures();
-  return signatures;
 }
 
 SpawnNode::SpawnNode(ReceiveBuilder) {}

@@ -5,7 +5,7 @@
 #include "Spire/Canvas/Types/ParserTypes.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Parsers;

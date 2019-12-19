@@ -37,9 +37,8 @@ file(GLOB system_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/SystemNodes/*.hpp)
 file(GLOB system_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/SystemNodes/*.cpp)
-file(GLOB task_nodes_header_files
-  ${SPIRE_INCLUDE_PATH}/Spire/Canvas/TaskNodes/*.hpp)
-file(GLOB task_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/TaskNodes/*.cpp)
+file(GLOB tasks_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Tasks/*.hpp)
+file(GLOB tasks_source_files ${SPIRE_SOURCE_PATH}/Canvas/Tasks/*.cpp)
 file(GLOB types_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Types/*.hpp)
 file(GLOB types_source_files ${SPIRE_SOURCE_PATH}/Canvas/Types/*.cpp)
 file(GLOB value_nodes_header_files
@@ -50,14 +49,14 @@ set(header_files ${common_header_files} ${control_nodes_header_files}
   ${market_data_nodes_header_files} ${operations_header_files}
   ${order_execution_nodes_header_files} ${records_header_files}
   ${reference_nodes_header_files} ${standard_nodes_header_files}
-  ${system_nodes_header_files} ${task_nodes_header_files}
+  ${system_nodes_header_files} ${tasks_header_files}
   ${types_header_files} ${value_nodes_header_files})
 set(source_files ${common_source_files} ${control_nodes_source_files}
   ${io_nodes_source_files} ${lua_nodes_source_files}
   ${market_data_nodes_source_files} ${operations_source_files}
   ${order_execution_nodes_source_files} ${records_source_files}
   ${reference_nodes_source_files} ${standard_nodes_source_files}
-  ${system_nodes_source_files} ${task_nodes_source_files}
+  ${system_nodes_source_files} ${tasks_source_files}
   ${types_source_files} ${value_nodes_source_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
@@ -92,8 +91,8 @@ source_group("Standard Nodes\\Source Files"
   FILES ${standard_nodes_source_files})
 source_group("System Nodes\\Header Files" FILES ${system_nodes_header_files})
 source_group("System Nodes\\Source Files" FILES ${system_nodes_source_files})
-source_group("Task Nodes\\Header Files" FILES ${task_nodes_header_files})
-source_group("Task Nodes\\Source Files" FILES ${task_nodes_source_files})
+source_group("Tasks\\Header Files" FILES ${tasks_header_files})
+source_group("Tasks\\Source Files" FILES ${tasks_source_files})
 source_group("Types\\Header Files" FILES ${types_header_files})
 source_group("Types\\Source Files" FILES ${types_source_files})
 source_group("Value Nodes\\Header Files" FILES ${value_nodes_header_files})
@@ -124,7 +123,10 @@ install(TARGETS CanvasTests CONFIGURATIONS Debug
 install(TARGETS CanvasTests CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
 add_executable(CanvasTester ${SPIRE_SOURCE_PATH}/CanvasTester/main.cpp)
-target_link_libraries(CanvasTester CanvasTests Canvas
+target_link_libraries(CanvasTester Dashboard Charting PortfolioViewer
+  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
+  TimeAndSales OrderImbalanceIndicator InputWidgets CanvasTests CanvasView
+  Canvas UI Resources
   debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
   optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
@@ -135,12 +137,28 @@ target_link_libraries(CanvasTester CanvasTests Canvas
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_CORE_LIBRARY_DEBUG_PATH}
   optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_GUI_LIBRARY_DEBUG_PATH}
   optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
   optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
   optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_THEME_LIBRARY_DEBUG_PATH}
+  optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(MSVC)
@@ -148,9 +166,12 @@ if(MSVC)
 endif()
 if(WIN32)
   target_link_libraries(CanvasTester
+    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    imm32.lib winmm.lib ws2_32.lib opengl32.lib)
+    dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib version.lib
+    winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(CanvasTester

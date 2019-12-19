@@ -7,8 +7,8 @@
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;

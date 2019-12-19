@@ -24,7 +24,7 @@ void BacktesterMarketDataClientTester::TestRealTimeQuery() {
   auto COUNT = 6;
   for(auto i = 0; i < COUNT; ++i) {
     auto timestamp = startTime + seconds(i - 3);
-    auto bboQuote = MakeSequencedValue(MakeIndexedValue(
+    auto bboQuote = SequencedValue(IndexedValue(
       BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), timestamp), security),
       EncodeTimestamp(timestamp, Beam::Queries::Sequence(
@@ -77,7 +77,7 @@ void BacktesterMarketDataClientTester::TestHistoricalQuery() {
   auto COUNT = 6;
   for(auto i = 0; i < COUNT; ++i) {
     auto timestamp = startTime + seconds(i - 3);
-    auto bboQuote = MakeSequencedValue(MakeIndexedValue(
+    auto bboQuote = SequencedValue(IndexedValue(
       BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), timestamp), security),
       EncodeTimestamp(timestamp, Beam::Queries::Sequence(
