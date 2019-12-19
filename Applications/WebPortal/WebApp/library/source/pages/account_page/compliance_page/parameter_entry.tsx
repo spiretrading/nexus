@@ -60,7 +60,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return <Checkmark
             onClick={this.onBooleanClick}
             displaySize={this.props.displaySize}
-            isSelected={this.props.parameter.value.value}/>;
+            isChecked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
           return <CurrencySelectionBox
             value={this.props.parameter.value.value}

@@ -19,21 +19,21 @@ interface Properties {
 }
 
 interface State {
-  isInFocus: boolean,
+  isFocused: boolean,
   componentWidth: number
 }
 
-/** A component that displays and lets a user edit a duration. */
+/** A component that displays the date. */
 export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: new Beam.Date(0, 0, 0),
+    value: new Beam.Date(1, 1, 2020),
     onChange: () => {}
   };
 
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isInFocus: false,
+      isFocused: false,
       componentWidth: 0
     }
     this.handleResize = this.handleResize.bind(this);
@@ -48,7 +48,7 @@ export class DateField extends React.Component<Properties, State> {
       }
     })();
     const focusClassName = (() => {
-      if(this.state.isInFocus) {
+      if(this.state.isFocused) {
         return DateField.STYLE.focused;
       } else {
         return null;
@@ -69,28 +69,28 @@ export class DateField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
-          ref={(input) => { this.reference = input; }}
-          onFocus={() => this.setState({isInFocus: true})}
-          onBlur={() => this.setState({isInFocus: false})}> 
+          ref={(input) => {this.reference = input;}}
+          onFocus={() => this.setState({isFocused: true})}
+          onBlur={() => this.setState({isFocused: false})}> 
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
             min={1} max={31}
             value={this.props.value.day()}
-            className={css(DateField.EXTRA_STYLE.effects)}
-            style={DateField.STYLE.integerBoxLarge}
+            className={css(DateField.EXTRA_STYLE.noDefaults)}
+            style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
           <IntegerInputBox
             min={1} max={12}
             value={this.props.value.month()}
-            className={css(DateField.EXTRA_STYLE.effects)}
-            style={DateField.STYLE.integerBoxLarge}
+            className={css(DateField.EXTRA_STYLE.noDefaults)}
+            style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
           <IntegerInputBox
             min={2000} max={3000}
             value={this.props.value.year()}
-            className={css(DateField.EXTRA_STYLE.effects)}
+            className={css(DateField.EXTRA_STYLE.noDefaults)}
             style={DateField.STYLE.yearBox}
             padding={4}/>
           </div>
@@ -153,7 +153,7 @@ export class DateField extends React.Component<Properties, State> {
       alignItems: 'center',
       marginLeft: '9px' 
     },
-    integerBoxLarge: {
+    defaultIntegerBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
       minWidth: '16px',
@@ -196,7 +196,7 @@ export class DateField extends React.Component<Properties, State> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    effects: {
+    noDefaults: {
       ':focus': {
         ouline: 0,
         borderColor: '#684BC7',
@@ -210,9 +210,6 @@ export class DateField extends React.Component<Properties, State> {
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       }
     }
   });

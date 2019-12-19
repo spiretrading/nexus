@@ -50,7 +50,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         <select 
             style={{...CurrencySelectionBox.STYLE.selectionBoxStyle,
               ...this.props.style}} 
-            className={css(CurrencySelectionBox.EXTRA_STYLE.noHighting) + ' ' +
+            className={css(CurrencySelectionBox.EXTRA_STYLE.noDefaults) + ' ' +
               this.props.className}
             onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
@@ -90,7 +90,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    noHighting: {
+    noDefaults: {
       ':focus': {
         ouline: 0,
         outlineColor: 'transparent',

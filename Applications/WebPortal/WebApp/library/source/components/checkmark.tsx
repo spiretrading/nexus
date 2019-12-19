@@ -22,8 +22,8 @@ interface Properties {
 /** A checkmark component. */
 export class Checkmark extends React.Component<Properties> {
   public static readonly defaultProps = {
-    onClick: () => {},
-    readonly: false
+    readonly: false,
+    onClick: () => {}
   }
 
   public render(): JSX.Element {
