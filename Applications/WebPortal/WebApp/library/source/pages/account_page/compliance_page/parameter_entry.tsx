@@ -133,7 +133,7 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private onChange(newValue: any) {
-    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name, 
+    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 

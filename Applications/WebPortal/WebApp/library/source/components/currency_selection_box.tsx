@@ -76,7 +76,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
       backgroundImage:
-        'url(resources/account_page/profile_page/arrow-down.svg)',
+        'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
@@ -92,7 +92,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
   private static readonly EXTRA_STYLE = StyleSheet.create({
     noDefaults: {
       ':focus': {
-        ouline: 0,
+        outline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none',
         border: '1px solid #684BC7',
