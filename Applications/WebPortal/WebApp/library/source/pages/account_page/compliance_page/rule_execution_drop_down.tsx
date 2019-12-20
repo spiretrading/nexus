@@ -79,7 +79,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
       backgroundImage:
-        'url(resources/account_page/profile_page/arrow-down.svg)',
+        'url(/resources/account_page/compliance_page/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
