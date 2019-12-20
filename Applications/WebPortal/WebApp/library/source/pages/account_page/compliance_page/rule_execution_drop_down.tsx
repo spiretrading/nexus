@@ -91,7 +91,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
   public static readonly EXTRA_STYLE = StyleSheet.create({
     noHighlighting: {
       ':focus': {
-        ouline: 0,
+        outline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none',
         border: '1px solid #684BC7',

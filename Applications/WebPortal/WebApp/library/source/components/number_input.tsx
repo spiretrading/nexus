@@ -24,7 +24,7 @@ interface Properties {
   onChange?: (value: number) => void;
 }
 
-/** Displays a single number input field. */
+/** Displays a decimal number input field. */
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: 0,

@@ -1,14 +1,18 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../../display_size';
-import { HLine } from '../../../components';
+import { DisplaySize, HLine } from '../../..';
 
 interface Properties {
+  /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
+  /** The size at which the component should be displayed at. */
   value?: Nexus.ComplianceValue[];
 
+  /** Called when the value changes.
+   * @param newValue - The updated value.
+   */
   onChange?: (newValue: Nexus.ComplianceValue[]) => void;
 }
 
@@ -18,6 +22,7 @@ interface State {
   inputString: string;
 }
 
+/** A component that displays a list of securities. */
 export class SecurityInput extends React.Component<Properties, State>{
   constructor(props: Properties) {
     super(props);
