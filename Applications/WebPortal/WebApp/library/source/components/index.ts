@@ -5,7 +5,6 @@ export * from './currency_selection_box';
 export * from './date_field';
 export * from './date_time_field';
 export * from './drop_down_button';
-export * from './duration_input';
 export * from './duration_input_field';
 export * from './hline';
 export * from './integer_input_box';

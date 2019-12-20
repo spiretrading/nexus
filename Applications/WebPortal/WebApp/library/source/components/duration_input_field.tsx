@@ -87,8 +87,7 @@ export class DurationInputField extends React.Component<Properties, State> {
           ref={(input) => { this.reference = input; }}
           onFocus={() => this.setState({isInFocus: true})}
           onBlur={() => this.setState({isInFocus: false})}>
-        <div
-        style={DurationInputField.STYLE.inner}>
+        <div style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
             min={this.props.minHourValue} max={this.props.maxHourValue}
             value={splitTime.hours}
@@ -112,10 +111,10 @@ export class DurationInputField extends React.Component<Properties, State> {
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
             padding={2}/>
-          </div>
-          <div style={DurationInputField.STYLE.placeholder}>
-            {hintText}
-          </div>
+        </div>
+        <div style={DurationInputField.STYLE.placeholder}>
+          {hintText}
+        </div>
       </div>);
   }
   
