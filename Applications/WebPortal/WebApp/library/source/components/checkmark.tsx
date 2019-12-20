@@ -13,14 +13,14 @@ interface Properties {
   /** Determines if the component can be edited. */
   readonly: boolean;
 
-  /** Called when the checkmark is clicked on.
+  /** Called when the check mark is clicked on.
    * @param value - Any mouse event.
    */
   onClick?: (event?: React.MouseEvent<any>) => void;
 }
 
-/** A checkmark component. */
-export class Checkmark extends React.Component<Properties> {
+/** A check mark component. */
+export class CheckMark extends React.Component<Properties> {
   public static readonly defaultProps = {
     readonly: false,
     onClick: () => {}
@@ -43,16 +43,16 @@ export class Checkmark extends React.Component<Properties> {
     })();
     const wrapperStyle = (() => {
       if(this.props.readonly) {
-        return Checkmark.STYLE.wrapperReadonly;
+        return CheckMark.STYLE.wrapperReadonly;
       } else {
-        return Checkmark.STYLE.wrapper;
+        return CheckMark.STYLE.wrapper;
       }
     })();
     return (
       <div style={wrapperStyle}
-          className={css(Checkmark.EXTRA_STYLE.noDefaults)} 
+          className={css(CheckMark.EXTRA_STYLE.noDefaults)}
           onClick={this.props.onClick}>
-        <img height={size} width={size} src={imgSrc}/> 
+        <img height={size} width={size} src={imgSrc}/>
       </div>);
   }
 
@@ -82,14 +82,14 @@ export class Checkmark extends React.Component<Properties> {
     noDefaults: {
       '-webkit-appearance': 'none',
       ':active': {
-        ouline: 'none',
+        outline: 'none',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
       ':focus': {
-        ouline: 'none',
+        outline: 'none',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
