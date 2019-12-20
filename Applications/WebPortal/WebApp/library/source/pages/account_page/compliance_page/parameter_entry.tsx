@@ -1,9 +1,9 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, DurationInputField, MoneyInputBox,
-  NumberInput, TextInputField } from '../../..';
-import { Checkmark, DateTimeField } from '../../../components';
-import {SecurityInput} from '.';
+import { CheckMark, CurrencySelectionBox, DateTimeField, DisplaySize,
+  DurationInputField, MoneyInputBox, NumberInput, TextInputField } from 
+  '../../..';
+import { SecurityInput } from '.';
 
 interface Properties {
 
@@ -30,7 +30,8 @@ export class ParameterEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const rowStyle = (() => {
-      if(this.props.parameter.value.type !== Nexus.ComplianceValue.Type.DATE_TIME) {
+      if(this.props.parameter.value.type !== 
+          Nexus.ComplianceValue.Type.DATE_TIME) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return ParameterEntry.STYLE.rowSmall;
         } else {
@@ -57,7 +58,7 @@ export class ParameterEntry extends React.Component<Properties> {
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
-          return <Checkmark
+          return <CheckMark
             onClick={this.onBooleanClick}
             displaySize={this.props.displaySize}
             isChecked={this.props.parameter.value.value}/>;
