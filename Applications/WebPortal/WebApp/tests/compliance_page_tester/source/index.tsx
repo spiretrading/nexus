@@ -25,6 +25,7 @@ class TestApp extends React.Component<Properties, State> {
     };
     this.onRuleAdd = this.onRuleAdd.bind(this);
     this.onRuleChange = this.onRuleChange.bind(this);
+    this.toggleReadonly = this.toggleReadonly.bind(this);
   }
 
   public render(): JSX.Element {
