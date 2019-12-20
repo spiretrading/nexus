@@ -16,12 +16,19 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler called when the parameter changes. */
   onChange?: (newParameter: Nexus.ComplianceParameter) => void;
 }
 
 /** Displays a specific parameter. */
 export class ParameterEntry extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    readonly: false
+  };
+
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
@@ -61,6 +68,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return <CheckMark
             onClick={this.onBooleanClick}
             displaySize={this.props.displaySize}
+            readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
           return <CurrencySelectionBox

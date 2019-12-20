@@ -26,6 +26,11 @@ export class CheckMark extends React.Component<Properties> {
     onClick: () => {}
   }
 
+  constructor(props: Properties) {
+    super(props);
+    this.onClick = this.onClick.bind(this);
+  }
+  
   public render(): JSX.Element {
     const imgSrc = (() => {
       if(this.props.isChecked) {
@@ -51,9 +56,15 @@ export class CheckMark extends React.Component<Properties> {
     return (
       <div style={wrapperStyle}
           className={css(CheckMark.EXTRA_STYLE.noDefaults)}
-          onClick={this.props.onClick}>
+          onClick={this.onClick}>
         <img height={size} width={size} src={imgSrc}/>
       </div>);
+  }
+
+  private onClick() {
+    if(!this.props.readonly) {
+      this.props.onClick();
+    }
   }
 
   private static readonly STYLE = {

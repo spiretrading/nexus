@@ -14,12 +14,19 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler called when the schema changes. */
   onChange?: (schema: Nexus.ComplianceRuleSchema) => void;
 }
 
 /** Displays the a list of parameters associated with a schema. */
 export class ParametersList extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    readonly: false
+  };
+
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
@@ -50,6 +57,7 @@ export class ParametersList extends React.Component<Properties> {
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
+        readonly={this.props.readonly}
         onChange={this.onChange.bind(this, i)}
         parameter={rule}/>);
     }

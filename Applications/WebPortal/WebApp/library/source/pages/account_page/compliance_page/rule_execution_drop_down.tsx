@@ -4,15 +4,18 @@ import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
 
 interface Properties {
-  
-  /** The event handler called when the selection changes. */
-  onChange?: (newMode: Nexus.ComplianceRuleEntry.State) => void;
+
+  /** Determines the size of the element. */
+  displaySize: DisplaySize;
 
   /** The currently selected rule mode. */
   value: Nexus.ComplianceRuleEntry.State;
-  
-  /** Determines the size of the element. */
-  displaySize: DisplaySize;
+
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
+  /** The event handler called when the selection changes. */
+  onChange?: (newMode: Nexus.ComplianceRuleEntry.State) => void;
 }
 
 /* Displays a drop down box that allows the user to select a rule mode.*/
@@ -79,7 +82,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
       backgroundImage:
-        'url(/resources/account_page/compliance_page/arrow-down.svg)',
+        'url(resources/account_page/compliance_page/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',

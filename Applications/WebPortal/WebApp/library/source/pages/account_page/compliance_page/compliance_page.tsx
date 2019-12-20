@@ -19,6 +19,9 @@ interface Properties {
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
@@ -32,6 +35,10 @@ interface State {
 
 /* Displays the compliance page.*/
 export class CompliancePage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    readonly: false
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -56,7 +63,8 @@ export class CompliancePage extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.currencyDatabase}
           complianceList={this.props.entries}
-          onChange={this.props.onRuleChange}/>
+          onChange={this.props.onRuleChange}
+          readonly={this.props.readonly}/>
         <div style={CompliancePage.STYLE.paddingMedium}/>
         <NewRuleButton displaySize={this.props.displaySize}
           isOpen={this.state.isAddRuleModalOpen}

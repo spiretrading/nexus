@@ -12,6 +12,7 @@ export class PageWrapper extends React.Component {
 
   private static readonly STYLE = {
     page: {
+      backgroundColor: '#ffffff',
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
       height: '100%',

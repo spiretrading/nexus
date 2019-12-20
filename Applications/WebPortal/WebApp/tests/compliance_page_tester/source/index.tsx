@@ -3,7 +3,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { DateTimeField } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -12,6 +11,7 @@ interface Properties {
 interface State {
   entries: Nexus.ComplianceRuleEntry[];
   schemas: Nexus.ComplianceRuleSchema[];
+  readonly: boolean;
 }
 
 /** Displays a sample CompliancePage for testing. */
@@ -20,7 +20,8 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       entries: [],
-      schemas: []
+      schemas: [],
+      readonly: false
     };
     this.onRuleAdd = this.onRuleAdd.bind(this);
     this.onRuleChange = this.onRuleChange.bind(this);
@@ -29,7 +30,14 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
 
     return(
+      <div style={{backgroundColor: 'black'}}>
       <WebPortal.PageWrapper>
+        <div style={TestApp.STYLE.testingComponents}>
+          <button tabIndex={-1}
+            onClick={this.toggleReadonly}>
+            TOGGLE READONLY
+          </button>
+          </div>
         <WebPortal.CompliancePage
           onRuleAdd={this.onRuleAdd}
           onRuleChange={this.onRuleChange}
@@ -37,11 +45,16 @@ class TestApp extends React.Component<Properties, State> {
           schemas={this.state.schemas}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           entries={this.state.entries}/>
-      </WebPortal.PageWrapper>);
+      </WebPortal.PageWrapper>
+      </div>);
   }
 
   public componentDidMount() {
-    this.state.entries.push(new Nexus.ComplianceRuleEntry(
+    this.generateSchemas();
+  }
+
+  private generateSchemas() {
+        this.state.entries.push(new Nexus.ComplianceRuleEntry(
       56,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.ACTIVE,
@@ -229,6 +242,22 @@ class TestApp extends React.Component<Properties, State> {
     );
     this.setState({entries: this.state.entries});
   }
+
+  private toggleReadonly() {
+    this.setState({
+      readonly: !this.state.readonly
+    });
+  }
+
+  private static STYLE = {
+    testingComponents: {
+      position: 'fixed' as 'fixed',
+      fontSize: '8px',
+      top: 0,
+      left: 0,
+      zIndex: 500
+    }
+  };
 }
 
 const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);

@@ -19,6 +19,9 @@ interface Properties {
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler called when the rule entry changes. */
   onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
 }
@@ -30,6 +33,10 @@ interface State {
 
 /** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    readonly: false
+  };
+
   constructor(props: Properties){
     super(props);
     this.state = {
@@ -90,9 +97,10 @@ export class RuleRow extends React.Component<Properties, State> {
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
-              onChange={this.onRuleModeChange}
+              displaySize={this.props.displaySize}
               value={this.props.complianceRule.state}
-              displaySize={this.props.displaySize}/>
+              readonly={this.props.readonly}
+              onChange={this.onRuleModeChange}/>
           </div>
           {spacing}
         </div>
