@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="0132cda028b3a75c47be00d28af2ba481b70db89"
+SET beam_commit="76190382c85f2138145cbfcedbb1f717d9b30386"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -55,7 +55,7 @@ IF NOT EXIST lua-5.3.5 (
     gzip -d -c lua-5.3.5.tar.gz | tar -xf -
     PUSHD lua-5.3.5\src
     COPY %~dp0\Config\lua.cmake CMakeLists.txt
-    cmake .
+    cmake -A Win32 .
     cmake --build . --target ALL_BUILD --config Debug
     cmake --build . --target ALL_BUILD --config Release
     POPD
