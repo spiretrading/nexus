@@ -33,11 +33,11 @@ IF "%BUILD_BEAM%" == "1" (
 POPD
 SET commit=
 SET PATH=%PATH%;%ROOT%\Strawberry\perl\site\bin;%ROOT%\Strawberry\perl\bin;%ROOT%\Strawberry\c\bin
-IF NOT EXIST qt-5.12.1 (
-  git clone git://code.qt.io/qt/qt5.git qt-5.12.1
-  IF EXIST qt-5.12.1 (
-    PUSHD qt-5.12.1
-    git checkout 5.12.1
+IF NOT EXIST qt-5.14.0 (
+  git clone git://code.qt.io/qt/qt5.git qt-5.14.0
+  IF EXIST qt-5.14.0 (
+    PUSHD qt-5.14.0
+    git checkout 5.14.0
     perl init-repository --module-subset=default
     CALL configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^

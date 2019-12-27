@@ -112,7 +112,7 @@ void InteractionsWidget::StyleRegion(const RegionEntry& region) {
   if(region.m_isActive) {
     QVariant textColor = m_ui->m_regionComboBox->palette().color(
       QPalette::Normal, QPalette::Text);
-    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::TextColorRole);
+    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::ForegroundRole);
     QFont font = qvariant_cast<QFont>(
       m_ui->m_regionComboBox->itemData(index, Qt::FontRole));
     font.setItalic(false);
@@ -120,7 +120,7 @@ void InteractionsWidget::StyleRegion(const RegionEntry& region) {
   } else {
     QVariant textColor = m_ui->m_regionComboBox->palette().color(
       QPalette::Disabled, QPalette::Text);
-    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::TextColorRole);
+    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::ForegroundRole);
     QFont font = qvariant_cast<QFont>(
       m_ui->m_regionComboBox->itemData(index, Qt::FontRole));
     font.setItalic(true);

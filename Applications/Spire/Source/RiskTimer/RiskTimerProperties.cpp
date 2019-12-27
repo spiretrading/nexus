@@ -6,10 +6,9 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
-#include <QApplication>
-#include <QDesktopServices>
-#include <QDesktopWidget>
+#include <QGuiApplication>
 #include <QMessageBox>
+#include <QScreen>
 #include "Spire/UI/UISerialization.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -32,10 +31,10 @@ namespace {
 
 RiskTimerProperties RiskTimerProperties::GetDefault() {
   RiskTimerProperties properties;
-  QPoint riskTimerDialogInitialPosition(
-    (QApplication::desktop()->availableGeometry().width() -
-    RISK_TIMER_DIALOG_WIDTH) / 2,
-    (14 * QApplication::desktop()->availableGeometry().height()) / 100);
+  auto availableGeometry =
+    QGuiApplication::primaryScreen()->availableGeometry();
+  QPoint riskTimerDialogInitialPosition((availableGeometry.width() -
+    RISK_TIMER_DIALOG_WIDTH) / 2, (14 * availableGeometry.height()) / 100);
   properties.SetRiskTimerDialogInitialPosition(riskTimerDialogInitialPosition);
   return properties;
 }

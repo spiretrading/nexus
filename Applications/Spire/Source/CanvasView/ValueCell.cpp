@@ -41,11 +41,11 @@ QVariant ValueCell::data(int role) const {
     return QString::fromStdString(m_node->GetText());
   } else if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
-  } else if(role == Qt::TextColorRole) {
+  } else if(role == Qt::ForegroundRole) {
     if(m_node->IsReadOnly()) {
       return readOnlyTextColor;
     }
-  } else if(role == Qt::BackgroundColorRole) {
+  } else if(role == Qt::BackgroundRole) {
     if(m_node->IsReadOnly()) {
       return readOnlyBackgroundColor;
     }

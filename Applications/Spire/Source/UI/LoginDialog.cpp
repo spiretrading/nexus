@@ -4,8 +4,9 @@
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <boost/lexical_cast.hpp>
-#include <QDesktopWidget>
+#include <QGuiApplication>
 #include <QMessageBox>
+#include <QScreen>
 #include "ui_LoginDialog.h"
 #include "Version.hpp"
 
@@ -59,7 +60,7 @@ LoginDialog::LoginDialog(std::vector<ServerEntry> servers,
   for(auto& server : m_servers) {
     m_ui->m_serverComboBox->addItem(QString::fromStdString(server.m_name));
   }
-  auto desktopGeometry = QApplication::desktop()->screenGeometry();
+  auto desktopGeometry = QGuiApplication::primaryScreen()->geometry();
   move(desktopGeometry.center() - rect().center());
   m_ui->m_usernameInput->installEventFilter(this);
   m_ui->m_passwordInput->installEventFilter(this);

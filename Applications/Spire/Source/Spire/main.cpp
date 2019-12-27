@@ -6,8 +6,9 @@
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QGuiApplication>
 #include <QMessageBox>
+#include <QScreen>
 #include <QStandardPaths>
 #ifdef slots
   #undef slots
@@ -86,7 +87,7 @@ namespace {
     auto instantiateSecurityWindows = true;
     QPoint nextPosition(0, 0);
     auto nextHeight = 0;
-    auto resolution = QApplication::desktop()->availableGeometry();
+    auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     vector<Security> defaultSecurities;
     auto& marketEntry = userProfile.GetMarketDatabase().FromCode("XTSE");
     defaultSecurities.push_back(Security("RY", marketEntry.m_code,
