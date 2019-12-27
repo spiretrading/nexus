@@ -136,6 +136,8 @@ void Nexus::Python::ExportDefaultCountries(pybind11::module& module) {
   submodule.add_object("BR", cast(DefaultCountries::BR()));
   submodule.add_object("CA", cast(DefaultCountries::CA()));
   submodule.add_object("CN", cast(DefaultCountries::CN()));
+  submodule.add_object("HK", cast(DefaultCountries::HK()));
+  submodule.add_object("JP", cast(DefaultCountries::JP()));
   submodule.add_object("US", cast(DefaultCountries::US()));
 }
 
@@ -143,6 +145,8 @@ void Nexus::Python::ExportDefaultCurrencies(pybind11::module& module) {
   auto submodule = module.def_submodule("default_currencies");
   submodule.add_object("AUD", cast(DefaultCurrencies::AUD()));
   submodule.add_object("CAD", cast(DefaultCurrencies::CAD()));
+  submodule.add_object("HKD", cast(DefaultCurrencies::HKD()));
+  submodule.add_object("JPY", cast(DefaultCurrencies::JPY()));
   submodule.add_object("USD", cast(DefaultCurrencies::USD()));
   submodule.add_object("XBT", cast(DefaultCurrencies::XBT()));
 }
@@ -156,6 +160,7 @@ void Nexus::Python::ExportDefaultDestinations(pybind11::module& module) {
   submodule.add_object("BATS", cast(DefaultDestinations::BATS()));
   submodule.add_object("NYSE", cast(DefaultDestinations::NYSE()));
   submodule.add_object("NASDAQ", cast(DefaultDestinations::NASDAQ()));
+  submodule.add_object("HKEX", cast(DefaultDestinations::HKEX()));
   submodule.add_object("ALPHA", cast(DefaultDestinations::ALPHA()));
   submodule.add_object("CHIX", cast(DefaultDestinations::CHIX()));
   submodule.add_object("CX2", cast(DefaultDestinations::CX2()));
@@ -170,6 +175,7 @@ void Nexus::Python::ExportDefaultDestinations(pybind11::module& module) {
 
 void Nexus::Python::ExportDefaultMarkets(pybind11::module& module) {
   auto submodule = module.def_submodule("default_markets");
+  submodule.add_object("HKEX", cast(DefaultMarkets::HKEX()));
   submodule.add_object("ASX", cast(DefaultMarkets::ASX()));
   submodule.add_object("CXA", cast(DefaultMarkets::CXA()));
   submodule.add_object("ASEX", cast(DefaultMarkets::ASEX()));
@@ -196,6 +202,12 @@ void Nexus::Python::ExportDefaultMarkets(pybind11::module& module) {
   submodule.add_object("TSXV", cast(DefaultMarkets::TSXV()));
   submodule.add_object("XATS", cast(DefaultMarkets::XATS()));
   submodule.add_object("XCX2", cast(DefaultMarkets::XCX2()));
+  submodule.add_object("XFKA", cast(DefaultMarkets::XFKA()));
+  submodule.add_object("TSE", cast(DefaultMarkets::TSE()));
+  submodule.add_object("OSE", cast(DefaultMarkets::OSE()));
+  submodule.add_object("NSE", cast(DefaultMarkets::NSE()));
+  submodule.add_object("SSE", cast(DefaultMarkets::SSE()));
+  submodule.add_object("CHIJ", cast(DefaultMarkets::CHIJ()));
 }
 
 void Nexus::Python::ExportDefinitions(pybind11::module& module) {

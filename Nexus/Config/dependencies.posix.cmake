@@ -15,3 +15,9 @@ set(LUA_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/install/lib/liblua.a")
 set(LUA_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/install/lib/liblua.a")
+set(QUICK_FIX_INCLUDE_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/include")
+set(QUICK_FIX_LIBRARY_DEBUG_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/lib/debug/libquickfix.a")
+set(QUICK_FIX_LIBRARY_OPTIMIZED_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/lib/libquickfix.a")
