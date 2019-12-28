@@ -13,7 +13,7 @@ If((Get-Command "grep.exe" -ErrorAction SilentlyContinue) -eq $null) {
   .\Gow-0.8.0.exe /S | Out-Null
   rm Gow-0.8.0.exe -Force
   Invoke-WebRequest -UseBasicParsing -Uri https://eternallybored.org/misc/wget/1.20.3/64/wget.exe -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::FireFox -OutFile wget.exe
-  mv ./wget.exe "$program_files_x86_path\Gow\bin"
+  mv ./wget.exe "$program_files_x86_path\Gow\bin" -Force
   rm wget.exe -Force
 }
 If((Get-Command "unzip.exe" -ErrorAction SilentlyContinue) -eq $null) {
