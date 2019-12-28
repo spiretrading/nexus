@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="76190382c85f2138145cbfcedbb1f717d9b30386"
+SET beam_commit="bd814c2633ffff54c67fcb7bc4dcf5f856fc5989"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -73,9 +73,9 @@ IF NOT EXIST quickfix-v.1.15.1 (
     sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
     POPD
     devenv /Upgrade quickfix_vs12.sln
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Debug ^
       /p:UseEnv=true
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Release ^
       /p:UseEnv=true
     POPD
     DEL quickfix-v.1.15.1.zip

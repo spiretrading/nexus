@@ -26,7 +26,7 @@ If((Get-Command "git.exe" -ErrorAction SilentlyContinue) -eq $null) {
 }
 If((Get-Command "cmake.exe" -ErrorAction SilentlyContinue) -eq $null) {
   Invoke-WebRequest -UseBasicParsing -Uri https://github.com/Kitware/CMake/releases/download/v3.16.2/cmake-3.16.2-win64-x64.msi -OutFile cmake-3.16.2-win64-x64.msi
-  msiexec /quiet /i cmake-3.16.2-win64-x64.msi | Out-Null
+  msiexec /quiet /i cmake-3.16.2-win64-x64.msi ADD_CMAKE_TO_PATH=User | Out-Null
   rm .\cmake-3.16.2-win64-x64.msi -Force
 }
 If((Get-Command "node.exe" -ErrorAction SilentlyContinue) -eq $null) {
