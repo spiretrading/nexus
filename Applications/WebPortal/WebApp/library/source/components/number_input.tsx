@@ -18,6 +18,9 @@ interface Properties {
   /** The largest number that the box accepts. */
   max?: number;
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -28,6 +31,7 @@ interface Properties {
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: 0,
+    readonly: false,
     onChange: () => {}
   };
 
@@ -37,12 +41,20 @@ export class NumberInput extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const boxStyle = (() => {
+      if(this.props.readonly) {
+        return NumberInput.STYLE.boxReadonly;
+      } else {
+        return NumberInput.STYLE.box;
+      }
+    })();
     return (
       <input type={'number'}
         min={this.props.min}
         max={this.props.max}
         value={this.props.value}
-        style={{...NumberInput.STYLE.box, ...this.props.style}}
+        style={{...boxStyle, ...this.props.style}}
+        disabled={this.props.readonly}
         onChange={this.onChange}
         className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
@@ -72,21 +84,38 @@ export class NumberInput extends React.Component<Properties> {
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
       appearance: 'none' as 'none'
+    },
+    boxReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      flexGrow: 1,
+      minWidth: '184px',
+      maxWidth: '246px',
+      width: '100%',
+      paddingLeft: '10px',
+      WebkitAppearance: 'textfield',
+      appearance: 'none' as 'none'
     }
   };
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
       '-moz-appearance': 'textfield',
       ':focus': {
-        ouline: 0,
+        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0

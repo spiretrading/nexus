@@ -87,7 +87,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.DOUBLE:
           return <NumberInput 
             value={this.props.parameter.value.value}
-            
+            readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <DurationInputField

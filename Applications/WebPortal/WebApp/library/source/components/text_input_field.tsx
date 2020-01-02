@@ -62,13 +62,6 @@ export class TextInputField extends React.Component<Properties> {
         }
       }
     })();
-    const boxClassName = (() => {
-      if(this.props.readonly) {
-        return TextInputField.EXTRA_STYLE.noDefaults;
-      } else {
-        return TextInputField.EXTRA_STYLE.effects;
-      }
-    })();
     const errorStyle = (() => {
       if(this.props.isError) {
         return TextInputField.EXTRA_STYLE.errorBox;
@@ -84,7 +77,7 @@ export class TextInputField extends React.Component<Properties> {
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.props.onInput(event.target.value);}}
-        className={css(boxClassName, errorStyle) + ' ' +
+        className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' +
           this.props.className}/>);
   }
 
@@ -195,27 +188,11 @@ export class TextInputField extends React.Component<Properties> {
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
-        borderColor: '#684BC7'
-      },
       '::moz-focus-inner': {
         border: 0
       },
       '::placeholder': {
         color: '#8C8C8C'
-      }
-    },
-    noDefaults: {
-      ':focus': {
-        outline: 0,
-        borderColor: '#000000',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      '::moz-focus-inner': {
-        border: 0
       }
     },
     errorBox: {
