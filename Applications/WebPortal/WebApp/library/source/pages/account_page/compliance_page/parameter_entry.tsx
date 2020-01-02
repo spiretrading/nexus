@@ -93,7 +93,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return <DurationInputField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
-            
+            readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
@@ -103,7 +103,7 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.QUANTITY:
           return <NumberInput 
             value={this.props.parameter.value.value}
-            
+            readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.SECURITY:
           return <SecurityInput

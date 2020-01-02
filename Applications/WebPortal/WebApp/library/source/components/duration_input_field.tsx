@@ -24,6 +24,9 @@ interface Properties {
   /** The smallest value the hours field can hold. */
   minHourValue?: number;
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -41,6 +44,7 @@ export class DurationInputField extends React.Component<Properties, State> {
     value: new Beam.Duration(0),
     minHourValue: 0,
     maxHourValue: 99,
+    readonly: false,
     onChange: () => {}
   };
 
@@ -51,15 +55,25 @@ export class DurationInputField extends React.Component<Properties, State> {
       componentWidth: 0
     }
     this.handleResize = this.handleResize.bind(this);
+    this.onBlur = this.onBlur.bind(this);
+    this.onFocus = this.onFocus.bind(this);
   }
 
   public render(): JSX.Element {
     const splitTime = this.props.value.split();
     const wrapperStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.wrapperSmall;
+      if(this.props.readonly) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return DurationInputField.STYLE.wrapperSmallReadonly;
+        } else {
+          return DurationInputField.STYLE.wrapperLargeReadonly;
+        }
       } else {
-        return DurationInputField.STYLE.wrapperLarge;
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return DurationInputField.STYLE.wrapperSmall;
+        } else {
+          return DurationInputField.STYLE.wrapperLarge;
+        }
       }
     })();
     const focusClassName = (() => {
@@ -85,8 +99,8 @@ export class DurationInputField extends React.Component<Properties, State> {
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
           ref={(input) => { this.reference = input; }}
-          onFocus={() => this.setState({isInFocus: true})}
-          onBlur={() => this.setState({isInFocus: false})}>
+          onFocus={this.onFocus}
+          onBlur={this.onBlur}>
         <div style={DurationInputField.STYLE.inner}>
           <IntegerInputBox
             min={this.props.minHourValue} max={this.props.maxHourValue}
@@ -94,6 +108,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
+            readonly={this.props.readonly}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
           <IntegerInputBox
@@ -102,6 +117,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
+            readonly={this.props.readonly}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>{':'}</div>
           <IntegerInputBox
@@ -110,6 +126,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             className={css(DurationInputField.EXTRA_STYLE.effects)}
             style={DurationInputField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
+            readonly={this.props.readonly}
             padding={2}/>
         </div>
         <div style={DurationInputField.STYLE.placeholder}>
@@ -129,6 +146,18 @@ export class DurationInputField extends React.Component<Properties, State> {
   public componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
+  }
+
+  private onFocus() {
+    if(!this.props.readonly) {
+      this.setState({isInFocus: true})
+    }
+  }
+
+  private onBlur() {
+    if(!this.props.readonly) {
+      this.setState({isInFocus: false})
+    }
   }
 
   private onChange(timeUnit: TimeUnit, value: number) {
@@ -177,6 +206,33 @@ export class DurationInputField extends React.Component<Properties, State> {
       backgroundColor: '#ffffff',
       justifyContent: 'space-between' as 'space-between',
       border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      height: '34px'
+    },
+    wrapperSmallReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      minWidth: '110px',
+      width: '100%',
+      flexShrink: 1,
+      flexGrow: 1,
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #ffffff',
+      borderRadius: '1px',
+      height: '34px'
+    },
+    wrapperLargeReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexGrow: 1,
+      flexShrink: 1,
+      maxWidth: '246px',
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #ffffff',
       borderRadius: '1px',
       height: '34px'
     },

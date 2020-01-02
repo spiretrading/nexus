@@ -21,6 +21,9 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** The event handler for when a change is made. */
   onChange?: (value?: number) => (boolean | void);
 }
@@ -33,6 +36,7 @@ interface State {
 export class IntegerInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: 0,
+    readonly: false,
     onChange: () => {}
   };
 
@@ -58,6 +62,8 @@ export class IntegerInputBox extends React.Component<Properties, State> {
         style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}} 
         value={shownValue}
         onChange={this.onChange}
+        readOnly={this.props.readonly}
+        disabled={this.props.readonly}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
         className={css(IntegerInputBox.EXTRA_STYLE.customHighlighting)}
         type={'text'}/>);
@@ -145,6 +151,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       width: '66px',
       height: '34px',
       border: '1px solid #C8C8C8',
+      color: '#000000',
       textAlign: 'center' as 'center'
     }
   };
@@ -152,7 +159,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     customHighlighting: {
       '-moz-appearance': 'textfield',
       ':focus': {
-        ouline: 0,
+        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
@@ -164,9 +171,6 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       },
       '::-webkit-inner-spin-button': {
         '-webkit-appearance': 'none',
