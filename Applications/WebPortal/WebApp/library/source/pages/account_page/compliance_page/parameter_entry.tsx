@@ -75,38 +75,46 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             style={inputWrapper}
             onChange={this.onChange}
+            //readonly={this.props.readonly}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <DateTimeField
             value={this.props.parameter.value.value}
             displaySize={this.props.displaySize}
+            
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
           return <NumberInput 
             value={this.props.parameter.value.value}
+            
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <DurationInputField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
+            
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
           return <MoneyInputBox
             value={this.props.parameter.value.value}
+            readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
           return <NumberInput 
             value={this.props.parameter.value.value}
+            
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.SECURITY:
           return <SecurityInput
             displaySize={this.props.displaySize}
+            
             value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onInput={this.onChange}
+            
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
@@ -115,12 +123,14 @@ export class ParameterEntry extends React.Component<Properties> {
               return <SecurityInput
               displaySize={this.props.displaySize}
               onChange={this.onChange}
+              
               value={this.props.parameter.value.value}/>;
             }
           } else {
             return <SecurityInput
               displaySize={this.props.displaySize}
               onChange={this.onChange}
+              
               value={[]}/>;
           }
         default:

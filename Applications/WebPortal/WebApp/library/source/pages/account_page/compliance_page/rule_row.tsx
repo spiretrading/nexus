@@ -114,6 +114,7 @@ export class RuleRow extends React.Component<Properties, State> {
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
                   schema={this.props.complianceRule.schema}
+                  readonly={this.props.readonly}
                   onChange={this.onParameterChange}/>
               </div>)}
           </Transition>

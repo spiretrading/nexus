@@ -13,6 +13,9 @@ interface Properties {
   /** The initial value to display. */
   value?: Nexus.Money;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler for when a change is made. */
   onChange?: (value?: Nexus.Money) => (boolean | void);
 
@@ -30,6 +33,7 @@ interface State {
 /** Displays an input box for money values. */
 export class MoneyInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
+    readonly: false,
     onChange: () => {}
   };
 
@@ -44,12 +48,26 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const style = (() => {
+      if(this.props.readonly) {
+        return MoneyInputBox.STYLE.readonly;
+      } else {
+        return MoneyInputBox.STYLE.input;
+      }
+    })();
+    const className = (() => {
+      if(this.props.readonly) {
+        return MoneyInputBox.EXTRA_STYLE.noDefaults;
+      } else {
+        return MoneyInputBox.EXTRA_STYLE.effects;
+      }
+    })();
     return (
         <input
-          style={{...MoneyInputBox.STYLE.input, ...this.props.style}} 
-          className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
-            this.props.className}
+          style={{...style, ...this.props.style}} 
+          className={css(className) + ' ' + this.props.className}
           type='text'
+          readOnly={this.props.readonly}
           ref={(input) => {this._input = input;}}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
@@ -169,13 +187,30 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       flexGrow: 1,
       maxWidth: '246px',
       width: '100%',
-      paddingLeft: '10px',
+      paddingLeft: '10px'
+    },
+    readonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexWrap: 'nowrap' as 'nowrap',
+      alignItems: 'center' as 'center',
+      justifyContent: 'space-between',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      color: '#000000',
+      flexGrow: 1,
+      maxWidth: '246px',
+      width: '100%',
+      paddingLeft: '10px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        ouline: 0,
+        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
@@ -190,6 +225,16 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       },
       '::placeholder': {
         color: '#8C8C8C'
+      }
+    },
+    noDefaults: {
+      ':focus': {
+        outline: 0,
+        borderColor: '#FFFFFF',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
       }
     }
   });

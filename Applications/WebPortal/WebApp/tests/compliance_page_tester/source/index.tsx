@@ -44,6 +44,7 @@ class TestApp extends React.Component<Properties, State> {
           onRuleChange={this.onRuleChange}
           displaySize={this.props.displaySize} 
           schemas={this.state.schemas}
+          readonly={this.state.readonly}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           entries={this.state.entries}/>
       </WebPortal.PageWrapper>
