@@ -16,6 +16,9 @@ interface Properties {
   /** The class name of the currency selection box. */
   className?: string;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.Currency) => void;
 }
@@ -32,6 +35,26 @@ export class CurrencySelectionBox extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
+    const style = (() => {
+      if(this.props.readonly) {
+        return CurrencySelectionBox.STYLE.readonly;
+      } else {
+        return CurrencySelectionBox.STYLE.selectionBox;
+      }
+    })();
+    const className = (() => {
+      if(this.props.readonly) {
+
+      } else {
+
+      }
+    })();
+    const defaultValue = (() => {
+      if(this.props.value) {
+        return this.props.currencyDatabase.fromCurrency(this.props.value).code;
+      }
+      return undefined;
+    })();
     const currencies = [];
     for(let currency of this.props.currencyDatabase) {
       currencies.push(
@@ -39,23 +62,14 @@ export class CurrencySelectionBox extends React.Component<Properties> {
           {currency.code}
         </option>);
     }
-    const defaultValue = (() => {
-      if(this.props.value) {
-        return this.props.currencyDatabase.fromCurrency(this.props.value).code;
-      }
-      return undefined;
-    })();
     return (
-      <div>
-        <select 
-            style={{...CurrencySelectionBox.STYLE.selectionBoxStyle,
-              ...this.props.style}} 
+        <select disabled={this.props.readonly}
+            style={{...style, ...this.props.style}} 
             className={css(CurrencySelectionBox.EXTRA_STYLE.noDefaults) + ' ' +
               this.props.className}
             onChange={this.onChange} defaultValue={defaultValue}>
           {currencies}
-        </select>
-      </div>);
+        </select>);
   }
 
   private onChange(event: React.ChangeEvent<any>): void {
@@ -66,7 +80,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    selectionBoxStyle: {
+    selectionBox: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       font: '400 14px Roboto',
@@ -75,6 +89,28 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
+      backgroundImage:
+        'url(resources/components/arrow-down.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none',
+      minWidth: '246px',
+      width: '100%',
+      flexGrow: 1,
+      flexShrink: 1
+    },
+    readonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      font: '400 14px Roboto',
+      paddingLeft: '7px',
+      color: '#000000',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#FFFFFF',
       backgroundImage:
         'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',

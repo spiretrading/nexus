@@ -26,7 +26,8 @@ interface Properties {
 /** Displays a specific parameter. */
 export class ParameterEntry extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false
+    readonly: false,
+    onChange: () => {}
   };
 
   constructor(props: Properties) {
@@ -75,7 +76,7 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             style={inputWrapper}
             onChange={this.onChange}
-            //readonly={this.props.readonly}
+            readonly={this.props.readonly}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <DateTimeField
