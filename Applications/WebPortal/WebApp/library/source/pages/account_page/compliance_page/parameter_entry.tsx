@@ -115,7 +115,7 @@ export class ParameterEntry extends React.Component<Properties> {
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onInput={this.onChange}
-            
+            readonly={this.props.readonly}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
