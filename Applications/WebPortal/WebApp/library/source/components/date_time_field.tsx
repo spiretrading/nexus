@@ -51,6 +51,13 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const selectionStyle = (() => {
+      if(this.props.readonly) {
+        return DateTimeField.STYLE.selectReadonly;
+      } else {
+        return DateTimeField.STYLE.select;
+      }
+    })();
     return (
       <div style={DateTimeField.STYLE.outerWrapper}>
         <DateField
@@ -67,9 +74,10 @@ export class DateTimeField extends React.Component<Properties, State> {
             maxHourValue={12}
             minHourValue={1}
             onChange={this.onTimeChange}/>
-          <select style={DateTimeField.STYLE.select}
+          <select style={selectionStyle}
               onChange={this.onPeriodChange}
               value={this.state.period}
+              disabled={this.props.readonly}
               className={css(DateTimeField.EXTRA_STYLE.noHighlighting)}>
             <option value={Periods.AM}>{'AM'}</option>
             <option value={Periods.PM}>{'PM'}</option>
@@ -185,6 +193,28 @@ export class DateTimeField extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
+      backgroundImage:
+        'url(resources/components/arrow-down.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none'
+    },
+    selectReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
+      marginLeft: '10px',
+      paddingLeft: '7px',
+      width: '64px',
+      height: '34px',
+      flexGrow: 0,
+      flexShrink: 0,
+      color: '#333333',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#FFFFFF',
       backgroundImage:
         'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
