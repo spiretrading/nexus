@@ -22,7 +22,7 @@ interface Properties {
 }
 
 interface State {
-  isFocused: boolean,
+  isInFocus: boolean,
   componentWidth: number
 }
 
@@ -37,30 +37,24 @@ export class DateField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isFocused: false,
+      isInFocus: false,
       componentWidth: 0
     }
     this.handleResize = this.handleResize.bind(this);
+    this.onBlur = this.onBlur.bind(this);
+    this.onFocus = this.onFocus.bind(this);
   } 
 
   public render(): JSX.Element {
     const wrapperStyle = (() => {
-      if(this.props.readonly) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return DateField.STYLE.wrapperSmallReadonly;
-        } else {
-          return DateField.STYLE.wrapperLargeReadonly;
-        }
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return DateField.STYLE.wrapperSmall;
       } else {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return DateField.STYLE.wrapperSmall;
-        } else {
-          return DateField.STYLE.wrapperLarge;
-        }
+        return DateField.STYLE.wrapperLarge;
       }
     })();
     const focusClassName = (() => {
-      if(this.state.isFocused) {
+      if(this.state.isInFocus) {
         return DateField.STYLE.focused;
       } else {
         return null;
@@ -82,8 +76,8 @@ export class DateField extends React.Component<Properties, State> {
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
           ref={(input) => {this.reference = input;}}
-          onFocus={() => this.setState({isFocused: true})}
-          onBlur={() => this.setState({isFocused: false})}> 
+          onFocus={this.onFocus}
+          onBlur={this.onBlur}> 
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
             min={1} max={31}
@@ -115,14 +109,6 @@ export class DateField extends React.Component<Properties, State> {
       </div>);
   }
 
-  private handleResize() {
-    if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.reference.clientWidth) {
-        this.setState({componentWidth: this.reference.clientWidth});
-      }
-    }
-  }
-
   public componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
@@ -131,7 +117,25 @@ export class DateField extends React.Component<Properties, State> {
   public componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
   }
+  private handleResize() {
+    if(this.props.displaySize === DisplaySize.SMALL) {
+      if(this.state.componentWidth !== this.reference.clientWidth) {
+        this.setState({componentWidth: this.reference.clientWidth});
+      }
+    }
+  }
 
+  private onFocus() {
+    if(!this.props.readonly) {
+      this.setState({isInFocus: true})
+    }
+  }
+
+  private onBlur() {
+    if(!this.props.readonly) {
+      this.setState({isInFocus: false})
+    }
+  }
   private static readonly STYLE = {
     wrapperSmall: {
       boxSizing: 'border-box' as 'border-box',

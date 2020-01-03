@@ -62,18 +62,10 @@ export class DurationInputField extends React.Component<Properties, State> {
   public render(): JSX.Element {
     const splitTime = this.props.value.split();
     const wrapperStyle = (() => {
-      if(this.props.readonly) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return DurationInputField.STYLE.wrapperSmallReadonly;
-        } else {
-          return DurationInputField.STYLE.wrapperLargeReadonly;
-        }
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return DurationInputField.STYLE.wrapperSmall;
       } else {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return DurationInputField.STYLE.wrapperSmall;
-        } else {
-          return DurationInputField.STYLE.wrapperLarge;
-        }
+        return DurationInputField.STYLE.wrapperLarge;
       }
     })();
     const focusClassName = (() => {
@@ -209,33 +201,6 @@ export class DurationInputField extends React.Component<Properties, State> {
       borderRadius: '1px',
       height: '34px'
     },
-    wrapperSmallReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      minWidth: '110px',
-      width: '100%',
-      flexShrink: 1,
-      flexGrow: 1,
-      backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
-      border: '1px solid #ffffff',
-      borderRadius: '1px',
-      height: '34px'
-    },
-    wrapperLargeReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexGrow: 1,
-      flexShrink: 1,
-      maxWidth: '246px',
-      backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
-      border: '1px solid #ffffff',
-      borderRadius: '1px',
-      height: '34px'
-    },
     inner: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -270,7 +235,6 @@ export class DurationInputField extends React.Component<Properties, State> {
       marginRight: '10px'
     },
     focused: {
-      ouline: 0,
       outlineColor: 'transparent',
       outlineStyle: 'none',
       border: '1px solid #684BC7',
@@ -280,15 +244,11 @@ export class DurationInputField extends React.Component<Properties, State> {
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        ouline: 0,
         border: '0px solid #333333',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0

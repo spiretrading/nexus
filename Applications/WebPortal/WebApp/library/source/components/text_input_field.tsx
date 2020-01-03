@@ -44,22 +44,12 @@ export class TextInputField extends React.Component<Properties> {
 
   public render(): JSX.Element {
     const boxStyle = (() => {
-      if(this.props.readonly) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return TextInputField.STYLE.boxSmallReadonly;
-        } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-          return TextInputField.STYLE.boxMediumReadonly;
-        } else {
-          return TextInputField.STYLE.boxLargeReadonly;
-        }
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return TextInputField.STYLE.boxSmall;
+      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+        return TextInputField.STYLE.boxMedium;
       } else {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return TextInputField.STYLE.boxSmall;
-        } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-          return TextInputField.STYLE.boxMedium;
-        } else {
-          return TextInputField.STYLE.boxLarge;
-        }
+        return TextInputField.STYLE.boxLarge;
       }
     })();
     const errorStyle = (() => {
@@ -71,7 +61,6 @@ export class TextInputField extends React.Component<Properties> {
     })();
     return (
       <input value={this.props.value}
-        readOnly={this.props.readonly}
         disabled={this.props.readonly}
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
@@ -98,6 +87,7 @@ export class TextInputField extends React.Component<Properties> {
       minWidth: '284px',
       width: '100%',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxMedium: {
       boxSizing: 'border-box' as 'border-box',
@@ -113,6 +103,7 @@ export class TextInputField extends React.Component<Properties> {
       color: '#333333',
       minWidth: '284px',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxLarge: {
       boxSizing: 'border-box' as 'border-box',
@@ -123,55 +114,6 @@ export class TextInputField extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      color: '#333333',
-      minWidth: '350px',
-      paddingLeft: '10px',
-    },
-    boxSmallReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      color: '#333333',
-      flexGrow: 1,
-      minWidth: '284px',
-      width: '100%',
-      paddingLeft: '10px',
-      backgroundColor: '#FFFFFF'
-    },
-    boxMediumReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      color: '#333333',
-      minWidth: '284px',
-      paddingLeft: '10px',
-      backgroundColor: '#FFFFFF'
-    },
-    boxLargeReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',

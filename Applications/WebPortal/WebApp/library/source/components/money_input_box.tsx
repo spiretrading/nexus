@@ -59,7 +59,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
           style={{...style, ...this.props.style}} 
           className={css(className) + ' ' + this.props.className}
           type='text'
-          readOnly={this.props.readonly}
+          disabled={this.props.readonly}
           ref={(input) => {this._input = input;}}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
@@ -175,6 +175,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
+      backgroundColor: '#FFFFFF',
       color: '#333333',
       flexGrow: 1,
       maxWidth: '246px',
@@ -191,9 +192,6 @@ export class MoneyInputBox extends React.Component<Properties, State> {
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
-      },
-      ':active': {
-        borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0
