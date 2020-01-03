@@ -211,7 +211,8 @@ export class ParameterEntry extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       height: '34px',
-      alignSelf: 'flex-start' as 'flex-start'
+      alignSelf: 'flex-start' as 'flex-start',
+      color: '#333333'
     },
   };
 }

@@ -251,6 +251,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
     headerText: {
       font: '400 16px Roboto',
       height: '20px',
+      color: '#333333'
     },
     iconWrapperSmall: {
       height: '24px',

@@ -91,7 +91,7 @@ export class CountrySelectionBox extends React.Component<Properties> {
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '7px',
-      color: '#000000',
+      color: '#333333',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
