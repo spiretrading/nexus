@@ -76,7 +76,7 @@ export class NumberInput extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       minWidth: '184px',
       maxWidth: '246px',
@@ -96,14 +96,15 @@ export class NumberInput extends React.Component<Properties> {
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       minWidth: '184px',
       maxWidth: '246px',
       width: '100%',
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
-      appearance: 'none' as 'none'
+      appearance: 'none' as 'none',
+      backgroundColor: '#FFFFFF'
     }
   };
   private static EXTRA_STYLE = StyleSheet.create({

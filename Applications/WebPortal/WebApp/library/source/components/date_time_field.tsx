@@ -175,7 +175,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       height: '34px',
       flexGrow: 0,
       flexShrink: 0,
-      color: '#000000',
+      color: '#333333',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',

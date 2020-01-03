@@ -93,7 +93,7 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       minWidth: '284px',
       width: '100%',
@@ -110,7 +110,7 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '284px',
       paddingLeft: '10px',
     },
@@ -125,7 +125,7 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '350px',
       paddingLeft: '10px',
     },
@@ -140,11 +140,12 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       minWidth: '284px',
       width: '100%',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxMediumReadonly: {
       boxSizing: 'border-box' as 'border-box',
@@ -157,9 +158,10 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '284px',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxLargeReadonly: {
       boxSizing: 'border-box' as 'border-box',
@@ -172,9 +174,10 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '350px',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     }
   };
 

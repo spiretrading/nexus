@@ -115,7 +115,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
                 onClick={this.props.onToggleModal}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
-            <div style={NewRuleButton.STYLE.ruleItemWraper}>
+            <div style={NewRuleButton.STYLE.ruleItemWrapper}>
               {options}
             </div>
             <div style={NewRuleButton.STYLE.footerWrapper}>
@@ -159,7 +159,8 @@ export class NewRuleButton extends React.Component<Properties, State> {
     },
     newRuleText: {
       font: '400 14px Roboto',
-      paddingLeft: '18px'
+      paddingLeft: '18px',
+      color: '#333333'
     },
     imageWrapper: {
       display: 'flex' as 'flex',
@@ -259,7 +260,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       height: '16px',
       width: '16px'
     },
-    ruleItemWraper: {
+    ruleItemWrapper: {
       paddingTop: '30px',
       paddingBottom: '30px'
     },
@@ -289,7 +290,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       height: '40px',
       width: '100%',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       paddingLeft: '18px',

@@ -152,7 +152,8 @@ export class IntegerInputBox extends React.Component<Properties, State> {
       height: '34px',
       border: '1px solid #C8C8C8',
       color: '#000000',
-      textAlign: 'center' as 'center'
+      textAlign: 'center' as 'center',
+      backgroundColor: '#FFFFFF'
     }
   };
   private static EXTRA_STYLE = StyleSheet.create({

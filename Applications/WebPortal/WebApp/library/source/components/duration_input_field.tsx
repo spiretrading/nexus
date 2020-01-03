@@ -281,7 +281,7 @@ export class DurationInputField extends React.Component<Properties, State> {
     effects: {
       ':focus': {
         ouline: 0,
-        border: '0px solid #000000',
+        border: '0px solid #333333',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
