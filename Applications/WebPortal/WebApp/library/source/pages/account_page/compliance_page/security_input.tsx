@@ -10,6 +10,9 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   value?: Nexus.ComplianceValue[];
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param newValue - The updated value.
    */
@@ -24,6 +27,12 @@ interface State {
 
 /** A component that displays a list of securities. */
 export class SecurityInput extends React.Component<Properties, State>{
+  public static readonly defaultProps = {
+    value: '',
+    readonly: false,
+    onChange: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -127,7 +136,7 @@ export class SecurityInput extends React.Component<Properties, State>{
         <input
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
-          value ={displayValue}
+          value={displayValue}
           onFocus={this.toggleEditing.bind(this)}
           onClick={this.toggleEditing.bind(this)}/>
         <div style={visibility}>
@@ -174,7 +183,9 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private toggleEditing(){
-    this.setState({isEditing: !this.state.isEditing});
+    if(!this.props.readonly) {
+      this.setState({isEditing: !this.state.isEditing});
+    }
   }
 
   private selectEntry(index: number) {
@@ -213,7 +224,6 @@ export class SecurityInput extends React.Component<Properties, State>{
     }
   }
 
-
   private static readonly STYLE = {
     textBox: {
       textOverflow: 'ellipsis' as 'ellipsis',
@@ -226,7 +236,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       width: '100%',
       paddingLeft: '10px',
@@ -429,15 +439,11 @@ export class SecurityInput extends React.Component<Properties, State>{
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        ouline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0

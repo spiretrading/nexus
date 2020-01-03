@@ -122,14 +122,14 @@ export class ParameterEntry extends React.Component<Properties> {
                 Nexus.ComplianceValue.Type.SECURITY) {
               return <SecurityInput
               displaySize={this.props.displaySize}
-              onChange={this.onChange}
+              readonly={this.props.readonly}
               value={this.props.parameter.value.value}/>;
             }
           } else {
             return <SecurityInput
               displaySize={this.props.displaySize}
               onChange={this.onChange}
-              
+              readonly={this.props.readonly}
               value={[]}/>;
           }
         default:
