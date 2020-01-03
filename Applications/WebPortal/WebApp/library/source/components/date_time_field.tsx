@@ -17,6 +17,9 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.DateTime;
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -32,6 +35,7 @@ interface State {
 export class DateTimeField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     newValue: new Beam.DateTime(new Beam.Date(1, 1, 0), new Beam.Duration(0)),
+    readonly: false,
     onChange: () => {}
   };
 
@@ -52,12 +56,14 @@ export class DateTimeField extends React.Component<Properties, State> {
         <DateField
           displaySize={this.props.displaySize}
           value={this.props.value.date()}
+          readonly={this.props.readonly}
           onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>  
         <div style={DateTimeField.STYLE.durationWrapper}>
           <DurationInputField 
             displaySize={this.props.displaySize}
             value={this.state.displayedTime}
+            readonly={this.props.readonly}
             maxHourValue={12}
             minHourValue={1}
             onChange={this.onTimeChange}/>
@@ -195,7 +201,6 @@ export class DateTimeField extends React.Component<Properties, State> {
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({
     focusEffects: {
-      ouline: 0,
       outlineColor: 'transparent',
       outlineStyle: 'none',
       border: '1px solid #684BC7',

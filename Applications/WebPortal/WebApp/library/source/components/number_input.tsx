@@ -93,7 +93,7 @@ export class NumberInput extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       alignItems: 'center' as 'center',
       justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
+      border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
       color: '#333333',

@@ -82,7 +82,7 @@ export class ParameterEntry extends React.Component<Properties> {
           return <DateTimeField
             value={this.props.parameter.value.value}
             displaySize={this.props.displaySize}
-            
+            readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
           return <NumberInput 
@@ -108,7 +108,6 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.SECURITY:
           return <SecurityInput
             displaySize={this.props.displaySize}
-            
             value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
@@ -124,7 +123,6 @@ export class ParameterEntry extends React.Component<Properties> {
               return <SecurityInput
               displaySize={this.props.displaySize}
               onChange={this.onChange}
-              
               value={this.props.parameter.value.value}/>;
             }
           } else {

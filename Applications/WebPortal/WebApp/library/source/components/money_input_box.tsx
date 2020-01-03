@@ -49,18 +49,10 @@ export class MoneyInputBox extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const style = (() => {
-      if(this.props.readonly) {
-        return MoneyInputBox.STYLE.readonly;
-      } else {
-        return MoneyInputBox.STYLE.input;
-      }
+      return MoneyInputBox.STYLE.input;
     })();
     const className = (() => {
-      if(this.props.readonly) {
-        return MoneyInputBox.EXTRA_STYLE.noDefaults;
-      } else {
-        return MoneyInputBox.EXTRA_STYLE.effects;
-      }
+      return MoneyInputBox.EXTRA_STYLE.effects;
     })();
     return (
         <input
@@ -188,23 +180,6 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       maxWidth: '246px',
       width: '100%',
       paddingLeft: '10px'
-    },
-    readonly: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between',
-      border: '1px solid #FFFFFF',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      color: '#333333',
-      flexGrow: 1,
-      maxWidth: '246px',
-      width: '100%',
-      paddingLeft: '10px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
@@ -225,16 +200,6 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       },
       '::placeholder': {
         color: '#8C8C8C'
-      }
-    },
-    noDefaults: {
-      ':focus': {
-        outline: 0,
-        borderColor: '#FFFFFF',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
       }
     }
   });

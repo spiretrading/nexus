@@ -12,6 +12,9 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
+  /** Whether the selection box is read only. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -27,6 +30,7 @@ interface State {
 export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Date(1, 1, 2020),
+    readonly: false,
     onChange: () => {}
   };
 
@@ -41,10 +45,18 @@ export class DateField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const wrapperStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return DateField.STYLE.wrapperSmall;
+      if(this.props.readonly) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return DateField.STYLE.wrapperSmallReadonly;
+        } else {
+          return DateField.STYLE.wrapperLargeReadonly;
+        }
       } else {
-        return DateField.STYLE.wrapperLarge;
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return DateField.STYLE.wrapperSmall;
+        } else {
+          return DateField.STYLE.wrapperLarge;
+        }
       }
     })();
     const focusClassName = (() => {
@@ -76,6 +88,7 @@ export class DateField extends React.Component<Properties, State> {
           <IntegerInputBox
             min={1} max={31}
             value={this.props.value.day()}
+            readonly={this.props.readonly}
             className={css(DateField.EXTRA_STYLE.noDefaults)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
@@ -83,6 +96,7 @@ export class DateField extends React.Component<Properties, State> {
           <IntegerInputBox
             min={1} max={12}
             value={this.props.value.month()}
+            readonly={this.props.readonly}
             className={css(DateField.EXTRA_STYLE.noDefaults)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
@@ -90,6 +104,7 @@ export class DateField extends React.Component<Properties, State> {
           <IntegerInputBox
             min={2000} max={3000}
             value={this.props.value.year()}
+            readonly={this.props.readonly}
             className={css(DateField.EXTRA_STYLE.noDefaults)}
             style={DateField.STYLE.yearBox}
             padding={4}/>
@@ -145,6 +160,33 @@ export class DateField extends React.Component<Properties, State> {
       borderRadius: '1px',
       height: '34px'
     },
+    wrapperSmallReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      minWidth: '184px',
+      width: '100%',
+      flexShrink: 1,
+      flexGrow: 1,
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #ffffff',
+      borderRadius: '1px',
+      height: '34px'
+    },
+    wrapperLargeReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      flexGrow: 1,
+      flexShrink: 1,
+      maxWidth: '246px',
+      backgroundColor: '#ffffff',
+      justifyContent: 'space-between' as 'space-between',
+      border: '1px solid #ffffff',
+      borderRadius: '1px',
+      height: '34px'
+    },
     inner: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -188,7 +230,7 @@ export class DateField extends React.Component<Properties, State> {
       marginRight: '10px'
     },
     focused: {
-      ouline: 0,
+      outline: 0,
       outlineColor: 'transparent',
       outlineStyle: 'none',
       border: '1px solid #684BC7',
@@ -198,7 +240,7 @@ export class DateField extends React.Component<Properties, State> {
   private static readonly EXTRA_STYLE = StyleSheet.create({
     noDefaults: {
       ':focus': {
-        ouline: 0,
+        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
