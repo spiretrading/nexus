@@ -174,7 +174,7 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       height: '84px',
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     },
     headerMedium: {
       width: '732px',

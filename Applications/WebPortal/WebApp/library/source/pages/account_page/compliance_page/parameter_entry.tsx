@@ -210,7 +210,8 @@ export class ParameterEntry extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       height: '34px',
       alignSelf: 'flex-start' as 'flex-start',
-      color: '#333333'
+      color: '#333333',
+      cursor: 'default' as 'default'
     },
   };
 }
