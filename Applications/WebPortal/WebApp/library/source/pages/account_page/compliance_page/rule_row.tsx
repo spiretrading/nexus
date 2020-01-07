@@ -161,11 +161,13 @@ export class RuleRow extends React.Component<Properties, State> {
     },
     closedText: {
       font: '400 14px Roboto',
-      color: '#333333'
+      color: '#333333',
+      cursor: 'default' as 'default'
     },
     openText: {
       font: '500 14px Roboto',
-      color: '#4B23A0'
+      color: '#4B23A0',
+      cursor: 'default' as 'default'
     },
     headerSmall: {
       minWidth: '284px',

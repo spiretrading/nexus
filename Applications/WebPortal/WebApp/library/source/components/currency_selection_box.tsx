@@ -100,7 +100,8 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       minWidth: '246px',
       width: '100%',
       flexGrow: 1,
-      flexShrink: 1
+      flexShrink: 1,
+      cursor: 'pointer' as 'pointer'
     },
     readonly: {
       boxSizing: 'border-box' as 'border-box',
@@ -112,7 +113,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       borderRadius: '1px',
       backgroundColor: '#FFFFFF',
       backgroundImage:
-        'url(resources/components/arrow-down.svg)',
+        'url(resources/components/arrow-down-grey.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',

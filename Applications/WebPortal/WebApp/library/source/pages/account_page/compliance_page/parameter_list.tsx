@@ -105,7 +105,7 @@ export class ParametersList extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       width: '246px',
       minWidth: '246px',
-      maxWidtH: '246px',
+      maxWidth: '246px',
       height: '34px',
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
@@ -117,21 +117,19 @@ export class ParametersList extends React.Component<Properties> {
     bottomFiller: {
       height: '30px'
     },
-    label: {
-      width: '100px',
-      font: '400 14px Roboto',
-    },
     headerSmall: {
       color: '#4B23A0',
       font: '500 14px Roboto',
       marginTop: '10px',
-      marginBottom: '18px'
+      marginBottom: '18px',
+      cursor: 'default' as 'default'
     },
     headerLarge: {
       color: '#4B23A0',
       font: '500 14px Roboto',
       marginTop: '10px',
-      marginBottom: '18px'
+      marginBottom: '18px',
+      cursor: 'default' as 'default'
     }
   };
 }

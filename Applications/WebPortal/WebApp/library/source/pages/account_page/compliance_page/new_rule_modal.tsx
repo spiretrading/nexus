@@ -14,7 +14,7 @@ interface Properties {
   /** Determines if the modal should be open or not. */
   isOpen?: boolean;
 
-  /** The callback to hide or show the uploader. */
+  /** The callback to hide or show the modal. */
   onToggleModal?: () => void;
 
   /** The callback to add a rule with the following schema. */
@@ -160,7 +160,8 @@ export class NewRuleButton extends React.Component<Properties, State> {
     newRuleText: {
       font: '400 14px Roboto',
       paddingLeft: '18px',
-      color: '#333333'
+      color: '#333333',
+      cursor: 'default' as 'default'
     },
     imageWrapper: {
       display: 'flex' as 'flex',

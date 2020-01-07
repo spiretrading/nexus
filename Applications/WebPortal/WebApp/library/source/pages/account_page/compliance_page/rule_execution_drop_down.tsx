@@ -30,18 +30,26 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const sizeStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return RuleExecutionDropDown.STYLE.boxSmall;
+    const boxStyle = (() => {
+      if(this.props.readonly) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return RuleExecutionDropDown.STYLE.selectionBoxReadonlySmall
+        } else {
+          return RuleExecutionDropDown.STYLE.selectionBoxReadonlyLarge;
+        }
       } else {
-        return RuleExecutionDropDown.STYLE.boxLarge;
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return RuleExecutionDropDown.STYLE.selectionBoxSmall;
+        } else {
+          return RuleExecutionDropDown.STYLE.selectionBoxLarge;
+        }
       }
     })();
     return (
       <select onChange={this.onChange} value={this.props.value}
+          disabled={this.props.readonly}
           className={css(RuleExecutionDropDown.EXTRA_STYLE.noHighlighting)}
-          style={{...sizeStyle,
-            ...RuleExecutionDropDown.STYLE.selectionBoxStyle}}>
+          style={boxStyle}>
         <option value={Nexus.ComplianceRuleEntry.State.ACTIVE}>
           {'Active'}
         </option>
@@ -62,19 +70,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    boxSmall: {
-      height: '34px',
-      font: '400 14px Roboto',
-      width: '100%',
-      minWidth: '246px',
-      maxWidth: '386px'
-    },
-    boxLarge: {
-      width: '200px',
-      height: '34px',
-      font: '400 14px Roboto'
-    },
-    selectionBoxStyle: {
+    selectionBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '7px',
       color: '#333333',
@@ -88,7 +84,75 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       backgroundSize: '8px 6px',
       MozAppearance: 'none' as 'none',
       WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
+      appearance: 'none' as 'none',
+      cursor: 'pointer' as 'pointer',
+      height: '34px',
+      font: '400 14px Roboto',
+      width: '100%',
+      minWidth: '246px',
+      maxWidth: '386px'
+    },
+    selectionBoxLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      paddingLeft: '7px',
+      color: '#333333',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#F2F2F2',
+      backgroundImage:
+        'url(resources/account_page/compliance_page/arrow-down.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none',
+      cursor: 'pointer' as 'pointer',
+      width: '200px',
+      height: '34px',
+      font: '400 14px Roboto'
+    },
+    selectionBoxReadonlySmall: {
+      boxSizing: 'border-box' as 'border-box',
+      paddingLeft: '7px',
+      color: '#333333',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#FFFFFF',
+      backgroundImage:
+        'url(resources/account_page/compliance_page/arrow-down-grey.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none',
+      cursor: 'default' as 'default',
+      height: '34px',
+      font: '400 14px Roboto',
+      width: '100%',
+      minWidth: '246px',
+      maxWidth: '386px'
+    },
+    selectionBoxReadonlyLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      paddingLeft: '7px',
+      color: '#333333',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      backgroundColor: '#FFFFFF',
+      backgroundImage:
+        'url(resources/account_page/compliance_page/arrow-down-grey.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 10px top 50%',
+      backgroundSize: '8px 6px',
+      MozAppearance: 'none' as 'none',
+      WebkitAppearance: 'none' as 'none',
+      appearance: 'none' as 'none',
+      cursor: 'default' as 'default',
+      width: '200px',
+      height: '34px',
+      font: '400 14px Roboto'
     }
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({

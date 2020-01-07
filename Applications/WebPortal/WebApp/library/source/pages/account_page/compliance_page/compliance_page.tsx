@@ -154,6 +154,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       alignSelf: 'center' as 'center',
+      cursor: 'pointer' as 'pointer',
       ':active' : {
         backgroundColor: '#4B23A0'
       },
