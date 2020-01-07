@@ -39,7 +39,7 @@ export class DateField extends React.Component<Properties, State> {
     this.state = {
       isInFocus: false,
       componentWidth: 0
-    }
+    };
     this.handleResize = this.handleResize.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);

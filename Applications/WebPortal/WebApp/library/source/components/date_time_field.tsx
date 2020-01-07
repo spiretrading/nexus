@@ -44,7 +44,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     this.state = {
       period: Periods.AM,
       displayedTime: this.props.value.timeOfDay()
-    }
+    };
     this.onPeriodChange = this.onPeriodChange.bind(this);
     this.onTimeChange = this.onTimeChange.bind(this);
     this.onDateChange = this.onDateChange.bind(this);

@@ -45,7 +45,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     super(props);
     this.state = {
       value: props.value || this.props.min
-    }
+    };
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
     this.onChange = this.onChange.bind(this);
