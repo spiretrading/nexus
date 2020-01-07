@@ -5,7 +5,7 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
-//#include <Beam/Tasks/Task.hpp>
+#include <Beam/Tasks/Task.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -58,7 +58,7 @@ namespace Spire {
   };
 }
 
-//Q_DECLARE_METATYPE(Beam::Tasks::Task::State);
+Q_DECLARE_METATYPE(Beam::Tasks::Task::State);
 Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
