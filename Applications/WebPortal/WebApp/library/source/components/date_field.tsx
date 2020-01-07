@@ -12,7 +12,7 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
-  /** Whether the selection box is read only. */
+  /** Determines if the selection box is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.
@@ -29,7 +29,7 @@ interface State {
 /** A component that displays the date. */
 export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: new Beam.Date(1, 1, 2020),
+    value: new Beam.Date(1, 1, 1900),
     readonly: false,
     onChange: () => {}
   };
@@ -53,7 +53,7 @@ export class DateField extends React.Component<Properties, State> {
         return DateField.STYLE.wrapperLarge;
       }
     })();
-    const focusClassName = (() => {
+    const focusStyle = (() => {
       if(this.state.isInFocus) {
         return DateField.STYLE.focused;
       } else {
@@ -74,16 +74,16 @@ export class DateField extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={{...wrapperStyle, ...focusClassName}}
+      <div style={{...wrapperStyle, ...focusStyle}}
           ref={(input) => {this.reference = input;}}
           onFocus={this.onFocus}
-          onBlur={this.onBlur}> 
+          onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
             min={1} max={31}
             value={this.props.value.day()}
             readonly={this.props.readonly}
-            className={css(DateField.EXTRA_STYLE.noDefaults)}
+            className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
@@ -91,7 +91,7 @@ export class DateField extends React.Component<Properties, State> {
             min={1} max={12}
             value={this.props.value.month()}
             readonly={this.props.readonly}
-            className={css(DateField.EXTRA_STYLE.noDefaults)}
+            className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>{'/'}</div>
@@ -99,13 +99,13 @@ export class DateField extends React.Component<Properties, State> {
             min={2000} max={3000}
             value={this.props.value.year()}
             readonly={this.props.readonly}
-            className={css(DateField.EXTRA_STYLE.noDefaults)}
+            className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.yearBox}
             padding={4}/>
-          </div>
-          <div style={DateField.STYLE.placeholder}>
-            {hintText}
-          </div>
+        </div>
+        <div style={DateField.STYLE.placeholder}>
+          {hintText}
+        </div>
       </div>);
   }
 
@@ -127,15 +127,16 @@ export class DateField extends React.Component<Properties, State> {
 
   private onFocus() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: true})
+      this.setState({isInFocus: true});
     }
   }
 
   private onBlur() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: false})
+      this.setState({isInFocus: false});
     }
   }
+
   private static readonly STYLE = {
     wrapperSmall: {
       boxSizing: 'border-box' as 'border-box',
@@ -244,7 +245,7 @@ export class DateField extends React.Component<Properties, State> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    noDefaults: {
+    effects: {
       ':focus': {
         outline: 0,
         borderColor: '#684BC7',

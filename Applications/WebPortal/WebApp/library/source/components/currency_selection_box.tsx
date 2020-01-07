@@ -58,7 +58,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     return (
       <select disabled={this.props.readonly}
           style={{...style, ...this.props.style}} 
-          className={css(CurrencySelectionBox.EXTRA_STYLE.noDefaults) + ' ' +
+          className={css(CurrencySelectionBox.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           onChange={this.onChange} defaultValue={defaultValue}>
         {currencies}
@@ -118,9 +118,8 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    noDefaults: {
+    effects: {
       ':focus': {
-        outline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none',
         border: '1px solid #684BC7',
