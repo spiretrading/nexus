@@ -2,6 +2,7 @@
 #define SPIRE_RANGE_INPUT_MODEL_HPP
 #include <vector>
 #include <QVariant>
+#include "Spire/Spire/Utility.hpp"
 
 namespace Spire {
 
@@ -60,8 +61,10 @@ namespace Spire {
         auto highest_frequency = 0;
         for(auto& value : m_data) {
           auto index =
-            static_cast<double>(value.value - m_minimum_value) /
-            static_cast<double>(m_maximum_value - m_minimum_value) *
+            static_cast<double>(value.value<T>() -
+            m_minimum_value.value<T>()) /
+            static_cast<double>(m_maximum_value.value<T>() -
+            m_minimum_value.value<T>()) *
             static_cast<double>(bin_count - 1);
           histogram[static_cast<int>(index)]++;
         }

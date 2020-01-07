@@ -34,7 +34,7 @@ TEST_CASE("test_histogram_integers", "[RangeInputModel]") {
   }
   auto histogram2 = model.make_histogram(7);
   REQUIRE(histogram2.m_highest_frequency == 15);
-  for(auto i = 0; i < histogram2.m_histogram.size() - 1; ++i) {
+  for(auto i = std::size_t(0); i < histogram2.m_histogram.size() - 1; ++i) {
     REQUIRE(histogram2.m_histogram[i] == 14);
   }
   REQUIRE(histogram2.m_histogram[6] == 15);
@@ -62,7 +62,7 @@ TEST_CASE("test_histogram_doubles", "[RangeInputModel]") {
   }
   auto histogram2 = model.make_histogram(7);
   REQUIRE(histogram2.m_highest_frequency == 15);
-  for(auto i = 0; i < histogram2.m_histogram.size() - 1; ++i) {
+  for(auto i = std::size_t(0); i < histogram2.m_histogram.size() - 1; ++i) {
     REQUIRE(histogram2.m_histogram[i] == 14);
   }
   REQUIRE(histogram2.m_histogram[6] == 15);
