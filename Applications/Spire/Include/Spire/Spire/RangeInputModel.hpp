@@ -61,12 +61,13 @@ namespace Spire {
         auto highest_frequency = 0;
         for(auto& value : m_data) {
           auto index =
-            static_cast<double>(value.value<T>() -
+            static_cast<int>(static_cast<double>(value.value<T>() -
             m_minimum_value.value<T>()) /
             static_cast<double>(m_maximum_value.value<T>() -
             m_minimum_value.value<T>()) *
-            static_cast<double>(bin_count - 1);
-          histogram[static_cast<int>(index)]++;
+            static_cast<double>(bin_count - 1));
+          histogram[index]++;
+          highest_frequency = max(histogram[index], highest_frequency);
         }
         return {histogram, highest_frequency};
       }
