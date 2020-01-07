@@ -30,7 +30,8 @@ void ValueLabel::Initialize(const string& label,
 
 void ValueLabel::AdjustSize(const QVariant& value) {
   QFontMetrics metrics(font());
-  setFixedWidth(metrics.width(QString::fromStdString(m_label) + ": " +
+  setFixedWidth(metrics.horizontalAdvance(
+    QString::fromStdString(m_label) + ": " +
     m_converter->displayText(value, QLocale())));
 }
 

@@ -103,7 +103,7 @@ void CollapsibleWidget::SetupLayouts(bool expanded) {
   headerLayout->setSpacing(0);
   m_expandButton = new ExpandButton(expanded);
   QPalette expandButtonPalette(m_expandButton->palette());
-  expandButtonPalette.setColor(QPalette::Background, HEADER_BACKGROUND_COLOR);
+  expandButtonPalette.setColor(QPalette::Window, HEADER_BACKGROUND_COLOR);
   m_expandButton->setAutoFillBackground(true);
   m_expandButton->setPalette(expandButtonPalette);
   headerLayout->addWidget(m_expandButton);

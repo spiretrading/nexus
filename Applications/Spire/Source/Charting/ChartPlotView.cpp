@@ -69,7 +69,7 @@ void ChartPlotView::Initialize(Ref<UserProfile> userProfile,
   m_userProfile = userProfile.Get();
   m_properties = properties;
   QPalette p(palette());
-  p.setColor(QPalette::Background, m_properties.m_backgroundColor);
+  p.setColor(QPalette::Window, m_properties.m_backgroundColor);
   setPalette(p);
 }
 
