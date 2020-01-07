@@ -9,16 +9,16 @@ interface Properties {
   /** Additional CSS styles. */
   style?: any;
 
-  /** The class name of the input box. */
+  /** The class name of the input field. */
   className?: string;
 
-  /** The smallest number that the box accepts. */
+  /** The smallest number that the box accepts (inclusive). */
   min?: number;
 
-  /** The largest number that the box accepts. */
+  /** The largest number that the box accepts (inclusive). */
   max?: number;
 
-  /** Whether the selection box is read only. */
+  /** Determines if the component is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.
@@ -111,7 +111,6 @@ export class NumberInput extends React.Component<Properties> {
     customHighlighting: {
       '-moz-appearance': 'textfield',
       ':focus': {
-        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
@@ -121,22 +120,16 @@ export class NumberInput extends React.Component<Properties> {
       '::moz-focus-inner': {
         border: 0
       },
-      '::placeholder': {
-        color: '#8C8C8C'
-      },
       '::-webkit-inner-spin-button': {
         '-webkit-appearance': 'none',
         'appearance': 'none',
         margin: 0
       },
-      '::-webkit-outer-spin-button': { 
+      '::-webkit-outer-spin-button': {
         '-webkit-appearance': 'none',
         'appearance': 'none',
         margin: 0
       }
-    },
-    errorBox: {
-      border: '1px solid #E63F44'
     }
   });
 }
