@@ -206,7 +206,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
-      width: '360px',
+      width: '300px',
       height: '461px',
       top: 'calc(50% - 230.5px)',
       left: 'calc(50% - 180px)',
@@ -228,7 +228,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       display: 'block',
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
-      width: '360px',
+      width: '300px',
       height: '461px',
       top: 'calc(50% - 230.5px)',
       left: 'calc(50% - 180px)'

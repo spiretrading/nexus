@@ -65,7 +65,7 @@ export class DateTimeField extends React.Component<Properties, State> {
           value={this.props.value.date()}
           readonly={this.props.readonly}
           onChange={this.onDateChange}/>
-        <div style={DateTimeField.STYLE.filler}/>  
+        <div style={DateTimeField.STYLE.filler}/>
         <div style={DateTimeField.STYLE.durationWrapper}>
           <DurationInputField 
             displaySize={this.props.displaySize}
@@ -78,7 +78,7 @@ export class DateTimeField extends React.Component<Properties, State> {
               onChange={this.onPeriodChange}
               value={this.state.period}
               disabled={this.props.readonly}
-              className={css(DateTimeField.EXTRA_STYLE.noHighlighting)}>
+              className={css(DateTimeField.EXTRA_STYLE.effects)}>
             <option value={Periods.AM}>{'AM'}</option>
             <option value={Periods.PM}>{'PM'}</option>
           </select>
@@ -236,7 +236,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       border: '1px solid #684BC7',
       borderRadius: '1px'
     },
-    noHighlighting: {
+    effects: {
       ':focus': {
         outline: 0,
         outlineColor: 'transparent',
