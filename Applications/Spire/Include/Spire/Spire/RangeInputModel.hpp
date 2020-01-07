@@ -65,7 +65,8 @@ namespace Spire {
             m_minimum_value.value<T>()) /
             static_cast<double>(m_maximum_value.value<T>() -
             m_minimum_value.value<T>()) *
-            static_cast<double>(bin_count - 1));
+            static_cast<double>(bin_count));
+          index = min(bin_count - 1, index);
           histogram[index]++;
           highest_frequency = max(histogram[index], highest_frequency);
         }
