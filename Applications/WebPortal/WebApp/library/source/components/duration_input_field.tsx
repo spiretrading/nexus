@@ -24,7 +24,7 @@ interface Properties {
   /** The smallest value the hours field can hold. */
   minHourValue?: number;
 
-  /** Whether the selection box is read only. */
+  /** Determines if the selection box is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.
@@ -90,7 +90,7 @@ export class DurationInputField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
-          ref={(input) => { this.reference = input; }}
+          ref={(input) => {this.reference = input;}}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DurationInputField.STYLE.inner}>
@@ -254,9 +254,6 @@ export class DurationInputField extends React.Component<Properties, State> {
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       }
     }
   });
