@@ -41,23 +41,18 @@ export class MoneyInputBox extends React.Component<Properties, State> {
     super(props);
     this.state = {
       value: props.value || Nexus.Money.ZERO
-    }
+    };
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
     this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
-    const style = (() => {
-      return MoneyInputBox.STYLE.input;
-    })();
-    const className = (() => {
-      return MoneyInputBox.EXTRA_STYLE.effects;
-    })();
     return (
         <input
-          style={{...style, ...this.props.style}} 
-          className={css(className) + ' ' + this.props.className}
+          style={{...MoneyInputBox.STYLE.input, ...this.props.style}}
+          className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
+            this.props.className}
           type='text'
           disabled={this.props.readonly}
           ref={(input) => {this._input = input;}}
@@ -195,9 +190,6 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       }
     }
   });
