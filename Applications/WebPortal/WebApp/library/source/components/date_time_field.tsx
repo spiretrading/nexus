@@ -95,7 +95,7 @@ export class DateTimeField extends React.Component<Properties, State> {
 
   private getPeriod() {
     const sourceTime = this.props.value.timeOfDay().split();
-    if(sourceTime.hours === 0 || sourceTime.hours === 24 ) {
+    if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Periods.AM;
     } else if(sourceTime.hours >= 12) {
       return Periods.PM;
@@ -106,7 +106,7 @@ export class DateTimeField extends React.Component<Properties, State> {
 
   private getTimeIn12HourFormat() {
     const sourceTime = this.props.value.timeOfDay().split();
-    if(sourceTime.hours === 0 || sourceTime.hours === 24 ) {
+    if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Beam.Duration.HOUR.multiply(12).add(
         Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
         Beam.Duration.SECOND.multiply(sourceTime.seconds));
@@ -178,7 +178,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     },
     durationWrapper: {
       display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      flexDirection: 'row' as 'row'
     },
     select: {
       boxSizing: 'border-box' as 'border-box',
@@ -193,8 +193,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
-      backgroundImage:
-        'url(resources/components/arrow-down.svg)',
+      backgroundImage: 'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
@@ -215,8 +214,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#FFFFFF',
-      backgroundImage:
-        'url(resources/components/arrow-down-grey.svg)',
+      backgroundImage: 'url(resources/components/arrow-down-grey.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
