@@ -111,7 +111,7 @@ export class CheckMark extends React.Component<Properties> {
       },
       ':-moz-focusring': {
         color: 'transparent',
-        textShadow: '0 0 0 #000'
+        textShadow: '0 0 0 #000000'
       }
     }
   });
