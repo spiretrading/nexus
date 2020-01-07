@@ -21,7 +21,7 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
-  /** Whether the selection box is read only. */
+  /** Determines if the component is readonly. */
   readonly?: boolean;
 
   /** The event handler for when a change is made. */
@@ -35,6 +35,7 @@ interface State {
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
+    min: 0,
     value: 0,
     readonly: false,
     onChange: () => {}
@@ -53,19 +54,19 @@ export class IntegerInputBox extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const shownValue = (() => {
-      return ('0'.repeat(this.props.padding) + 
+      return ('0'.repeat(this.props.padding) +
         this.state.value).slice(-1 * (this.props.padding));
     })();
     return (
       <input
         onBlur={this.onBlur}
-        style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}} 
+        style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}}
         value={shownValue}
         onChange={this.onChange}
         readOnly={this.props.readonly}
         disabled={this.props.readonly}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-        className={css(IntegerInputBox.EXTRA_STYLE.customHighlighting)}
+        className={css(IntegerInputBox.EXTRA_STYLE.effects)}
         type={'text'}/>);
   }
 
@@ -157,7 +158,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     }
   };
   private static EXTRA_STYLE = StyleSheet.create({
-    customHighlighting: {
+    effects: {
       '-moz-appearance': 'textfield',
       ':focus': {
         outline: 0,
