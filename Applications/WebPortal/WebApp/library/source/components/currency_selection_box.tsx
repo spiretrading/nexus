@@ -56,13 +56,13 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         </option>);
     }
     return (
-        <select disabled={this.props.readonly}
-            style={{...style, ...this.props.style}} 
-            className={css(CurrencySelectionBox.EXTRA_STYLE.noDefaults) + ' ' +
-              this.props.className}
-            onChange={this.onChange} defaultValue={defaultValue}>
-          {currencies}
-        </select>);
+      <select disabled={this.props.readonly}
+          style={{...style, ...this.props.style}} 
+          className={css(CurrencySelectionBox.EXTRA_STYLE.noDefaults) + ' ' +
+            this.props.className}
+          onChange={this.onChange} defaultValue={defaultValue}>
+        {currencies}
+      </select>);
   }
 
   private onChange(event: React.ChangeEvent<any>): void {
@@ -82,8 +82,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
-      backgroundImage:
-        'url(resources/components/arrow-down.svg)',
+      backgroundImage: 'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
@@ -105,8 +104,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#FFFFFF',
-      backgroundImage:
-        'url(resources/components/arrow-down-grey.svg)',
+      backgroundImage:'url(resources/components/arrow-down-grey.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
