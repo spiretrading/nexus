@@ -1,9 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../../display_size';
+import { DisplaySize,  HLine } from '../../../';
 import { NewRuleButton, RulesList } from '.';
-import { HLine } from '../../../components';
 
 interface Properties {
   
@@ -19,10 +18,10 @@ interface Properties {
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
 
-  /** Indicates if the component is readonly. */
+  /** Indicates if the page is readonly. */
   readonly?: boolean;
 
-  /** The callback for adding the rule.*/
+  /** The callback for adding the rule. */
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
   /** The callback for updating a changed rule. */
@@ -78,9 +77,9 @@ export class CompliancePage extends React.Component<Properties, State> {
           {'Save Changes'}
         </button>
         <div style={CompliancePage.STYLE.paddingSmall}/>
-          <div style={CompliancePage.STYLE.statusBox}>
-            {'Saved'}
-          </div>
+        <div style={CompliancePage.STYLE.statusBox}>
+          {'Saved'}
+        </div>
       </div>);
   }
 
@@ -111,7 +110,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       flexBasis: '284px',
       flexGrow: 1,
       minWidth: '284px',
-      maxWidth: '424px',
+      maxWidth: '424px'
     },
     mediumContent: {
       paddingTop: '18px',
@@ -120,7 +119,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
-      width: '732px',
+      width: '732px'
     },
     largeContent: {
       paddingTop: '18px',
@@ -129,7 +128,7 @@ export class CompliancePage extends React.Component<Properties, State> {
       paddingBottom: '60px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
-      width: '1000px',
+      width: '1000px'
     },
     statusBox: {
       height: '19px',
