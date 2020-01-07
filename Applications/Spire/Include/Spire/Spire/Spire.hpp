@@ -10,6 +10,7 @@ namespace Spire {
   class Definitions;
   class LocalTechnicalsModel;
   template<typename T> class QtPromise;
+  class RangeInputModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
   class TechnicalsModel;
