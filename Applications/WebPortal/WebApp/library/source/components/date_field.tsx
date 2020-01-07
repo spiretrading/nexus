@@ -224,6 +224,7 @@ export class DateField extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      cursor: 'default' as 'default'
     },
     placeholder: {
       font: '500 11px Roboto',
@@ -231,7 +232,8 @@ export class DateField extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: '10px'
+      marginRight: '10px', 
+      cursor: 'default' as 'default'
     },
     focused: {
       outline: 0,
