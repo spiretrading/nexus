@@ -29,7 +29,6 @@ interface Properties {
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
-
 }
 
 /** Displays a single text input field. */
