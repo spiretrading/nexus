@@ -42,13 +42,6 @@ export class CurrencySelectionBox extends React.Component<Properties> {
         return CurrencySelectionBox.STYLE.selectionBox;
       }
     })();
-    const className = (() => {
-      if(this.props.readonly) {
-
-      } else {
-
-      }
-    })();
     const defaultValue = (() => {
       if(this.props.value) {
         return this.props.currencyDatabase.fromCurrency(this.props.value).code;
