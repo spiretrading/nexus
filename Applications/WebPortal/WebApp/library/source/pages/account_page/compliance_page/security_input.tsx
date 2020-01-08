@@ -57,28 +57,51 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(this.props.displaySize === DisplaySize.SMALL) {
         return SecurityInput.STYLE.boxShadowSmall;
       } else {
-        return SecurityInput.STYLE.boxShadowBig;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.boxShadowBigReadonly;
+        } else {
+          return SecurityInput.STYLE.boxShadowBig;
+        }
       }
     })();
-    const optionsBox = (() => {
+    const modalBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.smallOptionsBox;
+        return SecurityInput.STYLE.smallModalBox;
       } else {
-        return SecurityInput.STYLE.bigOptionsBox;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.bigModalBoxReadonly;
+        } else {
+          return SecurityInput.STYLE.bigModalBox;
+        }
+      }
+    })();
+    const findSymbolBox = (() => {
+      if(this.props.readonly) {
+        return SecurityInput.STYLE.hidden;
+      } else {
+        return SecurityInput.STYLE.findSymbolBox;
       }
     })();
     const selectedSecuritiesBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.scrollBoxSmall;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.scrollBoxSmallReadonly;
+        } else {
+          return SecurityInput.STYLE.scrollBoxSmall;
+        }
       } else {
         return SecurityInput.STYLE.scrollBoxBig;
       }
     })();
     const iconRowStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.iconRowSmall;
+      if(this.props.readonly) {
+        return SecurityInput.STYLE.hidden;
       } else {
-        return SecurityInput.STYLE.iconRowBig;
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return SecurityInput.STYLE.iconRowSmall;
+        } else {
+          return SecurityInput.STYLE.iconRowBig;
+        }
       }
     })();
     const imageSize = (() => {
@@ -99,12 +122,12 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(this.state.selection !== -1) {
         return (
           <div style={imageWrapperStyle} onClick={this.removeEntry.bind(this)}>
-            <img src={'resources/account_page/compliance_page/security_input/remove-purple.svg'}/>
+            <img src={SecurityInput.PATH + 'remove-purple.svg'}/>
           </div>);
       } else {
-        return  (          
+        return (
           <div style={imageWrapperStyle}>
-            <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
+            <img src={SecurityInput.PATH + 'remove-grey.svg'}/>
           </div>);
       }
     })();
@@ -126,7 +149,8 @@ export class SecurityInput extends React.Component<Properties, State>{
             {sec.symbol.toString()}
           </div>);
       }
-      if(i >= 0 && i < this.props.value.length - 1 && this.props.value.length > 1) {
+      if(i >= 0 && i < this.props.value.length - 1 && 
+          this.props.value.length > 1) {
         displayValue = displayValue.concat(', ');
       }
     }
@@ -142,19 +166,19 @@ export class SecurityInput extends React.Component<Properties, State>{
         <div style={visibility}>
           <div style={SecurityInput.STYLE.overlay}/>
           <div style={shadowBox}/>
-          <div style={optionsBox}>
+          <div style={modalBox}>
             <div style={SecurityInput.STYLE.header}>
               <div style={SecurityInput.STYLE.headerText}>
                 {SecurityInput.MODAL_HEADER}
               </div>
-              <img src={'resources/account_page/compliance_page/security_input/close.svg'}
+              <img src={SecurityInput.PATH + 'close.svg'}
                 height='20px'
                 width='20px'
                 onClick={this.toggleEditing}/>
             </div>
             <input
               className={css(SecurityInput.EXTRA_STYLE.effects)}
-              style={SecurityInput.STYLE.findSymbolBox}
+              style={findSymbolBox}
               placeholder={SecurityInput.PLACEHOLDER_TEXT}
               onChange={this.onInputChange}
               onKeyDown={this.addEntry}
@@ -168,7 +192,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             <div style={iconRowStyle}>
               {removeImgSrc}
               <div style={imageWrapperStyle}>
-                <img src={'resources/account_page/compliance_page/security_input/upload.svg'}/>
+                <img src={SecurityInput.PATH + 'upload.svg'}/>
               </div>
             </div>
             <HLine color={'#e6e6e6'}/>
@@ -290,7 +314,19 @@ export class SecurityInput extends React.Component<Properties, State>{
       top: 'calc(50% - 279.5px + 30px)',
       left: 'calc(50% - 180px)',
     },
-    smallOptionsBox: {
+    boxShadowBigReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      opacity: 0.4,
+      boxShadow: '0px 0px 6px #000000',
+      display: 'block',
+      position: 'absolute' as 'absolute',
+      backgroundColor: '#FFFFFF',
+      width: '300px',
+      height: '424px',
+      top: 'calc(50% - 212px + 30px)',
+      left: 'calc(50% - 180px)',
+    },
+    smallModalBox: {
       opacity: 1,
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
@@ -307,7 +343,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       paddingBottom: '40px',
       overflowY: 'auto' as 'auto'
     },
-    bigOptionsBox: {
+    bigModalBox: {
       opacity: 1,
       boxSizing: 'border-box' as 'border-box',
       display: 'block',
@@ -316,6 +352,18 @@ export class SecurityInput extends React.Component<Properties, State>{
       width: '300px',
       height: '559px',
       top: 'calc(50% - 279.5px + 30px)',
+      left: 'calc(50% - 180px)',
+      padding: '18px',
+    },
+    bigModalBoxReadonly: {
+      opacity: 1,
+      boxSizing: 'border-box' as 'border-box',
+      display: 'block',
+      position: 'absolute' as 'absolute',
+      backgroundColor: '#FFFFFF',
+      width: '300px',
+      height: '424px',
+      top: 'calc(50% - 212px + 30px)',
       left: 'calc(50% - 180px)',
       padding: '18px',
     },
@@ -347,7 +395,13 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '246px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      marginBottom: '30px',
+      overflowY: 'scroll' as 'scroll'
+    },
+    scrollBoxSmallReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '342px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
       overflowY: 'scroll' as 'scroll'
     },
     scrollBoxBig: {
@@ -355,7 +409,6 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '280px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      marginBottom: '30px',
       overflowY: 'scroll' as 'scroll'
     },
     scrollBoxHeader: {
@@ -405,6 +458,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '24px',
       width: '100%',
       marginBottom: '30px',
+      marginTop: '30px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       justifyContent: 'space-evenly' as 'space-evenly' 
@@ -413,6 +467,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '16px',
       width: '100%',
       marginBottom: '30px',
+      marginTop: '30px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       justifyContent: 'space-evenly' as 'space-evenly' 
@@ -455,6 +510,8 @@ export class SecurityInput extends React.Component<Properties, State>{
   });
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
+  private static readonly SUBMIT_CHANGES = ''; //???
+  private static readonly CONFIRM = ''; //???
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
   private static readonly IMAGE_SIZE_SMALL = '20px';
