@@ -322,8 +322,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '300px',
-      height: '492px',
-      top: 'calc(50% - 246px + 30px)',
+      height: '430px',
+      top: 'calc(50% - 215px + 30px)',
       left: 'calc(50% - 180px)',
     },
     smallModalBox: {
@@ -362,8 +362,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '300px',
-      height: '492px',
-      top: 'calc(50% - 212px + 30px)',
+      height: '430px',
+      top: 'calc(50% - 215px + 30px)',
       left: 'calc(50% - 180px)',
       padding: '18px',
     },
@@ -407,6 +407,13 @@ export class SecurityInput extends React.Component<Properties, State>{
     scrollBoxBig: {
       boxSizing: 'border-box' as 'border-box',
       height: '280px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      overflowY: 'scroll' as 'scroll'
+    },
+    scrollBoxBigReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '342px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'scroll' as 'scroll'
