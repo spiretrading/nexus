@@ -21,6 +21,7 @@ interface Properties {
 
 interface State {
   isEditing: boolean;
+  localValue: Nexus.ComplianceValue[];
   selection: number;
   inputString: string;
 }
@@ -37,12 +38,15 @@ export class SecurityInput extends React.Component<Properties, State>{
     super(props);
     this.state = {
       isEditing: false,
+      localValue: this.props.value.slice(),
       selection: -1,
       inputString: ''
     }
     this.toggleEditing = this.toggleEditing.bind(this);
     this.onInputChange = this.onInputChange.bind(this);
     this.addEntry = this.addEntry.bind(this);
+    this.removeEntry = this.removeEntry.bind(this);
+    this.onSubmitChange = this.onSubmitChange.bind(this);
   }
 
   public render() {
@@ -127,7 +131,7 @@ export class SecurityInput extends React.Component<Properties, State>{
           </div>);
       } else {
         return (
-          <div style={imageWrapperStyle} onClick={this.removeEntry.bind(this)}>
+          <div style={imageWrapperStyle}>
             <img src={SecurityInput.PATH + 'upload-grey.svg'}/>
           </div>);
       }
@@ -145,28 +149,56 @@ export class SecurityInput extends React.Component<Properties, State>{
           </div>);
       }
     })();
+    const confirmationButton = (() => {
+      if(this.props.readonly) {
+        return (
+          <button style={SecurityInput.STYLE.button}
+              onClick={this.toggleEditing}>
+            {SecurityInput.CONFIRM_TEXT}
+          </button>);
+      } else {
+        return (
+          <button style={SecurityInput.STYLE.button}
+            onClick={this.onSubmitChange}>
+            {SecurityInput.SUBMIT_CHANGES_TEXT}
+          </button>);
+      }
+    })();
     let displayValue  = '';
     const entries = [];
-    for(let i = 0; i < this.props.value.length; ++i) {
-      const sec = this.props.value[i].value as Nexus.Security;
-      displayValue = displayValue.concat(sec.symbol.toString());
-      if(this.state.selection === i) {
-        entries.push(
-          <div style={SecurityInput.STYLE.scrollBoxEntrySelected}
-              onClick={this.selectEntry.bind(this, i)}>
-            {sec.symbol.toString()}
-          </div>);
-      } else {
-        entries.push(
-          <div style={SecurityInput.STYLE.scrollBoxEntry}
-              onClick={this.selectEntry.bind(this, i)}>
-            {sec.symbol.toString()}
-          </div>);
+    const maxLength = (() => {
+      if(this.props.value.length > this.state.localValue.length) {
+        return this.props.value.length;
+      }else {
+        return this.state.localValue.length;
       }
-      if(i >= 0 && i < this.props.value.length - 1 && 
+    })();
+    for(let i = 0; i < maxLength; ++i) {
+      if(i < this.state.localValue.length) {
+        const sec = this.state.localValue[i].value as Nexus.Security;
+        if(this.state.selection === i) {
+          entries.push(
+            <div style={SecurityInput.STYLE.scrollBoxEntrySelected}
+                onClick={this.selectEntry.bind(this, i)}>
+              {sec.symbol.toString()}
+            </div>);
+        } else {
+          entries.push(
+            <div style={SecurityInput.STYLE.scrollBoxEntry}
+                onClick={this.selectEntry.bind(this, i)}>
+              {sec.symbol.toString()}
+            </div>);
+        }
+      }
+      if(i < this.props.value.length) {
+        const sec = this.props.value[i].value as Nexus.Security;
+        displayValue = displayValue.concat(sec.symbol.toString());
+        if(i >= 0 && i < this.props.value.length - 1 && 
           this.props.value.length > 1) {
         displayValue = displayValue.concat(', ');
       }
+      }
+
     }
     return(
       <div>
@@ -187,6 +219,7 @@ export class SecurityInput extends React.Component<Properties, State>{
               <img src={SecurityInput.PATH + 'close.svg'}
                 height='20px'
                 width='20px'
+                //add style
                 onClick={this.toggleEditing}/>
             </div>
             <input
@@ -208,9 +241,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
-              <button style={SecurityInput.STYLE.button}>
-                {'Submit Changes'}
-              </button>
+              {confirmationButton}
             </div>
           </div>
         </div>
@@ -218,9 +249,8 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private toggleEditing(){
-    if(!this.props.readonly) {
-      this.setState({isEditing: !this.state.isEditing});
-    }
+    this.setState({isEditing: !this.state.isEditing});
+    
   }
 
   private selectEntry(index: number) {
@@ -232,16 +262,23 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private removeEntry() {
+    console.log();
     if(this.state.selection !== -1) {
-      this.props.onChange(
-        this.props.value.slice(0, this.state.selection).concat(
-        this.props.value.slice(this.state.selection+1)));
+      this.setState({localValue: 
+        this.state.localValue.slice(0, this.state.selection).concat(
+        this.state.localValue.slice(this.state.selection+1))});
     }
     this.setState({selection: -1});
   }
 
   private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({inputString: event.target.value});
+  }
+
+  private onSubmitChange(){
+    console.log('suuuubmit');
+    //this.props.onChange(this.state.localValue);
+    this.toggleEditing();
   }
 
   private addEntry(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -280,6 +317,9 @@ export class SecurityInput extends React.Component<Properties, State>{
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
+    },
+    clickable: {
+      cursor: 'pointer' as 'pointer'
     },
     modal: {
       boxSizing: 'border-box' as 'border-box',
