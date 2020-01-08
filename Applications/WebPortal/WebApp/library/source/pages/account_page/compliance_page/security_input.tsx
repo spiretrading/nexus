@@ -117,6 +117,20 @@ export class SecurityInput extends React.Component<Properties, State>{
       } else {
         return SecurityInput.STYLE.iconWrapperLarge;
       }
+      
+    })();
+    const uploadImgSrc = (() => {
+      if(this.props.readonly) {
+        return (
+          <div style={imageWrapperStyle}>
+            <img src={SecurityInput.PATH + 'upload-grey.svg'}/>
+          </div>);
+      } else {
+        return (
+          <div style={imageWrapperStyle} onClick={this.removeEntry.bind(this)}>
+            <img src={SecurityInput.PATH + 'upload-grey.svg'}/>
+          </div>);
+      }
     })();
     const removeImgSrc = (() => {
       if(this.state.selection !== -1) {
@@ -154,7 +168,6 @@ export class SecurityInput extends React.Component<Properties, State>{
         displayValue = displayValue.concat(', ');
       }
     }
-    
     return(
       <div>
         <input
@@ -191,9 +204,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             </div>
             <div style={iconRowStyle}>
               {removeImgSrc}
-              <div style={imageWrapperStyle}>
-                <img src={SecurityInput.PATH + 'upload.svg'}/>
-              </div>
+              {uploadImgSrc}
             </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
@@ -517,8 +528,8 @@ export class SecurityInput extends React.Component<Properties, State>{
   });
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
-  private static readonly SUBMIT_CHANGES = ''; //???
-  private static readonly CONFIRM = ''; //???
+  private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
+  private static readonly CONFIRM_TEXT = 'OK';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
   private static readonly IMAGE_SIZE_SMALL = '20px';
