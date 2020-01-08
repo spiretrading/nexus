@@ -1,7 +1,7 @@
 #!/bin/bash
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="76190382c85f2138145cbfcedbb1f717d9b30386"
+beam_commit="e2b07f3975dd43b2d933bf53294e7dabd6490656"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/eidolonsystems/beam.git Beam
@@ -33,7 +33,7 @@ if [ ! -d "lua-5.3.5" ]; then
     make -j $cores linux
     make local
     popd
-    rm -f lua-5.3.5.tar.gz
+    rm lua-5.3.5.tar.gz
   fi
 fi
 if [ ! -d "quickfix-v.1.15.1" ]; then
