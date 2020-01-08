@@ -249,8 +249,10 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private toggleEditing(){
-    this.setState({isEditing: !this.state.isEditing});
-    
+    this.setState({
+      isEditing: !this.state.isEditing,
+      localValue: this.props.value.slice()
+    });
   }
 
   private selectEntry(index: number) {
@@ -277,7 +279,7 @@ export class SecurityInput extends React.Component<Properties, State>{
 
   private onSubmitChange(){
     console.log('suuuubmit');
-    //this.props.onChange(this.state.localValue);
+    this.props.onChange(this.state.localValue);
     this.toggleEditing();
   }
 
@@ -290,8 +292,8 @@ export class SecurityInput extends React.Component<Properties, State>{
             this.state.inputString,
             Nexus.MarketCode.NONE,
             Nexus.DefaultCountries.CA));
-      this.props.onChange(
-        this.props.value.slice().concat(newParameter));
+      this.setState({localValue: 
+        this.state.localValue.slice().concat(newParameter)});
       this.setState({inputString: ''});
     }
   }
