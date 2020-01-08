@@ -31,7 +31,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
   layout->addWidget(m_spinBox);
   connect(m_spinBox,
     static_cast<void (QDoubleSpinBox::*)(const QString&)>(
-    &QDoubleSpinBox::valueChanged), this, &MoneySpinBox::OnValueChanged);
+    &QDoubleSpinBox::textChanged), this, &MoneySpinBox::OnValueChanged);
 }
 
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,

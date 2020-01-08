@@ -151,7 +151,7 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
   m_renderer = std::make_unique<DashboardRenderer>(Ref(*m_model),
     Ref(*m_selectionModel), rowRenderer, Ref(*m_userProfile));
   QPalette p{palette()};
-  p.setColor(QPalette::Background, QColor{13, 13, 13});
+  p.setColor(QPalette::Window, QColor{13, 13, 13});
   setPalette(p);
   resizeEvent(nullptr);
   m_drawConnection = m_renderer->ConnectDrawSignal(

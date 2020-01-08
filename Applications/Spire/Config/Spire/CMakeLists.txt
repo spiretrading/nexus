@@ -57,15 +57,6 @@ target_link_libraries(Spire Dashboard Charting PortfolioViewer Utilities
   optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(WIN32)
-  target_link_libraries(Spire
-    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
-    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib version.lib
-    winmm.lib ws2_32.lib wtsapi32.lib)
-endif()
 if(UNIX)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   target_link_libraries(Spire
@@ -76,5 +67,14 @@ if(UNIX)
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
+endif()
+if(WIN32)
+  target_link_libraries(Spire
+    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
+    version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 install(TARGETS Spire DESTINATION ${PROJECT_BINARY_DIR}/Application)

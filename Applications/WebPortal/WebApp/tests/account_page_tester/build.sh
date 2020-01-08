@@ -17,14 +17,14 @@ if [ $# -eq 0 ] || [ "$1" != "Debug" ]; then
 fi
 if [ "$1" = "clean" ]; then
   rm -rf application
-  rm mod_time.txt
+  rm -f mod_time.txt
   exit 0
 fi
 if [ "$1" = "reset" ]; then
   rm -rf application
-  rm mod_time.txt
+  rm -f mod_time.txt
   rm -rf node_modules
-  rm package-lock.json
+  rm -f package-lock.json
   exit 0
 fi
 WEB_PORTAL_PATH=Dependencies/library

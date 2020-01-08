@@ -119,10 +119,10 @@ namespace {
     coordinateLayout->setContentsMargins(4, 0, 4, 0);
     xCoordinateLabel = new QLabel();
     QFontMetrics metrics(xCoordinateLabel->font());
-    xCoordinateLabel->setMinimumWidth(metrics.width("Row: 999"));
+    xCoordinateLabel->setMinimumWidth(metrics.horizontalAdvance("Row: 999"));
     coordinateLayout->addWidget(xCoordinateLabel);
     yCoordinateLabel = new QLabel();
-    yCoordinateLabel->setMinimumWidth(metrics.width("Col: 999"));
+    yCoordinateLabel->setMinimumWidth(metrics.horizontalAdvance("Col: 999"));
     coordinateLayout->addWidget(yCoordinateLabel);
     coordinates->setLayout(coordinateLayout);
     coordinates->setSizePolicy(QSizePolicy::Preferred,

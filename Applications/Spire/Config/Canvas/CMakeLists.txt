@@ -164,15 +164,6 @@ target_link_libraries(CanvasTester Dashboard Charting PortfolioViewer
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
-if(WIN32)
-  target_link_libraries(CanvasTester
-    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
-    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib version.lib
-    winmm.lib ws2_32.lib wtsapi32.lib)
-endif()
 if(UNIX)
   target_link_libraries(CanvasTester
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -186,6 +177,15 @@ if(UNIX)
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
+endif()
+if(WIN32)
+  target_link_libraries(CanvasTester
+    debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
+    version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
   target_link_libraries(CanvasTester rt socket nsl)
