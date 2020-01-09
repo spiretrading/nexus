@@ -86,6 +86,15 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.findSymbolBox;
       }
     })();
+    const scrollHeader = (() => {
+      if(!this.props.readonly) {
+        return(<div style={SecurityInput.STYLE.scrollBoxHeader}>
+          {'Added Symbols'}
+        </div>);
+      } else {
+        return;
+      }
+    })();
     const selectedSecuritiesBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.props.readonly) {
@@ -152,13 +161,13 @@ export class SecurityInput extends React.Component<Properties, State>{
     const confirmationButton = (() => {
       if(this.props.readonly) {
         return (
-          <button style={SecurityInput.STYLE.button}
+          <button className={css(SecurityInput.EXTRA_STYLE.button)}
               onClick={this.toggleEditing}>
             {SecurityInput.CONFIRM_TEXT}
           </button>);
       } else {
         return (
-          <button style={SecurityInput.STYLE.button}
+          <button className={css(SecurityInput.EXTRA_STYLE.button)}
             onClick={this.onSubmitChange}>
             {SecurityInput.SUBMIT_CHANGES_TEXT}
           </button>);
@@ -230,9 +239,7 @@ export class SecurityInput extends React.Component<Properties, State>{
               onKeyDown={this.addEntry}
               value={this.state.inputString}/>
             <div style={selectedSecuritiesBox}>
-              <div style={SecurityInput.STYLE.scrollBoxHeader}>
-                {'Added Symbols'}
-              </div>
+              {scrollHeader}
               {entries}
             </div>
             <div style={iconRowStyle}>
@@ -251,15 +258,18 @@ export class SecurityInput extends React.Component<Properties, State>{
   private toggleEditing(){
     this.setState({
       isEditing: !this.state.isEditing,
+      selection: -1,
       localValue: this.props.value.slice()
     });
   }
 
   private selectEntry(index: number) {
-    if(index === this.state.selection) {
-      this.setState({selection: -1});
-    } else {
-      this.setState({selection: index});
+    if(!this.props.readonly) {
+      if(index === this.state.selection) {
+        this.setState({selection: -1});
+      } else {
+        this.setState({selection: index});
+      }
     }
   }
 
@@ -278,7 +288,6 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private onSubmitChange(){
-    console.log('suuuubmit');
     this.props.onChange(this.state.localValue);
     this.toggleEditing();
   }
@@ -476,7 +485,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '40px',
       width: '100%',
       backgroundColor: '#F8F8F8',
-      font: '400 14px Roboto',
+      color: '#4B23A0',
+      font: '500 14px Roboto',
       paddingLeft: '10px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -536,14 +546,14 @@ export class SecurityInput extends React.Component<Properties, State>{
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
-      backgroundColor: '#4B23A0',
+      backgroundColor: '#684BC7',
       color: '#FFFFFF',
-      border: '1px solid #4B23A0',
+      border: '1px solid #684BC7',
       borderRadius: '1px',
-      marginTop: '30px',
       font: '400 16px Roboto',
     },
     buttonWrapper: {
+      marginTop: '30px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
@@ -562,9 +572,42 @@ export class SecurityInput extends React.Component<Properties, State>{
       },
       '::moz-focus-inner': {
         border: 0
+      }
+    },
+    button: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '246px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      border: '0px solid #684BC7',
+      borderRadius: '1px',
+      font: '400 16px Roboto',
+      outline: 'none',
+      MozAppearance: 'none' as 'none',
+      ':active' : {
+        backgroundColor: '#4B23A0'
       },
-      '::placeholder': {
-        color: '#8C8C8C'
+      ':focus': {
+        border: 0,
+        outline: 'none',
+        borderColor: '#4B23A0',
+        backgroundColor: '#4B23A0',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none',
+        MozAppearance: 'none' as 'none'
+      },
+      ':hover':{
+        backgroundColor: '#4B23A0'
+      },
+      '::-moz-focus-inner': {
+        border: 0,
+        outline: 0
+      },
+      ':-moz-focusring': {
+        outline: 0
       }
     }
   });
