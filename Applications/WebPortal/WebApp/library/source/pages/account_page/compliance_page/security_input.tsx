@@ -261,7 +261,7 @@ export class SecurityInput extends React.Component<Properties, State>{
 
     }
     return(
-      <div style={{position: 'static'}}>
+      <div>
         <input
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
@@ -384,15 +384,13 @@ export class SecurityInput extends React.Component<Properties, State>{
       cursor: 'pointer' as 'pointer'
     },
     modal: {
-      boxSizing: 'border-box' as 'border-box',
-      minHeight: '559px',
-      overflow: 'scroll' as 'scroll',
+
     },
     overlay: {
       boxSizing: 'border-box' as 'border-box',
       top: '0px',
       left: '0px',
-      position: 'fixed' as 'fixed',
+      position: 'absolute' as 'absolute',
       width: '100%',
       height: '100%',
       backgroundColor: '#FFFFFF',
