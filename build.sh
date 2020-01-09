@@ -8,19 +8,20 @@ done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
 build_function() {
-  if [ ! -d "$1" ]; then
-    mkdir -p "$1"
+  location="${@: -1}"
+  if [ ! -d "$location" ]; then
+    mkdir -p "$location"
   fi
-  pushd "$1"
-  "$directory/$1/build.sh" "$@"
+  pushd "$location"
+  "$directory/$location/build.sh" "${@:1:$#-1}"
   popd
 }
 
 export -f build_function
 export directory
 
-build_function "Nexus"
-build_function "WebApi"
+build_function "$@" "Nexus"
+build_function "$@" "WebApi"
 targets+=" Applications/AdministrationServer"
 targets+=" Applications/AsxItchMarketDataFeedClient"
 targets+=" Applications/ChartingServer"
@@ -45,4 +46,4 @@ let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
 let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 4194304"
 let jobs="$(($cores<$mem?$cores:$mem))"
 
-parallel -j$jobs --no-notice build_function ::: $targets
+parallel -j$jobs --no-notice build_function "$@" ::: $targets

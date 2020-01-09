@@ -2,6 +2,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
+using namespace Beam::Queries;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
@@ -73,7 +74,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     int count) {
   auto insert = [&] (auto where, auto sequence) {
     auto timestamp = where->m_time_and_sale->m_timestamp - seconds(1);
-    auto value = MakeSequencedValue(TimeAndSale(timestamp, m_price, 100,
+    auto value = SequencedValue(TimeAndSale(timestamp, m_price, 100,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
       "NYSE"), sequence);
     return m_entries.insert(where, {value, m_price_range});
@@ -86,7 +87,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
       });
   }
   if(m_entries.empty()) {
-    auto value = MakeSequencedValue(TimeAndSale(second_clock::universal_time(),
+    auto value = SequencedValue(TimeAndSale(second_clock::universal_time(),
       m_price, 100, TimeAndSale::Condition(
       TimeAndSale::Condition::Type::REGULAR, "@"), "NYSE"),
       Beam::Queries::Sequence(100000));
@@ -139,7 +140,7 @@ void PeriodicTimeAndSalesModel::on_timeout() {
     return;
   }
   auto sequence = Increment(m_entries.back().m_time_and_sale.GetSequence());
-  auto value = MakeSequencedValue(TimeAndSale(second_clock::universal_time(),
+  auto value = SequencedValue(TimeAndSale(second_clock::universal_time(),
     m_price, 100, TimeAndSale::Condition(
     TimeAndSale::Condition::Type::REGULAR, "@"), "NYSE"), sequence);
   m_entries.push_back({value, m_price_range});

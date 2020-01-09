@@ -5,7 +5,6 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
@@ -38,8 +37,6 @@ namespace {
       return QVariant::fromValue(any_cast<Quantity>(value));
     } else if(value.type() == typeid(OrderStatus)) {
       return QVariant::fromValue(any_cast<OrderStatus>(value));
-    } else if(value.type() == typeid(Task::State)) {
-      return QVariant::fromValue(any_cast<Task::State>(value));
     } else if(value.type() == typeid(OrderType)) {
       return QVariant::fromValue(any_cast<OrderType>(value));
     } else if(value.type() == typeid(PositionSideToken)) {
@@ -139,12 +136,6 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return locale.toString(static_cast<double>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
-  } else if(value.canConvert<Task::State>()) {
-    auto state = value.value<Task::State>();
-    if(state == Task::State::NONE) {
-      return tr("Ready");
-    }
-    return QString::fromStdString(ToString(state));
   } else if(value.canConvert<OrderType>()) {
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
@@ -183,10 +174,7 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   if(left_variant.type() != right_variant.type()) {
     return QSortFilterProxyModel::lessThan(left, right);
   }
-  if(left_variant.canConvert<Task::State>()) {
-    return compare(ToString(left_variant.value<Task::State>()),
-      ToString(right_variant.value<Task::State>()), left, right);
-  } else if(left_variant.canConvert<ptime>()) {
+  if(left_variant.canConvert<ptime>()) {
     return compare(left_variant.value<ptime>(), right_variant.value<ptime>(),
       left, right);
   } else if(left_variant.canConvert<posix_time::time_duration>()) {

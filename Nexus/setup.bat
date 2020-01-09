@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="76190382c85f2138145cbfcedbb1f717d9b30386"
+SET beam_commit="8eba00bbc1fa2d87b05aadb527233ffaf655674d"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -36,11 +36,11 @@ IF NOT EXIST Catch2-2.2.1 (
   git clone --branch v2.2.1 https://github.com/catchorg/Catch2.git Catch2-2.2.1
 )
 SET PATH=%PATH%;%ROOT%\Strawberry\perl\site\bin;%ROOT%\Strawberry\perl\bin;%ROOT%\Strawberry\c\bin
-IF NOT EXIST qt-5.12.1 (
-  git clone git://code.qt.io/qt/qt5.git qt-5.12.1
-  IF EXIST qt-5.12.1 (
-    PUSHD qt-5.12.1
-    git checkout 5.12.1
+IF NOT EXIST qt-5.14.0 (
+  git clone git://code.qt.io/qt/qt5.git qt-5.14.0
+  IF EXIST qt-5.14.0 (
+    PUSHD qt-5.14.0
+    git checkout 5.14.0
     perl init-repository --module-subset=default
     CALL configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
@@ -76,9 +76,9 @@ IF NOT EXIST quickfix-v.1.15.1 (
     sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
     POPD
     devenv /Upgrade quickfix_vs12.sln
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Debug ^
       /p:UseEnv=true
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Release ^
       /p:UseEnv=true
     POPD
     DEL quickfix-v.1.15.1.zip

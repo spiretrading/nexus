@@ -7,7 +7,7 @@ using namespace Spire;
 namespace {
   auto calculate_rendered_text_width(const QFont& font, const QString& text) {
     auto metrics = QFontMetrics(font);
-    return metrics.width(text);
+    return metrics.horizontalAdvance(text);
   }
 }
 

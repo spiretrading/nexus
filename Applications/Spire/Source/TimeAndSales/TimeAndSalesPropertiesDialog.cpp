@@ -77,7 +77,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     m_band_list);
   below_bid_item->setTextAlignment(Qt::AlignCenter);
   m_band_list->setFont(properties.m_font);
-  m_band_list->setItemSelected(band_unknown_item, true);
+  band_unknown_item->setSelected(true);
   band_list_layout->addWidget(m_band_list);
   band_list_layout->setStretchFactor(m_band_list, 140);
   style_layout->addLayout(band_list_layout);
@@ -201,34 +201,34 @@ TimeAndSalesProperties
   TimeAndSalesProperties properties;
   auto unknown_item = m_band_list->item(0);
   properties.set_band_color(PriceRange::UNKNOWN,
-    unknown_item->backgroundColor());
+    unknown_item->background().color());
   properties.set_text_color(PriceRange::UNKNOWN,
-    unknown_item->textColor());
+    unknown_item->foreground().color());
   auto above_ask_item = m_band_list->item(1);
   properties.set_band_color(PriceRange::ABOVE_ASK,
-    above_ask_item->backgroundColor());
+    above_ask_item->background().color());
   properties.set_text_color(PriceRange::ABOVE_ASK,
-    above_ask_item->textColor());
+    above_ask_item->foreground().color());
   auto at_ask_item = m_band_list->item(2);
   properties.set_band_color(PriceRange::AT_ASK,
-    at_ask_item->backgroundColor());
+    at_ask_item->background().color());
   properties.set_text_color(PriceRange::AT_ASK,
-    at_ask_item->textColor());
+    at_ask_item->foreground().color());
   auto inside_item = m_band_list->item(3);
   properties.set_band_color(PriceRange::INSIDE,
-    inside_item->backgroundColor());
+    inside_item->background().color());
   properties.set_text_color(PriceRange::INSIDE,
-    inside_item->textColor());
+    inside_item->foreground().color());
   auto at_bid_item = m_band_list->item(4);
   properties.set_band_color(PriceRange::AT_BID,
-    at_bid_item->backgroundColor());
+    at_bid_item->background().color());
   properties.set_text_color(PriceRange::AT_BID,
-    at_bid_item->textColor());
+    at_bid_item->foreground().color());
   auto below_bid_item = m_band_list->item(5);
   properties.set_band_color(PriceRange::BELOW_BID,
-    below_bid_item->backgroundColor());
+    below_bid_item->background().color());
   properties.set_text_color(PriceRange::BELOW_BID,
-    below_bid_item->textColor());
+    below_bid_item->foreground().color());
   properties.m_show_grid = m_show_grid_check_box->isChecked();
   properties.m_font = m_band_list->font();
   return properties;
