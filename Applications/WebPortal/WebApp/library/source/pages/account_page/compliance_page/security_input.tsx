@@ -118,7 +118,11 @@ export class SecurityInput extends React.Component<Properties, State>{
           return SecurityInput.STYLE.scrollBoxSmall;
         }
       } else {
-        return SecurityInput.STYLE.scrollBoxBig;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.scrollBoxBigReadonly;
+        } else {
+          return SecurityInput.STYLE.scrollBoxBig;
+        }
       }
     })();
     const iconRowStyle = (() => {
@@ -257,7 +261,7 @@ export class SecurityInput extends React.Component<Properties, State>{
 
     }
     return(
-      <div>
+      <div style={{position: 'static'}}>
         <input
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
@@ -382,7 +386,7 @@ export class SecurityInput extends React.Component<Properties, State>{
     modal: {
       boxSizing: 'border-box' as 'border-box',
       minHeight: '559px',
-      overflow: 'scroll',
+      overflow: 'scroll' as 'scroll',
     },
     overlay: {
       boxSizing: 'border-box' as 'border-box',
@@ -431,8 +435,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '300px',
-      height: '430px',
-      top: 'calc(50% - 215px + 30px)',
+      height: '492px',
+      top: 'calc(50% - 246px + 30px)',
       left: 'calc(50% - 180px)',
     },
     smallModalBox: {
@@ -471,8 +475,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       position: 'absolute' as 'absolute',
       backgroundColor: '#FFFFFF',
       width: '300px',
-      height: '430px',
-      top: 'calc(50% - 215px + 30px)',
+      height: '492px',
+      top: 'calc(50% - 246px + 30px)',
       left: 'calc(50% - 180px)',
       padding: '18px',
     },
