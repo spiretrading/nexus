@@ -143,24 +143,31 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
-    const imageWrapperStyle = (() => {
+    const iconWrapperStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.iconWrapperSmall;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.iconWrapperSmallReadonly;
+        } else {
+          return SecurityInput.STYLE.iconWrapperSmall;
+        }
       } else {
-        return SecurityInput.STYLE.iconWrapperLarge;
+        if(this.props.readonly) {
+          return SecurityInput.STYLE.iconWrapperLargeReadonly;
+        } else {
+          return SecurityInput.STYLE.iconWrapperLarge;
+        }
       }
-      
     })();
-    const uploadImg = (() => {
+    const uploadIcon = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
-          <div style={imageWrapperStyle}>
+          <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
               src={SecurityInput.PATH + 'upload-grey.svg'}/>
           </div>);
       } else {
         return (
-          <div style={imageWrapperStyle}>
+          <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
               src={SecurityInput.PATH + 'upload-grey.svg'}/>
             <div style={SecurityInput.STYLE.iconLabelReadonly}>
@@ -173,14 +180,14 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(this.state.selection !== -1) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
-            <div style={imageWrapperStyle} 
+            <div style={iconWrapperStyle} 
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
           return (
-            <div style={imageWrapperStyle} 
+            <div style={iconWrapperStyle} 
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
@@ -192,13 +199,13 @@ export class SecurityInput extends React.Component<Properties, State>{
       } else {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
-            <div style={imageWrapperStyle}>
+            <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-grey.svg'}/>
             </div>);
         } else {
           return (
-            <div style={imageWrapperStyle} 
+            <div style={iconWrapperStyle} 
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-grey.svg'}/>
@@ -295,7 +302,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             </div>
             <div style={iconRowStyle}>
               {removeIcon}
-              {uploadImg}
+              {uploadIcon}
             </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
@@ -379,9 +386,6 @@ export class SecurityInput extends React.Component<Properties, State>{
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    },
-    clickable: {
-      cursor: 'pointer' as 'pointer'
     },
     modal: {
 
@@ -485,11 +489,12 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between',
       height: '20px',
-      marginBottom: '30px'
+      marginBottom: '30px',
     },
     headerText: {
       font: '400 16px Roboto',
-      flexGrow: 1
+      flexGrow: 1,
+      cursor: 'default' as 'default'
     },
     findSymbolBox: {
       width: '100%',
@@ -542,7 +547,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       alignItems: 'center' as 'center',
       borderBottom: '1px solid #C8C8C8',
       position: 'sticky' as 'sticky',
-      top: 0
+      top: 0,
+      cursor: 'default' as 'default'
     },
     scrollBoxHeaderLarge: {
       boxSizing: 'border-box' as 'border-box',
@@ -557,7 +563,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       alignItems: 'center' as 'center',
       borderBottom: '1px solid #C8C8C8',
       position: 'sticky' as 'sticky',
-      top: 0
+      top: 0,
+      cursor: 'default' as 'default'
     },
     scrollBoxEntry: {
       boxSizing: 'border-box' as 'border-box',
@@ -590,9 +597,30 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
-      pointer: ''
+      pointer: 'pointer' as 'pointer'
+    },
+    iconWrapperSmallReadonly: {
+      height: '24px',
+      width: '24px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+      pointer: 'default' as 'default'
     },
     iconWrapperLarge:  {
+      height: '16px',
+      width: '16px',
+      display: 'flex' as 'flex',
+      maxWidth: '74px',
+      minWidth: '64px',
+      flexShrink: 1,
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+      pointer: 'pointer' as 'pointer'
+    },
+    iconWrapperLargeReadonly:  {
       height: '16px',
       width: '16px',
       display: 'flex' as 'flex',
@@ -602,16 +630,19 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
+      pointer: 'default' as 'default'
     },
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
-      marginLeft: '8px'
+      marginLeft: '8px',
+      cursor: 'pointer' as 'pointer'
     },
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
-      marginLeft: '8px'
+      marginLeft: '8px',
+      cursor: 'default' as 'default'
     },
     iconRowSmall: {
       height: '24px',
@@ -674,6 +705,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       font: '400 16px Roboto',
       outline: 'none',
       MozAppearance: 'none' as 'none',
+      cursor: 'pointer' as 'pointer',
       ':active' : {
         backgroundColor: '#4B23A0'
       },
