@@ -86,11 +86,26 @@ export class SecurityInput extends React.Component<Properties, State>{
         return SecurityInput.STYLE.findSymbolBox;
       }
     })();
+    const headerText = (() => {
+      if(this.props.readonly) {
+        return SecurityInput.MODAL_HEADER_READONLY;
+      } else {
+        return SecurityInput.MODAL_HEADER;
+      }
+    })();
     const scrollHeader = (() => {
       if(!this.props.readonly) {
-        return(<div style={SecurityInput.STYLE.scrollBoxHeader}>
-          {'Added Symbols'}
-        </div>);
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return(
+            <div style={SecurityInput.STYLE.scrollBoxHeaderSmall}>
+              {'Added Symbols'}
+            </div>);
+        } else {
+          return(
+            <div style={SecurityInput.STYLE.scrollBoxHeaderLarge}>
+              {'Added Symbols'}
+            </div>);
+        }
       } else {
         return;
       }
@@ -119,9 +134,9 @@ export class SecurityInput extends React.Component<Properties, State>{
     })();
     const imageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.IMAGE_SIZE_SMALL;
+        return SecurityInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
-        return SecurityInput.IMAGE_SIZE_BIG;
+        return SecurityInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
     const imageWrapperStyle = (() => {
@@ -132,30 +147,62 @@ export class SecurityInput extends React.Component<Properties, State>{
       }
       
     })();
-    const uploadImgSrc = (() => {
-      if(this.props.readonly) {
+    const uploadImg = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <div style={imageWrapperStyle}>
-            <img src={SecurityInput.PATH + 'upload-grey.svg'}/>
+            <img height={imageSize} width={imageSize}
+              src={SecurityInput.PATH + 'upload-grey.svg'}/>
           </div>);
       } else {
         return (
           <div style={imageWrapperStyle}>
-            <img src={SecurityInput.PATH + 'upload-grey.svg'}/>
+            <img height={imageSize} width={imageSize}
+              src={SecurityInput.PATH + 'upload-grey.svg'}/>
+            <div style={SecurityInput.STYLE.iconLabelReadonly}>
+              {SecurityInput.UPLOAD_TEXT}
+            </div>
           </div>);
       }
     })();
-    const removeImgSrc = (() => {
+    const removeIcon = (() => {
       if(this.state.selection !== -1) {
-        return (
-          <div style={imageWrapperStyle} onClick={this.removeEntry.bind(this)}>
-            <img src={SecurityInput.PATH + 'remove-purple.svg'}/>
-          </div>);
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return (
+            <div style={imageWrapperStyle} 
+                onClick={this.removeEntry.bind(this)}>
+              <img height={imageSize} width={imageSize}
+                src={SecurityInput.PATH + 'remove-purple.svg'}/>
+            </div>);
+        } else {
+          return (
+            <div style={imageWrapperStyle} 
+                onClick={this.removeEntry.bind(this)}>
+              <img height={imageSize} width={imageSize}
+                src={SecurityInput.PATH + 'remove-purple.svg'}/>
+              <div style={SecurityInput.STYLE.iconLabel}>
+                {SecurityInput.REMOVE_TEXT}
+              </div>
+            </div>);
+        }
       } else {
-        return (
-          <div style={imageWrapperStyle}>
-            <img src={SecurityInput.PATH + 'remove-grey.svg'}/>
-          </div>);
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return (
+            <div style={imageWrapperStyle}>
+              <img height={imageSize} width={imageSize}
+                src={SecurityInput.PATH + 'remove-grey.svg'}/>
+            </div>);
+        } else {
+          return (
+            <div style={imageWrapperStyle} 
+                onClick={this.removeEntry.bind(this)}>
+              <img height={imageSize} width={imageSize}
+                src={SecurityInput.PATH + 'remove-grey.svg'}/>
+              <div style={SecurityInput.STYLE.iconLabelReadonly}>
+                {SecurityInput.REMOVE_TEXT}
+              </div>
+            </div>);
+        }
       }
     })();
     const confirmationButton = (() => {
@@ -223,7 +270,7 @@ export class SecurityInput extends React.Component<Properties, State>{
           <div style={modalBox}>
             <div style={SecurityInput.STYLE.header}>
               <div style={SecurityInput.STYLE.headerText}>
-                {SecurityInput.MODAL_HEADER}
+                {headerText}
               </div>
               <img src={SecurityInput.PATH + 'close.svg'}
                 height='20px'
@@ -243,8 +290,8 @@ export class SecurityInput extends React.Component<Properties, State>{
               {entries}
             </div>
             <div style={iconRowStyle}>
-              {removeImgSrc}
-              {uploadImgSrc}
+              {removeIcon}
+              {uploadImg}
             </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
@@ -480,17 +527,35 @@ export class SecurityInput extends React.Component<Properties, State>{
       borderRadius: '1px',
       overflowY: 'scroll' as 'scroll'
     },
-    scrollBoxHeader: {
+    scrollBoxHeaderSmall: {
       boxSizing: 'border-box' as 'border-box',
+      backgroundColor: '#FFFFFF',
       height: '40px',
-      width: '100%',
-      backgroundColor: '#F8F8F8',
+      maxWidth: '246px',
       color: '#4B23A0',
       font: '500 14px Roboto',
       paddingLeft: '10px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      borderBottom: '1px solid #C8C8C8',
+      position: 'sticky' as 'sticky',
+      top: 0
+    },
+    scrollBoxHeaderLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      backgroundColor: '#FFFFFF',
+      height: '40px',
+      maxWidth: '264px',
+      color: '#4B23A0',
+      font: '500 14px Roboto',
+      paddingLeft: '10px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      borderBottom: '1px solid #C8C8C8',
+      position: 'sticky' as 'sticky',
+      top: 0
     },
     scrollBoxEntry: {
       boxSizing: 'border-box' as 'border-box',
@@ -518,11 +583,33 @@ export class SecurityInput extends React.Component<Properties, State>{
     },
     iconWrapperSmall: {
       height: '24px',
-      width: '24px'
+      width: '24px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+      pointer: ''
     },
-    iconWrapperLarge: {
+    iconWrapperLarge:  {
       height: '16px',
-      width: '16px'
+      width: '16px',
+      display: 'flex' as 'flex',
+      flexBasis: '74px',
+      minWidth: '64px',
+      flexShrink: 1,
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+    },
+    iconLabel: {
+      color: '#333333',
+      font: '400 14px Roboto',
+      marginLeft: '8px'
+    },
+    iconLabelReadonly: {
+      color: '#C8C8C8',
+      font: '400 14px Roboto',
+      marginLeft: '8px'
     },
     iconRowSmall: {
       height: '24px',
@@ -612,11 +699,14 @@ export class SecurityInput extends React.Component<Properties, State>{
     }
   });
   private static readonly MODAL_HEADER = 'Edit Symbols';
+  private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly CONFIRM_TEXT = 'OK';
+  private static readonly UPLOAD_TEXT = 'Upload';
+  private static readonly REMOVE_TEXT = 'Remove';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
-  private static readonly IMAGE_SIZE_SMALL = '20px';
-  private static readonly IMAGE_SIZE_BIG = '16px';
+  private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
+  private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
 }
