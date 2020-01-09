@@ -31,14 +31,14 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
 
     return(
-      <div style={{backgroundColor: 'black'}}>
-      <WebPortal.PageWrapper>
+      <div style={{backgroundColor: 'black', height: '100%'}}>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
             onClick={this.toggleReadonly}>
             TOGGLE READONLY
           </button>
-          </div>
+        </div>
+      <WebPortal.PageWrapper>
         <WebPortal.CompliancePage
           onRuleAdd={this.onRuleAdd}
           onRuleChange={this.onRuleChange}
