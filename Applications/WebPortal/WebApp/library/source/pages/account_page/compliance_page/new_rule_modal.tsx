@@ -94,10 +94,11 @@ export class NewRuleButton extends React.Component<Properties, State> {
     }
     return (
       <div>
-        <div style={NewRuleButton.STYLE.newRuleRow}
+        <div style={NewRuleButton.STYLE.modalButtonWrapper}
             onClick={this.props.onToggleModal}>
           <div style={NewRuleButton.STYLE.imageWrapper}>
             <img src='resources/account_page/compliance_page/add.svg'
+              style={NewRuleButton.STYLE.clickable}
               height={plusSignImageSize}
               width={plusSignImageSize}/>
           </div>
@@ -112,6 +113,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
                 {'Add New Rule'}
               </div>
               <img height={plusSignImageSize} width={plusSignImageSize}
+                style={NewRuleButton.STYLE.clickable}
                 onClick={this.props.onToggleModal}
                 src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
             </div>
@@ -151,17 +153,19 @@ export class NewRuleButton extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    newRuleRow: {
+    modalButtonWrapper: {
       height: '20px',
+      width: '130px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer'
     },
     newRuleText: {
       font: '400 14px Roboto',
       paddingLeft: '18px',
       color: '#333333',
-      cursor: 'default' as 'default'
+      cursor: 'pointer' as 'default'
     },
     imageWrapper: {
       display: 'flex' as 'flex',
@@ -169,11 +173,14 @@ export class NewRuleButton extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       width: '20px',
       height: '20px',
-      cursor: 'pointer'
+      cursor: 'pointer' as 'pointer'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
+    },
+    clickable: {
+      cursor: 'pointer' as 'pointer'
     },
     overlay: {
       boxSizing: 'border-box' as 'border-box',
@@ -242,7 +249,8 @@ export class NewRuleButton extends React.Component<Properties, State> {
       height: '38px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      paddingTop: '18px'
+      paddingTop: '18px',
+      cursor: 'default' as 'default'
     },
     footerWrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -256,11 +264,13 @@ export class NewRuleButton extends React.Component<Properties, State> {
     },
     iconWrapperSmall: {
       height: '24px',
-      width: '24px'
+      width: '24px',
+      cursor: 'pointer' as 'pointer'
     },
     iconWrapperLarge: {
       height: '16px',
-      width: '16px'
+      width: '16px',
+      cursor: 'pointer' as 'pointer'
     },
     ruleItemWrapper: {
       paddingTop: '30px',
@@ -296,6 +306,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
+      cursor: 'pointer' as 'pointer',
       ':hover': {
         backgroundColor: '#F8F8F8'
       }
@@ -309,7 +320,11 @@ export class NewRuleButton extends React.Component<Properties, State> {
       backgroundColor: '#684BC7',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
-      paddingLeft: '18px'
+      paddingLeft: '18px',
+      cursor: 'pointer' as 'pointer',
+      ':hover':{
+        backgroundColor: '#4B23A0'
+      },
     },
     button: {
       boxSizing: 'border-box' as 'border-box',
@@ -322,6 +337,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       font: '400 16px Roboto',
       outline: 'none',
       MozAppearance: 'none' as 'none',
+      cursor: 'pointer' as 'pointer',
       ':active' : {
         backgroundColor: '#4B23A0'
       },
