@@ -92,6 +92,42 @@ namespace Spire {
   };
 
   template<>
+  struct PopLuaValue<Beam::Queries::Range> {
+    Beam::Queries::Range operator ()(lua_State& state) const {
+
+      // TODO
+      return Beam::Queries::Range::Empty();
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Beam::Queries::Range> {
+    void operator ()(lua_State& state,
+        const Beam::Queries::Range& value) const {
+
+      // TODO
+    }
+  };
+
+  template<>
+  struct PopLuaValue<Beam::Queries::Sequence> {
+    Beam::Queries::Sequence operator ()(lua_State& state) const {
+
+      // TODO
+      return Beam::Queries::Sequence();
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Beam::Queries::Sequence> {
+    void operator ()(lua_State& state,
+        const Beam::Queries::Sequence& value) const {
+
+      // TODO
+    }
+  };
+
+  template<>
   struct PopLuaValue<Spire::Record> {
     Spire::Record operator ()(lua_State& state) const {
 
