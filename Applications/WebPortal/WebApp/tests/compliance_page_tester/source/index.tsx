@@ -195,7 +195,7 @@ class TestApp extends React.Component<Properties, State> {
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Some Rule', [
         new Nexus.ComplianceParameter(
-          'Currency',
+          'Time',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(23424))),
         new Nexus.ComplianceParameter(
@@ -206,7 +206,7 @@ class TestApp extends React.Component<Properties, State> {
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Timeout Period', [
         new Nexus.ComplianceParameter(
-          'Time Out Duration',
+          'Time Out',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(2342)))
       ]));
@@ -227,7 +227,7 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Some Double',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.LIST, 123.4567)),
+            Nexus.ComplianceValue.Type.DOUBLE, 123.4567)),
       ]));
       this.setState({
         entries: this.state.entries,
