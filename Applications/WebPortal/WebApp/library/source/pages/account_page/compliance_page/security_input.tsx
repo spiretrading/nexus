@@ -54,7 +54,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(!this.state.isEditing) {
         return SecurityInput.STYLE.hidden;
       } else {
-        return null;
+        return null; //????? tyisdf
       }
     })();
     const shadowBox = (() => {
@@ -167,7 +167,7 @@ export class SecurityInput extends React.Component<Properties, State>{
           </div>);
       } else {
         return (
-          <div style={iconWrapperStyle}>
+          <div style={{...iconWrapperStyle}}>
             <img height={imageSize} width={imageSize}
               src={SecurityInput.PATH + 'upload-grey.svg'}/>
             <div style={SecurityInput.STYLE.iconLabelReadonly}>
@@ -183,6 +183,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             <div style={iconWrapperStyle} 
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
+                style={SecurityInput.STYLE.iconClickableStyle}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
@@ -190,6 +191,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             <div style={iconWrapperStyle} 
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
+                style={SecurityInput.STYLE.iconClickableStyle}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
               <div style={SecurityInput.STYLE.iconLabel}>
                 {SecurityInput.REMOVE_TEXT}
@@ -243,7 +245,12 @@ export class SecurityInput extends React.Component<Properties, State>{
     for(let i = 0; i < maxLength; ++i) {
       if(i < this.state.localValue.length) {
         const sec = this.state.localValue[i].value as Nexus.Security;
-        if(this.state.selection === i) {
+        if(this.props.readonly) {
+          entries.push(
+            <div style={SecurityInput.STYLE.scrollBoxEntryReadonly}>
+              {sec.symbol.toString()}
+            </div>);
+        } else if(this.state.selection === i) {
           entries.push(
             <div style={SecurityInput.STYLE.scrollBoxEntrySelected}
                 onClick={this.selectEntry.bind(this, i)}>
@@ -575,7 +582,21 @@ export class SecurityInput extends React.Component<Properties, State>{
       paddingLeft: '10px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer'
+    },
+    scrollBoxEntryReadonly: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '100%',
+      backgroundColor: '#FFFFFF',
+      color: '#000000',
+      font: '400 14px Roboto',
+      paddingLeft: '10px',
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
+      alignItems: 'center' as 'center',
+      cursor: 'default' as 'default'
     },
     scrollBoxEntrySelected: {
       boxSizing: 'border-box' as 'border-box',
@@ -587,7 +608,11 @@ export class SecurityInput extends React.Component<Properties, State>{
       paddingLeft: '10px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer'
+    },
+    iconClickableStyle: {
+      cursor: 'pointer' as 'pointer'
     },
     iconWrapperSmall: {
       height: '24px',
@@ -609,11 +634,7 @@ export class SecurityInput extends React.Component<Properties, State>{
     },
     iconWrapperLarge:  {
       height: '16px',
-      width: '16px',
       display: 'flex' as 'flex',
-      maxWidth: '74px',
-      minWidth: '64px',
-      flexShrink: 1,
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
@@ -621,11 +642,7 @@ export class SecurityInput extends React.Component<Properties, State>{
     },
     iconWrapperLargeReadonly:  {
       height: '16px',
-      width: '16px',
       display: 'flex' as 'flex',
-      flexBasis: '74px',
-      minWidth: '64px',
-      flexShrink: 1,
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
@@ -634,13 +651,13 @@ export class SecurityInput extends React.Component<Properties, State>{
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
-      marginLeft: '8px',
+      paddingLeft: '8px',
       cursor: 'pointer' as 'pointer'
     },
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
-      marginLeft: '8px',
+      paddingLeft: '8px',
       cursor: 'default' as 'default'
     },
     iconRowSmall: {
