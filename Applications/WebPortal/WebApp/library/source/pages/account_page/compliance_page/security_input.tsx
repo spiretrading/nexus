@@ -54,7 +54,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(!this.state.isEditing) {
         return SecurityInput.STYLE.hidden;
       } else {
-        return SecurityInput.STYLE.modal;
+        return null;
       }
     })();
     const shadowBox = (() => {
@@ -265,7 +265,6 @@ export class SecurityInput extends React.Component<Properties, State>{
         displayValue = displayValue.concat(', ');
       }
       }
-
     }
     return(
       <div>
@@ -286,7 +285,7 @@ export class SecurityInput extends React.Component<Properties, State>{
               <img src={SecurityInput.PATH + 'close.svg'}
                 height='20px'
                 width='20px'
-                //add style
+                style={SecurityInput.STYLE.clickable}
                 onClick={this.toggleEditing}/>
             </div>
             <input
@@ -387,8 +386,8 @@ export class SecurityInput extends React.Component<Properties, State>{
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
     },
-    modal: {
-
+    clickable: {
+      cursor: 'pointer' as 'pointer'
     },
     overlay: {
       boxSizing: 'border-box' as 'border-box',

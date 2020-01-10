@@ -135,6 +135,17 @@ class TestApp extends React.Component<Properties, State> {
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY, 
               new Nexus.Security('AST.NYC', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+            ])),
+        new Nexus.ComplianceParameter(
+          'Other',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.LIST, [
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('PST.RME', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('FTR.TOR', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
             ]))
       ])));
     this.state.schemas.push(
