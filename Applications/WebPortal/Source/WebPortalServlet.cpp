@@ -30,9 +30,9 @@ WebPortalServlet::WebPortalServlet(
   : m_fileStore("web_app"),
     m_serviceClients(serviceClients.Get()),
     m_serviceLocatorServlet(Ref(m_sessions), std::move(serviceClientsBuilder)),
-    m_definitionsServlet(Ref(m_sessions), Ref(*m_serviceClients)),
-    m_administrationServlet(Ref(m_sessions), Ref(*m_serviceClients)),
-    m_marketDataServlet(Ref(m_sessions), Ref(*m_serviceClients)),
+    m_definitionsServlet(Ref(m_sessions)),
+    m_administrationServlet(Ref(m_sessions)),
+    m_marketDataServlet(Ref(m_sessions)),
     m_complianceServlet(Ref(m_sessions)),
     m_riskServlet(Ref(m_sessions), Ref(*m_serviceClients)) {}
 

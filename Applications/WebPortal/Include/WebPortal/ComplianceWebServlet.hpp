@@ -10,14 +10,14 @@
 
 namespace Nexus::WebPortal {
 
-  //! Provides a web interface to the ComplianceService.
+  /** Provides a web interface to the ComplianceService. */
   class ComplianceWebServlet : private boost::noncopyable {
     public:
 
-      //! Constructs a ComplianceWebServlet.
-      /*!
-        \param sessions The available web sessions.
-      */
+      /**
+       * Constructs a ComplianceWebServlet.
+       * @param sessions The available web sessions.
+       */
       explicit ComplianceWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions);
 
