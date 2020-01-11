@@ -671,8 +671,7 @@ HttpResponse AdministrationWebServlet::OnSubmitEntitlementModificationRequest(
   auto& serviceClients = session->GetServiceClients();
   auto modification =
     serviceClients.GetAdministrationClient().SubmitAccountModificationRequest(
-    parameters.m_account, session->GetAccount(), parameters.m_modification,
-    parameters.m_comment);
+    parameters.m_account, parameters.m_modification, parameters.m_comment);
   session->ShuttleResponse(modification, Store(response));
   return response;
 }
@@ -724,8 +723,7 @@ HttpResponse AdministrationWebServlet::OnSubmitRiskModificationRequest(
   auto& serviceClients = session->GetServiceClients();
   auto modification =
     serviceClients.GetAdministrationClient().SubmitAccountModificationRequest(
-    parameters.m_account, session->GetAccount(), parameters.m_modification,
-    parameters.m_comment);
+    parameters.m_account, parameters.m_modification, parameters.m_comment);
   session->ShuttleResponse(modification, Store(response));
   return response;
 }
@@ -773,8 +771,7 @@ HttpResponse AdministrationWebServlet::OnApproveAccountModificationRequest(
   auto parameters = session->ShuttleParameters<Parameters>(request);
   auto& serviceClients = session->GetServiceClients();
   auto update = serviceClients.GetAdministrationClient().
-    ApproveAccountModificationRequest(parameters.m_id, session->GetAccount(),
-    parameters.m_comment);
+    ApproveAccountModificationRequest(parameters.m_id, parameters.m_comment);
   session->ShuttleResponse(update, Store(response));
   return response;
 }
@@ -799,8 +796,7 @@ HttpResponse AdministrationWebServlet::OnRejectAccountModificationRequest(
   auto parameters = session->ShuttleParameters<Parameters>(request);
   auto& serviceClients = session->GetServiceClients();
   auto update = serviceClients.GetAdministrationClient().
-    RejectAccountModificationRequest(parameters.m_id, session->GetAccount(),
-    parameters.m_comment);
+    RejectAccountModificationRequest(parameters.m_id, parameters.m_comment);
   session->ShuttleResponse(update, Store(response));
   return response;
 }

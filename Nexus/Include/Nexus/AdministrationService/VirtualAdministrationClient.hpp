@@ -19,8 +19,7 @@
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
   /*! \class VirtualAdministrationClient
       \brief Provides a pure virtual interface to an AdministrationClient.
@@ -120,7 +119,6 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification,
         const Message& comment) = 0;
 
@@ -129,7 +127,6 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const RiskModification& modification, const Message& comment) = 0;
 
       virtual AccountModificationRequest::Update
@@ -138,12 +135,10 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest::Update
         ApproveAccountModificationRequest(AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) = 0;
 
       virtual AccountModificationRequest::Update
         RejectAccountModificationRequest(AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) = 0;
 
       virtual Message LoadMessage(Message::Id id) = 0;
@@ -278,7 +273,6 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification,
         const Message& comment) override;
 
@@ -287,7 +281,6 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const RiskModification& modification, const Message& comment) override;
 
       virtual AccountModificationRequest::Update
@@ -296,12 +289,10 @@ namespace AdministrationService {
 
       virtual AccountModificationRequest::Update
         ApproveAccountModificationRequest(AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override;
 
       virtual AccountModificationRequest::Update
         RejectAccountModificationRequest(AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
         const Message& comment) override;
 
       virtual Message LoadMessage(Message::Id id) override;
@@ -518,10 +509,9 @@ namespace AdministrationService {
   AccountModificationRequest WrapperAdministrationClient<ClientType>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const EntitlementModification& modification, const Message& comment) {
-    return m_client->SubmitAccountModificationRequest(account,
-      submissionAccount, modification, comment);
+    return m_client->SubmitAccountModificationRequest(account, modification,
+      comment);
   }
 
   template<typename ClientType>
@@ -534,10 +524,9 @@ namespace AdministrationService {
   AccountModificationRequest WrapperAdministrationClient<ClientType>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const RiskModification& modification, const Message& comment) {
-    return m_client->SubmitAccountModificationRequest(account,
-      submissionAccount, modification, comment);
+    return m_client->SubmitAccountModificationRequest(account, modification,
+      comment);
   }
 
   template<typename ClientType>
@@ -549,17 +538,15 @@ namespace AdministrationService {
   template<typename ClientType>
   AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
       ApproveAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
-    return m_client->ApproveAccountModificationRequest(id, account, comment);
+    return m_client->ApproveAccountModificationRequest(id, comment);
   }
 
   template<typename ClientType>
   AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
       RejectAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
-    return m_client->RejectAccountModificationRequest(id, account, comment);
+    return m_client->RejectAccountModificationRequest(id, comment);
   }
 
   template<typename ClientType>
@@ -589,7 +576,6 @@ namespace AdministrationService {
   void WrapperAdministrationClient<ClientType>::Close() {
     m_client->Close();
   }
-}
 }
 
 #endif

@@ -112,7 +112,6 @@ namespace Nexus::AdministrationService {
 
       AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification,
         const Message& comment) override;
 
@@ -121,21 +120,16 @@ namespace Nexus::AdministrationService {
 
       AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const RiskModification& modification, const Message& comment) override;
 
       AccountModificationRequest::Update LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
       AccountModificationRequest::Update ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment) override;
+        AccountModificationRequest::Id id, const Message& comment) override;
 
       AccountModificationRequest::Update RejectAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment) override;
+        AccountModificationRequest::Id id, const Message& comment) override;
 
       Message LoadMessage(Message::Id id) override;
 
@@ -376,11 +370,10 @@ namespace Nexus::AdministrationService {
   AccountModificationRequest ToPythonAdministrationClient<C>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const EntitlementModification& modification, const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->SubmitAccountModificationRequest(account,
-      submissionAccount, modification, comment);
+    return m_client->SubmitAccountModificationRequest(account, modification,
+      comment);
   }
 
   template<typename C>
@@ -394,11 +387,10 @@ namespace Nexus::AdministrationService {
   AccountModificationRequest ToPythonAdministrationClient<C>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const RiskModification& modification, const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->SubmitAccountModificationRequest(account,
-      submissionAccount, modification, comment);
+    return m_client->SubmitAccountModificationRequest(account, modification,
+      comment);
   }
 
   template<typename C>
@@ -411,19 +403,17 @@ namespace Nexus::AdministrationService {
   template<typename C>
   AccountModificationRequest::Update ToPythonAdministrationClient<C>::
       ApproveAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->ApproveAccountModificationRequest(id, account, comment);
+    return m_client->ApproveAccountModificationRequest(id, comment);
   }
 
   template<typename C>
   AccountModificationRequest::Update ToPythonAdministrationClient<C>::
       RejectAccountModificationRequest(AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
       const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->RejectAccountModificationRequest(id, account, comment);
+    return m_client->RejectAccountModificationRequest(id, comment);
   }
 
   template<typename C>
@@ -433,8 +423,8 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  std::vector<Message::Id> ToPythonAdministrationClient<C>::
-      LoadMessageIds(AccountModificationRequest::Id id) {
+  std::vector<Message::Id> ToPythonAdministrationClient<C>::LoadMessageIds(
+      AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadMessageIds(id);
   }
