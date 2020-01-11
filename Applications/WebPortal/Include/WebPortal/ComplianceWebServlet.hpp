@@ -5,7 +5,6 @@
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
@@ -18,11 +17,9 @@ namespace Nexus::WebPortal {
       //! Constructs a ComplianceWebServlet.
       /*!
         \param sessions The available web sessions.
-        \param serviceClients The clients used to access Spire services.
       */
-      ComplianceWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+      explicit ComplianceWebServlet(Beam::Ref<
+        Beam::WebServices::SessionStore<WebPortalSession>> sessions);
 
       ~ComplianceWebServlet();
 
@@ -33,7 +30,6 @@ namespace Nexus::WebPortal {
       void Close();
 
     private:
-      ApplicationServiceClients* m_serviceClients;
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
       Beam::IO::OpenState m_openState;
 
