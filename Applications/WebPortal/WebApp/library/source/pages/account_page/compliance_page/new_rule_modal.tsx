@@ -165,7 +165,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       font: '400 14px Roboto',
       paddingLeft: '18px',
       color: '#333333',
-      cursor: 'pointer' as 'default'
+      cursor: 'pointer' as 'pointer'
     },
     imageWrapper: {
       display: 'flex' as 'flex',

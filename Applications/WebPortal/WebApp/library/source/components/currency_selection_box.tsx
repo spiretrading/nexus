@@ -19,7 +19,9 @@ interface Properties {
   /** Indicates if the component is readonly. */
   readonly?: boolean;
 
-  /** The event handler called when the selection changes. */
+  /** The event handler called when the selection changes.
+   * @param currency - The selected currency.
+   */
   onChange?: (currency: Nexus.Currency) => void;
 }
 

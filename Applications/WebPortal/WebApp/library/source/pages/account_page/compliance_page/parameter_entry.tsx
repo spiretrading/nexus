@@ -33,7 +33,6 @@ export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
-    this.onBooleanClick = this.onBooleanClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -67,7 +66,7 @@ export class ParameterEntry extends React.Component<Properties> {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <CheckMark
-            onClick={this.onBooleanClick}
+            onClick={this.onChange}
             displaySize={this.props.displaySize}
             readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
@@ -144,10 +143,6 @@ export class ParameterEntry extends React.Component<Properties> {
           {input}
         </div>
       </div>);
-  }
-
-  private onBooleanClick() {
-    this.onChange(!this.props.parameter.value.value);
   }
 
   private onChange(newValue: any) {

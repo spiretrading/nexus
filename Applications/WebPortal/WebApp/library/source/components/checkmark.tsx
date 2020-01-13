@@ -14,9 +14,9 @@ interface Properties {
   readonly: boolean;
 
   /** Called when the check mark is clicked on.
-   * @param value - Any mouse event.
+   * @param newValue - The new value.
    */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?: (newValue?: boolean) => void;
 }
 
 /** A check mark component. */
@@ -63,7 +63,7 @@ export class CheckMark extends React.Component<Properties> {
 
   private onClick() {
     if(!this.props.readonly) {
-      this.props.onClick();
+      this.props.onClick(!this.props.isChecked);
     }
   }
 
