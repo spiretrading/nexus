@@ -4,6 +4,12 @@ import * as React from 'react';
 import { DisplaySize } from '../display_size';
 import { IntegerInputBox } from './integer_input_box';
 
+enum DateUnit {
+  DAY,
+  MONTH,
+  YEAR
+}
+
 interface Properties {
 
   /** The size to display the component at. */
@@ -60,6 +66,22 @@ export class DateField extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const maxDate = (() => {
+      const month = this.props.value.month();
+      if(month === 4 || month === 6 || month === 9 || month === 11) {
+        return 30;
+      } else if(month === 2) {
+        console.log(this.props.value.year());
+        if(this.props.value.year() % 4 === 0 && 
+            this.props.value.year() % 100 !== 0) {
+          return 29;
+        } else {
+          return 28;
+        }
+      } else {
+        return 31;
+      }
+    })();
     const hintText = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.state.componentWidth >= 227) {
@@ -80,9 +102,10 @@ export class DateField extends React.Component<Properties, State> {
           onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
           <IntegerInputBox
-            min={1} max={31}
+            min={1} max={maxDate}
             value={this.props.value.day()}
             readonly={this.props.readonly}
+            onChange={this.onChange.bind(this, DateUnit.DAY)}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
@@ -91,6 +114,7 @@ export class DateField extends React.Component<Properties, State> {
             min={1} max={12}
             value={this.props.value.month()}
             readonly={this.props.readonly}
+            onChange={this.onChange.bind(this, DateUnit.MONTH)}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
@@ -99,6 +123,7 @@ export class DateField extends React.Component<Properties, State> {
             min={2000} max={3000}
             value={this.props.value.year()}
             readonly={this.props.readonly}
+            onChange={this.onChange.bind(this, DateUnit.YEAR)}
             className={css(DateField.EXTRA_STYLE.effects)}
             style={DateField.STYLE.yearBox}
             padding={4}/>
@@ -135,6 +160,21 @@ export class DateField extends React.Component<Properties, State> {
     if(!this.props.readonly) {
       this.setState({isInFocus: false});
     }
+  }
+
+  private onChange(dateUnit: DateUnit, value: number) {
+    const oldValue = this.props.value;
+    const newValue = (() => {
+      switch(dateUnit) {
+        case DateUnit.DAY:
+          return new Beam.Date(oldValue.year(), oldValue.month(), value);
+        case DateUnit.MONTH:
+          return new Beam.Date(oldValue.year(), value, oldValue.day());
+        case DateUnit.YEAR:
+          return new Beam.Date(value, oldValue.month(), oldValue.day());
+      }
+    })();
+    this.props.onChange(newValue);
   }
 
   private static readonly STYLE = {
