@@ -56,6 +56,13 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
+    const footerStyle = (() => {
+      if(this.props.readonly) {
+        return CompliancePage.STYLE.hidden;
+      } else {
+        return CompliancePage.STYLE.footer;
+      }
+    })();
     return (
       <div style={contentStyle}>
         <RulesList
@@ -64,21 +71,23 @@ export class CompliancePage extends React.Component<Properties, State> {
           complianceList={this.props.entries}
           onChange={this.props.onRuleChange}
           readonly={this.props.readonly}/>
-        <div style={CompliancePage.STYLE.paddingMedium}/>
-        <NewRuleButton displaySize={this.props.displaySize}
-          isOpen={this.state.isAddRuleModalOpen}
-          onToggleModal={this.onToggleAddRuleModal}
-          onAddNewRule={this.props.onRuleAdd}
-          schemas={this.props.schemas}/>
-        <div style={CompliancePage.STYLE.paddingLarge}/>
-        <HLine color='#E6E6E6'/>
-        <div style={CompliancePage.STYLE.paddingLarge}/>
-        <button className={css(CompliancePage.EXTRA_STYLE.button)}>
-          {'Save Changes'}
-        </button>
-        <div style={CompliancePage.STYLE.paddingSmall}/>
-        <div style={CompliancePage.STYLE.statusBox}>
-          {'Saved'}
+        <div style={footerStyle}>
+          <div style={CompliancePage.STYLE.paddingMedium}/>
+          <NewRuleButton displaySize={this.props.displaySize}
+            isOpen={this.state.isAddRuleModalOpen}
+            onToggleModal={this.onToggleAddRuleModal}
+            onAddNewRule={this.props.onRuleAdd}
+            schemas={this.props.schemas}/>
+          <div style={CompliancePage.STYLE.paddingLarge}/>
+          <HLine color='#E6E6E6'/>
+          <div style={CompliancePage.STYLE.paddingLarge}/>
+          <button className={css(CompliancePage.EXTRA_STYLE.button)}>
+            {'Save Changes'}
+          </button>
+          <div style={CompliancePage.STYLE.paddingSmall}/>
+          <div style={CompliancePage.STYLE.statusBox}>
+            {'Saved'}
+          </div>
         </div>
       </div>);
   }
@@ -129,6 +138,16 @@ export class CompliancePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px'
+    },
+    footer: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      flexWrap: 'nowrap' as 'nowrap',
+      justifyContent: 'center' as 'center',
+    },
+    hidden: {
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
     },
     statusBox: {
       height: '19px',

@@ -181,7 +181,6 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        outline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
