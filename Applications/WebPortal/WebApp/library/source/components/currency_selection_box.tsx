@@ -66,7 +66,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
   }
 
   private onChange(event: React.ChangeEvent<any>): void {
-    if(this.props.onChange) {
+    if(!this.props.readonly) {
       this.props.onChange(this.props.currencyDatabase.fromCode(
         event.target.value).currency);
     }
