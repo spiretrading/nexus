@@ -4,8 +4,8 @@ SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
 IF "%1" == "clean" (
-  IF EXIST library (
-    RMDIR /q /s library
+  IF EXIST application (
+    RMDIR /q /s application
   )
   IF EXIST mod_time.txt (
     DEL mod_time.txt
@@ -13,8 +13,8 @@ IF "%1" == "clean" (
   EXIT /B
 )
 IF "%1" == "reset" (
-  IF EXIST library (
-    RMDIR /q /s library
+  IF EXIST application (
+    RMDIR /q /s application
   )
   IF EXIST mod_time.txt (
     DEL mod_time.txt

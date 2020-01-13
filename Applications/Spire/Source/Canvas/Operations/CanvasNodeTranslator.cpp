@@ -1,4 +1,6 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
+#include <any>
+#include <unordered_map>
 #include <Aspen/Aspen.hpp>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/Parsers/ParserPublisher.hpp>
@@ -212,6 +214,7 @@ namespace {
       CanvasNodeTranslationContext* m_context;
       const CanvasNode* m_node;
       std::optional<Translation> m_translation;
+      std::unordered_map<const CanvasNode*, std::any> m_proxies;
 
       Translation InternalTranslation(const CanvasNode& node);
       template<typename Translator>
@@ -484,13 +487,20 @@ namespace {
     static Translation Template(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      using BaseParser = ParserType<T>::type;
-      auto parser = BuildParser(BaseParser());
-      using Parser = decltype(parser);
-      auto publisher = std::make_shared<
-        ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
-        errorPolicy);
-      return PublisherReactor(std::move(publisher));
+
+      // TODO
+      if constexpr(std::is_same_v<T, Beam::Queries::Sequence> ||
+          std::is_same_v<T, Beam::Queries::Range>) {
+        return Aspen::none<T>();
+      } else {
+        using BaseParser = typename ParserType<T>::type;
+        auto parser = BuildParser(BaseParser());
+        using Parser = decltype(parser);
+        auto publisher = std::make_shared<
+          ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
+          errorPolicy);
+        return PublisherReactor(std::move(publisher));
+      }
     }
 
     template<>
@@ -894,6 +904,36 @@ namespace {
     }
 
     using SupportedTypes = NotNodeSignatures::type;
+  };
+
+  struct ProxyBuilder {
+    template<typename T>
+    static std::any Template() {
+      return Aspen::Shared(Aspen::Proxy<Aspen::Box<T>>());
+    }
+
+    using SupportedTypes = NativeTypes;
+  };
+
+  struct ProxyFinalizer {
+    template<typename T>
+    static void Template(const std::any& proxy,
+        const Translation& translation) {
+      auto reactor = std::any_cast<Aspen::Shared<Aspen::Proxy<Aspen::Box<T>>>>(
+        proxy);
+      reactor->set_reactor(translation.Extract<Aspen::Box<T>>());
+    }
+
+    using SupportedTypes = NativeTypes;
+  };
+
+  struct ProxyTranslator {
+    template<typename T>
+    static Translation Template(const std::any& proxy) {
+      return std::any_cast<Aspen::Shared<Aspen::Proxy<Aspen::Box<T>>>>(proxy);
+    }
+
+    using SupportedTypes = NativeTypes;
   };
 
   struct QueryTranslator {
@@ -1614,8 +1654,22 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
   auto existingTranslation = m_context->FindTranslation(node);
   if(existingTranslation.is_initialized()) {
     m_translation = std::move(*existingTranslation);
+  } else if(m_proxies.count(&node) == 1) {
+    auto& nativeType = static_cast<const NativeType&>(
+      node.GetType()).GetNativeType();
+    auto& proxy = m_proxies[&node];
+    m_translation = Instantiate<ProxyTranslator>(nativeType)(proxy);
   } else {
-    node.Apply(*this);
+    if(auto type = dynamic_cast<const NativeType*>(&node.GetType())) {
+      auto& nativeType = type->GetNativeType();
+      auto proxy = Instantiate<ProxyBuilder>(nativeType)();
+      m_proxies.insert(std::make_pair(&node, proxy));
+      node.Apply(*this);
+      Instantiate<ProxyFinalizer>(nativeType)(proxy, *m_translation);
+      m_proxies.erase(&node);
+    } else {
+      node.Apply(*this);
+    }
     if(dynamic_cast<const SingleOrderTaskNode*>(&node)) {
       m_context->Add(Ref(node), m_translation->ToWeak());
     } else {

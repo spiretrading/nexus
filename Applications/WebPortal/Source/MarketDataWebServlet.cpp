@@ -13,20 +13,17 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 MarketDataWebServlet::MarketDataWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_sessions{sessions.Get()},
-      m_serviceClients{serviceClients.Get()} {}
+  Ref<SessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.Get()) {}
 
 MarketDataWebServlet::~MarketDataWebServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/market_data_service/load_security_info_from_prefix"),
     std::bind(&MarketDataWebServlet::OnLoadSecurityInfoFromPrefix, this,
@@ -37,12 +34,6 @@ vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
 void MarketDataWebServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
-  }
-  try {
-    m_serviceClients->Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
   }
   m_openState.SetOpen();
 }
@@ -61,21 +52,22 @@ void MarketDataWebServlet::Shutdown() {
 HttpResponse MarketDataWebServlet::OnLoadSecurityInfoFromPrefix(
     const HttpRequest& request) {
   struct Parameters {
-    string m_prefix;
+    std::string m_prefix;
 
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("prefix", m_prefix);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto& serviceClients = session->GetServiceClients();
   auto securityInfos =
-    m_serviceClients->GetMarketDataClient().LoadSecurityInfoFromPrefix(
+    serviceClients.GetMarketDataClient().LoadSecurityInfoFromPrefix(
     parameters.m_prefix);
   session->ShuttleResponse(securityInfos, Store(response));
   return response;

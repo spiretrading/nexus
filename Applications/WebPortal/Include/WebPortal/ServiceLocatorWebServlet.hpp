@@ -1,28 +1,38 @@
 #ifndef NEXUS_SERVICE_LOCATOR_WEB_SERVLET_HPP
 #define NEXUS_SERVICE_LOCATOR_WEB_SERVLET_HPP
+#include <functional>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus::WebPortal {
 
-  //! Provides a web interface to the ServiceLocator.
+  /** Provides a web interface to the ServiceLocator. */
   class ServiceLocatorWebServlet : private boost::noncopyable {
     public:
 
-      //! Constructs a ServiceLocatorWebServlet.
-      /*!
-        \param sessions The available web sessions.
-        \param serviceClients The clients used to access Spire services.
-      */
+      /**
+       * Type of function used to build session ServiceClients.
+       * @param username The username to login with.
+       * @param password The username's password.
+       */
+      using ServiceClientsBuilder = std::function<
+        std::unique_ptr<VirtualServiceClients> (
+        const std::string& username, const std::string& password)>;
+
+      /**
+       * Constructs a ServiceLocatorWebServlet.
+       * @param sessions The available web sessions.
+       * @param serviceClientsBuilder The function used to build session
+       *        ServiceClients.
+       */
       ServiceLocatorWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+        ServiceClientsBuilder serviceClientsBuilder);
 
       ~ServiceLocatorWebServlet();
 
@@ -33,8 +43,8 @@ namespace Nexus::WebPortal {
       void Close();
 
     private:
-      ApplicationServiceClients* m_serviceClients;
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
+      ServiceClientsBuilder m_serviceClientsBuilder;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();

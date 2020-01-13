@@ -258,14 +258,12 @@ namespace AdministrationService {
       //! Submits a request to modify an account's entitlements.
       /*!
         \param account The account to modify.
-        \param submissionAccount The account submitting the request.
         \param modification The modification to apply.
         \param comment The comment to associate with the request.
         \return An object representing the request.
       */
       AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const EntitlementModification& modification, const Message& comment);
 
       //! Loads a risk modification.
@@ -278,14 +276,12 @@ namespace AdministrationService {
       //! Submits a request to modify an account's risk parameters.
       /*!
         \param account The account to modify.
-        \param submissionAccount The account submitting the request.
         \param modification The modification to apply.
         \param comment The comment to associate with the request.
         \return An object representing the request.
       */
       AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
         const RiskModification& modification, const Message& comment);
 
       //! Loads the status of an account modification request.
@@ -299,26 +295,20 @@ namespace AdministrationService {
       //! Approves an account modification request.
       /*!
         \param id The id of the request to approve.
-        \param account The account that approved the request.
         \param comment The comment to associate with the update.
         \return An object representing the update.
       */
       AccountModificationRequest::Update ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment);
+        AccountModificationRequest::Id id, const Message& comment);
 
       //! Rejects an account modification request.
       /*!
         \param id The id of the request to reject.
-        \param account The account that rejected the request.
         \param comment The comment to associate with the update.
         \return An object representing the update.
       */
       AccountModificationRequest::Update RejectAccountModificationRequest(
-        AccountModificationRequest::Id id,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const Message& comment);
+        AccountModificationRequest::Id id, const Message& comment);
 
       //! Loads a message.
       /*!
@@ -647,12 +637,11 @@ namespace AdministrationService {
   AccountModificationRequest AdministrationClient<
       ServiceProtocolClientBuilderType>::SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const EntitlementModification& modification, const Message& comment) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
-      SubmitEntitlementModificationRequestService>(account, submissionAccount,
-      modification, comment);
+      SubmitEntitlementModificationRequestService>(account, modification,
+      comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
@@ -666,11 +655,10 @@ namespace AdministrationService {
   AccountModificationRequest AdministrationClient<
       ServiceProtocolClientBuilderType>::SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const RiskModification& modification, const Message& comment) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<SubmitRiskModificationRequestService>(
-      account, submissionAccount, modification, comment);
+      account, modification, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
@@ -685,23 +673,19 @@ namespace AdministrationService {
   template<typename ServiceProtocolClientBuilderType>
   AccountModificationRequest::Update AdministrationClient<
       ServiceProtocolClientBuilderType>::ApproveAccountModificationRequest(
-      AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Message& comment) {
+      AccountModificationRequest::Id id, const Message& comment) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
-      ApproveAccountModificationRequestService>(id, account, comment);
+      ApproveAccountModificationRequestService>(id, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>
   AccountModificationRequest::Update AdministrationClient<
       ServiceProtocolClientBuilderType>::RejectAccountModificationRequest(
-      AccountModificationRequest::Id id,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Message& comment) {
+      AccountModificationRequest::Id id, const Message& comment) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
-      RejectAccountModificationRequestService>(id, account, comment);
+      RejectAccountModificationRequestService>(id, comment);
   }
 
   template<typename ServiceProtocolClientBuilderType>

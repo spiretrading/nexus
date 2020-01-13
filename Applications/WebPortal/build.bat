@@ -6,7 +6,7 @@ IF [%1] == [] (
   SET config="%1"
 )
 IF "%1" == "clean" (
-  git clean -fxd -e *Dependencies*
+  git clean -fxd -e *Dependencies* -e *WebApp*
 ) ELSE (
   cmake --build . --target INSTALL --config %config%
 )

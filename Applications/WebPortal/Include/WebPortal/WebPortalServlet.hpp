@@ -24,27 +24,30 @@
 
 namespace Nexus::WebPortal {
 
-  //! Implements a web servlet for Spire client services.
+  /** Implements a web servlet for Spire client services. */
   class WebPortalServlet : private boost::noncopyable {
     public:
 
-      //! The type of WebSocketChannel used.
+      /** The type of WebSocketChannel used. */
       using WebSocketChannel = Beam::WebServices::WebSocketChannel<
         std::shared_ptr<Beam::Network::TcpSocketChannel>>;
 
-      //! Constructs a WebPortalServlet.
-      /*!
-        \param serviceClients The clients used to access Spire services.
-      */
+      /**
+       * Constructs a WebPortalServlet.
+       * @param serviceClientsBuilder The function used to build session
+       *        ServiceClients.
+       * @param serviceClients The clients used to access Spire services.
+       */
       WebPortalServlet(
+        ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
         Beam::Ref<ApplicationServiceClients> serviceClients);
 
       ~WebPortalServlet();
 
-      //! Returns the HTTP request slots.
+      /** Returns the HTTP request slots. */
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      //! Returns the WebSocket upgrade slots.
+      /** Returns the WebSocket upgrade slots. */
       std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
         GetWebSocketSlots();
 

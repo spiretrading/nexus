@@ -5,7 +5,7 @@ CALL "%~dp0..\..\..\WebApi\setup.bat"
 IF NOT EXIST dali (
   git clone https://www.github.com/eidolonsystems/dali
 )
-SET dali_commit="781c8f9a037ebe44b1da725d0d93d168532bff97"
+SET dali_commit="99a1f58c6c24b5553712b410186cb27119328bac"
 PUSHD dali
 git merge-base --is-ancestor "%dali_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (

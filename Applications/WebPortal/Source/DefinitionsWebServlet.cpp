@@ -9,20 +9,17 @@ using namespace Beam::WebServices;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 DefinitionsWebServlet::DefinitionsWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_sessions{sessions.Get()},
-      m_serviceClients{serviceClients.Get()} {}
+  Ref<SessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.Get()) {}
 
 DefinitionsWebServlet::~DefinitionsWebServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_compliance_rule_schemas"),
     std::bind(&DefinitionsWebServlet::OnLoadComplianceRuleSchemas, this,
@@ -54,12 +51,6 @@ void DefinitionsWebServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
   }
-  try {
-    m_serviceClients->Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
-  }
   m_openState.SetOpen();
 }
 
@@ -76,84 +67,87 @@ void DefinitionsWebServlet::Shutdown() {
 
 HttpResponse DefinitionsWebServlet::OnLoadComplianceRuleSchemas(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  auto& serviceClients = session->GetServiceClients();
   auto schemas =
-    m_serviceClients->GetDefinitionsClient().LoadComplianceRuleSchemas();
+    serviceClients.GetDefinitionsClient().LoadComplianceRuleSchemas();
   session->ShuttleResponse(schemas, Store(response));
   return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadCountryDatabase(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto database =
-    m_serviceClients->GetDefinitionsClient().LoadCountryDatabase();
+  auto& serviceClients = session->GetServiceClients();
+  auto database = serviceClients.GetDefinitionsClient().LoadCountryDatabase();
   session->ShuttleResponse(database, Store(response));
   return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadCurrencyDatabase(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto database =
-    m_serviceClients->GetDefinitionsClient().LoadCurrencyDatabase();
+  auto& serviceClients = session->GetServiceClients();
+  auto database = serviceClients.GetDefinitionsClient().LoadCurrencyDatabase();
   session->ShuttleResponse(database, Store(response));
   return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadDestinationDatabase(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  auto& serviceClients = session->GetServiceClients();
   auto database =
-    m_serviceClients->GetDefinitionsClient().LoadDestinationDatabase();
+    serviceClients.GetDefinitionsClient().LoadDestinationDatabase();
   session->ShuttleResponse(database, Store(response));
   return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadExchangeRates(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  auto& serviceClients = session->GetServiceClients();
   auto exchangeRates =
-    m_serviceClients->GetDefinitionsClient().LoadExchangeRates();
+    serviceClients.GetDefinitionsClient().LoadExchangeRates();
   session->ShuttleResponse(exchangeRates, Store(response));
   return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadMarketDatabase(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto database =
-    m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
+  auto& serviceClients = session->GetServiceClients();
+  auto database = serviceClients.GetDefinitionsClient().LoadMarketDatabase();
   session->ShuttleResponse(database, Store(response));
   return response;
 }

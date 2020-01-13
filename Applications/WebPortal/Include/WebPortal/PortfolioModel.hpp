@@ -16,56 +16,55 @@
 
 namespace Nexus::WebPortal {
 
-  //! Publishes updates for positions held by trading accounts.
+  /** Publishes updates for positions held by trading accounts. */
   class PortfolioModel : private boost::noncopyable {
     public:
 
-      /*! \struct Entry
-          \brief Represents a single position.
-       */
+      /** Represents a single position. */
       struct Entry {
 
-        //! The account holding the position.
+        /** The account holding the position. */
         Beam::ServiceLocator::DirectoryEntry m_account;
 
-        //! The Entry's Inventory.
+        /** The Entry's Inventory. */
         RiskService::RiskPortfolioInventory m_inventory;
 
-        //! The position's unrealized profit and loss.
+        /** The position's unrealized profit and loss. */
         boost::optional<Money> m_unrealizedProfitAndLoss;
 
-        //! Constructs an Entry.
-        /*!
-          \param account The account holding the position.
-          \param security The position's Security.
-          \param currency The position's currency.
-        */
+        /**
+         * Constructs an Entry.
+         * @param account The account holding the position.
+         * @param security The position's Security.
+         * @param currency The position's currency.
+         */
         Entry(Beam::ServiceLocator::DirectoryEntry account, Security security,
           CurrencyId currency);
 
-        //! Tests if two Entry's are equal.
-        /*!
-          \param rhs The right hand side of the comparison.
-          \return <code>true</code> iff the two Entry's represent the same
-                  account, security and currency.
-        */
+        /**
+         * Tests if two Entry's are equal.
+         * @param rhs The right hand side of the comparison.
+         * @return <code>true</code> iff the two Entry's represent the same
+         *         account, security and currency.
+         */
         bool operator ==(const Entry& rhs) const;
       };
 
-      //! Constructs a PortfolioModel.
-      /*!
-        \param serviceClients The ServiceClients used to query for positions.
-      */
-      PortfolioModel(Beam::Ref<ApplicationServiceClients> serviceClients);
+      /**
+       * Constructs a PortfolioModel.
+       * @param serviceClients The ServiceClients used to query for positions.
+       */
+      explicit PortfolioModel(
+        Beam::Ref<ApplicationServiceClients> serviceClients);
 
       ~PortfolioModel();
+
+      /** Returns the Publisher updating the position Entries. */
+      const Beam::Publisher<Entry>& GetPublisher() const;
 
       void Open();
 
       void Close();
-
-      //! Returns the Publisher updating the position Entries.
-      const Beam::Publisher<Entry>& GetPublisher() const;
 
     private:
       ApplicationServiceClients* m_serviceClients;

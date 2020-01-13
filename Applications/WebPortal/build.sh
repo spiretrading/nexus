@@ -8,7 +8,7 @@ else
   config="$1"
 fi
 if [ "$config" = "clean" ]; then
-  git clean -fxd -e *Dependencies*
+  git clean -fxd -e *Dependencies* -e *WebApp*
 else
   let cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
   let mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"

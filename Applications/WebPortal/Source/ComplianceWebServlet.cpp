@@ -14,20 +14,17 @@ using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::Compliance;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 ComplianceWebServlet::ComplianceWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_sessions{sessions.Get()},
-      m_serviceClients{serviceClients.Get()} {}
+  Ref<SessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.Get()) {}
 
 ComplianceWebServlet::~ComplianceWebServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/compliance_service/load_directory_entry_compliance_rule_entry"),
     std::bind(&ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry,
@@ -50,12 +47,6 @@ vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
 void ComplianceWebServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
-  }
-  try {
-    m_serviceClients->Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
   }
   m_openState.SetOpen();
 }
@@ -80,14 +71,15 @@ HttpResponse ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry(
       shuttle.Shuttle("directory_entry", m_directoryEntry);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto rules = m_serviceClients->GetComplianceClient().Load(
+  auto& serviceClients = session->GetServiceClients();
+  auto rules = serviceClients.GetComplianceClient().Load(
     parameters.m_directoryEntry);
   session->ShuttleResponse(rules, Store(response));
   return response;
@@ -106,20 +98,15 @@ HttpResponse ComplianceWebServlet::OnAddComplianceRuleEntry(
       shuttle.Shuttle("schema", m_schema);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto id = m_serviceClients->GetComplianceClient().Add(
+  auto& serviceClients = session->GetServiceClients();
+  auto id = serviceClients.GetComplianceClient().Add(
     parameters.m_directoryEntry, parameters.m_state, parameters.m_schema);
   session->ShuttleResponse(id, Store(response));
   return response;
@@ -134,20 +121,15 @@ HttpResponse ComplianceWebServlet::OnUpdateComplianceRuleEntry(
       shuttle.Shuttle("rule_entry", m_ruleEntry);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  m_serviceClients->GetComplianceClient().Update(parameters.m_ruleEntry);
+  auto& serviceClients = session->GetServiceClients();
+  serviceClients.GetComplianceClient().Update(parameters.m_ruleEntry);
   return response;
 }
 
@@ -160,19 +142,14 @@ HttpResponse ComplianceWebServlet::OnDeleteComplianceRuleEntry(
       shuttle.Shuttle("id", m_id);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  m_serviceClients->GetComplianceClient().Delete(parameters.m_id);
+  auto& serviceClients = session->GetServiceClients();
+  serviceClients.GetComplianceClient().Delete(parameters.m_id);
   return response;
 }
