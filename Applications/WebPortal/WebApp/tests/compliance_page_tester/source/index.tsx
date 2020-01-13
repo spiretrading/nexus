@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { Date } from 'beam';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -57,7 +58,7 @@ class TestApp extends React.Component<Properties, State> {
 
   private generateSchemas() {
         this.state.entries.push(new Nexus.ComplianceRuleEntry(
-      56,
+      52,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.ACTIVE,
       new Nexus.ComplianceRuleSchema(
@@ -78,7 +79,7 @@ class TestApp extends React.Component<Properties, State> {
       )
     ));
     this.state.entries.push(new Nexus.ComplianceRuleEntry(
-      34,
+      88,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.PASSIVE,
       new Nexus.ComplianceRuleSchema('New Components', [
@@ -247,10 +248,11 @@ class TestApp extends React.Component<Properties, State> {
   private onRuleAdd(newSchema: Nexus.ComplianceRuleSchema) {
       this.state.entries.push(
       new Nexus.ComplianceRuleEntry(
-        0,
+        this.state.entries[this.state.entries.length - 1].id + 1,
         Beam.DirectoryEntry.INVALID,
         Nexus.ComplianceRuleEntry.State.DISABLED,
-        newSchema
+        new Nexus.ComplianceRuleSchema(
+          newSchema.name, newSchema.parameters.slice())
       )
     );
     this.setState({entries: this.state.entries});

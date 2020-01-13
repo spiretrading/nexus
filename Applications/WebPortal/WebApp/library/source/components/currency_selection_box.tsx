@@ -46,11 +46,11 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       if(this.props.value) {
         return this.props.currencyDatabase.fromCurrency(this.props.value).code;
       }
-      return undefined;
+      return null;
     })();
-    const currencies = [];
+    const currencyOptions = [];
     for(let currency of this.props.currencyDatabase) {
-      currencies.push(
+      currencyOptions.push(
         <option value={currency.code} key={currency.code}>
           {currency.code}
         </option>);
@@ -61,7 +61,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
           className={css(CurrencySelectionBox.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           onChange={this.onChange} defaultValue={defaultValue}>
-        {currencies}
+        {currencyOptions}
       </select>);
   }
 
