@@ -71,12 +71,15 @@ export class DateField extends React.Component<Properties, State> {
       if(month === 4 || month === 6 || month === 9 || month === 11) {
         return 30;
       } else if(month === 2) {
-        console.log(this.props.value.year());
-        if(this.props.value.year() % 4 === 0 && 
-            this.props.value.year() % 100 !== 0) {
-          return 29;
-        } else {
+        const year = this.props.value.year();
+        if(year % 4 !== 0) {
           return 28;
+        } else if(year % 100 !== 0) {
+          return 29;
+        }else if(year % 400 !== 0) {
+          return 28;
+        } else {
+          return 29;
         }
       } else {
         return 31;
