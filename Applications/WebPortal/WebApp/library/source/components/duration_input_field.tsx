@@ -262,5 +262,6 @@ export class DurationInputField extends React.Component<Properties, State> {
       }
     }
   });
+
   private reference: HTMLDivElement;
 }

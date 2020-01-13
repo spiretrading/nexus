@@ -306,5 +306,6 @@ export class DateField extends React.Component<Properties, State> {
       }
     }
   });
+
   private reference: HTMLDivElement;
 }
