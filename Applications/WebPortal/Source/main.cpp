@@ -8,6 +8,7 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
 #include <tclap/CmdLine.h>
+#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
 #include "WebPortal/WebPortalServlet.hpp"
 #include "Version.hpp"
 
@@ -70,12 +71,13 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto serviceClients = ApplicationServiceClients(
+  auto serviceClients = MakeVirtualServiceClients(
+    std::make_unique<ApplicationServiceClients>(
     serviceLocatorClientConfig.m_address, serviceLocatorClientConfig.m_username,
     serviceLocatorClientConfig.m_password, Ref(socketThreadPool),
-    Ref(timerThreadPool));
+    Ref(timerThreadPool)));
   try {
-    serviceClients.Open();
+    serviceClients->Open();
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
@@ -95,7 +97,7 @@ int main(int argc, const char** argv) {
         Ref(socketThreadPool), Ref(timerThreadPool)));
     };
   auto server = WebPortalServletContainer(Initialize(
-    std::move(serviceClientsBuilder), Ref(serviceClients)),
+    std::move(serviceClientsBuilder), Ref(*serviceClients)),
     Initialize(serverConnectionInitializer.m_interface, Ref(socketThreadPool)));
   try {
     server.Open();

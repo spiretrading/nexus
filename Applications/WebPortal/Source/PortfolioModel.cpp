@@ -21,7 +21,7 @@ bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
     std::tie(rhs.m_account, rhs.m_inventory.m_position.m_key);
 }
 
-PortfolioModel::PortfolioModel(Ref<ApplicationServiceClients> serviceClients)
+PortfolioModel::PortfolioModel(Ref<VirtualServiceClients> serviceClients)
   : m_serviceClients(serviceClients.Get()) {}
 
 PortfolioModel::~PortfolioModel() {

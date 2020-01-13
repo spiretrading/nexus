@@ -12,7 +12,7 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "WebPortal/AdministrationWebServlet.hpp"
 #include "WebPortal/ComplianceWebServlet.hpp"
 #include "WebPortal/DefinitionsWebServlet.hpp"
@@ -40,7 +40,7 @@ namespace Nexus::WebPortal {
        */
       WebPortalServlet(
         ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+        Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~WebPortalServlet();
 
@@ -58,7 +58,6 @@ namespace Nexus::WebPortal {
     private:
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<WebPortalSession> m_sessions;
-      ApplicationServiceClients* m_serviceClients;
       ServiceLocatorWebServlet m_serviceLocatorServlet;
       DefinitionsWebServlet m_definitionsServlet;
       AdministrationWebServlet m_administrationServlet;
@@ -72,8 +71,6 @@ namespace Nexus::WebPortal {
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);
   };
 }
