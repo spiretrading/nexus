@@ -145,6 +145,7 @@ export class DateField extends React.Component<Properties, State> {
   public componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
   }
+
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL) {
       if(this.state.componentWidth !== this.reference.clientWidth) {
