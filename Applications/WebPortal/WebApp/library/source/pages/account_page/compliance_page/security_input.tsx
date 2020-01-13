@@ -338,7 +338,6 @@ export class SecurityInput extends React.Component<Properties, State>{
   }
 
   private removeEntry() {
-    console.log();
     if(this.state.selection !== -1) {
       this.setState({localValue: 
         this.state.localValue.slice(0, this.state.selection).concat(

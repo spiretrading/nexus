@@ -127,6 +127,16 @@ export class DurationInputField extends React.Component<Properties, State> {
       </div>);
   }
   
+
+  public componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
+  }
+
+  public componentWillUnmount() {
+    window.addEventListener('resize', this.handleResize);
+  }
+
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL) {
       if(this.state.componentWidth !== this.reference.clientWidth) {
@@ -135,20 +145,15 @@ export class DurationInputField extends React.Component<Properties, State> {
     }
   }
 
-  public componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-    this.handleResize();
-  }
-
   private onFocus() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: true})
+      this.setState({isInFocus: true});
     }
   }
 
   private onBlur() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: false})
+      this.setState({isInFocus: false});
     }
   }
 
