@@ -18,7 +18,7 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
-  /** Determines if the selection box is read only. */
+  /** Determines if the field box is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.

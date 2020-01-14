@@ -24,7 +24,7 @@ interface Properties {
   /** The smallest value the hours field can hold. */
   minHourValue?: number;
 
-  /** Determines if the selection box is read only. */
+  /** Determines if the field box is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.
