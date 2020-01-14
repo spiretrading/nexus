@@ -159,7 +159,7 @@ export class SecurityInput extends React.Component<Properties, State> {
         }
       }
     })();
-    const uploadIcon = (() => {
+    const uploadButton = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <div style={iconWrapperStyle}>
@@ -177,7 +177,7 @@ export class SecurityInput extends React.Component<Properties, State> {
           </div>);
       }
     })();
-    const removeIcon = (() => {
+    const removeButton = (() => {
       if(this.state.selection !== -1) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
@@ -269,9 +269,9 @@ export class SecurityInput extends React.Component<Properties, State> {
         const sec = this.props.value[i].value as Nexus.Security;
         displayValue = displayValue.concat(sec.symbol.toString());
         if(i >= 0 && i < this.props.value.length - 1 && 
-          this.props.value.length > 1) {
-        displayValue = displayValue.concat(', ');
-      }
+            this.props.value.length > 1) {
+          displayValue = displayValue.concat(', ');
+        }
       }
     }
     return(
@@ -308,8 +308,8 @@ export class SecurityInput extends React.Component<Properties, State> {
               {entries}
             </div>
             <div style={iconRowStyle}>
-              {removeIcon}
-              {uploadIcon}
+              {removeButton}
+              {uploadButton}
             </div>
             <HLine color={'#e6e6e6'}/>
             <div style={SecurityInput.STYLE.buttonWrapper}>
