@@ -13,6 +13,7 @@ namespace Spire {
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
     Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
+    Beam::Queries::Range, Beam::Queries::Sequence,
     const Nexus::OrderExecutionService::Order*, Record>;
 
   /** Lists all value types. */
@@ -20,12 +21,12 @@ namespace Spire {
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
     Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
-    Record>;
+    Beam::Queries::Range, Beam::Queries::Sequence, Record>;
 
   /** Lists types that can be compared. */
   using ComparableTypes = boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-    Nexus::Money>;
+    Nexus::Money, Beam::Queries::Sequence>;
 
   /** Stores the available CanvasTypes. */
   class CanvasTypeRegistry {

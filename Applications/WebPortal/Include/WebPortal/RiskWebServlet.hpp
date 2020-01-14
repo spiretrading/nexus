@@ -15,29 +15,29 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 #include "WebPortal/PortfolioModel.hpp"
 
 namespace Nexus::WebPortal {
 
-  //! Provides a web interface to the RiskService.
+  /** Provides a web interface to the RiskService. */
   class RiskWebServlet : private boost::noncopyable {
     public:
 
-      //! The type of WebSocketChannel used.
+      /** The type of WebSocketChannel used. */
       using WebSocketChannel = Beam::WebServices::WebSocketChannel<
         std::shared_ptr<Beam::Network::TcpSocketChannel>>;
 
-      //! Constructs a RiskWebServlet.
-      /*!
-        \param sessions The available web sessions.
-        \param serviceClients The clients used to access Spire services.
-      */
+      /**
+       * Constructs a RiskWebServlet.
+       * @param sessions The available web sessions.
+       * @param serviceClients The clients used to access Spire services.
+       */
       RiskWebServlet(Beam::Ref<
         Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+        Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~RiskWebServlet();
 
@@ -70,9 +70,9 @@ namespace Nexus::WebPortal {
         PortfolioSubscriber(Beam::ServiceLocator::DirectoryEntry account,
           std::unique_ptr<WebSocketChannel> channel);
       };
-      ApplicationServiceClients* m_serviceClients;
+      VirtualServiceClients* m_serviceClients;
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      std::unique_ptr<ApplicationServiceClients::Timer> m_portfolioTimer;
+      std::unique_ptr<Beam::Threading::VirtualTimer> m_portfolioTimer;
       std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
         m_portfolioEntries;
       std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;

@@ -192,13 +192,12 @@ namespace {
     }
 
     AccountModificationRequest SubmitAccountModificationRequest(
-        const DirectoryEntry& account, const DirectoryEntry& submissionAccount,
+        const DirectoryEntry& account,
         const EntitlementModification& modification,
         const AdministrationService::Message& comment) override {
       PYBIND11_OVERLOAD_PURE_NAME(AccountModificationRequest,
         VirtualAdministrationClient, "submit_account_modification_request",
-        SubmitAccountModificationRequest, account, submissionAccount,
-        modification, comment);
+        SubmitAccountModificationRequest, account, modification, comment);
     }
 
     RiskModification LoadRiskModification(
@@ -208,13 +207,11 @@ namespace {
     }
 
     AccountModificationRequest SubmitAccountModificationRequest(
-        const DirectoryEntry& account, const DirectoryEntry& submissionAccount,
-        const RiskModification& modification,
+        const DirectoryEntry& account, const RiskModification& modification,
         const AdministrationService::Message& comment) override {
       PYBIND11_OVERLOAD_PURE_NAME(AccountModificationRequest,
         VirtualAdministrationClient, "submit_account_modification_request",
-        SubmitAccountModificationRequest, account, submissionAccount,
-        modification, comment);
+        SubmitAccountModificationRequest, account, modification, comment);
     }
 
     AccountModificationRequest::Update LoadAccountModificationRequestStatus(
@@ -225,19 +222,19 @@ namespace {
     }
 
     AccountModificationRequest::Update ApproveAccountModificationRequest(
-        AccountModificationRequest::Id id, const DirectoryEntry& account,
+        AccountModificationRequest::Id id,
         const AdministrationService::Message& comment) override {
       PYBIND11_OVERLOAD_PURE_NAME(AccountModificationRequest::Update,
         VirtualAdministrationClient, "approve_account_modification_request",
-        ApproveAccountModificationRequest, id, account, comment);
+        ApproveAccountModificationRequest, id, comment);
     }
 
     AccountModificationRequest::Update RejectAccountModificationRequest(
-        AccountModificationRequest::Id id, const DirectoryEntry& account,
+        AccountModificationRequest::Id id,
         const AdministrationService::Message& comment) override {
       PYBIND11_OVERLOAD_PURE_NAME(AccountModificationRequest::Update,
         VirtualAdministrationClient, "reject_account_modification_request",
-        RejectAccountModificationRequest, id, account, comment);
+        RejectAccountModificationRequest, id, comment);
     }
 
     AdministrationService::Message LoadMessage(
@@ -384,14 +381,14 @@ void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
       &VirtualAdministrationClient::LoadEntitlementModification)
     .def("submit_account_modification_request", static_cast<
       AccountModificationRequest (VirtualAdministrationClient::*)(
-      const DirectoryEntry&, const DirectoryEntry&,
-      const EntitlementModification&, const AdministrationService::Message&)>(
+      const DirectoryEntry&, const EntitlementModification&,
+      const AdministrationService::Message&)>(
       &VirtualAdministrationClient::SubmitAccountModificationRequest))
     .def("load_risk_modification",
       &VirtualAdministrationClient::LoadRiskModification)
     .def("submit_account_modification_request", static_cast<
       AccountModificationRequest (VirtualAdministrationClient::*)(
-      const DirectoryEntry&, const DirectoryEntry&, const RiskModification&,
+      const DirectoryEntry&, const RiskModification&,
       const AdministrationService::Message&)>(
       &VirtualAdministrationClient::SubmitAccountModificationRequest))
     .def("load_account_modification_request_status",

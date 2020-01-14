@@ -12,7 +12,7 @@
 #include <Beam/WebServices/SessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include <boost/noncopyable.hpp>
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "WebPortal/AdministrationWebServlet.hpp"
 #include "WebPortal/ComplianceWebServlet.hpp"
 #include "WebPortal/DefinitionsWebServlet.hpp"
@@ -24,27 +24,30 @@
 
 namespace Nexus::WebPortal {
 
-  //! Implements a web servlet for Spire client services.
+  /** Implements a web servlet for Spire client services. */
   class WebPortalServlet : private boost::noncopyable {
     public:
 
-      //! The type of WebSocketChannel used.
+      /** The type of WebSocketChannel used. */
       using WebSocketChannel = Beam::WebServices::WebSocketChannel<
         std::shared_ptr<Beam::Network::TcpSocketChannel>>;
 
-      //! Constructs a WebPortalServlet.
-      /*!
-        \param serviceClients The clients used to access Spire services.
-      */
+      /**
+       * Constructs a WebPortalServlet.
+       * @param serviceClientsBuilder The function used to build session
+       *        ServiceClients.
+       * @param serviceClients The clients used to access Spire services.
+       */
       WebPortalServlet(
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+        ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
+        Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~WebPortalServlet();
 
-      //! Returns the HTTP request slots.
+      /** Returns the HTTP request slots. */
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      //! Returns the WebSocket upgrade slots.
+      /** Returns the WebSocket upgrade slots. */
       std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
         GetWebSocketSlots();
 
@@ -55,7 +58,6 @@ namespace Nexus::WebPortal {
     private:
       Beam::WebServices::FileStore m_fileStore;
       Beam::WebServices::SessionStore<WebPortalSession> m_sessions;
-      ApplicationServiceClients* m_serviceClients;
       ServiceLocatorWebServlet m_serviceLocatorServlet;
       DefinitionsWebServlet m_definitionsServlet;
       AdministrationWebServlet m_administrationServlet;
@@ -69,8 +71,6 @@ namespace Nexus::WebPortal {
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadProfitAndLossReport(
         const Beam::WebServices::HttpRequest& request);
   };
 }

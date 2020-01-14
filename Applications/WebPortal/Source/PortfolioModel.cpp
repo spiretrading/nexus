@@ -10,24 +10,26 @@ using namespace Nexus::Accounting;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 PortfolioModel::Entry::Entry(Beam::ServiceLocator::DirectoryEntry account,
-    Security security, CurrencyId currency)
-    : m_account{std::move(account)},
-      m_inventory{{security, currency}} {}
+  Security security, CurrencyId currency)
+  : m_account(std::move(account)),
+    m_inventory({security, currency}) {}
 
 bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
-  return tie(m_account, m_inventory.m_position.m_key) ==
-    tie(rhs.m_account, rhs.m_inventory.m_position.m_key);
+  return std::tie(m_account, m_inventory.m_position.m_key) ==
+    std::tie(rhs.m_account, rhs.m_inventory.m_position.m_key);
 }
 
-PortfolioModel::PortfolioModel(
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_serviceClients{serviceClients.Get()} {}
+PortfolioModel::PortfolioModel(Ref<VirtualServiceClients> serviceClients)
+  : m_serviceClients(serviceClients.Get()) {}
 
 PortfolioModel::~PortfolioModel() {
   Close();
+}
+
+const Publisher<PortfolioModel::Entry>& PortfolioModel::GetPublisher() const {
+  return m_publisher;
 }
 
 void PortfolioModel::Open() {
@@ -38,10 +40,6 @@ void PortfolioModel::Open() {
 }
 
 void PortfolioModel::Close() {}
-
-const Publisher<PortfolioModel::Entry>& PortfolioModel::GetPublisher() const {
-  return m_publisher;
-}
 
 void PortfolioModel::OnRiskPortfolioInventoryUpdate(
     const RiskPortfolioInventoryEntry& inventory) {
@@ -61,11 +59,11 @@ void PortfolioModel::OnRiskPortfolioInventoryUpdate(
       if(valuationIterator == m_valuations.end()) {
         auto query = Beam::Queries::BuildCurrentQuery(security);
         valuationIterator = m_valuations.insert(std::make_pair(security,
-          SecurityValuation{
-          inventory.m_value.m_position.m_key.m_currency})).first;
+          SecurityValuation(
+          inventory.m_value.m_position.m_key.m_currency))).first;
         m_serviceClients->GetMarketDataClient().QueryBboQuotes(query,
-          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioModel::OnBboQuote,
-          this, security, std::ref(valuationIterator->second),
+          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioModel::OnBboQuote, this,
+          security, std::ref(valuationIterator->second),
           std::placeholders::_1)));
       }
       return valuationIterator->second;
@@ -92,9 +90,9 @@ void PortfolioModel::OnBboQuote(const Security& security,
   }
 }
 
-size_t std::hash<PortfolioModel::Entry>::operator()(
+std::size_t std::hash<PortfolioModel::Entry>::operator()(
     const PortfolioModel::Entry& value) const {
-  std::size_t seed = 0;
+  auto seed = std::size_t(0);
   boost::hash_combine(seed, value.m_account);
   boost::hash_combine(seed, value.m_inventory.m_position.m_key.m_index);
   return seed;

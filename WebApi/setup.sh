@@ -1,5 +1,5 @@
 #!/bin/bash
-beam_commit="d8a4faff21a9773f25607e8413da693613ca298f"
+beam_commit="ab3e89fb5a3367745f9194804033ebc852d65743"
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/eidolonsystems/beam.git Beam
 fi

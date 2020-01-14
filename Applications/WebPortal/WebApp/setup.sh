@@ -8,7 +8,7 @@ done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
 "$directory/../../../WebApi/setup.sh"
-dali_commit="781c8f9a037ebe44b1da725d0d93d168532bff97"
+dali_commit="99a1f58c6c24b5553712b410186cb27119328bac"
 if [ ! -d "dali" ]; then
   git clone https://www.github.com/eidolonsystems/dali.git
 fi

@@ -23,25 +23,24 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 WebPortalServlet::WebPortalServlet(
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_fileStore{"web_app"},
-      m_serviceClients{serviceClients.Get()},
-      m_serviceLocatorServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_definitionsServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_administrationServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_marketDataServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_complianceServlet{Ref(m_sessions), Ref(*m_serviceClients)},
-      m_riskServlet{Ref(m_sessions), Ref(*m_serviceClients)} {}
+  ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
+  Ref<VirtualServiceClients> serviceClients)
+  : m_fileStore("web_app"),
+    m_serviceLocatorServlet(Ref(m_sessions), std::move(serviceClientsBuilder)),
+    m_definitionsServlet(Ref(m_sessions)),
+    m_administrationServlet(Ref(m_sessions)),
+    m_marketDataServlet(Ref(m_sessions)),
+    m_complianceServlet(Ref(m_sessions)),
+    m_riskServlet(Ref(m_sessions), Ref(serviceClients)) {}
 
 WebPortalServlet::~WebPortalServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
     std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
@@ -50,10 +49,6 @@ vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
     std::bind(&WebPortalServlet::OnIndex, this, std::placeholders::_1));
   slots.emplace_back(MatchAny(HttpMethod::GET),
     std::bind(&WebPortalServlet::OnServeFile, this, std::placeholders::_1));
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
-    "/api/reporting_service/load_profit_and_loss_report"),
-    std::bind(&WebPortalServlet::OnLoadProfitAndLossReport, this,
-    std::placeholders::_1));
   auto serviceLocatorSlots = m_serviceLocatorServlet.GetSlots();
   slots.insert(slots.end(), serviceLocatorSlots.begin(),
     serviceLocatorSlots.end());
@@ -71,9 +66,9 @@ vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
   return slots;
 }
 
-vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
+std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
     WebPortalServlet::GetWebSocketSlots() {
-  vector<HttpUpgradeSlot<WebSocketChannel>> slots;
+  auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
   auto riskSlots = m_riskServlet.GetWebSocketSlots();
   slots.insert(slots.end(), riskSlots.begin(), riskSlots.end());
   return slots;
@@ -84,7 +79,6 @@ void WebPortalServlet::Open() {
     return;
   }
   try {
-    m_serviceClients->Open();
     m_serviceLocatorServlet.Open();
     m_definitionsServlet.Open();
     m_administrationServlet.Open();
@@ -112,12 +106,11 @@ void WebPortalServlet::Shutdown() {
   m_administrationServlet.Close();
   m_definitionsServlet.Close();
   m_serviceLocatorServlet.Close();
-  m_serviceClients->Close();
   m_openState.SetClosed();
 }
 
 HttpResponse WebPortalServlet::OnIndex(const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   m_fileStore.Serve("index.html", Store(response));
   return response;
 }
@@ -127,58 +120,5 @@ HttpResponse WebPortalServlet::OnServeFile(const HttpRequest& request) {
   if(response.GetStatusCode() == HttpStatusCode::NOT_FOUND) {
     return OnIndex(request);
   }
-  return response;
-}
-
-HttpResponse WebPortalServlet::OnLoadProfitAndLossReport(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_directoryEntry;
-    ptime m_startDate;
-    ptime m_endDate;
-
-    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.Shuttle("directory_entry", m_directoryEntry);
-      shuttle.Shuttle("start_date", m_startDate);
-      shuttle.Shuttle("end_date", m_endDate);
-    }
-  };
-  HttpResponse response;
-  auto session = m_sessions.Find(request);
-  if(session == nullptr) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto orderQueue = std::make_shared<Queue<const Order*>>();
-  auto marketDatabase =
-    m_serviceClients->GetDefinitionsClient().LoadMarketDatabase();
-  auto timeZoneDatabase =
-    m_serviceClients->GetDefinitionsClient().LoadTimeZoneDatabase();
-  QueryDailyOrderSubmissions(parameters.m_directoryEntry,
-    parameters.m_startDate, parameters.m_endDate, marketDatabase,
-    timeZoneDatabase, m_serviceClients->GetOrderExecutionClient(), orderQueue);
-  WebPortfolio portfolio{marketDatabase};
-  try {
-    while(true) {
-      auto order = orderQueue->Top();
-      orderQueue->Pop();
-      vector<ExecutionReport> executionReports;
-      order->GetPublisher().WithSnapshot(
-        [&] (auto snapshot) {
-          if(snapshot.is_initialized()) {
-            executionReports = *snapshot;
-          }
-        });
-      for(auto& executionReport : executionReports) {
-        portfolio.Update(order->GetInfo().m_fields, executionReport);
-      }
-    }
-  } catch(const PipeBrokenException&) {}
-  vector<WebInventory> inventories;
-  for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
-    inventories.push_back(inventory.second);
-  }
-  session->ShuttleResponse(inventories, Store(response));
   return response;
 }
