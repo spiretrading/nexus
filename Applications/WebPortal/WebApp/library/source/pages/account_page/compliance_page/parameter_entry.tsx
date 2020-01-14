@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CheckMark, CurrencySelectionBox, DateTimeField, DisplaySize,
+import { Checkmark, CurrencySelectionBox, DateTimeField, DisplaySize,
   DurationInputField, MoneyInputBox, NumberInput, TextInputField } from
   '../../..';
 import { SecurityInput } from '.';
@@ -26,7 +26,6 @@ interface Properties {
 /** Displays a specific parameter. */
 export class ParameterEntry extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 
@@ -58,7 +57,7 @@ export class ParameterEntry extends React.Component<Properties> {
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
-          return <CheckMark
+          return <Checkmark
             onClick={this.onChange}
             displaySize={this.props.displaySize}
             readonly={this.props.readonly}

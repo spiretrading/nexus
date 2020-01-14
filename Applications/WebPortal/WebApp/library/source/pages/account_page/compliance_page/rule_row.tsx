@@ -33,9 +33,6 @@ interface State {
 
 /** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    readonly: false
-  };
 
   constructor(props: Properties){
     super(props);

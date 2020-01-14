@@ -25,7 +25,6 @@ interface Properties {
 /** Displays a country seleciton box. */
 export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 

@@ -31,7 +31,6 @@ interface Properties {
 export class NumberInput extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: 0,
-    readonly: false,
     onChange: () => {}
   };
 

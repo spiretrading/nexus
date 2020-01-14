@@ -44,7 +44,6 @@ export class DurationInputField extends React.Component<Properties, State> {
     value: new Beam.Duration(0),
     minHourValue: 0,
     maxHourValue: 99,
-    readonly: false,
     onChange: () => {}
   };
 

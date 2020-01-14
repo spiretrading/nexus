@@ -33,7 +33,6 @@ interface State {
 /** Displays an input box for money values. */
 export class MoneyInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 

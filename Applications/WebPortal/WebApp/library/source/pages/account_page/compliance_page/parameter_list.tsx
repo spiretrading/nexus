@@ -24,7 +24,7 @@ interface Properties {
 /** Displays the a list of parameters associated with a schema. */
 export class ParametersList extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false
+    onChange: () => {}
   };
 
   constructor(props: Properties) {

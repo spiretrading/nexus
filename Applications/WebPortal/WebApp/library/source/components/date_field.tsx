@@ -36,7 +36,6 @@ interface State {
 export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Date(1, 1, 1900),
-    readonly: false,
     onChange: () => {}
   };
 

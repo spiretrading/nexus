@@ -37,7 +37,6 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     min: 0,
     value: 0,
-    readonly: false,
     onChange: () => {}
   };
 

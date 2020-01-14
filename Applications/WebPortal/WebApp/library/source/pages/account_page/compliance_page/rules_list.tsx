@@ -24,7 +24,6 @@ interface Properties {
 /** Displays a list of rules. */
 export class RulesList extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 

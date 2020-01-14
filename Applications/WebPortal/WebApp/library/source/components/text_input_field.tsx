@@ -36,7 +36,6 @@ export class TextInputField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: '',
     placeholder: '',
-    readonly: false,
     isError: false,
     onInput: (_: string) => {}
   };

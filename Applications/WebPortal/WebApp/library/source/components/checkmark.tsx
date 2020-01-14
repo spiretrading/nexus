@@ -20,9 +20,8 @@ interface Properties {
 }
 
 /** A check mark component. */
-export class CheckMark extends React.Component<Properties> {
+export class Checkmark extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onClick: () => {}
   }
 
@@ -48,14 +47,14 @@ export class CheckMark extends React.Component<Properties> {
     })();
     const wrapperStyle = (() => {
       if(this.props.readonly) {
-        return CheckMark.STYLE.wrapperReadonly;
+        return Checkmark.STYLE.wrapperReadonly;
       } else {
-        return CheckMark.STYLE.wrapper;
+        return Checkmark.STYLE.wrapper;
       }
     })();
     return (
       <div style={wrapperStyle}
-          className={css(CheckMark.EXTRA_STYLE.noDefaults)}
+          className={css(Checkmark.EXTRA_STYLE.noDefaults)}
           onClick={this.onClick}>
         <img height={size} width={size} src={imgSrc}/>
       </div>);
