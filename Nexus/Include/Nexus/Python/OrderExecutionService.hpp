@@ -59,6 +59,12 @@ namespace Nexus::Python {
   void ExportOrderInfo(pybind11::module& module);
 
   /**
+   * Exports the OrderReactor class.
+   * @param module The module to export to.
+   */
+  void ExportOrderReactor(pybind11::module& module);
+
+  /**
    * Exports the OrderRecord struct.
    * @param module The module to export to.
    */

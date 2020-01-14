@@ -41,6 +41,8 @@ namespace Spire {
 
       virtual void Visit(const SecurityType& type);
 
+      virtual void Visit(const SequenceType& type);
+
       virtual void Visit(const SideType& type);
 
       virtual void Visit(const TextType& type);

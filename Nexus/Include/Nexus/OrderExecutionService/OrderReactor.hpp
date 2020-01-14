@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_REACTOR_HPP
 #include <cstdint>
 #include <type_traits>
+#include <vector>
 #include <Aspen/MultiSync.hpp>
 #include <Aspen/Sync.hpp>
 #include <Aspen/VectorSync.hpp>
@@ -90,7 +91,7 @@ namespace Nexus::OrderExecutionService {
         CurrencyReactor currency, OrderTypeReactor orderType, SideReactor side,
         DestinationReactor destination, QuantityReactor quantity,
         PriceReactor price, TimeInForceReactor timeInForce,
-        AdditionalFieldsReactor additionalFields);
+        std::vector<AdditionalFieldsReactor> additionalFields);
 
       Aspen::State commit(int sequence) noexcept;
 
@@ -115,8 +116,8 @@ namespace Nexus::OrderExecutionService {
         Aspen::Sync<Aspen::Shared<QuantityReactor>, Quantity>,
         Aspen::Sync<PriceReactor, Money>,
         Aspen::Sync<TimeInForceReactor, TimeInForce>,
-        Aspen::VectorSync<typename AdditionalFieldsReactor::value_type,
-        std::vector<Tag>>>> m_orderFields;
+        Aspen::VectorSync<AdditionalFieldsReactor, std::vector<Tag>>>>
+        m_orderFields;
       Aspen::Maybe<const Order*> m_order;
       std::uint8_t m_state;
       Quantity m_filled;
@@ -137,6 +138,19 @@ namespace Nexus::OrderExecutionService {
       std::vector<Aspen::Constant<Tag>>());
   }
 
+  template<typename C, typename S, typename T, typename Q>
+  auto MakeMarketOrderReactor(Beam::Ref<C> client, S security, T side,
+      Q quantity) {
+    return OrderReactor(Beam::Ref(client),
+      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      std::move(security), Aspen::constant(CurrencyId::NONE()),
+      Aspen::constant(OrderType::MARKET), std::move(side),
+      Aspen::constant(std::string()), std::move(quantity),
+      Aspen::constant(Money::ZERO),
+      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
+      std::vector<Aspen::Constant<Tag>>());
+  }
+
   template<typename C, typename AR, typename SR, typename CR, typename OR,
     typename TR, typename DR, typename QR, typename PR, typename FR,
     typename RR>
@@ -146,7 +160,7 @@ namespace Nexus::OrderExecutionService {
     OrderTypeReactor orderType, SideReactor side,
     DestinationReactor destination, QuantityReactor quantity,
     PriceReactor price, TimeInForceReactor timeInForce,
-    AdditionalFieldsReactor additionalFields)
+    std::vector<AdditionalFieldsReactor> additionalFields)
     : m_client(client.Get()),
       m_quantity(std::move(quantity)),
       m_lastOrderFields(std::make_unique<OrderFields>()),

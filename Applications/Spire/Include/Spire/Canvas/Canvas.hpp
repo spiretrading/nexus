@@ -101,6 +101,7 @@ namespace Spire {
   class SecurityNode;
   class SecurityPortfolioNode;
   class SecurityType;
+  class SequenceType;
   class SideNode;
   class SideType;
   class SignatureNode;

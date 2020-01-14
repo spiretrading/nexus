@@ -74,6 +74,7 @@
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
+#include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
@@ -212,6 +213,7 @@ namespace Spire {
     (OrderTypeType, "Spire.OrderTypeType"),
     (RecordType, "Spire.RecordType"),
     (SecurityType, "Spire.SecurityType"),
+    (SequenceType, "Spire.SequenceType"),
     (SideType, "Spire.SideType"),
     (TextType, "Spire.TextType"),
     (TimeInForceType, "Spire.TimeInForceType"),
