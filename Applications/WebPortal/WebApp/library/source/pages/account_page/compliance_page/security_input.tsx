@@ -8,14 +8,14 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The size at which the component should be displayed at. */
+  /** The list of securities to display. */
   value?: Nexus.ComplianceValue[];
 
-  /** Whether the selection box is read only. */
+  /** Determines if the component is readonly. */
   readonly?: boolean;
 
-  /** Called when the value changes.
-   * @param newValue - The updated value.
+  /** Called when the list of values changes.
+   * @param newValue - The updated list.
    */
   onChange?: (newValue: Nexus.ComplianceValue[]) => void;
 }
@@ -108,7 +108,7 @@ export class SecurityInput extends React.Component<Properties, State> {
             </div>);
         }
       } else {
-        return;
+        return null;
       }
     })();
     const selectedSecuritiesBox = (() => {
