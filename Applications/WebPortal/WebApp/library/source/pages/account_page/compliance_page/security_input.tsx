@@ -4,6 +4,7 @@ import * as React from 'react';
 import { DisplaySize, HLine } from '../../..';
 
 interface Properties {
+
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
@@ -27,7 +28,7 @@ interface State {
 }
 
 /** A component that displays a list of securities. */
-export class SecurityInput extends React.Component<Properties, State>{
+export class SecurityInput extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: '',
     readonly: false,
@@ -54,9 +55,9 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(!this.state.isEditing) {
         return SecurityInput.STYLE.hidden;
       } else {
-        return null; //????? tyisdf
+        return null;
       }
-    })();
+    })(); 
     const shadowBox = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return SecurityInput.STYLE.boxShadowSmall;
@@ -180,7 +181,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(this.state.selection !== -1) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
-            <div style={iconWrapperStyle} 
+            <div style={iconWrapperStyle}
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 style={SecurityInput.STYLE.iconClickableStyle}
@@ -188,7 +189,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             </div>);
         } else {
           return (
-            <div style={iconWrapperStyle} 
+            <div style={iconWrapperStyle}
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 style={SecurityInput.STYLE.iconClickableStyle}
@@ -207,7 +208,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             </div>);
         } else {
           return (
-            <div style={iconWrapperStyle} 
+            <div style={iconWrapperStyle}
                 onClick={this.removeEntry.bind(this)}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-grey.svg'}/>
@@ -473,7 +474,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '559px',
       top: 'calc(50% - 279.5px + 30px)',
       left: 'calc(50% - 180px)',
-      padding: '18px',
+      padding: '18px'
     },
     bigModalBoxReadonly: {
       opacity: 1,
@@ -485,7 +486,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       height: '492px',
       top: 'calc(50% - 246px + 30px)',
       left: 'calc(50% - 180px)',
-      padding: '18px',
+      padding: '18px'
     },
     header: {
       boxSizing: 'border-box' as 'border-box',
@@ -494,7 +495,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexDirection: 'row' as 'row',
       justifyContent: 'space-between' as 'space-between',
       height: '20px',
-      marginBottom: '30px',
+      marginBottom: '30px'
     },
     headerText: {
       font: '400 16px Roboto',
@@ -685,7 +686,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       color: '#FFFFFF',
       border: '1px solid #684BC7',
       borderRadius: '1px',
-      font: '400 16px Roboto',
+      font: '400 16px Roboto'
     },
     buttonWrapper: {
       marginTop: '30px',
@@ -693,7 +694,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       flexDirection: 'row' as 'row',
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      alignItems: 'center' as 'center'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
