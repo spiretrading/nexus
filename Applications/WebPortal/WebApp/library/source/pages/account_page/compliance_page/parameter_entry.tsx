@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CheckMark, CurrencySelectionBox, DateTimeField, DisplaySize,
-  DurationInputField, MoneyInputBox, NumberInput, TextInputField } from 
+  DurationInputField, MoneyInputBox, NumberInput, TextInputField } from
   '../../..';
 import { SecurityInput } from '.';
 
@@ -46,13 +46,6 @@ export class ParameterEntry extends React.Component<Properties> {
         }
       } else {
         return ParameterEntry.STYLE.dateTimeRow;
-      }
-    })();
-    const labelStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParameterEntry.STYLE.label;
-      } else {
-        return ParameterEntry.STYLE.label;
       }
     })();
     const inputWrapper = (() => {
@@ -138,7 +131,9 @@ export class ParameterEntry extends React.Component<Properties> {
     })();
     return (
       <div style={rowStyle}>
-        <div style={labelStyle}>{this.props.parameter.name}</div>
+        <div style={ParameterEntry.STYLE.label}>
+          {this.props.parameter.name}
+        </div>
         <div style={inputWrapper}>
           {input}
         </div>

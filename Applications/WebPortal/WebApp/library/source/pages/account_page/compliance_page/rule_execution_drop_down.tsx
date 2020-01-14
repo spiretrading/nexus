@@ -14,7 +14,9 @@ interface Properties {
   /** Indicates if the component is readonly. */
   readonly?: boolean;
 
-  /** The event handler called when the selection changes. */
+  /** The event handler called when the selection changes. 
+   * @param newMode - The new mode.
+   */
   onChange?: (newMode: Nexus.ComplianceRuleEntry.State) => void;
 }
 
@@ -33,7 +35,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
     const boxStyle = (() => {
       if(this.props.readonly) {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return RuleExecutionDropDown.STYLE.selectionBoxReadonlySmall
+          return RuleExecutionDropDown.STYLE.selectionBoxReadonlySmall;
         } else {
           return RuleExecutionDropDown.STYLE.selectionBoxReadonlyLarge;
         }

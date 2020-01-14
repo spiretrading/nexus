@@ -8,7 +8,7 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The schema that provides the paramters. */
+  /** The schema that provides the parameters. */
   schema: Nexus.ComplianceRuleSchema;
 
   /** The set of available currencies to select. */
@@ -33,13 +33,6 @@ export class ParametersList extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const headerStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParametersList.STYLE.headerSmall;
-      } else {
-        return ParametersList.STYLE.headerLarge;
-      }
-    })();
     const leftPadding = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
@@ -64,7 +57,7 @@ export class ParametersList extends React.Component<Properties> {
     return (
       <div style={leftPadding}>
         <div id={'topFiller'}/>
-        <div style={headerStyle}>Parameters</div>
+        <div style={ParametersList.STYLE.header}>Parameters</div>
         <div id={'moreFiller'}/>
         {parameterEntries}
         <div style={ParametersList.STYLE.bottomFiller}/>
@@ -117,14 +110,7 @@ export class ParametersList extends React.Component<Properties> {
     bottomFiller: {
       height: '30px'
     },
-    headerSmall: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px',
-      cursor: 'default' as 'default'
-    },
-    headerLarge: {
+    header: {
       color: '#4B23A0',
       font: '500 14px Roboto',
       marginTop: '10px',
