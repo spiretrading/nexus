@@ -53,6 +53,7 @@ export class DurationInputField extends React.Component<Properties, State> {
       isInFocus: false,
       componentWidth: 0
     };
+    this.wrapperRef = React.createRef<HTMLDivElement>();
     this.handleResize = this.handleResize.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
@@ -89,7 +90,7 @@ export class DurationInputField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusClassName}}
-          ref={(input) => {this.reference = input;}}
+          ref={this.wrapperRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DurationInputField.STYLE.inner}>
@@ -101,7 +102,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <div style={DurationInputField.STYLE.colon}>:</div>
           <IntegerInputBox
             min={0} max={59}
             value={splitTime.minutes}
@@ -110,7 +111,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>{':'}</div>
+          <div style={DurationInputField.STYLE.colon}>:</div>
           <IntegerInputBox
             min={0} max={59}
             value={splitTime.seconds}
@@ -138,8 +139,8 @@ export class DurationInputField extends React.Component<Properties, State> {
 
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.reference.clientWidth) {
-        this.setState({componentWidth: this.reference.clientWidth});
+      if(this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
+        this.setState({componentWidth: this.wrapperRef.current.clientWidth});
       }
     }
   }
@@ -262,5 +263,5 @@ export class DurationInputField extends React.Component<Properties, State> {
     }
   });
 
-  private reference: HTMLDivElement;
+  private wrapperRef: React.RefObject<HTMLDivElement>;
 }
