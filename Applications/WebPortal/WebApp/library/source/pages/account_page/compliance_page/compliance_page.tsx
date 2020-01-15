@@ -37,7 +37,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isAddRuleModalOpen: false,
+      isAddRuleModalOpen: false
     };
     this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
   }
