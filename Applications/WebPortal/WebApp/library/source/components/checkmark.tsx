@@ -14,9 +14,9 @@ interface Properties {
   readonly: boolean;
 
   /** Called when the check mark is clicked on.
-   * @param newValue - The new value.
+   * @param value - The new value.
    */
-  onClick?: (newValue?: boolean) => void;
+  onClick?: (value?: boolean) => void;
 }
 
 /** A check mark component. */

@@ -15,9 +15,9 @@ interface Properties {
   readonly?: boolean;
 
   /** Called when the list of values changes.
-   * @param newValue - The updated list.
+   * @param value - The updated list.
    */
-  onChange?: (newValue: Nexus.ComplianceValue[]) => void;
+  onChange?: (value: Nexus.ComplianceValue[]) => void;
 }
 
 interface State {
