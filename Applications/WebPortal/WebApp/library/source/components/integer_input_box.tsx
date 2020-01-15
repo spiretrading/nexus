@@ -52,10 +52,8 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const shownValue = (() => {
-      return ('0'.repeat(this.props.padding) +
+    const shownValue =  ('0'.repeat(this.props.padding) +
         this.state.value).slice(-1 * (this.props.padding));
-    })();
     return (
       <input
         onBlur={this.onBlur}
@@ -89,7 +87,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    let value = (() => {
+    const value = (() => {
       if(event.target.value.length === 0) {
         return 0;
       } else {
@@ -104,7 +102,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onBlur() {
-    let value = (() => {
+    const value = (() => {
     if(this.state.value < this.props.min) {
       return this.props.min;
     } else if(this.state.value > this.props.max) {
