@@ -76,7 +76,7 @@ export class DateField extends React.Component<Properties, State> {
           return 28;
         } else if(year % 100 !== 0) {
           return 29;
-        }else if(year % 400 !== 0) {
+        } else if(year % 400 !== 0) {
           return 28;
         } else {
           return 29;
@@ -149,8 +149,8 @@ export class DateField extends React.Component<Properties, State> {
 
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.reference.current.clientWidth) {
-        this.setState({componentWidth: this.reference.current.clientWidth});
+      if(this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
+        this.setState({componentWidth: this.wrapperRef.current.clientWidth});
       }
     }
   }

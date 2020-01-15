@@ -17,7 +17,7 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.DateTime;
 
-  /** Whether the field is read only. */
+  /** Determines if the field is read only. */
   readonly?: boolean;
 
   /** Called when the value changes.

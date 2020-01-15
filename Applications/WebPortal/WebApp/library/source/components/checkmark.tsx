@@ -11,7 +11,7 @@ interface Properties {
   isChecked: boolean;
 
   /** Determines if the component can be edited. */
-  readonly: boolean;
+  readonly?: boolean;
 
   /** Called when the check mark is clicked on.
    * @param value - The new value.

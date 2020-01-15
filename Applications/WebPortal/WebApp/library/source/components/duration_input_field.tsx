@@ -38,7 +38,7 @@ interface State {
   componentWidth: number
 }
 
-/** A component that displays and lets a user edit a duration. */
+/** A component that displays a duration. */
 export class DurationInputField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
