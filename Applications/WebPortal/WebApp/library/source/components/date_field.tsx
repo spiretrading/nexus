@@ -100,7 +100,7 @@ export class DateField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusStyle}}
-          ref={this.wrapperRef} //dis bad
+          ref={this.wrapperRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
