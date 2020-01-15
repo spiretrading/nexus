@@ -45,6 +45,7 @@ export class DateField extends React.Component<Properties, State> {
       isInFocus: false,
       componentWidth: 0
     };
+    this.wrapperRef = React.createRef<HTMLDivElement>();
     this.handleResize = this.handleResize.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
@@ -99,7 +100,7 @@ export class DateField extends React.Component<Properties, State> {
     })();
     return (
       <div style={{...wrapperStyle, ...focusStyle}}
-          ref={(input) => {this.reference = input;}}
+          ref={this.wrapperRef} //dis bad
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
@@ -138,6 +139,7 @@ export class DateField extends React.Component<Properties, State> {
 
   public componentDidMount() {
     window.addEventListener('resize', this.handleResize);
+
     this.handleResize();
   }
 
@@ -147,8 +149,8 @@ export class DateField extends React.Component<Properties, State> {
 
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.reference.clientWidth) {
-        this.setState({componentWidth: this.reference.clientWidth});
+      if(this.state.componentWidth !== this.reference.current.clientWidth) {
+        this.setState({componentWidth: this.reference.current.clientWidth});
       }
     }
   }
@@ -305,6 +307,5 @@ export class DateField extends React.Component<Properties, State> {
       }
     }
   });
-
-  private reference: HTMLDivElement;
+  private wrapperRef: React.RefObject<HTMLDivElement>;
 }
