@@ -34,10 +34,6 @@ interface State {
 
 /* Displays the compliance page.*/
 export class CompliancePage extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    readonly: false
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {

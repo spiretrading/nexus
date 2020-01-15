@@ -33,7 +33,6 @@ interface State {
 
 /** Displays a given compliance rule. */
 export class RuleRow extends React.Component<Properties, State> {
-
   constructor(props: Properties){
     super(props);
     this.state = {
