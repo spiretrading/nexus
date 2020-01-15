@@ -139,7 +139,6 @@ export class DateField extends React.Component<Properties, State> {
 
   public componentDidMount() {
     window.addEventListener('resize', this.handleResize);
-
     this.handleResize();
   }
 
@@ -148,10 +147,9 @@ export class DateField extends React.Component<Properties, State> {
   }
 
   private handleResize() {
-    if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
-        this.setState({componentWidth: this.wrapperRef.current.clientWidth});
-      }
+    if(this.props.displaySize === DisplaySize.SMALL && 
+        this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
+      this.setState({componentWidth: this.wrapperRef.current.clientWidth});
     }
   }
 
@@ -307,5 +305,6 @@ export class DateField extends React.Component<Properties, State> {
       }
     }
   });
+
   private wrapperRef: React.RefObject<HTMLDivElement>;
 }

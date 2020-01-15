@@ -138,10 +138,9 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   private handleResize() {
-    if(this.props.displaySize === DisplaySize.SMALL) {
-      if(this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
-        this.setState({componentWidth: this.wrapperRef.current.clientWidth});
-      }
+    if(this.props.displaySize === DisplaySize.SMALL && 
+        this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
+      this.setState({componentWidth: this.wrapperRef.current.clientWidth});
     }
   }
 
