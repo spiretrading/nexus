@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Ui/IconButton.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -141,8 +142,8 @@ void ToolbarWindow::keyPressEvent(QKeyEvent* event) {
 }
 
 void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
-  auto icon_size = scale(26, 20);
-  auto icon_rect = QRect(translate(8, 5), scale(10, 10));
+  auto icon_size = scale(18, 10);
+  auto icon_rect = QRect(translate(8, 0), scale(10, 10));
   m_entries.push_back(e);
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {

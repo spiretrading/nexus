@@ -22,8 +22,6 @@ IconButton::IconButton(QImage icon, QImage hover_icon,
       m_blur_icon(std::move(blur_icon)) {
   setFocusPolicy(Qt::StrongFocus);
   setMouseTracking(true);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   setFixedSize(m_icon.size());
   show_normal();
 }
