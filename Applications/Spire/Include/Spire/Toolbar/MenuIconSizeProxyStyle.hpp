@@ -4,10 +4,15 @@
 
 namespace Spire {
 
+  //! Defines a custom icon size for a QMenu style.
   class MenuIconSizeProxyStyle : public QProxyStyle {
     public:
 
-      MenuIconSizeProxyStyle(int size);
+      //! Constructs a MenuIconProxyStyle with the given icon size.
+      /*
+        \param size The icon size.
+      */
+      explicit MenuIconSizeProxyStyle(int size);
 
       int pixelMetric(QStyle::PixelMetric metric,
         const QStyleOption* option = nullptr,

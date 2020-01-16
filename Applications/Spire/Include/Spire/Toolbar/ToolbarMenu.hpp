@@ -28,8 +28,6 @@ namespace Spire {
       */
       explicit ToolbarMenu(const QString& title, QWidget* parent = nullptr);
 
-      ~ToolbarMenu() override;
-
       //! Adds a text item to the menu.
       /*!
         \param text The text string for the item.
@@ -59,7 +57,7 @@ namespace Spire {
     private:
       mutable ItemSelectedSignal m_item_selected_signal;
       QMenu* m_items;
-      MenuIconSizeProxyStyle* m_menu_icon_style;
+      std::unique_ptr<MenuIconSizeProxyStyle> m_menu_icon_style;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
       bool m_empty_style;
