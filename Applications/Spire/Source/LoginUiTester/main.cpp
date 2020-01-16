@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   login.show();
   LoginUiTester tester(&login);
   login.installEventFilter(&tester);
-  tester.setGeometry(login.pos().x(), 
+  tester.setGeometry(login.pos().x(),
     login.pos().y() + login.height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
