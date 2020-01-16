@@ -16,6 +16,6 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   auto image = QImage(size, QImage::Format_ARGB32);
   image.fill(QColor(0, 0, 0, 0));
   auto painter = QPainter(&image);
-  painter.drawPixmap(QPoint(box.topLeft()), svg_pixmap);
+  painter.drawPixmap(box.topLeft(), svg_pixmap);
   return image;
 }
