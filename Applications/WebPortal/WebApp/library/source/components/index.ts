@@ -5,6 +5,7 @@ export * from './drop_down_button';
 export * from './duration_input';
 export * from './hline';
 export * from './integer_input_box';
+export * from './modal';
 export * from './money_input_box';
 export * from './number_input';
 export * from './text_input_field';
