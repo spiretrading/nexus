@@ -66,7 +66,7 @@ namespace Spire {
 
       void remove_empty_item();
       void set_empty_menu_stylesheet();
-      void set_default_menu_stylesheet(int padding_left);
+      void set_default_menu_stylesheet();
       void on_triggered(QAction* action);
   };
 }

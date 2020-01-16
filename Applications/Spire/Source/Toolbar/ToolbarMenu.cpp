@@ -54,7 +54,7 @@ void ToolbarMenu::add(const QString& text) {
   remove_empty_item();
   if(m_empty_style) {
     m_empty_style = false;
-    set_default_menu_stylesheet(scale_width(8));
+    set_default_menu_stylesheet();
   }
   m_items->addAction(action);
   m_action_to_index[action] = m_action_to_index.size();
@@ -68,7 +68,7 @@ void ToolbarMenu::add(const QString& text, const QImage& icon) {
   remove_empty_item();
   if(m_empty_style) {
     m_empty_style = false;
-    set_default_menu_stylesheet(scale_width(26));
+    set_default_menu_stylesheet();
   }
   m_items->addAction(action);
   m_action_to_index[action] = m_action_to_index.size();
@@ -134,7 +134,7 @@ void ToolbarMenu::set_empty_menu_stylesheet() {
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
 }
 
-void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
+void ToolbarMenu::set_default_menu_stylesheet() {
   m_items->setStyleSheet(QString(R"(
     QMenu {
       background-color: white;
@@ -151,7 +151,7 @@ void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
     }
     QMenu::item:selected {
       background-color: #F2F2FF;
-  })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
+  })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(20)));
 }
 
 void ToolbarMenu::on_triggered(QAction* action) {
