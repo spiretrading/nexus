@@ -3,7 +3,6 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QVBoxLayout>
-#include <QWindow>
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
@@ -76,8 +75,6 @@ void Window::closeEvent(QCloseEvent* event) {
 bool Window::event(QEvent* event) {
   if(event->type() == QEvent::WinIdChange) {
     set_window_attributes(m_is_resizeable);
-    connect(windowHandle(), &QWindow::screenChanged, this,
-      &Window::on_screen_changed);
   }
   return QWidget::event(event);
 }
@@ -203,8 +200,4 @@ void Window::set_window_attributes(bool is_resizeable) {
   const auto shadow = MARGINS{ 1, 1, 1, 1 };
   DwmExtendFrameIntoClientArea(reinterpret_cast<HWND>(effectiveWinId()),
     &shadow);
-}
-
-void Window::on_screen_changed(QScreen* screen) {
-  
 }
