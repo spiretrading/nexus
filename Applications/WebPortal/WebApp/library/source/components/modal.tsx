@@ -23,6 +23,10 @@ export class Modal extends React.Component<Props> {
   }
 
   private static readonly STYLE = {
+    wrapper: {
+      height: '100%',
+      width: '100%',
+    },
     overlay: {
       height: '100%',
       width: '100%',
@@ -30,6 +34,8 @@ export class Modal extends React.Component<Props> {
       backgroundColor: '#FFFFFF',
       opacity: '0.9',
       position: 'fixed' as 'fixed',
+      margin: 0,
+      padding: 0,
       top: 0,
       bottom: 0,
       left: 0,
@@ -45,10 +51,8 @@ export class Modal extends React.Component<Props> {
       bottom: 0,
       left: 0,
       right: 0,
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
-      padding: '20px',
+      margin: 0,
+      padding: 0,
       zIndex: 100000000
     },
     modal: {
@@ -57,7 +61,6 @@ export class Modal extends React.Component<Props> {
       padding: '18px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
-      position: 'absolute' as 'absolute'
     }
   };
 
