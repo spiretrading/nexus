@@ -1,4 +1,5 @@
 #include "Spire/Toolbar/ToolbarMenu.hpp"
+#include "Spire/Toolbar/MenuIconSizeProxyStyle.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -11,6 +12,7 @@ ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
       m_items(new QMenu(this)),
       m_empty_style(true) {
   setMenu(m_items);
+  m_items->setStyle(new MenuIconSizeProxyStyle(scale_height(18)));
   connect(m_items, &QMenu::triggered, this, &ToolbarMenu::on_triggered);
   m_empty_item = new QWidgetAction(this);
   m_empty_item->setText(tr("Empty"));
@@ -124,7 +126,7 @@ void ToolbarMenu::set_empty_menu_stylesheet() {
       font-style: italic;
       height: %2px;
       padding-left: %3px;
-  })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
+    })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
 }
 
 void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
