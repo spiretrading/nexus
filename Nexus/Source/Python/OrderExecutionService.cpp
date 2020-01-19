@@ -15,6 +15,7 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
+#include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
@@ -198,6 +199,15 @@ void Nexus::Python::ExportOrder(pybind11::module& module) {
     "Order");
 }
 
+void Nexus::Python::ExportOrderCancellationReactor(pybind11::module& module) {
+  auto aspenModule = pybind11::module::import("aspen");
+  Aspen::export_box<const Order*>(aspenModule, "Order");
+  Aspen::export_reactor<OrderCancellationReactor<VirtualOrderExecutionClient,
+    Aspen::SharedBox<const Order*>>>(module, "OrderCancellationReactor")
+    .def(init<Ref<VirtualOrderExecutionClient>,
+    Aspen::SharedBox<const Order*>>());
+}
+
 void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
   class_<VirtualOrderExecutionClient, TrampolineOrderExecutionClient>(module,
     "OrderExecutionClient")
@@ -228,6 +238,7 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   ExportApplicationOrderExecutionClient(submodule);
   ExportOrderFields(submodule);
   ExportOrderInfo(submodule);
+  ExportOrderCancellationReactor(submodule);
   ExportOrderReactor(submodule);
   ExportOrderRecord(submodule);
   ExportPrimitiveOrder(submodule);
@@ -356,7 +367,6 @@ void Nexus::Python::ExportOrderReactor(pybind11::module& module) {
   Aspen::export_box<Money>(aspenModule, "Money");
   Aspen::export_box<TimeInForce>(aspenModule, "TimeInForce");
   Aspen::export_box<Tag>(aspenModule, "Tag");
-  Aspen::export_box<const Order*>(aspenModule, "Order");
   Aspen::export_reactor<OrderReactor<VirtualOrderExecutionClient,
     Aspen::SharedBox<DirectoryEntry>, Aspen::SharedBox<Security>,
     Aspen::SharedBox<CurrencyId>, Aspen::SharedBox<OrderType>,
