@@ -1,7 +1,7 @@
 #ifndef NEXUS_BUYINGPOWERCHECK_HPP
 #define NEXUS_BUYINGPOWERCHECK_HPP
 #include <vector>
-#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -66,7 +66,7 @@ namespace OrderExecutionService {
           m_buyingPowerTracker;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskParameters>>
           m_riskParametersQueue;
-        std::shared_ptr<Beam::Queue<ExecutionReport>> m_executionReportQueue;
+        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
         Beam::SynchronizedUnorderedMap<OrderId, CurrencyId> m_currencies;
 
         BuyingPowerEntry();
@@ -89,10 +89,8 @@ namespace OrderExecutionService {
   template<typename AdministrationClientType, typename MarketDataClientType>
   BuyingPowerCheck<AdministrationClientType, MarketDataClientType>::
       BuyingPowerEntry::BuyingPowerEntry()
-      : m_riskParametersQueue{std::make_shared<Beam::StateQueue<
-          RiskService::RiskParameters>>()},
-        m_executionReportQueue{std::make_shared<Beam::Queue<
-          ExecutionReport>>()} {}
+      : m_riskParametersQueue(std::make_shared<Beam::StateQueue<
+          RiskService::RiskParameters>>()) {}
 
   template<typename AdministrationClientType, typename MarketDataClientType>
   template<typename AdministrationClientForward,
@@ -119,9 +117,9 @@ namespace OrderExecutionService {
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
         auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Top();
-        while(!buyingPowerEntry.m_executionReportQueue->IsEmpty()) {
-          auto report = buyingPowerEntry.m_executionReportQueue->Top();
-          buyingPowerEntry.m_executionReportQueue->Pop();
+        while(!buyingPowerEntry.m_executionReportQueue.IsEmpty()) {
+          auto report = buyingPowerEntry.m_executionReportQueue.Top();
+          buyingPowerEntry.m_executionReportQueue.Pop();
           if(report.m_lastQuantity != 0) {
             auto currency = buyingPowerEntry.m_currencies.Find(report.m_id);
             if(!currency.is_initialized()) {
@@ -190,7 +188,8 @@ namespace OrderExecutionService {
         buyingPowerTracker.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
       });
-    order.GetPublisher().Monitor(buyingPowerEntry.m_executionReportQueue);
+    order.GetPublisher().Monitor(
+      buyingPowerEntry.m_executionReportQueue.GetWriter());
   }
 
   template<typename AdministrationClientType, typename MarketDataClientType>

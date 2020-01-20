@@ -1,10 +1,13 @@
 #include "Nexus/Python/Accounting.hpp"
+#include <Aspen/Python/Aspen.hpp>
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 
+using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
@@ -40,6 +43,7 @@ void Nexus::Python::ExportAccounting(pybind11::module& module) {
   ExportPosition(submodule);
   ExportSecurityInventory(submodule);
   ExportTrueAverageBookkeeper(submodule);
+  ExportTrueAverageBookkeeperReactor(submodule);
   ExportTrueAveragePortfolio(submodule);
 }
 
@@ -104,6 +108,16 @@ void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {
       Inventory<Position<Security>>>::GetInventory)
     .def("get_total", &TrueAverageBookkeeper<
       Inventory<Position<Security>>>::GetTotal);
+}
+
+void Nexus::Python::ExportTrueAverageBookkeeperReactor(
+    pybind11::module& module) {
+  module.def("TrueAverageBookkeeperReactor",
+    [] (SharedBox<const Order*> orders) {
+      return to_object(BookkeeperReactor<
+        TrueAverageBookkeeper<Inventory<Position<Security>>>>(
+        std::move(orders)));
+    });
 }
 
 void Nexus::Python::ExportTrueAveragePortfolio(pybind11::module& module) {

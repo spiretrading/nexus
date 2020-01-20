@@ -35,6 +35,12 @@ namespace Nexus::Python {
   void ExportTrueAverageBookkeeper(pybind11::module& module);
 
   /**
+   * Exports the BookkeeperReactor using a TrueAverageBookkeeper.
+   * @param module The module to export to.
+   */
+  void ExportTrueAverageBookkeeperReactor(pybind11::module& module);
+
+  /**
    * Exports the TrueAveragePortfolio class.
    * @param module The module to export to.
    */

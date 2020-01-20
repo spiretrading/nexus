@@ -39,7 +39,7 @@ namespace OrderExecutionService {
       \brief Publishes a synchronized sequence of ExecutionReportEntries based
              off of the Orders published by an OrderExecutionPublisher.
    */
-  class ExecutionReportPublisher :
+  class ExecutionReportPublisher final :
       public Beam::Publisher<ExecutionReportEntry> {
     public:
 
@@ -51,10 +51,11 @@ namespace OrderExecutionService {
       ExecutionReportPublisher(
         const OrderExecutionPublisher& orderExecutionPublisher);
 
-      virtual void With(const std::function<void ()>& f) const override final;
+      void With(const std::function<void ()>& f) const override;
 
-      virtual void Monitor(std::shared_ptr<
-        Beam::QueueWriter<ExecutionReportEntry>> monitor) const override final;
+      void Monitor(
+        std::shared_ptr<Beam::QueueWriter<ExecutionReportEntry>> monitor)
+        const override;
 
     private:
       std::shared_ptr<Beam::SequencePublisher<ExecutionReportEntry>>
@@ -65,12 +66,12 @@ namespace OrderExecutionService {
   };
 
   inline ExecutionReportEntry::ExecutionReportEntry()
-      : m_order(nullptr) {}
+    : m_order(nullptr) {}
 
   inline ExecutionReportEntry::ExecutionReportEntry(const Order* order,
-      const ExecutionReport& executionReport)
-      : m_order(order),
-        m_executionReport(executionReport) {}
+    const ExecutionReport& executionReport)
+    : m_order(order),
+      m_executionReport(executionReport) {}
 
   inline ExecutionReportPublisher::ExecutionReportPublisher(
       const OrderExecutionPublisher& orderExecutionPublisher)
@@ -80,6 +81,10 @@ namespace OrderExecutionService {
         m_callbackQueue(
           std::make_shared<Beam::CallbackWriterQueue<const Order*>>(
           [=] (const Order* order) {
+
+            // TODO: The converter acts a proxy into m_publisher, when the
+            // order's publisher breaks it causes the converter to break which
+            // then causes m_publisher to break, meaning no further updates.
             std::shared_ptr<Beam::QueueWriter<ExecutionReport>> converter =
               Beam::MakeConverterWriterQueue<ExecutionReport>(m_publisher,
               [=] (const ExecutionReport& executionReport) {
