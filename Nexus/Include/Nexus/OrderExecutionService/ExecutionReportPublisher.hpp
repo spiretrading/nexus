@@ -81,14 +81,10 @@ namespace OrderExecutionService {
         m_callbackQueue(
           std::make_shared<Beam::CallbackWriterQueue<const Order*>>(
           [=] (const Order* order) {
-
-            // TODO: The converter acts a proxy into m_publisher, when the
-            // order's publisher breaks it causes the converter to break which
-            // then causes m_publisher to break, meaning no further updates.
             std::shared_ptr<Beam::QueueWriter<ExecutionReport>> converter =
-              Beam::MakeConverterWriterQueue<ExecutionReport>(m_publisher,
+              std::make_shared<Beam::CallbackWriterQueue<ExecutionReport>>(
               [=] (const ExecutionReport& executionReport) {
-                return ExecutionReportEntry(order, executionReport);
+                m_publisher->Push(ExecutionReportEntry(order, executionReport));
               });
             m_converters.push_back(converter);
             order->GetPublisher().Monitor(converter);
@@ -108,9 +104,10 @@ namespace OrderExecutionService {
             order->GetPublisher().With(
               [&] {
                 std::shared_ptr<Beam::QueueWriter<ExecutionReport>> converter =
-                  Beam::MakeConverterWriterQueue<ExecutionReport>(m_publisher,
+                  std::make_shared<Beam::CallbackWriterQueue<ExecutionReport>>(
                   [=] (const ExecutionReport& executionReport) {
-                    return ExecutionReportEntry(order, executionReport);
+                    m_publisher->Push(ExecutionReportEntry(order,
+                      executionReport));
                   });
                 boost::optional<std::vector<ExecutionReport>>
                   executionReportSnapshot;

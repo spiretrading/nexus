@@ -42,7 +42,10 @@ void BookkeeperReactorTester::TestSingleOrder() {
   CPPUNIT_ASSERT(!Aspen::has_evaluation(bookkeeper.commit(1)));
   commits.Top();
   commits.Pop();
-  CPPUNIT_ASSERT(Aspen::has_evaluation(bookkeeper.commit(2)));
+  CPPUNIT_ASSERT(!Aspen::has_evaluation(bookkeeper.commit(2)));
+  commits.Top();
+  commits.Pop();
+  CPPUNIT_ASSERT(Aspen::has_evaluation(bookkeeper.commit(3)));
   auto inventory = bookkeeper.eval();
   CPPUNIT_ASSERT(inventory.m_volume == 100);
   CPPUNIT_ASSERT(inventory.m_transactionCount == 1);
