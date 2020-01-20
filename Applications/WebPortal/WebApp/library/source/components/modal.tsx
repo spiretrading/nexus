@@ -12,9 +12,7 @@ export class Modal extends React.Component<Props> {
     return (
       <div>
         <div style={Modal.STYLE.modalWrapper}>
-          <div style={{...Modal.STYLE.modal, 
-            ...{height: this.props.height},
-            ...{width: this.props.width}}}>
+          <div style={{...Modal.STYLE.modal}}>
             {this.props.children}
           </div>
         </div>
@@ -45,6 +43,7 @@ export class Modal extends React.Component<Props> {
       overflowY: 'auto' as 'auto',
       overflowX: 'hidden' as 'hidden',
       height: '100%',
+      maxHeight: '100%',
       width: '100%',
       position: 'fixed' as 'fixed',
       top: 0,
@@ -53,6 +52,10 @@ export class Modal extends React.Component<Props> {
       right: 0,
       margin: 0,
       padding: 0,
+      //display: 'flex' as 'flex',
+      //flexWrap: 'nowrap' as 'nowrap',
+      //justifyContent: 'center' as 'center',
+      //alignItems: 'center' as 'center',
       zIndex: 100000000
     },
     modal: {
@@ -61,6 +64,14 @@ export class Modal extends React.Component<Props> {
       padding: '18px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
+      height: '500px',
+      width: '300px'
+      //position: 'fixed' as 'fixed',
+      //top: '50%',
+      //bottom: '1%',
+      //left: '50%',
+      //right: '1%',
+      //transform: 'transformation(50% 50%)'
     }
   };
 
