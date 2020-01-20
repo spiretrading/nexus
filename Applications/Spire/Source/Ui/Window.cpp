@@ -177,6 +177,8 @@ void Window::resize_body(const QSize& size) {
 }
 
 void Window::on_screen_changed(QScreen* screen) {
+  // TODO: Workaround for this change:
+  // https://github.com/qt/qtbase/commit/d2fd9b1b9818b3ec88487967e010f66e92952f55
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
   auto rect = RECT{ 0, 0, 1, 1 };
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
