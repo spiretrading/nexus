@@ -1,6 +1,7 @@
 #include "Nexus/Python/Accounting.hpp"
 #include <Aspen/Python/Aspen.hpp>
 #include <Beam/Python/Beam.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
@@ -27,7 +28,9 @@ namespace {
       .def(init<const Accounting::Details::Key<IndexType>&>())
       .def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index)
       .def_readwrite("currency",
-        &Accounting::Details::Key<IndexType>::m_currency);
+        &Accounting::Details::Key<IndexType>::m_currency)
+      .def("__str__",
+        &lexical_cast<std::string, Accounting::Details::Key<IndexType>>);
   }
 
   Money PythonGetTotalProfitAndLoss(
@@ -71,7 +74,8 @@ void Nexus::Python::ExportPosition(pybind11::module& module) {
     .def(init<const Position<Security>&>())
     .def_readwrite("key", &Position<Security>::m_key)
     .def_readwrite("quantity", &Position<Security>::m_quantity)
-    .def_readwrite("cost_basis", &Position<Security>::m_costBasis);
+    .def_readwrite("cost_basis", &Position<Security>::m_costBasis)
+    .def("__str__", &lexical_cast<std::string, Position<Security>>);
   ExportKey<Security>(outer, "Key");
   module.def("average_price", &GetAveragePrice<Security>);
   module.def("side", &Accounting::GetSide<Security>);
@@ -87,7 +91,8 @@ void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
     .def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss)
     .def_readwrite("fees", &Inventory::m_fees)
     .def_readwrite("volume", &Inventory::m_volume)
-    .def_readwrite("transaction_count", &Inventory::m_transactionCount);
+    .def_readwrite("transaction_count", &Inventory::m_transactionCount)
+    .def("__str__", &lexical_cast<std::string, Inventory>);
 }
 
 void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {

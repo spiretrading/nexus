@@ -301,7 +301,7 @@ namespace {
         queue.push(Aspen::Shared(child.Extract<Aspen::Box<T>>()));
       }
       queue.set_complete();
-      return Aspen::group(std::move(queue));
+      return Aspen::concur(std::move(queue));
     }
 
     using SupportedTypes = NativeTypes;
@@ -1003,7 +1003,7 @@ namespace {
     template<typename T>
     static Translation Template(CanvasNodeTranslationContext& context,
         Aspen::Box<void> trigger, const CanvasNode& series) {
-      return Aspen::group(Aspen::lift(
+      return Aspen::concur(Aspen::lift(
         [context = &context, series = &series] (
             const Aspen::Maybe<void>& value) {
           auto localContext = new CanvasNodeTranslationContext(Ref(*context));
@@ -1274,7 +1274,7 @@ void CanvasNodeTranslationVisitor::Visit(
     const ExecutionReportMonitorNode& node) {
   auto source = InternalTranslation(node.GetChildren().front());
   m_translation = Aspen::lift(ExecutionReportToRecordConverter(),
-    Aspen::group(Aspen::lift(
+    Aspen::concur(Aspen::lift(
     [] (const Order* order) {
       return Aspen::shared_box(PublisherReactor(order->GetPublisher()));
     }, source.Extract<Aspen::Box<const Order*>>())));

@@ -28,19 +28,18 @@ namespace Nexus::Accounting {
           return std::nullopt;
         }
         bookkeeper.RecordTransaction(order.GetInfo().m_fields.m_security,
-          order.GetInfo().m_fields.m_currency, report.m_lastQuantity,
+          order.GetInfo().m_fields.m_currency,
+          GetDirection(order.GetInfo().m_fields.m_side) * report.m_lastQuantity,
           report.m_lastQuantity * report.m_lastPrice,
           report.m_executionFee + report.m_processingFee + report.m_commission);
         return bookkeeper.GetInventory(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency);
-      }, Aspen::group(Aspen::lift(
+      }, Aspen::concur(Aspen::lift(
       [] (const OrderExecutionService::Order* order) {
         return Aspen::Shared(Aspen::lift(
-          [=] (const OrderExecutionService::Order* order,
-              const OrderExecutionService::ExecutionReport& executionReport) {
+          [=] (const OrderExecutionService::ExecutionReport& executionReport) {
             return std::tuple(order, executionReport);
-          }, Aspen::constant(order), Beam::Reactors::PublisherReactor(
-          order->GetPublisher())));
+          }, Beam::Reactors::PublisherReactor(order->GetPublisher())));
       }, std::move(orders))));
   }
 }
