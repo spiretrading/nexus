@@ -8,6 +8,7 @@
 
 namespace Spire {
   class Definitions;
+  class LocalRangeInputModel;
   class LocalTechnicalsModel;
   template<typename T> class QtPromise;
   class RangeInputModel;
