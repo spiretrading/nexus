@@ -1,32 +1,34 @@
 #include <catch.hpp>
-#include "Spire/Spire/RangeInputModel.hpp"
+#include "Spire/Spire/LocalRangeInputModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Spire;
 
-TEST_CASE("test_min_max_values_integers", "[RangeInputModel]") {
-  auto model = RangeInputModel<int>({1, 2, 3, 4, 5});
-  REQUIRE(model.get_minimum_value() == 1);
-  REQUIRE(model.get_maximum_value() == 5);
+TEST_CASE("test_min_max_values_integers", "[LocalRangeInputModel]") {
+  auto model = LocalRangeInputModel({ChartValue(1), ChartValue(2),
+    ChartValue(3), ChartValue(4), ChartValue(5)});
+  REQUIRE(model.get_minimum_value() == ChartValue(1));
+  REQUIRE(model.get_maximum_value() == ChartValue(5));
   print_test_name("test_min_max_values_integers");
 }
 
-TEST_CASE("test_min_max_values_doubles", "[RangeInputModel]") {
-  auto model = RangeInputModel<double>({1.0, 1.5, 2.0, 2.5, 3.0});
-  REQUIRE(model.get_minimum_value() == 1.0);
-  REQUIRE(model.get_maximum_value() == 3.0);
-  print_test_name("test_min_max_values_doubles");
+TEST_CASE("test_min_max_values_floating_point", "[LocalRangeInputModel]") {
+  auto model = LocalRangeInputModel({ChartValue(1.0), ChartValue(1.5),
+    ChartValue(2.0), ChartValue(2.5), ChartValue(3.0)});
+  REQUIRE(model.get_minimum_value() == ChartValue(1.0));
+  REQUIRE(model.get_maximum_value() == ChartValue(3.0));
+  print_test_name("test_min_max_values_floating_point");
 }
 
-TEST_CASE("test_histogram_integers", "[RangeInputModel]") {
+TEST_CASE("test_histogram_integers", "[LocalRangeInputModel]") {
   auto data = [] {
-      auto data = std::vector<QVariant>();
+      auto data = std::vector<ChartValue>();
       for(auto i = 1; i < 101; ++i) {
-        data.push_back(i);
+        data.push_back(ChartValue(i));
       }
       return data;
     }();
-  auto model = RangeInputModel<int>(data);
+  auto model = LocalRangeInputModel(data);
   auto histogram1 = model.make_histogram(5);
   REQUIRE(histogram1.m_highest_frequency == 20);
   for(auto bin : histogram1.m_histogram) {
@@ -47,15 +49,15 @@ TEST_CASE("test_histogram_integers", "[RangeInputModel]") {
   print_test_name("test_histogram_integers");
 }
 
-TEST_CASE("test_histogram_doubles", "[RangeInputModel]") {
+TEST_CASE("test_histogram_floating_point", "[LocalRangeInputModel]") {
   auto data = [] {
-      auto data = std::vector<QVariant>();
+      auto data = std::vector<ChartValue>();
       for(auto i = 1.0; i < 101.0; ++i) {
-        data.push_back(i);
+        data.push_back(ChartValue(i));
       }
       return data;
     }();
-  auto model = RangeInputModel<double>(data);
+  auto model = LocalRangeInputModel(data);
   auto histogram1 = model.make_histogram(5);
   REQUIRE(histogram1.m_highest_frequency == 20);
   for(auto bin : histogram1.m_histogram) {
@@ -73,5 +75,5 @@ TEST_CASE("test_histogram_doubles", "[RangeInputModel]") {
   for(auto bin : histogram3.m_histogram) {
     REQUIRE(bin == 10);
   }
-  print_test_name("test_histogram_doubles");
+  print_test_name("test_histogram_floating_point");
 }
