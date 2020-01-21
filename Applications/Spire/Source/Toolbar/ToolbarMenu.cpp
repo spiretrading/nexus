@@ -1,5 +1,6 @@
 #include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/MenuIconSizeProxyStyle.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
@@ -9,8 +10,11 @@ using namespace Spire;
 ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
     : QPushButton(title, parent),
       m_items(new QMenu(this)),
+      m_menu_icon_style(
+        std::make_unique<MenuIconSizeProxyStyle>(scale_width(18))),
       m_empty_style(true) {
   setMenu(m_items);
+  m_items->setStyle(m_menu_icon_style.get());
   connect(m_items, &QMenu::triggered, this, &ToolbarMenu::on_triggered);
   m_empty_item = new QWidgetAction(this);
   m_empty_item->setText(tr("Empty"));
@@ -47,7 +51,7 @@ void ToolbarMenu::add(const QString& text) {
   remove_empty_item();
   if(m_empty_style) {
     m_empty_style = false;
-    set_default_menu_stylesheet(scale_width(8));
+    set_default_menu_stylesheet();
   }
   m_items->addAction(action);
   m_action_to_index[action] = m_action_to_index.size();
@@ -61,7 +65,7 @@ void ToolbarMenu::add(const QString& text, const QImage& icon) {
   remove_empty_item();
   if(m_empty_style) {
     m_empty_style = false;
-    set_default_menu_stylesheet(scale_width(26));
+    set_default_menu_stylesheet();
   }
   m_items->addAction(action);
   m_action_to_index[action] = m_action_to_index.size();
@@ -127,7 +131,7 @@ void ToolbarMenu::set_empty_menu_stylesheet() {
   })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_width(8)));
 }
 
-void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
+void ToolbarMenu::set_default_menu_stylesheet() {
   m_items->setStyleSheet(QString(R"(
     QMenu {
       background-color: white;
@@ -144,7 +148,7 @@ void ToolbarMenu::set_default_menu_stylesheet(int padding_left) {
     }
     QMenu::item:selected {
       background-color: #F2F2FF;
-  })").arg(scale_height(12)).arg(padding_left).arg(scale_height(20)));
+  })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(20)));
 }
 
 void ToolbarMenu::on_triggered(QAction* action) {

@@ -1,6 +1,6 @@
 #include "Spire/Ui/Ui.hpp"
+#include <QIcon>
 #include <QPainter>
-#include <QtSvg/QSvgRenderer>
 
 using namespace Spire;
 
@@ -10,10 +10,12 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
 
 QImage Spire::imageFromSvg(const QString& path, const QSize& size,
     const QRect& box) {
-  auto renderer = QSvgRenderer(path);
+  // TODO: Revert this when Qt fixes the regression.
+  // https://bugreports.qt.io/browse/QTBUG-81259
+  auto svg_pixmap = QIcon(path).pixmap(box.width(), box.height());
   auto image = QImage(size, QImage::Format_ARGB32);
   image.fill(QColor(0, 0, 0, 0));
-  QPainter painter(&image);
-  renderer.render(&painter, box);
+  auto painter = QPainter(&image);
+  painter.drawPixmap(box.topLeft(), svg_pixmap);
   return image;
 }

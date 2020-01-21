@@ -343,8 +343,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
       painter.setPen(Qt::white);
       painter.drawLine(x_pos, m_bottom_right_pixel.y(), x_pos,
         m_bottom_right_pixel.y() + scale_height(2));
-      auto text_width = m_font_metrics.width(m_item_delegate->displayText(
-        to_variant(m_model->get_x_axis_type(), x), QLocale()));
+      auto text_width = m_font_metrics.horizontalAdvance(
+        m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
+        QLocale()));
       painter.drawText(x_pos - text_width / 2,
         m_bottom_right_pixel.y() + m_font_metrics.height() + scale_height(2),
         m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), x),
@@ -418,13 +419,13 @@ void ChartView::paintEvent(QPaintEvent* event) {
     if(m_gaps.empty() || !intersects_gap(m_crosshair_pos->x())) {
       auto x_label = m_item_delegate->displayText(to_variant(
         m_model->get_x_axis_type(), crosshair_value.m_x), QLocale());
-      auto x_label_width = m_font_metrics.width(x_label);
+      auto x_label_width = m_font_metrics.horizontalAdvance(x_label);
       painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
         scale_width(5), m_bottom_right_pixel.y(), x_label_width +
         scale_width(10), scale_height(21), Qt::white);
       painter.fillRect(m_crosshair_pos.value().x(), m_bottom_right_pixel.y(),
         scale_width(1), scale_height(3), Qt::black);
-      auto text_width = m_font_metrics.width(x_label);
+      auto text_width = m_font_metrics.horizontalAdvance(x_label);
       painter.setPen(m_label_text_color);
       painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
         m_bottom_right_pixel.y() + m_font_metrics.height() + scale_height(2),
@@ -435,7 +436,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
         Qt::white);
       painter.fillRect(m_crosshair_pos.value().x(), m_bottom_right_pixel.y(),
         scale_width(1), scale_height(3), Qt::black);
-      auto text_width = m_font_metrics.width(tr("No Activity"));
+      auto text_width = m_font_metrics.horizontalAdvance(tr("No Activity"));
       painter.setPen(m_label_text_color);
       painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
         m_bottom_right_pixel.y() + m_font_metrics.height() + scale_height(2),
@@ -702,14 +703,14 @@ void ChartView::update_origins() {
     m_y_axis_step) + m_y_axis_step;
   m_y_axis_values.clear();
   auto old_x_origin = m_bottom_right_pixel.x();
-  m_bottom_right_pixel.setX(width() - (m_font_metrics.width("M") * (
-    m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+  m_bottom_right_pixel.setX(width() - (m_font_metrics.horizontalAdvance("M") *
+    (m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
     y_value), QLocale()).length()) - scale_width(4)));
   auto top_label = m_region.m_top_left.m_y - (m_region.m_top_left.m_y %
     m_y_axis_step);
   while(y_value <= top_label) {
     m_y_axis_values.push_back(y_value);
-    auto origin = width() - (m_font_metrics.width("M") * (
+    auto origin = width() - (m_font_metrics.horizontalAdvance("M") * (
       m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
       y_value), QLocale()).length()) - scale_width(4));
     m_bottom_right_pixel.setX(min(m_bottom_right_pixel.x(), origin));

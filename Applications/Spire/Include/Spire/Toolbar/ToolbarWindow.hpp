@@ -6,7 +6,6 @@
 #include <QWidget>
 #include "Spire/Toolbar/RecentlyClosedModel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
-#include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
