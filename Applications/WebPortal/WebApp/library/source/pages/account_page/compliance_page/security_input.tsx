@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
-import { HLine } from '../../../components';
+import { HLine, Modal } from '../../../components';
 
 interface Properties {
   displaySize: DisplaySize;
@@ -36,21 +36,7 @@ export class SecurityInput extends React.Component<Properties, State>{
       if(!this.state.isEditing) {
         return SecurityInput.STYLE.hidden;
       } else {
-        return SecurityInput.STYLE.modal;
-      }
-    })();
-    const shadowBox = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.boxShadowSmall;
-      } else {
-        return SecurityInput.STYLE.boxShadowBig;
-      }
-    })();
-    const optionsBox = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityInput.STYLE.smallOptionsBox;
-      } else {
-        return SecurityInput.STYLE.bigOptionsBox;
+        return null;
       }
     })();
     const selectedSecuritiesBox = (() => {
@@ -88,7 +74,7 @@ export class SecurityInput extends React.Component<Properties, State>{
             <img src={'resources/account_page/compliance_page/security_input/remove-purple.svg'}/>
           </div>);
       } else {
-        return  (          
+        return  (
           <div style={imageWrapperStyle}>
             <img src={'resources/account_page/compliance_page/security_input/remove-grey.svg'}/>
           </div>);
@@ -126,46 +112,45 @@ export class SecurityInput extends React.Component<Properties, State>{
           onFocus={this.toggleEditing.bind(this)}
           onClick={this.toggleEditing.bind(this)}/>
         <div style={visibility}>
-          <div style={SecurityInput.STYLE.overlay}/>
-          <div style={shadowBox}/>
-          <div style={optionsBox}>
-            <div style={SecurityInput.STYLE.header}>
-              <div style={SecurityInput.STYLE.headerText}>
-                {SecurityInput.MODAL_HEADER}
+          <Modal displaySize={this.props.displaySize} 
+              height={'559px'} width={'360px'}>
+              <div style={SecurityInput.STYLE.header}>
+                <div style={SecurityInput.STYLE.headerText}>
+                  {SecurityInput.MODAL_HEADER}
+                </div>
+                <img src={'resources/account_page/compliance_page/security_input/close.svg'}
+                  height='20px'
+                  width='20px'
+                  onClick={this.toggleEditing}/>
               </div>
-              <img src={'resources/account_page/compliance_page/security_input/close.svg'}
-                height='20px'
-                width='20px'
-                onClick={this.toggleEditing}/>
-            </div>
-            <input
-              className={css(SecurityInput.EXTRA_STYLE.effects)}
-              style={SecurityInput.STYLE.findSymbolBox}
-              placeholder={SecurityInput.PLACEHOLDER_TEXT}
-              onChange={this.onInputChange}
-              onKeyDown={this.addEntry}
-              value={this.state.inputString}/>
-            <div style={selectedSecuritiesBox}>
-              <div style={SecurityInput.STYLE.scrollBoxHeader}>
-                {'Added Symbols'}
+              <input
+                className={css(SecurityInput.EXTRA_STYLE.effects)}
+                style={SecurityInput.STYLE.findSymbolBox}
+                placeholder={SecurityInput.PLACEHOLDER_TEXT}
+                onChange={this.onInputChange}
+                onKeyDown={this.addEntry}
+                value={this.state.inputString}/>
+              <div style={selectedSecuritiesBox}>
+                <div style={SecurityInput.STYLE.scrollBoxHeader}>
+                  {'Added Symbols'}
+                </div>
+                {entries}
               </div>
-              {entries}
-            </div>
-            <div style={iconRowStyle}>
-              {removeImgSrc}
-              <div style={imageWrapperStyle}>
-                <img src={'resources/account_page/compliance_page/security_input/upload.svg'}/>
+              <div style={iconRowStyle}>
+                {removeImgSrc}
+                <div style={imageWrapperStyle}>
+                  <img src={'resources/account_page/compliance_page/security_input/upload.svg'}/>
+                </div>
               </div>
-            </div>
-            <HLine color={'#e6e6e6'}/>
-            <div style={SecurityInput.STYLE.buttonWrapper}>
-              <button style={SecurityInput.STYLE.button}>
-                {'Submit Changes'}
-              </button>
-            </div>
+              <HLine color={'#e6e6e6'}/>
+              <div style={SecurityInput.STYLE.buttonWrapper}>
+                <button style={SecurityInput.STYLE.button}>
+                  {'Submit Changes'}
+                </button>
+              </div>
+          </Modal>
           </div>
-        </div>
-      </div>);
+        </div>);
   }
 
   private toggleEditing(){
@@ -229,79 +214,6 @@ export class SecurityInput extends React.Component<Properties, State>{
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    },
-    modal: {
-      boxSizing: 'border-box' as 'border-box',
-      minHeight: '559px',
-      overflow: 'scroll',
-    },
-    overlay: {
-      boxSizing: 'border-box' as 'border-box',
-      top: '0px',
-      left: '0px',
-      position: 'fixed' as 'fixed',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#FFFFFF',
-      opacity: 0.9
-    },
-    overlayMarginsBig: {
-      width: '100%',
-      height: '20px'
-    },
-    boxShadowSmall: {
-      boxSizing: 'border-box' as 'border-box', 
-      opacity: 0.4,
-      display: 'block',
-      boxShadow: '0px 0px 6px #000000',
-      position: 'absolute' as 'absolute',
-      border: '1px solid #FFFFFF',
-      backgroundColor: '#FFFFFF',
-      width: '282px',
-      height: '100%',
-      top: '0%',
-      right: '0%'
-    },
-    boxShadowBig: {
-      boxSizing: 'border-box' as 'border-box',
-      opacity: 0.4,
-      boxShadow: '0px 0px 6px #000000',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      backgroundColor: '#FFFFFF',
-      width: '360px',
-      height: '559px',
-      top: 'calc(50% - 279.5px + 30px)',
-      left: 'calc(50% - 180px)',
-    },
-    smallOptionsBox: {
-      opacity: 1,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      border: '1px solid #FFFFFF',
-      backgroundColor: '#FFFFFF',
-      width: '282px',
-      height: '100%',
-      top: '0%',
-      right: '0%',
-      paddingLeft: '18px',
-      paddingRight: '18px',
-      paddingTop: '18px',
-      paddingBottom: '40px',
-      overflowY: 'auto' as 'auto'
-    },
-    bigOptionsBox: {
-      opacity: 1,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      backgroundColor: '#FFFFFF',
-      width: '360px',
-      height: '559px',
-      top: 'calc(50% - 279.5px + 30px)',
-      left: 'calc(50% - 180px)',
-      padding: '18px',
     },
     header: {
       boxSizing: 'border-box' as 'border-box',
