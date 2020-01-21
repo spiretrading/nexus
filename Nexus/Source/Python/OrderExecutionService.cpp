@@ -159,6 +159,7 @@ void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
     .def_readwrite("commission", &ExecutionReport::m_commission)
     .def_readwrite("text", &ExecutionReport::m_text)
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
+    .def("__str__", &lexical_cast<std::string, ExecutionReport>)
     .def(self == self)
     .def(self != self);
   ExportQueueSuite<ExecutionReport>(module, "ExecutionReport");

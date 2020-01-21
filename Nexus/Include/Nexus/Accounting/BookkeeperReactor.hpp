@@ -17,6 +17,8 @@ namespace Nexus::Accounting {
    */
   template<typename Bookkeeper, typename Orders>
   auto BookkeeperReactor(Orders orders) {
+    static int id = 0;
+    ++id;
     return Aspen::lift(
       [bookkeeper = Bookkeeper()] (
           const std::tuple<const OrderExecutionService::Order*,
@@ -27,6 +29,7 @@ namespace Nexus::Accounting {
         if(report.m_lastQuantity == 0) {
           return std::nullopt;
         }
+//        std::cout << report << std::endl;
         bookkeeper.RecordTransaction(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency,
           GetDirection(order.GetInfo().m_fields.m_side) * report.m_lastQuantity,
@@ -35,7 +38,8 @@ namespace Nexus::Accounting {
         return bookkeeper.GetInventory(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency);
       }, Aspen::concur(Aspen::lift(
-      [] (const OrderExecutionService::Order* order) {
+      [id=id] (const OrderExecutionService::Order* order) {
+        std::cout << id << " " << order << std::endl;
         return Aspen::Shared(Aspen::lift(
           [=] (const OrderExecutionService::ExecutionReport& executionReport) {
             return std::tuple(order, executionReport);
