@@ -76,7 +76,7 @@ export class Modal extends React.Component<Properties> {
     overlay: {
       height: '100%',
       width: '100%',
-      backgroundColor: 'salmon',
+      backgroundColor: '#FFFFFF',
       opacity: '0.9',
       position: 'fixed' as 'fixed',
       margin: 0,
