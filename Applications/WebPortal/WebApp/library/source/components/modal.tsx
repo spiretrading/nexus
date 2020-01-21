@@ -5,15 +5,26 @@ interface Properties {
   displaySize: DisplaySize;
   height: string;
   width: string;
+  onClose?: () => void;
 }
 
 export class Modal extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    onClose: () => {}
+  };
+
+  public constructor(props: Properties) {
+    super(props);
+    this.onClick = this.onClick.bind(this);
+  }
+
   public render(): JSX.Element {
     const modalStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return {...Modal.STYLE.modalSmall, ...{width:this.props.width}};
+        return {...Modal.STYLE.modalSmall};
       } else {
-        return {...Modal.STYLE.modalLarge, ...{width: this.props.width, height: this.props.height}};
+        return {...Modal.STYLE.modalLarge,
+          ...{width: this.props.width, height: this.props.height}};
       }
     })();
     const modalWrapperStyle = (() => {
@@ -32,15 +43,22 @@ export class Modal extends React.Component<Properties> {
     })();
     return (
       <div style={Modal.STYLE.wrapper}>
-        <div style={modalWrapperStyle}>
-          <div style={Modal.STYLE.filler}/>
+        <div style={modalWrapperStyle}
+            onClick={this.onClick.bind(HTMLDivElement)}>
+          <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
           <div style={modalStyle}>
             {this.props.children}
           </div>
-          <div style={rightFillerStyle}/>
+          <div style={rightFillerStyle} onClick={this.props.onClose}/>
         </div>
-        <div style={Modal.STYLE.overlay}id='overlay'/>
+        <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
       </div>);
+  }
+
+  private onClick(event: MouseEvent) {
+    if(event.target === event.currentTarget) {
+      this.props.onClose();
+    }
   }
 
   private static readonly STYLE = {
@@ -51,8 +69,8 @@ export class Modal extends React.Component<Properties> {
       zIndex: 9998000
     },
     filler: {
-      flexGrow: 1,
       flexBasis: '20px',
+      flexGrow: 1,
       flexShrink: 0
     },
     overlay: {
