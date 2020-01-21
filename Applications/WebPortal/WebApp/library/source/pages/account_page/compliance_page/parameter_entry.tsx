@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
-  NumberInput, TextInputField } from '../../..';
+  NumberInput, SecurityInput, TextInputField } from '../../..';
 
 interface Properties {
 
@@ -77,7 +77,9 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.SECURITY:
-          return <div/>;
+          return <SecurityInput
+            displaySize={this.props.displaySize}
+            value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
             displaySize={this.props.displaySize}
@@ -85,7 +87,20 @@ export class ParameterEntry extends React.Component<Properties> {
             onInput={this.onChange}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
-          return <div/>;
+          if(this.props.parameter.value.value.length > 0) {
+            if(this.props.parameter.value.value[0].type ===
+                Nexus.ComplianceValue.Type.SECURITY) {
+              return <SecurityInput
+              displaySize={this.props.displaySize}
+              onChange={this.onChange}
+              value={this.props.parameter.value.value}/>;
+            }
+          } else {
+            return <SecurityInput
+              displaySize={this.props.displaySize}
+              onChange={this.onChange}
+              value={[]}/>;
+          }
         default:
           return <div/>;
       }
@@ -129,7 +144,7 @@ export class ParameterEntry extends React.Component<Properties> {
       maxWidth: '424px',
       width: '100%',
       height: '34px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
     rowLarge: {

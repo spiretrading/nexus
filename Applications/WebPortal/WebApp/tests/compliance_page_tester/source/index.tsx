@@ -77,7 +77,39 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Duration',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000)))
+            Nexus.ComplianceValue.Type.DURATION, new Beam.Duration(16000))),
+        new Nexus.ComplianceParameter(
+          'Securities',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.LIST, [
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('AST.XASX', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('PST.CSE', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+            new Nexus.ComplianceValue(
+              Nexus.ComplianceValue.Type.SECURITY, 
+              new Nexus.Security('AST.NYC', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+            ]))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [
@@ -158,7 +190,7 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Some Double',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DOUBLE, 123.4567)),
+            Nexus.ComplianceValue.Type.LIST, 123.4567)),
       ]));
       this.setState({
         entries: this.state.entries,
