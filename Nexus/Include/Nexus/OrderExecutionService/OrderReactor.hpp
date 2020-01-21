@@ -126,16 +126,45 @@ namespace Nexus::OrderExecutionService {
       Beam::Reactors::QueueReactor<ExecutionReport> m_queue;
   };
 
+  template<typename C, typename A, typename S, typename R, typename T,
+    typename D, typename Q, typename M, typename F>
+  auto MakeLimitOrderReactor(Beam::Ref<C> client, A account, S security,
+      R currency, T side, D destination, Q quantity, M price, F timeInForce) {
+    return OrderReactor(Beam::Ref(client), std::move(account),
+      std::move(security), std::move(currency),
+      Aspen::constant(OrderType::LIMIT), std::move(side),
+      std::move(destination), std::move(quantity), std::move(price),
+      std::move(timeInForce), std::vector<Aspen::Constant<Tag>>());
+  }
+
+  template<typename C, typename A, typename S, typename R, typename T,
+    typename D, typename Q, typename M>
+  auto MakeLimitOrderReactor(Beam::Ref<C> client, A account, S security,
+      R currency, T side, D destination, Q quantity, M price) {
+    return MakeLimitOrderReactor(Beam::Ref(client), std::move(account),
+      std::move(security), std::move(currency), std::move(side),
+      std::move(destination), std::move(quantity), std::move(price),
+      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)));
+  }
+
   template<typename C, typename S, typename T, typename Q, typename M>
   auto MakeLimitOrderReactor(Beam::Ref<C> client, S security, T side,
       Q quantity, M price) {
-    return OrderReactor(Beam::Ref(client),
+    return MakeLimitOrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE()),
-      Aspen::constant(OrderType::LIMIT), std::move(side),
+      std::move(security), Aspen::constant(CurrencyId::NONE()), std::move(side),
+      Aspen::constant(std::string()), std::move(quantity), std::move(price));
+  }
+
+  template<typename C, typename S, typename T, typename Q, typename M,
+    typename F>
+  auto MakeLimitOrderReactor(Beam::Ref<C> client, S security, T side,
+      Q quantity, M price, F timeInForce) {
+    return MakeLimitOrderReactor(Beam::Ref(client),
+      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      std::move(security), Aspen::constant(CurrencyId::NONE()), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price),
-      Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
-      std::vector<Aspen::Constant<Tag>>());
+      std::move(timeInForce));
   }
 
   template<typename C, typename S, typename T, typename Q>

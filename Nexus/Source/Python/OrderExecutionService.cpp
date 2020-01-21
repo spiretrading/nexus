@@ -383,11 +383,45 @@ void Nexus::Python::ExportOrderReactor(pybind11::module& module) {
       Aspen::SharedBox<TimeInForce>, std::vector<Aspen::SharedBox<Tag>>>());
   module.def("make_limit_order_reactor",
     [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<DirectoryEntry> account,
+        Aspen::SharedBox<Security> security,
+        Aspen::SharedBox<CurrencyId> currency, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<std::string> destination,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price,
+        Aspen::SharedBox<TimeInForce> timeInForce) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(account), std::move(security), std::move(currency),
+        std::move(side), std::move(destination), std::move(quantity),
+        std::move(price), std::move(timeInForce)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<DirectoryEntry> account,
+        Aspen::SharedBox<Security> security,
+        Aspen::SharedBox<CurrencyId> currency, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<std::string> destination,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(account), std::move(security), std::move(currency),
+        std::move(side), std::move(destination), std::move(quantity),
+        std::move(price)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
         Aspen::SharedBox<Security> security, Aspen::SharedBox<Side> side,
         Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price) {
       return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
         std::move(security), std::move(side), std::move(quantity),
         std::move(price)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<Security> security, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price,
+        Aspen::SharedBox<TimeInForce> timeInForce) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(security), std::move(side), std::move(quantity),
+        std::move(price), std::move(timeInForce)));
     });
   module.def("make_market_order_reactor",
     [] (VirtualOrderExecutionClient& client,
