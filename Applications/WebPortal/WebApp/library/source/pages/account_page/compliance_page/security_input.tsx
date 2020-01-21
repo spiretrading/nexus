@@ -403,28 +403,28 @@ export class SecurityInput extends React.Component<Properties, State> {
       height: '246px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'scroll' as 'scroll'
+      overflowY: 'auto' as 'auto'
     },
     scrollBoxSmallReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '342px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'scroll' as 'scroll'
+      overflowY: 'auto' as 'auto'
     },
     scrollBoxBig: {
       boxSizing: 'border-box' as 'border-box',
       height: '280px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'scroll' as 'scroll'
+      overflowY: 'auto' as 'auto'
     },
     scrollBoxBigReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '342px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'scroll' as 'scroll'
+      overflowY: 'auto' as 'auto'
     },
     scrollBoxHeaderSmall: {
       boxSizing: 'border-box' as 'border-box',
