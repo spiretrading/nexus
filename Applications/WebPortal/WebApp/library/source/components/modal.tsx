@@ -3,15 +3,17 @@ import { DisplaySize } from '../display_size';
 
 interface Properties {
   displaySize: DisplaySize;
+  height: string;
+  width: string;
 }
 
 export class Modal extends React.Component<Properties> {
   public render(): JSX.Element {
     const modalStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return Modal.STYLE.modalSmall;
+        return {...Modal.STYLE.modalSmall, ...{width:this.props.width}};
       } else {
-        return Modal.STYLE.modalLarge;
+        return {...Modal.STYLE.modalLarge, ...{width: this.props.width, height: this.props.height}};
       }
     })();
     const modalWrapperStyle = (() => {
@@ -88,11 +90,14 @@ export class Modal extends React.Component<Properties> {
     modalSmall: {
       boxSizing: 'border-box' as 'border-box',
       padding: '18px',
+      paddingBottom: '40px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
       height: '100%',
-      width: '282px',
-      alignSelf: 'flex-end' as 'center',
+      display: 'flex' as 'flex',
+      flexWrap: 'nowrap' as 'nowrap',
+      flexDirection: 'column' as 'column',
+      justifyContent: 'flex-start' as 'flex-start',
       flexGrow: 0,
       flexShrink: 0
     },
@@ -119,8 +124,6 @@ export class Modal extends React.Component<Properties> {
       padding: '18px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
-      height: '500px',
-      width: '300px',
       alignSelf: 'center' as 'center',
       flexGrow: 0,
       flexShrink: 0
