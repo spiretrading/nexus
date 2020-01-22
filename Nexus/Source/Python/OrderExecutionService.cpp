@@ -337,6 +337,7 @@ void Nexus::Python::ExportOrderFields(pybind11::module& module) {
     .def_readwrite("price", &OrderFields::m_price)
     .def_readwrite("time_in_force", &OrderFields::m_timeInForce)
     .def_readwrite("additional_fields", &OrderFields::m_additionalFields)
+    .def("__str__", lexical_cast<std::string, OrderFields>)
     .def(self < self)
     .def(self == self);
   module.def("find_field", &FindField);
@@ -355,6 +356,7 @@ void Nexus::Python::ExportOrderInfo(pybind11::module& module) {
     .def_readwrite("order_id", &OrderInfo::m_orderId)
     .def_readwrite("shorting_flag", &OrderInfo::m_shortingFlag)
     .def_readwrite("timestamp", &OrderInfo::m_timestamp)
+    .def("__str__", lexical_cast<std::string, OrderInfo>)
     .def(self == self)
     .def(self != self);
 }
