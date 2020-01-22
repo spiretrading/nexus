@@ -4,14 +4,14 @@
 using namespace Nexus;
 using namespace Spire;
 
-LocalRangeInputModel::LocalRangeInputModel(
-    const std::vector<ChartValue> data)
-    : m_data(data),
-      m_minimum_value(0),
-      m_maximum_value(std::numeric_limits<int>::max()) {
-  if(!m_data.empty()) {
-    m_minimum_value = data.front();
-    m_maximum_value = data.front();
+LocalRangeInputModel::LocalRangeInputModel(std::vector<ChartValue> data)
+    : m_data(std::move(data)) {
+  if(m_data.empty()) {
+    m_minimum_value = ChartValue(Quantity(0));
+    m_maximum_value = ChartValue(Quantity(0));
+  } else {
+    m_minimum_value = m_data.front();
+    m_maximum_value = m_data.front();
     for(auto& value : m_data) {
       m_minimum_value = min(value, m_minimum_value);
       m_maximum_value = max(value, m_maximum_value);

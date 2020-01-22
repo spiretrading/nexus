@@ -19,6 +19,8 @@ namespace Spire {
         int m_highest_frequency;
       };
 
+      virtual ~RangeInputModel() = default;
+
       //! Returns the smallest value among the data.
       virtual ChartValue get_minimum_value() const = 0;
 

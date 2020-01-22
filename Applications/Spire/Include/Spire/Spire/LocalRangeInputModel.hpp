@@ -13,7 +13,7 @@ namespace Spire {
       /*
         \param data The data for the model.
       */
-      LocalRangeInputModel(const std::vector<ChartValue> data);
+      LocalRangeInputModel(std::vector<ChartValue> data);
 
       ChartValue get_minimum_value() const override;
 
