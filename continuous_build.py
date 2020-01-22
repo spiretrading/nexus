@@ -72,7 +72,7 @@ def copy_build(applications, version, name, source, path):
 
 def copy_python_libraries(path, version):
   beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
-  python_path = os.path.join(path, version, 'Python')
+  python_path = os.path.join(path, str(version), 'Python')
   makedirs(python_path)
   if sys.platform == 'win32':
     python_ext = '.pyd'
