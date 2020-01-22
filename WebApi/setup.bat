@@ -3,7 +3,7 @@ SETLOCAL
 IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
 )
-SET beam_commit="3c9d707d284f2040ef4b8f9e3232f46a1ed17e53"
+SET beam_commit="266a6b6f417d314cf031f56e87752b91ece8857b"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (

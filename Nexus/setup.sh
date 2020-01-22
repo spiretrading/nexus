@@ -1,7 +1,7 @@
 #!/bin/bash
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="44ca4503e336efdbe0a4275a00d400f7f690db48"
+beam_commit="266a6b6f417d314cf031f56e87752b91ece8857b"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/eidolonsystems/beam.git Beam
