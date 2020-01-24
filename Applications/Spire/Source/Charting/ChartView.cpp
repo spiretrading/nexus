@@ -29,23 +29,6 @@ namespace {
     return QVariant();
   }
 
-  template<typename T, typename U>
-  U map_to(T value, T a, T b, U c, U d) {
-    return static_cast<U>((value - a) / (b - a) * (d - c) + c);
-  }
-
-  template<typename U>
-  U map_to(int value, int a, int b, U c, U d) {
-    return map_to(static_cast<double>(value), static_cast<double>(a),
-      static_cast<double>(b), c, d);
-  }
-
-  template<typename T>
-  int map_to(T value, T a, T b, int c, int d) {
-    return static_cast<int>(
-      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d)));
-  }
-
   ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
     if(value_type == ChartValue::Type::MONEY) {
       return ChartValue(Money::ONE);

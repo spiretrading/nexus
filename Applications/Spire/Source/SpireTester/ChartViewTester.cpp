@@ -4,6 +4,7 @@
 #include "Spire/Charting/ChartView.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Nexus;
@@ -42,23 +43,6 @@ namespace {
       gaps.push_back({ChartValue(930), ChartValue(940)});
     }
     return gaps;
-  }
-
-  template<typename T, typename U>
-  U map_to(T value, T a, T b, U c, U d) {
-    return static_cast<U>((value - a) / (b - a) * (d - c) + c);
-  }
-
-  template<typename U>
-  U map_to(int value, int a, int b, U c, U d) {
-    return map_to(static_cast<double>(value), static_cast<double>(a),
-      static_cast<double>(b), c, d);
-  }
-
-  template<typename T>
-  int map_to(T value, T a, T b, int c, int d) {
-    return static_cast<int>(
-      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d)));
   }
 
   QPoint to_pixel(const ChartPoint& point) {
