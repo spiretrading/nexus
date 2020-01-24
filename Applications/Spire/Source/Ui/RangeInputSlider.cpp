@@ -8,17 +8,16 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  template<typename T, typename U>
-  U map_to(T value, T a, T b, U c, U d) {
-    return static_cast<U>((value - a) / (b - a) * (d - c) + c);
-  }
-
   int HANDLE_SIZE() {
     return scale_width(16);
   }
 
   int MARGIN() {
     return scale_width(8);
+  }
+
+  int RANGE_MARGIN() {
+    return MARGIN() + HANDLE_SIZE();
   }
 }
 
@@ -75,12 +74,10 @@ void RangeInputSlider::mouseMoveEvent(QMouseEvent* event) {
   auto x = event->x();
   if(m_is_dragging_handle) {
     auto delta = x - m_last_mouse_x;
-    if(m_min_handle_x + delta < MARGIN() + HANDLE_SIZE()) {
-      m_max_handle_x = MARGIN() + HANDLE_SIZE() +
-        m_max_handle_x - m_min_handle_x;
+    if(m_min_handle_x + delta < RANGE_MARGIN()) {
+      m_max_handle_x = RANGE_MARGIN() + m_max_handle_x - m_min_handle_x;
       m_min_handle_x = MARGIN() + HANDLE_SIZE();
-    } else if(m_max_handle_x + delta > width() - (MARGIN() +
-        HANDLE_SIZE())) {
+    } else if(m_max_handle_x + delta > width() - RANGE_MARGIN()) {
       m_min_handle_x = width() - MARGIN() - HANDLE_SIZE() -
         (m_max_handle_x - m_min_handle_x);
       m_max_handle_x = width() - MARGIN() - HANDLE_SIZE();
@@ -94,7 +91,7 @@ void RangeInputSlider::mouseMoveEvent(QMouseEvent* event) {
     m_current_max_value = map_x_to_value(m_max_handle_x);
     m_max_changed_signal(m_current_max_value);
   } else if(m_is_dragging_min) {
-    auto pos_x = max(MARGIN() + HANDLE_SIZE(), x - m_mouse_offset);
+    auto pos_x = max(RANGE_MARGIN(), x - m_mouse_offset);
     pos_x = min(pos_x, m_max_handle_x);
     m_min_handle_x = pos_x;
     m_current_min_value = map_x_to_value(m_min_handle_x);
@@ -203,14 +200,14 @@ void RangeInputSlider::draw_handle(QPainter& painter, bool is_highlighted,
 
 ChartValue RangeInputSlider::map_x_to_value(int x) {
   return map_to(static_cast<double>(x),
-    static_cast<double>(MARGIN() + HANDLE_SIZE()),
+    static_cast<double>(RANGE_MARGIN()),
     static_cast<double>(width() - MARGIN() - HANDLE_SIZE()),
     m_min_value, m_max_value);
 }
 
 void RangeInputSlider::move_handle(ChartValue value, int& handle_x) {
   handle_x = static_cast<int>(map_to(value, m_min_value, m_max_value,
-    static_cast<double>(MARGIN() + HANDLE_SIZE()),
+    static_cast<double>(RANGE_MARGIN()),
     static_cast<double>(width() - MARGIN() - HANDLE_SIZE())));
   update();
 }

@@ -20,7 +20,7 @@ namespace Spire {
         \param parent The parent widget to the RangeInputSlider.
       */
       RangeInputSlider(ChartValue min_value, ChartValue max_value,
-        QWidget* parent);
+        QWidget* parent = nullptr);
 
       //! Sets the minimum value of the slider without triggering the changed
       //! signal.
