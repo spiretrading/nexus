@@ -12,8 +12,8 @@
 #include "Spire/Catalog/CatalogSearchBarModel.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LineInputDialog.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_CatalogTabView.h"
 
 using namespace Beam;

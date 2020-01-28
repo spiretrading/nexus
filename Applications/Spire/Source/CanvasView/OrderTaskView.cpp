@@ -2,7 +2,6 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
@@ -20,12 +20,10 @@
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace Nexus;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace std;
 
@@ -88,19 +86,20 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
     m_parent->raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[*m_state->m_security].push_back(entry.m_context);
-  entry.m_context->m_task->GetPublisher().Monitor(
-    m_slotHandler.GetSlot<Task::StateEntry>(std::bind(
-    &OrderTaskView::OnTaskState, this,
-    std::weak_ptr<BlotterTasksModel::TaskContext>(entry.m_context),
-    *m_state->m_security, std::placeholders::_1)));
-  entry.m_context->m_task->Execute();
+  m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
+  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+    [=, security = *m_state->m_security, task = entry.m_task] (
+        const Task::StateEntry& update) {
+      OnTaskState(task, security, update);
+    }));
+  entry.m_task->Execute();
 }
 
 unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
     const CanvasNode& baseNode) {
   auto taskNode = CanvasNode::Clone(baseNode);
-  auto securityNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SECURITY);
+  auto securityNode = taskNode->FindNode(
+    SingleOrderTaskNode::SECURITY_PROPERTY);
   if(securityNode.is_initialized() && !securityNode->IsReadOnly()) {
     if(auto securityValueNode =
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
@@ -108,7 +107,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
       builder.Replace(*securityNode, securityValueNode->SetValue(
         *m_state->m_security, m_userProfile->GetMarketDatabase()));
       builder.SetReadOnly(*securityNode, true);
-      auto sideNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SIDE);
+      auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
         if(sideNode.is_initialized()) {
           if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
@@ -124,7 +123,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
           return *m_state->m_askPrice;
         }
       }();
-      auto priceNode = taskNode->FindNode(BaseSingleOrderTaskFactory::PRICE);
+      auto priceNode = taskNode->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
       if(priceNode.is_initialized() && !priceNode->IsReadOnly()) {
         if(auto moneyNode = dynamic_cast<const MoneyNode*>(&*priceNode)) {
           builder.Replace(*priceNode, moneyNode->SetValue(price));
@@ -134,13 +133,13 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
         }
       }
       auto quantityNode = taskNode->FindNode(
-        BaseSingleOrderTaskFactory::QUANTITY);
+        SingleOrderTaskNode::QUANTITY_PROPERTY);
       if(quantityNode.is_initialized() && !quantityNode->IsReadOnly()) {
         if(auto quantityValueNode = dynamic_cast<const IntegerNode*>(
             &*quantityNode)) {
           auto quantity = [&] {
             auto sideNode = taskNode->FindNode(
-              BaseSingleOrderTaskFactory::SIDE);
+              SingleOrderTaskNode::SIDE_PROPERTY);
             if(sideNode.is_initialized()) {
               if(auto sideValueNode = dynamic_cast<const SideNode*>(
                   &*sideNode)) {
@@ -250,13 +249,8 @@ bool OrderTaskView::HandleCancelBindingEvent(
   return true;
 }
 
-void OrderTaskView::OnTaskState(
-    std::weak_ptr<BlotterTasksModel::TaskContext> weakTask,
+void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
     const Security& security, const Task::StateEntry& update) {
-  auto task = weakTask.lock();
-  if(task == nullptr) {
-    return;
-  }
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted[security], task);
   }

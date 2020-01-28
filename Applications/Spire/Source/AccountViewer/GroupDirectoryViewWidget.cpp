@@ -1,7 +1,7 @@
 #include "Spire/AccountViewer/GroupDirectoryViewWidget.hpp"
 #include <QMessageBox>
 #include "Spire/AccountViewer/ComplianceModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_GroupDirectoryViewWidget.h"
 
 using namespace Beam;

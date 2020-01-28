@@ -7,8 +7,8 @@
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/CatalogTabView.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LineInputDialog.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

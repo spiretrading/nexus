@@ -109,8 +109,8 @@ ca_equities:
   #   < $1.00     X       X
   lynx:
     fee_table:
-      [[ 0.00017,  0.00017],
-       [ 0.00023, -0.00010]]
+      [[ 0.00023, 0.0000],
+       [ 0.00023, 0.0000]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
@@ -251,6 +251,17 @@ ca_equities:
 
   # List is sub-dime, sub-dollar, dollar.
     odd_lot_list: [0.000025, 0.000075, 0.0010]
+
+# Fees charges for Hong Kong markets.
+hk_equities:
+  spire_fee: 0.90
+  stamp_tax: 0.001078
+  levy: 0.000027
+  trading_fee: 0.00005
+  brokerage_fee: 0.00012
+  ccass_fee: 0.00002
+  minimum_ccass_fee: 2.0
+  stamp_path: "./hkex_stamp.yml"
 
 # The fees charged for U.S. equity markets.
 us_equities:

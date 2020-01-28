@@ -345,8 +345,8 @@ namespace Nexus::OrderExecutionService {
         }
         const Order* order;
         try {
-          order = &m_driver->Recover(Beam::Queries::MakeSequencedValue(
-            Beam::Queries::MakeIndexedValue(*orderRecord, account),
+          order = &m_driver->Recover(Beam::Queries::SequencedValue(
+            Beam::Queries::IndexedValue(*orderRecord, account),
             orderRecord.GetSequence()));
         } catch(const std::exception&) {
           continue;
@@ -406,7 +406,7 @@ namespace Nexus::OrderExecutionService {
       });
     try {
       m_registry.Publish(
-        Beam::Queries::MakeIndexedValue(executionReport, account),
+        Beam::Queries::IndexedValue(executionReport, account),
         [&] {
           return LoadInitialSequences(*m_dataStore, account);
         },
@@ -599,8 +599,8 @@ namespace Nexus::OrderExecutionService {
         m_liveOrders.Insert((*orderInfo)->m_orderId);
         m_dataStore->Store(orderInfo);
         request.SetResult(orderInfo);
-        auto orderRecord = Beam::Queries::MakeSequencedValue(
-          Beam::Queries::MakeIndexedValue(
+        auto orderRecord = Beam::Queries::SequencedValue(
+          Beam::Queries::IndexedValue(
           OrderRecord{**orderInfo, {}}, orderInfo->GetIndex()),
           orderInfo.GetSequence());
         m_submissionSubscriptions.Publish(orderRecord,

@@ -1,6 +1,6 @@
 #ifndef SPIRE_ACTIVITYLOGMODEL_HPP
 #define SPIRE_ACTIVITYLOGMODEL_HPP
-#include <Beam/Pointers/DelayPtr.hpp>
+#include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
@@ -75,7 +75,7 @@ namespace Spire {
         \param publisher Publishes the Orders to model.
       */
       void SetOrderExecutionPublisher(
-        Beam::Ref<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
         publisher);
 
       int rowCount(const QModelIndex& parent) const;
@@ -96,10 +96,10 @@ namespace Spire {
           const Nexus::OrderExecutionService::ExecutionReport& report);
       };
       QTimer m_updateTimer;
-      Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,

@@ -1,17 +1,13 @@
 #include "Spire/AccountViewer/GroupProfitAndLossReportWidget.hpp"
 #include <Beam/Queues/QueuePublisher.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/ProfitAndLossWidget.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CollapsibleWidget.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_GroupProfitAndLossReportWidget.h"
 
 using namespace Beam;
@@ -93,8 +89,8 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
     m_groupModels.push_back(std::move(reportModel));
     totalsPublisher->Add(*orderPublisher);
   }
-  m_totalsModel.Reset();
-  m_totalsModel.Initialize(Ref(*m_userProfile), totalsPublisher);
+  m_totalsModel = std::nullopt;
+  m_totalsModel.emplace(Ref(*m_userProfile), totalsPublisher);
   auto totalsProfitAndLossWidget = new ProfitAndLossWidget();
   totalsProfitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_totalsModel->m_profitAndLossModel));

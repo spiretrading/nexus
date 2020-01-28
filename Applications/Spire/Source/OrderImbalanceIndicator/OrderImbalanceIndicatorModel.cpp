@@ -1,9 +1,8 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Nexus/Definitions/Market.hpp"
-#include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -142,15 +141,15 @@ bool OrderImbalanceIndicatorModel::IsDisplayed(
 
 void OrderImbalanceIndicatorModel::Reset() {
   beginResetModel();
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_displayedOrderImbalances.clear();
   m_orderImbalances.clear();
   endResetModel();
 }
 
 void OrderImbalanceIndicatorModel::InitializePublishers() {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   Beam::Queries::Range timeRange = m_properties.GetTimeRange(
     m_userProfile->GetServiceClients().GetTimeClient());
   for(const MarketDatabase::Entry& market :

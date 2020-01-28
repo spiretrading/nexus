@@ -10,7 +10,6 @@
 #include <QMessageBox>
 #include <QStatusBar>
 #include <QTableView>
-#include "Nexus/Tasks/SingleOrderTask.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -21,6 +20,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
@@ -29,18 +29,16 @@
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/ValueLabel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
 #include "ui_BookViewWindow.h"
 
 using namespace Beam;
-using namespace Beam::Tasks;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
-using namespace Nexus::Tasks;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -270,7 +268,8 @@ void BookViewWindow::SetupSecurityTechnicalsModel() {
 
 unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
   auto taskNode = CanvasNode::Clone(node);
-  auto securityNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SECURITY);
+  auto securityNode = taskNode->FindNode(
+    SingleOrderTaskNode::SECURITY_PROPERTY);
   if(securityNode.is_initialized() && !securityNode->IsReadOnly()) {
     if(auto securityValueNode =
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
@@ -279,7 +278,7 @@ unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
         m_userProfile->GetMarketDatabase()));
       builder.SetReadOnly(*securityNode, true);
       Money price;
-      auto sideNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SIDE);
+      auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       if(sideNode.is_initialized()) {
         if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
           if(sideValueNode->GetValue() == Side::BID) {
@@ -293,7 +292,7 @@ unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
       } else {
         price = m_ui->m_bidPanel->GetBestQuote().m_price;
       }
-      auto priceNode = taskNode->FindNode(BaseSingleOrderTaskFactory::PRICE);
+      auto priceNode = taskNode->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
       if(priceNode.is_initialized() && !priceNode->IsReadOnly()) {
         if(auto moneyNode = dynamic_cast<const MoneyNode*>(&*priceNode)) {
           builder.Replace(*priceNode, moneyNode->SetValue(price));
@@ -303,12 +302,13 @@ unique_ptr<CanvasNode> BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
         }
       }
       auto quantityNode = taskNode->FindNode(
-        BaseSingleOrderTaskFactory::QUANTITY);
+        SingleOrderTaskNode::QUANTITY_PROPERTY);
       if(quantityNode.is_initialized() && !quantityNode->IsReadOnly()) {
         Quantity quantity;
         if(auto quantityValueNode = dynamic_cast<const IntegerNode*>(
             &*quantityNode)) {
-          auto sideNode = taskNode->FindNode(BaseSingleOrderTaskFactory::SIDE);
+          auto sideNode = taskNode->FindNode(
+            SingleOrderTaskNode::SIDE_PROPERTY);
           if(sideNode.is_initialized()) {
             if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
               quantity = m_userProfile->GetDefaultQuantity(m_security,
@@ -356,13 +356,12 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
     raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[m_security].push_back(entry.m_context);
-  entry.m_context->m_task->GetPublisher().Monitor(
-    m_slotHandler.GetSlot<Task::StateEntry>(std::bind(
-    &BookViewWindow::OnTaskState, this,
-    std::weak_ptr<BlotterTasksModel::TaskContext>(entry.m_context),
-    std::placeholders::_1)));
-  entry.m_context->m_task->Execute();
+  m_tasksExecuted[m_security].push_back(entry.m_task);
+  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+    [=, task = entry.m_task] (const Task::StateEntry& update) {
+      OnTaskState(task, update);
+    }));
+  entry.m_task->Execute();
 }
 
 void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
@@ -503,13 +502,8 @@ void BookViewWindow::OnVolumeUpdate(Quantity volume) {
   m_ui->m_volumeValue->SetValue(static_cast<int>(volume));
 }
 
-void BookViewWindow::OnTaskState(
-    std::weak_ptr<BlotterTasksModel::TaskContext> weakTask,
+void BookViewWindow::OnTaskState(const std::shared_ptr<Task>& task,
     const Task::StateEntry& update) {
-  auto task = weakTask.lock();
-  if(task == nullptr) {
-    return;
-  }
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted[m_security], task);
   }

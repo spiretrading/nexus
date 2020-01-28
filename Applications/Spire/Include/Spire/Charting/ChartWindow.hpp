@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHARTWINDOW_HPP
 #define SPIRE_CHARTWINDOW_HPP
+#include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/connection.hpp>
@@ -82,7 +83,7 @@ namespace Spire {
       ChartIntervalComboBox* m_intervalComboBox;
       UserProfile* m_userProfile;
       ChartInteractionMode m_interactionMode;
-      Beam::DelayPtr<ChartPlotController> m_controller;
+      std::optional<ChartPlotController> m_controller;
       Nexus::Security m_security;
       std::string m_linkIdentifier;
       UI::SecurityViewStack m_securityViewStack;

@@ -382,7 +382,6 @@ namespace AdministrationService {
     (SubmitEntitlementModificationRequestService,
       "Nexus.AdministrationServices.SubmitEntitlementModificationRequestService",
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
-      Beam::ServiceLocator::DirectoryEntry, submission_account,
       EntitlementModification, modification, Message, comment),
 
     /*! \interface Nexus::AdministrationServices::LoadRiskModificationService
@@ -401,8 +400,6 @@ namespace AdministrationService {
         \brief Submits a request to modify an account's risk parameters.
         \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
                account to modify.
-        \param submission_account <code>Beam::ServiceLocator::DirectoryEntry</code>
-               The account submitting the request.
         \param modification <code>Nexus::AdministrationService::RiskModification</code>
                The modification to apply.
         \param comment <code>Nexus::AdministrationService::Message</code> The
@@ -414,7 +411,6 @@ namespace AdministrationService {
     (SubmitRiskModificationRequestService,
       "Nexus.AdministrationServices.SubmitRiskModificationRequestService",
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
-      Beam::ServiceLocator::DirectoryEntry, submission_account,
       RiskModification, modification, Message, comment),
 
     /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestStatusService
@@ -433,8 +429,6 @@ namespace AdministrationService {
         \brief Approves an account modification request.
         \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
                The id of the request.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account that approved the request.
         \param comment <code>Nexus::AdministrationService::Message</code> The
                comment to associate with the approval.
         \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
@@ -444,14 +438,12 @@ namespace AdministrationService {
     (ApproveAccountModificationRequestService,
       "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
       AccountModificationRequest::Update, AccountModificationRequest::Id, id,
-      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+      Message, comment),
 
     /*! \interface Nexus::AdministrationServices::RejectAccountModificationRequestService
         \brief Rejects an account modification request.
         \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
                The id of the request.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account that rejected the request.
         \param comment <code>Nexus::AdministrationService::Message</code> The
                comment to associate with the rejection.
         \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
@@ -461,7 +453,7 @@ namespace AdministrationService {
     (RejectAccountModificationRequestService,
       "Nexus.AdministrationServices.RejectAccountModificationRequestService",
       AccountModificationRequest::Update, AccountModificationRequest::Id, id,
-      Beam::ServiceLocator::DirectoryEntry, account, Message, comment),
+      Message, comment),
 
     /*! \interface Nexus::AdministrationServices::LoadMessageService
         \brief Loads a message.

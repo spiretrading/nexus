@@ -6,11 +6,11 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QApplication>
 #include <QMessageBox>
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/Toolbar.hpp"
 #include "Spire/UI/ToolbarWindowSettings.hpp"
 #include "Spire/UI/UISerialization.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

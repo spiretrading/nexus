@@ -27,6 +27,7 @@ namespace {
   const auto TRADE_LIQUIDITY_INDICATOR_TAG = 9882;
   const auto NO_TRADE_FEAT_TAG = 7713;
   const auto NO_TRADE_KEY_TAG = 7714;
+  const auto LONG_LIFE_TAG = 7735;
 }
 
 ChixFixApplication::ChixFixApplication(Ref<LiveNtpTimeClient> timeClient)
@@ -66,6 +67,15 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
           newOrderSingle->set(FIX::ExecInst("M"));
         }
         hasDestination = true;
+        for(auto& tag : info.m_fields.m_additionalFields) {
+          if(tag.GetKey() == LONG_LIFE_TAG) {
+            if(auto value = boost::get<std::string>(&tag.GetValue())) {
+              if(*value == "Y" || *value == "N") {
+                newOrderSingle->setField(LONG_LIFE_TAG, *value);
+              }
+            }
+          }
+        }
       } else {
         for(auto& tag : info.m_fields.m_additionalFields) {
           if(tag.GetKey() == FIX::FIELD::ExDestination) {
@@ -76,10 +86,15 @@ const Order& ChixFixApplication::Submit(const OrderInfo& info) {
                 newOrderSingle->setField(ANONYMOUS_TAG, "Y");
               }
               hasDestination = true;
-              break;
             } else {
               BOOST_THROW_EXCEPTION(FixOrderRejectedException(
                 "Invalid value for tag 100 (ExDestination)."));
+            }
+          } else if(tag.GetKey() == LONG_LIFE_TAG) {
+            if(auto value = boost::get<std::string>(&tag.GetValue())) {
+              if(*value == "Y" || *value == "N") {
+                newOrderSingle->setField(LONG_LIFE_TAG, *value);
+              }
             }
           }
         }

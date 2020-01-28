@@ -5,8 +5,8 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/Spire/UserProfile.hpp"
 #include "Spire/UI/CanvasWindow.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "ui_BlotterMonitorsDialog.h"
 
 using namespace Beam;
@@ -128,7 +128,7 @@ void BlotterMonitorsDialog::OnAddMonitor() {
   m_ui->m_monitorTable->setItem(m_propeties.GetMonitors().size() - 1, 0,
     monitorItem);
   m_ui->m_monitorTable->setCurrentItem(monitorItem);
-  m_ui->m_monitorTable->setItemSelected(monitorItem, true);
+  monitorItem->setSelected(true);
   m_ui->m_monitorTable->setFocus();
 }
 
@@ -161,7 +161,7 @@ void BlotterMonitorsDialog::OnLoadDefault() {
   if(m_ui->m_monitorTable->rowCount() > 0) {
     auto selectedItem = m_ui->m_monitorTable->item(0, 0);
     m_ui->m_monitorTable->setCurrentItem(selectedItem);
-    m_ui->m_monitorTable->setItemSelected(selectedItem, true);
+    selectedItem->setSelected(true);
   }
 }
 

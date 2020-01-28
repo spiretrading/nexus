@@ -3,7 +3,7 @@
 #include <QDoubleSpinBox>
 #include <QKeyEvent>
 #include <QVBoxLayout>
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -31,7 +31,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
   layout->addWidget(m_spinBox);
   connect(m_spinBox,
     static_cast<void (QDoubleSpinBox::*)(const QString&)>(
-    &QDoubleSpinBox::valueChanged), this, &MoneySpinBox::OnValueChanged);
+    &QDoubleSpinBox::textChanged), this, &MoneySpinBox::OnValueChanged);
 }
 
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,

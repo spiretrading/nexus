@@ -27,8 +27,6 @@ namespace Nexus::OrderExecutionService {
       virtual void QueryExecutionReports(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) = 0;
 
-      virtual const OrderExecutionPublisher& GetOrderSubmissionPublisher() = 0;
-
       virtual const Order& Submit(const OrderFields& fields) = 0;
 
       virtual void Cancel(const Order& order) = 0;
@@ -77,8 +75,6 @@ namespace Nexus::OrderExecutionService {
       void QueryExecutionReports(const AccountQuery& query,
         const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
         override;
-
-      const OrderExecutionPublisher& GetOrderSubmissionPublisher() override;
 
       const Order& Submit(const OrderFields& fields) override;
 
@@ -138,12 +134,6 @@ namespace Nexus::OrderExecutionService {
       const AccountQuery& query,
       const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
     m_client->QueryExecutionReports(query, queue);
-  }
-
-  template<typename ClientType>
-  const OrderExecutionPublisher& WrapperOrderExecutionClient<ClientType>::
-      GetOrderSubmissionPublisher() {
-    return m_client->GetOrderSubmissionPublisher();
   }
 
   template<typename ClientType>

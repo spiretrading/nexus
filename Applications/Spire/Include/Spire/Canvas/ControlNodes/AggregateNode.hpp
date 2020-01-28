@@ -21,6 +21,8 @@ namespace Spire {
       */
       AggregateNode(std::vector<std::unique_ptr<CanvasNode>> nodes);
 
+      virtual std::unique_ptr<CanvasNode> Convert(const CanvasType& type) const;
+
       virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
         std::unique_ptr<CanvasNode> replacement) const;
 

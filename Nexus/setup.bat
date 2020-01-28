@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="d8a4faff21a9773f25607e8413da693613ca298f"
+SET beam_commit="ab3e89fb5a3367745f9194804033ebc852d65743"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
@@ -22,7 +22,7 @@ IF NOT "%ERRORLEVEL%" == "0" (
   SET BUILD_BEAM=1
 )
 IF "%BUILD_BEAM%" == "1" (
-  CALL configure.bat "-DD=%ROOT%"
+  CALL configure.bat -DD="%ROOT%"
   CALL build.bat Debug
   CALL build.bat Release
 ) ELSE (
@@ -33,11 +33,11 @@ IF "%BUILD_BEAM%" == "1" (
 POPD
 SET commit=
 SET PATH=%PATH%;%ROOT%\Strawberry\perl\site\bin;%ROOT%\Strawberry\perl\bin;%ROOT%\Strawberry\c\bin
-IF NOT EXIST qt-5.12.1 (
-  git clone git://code.qt.io/qt/qt5.git qt-5.12.1
-  IF EXIST qt-5.12.1 (
-    PUSHD qt-5.12.1
-    git checkout 5.12.1
+IF NOT EXIST qt-5.14.0 (
+  git clone git://code.qt.io/qt/qt5.git qt-5.14.0
+  IF EXIST qt-5.14.0 (
+    PUSHD qt-5.14.0
+    git checkout 5.14.0
     perl init-repository --module-subset=default
     CALL configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
@@ -47,6 +47,19 @@ IF NOT EXIST qt-5.12.1 (
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
+  )
+)
+IF NOT EXIST lua-5.3.5 (
+  wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
+  IF EXIST lua-5.3.5.tar.gz (
+    gzip -d -c lua-5.3.5.tar.gz | tar -xf -
+    PUSHD lua-5.3.5\src
+    COPY %~dp0\Config\lua.cmake CMakeLists.txt
+    cmake -A Win32 .
+    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
+    POPD
+    DEL lua-5.3.5.tar.gz
   )
 )
 IF NOT EXIST quickfix-v.1.15.1 (
@@ -60,9 +73,9 @@ IF NOT EXIST quickfix-v.1.15.1 (
     sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
     POPD
     devenv /Upgrade quickfix_vs12.sln
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Debug ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Debug ^
       /p:UseEnv=true
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v141 /p:configuration=Release ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Release ^
       /p:UseEnv=true
     POPD
     DEL quickfix-v.1.15.1.zip

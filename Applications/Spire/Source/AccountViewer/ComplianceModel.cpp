@@ -1,9 +1,7 @@
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include <algorithm>
-#include "Nexus/Compliance/VirtualComplianceClient.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

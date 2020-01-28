@@ -23,7 +23,7 @@ OrderLogModel::OrderEntry::OrderEntry(const Order* order)
 OrderLogModel::OrderLogModel(const OrderLogProperties& properties)
     : m_properties(properties),
       m_orderExecutionPublisher(nullptr) {
-  m_slotHandler.Initialize();
+  m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &OrderLogModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -47,7 +47,7 @@ const OrderLogModel::OrderEntry& OrderLogModel::GetEntry(
 }
 
 void OrderLogModel::SetOrderExecutionPublisher(
-    Ref<OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     vector<OrderEntry> entries;
@@ -57,8 +57,8 @@ void OrderLogModel::SetOrderExecutionPublisher(
       m_orderRemovedSignal(entry);
     }
   }
-  m_slotHandler.Reset();
-  m_slotHandler.Initialize();
+  m_slotHandler = std::nullopt;
+  m_slotHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
   m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
     std::bind(&OrderLogModel::OnOrderExecuted, this, std::placeholders::_1)));

@@ -11,16 +11,11 @@ IF NOT EXIST configure.bat (
 )
 SET DIRECTORY=%~dp0
 SET DEPENDENCIES=
-SET IS_DEPENDENCY=
 :begin_args
 SET ARG=%~1
-IF "%IS_DEPENDENCY%" == "1" (
-  SET DEPENDENCIES=%ARG%
-  SET IS_DEPENDENCY=
-  GOTO begin_args
-) ELSE IF NOT "%ARG%" == "" (
-  IF "%ARG:~0,3%" == "-DD" (
-    SET IS_DEPENDENCY=1
+IF NOT "%ARG%" == "" (
+  IF "%ARG:~0,4%" == "-DD=" (
+    SET DEPENDENCIES=%ARG:~4%
   )
   SHIFT
   GOTO begin_args
@@ -39,5 +34,5 @@ IF NOT "%DEPENDENCIES%" == "%ROOT%\Dependencies" (
     mklink /j Dependencies "%DEPENDENCIES%" > NUL
   )
 )
-cmake -T host=x64 "%DIRECTORY%"
+cmake -A Win32 -T host=x64 "%DIRECTORY%"
 ENDLOCAL

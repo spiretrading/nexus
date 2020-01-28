@@ -18,11 +18,11 @@ namespace {
 }
 
 void SecurityEntryTester::setUp() {
-  m_timeClient.Initialize();
+  m_timeClient.emplace();
 }
 
 void SecurityEntryTester::tearDown() {
-  m_timeClient.Reset();
+  m_timeClient = std::nullopt;
 }
 
 void SecurityEntryTester::TestPublishBboQuote() {

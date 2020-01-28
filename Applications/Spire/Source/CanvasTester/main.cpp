@@ -4,6 +4,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include "Spire/CanvasTests/RecordTypeTester.hpp"
+#include "Spire/CanvasTests/TranslationTester.hpp"
 #include "Spire/CanvasTests/ValueTypeTester.hpp"
 
 using namespace Spire::Tests;
@@ -13,6 +14,7 @@ int main() {
   CppUnit::BriefTestProgressListener listener;
   runner.addTest(ValueTypeTester::suite());
   runner.addTest(RecordTypeTester::suite());
+  runner.addTest(TranslationTester::suite());
   runner.eventManager().addListener(&listener);
   runner.setOutputter(new CPPUNIT_NS::CompilerOutputter(&runner.result(),
     CPPUNIT_NS::stdCOut()));

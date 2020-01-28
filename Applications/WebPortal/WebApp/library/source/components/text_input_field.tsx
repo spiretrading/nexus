@@ -10,16 +10,22 @@ interface Properties {
   /** Text to show if the value is empty. */
   placeholder?: string;
 
-  /** The size to display the component at. */
-  displaySize: DisplaySize;
-
   /** Indicates if there is an error with the value. */
   isError?: boolean;
+
+  /** Additional CSS styles. */
+  style?: any;
+
+  /** The class name of the input box. */
+  className?: string;
 
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
+  
+  /** The size to display the component at. */
+  displaySize: DisplaySize;
 }
 
 /** Displays a single text input field. */
@@ -43,21 +49,22 @@ export class TextInputField extends React.Component<Properties> {
     })();
     const errorStyle = (() => {
       if(this.props.isError) {
-        return TextInputField.STYLE.errorBox;
+        return TextInputField.EXTRA_STYLE.errorBox;
       } else {
         return null;
       }
     })();
     return (
       <input value={this.props.value}
+        style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onInput(event.target.value);
-        }}
-        className={css(boxStyle, errorStyle)}/>);
+          this.props.onInput(event.target.value);}}
+        className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' +
+          this.props.className}/>);
   }
 
-  private static STYLE = StyleSheet.create({
+  private static readonly STYLE = {
     boxSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -68,29 +75,12 @@ export class TextInputField extends React.Component<Properties> {
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
       minWidth: '284px',
       width: '100%',
       paddingLeft: '10px',
-      ':focus': {
-        ouline: 0,
-        borderColor: '#684BC7',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
-      }
     },
     boxMedium: {
       boxSizing: 'border-box' as 'border-box',
@@ -106,20 +96,6 @@ export class TextInputField extends React.Component<Properties> {
       color: '#000000',
       minWidth: '284px',
       paddingLeft: '10px',
-      ':focus': {
-        ouline: 0,
-        borderColor: '#684BC7',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
-      }
     },
     boxLarge: {
       boxSizing: 'border-box' as 'border-box',
@@ -135,6 +111,11 @@ export class TextInputField extends React.Component<Properties> {
       color: '#000000',
       minWidth: '350px',
       paddingLeft: '10px',
+    }
+  };
+
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    effects: {
       ':focus': {
         ouline: 0,
         borderColor: '#684BC7',

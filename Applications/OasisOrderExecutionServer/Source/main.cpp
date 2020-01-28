@@ -42,6 +42,7 @@
 #include "OasisOrderExecutionServer/FeeCalculatorOrderExecutionDriver.hpp"
 #include "OasisOrderExecutionServer/LekFixApplication.hpp"
 #include "OasisOrderExecutionServer/MatchNowFixApplication.hpp"
+#include "OasisOrderExecutionServer/MonexBoomFixApplication.hpp"
 #include "OasisOrderExecutionServer/OmegaFixApplication.hpp"
 #include "OasisOrderExecutionServer/TsxSorFixApplication.hpp"
 #include "Version.hpp"
@@ -294,12 +295,25 @@ int main(int argc, const char** argv) {
     lekEntry.m_destinations.push_back(DefaultDestinations::NYSE());
     lekEntry.m_destinations.push_back(DefaultDestinations::NASDAQ());
     fixApplicationEntries.push_back(lekEntry);
+    FixApplicationEntry boomEntry;
+    boomEntry.m_configPath = "boom.cfg";
+    boomEntry.m_application = std::make_shared<MonexBoomFixApplication>(
+      Ref(*timeClient), Ref(*marketDataClient));
+    boomEntry.m_destinations.push_back(DefaultDestinations::HKEX());
+    fixApplicationEntries.push_back(boomEntry);
   } catch(const std::exception& e) {
     cerr << "Unable to initialize FIX entry: " << e.what() << endl;
     return -1;
   }
   ApplicationFixOrderExecutionDriver fixOrderExecutionDriver{
     fixApplicationEntries};
+  auto marketDatabase = MarketDatabase();
+  try {
+    marketDatabase = definitionsClient->LoadMarketDatabase();
+  } catch(const std::exception& e) {
+    cerr << "Unable to load market database: " << e.what() << endl;
+    return -1;
+  }
   AsxtFeeTable asxtFeeTable;
   try {
     asxtFeeTable = ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
@@ -307,9 +321,16 @@ int main(int argc, const char** argv) {
     cerr << "Unable to initialize ASX fee table: " << e.what() << endl;
     return -1;
   }
+  HkexFeeTable hkexFeeTable;
+  try {
+    hkexFeeTable = ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"),
+      marketDatabase);
+  } catch(const std::exception& e) {
+    cerr << "Unable to initialize HKEX fee table: " << e.what() << endl;
+    return -1;
+  }
   ConsolidatedTmxFeeTable tmxFeeTable;
   try {
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
     tmxFeeTable = ParseConsolidatedTmxFeeTable(
       GetNode(feeTableConfig, "ca_equities"), marketDatabase);
   } catch(const std::exception& e) {
@@ -318,7 +339,6 @@ int main(int argc, const char** argv) {
   }
   ConsolidatedUsFeeTable usFeeTable;
   try {
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
     usFeeTable = ParseConsolidatedUsFeeTable(
       GetNode(feeTableConfig, "us_equities"), marketDatabase);
   } catch(const std::exception& e) {
@@ -326,7 +346,8 @@ int main(int argc, const char** argv) {
     return -1;
   }
   ApplicationFeesCalculatorOrderExecutionDriver feesCalculator{
-    &fixOrderExecutionDriver, asxtFeeTable, tmxFeeTable, usFeeTable};
+    &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, tmxFeeTable,
+    usFeeTable};
   vector<unique_ptr<OrderSubmissionCheck>> checks;
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),

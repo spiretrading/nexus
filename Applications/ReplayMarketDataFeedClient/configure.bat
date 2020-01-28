@@ -39,5 +39,5 @@ IF NOT "%DEPENDENCIES%" == "%ROOT%\Dependencies" (
     mklink /j Dependencies "%DEPENDENCIES%" > NUL
   )
 )
-cmake -T host=x64 "%DIRECTORY%"
+cmake -A Win32 -T host=x64 "%DIRECTORY%"
 ENDLOCAL

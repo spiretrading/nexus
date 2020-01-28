@@ -1,7 +1,7 @@
 #ifndef SPIRE_PROFITANDLOSSMODEL_HPP
 #define SPIRE_PROFITANDLOSSMODEL_HPP
+#include <optional>
 #include <unordered_map>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/signal.hpp>
@@ -104,7 +104,7 @@ namespace Spire {
         m_profitAndLossEntryModelAddedSignal;
       mutable ProfitAndLossEntryModelRemovedSignal
         m_profitAndLossEntryModelRemovedSignal;
-      Beam::DelayPtr<Beam::TaskQueue> m_slotHandler;
+      std::optional<Beam::TaskQueue> m_slotHandler;
 
       void OnPortfolioUpdate(const SpirePortfolioMonitor::UpdateEntry& update);
       void OnUpdateTimer();

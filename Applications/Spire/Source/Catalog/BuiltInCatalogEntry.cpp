@@ -13,7 +13,7 @@
 #include "Spire/Canvas/IONodes/FilePathNode.hpp"
 #include "Spire/Canvas/IONodes/FileReaderNode.hpp"
 #include "Spire/Canvas/LuaNodes/LuaScriptNode.hpp"
-#include "Spire/Canvas/MarketDataNodes/BboQuoteNode.hpp"
+#include "Spire/Canvas/MarketDataNodes/BboQuoteQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/OrderImbalanceQueryNode.hpp"
 #include "Spire/Canvas/MarketDataNodes/TimeAndSaleQueryNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
@@ -60,8 +60,6 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Spire/Canvas/TaskNodes/IsTerminalNode.hpp"
-#include "Spire/Canvas/TaskNodes/TaskStateMonitorNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
@@ -79,7 +77,6 @@
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
-#include "Spire/Canvas/ValueNodes/TaskStateNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
@@ -106,7 +103,7 @@ const uuid BuiltInCatalogEntry::ALARM_UUID = stringUuidGenerator(
   "{5e93981b-6d91-49e9-8c67-c28f2848e297}");
 const uuid BuiltInCatalogEntry::ASK_ORDER_TASK_UUID = stringUuidGenerator(
   "{cd1091ac-d8be-47c0-830d-2521edde18af}");
-const uuid BuiltInCatalogEntry::BBO_UUID = stringUuidGenerator(
+const uuid BuiltInCatalogEntry::BBO_QUOTE_QUERY_UUID = stringUuidGenerator(
   "{5337c510-7c4f-11e1-b0c4-0800200c9a66}");
 const uuid BuiltInCatalogEntry::BID_ORDER_TASK_UUID = stringUuidGenerator(
   "{96c62c40-1cae-4c9e-8824-f1ca989a4e25}");
@@ -268,8 +265,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/hourglass.png", "", AlarmNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(ASK_ORDER_TASK_UUID,
     ":/icons/flash_yellow.png", "", *GetAskOrderTaskNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(BBO_UUID,
-    ":/icons/chart_line.png", "", BboQuoteNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(BBO_QUOTE_QUERY_UUID,
+    ":/icons/chart_line.png", "", BboQuoteQueryNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(BID_ORDER_TASK_UUID,
     ":/icons/flash_yellow.png", "", *GetBidOrderTaskNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Boolean",
@@ -327,8 +324,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/symbol_questionmark.png", "", IfNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Integer",
     INTEGER_UUID, ":/icons/weight.png", "", IntegerNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(IS_TERMINAL_UUID,
-    ":/icons/logic_not.png", "", IsTerminalNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LAST_UUID,
     ":/icons/note_pinned.png", "", LastNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(LESS_EQUAL_UUID,
@@ -412,11 +407,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/flash_yellow.png", "", SpawnNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(SUBTRACTION_UUID,
     ":/icons/calculator.png", "", SubtractionNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Task State",
-    TASK_STATE_UUID, ":/icons/trafficlight_green.png", "", TaskStateNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
-    TASK_STATE_MONITOR_UUID, ":/icons/magnifying_glass.png", "",
-    TaskStateMonitorNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Text", TEXT_UUID,
     ":/icons/window_font.png", "", TextNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(

@@ -18,12 +18,11 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 RiskWebServlet::PortfolioSubscriber::PortfolioSubscriber(DirectoryEntry account,
-    std::unique_ptr<WebSocketChannel> channel)
-    : m_account{std::move(account)},
-      m_client{std::move(channel)} {}
+  std::unique_ptr<WebSocketChannel> channel)
+  : m_account(std::move(account)),
+    m_client(std::move(channel)) {}
 
 bool RiskWebServlet::PortfolioFilter::IsFiltered(
     const PortfolioModel::Entry& entry, const DirectoryEntry& group) const {
@@ -42,23 +41,23 @@ bool RiskWebServlet::PortfolioFilter::IsFiltered(
 }
 
 RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_sessions{sessions.Get()},
-      m_serviceClients{serviceClients.Get()},
-      m_portfolioModel{Ref(*m_serviceClients)} {}
+  Ref<ApplicationServiceClients> serviceClients)
+  : m_sessions(sessions.Get()),
+    m_serviceClients(serviceClients.Get()),
+    m_portfolioModel(Ref(*m_serviceClients)) {}
 
 RiskWebServlet::~RiskWebServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> RiskWebServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> RiskWebServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   return slots;
 }
 
-vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
+std::vector<HttpUpgradeSlot<RiskWebServlet::WebSocketChannel>>
     RiskWebServlet::GetWebSocketSlots() {
-  vector<HttpUpgradeSlot<WebSocketChannel>> slots;
+  auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
   slots.emplace_back(MatchesPath(HttpMethod::GET,
     "/api/risk_service/portfolio"), std::bind(
     &RiskWebServlet::OnPortfolioUpgrade, this, std::placeholders::_1,
@@ -97,6 +96,7 @@ void RiskWebServlet::Close() {
 }
 
 void RiskWebServlet::Shutdown() {
+  m_portfolioTimer->Cancel();
   m_openState.SetClosed();
 }
 
@@ -134,8 +134,8 @@ void RiskWebServlet::SendPortfolioEntry(const PortfolioModel::Entry& entry,
       return;
     }
   }
-  JsonSender<SharedBuffer> sender;
-  StompFrame entryFrame{StompCommand::MESSAGE};
+  auto sender = JsonSender<SharedBuffer>();
+  auto entryFrame = StompFrame(StompCommand::MESSAGE);
   entryFrame.AddHeader({"subscription", subscriber.m_subscriptionId});
   entryFrame.AddHeader({"destination", "/api/risk_service/portfolio"});
   entryFrame.AddHeader({"content-type", "application/json"});
@@ -158,7 +158,7 @@ void RiskWebServlet::OnPortfolioUpgrade(const HttpRequest& request,
       subscriber->m_client.Open();
       while(true) {
         auto frame = subscriber->m_client.Read();
-        SharedBuffer buffer;
+        auto buffer = SharedBuffer();
         Serialize(frame, Store(buffer));
         std::cout << buffer << std::endl << std::endl << std::endl;
         if(frame.GetCommand() == StompCommand::SEND) {
@@ -225,10 +225,10 @@ void RiskWebServlet::OnPortfolioFilterRequest(
     const std::shared_ptr<PortfolioSubscriber>& subscriber,
     const StompFrame& frame) {
   struct Parameters {
-    string m_id;
-    vector<DirectoryEntry> m_groups;
-    vector<CurrencyId> m_currencies;
-    vector<MarketCode> m_markets;
+    std::string m_id;
+    std::vector<DirectoryEntry> m_groups;
+    std::vector<CurrencyId> m_currencies;
+    std::vector<MarketCode> m_markets;
 
     void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.Shuttle("id", m_id);
@@ -240,8 +240,8 @@ void RiskWebServlet::OnPortfolioFilterRequest(
   if(subscriber->m_subscriptionId.empty()) {
     return;
   }
-  JsonReceiver<SharedBuffer> receiver;
-  Parameters parameters;
+  auto receiver = JsonReceiver<SharedBuffer>();
+  auto parameters = Parameters();
   try {
     receiver.SetSource(Ref(frame.GetBody()));
     receiver.Shuttle(parameters);
@@ -261,7 +261,7 @@ void RiskWebServlet::OnPortfolioFilterRequest(
   std::unordered_set<DirectoryEntry> managedGroups;
   std::move(managedGroupsList.begin(), managedGroupsList.end(),
     std::inserter(managedGroups, managedGroups.end()));
-  PortfolioFilter updatedFilter;
+  auto updatedFilter = PortfolioFilter();
   set_intersection(managedGroups.begin(), managedGroups.end(),
     parameters.m_groups.begin(), parameters.m_groups.end(),
     std::inserter(updatedFilter.m_groups, updatedFilter.m_groups.end()));
@@ -301,20 +301,24 @@ void RiskWebServlet::OnPortfolioUpdate(
 }
 
 void RiskWebServlet::OnPortfolioTimerExpired(Timer::Result result) {
-  vector<PortfolioModel::Entry> updatedEntries;
+  if(result != Timer::Result::EXPIRED) {
+    return;
+  }
+  auto updatedEntries = std::vector<PortfolioModel::Entry>();
   updatedEntries.reserve(m_updatedPortfolioEntries.size());
   std::move(m_updatedPortfolioEntries.begin(), m_updatedPortfolioEntries.end(),
     std::back_inserter(updatedEntries));
   for(auto& updatedEntry : updatedEntries) {
-    RiskPortfolioKey key{updatedEntry.m_account,
-      updatedEntry.m_inventory.m_position.m_key.m_index};
-    auto entryResult = m_portfolioEntries.insert(make_pair(key, updatedEntry));
+    auto key = RiskPortfolioKey(updatedEntry.m_account,
+      updatedEntry.m_inventory.m_position.m_key.m_index);
+    auto entryResult = m_portfolioEntries.insert(
+      std::make_pair(key, updatedEntry));
     if(!entryResult.second) {
       entryResult.first->second = updatedEntry;
     }
   }
   m_updatedPortfolioEntries.clear();
-  JsonSender<SharedBuffer> sender;
+  auto sender = JsonSender<SharedBuffer>();
   auto i = m_porfolioSubscribers.begin();
   while(i != m_porfolioSubscribers.end()) {
     auto& subscriber = *i;

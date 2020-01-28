@@ -1,6 +1,7 @@
 export * from './account_controller';
 export * from './account_model';
 export * from './account_page';
+export * from './compliance_page';
 export * from './entitlements_page';
 export * from './local_account_model';
 export * from './profile_page';

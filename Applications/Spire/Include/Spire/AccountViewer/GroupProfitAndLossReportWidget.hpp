@@ -1,8 +1,8 @@
 #ifndef SPIRE_GROUPPROFITANDLOSSREPORTWIDGET_HPP
 #define SPIRE_GROUPPROFITANDLOSSREPORTWIDGET_HPP
+#include <optional>
 #include <vector>
 #include <QWidget>
-#include <Beam/Pointers/DelayPtr.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
@@ -52,7 +52,7 @@ namespace Spire {
       std::unique_ptr<Ui_GroupProfitAndLossReportWidget> m_ui;
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_group;
-      Beam::DelayPtr<ReportModel> m_totalsModel;
+      std::optional<ReportModel> m_totalsModel;
       std::vector<std::unique_ptr<ReportModel>> m_groupModels;
 
       void OnUpdate(bool checked);

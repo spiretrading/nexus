@@ -42,7 +42,7 @@ namespace Spire {
       */
       OpenPositionsWidget(QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
-      virtual ~OpenPositionsWidget();
+      ~OpenPositionsWidget() = default;
 
       //! Returns the current UI state.
       UIState GetUIState() const;

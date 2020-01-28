@@ -6,7 +6,7 @@
 #include <QTimeEdit>
 #include <QVBoxLayout>
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;

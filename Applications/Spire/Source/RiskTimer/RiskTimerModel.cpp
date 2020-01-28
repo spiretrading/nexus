@@ -1,7 +1,6 @@
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
-#include <Beam/TimeService/VirtualTimeClient.hpp>
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
+#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;

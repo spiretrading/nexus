@@ -1,23 +1,22 @@
 #include <filesystem>
 #include <fstream>
 #include <Beam/Network/SocketThreadPool.hpp>
-#include <Beam/ServiceLocator/VirtualServiceLocatorClient.hpp>
 #include <Beam/Threading/TimerThreadPool.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QGuiApplication>
 #include <QMessageBox>
+#include <QScreen>
 #include <QStandardPaths>
 #ifdef slots
   #undef slots
 #endif
-#include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -27,12 +26,12 @@
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
-#include "Spire/Spire/ServiceClients.hpp"
-#include "Spire/Spire/UserProfile.hpp"
+#include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LoginDialog.hpp"
 #include "Spire/UI/Toolbar.hpp"
+#include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
@@ -90,7 +89,7 @@ namespace {
     auto instantiateSecurityWindows = true;
     QPoint nextPosition(0, 0);
     auto nextHeight = 0;
-    auto resolution = QApplication::desktop()->availableGeometry();
+    auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     vector<Security> defaultSecurities;
     auto& marketEntry = userProfile.GetMarketDatabase().FromCode("XTSE");
     defaultSecurities.push_back(Security("RY", marketEntry.m_code,
@@ -206,28 +205,30 @@ int main(int argc, char* argv[]) {
   if(loginResultCode == QDialog::Rejected) {
     return -1;
   }
-  ServiceClients serviceClients{loginDialog.GetServiceLocatorClient(),
-    Ref(socketThreadPool), Ref(timerThreadPool)};
+  auto serviceClients = MakeVirtualServiceClients(
+    std::make_unique<SpireServiceClients>(loginDialog.GetServiceLocatorClient(),
+    Ref(socketThreadPool), Ref(timerThreadPool)));
   try {
-    serviceClients.Open();
+    serviceClients->Open();
   } catch(const std::exception& e) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
     return -1;
   }
   auto isAdministrator =
-    serviceClients.GetAdministrationClient().CheckAdministrator(
-    serviceClients.GetServiceLocatorClient().GetAccount());
+    serviceClients->GetAdministrationClient().CheckAdministrator(
+    serviceClients->GetServiceLocatorClient().GetAccount());
   auto isManager = isAdministrator ||
-    !serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
-    serviceClients.GetServiceLocatorClient().GetAccount()).empty();
+    !serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    serviceClients->GetServiceLocatorClient().GetAccount()).empty();
   UserProfile userProfile{loginDialog.GetUsername(), isAdministrator, isManager,
-    serviceClients.GetDefinitionsClient().LoadCountryDatabase(),
-    serviceClients.GetDefinitionsClient().LoadTimeZoneDatabase(),
-    serviceClients.GetDefinitionsClient().LoadCurrencyDatabase(),
-    serviceClients.GetDefinitionsClient().LoadExchangeRates(),
-    serviceClients.GetDefinitionsClient().LoadMarketDatabase(),
-    serviceClients.GetDefinitionsClient().LoadDestinationDatabase(),
-    Ref(timerThreadPool), Ref(serviceClients)};
+    serviceClients->GetDefinitionsClient().LoadCountryDatabase(),
+    serviceClients->GetDefinitionsClient().LoadTimeZoneDatabase(),
+    serviceClients->GetDefinitionsClient().LoadCurrencyDatabase(),
+    serviceClients->GetDefinitionsClient().LoadExchangeRates(),
+    serviceClients->GetDefinitionsClient().LoadMarketDatabase(),
+    serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
+    serviceClients->GetAdministrationClient().LoadEntitlements(),
+    Ref(timerThreadPool), Ref(*serviceClients)};
   try {
     userProfile.CreateProfilePath();
   } catch(std::exception&) {

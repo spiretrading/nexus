@@ -629,9 +629,9 @@ namespace MarketDataService {
       ServiceAccessClientType, TimeClientType>::ReadLoop() {
     static const auto BUSINESS_CLASS_FIELD_ID = 6;
     while(true) {
-      Beam::DelayPtr<StampProtocol::StampMessage> message;
+      std::optional<StampProtocol::StampMessage> message;
       try {
-        message.Initialize(m_serviceAccessClient->Read());
+        message.emplace(m_serviceAccessClient->Read());
       } catch(const Beam::IO::NotConnectedException&) {
         break;
       } catch(const Beam::IO::EndOfFileException&) {

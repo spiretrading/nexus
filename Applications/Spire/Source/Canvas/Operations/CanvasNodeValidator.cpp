@@ -11,7 +11,7 @@
 #include "Spire/Canvas/StandardNodes/FoldNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
-#include "Spire/Canvas/Types/TaskType.hpp"
+#include "Spire/Canvas/Types/OrderReferenceType.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -33,7 +33,8 @@ namespace {
     for(const auto& node : BreadthFirstView(*anchor)) {
       auto referenceCheck = dynamic_cast<const ReferenceNode*>(&node);
       if(referenceCheck != nullptr &&
-          referenceCheck->GetType().GetCompatibility(TaskType::GetInstance()) !=
+          referenceCheck->GetType().GetCompatibility(
+          OrderReferenceType::GetInstance()) !=
           CanvasType::Compatibility::EQUAL) {
         auto cycle = FindCycle(*referenceCheck, visitedReferences);
         if(cycle.is_initialized()) {
@@ -57,7 +58,7 @@ namespace {
     if(!anchor.is_initialized()) {
       return false;
     }
-    if(anchor->GetType().GetCompatibility(TaskType::GetInstance()) ==
+    if(anchor->GetType().GetCompatibility(OrderReferenceType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       return false;
     }
