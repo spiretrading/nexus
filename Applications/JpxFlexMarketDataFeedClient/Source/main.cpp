@@ -22,9 +22,9 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <tclap/CmdLine.h>
-#include "HkexMarketDataFeedClient/HkexConfiguration.hpp"
-#include "HkexMarketDataFeedClient/HkexMarketDataFeedClient.hpp"
-#include "HkexMarketDataFeedClient/HkexProtocolClient.hpp"
+#include "JpxFlexMarketDataFeedClient/JpxFlexConfiguration.hpp"
+#include "JpxFlexMarketDataFeedClient/JpxFlexMarketDataFeedClient.hpp"
+#include "JpxFlexMarketDataFeedClient/JpxFlexProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Version.hpp"
@@ -43,46 +43,49 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
-using namespace std;
 using namespace TCLAP;
 
 namespace {
-  using BaseMarketDataFeedClient = MarketDataFeedClient<string, LiveTimer,
+  using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
     SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = HkexProtocolClient<ApplicationFeedChannel*>;
-  using ApplicationMarketDataFeedClient = HkexMarketDataFeedClient<
+  using ApplicationProtocolClient = JpxFlexProtocolClient<
+    ApplicationFeedChannel*>;
+  using ApplicationMarketDataFeedClient = JpxFlexMarketDataFeedClient<
     BaseMarketDataFeedClient*, ApplicationProtocolClient*>;
 
   static const std::size_t DEFAULT_RECEIVE_BUFFER_SIZE = 16777216;
 
-  HkexConfiguration ParseConfiguration(const YAML::Node& config,
+  JpxFlexConfiguration ParseConfiguration(const YAML::Node& config,
       const MarketDatabase& marketDatabase, const ptime& currentTime,
       const local_time::tz_database& timeZones) {
-    auto hkexConfig = HkexConfiguration();
-    hkexConfig.m_enableLogging = false;
-    hkexConfig.m_market = GetDefaultMarketDatabase().FromCode(
-      DefaultMarkets::HKEX());
-    hkexConfig.m_disseminatingMarket = DefaultMarkets::HKEX();
-    hkexConfig.m_mpid = "HKEX";
-    return hkexConfig;
+    auto jpxConfig = JpxFlexConfiguration();
+    jpxConfig.m_enableLogging = Extract<bool>(config, "enable_logging",
+      false);
+    jpxConfig.m_market = marketDatabase.FromDisplayName(
+      Extract<std::string>(config, "market"));
+    jpxConfig.m_disseminatingMarket = marketDatabase.FromDisplayName(
+      Extract<std::string>(config, "disseminating_market")).m_code;
+    jpxConfig.m_mpid = Extract<std::string>(config, "mpid");
+    return jpxConfig;
   }
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "1.0-r" HKEX_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2011 Eidolon Systems Inc."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ', "1.0-r" JPX_FLEX_MARKET_DATA_FEED_CLIENT_VERSION
+      "\nCopyright (C) 2020 Eidolon Systems Inc.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
@@ -91,7 +94,8 @@ int main(int argc, const char** argv) {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
   auto socketThreadPool = SocketThreadPool();
@@ -104,7 +108,7 @@ int main(int argc, const char** argv) {
       serviceLocatorClientConfig.m_password);
     serviceLocatorClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
   auto definitionsClient = ApplicationDefinitionsClient();
@@ -113,29 +117,29 @@ int main(int argc, const char** argv) {
       Ref(socketThreadPool), Ref(timerThreadPool));
     definitionsClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the definitions service." << endl;
+    std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
-  auto timeClient = unique_ptr<LiveNtpTimeClient>();
+  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
+      std::cerr << "No time services available." << std::endl;
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+    auto ntpPool = FromString<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
-  } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
+  } catch(const std::exception& e) {
+    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
   try {
     timeClient->Open();
   } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
+    std::cerr << "NTP service unavailable." << std::endl;
     return -1;
   }
   auto baseMarketDataFeedClient = std::optional<BaseMarketDataFeedClient>();
@@ -143,11 +147,11 @@ int main(int argc, const char** argv) {
     auto marketDataService = FindMarketDataFeedService(DefaultCountries::HK(),
       *serviceLocatorClient);
     if(!marketDataService.is_initialized()) {
-      cerr << "No market data services available." << endl;
+      std::cerr << "No market data services available." << std::endl;
       return -1;
     }
-    auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService->GetProperties().At("addresses")));
+    auto marketDataAddresses = FromString<std::vector<IpAddress>>(
+      get<std::string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
@@ -156,7 +160,8 @@ int main(int argc, const char** argv) {
       Initialize(samplingTime, Ref(timerThreadPool)),
       Initialize(seconds(10), Ref(timerThreadPool)));
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize market data client: " << e.what() << endl;
+    std::cerr << "Unable to initialize market data client: " << e.what() <<
+      std::endl;
     return -1;
   }
   auto multicastSocketChannel = std::optional<MulticastSocketChannel>();
@@ -172,7 +177,8 @@ int main(int argc, const char** argv) {
       UdpSocketReceiver::Settings::DEFAULT_DATAGRAM_SIZE);
     multicastSocketChannel->GetSocket().SetReceiverSettings(receiverSettings);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize multicast socket: " << e.what() << endl;
+    std::cerr << "Unable to initialize multicast socket: " << e.what() <<
+      std::endl;
     return -1;
   }
   auto retransmissionHost = std::optional<IpAddress>();
@@ -181,7 +187,8 @@ int main(int argc, const char** argv) {
       retransmissionHost = Extract<IpAddress>(config, "retransmission_host");
     }
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize retransmission: " << e.what() << endl;
+    std::cerr << "Unable to initialize retransmission: " << e.what() <<
+      std::endl;
     return -1;
   }
   auto snapshotHost = std::optional<IpAddress>();
@@ -190,7 +197,7 @@ int main(int argc, const char** argv) {
       retransmissionHost = Extract<IpAddress>(config, "snapshot_host");
     }
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize snapshot: " << e.what() << endl;
+    std::cerr << "Unable to initialize snapshot: " << e.what() << std::endl;
     return -1;
   }
   auto feedChannel = ApplicationFeedChannel(&*multicastSocketChannel,
@@ -205,14 +212,14 @@ int main(int argc, const char** argv) {
     feedClient.emplace(std::move(feedConfiguration), &*baseMarketDataFeedClient,
       &protocolClient);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize market data feed client: " << e.what() <<
-      endl;
+    std::cerr << "Unable to initialize market data feed client: " << e.what() <<
+      std::endl;
     return -1;
   }
   try {
     feedClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error opening client: " << e.what() << endl;
+    std::cerr << "Error opening client: " << e.what() << std::endl;
     return -1;
   }
   WaitForKillEvent();

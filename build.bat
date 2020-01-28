@@ -12,6 +12,7 @@ CALL:build Applications\CseMarketDataFeedClient %*
 CALL:build Applications\CtaMarketDataFeedClient %*
 CALL:build Applications\DefinitionsServer %*
 CALL:build Applications\HkexMarketDataFeedClient %*
+CALL:build Applications\JpxFlexMarketDataFeedClient %*
 CALL:build Applications\MarketDataRelayServer %*
 CALL:build Applications\MarketDataServer %*
 CALL:build Applications\OasisOrderExecutionServer %*

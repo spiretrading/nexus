@@ -46,7 +46,8 @@ elseif(UNIX)
 endif()
 include_directories(Include)
 include_directories(${PROJECT_BINARY_DIR})
-file(GLOB header_files ${PROJECT_BINARY_DIR}/*.hpp Include/JpxFlexMarketDataFeedClient/*.hpp)
+file(GLOB header_files ${PROJECT_BINARY_DIR}/*.hpp
+  Include/JpxFlexMarketDataFeedClient/*.hpp)
 file(GLOB source_files Source/*.cpp)
 add_executable(JpxFlexMarketDataFeedClient ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -74,6 +75,9 @@ if(UNIX)
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     dl pthread rt)
+endif()
+if(WIN32)
+  target_link_libraries(JpxFlexMarketDataFeedClient Crypt32.lib)
 endif()
 install(TARGETS JpxFlexMarketDataFeedClient
   DESTINATION ${PROJECT_BINARY_DIR}/Application)
