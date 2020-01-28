@@ -1,7 +1,6 @@
 #include <catch.hpp>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/TrendLine.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 

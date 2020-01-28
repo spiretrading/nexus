@@ -1,20 +1,20 @@
-#ifndef SPIRE_CHART_VALUE_HPP
-#define SPIRE_CHART_VALUE_HPP
+#ifndef SPIRE_SCALAR_HPP
+#define SPIRE_SCALAR_HPP
 #include <cstdint>
 #include <functional>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Spire/Charting/Charting.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /** Stores a value that can be displayed in a chart. */
-  class ChartValue {
+  /** Encapsulates a generic scalar value. */
+  class Scalar {
     public:
 
-      /** Lists the data types a value can represent. */
+      /** Lists a Scalar's possible data types. */
       enum class Type {
 
         //! No data type is represented.
@@ -34,31 +34,31 @@ namespace Spire {
       };
 
       //! Constructs a value of 0.
-      ChartValue() = default;
+      Scalar() = default;
 
-      //! Constructs a ChartValue from a Money instance.
+      //! Constructs a Scalar from a Money instance.
       /*!
         \param value The value to represent.
       */
-      explicit ChartValue(Nexus::Money value);
+      explicit Scalar(Nexus::Money value);
 
-      //! Constructs a ChartValue from a Quantity.
+      //! Constructs a Scalar from a Quantity.
       /*!
         \param value The value to represent.
       */
-      explicit ChartValue(Nexus::Quantity value);
+      explicit Scalar(Nexus::Quantity value);
 
-      //! Constructs a ChartValue from a date/time.
+      //! Constructs a Scalar from a date/time.
       /*!
         \param value The value to represent.
       */
-      explicit ChartValue(boost::posix_time::ptime value);
+      explicit Scalar(boost::posix_time::ptime value);
 
-      //! Constructs a ChartValue from a time duration.
+      //! Constructs a Scalar from a time duration.
       /*!
         \param value The value to represent.
       */
-      explicit ChartValue(boost::posix_time::time_duration value);
+      explicit Scalar(boost::posix_time::time_duration value);
 
       //! Returns the date/time value represented by this value.
       explicit operator boost::posix_time::ptime() const;
@@ -77,28 +77,28 @@ namespace Spire {
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than <i>rhs</i>.
       */
-      bool operator <(ChartValue rhs) const;
+      bool operator <(Scalar rhs) const;
 
       //! Less than or equal test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is less than or equal to <i>rhs</i>.
       */
-      bool operator <=(ChartValue rhs) const;
+      bool operator <=(Scalar rhs) const;
 
       //! Tests for equality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is equal to <i>rhs</i>.
       */
-      bool operator ==(ChartValue rhs) const;
+      bool operator ==(Scalar rhs) const;
 
       //! Tests for inequality.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is not equal to <i>rhs</i>.
       */
-      bool operator !=(ChartValue rhs) const;
+      bool operator !=(Scalar rhs) const;
 
       //! Greater than or equal test.
       /*!
@@ -106,113 +106,113 @@ namespace Spire {
         \return <code>true</code> iff this is greater than or equal to
                 <i>rhs</i>.
       */
-      bool operator >=(ChartValue rhs) const;
+      bool operator >=(Scalar rhs) const;
 
       //! Greater than test.
       /*!
         \param rhs The right hand side of the operation.
         \return <code>true</code> iff this is greater than <i>rhs</i>.
       */
-      bool operator >(ChartValue rhs) const;
+      bool operator >(Scalar rhs) const;
 
-      //! Adds two ChartValues together.
+      //! Adds two Scalars together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> + <i>rhs</i>.
       */
-      ChartValue operator +(ChartValue rhs) const;
+      Scalar operator +(Scalar rhs) const;
 
-      //! Increases this ChartValue.
+      //! Increases this Scalar.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      ChartValue& operator +=(ChartValue rhs);
+      Scalar& operator +=(Scalar rhs);
 
-      //! Subtracts two ChartValues together.
+      //! Subtracts two Scalars together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> - <i>rhs</i>.
       */
-      ChartValue operator -(ChartValue rhs) const;
+      Scalar operator -(Scalar rhs) const;
 
-      //! Decreases this ChartValue.
+      //! Decreases this Scalar.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
-      ChartValue& operator -=(ChartValue rhs);
+      Scalar& operator -=(Scalar rhs);
 
-      //! Multiplies this ChartValue.
+      //! Multiplies this Scalar.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
       template<typename T>
-      ChartValue& operator *=(T rhs);
+      Scalar& operator *=(T rhs);
 
-      //! Takes the modulus of two ChartValues.
+      //! Takes the modulus of two Scalars.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> % <i>rhs</i>.
       */
-      ChartValue operator %(ChartValue rhs) const;
+      Scalar operator %(Scalar rhs) const;
 
-      //! Divides two ChartValues together.
+      //! Divides two Scalars together.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i> / <i>rhs</i>.
       */
-      double operator /(ChartValue rhs) const;
+      double operator /(Scalar rhs) const;
 
-      //! Divides this ChartValue.
+      //! Divides this Scalar.
       /*!
         \param rhs The right hand side of the operation.
         \return <i>this</i>.
       */
       template<typename T>
-      ChartValue& operator /=(T rhs);
+      Scalar& operator /=(T rhs);
 
-      //! Returns the unary negation of this ChartValue.
+      //! Returns the unary negation of this Scalar.
       /*!
         \return -<i>this</i>.
       */
-      ChartValue operator -() const;
+      Scalar operator -() const;
 
     private:
       Nexus::Quantity m_value;
   };
 
-  //! Multiplies a ChartValue by a scalar quantity.
+  //! Multiplies a Scalar by a quantity.
   /*!
-    \param lhs The scalar quantity.
-    \param rhs The ChartValue to be multiplied.
+    \param lhs The quantity.
+    \param rhs The Scalar to be multiplied.
     \return <i>lhs</i> * <i>rhs</i>.
   */
   template<typename T>
-  ChartValue operator *(T lhs, ChartValue rhs) {
-    return ChartValue(lhs * static_cast<Nexus::Quantity>(rhs));
+  Scalar operator *(T lhs, Scalar rhs) {
+    return Scalar(lhs * static_cast<Nexus::Quantity>(rhs));
   }
 
-  //! Divides a ChartValue by a scalar quantity.
+  //! Divides a Scalar by a quantity.
   /*!
-    \param lhs The ChartValue instance to be divided.
-    \param rhs The scalar quantity.
+    \param lhs The Scalar instance to be divided.
+    \param rhs The quantity.
     \return <i>lhs</i> / <i>rhs</i>.
   */
   template<typename T>
-  ChartValue operator /(ChartValue lhs, T rhs) {
-    return ChartValue(static_cast<Nexus::Quantity>(lhs) / rhs);
+  Scalar operator /(Scalar lhs, T rhs) {
+    return Scalar(static_cast<Nexus::Quantity>(lhs) / rhs);
   }
 
   template<typename T>
-  ChartValue& ChartValue::operator *=(T rhs) {
+  Scalar& Scalar::operator *=(T rhs) {
     m_value *= rhs;
     return *this;
   }
 
   template<typename T>
-  ChartValue& ChartValue::operator /=(T rhs) {
+  Scalar& Scalar::operator /=(T rhs) {
     m_value /= rhs;
     return *this;
   }
@@ -220,8 +220,8 @@ namespace Spire {
 
 namespace std {
   template <>
-  struct hash<Spire::ChartValue> {
-    size_t operator()(Spire::ChartValue value) const {
+  struct hash<Spire::Scalar> {
+    size_t operator()(Spire::Scalar value) const {
       return static_cast<size_t>(static_cast<Nexus::Quantity>(value));
     }
   };

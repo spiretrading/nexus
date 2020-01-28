@@ -1,6 +1,6 @@
 #ifndef SPIRE_RANGE_INPUT_MODEL_HPP
 #define SPIRE_RANGE_INPUT_MODEL_HPP
-#include "Spire/Charting/ChartValue.hpp"
+#include "Spire/Spire/Scalar.hpp"
 
 namespace Spire {
 
@@ -22,10 +22,10 @@ namespace Spire {
       virtual ~RangeInputModel() = default;
 
       //! Returns the smallest value among the data.
-      virtual ChartValue get_minimum_value() const = 0;
+      virtual Scalar get_minimum_value() const = 0;
 
       //! Returns the largest value among the data.
-      virtual ChartValue get_maximum_value() const = 0;
+      virtual Scalar get_maximum_value() const = 0;
 
       //! Returns a Histogram constructed from the data.
       /*

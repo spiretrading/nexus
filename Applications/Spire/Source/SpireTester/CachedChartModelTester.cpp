@@ -1,6 +1,5 @@
 #include <catch.hpp>
 #include "Spire/Charting/CachedChartModel.hpp"
-#include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/SpireTester/TestChartModel.hpp"
@@ -11,13 +10,13 @@ using namespace Spire;
 
 namespace {
   auto create_model() {
-    auto local_model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+    auto local_model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+      Scalar::Type::MONEY,
       [=] {
         auto candlesticks = std::vector<Candlestick>();
         for(auto i = 0; i < 101; ++i) {
-          candlesticks.push_back({ChartValue(i * Money::ONE),
-            ChartValue((i + 1) * Money::ONE)});
+          candlesticks.push_back({Scalar(i * Money::ONE),
+            Scalar((i + 1) * Money::ONE)});
         }
         return candlesticks;
       }());
@@ -26,12 +25,12 @@ namespace {
 
   std::vector<Candlestick> load(ChartModel* model, int first, int last,
       const SnapshotLimit& limit) {
-    return std::move(wait(model->load(ChartValue(first * Money::ONE),
-      ChartValue(last * Money::ONE), limit)));
+    return std::move(wait(model->load(Scalar(first * Money::ONE),
+      Scalar(last * Money::ONE), limit)));
   }
 
   Candlestick make(int start, int end) {
-    return {ChartValue(start), ChartValue(end)};
+    return {Scalar(start), Scalar(end)};
   }
 }
 
@@ -160,27 +159,27 @@ TEST_CASE("test_multiple_cache_hits", "[CachedChartModel]") {
     auto test_model = TestChartModel(model->get_x_axis_type(),
       model->get_y_axis_type());
     auto cache = CachedChartModel(test_model);
-    auto pre_load1 = cache.load(ChartValue(40 * Money::ONE),
-      ChartValue(50 * Money::ONE), SnapshotLimit::Unlimited());
+    auto pre_load1 = cache.load(Scalar(40 * Money::ONE),
+      Scalar(50 * Money::ONE), SnapshotLimit::Unlimited());
     wait(test_model.pop_load())->set_result(wait(
-      model->load(ChartValue(40 * Money::ONE), ChartValue(50 * Money::ONE),
+      model->load(Scalar(40 * Money::ONE), Scalar(50 * Money::ONE),
       SnapshotLimit::Unlimited())));
     wait(std::move(pre_load1));
-    auto pre_load2 = cache.load(ChartValue(60 * Money::ONE),
-      ChartValue(70 * Money::ONE), SnapshotLimit::Unlimited());
+    auto pre_load2 = cache.load(Scalar(60 * Money::ONE),
+      Scalar(70 * Money::ONE), SnapshotLimit::Unlimited());
     wait(test_model.pop_load())->set_result(wait(
-      model->load(ChartValue(60 * Money::ONE), ChartValue(70 * Money::ONE),
+      model->load(Scalar(60 * Money::ONE), Scalar(70 * Money::ONE),
       SnapshotLimit::Unlimited())));
     wait(std::move(pre_load2));
-    cache.load(ChartValue(45 * Money::ONE),
-      ChartValue(75 * Money::ONE), SnapshotLimit::Unlimited());
+    cache.load(Scalar(45 * Money::ONE), Scalar(75 * Money::ONE),
+      SnapshotLimit::Unlimited());
     auto cache_load1 = wait(test_model.pop_load());
-    REQUIRE(cache_load1->get_first() == ChartValue(50 * Money::ONE));
-    REQUIRE(cache_load1->get_last() == ChartValue(60 * Money::ONE));
+    REQUIRE(cache_load1->get_first() == Scalar(50 * Money::ONE));
+    REQUIRE(cache_load1->get_last() == Scalar(60 * Money::ONE));
     cache_load1->set_result({});
     auto cache_load2 = wait(test_model.pop_load());
-    REQUIRE(cache_load2->get_first() == ChartValue(70 * Money::ONE));
-    REQUIRE(cache_load2->get_last() == ChartValue(75 * Money::ONE));
+    REQUIRE(cache_load2->get_first() == Scalar(70 * Money::ONE));
+    REQUIRE(cache_load2->get_last() == Scalar(75 * Money::ONE));
     cache_load2->set_result({});
   }, "test_multiple_cache_hits");
 }
@@ -189,23 +188,23 @@ TEST_CASE("test_cached_model_loads_from_head", "[CachedChartModel]") {
   run_test([=] {
     auto model = create_model();
     auto cache = CachedChartModel(*model);
-    model->load(ChartValue(0), ChartValue(100), SnapshotLimit::Unlimited());
+    model->load(Scalar(0), Scalar(100), SnapshotLimit::Unlimited());
     auto load1 = load(&cache, 0, 100, SnapshotLimit::FromHead(25));
     REQUIRE(load1.size() == 25);
-    REQUIRE(load1.front().GetStart() == ChartValue(0));
-    REQUIRE(load1.back().GetEnd() == ChartValue(25));
+    REQUIRE(load1.front().GetStart() == Scalar(0));
+    REQUIRE(load1.back().GetEnd() == Scalar(25));
     auto load2 = load(&cache, 50, 100, SnapshotLimit::FromHead(25));
     REQUIRE(load2.size() == 25);
-    REQUIRE(load2.front().GetStart() == ChartValue(49));
-    REQUIRE(load2.back().GetEnd() == ChartValue(74));
+    REQUIRE(load2.front().GetStart() == Scalar(49));
+    REQUIRE(load2.back().GetEnd() == Scalar(74));
     auto load3 = load(&cache, -10, 25, SnapshotLimit::FromHead(10));
     REQUIRE(load3.size() == 10);
-    REQUIRE(load3.front().GetStart() == ChartValue(0));
-    REQUIRE(load3.back().GetEnd() == ChartValue(10));
+    REQUIRE(load3.front().GetStart() == Scalar(0));
+    REQUIRE(load3.back().GetEnd() == Scalar(10));
     auto load4 = load(&cache, 95, 110, SnapshotLimit::FromHead(10));
     REQUIRE(load4.size() == 7);
-    REQUIRE(load4.front().GetStart() == ChartValue(94));
-    REQUIRE(load4.back().GetEnd() == ChartValue(101));
+    REQUIRE(load4.front().GetStart() == Scalar(94));
+    REQUIRE(load4.back().GetEnd() == Scalar(101));
   }, "test_cached_model_loads_from_head");
 }
 
@@ -213,30 +212,30 @@ TEST_CASE("test_cache_model_loads_from_tail", "[CachedChartModel]") {
   run_test([=] {
     auto model = create_model();
     auto cache = CachedChartModel(*model);
-    model->load(ChartValue(0), ChartValue(100), SnapshotLimit::Unlimited());
+    model->load(Scalar(0), Scalar(100), SnapshotLimit::Unlimited());
     auto load1 = load(&cache, 0, 100, SnapshotLimit::FromTail(25));
     REQUIRE(load1.size() == 25);
-    REQUIRE(load1.front().GetStart() == ChartValue(76));
-    REQUIRE(load1.back().GetEnd() == ChartValue(101));
+    REQUIRE(load1.front().GetStart() == Scalar(76));
+    REQUIRE(load1.back().GetEnd() == Scalar(101));
     auto load2 = load(&cache, 50, 100, SnapshotLimit::FromTail(25));
     REQUIRE(load2.size() == 25);
-    REQUIRE(load2.front().GetStart() == ChartValue(76));
-    REQUIRE(load2.back().GetEnd() == ChartValue(101));
+    REQUIRE(load2.front().GetStart() == Scalar(76));
+    REQUIRE(load2.back().GetEnd() == Scalar(101));
     auto load3 = load(&cache, -10, 25, SnapshotLimit::FromTail(10));
     REQUIRE(load3.size() == 10);
-    REQUIRE(load3.front().GetStart() == ChartValue(16));
-    REQUIRE(load3.back().GetEnd() == ChartValue(26));
+    REQUIRE(load3.front().GetStart() == Scalar(16));
+    REQUIRE(load3.back().GetEnd() == Scalar(26));
     auto load4 = load(&cache, 95, 110, SnapshotLimit::FromTail(10));
     REQUIRE(load4.size() == 7);
-    REQUIRE(load4.front().GetStart() == ChartValue(94));
-    REQUIRE(load4.back().GetEnd() == ChartValue(101));
+    REQUIRE(load4.front().GetStart() == Scalar(94));
+    REQUIRE(load4.back().GetEnd() == Scalar(101));
   }, "test_cache_model_loads_from_tail");
 }
 
 TEST_CASE("test_empty_intervals_with_head_limit", "[CachedChartModel]") {
   run_test([=] {
-    auto model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+    auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+      Scalar::Type::MONEY,
       std::vector<Candlestick>({make(30, 40), make(39, 40)}));
     auto cache1 = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromHead(1));
@@ -250,8 +249,8 @@ TEST_CASE("test_empty_intervals_with_head_limit", "[CachedChartModel]") {
 
 TEST_CASE("test_empty_intervals_with_tail_limit", "[CachedChartModel]") {
   run_test([=] {
-    auto model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+    auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+      Scalar::Type::MONEY,
       std::vector<Candlestick>({make(30, 40), make(39, 40)}));
     auto cache = CachedChartModel(*model);
     auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::FromTail(1));
@@ -265,8 +264,8 @@ TEST_CASE("test_empty_intervals_with_tail_limit", "[CachedChartModel]") {
 
 TEST_CASE("test_coincident_open_intervals", "[CachedChartModel]") {
   run_test([=] {
-    auto model = std::make_shared<LocalChartModel>(
-      ChartValue::Type::MONEY, ChartValue::Type::MONEY,
+    auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+      Scalar::Type::MONEY,
       std::vector<Candlestick>({make(20, 39), make(39, 40), make(39, 40),
         make(39, 40), make(39, 60)}));
     auto cache = CachedChartModel(*model);
@@ -284,23 +283,23 @@ TEST_CASE("test_coincident_open_intervals", "[CachedChartModel]") {
 
 TEST_CASE("test_limits_with_no_data", "[CachedChartModel]") {
   run_test([=] {
-    auto model = std::make_shared<LocalChartModel>(ChartValue::Type::MONEY,
-      ChartValue::Type::MONEY, std::vector<Candlestick>());
+    auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+      Scalar::Type::MONEY, std::vector<Candlestick>());
     auto test_model = TestChartModel(model->get_x_axis_type(),
       model->get_y_axis_type());
     auto cache = CachedChartModel(test_model);
-    auto load1 = cache.load(ChartValue(40 * Money::ONE),
-      ChartValue(50 * Money::ONE), SnapshotLimit::FromHead(1));
+    auto load1 = cache.load(Scalar(40 * Money::ONE), Scalar(50 * Money::ONE),
+      SnapshotLimit::FromHead(1));
     auto cache_load1 = wait(test_model.pop_load());
-    REQUIRE(cache_load1->get_first() == ChartValue(40 * Money::ONE));
-    REQUIRE(cache_load1->get_last() == ChartValue(50 * Money::ONE));
+    REQUIRE(cache_load1->get_first() == Scalar(40 * Money::ONE));
+    REQUIRE(cache_load1->get_last() == Scalar(50 * Money::ONE));
     cache_load1->set_result({});
     wait(std::move(load1));
-    auto load2 = cache.load(ChartValue(30 * Money::ONE),
-      ChartValue(45 * Money::ONE), SnapshotLimit::FromHead(1));
+    auto load2 = cache.load(Scalar(30 * Money::ONE), Scalar(45 * Money::ONE),
+      SnapshotLimit::FromHead(1));
     auto cache_load2 = wait(test_model.pop_load());
-    REQUIRE(cache_load2->get_first() == ChartValue(30 * Money::ONE));
-    REQUIRE(cache_load2->get_last() == ChartValue(40 * Money::ONE));
+    REQUIRE(cache_load2->get_first() == Scalar(30 * Money::ONE));
+    REQUIRE(cache_load2->get_last() == Scalar(40 * Money::ONE));
     cache_load2->set_result({});
   }, "test_limits_with_no_data");
 }

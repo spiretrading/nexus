@@ -6,9 +6,9 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  double cast_value(ChartValue value) {
+  double cast_value(Scalar value) {
     return static_cast<double>(
-      static_cast<Quantity>(static_cast<ChartValue>(value)));
+      static_cast<Quantity>(static_cast<Scalar>(value)));
   }
 
   QPointF cast_point(const ChartPoint& point) {

@@ -56,31 +56,31 @@ int main(int argc, char** argv) {
       auto rand = std::default_random_engine(std::random_device()());
       auto time = boost::posix_time::second_clock::local_time();
       for(auto i = 0; i < 100; ++i) {
-        auto open = ChartValue(Money((rand() % 40 + 40) *
+        auto open = Scalar(Money((rand() % 40 + 40) *
           Money::FromValue("0.01").get()));
-        auto close = ChartValue(Money((rand() % 40 + 40) *
+        auto close = Scalar(Money((rand() % 40 + 40) *
           Money::FromValue("0.01").get()));
         auto [high, low] = [&] {
           if(open > close) {
-            return std::make_tuple(ChartValue(Money((rand() % 40) *
-              Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
+            return std::make_tuple(Scalar(Money((rand() % 40) *
+              Money::FromValue("0.01").get())) + open, close - Scalar(Money(
               (rand() % 40) * Money::FromValue("0.01").get())));
           }
-          return std::make_tuple(ChartValue(Money((rand() % 40) *
-            Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
+          return std::make_tuple(Scalar(Money((rand() % 40) *
+            Money::FromValue("0.01").get())) + close, open - Scalar(Money(
             (rand() % 40) * Money::FromValue("0.01").get())));
         }();
         candlesticks.push_back(Candlestick(
-          ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
-          open, close, high, low));
+          Scalar(time - boost::posix_time::minutes(1)), Scalar(time), open,
+          close, high, low));
         if(rand() % 5 == 1) {
           time -= boost::posix_time::minutes(rand() % 25 + 1);
         } else {
           time -= boost::posix_time::minutes(1);
         }
       }
-      auto chart_model = new LocalChartModel(
-        ChartValue::Type::TIMESTAMP, ChartValue::Type::MONEY, candlesticks);
+      auto chart_model = new LocalChartModel(Scalar::Type::TIMESTAMP,
+        Scalar::Type::MONEY, candlesticks);
       auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
       test_timer.start(1500);

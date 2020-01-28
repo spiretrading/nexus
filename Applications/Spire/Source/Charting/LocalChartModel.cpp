@@ -5,8 +5,8 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-LocalChartModel::LocalChartModel(ChartValue::Type x_axis_type,
-    ChartValue::Type y_axis_type, std::vector<Candlestick> candlesticks)
+LocalChartModel::LocalChartModel(Scalar::Type x_axis_type,
+    Scalar::Type y_axis_type, std::vector<Candlestick> candlesticks)
     : m_x_axis_type(x_axis_type),
       m_y_axis_type(y_axis_type),
       m_candlesticks(std::move(candlesticks)) {
@@ -16,16 +16,16 @@ LocalChartModel::LocalChartModel(ChartValue::Type x_axis_type,
     });
 }
 
-ChartValue::Type LocalChartModel::get_x_axis_type() const {
+Scalar::Type LocalChartModel::get_x_axis_type() const {
   return m_x_axis_type;
 }
 
-ChartValue::Type LocalChartModel::get_y_axis_type() const {
+Scalar::Type LocalChartModel::get_y_axis_type() const {
   return m_y_axis_type;
 }
 
-QtPromise<std::vector<Candlestick>> LocalChartModel::load(ChartValue first,
-    ChartValue last, const SnapshotLimit& limit) {
+QtPromise<std::vector<Candlestick>> LocalChartModel::load(Scalar first,
+    Scalar last, const SnapshotLimit& limit) {
   return QtPromise([=, candlesticks = m_candlesticks] {
     auto start = std::lower_bound(candlesticks.begin(), candlesticks.end(),
       first, [] (const auto& lhs, const auto& rhs) {

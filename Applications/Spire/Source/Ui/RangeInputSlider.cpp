@@ -21,7 +21,7 @@ namespace {
   }
 }
 
-RangeInputSlider::RangeInputSlider(ChartValue min_value, ChartValue max_value,
+RangeInputSlider::RangeInputSlider(Scalar min_value, Scalar max_value,
     QWidget* parent)
     : QWidget(parent),
       m_min_value(min_value),
@@ -38,12 +38,12 @@ RangeInputSlider::RangeInputSlider(ChartValue min_value, ChartValue max_value,
   setMouseTracking(true);
 }
 
-void RangeInputSlider::set_min_value(ChartValue value) {
+void RangeInputSlider::set_min_value(Scalar value) {
   m_current_min_value = value;
   move_handle(m_current_min_value, m_min_handle_x);
 }
 
-void RangeInputSlider::set_max_value(ChartValue value) {
+void RangeInputSlider::set_max_value(Scalar value) {
   m_current_max_value = value;
   move_handle(m_current_max_value, m_max_handle_x);
 }
@@ -95,14 +95,14 @@ void RangeInputSlider::mouseMoveEvent(QMouseEvent* event) {
     pos_x = min(pos_x, m_max_handle_x);
     m_min_handle_x = pos_x;
     m_current_min_value = map_x_to_value(m_min_handle_x);
-    m_min_changed_signal(ChartValue(m_current_min_value));
+    m_min_changed_signal(Scalar(m_current_min_value));
   } else if(m_is_dragging_max) {
     auto pos_x = min(x - m_mouse_offset,
       width() - MARGIN() - HANDLE_SIZE());
     pos_x = max(m_min_handle_x, pos_x);
     m_max_handle_x = pos_x;
     m_current_max_value = map_x_to_value(m_max_handle_x);
-    m_max_changed_signal(ChartValue(m_current_max_value));
+    m_max_changed_signal(Scalar(m_current_max_value));
   }
   if(x > m_min_handle_x  - HANDLE_SIZE() && x < m_min_handle_x) {
     m_is_hovering_min = true;
@@ -198,14 +198,14 @@ void RangeInputSlider::draw_handle(QPainter& painter, bool is_highlighted,
   }
 }
 
-ChartValue RangeInputSlider::map_x_to_value(int x) {
+Scalar RangeInputSlider::map_x_to_value(int x) {
   return map_to(static_cast<double>(x),
     static_cast<double>(RANGE_MARGIN()),
     static_cast<double>(width() - MARGIN() - HANDLE_SIZE()),
     m_min_value, m_max_value);
 }
 
-void RangeInputSlider::move_handle(ChartValue value, int& handle_x) {
+void RangeInputSlider::move_handle(Scalar value, int& handle_x) {
   handle_x = static_cast<int>(map_to(value, m_min_value, m_max_value,
     static_cast<double>(RANGE_MARGIN()),
     static_cast<double>(width() - MARGIN() - HANDLE_SIZE())));

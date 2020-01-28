@@ -13,18 +13,18 @@ namespace Spire {
       /*
         \param data The data for the model.
       */
-      LocalRangeInputModel(std::vector<ChartValue> data);
+      LocalRangeInputModel(std::vector<Scalar> data);
 
-      ChartValue get_minimum_value() const override;
+      Scalar get_minimum_value() const override;
 
-      ChartValue get_maximum_value() const override;
+      Scalar get_maximum_value() const override;
 
       Histogram make_histogram(int bin_count) const override;
 
     private:
-      std::vector<ChartValue> m_data;
-      ChartValue m_minimum_value;
-      ChartValue m_maximum_value;
+      std::vector<Scalar> m_data;
+      Scalar m_minimum_value;
+      Scalar m_maximum_value;
   };
 }
 

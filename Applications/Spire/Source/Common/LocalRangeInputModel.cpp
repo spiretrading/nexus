@@ -4,11 +4,11 @@
 using namespace Nexus;
 using namespace Spire;
 
-LocalRangeInputModel::LocalRangeInputModel(std::vector<ChartValue> data)
+LocalRangeInputModel::LocalRangeInputModel(std::vector<Scalar> data)
     : m_data(std::move(data)) {
   if(m_data.empty()) {
-    m_minimum_value = ChartValue(Quantity(0));
-    m_maximum_value = ChartValue(Quantity(0));
+    m_minimum_value = Scalar(Quantity(0));
+    m_maximum_value = Scalar(Quantity(0));
   } else {
     m_minimum_value = m_data.front();
     m_maximum_value = m_data.front();
@@ -19,11 +19,11 @@ LocalRangeInputModel::LocalRangeInputModel(std::vector<ChartValue> data)
   }
 }
 
-ChartValue LocalRangeInputModel::get_minimum_value() const {
+Scalar LocalRangeInputModel::get_minimum_value() const {
   return m_minimum_value;
 }
 
-ChartValue LocalRangeInputModel::get_maximum_value() const {
+Scalar LocalRangeInputModel::get_maximum_value() const {
   return m_maximum_value;
 }
 

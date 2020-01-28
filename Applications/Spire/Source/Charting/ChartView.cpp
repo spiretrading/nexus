@@ -15,27 +15,26 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-
-  QVariant to_variant(ChartValue::Type type, ChartValue value) {
-    if(type == ChartValue::Type::DURATION) {
+  QVariant to_variant(Scalar::Type type, Scalar value) {
+    if(type == Scalar::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
-    } else if(type == ChartValue::Type::MONEY) {
+    } else if(type == Scalar::Type::MONEY) {
       return QVariant::fromValue(static_cast<Money>(value));
-    } else if(type == ChartValue::Type::QUANTITY) {
+    } else if(type == Scalar::Type::QUANTITY) {
       return QVariant::fromValue(static_cast<Quantity>(value));
-    } else if(type == ChartValue::Type::TIMESTAMP) {
+    } else if(type == Scalar::Type::TIMESTAMP) {
       return QVariant::fromValue(static_cast<ptime>(value));
     }
     return QVariant();
   }
 
-  ChartValue calculate_step(ChartValue::Type value_type, ChartValue range) {
-    if(value_type == ChartValue::Type::MONEY) {
-      return ChartValue(Money::ONE);
-    } else if(value_type == ChartValue::Type::TIMESTAMP) {
-      return ChartValue(minutes(10));
+  Scalar calculate_step(Scalar::Type type, Scalar range) {
+    if(type == Scalar::Type::MONEY) {
+      return Scalar(Money::ONE);
+    } else if(type == Scalar::Type::TIMESTAMP) {
+      return Scalar(minutes(10));
     }
-    return ChartValue();
+    return Scalar();
   }
 
   const auto GAP_SIZE() {
@@ -123,7 +122,7 @@ QPoint ChartView::to_pixel(const ChartPoint& point) const {
     m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
   for(auto& gap : m_gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
-      auto new_x = to_pixel({gap.m_start, ChartValue()}).x() +
+      auto new_x = to_pixel({gap.m_start, Scalar()}).x() +
         static_cast<int>((point.m_x - gap.m_start) /
         (gap.m_end - gap.m_start) * static_cast<double>(GAP_SIZE()));
       return {new_x, map_to(point.m_y, m_region.m_bottom_right.m_y,
@@ -303,7 +302,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     m_bottom_right_pixel.y());
   painter.drawLine(0, m_bottom_right_pixel.y(), m_bottom_right_pixel.x(),
     m_bottom_right_pixel.y());
-  if(m_x_range <= ChartValue(0) || m_y_range <= ChartValue(0)) {
+  if(m_x_range <= Scalar(0) || m_y_range <= Scalar(0)) {
     return;
   }
   for(auto y : m_y_axis_values) {
@@ -319,7 +318,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
       to_variant(m_model->get_y_axis_type(), y), QLocale()));
   }
   for(auto x : m_x_axis_values) {
-    auto x_pos = static_cast<int>(to_pixel({x, ChartValue()}).x());
+    auto x_pos = static_cast<int>(to_pixel({x, Scalar()}).x());
     if(x_pos < m_bottom_right_pixel.x() && !intersects_gap(x_pos)) {
       painter.setPen("#3A3348");
       painter.drawLine(x_pos, 0, x_pos, m_bottom_right_pixel.y());
@@ -378,9 +377,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
   }
   for(auto& gap : m_gaps) {
-    auto start = to_pixel({gap.m_start, ChartValue()}).x();
+    auto start = to_pixel({gap.m_start, Scalar()}).x();
     if(start < m_bottom_right_pixel.x()) {
-      draw_gap(painter, start, to_pixel({gap.m_end, ChartValue()}).x());
+      draw_gap(painter, start, to_pixel({gap.m_end, Scalar()}).x());
     }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <=
@@ -466,19 +465,19 @@ void ChartView::resizeEvent(QResizeEvent* event) {
 void ChartView::showEvent(QShowEvent* event) {
   if(m_region == Region{}) {
     auto current_time = boost::posix_time::second_clock::local_time();
-    auto bottom_right = ChartPoint(ChartValue(current_time),
-      ChartValue(Nexus::Money(0)));
+    auto bottom_right = ChartPoint(Scalar(current_time),
+      Scalar(Nexus::Money(0)));
     auto top_left = ChartPoint(
-      ChartValue(current_time - boost::posix_time::hours(1)),
-      ChartValue(Nexus::Money(1)));
+      Scalar(current_time - boost::posix_time::hours(1)),
+      Scalar(Nexus::Money(1)));
     set_region({top_left, bottom_right});
   }
   QWidget::showEvent(event);
 }
 
 ChartView::GapInfo ChartView::update_gaps(std::vector<ChartView::Gap>& gaps,
-    std::vector<Candlestick>& candlesticks, ChartValue start) {
-  auto gap_info = GapInfo{0, ChartValue()};
+    std::vector<Candlestick>& candlesticks, Scalar start) {
+  auto gap_info = GapInfo{0, Scalar()};
   for(auto& candlestick : candlesticks) {
     auto end = candlestick.GetStart();
     if(start != end) {
@@ -509,7 +508,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     }
     auto last = [&] {
       if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
-        return ChartValue();
+        return Scalar();
       } else if(data.m_candlesticks.empty()) {
         return new_candlesticks.front().GetStart();
       }
@@ -720,8 +719,8 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
     }
     m_trend_line_model.clear_selected();
     m_trend_line_model.set_selected(m_current_trend_line_id);
-    if(m_current_trend_line_point.m_x != ChartValue() &&
-        m_current_trend_line_point.m_y != ChartValue()) {
+    if(m_current_trend_line_point.m_x != Scalar() &&
+        m_current_trend_line_point.m_y != Scalar()) {
       m_trend_line_model.set_selected(m_current_trend_line_id);
       m_draw_state = DrawState::POINT;
     } else {

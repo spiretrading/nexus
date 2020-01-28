@@ -5,26 +5,26 @@
 using namespace Spire;
 
 TEST_CASE("test_min_max_values_integers", "[LocalRangeInputModel]") {
-  auto model = LocalRangeInputModel({ChartValue(1), ChartValue(2),
-    ChartValue(3), ChartValue(4), ChartValue(5)});
-  REQUIRE(model.get_minimum_value() == ChartValue(1));
-  REQUIRE(model.get_maximum_value() == ChartValue(5));
+  auto model = LocalRangeInputModel({Scalar(1), Scalar(2), Scalar(3), Scalar(4),
+    Scalar(5)});
+  REQUIRE(model.get_minimum_value() == Scalar(1));
+  REQUIRE(model.get_maximum_value() == Scalar(5));
   print_test_name("test_min_max_values_integers");
 }
 
 TEST_CASE("test_min_max_values_floating_point", "[LocalRangeInputModel]") {
-  auto model = LocalRangeInputModel({ChartValue(1.0), ChartValue(1.5),
-    ChartValue(2.0), ChartValue(2.5), ChartValue(3.0)});
-  REQUIRE(model.get_minimum_value() == ChartValue(1.0));
-  REQUIRE(model.get_maximum_value() == ChartValue(3.0));
+  auto model = LocalRangeInputModel({Scalar(1.0), Scalar(1.5), Scalar(2.0),
+    Scalar(2.5), Scalar(3.0)});
+  REQUIRE(model.get_minimum_value() == Scalar(1.0));
+  REQUIRE(model.get_maximum_value() == Scalar(3.0));
   print_test_name("test_min_max_values_floating_point");
 }
 
 TEST_CASE("test_histogram_integers", "[LocalRangeInputModel]") {
   auto data = [] {
-      auto data = std::vector<ChartValue>();
+      auto data = std::vector<Scalar>();
       for(auto i = 1; i < 101; ++i) {
-        data.push_back(ChartValue(i));
+        data.push_back(Scalar(i));
       }
       return data;
     }();
@@ -51,9 +51,9 @@ TEST_CASE("test_histogram_integers", "[LocalRangeInputModel]") {
 
 TEST_CASE("test_histogram_floating_point", "[LocalRangeInputModel]") {
   auto data = [] {
-      auto data = std::vector<ChartValue>();
+      auto data = std::vector<Scalar>();
       for(auto i = 1.0; i < 101.0; ++i) {
-        data.push_back(ChartValue(i));
+        data.push_back(Scalar(i));
       }
       return data;
     }();

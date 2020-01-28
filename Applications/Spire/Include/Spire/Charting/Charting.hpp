@@ -8,7 +8,6 @@ namespace Spire {
   class CachedChartModel;
   class ChartModel;
   struct ChartPoint;
-  class ChartValue;
   class ChartView;
   class ChartingTechnicalsPanel;
   class ChartingWindow;
@@ -20,8 +19,7 @@ namespace Spire {
   class TrendLineEditor;
   class TrendLineModel;
   class TrendLineStyleDropDownMenu;
-  using Candlestick =
-    Nexus::TechnicalAnalysis::Candlestick<ChartValue, ChartValue>;
+  using Candlestick = Nexus::TechnicalAnalysis::Candlestick<Scalar, Scalar>;
 
   //! Returns the slope of the line represented by the given points.
   /*!
