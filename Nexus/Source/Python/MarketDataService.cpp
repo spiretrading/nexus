@@ -1,4 +1,5 @@
 #include "Nexus/Python/MarketDataService.hpp"
+#include <Aspen/Python/Box.hpp>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
@@ -17,6 +18,7 @@
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
+#include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
@@ -276,7 +278,8 @@ void Nexus::Python::ExportApplicationMarketDataClient(
 }
 
 void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
-  class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore>(module,
+  class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
+      std::shared_ptr<VirtualHistoricalDataStore>>(module,
     "HistoricalDataStore")
     .def("load_order_imbalances",
       &VirtualHistoricalDataStore::LoadOrderImbalances)
@@ -371,12 +374,80 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
     .def("close", &VirtualMarketDataClient::Close);
 }
 
+void Nexus::Python::ExportMarketDataReactors(pybind11::module& module) {
+  auto aspenModule = pybind11::module::import("aspen");
+  Aspen::export_box<SecurityMarketDataQuery>(aspenModule,
+    "SecurityMarketDataQuery");
+  Aspen::export_box<Security>(aspenModule, "Security");
+  module.def("bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(BboQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentBboQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeBboQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("book_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(BookQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_book_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentBookQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_book_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeBookQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("market_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(MarketQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_market_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentMarketQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_market_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeMarketQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(TimeAndSalesReactor(client, std::move(query)));
+    });
+  module.def("current_time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentTimeAndSalesReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeTimeAndSalesReactor(client,
+        std::move(security)));
+    });
+}
+
 void Nexus::Python::ExportMarketDataService(pybind11::module& module) {
   auto submodule = module.def_submodule("market_data_service");
   ExportHistoricalDataStore(submodule);
   ExportMarketDataClient(submodule);
   ExportApplicationMarketDataClient(submodule);
   ExportSecuritySnapshot(submodule);
+  ExportMarketDataReactors(submodule);
   ExportMySqlHistoricalDataStore(submodule);
   ExportSqliteHistoricalDataStore(submodule);
   auto testModule = submodule.def_submodule("tests");
@@ -429,7 +500,9 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
 
 void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
   class_<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
-      Viper::MySql::Connection>>, VirtualHistoricalDataStore>(module,
+      Viper::MySql::Connection>>, VirtualHistoricalDataStore,
+      std::shared_ptr<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
+      Viper::MySql::Connection>>>>(module,
       "MySqlHistoricalDataStore")
     .def(init(
       [] (std::string host, unsigned int port, std::string username,
@@ -459,7 +532,8 @@ void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
 void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
   using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
-  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore>(module,
+  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore,
+      std::shared_ptr<PythonSqliteHistoricalDataStore>>(module,
       "SqliteHistoricalDataStore")
     .def(init(
       [] (std::string path) {

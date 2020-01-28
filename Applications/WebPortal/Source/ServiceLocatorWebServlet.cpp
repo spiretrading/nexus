@@ -17,20 +17,19 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::WebPortal;
-using namespace std;
 
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions,
-    Ref<ApplicationServiceClients> serviceClients)
-    : m_sessions{sessions.Get()},
-      m_serviceClients{serviceClients.Get()} {}
+  Ref<SessionStore<WebPortalSession>> sessions,
+  ServiceClientsBuilder serviceClientsBuilder)
+  : m_sessions(sessions.Get()),
+    m_serviceClientsBuilder(std::move(serviceClientsBuilder)) {}
 
 ServiceLocatorWebServlet::~ServiceLocatorWebServlet() {
   Close();
 }
 
-vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
-  vector<HttpRequestSlot> slots;
+std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
+  auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/login"),
     std::bind(&ServiceLocatorWebServlet::OnLogin, this, std::placeholders::_1));
@@ -65,12 +64,6 @@ void ServiceLocatorWebServlet::Open() {
   if(m_openState.SetOpening()) {
     return;
   }
-  try {
-    m_serviceClients->Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
-  }
   m_openState.SetOpen();
 }
 
@@ -95,27 +88,30 @@ HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {
       shuttle.Shuttle("password", m_password);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Get(request, Store(response));
   if(session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto account =
-    m_serviceClients->GetServiceLocatorClient().AuthenticateAccount(
-    parameters.m_username, parameters.m_password);
-  if(account.m_type != DirectoryEntry::Type::ACCOUNT) {
+  auto serviceClients = m_serviceClientsBuilder(parameters.m_username,
+    parameters.m_password);
+  try {
+    serviceClients->Open();
+  } catch(const std::exception&) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
+  auto account = serviceClients->GetServiceLocatorClient().GetAccount();
+  session->SetServiceClients(std::move(serviceClients));
   session->ShuttleResponse(account, Store(response));
   session->SetAccount(account);
   return response;
 }
 
 HttpResponse ServiceLocatorWebServlet::OnLogout(const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr || !session->IsLoggedIn()) {
     response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
@@ -127,11 +123,11 @@ HttpResponse ServiceLocatorWebServlet::OnLogout(const HttpRequest& request) {
 
 HttpResponse ServiceLocatorWebServlet::OnLoadCurrentAccount(
     const HttpRequest& request) {
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   auto account = [&] {
     if(session == nullptr || !session->IsLoggedIn()) {
-      return DirectoryEntry{};
+      return DirectoryEntry();
     }
     return session->GetAccount();
   }();
@@ -139,7 +135,7 @@ HttpResponse ServiceLocatorWebServlet::OnLoadCurrentAccount(
     session->ShuttleResponse(account, Store(response));
   } else {
     response.SetHeader({"Content-Type", "application/json"});
-    JsonSender<SharedBuffer> sender;
+    auto sender = JsonSender<SharedBuffer>();
     response.SetBody(Encode<SharedBuffer>(sender, account));
   }
   return response;
@@ -156,23 +152,16 @@ HttpResponse ServiceLocatorWebServlet::OnStorePassword(
       shuttle.Shuttle("password", m_password);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  if(parameters.m_account != session->GetAccount()) {
-    auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-      session->GetAccount());
-    if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-      response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-      return response;
-    }
-  }
-  m_serviceClients->GetServiceLocatorClient().StorePassword(
-    parameters.m_account, parameters.m_password);
+  auto& serviceClients = session->GetServiceClients();
+  serviceClients.GetServiceLocatorClient().StorePassword(parameters.m_account,
+    parameters.m_password);
   return response;
 }
 
@@ -196,44 +185,43 @@ HttpResponse ServiceLocatorWebServlet::OnSearchDirectoryEntry(
       shuttle.Shuttle("group", m_group);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto& serviceClients = session->GetServiceClients();
   to_lower(parameters.m_name);
   trim(parameters.m_name);
-  vector<ResultEntry> result;
+  auto result = std::vector<ResultEntry>();
   if(parameters.m_name.empty()) {
     session->ShuttleResponse(result, Store(response));
     return response;
   }
   auto managedTradingGroups =
-    m_serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
+    serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
     session->GetAccount());
   for(auto& managedTradingGroup : managedTradingGroups) {
-    auto group = m_serviceClients->GetAdministrationClient().LoadTradingGroup(
+    auto group = serviceClients.GetAdministrationClient().LoadTradingGroup(
       managedTradingGroup);
     if(starts_with(to_lower_copy(group.GetEntry().m_name), parameters.m_name)) {
       result.push_back(
-        ResultEntry{group.GetEntry(), AccountRoles{0}, group.GetEntry()});
+        ResultEntry{group.GetEntry(), AccountRoles(0), group.GetEntry()});
     }
     for(auto& manager : group.GetManagers()) {
       if(starts_with(to_lower_copy(manager.m_name), parameters.m_name)) {
-        auto roles =
-          m_serviceClients->GetAdministrationClient().LoadAccountRoles(manager);
-        result.push_back(
-          ResultEntry{manager, roles, group.GetEntry()});
+        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+          manager);
+        result.push_back(ResultEntry{manager, roles, group.GetEntry()});
       }
     }
     for(auto& trader : group.GetTraders()) {
       if(starts_with(to_lower_copy(trader.m_name), parameters.m_name)) {
-        auto roles =
-          m_serviceClients->GetAdministrationClient().LoadAccountRoles(trader);
-        result.push_back(
-          ResultEntry{trader, roles, group.GetEntry()});
+        auto roles = serviceClients.GetAdministrationClient().LoadAccountRoles(
+          trader);
+        result.push_back(ResultEntry{trader, roles, group.GetEntry()});
       }
     }
   }
@@ -256,28 +244,23 @@ HttpResponse ServiceLocatorWebServlet::OnCreateAccount(
       shuttle.Shuttle("roles", m_accountRoles);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
   auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto& serviceClients = session->GetServiceClients();
   auto validatedGroup =
-    m_serviceClients->GetServiceLocatorClient().LoadDirectoryEntry(
+    serviceClients.GetServiceLocatorClient().LoadDirectoryEntry(
     parameters.m_group.m_id);
   if(validatedGroup != parameters.m_group) {
     response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
     return response;
   }
-  DirectoryEntry newAccount;
-  auto groupChildren = m_serviceClients->GetServiceLocatorClient().LoadChildren(
+  auto newAccount = DirectoryEntry();
+  auto groupChildren = serviceClients.GetServiceLocatorClient().LoadChildren(
     validatedGroup);
   if(parameters.m_accountRoles.Test(AccountRole::MANAGER)) {
     auto managerGroup = std::find_if(groupChildren.begin(), groupChildren.end(),
@@ -288,9 +271,9 @@ HttpResponse ServiceLocatorWebServlet::OnCreateAccount(
       response.SetStatusCode(HttpStatusCode::BAD_REQUEST);
       return response;
     }
-    newAccount = m_serviceClients->GetServiceLocatorClient().MakeAccount(
+    newAccount = serviceClients.GetServiceLocatorClient().MakeAccount(
       parameters.m_name, "1234", *managerGroup);
-    m_serviceClients->GetServiceLocatorClient().StorePermissions(newAccount,
+    serviceClients.GetServiceLocatorClient().StorePermissions(newAccount,
       validatedGroup, Permission::READ);
   }
   if(parameters.m_accountRoles.Test(AccountRole::TRADER)) {
@@ -303,14 +286,14 @@ HttpResponse ServiceLocatorWebServlet::OnCreateAccount(
       return response;
     }
     if(newAccount.m_id == -1) {
-      newAccount = m_serviceClients->GetServiceLocatorClient().MakeAccount(
+      newAccount = serviceClients.GetServiceLocatorClient().MakeAccount(
         parameters.m_name, "1234", *traderGroup);
     } else {
-      m_serviceClients->GetServiceLocatorClient().Associate(newAccount,
+      serviceClients.GetServiceLocatorClient().Associate(newAccount,
         *traderGroup);
     }
   }
-  m_serviceClients->GetAdministrationClient().StoreIdentity(newAccount,
+  serviceClients.GetAdministrationClient().StoreIdentity(newAccount,
     parameters.m_identity);
   session->ShuttleResponse(newAccount, Store(response));
   return response;
@@ -325,30 +308,23 @@ HttpResponse ServiceLocatorWebServlet::OnCreateGroup(
       shuttle.Shuttle("name", m_name);
     }
   };
-  HttpResponse response;
+  auto response = HttpResponse();
   auto session = m_sessions->Find(request);
   if(session == nullptr) {
     response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto roles = m_serviceClients->GetAdministrationClient().LoadAccountRoles(
-    session->GetAccount());
-  if(!roles.Test(AccountRole::ADMINISTRATOR)) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
+  auto& serviceClients = session->GetServiceClients();
   auto tradingGroupsDirectory =
-    m_serviceClients->GetServiceLocatorClient().LoadDirectoryEntry(
+    serviceClients.GetServiceLocatorClient().LoadDirectoryEntry(
     DirectoryEntry::GetStarDirectory(), "trading_groups");
   auto parameters = session->ShuttleParameters<Parameters>(request);
-  auto newGroup = m_serviceClients->GetServiceLocatorClient().MakeDirectory(
+  auto newGroup = serviceClients.GetServiceLocatorClient().MakeDirectory(
     parameters.m_name, tradingGroupsDirectory);
-  auto managersGroup =
-    m_serviceClients->GetServiceLocatorClient().MakeDirectory("managers",
-    newGroup);
-  auto tradersGroup =
-    m_serviceClients->GetServiceLocatorClient().MakeDirectory("traders",
-    newGroup);
+  auto managersGroup = serviceClients.GetServiceLocatorClient().MakeDirectory(
+    "managers", newGroup);
+  auto tradersGroup = serviceClients.GetServiceLocatorClient().MakeDirectory(
+    "traders", newGroup);
   session->ShuttleResponse(newGroup, Store(response));
   return response;
 }

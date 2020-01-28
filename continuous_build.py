@@ -70,6 +70,30 @@ def copy_build(applications, version, name, source, path):
   except OSError:
     return
 
+def copy_python_libraries(path, version):
+  beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
+  python_path = os.path.join(path, str(version), 'Python')
+  makedirs(python_path)
+  if sys.platform == 'win32':
+    python_ext = '.pyd'
+  else:
+    python_ext = '.so'
+  aspen_path = os.path.join(os.getcwd(), 'Dependencies', 'aspen')
+  shutil.copy2(os.path.join(aspen_path, 'Libraries', 'Release',
+    'aspen%s' % python_ext), python_path)
+  beam_python_path = os.path.join(python_path, 'beam')
+  makedirs(beam_python_path)
+  shutil.copy2(os.path.join(beam_path, 'Beam', 'Libraries', 'Release',
+    '_beam%s' % python_ext), beam_python_path)
+  shutil.copy2(os.path.join(beam_path, 'Applications', 'Python', '__init__.py'),
+    beam_python_path)
+  nexus_python_path = os.path.join(python_path, 'nexus')
+  makedirs(nexus_python_path)
+  shutil.copy2(os.path.join(os.getcwd(), 'Nexus', 'Nexus', 'Libraries',
+    'Release', '_nexus%s' % python_ext), nexus_python_path)
+  shutil.copy2(os.path.join(os.getcwd(), 'Nexus', 'Applications', 'Python',
+    '__init__.py'), nexus_python_path)
+
 def build_repo(repo, path, branch):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
   commits.reverse()
@@ -120,6 +144,7 @@ def build_repo(repo, path, branch):
     copy_build(beam_applications, version, 'Beam', beam_path, path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
       os.path.join(destination_path, 'setup.py'))
+    copy_python_libraries(path, version)
     if sys.platform == 'win32':
       archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)

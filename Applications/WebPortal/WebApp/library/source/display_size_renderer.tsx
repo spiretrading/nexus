@@ -59,8 +59,8 @@ export function displaySizeRenderer<T extends DisplaySizeProperties>(
     }
 
     public render() {
-      return <BaseComponent {...this.props}
-        displaySize={this.state.displaySize}/>;
+      const C = BaseComponent as any;
+      return <C {...this.props} displaySize={this.state.displaySize}/>;
     }
   };
 }

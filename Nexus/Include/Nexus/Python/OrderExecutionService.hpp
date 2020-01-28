@@ -29,6 +29,12 @@ namespace Nexus::Python {
   void ExportOrder(pybind11::module& module);
 
   /**
+   * Exports the OrderCancellationReactor class.
+   * @param module The module to export to.
+   */
+  void ExportOrderCancellationReactor(pybind11::module& module);
+
+  /**
    * Exports the OrderExecutionClient class.
    * @param module The module to export to.
    */
@@ -57,6 +63,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportOrderInfo(pybind11::module& module);
+
+  /**
+   * Exports the OrderReactor class.
+   * @param module The module to export to.
+   */
+  void ExportOrderReactor(pybind11::module& module);
 
   /**
    * Exports the OrderRecord struct.
