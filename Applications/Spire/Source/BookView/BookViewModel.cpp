@@ -42,8 +42,9 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
   if(m_security == Security()) {
     return;
   }
-  m_boardLot = m_userProfile->GetMarketDatabase().FromCode(
-    m_security.GetMarket()).m_boardLot;
+  m_securityInfo =
+    m_userProfile->GetServiceClients().GetMarketDataClient().LoadSecurityInfo(
+    m_security);
   QueryRealTimeBookQuotesWithSnapshot(
     m_userProfile->GetServiceClients().GetMarketDataClient(),
     m_security, m_slotHandler->GetSlot<BookQuote>(
@@ -137,8 +138,14 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
     if(index.column() == PRICE_COLUMN) {
       return QVariant::fromValue(entry.m_quote.m_quote.m_price);
     } else if(index.column() == SIZE_COLUMN) {
+      auto boardLot = [&] {
+        if(m_securityInfo.m_boardLot <= 1) {
+          return Quantity(1);
+        }
+        return m_securityInfo.m_boardLot;
+      }();
       return QVariant::fromValue(Floor(std::max<Quantity>(
-        1, entry.m_quote.m_quote.m_size / m_boardLot), 0));
+        1, entry.m_quote.m_quote.m_size / boardLot), 0));
     } else if(index.column() == MPID_COLUMN) {
       return QString::fromStdString(entry.m_quote.m_mpid);
     }
