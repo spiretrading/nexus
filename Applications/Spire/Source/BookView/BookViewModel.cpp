@@ -66,6 +66,10 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
 
 BookViewModel::~BookViewModel() {}
 
+const SecurityInfo& BookViewModel::GetSecurityInfo() const {
+  return m_securityInfo;
+}
+
 void BookViewModel::SetProperties(const BookViewProperties& properties) {
   m_properties = properties;
   for(auto& orderQuantity : m_orderQuantities) {
