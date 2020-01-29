@@ -224,6 +224,11 @@ namespace {
         "load_security_technicals", LoadSecurityTechnicals, security);
     }
 
+    SecurityInfo LoadSecurityInfo(const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(SecurityInfo, VirtualMarketDataClient,
+        "load_security_info", LoadSecurityInfo, security);
+    }
+
     std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SecurityInfo>,
@@ -368,6 +373,7 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
       &VirtualMarketDataClient::LoadSecuritySnapshot)
     .def("load_security_technicals",
       &VirtualMarketDataClient::LoadSecurityTechnicals)
+    .def("load_security_info", &VirtualMarketDataClient::LoadSecurityInfo)
     .def("load_security_info_from_prefix",
       &VirtualMarketDataClient::LoadSecurityInfoFromPrefix)
     .def("open", &VirtualMarketDataClient::Open)

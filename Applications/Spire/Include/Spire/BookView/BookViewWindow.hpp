@@ -74,7 +74,6 @@ namespace Spire {
       UserProfile* m_userProfile;
       BookViewProperties m_properties;
       Nexus::Security m_security;
-      Nexus::Quantity m_boardLot;
       UI::SecurityViewStack m_securityViewStack;
       std::string m_linkIdentifier;
       boost::signals2::scoped_connection m_linkConnection;
