@@ -4,9 +4,9 @@
 
 namespace Nexus::MarketDataService {
   class ApplicationMarketDataClient;
-  template<typename HistoricalDataStoreType> class BufferedHistoricalDataStore;
-  template<typename HistoricalDataStoreType> class CachedHistoricalDataStore;
-  template<typename MarketDataClientType> class ClientHistoricalDataStore;
+  template<typename D> class BufferedHistoricalDataStore;
+  template<typename D> class CachedHistoricalDataStore;
+  template<typename C> class ClientHistoricalDataStore;
   template<typename D> class DataStoreMarketDataClient;
   template<typename MarketExpressionType> class DefaultCurrencyExpression;
   class DistributedMarketDataClient;
@@ -15,8 +15,7 @@ namespace Nexus::MarketDataService {
   class EntitlementSet;
   struct HistoricalDataStore;
   class HistoricalDataStoreException;
-  template<typename T, typename DataStoreType>
-    class HistoricalDataStoreQueryWrapper;
+  template<typename V, typename D> class HistoricalDataStoreQueryWrapper;
   class LocalHistoricalDataStore;
   template<typename B> class MarketDataClient;
   template<typename OrderIdType, typename SamplingTimerType,
@@ -36,8 +35,7 @@ namespace Nexus::MarketDataService {
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;
   class SecurityEntry;
   struct SecuritySnapshot;
-  template<typename HistoricalDataStoreType>
-    class SessionCachedHistoricalDataStore;
+  template<typename D> class SessionCachedHistoricalDataStore;
   template<typename C> class SqlHistoricalDataStore;
   class VirtualHistoricalDataStore;
   class VirtualMarketDataClient;

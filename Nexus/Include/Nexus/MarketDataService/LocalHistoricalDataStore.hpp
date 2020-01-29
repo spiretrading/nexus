@@ -1,36 +1,34 @@
-#ifndef NEXUS_MARKETDATALOCALHISTORICALDATASTORE_HPP
-#define NEXUS_MARKETDATALOCALHISTORICALDATASTORE_HPP
+#ifndef NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
+#define NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
 #include <Beam/Queries/LocalDataStore.hpp>
+#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class LocalHistoricalDataStore
-      \brief Stores historical market data in memory.
-   */
+  /** Stores historical market data in memory. */
   class LocalHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! Constructs a LocalHistoricalDataStore.
+      /** Constructs a LocalHistoricalDataStore. */
       LocalHistoricalDataStore() = default;
 
-      //! Returns all OrderImbalances stored.
+      /** Returns all OrderImbalances stored. */
       std::vector<SequencedMarketOrderImbalance> LoadOrderImbalances();
 
-      //! Returns all the BboQuotes stored.
+      /** Returns all the BboQuotes stored. */
       std::vector<SequencedSecurityBboQuote> LoadBboQuotes();
 
-      //! Returns all the MarketQuotes stored.
+      /** Returns all the MarketQuotes stored. */
       std::vector<SequencedSecurityMarketQuote> LoadMarketQuotes();
 
-      //! Returns all the BookQuotes stored.
+      /** Returns all the BookQuotes stored. */
       std::vector<SequencedSecurityBookQuote> LoadBookQuotes();
 
-      //! Returns all the TimeAndSales stored.
+      /** Returns all the TimeAndSales stored. */
       std::vector<SequencedSecurityTimeAndSale> LoadTimeAndSales();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
@@ -47,6 +45,8 @@ namespace MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -77,6 +77,7 @@ namespace MarketDataService {
       template<typename T, typename Query>
       using DataStore = Beam::Queries::LocalDataStore<Query, T,
         Queries::EvaluatorTranslator>;
+      Beam::SynchronizedUnorderedMap<Security, SecurityInfo> m_securityInfo;
       DataStore<OrderImbalance, MarketWideDataQuery> m_orderImbalanceDataStore;
       DataStore<BboQuote, SecurityMarketDataQuery> m_bboQuoteDataStore;
       DataStore<MarketQuote, SecurityMarketDataQuery> m_marketQuoteDataStore;
@@ -134,6 +135,10 @@ namespace MarketDataService {
     return m_timeAndSaleDataStore.Load(query);
   }
 
+  inline void LocalHistoricalDataStore::Store(const SecurityInfo& info) {
+    m_securityInfo.Insert(info.m_security, info);
+  }
+
   inline void LocalHistoricalDataStore::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
     m_orderImbalanceDataStore.Store(orderImbalance);
@@ -187,7 +192,6 @@ namespace MarketDataService {
   inline void LocalHistoricalDataStore::Open() {}
 
   inline void LocalHistoricalDataStore::Close() {}
-}
 }
 
 #endif
