@@ -102,8 +102,10 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   if(m_model->is_loading() && m_transition_widget == nullptr) {
     m_transition_widget = std::make_unique<TransitionWidget>(this);
   }
-  m_model->connect_begin_loading_signal([=] { show_loading_widget(); });
-  m_model->connect_end_loading_signal([=] { on_end_loading_signal(); });
+  m_model_begin_loading_connection = m_model->connect_begin_loading_signal(
+    [=] { show_loading_widget(); });
+  m_model_end_loading_connection = m_model->connect_end_loading_signal(
+    [=] { on_end_loading_signal(); });
   auto filter = new CustomVariantSortFilterProxyModel(this);
   filter->setSourceModel(m_model);
   connect(filter, &QAbstractItemModel::rowsAboutToBeInserted, this,

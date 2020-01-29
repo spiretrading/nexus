@@ -5,18 +5,18 @@ using namespace Beam::Queries;
 using namespace boost::signals2;
 using namespace Spire;
 
-TestChartModel::LoadEntry::LoadEntry(ChartValue first, ChartValue last,
-    const SnapshotLimit& limit)
-    : m_first(first),
-      m_last(last),
-      m_limit(limit),
-      m_is_loaded(false) {}
+TestChartModel::LoadEntry::LoadEntry(Scalar first, Scalar last,
+  const SnapshotLimit& limit)
+  : m_first(first),
+    m_last(last),
+    m_limit(limit),
+    m_is_loaded(false) {}
 
-ChartValue TestChartModel::LoadEntry::get_first() const {
+Scalar TestChartModel::LoadEntry::get_first() const {
   return m_first;
 }
 
-ChartValue TestChartModel::LoadEntry::get_last() const {
+Scalar TestChartModel::LoadEntry::get_last() const {
   return m_last;
 }
 
@@ -35,10 +35,10 @@ std::vector<Candlestick>& TestChartModel::LoadEntry::get_result() {
   return m_result;
 }
 
-TestChartModel::TestChartModel(ChartValue::Type x_axis_type,
-    ChartValue::Type y_axis_type)
-    : m_x_axis_type(x_axis_type),
-      m_y_axis_type(y_axis_type) {}
+TestChartModel::TestChartModel(Scalar::Type x_axis_type,
+  Scalar::Type y_axis_type)
+  : m_x_axis_type(x_axis_type),
+    m_y_axis_type(y_axis_type) {}
 
 QtPromise<std::shared_ptr<TestChartModel::LoadEntry>>
     TestChartModel::pop_load() {
@@ -53,16 +53,16 @@ QtPromise<std::shared_ptr<TestChartModel::LoadEntry>>
   }, LaunchPolicy::ASYNC);
 }
 
-ChartValue::Type TestChartModel::get_x_axis_type() const {
+Scalar::Type TestChartModel::get_x_axis_type() const {
   return m_x_axis_type;
 }
 
-ChartValue::Type TestChartModel::get_y_axis_type() const {
+Scalar::Type TestChartModel::get_y_axis_type() const {
   return m_y_axis_type;
 }
 
-QtPromise<std::vector<Candlestick>> TestChartModel::load(ChartValue first,
-    ChartValue last, const SnapshotLimit& limit) {
+QtPromise<std::vector<Candlestick>> TestChartModel::load(Scalar first,
+    Scalar last, const SnapshotLimit& limit) {
   auto load_entry = std::make_shared<LoadEntry>(first, last, limit);
   {
     auto lock = std::lock_guard(m_mutex);

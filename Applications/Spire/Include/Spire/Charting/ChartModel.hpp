@@ -4,8 +4,8 @@
 #include <Beam/Queries/SnapshotLimit.hpp>
 #include <boost/noncopyable.hpp>
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Scalar.hpp"
 
 namespace Spire {
 
@@ -19,10 +19,10 @@ namespace Spire {
       virtual ~ChartModel() = default;
 
       //! Returns the type of the x-axis.
-      virtual ChartValue::Type get_x_axis_type() const = 0;
+      virtual Scalar::Type get_x_axis_type() const = 0;
 
       //! Returns the type of the y-axis.
-      virtual ChartValue::Type get_y_axis_type() const = 0;
+      virtual Scalar::Type get_y_axis_type() const = 0;
 
       //! Loads a range of candlesticks and makes them available to query.
       /*!
@@ -30,8 +30,8 @@ namespace Spire {
         \param last The last candlestick in the range to load (inclusive).
         \param limit Limits the number of candlesticks to load.
       */
-      virtual QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit) = 0;
+      virtual QtPromise<std::vector<Candlestick>> load(Scalar first,
+        Scalar last, const Beam::Queries::SnapshotLimit& limit) = 0;
 
       //! Connects a slot to the candlestick signal.
       /*!

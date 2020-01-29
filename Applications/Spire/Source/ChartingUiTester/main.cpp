@@ -53,51 +53,35 @@ int main(int argc, char** argv) {
       window->setWindowTitle(CustomVariantItemDelegate().displayText(
         QVariant::fromValue(security), QLocale()) + QObject::tr(" - Chart"));
       auto candlesticks = std::vector<Candlestick>();
-      auto up = [&] (auto start, auto end) {
-          candlesticks.push_back(Candlestick(
-          ChartValue(start), ChartValue(end),
-          ChartValue(0.4), ChartValue(0.6), ChartValue(0.8), ChartValue(0.2)));
-        };
-      auto down = [&] (auto start, auto end) {
-          candlesticks.push_back(Candlestick(
-          ChartValue(start), ChartValue(end),
-          ChartValue(0.6), ChartValue(0.4), ChartValue(0.8), ChartValue(0.2)));
-        };
-      up(0, 25);
-      down(100, 125);
-      up(200, 225);
-      up(225, 250);
-      up(250, 275);
-      up(275, 300);
-      //auto rand = std::default_random_engine(std::random_device()());
-      //auto time = boost::posix_time::second_clock::local_time();
-      //for(auto i = 0; i < 100; ++i) {
-      //  auto open = ChartValue(Money((rand() % 40 + 40) *
-      //    Money::FromValue("0.01").get()));
-      //  auto close = ChartValue(Money((rand() % 40 + 40) *
-      //    Money::FromValue("0.01").get()));
-      //  auto [high, low] = [&] {
-      //    if(open > close) {
-      //      return std::make_tuple(ChartValue(Money((rand() % 40) *
-      //        Money::FromValue("0.01").get())) + open, close - ChartValue(Money(
-      //        (rand() % 40) * Money::FromValue("0.01").get())));
-      //    }
-      //    return std::make_tuple(ChartValue(Money((rand() % 40) *
-      //      Money::FromValue("0.01").get())) + close, open - ChartValue(Money(
-      //      (rand() % 40) * Money::FromValue("0.01").get())));
-      //  }();
-      //  candlesticks.push_back(Candlestick(
-      //    ChartValue(time - boost::posix_time::minutes(1)), ChartValue(time),
-      //    open, close, high, low));
-      //  if(rand() % 5 == 1) {
-      //    time -= boost::posix_time::minutes(rand() % 25 + 1);
-      //  } else {
-      //    time -= boost::posix_time::minutes(1);
-      //  }
-      //}
-      auto chart_model = std::make_shared<LocalChartModel>(
-        ChartValue::Type::MONEY, ChartValue::Type::MONEY, candlesticks);
-      //auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
+      auto rand = std::default_random_engine(std::random_device()());
+      auto time = boost::posix_time::second_clock::local_time();
+      for(auto i = 0; i < 100; ++i) {
+        auto open = Scalar(Money((rand() % 40 + 40) *
+          Money::FromValue("0.01").get()));
+        auto close = Scalar(Money((rand() % 40 + 40) *
+          Money::FromValue("0.01").get()));
+        auto [high, low] = [&] {
+          if(open > close) {
+            return std::make_tuple(Scalar(Money((rand() % 40) *
+              Money::FromValue("0.01").get())) + open, close - Scalar(Money(
+              (rand() % 40) * Money::FromValue("0.01").get())));
+          }
+          return std::make_tuple(Scalar(Money((rand() % 40) *
+            Money::FromValue("0.01").get())) + close, open - Scalar(Money(
+            (rand() % 40) * Money::FromValue("0.01").get())));
+        }();
+        candlesticks.push_back(Candlestick(
+          Scalar(time - boost::posix_time::minutes(1)), Scalar(time), open,
+          close, high, low));
+        if(rand() % 5 == 1) {
+          time -= boost::posix_time::minutes(rand() % 25 + 1);
+        } else {
+          time -= boost::posix_time::minutes(1);
+        }
+      }
+      auto chart_model = new LocalChartModel(Scalar::Type::TIMESTAMP,
+        Scalar::Type::MONEY, candlesticks);
+      auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
       test_timer.start(1500);
       QObject::connect(&test_timer, &QTimer::timeout, [=] {
@@ -105,7 +89,7 @@ int main(int argc, char** argv) {
         technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
           Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
       });
-      window->set_models(chart_model, technicals_model);
+      window->set_models(cached_model, technicals_model);
     });
   window->show();
   application->exec();

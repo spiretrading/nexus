@@ -1,9 +1,9 @@
 #include <catch.hpp>
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartView.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Nexus;
@@ -11,25 +11,24 @@ using namespace Spire;
 
 namespace {
   struct Gap {
-    ChartValue m_start;
-    ChartValue m_end;
+    Scalar m_start;
+    Scalar m_end;
   };
 
   const auto GAP_SIZE = 35;
 
   const auto TOP_LEFT() {
-    static auto top_left = ChartPoint(ChartValue(900), ChartValue(1));
+    static auto top_left = ChartPoint(Scalar(900), Scalar(1));
     return top_left;
   }
 
   const auto BOTTOM_RIGHT() {
-    static auto bottom_right = ChartPoint(ChartValue(950), ChartValue(0));
+    static auto bottom_right = ChartPoint(Scalar(950), Scalar(0));
     return bottom_right;
   }
 
   const auto ADJUSTED_BOTTOM_RIGHT() {
-    static auto adjusted_bottom_right = ChartPoint(ChartValue(952.5),
-      ChartValue(0));
+    static auto adjusted_bottom_right = ChartPoint(Scalar(952.5), Scalar(0));
     return adjusted_bottom_right;
   }
 
@@ -38,27 +37,10 @@ namespace {
   const auto GAPS() {
     static auto gaps = std::vector<Gap>();
     if(gaps.empty()) {
-      gaps.push_back({ChartValue(910), ChartValue(920)});
-      gaps.push_back({ChartValue(930), ChartValue(940)});
+      gaps.push_back({Scalar(910), Scalar(920)});
+      gaps.push_back({Scalar(930), Scalar(940)});
     }
     return gaps;
-  }
-
-  template<typename T, typename U>
-  U map_to(T value, T a, T b, U c, U d) {
-    return static_cast<U>((value - a) / (b - a) * (d - c) + c);
-  }
-
-  template<typename U>
-  U map_to(int value, int a, int b, U c, U d) {
-    return map_to(static_cast<double>(value), static_cast<double>(a),
-      static_cast<double>(b), c, d);
-  }
-
-  template<typename T>
-  int map_to(T value, T a, T b, int c, int d) {
-    return static_cast<int>(
-      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d)));
   }
 
   QPoint to_pixel(const ChartPoint& point) {
@@ -67,7 +49,7 @@ namespace {
     auto gaps = GAPS();
     for(auto& gap : gaps) {
       if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
-        auto new_x = to_pixel({gap.m_start, ChartValue()}).x() +
+        auto new_x = to_pixel({gap.m_start, Scalar()}).x() +
           static_cast<int>((point.m_x - gap.m_start) /
           (gap.m_end - gap.m_start) * static_cast<double>(GAP_SIZE));
         return {new_x, map_to(point.m_y, BOTTOM_RIGHT().m_y, TOP_LEFT().m_y,
@@ -144,17 +126,17 @@ TEST_CASE("test_to_chart_point", "[Charting]") {
 }
 
 TEST_CASE("test_to_pixel", "[Charting]") {
-  REQUIRE(to_pixel({ChartValue(900), ChartValue(1)}) == QPoint(0, 0));
-  REQUIRE(to_pixel({ChartValue(905), ChartValue(1)}) == QPoint(20, 0));
-  REQUIRE(to_pixel({ChartValue(910), ChartValue(1)}) == QPoint(40, 0));
-  REQUIRE(to_pixel({ChartValue(915), ChartValue(1)}) == QPoint(57, 0));
-  REQUIRE(to_pixel({ChartValue(920), ChartValue(1)}) == QPoint(75, 0));
-  REQUIRE(to_pixel({ChartValue(925), ChartValue(1)}) == QPoint(95, 0));
-  REQUIRE(to_pixel({ChartValue(930), ChartValue(1)}) == QPoint(115, 0));
-  REQUIRE(to_pixel({ChartValue(935), ChartValue(1)}) == QPoint(132, 0));
-  REQUIRE(to_pixel({ChartValue(940), ChartValue(1)}) == QPoint(150, 0));
-  REQUIRE(to_pixel({ChartValue(945), ChartValue(1)}) == QPoint(170, 0));
-  REQUIRE(to_pixel({ChartValue(950), ChartValue(1)}) == QPoint(190, 0));
-  REQUIRE(to_pixel({ChartValue(952.5), ChartValue(1)}) == QPoint(200, 0));
+  REQUIRE(to_pixel({Scalar(900), Scalar(1)}) == QPoint(0, 0));
+  REQUIRE(to_pixel({Scalar(905), Scalar(1)}) == QPoint(20, 0));
+  REQUIRE(to_pixel({Scalar(910), Scalar(1)}) == QPoint(40, 0));
+  REQUIRE(to_pixel({Scalar(915), Scalar(1)}) == QPoint(57, 0));
+  REQUIRE(to_pixel({Scalar(920), Scalar(1)}) == QPoint(75, 0));
+  REQUIRE(to_pixel({Scalar(925), Scalar(1)}) == QPoint(95, 0));
+  REQUIRE(to_pixel({Scalar(930), Scalar(1)}) == QPoint(115, 0));
+  REQUIRE(to_pixel({Scalar(935), Scalar(1)}) == QPoint(132, 0));
+  REQUIRE(to_pixel({Scalar(940), Scalar(1)}) == QPoint(150, 0));
+  REQUIRE(to_pixel({Scalar(945), Scalar(1)}) == QPoint(170, 0));
+  REQUIRE(to_pixel({Scalar(950), Scalar(1)}) == QPoint(190, 0));
+  REQUIRE(to_pixel({Scalar(952.5), Scalar(1)}) == QPoint(200, 0));
   print_test_name("test_to_pixel");
 }

@@ -57,13 +57,14 @@ namespace Spire {
     private:
       mutable ItemSelectedSignal m_item_selected_signal;
       QMenu* m_items;
+      std::unique_ptr<MenuIconSizeProxyStyle> m_menu_icon_style;
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
       bool m_empty_style;
 
       void remove_empty_item();
       void set_empty_menu_stylesheet();
-      void set_default_menu_stylesheet(int padding_left);
+      void set_default_menu_stylesheet();
       void on_triggered(QAction* action);
   };
 }

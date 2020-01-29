@@ -108,6 +108,9 @@ namespace OrderExecutionService {
           m_status = report.m_status;
         }
         m_publisher.Push(report);
+        if(IsTerminal(report.m_status)) {
+          m_publisher.Break();
+        }
       });
   }
 

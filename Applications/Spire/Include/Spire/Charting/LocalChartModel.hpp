@@ -15,15 +15,15 @@ namespace Spire {
         \param y_axis_type The type of the y-axis.
         \param candlesticks The initial list of candlesticks to store.
       */
-      LocalChartModel(ChartValue::Type x_axis_type,
-        ChartValue::Type y_axis_type, std::vector<Candlestick> candlesticks);
+      LocalChartModel(Scalar::Type x_axis_type, Scalar::Type y_axis_type,
+        std::vector<Candlestick> candlesticks);
 
-      ChartValue::Type get_x_axis_type() const override;
+      Scalar::Type get_x_axis_type() const override;
 
-      ChartValue::Type get_y_axis_type() const override;
+      Scalar::Type get_y_axis_type() const override;
 
-      QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit) override;
+      QtPromise<std::vector<Candlestick>> load(Scalar first, Scalar last,
+        const Beam::Queries::SnapshotLimit& limit) override;
 
       //! Inserts candlesticks into the model in sorted order. Duplicate
       //! candlesticks are erased.
@@ -38,8 +38,8 @@ namespace Spire {
 
     private:
       mutable CandlestickSignal m_candlestick_signal;
-      ChartValue::Type m_x_axis_type;
-      ChartValue::Type m_y_axis_type;
+      Scalar::Type m_x_axis_type;
+      Scalar::Type m_y_axis_type;
       std::vector<Candlestick> m_candlesticks;
   };
 }

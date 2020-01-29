@@ -5,21 +5,21 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-EmptyChartModel::EmptyChartModel(ChartValue::Type x_axis_type,
-    ChartValue::Type y_axis_type)
-    : m_x_axis_type(x_axis_type),
-      m_y_axis_type(y_axis_type) {}
+EmptyChartModel::EmptyChartModel(Scalar::Type x_axis_type,
+  Scalar::Type y_axis_type)
+  : m_x_axis_type(x_axis_type),
+    m_y_axis_type(y_axis_type) {}
 
-ChartValue::Type EmptyChartModel::get_x_axis_type() const {
+Scalar::Type EmptyChartModel::get_x_axis_type() const {
   return m_x_axis_type;
 }
 
-ChartValue::Type EmptyChartModel::get_y_axis_type() const {
+Scalar::Type EmptyChartModel::get_y_axis_type() const {
   return m_y_axis_type;
 }
 
-QtPromise<std::vector<Candlestick>> EmptyChartModel::load(ChartValue first,
-    ChartValue last, const SnapshotLimit& limit) {
+QtPromise<std::vector<Candlestick>> EmptyChartModel::load(Scalar first,
+    Scalar last, const SnapshotLimit& limit) {
   return QtPromise([] {
     return std::vector<Candlestick>();
   });

@@ -442,7 +442,7 @@ namespace Details {
             Beam::Remote<SyncMarketEntry, Beam::Threading::Mutex>>(
           [&] (auto& entry) {
             auto initialSequences = LoadInitialSequences(dataStore, market);
-            entry.Initialize(market, initialSequences);
+            entry.emplace(market, initialSequences);
           });
       });
     return **entry;
@@ -466,7 +466,7 @@ namespace Details {
               sanitizedSecurity);
             auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
               dataStore);
-            entry.Initialize(sanitizedSecurity, closePrice, initialSequences);
+            entry.emplace(sanitizedSecurity, closePrice, initialSequences);
           });
       });
     return **entry;

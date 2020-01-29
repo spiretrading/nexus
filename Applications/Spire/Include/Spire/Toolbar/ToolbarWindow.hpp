@@ -6,7 +6,6 @@
 #include <QWidget>
 #include "Spire/Toolbar/RecentlyClosedModel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
-#include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -50,6 +49,8 @@ namespace Spire {
       mutable OpenSignal m_open_signal;
       mutable ReopenSignal m_reopen_signal;
       RecentlyClosedModel* m_model;
+      boost::signals2::scoped_connection m_entry_added_connection;
+      boost::signals2::scoped_connection m_entry_removed_connection;
       std::vector<RecentlyClosedModel::Entry> m_entries;
       ToolbarMenu* m_window_manager_button;
       ToolbarMenu* m_recently_closed_button;

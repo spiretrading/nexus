@@ -38,6 +38,14 @@ def backup(index, start, end, loader, destination):
       timezone = pytz.timezone('US/Eastern')
     elif index.country == nexus.default_countries.AU:
       timezone = pytz.timezone('Australia/Sydney')
+    elif index.country == nexus.default_countries.BR:
+      timezone = pytz.timezone('America/Sao_Paulo')
+    elif index.country == nexus.default_countries.CN:
+      timezone = pytz.timezone('Asia/Shanghai')
+    elif index.country == nexus.default_countries.HK:
+      timezone = pytz.timezone('Asia/Hong_Kong')
+    elif index.country == nexus.default_countries.JP:
+      timezone = pytz.timezone('Asia/Tokyo')
   else:
     timezone = pytz.timezone('US/Eastern')
   localized_start = timezone.localize(start)
@@ -126,8 +134,8 @@ def main():
         routine.wait()
       routines = []
     routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      lambda: backup(market, args.start, args.end,
-        mysql_data_store.load_order_imbalances, sqlite_data_store))))
+      (lambda s: lambda: backup(s, args.start, args.end,
+      mysql_data_store.load_order_imbalances, sqlite_data_store))(market))))
   for routine in routines:
     routine.wait()
 

@@ -130,40 +130,35 @@ namespace Spire {
         OFF,
         POINT
       };
-
       struct Gap {
-        ChartValue m_start;
-        ChartValue m_end;
+        Scalar m_start;
+        Scalar m_end;
       };
-
       struct GapInfo {
         int gap_count;
-        ChartValue total_gaps_value;
+        Scalar total_gaps_value;
       };
-
       struct LoadedData {
         std::vector<Candlestick> m_candlesticks;
         std::vector<ChartView::Gap> m_gaps;
-        ChartValue m_start;
-        ChartValue m_end;
+        Scalar m_start;
+        Scalar m_end;
         int m_current_x;
         int m_end_x;
-        ChartValue m_values_per_pixel;
+        Scalar m_values_per_pixel;
       };
-
       struct LineMouseOffset {
         QPoint m_first;
         QPoint m_second;
       };
-
       ChartModel* m_model;
       Region m_region;
       ChartPoint m_gap_adjusted_bottom_right;
       QPoint m_bottom_right_pixel;
-      ChartValue m_x_axis_step;
-      ChartValue m_x_range;
-      ChartValue m_y_axis_step;
-      ChartValue m_y_range;
+      Scalar m_x_axis_step;
+      Scalar m_x_range;
+      Scalar m_y_axis_step;
+      Scalar m_y_range;
       QFont m_label_font;
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
@@ -171,8 +166,8 @@ namespace Spire {
       Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
-      std::vector<ChartValue> m_x_axis_values;
-      std::vector<ChartValue> m_y_axis_values;
+      std::vector<Scalar> m_x_axis_values;
+      std::vector<Scalar> m_y_axis_values;
       bool m_is_auto_scaled;
       QtPromise<LoadedData> m_loaded_data_promise;
       std::vector<Candlestick> m_candlesticks;
@@ -189,11 +184,10 @@ namespace Spire {
       std::vector<Gap> m_gaps;
 
       static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
-        std::vector<Candlestick>& candlesticks, ChartValue start);
+        std::vector<Candlestick>& candlesticks, Scalar start);
       static QtPromise<ChartView::LoadedData> load_data(
         QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
         ChartModel* model);
-
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);

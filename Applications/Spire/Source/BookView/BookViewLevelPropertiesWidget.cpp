@@ -260,13 +260,13 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
 void BookViewLevelPropertiesWidget::apply(
     BookViewProperties& properties) const {
   properties.set_book_quote_foreground_color(
-    m_band_list_widget->currentItem()->textColor());
+    m_band_list_widget->currentItem()->foreground().color());
   properties.set_book_quote_font(m_band_list_widget->currentItem()->font());
   properties.set_show_grid(m_show_grid_lines_check_box->isChecked());
   auto& colors = properties.get_book_quote_background_colors();
   colors.clear();
   for(auto i = 0; i < m_band_list_widget->count(); ++i) {
-    colors.push_back(m_band_list_widget->item(i)->backgroundColor());
+    colors.push_back(m_band_list_widget->item(i)->background().color());
   }
 }
 
@@ -391,8 +391,8 @@ void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(
     for(auto i = item_count; i < value; ++i) {
       auto item = new QListWidgetItem(
         tr("Level") + QString(" %1").arg(i + 1), m_band_list_widget);
-      item->setBackgroundColor(m_band_list_widget->item(
-        item_count - 1)->backgroundColor());
+      item->setBackground(m_band_list_widget->item(
+        item_count - 1)->background());
       item->setFont(m_band_list_widget->item(item_count - 1)->font());
       item->setTextAlignment(Qt::AlignCenter);
     }

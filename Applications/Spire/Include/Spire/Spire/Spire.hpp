@@ -8,9 +8,13 @@
 
 namespace Spire {
   class Definitions;
+  class LocalRangeInputModel;
   class LocalTechnicalsModel;
   template<typename T> class QtPromise;
+  class RangeInputModel;
+  class Scalar;
   class SpireController;
+  template<typename T> struct SubscriptionResult;
   class TechnicalsModel;
 
   //! Defines the common type of boost signal used throughout Spire.

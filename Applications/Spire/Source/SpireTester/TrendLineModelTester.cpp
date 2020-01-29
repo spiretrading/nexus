@@ -1,7 +1,6 @@
 #include <catch.hpp>
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/TrendLine.hpp"
 #include "Spire/Charting/TrendLineModel.hpp"
 
@@ -9,7 +8,7 @@ using namespace Spire;
 
 namespace {
   ChartPoint make_point(double x, double y) {
-    return ChartPoint(ChartValue(x), ChartValue(y));
+    return ChartPoint(Scalar(x), Scalar(y));
   }
 
   TrendLine make_line(int x1, int y1, int x2, int y2, const QColor& color,

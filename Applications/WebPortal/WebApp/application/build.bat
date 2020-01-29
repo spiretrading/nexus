@@ -95,7 +95,7 @@ IF "%UPDATE_BUILD%" == "1" (
   node node_modules\webpack\bin\webpack.js
   ECHO "timestamp" > mod_time.txt
   IF EXIST application (
-    robocopy "%~dp0..\..\resources" application\resources /E > NUL
+    robocopy "%~dp0..\resources" application\resources /E > NUL
     COPY "%~dp0source\index.html" application\index.html > NUL
     IF EXIST ..\..\Application (
       IF NOT EXIST ..\..\Application\web_app (
@@ -103,7 +103,7 @@ IF "%UPDATE_BUILD%" == "1" (
         MD web_app
         POPD
       )
-      robocopy application ..\..\Application\web_app > NUL
+      robocopy application ..\..\Application\web_app /E > NUL
     )
   )
 )

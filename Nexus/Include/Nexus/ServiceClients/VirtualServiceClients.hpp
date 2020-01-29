@@ -206,65 +206,65 @@ namespace Nexus {
       BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_client{std::forward<ServiceClientsForward>(client)},
         m_serviceLocatorClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<ServiceLocatorClient>>& client) {
-            client.Initialize(
+          [=] (std::optional<std::unique_ptr<ServiceLocatorClient>>& client) {
+            client.emplace(
               Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
               &m_client->GetServiceLocatorClient()));
           }
         },
         m_registryClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<RegistryClient>>& client) {
-            client.Initialize(Beam::RegistryService::MakeVirtualRegistryClient(
+          [=] (std::optional<std::unique_ptr<RegistryClient>>& client) {
+            client.emplace(Beam::RegistryService::MakeVirtualRegistryClient(
               &m_client->GetRegistryClient()));
           }
         },
         m_administrationClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<AdministrationClient>>& client) {
-            client.Initialize(
+          [=] (std::optional<std::unique_ptr<AdministrationClient>>& client) {
+            client.emplace(
               AdministrationService::MakeVirtualAdministrationClient(
               &m_client->GetAdministrationClient()));
           }
         },
         m_definitionsClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<DefinitionsClient>>& client) {
-            client.Initialize(DefinitionsService::MakeVirtualDefinitionsClient(
+          [=] (std::optional<std::unique_ptr<DefinitionsClient>>& client) {
+            client.emplace(DefinitionsService::MakeVirtualDefinitionsClient(
               &m_client->GetDefinitionsClient()));
           }
         },
         m_marketDataClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<MarketDataClient>>& client) {
-            client.Initialize(MarketDataService::MakeVirtualMarketDataClient(
+          [=] (std::optional<std::unique_ptr<MarketDataClient>>& client) {
+            client.emplace(MarketDataService::MakeVirtualMarketDataClient(
               &m_client->GetMarketDataClient()));
           }
         },
         m_chartingClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<ChartingClient>>& client) {
-            client.Initialize(ChartingService::MakeVirtualChartingClient(
+          [=] (std::optional<std::unique_ptr<ChartingClient>>& client) {
+            client.emplace(ChartingService::MakeVirtualChartingClient(
               &m_client->GetChartingClient()));
           }
         },
         m_complianceClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<ComplianceClient>>& client) {
-            client.Initialize(Compliance::MakeVirtualComplianceClient(
+          [=] (std::optional<std::unique_ptr<ComplianceClient>>& client) {
+            client.emplace(Compliance::MakeVirtualComplianceClient(
               &m_client->GetComplianceClient()));
           }
         },
         m_orderExecutionClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<OrderExecutionClient>>& client) {
-            client.Initialize(
+          [=] (std::optional<std::unique_ptr<OrderExecutionClient>>& client) {
+            client.emplace(
               OrderExecutionService::MakeVirtualOrderExecutionClient(
               &m_client->GetOrderExecutionClient()));
           }
         },
         m_riskClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<RiskClient>>& client) {
-            client.Initialize(RiskService::MakeVirtualRiskClient(
+          [=] (std::optional<std::unique_ptr<RiskClient>>& client) {
+            client.emplace(RiskService::MakeVirtualRiskClient(
               &m_client->GetRiskClient()));
           }
         },
         m_timeClient{
-          [=] (Beam::DelayPtr<std::unique_ptr<TimeClient>>& client) {
-            client.Initialize(Beam::TimeService::MakeVirtualTimeClient(
+          [=] (std::optional<std::unique_ptr<TimeClient>>& client) {
+            client.emplace(Beam::TimeService::MakeVirtualTimeClient(
               &m_client->GetTimeClient()));
           }
         } {}

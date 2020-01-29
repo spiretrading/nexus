@@ -68,6 +68,7 @@ namespace Spire {
       std::unique_ptr<BookViewTableWidget> m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
+      boost::signals2::scoped_connection m_dialog_apply_connection;
 
       void show_context_menu(const QPoint& pos);
       void show_properties_dialog();

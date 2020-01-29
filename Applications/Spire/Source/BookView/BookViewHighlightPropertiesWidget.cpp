@@ -83,7 +83,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     item->setTextAlignment(Qt::AlignCenter);
     auto highlight = properties.get_market_highlight(entry.m_code);
     if(highlight.is_initialized()) {
-      item->setBackgroundColor(highlight->m_color);
+      item->setBackground(highlight->m_color);
       item->set_highlight_color(highlight->m_color);
       if(highlight->m_highlight_all_levels) {
         item->set_highlight_all_levels();
@@ -91,7 +91,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
         item->set_highlight_top_level();
       }
     } else {
-      item->setBackgroundColor(Qt::white);
+      item->setBackground(Qt::white);
     }
   }
   m_markets_list_widget->item(0)->setSelected(true);
@@ -319,10 +319,10 @@ void BookViewHighlightPropertiesWidget::
     on_market_highlight_color_button_clicked() {
   auto item = static_cast<MarketListItem*>(
     m_markets_list_widget->currentItem());
-  auto color = QColorDialog::getColor(item->backgroundColor());
+  auto color = QColorDialog::getColor(item->background().color());
   if(color.isValid()) {
     item->set_highlight_color(color);
-    item->setBackgroundColor(color);
+    item->setBackground(color);
     update_market_widgets();
   }
 }
@@ -342,7 +342,7 @@ void BookViewHighlightPropertiesWidget::
     auto current_item = static_cast<MarketListItem*>(
       m_markets_list_widget->currentItem());
     current_item->remove_highlight();
-    current_item->setBackgroundColor(Qt::white);
+    current_item->setBackground(Qt::white);
     update_market_list_stylesheet(m_markets_list_widget->currentRow());
     update_color_button_stylesheet(m_market_highlight_color_button, Qt::white);
   }

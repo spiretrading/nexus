@@ -1,17 +1,12 @@
 #include "Nexus/Python/MarketDataService.hpp"
+#include <Aspen/Python/Box.hpp>
 #include <Beam/Codecs/SizeDeclarativeDecoder.hpp>
 #include <Beam/Codecs/SizeDeclarativeEncoder.hpp>
 #include <Beam/Codecs/ZLibDecoder.hpp>
 #include <Beam/Codecs/ZLibEncoder.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Python/BoostPython.hpp>
-#include <Beam/Python/Copy.hpp>
-#include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/PythonBindings.hpp>
-#include <Beam/Python/Queries.hpp>
-#include <Beam/Python/UniquePtr.hpp>
-#include <Beam/Python/Vector.hpp>
+#include <Beam/Python/Beam.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
@@ -19,17 +14,16 @@
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClientBuilder.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
+#include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
-#include "Nexus/Python/ToPythonHistoricalDataStore.hpp"
-#include "Nexus/Python/ToPythonMarketDataClient.hpp"
+#include "Nexus/Python/HistoricalDataStore.hpp"
+#include "Nexus/Python/MarketDataClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -43,424 +37,490 @@ using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
-using namespace boost::python;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 using namespace Nexus::Python;
-using namespace std;
+using namespace pybind11;
 
 namespace {
-  using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
-    VirtualServiceLocatorClient, MessageProtocol<
-    std::unique_ptr<Beam::Network::TcpSocketChannel>,
-    BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>>,
-    LiveTimer>;
-  using Client = MarketDataClient<SessionBuilder>;
-
-  struct FromPythonHistoricalDataStore final : VirtualHistoricalDataStore,
-      wrapper<VirtualHistoricalDataStore> {
+  struct TrampolineHistoricalDataStore final : VirtualHistoricalDataStore {
     std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override {
-      return get_override("load_order_imbalances")(query);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedOrderImbalance>,
+        VirtualHistoricalDataStore, "load_order_imbalances",
+        LoadOrderImbalances, query);
     }
 
     std::vector<SequencedBboQuote> LoadBboQuotes(
         const SecurityMarketDataQuery& query) override {
-      return get_override("load_bbo_quotes")(query);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedBboQuote>,
+        VirtualHistoricalDataStore, "load_bbo_quotes", LoadBboQuotes, query);
     }
 
     std::vector<SequencedBookQuote> LoadBookQuotes(
         const SecurityMarketDataQuery& query) override {
-      return get_override("load_book_quotes")(query);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedBookQuote>,
+        VirtualHistoricalDataStore, "load_book_quotes", LoadBookQuotes, query);
     }
 
     std::vector<SequencedMarketQuote> LoadMarketQuotes(
         const SecurityMarketDataQuery& query) override {
-      return get_override("load_market_quotes")(query);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedMarketQuote>,
+        VirtualHistoricalDataStore, "load_market_quotes", LoadMarketQuotes,
+        query);
     }
 
     std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query) override {
-      return get_override("load_time_and_sales")(query);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedTimeAndSale>,
+        VirtualHistoricalDataStore, "load_time_and_sales", LoadTimeAndSales,
+        query);
     }
 
     void Store(const SequencedMarketOrderImbalance& orderImbalance) override {
-      get_override("store")(orderImbalance);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, orderImbalance);
     }
 
     void Store(const std::vector<SequencedMarketOrderImbalance>&
         orderImbalances) override {
-      get_override("store")(orderImbalances);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, orderImbalances);
     }
 
     void Store(const SequencedSecurityBboQuote& bboQuote) override {
-      get_override("store")(bboQuote);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, bboQuote);
     }
 
     void Store(
         const std::vector<SequencedSecurityBboQuote>& bboQuotes) override {
-      get_override("store")(bboQuotes);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, bboQuotes);
     }
 
     void Store(const SequencedSecurityMarketQuote& marketQuote) override {
-      get_override("store")(marketQuote);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, marketQuote);
     }
 
     void Store(const std::vector<
         SequencedSecurityMarketQuote>& marketQuotes) override {
-      get_override("store")(marketQuotes);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, marketQuotes);
     }
 
     void Store(const SequencedSecurityBookQuote& bookQuote) override {
-      get_override("store")(bookQuote);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, bookQuote);
     }
 
     void Store(
         const std::vector<SequencedSecurityBookQuote>& bookQuotes) override {
-      get_override("store")(bookQuotes);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, bookQuotes);
     }
 
     void Store(const SequencedSecurityTimeAndSale& timeAndSale) override {
-      get_override("store")(timeAndSale);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, timeAndSale);
     }
 
     void Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) override {
-      get_override("store")(timeAndSales);
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, timeAndSales);
     }
 
     void Open() override {
-      get_override("open")();
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "open",
+        Open);
     }
 
     void Close() override {
-      get_override("close")();
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "close",
+        Close);
     }
   };
 
-  struct FromPythonMarketDataClient : VirtualMarketDataClient,
-      wrapper<VirtualMarketDataClient> {
-    virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
+  struct TrampolineMarketDataClient final : VirtualMarketDataClient {
+    void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>& queue)
-        override final {
-      get_override("query_sequenced_order_imbalances")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_sequenced_order_imbalances", QueryOrderImbalances, query, queue);
     }
 
-    virtual void QueryOrderImbalances(const MarketWideDataQuery& query,
+    void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<QueueWriter<OrderImbalance>>& queue)
-        override final {
-      get_override("query_order_imbalances")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_order_imbalances", QueryOrderImbalances, query, queue);
     }
 
-    virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
+    void QueryBboQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<QueueWriter<SequencedBboQuote>>& queue)
-        override final {
-      get_override("query_sequenced_bbo_quotes")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_sequenced_bbo_quotes", QueryBboQuotes, query, queue);
     }
 
-    virtual void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<BboQuote>>& queue) override final {
-      get_override("query_bbo_quotes")(query, queue);
+    void QueryBboQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<BboQuote>>& queue) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_bbo_quotes", QueryBboQuotes, query, queue);
     }
 
-    virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
+    void QueryBookQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<QueueWriter<SequencedBookQuote>>& queue)
-        override final {
-      get_override("query_sequenced_book_quotes")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_sequenced_book_quotes", QueryBookQuotes, query, queue);
     }
 
-    virtual void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<BookQuote>>& queue) override final {
-      get_override("query_book_quotes")(query, queue);
+    void QueryBookQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<BookQuote>>& queue) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_book_quotes", QueryBookQuotes, query, queue);
     }
 
-    virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
+    void QueryMarketQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<QueueWriter<SequencedMarketQuote>>& queue)
-        override final {
-      get_override("query_sequenced_market_quotes")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_sequenced_market_quotes", QueryMarketQuotes, query, queue);
     }
 
-    virtual void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<MarketQuote>>& queue) override final {
-      get_override("query_market_quotes")(query, queue);
+    void QueryMarketQuotes(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<MarketQuote>>& queue) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_market_quotes", QueryMarketQuotes, query, queue);
     }
 
-    virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+    void QueryTimeAndSales(const SecurityMarketDataQuery& query,
         const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>& queue)
-        override final {
-      get_override("query_sequenced_time_and_sales")(query, queue);
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_sequenced_time_and_sales", QueryTimeAndSales, query, queue);
     }
 
-    virtual void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<TimeAndSale>>& queue) override final {
-      get_override("query_time_and_sales")(query, queue);
+    void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+        const std::shared_ptr<QueueWriter<TimeAndSale>>& queue) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
+        "query_time_and_sales", QueryTimeAndSales, query, queue);
     }
 
-    virtual SecuritySnapshot LoadSecuritySnapshot(
-        const Security& security) override final {
-      return get_override("load_security_snapshot")(security);
+    SecuritySnapshot LoadSecuritySnapshot(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(SecuritySnapshot, VirtualMarketDataClient,
+        "load_security_snapshot", LoadSecuritySnapshot, security);
     }
 
-    virtual SecurityTechnicals LoadSecurityTechnicals(
-        const Security& security) override final {
-      return get_override("load_security_technicals")(security);
+    SecurityTechnicals LoadSecurityTechnicals(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(SecurityTechnicals, VirtualMarketDataClient,
+        "load_security_technicals", LoadSecurityTechnicals, security);
     }
 
-    virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
-        const std::string& prefix) override final {
-      return get_override("load_security_info_from_prefix")(prefix);
+    std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
+        const std::string& prefix) override {
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SecurityInfo>,
+        VirtualMarketDataClient, "load_security_info_from_prefix",
+        LoadSecurityInfoFromPrefix, prefix);
     }
 
-    virtual void Open() override final {
-      get_override("open")();
+    void Open() override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient, "open", Open);
     }
 
-    virtual void Close() override final {
-      get_override("close")();
+    void Close() override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient, "close",
+        Close);
     }
   };
-
-  auto BuildClient(VirtualServiceLocatorClient& serviceLocatorClient) {
-    auto addresses = LocateServiceAddresses(serviceLocatorClient,
-      MarketDataService::RELAY_SERVICE_NAME);
-    auto delay = false;
-    auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
-      [=] () mutable {
-        if(delay) {
-          auto delayTimer = LiveTimer(seconds(3), Ref(*GetTimerThreadPool()));
-          delayTimer.Start();
-          delayTimer.Wait();
-        }
-        delay = true;
-        return std::make_unique<TcpSocketChannel>(addresses,
-          Ref(*GetSocketThreadPool()));
-      },
-      [=] {
-        return std::make_unique<LiveTimer>(seconds(10),
-          Ref(*GetTimerThreadPool()));
-      });
-    return MakeToPythonMarketDataClient(std::make_unique<Client>(
-      sessionBuilder)).release();
-  }
-
-  auto BuildMarketDataServiceTestEnvironment(
-      const std::shared_ptr<VirtualServiceLocatorClient>& serviceLocatorClient,
-      const std::shared_ptr<VirtualAdministrationClient>&
-      administrationClient) {
-    return new MarketDataServiceTestEnvironment{serviceLocatorClient,
-      administrationClient};
-  }
-
-  std::unique_ptr<VirtualMarketDataClient>
-      MarketDataServiceTestEnvironmentBuildClient(
-      MarketDataServiceTestEnvironment& environment,
-      VirtualServiceLocatorClient& serviceLocatorClient) {
-    return MakeToPythonMarketDataClient(
-      environment.BuildClient(Ref(serviceLocatorClient)));
-  }
-
-  auto BuildMySqlHistoricalDataStore(
-      std::string host, unsigned int port, std::string username,
-      std::string password, std::string database) {
-    return MakeToPythonHistoricalDataStore(
-      std::make_unique<SqlHistoricalDataStore<Viper::MySql::Connection>>(
-      [=] {
-        return Viper::MySql::Connection(host, port, username, password,
-          database);
-      })).release();
-  }
-
-  auto BuildSqliteHistoricalDataStore(std::string path) {
-    return std::shared_ptr(MakeToPythonHistoricalDataStore(
-      std::make_unique<SqlHistoricalDataStore<Viper::Sqlite3::Connection>>(
-      [=] {
-        return Viper::Sqlite3::Connection(path);
-      })));
-  }
 }
 
-void Nexus::Python::ExportApplicationMarketDataClient() {
-  class_<ToPythonMarketDataClient<Client>, bases<VirtualMarketDataClient>,
-    boost::noncopyable>("ApplicationMarketDataClient", no_init)
-    .def("__init__", make_constructor(&BuildClient));
+void Nexus::Python::ExportApplicationMarketDataClient(
+    pybind11::module& module) {
+  using SessionBuilder = AuthenticatedServiceProtocolClientBuilder<
+    VirtualServiceLocatorClient, MessageProtocol<
+    std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
+    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+  using Client = MarketDataClient<SessionBuilder>;
+  class_<ToPythonMarketDataClient<Client>, VirtualMarketDataClient>(
+      module, "ApplicationMarketDataClient")
+    .def(init(
+      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
+        auto addresses = LocateServiceAddresses(serviceLocatorClient,
+          MarketDataService::RELAY_SERVICE_NAME);
+        auto delay = false;
+        auto sessionBuilder = SessionBuilder(Ref(serviceLocatorClient),
+          [=] () mutable {
+            if(delay) {
+              auto delayTimer = LiveTimer(seconds(3),
+                Ref(*GetTimerThreadPool()));
+              delayTimer.Start();
+              delayTimer.Wait();
+            }
+            delay = true;
+            return std::make_unique<TcpSocketChannel>(addresses,
+              Ref(*GetSocketThreadPool()));
+          },
+          [=] {
+            return std::make_unique<LiveTimer>(seconds(10),
+              Ref(*GetTimerThreadPool()));
+          });
+        return MakeToPythonMarketDataClient(std::make_unique<Client>(
+          sessionBuilder));
+      }));
 }
 
-void Nexus::Python::ExportHistoricalDataStore() {
-  class_<FromPythonHistoricalDataStore, boost::noncopyable>(
-    "HistoricalDataStore", no_init)
+void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
+  class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
+      std::shared_ptr<VirtualHistoricalDataStore>>(module,
+    "HistoricalDataStore")
     .def("load_order_imbalances",
-      pure_virtual(&VirtualHistoricalDataStore::LoadOrderImbalances))
-    .def("load_bbo_quotes",
-      pure_virtual(&VirtualHistoricalDataStore::LoadBboQuotes))
-    .def("load_book_quotes",
-      pure_virtual(&VirtualHistoricalDataStore::LoadBookQuotes))
-    .def("load_market_quotes",
-      pure_virtual(&VirtualHistoricalDataStore::LoadMarketQuotes))
-    .def("load_time_and_sales",
-      pure_virtual(&VirtualHistoricalDataStore::LoadTimeAndSales))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::LoadOrderImbalances)
+    .def("load_bbo_quotes", &VirtualHistoricalDataStore::LoadBboQuotes)
+    .def("load_book_quotes", &VirtualHistoricalDataStore::LoadBookQuotes)
+    .def("load_market_quotes", &VirtualHistoricalDataStore::LoadMarketQuotes)
+    .def("load_time_and_sales", &VirtualHistoricalDataStore::LoadTimeAndSales)
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const SequencedMarketOrderImbalance&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedMarketOrderImbalance>&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
-      const SequencedSecurityBboQuote&)>(&VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SequencedSecurityBboQuote&)>(&VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedSecurityBboQuote>&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
-      const SequencedSecurityMarketQuote&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SequencedSecurityMarketQuote&)>(&VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedSecurityMarketQuote>&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
-      const SequencedSecurityBookQuote&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SequencedSecurityBookQuote&)>(&VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedSecurityBookQuote>&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
-      const SequencedSecurityTimeAndSale&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("store", pure_virtual(static_cast<void (VirtualHistoricalDataStore::*)(
+      &VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SequencedSecurityTimeAndSale&)>(&VirtualHistoricalDataStore::Store))
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedSecurityTimeAndSale>&)>(
-      &VirtualHistoricalDataStore::Store)))
-    .def("open", pure_virtual(&VirtualHistoricalDataStore::Open))
-    .def("close", pure_virtual(&VirtualHistoricalDataStore::Close));
-  ExportUniquePtr<VirtualHistoricalDataStore>();
+      &VirtualHistoricalDataStore::Store))
+    .def("open", &VirtualHistoricalDataStore::Open)
+    .def("close", &VirtualHistoricalDataStore::Close);
 }
 
-void Nexus::Python::ExportMarketDataClient() {
-  class_<FromPythonMarketDataClient, boost::noncopyable>("MarketDataClient",
-    no_init)
-    .def("query_sequenced_order_imbalances", pure_virtual(
+void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
+  class_<VirtualMarketDataClient, TrampolineMarketDataClient>(module,
+      "MarketDataClient")
+    .def("query_sequenced_order_imbalances",
       static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
       const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>&)>(
-      &VirtualMarketDataClient::QueryOrderImbalances)))
-    .def("query_order_imbalances", pure_virtual(
+      &VirtualMarketDataClient::QueryOrderImbalances))
+    .def("query_order_imbalances",
       static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
       const std::shared_ptr<QueueWriter<OrderImbalance>>&)>(
-      &VirtualMarketDataClient::QueryOrderImbalances)))
-    .def("query_sequenced_bbo_quotes", pure_virtual(
+      &VirtualMarketDataClient::QueryOrderImbalances))
+    .def("query_sequenced_bbo_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<SequencedBboQuote>>&)>(
-      &VirtualMarketDataClient::QueryBboQuotes)))
-    .def("query_bbo_quotes", pure_virtual(
-      static_cast<void (VirtualMarketDataClient::*)(
+      &VirtualMarketDataClient::QueryBboQuotes))
+    .def("query_bbo_quotes", static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<BboQuote>>&)>(
-      &VirtualMarketDataClient::QueryBboQuotes)))
-    .def("query_sequenced_book_quotes", pure_virtual(
+      &VirtualMarketDataClient::QueryBboQuotes))
+    .def("query_sequenced_book_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<SequencedBookQuote>>&)>(
-      &VirtualMarketDataClient::QueryBookQuotes)))
-    .def("query_book_quotes", pure_virtual(
-      static_cast<void (VirtualMarketDataClient::*)(
+      &VirtualMarketDataClient::QueryBookQuotes))
+    .def("query_book_quotes", static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<BookQuote>>&)>(
-      &VirtualMarketDataClient::QueryBookQuotes)))
-    .def("query_sequenced_market_quotes", pure_virtual(
+      &VirtualMarketDataClient::QueryBookQuotes))
+    .def("query_sequenced_market_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<SequencedMarketQuote>>&)>(
-      &VirtualMarketDataClient::QueryMarketQuotes)))
-    .def("query_market_quotes", pure_virtual(
-      static_cast<void (VirtualMarketDataClient::*)(
+      &VirtualMarketDataClient::QueryMarketQuotes))
+    .def("query_market_quotes", static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<MarketQuote>>&)>(
-      &VirtualMarketDataClient::QueryMarketQuotes)))
-    .def("query_sequenced_time_and_sales", pure_virtual(
+      &VirtualMarketDataClient::QueryMarketQuotes))
+    .def("query_sequenced_time_and_sales",
       static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>&)>(
-      &VirtualMarketDataClient::QueryTimeAndSales)))
-    .def("query_time_and_sales", pure_virtual(
-      static_cast<void (VirtualMarketDataClient::*)(
+      &VirtualMarketDataClient::QueryTimeAndSales))
+    .def("query_time_and_sales", static_cast<void (VirtualMarketDataClient::*)(
       const SecurityMarketDataQuery&,
       const std::shared_ptr<QueueWriter<TimeAndSale>>&)>(
-      &VirtualMarketDataClient::QueryTimeAndSales)))
-    .def("load_security_snapshot", pure_virtual(
-      &VirtualMarketDataClient::LoadSecuritySnapshot))
-    .def("load_security_technicals", pure_virtual(
-      &VirtualMarketDataClient::LoadSecurityTechnicals))
-    .def("load_security_info_from_prefix", pure_virtual(
-      &VirtualMarketDataClient::LoadSecurityInfoFromPrefix))
-    .def("open", pure_virtual(&VirtualMarketDataClient::Open))
-    .def("close", pure_virtual(&VirtualMarketDataClient::Close));
-  ExportUniquePtr<VirtualMarketDataClient>();
-  ExportVector<vector<SecurityInfo>>("VectorSecurityInfo");
+      &VirtualMarketDataClient::QueryTimeAndSales))
+    .def("load_security_snapshot",
+      &VirtualMarketDataClient::LoadSecuritySnapshot)
+    .def("load_security_technicals",
+      &VirtualMarketDataClient::LoadSecurityTechnicals)
+    .def("load_security_info_from_prefix",
+      &VirtualMarketDataClient::LoadSecurityInfoFromPrefix)
+    .def("open", &VirtualMarketDataClient::Open)
+    .def("close", &VirtualMarketDataClient::Close);
 }
 
-void Nexus::Python::ExportMarketDataService() {
-  string nestedName = extract<string>(scope().attr("__name__") +
-    ".market_data_service");
-  object nestedModule{handle<>(
-    borrowed(PyImport_AddModule(nestedName.c_str())))};
-  scope().attr("market_data_service") = nestedModule;
-  scope parent = nestedModule;
-  ExportHistoricalDataStore();
-  ExportMarketDataClient();
-  ExportApplicationMarketDataClient();
-  ExportBasicQuery<MarketCode>("MarketWideData");
-  ExportBasicQuery<Security>("SecurityMarketData");
-  ExportSecuritySnapshot();
-  ExportMySqlHistoricalDataStore();
-  ExportSqliteHistoricalDataStore();
-  {
-    string nestedName = extract<string>(parent.attr("__name__") + ".tests");
-    object nestedModule{handle<>(
-      borrowed(PyImport_AddModule(nestedName.c_str())))};
-    parent.attr("tests") = nestedModule;
-    scope child = nestedModule;
-    ExportMarketDataServiceTestEnvironment();
-  }
+void Nexus::Python::ExportMarketDataReactors(pybind11::module& module) {
+  auto aspenModule = pybind11::module::import("aspen");
+  Aspen::export_box<SecurityMarketDataQuery>(aspenModule,
+    "SecurityMarketDataQuery");
+  Aspen::export_box<Security>(aspenModule, "Security");
+  module.def("bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(BboQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentBboQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_bbo_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeBboQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("book_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(BookQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_book_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentBookQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_book_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeBookQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("market_quote_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(MarketQuoteReactor(client, std::move(query)));
+    });
+  module.def("current_market_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentMarketQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_market_quote_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeMarketQuoteReactor(client,
+        std::move(security)));
+    });
+  module.def("time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client,
+        Aspen::SharedBox<SecurityMarketDataQuery> query) {
+      return Aspen::to_object(TimeAndSalesReactor(client, std::move(query)));
+    });
+  module.def("current_time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(CurrentTimeAndSalesReactor(client,
+        std::move(security)));
+    });
+  module.def("real_time_time_and_sales_reactor",
+    [] (VirtualMarketDataClient& client, Aspen::SharedBox<Security> security) {
+      return Aspen::to_object(RealTimeTimeAndSalesReactor(client,
+        std::move(security)));
+    });
 }
 
-void Nexus::Python::ExportMarketDataServiceTestEnvironment() {
-  class_<MarketDataServiceTestEnvironment, boost::noncopyable>(
-      "MarketDataServiceTestEnvironment", no_init)
-    .def("__init__", make_constructor(BuildMarketDataServiceTestEnvironment))
-    .def("open", BlockingFunction(&MarketDataServiceTestEnvironment::Open))
-    .def("close", BlockingFunction(&MarketDataServiceTestEnvironment::Close))
-    .def("publish", BlockingFunction(
-      static_cast<void (MarketDataServiceTestEnvironment::*)(
+void Nexus::Python::ExportMarketDataService(pybind11::module& module) {
+  auto submodule = module.def_submodule("market_data_service");
+  ExportHistoricalDataStore(submodule);
+  ExportMarketDataClient(submodule);
+  ExportApplicationMarketDataClient(submodule);
+  ExportSecuritySnapshot(submodule);
+  ExportMarketDataReactors(submodule);
+  ExportMySqlHistoricalDataStore(submodule);
+  ExportSqliteHistoricalDataStore(submodule);
+  auto testModule = submodule.def_submodule("tests");
+  ExportMarketDataServiceTestEnvironment(testModule);
+}
+
+void Nexus::Python::ExportMarketDataServiceTestEnvironment(
+    pybind11::module& module) {
+  class_<MarketDataServiceTestEnvironment>(module,
+      "MarketDataServiceTestEnvironment")
+    .def(init(
+      [] (const std::shared_ptr<VirtualServiceLocatorClient>&
+          serviceLocatorClient,
+          const std::shared_ptr<VirtualAdministrationClient>&
+          administrationClient) {
+        return std::make_unique<MarketDataServiceTestEnvironment>(
+          serviceLocatorClient, administrationClient);
+      }))
+    .def("open", &MarketDataServiceTestEnvironment::Open,
+      call_guard<GilRelease>())
+    .def("close", &MarketDataServiceTestEnvironment::Close,
+      call_guard<GilRelease>())
+    .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       MarketCode, const OrderImbalance&)>(
-      &MarketDataServiceTestEnvironment::Publish)))
-    .def("publish", BlockingFunction(
-      static_cast<void (MarketDataServiceTestEnvironment::*)(
+      &MarketDataServiceTestEnvironment::Publish),
+      call_guard<GilRelease>())
+    .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
       const Security&, const BboQuote&)>(
-      &MarketDataServiceTestEnvironment::Publish)))
-    .def("publish", BlockingFunction(
-      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
-      const BookQuote&)>(&MarketDataServiceTestEnvironment::Publish)))
-    .def("publish", BlockingFunction(
-      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
-      const MarketQuote&)>(&MarketDataServiceTestEnvironment::Publish)))
-    .def("publish", BlockingFunction(
-      static_cast<void (MarketDataServiceTestEnvironment::*)(const Security&,
-      const TimeAndSale&)>(&MarketDataServiceTestEnvironment::Publish)))
-    .def("build_client", &MarketDataServiceTestEnvironmentBuildClient);
+      &MarketDataServiceTestEnvironment::Publish),
+      call_guard<GilRelease>())
+    .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
+      const Security&, const BookQuote&)>(
+      &MarketDataServiceTestEnvironment::Publish),
+      call_guard<GilRelease>())
+    .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
+      const Security&, const MarketQuote&)>(
+      &MarketDataServiceTestEnvironment::Publish),
+      call_guard<GilRelease>())
+    .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
+      const Security&, const TimeAndSale&)>(
+      &MarketDataServiceTestEnvironment::Publish),
+      call_guard<GilRelease>())
+    .def("build_client",
+      [] (MarketDataServiceTestEnvironment& self,
+          VirtualServiceLocatorClient& serviceLocatorClient) {
+        return MakeToPythonMarketDataClient(self.BuildClient(
+          Ref(serviceLocatorClient)));
+      });
 }
 
-void Nexus::Python::ExportMySqlHistoricalDataStore() {
-  class_<ToPythonHistoricalDataStore<
-    SqlHistoricalDataStore<Viper::MySql::Connection>>,
-    bases<VirtualHistoricalDataStore>, boost::noncopyable>(
-    "MySqlHistoricalDataStore", no_init)
-    .def("__init__", make_constructor(&BuildMySqlHistoricalDataStore));
+void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
+  class_<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
+      Viper::MySql::Connection>>, VirtualHistoricalDataStore,
+      std::shared_ptr<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
+      Viper::MySql::Connection>>>>(module,
+      "MySqlHistoricalDataStore")
+    .def(init(
+      [] (std::string host, unsigned int port, std::string username,
+          std::string password, std::string database) {
+        return MakeToPythonHistoricalDataStore(
+          std::make_unique<SqlHistoricalDataStore<Viper::MySql::Connection>>(
+          [=] {
+            return Viper::MySql::Connection(host, port, username, password,
+              database);
+          }));
+      }));
 }
 
-void Nexus::Python::ExportSecuritySnapshot() {
-  class_<SecuritySnapshot>("SecuritySnapshot", init<>())
+void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
+  class_<SecuritySnapshot>(module, "SecuritySnapshot")
+    .def(init())
     .def(init<const Security&>())
-    .def("__copy__", &MakeCopy<SecuritySnapshot>)
-    .def("__deepcopy__", &MakeDeepCopy<SecuritySnapshot>)
+    .def(init<const SecuritySnapshot&>())
     .def_readwrite("security", &SecuritySnapshot::m_security)
     .def_readwrite("bbo_quote", &SecuritySnapshot::m_bboQuote)
     .def_readwrite("time_and_sale", &SecuritySnapshot::m_timeAndSale)
@@ -469,14 +529,18 @@ void Nexus::Python::ExportSecuritySnapshot() {
     .def_readwrite("bid_book", &SecuritySnapshot::m_bidBook);
 }
 
-void Nexus::Python::ExportSqliteHistoricalDataStore() {
+void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
   using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
-  class_<PythonSqliteHistoricalDataStore,
-    std::shared_ptr<PythonSqliteHistoricalDataStore>,
-    bases<VirtualHistoricalDataStore>, boost::noncopyable>(
-    "SqliteHistoricalDataStore", no_init)
-    .def("__init__", make_constructor(&BuildSqliteHistoricalDataStore));
-  implicitly_convertible<std::shared_ptr<PythonSqliteHistoricalDataStore>,
-    std::shared_ptr<VirtualHistoricalDataStore>>();
+  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore,
+      std::shared_ptr<PythonSqliteHistoricalDataStore>>(module,
+      "SqliteHistoricalDataStore")
+    .def(init(
+      [] (std::string path) {
+        return MakeToPythonHistoricalDataStore(
+          std::make_unique<SqlHistoricalDataStore<Viper::Sqlite3::Connection>>(
+          [=] {
+            return Viper::Sqlite3::Connection(path);
+          }));
+      }));
 }

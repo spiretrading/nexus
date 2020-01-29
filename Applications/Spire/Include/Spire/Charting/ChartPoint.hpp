@@ -1,7 +1,7 @@
 #ifndef SPIRE_CHART_POINT_HPP
 #define SPIRE_CHART_POINT_HPP
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Charting/ChartValue.hpp"
+#include "Spire/Spire/Scalar.hpp"
 
 namespace Spire {
 
@@ -9,10 +9,10 @@ namespace Spire {
   struct ChartPoint {
 
     //! The position on the x-axis.
-    ChartValue m_x;
+    Scalar m_x;
 
     //! The position on the y-axis.
-    ChartValue m_y;
+    Scalar m_y;
 
     //! Constructs a point at position (0, 0).
     ChartPoint() = default;
@@ -22,7 +22,7 @@ namespace Spire {
       \param x The position on the x-axis.
       \param y The position on the y-axis.
     */
-    ChartPoint(ChartValue x, ChartValue y);
+    ChartPoint(Scalar x, Scalar y);
 
     /** Returns <code>true</code> iff two ChartPoints are equal. */
     bool operator ==(const ChartPoint& rhs) const;

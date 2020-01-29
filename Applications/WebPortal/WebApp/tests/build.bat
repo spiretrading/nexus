@@ -3,6 +3,7 @@ SETLOCAL
 SET ROOT=%cd%
 CALL:build account_directory_page_tester %*
 CALL:build account_page_tester %*
+CALL:build compliance_page_tester %*
 CALL:build create_account_page_tester %*
 CALL:build dashboard_page_tester %*
 CALL:build entitlements_page_tester %*

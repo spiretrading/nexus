@@ -72,7 +72,8 @@ void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
       QLocale()) + tr(" - Time and Sales"));
     m_security_widget->set_widget(m_table);
   }
-  model->connect_volume_signal([=] (const Quantity& v) { on_volume(v); });
+  m_volume_connection = model->connect_volume_signal(
+    [=] (const Quantity& v) { on_volume(v); });
   m_model.emplace(std::move(model), m_properties);
   m_table->set_model(m_model.get_ptr());
 }

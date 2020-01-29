@@ -20,35 +20,35 @@ namespace Spire {
       */
       CachedChartModel(ChartModel& model);
 
-      ChartValue::Type get_x_axis_type() const override;
+      Scalar::Type get_x_axis_type() const override;
 
-      ChartValue::Type get_y_axis_type() const override;
+      Scalar::Type get_y_axis_type() const override;
 
-      QtPromise<std::vector<Candlestick>> load(ChartValue first,
-        ChartValue last, const Beam::Queries::SnapshotLimit& limit) override;
+      QtPromise<std::vector<Candlestick>> load(Scalar first, Scalar last,
+        const Beam::Queries::SnapshotLimit& limit) override;
 
       boost::signals2::connection connect_candlestick_slot(
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
       struct LoadInfo {
-        ChartValue m_first;
-        ChartValue m_last;
-        ChartValue m_requested_first;
-        ChartValue m_requested_last;
+        Scalar m_first;
+        Scalar m_last;
+        Scalar m_requested_first;
+        Scalar m_requested_last;
         Beam::Queries::SnapshotLimit m_limit;
       };
       mutable CandlestickSignal m_candlestick_signal;
       ChartModel* m_chart_model;
       LocalChartModel m_cache;
-      boost::icl::interval_set<ChartValue> m_ranges;
+      boost::icl::interval_set<Scalar> m_ranges;
       
       QtPromise<std::vector<Candlestick>> load_from_cache(
         const LoadInfo& info);
       QtPromise<std::vector<Candlestick>> load_from_model(
         const LoadInfo& info);
       void on_data_loaded(const std::vector<Candlestick>& data,
-        const boost::icl::continuous_interval<ChartValue>& loaded_range);
+        const boost::icl::continuous_interval<Scalar>& loaded_range);
       void on_data_loaded(const std::vector<Candlestick>& data,
         const LoadInfo& info);
   };
