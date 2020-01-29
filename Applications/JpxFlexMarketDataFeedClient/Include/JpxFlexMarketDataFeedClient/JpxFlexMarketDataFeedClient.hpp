@@ -6,6 +6,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include "JpxFlexMarketDataFeedClient/JpxFlexConfiguration.hpp"
+#include "JpxFlexMarketDataFeedClient/JpxFlexMessage.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -54,6 +55,7 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      void Dispatch(const JpxFlexMessage& message);
       void ReadLoop();
   };
 
@@ -106,7 +108,28 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  void JpxFlexMarketDataFeedClient<C, P>::ReadLoop() {}
+  void JpxFlexMarketDataFeedClient<C, P>::Dispatch(
+      const JpxFlexMessage& message) {
+    std::cout << std::string(message.m_payload, message.m_size) << std::endl;
+  }
+
+  template<typename C, typename P>
+  void JpxFlexMarketDataFeedClient<C, P>::ReadLoop() {
+    auto lastSequence = std::uint32_t{0};
+    auto sequence = std::uint32_t{};
+    while(true) {
+      try {
+        auto message = m_protocolClient->Read(Beam::Store(sequence));
+        if(lastSequence != 0 && sequence != lastSequence + 1) {
+          std::cout << "Packets dropped: " << (lastSequence + 1) << " - " <<
+            (sequence - 1) << std::endl;
+        }
+        Dispatch(message);
+      } catch(const Beam::IO::EndOfFileException&) {
+        break;
+      }
+    }
+  }
 }
 
 #endif
