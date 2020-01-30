@@ -1,5 +1,7 @@
 #ifndef SPIRE_CHART_VIEW_HPP
 #define SPIRE_CHART_VIEW_HPP
+#include <deque>
+#include <optional>
 #include <QPen>
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
@@ -22,7 +24,7 @@ namespace Spire {
 
         /** The bottom right point of the region. */
         ChartPoint m_bottom_right;
-
+        
         bool operator ==(const Region& rhs) const;
 
         bool operator !=(const Region& rhs) const;
@@ -34,28 +36,6 @@ namespace Spire {
         \param parent Parent to this widget.
       */
       ChartView(ChartModel& model, QWidget* parent = nullptr);
-
-      //! Converts a point in pixels to a point on the chart.
-      /*!
-        \param point The point in pixels to convert.
-        \return The corresponding point on the chart.
-      */
-      ChartPoint to_chart_point(const QPoint& point) const;
-
-      //! Converts a point on the chart to a point in pixels.
-      /*!
-        \param point The point on the chart to convert.
-        \return The corresponding point in pixels.
-      */
-      QPoint to_pixel(const ChartPoint& point) const;
-
-      //! Sets the position of the crosshair and sets the status of the mouse
-      //! buttons.
-      /*!
-        \param position The position to place the crosshair.
-        \param buttons The status of the mouse buttons.
-      */
-      void set_crosshair(const ChartPoint& position, Qt::MouseButtons buttons);
 
       //! Sets the position of the crosshair and sets the status of the mouse
       //! buttons.
@@ -69,7 +49,7 @@ namespace Spire {
       void reset_crosshair();
 
       //! Returns the region of the ChartView.
-      const ChartView::Region& get_region() const;
+      const std::optional<ChartView::Region>& get_region() const;
 
       //! Sets the visible region of the chart to display.
       /*!
@@ -130,6 +110,21 @@ namespace Spire {
         OFF,
         POINT
       };
+      class PeggedCandlestick : public Candlestick {
+        public:
+          PeggedCandlestick(Candlestick candlestick, Scalar location);
+          void set_location(Scalar location);
+          Scalar get_location() const;
+
+        private:
+          Scalar m_location;
+      };
+      struct CandlestickLayout {
+        QPoint open;
+        QPoint close;
+        QPoint high;
+        QPoint low;
+      };
       struct Gap {
         Scalar m_start;
         Scalar m_end;
@@ -138,27 +133,15 @@ namespace Spire {
         int gap_count;
         Scalar total_gaps_value;
       };
-      struct LoadedData {
-        std::vector<Candlestick> m_candlesticks;
-        std::vector<ChartView::Gap> m_gaps;
-        Scalar m_start;
-        Scalar m_end;
-        int m_current_x;
-        int m_end_x;
-        Scalar m_values_per_pixel;
-      };
       struct LineMouseOffset {
         QPoint m_first;
         QPoint m_second;
       };
       ChartModel* m_model;
-      Region m_region;
+      std::optional<Region> m_region;
       ChartPoint m_gap_adjusted_bottom_right;
-      QPoint m_bottom_right_pixel;
       Scalar m_x_axis_step;
-      Scalar m_x_range;
       Scalar m_y_axis_step;
-      Scalar m_y_range;
       QFont m_label_font;
       QFontMetrics m_font_metrics;
       CustomVariantItemDelegate* m_item_delegate;
@@ -166,11 +149,8 @@ namespace Spire {
       Qt::MouseButtons m_mouse_buttons;
       QPen m_dashed_line_pen;
       QPen m_label_text_color;
-      std::vector<Scalar> m_x_axis_values;
-      std::vector<Scalar> m_y_axis_values;
       bool m_is_auto_scaled;
-      QtPromise<LoadedData> m_loaded_data_promise;
-      std::vector<Candlestick> m_candlesticks;
+      double m_time_per_point;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
       int m_current_trend_line_id;
@@ -181,17 +161,19 @@ namespace Spire {
       int m_line_hover_distance_squared;
       bool m_is_multi_select_enabled;
       std::optional<LineMouseOffset> m_line_mouse_offset;
-      std::vector<Gap> m_gaps;
+      std::deque<PeggedCandlestick> m_visible_candlesticks;
+      std::optional<PeggedCandlestick> m_left_candlestick;
+      std::optional<PeggedCandlestick> m_right_candlestick;
+      QtPromise<std::nullopt_t> m_data_update_promise;
 
       static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
         std::vector<Candlestick>& candlesticks, Scalar start);
-      static QtPromise<ChartView::LoadedData> load_data(
-        QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
-        ChartModel* model);
-      void draw_gap(QPainter& paitner, int start, int end);
-      void draw_point(QPainter& painter, const QColor& color,
-        const QPoint& pos);
-      void draw_points(int id, QPainter& painter);
+      static Scalar get_candlestick_time(const Candlestick&
+        candlestick);
+      //void draw_gap(QPainter& paitner, int start, int end);
+      //void draw_point(QPainter& painter, const QColor& color,
+      //  const QPoint& pos);
+      //void draw_points(int id, QPainter& painter);
       bool intersects_gap(int x) const;
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
@@ -200,6 +182,26 @@ namespace Spire {
       void on_left_mouse_button_press(const QPoint& pos);
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();
+      void update_candlesticks();
+      void drop_left_candlesticks();
+      void drop_right_candlesticks();
+      void load_left_candlesticks();
+      void load_right_candlesticks();
+      QtPromise<bool> load_first_candlestick();
+      void insert_left_candlestick(Candlestick candlestick);
+      void insert_right_candlestick(Candlestick candlestick);
+      bool is_visible(Scalar location) const;
+      std::optional<QPoint> to_pixel(const ChartPoint& point) const;
+      std::optional<CandlestickLayout> get_candlestick_layout(
+        const PeggedCandlestick& candlestick) const;
+      QPoint get_top_right_pixel() const;
+      std::optional<Scalar> get_time_by_location(Scalar location) const;
+      std::optional<PeggedCandlestick*> get_leftmost_candlestick();
+      std::optional<const PeggedCandlestick*> get_leftmost_candlestick() const;
+      std::optional<PeggedCandlestick*> get_rightmost_candlestick();
+      std::optional<const PeggedCandlestick*>
+        get_rightmost_candlestick() const;
+      bool is_empty() const;
   };
 }
 

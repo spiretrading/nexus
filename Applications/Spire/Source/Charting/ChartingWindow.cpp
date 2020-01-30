@@ -190,16 +190,12 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
-        auto chart_delta = m_chart->to_chart_point(e->pos());
-        auto last_pos = m_chart->to_chart_point(m_last_chart_mouse_pos);
+        auto delta = e->pos().x() - m_last_chart_mouse_pos.x();
         auto region = m_chart->get_region();
-        region.m_top_left.m_x -= chart_delta.m_x - last_pos.m_x;
-        region.m_bottom_right.m_x -= chart_delta.m_x - last_pos.m_x;
-        if(!m_chart->is_auto_scale_enabled()) {
-          region.m_top_left.m_y -= chart_delta.m_y - last_pos.m_y;
-          region.m_bottom_right.m_y -= chart_delta.m_y - last_pos.m_y;
-        }
-        m_chart->set_region(region);
+        region->m_top_left.m_x -= Scalar(delta);
+        region->m_bottom_right.m_x -= Scalar(delta);
+        // TODO: shift along Y
+        m_chart->set_region(*region);
         m_last_chart_mouse_pos = e->pos();
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
@@ -219,22 +215,18 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     } else if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
       auto region = m_chart->get_region();
-      auto old_height = region.m_top_left.m_y - region.m_bottom_right.m_y;
-      auto old_width = region.m_top_left.m_x - region.m_bottom_right.m_x;
-      auto [new_width, new_height] = [&] {
+      auto old_width = region->m_bottom_right.m_x - region->m_top_left.m_x;
+      auto new_width = [&] {
         if(e->angleDelta().y() < 0) {
-          return std::make_tuple(ZOOM_FACTOR * old_width,
-            ZOOM_FACTOR * old_height);
+          return ZOOM_FACTOR * old_width;
+        } else {
+          return old_width / ZOOM_FACTOR;
         }
-        return std::make_tuple(old_width / ZOOM_FACTOR,
-          old_height / ZOOM_FACTOR);
       }();
       auto width_change = (new_width - old_width) / 2;
-      auto height_change = (new_height - old_height) / 2;
-      m_chart->set_region({{region.m_top_left.m_x + width_change,
-        region.m_top_left.m_y + height_change},
-        {region.m_bottom_right.m_x - width_change,
-        region.m_bottom_right.m_y - height_change}});
+      region->m_top_left.m_x -= width_change;
+      region->m_bottom_right.m_x += width_change;
+      m_chart->set_region(*region);
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {

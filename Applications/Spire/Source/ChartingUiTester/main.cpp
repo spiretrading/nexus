@@ -55,6 +55,17 @@ int main(int argc, char** argv) {
       auto candlesticks = std::vector<Candlestick>();
       auto rand = std::default_random_engine(std::random_device()());
       auto time = boost::posix_time::second_clock::local_time();
+      auto up = [&] (auto start, auto end) {
+        candlesticks.push_back(Candlestick(
+          Scalar(time + boost::posix_time::seconds(start)), Scalar(time + boost::posix_time::seconds(end)),
+          Scalar(0.4), Scalar(0.6), Scalar(0.8), Scalar(0.2)));
+      };
+      auto down = [&] (auto start, auto end) {
+        candlesticks.push_back(Candlestick(
+          Scalar(time + boost::posix_time::seconds(start)), Scalar(time + boost::posix_time::seconds(end)),
+          Scalar(0.6), Scalar(0.4), Scalar(0.7), Scalar(0.3)));
+      };
+
       for(auto i = 0; i < 100; ++i) {
         auto open = Scalar(Money((rand() % 40 + 40) *
           Money::FromValue("0.01").get()));
@@ -79,9 +90,8 @@ int main(int argc, char** argv) {
           time -= boost::posix_time::minutes(1);
         }
       }
-      auto chart_model = new LocalChartModel(Scalar::Type::TIMESTAMP,
+      auto chart_model = std::make_shared<LocalChartModel>(Scalar::Type::TIMESTAMP,
         Scalar::Type::MONEY, candlesticks);
-      auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
       test_timer.start(1500);
       QObject::connect(&test_timer, &QTimer::timeout, [=] {
@@ -89,7 +99,7 @@ int main(int argc, char** argv) {
         technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
           Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
       });
-      window->set_models(cached_model, technicals_model);
+      window->set_models(chart_model, technicals_model);
     });
   window->show();
   application->exec();
