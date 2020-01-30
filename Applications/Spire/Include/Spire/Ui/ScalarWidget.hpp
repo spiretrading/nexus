@@ -22,12 +22,12 @@ namespace Spire {
         \param setter Method to call to set the value that the widget displays.
       */
       template<typename W, typename T>
-      ScalarWidget(W* widget,
-        boost::signals2::connection (W::* connector)(Signal<T>),
-        std::function<void (const T&)> setter);
+      ScalarWidget(W* widget, boost::signals2::connection (W::* connector)(
+        const typename Signal<void (T)>::slot_type&) const,
+        void (W::* setter)(T));
 
-      //! Constructs a ScalarWidget from a widget that uses a Qt signal for
-      //! signaling updates to its value.
+      //! Constructs a ScalarWidget from a widget that uses the Qt signal/slot
+      //! system for signaling updates to its value.
       /*
         \param widget The widget to display and manage getting/setting values
                       for.
@@ -35,11 +35,14 @@ namespace Spire {
         \param setter Method to call to set the value that the widget displays.
       */
       template<typename W, typename T>
-      ScalarWidget(W* widget, void (W::* callback)(T),
-        std::function<void (const T&)> setter);
+      ScalarWidget(W* widget, void (W::* connector)(T), void (W::* setter)(T));
 
       //! Sets the widget's value by calling its setter method.
       void set_value(Scalar value);
+
+      //! Signals that the widget's value has changed.
+      boost::signals2::connection connect_change_signal(
+        const ChangeSignal::slot_type& slot) const;
 
     private:
       mutable ChangeSignal m_change_signal;
@@ -49,6 +52,30 @@ namespace Spire {
       void on_widget_value_changed(Scalar value);
       void set_layout(QWidget* widget);
   };
+
+  template<typename W, typename T>
+  ScalarWidget::ScalarWidget(W* widget,
+      boost::signals2::connection (W::* connector)(
+      const typename Signal<void (T)>::slot_type&) const,
+      void (W::* setter)(T))
+      : m_setter([=] (Scalar s) {
+          (widget->*setter)(static_cast<T>(s));
+        }) {
+    m_callback_connection = (widget->*connector)([=] (T value) {
+      on_widget_value_changed(static_cast<Scalar>(value));
+    });
+    set_layout(widget);
+  }
+
+  template<typename W, typename T>
+  ScalarWidget::ScalarWidget(W* widget, void (W::* connector)(T),
+      void (W::* setter)(T))
+      : m_setter([=] (Scalar s) {
+          (widget->*setter)(static_cast<T>(s));
+        }) {
+    connect(widget, connector, this, &ScalarWidget::on_widget_value_changed);
+    set_layout(widget);
+  }
 }
 
 #endif
