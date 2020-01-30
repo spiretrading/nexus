@@ -163,8 +163,8 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::Add(
       const SecurityInfo& securityInfo) {
-    m_registry->Add(securityInfo);
     m_dataStore->Store(securityInfo);
+    m_registry->Add(securityInfo);
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -349,6 +349,10 @@ namespace Nexus::MarketDataService {
     try {
       m_administrationClient->Open();
       m_dataStore->Open();
+      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
+      for(auto& entry : securityInfo) {
+        m_registry->Add(entry);
+      }
       m_entitlementDatabase = m_administrationClient->LoadEntitlements();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

@@ -53,6 +53,12 @@ namespace {
         security);
     }
 
+    std::vector<SecurityInfo> LoadAllSecurityInfo() override {
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SecurityInfo>,
+        VirtualHistoricalDataStore, "load_all_security_info",
+        LoadAllSecurityInfo);
+    }
+
     std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedOrderImbalance>,
@@ -301,6 +307,8 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
       std::shared_ptr<VirtualHistoricalDataStore>>(module,
     "HistoricalDataStore")
     .def("load_security_info", &VirtualHistoricalDataStore::LoadSecurityInfo)
+    .def("load_all_security_info",
+      &VirtualHistoricalDataStore::LoadAllSecurityInfo)
     .def("load_order_imbalances",
       &VirtualHistoricalDataStore::LoadOrderImbalances)
     .def("load_bbo_quotes", &VirtualHistoricalDataStore::LoadBboQuotes)

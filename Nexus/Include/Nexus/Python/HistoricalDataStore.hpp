@@ -29,6 +29,8 @@ namespace Nexus::MarketDataService {
       boost::optional<SecurityInfo> LoadSecurityInfo(
         const Security& security) override;
 
+      std::vector<SecurityInfo> LoadAllSecurityInfo() override;
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override;
 
@@ -106,6 +108,13 @@ namespace Nexus::MarketDataService {
       LoadSecurityInfo(const Security& security) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename D>
+  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::
+      LoadAllSecurityInfo() {
+    auto release = Beam::Python::GilRelease();
+    return m_dataStore->LoadAllSecurityInfo();
   }
 
   template<typename D>

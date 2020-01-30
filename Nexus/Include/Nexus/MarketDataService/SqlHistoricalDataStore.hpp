@@ -41,6 +41,8 @@ namespace Nexus::MarketDataService {
 
       boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -133,14 +135,28 @@ namespace Nexus::MarketDataService {
   template<typename C>
   boost::optional<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
       const Security& security) {
-    auto reader = m_readerPool.Acquire();
     auto info = std::optional<SecurityInfo>();
-    reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
-      &info));
+    {
+      auto reader = m_readerPool.Acquire();
+      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
+        Viper::sym("symbol") == security.GetSymbol() &&
+        Viper::sym("country") == security.GetCountry(), &info));
+    }
     if(info.has_value()) {
       return std::move(*info);
     }
     return boost::none;
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadAllSecurityInfo() {
+    auto result = std::vector<SecurityInfo>();
+    {
+      auto reader = m_readerPool.Acquire();
+      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
+        std::back_inserter(result)));
+    }
+    return result;
   }
 
   template<typename C>
@@ -256,6 +272,8 @@ namespace Nexus::MarketDataService {
       auto writerConnection =
         std::make_unique<Connection>(m_connectionBuilder());
       writerConnection->open();
+      writerConnection->execute(Viper::create_if_not_exists(
+        GetSecurityInfoRow(), "security_info"));
       m_writerPool.Add(std::move(writerConnection));
       m_orderImbalanceDataStore.Open();
       m_bboQuoteDataStore.Open();

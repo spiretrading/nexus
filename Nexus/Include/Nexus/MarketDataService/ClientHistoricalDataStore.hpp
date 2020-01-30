@@ -33,6 +33,8 @@ namespace Nexus::MarketDataService {
 
       boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -101,6 +103,12 @@ namespace Nexus::MarketDataService {
   boost::optional<SecurityInfo> ClientHistoricalDataStore<C>::LoadSecurityInfo(
       const Security& security) {
     return m_client->LoadSecurityInfo(security);
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::
+      LoadAllSecurityInfo() {
+    return {};
   }
 
   template<typename C>

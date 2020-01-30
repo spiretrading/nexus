@@ -19,8 +19,7 @@
 #include "Nexus/MarketDataService/SecurityEntry.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 namespace Details {
   template<typename DataStore>
   Money LoadClosePrice(const Security& security, DataStore& dataStore) {
@@ -194,7 +193,7 @@ namespace Details {
   };
 
   inline MarketDataRegistry::MarketDataRegistry()
-    : m_securityDatabase{'\0'} {}
+    : m_securityDatabase('\0') {}
 
   inline void MarketDataRegistry::Add(const SecurityInfo& securityInfo) {
     auto key = ToString(securityInfo.m_security, GetDefaultMarketDatabase());
@@ -482,7 +481,6 @@ namespace Details {
       });
     return **entry;
   }
-}
 }
 
 #endif

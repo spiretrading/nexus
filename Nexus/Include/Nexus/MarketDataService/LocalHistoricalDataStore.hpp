@@ -33,6 +33,8 @@ namespace Nexus::MarketDataService {
 
       boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -119,6 +121,18 @@ namespace Nexus::MarketDataService {
   inline std::vector<SequencedSecurityTimeAndSale> LocalHistoricalDataStore::
       LoadTimeAndSales() {
     return m_timeAndSaleDataStore.LoadAll();
+  }
+
+  inline std::vector<SecurityInfo> LocalHistoricalDataStore::
+      LoadAllSecurityInfo() {
+    auto result = std::vector<SecurityInfo>();
+    m_securityInfo.With(
+      [&] (const auto& securityInfo) {
+        for(auto& entry : securityInfo) {
+          result.push_back(entry.second);
+        }
+      });
+    return result;
   }
 
   inline std::vector<SequencedOrderImbalance> LocalHistoricalDataStore::

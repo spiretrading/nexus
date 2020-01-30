@@ -22,6 +22,9 @@ namespace Nexus::MarketDataService {
      */
     boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
+    /** Loads all SecurityInfos. */
+    std::vector<SecurityInfo> LoadAllSecurityInfo();
+
     /**
      * Executes a search query over a Market's OrderImbalances.
      * @param query The search query to execute.

@@ -15,6 +15,8 @@ namespace Nexus::MarketDataService {
       virtual boost::optional<SecurityInfo> LoadSecurityInfo(
         const Security& security) = 0;
 
+      virtual std::vector<SecurityInfo> LoadAllSecurityInfo() = 0;
+
       virtual std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) = 0;
 
@@ -89,6 +91,8 @@ namespace Nexus::MarketDataService {
       boost::optional<SecurityInfo> LoadSecurityInfo(
         const Security& security) override;
 
+      std::vector<SecurityInfo> LoadAllSecurityInfo() override;
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override;
 
@@ -159,6 +163,12 @@ namespace Nexus::MarketDataService {
   boost::optional<SecurityInfo> WrapperHistoricalDataStore<C>::LoadSecurityInfo(
       const Security& security) {
     return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> WrapperHistoricalDataStore<C>::
+      LoadAllSecurityInfo() {
+    return m_dataStore->LoadAllSecurityInfo();
   }
 
   template<typename C>
