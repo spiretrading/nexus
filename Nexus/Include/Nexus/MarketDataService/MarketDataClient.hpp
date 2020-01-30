@@ -136,7 +136,7 @@ namespace Nexus::MarketDataService {
        * @param security The Security whose SecurityInfo is to be loaded.
        * @return The SecurityInfo for the specified <i>security</i>.
        */
-      SecurityInfo LoadSecurityInfo(const Security& security);
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
       /**
        * Loads SecurityInfo objects that match a prefix.
@@ -291,7 +291,8 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename B>
-  SecurityInfo MarketDataClient<B>::LoadSecurityInfo(const Security& security) {
+  boost::optional<SecurityInfo> MarketDataClient<B>::LoadSecurityInfo(
+      const Security& security) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityInfoService>(security);
   }

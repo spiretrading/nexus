@@ -66,7 +66,7 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      SecurityInfo LoadSecurityInfo(const Security& security);
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
@@ -226,11 +226,11 @@ namespace Nexus::MarketDataService {
     return marketDataClient->LoadSecurityTechnicals(security);
   }
 
-  inline SecurityInfo DistributedMarketDataClient::LoadSecurityInfo(
-      const Security& security) {
+  inline boost::optional<SecurityInfo>
+      DistributedMarketDataClient::LoadSecurityInfo(const Security& security) {
     auto marketDataClient = FindMarketDataClient(security);
     if(marketDataClient == nullptr) {
-      return SecurityInfo();
+      return boost::none;
     }
     return marketDataClient->LoadSecurityInfo(security);
   }

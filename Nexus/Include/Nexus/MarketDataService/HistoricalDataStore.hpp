@@ -3,6 +3,7 @@
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/Utilities/Concept.hpp>
+#include <boost/optional.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -14,6 +15,12 @@ namespace Nexus::MarketDataService {
 
   /** Concept used to store historical market data. */
   struct HistoricalDataStore : Beam::Concept<HistoricalDataStore> {
+
+    /**
+     * Loads a SecurityInfo.
+     * @param security The Security whose SecurityInfo is to be loaded.
+     */
+    boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
     /**
      * Executes a search query over a Market's OrderImbalances.

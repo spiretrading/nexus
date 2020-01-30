@@ -61,7 +61,8 @@ namespace Nexus::MarketDataService {
       virtual SecurityTechnicals LoadSecurityTechnicals(
         const Security& security) = 0;
 
-      virtual SecurityInfo LoadSecurityInfo(const Security& security) = 0;
+      virtual boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) = 0;
 
       virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) = 0;
@@ -135,7 +136,8 @@ namespace Nexus::MarketDataService {
       SecurityTechnicals LoadSecurityTechnicals(
         const Security& security) override;
 
-      SecurityInfo LoadSecurityInfo(const Security& security) override;
+      boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override;
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override;
@@ -354,7 +356,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
-  SecurityInfo WrapperMarketDataClient<C>::LoadSecurityInfo(
+  boost::optional<SecurityInfo> WrapperMarketDataClient<C>::LoadSecurityInfo(
       const Security& security) {
     return m_client->LoadSecurityInfo(security);
   }

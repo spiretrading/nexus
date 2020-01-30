@@ -30,6 +30,8 @@ namespace Nexus {
 
       ~BacktesterHistoricalDataStore();
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketDataService::MarketWideDataQuery& query);
 
@@ -88,6 +90,12 @@ namespace Nexus {
   template<typename H>
   BacktesterHistoricalDataStore<H>::~BacktesterHistoricalDataStore() {
     Close();
+  }
+
+  template<typename H>
+  boost::optional<SecurityInfo> BacktesterHistoricalDataStore<H>::
+      LoadSecurityInfo(const Security& security) {
+    return m_dataStore.LoadSecurityInfo(security);
   }
 
   template<typename H>

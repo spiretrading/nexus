@@ -10,6 +10,38 @@ namespace Details {
   struct HistoricalDataStoreLoader {};
 
   template<typename D>
+  struct HistoricalDataStoreLoader<SequencedOrderImbalance, D> {
+    std::vector<SequencedOrderImbalance> operator ()(D& dataStore,
+        const MarketWideDataQuery& query) const {
+      return dataStore.LoadOrderImbalances(query);
+    }
+  };
+
+  template<typename D>
+  struct HistoricalDataStoreLoader<SequencedBboQuote, D> {
+    std::vector<SequencedBboQuote> operator ()(D& dataStore,
+        const SecurityMarketDataQuery& query) const {
+      return dataStore.LoadBboQuotes(query);
+    }
+  };
+
+  template<typename D>
+  struct HistoricalDataStoreLoader<SequencedMarketQuote, D> {
+    std::vector<SequencedMarketQuote> operator ()(D& dataStore,
+        const SecurityMarketDataQuery& query) const {
+      return dataStore.LoadMarketQuotes(query);
+    }
+  };
+
+  template<typename D>
+  struct HistoricalDataStoreLoader<SequencedBookQuote, D> {
+    std::vector<SequencedBookQuote> operator ()(D& dataStore,
+        const SecurityMarketDataQuery& query) const {
+      return dataStore.LoadBookQuotes(query);
+    }
+  };
+
+  template<typename D>
   struct HistoricalDataStoreLoader<SequencedTimeAndSale, D> {
     std::vector<SequencedTimeAndSale> operator ()(D& dataStore,
         const SecurityMarketDataQuery& query) const {

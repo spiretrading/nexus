@@ -133,8 +133,8 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(
         ServiceProtocolClient& client, const Security& security);
-      SecurityInfo OnLoadSecurityInfo(ServiceProtocolClient& client,
-        const Security& security);
+      boost::optional<SecurityInfo> OnLoadSecurityInfo(
+        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
@@ -164,6 +164,7 @@ namespace Nexus::MarketDataService {
   void MarketDataRegistryServlet<C, R, D, A>::Add(
       const SecurityInfo& securityInfo) {
     m_registry->Add(securityInfo);
+    m_dataStore->Store(securityInfo);
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -572,15 +573,10 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
-  SecurityInfo MarketDataRegistryServlet<C, R, D, A>::OnLoadSecurityInfo(
-      ServiceProtocolClient& client, const Security& security) {
-    auto info = m_registry->FindSecurityInfo(security);
-    if(!info.is_initialized()) {
-      auto result = SecurityInfo();
-      result.m_security = security;
-      return result;
-    }
-    return *info;
+  boost::optional<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecurityInfo(ServiceProtocolClient& client,
+      const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
   }
 
   template<typename C, typename R, typename D, typename A>

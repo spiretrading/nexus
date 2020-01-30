@@ -71,7 +71,7 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      SecurityInfo LoadSecurityInfo(const Security& security);
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
@@ -220,9 +220,9 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
-  SecurityInfo DataStoreMarketDataClient<D>::LoadSecurityInfo(
-      const Security& prefix) {
-    return {};
+  boost::optional<SecurityInfo> DataStoreMarketDataClient<D>::LoadSecurityInfo(
+      const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
   }
 
   template<typename D>

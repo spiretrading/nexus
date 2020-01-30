@@ -115,7 +115,7 @@ namespace Nexus::MarketDataService {
     */
     //! \cond
     (LoadSecurityInfoService, "Nexus.MarketDataService.LoadSecurityInfoService",
-      SecurityInfo, Security, security),
+      boost::optional<SecurityInfo>, Security, security),
 
     /*! \interface Nexus::MarketDataService::LoadSecurityInfoFromPrefixService
         \brief Loads all SecurityInfo objects that match a prefix.

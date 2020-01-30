@@ -39,6 +39,8 @@ namespace Nexus::MarketDataService {
 
       ~SqlHistoricalDataStore();
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -126,6 +128,19 @@ namespace Nexus::MarketDataService {
   template<typename C>
   SqlHistoricalDataStore<C>::~SqlHistoricalDataStore() {
     Close();
+  }
+
+  template<typename C>
+  boost::optional<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
+      const Security& security) {
+    auto reader = m_readerPool.Acquire();
+    auto info = std::optional<SecurityInfo>();
+    reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
+      &info));
+    if(info.has_value()) {
+      return std::move(*info);
+    }
+    return boost::none;
   }
 
   template<typename C>

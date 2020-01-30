@@ -75,7 +75,7 @@ namespace Nexus {
       SecurityTechnicals LoadSecurityTechnicals(
         const Security& security);
 
-      SecurityInfo LoadSecurityInfo(const Security& security);
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
@@ -187,8 +187,8 @@ namespace Nexus {
     return m_marketDataClient->LoadSecurityTechnicals(security);
   }
 
-  inline SecurityInfo BacktesterMarketDataClient::LoadSecurityInfo(
-      const Security& security) {
+  inline boost::optional<SecurityInfo>
+      BacktesterMarketDataClient::LoadSecurityInfo(const Security& security) {
     return m_marketDataClient->LoadSecurityInfo(security);
   }
 

@@ -36,6 +36,8 @@ namespace Nexus::MarketDataService {
 
       ~BufferedHistoricalDataStore();
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
 
@@ -111,6 +113,12 @@ namespace Nexus::MarketDataService {
   template<typename D>
   BufferedHistoricalDataStore<D>::~BufferedHistoricalDataStore() {
     Close();
+  }
+
+  template<typename D>
+  boost::optional<SecurityInfo> BufferedHistoricalDataStore<D>::
+      LoadSecurityInfo(const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
   }
 
   template<typename D>

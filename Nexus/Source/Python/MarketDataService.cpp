@@ -46,6 +46,13 @@ using namespace pybind11;
 
 namespace {
   struct TrampolineHistoricalDataStore final : VirtualHistoricalDataStore {
+    boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(boost::optional<SecurityInfo>,
+        VirtualHistoricalDataStore, "load_security_info", LoadSecurityInfo,
+        security);
+    }
+
     std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedOrderImbalance>,
@@ -229,9 +236,11 @@ namespace {
         "load_security_technicals", LoadSecurityTechnicals, security);
     }
 
-    SecurityInfo LoadSecurityInfo(const Security& security) override {
-      PYBIND11_OVERLOAD_PURE_NAME(SecurityInfo, VirtualMarketDataClient,
-        "load_security_info", LoadSecurityInfo, security);
+    boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(boost::optional<SecurityInfo>,
+        VirtualMarketDataClient, "load_security_info", LoadSecurityInfo,
+        security);
     }
 
     std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
@@ -291,6 +300,7 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
   class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
       std::shared_ptr<VirtualHistoricalDataStore>>(module,
     "HistoricalDataStore")
+    .def("load_security_info", &VirtualHistoricalDataStore::LoadSecurityInfo)
     .def("load_order_imbalances",
       &VirtualHistoricalDataStore::LoadOrderImbalances)
     .def("load_bbo_quotes", &VirtualHistoricalDataStore::LoadBboQuotes)
