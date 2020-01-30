@@ -26,17 +26,6 @@ namespace Spire {
         const typename Signal<void (T)>::slot_type&) const,
         void (W::* setter)(T));
 
-      //! Constructs a ScalarWidget from a widget that uses the Qt signal/slot
-      //! system for signaling updates to its value.
-      /*
-        \param widget The widget to display and manage getting/setting values
-                      for.
-        \param connector Callback for when the widget's value has changed.
-        \param setter Method to call to set the value that the widget displays.
-      */
-      template<typename W, typename T>
-      ScalarWidget(W* widget, void (W::* connector)(T), void (W::* setter)(T));
-
       //! Sets the widget's value by calling its setter method.
       void set_value(Scalar value);
 
@@ -64,16 +53,6 @@ namespace Spire {
     m_callback_connection = (widget->*connector)([=] (T value) {
       on_widget_value_changed(static_cast<Scalar>(value));
     });
-    set_layout(widget);
-  }
-
-  template<typename W, typename T>
-  ScalarWidget::ScalarWidget(W* widget, void (W::* connector)(T),
-      void (W::* setter)(T))
-      : m_setter([=] (Scalar s) {
-          (widget->*setter)(static_cast<T>(s));
-        }) {
-    connect(widget, connector, this, &ScalarWidget::on_widget_value_changed);
     set_layout(widget);
   }
 }
