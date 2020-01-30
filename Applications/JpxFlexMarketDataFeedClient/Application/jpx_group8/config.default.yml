@@ -10,6 +10,6 @@ disseminating_market: XTKS
 mpid: TSE
 time_zone: Asia/Tokyo
 sampling: 100ms
-host: 239.194.1.58:51058
-interface: $local_interface:51058
+host: 239.194.23.58:51558
+interface: $local_interface:51558
 ...

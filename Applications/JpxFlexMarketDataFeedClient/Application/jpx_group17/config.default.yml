@@ -5,11 +5,11 @@ service_locator:
   password: $password
 
 enable_logging: false
-market: XTKS
-disseminating_market: XTKS
-mpid: TSE
+market: XFKA
+disseminating_market: XFKA
+mpid: FSE
 time_zone: Asia/Tokyo
 sampling: 100ms
-host: 239.194.23.54:51554
-interface: $local_interface:51554
+host: 239.194.23.74:51574
+interface: $local_interface:51574
 ...
