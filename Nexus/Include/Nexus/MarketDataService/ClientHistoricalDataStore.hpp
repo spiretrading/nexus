@@ -75,7 +75,7 @@ namespace Nexus::MarketDataService {
 
     private:
       using ClientType = std::remove_reference_t<
-        decltype(*std::decltype<Beam::GetOptionalLocalPtr<C>>())>;
+        decltype(*std::declval<Beam::GetOptionalLocalPtr<C>>())>;
       Beam::GetOptionalLocalPtr<C> m_client;
       Beam::IO::OpenState m_openState;
 

@@ -1,12 +1,9 @@
 #ifndef NEXUS_VIRTUAL_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_VIRTUAL_HISTORICAL_DATA_STORE_HPP
-#include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/MarketEntry.hpp"
-#include "Nexus/MarketDataService/QueryTypes.hpp"
-#include "Nexus/MarketDataService/SecurityEntry.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -29,6 +26,8 @@ namespace Nexus::MarketDataService {
 
       virtual std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query) = 0;
+
+      virtual void Store(const SecurityInfo& info) = 0;
 
       virtual void Store(
         const SequencedMarketOrderImbalance& orderImbalance) = 0;
@@ -62,24 +61,25 @@ namespace Nexus::MarketDataService {
 
     protected:
 
-      //! Constructs a VirtualHistoricalDataStore.
+      /** Constructs a VirtualHistoricalDataStore. */
       VirtualHistoricalDataStore() = default;
   };
 
-  /** Wraps a HistoricalDataStore providing it with a virtual interface.
-      \tparam ClientType The MarketDataFeedClient to wrap.
+  /**
+   * Wraps a HistoricalDataStore providing it with a virtual interface.
+   * @param <C> The HistoricalDataStore to wrap.
    */
   template<typename C>
   class WrapperHistoricalDataStore : public VirtualHistoricalDataStore {
     public:
 
-      //! The HistoricalDataStore to wrap.
+      /** The HistoricalDataStore to wrap. */
       using DataStore = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperHistoricalDataStore.
-      /*!
-        \param dataStore The HistoricalDataStore to wrap.
-      */
+      /**
+       * Constructs a WrapperHistoricalDataStore.
+       * @param dataStore The HistoricalDataStore to wrap.
+       */
       template<typename D>
       WrapperHistoricalDataStore(D&& dataStore);
 
@@ -97,6 +97,8 @@ namespace Nexus::MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query) override;
+
+      void Store(const SecurityInfo& info) override;
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance) override;
 
@@ -131,10 +133,10 @@ namespace Nexus::MarketDataService {
       Beam::GetOptionalLocalPtr<C> m_dataStore;
   };
 
-  //! Wraps a HistoricalDataStore into a VirtualHistoricalDataStore.
-  /*!
-    \param dataStore The data store to wrap.
-  */
+  /**
+   * Wraps a HistoricalDataStore into a VirtualHistoricalDataStore.
+   * @param dataStore The data store to wrap.
+   */
   template<typename DataStore>
   std::unique_ptr<VirtualHistoricalDataStore> MakeVirtualHistoricalDataStore(
       DataStore&& dataStore) {
@@ -145,7 +147,7 @@ namespace Nexus::MarketDataService {
   template<typename C>
   template<typename D>
   WrapperHistoricalDataStore<C>::WrapperHistoricalDataStore(D&& dataStore)
-      : m_dataStore(std::forward<D>(dataStore)) {}
+    : m_dataStore(std::forward<D>(dataStore)) {}
 
   template<typename C>
   std::vector<SequencedOrderImbalance>
@@ -178,6 +180,11 @@ namespace Nexus::MarketDataService {
       WrapperHistoricalDataStore<C>::LoadTimeAndSales(
       const SecurityMarketDataQuery& query) {
     return m_dataStore->LoadTimeAndSales(query);
+  }
+
+  template<typename C>
+  void WrapperHistoricalDataStore<C>::Store(const SecurityInfo& info) {
+    m_dataStore->Store(info);
   }
 
   template<typename C>

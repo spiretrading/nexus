@@ -5,25 +5,25 @@
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/CutoffHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/BufferedHistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
 namespace Nexus {
 
-  /** Historical data store used by the backtester.
-      \tparam H The underlying data store to wrap.
+  /**
+   * Historical data store used by the backtester.
+   * @param <H> The underlying data store to wrap.
    */
   template<typename H>
   class BacktesterHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! The type of underlying data store to wrap.
+      /** The type of underlying data store to wrap. */
       using HistoricalDataStore = Beam::GetTryDereferenceType<H>;
 
-      //! Constructs a BacktesterHistoricalDataStore.
-      /*!
-        \param dataStore Initializes the data store to wrap.
-        \param cutoff The date/time to satisfied queries to.
-      */
+      /**
+       * Constructs a BacktesterHistoricalDataStore.
+       * @param dataStore Initializes the data store to wrap.
+       * @param cutoff The date/time to satisfied queries to.
+       */
       template<typename D>
       BacktesterHistoricalDataStore(D&& dataStore,
         boost::posix_time::ptime cutoff);
@@ -44,6 +44,8 @@ namespace Nexus {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const MarketDataService::SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -79,9 +81,9 @@ namespace Nexus {
   template<typename H>
   template<typename D>
   BacktesterHistoricalDataStore<H>::BacktesterHistoricalDataStore(D&& dataStore,
-      boost::posix_time::ptime cutoff)
-      : m_dataStore(Beam::Initialize(std::forward<D>(dataStore), cutoff),
-          std::numeric_limits<std::size_t>::max(), Beam::Ref(m_threadPool)) {}
+    boost::posix_time::ptime cutoff)
+    : m_dataStore(Beam::Initialize(std::forward<D>(dataStore), cutoff),
+        std::numeric_limits<std::size_t>::max(), Beam::Ref(m_threadPool)) {}
 
   template<typename H>
   BacktesterHistoricalDataStore<H>::~BacktesterHistoricalDataStore() {
@@ -121,6 +123,11 @@ namespace Nexus {
       BacktesterHistoricalDataStore<H>::LoadTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query) {
     return m_dataStore.LoadTimeAndSales(query);
+  }
+
+  template<typename H>
+  void BacktesterHistoricalDataStore<H>::Store(const SecurityInfo& info) {
+    m_dataStore.Store(info);
   }
 
   template<typename H>

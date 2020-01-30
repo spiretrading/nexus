@@ -138,7 +138,7 @@ namespace {
       auto symbol = Extract<string>(entry, "symbol");
       auto name = Extract<string>(entry, "name");
       auto security = ParseSecurity(symbol, marketDatabase);
-      SecurityInfo securityInfo{security, name, ""};
+      SecurityInfo securityInfo{security, name, "", 0};
       registry->Add(securityInfo);
     }
   }

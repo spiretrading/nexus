@@ -4,6 +4,7 @@
 #include <Beam/IO/Connection.hpp>
 #include <Beam/Utilities/Concept.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketEntry.hpp"
 #include "Nexus/MarketDataService/QueryTypes.hpp"

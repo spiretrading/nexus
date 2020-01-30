@@ -79,6 +79,11 @@ namespace {
         query);
     }
 
+    void Store(const SecurityInfo& info) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, info);
+    }
+
     void Store(const SequencedMarketOrderImbalance& orderImbalance) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
         Store, orderImbalance);
@@ -292,6 +297,8 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
     .def("load_book_quotes", &VirtualHistoricalDataStore::LoadBookQuotes)
     .def("load_market_quotes", &VirtualHistoricalDataStore::LoadMarketQuotes)
     .def("load_time_and_sales", &VirtualHistoricalDataStore::LoadTimeAndSales)
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SecurityInfo&)>(&VirtualHistoricalDataStore::Store))
     .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const SequencedMarketOrderImbalance&)>(
       &VirtualHistoricalDataStore::Store))
