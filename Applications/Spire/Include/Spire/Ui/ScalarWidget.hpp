@@ -5,8 +5,8 @@
 
 namespace Spire {
 
-  //! Provides a common widget with an interface for getting and setting a
-  //! value on another widget that displays a scalar value.
+  //! Wraps a QWidget used to edit a scalar type T into a QWidget that edits a
+  //! Scalar.
   class ScalarWidget : public QWidget {
     public:
 
