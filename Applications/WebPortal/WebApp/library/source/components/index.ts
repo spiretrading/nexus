@@ -1,4 +1,5 @@
 export * from './burger_button';
+export * from './button';
 export * from './country_selection_box';
 export * from './currency_selection_box';
 export * from './drop_down_button';

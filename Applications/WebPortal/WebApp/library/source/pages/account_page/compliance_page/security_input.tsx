@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HLine, Modal } from '../../..';
+import { Button, DisplaySize, HLine, Modal } from '../../..';
 
 interface Properties {
 
@@ -162,16 +162,12 @@ export class SecurityInput extends React.Component<Properties, State> {
     const confirmationButton = (() => {
       if(this.props.readonly) {
         return (
-          <button className={css(SecurityInput.EXTRA_STYLE.button)}
-              onClick={this.toggleEditing}>
-            {SecurityInput.CONFIRM_TEXT}
-          </button>);
+          <Button label={SecurityInput.CONFIRM_TEXT}
+              onClick={this.toggleEditing}/>);
       } else {
         return (
-          <button className={css(SecurityInput.EXTRA_STYLE.button)}
-            onClick={this.onSubmitChange}>
-            {SecurityInput.SUBMIT_CHANGES_TEXT}
-          </button>);
+          <Button label={SecurityInput.SUBMIT_CHANGES_TEXT}
+            onClick={this.onSubmitChange}/>);
       }
     })();
     let displayValue  = '';
