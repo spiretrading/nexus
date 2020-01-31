@@ -7,7 +7,7 @@
 
 namespace Spire {
 
-  //! Displays an input box that accepts integer values.
+  //! Displays an input box that accepts Quantities.
   class QuantityInputWidget : public QWidget {
     public:
 
