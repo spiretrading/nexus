@@ -1,6 +1,7 @@
 #ifndef NEXUS_POSITION_HPP
 #define NEXUS_POSITION_HPP
 #include <cstdint>
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
@@ -48,6 +49,11 @@ namespace Details {
   bool Key<IndexType>::operator ==(const Key& key) const {
     return m_index == key.m_index && m_currency == key.m_currency;
   }
+
+  template<typename Index>
+  std::ostream& operator <<(std::ostream& out, const Key<Index>& key) {
+    return out << '(' << key.m_index << ' ' << key.m_currency << ')';
+  }
 }
 
   /** Stores information about a single Inventory position.
@@ -77,6 +83,13 @@ namespace Details {
     //! Constructs a Position.
     Position(const Key& key);
   };
+
+  template<typename Index>
+  std::ostream& operator <<(std::ostream& out,
+      const Position<Index>& position) {
+    return out << '(' << position.m_key << ' ' << position.m_quantity << ' ' <<
+      position.m_costBasis << ')';
+  }
 
   //! Returns the average price of a Position.
   /*!

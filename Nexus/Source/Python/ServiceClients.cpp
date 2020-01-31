@@ -129,8 +129,7 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
       "TestEnvironment")
     .def(init())
     .def(init<std::shared_ptr<VirtualHistoricalDataStore>>())
-    .def("set_time", &TestEnvironment::SetTime,
-      call_guard<GilRelease>())
+    .def("set_time", &TestEnvironment::SetTime, call_guard<GilRelease>())
     .def("advance_time", &TestEnvironment::AdvanceTime,
       call_guard<GilRelease>())
     .def("publish", static_cast<void (TestEnvironment::*)(

@@ -2,7 +2,7 @@
 #define NEXUS_BUYINGPOWERCOMPLIANCERULE_HPP
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
@@ -67,7 +67,7 @@ namespace Compliance {
       Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
       Beam::Threading::Sync<Accounting::BuyingPowerTracker>
         m_buyingPowerTracker;
-      std::shared_ptr<Beam::Queue<OrderExecutionService::ExecutionReport>>
+      Beam::MultiQueueReader<OrderExecutionService::ExecutionReport>
         m_executionReportQueue;
       std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
         m_currencies;
@@ -97,10 +97,8 @@ namespace Compliance {
       const std::vector<ComplianceParameter>& parameters,
       const std::vector<ExchangeRate>& exchangeRates,
       MarketDataClientForward&& marketDataClient)
-      : m_marketDataClient{std::forward<MarketDataClientForward>(
-          marketDataClient)},
-        m_executionReportQueue{std::make_shared<
-          Beam::Queue<OrderExecutionService::ExecutionReport>>()} {
+      : m_marketDataClient(std::forward<MarketDataClientForward>(
+          marketDataClient)) {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "currency") {
         m_currency = boost::get<CurrencyId>(parameter.m_value);
@@ -131,9 +129,9 @@ namespace Compliance {
     auto price = GetExpectedPrice(fields);
     Beam::Threading::With(m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
-        while(!m_executionReportQueue->IsEmpty()) {
-          auto report = m_executionReportQueue->Top();
-          m_executionReportQueue->Pop();
+        while(!m_executionReportQueue.IsEmpty()) {
+          auto report = m_executionReportQueue.Top();
+          m_executionReportQueue.Pop();
           if(report.m_lastQuantity != 0) {
             auto currency = Beam::Lookup(m_currencies, report.m_id);
             if(!currency.is_initialized()) {
@@ -169,7 +167,7 @@ namespace Compliance {
           BOOST_THROW_EXCEPTION(ComplianceCheckException{
             "Order exceeds available buying power."});
         } else {
-          order.GetPublisher().Monitor(m_executionReportQueue);
+          order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
         }
     });
   }
@@ -199,7 +197,7 @@ namespace Compliance {
         }
         buyingPowerTracker.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
-        order.GetPublisher().Monitor(m_executionReportQueue);
+        order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
     });
   }
 

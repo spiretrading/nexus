@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
+#include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "WebPortal/WebPortal.hpp"
 
 namespace Nexus::WebPortal {
@@ -54,8 +54,7 @@ namespace Nexus::WebPortal {
        * Constructs a PortfolioModel.
        * @param serviceClients The ServiceClients used to query for positions.
        */
-      explicit PortfolioModel(
-        Beam::Ref<ApplicationServiceClients> serviceClients);
+      explicit PortfolioModel(Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~PortfolioModel();
 
@@ -67,7 +66,7 @@ namespace Nexus::WebPortal {
       void Close();
 
     private:
-      ApplicationServiceClients* m_serviceClients;
+      VirtualServiceClients* m_serviceClients;
       std::unordered_map<RiskService::RiskPortfolioKey, std::shared_ptr<Entry>>
         m_entries;
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>

@@ -1,16 +1,13 @@
-#ifndef NEXUS_ACCOUNTINGTESTS_HPP
-#define NEXUS_ACCOUNTINGTESTS_HPP
+#ifndef NEXUS_ACCOUNTING_TESTS_HPP
+#define NEXUS_ACCOUNTING_TESTS_HPP
 
-namespace Nexus {
-namespace Accounting {
-namespace Tests {
+namespace Nexus::Accounting::Tests {
+  class BookkeeperReactorTester;
   class BuyingPowerTrackerTester;
   class PortfolioMonitorTester;
   class PositionOrderBookTester;
   class ShortingTrackerTester;
   class TrueAverageBookkeeperTester;
-}
-}
 }
 
 #endif

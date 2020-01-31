@@ -1,6 +1,6 @@
 #ifndef NEXUS_RISKSTATECHECK_HPP
 #define NEXUS_RISKSTATECHECK_HPP
-#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -45,7 +45,7 @@ namespace OrderExecutionService {
           m_positionOrderBook;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
           m_riskStateQueue;
-        std::shared_ptr<Beam::Queue<ExecutionReport>> m_executionReportQueue;
+        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
 
         AccountEntry();
       };
@@ -61,9 +61,7 @@ namespace OrderExecutionService {
   template<typename AdministrationClientType>
   RiskStateCheck<AdministrationClientType>::AccountEntry::AccountEntry()
       : m_riskStateQueue(std::make_shared<Beam::StateQueue<
-          RiskService::RiskState>>()),
-        m_executionReportQueue(std::make_shared<Beam::Queue<
-          ExecutionReport>>()) {}
+          RiskService::RiskState>>()) {}
 
   template<typename AdministrationClientType>
   template<typename AdministrationClientForward>
@@ -78,9 +76,9 @@ namespace OrderExecutionService {
     auto& accountEntry = LoadAccountEntry(orderInfo.m_fields.m_account);
     Beam::Threading::With(accountEntry.m_positionOrderBook,
       [&] (Accounting::PositionOrderBook& positionOrderBook) {
-        while(!accountEntry.m_executionReportQueue->IsEmpty()) {
-          auto report = accountEntry.m_executionReportQueue->Top();
-          accountEntry.m_executionReportQueue->Pop();
+        while(!accountEntry.m_executionReportQueue.IsEmpty()) {
+          auto report = accountEntry.m_executionReportQueue.Top();
+          accountEntry.m_executionReportQueue.Pop();
           positionOrderBook.Update(report);
         }
         assert(!accountEntry.m_riskStateQueue->IsEmpty());
@@ -100,7 +98,8 @@ namespace OrderExecutionService {
     Beam::Threading::With(accountEntry.m_positionOrderBook,
       [&] (Accounting::PositionOrderBook& positionOrderBook) {
         positionOrderBook.Add(order);
-        order.GetPublisher().Monitor(accountEntry.m_executionReportQueue);
+        order.GetPublisher().Monitor(
+          accountEntry.m_executionReportQueue.GetWriter());
       });
   }
 

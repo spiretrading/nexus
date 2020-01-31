@@ -1,4 +1,5 @@
 #include "Nexus/Python/OrderExecutionService.hpp"
+#include <Aspen/Python/Box.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Python/Beam.hpp>
@@ -14,9 +15,11 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
+#include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
+#include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -156,6 +159,7 @@ void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
     .def_readwrite("commission", &ExecutionReport::m_commission)
     .def_readwrite("text", &ExecutionReport::m_text)
     .def_readwrite("additional_tags", &ExecutionReport::m_additionalTags)
+    .def("__str__", &lexical_cast<std::string, ExecutionReport>)
     .def(self == self)
     .def(self != self);
   ExportQueueSuite<ExecutionReport>(module, "ExecutionReport");
@@ -196,6 +200,15 @@ void Nexus::Python::ExportOrder(pybind11::module& module) {
     "Order");
 }
 
+void Nexus::Python::ExportOrderCancellationReactor(pybind11::module& module) {
+  auto aspenModule = pybind11::module::import("aspen");
+  Aspen::export_box<const Order*>(aspenModule, "Order");
+  Aspen::export_reactor<OrderCancellationReactor<VirtualOrderExecutionClient,
+    Aspen::SharedBox<const Order*>>>(module, "OrderCancellationReactor")
+    .def(init<Ref<VirtualOrderExecutionClient>,
+    Aspen::SharedBox<const Order*>>());
+}
+
 void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
   class_<VirtualOrderExecutionClient, TrampolineOrderExecutionClient>(module,
     "OrderExecutionClient")
@@ -226,6 +239,8 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   ExportApplicationOrderExecutionClient(submodule);
   ExportOrderFields(submodule);
   ExportOrderInfo(submodule);
+  ExportOrderCancellationReactor(submodule);
+  ExportOrderReactor(submodule);
   ExportOrderRecord(submodule);
   ExportPrimitiveOrder(submodule);
   ExportStandardQueries(submodule);
@@ -322,6 +337,7 @@ void Nexus::Python::ExportOrderFields(pybind11::module& module) {
     .def_readwrite("price", &OrderFields::m_price)
     .def_readwrite("time_in_force", &OrderFields::m_timeInForce)
     .def_readwrite("additional_fields", &OrderFields::m_additionalFields)
+    .def("__str__", lexical_cast<std::string, OrderFields>)
     .def(self < self)
     .def(self == self);
   module.def("find_field", &FindField);
@@ -340,8 +356,82 @@ void Nexus::Python::ExportOrderInfo(pybind11::module& module) {
     .def_readwrite("order_id", &OrderInfo::m_orderId)
     .def_readwrite("shorting_flag", &OrderInfo::m_shortingFlag)
     .def_readwrite("timestamp", &OrderInfo::m_timestamp)
+    .def("__str__", lexical_cast<std::string, OrderInfo>)
     .def(self == self)
     .def(self != self);
+}
+
+void Nexus::Python::ExportOrderReactor(pybind11::module& module) {
+  auto aspenModule = pybind11::module::import("aspen");
+  Aspen::export_box<CurrencyId>(aspenModule, "CurrencyId");
+  Aspen::export_box<OrderType>(aspenModule, "OrderType");
+  Aspen::export_box<Side>(aspenModule, "Side");
+  Aspen::export_box<Quantity>(aspenModule, "Quantity");
+  Aspen::export_box<Money>(aspenModule, "Money");
+  Aspen::export_box<TimeInForce>(aspenModule, "TimeInForce");
+  Aspen::export_box<Tag>(aspenModule, "Tag");
+  Aspen::export_reactor<OrderReactor<VirtualOrderExecutionClient,
+    Aspen::SharedBox<DirectoryEntry>, Aspen::SharedBox<Security>,
+    Aspen::SharedBox<CurrencyId>, Aspen::SharedBox<OrderType>,
+    Aspen::SharedBox<Side>, Aspen::SharedBox<std::string>,
+    Aspen::SharedBox<Quantity>, Aspen::SharedBox<Money>,
+    Aspen::SharedBox<TimeInForce>, Aspen::SharedBox<Tag>>>(module,
+    "OrderReactor")
+    .def(init<Ref<VirtualOrderExecutionClient>,
+      Aspen::SharedBox<DirectoryEntry>, Aspen::SharedBox<Security>,
+      Aspen::SharedBox<CurrencyId>, Aspen::SharedBox<OrderType>,
+      Aspen::SharedBox<Side>, Aspen::SharedBox<std::string>,
+      Aspen::SharedBox<Quantity>, Aspen::SharedBox<Money>,
+      Aspen::SharedBox<TimeInForce>, std::vector<Aspen::SharedBox<Tag>>>());
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<DirectoryEntry> account,
+        Aspen::SharedBox<Security> security,
+        Aspen::SharedBox<CurrencyId> currency, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<std::string> destination,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price,
+        Aspen::SharedBox<TimeInForce> timeInForce) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(account), std::move(security), std::move(currency),
+        std::move(side), std::move(destination), std::move(quantity),
+        std::move(price), std::move(timeInForce)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<DirectoryEntry> account,
+        Aspen::SharedBox<Security> security,
+        Aspen::SharedBox<CurrencyId> currency, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<std::string> destination,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(account), std::move(security), std::move(currency),
+        std::move(side), std::move(destination), std::move(quantity),
+        std::move(price)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<Security> security, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(security), std::move(side), std::move(quantity),
+        std::move(price)));
+    });
+  module.def("make_limit_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<Security> security, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<Quantity> quantity, Aspen::SharedBox<Money> price,
+        Aspen::SharedBox<TimeInForce> timeInForce) {
+      return Aspen::to_object(MakeLimitOrderReactor(Ref(client),
+        std::move(security), std::move(side), std::move(quantity),
+        std::move(price), std::move(timeInForce)));
+    });
+  module.def("make_market_order_reactor",
+    [] (VirtualOrderExecutionClient& client,
+        Aspen::SharedBox<Security> security, Aspen::SharedBox<Side> side,
+        Aspen::SharedBox<Quantity> quantity) {
+      return Aspen::to_object(MakeMarketOrderReactor(Ref(client),
+        std::move(security), std::move(side), std::move(quantity)));
+    });
 }
 
 void Nexus::Python::ExportOrderRecord(pybind11::module& module) {
