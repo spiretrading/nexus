@@ -1,90 +1,110 @@
 #ifndef NEXUS_EXECUTIONREPORT_HPP
 #define NEXUS_EXECUTIONREPORT_HPP
+#include <ostream>
 #include <string>
-#include <tuple>
 #include <vector>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \struct ExecutionReport
-      \brief Represents an update to an Order.
-   */
+  /** Represents an update to an Order. */
   struct ExecutionReport {
 
-    //! The id of the Order being reported.
+    /** The id of the Order being reported. */
     OrderId m_id;
 
-    //! The timestamp.
+    /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    //! The sequence.
+    /** The sequence. */
     int m_sequence;
 
-    //! The status of the Order.
+    /** The status of the Order. */
     OrderStatus m_status;
 
-    //! The quantity last executed.
+    /** The quantity last executed. */
     Quantity m_lastQuantity;
 
-    //! The price of the last execution.
+    /** The price of the last execution. */
     Money m_lastPrice;
 
-    //! The liquidity flag.
+    /** The liquidity flag. */
     std::string m_liquidityFlag;
 
-    //! The last market.
+    /** The last market. */
     std::string m_lastMarket;
 
-    //! The execution fee.
+    /** The execution fee. */
     Money m_executionFee;
 
-    //! The processing fee.
+    /** The processing fee. */
     Money m_processingFee;
 
-    //! The commission.
+    /** The commission. */
     Money m_commission;
 
-    //! The text.
+    /** The text. */
     std::string m_text;
 
-    //! Any additional tags.
+    /** Any additional tags. */
     std::vector<Tag> m_additionalTags;
 
-    //! Constructs an ExecutionReport.
+    /** Constructs an ExecutionReport. */
     ExecutionReport();
 
-    //! Builds an initial ExecutionReport for an Order in a PENDING_NEW status.
-    /*!
-      \param id The id of the Order this ExecutionReport belongs to.
-      \param timestamp The timestamp.
-    */
+    /**
+     * Builds an initial ExecutionReport for an Order in a PENDING_NEW status.
+     * @param id The id of the Order this ExecutionReport belongs to.
+     * @param timestamp The timestamp.
+     */
     static ExecutionReport BuildInitialReport(OrderId id,
       const boost::posix_time::ptime& timestamp);
 
-    //! Builds a new ExecutionReport updating the OrderStatus of a previous
-    //! ExecutionReport.
-    /*!
-      \param report The ExecutionReport to update.
-      \param status The new OrderStatus.
-      \param timestamp The timestamp.
-    */
+    /**
+     * Builds a new ExecutionReport updating the OrderStatus of a previous
+     * ExecutionReport.
+     * @param report The ExecutionReport to update.
+     * @param status The new OrderStatus.
+     * @param timestamp The timestamp.
+     */
     static ExecutionReport BuildUpdatedReport(const ExecutionReport& report,
       OrderStatus status, const boost::posix_time::ptime& timestamp);
   };
 
-  //! Tests if two ExecutionReports are equal.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff <code>lhs</code> is equal to <code>rhs</code>.
-  */
+  inline std::ostream& operator <<(std::ostream& out,
+      const ExecutionReport& report) {
+    out << '(' << report.m_id << ' ' << report.m_timestamp << ' ' <<
+      report.m_sequence << ' ' << report.m_status << ' ' <<
+      report.m_lastQuantity << ' ' << report.m_lastPrice << ' ' <<
+      report.m_liquidityFlag << ' ' << report.m_lastMarket << ' ' <<
+      report.m_executionFee << ' ' << report.m_processingFee << ' ' <<
+      report.m_commission << ' ' << report.m_text;
+    out << " [";
+    auto isFirst = true;
+    for(auto& tag : report.m_additionalTags) {
+      if(!isFirst) {
+        out << ' ';
+      } else {
+        isFirst = false;
+      }
+      out << tag;
+    }
+    return out << "])";
+  }
+
+  /**
+   * Tests if two ExecutionReports are equal.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff <code>lhs</code> is equal to
+   *         <code>rhs</code>.
+   */
   inline bool operator ==(const ExecutionReport& lhs,
       const ExecutionReport& rhs) {
     return std::tie(lhs.m_id, lhs.m_timestamp, lhs.m_sequence, lhs.m_status,
@@ -97,24 +117,24 @@ namespace OrderExecutionService {
       rhs.m_commission, rhs.m_text, rhs.m_additionalTags);
   }
 
-  //! Tests if two ExecutionReports are not equal.
-  /*!
-    \param lhs The left hand side of the inequality.
-    \param rhs The right hand side of the inequality.
-    \return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-  */
+  /**
+   * Tests if two ExecutionReports are not equal.
+   * @param lhs The left hand side of the inequality.
+   * @param rhs The right hand side of the inequality.
+   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
+   */
   inline bool operator !=(const ExecutionReport& lhs,
       const ExecutionReport& rhs) {
     return !(lhs == rhs);
   }
 
   inline ExecutionReport::ExecutionReport()
-      : m_id(0),
-        m_lastQuantity(0) {}
+    : m_id(0),
+      m_lastQuantity(0) {}
 
   inline ExecutionReport ExecutionReport::BuildInitialReport(OrderId id,
       const boost::posix_time::ptime& timestamp) {
-    ExecutionReport report;
+    auto report = ExecutionReport();
     report.m_id = id;
     report.m_timestamp = timestamp;
     report.m_sequence = 0;
@@ -130,7 +150,7 @@ namespace OrderExecutionService {
   inline ExecutionReport ExecutionReport::BuildUpdatedReport(
       const ExecutionReport& report, OrderStatus status,
       const boost::posix_time::ptime& timestamp) {
-    ExecutionReport updatedReport = report;
+    auto updatedReport = report;
     updatedReport.m_timestamp = timestamp;
     updatedReport.m_sequence = report.m_sequence + 1;
     updatedReport.m_status = status;
@@ -143,10 +163,8 @@ namespace OrderExecutionService {
     return updatedReport;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::OrderExecutionService::ExecutionReport> {
     template<typename Shuttler>
@@ -168,7 +186,6 @@ namespace Serialization {
       shuttle.Shuttle("additional_tags", value.m_additionalTags);
     }
   };
-}
 }
 
 #endif

@@ -23,6 +23,12 @@ namespace Nexus::Python {
   void ExportMarketDataClient(pybind11::module& module);
 
   /**
+   * Exports the market data reactors.
+   * @param module The module to export to.
+   */
+  void ExportMarketDataReactors(pybind11::module& module);
+
+  /**
    * Exports the MarketDataService namespace.
    * @param module The module to export to.
    */

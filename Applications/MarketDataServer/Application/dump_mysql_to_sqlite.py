@@ -134,8 +134,8 @@ def main():
         routine.wait()
       routines = []
     routines.append(beam.routines.RoutineHandler(beam.routines.spawn(
-      lambda: backup(market, args.start, args.end,
-        mysql_data_store.load_order_imbalances, sqlite_data_store))))
+      (lambda s: lambda: backup(s, args.start, args.end,
+      mysql_data_store.load_order_imbalances, sqlite_data_store))(market))))
   for routine in routines:
     routine.wait()
 
