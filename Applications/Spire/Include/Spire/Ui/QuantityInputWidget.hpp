@@ -19,7 +19,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      QuantityInputWidget(QWidget* parent = nullptr);
+      explicit QuantityInputWidget(QWidget* parent = nullptr);
 
       //! Sets the value to display in the input box.
       /*

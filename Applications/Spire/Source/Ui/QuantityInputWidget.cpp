@@ -9,6 +9,7 @@ using namespace Spire;
 QuantityInputWidget::QuantityInputWidget(QWidget* parent)
     : QWidget(parent),
       m_item_delegate(this) {
+  setFocusPolicy(Qt::NoFocus);
   auto layout = new QHBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
