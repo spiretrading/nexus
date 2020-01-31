@@ -1,5 +1,5 @@
-#ifndef SPIRE_NUMBER_INPUT_WIDGET_HPP
-#define SPIRE_NUMBER_INPUT_WIDGET_HPP
+#ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
+#define SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
