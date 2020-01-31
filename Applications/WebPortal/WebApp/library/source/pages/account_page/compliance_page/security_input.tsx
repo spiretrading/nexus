@@ -59,11 +59,29 @@ export class SecurityInput extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const modalHeight = (() => {
+      if(this.props.readonly) {
+        return SecurityInput.MODAL_HEIGHT_READONLY;
+      } else {
+        return SecurityInput.MODAL_HEIGHT;
+      }
+    })();
     const headerText = (() => {
       if(this.props.readonly) {
         return SecurityInput.MODAL_HEADER_READONLY;
       } else {
         return SecurityInput.MODAL_HEADER;
+      }
+    })();
+    const inputField = (() => {
+      if(this.props.readonly) {
+        return null;
+      } else{
+        return(
+          <InputField 
+            value={this.state.inputString}
+            onChange={this.onInputChange}
+            onEnter={this.addEntry}/>);
       }
     })();
     const iconRowStyle = (() => {
@@ -189,7 +207,7 @@ export class SecurityInput extends React.Component<Properties, State> {
           onClick={this.toggleEditing.bind(this)}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize} 
-              width={'300px'} height={'559px'}
+              width={'300px'} height={modalHeight}
               onClose={this.toggleEditing}>
             <div style={SecurityInput.STYLE.header}>
               <div style={SecurityInput.STYLE.headerText}>
@@ -201,10 +219,7 @@ export class SecurityInput extends React.Component<Properties, State> {
                 style={SecurityInput.STYLE.clickable}
                 onClick={this.toggleEditing}/>
             </div>
-            <InputField 
-              value={this.state.inputString}
-              onChange={this.onInputChange}
-              onEnter={this.addEntry}/>
+            {inputField}
             <SymbolsBox 
               displaySize={this.props.displaySize}
               readonly={this.props.readonly}
@@ -431,6 +446,8 @@ export class SecurityInput extends React.Component<Properties, State> {
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
+  private static readonly MODAL_HEIGHT = '559px';
+  private static readonly MODAL_HEIGHT_READONLY = '492px';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';
