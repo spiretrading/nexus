@@ -21,10 +21,10 @@ interface Properties {
 }
 
 interface State {
+  inputString: string;
   isEditing: boolean;
   localValue: Nexus.ComplianceValue[];
   selection: number;
-  inputString: string;
 }
 
 /** A component that displays a list of securities. */
@@ -38,17 +38,17 @@ export class SecurityInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
+      inputString: '',
       isEditing: false,
       localValue: this.props.value.slice(),
-      selection: -1,
-      inputString: ''
+      selection: -1
     }
-    this.toggleEditing = this.toggleEditing.bind(this);
-    this.selectEntry = this.selectEntry.bind(this);
-    this.onInputChange = this.onInputChange.bind(this);
     this.addEntry = this.addEntry.bind(this);
-    this.removeEntry = this.removeEntry.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
     this.onSubmitChange = this.onSubmitChange.bind(this);
+    this.removeEntry = this.removeEntry.bind(this);
+    this.selectEntry = this.selectEntry.bind(this);
+    this.toggleEditing = this.toggleEditing.bind(this);
   }
 
   public render() {
@@ -223,26 +223,11 @@ export class SecurityInput extends React.Component<Properties, State> {
         </div>
       </div>);
   }
-
-  private toggleEditing(){
-    this.setState({
-      isEditing: !this.state.isEditing,
-      selection: -1,
-      localValue: this.props.value.slice()
-    });
-  }
-
-  private selectEntry(index: number) {
-    this.setState({selection: index});
-  }
-
-  private removeEntry() {
-    if(this.state.selection !== -1) {
-      this.setState({localValue: 
-        this.state.localValue.slice(0, this.state.selection).concat(
-        this.state.localValue.slice(this.state.selection+1))});
-    }
-    this.setState({selection: -1});
+  
+  private addEntry(paramter: Nexus.ComplianceValue) {
+    this.setState({localValue: 
+      this.state.localValue.slice().concat(paramter)});
+    this.setState({inputString: ''});
   }
 
   private onInputChange(value: string) {
@@ -254,10 +239,25 @@ export class SecurityInput extends React.Component<Properties, State> {
     this.toggleEditing();
   }
 
-  private addEntry(paramter: Nexus.ComplianceValue) {
-    this.setState({localValue: 
-      this.state.localValue.slice().concat(paramter)});
-    this.setState({inputString: ''});
+  private removeEntry() {
+    if(this.state.selection !== -1) {
+      this.setState({localValue: 
+        this.state.localValue.slice(0, this.state.selection).concat(
+        this.state.localValue.slice(this.state.selection+1))});
+    }
+    this.setState({selection: -1});
+  }
+
+  private selectEntry(index: number) {
+    this.setState({selection: index});
+  }
+
+  private toggleEditing(){
+    this.setState({
+      isEditing: !this.state.isEditing,
+      selection: -1,
+      localValue: this.props.value.slice()
+    });
   }
 
   private static readonly STYLE = {
@@ -426,25 +426,35 @@ export class SecurityInput extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly MODAL_HEADER = 'Edit Symbols';
-  private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
-  private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly CONFIRM_TEXT = 'OK';
-  private static readonly UPLOAD_TEXT = 'Upload';
-  private static readonly REMOVE_TEXT = 'Remove';
-  private static readonly PATH =
-    'resources/account_page/compliance_page/security_input/';
   private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
+  private static readonly MODAL_HEADER = 'Edit Symbols';
+  private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
+  private static readonly PATH =
+    'resources/account_page/compliance_page/security_input/';
+  private static readonly REMOVE_TEXT = 'Remove';
+  private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
+  private static readonly UPLOAD_TEXT = 'Upload';
 }
 
 interface InputFieldProperties {
   
+  /** The current value of the input field. */
   value: string;
+
+  /** Called when the displayed value changes.
+   * @param value - The new value.
+   */
   onChange?: (value: string) => void;
-  onEnter?: (parameter: Nexus.ComplianceValue) => void;
+
+  /** Called when the value is submitted.
+   * @param value - The compliance value that is being submitted.
+   */
+  onEnter?: (value: Nexus.ComplianceValue) => void;
 }
 
+/** The field that allows the user to add a new entry to the list. */
 export class InputField extends React.Component<InputFieldProperties> {
   public constructor(props: InputFieldProperties) {
     super(props);
@@ -516,18 +526,19 @@ interface SymbolsListProperties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
-  /** The currently selected value. */
+  /** The index of the currently selected value. */
   selection: number;
 
   /** The list of securities to display. */
   value: Nexus.ComplianceValue[];
 
-  /** Called when the list of values changes.
-   * @param value - The updated list.
+  /** Called when a list item is clicked on.
+   * @param index - The index of the selected security.
    */
   onClick?: (index: number) => void;
 }
 
+/** A component that displays a list of symbols. */
 export class SymbolsBox extends React.Component<SymbolsListProperties> {
   public render() {
     const scrollHeader = (() => {
