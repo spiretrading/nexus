@@ -1,14 +1,13 @@
 #ifndef SPIRE_NUMBER_INPUT_WIDGET_HPP
 #define SPIRE_NUMBER_INPUT_WIDGET_HPP
-#include <QWidget>
+#include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/InputWidget.hpp"
 
 namespace Spire {
 
   //! Displays an input box that accepts Quantities.
-  class QuantityInputWidget : public QWidget {
+  class QuantityInputWidget : public QLineEdit {
     public:
 
       //! Signals that the user has modified the input box or submitted a
@@ -36,7 +35,6 @@ namespace Spire {
         const InputSignal::slot_type& slot) const;
 
     private:
-      InputWidget* m_line_edit;
       CustomVariantItemDelegate m_item_delegate;
       mutable InputSignal m_committed_signal;
       mutable InputSignal m_modified_signal;
