@@ -59,13 +59,6 @@ export class SecurityInput extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const findSymbolBox = (() => {
-      if(this.props.readonly) {
-        return SecurityInput.STYLE.hidden;
-      } else {
-        return SecurityInput.STYLE.findSymbolBox;
-      }
-    })();
     const headerText = (() => {
       if(this.props.readonly) {
         return SecurityInput.MODAL_HEADER_READONLY;
@@ -212,13 +205,10 @@ export class SecurityInput extends React.Component<Properties, State> {
                 style={SecurityInput.STYLE.clickable}
                 onClick={this.toggleEditing}/>
             </div>
-            <input
-              className={css(SecurityInput.EXTRA_STYLE.effects)}
-              style={findSymbolBox}
-              placeholder={SecurityInput.PLACEHOLDER_TEXT}
+            <InputField 
+              value={this.state.inputString}
               onChange={this.onInputChange}
-              onKeyDown={this.addEntry}
-              value={this.state.inputString}/>
+              onEnter={this.addEntry}/>
             <SymbolsBox 
               displaySize={this.props.displaySize}
               readonly={this.props.readonly}
@@ -259,8 +249,8 @@ export class SecurityInput extends React.Component<Properties, State> {
     this.setState({selection: -1});
   }
 
-  private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({inputString: event.target.value});
+  private onInputChange(value: string) {
+    this.setState({inputString: value});
   }
 
   private onSubmitChange(){
@@ -268,19 +258,10 @@ export class SecurityInput extends React.Component<Properties, State> {
     this.toggleEditing();
   }
 
-  private addEntry(event: React.KeyboardEvent<HTMLInputElement>) {
-    if(event.keyCode === 13) {
-      const newParameter = 
-        new Nexus.ComplianceValue( 
-          Nexus.ComplianceValue.Type.SECURITY, 
-          new Nexus.Security(
-            this.state.inputString,
-            Nexus.MarketCode.NONE,
-            Nexus.DefaultCountries.CA));
-      this.setState({localValue: 
-        this.state.localValue.slice().concat(newParameter)});
-      this.setState({inputString: ''});
-    }
+  private addEntry(paramter: Nexus.ComplianceValue) {
+    this.setState({localValue: 
+      this.state.localValue.slice().concat(paramter)});
+    this.setState({inputString: ''});
   }
 
   private static readonly STYLE = {
@@ -321,16 +302,6 @@ export class SecurityInput extends React.Component<Properties, State> {
       font: '400 16px Roboto',
       flexGrow: 1,
       cursor: 'default' as 'default'
-    },
-    findSymbolBox: {
-      width: '100%',
-      boxSizing: 'border-box' as 'border-box',
-      font: '400 14px Roboto',
-      height: '34px',
-      paddingLeft: '10px',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      marginBottom: '18px'
     },
     iconClickableStyle: {
       cursor: 'pointer' as 'pointer'
@@ -399,16 +370,6 @@ export class SecurityInput extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       justifyContent: 'space-evenly' as 'space-evenly' 
     },
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '1px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto'
-    },
     buttonWrapper: {
       marginTop: '30px',
       display: 'flex' as 'flex',
@@ -470,8 +431,7 @@ export class SecurityInput extends React.Component<Properties, State> {
     }
   });
   private static readonly MODAL_HEADER = 'Edit Symbols';
-  private static readonly MODAL_HEADER_READONLY = 'Find symbol here';
-  private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
+  private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly CONFIRM_TEXT = 'OK';
   private static readonly UPLOAD_TEXT = 'Upload';
@@ -483,12 +443,76 @@ export class SecurityInput extends React.Component<Properties, State> {
 }
 
 interface InputFieldProperties {
+  
+  value: string;
+  onChange?: (value: string) => void;
+  onEnter?: (parameter: Nexus.ComplianceValue) => void;
 }
 
-export class InputField extends React.Component<SymbolsBoxProperties> {
+export class InputField extends React.Component<InputFieldProperties> {
+  public constructor(props: InputFieldProperties) {
+    super(props);
+    this.onInputChange = this.onInputChange.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+  }
 
+  public render() {
+    return (<input
+      className={css(InputField.EXTRA_STYLE.effects)}
+      style={InputField.STYLE.findSymbolBox}
+      placeholder={InputField.PLACEHOLDER_TEXT}
+      onChange={this.onInputChange}
+      onKeyDown={this.onKeyDown}
+      value={this.props.value}/>);
+  }
+
+  private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.props.onChange(event.target.value);
+  }
+
+  private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if(event.keyCode === 13) {
+      const newParameter = 
+        new Nexus.ComplianceValue( 
+          Nexus.ComplianceValue.Type.SECURITY, 
+          new Nexus.Security(
+            this.props.value,
+            Nexus.MarketCode.NONE,
+            Nexus.DefaultCountries.CA));
+      this.props.onEnter(newParameter);
+    }
+  }
+
+  private static readonly STYLE = {
+    findSymbolBox: {
+      width: '100%',
+      boxSizing: 'border-box' as 'border-box',
+      font: '400 14px Roboto',
+      height: '34px',
+      paddingLeft: '10px',
+      border: '1px solid #C8C8C8',
+      borderRadius: '1px',
+      marginBottom: '18px'
+    }
+  };
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    effects: {
+      ':focus': {
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      }
+    }
+  });
+  private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
 }
-interface SymbolsBoxProperties {
+
+interface SymbolsListProperties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -508,7 +532,7 @@ interface SymbolsBoxProperties {
   onClick?: (index: number) => void;
 }
 
-export class SymbolsBox extends React.Component<SymbolsBoxProperties> {
+export class SymbolsBox extends React.Component<SymbolsListProperties> {
   public render() {
     const scrollHeader = (() => {
       if(!this.props.readonly) {
