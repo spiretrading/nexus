@@ -42,9 +42,15 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
   if(m_security == Security()) {
     return;
   }
-  m_securityInfo =
+  auto securityInfo =
     m_userProfile->GetServiceClients().GetMarketDataClient().LoadSecurityInfo(
     m_security);
+  if(securityInfo.is_initialized()) {
+    m_securityInfo = *securityInfo;
+  } else {
+    m_securityInfo.m_security = security;
+    m_securityInfo.m_boardLot = 1;
+  }
   QueryRealTimeBookQuotesWithSnapshot(
     m_userProfile->GetServiceClients().GetMarketDataClient(),
     m_security, m_slotHandler->GetSlot<BookQuote>(
