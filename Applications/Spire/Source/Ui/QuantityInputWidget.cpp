@@ -40,15 +40,13 @@ connection QuantityInputWidget::connect_modified_signal(
 }
 
 void QuantityInputWidget::on_line_edit_committed() {
-  auto quantity = Quantity::FromValue(m_line_edit->text().toStdString());
-  if(quantity) {
-    m_committed_signal(*quantity);
+  if(!m_line_edit->text().isEmpty()) {
+    m_committed_signal(*Quantity::FromValue(m_line_edit->text().toStdString()));
   }
 }
 
 void QuantityInputWidget::on_line_edit_modified(const QString& text) {
-  auto quantity = Quantity::FromValue(text.toStdString());
-  if(quantity) {
-    m_modified_signal(*quantity);
+  if(!m_line_edit->text().isEmpty()) {
+    m_modified_signal(*Quantity::FromValue(text.toStdString()));
   }
 }

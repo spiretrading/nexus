@@ -11,8 +11,8 @@ namespace Spire {
   class QuantityInputWidget : public QWidget {
     public:
 
-      //! Signals that the user has modified the input box or has submitted
-      //! a value.
+      //! Signals that the user has modified the input box or submitted a
+      //! value.
       using InputSignal = Signal<void (Nexus::Quantity)>;
 
       //! Constructs a QuantityInputWidget.
