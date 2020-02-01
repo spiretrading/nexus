@@ -29,8 +29,7 @@ class TestApp extends React.Component<Properties, State> {
         <WebPortal.SecurityInput
           value={this.state.entries}
           displaySize={this.props.displaySize}
-          readonly={this.state.readonly}
-          />
+          readonly={this.state.readonly}/>
       </WebPortal.PageWrapper>);
   }
 

@@ -76,9 +76,9 @@ export class SecurityInput extends React.Component<Properties, State> {
     const inputField = (() => {
       if(this.props.readonly) {
         return null;
-      } else{
+      } else {
         return(
-          <InputField 
+          <InputField
             value={this.state.inputString}
             onChange={this.onInputChange}
             onEnter={this.addEntry}/>);
@@ -576,18 +576,15 @@ export class SymbolsBox extends React.Component<SymbolsListProperties> {
       }
     })();
     const selectedSecuritiesBox = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        if(this.props.readonly) {
-          return SymbolsBox.STYLE.scrollBoxSmallReadonly;
-        } else {
-          return SymbolsBox.STYLE.scrollBoxSmall;
-        }
-      } else {
-        if(this.props.readonly) {
-          return SymbolsBox.STYLE.scrollBoxBigReadonly;
-        } else {
-          return SymbolsBox.STYLE.scrollBoxBig;
-        }
+      const displaySize = this.props.displaySize;
+      if(displaySize === DisplaySize.SMALL && this.props.readonly) {
+        return SymbolsBox.STYLE.scrollBoxSmallReadonly;
+      } else if (displaySize === DisplaySize.SMALL && !this.props.readonly ) {
+        return SymbolsBox.STYLE.scrollBoxSmall;
+      } else if(displaySize === DisplaySize.LARGE && this.props.readonly) {
+        return SymbolsBox.STYLE.scrollBoxBigReadonly;
+      } else if(displaySize === DisplaySize.LARGE && !this.props.readonly){
+        return SymbolsBox.STYLE.scrollBoxBig;
       }
     })();
     const entries = [];
