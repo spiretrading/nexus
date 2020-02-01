@@ -103,18 +103,15 @@ export class SecurityInput extends React.Component<Properties, State> {
       }
     })();
     const iconWrapperStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        if(this.props.readonly) {
+      const displaySize = this.props.displaySize;
+      if(displaySize=== DisplaySize.SMALL && this.props.readonly) {
           return SecurityInput.STYLE.iconWrapperSmallReadonly;
-        } else {
+      } else if(displaySize=== DisplaySize.SMALL && !this.props.readonly) {
           return SecurityInput.STYLE.iconWrapperSmall;
-        }
-      } else {
-        if(this.props.readonly) {
+      } else if(displaySize=== DisplaySize.LARGE && this.props.readonly) {
           return SecurityInput.STYLE.iconWrapperLargeReadonly;
-        } else {
-          return SecurityInput.STYLE.iconWrapperLarge;
-        }
+      } else {
+        return SecurityInput.STYLE.iconWrapperLarge;
       }
     })();
     const uploadButton = (() => {
@@ -581,9 +578,9 @@ export class SymbolsBox extends React.Component<SymbolsListProperties> {
         return SymbolsBox.STYLE.scrollBoxSmallReadonly;
       } else if (displaySize === DisplaySize.SMALL && !this.props.readonly ) {
         return SymbolsBox.STYLE.scrollBoxSmall;
-      } else if(displaySize === DisplaySize.LARGE && this.props.readonly) {
+      } else if(displaySize !== DisplaySize.SMALL && this.props.readonly) {
         return SymbolsBox.STYLE.scrollBoxBigReadonly;
-      } else if(displaySize === DisplaySize.LARGE && !this.props.readonly){
+      } else if (displaySize !== DisplaySize.SMALL && !this.props.readonly) {
         return SymbolsBox.STYLE.scrollBoxBig;
       }
     })();
