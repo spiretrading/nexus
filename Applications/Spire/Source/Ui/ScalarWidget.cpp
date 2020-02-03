@@ -4,7 +4,12 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+Scalar ScalarWidget::get_value() const {
+  return m_value;
+}
+
 void ScalarWidget::set_value(Scalar value) {
+  m_value = value;
   m_setter(value);
 }
 
@@ -14,6 +19,7 @@ connection ScalarWidget::connect_change_signal(
 }
 
 void ScalarWidget::on_widget_value_changed(Scalar value) {
+  m_value = value;
   m_change_signal(value);
 }
 
