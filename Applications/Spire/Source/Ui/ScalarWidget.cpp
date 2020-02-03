@@ -24,4 +24,3 @@ void ScalarWidget::set_layout(QWidget* widget) {
   layout->setContentsMargins({});
   layout->addWidget(widget);
 }
-
