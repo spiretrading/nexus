@@ -207,4 +207,32 @@ entitlements:
     applicability:
       - source: XHKG
         messages: [BBO, MQT, BOOK, TAS, IMB]
+  - name: Osaka Stock Exchange Top of Book (L1)
+    price: 1500.00
+    currency: JPY
+    group: osel1
+    applicability:
+      - source: XOSE
+        messages: [BBO, MQT, TAS, IMB]
+  - name: Osaka Stock Exchange Depth of Book (L2)
+    price: 2200.00
+    currency: JPY
+    group: osel2
+    applicability:
+      - source: XOSE
+        messages: [BBO, MQT, TAS, BOOK, IMB]
+  - name: Tokyo Stock Exchange Top of Book (L1)
+    price: 3000.00
+    currency: JPY
+    group: tsel1
+    applicability:
+      - source: XTKS
+        messages: [BBO, MQT, TAS, IMB]
+  - name: Tokyo Stock Exchange Depth of Book (L2)
+    price: 3600.00
+    currency: JPY
+    group: tsel2
+    applicability:
+      - source: XTKS
+        messages: [BBO, MQT, TAS, BOOK, IMB]
 ...
