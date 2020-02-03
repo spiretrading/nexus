@@ -5,6 +5,8 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "JpxFlexMarketDataFeedClient/JpxFlexConfiguration.hpp"
 #include "JpxFlexMarketDataFeedClient/JpxFlexMessage.hpp"
 
@@ -55,6 +57,11 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
+      Security ParseSecurity(const JpxFlexPacket& packet);
+      void HandleCurrentPriceMessage(const JpxFlexMessage& message);
+      void HandleTradingVolumeMessage(const JpxFlexMessage& message);
+      void HandleTurnoverMessage(const JpxFlexMessage& message);
+      void HandleQuoteMessage(const JpxFlexMessage& message, Side side);
       void Dispatch(const JpxFlexMessage& message);
       void ReadLoop();
   };
@@ -108,9 +115,62 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
+  Security JpxFlexMarketDataFeedClient<C, P>::ParseSecurity(
+      const JpxFlexPacket& packet) {
+    return Security(std::string(packet.m_issueCode.GetData() + 7, 4),
+      packet.m_exchange, DefaultCountries::JP());
+  }
+
+  template<typename C, typename P>
+  void JpxFlexMarketDataFeedClient<C, P>::HandleCurrentPriceMessage(
+      const JpxFlexMessage& message) {
+    auto security = ParseSecurity(*message.m_packet);
+    std::cout << security << " " <<
+      std::string(message.m_payload, message.m_size) << std::endl;
+  }
+
+  template<typename C, typename P>
+  void JpxFlexMarketDataFeedClient<C, P>::HandleTradingVolumeMessage(
+      const JpxFlexMessage& message) {
+    auto security = ParseSecurity(*message.m_packet);
+    std::cout << security << " " <<
+      std::string(message.m_payload, message.m_size) << std::endl;
+  }
+
+  template<typename C, typename P>
+  void JpxFlexMarketDataFeedClient<C, P>::HandleTurnoverMessage(
+      const JpxFlexMessage& message) {
+    auto security = ParseSecurity(*message.m_packet);
+    std::cout << security << " " <<
+      std::string(message.m_payload, message.m_size) << std::endl;
+  }
+
+  template<typename C, typename P>
+  void JpxFlexMarketDataFeedClient<C, P>::HandleQuoteMessage(
+      const JpxFlexMessage& message, Side side) {
+    auto security = ParseSecurity(*message.m_packet);
+    std::cout << security << " " << side << " " <<
+      std::string(message.m_payload, message.m_size) << std::endl;
+  }
+
+  template<typename C, typename P>
   void JpxFlexMarketDataFeedClient<C, P>::Dispatch(
       const JpxFlexMessage& message) {
-    std::cout << std::string(message.m_payload, message.m_size) << std::endl;
+    if(message.m_packet->m_issueLargeClassification !=
+        JpxFlexPacket::IssueLargeClassification::STOCK_RELATED) {
+      return;
+    }
+    if(message.m_type == JpxFlexMessage::Type::CURRENT_PRICE) {
+      HandleCurrentPriceMessage(message);
+    } else if(message.m_type == JpxFlexMessage::Type::TRADING_VOLUME) {
+      HandleTradingVolumeMessage(message);
+    } else if(message.m_type == JpxFlexMessage::Type::TURNOVER) {
+      HandleTurnoverMessage(message);
+    } else if(message.m_type == JpxFlexMessage::Type::ASK_QUOTE) {
+      HandleQuoteMessage(message, Side::ASK);
+    } else if(message.m_type == JpxFlexMessage::Type::BID_QUOTE) {
+      HandleQuoteMessage(message, Side::BID);
+    }
   }
 
   template<typename C, typename P>

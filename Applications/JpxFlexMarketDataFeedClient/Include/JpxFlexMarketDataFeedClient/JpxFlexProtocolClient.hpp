@@ -79,9 +79,8 @@ namespace Nexus::MarketDataService {
       m_source = m_packet.m_payload;
       m_remainingSize = m_buffer.GetSize() - JpxFlexPacket::HEADER_LENGTH;
     }
-    auto message = JpxFlexMessage::Parse(&m_packet, m_source, m_remainingSize);
-    m_remainingSize -= message.m_size;
-    m_source += message.m_size;
+    auto message = JpxFlexMessage::Parse(&m_packet, Beam::Store(m_source),
+      Beam::Store(m_remainingSize));
     *sequenceNumber = m_sequenceNumber;
     return message;
   }
