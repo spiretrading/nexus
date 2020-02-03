@@ -36,6 +36,9 @@ RangeInputSlider::RangeInputSlider(Scalar min_value, Scalar max_value,
       m_is_hovering_max(false),
       m_mouse_offset(0) {
   setMouseTracking(true);
+  setFixedHeight(scale_height(26));
+  move_handle(m_current_min_value, m_min_handle_x);
+  move_handle(m_current_max_value, m_max_handle_x);
 }
 
 void RangeInputSlider::set_min_value(Scalar value) {

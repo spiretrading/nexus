@@ -26,8 +26,6 @@ RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
   layout->addWidget(m_min_widget);
   m_slider = new RangeInputSlider(m_model->get_minimum_value(),
     m_model->get_maximum_value(), this);
-  m_slider->set_min_value(m_model->get_minimum_value());
-  m_slider->set_max_value(m_model->get_maximum_value());
   m_slider->connect_min_changed_signal([=] (auto value) {
     on_min_handle_moved(value); });
   m_slider->connect_max_changed_signal([=] (auto value) {
@@ -37,6 +35,8 @@ RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
     on_max_edited(value);
   });
   layout->addWidget(m_max_widget);
+  m_min_widget->set_value(m_model->get_minimum_value());
+  m_max_widget->set_value(m_model->get_maximum_value());
 }
 
 connection RangeInputWidget::connect_min_changed_signal(
@@ -56,7 +56,7 @@ void RangeInputWidget::resizeEvent(QResizeEvent* event) {
 
 void RangeInputWidget::on_min_edited(Scalar value) {
   if(value >= m_model->get_minimum_value() &&
-      value <= m_model->get_minimum_value()) {
+      value <= m_max_widget->get_value()) {
     m_slider->set_min_value(value);
   } else if(value < m_model->get_minimum_value()) {
     m_slider->set_min_value(m_model->get_minimum_value());
@@ -65,7 +65,7 @@ void RangeInputWidget::on_min_edited(Scalar value) {
 }
 
 void RangeInputWidget::on_max_edited(Scalar value) {
-  if(value <= m_model->get_maximum_value() && value >=
+  if(value >= m_min_widget->get_value() && value <=
       m_model->get_maximum_value()) {
     m_slider->set_max_value(value);
   } else if(value > m_model->get_maximum_value()) {
