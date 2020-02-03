@@ -1,6 +1,7 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
 #include <QImage>
+#include <QLineEdit>
 #include <QRect>
 #include <QSize>
 #include "Spire/Spire/Spire.hpp"
@@ -40,6 +41,13 @@ namespace Spire {
     \return An image rendered from the SVG resource to the specified dimensions.
   */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
+
+  //! Applies the Spire line edit style to a line edit, overwriting any
+  //! previously set style.
+  /*
+    \param widget The line edit to apply the style to.
+  */
+  void apply_line_edit_style(QLineEdit* widget);
 }
 
 #endif
