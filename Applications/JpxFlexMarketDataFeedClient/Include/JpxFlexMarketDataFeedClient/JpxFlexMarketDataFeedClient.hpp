@@ -7,6 +7,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <boost/optional.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "JpxFlexMarketDataFeedClient/JpxFlexConfiguration.hpp"
@@ -56,7 +57,11 @@ namespace Nexus::MarketDataService {
         Money m_price;
         Quantity m_quantity;
       };
-      struct BboEntry {
+      struct SecurityEntry {
+        Quantity m_volume;
+        Money m_turnover;
+        boost::optional<Quantity> m_tradeQuantity;
+        boost::optional<Money> m_tradePrice;
         std::vector<PriceLevel> m_asks;
         std::vector<PriceLevel> m_bids;
       };
@@ -64,7 +69,7 @@ namespace Nexus::MarketDataService {
       Beam::GetOptionalLocalPtr<C> m_marketDataFeedClient;
       Beam::GetOptionalLocalPtr<P> m_protocolClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
-      std::unordered_map<Security, BboEntry> m_bboEntries;
+      std::unordered_map<Security, SecurityEntry> m_securityEntries;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -72,7 +77,8 @@ namespace Nexus::MarketDataService {
       Security ParseSecurity(const JpxFlexPacket& packet);
       Money ParsePrice(Beam::Out<const char*> source);
       Quantity ParseQuantity(Beam::Out<const char*> source);
-      void HandleCurrentPriceMessage(const JpxFlexMessage& message);
+      void PublishTimeAndSale(const Security& security, SecurityEntry& entry,
+        boost::posix_time::ptime timestamp);
       void HandleTradingVolumeMessage(const JpxFlexMessage& message);
       void HandleTurnoverMessage(const JpxFlexMessage& message);
       void HandleQuoteMessage(const JpxFlexMessage& message, Side side);
@@ -187,11 +193,15 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  void JpxFlexMarketDataFeedClient<C, P>::HandleCurrentPriceMessage(
-      const JpxFlexMessage& message) {
-    auto security = ParseSecurity(*message.m_packet);
-    std::cout << "Current: " << security << " " <<
-      std::string(message.m_payload, message.m_size) << std::endl;
+  void JpxFlexMarketDataFeedClient<C, P>::PublishTimeAndSale(
+      const Security& security, SecurityEntry& entry,
+      boost::posix_time::ptime timestamp) {
+    m_marketDataFeedClient->PublishTimeAndSale(SecurityTimeAndSale(
+      TimeAndSale(timestamp, *entry.m_tradePrice, *entry.m_tradeQuantity,
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+      m_config.m_disseminatingMarket.GetData()), security));
+    entry.m_tradePrice.reset();
+    entry.m_tradeQuantity.reset();
   }
 
   template<typename C, typename P>
@@ -202,8 +212,19 @@ namespace Nexus::MarketDataService {
     source += 3;
     auto volume = ParseQuantity(Beam::Store(source));
     auto timestamp = ParseTimestamp(Beam::Store(source));
-    std::cout << "Volume: " << security << " " << volume << " " << timestamp <<
-      std::endl;
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
+      [] {
+        return SecurityEntry();
+      });
+    if(entry.m_volume == 0) {
+      entry.m_volume = volume;
+    } else {
+      entry.m_tradeQuantity = volume - entry.m_volume;
+      entry.m_volume = volume;
+      if(entry.m_tradePrice.is_initialized()) {
+        PublishTimeAndSale(security, entry, timestamp);
+      }
+    }
   }
 
   template<typename C, typename P>
@@ -214,8 +235,19 @@ namespace Nexus::MarketDataService {
     source += 3;
     auto turnover = ParseQuantity(Beam::Store(source)) * Money::ONE;
     auto timestamp = ParseTimestamp(Beam::Store(source));
-    std::cout << "Turnover: " << security << " " << turnover << " " <<
-      timestamp << std::endl;
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
+      [] {
+        return SecurityEntry();
+      });
+    if(entry.m_turnover == Money::ZERO) {
+      entry.m_turnover = turnover;
+    } else {
+      entry.m_tradePrice = turnover - entry.m_turnover;
+      entry.m_turnover = turnover;
+      if(entry.m_tradeQuantity.is_initialized()) {
+        PublishTimeAndSale(security, entry, timestamp);
+      }
+    }
   }
 
   template<typename C, typename P>
@@ -232,11 +264,11 @@ namespace Nexus::MarketDataService {
     }
     source += 2;
     auto quantity = ParseQuantity(Beam::Store(source));
-    auto& bboEntry = Beam::GetOrInsert(m_bboEntries, security,
+    auto& entry = Beam::GetOrInsert(m_securityEntries, security,
       [] {
-        return BboEntry();
+        return SecurityEntry();
       });
-    auto& levels = Pick(side, bboEntry.m_asks, bboEntry.m_bids);
+    auto& levels = Pick(side, entry.m_asks, entry.m_bids);
     auto positionIterator = std::lower_bound(levels.begin(),
       levels.end(), price,
       [&] (const PriceLevel& lhs, Money rhs) {
@@ -268,21 +300,21 @@ namespace Nexus::MarketDataService {
     if(positionIterator == levels.begin()) {
       auto ask = Quote();
       ask.m_side = Side::ASK;
-      if(bboEntry.m_asks.empty()) {
+      if(entry.m_asks.empty()) {
         ask.m_price = Money::ZERO;
         ask.m_size = 0;
       } else {
-        ask.m_price = bboEntry.m_asks.front().m_price;
-        ask.m_size = bboEntry.m_asks.front().m_quantity;
+        ask.m_price = entry.m_asks.front().m_price;
+        ask.m_size = entry.m_asks.front().m_quantity;
       }
       auto bid = Quote();
       bid.m_side = Side::BID;
-      if(bboEntry.m_bids.empty()) {
+      if(entry.m_bids.empty()) {
         bid.m_price = Money::ZERO;
         bid.m_size = 0;
       } else {
-        bid.m_price = bboEntry.m_bids.front().m_price;
-        bid.m_size = bboEntry.m_bids.front().m_quantity;
+        bid.m_price = entry.m_bids.front().m_price;
+        bid.m_size = entry.m_bids.front().m_quantity;
       }
       auto bbo = BboQuote(bid, ask, timestamp);
       m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo, security));
@@ -296,9 +328,7 @@ namespace Nexus::MarketDataService {
         JpxFlexPacket::IssueLargeClassification::STOCK_RELATED) {
       return;
     }
-    if(message.m_type == JpxFlexMessage::Type::CURRENT_PRICE) {
-      HandleCurrentPriceMessage(message);
-    } else if(message.m_type == JpxFlexMessage::Type::TRADING_VOLUME) {
+    if(message.m_type == JpxFlexMessage::Type::TRADING_VOLUME) {
       HandleTradingVolumeMessage(message);
     } else if(message.m_type == JpxFlexMessage::Type::TURNOVER) {
       HandleTurnoverMessage(message);
