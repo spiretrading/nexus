@@ -196,7 +196,7 @@ namespace Nexus::MarketDataService {
     *source += 2;
     *remainingSize -= 2;
     message.m_payload = *source;
-    while((*remainingSize)-- > 0) {
+    while(*remainingSize > 0) {
       --*remainingSize;
       if(!IsControl(**source)) {
         ++message.m_size;

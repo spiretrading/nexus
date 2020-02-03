@@ -64,11 +64,18 @@ namespace {
     auto jpxConfig = JpxFlexConfiguration();
     jpxConfig.m_enableLogging = Extract<bool>(config, "enable_logging",
       false);
-    jpxConfig.m_market = marketDatabase.FromDisplayName(
-      Extract<std::string>(config, "market"));
-    jpxConfig.m_disseminatingMarket = marketDatabase.FromDisplayName(
-      Extract<std::string>(config, "disseminating_market")).m_code;
+    jpxConfig.m_market = ParseMarketEntry(
+      Extract<std::string>(config, "market"), marketDatabase);
+    jpxConfig.m_disseminatingMarket = ParseMarketCode(
+      Extract<std::string>(config, "disseminating_market"), marketDatabase);
     jpxConfig.m_mpid = Extract<std::string>(config, "mpid");
+    auto configTimezone = Extract<std::string>(config, "time_zone");
+    auto timeZone = timeZones.time_zone_from_region(configTimezone);
+    if(timeZone == nullptr) {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Time zone not found."));
+    }
+    jpxConfig.m_utcOffset = currentTime - AdjustDateTime(currentTime, "UTC",
+      configTimezone, timeZones);
     return jpxConfig;
   }
 }

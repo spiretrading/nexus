@@ -18,6 +18,9 @@ namespace Nexus::MarketDataService {
 
     /** The feed's MPID. */
     std::string m_mpid;
+
+    /** The offset from UTC of the market data's time zone. */
+    boost::posix_time::time_duration m_utcOffset;
   };
 }
 
