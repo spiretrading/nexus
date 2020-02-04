@@ -81,7 +81,8 @@ namespace Spire {
 
       void draw_handle(QPainter& painter, bool is_highlighted, int x);
       Scalar map_x_to_value(int x);
-      void move_handle(Scalar value, int& handle_x);
+      void move_min_handle(Scalar value);
+      void move_max_handle(Scalar value);
       Scalar rounded_value(Scalar value);
   };
 }
