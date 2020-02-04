@@ -232,7 +232,7 @@ void RangeInputSlider::move_max_handle(Scalar value) {
 }
 
 Scalar RangeInputSlider::rounded_value(Scalar value) {
-  auto result = value + m_step / 2;
+  auto result = value + (m_step / 2);
   result -= result % m_step;
   return result;
 }
