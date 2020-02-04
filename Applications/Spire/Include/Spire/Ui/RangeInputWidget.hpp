@@ -1,8 +1,8 @@
 #ifndef SPIRE_RANGE_INPUT_WIDGET_HPP
 #define SPIRE_RANGE_INPUT_WIDGET_HPP
 #include <QWidget>
-#include "Spire/Spire/Scalar.hpp"
 #include "Spire/Spire/RangeInputModel.hpp"
+#include "Spire/Spire/Scalar.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
 
