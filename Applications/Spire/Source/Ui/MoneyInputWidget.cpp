@@ -11,7 +11,7 @@ MoneyInputWidget::MoneyInputWidget(QWidget* parent)
       m_item_delegate(this) {
   apply_line_edit_style(this);
   setValidator(new QRegularExpressionValidator(
-    QRegularExpression("((\d+\.?\d*)|(\.\d+))"), this));
+    QRegularExpression("((\\d+\\.?\\d*)|(\\.\\d+))"), this));
   connect(this, &QLineEdit::editingFinished, this,
     &MoneyInputWidget::on_line_edit_committed);
   connect(this, &QLineEdit::textEdited, this,
@@ -20,7 +20,7 @@ MoneyInputWidget::MoneyInputWidget(QWidget* parent)
 
 void MoneyInputWidget::set_value(Money value) {
   setText(m_item_delegate.displayText(
-    QVariant::fromValue(Truncate(value, 0)), QLocale()));
+    QVariant::fromValue(Round(value, 2)), QLocale()));
 }
 
 connection MoneyInputWidget::connect_committed_signal(
