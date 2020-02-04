@@ -17,9 +17,10 @@ namespace Spire {
       /*
         \param min_value The left-most (minimum) value of the slider.
         \param max_value The right-most (maximum) value of the slider.
+        \param step The minimum step between slider values.
         \param parent The parent widget to the RangeInputSlider.
       */
-      RangeInputSlider(Scalar min_value, Scalar max_value,
+      RangeInputSlider(Scalar min_value, Scalar max_value, Scalar step,
         QWidget* parent = nullptr);
 
       //! Sets the minimum value of the slider without triggering the changed
@@ -63,6 +64,7 @@ namespace Spire {
       mutable ChangedSignal m_max_changed_signal;
       Scalar m_min_value;
       Scalar m_max_value;
+      Scalar m_step;
       Scalar m_current_min_value;
       Scalar m_current_max_value;
       RangeInputModel::Histogram m_histogram;
@@ -80,6 +82,7 @@ namespace Spire {
       void draw_handle(QPainter& painter, bool is_highlighted, int x);
       Scalar map_x_to_value(int x);
       void move_handle(Scalar value, int& handle_x);
+      Scalar rounded_value(Scalar value);
   };
 }
 

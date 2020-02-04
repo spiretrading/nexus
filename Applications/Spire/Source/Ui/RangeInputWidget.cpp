@@ -1,6 +1,7 @@
 #include "Spire/Ui/RangeInputWidget.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/RangeInputSlider.hpp"
 #include "Spire/Ui/ScalarWidget.hpp"
 
@@ -10,11 +11,10 @@ using namespace Nexus;
 using namespace Spire;
 
 RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
-    Scalar::Type type, ScalarWidget* min_widget,
-    ScalarWidget* max_widget, QWidget* parent)
+    ScalarWidget* min_widget, ScalarWidget* max_widget, Scalar step,
+    QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_type(type),
       m_min_widget(min_widget),
       m_max_widget(max_widget) {
   auto layout = new QHBoxLayout(this);
@@ -25,7 +25,7 @@ RangeInputWidget::RangeInputWidget(std::shared_ptr<RangeInputModel> model,
   });
   layout->addWidget(m_min_widget);
   m_slider = new RangeInputSlider(m_model->get_minimum_value(),
-    m_model->get_maximum_value(), this);
+    m_model->get_maximum_value(), step, this);
   m_slider->connect_min_changed_signal([=] (auto value) {
     on_min_handle_moved(value); });
   m_slider->connect_max_changed_signal([=] (auto value) {

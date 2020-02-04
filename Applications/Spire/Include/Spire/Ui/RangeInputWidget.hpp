@@ -15,16 +15,9 @@ namespace Spire {
       //! Signals that a value was modified.
       using ChangedSignal = Signal<void (Scalar value)>;
 
-      //! Constructs a RangeInputWidget with minimum and maximum values
-      //! from the provided model.
-      /*
-        \param model The range input model.
-        \param type The type that is displayed in the line edits.
-        \param parent The parent widget.
-      */
       RangeInputWidget(std::shared_ptr<RangeInputModel> model,
-        Scalar::Type type, ScalarWidget* min_widget,
-        ScalarWidget* max_widget, QWidget* parent = nullptr);
+        ScalarWidget* min_widget, ScalarWidget* max_widget,
+        Scalar step, QWidget* parent = nullptr);
 
       //! Connects a slot to the minimum value changed signal.
       boost::signals2::connection connect_min_changed_signal(
