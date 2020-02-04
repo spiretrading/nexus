@@ -171,6 +171,8 @@ void Nexus::Python::ExportDefaultDestinations(pybind11::module& module) {
   submodule.add_object("OMEGA", cast(DefaultDestinations::OMEGA()));
   submodule.add_object("PURE", cast(DefaultDestinations::PURE()));
   submodule.add_object("TSX", cast(DefaultDestinations::TSX()));
+  submodule.add_object("OSE", cast(DefaultDestinations::OSE()));
+  submodule.add_object("TSE", cast(DefaultDestinations::TSE()));
 }
 
 void Nexus::Python::ExportDefaultMarkets(pybind11::module& module) {
