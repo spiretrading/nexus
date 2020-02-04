@@ -197,7 +197,8 @@ namespace Nexus::MarketDataService {
       const Security& security, SecurityEntry& entry,
       boost::posix_time::ptime timestamp) {
     m_marketDataFeedClient->PublishTimeAndSale(SecurityTimeAndSale(
-      TimeAndSale(timestamp, *entry.m_tradePrice, *entry.m_tradeQuantity,
+      TimeAndSale(timestamp, *entry.m_tradePrice / *entry.m_tradeQuantity,
+      *entry.m_tradeQuantity,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
       m_config.m_disseminatingMarket.GetData()), security));
     entry.m_tradePrice.reset();
