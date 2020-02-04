@@ -6,7 +6,7 @@
 
 namespace Spire {
 
-  //! Displays an input box that accepts Quantities.
+  //! Displays an input box that accepts Money values.
   class MoneyInputWidget : public QLineEdit {
     public:
 

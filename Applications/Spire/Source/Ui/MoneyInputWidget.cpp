@@ -11,7 +11,7 @@ MoneyInputWidget::MoneyInputWidget(QWidget* parent)
       m_item_delegate(this) {
   apply_line_edit_style(this);
   setValidator(new QRegularExpressionValidator(
-    QRegularExpression("((\\d+\\.?\\d*)|(\\.\\d+))"), this));
+    QRegularExpression("((\\d+\\.?\\d{0,2})|(\\.\\d{0,2}))"), this));
   connect(this, &QLineEdit::editingFinished, this,
     &MoneyInputWidget::on_line_edit_committed);
   connect(this, &QLineEdit::textEdited, this,
