@@ -220,11 +220,16 @@ namespace Nexus::MarketDataService {
   T ParseNumber(Beam::Out<const char*> source,
       Beam::Out<std::size_t> remainingSize, std::size_t size) {
     auto value = T{0};
-    while(size-- != 0) {
+    *remainingSize -= size;
+    while(size != 0 && **source == ' ') {
+      --size;
+      ++*source;
+    }
+    while(size != 0) {
+      --size;
       value = 10 * value + static_cast<T>(**source - '0');
       ++*source;
     }
-    *remainingSize -= size;
     return value;
   }
 
