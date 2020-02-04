@@ -87,6 +87,9 @@ namespace Nexus::OasisOrderExecutionService {
       void HandleHongKongMarketFees(
         OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
+      void HandleJapaneseMarketFees(
+        OrderExecutionService::PrimitiveOrder& order,
+        const OrderExecutionService::ExecutionReport& executionReport);
       void HandleUsMarketFees(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
       void OnExecutionReport(
@@ -237,6 +240,11 @@ namespace Nexus::OasisOrderExecutionService {
   }
 
   template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::HandleJapaneseMarketFees(
+      OrderExecutionService::PrimitiveOrder& order,
+      const OrderExecutionService::ExecutionReport& executionReport) {}
+
+  template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::HandleUsMarketFees(
       OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -264,6 +272,9 @@ namespace Nexus::OasisOrderExecutionService {
     } else if(order->GetInfo().m_fields.m_security.GetCountry() ==
         DefaultCountries::HK()) {
       HandleHongKongMarketFees(*order, executionReport);
+    } else if(order->GetInfo().m_fields.m_security.GetCountry() ==
+        DefaultCountries::JP()) {
+      HandleJapaneseMarketFees(*order, executionReport);
     }  else {
       HandleUsMarketFees(*order, executionReport);
     }

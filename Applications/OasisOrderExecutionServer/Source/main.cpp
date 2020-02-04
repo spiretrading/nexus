@@ -68,7 +68,6 @@ using namespace Nexus::FixUtilities;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 using namespace TCLAP;
 using namespace Viper;
 
@@ -96,56 +95,59 @@ namespace {
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct OrderExecutionServerConnectionInitializer {
-    string m_serviceName;
+    std::string m_serviceName;
     IpAddress m_interface;
-    vector<IpAddress> m_addresses;
+    std::vector<IpAddress> m_addresses;
 
     void Initialize(const YAML::Node& config);
   };
 
   void OrderExecutionServerConnectionInitializer::Initialize(
       const YAML::Node& config) {
-    m_serviceName = Extract<string>(config, "service",
+    m_serviceName = Extract<std::string>(config, "service",
       OrderExecutionService::SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
-    vector<IpAddress> addresses;
+    auto addresses = std::vector<IpAddress>();
     addresses.push_back(m_interface);
-    m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
+    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
+      addresses);
   }
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
-  string feeTableFile;
+  auto configFile = std::string();
+  auto feeTableFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "0.9-r" OASIS_ORDER_EXECUTION_SERVER_VERSION
-      "\nCopyright (C) 2009 Eidolon Systems Ltd."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ', "0.9-r" OASIS_ORDER_EXECUTION_SERVER_VERSION
+      "\nCopyright (C) 2009 Eidolon Systems Ltd.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
-    ValueArg<string> feeTableArg{"f", "fee_table", "Fee table file", false,
-      "fee_table.yml", "path"};
+    auto feeTableArg = ValueArg<std::string>("f", "fee_table", "Fee table file",
+      false, "fee_table.yml", "path");
     cmd.add(feeTableArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
     feeTableFile = feeTableArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
   auto feeTableConfig = Require(LoadFile, feeTableFile);
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto socketThreadPool = SocketThreadPool();
+  auto timerThreadPool = TimerThreadPool();
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -153,87 +155,88 @@ int main(int argc, const char** argv) {
       serviceLocatorClientConfig.m_password);
     serviceLocatorClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationUidClient uidClient;
+  auto uidClient = ApplicationUidClient();
   try {
     uidClient.BuildSession(Ref(*serviceLocatorClient), Ref(socketThreadPool),
       Ref(timerThreadPool));
     uidClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error connecting to the uid service: " << e.what() << endl;
+    std::cerr << "Error connecting to the uid service: " << e.what() <<
+      std::endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
+  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
+      std::cerr << "No time services available." << std::endl;
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+    auto ntpPool = FromString<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
-  } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
+  } catch(const std::exception& e) {
+    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
   try {
     timeClient->Open();
   } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
+    std::cerr << "NTP service unavailable." << std::endl;
     return -1;
   }
-  ApplicationAdministrationClient administrationClient;
+  auto administrationClient = ApplicationAdministrationClient();
   try {
     administrationClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     administrationClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error connecting to the administration service: " << e.what() <<
-      endl;
+    std::cerr << "Error connecting to the administration service: " <<
+      e.what() << std::endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     definitionsClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the definitions service." << endl;
+    std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
-  ApplicationComplianceClient complianceClient;
+  auto complianceClient = ApplicationComplianceClient();
   try {
     complianceClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     complianceClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the compliance service." << endl;
+    std::cerr << "Unable to connect to the compliance service." << std::endl;
     return -1;
   }
-  ApplicationMarketDataClient marketDataClient;
+  auto marketDataClient = ApplicationMarketDataClient();
   try {
     marketDataClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     marketDataClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the market data service." << endl;
+    std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
   }
-  vector<FixApplicationEntry> fixApplicationEntries;
+  auto fixApplicationEntries = std::vector<FixApplicationEntry>();
   try {
-    FixApplicationEntry asxEntry;
+    auto asxEntry = FixApplicationEntry();
     asxEntry.m_configPath = "asx.cfg";
     asxEntry.m_application = std::make_shared<AsxFixApplication>(
       Ref(*timeClient));
     asxEntry.m_destinations.push_back(DefaultDestinations::ASXT());
     asxEntry.m_destinations.push_back(DefaultDestinations::CXA());
     fixApplicationEntries.push_back(asxEntry);
-    FixApplicationEntry chixEntry;
+    auto chixEntry = FixApplicationEntry();
     chixEntry.m_configPath = "chix.cfg";
     chixEntry.m_application = std::make_shared<ChixFixApplication>(
       Ref(*timeClient));
@@ -241,47 +244,47 @@ int main(int argc, const char** argv) {
     chixEntry.m_destinations.push_back(DefaultDestinations::CX2());
     chixEntry.m_destinations.push_back(DefaultDestinations::TSX());
     fixApplicationEntries.push_back(chixEntry);
-    FixApplicationEntry tsxEntry;
+    auto tsxEntry = FixApplicationEntry();
     tsxEntry.m_configPath = "tsxsor.cfg";
     tsxEntry.m_application = std::make_shared<TsxSorFixApplication>(
       Ref(*timeClient));
     tsxEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
     fixApplicationEntries.push_back(tsxEntry);
-    FixApplicationEntry matchNowLiquidityProviderEntry;
+    auto matchNowLiquidityProviderEntry = FixApplicationEntry();
     matchNowLiquidityProviderEntry.m_configPath = "matnlp.cfg";
     matchNowLiquidityProviderEntry.m_application =
       std::make_shared<MatchNowFixApplication>(Ref(*timeClient));
     matchNowLiquidityProviderEntry.m_destinations.push_back(
       DefaultDestinations::MATNLP());
     fixApplicationEntries.push_back(matchNowLiquidityProviderEntry);
-    FixApplicationEntry matchNowMarketFlowEntry;
+    auto matchNowMarketFlowEntry = FixApplicationEntry();
     matchNowMarketFlowEntry.m_configPath = "matnmf.cfg";
     matchNowMarketFlowEntry.m_application =
       std::make_shared<MatchNowFixApplication>(Ref(*timeClient));
     matchNowMarketFlowEntry.m_destinations.push_back(
       DefaultDestinations::MATNMF());
     fixApplicationEntries.push_back(matchNowMarketFlowEntry);
-    FixApplicationEntry omegaEntry;
+    auto omegaEntry = FixApplicationEntry();
     omegaEntry.m_configPath = "omega.cfg";
     omegaEntry.m_application = std::make_shared<OmegaFixApplication>(
       Ref(*timeClient), Ref(*marketDataClient));
     omegaEntry.m_destinations.push_back(DefaultDestinations::LYNX());
     omegaEntry.m_destinations.push_back(DefaultDestinations::OMEGA());
     fixApplicationEntries.push_back(omegaEntry);
-    FixApplicationEntry pureEntry;
+    auto pureEntry = FixApplicationEntry();
     pureEntry.m_configPath = "pure.cfg";
     pureEntry.m_application = std::make_shared<CnsxFixApplication>(
       Ref(*timeClient));
     pureEntry.m_destinations.push_back(DefaultDestinations::PURE());
     pureEntry.m_destinations.push_back(DefaultDestinations::CSE());
     fixApplicationEntries.push_back(pureEntry);
-    FixApplicationEntry neoeEntry;
+    auto neoeEntry = FixApplicationEntry();
     neoeEntry.m_configPath = "neoe.cfg";
     neoeEntry.m_application = std::make_shared<AequitasFixApplication>(
       Ref(*timeClient));
     neoeEntry.m_destinations.push_back(DefaultDestinations::NEOE());
     fixApplicationEntries.push_back(neoeEntry);
-    FixApplicationEntry lekEntry;
+    auto lekEntry = FixApplicationEntry();
     lekEntry.m_configPath = "lek.cfg";
     lekEntry.m_application = std::make_shared<LekFixApplication>(
       Ref(*timeClient));
@@ -295,60 +298,65 @@ int main(int argc, const char** argv) {
     lekEntry.m_destinations.push_back(DefaultDestinations::NYSE());
     lekEntry.m_destinations.push_back(DefaultDestinations::NASDAQ());
     fixApplicationEntries.push_back(lekEntry);
-    FixApplicationEntry boomEntry;
+    auto boomEntry = FixApplicationEntry();
     boomEntry.m_configPath = "boom.cfg";
     boomEntry.m_application = std::make_shared<MonexBoomFixApplication>(
       Ref(*timeClient), Ref(*marketDataClient));
     boomEntry.m_destinations.push_back(DefaultDestinations::HKEX());
+    boomEntry.m_destinations.push_back(DefaultDestinations::OSE());
+    boomEntry.m_destinations.push_back(DefaultDestinations::TSE());
     fixApplicationEntries.push_back(boomEntry);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize FIX entry: " << e.what() << endl;
+    std::cerr << "Unable to initialize FIX entry: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationFixOrderExecutionDriver fixOrderExecutionDriver{
-    fixApplicationEntries};
+  auto fixOrderExecutionDriver = ApplicationFixOrderExecutionDriver(
+    fixApplicationEntries);
   auto marketDatabase = MarketDatabase();
   try {
     marketDatabase = definitionsClient->LoadMarketDatabase();
   } catch(const std::exception& e) {
-    cerr << "Unable to load market database: " << e.what() << endl;
+    std::cerr << "Unable to load market database: " << e.what() << std::endl;
     return -1;
   }
-  AsxtFeeTable asxtFeeTable;
+  auto asxtFeeTable = AsxtFeeTable();
   try {
     asxtFeeTable = ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize ASX fee table: " << e.what() << endl;
+    std::cerr << "Unable to initialize ASX fee table: " << e.what() <<
+      std::endl;
     return -1;
   }
-  HkexFeeTable hkexFeeTable;
+  auto hkexFeeTable = HkexFeeTable();
   try {
     hkexFeeTable = ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"),
       marketDatabase);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize HKEX fee table: " << e.what() << endl;
+    std::cerr << "Unable to initialize HKEX fee table: " << e.what() <<
+      std::endl;
     return -1;
   }
-  ConsolidatedTmxFeeTable tmxFeeTable;
+  auto tmxFeeTable = ConsolidatedTmxFeeTable();
   try {
     tmxFeeTable = ParseConsolidatedTmxFeeTable(
       GetNode(feeTableConfig, "ca_equities"), marketDatabase);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize TMX fee table: " << e.what() << endl;
+    std::cerr << "Unable to initialize TMX fee table: " << e.what() <<
+      std::endl;
     return -1;
   }
-  ConsolidatedUsFeeTable usFeeTable;
+  auto usFeeTable = ConsolidatedUsFeeTable();
   try {
     usFeeTable = ParseConsolidatedUsFeeTable(
       GetNode(feeTableConfig, "us_equities"), marketDatabase);
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize US fee table: " << e.what() << endl;
+    std::cerr << "Unable to initialize US fee table: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationFeesCalculatorOrderExecutionDriver feesCalculator{
+  auto feesCalculator = ApplicationFeesCalculatorOrderExecutionDriver(
     &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, tmxFeeTable,
-    usFeeTable};
-  vector<unique_ptr<OrderSubmissionCheck>> checks;
+    usFeeTable);
+  auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
       definitionsClient->LoadMarketDatabase(),
@@ -362,12 +370,12 @@ int main(int argc, const char** argv) {
       RiskStateCheck<ApplicationAdministrationClient::Client*>>(
       administrationClient.Get()));
   } catch(const std::exception& e) {
-    cerr << "Unable to initialize order submission checks: " << e.what() <<
-      endl;
+    std::cerr << "Unable to initialize order submission checks: " << e.what() <<
+      std::endl;
     return -1;
   }
-  ApplicationOrderSubmissionCheckDriver orderSubmissionCheckDriver{
-    &feesCalculator, std::move(checks)};
+  auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
+    &feesCalculator, std::move(checks));
   ComplianceRuleSet<ApplicationComplianceClient::Client*,
     ApplicationServiceLocatorClient::Client*> complianceRuleSet{
     complianceClient.Get(), serviceLocatorClient.Get(),
@@ -375,28 +383,29 @@ int main(int argc, const char** argv) {
       return BuildComplianceRule(entry.GetSchema(), *marketDataClient,
         *definitionsClient, *timeClient);
     }};
-  ApplicationComplianceCheckOrderExecutionDriver
-    complianceCheckOrderExecutionDriver{&orderSubmissionCheckDriver,
-    timeClient.get(), &complianceRuleSet};
-  ApplicationManualOrderEntryDriver manualOrderExecutionDriver{
+  auto complianceCheckOrderExecutionDriver =
+    ApplicationComplianceCheckOrderExecutionDriver(&orderSubmissionCheckDriver,
+    timeClient.get(), &complianceRuleSet);
+  auto manualOrderExecutionDriver = ApplicationManualOrderEntryDriver(
     DefaultDestinations::MOE(), &complianceCheckOrderExecutionDriver,
-    administrationClient.Get()};
+    administrationClient.Get());
   auto sessionStartTime = ToUtcTime(Extract<ptime>(config, "session_start_time",
     pos_infin));
-  OrderExecutionServerConnectionInitializer
-    orderExecutionServerConnectionInitializer;
+  auto orderExecutionServerConnectionInitializer =
+    OrderExecutionServerConnectionInitializer();
   try {
     orderExecutionServerConnectionInitializer.Initialize(
       GetNode(config, "server"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'server': " << e.what() << endl;
+    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
     return -1;
   }
-  vector<MySqlConfig> mySqlConfigs;
+  auto mySqlConfigs = std::vector<MySqlConfig>();
   try {
     mySqlConfigs = MySqlConfig::ParseReplication(GetNode(config, "data_store"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'data_store': " << e.what() << endl;
+    std::cerr << "Error parsing section 'data_store': " << e.what() <<
+      std::endl;
     return -1;
   }
   auto accountSource =
@@ -414,31 +423,31 @@ int main(int argc, const char** argv) {
   }
   auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
     connectionBuilders, accountSource);
-  OrderExecutionServletContainer orderExecutionServer{
-    Initialize(serviceLocatorClient.Get(), Initialize(sessionStartTime,
+  auto orderExecutionServer = OrderExecutionServletContainer(Initialize(
+    serviceLocatorClient.Get(), Initialize(sessionStartTime,
     definitionsClient->LoadMarketDatabase(),
     definitionsClient->LoadDestinationDatabase(), timeClient.get(),
     serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
     &manualOrderExecutionDriver, dataStore.get())),
     Initialize(orderExecutionServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>{}, seconds{10},
-    Ref(timerThreadPool))};
+    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+    Ref(timerThreadPool)));
   try {
     orderExecutionServer.Open();
   } catch(const std::exception& e) {
-    cerr << "Error opening server: " << e.what() << endl;
+    std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;
   }
   try {
-    JsonObject orderExecutionService;
+    auto orderExecutionService = JsonObject();
     orderExecutionService["addresses"] =
       ToString(orderExecutionServerConnectionInitializer.m_addresses);
     serviceLocatorClient->Register(
       orderExecutionServerConnectionInitializer.m_serviceName,
       orderExecutionService);
   } catch(const std::exception& e) {
-    cerr << "Error registering service: " << e.what() << endl;
+    std::cerr << "Error registering service: " << e.what() << std::endl;
     return -1;
   }
   WaitForKillEvent();

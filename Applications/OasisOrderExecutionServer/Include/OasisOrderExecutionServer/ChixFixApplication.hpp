@@ -1,5 +1,5 @@
-#ifndef OASIS_CHIXFIXAPPLICATION_HPP
-#define OASIS_CHIXFIXAPPLICATION_HPP
+#ifndef OASIS_CHIX_FIX_APPLICATION_HPP
+#define OASIS_CHIX_FIX_APPLICATION_HPP
 #include <Beam/Network/Network.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <quickfix/MessageCracker.h>
@@ -7,61 +7,57 @@
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OasisOrderExecutionService {
+namespace Nexus::OasisOrderExecutionService {
 
-  /*! \class ChixFixApplication
-      \brief Implements a FIX Application using CHI-X.
-   */
+  /** Implements a FIX Application using CHI-X. */
   class ChixFixApplication : public FixUtilities::FixApplication,
       public FIX::MessageCracker {
     public:
 
-      //! Constructs a ChixFixApplication.
-      /*!
-        \param timeClient The TimeClient used for timestamps.
-      */
+      /**
+       * Constructs a ChixFixApplication.
+       * @param timeClient The TimeClient used for timestamps.
+       */
       ChixFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
         timeClient);
 
-      virtual const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord);
+      const OrderExecutionService::Order& Recover(
+        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord)
+        override;
 
-      virtual const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& info);
+      const OrderExecutionService::Order& Submit(
+        const OrderExecutionService::OrderInfo& info) override;
 
-      virtual void Cancel(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId);
+      void Cancel(const OrderExecutionService::OrderExecutionSession& session,
+        OrderExecutionService::OrderId orderId) override;
 
-      virtual void Update(
-        const OrderExecutionService::OrderExecutionSession& session,
+      void Update(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport);
+        const OrderExecutionService::ExecutionReport& executionReport) override;
 
-      virtual void onCreate(const FIX::SessionID&);
+      void onCreate(const FIX::SessionID&) override;
 
-      virtual void onLogon(const FIX::SessionID& sessionID);
+      void onLogon(const FIX::SessionID& sessionID) override;
 
-      virtual void onLogout(const FIX::SessionID& sessionID);
+      void onLogout(const FIX::SessionID& sessionID) override;
 
-      virtual void toAdmin(FIX::Message&, const FIX::SessionID&);
+      void toAdmin(FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void toApp(FIX::Message&, const FIX::SessionID&);
+      void toApp(FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void fromAdmin(const FIX::Message&, const FIX::SessionID&);
+      void fromAdmin(const FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void fromApp(const FIX::Message& message,
-        const FIX::SessionID& sessionID);
+      void fromApp(const FIX::Message& message, const FIX::SessionID& sessionID)
+        override;
 
-      virtual void onMessage(const FIX42::ExecutionReport& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::ExecutionReport& message,
+        const FIX::SessionID& sessionId) override;
 
-      virtual void onMessage(const FIX42::TradingSessionStatus& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::TradingSessionStatus& message,
+        const FIX::SessionID& sessionId) override;
 
-      virtual void onMessage(const FIX42::OrderCancelReject& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::OrderCancelReject& message,
+        const FIX::SessionID& sessionId) override;
 
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
@@ -76,7 +72,6 @@ namespace OasisOrderExecutionService {
       std::string GetNoTradeKey() const;
       const boost::optional<std::string>& GetAnonymousTag() const;
   };
-}
 }
 
 #endif

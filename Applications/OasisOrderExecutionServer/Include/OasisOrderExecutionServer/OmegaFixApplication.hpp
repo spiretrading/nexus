@@ -1,5 +1,5 @@
-#ifndef OASIS_OMEGAFIXAPPLICATION_HPP
-#define OASIS_OMEGAFIXAPPLICATION_HPP
+#ifndef OASIS_OMEGA_FIX_APPLICATION_HPP
+#define OASIS_OMEGA_FIX_APPLICATION_HPP
 #include <unordered_map>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Queues/StateQueue.hpp>
@@ -12,12 +12,9 @@
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace OasisOrderExecutionService {
+namespace Nexus::OasisOrderExecutionService {
 
-  /*! \class OmegaFixApplication
-      \brief Implements a FIX Application using the Omega ATS.
-   */
+  /* Implements a FIX Application using the Omega ATS. */
   class OmegaFixApplication : public FixUtilities::FixApplication,
       public FIX::MessageCracker {
     public:
@@ -32,44 +29,43 @@ namespace OasisOrderExecutionService {
         Beam::Ref<MarketDataService::ApplicationMarketDataClient::Client>
         marketDataClient);
 
-      virtual const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord);
+      const OrderExecutionService::Order& Recover(
+        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord)
+        override;
 
-      virtual const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& info);
+      const OrderExecutionService::Order& Submit(
+        const OrderExecutionService::OrderInfo& info) override;
 
-      virtual void Cancel(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId);
+      void Cancel(const OrderExecutionService::OrderExecutionSession& session,
+        OrderExecutionService::OrderId orderId) override;
 
-      virtual void Update(
-        const OrderExecutionService::OrderExecutionSession& session,
+      void Update(const OrderExecutionService::OrderExecutionSession& session,
         OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport);
+        const OrderExecutionService::ExecutionReport& executionReport) override;
 
-      virtual void onCreate(const FIX::SessionID&);
+      void onCreate(const FIX::SessionID&) override;
 
-      virtual void onLogon(const FIX::SessionID& sessionID);
+      void onLogon(const FIX::SessionID& sessionID) override;
 
-      virtual void onLogout(const FIX::SessionID& sessionID);
+      void onLogout(const FIX::SessionID& sessionID) override;
 
-      virtual void toAdmin(FIX::Message&, const FIX::SessionID&);
+      void toAdmin(FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void toApp(FIX::Message&, const FIX::SessionID&);
+      void toApp(FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void fromAdmin(const FIX::Message&, const FIX::SessionID&);
+      void fromAdmin(const FIX::Message&, const FIX::SessionID&) override;
 
-      virtual void fromApp(const FIX::Message& message,
-        const FIX::SessionID& sessionID);
+      void fromApp(const FIX::Message& message, const FIX::SessionID& sessionID)
+        override;
 
-      virtual void onMessage(const FIX42::ExecutionReport& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::ExecutionReport& message,
+        const FIX::SessionID& sessionId) override;
 
-      virtual void onMessage(const FIX42::TradingSessionStatus& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::TradingSessionStatus& message,
+        const FIX::SessionID& sessionId) override;
 
-      virtual void onMessage(const FIX42::OrderCancelReject& message,
-        const FIX::SessionID& sessionId);
+      void onMessage(const FIX42::OrderCancelReject& message,
+        const FIX::SessionID& sessionId) override;
 
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
@@ -90,7 +86,6 @@ namespace OasisOrderExecutionService {
       std::string GetNoTradeFeat() const;
       std::string GetNoTradeKey() const;
   };
-}
 }
 
 #endif
