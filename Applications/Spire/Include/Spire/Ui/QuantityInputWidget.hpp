@@ -38,6 +38,7 @@ namespace Spire {
       CustomVariantItemDelegate m_item_delegate;
       mutable InputSignal m_committed_signal;
       mutable InputSignal m_modified_signal;
+      QLocale m_locale;
 
       void on_line_edit_committed();
       void on_line_edit_modified(const QString& text);
