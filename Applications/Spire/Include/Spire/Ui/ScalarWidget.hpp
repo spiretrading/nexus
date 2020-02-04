@@ -26,6 +26,9 @@ namespace Spire {
         const typename Signal<void (T)>::slot_type&) const,
         void (W::* setter)(T));
 
+      //! Returns the widget's current value.
+      Scalar get_value() const;
+
       //! Sets the widget's value by calling its setter method.
       void set_value(Scalar value);
 
@@ -37,6 +40,7 @@ namespace Spire {
       mutable ChangeSignal m_change_signal;
       boost::signals2::scoped_connection m_callback_connection;
       std::function<void (Scalar)> m_setter;
+      Scalar m_value;
 
       void on_widget_value_changed(Scalar value);
       void set_layout(QWidget* widget);

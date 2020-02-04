@@ -16,11 +16,12 @@ QuantityInputWidget::QuantityInputWidget(QWidget* parent)
     &QuantityInputWidget::on_line_edit_committed);
   connect(this, &QLineEdit::textEdited, this,
     &QuantityInputWidget::on_line_edit_modified);
+  m_locale.setNumberOptions(QLocale::OmitGroupSeparator);
 }
 
 void QuantityInputWidget::set_value(Quantity value) {
   setText(m_item_delegate.displayText(
-    QVariant::fromValue(Truncate(value, 0)), QLocale()));
+    QVariant::fromValue(Truncate(value, 0)), m_locale));
 }
 
 connection QuantityInputWidget::connect_committed_signal(

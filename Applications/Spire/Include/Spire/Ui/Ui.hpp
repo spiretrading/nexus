@@ -18,6 +18,9 @@ namespace Spire {
   class MoneyInputWidget;
   class PropertiesWindowButtonsWidget;
   class QuantityInputWidget;
+  class RangeInputSlider;
+  class RangeInputWidget;
+  class ScalarWidget;
   class SecurityStack;
   class SecurityWidget;
   class TitleBar;
