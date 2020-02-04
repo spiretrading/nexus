@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     }
     return data;
   };
-  auto model1 = std::make_shared<LocalRangeInputModel>(data(1, 3));
+  auto model1 = std::make_shared<LocalRangeInputModel>(data(1, 100));
   auto scalar_min1 = new ScalarWidget(min1,
     &QuantityInputWidget::connect_modified_signal,
     &QuantityInputWidget::set_value);

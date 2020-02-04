@@ -217,7 +217,7 @@ void RangeInputSlider::move_handle(Scalar value, int& handle_x) {
 }
 
 Scalar RangeInputSlider::rounded_value(Scalar value) {
-  auto a = m_step / 2;
-  auto b = (value + a) / m_step;
-  return b * m_step;
+  auto result = value + m_step / 2;
+  result -= result % m_step;
+  return result;
 }
