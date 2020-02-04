@@ -15,6 +15,15 @@ namespace Spire {
       //! Signals that a value was modified.
       using ChangedSignal = Signal<void (Scalar value)>;
 
+      //! Constructs a RangeInputWidget.
+      /*
+        \param model Model that defines the acceptable minimum and maximum
+                     values.
+        \param min_widget The widget to display the minimum value.
+        \param max_widget The widget to display the maximum value.
+        \param step The minimum step between consecutive input values.
+        \param parent The parent widget.
+      */
       RangeInputWidget(std::shared_ptr<RangeInputModel> model,
         ScalarWidget* min_widget, ScalarWidget* max_widget,
         Scalar step, QWidget* parent = nullptr);

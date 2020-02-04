@@ -17,7 +17,7 @@ namespace Spire {
       /*
         \param min_value The left-most (minimum) value of the slider.
         \param max_value The right-most (maximum) value of the slider.
-        \param step The minimum step between slider values.
+        \param step The minimum step between consecutive slider values.
         \param parent The parent widget to the RangeInputSlider.
       */
       RangeInputSlider(Scalar min_value, Scalar max_value, Scalar step,
