@@ -1,14 +1,14 @@
 ---
 service_locator:
-  address: local_interface:20000
-  username: market_data_feed
-  password: admin_password
+  address: $service_locator_address
+  username: $username
+  password: $password
 
 enable_logging: false
 market: XNAS
 sampling: 100ms
 host: 233.46.176.11:55643
-interface: local_interface:55643
+interface: $local_interface:55643
 
 market_codes:
   - code: A
