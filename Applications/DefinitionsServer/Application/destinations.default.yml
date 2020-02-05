@@ -124,6 +124,14 @@ destinations:
       - XASE
       - XNAS
       - XNYS
+  - id: OSE
+    description: Osaka Exchange
+    markets:
+      - XOSE
+  - id: TSE
+    description: Tokyo Stock Exchange
+    markets:
+      - XTKS
 
 preferred_destinations:
   - market: ARCX
@@ -144,6 +152,10 @@ preferred_destinations:
     destination: TSX
   - market: XTSX
     destination: TSX
+  - market: XOSE
+    destination: OSE
+  - market: XTKS
+    destination: TSE
 
 manual_order_entry:
   id: MOE
@@ -158,4 +170,6 @@ manual_order_entry:
     - XNYS
     - XTSE
     - XTSX
+    - XOSE
+    - XTKS
 ...
