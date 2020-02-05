@@ -351,6 +351,11 @@ namespace Nexus::MarketDataService {
           std::cout << "Packets dropped: " << (lastSequence + 1) << " - " <<
             (sequence - 1) << std::endl;
         }
+        if(m_config.m_enableLogging) {
+          std::cout << message.m_packet->m_exchange << " " <<
+            message.m_packet->m_issueCode << " " <<
+            std::string(message.m_payload, message.m_size) << std::endl;
+        }
         Dispatch(message);
       } catch(const Beam::IO::EndOfFileException&) {
         break;
