@@ -22,12 +22,11 @@ namespace {
 }
 
 RangeInputSlider::RangeInputSlider(Scalar min_value, Scalar max_value,
-    QWidget* parent)
+    Scalar step, QWidget* parent)
     : QWidget(parent),
       m_min_value(min_value),
       m_max_value(max_value),
-      m_current_min_value(min_value),
-      m_current_max_value(max_value),
+      m_step(step),
       m_is_dragging_handle(false),
       m_is_dragging_min(false),
       m_is_dragging_max(false),
@@ -36,16 +35,21 @@ RangeInputSlider::RangeInputSlider(Scalar min_value, Scalar max_value,
       m_is_hovering_max(false),
       m_mouse_offset(0) {
   setMouseTracking(true);
+  setFixedHeight(scale_height(26));
+  m_current_min_value = rounded_value(min_value);
+  m_current_max_value = rounded_value(max_value);
+  move_min_handle(m_current_min_value);
+  move_max_handle(m_current_max_value);
 }
 
 void RangeInputSlider::set_min_value(Scalar value) {
-  m_current_min_value = value;
-  move_handle(m_current_min_value, m_min_handle_x);
+  m_current_min_value = rounded_value(value);
+  move_min_handle(m_current_min_value);
 }
 
 void RangeInputSlider::set_max_value(Scalar value) {
-  m_current_max_value = value;
-  move_handle(m_current_max_value, m_max_handle_x);
+  m_current_max_value = rounded_value(value);
+  move_max_handle(m_current_max_value);
 }
 
 void RangeInputSlider::set_histogram(
@@ -86,23 +90,23 @@ void RangeInputSlider::mouseMoveEvent(QMouseEvent* event) {
       m_max_handle_x += delta;
     }
     m_last_mouse_x = x;
-    m_current_min_value = map_x_to_value(m_min_handle_x);
+    m_current_min_value = rounded_value(map_x_to_value(m_min_handle_x));
     m_min_changed_signal(m_current_min_value);
-    m_current_max_value = map_x_to_value(m_max_handle_x);
+    m_current_max_value = rounded_value(map_x_to_value(m_max_handle_x));
     m_max_changed_signal(m_current_max_value);
   } else if(m_is_dragging_min) {
     auto pos_x = max(RANGE_MARGIN(), x - m_mouse_offset);
     pos_x = min(pos_x, m_max_handle_x);
     m_min_handle_x = pos_x;
-    m_current_min_value = map_x_to_value(m_min_handle_x);
-    m_min_changed_signal(Scalar(m_current_min_value));
+    m_current_min_value = rounded_value(map_x_to_value(m_min_handle_x));
+    m_min_changed_signal(m_current_min_value);
   } else if(m_is_dragging_max) {
     auto pos_x = min(x - m_mouse_offset,
       width() - MARGIN() - HANDLE_SIZE());
     pos_x = max(m_min_handle_x, pos_x);
     m_max_handle_x = pos_x;
-    m_current_max_value = map_x_to_value(m_max_handle_x);
-    m_max_changed_signal(Scalar(m_current_max_value));
+    m_current_max_value = rounded_value(map_x_to_value(m_max_handle_x));
+    m_max_changed_signal(m_current_max_value);
   }
   if(x > m_min_handle_x  - HANDLE_SIZE() && x < m_min_handle_x) {
     m_is_hovering_min = true;
@@ -171,8 +175,8 @@ void RangeInputSlider::paintEvent(QPaintEvent* event) {
 }
 
 void RangeInputSlider::resizeEvent(QResizeEvent* event) {
-  move_handle(m_current_min_value, m_min_handle_x);
-  move_handle(m_current_max_value, m_max_handle_x);
+  move_min_handle(m_current_min_value);
+  move_max_handle(m_current_max_value);
 }
 
 void RangeInputSlider::draw_handle(QPainter& painter, bool is_highlighted,
@@ -205,9 +209,30 @@ Scalar RangeInputSlider::map_x_to_value(int x) {
     m_min_value, m_max_value);
 }
 
-void RangeInputSlider::move_handle(Scalar value, int& handle_x) {
-  handle_x = static_cast<int>(map_to(value, m_min_value, m_max_value,
-    static_cast<double>(RANGE_MARGIN()),
-    static_cast<double>(width() - MARGIN() - HANDLE_SIZE())));
+void RangeInputSlider::move_min_handle(Scalar value) {
+  if(value == m_current_max_value) {
+    m_min_handle_x = m_max_handle_x;
+  } else {
+    m_min_handle_x = static_cast<int>(map_to(value, m_min_value, m_max_value,
+      static_cast<double>(RANGE_MARGIN()),
+      static_cast<double>(width() - MARGIN() - HANDLE_SIZE())));
+  }
   update();
+}
+
+void RangeInputSlider::move_max_handle(Scalar value) {
+  if(value == m_current_min_value) {
+    m_max_handle_x = m_min_handle_x;
+  } else {
+    m_max_handle_x = static_cast<int>(map_to(value, m_min_value, m_max_value,
+      static_cast<double>(RANGE_MARGIN()),
+      static_cast<double>(width() - MARGIN() - HANDLE_SIZE())));
+  }
+  update();
+}
+
+Scalar RangeInputSlider::rounded_value(Scalar value) {
+  auto result = value + (m_step / 2);
+  result -= result % m_step;
+  return result;
 }

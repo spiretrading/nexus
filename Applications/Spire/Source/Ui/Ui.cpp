@@ -35,5 +35,5 @@ void Spire::apply_line_edit_style(QLineEdit* widget) {
     QLineEdit:focus {
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-        .arg(scale_width(8)));
+        .arg(scale_width(6)));
 }
