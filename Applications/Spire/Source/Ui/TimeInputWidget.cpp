@@ -1,8 +1,11 @@
 #include "Spire/Ui/TimeInputWidget.hpp"
+#include <boost/date_time/posix_time/ptime.hpp>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropDownMenu.hpp"
 
+using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Spire;
 
 TimeInputWidget::TimeInputWidget(QWidget* parent)
@@ -34,4 +37,27 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   m_drop_down_menu = new DropDownMenu({tr("PM"), tr("AM")}, this);
   m_drop_down_menu->setFixedHeight(scale_height(26));
   layout->addWidget(m_drop_down_menu);
+}
+
+void TimeInputWidget::set_time(Scalar time) {
+  auto timestamp = static_cast<ptime>(time);
+  auto hours = [&] {
+    auto hour = static_cast<int>(timestamp.time_of_day().hours());
+    if(hour >= 12 && hour < 24) {
+      m_drop_down_menu->set_current_text(tr("PM"));
+      return hour - 12;
+    }
+    m_drop_down_menu->set_current_text(tr("AM"));
+    if(hour == 0) {
+      return 12;
+    }
+    return hour;
+  }();
+  m_time_edit->setTime({hours,
+    static_cast<int>(timestamp.time_of_day().minutes())});
+}
+
+connection TimeInputWidget::connect_time_signal(
+    const TimeSignal::slot_type& slot) const {
+  return m_time_signal.connect(slot);
 }
