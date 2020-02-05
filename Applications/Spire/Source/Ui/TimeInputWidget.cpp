@@ -14,6 +14,8 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   m_time_edit->setFixedHeight(scale_height(26));
   m_time_edit->setDisplayFormat("hh:mm");
   m_time_edit->setButtonSymbols(QAbstractSpinBox::NoButtons);
+  m_time_edit->setMaximumTime({12, 59});
+  m_time_edit->setMinimumTime({1, 00});
   m_time_edit->setStyleSheet(QString(R"(
     QTimeEdit {
       background-color: #FFFFFF;
