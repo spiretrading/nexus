@@ -15,7 +15,9 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
+  class MoneyInputWidget;
   class PropertiesWindowButtonsWidget;
+  class QuantityInputWidget;
   class RangeInputSlider;
   class RangeInputWidget;
   class ScalarWidget;
