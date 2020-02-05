@@ -10,7 +10,7 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setSpacing(scale_width(8));
   layout->setContentsMargins({});
-  m_time_edit = new QTimeEdit(this);
+  m_time_edit = new QTimeEdit({12, 0}, this);
   m_time_edit->setFixedHeight(scale_height(26));
   m_time_edit->setDisplayFormat("hh:mm");
   m_time_edit->setButtonSymbols(QAbstractSpinBox::NoButtons);
