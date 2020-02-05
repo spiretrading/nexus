@@ -40,7 +40,7 @@ def main():
     for file in files:
       file_path = os.path.join(application_directory, file)
       destination_path = file_path.replace('.default.yml', '.yml')
-      call('cp %s %s' % (file_path, destination_path))
+      call('mv %s %s' % (file_path, destination_path))
       call('sed -i "s:local_interface:%s:g" %s' %
         (local_interface, destination_path))
       call('sed -i "s:global_address:%s:g" %s' %

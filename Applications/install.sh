@@ -12,33 +12,42 @@ nexus_applications+=" ComplianceServer"
 nexus_applications+=" RiskServer"
 nexus_applications+=" SimulationOrderExecutionServer"
 nexus_applications+=" SimulationMarketDataFeedClient"
+nexus_applications+=" WebPortal"
+
+make_copy() {
+  path="$1"
+  mkdir -p "$application"
+  if [ ! -f "$application/config.yml" ]; then
+    cp "$path/config.default.yml" "$application" 2>/dev/null || :
+  fi
+  for name in $(ls "$path" | grep ".*\.default\.yml" | grep -v "config.*" | \
+      sed "s/\.default\.yml//"); do
+    if [ ! -f "$application/$name.yml" ]; then
+      cp "$path/$name.default.yml" "$application/$name.yml"
+    fi
+  done
+  cp '$path/*.sh' "$application" 2>/dev/null || :
+  cp "$path/$application" "$application"
+  cp '$path/*.py' "$application" 2>/dev/null || :
+}
 
 for application in $beam_applications; do
-  if [ ! -d "$application" ]; then
-    mkdir -p $application
-    cp Nexus/Dependencies/Beam/Applications/$application/Application/*.sh $application
-    cp Nexus/Dependencies/Beam/Applications/$application/Application/*.default.yml $application/config.yml
-  fi
-  cp Nexus/Dependencies/Beam/Applications/$application/Application/$application $application
-  cp Nexus/Dependencies/Beam/Applications/$application/Application/*.py $application
+  path="Nexus/Dependencies/Beam/Applications/$application/Application"
+  make_copy "$path"
 done
 for application in $nexus_applications; do
-  if [ ! -d "$application" ]; then
-    mkdir -p $application
-    cp Nexus/Applications/$application/Application/*.sh $application
-    cp Nexus/Applications/$application/Application/*.default.yml $application/config.yml
-  fi
-  cp Nexus/Applications/$application/Application/$application $application
-  cp Nexus/Applications/$application/Application/*.py $application
+  path="Nexus/Applications/$application/Application"
+  make_copy "$path"
 done
 
 python_directory=$(python3 -m site --user-site)
-cp Nexus/Applications/WebPortal/Application/WebPortal WebPortal
 cp -R Nexus/Applications/WebPortal/Application/web_app WebPortal
 cp Nexus/Dependencies/aspen/Libraries/Release/aspen.so $python_directory
 mkdir -p $python_directory/beam
-cp Nexus/Dependencies/Beam/Applications/Python/__init__.py $python_directory/beam
-cp Nexus/Dependencies/Beam/Beam/Libraries/Release/_beam.so $python_directory/beam
+cp Nexus/Dependencies/Beam/Applications/Python/__init__.py \
+  $python_directory/beam
+cp Nexus/Dependencies/Beam/Beam/Libraries/Release/_beam.so \
+  $python_directory/beam
 mkdir -p $python_directory/nexus
 cp Nexus/Applications/Python/__init__.py $python_directory/nexus
 cp Nexus/Nexus/Libraries/Release/_nexus.so $python_directory/nexus
