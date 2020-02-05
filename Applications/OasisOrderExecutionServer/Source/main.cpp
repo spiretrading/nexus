@@ -336,6 +336,15 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
+  auto jpxFeeTable = JpxFeeTable();
+  try {
+    jpxFeeTable = ParseJpxFeeTable(GetNode(feeTableConfig, "jp_equities"),
+      marketDatabase);
+  } catch(const std::exception& e) {
+    std::cerr << "Unable to initialize JPX fee table: " << e.what() <<
+      std::endl;
+    return -1;
+  }
   auto tmxFeeTable = ConsolidatedTmxFeeTable();
   try {
     tmxFeeTable = ParseConsolidatedTmxFeeTable(
@@ -354,8 +363,8 @@ int main(int argc, const char** argv) {
     return -1;
   }
   auto feesCalculator = ApplicationFeesCalculatorOrderExecutionDriver(
-    &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, tmxFeeTable,
-    usFeeTable);
+    &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, jpxFeeTable,
+    tmxFeeTable, usFeeTable);
   auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
   try {
     checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),

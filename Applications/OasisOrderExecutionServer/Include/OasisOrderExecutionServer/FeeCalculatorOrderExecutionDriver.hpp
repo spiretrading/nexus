@@ -12,6 +12,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
+#include "Nexus/FeeHandling/JpxFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -36,6 +37,7 @@ namespace Nexus::OasisOrderExecutionService {
                 submission to if all checks pass.
        * @param asxtFeeTable The fee table used by ASX TradeMatch.
        * @param hkexFeeTable The fee table used by HKEX.
+       * @param jpxFeeTable The fee table used by JPX markets.
        * @param tmxFeeTable The fee table used by TMX markets.
        * @param usFeeTable The fee table used by US markets.
        */
@@ -43,7 +45,7 @@ namespace Nexus::OasisOrderExecutionService {
       FeesCalculatorOrderExecutionDriver(
         OrderExecutionDriverForward&& orderExecutionDriver,
         AsxtFeeTable asxFeeTable, HkexFeeTable hkexFeeTable,
-        ConsolidatedTmxFeeTable tmxFeeTable,
+        JpxFeeTable jpxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
         ConsolidatedUsFeeTable usFeeTable);
 
       ~FeesCalculatorOrderExecutionDriver();
@@ -69,6 +71,7 @@ namespace Nexus::OasisOrderExecutionService {
       Beam::GetOptionalLocalPtr<O> m_orderExecutionDriver;
       AsxtFeeTable m_asxtFeeTable;
       HkexFeeTable m_hkexFeeTable;
+      JpxFeeTable m_jpxFeeTable;
       ConsolidatedTmxFeeTable m_tmxFeeTable;
       ConsolidatedTmxFeeTable::State m_tmxState;
       ConsolidatedUsFeeTable m_usFeeTable;
@@ -100,15 +103,17 @@ namespace Nexus::OasisOrderExecutionService {
   template<typename O>
   template<typename OrderExecutionDriverForward>
   FeesCalculatorOrderExecutionDriver<O>::FeesCalculatorOrderExecutionDriver(
-      OrderExecutionDriverForward&& orderExecutionDriver,
-      AsxtFeeTable asxtFeeTable, HkexFeeTable hkexFeeTable,
-      ConsolidatedTmxFeeTable tmxFeeTable, ConsolidatedUsFeeTable usFeeTable)
-      : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)),
-        m_asxtFeeTable(std::move(asxtFeeTable)),
-        m_hkexFeeTable(std::move(hkexFeeTable)),
-        m_tmxFeeTable(std::move(tmxFeeTable)),
-        m_usFeeTable(std::move(usFeeTable)) {}
+    OrderExecutionDriverForward&& orderExecutionDriver,
+    AsxtFeeTable asxtFeeTable, HkexFeeTable hkexFeeTable,
+    JpxFeeTable jpxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
+    ConsolidatedUsFeeTable usFeeTable)
+    : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
+        orderExecutionDriver)),
+      m_asxtFeeTable(std::move(asxtFeeTable)),
+      m_hkexFeeTable(std::move(hkexFeeTable)),
+      m_jpxFeeTable(std::move(jpxFeeTable)),
+      m_tmxFeeTable(std::move(tmxFeeTable)),
+      m_usFeeTable(std::move(usFeeTable)) {}
 
   template<typename O>
   FeesCalculatorOrderExecutionDriver<O>::~FeesCalculatorOrderExecutionDriver() {
@@ -119,14 +124,14 @@ namespace Nexus::OasisOrderExecutionService {
   const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<O>::
       Recover(
       const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
-    const auto& driverOrder = m_orderExecutionDriver->Recover(orderRecord);
+    auto& driverOrder = m_orderExecutionDriver->Recover(orderRecord);
     auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(
       **orderRecord);
     m_orders.Insert(order);
     driverOrder.GetPublisher().With(
       [&] {
-        boost::optional<std::vector<OrderExecutionService::ExecutionReport>>
-          existingExecutionReports;
+        auto existingExecutionReports = boost::optional<
+          std::vector<OrderExecutionService::ExecutionReport>>();
         driverOrder.GetPublisher().Monitor(
           m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind(
           &FeesCalculatorOrderExecutionDriver::OnExecutionReport, this, order,
@@ -135,7 +140,7 @@ namespace Nexus::OasisOrderExecutionService {
           existingExecutionReports->erase(existingExecutionReports->begin(),
             existingExecutionReports->begin() +
             (*orderRecord)->m_executionReports.size());
-          for(const auto& executionReport : *existingExecutionReports) {
+          for(auto& executionReport : *existingExecutionReports) {
             m_tasks.Push(
               std::bind(&FeesCalculatorOrderExecutionDriver::OnExecutionReport,
               this, order, executionReport));
@@ -148,7 +153,7 @@ namespace Nexus::OasisOrderExecutionService {
   template<typename O>
   const OrderExecutionService::Order& FeesCalculatorOrderExecutionDriver<O>::
       Submit(const OrderExecutionService::OrderInfo& info) {
-    const auto& driverOrder = m_orderExecutionDriver->Submit(info);
+    auto& driverOrder = m_orderExecutionDriver->Submit(info);
     auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(
       driverOrder.GetInfo());
     m_orders.Insert(order);
@@ -242,7 +247,15 @@ namespace Nexus::OasisOrderExecutionService {
   template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::HandleJapaneseMarketFees(
       OrderExecutionService::PrimitiveOrder& order,
-      const OrderExecutionService::ExecutionReport& executionReport) {}
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    auto feesReport = CalculateFee(m_jpxFeeTable, order.GetInfo().m_fields,
+      executionReport);
+    order.With(
+      [&] (OrderStatus status,
+          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+        order.Update(feesReport);
+      });
+  }
 
   template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::HandleUsMarketFees(
