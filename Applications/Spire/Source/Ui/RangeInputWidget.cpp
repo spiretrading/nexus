@@ -61,7 +61,6 @@ void RangeInputWidget::on_min_edited(Scalar value) {
   } else if(value < m_model->get_minimum_value()) {
     m_slider->set_min_value(m_model->get_minimum_value());
   }
-  update();
 }
 
 void RangeInputWidget::on_max_edited(Scalar value) {
@@ -71,7 +70,6 @@ void RangeInputWidget::on_max_edited(Scalar value) {
   } else if(value > m_model->get_maximum_value()) {
     m_slider->set_max_value(m_model->get_maximum_value());
   }
-  update();
 }
 
 void RangeInputWidget::on_min_handle_moved(Scalar value) {

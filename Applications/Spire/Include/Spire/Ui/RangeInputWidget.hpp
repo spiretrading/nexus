@@ -43,7 +43,6 @@ namespace Spire {
       mutable ChangedSignal m_min_changed_signal;
       mutable ChangedSignal m_max_changed_signal;
       std::shared_ptr<RangeInputModel> m_model;
-      Scalar::Type m_type;
       ScalarWidget* m_min_widget;
       ScalarWidget* m_max_widget;
       RangeInputSlider* m_slider;
