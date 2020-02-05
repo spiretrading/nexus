@@ -54,11 +54,20 @@ const Order& MonexBoomFixApplication::Submit(const OrderInfo& info) {
         if(info.m_fields.m_currency != DefaultCurrencies::HKD()) {
           BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
         }
-        newOrderSingle->set(FIX::SecurityExchange("XHKG"));
+      } else if(info.m_fields.m_destination == DefaultDestinations::TSE() ||
+          info.m_fields.m_destination == DefaultDestinations::OSE()) {
+        if(info.m_fields.m_security.GetCountry() != DefaultCountries::JP()) {
+          BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
+        }
+        if(info.m_fields.m_currency != DefaultCurrencies::JPY()) {
+          BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
+        }
       } else {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException(
           "Invalid destination."));
       }
+      newOrderSingle->set(FIX::SecurityExchange(
+        info.m_fields.m_security.GetMarket().GetData()));
       newOrderSingle->set(GetAccount());
     });
 }
