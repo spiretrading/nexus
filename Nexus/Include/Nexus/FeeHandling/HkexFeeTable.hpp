@@ -57,7 +57,7 @@ namespace Nexus {
   }
 
   /**
-   * Parses a HkexFeeTable from a YAML configuration.
+   * Parses an HkexFeeTable from a YAML configuration.
    * @param config The configuration to parse the HkexFeeTable from.
    * @param marketDatabase The MarketDatabase used to parse Securities.
    * @return The HkexFeeTable represented by the <i>config</i>.
