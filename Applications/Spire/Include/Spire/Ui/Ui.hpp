@@ -16,6 +16,9 @@ namespace Spire {
   class FlatButton;
   class IconButton;
   class PropertiesWindowButtonsWidget;
+  class RangeInputSlider;
+  class RangeInputWidget;
+  class ScalarWidget;
   class SecurityStack;
   class SecurityWidget;
   class TitleBar;
