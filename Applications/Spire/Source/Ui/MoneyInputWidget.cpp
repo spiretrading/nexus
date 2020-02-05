@@ -35,12 +35,18 @@ connection MoneyInputWidget::connect_modified_signal(
 
 void MoneyInputWidget::on_line_edit_committed() {
   if(!text().isEmpty()) {
-    m_committed_signal(*Money::FromValue(text().toStdString()));
+    auto value = Money::FromValue(text().toStdString());
+    if(value) {
+      m_committed_signal(*value);
+    }
   }
 }
 
 void MoneyInputWidget::on_line_edit_modified(const QString& text) {
   if(!text.isEmpty()) {
-    m_modified_signal(*Money::FromValue(text.toStdString()));
+    auto value = Money::FromValue(text.toStdString());
+    if(value) {
+      m_modified_signal(*value);
+    }
   }
 }
