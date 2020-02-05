@@ -1,18 +1,18 @@
 ---
 server:
-  interface: local_interface:20100
-  addresses: [global_address:20100, local_interface:20100]
+  interface: $local_interface:20100
+  addresses: [$global_address:20100, $local_interface:20100]
 
 data_store:
-  address: 127.0.0.1:3306
-  username: spireadmin
-  password: admin_password
-  schema: spire
+  address: $mysql_address
+  username: $mysql_username
+  password: $mysql_password
+  schema: $mysql_schema
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: administration_service
-  password: admin_password
+  password: $admin_password
 
 organization: "Spire Trading Inc."
 

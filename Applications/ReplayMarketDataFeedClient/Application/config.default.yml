@@ -1,8 +1,8 @@
 ---
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: market_data_feed
-  password: admin_password
+  password: $admin_password
 
 data_store: market_data.db
 sampling: 100ms
