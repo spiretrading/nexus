@@ -37,6 +37,8 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   m_drop_down_menu = new DropDownMenu({tr("PM"), tr("AM")}, this);
   m_drop_down_menu->setFixedHeight(scale_height(26));
   layout->addWidget(m_drop_down_menu);
+  connect(m_time_edit, &QTimeEdit::timeChanged, this,
+    &TimeInputWidget::on_time_changed);
 }
 
 void TimeInputWidget::set_time(Scalar time) {
@@ -58,6 +60,10 @@ void TimeInputWidget::set_time(Scalar time) {
 }
 
 connection TimeInputWidget::connect_time_signal(
-    const TimeSignal::slot_type& slot) const {
+    const TimeChangeSignal::slot_type& slot) const {
   return m_time_signal.connect(slot);
+}
+
+void TimeInputWidget::on_time_changed(const QTime& time) {
+  m_time_signal(Scalar(10000000));
 }

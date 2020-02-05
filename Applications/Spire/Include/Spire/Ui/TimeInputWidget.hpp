@@ -12,22 +12,24 @@ namespace Spire {
     public:
 
       //! Signals that the time has been modified.
-      using TimeSignal = Signal<void (Scalar)>;
+      using TimeChangeSignal = Signal<void (Scalar)>;
 
       //! Constructs a TimeInputWidget.
       TimeInputWidget(QWidget* parent = nullptr);
 
-      //! Sets the widget's time.
+      //! Sets the widget's time without triggering the time change signal.
       void set_time(Scalar time);
 
       //! Connects a slot to the time signal.
       boost::signals2::connection connect_time_signal(
-        const TimeSignal::slot_type& slot) const;
+        const TimeChangeSignal::slot_type& slot) const;
 
     private:
-      mutable TimeSignal m_time_signal;
+      mutable TimeChangeSignal m_time_signal;
       QTimeEdit* m_time_edit;
       DropDownMenu* m_drop_down_menu;
+
+      void on_time_changed(const QTime& time);
   };
 }
 
