@@ -260,7 +260,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
     auto& [open, close, high, low] = *layout;
     auto color = QColor([&] {
-      if(open.y() > close.y()) {
+      if(open.y() < close.y()) {
         return "#EF5357";
       } else {
         return "#1FD37A";
@@ -317,8 +317,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
       width() - get_bottom_right_pixel().x(), scale_height(15), Qt::white);
     painter.fillRect(get_bottom_right_pixel().x(), m_crosshair_pos.value().y(),
       scale_width(3), scale_height(1), Qt::black);
+    auto y = map_to(m_crosshair_pos->y(), get_bottom_right_pixel().y(), 0,
+      m_region->m_bottom_right.m_y, m_region->m_top_left.m_y);
     auto y_label = m_item_delegate->displayText(to_variant(
-      m_model->get_y_axis_type(), Scalar(0)), QLocale());
+      m_model->get_y_axis_type(), y), QLocale());
     painter.setPen(m_label_text_color);
     painter.drawText(get_bottom_right_pixel().x() + scale_width(3),
       m_crosshair_pos.value().y() + (m_font_metrics.height() / 3), y_label);
@@ -568,7 +570,7 @@ std::optional<QPoint> ChartView::to_pixel(const ChartPoint& point) const {
   auto max_x = get_bottom_right_pixel().x();
   auto max_y = get_bottom_right_pixel().y();
   auto x = map_to(point.m_x, top_left.m_x, bottom_right.m_x, 0, max_x);
-  auto y = map_to(point.m_y, bottom_right.m_y, top_left.m_y, 0, max_y);
+  auto y = map_to(point.m_y, bottom_right.m_y, top_left.m_y, max_y, 0);
   auto pixel = QPoint(x, y);
   return pixel;
 }
