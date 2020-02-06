@@ -71,7 +71,7 @@ def main():
       os.chdir('..')
   if os.path.isdir('AsxItchMarketDataFeedClient'):
     os.chdir('AsxItchMarketDataFeedClient')
-    call('python3 setup.py -l "%s" -a "%s" -p "%s" -g "%s" -q "%s"' %
+    call('python3 setup.py -l "%s" -a "%s" -p "%s" -gu "%s" -gp "%s"' %
       (variables['local_interface'], variables['service_locator_address'],
       variables['admin_password'], variables['glimpse_username'],
       variables['glimpse_password']))
