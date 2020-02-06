@@ -38,6 +38,7 @@ make_copy() {
   done
   cp "$cp_path/"*.sh "$application" 2>/dev/null || :
   cp "$cp_path/$application" "$application"
+  cp "$cp_path/"*.csv "$application" 2>/dev/null || :
   cp "$cp_path/"*.py "$application" 2>/dev/null || :
 }
 
