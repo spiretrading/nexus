@@ -62,7 +62,8 @@ def main():
   variables['chia_retransmission_password'] = args.chia_retrans_password
   applications = [d for d in os.listdir('./') if os.path.isdir(d)]
   for feed in ['ChiaMarketDataFeedClient', 'CseMarketDataFeedClient',
-      'CtaMarketDataFeedClient', 'TmxIpMarketDataFeedClient',
+      'CtaMarketDataFeedClient', 'HkexMarketDataFeedClient',
+      'JpxFlexMarketDataFeedClient', 'TmxIpMarketDataFeedClient',
       'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']:
     if os.path.isdir(feed):
       os.chdir(feed)
