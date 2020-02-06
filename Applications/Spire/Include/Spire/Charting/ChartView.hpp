@@ -180,7 +180,6 @@ namespace Spire {
       //  const QPoint& pos);
       //void draw_points(int id, QPainter& painter);
       void set_region(const Region& region);
-      const std::optional<ChartView::Region>& get_region() const;
       bool intersects_gap(int x) const;
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);

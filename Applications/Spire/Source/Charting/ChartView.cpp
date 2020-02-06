@@ -140,10 +140,6 @@ void ChartView::reset_crosshair() {
   m_crosshair_pos = std::nullopt;
 }
 
-const std::optional<ChartView::Region>& ChartView::get_region() const {
-  return m_region;
-}
-
 void ChartView::set_region(const Region& region) {
   if(m_region == region) {
     return;
@@ -235,11 +231,10 @@ void ChartView::set_multi_select(bool on) {
 }
 
 void ChartView::shift(int dx, int dy) {
-  auto region_opt = get_region();
-  if(!region_opt) {
+  if(!m_region) {
     return;
   }
-  auto region = *region_opt;
+  auto region = *m_region;
   auto& bottom_right = region.m_bottom_right;
   auto& top_left = region.m_top_left;
   auto dx_points = map_to(dx, 0, get_top_right_pixel().x(),
@@ -254,11 +249,10 @@ void ChartView::shift(int dx, int dy) {
 }
 
 void ChartView::zoom(double factor) {
-  auto region_opt = get_region();
-  if(!region_opt) {
+  if(!m_region) {
     return;
   }
-  auto region = *region_opt;
+  auto region = *m_region;
   auto& bottom_right = region.m_bottom_right;
   auto& top_left = region.m_top_left;
   auto old_width = bottom_right.m_x - top_left.m_x;
