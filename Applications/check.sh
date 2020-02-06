@@ -28,7 +28,7 @@ for directory in $services; do
   popd
 done
 for directory in $feeds; do
-  cd $directory
+  pushd $directory
   ./list_feeds.sh
-  cd ..
+  popd
 done
