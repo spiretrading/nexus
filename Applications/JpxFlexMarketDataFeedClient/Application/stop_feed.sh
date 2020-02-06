@@ -2,7 +2,7 @@
 reset=$(tput sgr0)
 red=$(tput setaf 1)
 yellow=$(tput setaf 3)
-feed_title="jpx"
+feed_title="JPX"
 feed_prefix="jpx_"
 feed_suffix="_jpx"
 pattern="^\./(.*)${feed_suffix}$"
