@@ -23,9 +23,9 @@ feeds+=" TmxIpMarketDataFeedClient"
 feeds+=" UtpMarketDataFeedClient"
 
 for directory in $services; do
-  cd $directory
+  pushd $directory
   ./check_server.sh
-  cd ..
+  popd
 done
 for directory in $feeds; do
   cd $directory
