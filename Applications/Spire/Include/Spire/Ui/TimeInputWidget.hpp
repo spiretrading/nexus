@@ -28,8 +28,8 @@ namespace Spire {
       mutable TimeChangeSignal m_time_signal;
       QTimeEdit* m_time_edit;
       DropDownMenu* m_drop_down_menu;
-      bool m_was_time_set;
 
+      void on_drop_down_changed(const QString& string);
       void on_time_changed(const QTime& time);
   };
 }
