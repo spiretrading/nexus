@@ -26,9 +26,9 @@ def main():
   parser.add_argument('-p', '--password', type=str, help='Password.',
     default='1234')
   parser.add_argument('-ru', '--retrans_username', type=str,
-    help='Retransmission username.', default='')
+    help='Retransmission username.', default='""')
   parser.add_argument('-rp', '--retrans_password', type=str,
-    help='Retransmission password.', default='')
+    help='Retransmission password.', default='""')
   args = parser.parse_args()
   variables = {}
   variables['local_interface'] = args.local

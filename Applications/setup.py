@@ -33,13 +33,13 @@ def main():
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     default='spire')
   parser.add_argument('-gu', '--glimpse_username', type=str,
-    help='ASX Glimpse username.', default='')
+    help='ASX Glimpse username.', default='""')
   parser.add_argument('-gp', '--glimpse_password', type=str,
-    help='ASX Glimpse password.', default='')
+    help='ASX Glimpse password.', default='""')
   parser.add_argument('-cru', '--chia_retrans_username', type=str,
-    help='CHIA retransmission username.', default='')
+    help='CHIA retransmission username.', default='""')
   parser.add_argument('-crp', '--chia_retrans_password', type=str,
-    help='CHIA retransmission password.', default='')
+    help='CHIA retransmission password.', default='""')
   args = parser.parse_args()
   variables = {}
   variables['local_interface'] = args.local
