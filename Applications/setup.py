@@ -17,42 +17,60 @@ def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2017 Eidolon Systems Ltd.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
-    required=False)
+    default=call('hostname -I').strip())
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
     required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
-    required=False)
+    default='1234')
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
     required=False)
   parser.add_argument('-mu', '--mysql_username', type=str,
-    help='MySQL username.', required=False)
+    help='MySQL username.', default='spireadmin')
   parser.add_argument('-mp', '--mysql_password', type=str,
     help='MySQL password.', required=False)
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
-    required=False)
+    default='spire')
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
+  parser.add_argument('-gu', '--glimpse_username', type=str,
+    help='ASX Glimpse username.', default='')
+  parser.add_argument('-gp', '--glimpse_password', type=str,
+    help='ASX Glimpse password.', default='')
   args = parser.parse_args()
   variables = {}
-  variables['local_interface'] = \
-    call('hostname -I').strip() if args.local is None else args.local
+  variables['local_interface'] = args.local
   variables['global_address'] = \
     variables['local_interface'] if args.world is None else args.world
-  variables['admin_password'] = \
-    '1234' if args.password is None else args.password
+  variables['admin_password'] = args.password
   variables['mysql_address'] = ('%s:3306' % variables['local_interface']) if \
     args.mysql_address is None else args.mysql_address
-  variables['mysql_username'] = \
-    'spireadmin' if args.mysql_username is None else args.mysql_username
+  variables['mysql_username'] = args.mysql_username
   variables['mysql_password'] = \
     variables['admin_password'] if args.mysql_password is None else \
     args.mysql_password
-  variables['mysql_schema'] = 'spire' if args.mysql_schema is None else \
-    args.mysql_schema
+  variables['mysql_schema'] = args.mysql_schema
   variables['service_locator_address'] = \
     ('%s:20000' % variables['local_interface']) if args.address is None else \
     args.address
+  variables['glimpse_username'] = args.glimpse_username
+  variables['glimpse_password'] = args.glimpse_password
   applications = [d for d in os.listdir('./') if os.path.isdir(d)]
+  for feed in ['ChiaMarketDataFeedClient', 'CseMarketDataFeedClient',
+      'CtaMarketDataFeedClient', 'TmxIpMarketDataFeedClient',
+      'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']:
+    if os.path.isdir(feed):
+      os.chdir(feed)
+      call('python3 setup.py -s "%s" -l "%s" -p "%s"' %
+        (variables['service_locator_address'], variables['local_interface'],
+        variables['password']))
+      os.chdir('..')
+  if os.path.isdir('AsxItchMarketDataFeedClient'):
+    os.chdir('AsxItchMarketDataFeedClient')
+    call('python3 setup.py -s "%s" -l "%s" -p "%s" -g "%s" -q "%s"' %
+      (variables['service_locator_address'], variables['local_interface'],
+      variables['password'], variables['glimpse_username'],
+      variables['glimpse_password']))
+    os.chdir('..')
   for application in applications:
     application_directory = os.path.join('.', application)
     files = [f for f in os.listdir(application_directory) if
