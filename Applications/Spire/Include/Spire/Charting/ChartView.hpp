@@ -200,7 +200,7 @@ namespace Spire {
       std::optional<QPoint> to_pixel(const ChartPoint& point) const;
       std::optional<CandlestickLayout> get_candlestick_layout(
         const PeggedCandlestick& candlestick) const;
-      QPoint get_top_right_pixel() const;
+      QPoint get_bottom_right_pixel() const;
       std::optional<Scalar> get_time_by_location(Scalar location) const;
       std::optional<PeggedCandlestick*> get_leftmost_candlestick();
       std::optional<const PeggedCandlestick*> get_leftmost_candlestick() const;

@@ -237,9 +237,9 @@ void ChartView::shift(int dx, int dy) {
   auto region = *m_region;
   auto& bottom_right = region.m_bottom_right;
   auto& top_left = region.m_top_left;
-  auto dx_points = map_to(dx, 0, get_top_right_pixel().x(),
+  auto dx_points = map_to(dx, 0, get_bottom_right_pixel().x(),
     Scalar(), bottom_right.m_x - top_left.m_x);
-  auto dy_points = map_to(dy, 0, get_top_right_pixel().y(),
+  auto dy_points = map_to(dy, 0, get_bottom_right_pixel().y(),
     Scalar(), top_left.m_y - bottom_right.m_y);
   bottom_right.m_x += dx_points;
   bottom_right.m_y += dy_points;
@@ -272,12 +272,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
   painter.setPen(Qt::white);
-  painter.setPen(Qt::white);
-
-  painter.drawLine(get_top_right_pixel().x(), 0, get_top_right_pixel().x(),
-    get_top_right_pixel().y());
-  painter.drawLine(0, get_top_right_pixel().y(), get_top_right_pixel().x(),
-    get_top_right_pixel().y());
+  painter.drawLine(get_bottom_right_pixel().x(), 0,
+    get_bottom_right_pixel().x(), get_bottom_right_pixel().y());
+  painter.drawLine(0, get_bottom_right_pixel().y(),
+    get_bottom_right_pixel().x(), get_bottom_right_pixel().y());
 
   painter.setPen(Qt::white);
   for(auto& candlestick : m_visible_candlesticks) {
@@ -296,8 +294,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     painter.fillRect(QRect(open, close), color);
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <=
-      get_top_right_pixel().x() && m_crosshair_pos.value().y() <=
-      get_top_right_pixel().y()) {
+      get_bottom_right_pixel().x() && m_crosshair_pos.value().y() <=
+      get_bottom_right_pixel().y()) {
     if(m_draw_state == DrawState::OFF ||
         m_draw_state == DrawState::IDLE ||
         m_draw_state == DrawState::NEW) {
@@ -307,10 +305,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
     painter.setPen(m_dashed_line_pen);
     painter.drawLine(m_crosshair_pos.value().x(), 0,
-      m_crosshair_pos.value().x(), get_top_right_pixel().y());
-    painter.drawLine(0, m_crosshair_pos.value().y(), get_top_right_pixel().x(),
+      m_crosshair_pos.value().x(), get_bottom_right_pixel().y());
+    painter.drawLine(0, m_crosshair_pos.value().y(), get_bottom_right_pixel().x(),
       m_crosshair_pos.value().y());
-    auto x = map_to(m_crosshair_pos->x(), 0, get_top_right_pixel().x(),
+    auto x = map_to(m_crosshair_pos->x(), 0, get_bottom_right_pixel().x(),
       m_region->m_top_left.m_x, m_region->m_bottom_right.m_x);
     auto crosshair_time = get_time_by_location(x);
     if(crosshair_time && !intersects_gap(m_crosshair_pos->x())) {
@@ -318,45 +316,43 @@ void ChartView::paintEvent(QPaintEvent* event) {
         m_model->get_x_axis_type(), *crosshair_time), QLocale());
       auto x_label_width = m_font_metrics.horizontalAdvance(x_label);
       painter.fillRect(m_crosshair_pos.value().x() - (x_label_width / 2) -
-        scale_width(5), get_top_right_pixel().y(), x_label_width +
+        scale_width(5), get_bottom_right_pixel().y(), x_label_width +
         scale_width(10), scale_height(21), Qt::white);
-      painter.fillRect(m_crosshair_pos.value().x(), get_top_right_pixel().y(),
+      painter.fillRect(m_crosshair_pos.value().x(), get_bottom_right_pixel().y(),
         scale_width(1), scale_height(3), Qt::black);
       auto text_width = m_font_metrics.horizontalAdvance(x_label);
       painter.setPen(m_label_text_color);
       painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
-        get_top_right_pixel().y() + m_font_metrics.height() + scale_height(2),
+        get_bottom_right_pixel().y() + m_font_metrics.height() + scale_height(2),
         x_label);
     } else {
       painter.fillRect(m_crosshair_pos.value().x() - (scale_width(64) / 2),
-        get_top_right_pixel().y(), scale_width(64), scale_height(21),
+        get_bottom_right_pixel().y(), scale_width(64), scale_height(21),
         Qt::white);
-      painter.fillRect(m_crosshair_pos.value().x(), get_top_right_pixel().y(),
+      painter.fillRect(m_crosshair_pos.value().x(), get_bottom_right_pixel().y(),
         scale_width(1), scale_height(3), Qt::black);
       auto text_width = m_font_metrics.horizontalAdvance(tr("No Activity"));
       painter.setPen(m_label_text_color);
       painter.drawText(m_crosshair_pos.value().x() - text_width / 2,
-        get_top_right_pixel().y() + m_font_metrics.height() + scale_height(2),
+        get_bottom_right_pixel().y() + m_font_metrics.height() + scale_height(2),
         tr("No Activity"));
     }
-    painter.fillRect(get_top_right_pixel().x(),
+    painter.fillRect(get_bottom_right_pixel().x(),
       m_crosshair_pos.value().y() - (scale_height(15) / 2),
-      width() - get_top_right_pixel().x(), scale_height(15), Qt::white);
-    painter.fillRect(get_top_right_pixel().x(), m_crosshair_pos.value().y(),
+      width() - get_bottom_right_pixel().x(), scale_height(15), Qt::white);
+    painter.fillRect(get_bottom_right_pixel().x(), m_crosshair_pos.value().y(),
       scale_width(3), scale_height(1), Qt::black);
     auto y_label = m_item_delegate->displayText(to_variant(
       m_model->get_y_axis_type(), Scalar(0)), QLocale());
     painter.setPen(m_label_text_color);
-    painter.drawText(get_top_right_pixel().x() + scale_width(3),
+    painter.drawText(get_bottom_right_pixel().x() + scale_width(3),
       m_crosshair_pos.value().y() + (m_font_metrics.height() / 3), y_label);
   } else {
     setCursor(Qt::ArrowCursor);
   }
 
-  painter.setClipRegion({0, 0, get_top_right_pixel().x(),
-    get_top_right_pixel().y()});
-
-  // TODO: draw lines
+  painter.setClipRegion({0, 0, get_bottom_right_pixel().x(),
+    get_bottom_right_pixel().y()});
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
@@ -491,7 +487,7 @@ QtPromise<bool> ChartView::load_first_candlestick() {
       } else {
         auto& candlestick = candlesticks[0];
         auto info = PeggedCandlestick(std::move(candlestick),
-          Scalar(get_top_right_pixel().x() / 2));
+          Scalar(get_bottom_right_pixel().x() / 2));
         m_visible_candlesticks.push_back(std::move(info));
         return true;
       }
@@ -596,16 +592,28 @@ std::optional<QPoint> ChartView::to_pixel(const ChartPoint& point) const {
   }
   auto& top_left = m_region->m_top_left;
   auto& bottom_right = m_region->m_bottom_right;
-  auto max_x = get_top_right_pixel().x();
-  auto max_y = get_top_right_pixel().y();
+  auto max_x = get_bottom_right_pixel().x();
+  auto max_y = get_bottom_right_pixel().y();
   auto x = map_to(point.m_x, top_left.m_x, bottom_right.m_x, 0, max_x);
   auto y = map_to(point.m_y, bottom_right.m_y, top_left.m_y, 0, max_y);
   auto pixel = QPoint(x, y);
   return pixel;
 }
 
-QPoint ChartView::get_top_right_pixel() const {
-  return QPoint(size().width() - 30, size().height() - 30);
+QPoint ChartView::get_bottom_right_pixel() const {
+  auto x = width() + scale_width(4);
+  if(m_region) {
+    auto& top_left = m_region->m_top_left;
+    auto& bottom_right = m_region->m_bottom_right;
+    auto y_step = calculate_step(m_model->get_y_axis_type(),
+      top_left.m_y - bottom_right.m_y);
+    auto y_value = bottom_right.m_y - (bottom_right.m_y % y_step) + y_step;
+    x -= m_font_metrics.horizontalAdvance("M") * (
+      m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
+        y_value), QLocale()).length());
+  }
+  auto y = height() - m_font_metrics.height() - scale_height(9);
+  return QPoint(x, y);
 }
 
 std::optional<ChartView::CandlestickLayout> ChartView::get_candlestick_layout(
