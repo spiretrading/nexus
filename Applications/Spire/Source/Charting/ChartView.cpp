@@ -151,31 +151,6 @@ void ChartView::set_region(const Region& region) {
   update_origins();
   update_candlesticks();
   update();
-  auto before = [](auto& lhs, auto& rhs) {
-    if(lhs.get_location() >= rhs.get_location()) {
-      auto capture = 1;
-    }
-    if(get_candlestick_time(lhs) >= get_candlestick_time(rhs)) {
-      auto capture = 1;
-    }
-    assert(lhs.get_location() < rhs.get_location());
-    assert(lhs.GetEnd() <= rhs.GetStart());
-  };
-  if(!m_visible_candlesticks.empty()) {
-    auto& front = m_visible_candlesticks.front();
-    auto& back = m_visible_candlesticks.back();
-    if(m_left_candlestick) {
-      before(*m_left_candlestick, front);
-    }
-    if(m_right_candlestick) {
-      before(back, *m_right_candlestick);
-    }
-    for(auto i = std::size_t(0); i < m_visible_candlesticks.size() - 1; ++i) {
-      auto& lhs = m_visible_candlesticks[i];
-      auto& rhs = m_visible_candlesticks[i + 1];
-      before(lhs, rhs);
-    }
-  }
 }
 
 bool ChartView::is_auto_scale_enabled() const {
@@ -441,8 +416,6 @@ void ChartView::on_right_mouse_button_press() {
 void ChartView::update_candlesticks() {
   m_data_update_promise = m_data_update_promise.then([&](auto& result) {
     result.Get();
-    auto f = std::ofstream("log.txt", std::ios::app);
-    f << "promise execution" << std::endl;
     drop_left_candlesticks();
     drop_right_candlesticks();
     auto loader = [&](auto& result) {
