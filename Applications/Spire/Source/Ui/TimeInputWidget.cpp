@@ -2,7 +2,10 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <QHBoxLayout>
+#include <QKeyEvent>
+#include <QRegularExpressionValidator>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/DropDownMenu.hpp"
 
 using namespace boost::posix_time;
@@ -16,74 +19,93 @@ namespace {
 TimeInputWidget::TimeInputWidget(QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
-  layout->setSpacing(scale_width(8));
+  layout->setSpacing(0);
   layout->setContentsMargins({});
-  m_time_edit = new QTimeEdit({12, 0}, this);
-  m_time_edit->setFixedHeight(scale_height(26));
-  m_time_edit->setDisplayFormat("hh:mm");
-  m_time_edit->setButtonSymbols(QAbstractSpinBox::NoButtons);
-  m_time_edit->setMaximumTime({12, 59});
-  m_time_edit->setMinimumTime({1, 00});
-  m_time_edit->setStyleSheet(QString(R"(
-    QTimeEdit {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %3px;
-      padding-left: %4px;
-    }
-
-    QTimeEdit:focus {
-      border: %1px solid #4B23A0 %2px solid #4B23A0;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-        .arg(scale_width(8)));
-  layout->addWidget(m_time_edit);
+  m_hour_line_edit = new QLineEdit("12", this);
+  m_hour_line_edit->setValidator(new QRegularExpressionValidator(
+    QRegularExpression("^[0|1]\\d$"), this));
+  m_hour_line_edit->setFixedSize(scale(26, 26));
+  m_hour_line_edit->setAlignment(Qt::AlignRight);
+  m_hour_line_edit->installEventFilter(this);
+  layout->addWidget(m_hour_line_edit);
+  m_minute_line_edit = new QLineEdit("00", this);
+  m_minute_line_edit->setValidator(new QRegularExpressionValidator(
+    QRegularExpression("^[0-5]\\d$"), this));
+  m_minute_line_edit->setFixedSize(scale(24, 26));
+  m_minute_line_edit->installEventFilter(this);
+  layout->addWidget(m_minute_line_edit);
+  layout->addSpacing(scale_width(8));
   m_drop_down_menu = new DropDownMenu({tr("PM"), tr("AM")}, this);
-  m_drop_down_menu->setFixedHeight(scale_height(26));
+  m_drop_down_menu->setFixedSize(scale(54, 26));
   layout->addWidget(m_drop_down_menu);
   m_drop_down_menu->connect_selected_signal([=] (auto item) {
     on_drop_down_changed(item);
   });
-  connect(m_time_edit, &QTimeEdit::timeChanged, this,
-    &TimeInputWidget::on_time_changed);
+  set_unfocused_style();
 }
 
-void TimeInputWidget::set_time(Scalar time) {
-  auto timestamp = static_cast<ptime>(time);
-  auto hour = static_cast<int>(timestamp.time_of_day().hours());
-  auto min = static_cast<int>(timestamp.time_of_day().minutes());
-  if(hour >= 12 && hour < 24) {
-    m_drop_down_menu->set_current_text(tr("PM"));
-  } else {
-    m_drop_down_menu->set_current_text(tr("AM"));
-  }
-  auto new_time = QTime::fromMSecsSinceStartOfDay((hour * 60) * (min * 60) * 1000);
-  m_time_edit->setTime(new_time);
-  m_time_edit->setTime({hour,
-    static_cast<int>(timestamp.time_of_day().minutes())});
-}
-
-connection TimeInputWidget::connect_time_signal(
-    const TimeChangeSignal::slot_type& slot) const {
-  return m_time_signal.connect(slot);
-}
-
-void TimeInputWidget::on_drop_down_changed(const QString& string) {
-  on_time_changed(m_time_edit->time());
-}
-
-void TimeInputWidget::on_time_changed(const QTime& time) {
-  auto updated_time = time;
-  if(m_drop_down_menu->get_text() == tr("PM")) {
-    if(updated_time.hour() != 12) {
-      updated_time = updated_time.addSecs(TWELVE_HOUR_SECONDS);
-    }
-  } else {
-    if(updated_time.hour() == 12) {
-      updated_time = updated_time.addSecs(-TWELVE_HOUR_SECONDS);
+bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_hour_line_edit) {
+    if(event->type() == QEvent::FocusIn) {
+      set_focus_style();
+    } else if(event->type() == QEvent::FocusOut) {
+      set_unfocused_style();
+    } else if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Right &&
+          m_hour_line_edit->cursorPosition() == 2) {
+        m_minute_line_edit->setFocus();
+        m_minute_line_edit->setCursorPosition(0);
+      }
     }
   }
-  m_time_signal(Scalar(from_time_t(
-    updated_time.msecsSinceStartOfDay() / 1000)));
+  if(watched == m_minute_line_edit) {
+    if(event->type() == QEvent::FocusIn) {
+      set_focus_style();
+    } else if(event->type() == QEvent::FocusOut) {
+      set_unfocused_style();
+    } else if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Left &&
+          m_minute_line_edit->cursorPosition() == 0) {
+        m_hour_line_edit->setFocus();
+        m_hour_line_edit->setCursorPosition(2);
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void TimeInputWidget::set_focus_style() {
+  set_style("#4B23A0");
+}
+
+void TimeInputWidget::set_unfocused_style() {
+  set_style("#C8C8C8");
+}
+
+void TimeInputWidget::set_style(const QString& border_hex) {
+  m_hour_line_edit->setStyleSheet(QString(R"(
+      QLineEdit {
+        border-bottom: %2px solid %3;
+        border-left: %1px solid %3;
+        border-right: none;
+        border-top: %2px solid %3;
+      })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex));
+  m_minute_line_edit->setStyleSheet(QString(R"(
+      QLineEdit {
+        border-bottom: %2px solid %3;
+        border-left: none;
+        border-right: %1px solid %3;
+        border-top: %2px solid %3;
+      })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex));
+}
+
+void TimeInputWidget::on_drop_down_changed(const QString& item) {
+  on_time_changed();
+}
+
+void TimeInputWidget::on_time_changed() {
+  // parse time from line edits and drop down box.
+  //m_time_signal(time);
 }
