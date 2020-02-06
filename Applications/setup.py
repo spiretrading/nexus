@@ -20,6 +20,8 @@ def main():
     default=call('hostname -I').strip())
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
     required=False)
+  parser.add_argument('-a', '--address', type=str, help='Spire address.',
+    required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
     default='1234')
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
@@ -30,17 +32,22 @@ def main():
     help='MySQL password.', required=False)
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     default='spire')
-  parser.add_argument('-a', '--address', type=str, help='Spire address.',
-    required=False)
   parser.add_argument('-gu', '--glimpse_username', type=str,
     help='ASX Glimpse username.', default='')
   parser.add_argument('-gp', '--glimpse_password', type=str,
     help='ASX Glimpse password.', default='')
+  parser.add_argument('-cru', '--chia_retrans_username', type=str,
+    help='CHIA retransmission username.', default='')
+  parser.add_argument('-crp', '--chia_retrans_password', type=str,
+    help='CHIA retransmission password.', default='')
   args = parser.parse_args()
   variables = {}
   variables['local_interface'] = args.local
   variables['global_address'] = \
     variables['local_interface'] if args.world is None else args.world
+  variables['service_locator_address'] = \
+    ('%s:20000' % variables['local_interface']) if args.address is None else \
+    args.address
   variables['admin_password'] = args.password
   variables['mysql_address'] = ('%s:3306' % variables['local_interface']) if \
     args.mysql_address is None else args.mysql_address
@@ -49,11 +56,10 @@ def main():
     variables['admin_password'] if args.mysql_password is None else \
     args.mysql_password
   variables['mysql_schema'] = args.mysql_schema
-  variables['service_locator_address'] = \
-    ('%s:20000' % variables['local_interface']) if args.address is None else \
-    args.address
   variables['glimpse_username'] = args.glimpse_username
   variables['glimpse_password'] = args.glimpse_password
+  variables['chia_retransmission_username'] = args.chia_retrans_username
+  variables['chia_retransmission_password'] = args.chia_retrans_password
   applications = [d for d in os.listdir('./') if os.path.isdir(d)]
   for feed in ['ChiaMarketDataFeedClient', 'CseMarketDataFeedClient',
       'CtaMarketDataFeedClient', 'TmxIpMarketDataFeedClient',
