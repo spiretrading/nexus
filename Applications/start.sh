@@ -15,10 +15,10 @@ services+=" WebPortal"
 
 for directory in $services; do
   sleep 5
-  cd $directory
+  pushd $directory
   ./stop_server.sh
   ./start_server.sh
-  cd ..
+  popd
 done
 
 pushd AdministrationServer
