@@ -48,15 +48,6 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
-      //! Returns the region of the ChartView.
-      const std::optional<ChartView::Region>& get_region() const;
-
-      //! Sets the visible region of the chart to display.
-      /*!
-        \param region The region the chart will display.
-      */
-      void set_region(const Region& region);
-
       //! Returns true if auto scale is enabled, false otherwise.
       bool is_auto_scale_enabled() const;
 
@@ -95,6 +86,20 @@ namespace Spire {
         \param on The on/off status of the multi-select feature.
       */
       void set_multi_select(bool on);
+
+      //! Shifts the view to a different region.
+      /*!
+        \param dx The number of pixels to move the region by along X.
+        \param dy The number of pixels to move the region by along X.
+      */
+      void shift(int dx, int dy);
+
+      //! Expands or shrinks the region to a different size.
+      /*!
+        \param factor The scaling factor.
+        \detail The view is expanded if factor > 1 and shrinked if factor < 1.
+      */
+      void zoom(double factor);
 
     protected:
       void paintEvent(QPaintEvent* event) override;
@@ -174,6 +179,8 @@ namespace Spire {
       //void draw_point(QPainter& painter, const QColor& color,
       //  const QPoint& pos);
       //void draw_points(int id, QPainter& painter);
+      void set_region(const Region& region);
+      const std::optional<ChartView::Region>& get_region() const;
       bool intersects_gap(int x) const;
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);

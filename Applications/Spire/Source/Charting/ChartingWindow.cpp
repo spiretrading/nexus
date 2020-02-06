@@ -190,12 +190,9 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
-        auto delta = e->pos().x() - m_last_chart_mouse_pos.x();
-        auto region = m_chart->get_region();
-        region->m_top_left.m_x -= Scalar(delta);
-        region->m_bottom_right.m_x -= Scalar(delta);
-        // TODO: shift along Y
-        m_chart->set_region(*region);
+        auto dx = m_last_chart_mouse_pos.x() - e->pos().x();
+        auto dy = m_last_chart_mouse_pos.y() - e->pos().y();
+        m_chart->shift(dx, dy);
         m_last_chart_mouse_pos = e->pos();
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
@@ -214,19 +211,14 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       m_chart->set_crosshair(e->pos(), e->buttons());
     } else if(event->type() == QEvent::Wheel) {
       auto e = static_cast<QWheelEvent*>(event);
-      auto region = m_chart->get_region();
-      auto old_width = region->m_bottom_right.m_x - region->m_top_left.m_x;
-      auto new_width = [&] {
+      auto factor = [&] {
         if(e->angleDelta().y() < 0) {
-          return ZOOM_FACTOR * old_width;
+          return ZOOM_FACTOR;
         } else {
-          return old_width / ZOOM_FACTOR;
+          return 1. / ZOOM_FACTOR;
         }
       }();
-      auto width_change = (new_width - old_width) / 2;
-      region->m_top_left.m_x -= width_change;
-      region->m_bottom_right.m_x += width_change;
-      m_chart->set_region(*region);
+      m_chart->zoom(factor);
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {

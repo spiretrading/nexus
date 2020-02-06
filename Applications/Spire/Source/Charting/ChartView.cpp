@@ -234,6 +234,46 @@ void ChartView::set_multi_select(bool on) {
   m_is_multi_select_enabled = on;
 }
 
+void ChartView::shift(int dx, int dy) {
+  auto region_opt = get_region();
+  if(!region_opt) {
+    return;
+  }
+  auto region = *region_opt;
+  auto& bottom_right = region.m_bottom_right;
+  auto& top_left = region.m_top_left;
+  auto dx_points = map_to(dx, 0, get_top_right_pixel().x(),
+    Scalar(), bottom_right.m_x - top_left.m_x);
+  auto dy_points = map_to(dy, 0, get_top_right_pixel().y(),
+    Scalar(), top_left.m_y - bottom_right.m_y);
+  bottom_right.m_x += dx_points;
+  bottom_right.m_y += dy_points;
+  top_left.m_x += dx_points;
+  top_left.m_y += dy_points;
+  set_region(region);
+}
+
+void ChartView::zoom(double factor) {
+  auto region_opt = get_region();
+  if(!region_opt) {
+    return;
+  }
+  auto region = *region_opt;
+  auto& bottom_right = region.m_bottom_right;
+  auto& top_left = region.m_top_left;
+  auto old_width = bottom_right.m_x - top_left.m_x;
+  auto new_width = factor * old_width;
+  auto width_change = (new_width - old_width) / 2;
+  auto old_height = top_left.m_y - bottom_right.m_y;
+  auto new_height = factor * old_height;
+  auto height_change = (new_height - old_height) / 2;
+  top_left.m_x -= width_change;
+  bottom_right.m_x += width_change;
+  top_left.m_y += height_change;
+  bottom_right.m_y -= height_change;
+  set_region(region);
+}
+
 void ChartView::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setFont(m_label_font);
