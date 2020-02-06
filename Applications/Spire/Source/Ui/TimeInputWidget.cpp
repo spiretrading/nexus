@@ -1,4 +1,5 @@
 #include "Spire/Ui/TimeInputWidget.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -9,7 +10,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TimeInputWidget::TimeInputWidget(QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_was_time_set(false) {
   auto layout = new QHBoxLayout(this);
   layout->setSpacing(scale_width(8));
   layout->setContentsMargins({});
@@ -42,20 +44,16 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
 }
 
 void TimeInputWidget::set_time(Scalar time) {
+  m_was_time_set = true;
   auto timestamp = static_cast<ptime>(time);
-  auto hours = [&] {
-    auto hour = static_cast<int>(timestamp.time_of_day().hours());
-    if(hour >= 12 && hour < 24) {
-      m_drop_down_menu->set_current_text(tr("PM"));
-      return hour - 12;
-    }
+  auto hour = static_cast<int>(timestamp.time_of_day().hours());
+  auto min = static_cast<int>(timestamp.time_of_day().minutes());
+  if(hour >= 12 && hour < 24) {
+    m_drop_down_menu->set_current_text(tr("PM"));
+  } else {
     m_drop_down_menu->set_current_text(tr("AM"));
-    if(hour == 0) {
-      return 12;
-    }
-    return hour;
-  }();
-  m_time_edit->setTime({hours,
+  }
+  m_time_edit->setTime({hour,
     static_cast<int>(timestamp.time_of_day().minutes())});
 }
 
@@ -65,5 +63,20 @@ connection TimeInputWidget::connect_time_signal(
 }
 
 void TimeInputWidget::on_time_changed(const QTime& time) {
-  m_time_signal(Scalar(10000000));
+  auto updated_time = time;
+  if(!m_was_time_set) {
+    if(m_drop_down_menu->get_text() == tr("PM")) {
+      if(updated_time.hour() != 12) {
+        updated_time = updated_time.addSecs(12 * 60 * 60);
+      }
+    } else {
+      if(updated_time.hour() == 12) {
+        updated_time = updated_time.addSecs(-12 * 60 * 60);
+      }
+    }
+    m_time_signal(Scalar(from_time_t(
+      updated_time.msecsSinceStartOfDay() / 1000)));
+  } else {
+    m_was_time_set = false;
+  }
 }
