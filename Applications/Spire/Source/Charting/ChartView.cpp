@@ -396,14 +396,20 @@ void ChartView::update_auto_scale() {
   if(!m_region || m_visible_candlesticks.empty()) {
     return;
   }
-  auto auto_scale_top = m_visible_candlesticks.front().GetHigh();
-  auto auto_scale_bottom = m_visible_candlesticks.front().GetLow();
-  for(auto& candle : m_visible_candlesticks) {
-    auto_scale_top = max(auto_scale_top, candle.GetHigh());
-    auto_scale_bottom = min(auto_scale_bottom, candle.GetLow());
+  auto top = std::max_element(m_visible_candlesticks.begin(),
+    m_visible_candlesticks.end(), [](auto& lhs, auto& rhs) {
+      return lhs.GetHigh() < rhs.GetHigh();
+    })->GetHigh();
+  auto bottom = std::min_element(m_visible_candlesticks.begin(),
+    m_visible_candlesticks.end(), [](auto& lhs, auto& rhs) {
+      return lhs.GetLow() < rhs.GetLow();
+    })->GetLow();
+  auto region = *m_region;
+  region.m_top_left.m_y = top;
+  region.m_bottom_right.m_y = bottom;
+  if(region != *m_region) {
+    set_region(region);
   }
-  m_region->m_top_left.m_y = auto_scale_top;
-  m_region->m_bottom_right.m_y = auto_scale_bottom;
 }
 
 void ChartView::update_origins() {
