@@ -10,7 +10,7 @@ def call(command):
 
 def translate(source, variables):
   for key in variables.keys():
-    source = source.replace('$' + key, '"%s"' % variables[key])
+    source = source.replace('$' + key, '%s' % variables[key])
   return source
 
 def main():
@@ -25,7 +25,7 @@ def main():
   parser.add_argument('-p', '--password', type=str, help='Password.',
     default='1234')
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
-    required=False)
+    default='127.0.0.1:3306')
   parser.add_argument('-mu', '--mysql_username', type=str,
     help='MySQL username.', default='spireadmin')
   parser.add_argument('-mp', '--mysql_password', type=str,
@@ -49,8 +49,7 @@ def main():
     ('%s:20000' % variables['local_interface']) if args.address is None else \
     args.address
   variables['admin_password'] = args.password
-  variables['mysql_address'] = ('%s:3306' % variables['local_interface']) if \
-    args.mysql_address is None else args.mysql_address
+  variables['mysql_address'] = args.mysql_address
   variables['mysql_username'] = args.mysql_username
   variables['mysql_password'] = \
     variables['admin_password'] if args.mysql_password is None else \
@@ -68,13 +67,13 @@ def main():
       os.chdir(feed)
       call('python3 setup.py -s "%s" -l "%s" -p "%s"' %
         (variables['service_locator_address'], variables['local_interface'],
-        variables['password']))
+        variables['admin_password']))
       os.chdir('..')
   if os.path.isdir('AsxItchMarketDataFeedClient'):
     os.chdir('AsxItchMarketDataFeedClient')
     call('python3 setup.py -s "%s" -l "%s" -p "%s" -g "%s" -q "%s"' %
       (variables['service_locator_address'], variables['local_interface'],
-      variables['password'], variables['glimpse_username'],
+      variables['admin_password'], variables['glimpse_username'],
       variables['glimpse_password']))
     os.chdir('..')
   for application in applications:
