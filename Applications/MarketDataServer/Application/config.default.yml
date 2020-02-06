@@ -1,25 +1,27 @@
 ---
 registry_server:
-  interface: local_interface:20300
-  addresses: [global_address:20300, local_interface:20300]
+  interface: $local_interface:20300
+  addresses: [$global_address:20300, $local_interface:20300]
 
 feed_server:
-  interface: local_interface:20400
-  addresses: [global_address:20400, local_interface:20400]
+  interface: $local_interface:20400
+  addresses: [$global_address:20400, $local_interface:20400]
 
 data_store:
-  address: 127.0.0.1:3306
-  username: spireadmin
-  password: admin_password
+  address: $mysql_address
+  username: $mysql_username
+  password: $mysql_password
   schema: market_data
 
 countries:
   - AU
   - CA
+  - HK
+  - JP
   - US
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: market_data_service
-  password: admin_password
+  password: $admin_password
 ...
