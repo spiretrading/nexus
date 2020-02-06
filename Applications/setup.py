@@ -60,21 +60,28 @@ def main():
   variables['chia_retransmission_username'] = args.chia_retrans_username
   variables['chia_retransmission_password'] = args.chia_retrans_password
   applications = [d for d in os.listdir('./') if os.path.isdir(d)]
-  for feed in ['ChiaMarketDataFeedClient', 'CseMarketDataFeedClient',
-      'CtaMarketDataFeedClient', 'TmxIpMarketDataFeedClient',
-      'TmxTl1MarketDataFeedClient', 'UtpMarketDataFeedClient']:
+  for feed in ['CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
+      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
+      'UtpMarketDataFeedClient']:
     if os.path.isdir(feed):
       os.chdir(feed)
-      call('python3 setup.py -s "%s" -l "%s" -p "%s"' %
-        (variables['service_locator_address'], variables['local_interface'],
+      call('python3 setup.py -l "%s" -a "%s" -p "%s"' %
+        (variables['local_interface'], variables['service_locator_address'],
         variables['admin_password']))
       os.chdir('..')
   if os.path.isdir('AsxItchMarketDataFeedClient'):
     os.chdir('AsxItchMarketDataFeedClient')
-    call('python3 setup.py -s "%s" -l "%s" -p "%s" -g "%s" -q "%s"' %
-      (variables['service_locator_address'], variables['local_interface'],
+    call('python3 setup.py -l "%s" -a "%s" -p "%s" -g "%s" -q "%s"' %
+      (variables['local_interface'], variables['service_locator_address'],
       variables['admin_password'], variables['glimpse_username'],
       variables['glimpse_password']))
+    os.chdir('..')
+  if os.path.isdir('ChiaMarketDataFeedClient'):
+    os.chdir('ChiaMarketDataFeedClient')
+    call('python3 setup.py -l "%s" -a "%s" -p "%s" -ru "%s" -rp "%s"' %
+      (variables['local_interface'], variables['service_locator_address'],
+      variables['admin_password'], variables['chia_retransmission_username'],
+      variables['chia_retransmission_password']))
     os.chdir('..')
   for application in applications:
     application_directory = os.path.join('.', application)
