@@ -9,6 +9,10 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  const auto TWELVE_HOUR_SECONDS = 12 * 60 * 60;
+}
+
 TimeInputWidget::TimeInputWidget(QWidget* parent)
     : QWidget(parent),
       m_was_time_set(false) {
@@ -67,11 +71,11 @@ void TimeInputWidget::on_time_changed(const QTime& time) {
   if(!m_was_time_set) {
     if(m_drop_down_menu->get_text() == tr("PM")) {
       if(updated_time.hour() != 12) {
-        updated_time = updated_time.addSecs(12 * 60 * 60);
+        updated_time = updated_time.addSecs(TWELVE_HOUR_SECONDS);
       }
     } else {
       if(updated_time.hour() == 12) {
-        updated_time = updated_time.addSecs(-12 * 60 * 60);
+        updated_time = updated_time.addSecs(-TWELVE_HOUR_SECONDS);
       }
     }
     m_time_signal(Scalar(from_time_t(
