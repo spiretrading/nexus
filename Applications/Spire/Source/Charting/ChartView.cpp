@@ -259,20 +259,32 @@ void ChartView::paintEvent(QPaintEvent* event) {
       continue;
     }
     auto& [open, close, high, low] = *layout;
-    auto color = QColor([&] {
-      if(open.y() < close.y()) {
-        return "#EF5357";
-      } else {
-        return "#1FD37A";
-      }
-    }());
-    painter.fillRect(QRect(open, close), color);
+    if(open.y() > close.y() && close.y() < get_bottom_right_pixel().y()) {
+      painter.fillRect(QRect(QPoint(open.x(), close.y()),
+        QPoint(std::min(close.x() - 1, get_bottom_right_pixel().x() - 1),
+          std::min(open.y(), get_bottom_right_pixel().y() - 1))),
+        QColor("#8AF5C0"));
+      painter.fillRect(QRect(QPoint(open.x() + 1, close.y() + 1),
+        QPoint(std::min(close.x() - 2, get_bottom_right_pixel().x() - 1),
+          std::min(open.y() - 1, get_bottom_right_pixel().y() - 1))),
+        QColor("#1FD37A"));
+    } else if(open.y() < get_bottom_right_pixel().y()) {
+      painter.fillRect(QRect({open.x(), open.y()},
+        QPoint(std::min(close.x() - 1, get_bottom_right_pixel().x() - 1),
+          std::min(close.y(), get_bottom_right_pixel().y() - 1))),
+        QColor("#FFA7A0"));
+      painter.fillRect(QRect(QPoint(open.x() + 1, open.y() + 1),
+        QPoint(std::min(close.x() - 2, get_bottom_right_pixel().x() - 1),
+          std::min(close.y() - 1, get_bottom_right_pixel().y() - 1))),
+        QColor("#EF5357"));
+    }
   }
   for(auto& gap : get_gaps()) {
-    auto start = map_to(gap.m_start, m_region->m_top_left.m_x,
-      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
-    auto end = map_to(gap.m_end, m_region->m_top_left.m_x,
-      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
+    auto start = std::max(0, map_to(gap.m_start, m_region->m_top_left.m_x,
+      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()));
+    auto end = std::min(map_to(gap.m_end, m_region->m_top_left.m_x,
+      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()),
+      get_bottom_right_pixel().x());
     draw_gap(painter, std::max(0, start), std::min(
       get_bottom_right_pixel().x() - 1, end));
   }
@@ -672,7 +684,7 @@ QPoint ChartView::get_bottom_right_pixel() const {
 std::optional<ChartView::CandlestickLayout> ChartView::get_candlestick_layout(
     const PeggedCandlestick& candlestick) const {
   auto location = candlestick.get_location();
-  auto span = (candlestick.GetStart() - candlestick.GetEnd()) /
+  auto span = (candlestick.GetEnd() - candlestick.GetStart()) /
     m_time_per_point;
   auto open = to_pixel({ location - span / 2.,
     candlestick.GetOpen() });
