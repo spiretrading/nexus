@@ -526,7 +526,7 @@ void ChartView::update_candlesticks() {
 
 void ChartView::drop_left_candlesticks() {
   while(!m_visible_candlesticks.empty() &&
-      !is_visible(m_visible_candlesticks.front().get_location())) {
+      !is_visible(m_visible_candlesticks.front())) {
     auto candlestick = std::move(m_visible_candlesticks.front());
     m_visible_candlesticks.pop_front();
     m_left_candlestick = std::move(candlestick);
@@ -535,7 +535,7 @@ void ChartView::drop_left_candlesticks() {
 
 void ChartView::drop_right_candlesticks() {
   while(!m_visible_candlesticks.empty() &&
-      !is_visible(m_visible_candlesticks.back().get_location())) {
+      !is_visible(m_visible_candlesticks.back())) {
     auto candlestick = std::move(m_visible_candlesticks.back());
     m_visible_candlesticks.pop_back();
     m_right_candlestick = std::move(candlestick);
@@ -560,7 +560,7 @@ QtPromise<bool> ChartView::load_first_candlestick() {
 }
 
 void ChartView::load_left_candlesticks() {
-  if(!m_left_candlestick || is_visible(m_left_candlestick->get_location())) {
+  if(!m_left_candlestick || is_visible(*m_left_candlestick)) {
     m_data_update_promise = m_data_update_promise.then([&](auto& result) {
       result.Get();
       return m_model->load(Scalar(std::numeric_limits<Quantity>::lowest()),
@@ -584,7 +584,7 @@ void ChartView::load_left_candlesticks() {
 }
 
 void ChartView::load_right_candlesticks() {
-  if(!m_right_candlestick || is_visible(m_right_candlestick->get_location())) {
+  if(!m_right_candlestick || is_visible(*m_right_candlestick)) {
     m_data_update_promise = m_data_update_promise.then([&](auto& result) {
       result.Get();
       return m_model->load(get_candlestick_time(**get_rightmost_candlestick()),
@@ -646,9 +646,10 @@ Scalar ChartView::PeggedCandlestick::get_location() const {
   return m_location;
 }
 
-bool ChartView::is_visible(Scalar location) const {
-  return location <= m_region->m_bottom_right.m_x &&
-    location >= m_region->m_top_left.m_x;
+bool ChartView::is_visible(const PeggedCandlestick& candlestick) const {
+  auto layout = get_candlestick_layout(candlestick);
+  return layout && layout->open.x() < get_bottom_right_pixel().x() &&
+    layout->close.x() >= 0;
 }
 
 std::optional<QPoint> ChartView::to_pixel(const ChartPoint& point) const {

@@ -193,7 +193,7 @@ namespace Spire {
       QtPromise<bool> load_first_candlestick();
       void insert_left_candlestick(Candlestick candlestick);
       void insert_right_candlestick(Candlestick candlestick);
-      bool is_visible(Scalar location) const;
+      bool is_visible(const PeggedCandlestick& candlestick) const;
       std::optional<QPoint> to_pixel(const ChartPoint& point) const;
       std::optional<CandlestickLayout> get_candlestick_layout(
         const PeggedCandlestick& candlestick) const;
