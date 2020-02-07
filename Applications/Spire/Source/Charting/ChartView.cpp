@@ -285,7 +285,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
         QColor("#EF5357"));
     }
   }
-  for(auto& gap : get_gaps()) {
+  auto gaps = get_gaps();
+  for(auto& gap : gaps) {
     auto start = std::max(0, map_to(gap.m_start, m_region->m_top_left.m_x,
       m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()));
     auto end = std::min(map_to(gap.m_end, m_region->m_top_left.m_x,
@@ -312,7 +313,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     auto x = map_to(m_crosshair_pos->x(), 0, get_bottom_right_pixel().x(),
       m_region->m_top_left.m_x, m_region->m_bottom_right.m_x);
     auto crosshair_time = get_time_by_location(x);
-    if(crosshair_time && !intersects_gap(m_crosshair_pos->x())) {
+    if(crosshair_time && !intersects_gap(m_crosshair_pos->x(), gaps)) {
       auto x_label = m_item_delegate->displayText(to_variant(
         m_model->get_x_axis_type(), *crosshair_time), QLocale());
       auto x_label_width = m_font_metrics.horizontalAdvance(x_label);
@@ -457,8 +458,18 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   painter.restore();
 }
 
-bool ChartView::intersects_gap(int x) const {
-  return false;
+bool ChartView::intersects_gap(int x, const std::optional<std::vector<Gap>>&
+    gaps) const {
+  auto x_location = map_to(x, 0, get_bottom_right_pixel().x(),
+    m_region->m_top_left.m_x, m_region->m_bottom_right.m_x);
+  auto gap_list = gaps.value_or(get_gaps());
+  auto it = std::upper_bound(gap_list.begin(), gap_list.end(), x_location,
+    [](auto x, auto& gap) {
+      return x < gap.m_start;
+    });
+  auto result = !gap_list.empty() && it != gap_list.begin() &&
+    x_location < (it - 1)->m_end;
+  return result;
 }
 
 void ChartView::update_auto_scale() {

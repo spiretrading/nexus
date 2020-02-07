@@ -177,7 +177,8 @@ namespace Spire {
       //  const QPoint& pos);
       //void draw_points(int id, QPainter& painter);
       void set_region(const Region& region);
-      bool intersects_gap(int x) const;
+      bool intersects_gap(int x, const std::optional<std::vector<Gap>>&
+        gaps = std::nullopt) const;
       void update_auto_scale();
       int update_intersection(const QPoint& mouse_pos);
       void update_origins();
