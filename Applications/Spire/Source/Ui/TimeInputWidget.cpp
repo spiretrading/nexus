@@ -18,14 +18,14 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   layout->setContentsMargins({});
   m_hour_line_edit = new QLineEdit("12", this);
   m_hour_line_edit->setValidator(new QRegularExpressionValidator(
-    QRegularExpression("^[0|1]\\d$"), this));
+    QRegularExpression("^\\d\\d$"), this));
   m_hour_line_edit->setFixedSize(scale(26, 26));
   m_hour_line_edit->setAlignment(Qt::AlignRight);
   m_hour_line_edit->installEventFilter(this);
   layout->addWidget(m_hour_line_edit);
   m_minute_line_edit = new QLineEdit("00", this);
   m_minute_line_edit->setValidator(new QRegularExpressionValidator(
-    QRegularExpression("^[0-5]\\d$"), this));
+    QRegularExpression("^\\d\\d$"), this));
   m_minute_line_edit->setFixedSize(scale(24, 26));
   m_minute_line_edit->installEventFilter(this);
   layout->addWidget(m_minute_line_edit);
@@ -53,6 +53,9 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
+      m_hour_line_edit->setText(clamped_value(m_hour_line_edit->text(),
+        1, 12));
+      on_time_changed();
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -60,7 +63,7 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
         if(m_hour_line_edit->text().isEmpty()) {
           m_hour_line_edit->setText(QString::number(0));
         }
-        m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit,
+        m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit->text(),
           e->key(), 1, 12));
         on_time_changed();
       } else if(e->key() == Qt::Key_Right &&
@@ -68,12 +71,17 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_hour_line_edit->text().count()) {
         m_minute_line_edit->setFocus();
         m_minute_line_edit->setCursorPosition(0);
+      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+        on_time_changed();
       }
     }
   } else if(watched == m_minute_line_edit) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
+      m_minute_line_edit->setText(clamped_value(m_minute_line_edit->text(),
+        0, 59));
+      on_time_changed();
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -81,36 +89,47 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
         if(m_minute_line_edit->text().isEmpty()) {
           m_minute_line_edit->setText(QString::number(-1));
         }
-        m_minute_line_edit->setText(get_line_edit_value(m_minute_line_edit,
-          e->key(), 0, 59));
+        m_minute_line_edit->setText(get_line_edit_value(
+          m_minute_line_edit->text(), e->key(), 0, 59));
         on_time_changed();
       } else if(e->key() == Qt::Key_Left &&
           m_minute_line_edit->cursorPosition() == 0) {
         m_hour_line_edit->setFocus();
         m_hour_line_edit->setCursorPosition(2);
+      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+        on_time_changed();
       }
     }
   }
   return QWidget::eventFilter(watched, event);
 }
 
-QString TimeInputWidget::get_line_edit_value(QLineEdit* line_edit, int key,
-    int min_value, int max_value) {
+QString TimeInputWidget::clamped_value(const QString& text, int min_value,
+    int max_value) {
+  return clamped_value(text, min_value, max_value, 0);
+}
+
+QString TimeInputWidget::clamped_value(const QString& text, int min_value,
+    int max_value, int addend) {
   auto ok = false;
-  auto value = line_edit->text().toInt(&ok);
+  auto value = text.toInt(&ok);
   if(ok) {
-    if(key == Qt::Key_Up) {
-      ++value;
-    } else {
-      --value;
-    }
+    value += addend;
     value = min(max_value, max(min_value, value));
     if(value < 10) {
       return QString("0" + QString::number(value));
     }
     return QString::number(value);
   }
-  return line_edit->text();
+  return text;
+}
+
+QString TimeInputWidget::get_line_edit_value(const QString& text, int key,
+    int min_value, int max_value) {
+  if(key == Qt::Key_Up) {
+    return clamped_value(text, min_value, max_value, 1);
+  }
+  return clamped_value(text, min_value, max_value, -1);
 }
 
 void TimeInputWidget::set_focus_style() {
