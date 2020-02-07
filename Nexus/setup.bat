@@ -12,7 +12,7 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/eidolonsystems/beam Beam
   SET BUILD_BEAM=1
 )
-SET beam_commit="c5f2491aaf245d7cad90cd6f05c1294f9906bd1d"
+SET beam_commit="a9b14c6bf9a6ad04435afcb11e4add908cee35c5"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
