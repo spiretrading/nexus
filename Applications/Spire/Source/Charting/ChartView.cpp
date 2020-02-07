@@ -259,6 +259,12 @@ void ChartView::paintEvent(QPaintEvent* event) {
       continue;
     }
     auto& [open, close, high, low] = *layout;
+    if(high.x() < get_bottom_right_pixel().x() && high.y() <
+        get_bottom_right_pixel().y()) {
+      painter.fillRect(QRect(QPoint(high.x(), high.y()),
+        QPoint(high.x(), std::min(low.y(), get_bottom_right_pixel().y() - 1))),
+        QColor("#A0A0A0"));
+    }
     if(open.y() > close.y() && close.y() < get_bottom_right_pixel().y()) {
       painter.fillRect(QRect(QPoint(open.x(), close.y()),
         QPoint(std::min(close.x() - 1, get_bottom_right_pixel().x() - 1),
