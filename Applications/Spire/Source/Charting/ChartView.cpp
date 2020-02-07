@@ -268,6 +268,14 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }());
     painter.fillRect(QRect(open, close), color);
   }
+  for(auto& gap : get_gaps()) {
+    auto start = map_to(gap.m_start, m_region->m_top_left.m_x,
+      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
+    auto end = map_to(gap.m_end, m_region->m_top_left.m_x,
+      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
+    draw_gap(painter, std::max(0, start), std::min(
+      get_bottom_right_pixel().x() - 1, end));
+  }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <=
       get_bottom_right_pixel().x() && m_crosshair_pos.value().y() <=
       get_bottom_right_pixel().y()) {
@@ -359,6 +367,76 @@ void ChartView::showEvent(QShowEvent* event) {
     });
   }
   QWidget::showEvent(event);
+}
+
+Scalar ChartView::get_gap_size() const {
+  return Scalar(200);
+}
+
+std::optional<ChartView::Gap> ChartView::get_gap_between(
+    const PeggedCandlestick& lhs, const PeggedCandlestick& rhs) const {
+  if(rhs.get_location() - lhs.get_location() == get_gap_size()) {
+    auto start = lhs.get_location() + (lhs.GetEnd() - lhs.GetStart()) /
+      (2 * m_time_per_point);
+    auto end = rhs.get_location() - (rhs.GetEnd() - rhs.GetStart()) /
+      (2 * m_time_per_point);
+    return Gap{ start, end };
+  }
+  return std::nullopt;
+}
+
+std::vector<ChartView::Gap> ChartView::get_gaps() const {
+  auto result = std::vector<Gap>();
+  if(m_visible_candlesticks.empty()) {
+    return result;
+  }
+  if(m_left_candlestick) {
+    auto gap = get_gap_between(*m_left_candlestick,
+      m_visible_candlesticks.front());
+    if(gap) {
+      result.push_back(*gap);
+    }
+  }
+  for(auto i = std::size_t(0); i < m_visible_candlesticks.size() - 1; ++i) {
+    auto gap = get_gap_between(m_visible_candlesticks[i],
+      m_visible_candlesticks[i + 1]);
+    if(gap) {
+      result.push_back(*gap);
+    }
+  }
+  if(m_right_candlestick) {
+    auto gap = get_gap_between(m_visible_candlesticks.back(),
+      *m_right_candlestick);
+    if(gap) {
+      result.push_back(*gap);
+    }
+  }
+  return result;
+}
+
+void ChartView::draw_gap(QPainter& painter, int start, int end) {
+  painter.fillRect(start, get_bottom_right_pixel().y(), end - start,
+    scale_height(3), QColor("#25212E"));
+  painter.save();
+  painter.setPen(Qt::white);
+  painter.drawLine(start, get_bottom_right_pixel().y(), start,
+    get_bottom_right_pixel().y() +  scale_height(2));
+  if(end <= get_bottom_right_pixel().x()) {
+    painter.drawLine(end, get_bottom_right_pixel().y(), end,
+      get_bottom_right_pixel().y() + scale_height(2));
+  }
+  end = min(end, get_bottom_right_pixel().x());
+  painter.setPen("#8C8C8C");
+  auto slash_count = (static_cast<double>(end) - static_cast<double>(start)) /
+    (static_cast<double>(scale_width(4)) +
+      static_cast<double>(scale_width(1))) - 1.0;
+  auto padding = std::fmod(slash_count, scale_width(4) + scale_width(1)) / 2;
+  auto x = start + static_cast<int>(padding) + scale_width(1);
+  for(auto i = 0; i < slash_count; ++i) {
+    painter.drawImage(x, get_bottom_right_pixel().y(), GAP_SLASH_IMAGE());
+    x += scale_width(4) + scale_width(1);
+  }
+  painter.restore();
 }
 
 bool ChartView::intersects_gap(int x) const {
@@ -521,8 +599,8 @@ void ChartView::insert_left_candlestick(Candlestick candlestick) {
   auto& first_visible_candlestick = m_visible_candlesticks.front();
   auto distance = (get_candlestick_time(first_visible_candlestick) -
     get_candlestick_time(candlestick)) / m_time_per_point;
-  if(distance > Scalar(200)) {
-    distance = Scalar(200);
+  if(distance > get_gap_size()) {
+    distance = get_gap_size();
   }
   auto location = first_visible_candlestick.get_location() - distance;
   auto pegged_candlestick = PeggedCandlestick(std::move(candlestick),
@@ -534,8 +612,8 @@ void ChartView::insert_right_candlestick(Candlestick candlestick) {
   auto& last_visible_candlestick = m_visible_candlesticks.back();
   auto distance = (get_candlestick_time(candlestick) -
     get_candlestick_time(last_visible_candlestick)) / m_time_per_point;
-  if(distance > Scalar(200)) {
-    distance = Scalar(200);
+  if(distance > get_gap_size()) {
+    distance = get_gap_size();
   }
   auto location = last_visible_candlestick.get_location() + distance;
   auto pegged_candlestick = PeggedCandlestick(std::move(candlestick),
