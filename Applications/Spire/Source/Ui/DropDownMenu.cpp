@@ -78,12 +78,6 @@ void DropDownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     on_clicked();
-  } else if(event->key() == Qt::Key_Down) {
-    m_current_text = m_menu_list->get_next(m_current_text);
-    update();
-  } else if(event->key() == Qt::Key_Up) {
-    m_current_text = m_menu_list->get_previous(m_current_text);
-    update();
   }
   event->ignore();
 }

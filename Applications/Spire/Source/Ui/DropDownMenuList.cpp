@@ -116,8 +116,10 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
         return true;
       } else if(key_event->key() == Qt::Key_Enter ||
           key_event->key() == Qt::Key_Return) {
-        on_select(static_cast<DropDownMenuItem*>(m_list_widget->layout()->
-          itemAt(m_highlight_index)->widget())->text());
+        if(m_highlight_index >= 0) {
+          on_select(static_cast<DropDownMenuItem*>(m_list_widget->layout()->
+            itemAt(m_highlight_index)->widget())->text());
+        }
         return true;
       } else if(key_event->key() == Qt::Key_Escape) {
         close();
