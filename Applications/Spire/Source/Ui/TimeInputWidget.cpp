@@ -30,7 +30,7 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   m_minute_line_edit->installEventFilter(this);
   layout->addWidget(m_minute_line_edit);
   layout->addSpacing(scale_width(8));
-  m_drop_down_menu = new DropDownMenu({tr("PM"), tr("AM")}, this);
+  m_drop_down_menu = new DropDownMenu({tr("AM"), tr("PM")}, this);
   m_drop_down_menu->setFixedSize(scale(54, 26));
   layout->addWidget(m_drop_down_menu);
   m_drop_down_menu->connect_selected_signal([=] (auto item) {
@@ -57,6 +57,9 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
+        if(m_hour_line_edit->text().isEmpty()) {
+          m_hour_line_edit->setText(QString::number(0));
+        }
         m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit,
           e->key(), 1, 12));
         on_time_changed();
@@ -75,6 +78,9 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
+        if(m_minute_line_edit->text().isEmpty()) {
+          m_minute_line_edit->setText(QString::number(-1));
+        }
         m_minute_line_edit->setText(get_line_edit_value(m_minute_line_edit,
           e->key(), 0, 59));
         on_time_changed();
