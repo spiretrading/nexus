@@ -32,6 +32,8 @@ namespace Spire {
       QLineEdit* m_minute_line_edit;
       DropDownMenu* m_drop_down_menu;
 
+      QString get_line_edit_value(QLineEdit* line_edit, int key, int min_value,
+        int max_value);
       void set_focus_style();
       void set_unfocused_style();
       void set_style(const QString& border_hex);

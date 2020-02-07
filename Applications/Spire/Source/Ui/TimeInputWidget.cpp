@@ -52,8 +52,12 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Right &&
-          m_hour_line_edit->cursorPosition() == 2) {
+      if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
+        m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit,
+          e->key(), 1, 12));
+      } else if(e->key() == Qt::Key_Right &&
+          m_hour_line_edit->cursorPosition() ==
+          m_hour_line_edit->text().count()) {
         m_minute_line_edit->setFocus();
         m_minute_line_edit->setCursorPosition(0);
       }
@@ -66,7 +70,10 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Left &&
+      if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
+        m_minute_line_edit->setText(get_line_edit_value(m_minute_line_edit,
+          e->key(), 0, 59));
+      } else if(e->key() == Qt::Key_Left &&
           m_minute_line_edit->cursorPosition() == 0) {
         m_hour_line_edit->setFocus();
         m_hour_line_edit->setCursorPosition(2);
@@ -74,6 +81,25 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+QString TimeInputWidget::get_line_edit_value(QLineEdit* line_edit, int key,
+    int min_value, int max_value) {
+  auto ok = false;
+  auto value = line_edit->text().toInt(&ok);
+  if(ok) {
+    if(key == Qt::Key_Up) {
+      ++value;
+    } else {
+      --value;
+    }
+    value = min(max_value, max(min_value, value));
+    if(value < 10) {
+      return QString("0" + QString::number(value));
+    }
+    return QString::number(value);
+  }
+  return line_edit->text();
 }
 
 void TimeInputWidget::set_focus_style() {
