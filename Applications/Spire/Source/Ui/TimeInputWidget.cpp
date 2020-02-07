@@ -56,16 +56,8 @@ void TimeInputWidget::set_time(Scalar time) {
     }
     m_drop_down_menu->set_current_text(tr("PM"));
   }
-  if(hour < 10) {
-    m_hour_line_edit->setText("0" + QString::number(hour));
-  } else {
-    m_hour_line_edit->setText(QString::number(hour));
-  }
-  if(minute < 10) {
-    m_minute_line_edit->setText("0" + QString::number(minute));
-  } else {
-    m_minute_line_edit->setText(QString::number(minute));
-  }
+  m_hour_line_edit->setText(clamped_value(QString::number(hour), 1, 12));
+  m_minute_line_edit->setText(clamped_value(QString::number(minute), 0, 59));
 }
 
 connection TimeInputWidget::connect_time_signal(
