@@ -24,10 +24,12 @@ int main(int argc, char** argv) {
   auto input = new TimeInputWidget(window);
   input->setFixedSize(scale(112, 26));
   auto button = new QPushButton("Set time 12:34 AM", window);
-  auto label = new QLabel("null time", window);
+  auto label = new QLabel("12:00 AM", window);
   layout->addWidget(input);
   layout->addWidget(label);
   layout->addWidget(button);
+  auto button2 = new QPushButton("Set time 4:56 PM", window);
+  layout->addWidget(button2);
   input->connect_time_signal([=] (auto duration) {
     auto d = static_cast<boost::posix_time::time_duration>(duration);
     auto str = [&] {
@@ -49,6 +51,12 @@ int main(int argc, char** argv) {
       return QString("%1:%2 %3").arg(hour_text).arg(minute_text).arg("PM");
     }();
     label->setText(str);
+  });
+  QObject::connect(button, &QPushButton::clicked, [=] {
+    input->set_time(Scalar(minutes(34)));
+  });
+  QObject::connect(button2, &QPushButton::clicked, [=] {
+    input->set_time(Scalar(hours(16) + minutes(56)));
   });
   window->resize(600, 300);
   window->show();

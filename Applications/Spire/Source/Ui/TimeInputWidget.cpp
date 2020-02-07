@@ -3,7 +3,6 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/DropDownMenu.hpp"
 
@@ -19,10 +18,13 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   m_hour_line_edit = new QLineEdit("12", this);
   m_hour_line_edit->setValidator(new QRegularExpressionValidator(
     QRegularExpression("^\\d\\d$"), this));
-  m_hour_line_edit->setFixedSize(scale(26, 26));
+  m_hour_line_edit->setFixedSize(scale(23, 26));
   m_hour_line_edit->setAlignment(Qt::AlignRight);
   m_hour_line_edit->installEventFilter(this);
   layout->addWidget(m_hour_line_edit);
+  m_colon_widget = new ColonWidget(this);
+  m_colon_widget->setFixedSize(scale(3, 26));
+  layout->addWidget(m_colon_widget);
   m_minute_line_edit = new QLineEdit("00", this);
   m_minute_line_edit->setValidator(new QRegularExpressionValidator(
     QRegularExpression("^\\d\\d$"), this));
@@ -40,7 +42,30 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
 }
 
 void TimeInputWidget::set_time(Scalar time) {
-
+  auto duration = static_cast<time_duration>(time);
+  auto hour = duration.hours();
+  auto minute = duration.minutes();
+  if(hour < 12) {
+    if(hour == 0) {
+      hour = 12;
+    }
+    m_drop_down_menu->set_current_text(tr("AM"));
+  } else {
+    if(hour != 12) {
+      hour -= 12;
+    }
+    m_drop_down_menu->set_current_text(tr("PM"));
+  }
+  if(hour < 10) {
+    m_hour_line_edit->setText("0" + QString::number(hour));
+  } else {
+    m_hour_line_edit->setText(QString::number(hour));
+  }
+  if(minute < 10) {
+    m_minute_line_edit->setText("0" + QString::number(minute));
+  } else {
+    m_minute_line_edit->setText(QString::number(minute));
+  }
 }
 
 connection TimeInputWidget::connect_time_signal(
@@ -134,27 +159,35 @@ QString TimeInputWidget::get_line_edit_value(const QString& text, int key,
 
 void TimeInputWidget::set_focus_style() {
   set_style("#4B23A0");
+  m_colon_widget->set_style("#4B23A0");
 }
 
 void TimeInputWidget::set_unfocused_style() {
   set_style("#C8C8C8");
+  m_colon_widget->set_style("#C8C8C8");
 }
 
 void TimeInputWidget::set_style(const QString& border_hex) {
   m_hour_line_edit->setStyleSheet(QString(R"(
-      QLineEdit {
-        border-bottom: %2px solid %3;
-        border-left: %1px solid %3;
-        border-right: none;
-        border-top: %2px solid %3;
-      })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex));
+    QLineEdit {
+      border-bottom: %2px solid %3;
+      border-left: %1px solid %3;
+      border-right: none;
+      border-top: %2px solid %3;
+      font-family: Roboto;
+      font-size: %4px;
+    })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex)
+        .arg(scale_height(12)));
   m_minute_line_edit->setStyleSheet(QString(R"(
-      QLineEdit {
-        border-bottom: %2px solid %3;
-        border-left: none;
-        border-right: %1px solid %3;
-        border-top: %2px solid %3;
-      })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex));
+    QLineEdit {
+      border-bottom: %2px solid %3;
+      border-left: none;
+      border-right: %1px solid %3;
+      border-top: %2px solid %3;
+      font-family: Roboto;
+      font-size: %4px;
+    })").arg(scale_width(1)).arg(scale_height(1)).arg(border_hex)
+        .arg(scale_height(12)));
 }
 
 void TimeInputWidget::on_drop_down_changed(const QString& item) {
