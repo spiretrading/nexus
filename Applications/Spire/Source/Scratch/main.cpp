@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "Spire/Spire/Resources.hpp"
+#include <QTime>
 
 using namespace Spire;
 
@@ -9,6 +10,9 @@ using namespace Spire;
 #include <QPushButton>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TimeInputWidget.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+using namespace boost::posix_time;
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
@@ -20,21 +24,32 @@ int main(int argc, char** argv) {
   auto input = new TimeInputWidget(window);
   input->setFixedSize(scale(112, 26));
   auto button = new QPushButton("Set time 12:34 AM", window);
-  button->connect(button, &QPushButton::clicked, [=] {
-    input->set_time(Scalar(2040000));
-  });
-
   auto label = new QLabel("null time", window);
-  input->connect_time_signal([&] (auto time) {
-    auto timestamp = static_cast<boost::posix_time::ptime>(time);
-    auto qtime = QTime(
-      static_cast<int>(timestamp.time_of_day().hours()),
-      static_cast<int>(timestamp.time_of_day().minutes()));
-    label->setText(qtime.toString("hh:mm"));
-  });
   layout->addWidget(input);
   layout->addWidget(label);
   layout->addWidget(button);
+  input->connect_time_signal([=] (auto duration) {
+    auto d = static_cast<boost::posix_time::time_duration>(duration);
+    auto str = [&] {
+      if(d.hours() < 12) {
+        auto hour = d.hours();
+        if(hour == 0) {
+          hour = 12;
+        }
+        auto hour_text = QString("%1%2").arg(hour < 10 ? "0" : "").arg(hour);
+        auto minute_text = QString("%1%2").arg(d.minutes() < 10 ? "0" : "").arg(d.minutes());
+        return QString("%1:%2 %3").arg(hour_text).arg(minute_text).arg("AM");
+      }
+      auto hour = d.hours();
+      if(hour > 12) {
+        hour -= 12;
+      }
+      auto hour_text = QString("%1%2").arg(hour < 10 ? "0" : "").arg(hour);
+      auto minute_text = QString("%1%2").arg(d.minutes() < 10 ? "0" : "").arg(d.minutes());
+      return QString("%1:%2 %3").arg(hour_text).arg(minute_text).arg("PM");
+    }();
+    label->setText(str);
+  });
   window->resize(600, 300);
   window->show();
   application->exec();

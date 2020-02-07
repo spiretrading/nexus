@@ -1,6 +1,5 @@
 #include "Spire/Ui/TimeInputWidget.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
@@ -11,10 +10,6 @@
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
-
-namespace {
-  const auto TWELVE_HOUR_SECONDS = 12 * 60 * 60;
-}
 
 TimeInputWidget::TimeInputWidget(QWidget* parent)
     : QWidget(parent) {
@@ -44,6 +39,15 @@ TimeInputWidget::TimeInputWidget(QWidget* parent)
   set_unfocused_style();
 }
 
+void TimeInputWidget::set_time(Scalar time) {
+
+}
+
+connection TimeInputWidget::connect_time_signal(
+    const TimeChangeSignal::slot_type& slot) const {
+  return m_time_signal.connect(slot);
+}
+
 bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_hour_line_edit) {
     if(event->type() == QEvent::FocusIn) {
@@ -55,6 +59,7 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
       if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
         m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit,
           e->key(), 1, 12));
+        on_time_changed();
       } else if(e->key() == Qt::Key_Right &&
           m_hour_line_edit->cursorPosition() ==
           m_hour_line_edit->text().count()) {
@@ -62,8 +67,7 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
         m_minute_line_edit->setCursorPosition(0);
       }
     }
-  }
-  if(watched == m_minute_line_edit) {
+  } else if(watched == m_minute_line_edit) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
@@ -73,6 +77,7 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
       if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
         m_minute_line_edit->setText(get_line_edit_value(m_minute_line_edit,
           e->key(), 0, 59));
+        on_time_changed();
       } else if(e->key() == Qt::Key_Left &&
           m_minute_line_edit->cursorPosition() == 0) {
         m_hour_line_edit->setFocus();
@@ -132,6 +137,18 @@ void TimeInputWidget::on_drop_down_changed(const QString& item) {
 }
 
 void TimeInputWidget::on_time_changed() {
-  // parse time from line edits and drop down box.
-  //m_time_signal(time);
+  auto hour_ok = false;
+  auto minute_ok = false;
+  auto hour = m_hour_line_edit->text().toInt(&hour_ok);
+  auto minute = m_minute_line_edit->text().toInt(&minute_ok);
+  if(hour_ok && minute_ok) {
+    if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
+      hour = 0;
+    } else if(m_drop_down_menu->get_text() == tr("PM")) {
+      if(hour != 12) {
+        hour += 12;
+      }
+    }
+    m_time_signal(Scalar(hours(hour) + minutes(minute)));
+  }
 }
