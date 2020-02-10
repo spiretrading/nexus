@@ -70,9 +70,6 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
-      m_hour_line_edit->setText(clamped_value(m_hour_line_edit->text(),
-        1, 12));
-      on_time_changed();
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -88,7 +85,14 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_hour_line_edit->text().count()) {
         m_minute_line_edit->setFocus();
         m_minute_line_edit->setCursorPosition(0);
-      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() >= Qt::Key_0 && e->key() <= Qt::Key_9) {
+        if(m_hour_line_edit->text().length() == 2) {
+          m_hour_line_edit->setText(clamped_value(m_hour_line_edit->text(),
+            1, 12));
+        }
         on_time_changed();
       }
     }
@@ -96,9 +100,6 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
-      m_minute_line_edit->setText(clamped_value(m_minute_line_edit->text(),
-        0, 59));
-      on_time_changed();
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -113,7 +114,14 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_minute_line_edit->cursorPosition() == 0) {
         m_hour_line_edit->setFocus();
         m_hour_line_edit->setCursorPosition(2);
-      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() >= Qt::Key_0 && e->key() <= Qt::Key_9) {
+        if(m_minute_line_edit->text().length() == 2) {
+          m_minute_line_edit->setText(clamped_value(m_minute_line_edit->text(),
+            0, 59));
+        }
         on_time_changed();
       }
     }
@@ -191,7 +199,7 @@ void TimeInputWidget::on_time_changed() {
   auto minute_ok = false;
   auto hour = m_hour_line_edit->text().toInt(&hour_ok);
   auto minute = m_minute_line_edit->text().toInt(&minute_ok);
-  if(hour_ok && minute_ok) {
+  if(hour_ok && minute_ok && hour > 0) {
     if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
       hour = 0;
     } else if(m_drop_down_menu->get_text() == tr("PM")) {
