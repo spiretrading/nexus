@@ -46,12 +46,7 @@ namespace {
   }
 
   Scalar calculate_step(Scalar::Type type, Scalar range) {
-    if(type == Scalar::Type::MONEY) {
-      return Scalar(Money::ONE);
-    } else if(type == Scalar::Type::TIMESTAMP) {
-      return Scalar(minutes(10));
-    }
-    return Scalar();
+    return range / 10;
   }
 
   const auto GAP_SIZE() {
@@ -251,8 +246,47 @@ void ChartView::paintEvent(QPaintEvent* event) {
     get_bottom_right_pixel().x(), get_bottom_right_pixel().y());
   painter.drawLine(0, get_bottom_right_pixel().y(),
     get_bottom_right_pixel().x(), get_bottom_right_pixel().y());
-
-  painter.setPen(Qt::white);
+  auto gaps = get_gaps();
+  auto x_step = calculate_step(m_model->get_x_axis_type(),
+    m_region->m_bottom_right.m_x - m_region->m_top_left.m_x);
+  for(auto x = m_region->m_top_left.m_x - m_region->m_top_left.m_x % x_step +
+      x_step; x < m_region->m_bottom_right.m_x; x += x_step) {
+    auto x_pos = map_to(x, m_region->m_top_left.m_x,
+      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
+    auto time_opt = get_time_by_location(x);
+    if(intersects_gap(x_pos, gaps) || !time_opt) {
+      continue;
+    }
+    auto time = *time_opt;
+    painter.setPen("#3A3348");
+    painter.drawLine(x_pos, 0, x_pos, get_bottom_right_pixel().y());
+    painter.setPen(Qt::white);
+    painter.drawLine(x_pos, get_bottom_right_pixel().y(), x_pos,
+      get_bottom_right_pixel().y() + scale_height(2));
+    auto text_width = m_font_metrics.horizontalAdvance(
+      m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), time),
+        QLocale()));
+    painter.drawText(x_pos - text_width / 2,
+      get_bottom_right_pixel().y() + m_font_metrics.height() + scale_height(2),
+      m_item_delegate->displayText(to_variant(m_model->get_x_axis_type(), time),
+        QLocale()));
+  }
+  auto y_step = calculate_step(m_model->get_y_axis_type(),
+    m_region->m_top_left.m_y - m_region->m_bottom_right.m_y);
+  for(auto y = m_region->m_bottom_right.m_y - m_region->m_bottom_right.m_y %
+      y_step + y_step; y < m_region->m_top_left.m_y; y += y_step) {
+    auto y_pos = get_bottom_right_pixel().y() - map_to(y,
+      m_region->m_bottom_right.m_y, m_region->m_top_left.m_y, 0,
+      get_bottom_right_pixel().y());
+    painter.setPen("#3A3348");
+    painter.drawLine(0, y_pos, get_bottom_right_pixel().x(), y_pos);
+    painter.setPen(Qt::white);
+    painter.drawLine(get_bottom_right_pixel().x(), y_pos,
+      get_bottom_right_pixel().x() + scale_width(2), y_pos);
+    painter.drawText(get_bottom_right_pixel().x() + scale_width(3),
+      y_pos + (m_font_metrics.height() / 3), m_item_delegate->displayText(
+        to_variant(m_model->get_y_axis_type(), y), QLocale()));
+  }
   for(auto& candlestick : m_visible_candlesticks) {
     auto layout = get_candlestick_layout(candlestick);
     if(!layout) {
@@ -285,7 +319,6 @@ void ChartView::paintEvent(QPaintEvent* event) {
         QColor("#EF5357"));
     }
   }
-  auto gaps = get_gaps();
   for(auto& gap : gaps) {
     auto start = std::max(0, map_to(gap.m_start, m_region->m_top_left.m_x,
       m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()));
