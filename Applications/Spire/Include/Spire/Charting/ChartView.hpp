@@ -173,9 +173,9 @@ namespace Spire {
         const PeggedCandlestick& rhs) const;
       std::vector<Gap> get_gaps() const;
       void draw_gap(QPainter& paitner, int start, int end);
-      //void draw_point(QPainter& painter, const QColor& color,
-      //  const QPoint& pos);
-      //void draw_points(int id, QPainter& painter);
+      void draw_point(QPainter& painter, const QColor& color,
+        const QPoint& pos);
+      void draw_points(int id, QPainter& painter);
       void set_region(const Region& region);
       bool intersects_gap(int x, const std::optional<std::vector<Gap>>&
         gaps = std::nullopt) const;
@@ -196,6 +196,7 @@ namespace Spire {
       void insert_right_candlestick(Candlestick candlestick);
       bool is_visible(const PeggedCandlestick& candlestick) const;
       std::optional<QPoint> to_pixel(const ChartPoint& point) const;
+      std::optional<ChartPoint> to_chart_point(const QPoint& point) const;
       std::optional<CandlestickLayout> get_candlestick_layout(
         const PeggedCandlestick& candlestick) const;
       QPoint get_bottom_right_pixel() const;

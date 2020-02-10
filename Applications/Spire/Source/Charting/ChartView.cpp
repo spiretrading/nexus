@@ -126,7 +126,41 @@ void ChartView::set_crosshair(const QPoint& position,
   m_mouse_buttons = buttons;
   m_crosshair_pos = position;
   if(m_draw_state != DrawState::OFF) {
-    // TODO: line model
+    if(m_draw_state == DrawState::IDLE) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
+      if(m_current_trend_line_id != -1) {
+        m_draw_state = DrawState::HOVER;
+      }
+    } else if(m_draw_state == DrawState::HOVER) {
+      m_current_trend_line_id = update_intersection(*m_crosshair_pos);
+      if(m_current_trend_line_id == -1) {
+        m_draw_state = DrawState::IDLE;
+      }
+    } else if(m_draw_state == DrawState::LINE) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      if(!m_line_mouse_offset) {
+        m_line_mouse_offset = LineMouseOffset{
+          *to_pixel(std::get<0>(line.m_points)) - *m_crosshair_pos,
+          *to_pixel(std::get<1>(line.m_points)) - *m_crosshair_pos};
+      } else {
+        line.m_points = {
+          *to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_first),
+          *to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_second)};
+        m_trend_line_model.update(line, m_current_trend_line_id);
+      }
+    } else if(m_draw_state == DrawState::NEW) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      m_current_trend_line_point = *to_chart_point(*m_crosshair_pos);
+      m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+        m_current_stationary_point}, line.m_color, line.m_style},
+        m_current_trend_line_id);
+    } else if(m_draw_state == DrawState::POINT) {
+      auto line = m_trend_line_model.get(m_current_trend_line_id);
+      m_current_trend_line_point = *to_chart_point(*m_crosshair_pos);
+      m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+        m_current_stationary_point}, line.m_color, line.m_style},
+        m_current_trend_line_id);
+    }
   }
   update();
 }
@@ -251,8 +285,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     m_region->m_bottom_right.m_x - m_region->m_top_left.m_x);
   for(auto x = m_region->m_top_left.m_x - m_region->m_top_left.m_x % x_step +
       x_step; x < m_region->m_bottom_right.m_x; x += x_step) {
-    auto x_pos = map_to(x, m_region->m_top_left.m_x,
-      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x());
+    auto x_pos = to_pixel(ChartPoint{ x, Scalar() })->x();
     auto time_opt = get_time_by_location(x);
     if(intersects_gap(x_pos, gaps) || !time_opt) {
       continue;
@@ -275,9 +308,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
     m_region->m_top_left.m_y - m_region->m_bottom_right.m_y);
   for(auto y = m_region->m_bottom_right.m_y - m_region->m_bottom_right.m_y %
       y_step + y_step; y < m_region->m_top_left.m_y; y += y_step) {
-    auto y_pos = get_bottom_right_pixel().y() - map_to(y,
-      m_region->m_bottom_right.m_y, m_region->m_top_left.m_y, 0,
-      get_bottom_right_pixel().y());
+    auto y_pos = to_pixel(ChartPoint{ Scalar(0), y })->y();
     painter.setPen("#3A3348");
     painter.drawLine(0, y_pos, get_bottom_right_pixel().x(), y_pos);
     painter.setPen(Qt::white);
@@ -320,10 +351,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
   }
   for(auto& gap : gaps) {
-    auto start = std::max(0, map_to(gap.m_start, m_region->m_top_left.m_x,
-      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()));
-    auto end = std::min(map_to(gap.m_end, m_region->m_top_left.m_x,
-      m_region->m_bottom_right.m_x, 0, get_bottom_right_pixel().x()),
+    auto start = std::max(0, to_pixel({ gap.m_start, Scalar(0) })->x());
+    auto end = std::min(to_pixel({ gap.m_end, Scalar(0) })->x(),
       get_bottom_right_pixel().x());
     draw_gap(painter, std::max(0, start), std::min(
       get_bottom_right_pixel().x() - 1, end));
@@ -343,8 +372,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
       m_crosshair_pos.value().x(), get_bottom_right_pixel().y());
     painter.drawLine(0, m_crosshair_pos.value().y(), get_bottom_right_pixel().x(),
       m_crosshair_pos.value().y());
-    auto x = map_to(m_crosshair_pos->x(), 0, get_bottom_right_pixel().x(),
-      m_region->m_top_left.m_x, m_region->m_bottom_right.m_x);
+    auto crosshair_chart = to_chart_point(*m_crosshair_pos);
+    auto x = crosshair_chart->m_x;
     auto crosshair_time = get_time_by_location(x);
     if(crosshair_time && !intersects_gap(m_crosshair_pos->x(), gaps)) {
       auto x_label = m_item_delegate->displayText(to_variant(
@@ -377,8 +406,7 @@ void ChartView::paintEvent(QPaintEvent* event) {
       width() - get_bottom_right_pixel().x(), scale_height(15), Qt::white);
     painter.fillRect(get_bottom_right_pixel().x(), m_crosshair_pos.value().y(),
       scale_width(3), scale_height(1), Qt::black);
-    auto y = map_to(m_crosshair_pos->y(), get_bottom_right_pixel().y(), 0,
-      m_region->m_bottom_right.m_y, m_region->m_top_left.m_y);
+    auto y = crosshair_chart->m_y;
     auto y_label = m_item_delegate->displayText(to_variant(
       m_model->get_y_axis_type(), y), QLocale());
     painter.setPen(m_label_text_color);
@@ -390,6 +418,25 @@ void ChartView::paintEvent(QPaintEvent* event) {
 
   painter.setClipRegion({0, 0, get_bottom_right_pixel().x(),
     get_bottom_right_pixel().y()});
+  for(auto& line : m_trend_line_model.get_lines()) {
+    auto first = to_pixel(std::get<0>(line.m_points));
+    auto second = to_pixel(std::get<1>(line.m_points));
+    if(!first || !second) {
+      continue;
+    }
+    draw_trend_line(painter, line.m_style, line.m_color,
+      first->x(), first->y(), second->x(), second->y());
+  }
+  if(m_draw_state != DrawState::OFF) {
+    for(auto id : m_trend_line_model.get_selected()) {
+      draw_points(id, painter);
+    }
+    if(m_draw_state == DrawState::HOVER ||
+      m_draw_state == DrawState::LINE ||
+      m_draw_state == DrawState::POINT) {
+      draw_points(m_current_trend_line_id, painter);
+    }
+  }
 }
 
 void ChartView::resizeEvent(QResizeEvent* event) {
@@ -491,10 +538,38 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
   painter.restore();
 }
 
+void ChartView::draw_point(QPainter& painter, const QColor& border_color,
+  const QPoint& pos) {
+  painter.setPen(border_color);
+  painter.setBrush(border_color);
+  painter.drawEllipse(pos, scale_width(6), scale_height(6));
+  painter.setPen(Qt::white);
+  painter.setBrush(Qt::white);
+  painter.drawEllipse(pos, scale_width(4), scale_height(4));
+}
+
+void ChartView::draw_points(int id, QPainter& painter) {
+  auto line = m_trend_line_model.get(id);
+  auto first = to_pixel(std::get<0>(line.m_points));
+  auto second = to_pixel(std::get<1>(line.m_points));
+  if(!first || !second) {
+    return;
+  }
+  auto current_point = to_pixel(m_current_trend_line_point);
+  auto first_color = QColor("#25212E");
+  auto second_color = QColor("#25212E");
+  if(current_point == first) {
+    first_color = QColor("#B9B4EC");
+  } else if(current_point == second) {
+    second_color = QColor("#B9B4EC");
+  }
+  draw_point(painter, first_color, *first);
+  draw_point(painter, second_color, *second);
+}
+
 bool ChartView::intersects_gap(int x, const std::optional<std::vector<Gap>>&
     gaps) const {
-  auto x_location = map_to(x, 0, get_bottom_right_pixel().x(),
-    m_region->m_top_left.m_x, m_region->m_bottom_right.m_x);
+  auto x_location = to_chart_point({ x, 0 })->m_x;
   auto gap_list = gaps.value_or(get_gaps());
   auto it = std::upper_bound(gap_list.begin(), gap_list.end(), x_location,
     [](auto x, auto& gap) {
@@ -503,6 +578,61 @@ bool ChartView::intersects_gap(int x, const std::optional<std::vector<Gap>>&
   auto result = !gap_list.empty() && it != gap_list.begin() &&
     x_location < (it - 1)->m_end;
   return result;
+}
+
+int ChartView::update_intersection(const QPoint& mouse_pos) {
+  auto id = m_trend_line_model.find_closest(
+    *to_chart_point(*m_crosshair_pos));
+  if(id == -1) {
+    return id;
+  }
+  auto line = m_trend_line_model.get(id);
+  auto point1 = *to_pixel(std::get<0>(line.m_points));
+  auto point2 = *to_pixel(std::get<1>(line.m_points));
+  auto line_slope = slope(point1, point2);
+  auto line_b = y_intercept(point1, line_slope);
+  auto point_distance = closest_point_distance_squared(mouse_pos, point1,
+    point2);
+  if(point_distance < m_line_hover_distance_squared) {
+    auto line = m_trend_line_model.get(id);
+    auto line_point = to_pixel(std::get<0>(line.m_points));
+    auto distance = distance_squared(mouse_pos, point1);
+    if(point_distance == distance) {
+      m_current_trend_line_point = std::get<0>(line.m_points);
+      m_current_stationary_point = std::get<1>(line.m_points);
+    } else {
+      m_current_trend_line_point = std::get<1>(line.m_points);
+      m_current_stationary_point = std::get<0>(line.m_points);
+    }
+  } else {
+    m_current_trend_line_point = ChartPoint();
+    m_current_stationary_point = ChartPoint();
+  }
+  auto distance = std::numeric_limits<double>::infinity();
+  if(std::isinf<double>(line_slope)) {
+    if(is_within_interval(mouse_pos.y(), point1.y(), point2.y())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(point1.x()), static_cast<double>(mouse_pos.y())});
+    }
+  } else if(line_slope == 0) {
+    if(is_within_interval(mouse_pos.x(), point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos,
+        {static_cast<double>(mouse_pos.x()), static_cast<double>(point1.y())});
+    }
+  } else {
+    auto line_point_x =
+      (mouse_pos.x() + line_slope * mouse_pos.y() - line_slope * line_b) /
+      (line_slope * line_slope + 1);
+    if(is_within_interval(line_point_x, point1.x(), point2.x())) {
+      distance = distance_squared(mouse_pos, {line_point_x,
+        calculate_y(line_slope, line_point_x, line_b)});
+    }
+  }
+  if(point_distance <= m_line_hover_distance_squared ||
+    distance <= m_line_hover_distance_squared) {
+    return id;
+  }
+  return -1;
 }
 
 void ChartView::update_auto_scale() {
@@ -538,6 +668,42 @@ void ChartView::update_selected_line_styles() {
 }
 
 void ChartView::on_left_mouse_button_press(const QPoint& pos) {
+  if(m_draw_state == DrawState::HOVER) {
+    if(m_is_multi_select_enabled) {
+      m_trend_line_model.toggle_selection(m_current_trend_line_id);
+      return;
+    }
+    m_trend_line_model.clear_selected();
+    m_trend_line_model.set_selected(m_current_trend_line_id);
+    if(m_current_trend_line_point.m_x != Scalar() &&
+      m_current_trend_line_point.m_y != Scalar()) {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
+      m_draw_state = DrawState::POINT;
+    } else {
+      m_trend_line_model.set_selected(m_current_trend_line_id);
+      m_draw_state = DrawState::LINE;
+    }
+  } else if(m_draw_state == DrawState::IDLE) {
+    if(m_trend_line_model.get_selected().empty()) {
+      m_current_trend_line_point = *to_chart_point(pos);
+      m_current_stationary_point = m_current_trend_line_point;
+      m_current_trend_line_id = m_trend_line_model.add(
+        TrendLine({m_current_trend_line_point, m_current_trend_line_point},
+          m_current_trend_line_color,
+          m_current_trend_line_style));
+      m_draw_state = DrawState::NEW;
+    } else {
+      m_trend_line_model.clear_selected();
+      m_draw_state = DrawState::IDLE;
+    }
+  } else if(m_draw_state == DrawState::NEW) {
+    auto line = m_trend_line_model.get(m_current_trend_line_id);
+    m_current_trend_line_point = *to_chart_point(pos);
+    m_trend_line_model.update(TrendLine{{m_current_trend_line_point,
+      m_current_stationary_point}, line.m_color, line.m_style},
+      m_current_trend_line_id);
+    m_draw_state = DrawState::IDLE;
+  }
 }
 
 void ChartView::on_left_mouse_button_release() {
@@ -714,6 +880,21 @@ std::optional<QPoint> ChartView::to_pixel(const ChartPoint& point) const {
   auto y = map_to(point.m_y, bottom_right.m_y, top_left.m_y, max_y, 0);
   auto pixel = QPoint(x, y);
   return pixel;
+}
+
+std::optional<ChartPoint> ChartView::to_chart_point(
+    const QPoint& point) const {
+  if(!m_region) {
+    return std::nullopt;
+  }
+  auto& top_left = m_region->m_top_left;
+  auto& bottom_right = m_region->m_bottom_right;
+  auto max_x = get_bottom_right_pixel().x();
+  auto max_y = get_bottom_right_pixel().y();
+  auto x = map_to(point.x(), 0, max_x, top_left.m_x, bottom_right.m_x);
+  auto y = map_to(point.y(), max_y, 0, bottom_right.m_y, top_left.m_y);
+  auto result = ChartPoint{ x, y };
+  return result;
 }
 
 QPoint ChartView::get_bottom_right_pixel() const {
