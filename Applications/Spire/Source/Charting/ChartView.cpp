@@ -212,9 +212,9 @@ void ChartView::shift(int dx, int dy) {
   auto dy_points = map_to(dy, 0, get_bottom_right_pixel().y(),
     Scalar(), top_left.m_y - bottom_right.m_y);
   bottom_right.m_x += dx_points;
-  bottom_right.m_y += dy_points;
+  bottom_right.m_y -= dy_points;
   top_left.m_x += dx_points;
-  top_left.m_y += dy_points;
+  top_left.m_y -= dy_points;
   set_region(region);
 }
 
