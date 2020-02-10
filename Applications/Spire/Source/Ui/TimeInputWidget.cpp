@@ -199,6 +199,10 @@ void TimeInputWidget::set_style(const QString& border_hex) {
 }
 
 void TimeInputWidget::on_drop_down_changed(const QString& item) {
+  m_hour_line_edit->setText(clamped_value(
+    QString::number(m_last_valid_hour), 1, 12));
+  m_minute_line_edit->setText(clamped_value(
+    QString::number(m_last_valid_minute), 0, 59));
   on_time_changed();
 }
 
@@ -208,6 +212,8 @@ void TimeInputWidget::on_time_changed() {
   auto hour = m_hour_line_edit->text().toInt(&hour_ok);
   auto minute = m_minute_line_edit->text().toInt(&minute_ok);
   if(hour_ok && minute_ok) {
+    m_last_valid_hour = hour;
+    m_last_valid_minute = minute;
     if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
       hour = 0;
     } else if(m_drop_down_menu->get_text() == tr("PM")) {
@@ -215,8 +221,6 @@ void TimeInputWidget::on_time_changed() {
         hour += 12;
       }
     }
-    m_last_valid_hour = hour;
-    m_last_valid_minute = minute;
     m_time_signal(Scalar(hours(hour) + minutes(minute)));
   }
 }
