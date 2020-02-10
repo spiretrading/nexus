@@ -11,7 +11,6 @@ interface Properties {
 interface State {
   entries: Nexus.ComplianceRuleEntry[];
   schemas: Nexus.ComplianceRuleSchema[];
-  readonly: boolean;
 }
 
 /** Displays a sample CompliancePage for testing. */
@@ -20,30 +19,21 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       entries: [],
-      schemas: [],
-      readonly: false
+      schemas: []
     };
     this.onRuleAdd = this.onRuleAdd.bind(this);
     this.onRuleChange = this.onRuleChange.bind(this);
-    this.toggleReadonly = this.toggleReadonly.bind(this);
   }
 
   public render(): JSX.Element {
     return(
       <div style={{height: '100%'}}>
-        <div style={TestApp.STYLE.testingComponents}>
-          <button tabIndex={-1}
-            onClick={this.toggleReadonly}>
-            TOGGLE READONLY
-          </button>
-        </div>
       <WebPortal.PageWrapper>
         <WebPortal.CompliancePage
           onRuleAdd={this.onRuleAdd}
           onRuleChange={this.onRuleChange}
           displaySize={this.props.displaySize} 
           schemas={this.state.schemas}
-          readonly={this.state.readonly}
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           entries={this.state.entries}/>
       </WebPortal.PageWrapper>
@@ -254,12 +244,6 @@ class TestApp extends React.Component<Properties, State> {
       )
     );
     this.setState({entries: this.state.entries});
-  }
-
-  private toggleReadonly() {
-    this.setState({
-      readonly: !this.state.readonly
-    });
   }
 
   private static STYLE = {
