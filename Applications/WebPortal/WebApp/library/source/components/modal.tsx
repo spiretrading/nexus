@@ -2,12 +2,21 @@ import * as React from 'react';
 import { DisplaySize } from '../display_size';
 
 interface Properties {
+
+  /** The size of the viewport. */
   displaySize: DisplaySize;
+
+  /** The height of the modal. */
   height: string;
+
+  /** The width of the modal. */
   width: string;
+
+  /** Called when the modal should be closed. */
   onClose?: () => void;
 }
 
+/** This is a component that wraps a child component to style it as a modal. */
 export class Modal extends React.Component<Properties> {
   public static readonly defaultProps = {
     onClose: () => {}
@@ -34,7 +43,7 @@ export class Modal extends React.Component<Properties> {
         return Modal.STYLE.modalWrapperLarge;
       }
     })();
-    const rightFillerStyle = (() => {
+    const bottomPadding = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
@@ -49,7 +58,7 @@ export class Modal extends React.Component<Properties> {
           <div style={modalStyle}>
             {this.props.children}
           </div>
-          <div style={rightFillerStyle} onClick={this.props.onClose}/>
+          <div style={bottomPadding} onClick={this.props.onClose}/>
         </div>
         <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
       </div>);
