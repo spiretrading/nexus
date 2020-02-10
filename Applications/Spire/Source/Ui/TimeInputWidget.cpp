@@ -11,7 +11,9 @@ using namespace boost::signals2;
 using namespace Spire;
 
 TimeInputWidget::TimeInputWidget(QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_last_valid_hour(12),
+      m_last_valid_minute(0) {
   auto layout = new QHBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
@@ -70,6 +72,8 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
+      m_hour_line_edit->setText(clamped_value(
+        QString::number(m_last_valid_hour), 1, 12));
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -93,13 +97,17 @@ bool TimeInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_hour_line_edit->setText(clamped_value(m_hour_line_edit->text(),
             1, 12));
         }
-        on_time_changed();
+        if(m_hour_line_edit->text() != "0") {
+          on_time_changed();
+        }
       }
     }
   } else if(watched == m_minute_line_edit) {
     if(event->type() == QEvent::FocusIn) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
+      m_minute_line_edit->setText(clamped_value(
+        QString::number(m_last_valid_minute), 0, 59));
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -146,7 +154,7 @@ QString TimeInputWidget::clamped_value(const QString& text, int min_value,
     }
     return QString::number(value);
   }
-  return text;
+  return QString::number(min_value);
 }
 
 QString TimeInputWidget::get_line_edit_value(const QString& text, int key,
@@ -199,7 +207,7 @@ void TimeInputWidget::on_time_changed() {
   auto minute_ok = false;
   auto hour = m_hour_line_edit->text().toInt(&hour_ok);
   auto minute = m_minute_line_edit->text().toInt(&minute_ok);
-  if(hour_ok && minute_ok && hour > 0) {
+  if(hour_ok && minute_ok) {
     if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
       hour = 0;
     } else if(m_drop_down_menu->get_text() == tr("PM")) {
@@ -207,6 +215,8 @@ void TimeInputWidget::on_time_changed() {
         hour += 12;
       }
     }
+    m_last_valid_hour = hour;
+    m_last_valid_minute = minute;
     m_time_signal(Scalar(hours(hour) + minutes(minute)));
   }
 }

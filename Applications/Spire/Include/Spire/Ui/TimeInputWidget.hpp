@@ -64,6 +64,8 @@ namespace Spire {
       ColonWidget* m_colon_widget;
       QLineEdit* m_minute_line_edit;
       DropDownMenu* m_drop_down_menu;
+      int m_last_valid_hour;
+      int m_last_valid_minute;
 
       QString clamped_value(const QString& text, int min_value, int max_value);
       QString clamped_value(const QString& text, int min_value, int max_value,
