@@ -206,30 +206,32 @@ export class SecurityInput extends React.Component<Properties, State> {
           <Modal displaySize={this.props.displaySize} 
               width={'300px'} height={modalHeight}
               onClose={this.toggleEditing}>
-            <div style={SecurityInput.STYLE.header}>
-              <div style={SecurityInput.STYLE.headerText}>
-                {headerText}
+            <div style={SecurityInput.STYLE.modalPadding}>
+              <div style={SecurityInput.STYLE.header}>
+                <div style={SecurityInput.STYLE.headerText}>
+                  {headerText}
+                </div>
+                <img src={SecurityInput.PATH + 'close.svg'}
+                  height='20px'
+                  width='20px'
+                  style={SecurityInput.STYLE.clickable}
+                  onClick={this.toggleEditing}/>
               </div>
-              <img src={SecurityInput.PATH + 'close.svg'}
-                height='20px'
-                width='20px'
-                style={SecurityInput.STYLE.clickable}
-                onClick={this.toggleEditing}/>
-            </div>
-            {inputField}
-            <SymbolsBox 
-              displaySize={this.props.displaySize}
-              readonly={this.props.readonly}
-              value={this.state.localValue}
-              selection={this.state.selection}
-              onClick={this.selectEntry}/>
-            <div style={iconRowStyle}>
-              {removeButton}
-              {uploadButton}
-            </div>
-            <HLine color={'#e6e6e6'}/>
-            <div style={SecurityInput.STYLE.buttonWrapper}>
-              {confirmationButton}
+              {inputField}
+              <SymbolsBox 
+                displaySize={this.props.displaySize}
+                readonly={this.props.readonly}
+                value={this.state.localValue}
+                selection={this.state.selection}
+                onClick={this.selectEntry}/>
+              <div style={iconRowStyle}>
+                {removeButton}
+                {uploadButton}
+              </div>
+              <HLine color={'#e6e6e6'}/>
+              <div style={SecurityInput.STYLE.buttonWrapper}>
+                {confirmationButton}
+              </div>
             </div>
           </Modal>
         </div>
@@ -293,6 +295,9 @@ export class SecurityInput extends React.Component<Properties, State> {
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
+    },
+    modalPadding: {
+      padding: '18px'
     },
     clickable: {
       cursor: 'pointer' as 'pointer'

@@ -22,11 +22,6 @@ export class Modal extends React.Component<Properties> {
     onClose: () => {}
   };
 
-  public constructor(props: Properties) {
-    super(props);
-    this.onClick = this.onClick.bind(this);
-  }
-
   public render(): JSX.Element {
     const modalStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -53,7 +48,7 @@ export class Modal extends React.Component<Properties> {
     return (
       <div style={Modal.STYLE.wrapper}>
         <div style={modalWrapperStyle}
-            onClick={this.onClick.bind(HTMLDivElement)}>
+            onClick={(e: React.MouseEvent<HTMLDivElement>) => this.onClick(e)}>
           <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
           <div style={modalStyle}>
             {this.props.children}
@@ -64,7 +59,7 @@ export class Modal extends React.Component<Properties> {
       </div>);
   }
 
-  private onClick(event: MouseEvent) {
+  private onClick(event: React.MouseEvent<HTMLDivElement>) {
     if(event.target === event.currentTarget) {
       this.props.onClose();
     }
@@ -116,7 +111,6 @@ export class Modal extends React.Component<Properties> {
     },
     modalSmall: {
       boxSizing: 'border-box' as 'border-box',
-      padding: '18px',
       paddingBottom: '40px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
@@ -148,7 +142,6 @@ export class Modal extends React.Component<Properties> {
     },
     modalLarge: {
       boxSizing: 'border-box' as 'border-box',
-      padding: '18px',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
       alignSelf: 'center' as 'center',

@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../../display_size';
-import { NewRuleButton, RulesList } from '.';
+import { NewRuleModal, RulesList } from '.';
 
 interface Properties {
   
@@ -33,7 +33,7 @@ export class CompliancePage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isAddRuleModalOpen: false,
+      isAddRuleModalOpen: false
     };
     this.onToggleAddRuleModal = this.onToggleAddRuleModal.bind(this);
   }
@@ -56,7 +56,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           complianceList={this.props.entries}
           onChange={this.props.onRuleChange}/>
         <div style={CompliancePage.STYLE.paddingMedium}/>
-        <NewRuleButton displaySize={this.props.displaySize}
+        <NewRuleModal displaySize={this.props.displaySize}
           isOpen={this.state.isAddRuleModalOpen}
           onToggleModal={this.onToggleAddRuleModal}
           onAddNewRule={this.props.onRuleAdd}
