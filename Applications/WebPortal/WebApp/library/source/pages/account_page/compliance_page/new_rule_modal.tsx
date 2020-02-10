@@ -1,8 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize,  HLine } from '../../..';
-import { Modal } from '../../../components';
+import { Button, DisplaySize, HLine, Modal } from '../../..';
 
 interface Properties {
 
@@ -107,11 +106,8 @@ export class NewRuleModal extends React.Component<Properties, State> {
             <div style={NewRuleModal.STYLE.footerWrapper}>
               <HLine color='#E6E6E6'/>
               <div style={buttonWrapper}>
-                <button 
-                    className={css(NewRuleModal.EXTRA_STYLE.button)}
-                    onClick={this.addNewRule.bind(this)}>
-                  {'Select'}
-                </button>
+                <Button label='Select'
+                  onClick={this.addNewRule.bind(this)}/>
               </div>
             </div>
           </Modal>
@@ -141,7 +137,9 @@ export class NewRuleModal extends React.Component<Properties, State> {
       height: '20px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer',
+      width: '130px'
     },
     newRuleText: {
       font: '400 14px Roboto',
@@ -235,42 +233,6 @@ export class NewRuleModal extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       paddingLeft: '18px'
-    },
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none' as 'none',
-      ':active' : {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
-      },
-      ':hover':{
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
     }
   });
   private static readonly CLOSE_PATH =
