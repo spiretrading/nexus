@@ -15,6 +15,7 @@
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
+#include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
@@ -45,6 +46,7 @@ void ValueTypeTester::TestNames() {
   CPPUNIT_ASSERT(OrderStatusType::GetInstance().GetName() == "Order Status");
   CPPUNIT_ASSERT(OrderTypeType::GetInstance().GetName() == "Order Type");
   CPPUNIT_ASSERT(SecurityType::GetInstance().GetName() == "Security");
+  CPPUNIT_ASSERT(SequenceType::GetInstance().GetName() == "Sequence");
   CPPUNIT_ASSERT(SideType::GetInstance().GetName() == "Side");
   CPPUNIT_ASSERT(TextType::GetInstance().GetName() == "Text");
   CPPUNIT_ASSERT(TimeInForceType::GetInstance().GetName() == "Time In Force");
@@ -74,6 +76,8 @@ void ValueTypeTester::TestNativeTypes() {
     typeid(OrderType));
   CPPUNIT_ASSERT(SecurityType::GetInstance().GetNativeType() ==
     typeid(Security));
+  CPPUNIT_ASSERT(SequenceType::GetInstance().GetNativeType() ==
+    typeid(Beam::Queries::Sequence));
   CPPUNIT_ASSERT(SideType::GetInstance().GetNativeType() == typeid(Side));
   CPPUNIT_ASSERT(TextType::GetInstance().GetNativeType() == typeid(string));
   CPPUNIT_ASSERT(TimeInForceType::GetInstance().GetNativeType() ==

@@ -1,0 +1,45 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $admin_password
+
+enable_logging: false
+market: XNYS
+sampling: 100ms
+host: 233.200.79.25:61025
+interface: $local_interface:61025
+market_codes:
+  - code: A
+    market: XASE
+  - code: B
+    market: XBOS
+  - code: C
+    market: XCIS
+  - code: D
+    market: XADF
+  - code: I
+    market: XISX
+  - code: J
+    market: EDGA
+  - code: K
+    market: EDGX
+  - code: M
+    market: XCHI
+  - code: N
+    market: XNYS
+  - code: P
+    market: ARCX
+  - code: T
+    market: XNAS
+  - code: V
+    market: IEXG
+  - code: W
+    market: XCBO
+  - code: X
+    market: XPHL
+  - code: Y
+    market: BATY
+  - code: Z
+    market: BATS
+...

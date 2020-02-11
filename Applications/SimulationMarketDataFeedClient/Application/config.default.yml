@@ -1,14 +1,13 @@
 ---
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: market_data_feed
-  password: admin_password
+  password: $admin_password
 
 feeds: 1
 bbo_period: 1s
 market_quote_period: 1s
 time_and_sales_period: 1s
 sampling: 100ms
-symbols: [XIU.TSX, RY.TSX, ABX.TSX, SU.TSX, A.TSX, B.TSX, C.TSX,
-  LHS.CSE, TRST.CSE, AHG.CSE]
+symbols: [A.TSX, B.TSX, C.TSX]
 ...

@@ -301,7 +301,7 @@ namespace {
         queue.push(Aspen::Shared(child.Extract<Aspen::Box<T>>()));
       }
       queue.set_complete();
-      return Aspen::group(std::move(queue));
+      return Aspen::concur(std::move(queue));
     }
 
     using SupportedTypes = NativeTypes;
@@ -1003,7 +1003,7 @@ namespace {
     template<typename T>
     static Translation Template(CanvasNodeTranslationContext& context,
         Aspen::Box<void> trigger, const CanvasNode& series) {
-      return Aspen::group(Aspen::lift(
+      return Aspen::concur(Aspen::lift(
         [context = &context, series = &series] (
             const Aspen::Maybe<void>& value) {
           auto localContext = new CanvasNodeTranslationContext(Ref(*context));
@@ -1274,7 +1274,7 @@ void CanvasNodeTranslationVisitor::Visit(
     const ExecutionReportMonitorNode& node) {
   auto source = InternalTranslation(node.GetChildren().front());
   m_translation = Aspen::lift(ExecutionReportToRecordConverter(),
-    Aspen::group(Aspen::lift(
+    Aspen::concur(Aspen::lift(
     [] (const Order* order) {
       return Aspen::shared_box(PublisherReactor(order->GetPublisher()));
     }, source.Extract<Aspen::Box<const Order*>>())));
@@ -1513,29 +1513,29 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     auto value = InternalTranslation(*node.FindChild(field.m_name));
     if(field.m_type->GetCompatibility(IntegerType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      additionalFields.push_back(Aspen::box(Aspen::lift(
+      additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (Quantity q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::Box<Quantity>>())));
+        }, value.Extract<Aspen::Box<Quantity>>()))));
     } else if(field.m_type->GetCompatibility(
         Spire::DecimalType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      additionalFields.push_back(Aspen::box(Aspen::lift(
+      additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (double q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::Box<double>>())));
+        }, value.Extract<Aspen::Box<double>>()))));
     } else if(field.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      additionalFields.push_back(Aspen::box(Aspen::lift(
+      additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (Money q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::Box<Money>>())));
+        }, value.Extract<Aspen::Box<Money>>()))));
     } else if(field.m_type->GetCompatibility(Spire::TextType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
-      additionalFields.push_back(Aspen::box(Aspen::lift(
+      additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (std::string q) {
           return Tag(key, q);
-        }, value.Extract<Aspen::Box<std::string>>())));
+        }, value.Extract<Aspen::Box<std::string>>()))));
     }
   }
   auto& orderExecutionClient =
@@ -1543,26 +1543,26 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
     OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
-    InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>(),
-    InternalTranslation(*node.FindChild(
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
+      SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<
-      Aspen::Box<CurrencyId>>(),
-    InternalTranslation(*node.FindChild(
+      Aspen::Box<CurrencyId>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY)).Extract<
-      Aspen::Box<OrderType>>(),
-    InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::SIDE_PROPERTY)).Extract<Aspen::Box<Side>>(),
-    InternalTranslation(*node.FindChild(
+      Aspen::Box<OrderType>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
+      SingleOrderTaskNode::SIDE_PROPERTY)).Extract<Aspen::Box<Side>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::DESTINATION_PROPERTY)).Extract<
-      Aspen::Box<std::string>>(),
-    InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::QUANTITY_PROPERTY)).Extract<Aspen::Box<Quantity>>(),
-    InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>(),
-    InternalTranslation(*node.FindChild(
+      Aspen::Box<std::string>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
+      SingleOrderTaskNode::QUANTITY_PROPERTY)).Extract<Aspen::Box<Quantity>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
+      SingleOrderTaskNode::PRICE_PROPERTY)).Extract<Aspen::Box<Money>>()),
+    Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)).Extract<
-      Aspen::Box<TimeInForce>>(), std::move(additionalFields)));
+      Aspen::Box<TimeInForce>>()), std::move(additionalFields)));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const SpawnNode& node) {

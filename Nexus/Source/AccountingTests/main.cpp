@@ -3,6 +3,7 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include "Nexus/AccountingTests/BookkeeperReactorTester.hpp"
 #include "Nexus/AccountingTests/BuyingPowerTrackerTester.hpp"
 #include "Nexus/AccountingTests/PortfolioMonitorTester.hpp"
 #include "Nexus/AccountingTests/PositionOrderBookTester.hpp"
@@ -19,6 +20,7 @@ int main() {
   runner.addTest(ShortingTrackerTester::suite());
   runner.addTest(TrueAverageBookkeeperTester::suite());
   runner.addTest(PositionOrderBookTester::suite());
+  runner.addTest(BookkeeperReactorTester::suite());
   runner.eventManager().addListener(&listener);
   runner.setOutputter(new CPPUNIT_NS::CompilerOutputter(&runner.result(),
     CPPUNIT_NS::stdCOut()));

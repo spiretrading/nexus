@@ -79,7 +79,7 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
-    return out << "(" << value.GetKey() << " " << value.GetValue() << ")";
+    return out << '(' << value.GetKey() << ' ' << value.GetValue() << ')';
   }
 
   inline Tag::Tag(int key, const Type& value)
