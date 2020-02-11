@@ -76,10 +76,6 @@ export class ParameterEntry extends React.Component<Properties> {
           return <NumberInput 
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
-        case Nexus.ComplianceValue.Type.SECURITY:
-          return <SecurityInput
-            displaySize={this.props.displaySize}
-            value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
             displaySize={this.props.displaySize}
