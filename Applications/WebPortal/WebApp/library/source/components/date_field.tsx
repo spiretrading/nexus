@@ -131,7 +131,7 @@ export class DateField extends React.Component<Properties, State> {
             style={DateField.STYLE.yearBox}
             padding={4}/>
         </div>
-        <div style={DateField.STYLE.placeholder}>
+        <div style={DateField.STYLE.hintText}>
           {hintText}
         </div>
       </div>);
@@ -208,33 +208,6 @@ export class DateField extends React.Component<Properties, State> {
       borderRadius: '1px',
       height: '34px'
     },
-    wrapperSmallReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      minWidth: '184px',
-      width: '100%',
-      flexShrink: 1,
-      flexGrow: 1,
-      backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
-      border: '1px solid #ffffff',
-      borderRadius: '1px',
-      height: '34px'
-    },
-    wrapperLargeReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexGrow: 1,
-      flexShrink: 1,
-      maxWidth: '246px',
-      backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
-      border: '1px solid #ffffff',
-      borderRadius: '1px',
-      height: '34px'
-    },
     inner: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -270,7 +243,7 @@ export class DateField extends React.Component<Properties, State> {
       alignItems: 'center',
       cursor: 'default' as 'default'
     },
-    placeholder: {
+    hintText: {
       font: '500 11px Roboto',
       color: '#8C8C8C',
       display: 'flex' as 'flex',
