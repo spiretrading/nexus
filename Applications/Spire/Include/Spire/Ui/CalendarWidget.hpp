@@ -56,6 +56,7 @@ namespace Spire {
               imageFromSvg(":/Icons/arrow-right.svg", scale(16, 26),
               QRect(translate(6, 10), scale(4, 6)))));
             layout->addWidget(m_right_label);
+            set_date(date);
             update_label();
           }
 

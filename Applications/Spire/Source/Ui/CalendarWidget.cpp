@@ -6,13 +6,12 @@ using namespace Spire;
 
 CalendarWidget::CalendarWidget(Scalar date, QWidget* parent)
     : QWidget(parent),
-      m_current_month(2),
-      m_current_year(2020),
       m_calendar(QCalendar::System::Gregorian) {
-  setFixedSize(scale(168, 178));
+  setStyleSheet("background-color: #FFFFFF;");
+  setFixedSize(scale(168, 201));
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  layout->setContentsMargins(scale_width(4), scale_height(7), scale_width(4),
+  layout->setContentsMargins(scale_width(6), scale_height(7), scale_width(4),
     scale_height(4));
   auto month_widget = new MonthSpinBox(date, this);
   month_widget->setFixedHeight(scale_height(26));
@@ -21,6 +20,7 @@ CalendarWidget::CalendarWidget(Scalar date, QWidget* parent)
     on_month_changed(date);
   });
   layout->addWidget(month_widget);
+  layout->addSpacing(scale_height(4));
   auto day_label_layout = new QHBoxLayout();
   day_label_layout->setSpacing(scale_width(3));
   day_label_layout->setContentsMargins({});
@@ -32,7 +32,7 @@ CalendarWidget::CalendarWidget(Scalar date, QWidget* parent)
   add_day_label(day_label_layout, tr("F"));
   add_day_label(day_label_layout, tr("S"));
   layout->addLayout(day_label_layout);
-  layout->addSpacing(scale_height(4));
+  layout->addSpacing(scale_height(3));
   m_calendar_layout = new QGridLayout();
   m_calendar_layout->setContentsMargins({});
   m_calendar_layout->setSpacing(0);
