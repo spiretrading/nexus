@@ -202,7 +202,7 @@ namespace Spire {
       void on_date_selected(CalendarDayWidget* selected_widget);
       void on_month_changed(const boost::gregorian::date& date);
       void add_day_label(QLayout* layout, const QString& text);
-      void update_calendar(int year, int month);
+      void update_calendar(const boost::gregorian::date& displayed_date);
   };
 }
 
