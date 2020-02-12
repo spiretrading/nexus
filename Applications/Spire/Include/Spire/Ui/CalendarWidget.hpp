@@ -2,7 +2,6 @@
 #define SPIRE_CALENDAR_WIDGET_HPP
 #include <array>
 #include <boost/date_time/gregorian/greg_date.hpp>
-#include <QCalendar>
 #include <QEvent>
 #include <QGridLayout>
 #include <QLabel>
@@ -196,12 +195,13 @@ namespace Spire {
       boost::gregorian::date m_selected_date;
       CalendarDayWidget* m_selected_date_widget;
       QGridLayout* m_calendar_layout;
-      QCalendar m_calendar;
       std::array<boost::gregorian::date, 42> m_dates;
 
-      void on_date_selected(CalendarDayWidget* selected_widget);
+      void on_date_selected(const boost::gregorian::date& date);
       void on_month_changed(const boost::gregorian::date& date);
       void add_day_label(QLayout* layout, const QString& text);
+      CalendarDayWidget* get_day_widget(const boost::gregorian::date& date);
+      void set_highlight();
       void update_calendar(const boost::gregorian::date& displayed_date);
   };
 }
