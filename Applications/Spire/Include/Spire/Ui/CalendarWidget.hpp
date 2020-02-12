@@ -127,8 +127,7 @@ namespace Spire {
               const QString& text_color_hex, QWidget* parent = nullptr)
               : QLabel(parent),
                 m_date(date),
-                m_text_color_hex(text_color_hex),
-                m_is_selected(false) {
+                m_text_color_hex(text_color_hex) {
             setAlignment(Qt::AlignCenter);
             setText(QString::number(date.day()));
             set_default_style();
@@ -154,17 +153,10 @@ namespace Spire {
 
         protected:
           void mousePressEvent(QMouseEvent* event) override {
-            if(m_is_selected) {
-              set_default_style();
-            } else {
-              set_selected_style();
-            }
-            m_is_selected = !m_is_selected;
             m_clicked_signal(m_date);
           }
 
         private:
-          bool m_is_selected;
           mutable ClickedSignal m_clicked_signal;
           boost::gregorian::date m_date;
           QString m_text_color_hex;
@@ -207,6 +199,7 @@ namespace Spire {
       QCalendar m_calendar;
       std::array<boost::gregorian::date, 42> m_dates;
 
+      void on_date_selected(CalendarDayWidget* selected_widget);
       void on_month_changed(const boost::gregorian::date& date);
       void add_day_label(QLayout* layout, const QString& text);
       void update_calendar(int year, int month);

@@ -1,6 +1,7 @@
 #include "Spire/Ui/CalendarWidget.hpp"
 #include "boost/date_time/gregorian/gregorian_types.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace boost::gregorian;
 using namespace Spire;
@@ -52,6 +53,18 @@ void CalendarWidget::set_date(const date& date) {
   update_calendar(m_selected_date.year(), m_selected_date.month());
 }
 
+void CalendarWidget::on_date_selected(CalendarDayWidget* selected_widget) {
+  if(selected_widget->get_date() != m_selected_date) {
+    m_selected_date = selected_widget->get_date();
+    if(m_selected_date_widget) {
+      m_selected_date_widget->remove_highlight();
+    }
+    m_selected_date_widget = selected_widget;
+    m_selected_date_widget->set_highlight();
+    m_date_signal(m_selected_date);
+  }
+}
+
 void CalendarWidget::on_month_changed(const date& date) {
   if(m_selected_date_widget) {
     m_selected_date_widget->remove_highlight();
@@ -80,7 +93,7 @@ void CalendarWidget::update_calendar(int year, int month) {
     if(i < first_day_of_week) {
       m_dates[i] = first_day_of_month + days(i - first_day_of_week);
     } else if(i > day_count + first_day_of_week - 1) {
-      m_dates[i] = date(year, month + 1,
+      m_dates[i] = date(year, max(1, (month + 1) % 13),
         i - day_count - first_day_of_week + 1);
     } else {
       m_dates[i] = date(year, month, i + 1 - first_day_of_week);
@@ -90,7 +103,7 @@ void CalendarWidget::update_calendar(int year, int month) {
     for(auto week = 0; week < 6; ++week) {
       auto date = m_dates[day + week * 7];
       auto day_widget = [&] () {
-        if(date.month() != m_selected_date.month()) {
+        if(date.month() != month) {
           return new CalendarDayWidget(date, "#C8C8C8", this);
         }
         return new CalendarDayWidget(date, "#000000", this);
@@ -102,12 +115,7 @@ void CalendarWidget::update_calendar(int year, int month) {
       }
       m_calendar_layout->addWidget(day_widget, week, day);
       day_widget->connect_clicked_signal([=] (auto date) {
-          m_selected_date = date;
-          if(m_selected_date_widget) {
-            m_selected_date_widget->remove_highlight();
-          }
-          m_selected_date_widget = day_widget;
-          m_date_signal(date);
+          on_date_selected(day_widget);
         });
     }
   }
