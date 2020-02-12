@@ -15,8 +15,8 @@ int main(int argc, char** argv) {
   auto window = new QWidget();
   window->setStyleSheet("background-color: white;");
   auto layout = new QVBoxLayout(window);
-  auto calendar = new CalendarWidget(Scalar(
-    boost::posix_time::second_clock::local_time()));
+  auto calendar = new CalendarWidget(
+    boost::posix_time::second_clock::local_time().date());
   layout->addWidget(calendar);
   window->resize(600, 400);
   window->show();

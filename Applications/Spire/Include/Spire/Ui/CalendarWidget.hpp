@@ -1,8 +1,8 @@
 #ifndef SPIRE_CALENDAR_WIDGET_HPP
 #define SPIRE_CALENDAR_WIDGET_HPP
 #include <array>
+#include <boost/date_time/gregorian/greg_date.hpp>
 #include <QCalendar>
-#include <QDate>
 #include <QEvent>
 #include <QGridLayout>
 #include <QLabel>
@@ -17,17 +17,26 @@ namespace Spire {
   class CalendarWidget : public QWidget {
     public:
 
-      explicit CalendarWidget(Scalar date, QWidget* parent = nullptr);
+      using DateSignal = Signal<void (const boost::gregorian::date&)>;
 
-      void set_date(Scalar date);
+      explicit CalendarWidget(const boost::gregorian::date& selected_date,
+        QWidget* parent = nullptr);
+
+      void set_date(const boost::gregorian::date& date);
+
+      boost::signals2::connection connect_date_signal(
+          const DateSignal::slot_type& slot) const {
+        return m_date_signal.connect(slot);
+      }
 
     private:
       class MonthSpinBox : public QWidget {
         public:
 
-          using MonthSignal = Signal<void (Scalar)>;
+          using MonthSignal = Signal<void (const boost::gregorian::date&)>;
 
-          explicit MonthSpinBox(Scalar date, QWidget* parent = nullptr)
+          explicit MonthSpinBox(const boost::gregorian::date& initial_date,
+              QWidget* parent = nullptr)
               : QWidget(parent) {
             auto layout = new QHBoxLayout(this);
             layout->setSpacing(0);
@@ -56,11 +65,11 @@ namespace Spire {
               imageFromSvg(":/Icons/arrow-right.svg", scale(16, 26),
               QRect(translate(6, 10), scale(4, 6)))));
             layout->addWidget(m_right_label);
-            set_date(date);
+            set_date(initial_date);
             update_label();
           }
 
-          void set_date(Scalar date) {
+          void set_date(const boost::gregorian::date& date) {
             m_date = date;
             update_label();
           }
@@ -74,17 +83,13 @@ namespace Spire {
           bool eventFilter(QObject* watched, QEvent* event) override {
             if(watched == m_left_label) {
               if(event->type() == QEvent::MouseButtonRelease) {
-                m_date = Scalar(boost::posix_time::ptime(
-                  boost::posix_time::ptime(m_date).date() +
-                  boost::gregorian::months(-1), {}));
+                m_date -= boost::gregorian::months(1);
                 update_label();
                 m_month_signal(m_date);
               }
             } else if(watched == m_right_label) {
               if(event->type() == QEvent::MouseButtonRelease) {
-                m_date = Scalar(boost::posix_time::ptime(
-                  boost::posix_time::ptime(m_date).date() +
-                  boost::gregorian::months(1), {}));
+                m_date += boost::gregorian::months(1);
                 update_label();
                 m_month_signal(m_date);
               }
@@ -94,7 +99,7 @@ namespace Spire {
 
         private:
           mutable MonthSignal m_month_signal;
-          Scalar m_date;
+          boost::gregorian::date m_date;
           QLabel* m_month_label;
           QLabel* m_left_label;
           QLabel* m_right_label;
@@ -116,14 +121,29 @@ namespace Spire {
       class CalendarDayWidget : public QLabel {
         public:
 
-          using ClickedSignal = Signal<void (const QDate&)>;
+          using ClickedSignal = Signal<void (const boost::gregorian::date&)>;
 
-          CalendarDayWidget(const QDate& date, QWidget* parent = nullptr)
+          CalendarDayWidget(const boost::gregorian::date& date,
+              const QString& text_color_hex, QWidget* parent = nullptr)
               : QLabel(parent),
                 m_date(date),
+                m_text_color_hex(text_color_hex),
                 m_is_selected(false) {
             setAlignment(Qt::AlignCenter);
-            setText(QString::number(m_date.day()));
+            setText(QString::number(date.day()));
+            set_default_style();
+          }
+
+          // ever used?
+          const boost::gregorian::date& get_date() const {
+            return m_date;
+          }
+
+          void set_highlight() {
+            set_selected_style();
+          }
+
+          void remove_highlight() {
             set_default_style();
           }
 
@@ -146,13 +166,15 @@ namespace Spire {
         private:
           bool m_is_selected;
           mutable ClickedSignal m_clicked_signal;
-          QDate m_date;
+          boost::gregorian::date m_date;
+          QString m_text_color_hex;
 
           void set_default_style() {
             setStyleSheet(QString(R"(
               QLabel {
                 background-color: #FFFFFF;
                 border-radius: %2px;
+                color: %3;
                 font-family: Roboto;
                 font-size: %1px;
               }
@@ -160,7 +182,8 @@ namespace Spire {
               QLabel:hover {
                 background-color: #F2F2FF;
               }
-            )").arg(scale_height(12)).arg(scale_width(2)));
+            )").arg(scale_height(12)).arg(scale_width(2))
+               .arg(m_text_color_hex));
           }
 
           void set_selected_style() {
@@ -176,17 +199,17 @@ namespace Spire {
           }
       };
 
+      mutable DateSignal m_date_signal;
       MonthSpinBox* m_month_spin_box;
-      CalendarDayWidget* m_selected_date;
+      boost::gregorian::date m_selected_date;
+      CalendarDayWidget* m_selected_date_widget;
       QGridLayout* m_calendar_layout;
       QCalendar m_calendar;
-      int m_current_month;
-      int m_current_year;
-      std::array<QDate, 42> m_dates;
+      std::array<boost::gregorian::date, 42> m_dates;
 
-      void on_month_changed(Scalar date);
+      void on_month_changed(const boost::gregorian::date& date);
       void add_day_label(QLayout* layout, const QString& text);
-      void update_calendar();
+      void update_calendar(int year, int month);
   };
 }
 

@@ -1,19 +1,21 @@
 #include "Spire/Ui/CalendarWidget.hpp"
+#include "boost/date_time/gregorian/gregorian_types.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Scalar.hpp"
 
+using namespace boost::gregorian;
 using namespace Spire;
 
-CalendarWidget::CalendarWidget(Scalar date, QWidget* parent)
+CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
     : QWidget(parent),
-      m_calendar(QCalendar::System::Gregorian) {
+      m_calendar(QCalendar::System::Gregorian),
+      m_selected_date_widget(nullptr) {
   setStyleSheet("background-color: #FFFFFF;");
   setFixedSize(scale(168, 201));
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins(scale_width(6), scale_height(7), scale_width(4),
     scale_height(4));
-  auto month_widget = new MonthSpinBox(date, this);
+  auto month_widget = new MonthSpinBox(selected_date, this);
   month_widget->setFixedHeight(scale_height(26));
   month_widget->setFixedSize(scale(158, 26));
   month_widget->connect_month_signal([=] (auto date) {
@@ -39,21 +41,22 @@ CalendarWidget::CalendarWidget(Scalar date, QWidget* parent)
   m_calendar_layout->setHorizontalSpacing(scale_width(3));
   m_calendar_layout->setVerticalSpacing(scale_height(3));
   layout->addLayout(m_calendar_layout);
-  set_date(date);
+  set_date(selected_date);
 }
 
-void CalendarWidget::set_date(Scalar date) {
-  auto datetime = boost::posix_time::ptime(date);
-  m_current_year = datetime.date().year();
-  m_current_month = datetime.date().month();
-  update_calendar();
+void CalendarWidget::set_date(const date& date) {
+  m_selected_date = date;
+  if(m_selected_date_widget) {
+    m_selected_date_widget->remove_highlight();
+  }
+  update_calendar(m_selected_date.year(), m_selected_date.month());
 }
 
-void CalendarWidget::on_month_changed(Scalar date) {
-  auto new_date = boost::posix_time::ptime(date).date();
-  m_current_month = new_date.month();
-  m_current_year = new_date.year();
-  update_calendar();
+void CalendarWidget::on_month_changed(const date& date) {
+  if(m_selected_date_widget) {
+    m_selected_date_widget->remove_highlight();
+  }
+  update_calendar(date.year(), date.month());
 }
 
 void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
@@ -69,28 +72,43 @@ void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
   layout->addWidget(label);
 }
 
-void CalendarWidget::update_calendar() {
-  auto day_count = m_calendar.daysInMonth(m_current_month, m_current_year);
-  auto first_day = QDate(m_current_year, m_current_month, 1);
-  auto first_day_of_week = first_day.dayOfWeek(m_calendar);
+void CalendarWidget::update_calendar(int year, int month) {
+  auto first_day_of_month = date(year, month, 1);
+  auto day_count = first_day_of_month.end_of_month().day();
+  auto first_day_of_week = first_day_of_month.day_of_week().as_number();
   for(auto i = 0; i < 42; ++i) {
     if(i < first_day_of_week) {
-      auto day = first_day.addDays(i - first_day_of_week);
-      m_dates[i] = day;
+      m_dates[i] = first_day_of_month + days(i - first_day_of_week);
     } else if(i > day_count + first_day_of_week - 1) {
-      m_dates[i] = QDate(m_current_year, m_current_month,
+      m_dates[i] = date(year, month + 1,
         i - day_count - first_day_of_week + 1);
     } else {
-      m_dates[i] = QDate(m_current_year, m_current_month,
-        i + 1 - first_day_of_week);
+      m_dates[i] = date(year, month, i + 1 - first_day_of_week);
     }
   }
   for(auto day = 0; day < 7; ++day) {
     for(auto week = 0; week < 6; ++week) {
       auto date = m_dates[day + week * 7];
-      auto day_widget = new CalendarDayWidget(date, this);
+      auto day_widget = [&] () {
+        if(date.month() != m_selected_date.month()) {
+          return new CalendarDayWidget(date, "#C8C8C8", this);
+        }
+        return new CalendarDayWidget(date, "#000000", this);
+      }();
       day_widget->setFixedSize(scale(20, 20));
+      if(date == m_selected_date) {
+        m_selected_date_widget = day_widget;
+        m_selected_date_widget->set_highlight();
+      }
       m_calendar_layout->addWidget(day_widget, week, day);
+      day_widget->connect_clicked_signal([=] (auto date) {
+          m_selected_date = date;
+          if(m_selected_date_widget) {
+            m_selected_date_widget->remove_highlight();
+          }
+          m_selected_date_widget = day_widget;
+          m_date_signal(date);
+        });
     }
   }
 }
