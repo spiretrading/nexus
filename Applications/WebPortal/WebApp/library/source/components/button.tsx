@@ -36,8 +36,8 @@ export class Button extends React.Component<Properties> {
     return (
       <button style={{...style, ...this.props.style}}
           disabled={this.props.readonly}
-          className={css(Button.EXTRA_STYLE.button) + ' ' +
-            this.props.className}
+          className={
+            [css(Button.EXTRA_STYLE.button), this.props.className].join(' ')}
           onClick={this.props.onClick}>
         {this.props.label}
       </button>);
