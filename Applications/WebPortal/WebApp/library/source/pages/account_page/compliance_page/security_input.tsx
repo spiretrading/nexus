@@ -48,7 +48,8 @@ export class SecurityInput extends React.Component<Properties, State> {
     this.onSubmitChange = this.onSubmitChange.bind(this);
     this.removeEntry = this.removeEntry.bind(this);
     this.selectEntry = this.selectEntry.bind(this);
-    this.toggleEditing = this.toggleEditing.bind(this);
+    this.onClose = this.onClose.bind(this);
+    this.onOpen = this.onOpen.bind(this);
   }
 
   public render() {
@@ -105,11 +106,11 @@ export class SecurityInput extends React.Component<Properties, State> {
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
       if(displaySize=== DisplaySize.SMALL && this.props.readonly) {
-          return SecurityInput.STYLE.iconWrapperSmallReadonly;
+        return SecurityInput.STYLE.iconWrapperSmallReadonly;
       } else if(displaySize=== DisplaySize.SMALL && !this.props.readonly) {
-          return SecurityInput.STYLE.iconWrapperSmall;
+        return SecurityInput.STYLE.iconWrapperSmall;
       } else if(displaySize=== DisplaySize.LARGE && this.props.readonly) {
-          return SecurityInput.STYLE.iconWrapperLargeReadonly;
+        return SecurityInput.STYLE.iconWrapperLargeReadonly;
       } else {
         return SecurityInput.STYLE.iconWrapperLarge;
       }
@@ -137,7 +138,7 @@ export class SecurityInput extends React.Component<Properties, State> {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return (
             <div style={iconWrapperStyle}
-                onClick={this.removeEntry.bind(this)}>
+                onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
                 style={SecurityInput.STYLE.iconClickableStyle}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
@@ -145,7 +146,7 @@ export class SecurityInput extends React.Component<Properties, State> {
         } else {
           return (
             <div style={iconWrapperStyle}
-                onClick={this.removeEntry.bind(this)}>
+                onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
                 style={SecurityInput.STYLE.iconClickableStyle}
                 src={SecurityInput.PATH + 'remove-purple.svg'}/>
@@ -164,7 +165,7 @@ export class SecurityInput extends React.Component<Properties, State> {
         } else {
           return (
             <div style={iconWrapperStyle}
-                onClick={this.removeEntry.bind(this)}>
+                onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
                 src={SecurityInput.PATH + 'remove-grey.svg'}/>
               <div style={SecurityInput.STYLE.iconLabelReadonly}>
@@ -178,7 +179,7 @@ export class SecurityInput extends React.Component<Properties, State> {
       if(this.props.readonly) {
         return (
           <Button label={SecurityInput.CONFIRM_TEXT}
-              onClick={this.toggleEditing}/>);
+            onClick={this.onClose}/>);
       } else {
         return (
           <Button label={SecurityInput.SUBMIT_CHANGES_TEXT}
@@ -186,11 +187,10 @@ export class SecurityInput extends React.Component<Properties, State> {
       }
     })();
     let displayValue  = '';
-    for (let i =0; i < this.props.value.length; ++i) {
+    for(let i = 0; i < this.props.value.length; ++i) {
       const sec = this.props.value[i].value as Nexus.Security;
       displayValue = displayValue.concat(sec.symbol.toString());
-      if(i >= 0 && i < this.props.value.length - 1 && 
-          this.props.value.length > 1) {
+      if(this.props.value.length > 1 && i < this.props.value.length - 1) {
         displayValue = displayValue.concat(', ');
       }
     }
@@ -200,12 +200,12 @@ export class SecurityInput extends React.Component<Properties, State> {
           style={SecurityInput.STYLE.textBox}
           className={css(SecurityInput.EXTRA_STYLE.effects)}
           value={displayValue}
-          onFocus={this.toggleEditing.bind(this)}
-          onClick={this.toggleEditing.bind(this)}/>
+          onFocus={this.onOpen}
+          onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize} 
-              width={'300px'} height={modalHeight}
-              onClose={this.toggleEditing}>
+              width='300px' height={modalHeight}
+              onClose={this.onClose}>
             <div style={SecurityInput.STYLE.modalPadding}>
               <div style={SecurityInput.STYLE.header}>
                 <div style={SecurityInput.STYLE.headerText}>
@@ -215,7 +215,7 @@ export class SecurityInput extends React.Component<Properties, State> {
                   height='20px'
                   width='20px'
                   style={SecurityInput.STYLE.clickable}
-                  onClick={this.toggleEditing}/>
+                  onClick={this.onClose}/>
               </div>
               {inputField}
               <SymbolsBox 
@@ -239,9 +239,10 @@ export class SecurityInput extends React.Component<Properties, State> {
   }
   
   private addEntry(paramter: Nexus.ComplianceValue) {
-    this.setState({localValue: 
-      this.state.localValue.slice().concat(paramter)});
-    this.setState({inputString: ''});
+    this.setState({
+      inputString: '',
+      localValue: this.state.localValue.slice().concat(paramter)
+    });
   }
 
   private onInputChange(value: string) {
@@ -250,27 +251,34 @@ export class SecurityInput extends React.Component<Properties, State> {
 
   private onSubmitChange(){
     this.props.onChange(this.state.localValue);
-    this.toggleEditing();
+    this.onClose();
   }
 
   private removeEntry() {
     if(this.state.selection !== -1) {
-      this.setState({localValue: 
-        this.state.localValue.slice(0, this.state.selection).concat(
-        this.state.localValue.slice(this.state.selection+1))});
+      this.setState({
+        selection: -1,
+        localValue: this.state.localValue.slice(0, this.state.selection).concat(
+          this.state.localValue.slice(this.state.selection+1))
+      });
     }
-    this.setState({selection: -1});
   }
 
   private selectEntry(index: number) {
     this.setState({selection: index});
   }
 
-  private toggleEditing(){
+  private onOpen() {
     this.setState({
-      isEditing: !this.state.isEditing,
+      isEditing: true,
       selection: -1,
       localValue: this.props.value.slice()
+    });
+  }
+
+  private onClose(){
+    this.setState({
+      isEditing: false
     });
   }
 
@@ -465,17 +473,17 @@ interface InputFieldProperties {
   /** Called when the displayed value changes.
    * @param value - The new value.
    */
-  onChange?: (value: string) => void;
+  onChange: (value: string) => void;
 
   /** Called when the value is submitted.
    * @param value - The compliance value that is being submitted.
    */
-  onEnter?: (value: Nexus.ComplianceValue) => void;
+  onEnter: (value: Nexus.ComplianceValue) => void;
 }
 
 /** The field that allows the user to add a new entry to the list. */
 export class InputField extends React.Component<InputFieldProperties> {
-  public constructor(props: InputFieldProperties) {
+  constructor(props: InputFieldProperties) {
     super(props);
     this.onInputChange = this.onInputChange.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
@@ -595,19 +603,19 @@ export class SymbolsBox extends React.Component<SymbolsListProperties> {
         if(this.props.readonly) {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntryReadonly}>
-              {sec.symbol.toString()}
+              {sec.symbol}
             </div>);
         } else if(this.props.selection === i) {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntrySelected}
                 onClick={this.selectEntry.bind(this, i)}>
-              {sec.symbol.toString()}
+              {sec.symbol}
             </div>);
         } else {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntry}
                 onClick={this.selectEntry.bind(this, i)}>
-              {sec.symbol.toString()}
+              {sec.symbol}
             </div>);
         }
     }

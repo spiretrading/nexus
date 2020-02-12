@@ -238,5 +238,5 @@ export class NewRuleModal extends React.Component<Properties, State> {
   private static readonly CLOSE_PATH =
     'resources/account_page/compliance_page/new_rule_modal/close.svg';
   private static readonly ADD_PATH = 
-  'resources/account_page/compliance_page/new_rule_modal/add.svg';
+    'resources/account_page/compliance_page/new_rule_modal/add.svg';
 }

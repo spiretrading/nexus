@@ -7,7 +7,7 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The height of the modal. */
-  height: string;
+  height: string | number;
 
   /** The width of the modal. */
   width: string;
@@ -21,6 +21,11 @@ export class Modal extends React.Component<Properties> {
   public static readonly defaultProps = {
     onClose: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.outOfBoundsClick = this.outOfBoundsClick.bind(this);
+  }
 
   public render(): JSX.Element {
     const modalStyle = (() => {
@@ -48,7 +53,7 @@ export class Modal extends React.Component<Properties> {
     return (
       <div style={Modal.STYLE.wrapper}>
         <div style={modalWrapperStyle}
-            onClick={(e: React.MouseEvent<HTMLDivElement>) => this.onClick(e)}>
+          onClick={this.outOfBoundsClick}>
           <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
           <div style={modalStyle}>
             {this.props.children}
@@ -59,7 +64,7 @@ export class Modal extends React.Component<Properties> {
       </div>);
   }
 
-  private onClick(event: React.MouseEvent<HTMLDivElement>) {
+  private outOfBoundsClick(event: React.MouseEvent<HTMLDivElement>) {
     if(event.target === event.currentTarget) {
       this.props.onClose();
     }

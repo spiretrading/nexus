@@ -87,9 +87,9 @@ export class ParameterEntry extends React.Component<Properties> {
             if(this.props.parameter.value.value[0].type ===
                 Nexus.ComplianceValue.Type.SECURITY) {
               return <SecurityInput
-              displaySize={this.props.displaySize}
-              onChange={this.onChange}
-              value={this.props.parameter.value.value}/>;
+                displaySize={this.props.displaySize}
+                onChange={this.onChange}
+                value={this.props.parameter.value.value}/>;
             }
           } else {
             return <SecurityInput
