@@ -132,11 +132,6 @@ namespace Spire {
             set_default_style();
           }
 
-          // ever used?
-          const boost::gregorian::date& get_date() const {
-            return m_date;
-          }
-
           void set_highlight() {
             set_selected_style();
           }

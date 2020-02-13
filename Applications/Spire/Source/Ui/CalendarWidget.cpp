@@ -89,12 +89,12 @@ void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
 
 CalendarWidget::CalendarDayWidget* CalendarWidget::get_day_widget(
     const date& date) {
-  qDebug() << date.day_of_week().as_number();
   auto first_day =
-    boost::gregorian::date(date.year(), date.month(), 1).day_of_week() + 1;
-  auto row = 0;
+    boost::gregorian::date(date.year(), date.month(), 1).day_of_week();
+  auto day_index = date.day() + first_day - 1;
   return static_cast<CalendarDayWidget*>(m_calendar_layout->itemAtPosition(
-    row, date.day_of_week().as_number())->widget());
+    static_cast<int>(std::floor(static_cast<double>(day_index) / 7.0)),
+    date.day_of_week().as_number())->widget());
 }
 
 void CalendarWidget::set_highlight() {
