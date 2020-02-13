@@ -17,7 +17,7 @@ CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
   layout->setSpacing(0);
   layout->setContentsMargins(scale_width(6), scale_height(7), scale_width(4),
     scale_height(4));
-  m_month_spin_box = new MonthSpinBox(selected_date, this);
+  m_month_spin_box = new MonthAndYearSpinBox(selected_date, this);
   m_month_spin_box->setFixedHeight(scale_height(26));
   m_month_spin_box->setFixedSize(scale(158, 26));
   m_month_spin_box->connect_month_signal([=] (auto date) {
@@ -48,7 +48,6 @@ CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
 
 void CalendarWidget::set_date(const date& date) {
   if(date != m_selected_date) {
-    qDebug() << date.year() << ", " << date.month();
     m_calendar_model.set_month(date.month(), date.year());
     update_calendar(date);
   }

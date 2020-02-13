@@ -29,12 +29,12 @@ namespace Spire {
       }
 
     private:
-      class MonthSpinBox : public QWidget {
+      class MonthAndYearSpinBox : public QWidget {
         public:
 
           using MonthSignal = Signal<void (const boost::gregorian::date&)>;
 
-          explicit MonthSpinBox(const boost::gregorian::date& initial_date,
+          explicit MonthAndYearSpinBox(const boost::gregorian::date& initial_date,
               QWidget* parent = nullptr)
               : QWidget(parent) {
             setCursor(Qt::ArrowCursor);
@@ -241,7 +241,7 @@ namespace Spire {
       };
 
       mutable DateSignal m_date_signal;
-      MonthSpinBox* m_month_spin_box;
+      MonthAndYearSpinBox* m_month_spin_box;
       boost::gregorian::date m_selected_date;
       CalendarDayWidget* m_selected_date_widget;
       CalendarModel m_calendar_model;
