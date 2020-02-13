@@ -69,6 +69,9 @@ void CalendarWidget::on_date_selected(const date& date) {
 
 void CalendarWidget::on_month_changed(const date& date) {
   update_calendar(date);
+  if(date.month() == m_selected_date.month()) {
+    set_highlight();
+  }
 }
 
 void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
