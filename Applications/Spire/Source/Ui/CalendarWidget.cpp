@@ -6,15 +6,6 @@
 using namespace boost::gregorian;
 using namespace Spire;
 
-namespace {
-  auto row_from_date(const date& date) {
-    auto first_day =
-      boost::gregorian::date(date.year(), date.month(), 1).day_of_week();
-    auto day_index = date.day() + first_day - 1;
-    return static_cast<int>(std::floor(static_cast<double>(day_index) / 7.0));
-  }
-}
-
 CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
     : QWidget(parent),
       m_selected_date_widget(nullptr) {
@@ -57,6 +48,8 @@ CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
 
 void CalendarWidget::set_date(const date& date) {
   if(date != m_selected_date) {
+    qDebug() << date.year() << ", " << date.month();
+    m_calendar_model.set_month(date.month(), date.year());
     update_calendar(date);
   }
   m_selected_date = date;
@@ -98,8 +91,9 @@ void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
 
 CalendarWidget::CalendarDayWidget* CalendarWidget::get_day_widget(
     const date& date) {
+  auto [x, y] = m_calendar_model.get_pos(date);
   return static_cast<CalendarDayWidget*>(m_calendar_layout->itemAtPosition(
-    row_from_date(date), date.day_of_week().as_number())->widget());
+    y, x)->widget());
 }
 
 void CalendarWidget::set_highlight() {
@@ -111,6 +105,7 @@ void CalendarWidget::set_highlight() {
 }
 
 void CalendarWidget::update_calendar(const date& displayed_date) {
+  m_calendar_model.set_month(displayed_date.month(), displayed_date.year());
   if(m_selected_date_widget) {
     m_selected_date_widget = nullptr;
   }
@@ -118,30 +113,15 @@ void CalendarWidget::update_calendar(const date& displayed_date) {
     delete item->widget();
     delete item;
   }
-  auto first_day_of_month = date(displayed_date.year(), displayed_date.month(),
-    1);
-  auto day_count = first_day_of_month.end_of_month().day();
-  auto first_day_of_week = first_day_of_month.day_of_week().as_number();
-  for(auto i = 0; i < 42; ++i) {
-    if(i < first_day_of_week) {
-      m_dates[i] = first_day_of_month + days(i - first_day_of_week);
-    } else if(i > day_count + first_day_of_week - 1) {
-      m_dates[i] = date(displayed_date.year(), displayed_date.month(),
-        i - day_count - first_day_of_week + 1) + months(1);
-    } else {
-      m_dates[i] = date(displayed_date.year(), displayed_date.month(),
-        i + 1 - first_day_of_week);
-    }
-  }
   for(auto day = 0; day < 7; ++day) {
     for(auto week = 0; week < 6; ++week) {
-      auto date = m_dates[day + week * 7];
+      auto date = m_calendar_model.get_date(week, day);
       auto day_widget = [&] () {
         if(date.month() != displayed_date.month()) {
-          return new CalendarDayWidget(date, "#C8C8C8", this);
-        }
-        return new CalendarDayWidget(date, "#000000", this);
-      }();
+            return new CalendarDayWidget(date, "#C8C8C8", this);
+          }
+          return new CalendarDayWidget(date, "#000000", this);
+        }();
       day_widget->setFixedSize(scale(20, 20));
       m_calendar_layout->addWidget(day_widget, week, day);
       day_widget->connect_clicked_signal([=] (auto date) {

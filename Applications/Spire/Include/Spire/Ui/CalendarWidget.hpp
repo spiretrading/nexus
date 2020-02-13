@@ -194,12 +194,58 @@ namespace Spire {
           }
       };
 
+      class CalendarModel {
+        public:
+
+          CalendarModel() = default;
+
+          // indexed at 0
+          boost::gregorian::date get_date(int row, int column) {
+            return m_dates[row * 7 + column];
+          }
+
+          std::tuple<int, int> get_pos(const boost::gregorian::date& date) {
+            if(date.month() < m_reference_date.month()) {
+              return {date.day_of_week(), 0};
+            }
+            // TODO: definitely possible to calculate this in constant time.
+            auto day_index = std::distance(m_dates.begin(),
+              std::find(m_dates.begin(), m_dates.end(), date));
+            return {day_index % 7, static_cast<int>(std::floor(day_index / 7))};
+          }
+
+          void set_month(int month, int year) {
+            m_reference_date = boost::gregorian::date(year, month, 1);
+            auto day_count = m_reference_date.end_of_month().day();
+            auto first_day_of_week = m_reference_date.day_of_week().as_number();
+            for(auto i = 0; i < 42; ++i) {
+              if(i < first_day_of_week) {
+                m_dates[i] = m_reference_date +
+                  boost::gregorian::days(i - first_day_of_week);
+              } else if(i > day_count + first_day_of_week - 1) {
+                m_dates[i] = boost::gregorian::date(m_reference_date.year(),
+                  m_reference_date.month(),
+                  i - day_count - first_day_of_week + 1) +
+                  boost::gregorian::months(1);
+              } else {
+                m_dates[i] = boost::gregorian::date(m_reference_date.year(),
+                  m_reference_date.month(),
+                  i + 1 - first_day_of_week);
+              }
+            }
+          }
+
+        private:
+          boost::gregorian::date m_reference_date;
+          std::array<boost::gregorian::date, 42> m_dates;
+      };
+
       mutable DateSignal m_date_signal;
       MonthSpinBox* m_month_spin_box;
       boost::gregorian::date m_selected_date;
       CalendarDayWidget* m_selected_date_widget;
+      CalendarModel m_calendar_model;
       QGridLayout* m_calendar_layout;
-      std::array<boost::gregorian::date, 42> m_dates;
 
       void on_date_selected(const boost::gregorian::date& date);
       void on_month_changed(const boost::gregorian::date& date);
