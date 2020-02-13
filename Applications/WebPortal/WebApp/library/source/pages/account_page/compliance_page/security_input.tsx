@@ -12,18 +12,18 @@ interface Properties {
   readonly?: boolean;
 
   /** The list of securities to display. */
-  value?: Nexus.ComplianceValue[];
+  value?: Nexus.Security[];
 
   /** Called when the list of values changes.
    * @param value - The updated list.
    */
-  onChange?: (value: Nexus.ComplianceValue[]) => void;
+  onChange?: (value: Nexus.Security[]) => void;
 }
 
 interface State {
   inputString: string;
   isEditing: boolean;
-  localValue: Nexus.ComplianceValue[];
+  localValue: Nexus.Security[];
   selection: number;
 }
 
@@ -188,8 +188,8 @@ export class SecurityInput extends React.Component<Properties, State> {
     })();
     let displayValue  = '';
     for(let i = 0; i < this.props.value.length; ++i) {
-      const sec = this.props.value[i].value as Nexus.Security;
-      displayValue = displayValue.concat(sec.symbol.toString());
+      const symbol = this.props.value[i].symbol;
+      displayValue = displayValue.concat(symbol);
       if(this.props.value.length > 1 && i < this.props.value.length - 1) {
         displayValue = displayValue.concat(', ');
       }
@@ -238,7 +238,7 @@ export class SecurityInput extends React.Component<Properties, State> {
       </div>);
   }
   
-  private addEntry(paramter: Nexus.ComplianceValue) {
+  private addEntry(paramter: Nexus.Security) {
     this.setState({
       inputString: '',
       localValue: this.state.localValue.slice().concat(paramter)
@@ -478,7 +478,7 @@ interface InputFieldProperties {
   /** Called when the value is submitted.
    * @param value - The compliance value that is being submitted.
    */
-  onEnter: (value: Nexus.ComplianceValue) => void;
+  onEnter: (value: Nexus.Security) => void;
 }
 
 /** The field that allows the user to add a new entry to the list. */
@@ -505,14 +505,12 @@ export class InputField extends React.Component<InputFieldProperties> {
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if(event.keyCode === 13) {
-      const newParameter = 
-        new Nexus.ComplianceValue( 
-          Nexus.ComplianceValue.Type.SECURITY, 
-          new Nexus.Security(
-            this.props.value,
-            Nexus.MarketCode.NONE,
-            Nexus.DefaultCountries.CA));
-      this.props.onEnter(newParameter);
+      const newSecurity = 
+        new Nexus.Security(
+          this.props.value,
+          Nexus.MarketCode.NONE,
+          Nexus.DefaultCountries.CA);
+      this.props.onEnter(newSecurity);
     }
   }
 
@@ -545,7 +543,7 @@ export class InputField extends React.Component<InputFieldProperties> {
   private static readonly PLACEHOLDER_TEXT = 'Find symbol here';
 }
 
-interface SymbolsListProperties {
+interface SymbolsBoxProperties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -557,7 +555,7 @@ interface SymbolsListProperties {
   selection: number;
 
   /** The list of securities to display. */
-  value: Nexus.ComplianceValue[];
+  value: Nexus.Security[];
 
   /** Called when a list item is clicked on.
    * @param index - The index of the selected security.
@@ -566,7 +564,7 @@ interface SymbolsListProperties {
 }
 
 /** A component that displays a list of symbols. */
-export class SymbolsBox extends React.Component<SymbolsListProperties> {
+export class SymbolsBox extends React.Component<SymbolsBoxProperties> {
   public render() {
     const scrollHeader = (() => {
       if(!this.props.readonly) {
@@ -599,23 +597,23 @@ export class SymbolsBox extends React.Component<SymbolsListProperties> {
     })();
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
-        const sec = this.props.value[i].value;
+        const symbol = this.props.value[i].symbol;
         if(this.props.readonly) {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntryReadonly}>
-              {sec.symbol}
+              {symbol}
             </div>);
         } else if(this.props.selection === i) {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntrySelected}
                 onClick={this.selectEntry.bind(this, i)}>
-              {sec.symbol}
+              {symbol}
             </div>);
         } else {
           entries.push(
             <div style={SymbolsBox.STYLE.scrollBoxEntry}
                 onClick={this.selectEntry.bind(this, i)}>
-              {sec.symbol}
+              {symbol}
             </div>);
         }
     }

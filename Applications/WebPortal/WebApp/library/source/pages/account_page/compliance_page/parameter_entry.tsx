@@ -23,6 +23,7 @@ export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
+    this.onSecurityListChange = this.onSecurityListChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -88,13 +89,14 @@ export class ParameterEntry extends React.Component<Properties> {
                 Nexus.ComplianceValue.Type.SECURITY) {
               return <SecurityInput
                 displaySize={this.props.displaySize}
-                onChange={this.onChange}
-                value={this.props.parameter.value.value}/>;
+                onChange={this.onSecurityListChange}
+                value={this.convertFromParameterList(
+                  this.props.parameter.value.value)}/>;
             }
           } else {
             return <SecurityInput
               displaySize={this.props.displaySize}
-              onChange={this.onChange}
+              onChange={this.onSecurityListChange}
               value={[]}/>;
           }
         default:
@@ -113,6 +115,26 @@ export class ParameterEntry extends React.Component<Properties> {
   private onChange(newValue: any) {
     this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name, 
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
+  }
+
+  private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {
+    const securityList = [] as Nexus.Security[];
+    for(let i = 0; i < complianceValues.length; ++i) {
+      securityList.push(complianceValues[i].value);
+    }
+    return securityList;
+  };
+
+  private onSecurityListChange(newValues: Nexus.Security[]) {
+    const newParameterList = [];
+    for(let i = 0; i < newValues.length; ++i) {
+      newParameterList.push(
+        new Nexus.ComplianceValue(
+          Nexus.ComplianceValue.Type.SECURITY, newValues[i]));
+    }
+    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
+      new Nexus.ComplianceValue(
+        Nexus.ComplianceValue.Type.LIST, newParameterList)));
   }
 
   private static readonly STYLE = {
