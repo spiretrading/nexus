@@ -9,6 +9,8 @@ using namespace Spire;
 CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
     : QWidget(parent),
       m_selected_date_widget(nullptr) {
+  setCursor({QPixmap::fromImage(
+    imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
   setStyleSheet("background-color: #FFFFFF;");
   setFixedSize(scale(168, 201));
   auto layout = new QVBoxLayout(this);
@@ -53,14 +55,9 @@ void CalendarWidget::set_date(const date& date) {
 }
 
 void CalendarWidget::on_date_selected(const date& date) {
-  qDebug() << "clicked: " << QString("%1/%2/%3").arg(date.month().as_number())
-    .arg(date.day().as_number()).arg(date.year());
-  qDebug() << "selected: " << QString("%1/%2/%3")
-    .arg(m_selected_date.month().as_number())
-    .arg(m_selected_date.day().as_number())
-    .arg(m_selected_date.year());
   if(date != m_selected_date) {
-    if(date.month() != m_selected_date.month()) {
+    if(date.month() != m_month_spin_box->get_date().month() &&
+        date.year() != m_month_spin_box->get_date().month()) {
       update_calendar(date);
       m_month_spin_box->set_date(date);
     }
@@ -144,5 +141,4 @@ void CalendarWidget::update_calendar(const date& displayed_date) {
         });
     }
   }
-  qDebug() << "day widget count: " << m_calendar_layout->count();
 }

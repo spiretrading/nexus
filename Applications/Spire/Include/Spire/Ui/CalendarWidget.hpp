@@ -37,10 +37,13 @@ namespace Spire {
           explicit MonthSpinBox(const boost::gregorian::date& initial_date,
               QWidget* parent = nullptr)
               : QWidget(parent) {
+            setCursor(Qt::ArrowCursor);
             auto layout = new QHBoxLayout(this);
             layout->setSpacing(0);
             layout->setContentsMargins({});
             m_left_label = new QLabel(this);
+            m_left_label->setCursor({QPixmap::fromImage(
+              imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
             m_left_label->installEventFilter(this);
             m_left_label->setFixedSize(scale(16, 26));
             m_left_label->setPixmap(QPixmap::fromImage(
@@ -58,6 +61,8 @@ namespace Spire {
             m_month_label->setFixedHeight(scale_height(26));
             layout->addWidget(m_month_label);
             m_right_label = new QLabel(this);
+            m_right_label->setCursor({QPixmap::fromImage(
+              imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
             m_right_label->installEventFilter(this);
             m_right_label->setFixedSize(scale(16, 26));
             m_right_label->setPixmap(QPixmap::fromImage(
@@ -66,6 +71,10 @@ namespace Spire {
             layout->addWidget(m_right_label);
             set_date(initial_date);
             update_label();
+          }
+
+          const boost::gregorian::date& get_date() const {
+            return m_date;
           }
 
           void set_date(const boost::gregorian::date& date) {
