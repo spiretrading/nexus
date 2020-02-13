@@ -15,7 +15,7 @@ interface Properties {
   value?: Nexus.Security[];
 
   /** Called when the list of values changes.
-   * @param value - The updated list.
+   * @param value - The new list.
    */
   onChange?: (value: Nexus.Security[]) => void;
 }
