@@ -4,8 +4,7 @@
 using namespace Spire;
 
 #include <QVBoxLayout>
-#include "Spire/Ui/CalendarWidget.hpp"
-#include "Spire/Spire/Scalar.hpp"
+#include "Spire/Ui/DateInputWidget.hpp"
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
@@ -15,9 +14,11 @@ int main(int argc, char** argv) {
   auto window = new QWidget();
   window->setStyleSheet("background-color: white;");
   auto layout = new QVBoxLayout(window);
-  auto calendar = new CalendarWidget(
-    boost::posix_time::second_clock::local_time().date());
-  layout->addWidget(calendar);
+  auto date_input = new DateInputWidget(
+    boost::posix_time::second_clock::local_time());
+  date_input->setFixedSize(scale(112, 26));
+  date_input->setStyleSheet("background-color: red;");
+  layout->addWidget(date_input);
   window->resize(600, 400);
   window->show();
   application->exec();

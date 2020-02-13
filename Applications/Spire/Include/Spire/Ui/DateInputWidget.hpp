@@ -1,18 +1,24 @@
 #ifndef SPIRE_DATE_INPUT_WIDGET_HPP
 #define SPIRE_DATE_INPUT_WIDGET_HPP
 #include <QWidget>
-#include <QHBoxLayout>
-#include <QCalendarWidget>
-#include <QLocale>
-#include <QTableView>
-#include <QHeaderView>
+#include "Spire/Ui/CalendarWidget.hpp"
 
 namespace Spire {
 
   class DateInputWidget : public QWidget {
     public:
 
-      DateInputWidget(QWidget* parent = nullptr);
+      DateInputWidget(boost::posix_time::ptime date,
+        QWidget* parent = nullptr);
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+
+    private:
+      CalendarWidget* m_calendar_widget;
+
+      void move_calendar();
   };
 }
 
