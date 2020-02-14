@@ -9,4 +9,5 @@ export * from './integer_input_box';
 export * from './modal';
 export * from './money_input_box';
 export * from './number_input';
+export * from './single_security_input';
 export * from './text_input_field';

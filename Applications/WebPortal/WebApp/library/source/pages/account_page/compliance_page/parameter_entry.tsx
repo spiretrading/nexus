@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
-  NumberInput, SecurityInput, TextInputField } from '../../..';
+  NumberInput, SingleSecurityInput, SecurityInput, TextInputField } from '../../..';
 
 interface Properties {
 
@@ -83,6 +83,12 @@ export class ParameterEntry extends React.Component<Properties> {
             value={this.props.parameter.value.value}
             onInput={this.onChange}
             style={inputWrapper}/>;
+        case Nexus.ComplianceValue.Type.SECURITY:
+          return <SingleSecurityInput
+            displaySize={this.props.displaySize}
+            onChange={this.onChange}
+            value={this.props.parameter.value.value}/>;
+          return 
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===

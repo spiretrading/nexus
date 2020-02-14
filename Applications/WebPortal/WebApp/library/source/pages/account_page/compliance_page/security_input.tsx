@@ -482,7 +482,7 @@ interface InputFieldProperties {
 }
 
 /** The field that allows the user to add a new entry to the list. */
-export class InputField extends React.Component<InputFieldProperties> {
+class InputField extends React.Component<InputFieldProperties> {
   constructor(props: InputFieldProperties) {
     super(props);
     this.onInputChange = this.onInputChange.bind(this);
@@ -564,7 +564,7 @@ interface SymbolsBoxProperties {
 }
 
 /** A component that displays a list of symbols. */
-export class SymbolsBox extends React.Component<SymbolsBoxProperties> {
+class SymbolsBox extends React.Component<SymbolsBoxProperties> {
   public render() {
     const scrollHeader = (() => {
       if(!this.props.readonly) {
