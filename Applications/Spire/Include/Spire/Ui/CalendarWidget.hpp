@@ -37,11 +37,14 @@ namespace Spire {
           explicit MonthAndYearSpinBox(const boost::gregorian::date& initial_date,
               QWidget* parent = nullptr)
               : QWidget(parent) {
+            setFocusPolicy(Qt::NoFocus);
             setCursor(Qt::ArrowCursor);
             auto layout = new QHBoxLayout(this);
             layout->setSpacing(0);
             layout->setContentsMargins({});
             m_left_label = new QLabel(this);
+            m_left_label->setFocusPolicy(Qt::NoFocus);
+            m_left_label->setFocusProxy(parent);
             m_left_label->setCursor({QPixmap::fromImage(
               imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
             m_left_label->installEventFilter(this);
@@ -61,6 +64,7 @@ namespace Spire {
             m_month_label->setFixedHeight(scale_height(26));
             layout->addWidget(m_month_label);
             m_right_label = new QLabel(this);
+            m_right_label->setFocusPolicy(Qt::NoFocus);
             m_right_label->setCursor({QPixmap::fromImage(
               imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
             m_right_label->installEventFilter(this);

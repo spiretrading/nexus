@@ -16,7 +16,6 @@ DateInputWidget::DateInputWidget(ptime date, QWidget* parent)
   set_default_style();
   m_calendar_widget = new CalendarWidget(date.date(), this);
   m_calendar_widget->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
-  m_calendar_widget->setAttribute(Qt::WA_ShowWithoutActivating);
   m_calendar_widget->connect_date_signal([=] (auto date) {
       m_calendar_widget->hide();
       update_label(date);
@@ -36,6 +35,10 @@ bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_calendar_widget->hide();
     }
+  } else if(watched == m_calendar_widget) {
+    if(event->type() == QEvent::FocusOut) {
+      m_calendar_widget->hide();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -45,7 +48,10 @@ void DateInputWidget::focusInEvent(QFocusEvent* event) {
 }
 
 void DateInputWidget::focusOutEvent(QFocusEvent* event) {
-  set_default_style();
+  if(!m_calendar_widget->hasFocus()) {
+    set_default_style();
+    m_calendar_widget->hide();
+  }
 }
 
 void DateInputWidget::mousePressEvent(QMouseEvent* event) {
@@ -55,6 +61,7 @@ void DateInputWidget::mousePressEvent(QMouseEvent* event) {
     } else {
       move_calendar();
       m_calendar_widget->show();
+      m_calendar_widget->setFocus();
     }
   }
 }
