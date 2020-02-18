@@ -11,7 +11,6 @@ std::tuple<int, int> CalendarModel::get_pos(date date) {
   if(date.month() < m_reference_date.month()) {
     return {date.day_of_week(), 0};
   }
-  // TODO: definitely possible to calculate this in constant time.
   auto day_index = std::distance(m_dates.begin(),
     std::find(m_dates.begin(), m_dates.end(), date));
   return {day_index % 7, static_cast<int>(std::floor(day_index / 7))};

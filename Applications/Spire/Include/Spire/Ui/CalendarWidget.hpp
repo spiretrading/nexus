@@ -8,28 +8,33 @@
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Scalar.hpp"
-#include "Spire/Ui/CalendarDayWidget.hpp"
 #include "Spire/Ui/CalendarModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/MonthAndYearSpinBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
+  //! Displays a calendar month for selecting dates.
   class CalendarWidget : public QWidget {
     public:
 
-      using DateSignal = Signal<void (const boost::gregorian::date&)>;
+      //! Signals that a date was selected.
+      using DateSignal = Signal<void (boost::gregorian::date)>;
 
-      explicit CalendarWidget(const boost::gregorian::date& selected_date,
+      //! Constructs a CalendarWidget with a selected date.
+      /*
+        \param selected_date The default selected date.
+        \param parent The parent widget.
+      */
+      CalendarWidget(boost::gregorian::date selected_date,
         QWidget* parent = nullptr);
 
+      //! Sets the selected date, without triggering the date signal.
       void set_date(const boost::gregorian::date& date);
 
+      //! Connects a slot to the date signal.
       boost::signals2::connection connect_date_signal(
-          const DateSignal::slot_type& slot) const {
-        return m_date_signal.connect(slot);
-      }
+        const DateSignal::slot_type& slot) const;
 
     private:
       mutable DateSignal m_date_signal;

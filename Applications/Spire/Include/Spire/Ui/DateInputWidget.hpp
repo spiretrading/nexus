@@ -5,10 +5,16 @@
 
 namespace Spire {
 
+  //! Displays a date selection widget with a pop-up calendar.
   class DateInputWidget : public QLabel {
     public:
 
-      DateInputWidget(boost::posix_time::ptime date,
+      //! Constructs a DateInputWidget with an initially selected date.
+      /*
+        \param initial_date The initially selected date.
+        \param parent The parent widget.
+      */
+      DateInputWidget(boost::posix_time::ptime initial_date,
         QWidget* parent = nullptr);
 
     protected:

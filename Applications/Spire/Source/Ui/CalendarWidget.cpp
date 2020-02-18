@@ -2,11 +2,14 @@
 #include "boost/date_time/gregorian/gregorian_types.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/CalendarDayWidget.hpp"
+#include "Spire/Ui/MonthAndYearSpinBox.hpp"
 
 using namespace boost::gregorian;
+using namespace boost::signals2;
 using namespace Spire;
 
-CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
+CalendarWidget::CalendarWidget(date selected_date, QWidget* parent)
     : QWidget(parent),
       m_selected_date_widget(nullptr) {
   setCursor({QPixmap::fromImage(
@@ -58,6 +61,11 @@ void CalendarWidget::set_date(const date& date) {
   }
   m_selected_date = date;
   set_highlight();
+}
+
+connection CalendarWidget::connect_date_signal(
+    const DateSignal::slot_type& slot) const {
+  return m_date_signal.connect(slot);
 }
 
 void CalendarWidget::on_date_selected(const date& date) {

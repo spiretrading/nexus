@@ -12,8 +12,7 @@ namespace Spire {
 
       CalendarModel() = default;
 
-      //! Returns the date at the given week and day, with the week and day
-      //! being indexed at 0.
+      //! Returns the date at the given week and day.
       /*
         \param week The week of the month to query, from 0 to 5.
         \param day The day of the week to query, from 0 to 6.
