@@ -16,6 +16,7 @@ namespace Spire {
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
 
     private:
       CalendarWidget* m_calendar_widget;

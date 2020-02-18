@@ -10,17 +10,15 @@ using namespace Spire;
 
 DateInputWidget::DateInputWidget(ptime date, QWidget* parent)
     : QLabel(parent) {
-  qDebug() << focusPolicy();
   setFocusPolicy(Qt::StrongFocus);
   setObjectName("dateinputwidget");
   setAlignment(Qt::AlignCenter);
   set_default_style();
   m_calendar_widget = new CalendarWidget(date.date(), this);
-  m_calendar_widget->setFocusPolicy(Qt::NoFocus);
   m_calendar_widget->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
   m_calendar_widget->setAttribute(Qt::WA_ShowWithoutActivating);
   m_calendar_widget->connect_date_signal([=] (auto date) {
-      setFocus();
+      m_calendar_widget->hide();
       update_label(date);
     });
   auto shadow = std::make_unique<DropShadow>(false, m_calendar_widget);
@@ -48,7 +46,6 @@ void DateInputWidget::focusInEvent(QFocusEvent* event) {
 
 void DateInputWidget::focusOutEvent(QFocusEvent* event) {
   set_default_style();
-  m_calendar_widget->hide();
 }
 
 void DateInputWidget::mousePressEvent(QMouseEvent* event) {
@@ -60,6 +57,10 @@ void DateInputWidget::mousePressEvent(QMouseEvent* event) {
       m_calendar_widget->show();
     }
   }
+}
+
+void DateInputWidget::moveEvent(QMoveEvent* event) {
+  move_calendar();
 }
 
 void DateInputWidget::move_calendar() {
