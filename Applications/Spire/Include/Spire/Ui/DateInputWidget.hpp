@@ -12,6 +12,7 @@ namespace Spire {
         QWidget* parent = nullptr);
 
     protected:
+      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
