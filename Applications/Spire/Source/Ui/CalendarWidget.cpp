@@ -11,7 +11,12 @@ CalendarWidget::CalendarWidget(const date& selected_date, QWidget* parent)
       m_selected_date_widget(nullptr) {
   setCursor({QPixmap::fromImage(
     imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0});
-  setStyleSheet("background-color: #FFFFFF;");
+  setObjectName("calendar_widget");
+  setStyleSheet(QString(R"(
+    #calendar_widget {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    })").arg(scale_width(1)).arg(scale_height(1)));
   setFixedSize(scale(168, 201));
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
