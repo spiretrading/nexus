@@ -37,12 +37,6 @@ bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
       if(m_calendar_widget->isVisible()) {
         move_calendar();
       }
-    } else if(event->type() == QEvent::WindowDeactivate) {
-      m_calendar_widget->hide();
-    }
-  } else if(watched == m_calendar_widget) {
-    if(event->type() == QEvent::FocusOut) {
-      m_calendar_widget->hide();
     }
   }
   return QWidget::eventFilter(watched, event);
