@@ -62,7 +62,7 @@ void CalendarWidget::on_date_selected(const date& date) {
       update_calendar(date);
       m_month_spin_box->set_date(date);
     }
-    m_date_signal(m_selected_date);
+    m_date_signal(date);
   }
   m_selected_date = date;
   set_highlight();
@@ -70,7 +70,8 @@ void CalendarWidget::on_date_selected(const date& date) {
 
 void CalendarWidget::on_month_changed(const date& date) {
   update_calendar(date);
-  if(date.month() == m_selected_date.month()) {
+  if(std::tie(date.year(), date.month()) ==
+      std::tie(m_selected_date.year(), m_selected_date.month())) {
     set_highlight();
   }
 }

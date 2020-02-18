@@ -1,19 +1,32 @@
 #include "Spire/Ui/DateInputWidget.hpp"
+#include <QDate>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::posix_time;
+using namespace boost::gregorian;
 using namespace Spire;
 
 DateInputWidget::DateInputWidget(ptime date, QWidget* parent)
-    : QWidget(parent) {
+    : QLabel(parent) {
+  qDebug() << focusPolicy();
+  setFocusPolicy(Qt::StrongFocus);
+  setObjectName("dateinputwidget");
+  setAlignment(Qt::AlignCenter);
+  set_default_style();
   m_calendar_widget = new CalendarWidget(date.date(), this);
+  m_calendar_widget->setFocusPolicy(Qt::NoFocus);
   m_calendar_widget->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
   m_calendar_widget->setAttribute(Qt::WA_ShowWithoutActivating);
+  m_calendar_widget->connect_date_signal([=] (auto date) {
+      setFocus();
+      update_label(date);
+    });
   auto shadow = std::make_unique<DropShadow>(false, m_calendar_widget);
   m_calendar_widget->hide();
   window()->installEventFilter(this);
+  update_label(date.date());
 }
 
 bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
@@ -27,6 +40,15 @@ bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void DateInputWidget::focusInEvent(QFocusEvent* event) {
+  set_focus_style();
+}
+
+void DateInputWidget::focusOutEvent(QFocusEvent* event) {
+  set_default_style();
+  m_calendar_widget->hide();
 }
 
 void DateInputWidget::mousePressEvent(QMouseEvent* event) {
@@ -47,4 +69,34 @@ void DateInputWidget::move_calendar() {
     frameGeometry().bottomLeft()).y();
   m_calendar_widget->move(x_pos, y_pos + 1);
   m_calendar_widget->raise();
+}
+
+void DateInputWidget::set_default_style() {
+  setStyleSheet(QString(R"(
+    #dateinputwidget {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      font-family: Roboto;
+      font-size: %3px;
+    }
+
+    #dateinputwidget:hover {
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
+    })").arg(scale_width(1)).arg(scale_height(1)).arg(scale_height(12)));
+}
+
+void DateInputWidget::set_focus_style() {
+  setStyleSheet(QString(R"(
+    #dateinputwidget {
+      background-color: #FFFFFF;
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
+      font-family: Roboto;
+      font-size: %3px;
+    })").arg(scale_width(1)).arg(scale_height(1)).arg(scale_height(12)));
+}
+
+void DateInputWidget::update_label(date updated_date) {
+  auto date = QDate(updated_date.year(), updated_date.month(),
+    updated_date.day());
+  setText(date.toString("MMM d, yyyy"));
 }
