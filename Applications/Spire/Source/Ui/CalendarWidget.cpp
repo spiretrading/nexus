@@ -94,7 +94,7 @@ void CalendarWidget::add_day_label(QLayout* layout, const QString& text) {
   layout->addWidget(label);
 }
 
-CalendarWidget::CalendarDayWidget* CalendarWidget::get_day_widget(
+CalendarDayWidget* CalendarWidget::get_day_widget(
     const date& date) {
   auto [x, y] = m_calendar_model.get_pos(date);
   return static_cast<CalendarDayWidget*>(m_calendar_layout->itemAtPosition(
