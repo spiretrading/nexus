@@ -7,18 +7,28 @@
 
 namespace Spire {
 
+  //! Displays a horizontal spin box that cycles through months and years.
   class MonthAndYearSpinBox : public QWidget {
     public:
 
+      //! Signals that a month has been selected.
       using MonthSignal = Signal<void (boost::gregorian::date)>;
 
+      //! Constructs a MonthAndYearSpinBox with an initial month and year.
+      /*
+        \param initial_date The initial month and year to display.
+        \param parent The parent widget.
+      */
       MonthAndYearSpinBox(boost::gregorian::date initial_date,
         QWidget* parent = nullptr);
 
+      //! Returns the current month and year.
       boost::gregorian::date get_date() const;
 
+      //! Sets the current month and year.
       void set_date(boost::gregorian::date date);
 
+      //! Connects a slot to the month signal.
       boost::signals2::connection connect_month_signal(
         const MonthSignal::slot_type& slot) const;
 

@@ -6,10 +6,10 @@ using namespace boost::signals2;
 using namespace Spire;
 
 CalendarDayWidget::CalendarDayWidget(date displayed_date,
-    const QString& text_color_hex, QWidget* parent)
+    const QColor& text_color, QWidget* parent)
     : QLabel(parent),
       m_date(displayed_date),
-      m_text_color_hex(text_color_hex) {
+      m_text_color(text_color) {
   setAlignment(Qt::AlignCenter);
   setText(QString::number(displayed_date.day()));
   set_default_style();
@@ -46,7 +46,7 @@ void CalendarDayWidget::set_default_style() {
       background-color: #F2F2FF;
     }
   )").arg(scale_height(12)).arg(scale_width(2))
-      .arg(m_text_color_hex));
+      .arg(m_text_color.name()));
 }
 
 void CalendarDayWidget::set_selected_style() {
