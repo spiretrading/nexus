@@ -8,15 +8,27 @@
 
 namespace Spire {
 
+  //! Displays a time duration input widget.
   class DurationInputWidget : public QWidget {
     public:
 
+      //! Signals that the time duration was modified.
       using DurationSignal = Signal<void (boost::posix_time::time_duration)>;
 
+      //! Constructs a DurationInputWidget.
+      /*
+        \param parent The parent widget.
+      */
       explicit DurationInputWidget(QWidget* parent = nullptr);
 
+      //! Sets the displayed time duration without trigger the duration
+      //! signal.
+      /*
+        \param duration The time duration to display.
+      */
       void set_duration(const boost::posix_time::time_duration& duration);
 
+      //! Connects a slot to the duration change signal.
       boost::signals2::connection connect_time_signal(
         const DurationSignal::slot_type& slot) const;
 
