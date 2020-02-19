@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/ColonWidget.hpp"
 #include "Spire/Ui/DropDownMenu.hpp"
 
 using namespace boost::posix_time;
@@ -165,12 +166,12 @@ QString TimeOfDayInputWidget::get_line_edit_value(const QString& text, int key,
 
 void TimeOfDayInputWidget::set_focus_style() {
   set_style("#4B23A0");
-  m_colon_widget->set_style("#4B23A0");
+  m_colon_widget->set_active_style();
 }
 
 void TimeOfDayInputWidget::set_unfocused_style() {
   set_style("#C8C8C8");
-  m_colon_widget->set_style("#C8C8C8");
+  m_colon_widget->set_default_style();
 }
 
 void TimeOfDayInputWidget::set_style(const QString& border_hex) {
