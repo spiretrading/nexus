@@ -9,6 +9,9 @@ namespace Spire {
   class DropDownMenu : public QWidget {
     public:
 
+      //! Signals that an item was selected.
+      using SelectedSignal = Signal<void (const QString&)>;
+
       //! Constructs a DropDownMenu with the specified items. The first item
       //! in the vector is the initially selected item.
       /*!
@@ -17,6 +20,13 @@ namespace Spire {
       */
       explicit DropDownMenu(const std::vector<QString>& items,
         QWidget* parent = nullptr);
+
+      //! Sets the DropDownMenu's displayed text, without triggering the
+      //! selected signal.
+      /*
+        \param text The text to display.
+      */
+      void set_current_text(const QString& text);
 
       //! Clears the items from the list and populates it with the specified
       //! items.
@@ -28,6 +38,10 @@ namespace Spire {
       //! Returns the selected item.
       const QString& get_text() const;
 
+      //! Connects a slot to the item selection signal.
+      boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const;
+
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
@@ -36,6 +50,7 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      mutable SelectedSignal m_selected_signal;
       QString m_current_text;
       QImage m_dropdown_image;
       DropDownMenuList* m_menu_list;

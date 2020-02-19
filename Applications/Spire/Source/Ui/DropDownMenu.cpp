@@ -7,6 +7,7 @@
 #include "Spire/Ui/DropdownMenuList.hpp"
 #include "Spire/Ui/Ui.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 DropDownMenu::DropDownMenu(const std::vector<QString>& items,
@@ -21,6 +22,11 @@ DropDownMenu::DropDownMenu(const std::vector<QString>& items,
   m_menu_list->connect_selected_signal([=] (auto& t) { on_item_selected(t); });
   m_menu_list->hide();
   window()->installEventFilter(this);
+}
+
+void DropDownMenu::set_current_text(const QString& text) {
+  m_current_text = text;
+  update();
 }
 
 void DropDownMenu::set_items(const std::vector<QString>& items) {
@@ -45,6 +51,11 @@ const QString& DropDownMenu::get_text() const {
   return m_current_text;
 }
 
+connection DropDownMenu::connect_selected_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
+}
+
 bool DropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
@@ -67,12 +78,6 @@ void DropDownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     on_clicked();
-  } else if(event->key() == Qt::Key_Down) {
-    m_current_text = m_menu_list->get_next(m_current_text);
-    update();
-  } else if(event->key() == Qt::Key_Up) {
-    m_current_text = m_menu_list->get_previous(m_current_text);
-    update();
   }
   event->ignore();
 }
@@ -125,5 +130,6 @@ void DropDownMenu::on_clicked() {
 void DropDownMenu::on_item_selected(const QString& text) {
   m_menu_list->hide();
   m_current_text = text;
+  m_selected_signal(m_current_text);
   update();
 }
