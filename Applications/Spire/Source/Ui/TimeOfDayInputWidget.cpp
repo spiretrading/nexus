@@ -59,6 +59,8 @@ void TimeOfDayInputWidget::set_time(const time_duration& duration) {
   }
   m_hour_line_edit->setText(clamped_value(QString::number(hour), 1, 12));
   m_minute_line_edit->setText(clamped_value(QString::number(minute), 0, 59));
+  m_last_valid_hour = m_hour_line_edit->text().toInt();
+  m_last_valid_minute = m_minute_line_edit->text().toInt();
 }
 
 connection TimeOfDayInputWidget::connect_time_signal(
