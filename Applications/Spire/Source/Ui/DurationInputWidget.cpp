@@ -65,10 +65,13 @@ connection DurationInputWidget::connect_time_signal(
 }
 
 bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_hour_line_edit) {
-    if(event->type() == QEvent::FocusIn) {
+  if(event->type() == QEvent::FocusIn) {
+    if(watched == m_hour_line_edit || watched == m_minute_line_edit ||
+        watched == m_second_line_edit) {
       set_focus_style();
-    } else if(event->type() == QEvent::FocusOut) {
+    }
+  } else if(watched == m_hour_line_edit) {
+    if(event->type() == QEvent::FocusOut) {
       m_hour_line_edit->setText(clamped_value(
         QString::number(m_last_valid_hour), 0, 99));
       set_unfocused_style();
@@ -100,9 +103,7 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
       }
     }
   } else if(watched == m_minute_line_edit) {
-    if(event->type() == QEvent::FocusIn) {
-      set_focus_style();
-    } else if(event->type() == QEvent::FocusOut) {
+    if(event->type() == QEvent::FocusOut) {
       m_minute_line_edit->setText(clamped_value(
         QString::number(m_last_valid_minute), 0, 59));
       set_unfocused_style();
@@ -135,9 +136,7 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
       }
     }
   } else if(watched == m_second_line_edit) {
-    if(event->type() == QEvent::FocusIn) {
-      set_focus_style();
-    } else if(event->type() == QEvent::FocusOut) {
+    if(event->type() == QEvent::FocusOut) {
       m_second_line_edit->setText(clamped_value(
         QString::number(m_last_valid_second), 0, 59));
       set_unfocused_style();
