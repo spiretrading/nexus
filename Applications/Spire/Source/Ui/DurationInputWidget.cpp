@@ -10,12 +10,13 @@ using namespace Spire;
 
 DurationInputWidget::DurationInputWidget(QWidget* parent)
     : QWidget(parent),
-      m_last_valid_hour(12),
-      m_last_valid_minute(0) {
+      m_last_valid_hour(0),
+      m_last_valid_minute(0),
+      m_last_valid_second(0) {
   auto layout = new QHBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
-  m_hour_line_edit = new QLineEdit("12", this);
+  m_hour_line_edit = new QLineEdit("00", this);
   m_hour_line_edit->setValidator(new QRegularExpressionValidator(
     QRegularExpression("^\\d\\d$"), this));
   m_hour_line_edit->setFixedSize(scale(31, 26));
@@ -45,20 +46,13 @@ DurationInputWidget::DurationInputWidget(QWidget* parent)
   set_unfocused_style();
 }
 
-void DurationInputWidget::set_time(const time_duration& duration) {
-  auto hour = duration.hours();
-  auto minute = duration.minutes();
-  if(hour < 12) {
-    if(hour == 0) {
-      hour = 12;
-    }
-  } else {
-    if(hour != 12) {
-      hour -= 12;
-    }
-  }
-  m_hour_line_edit->setText(clamped_value(QString::number(hour), 1, 12));
-  m_minute_line_edit->setText(clamped_value(QString::number(minute), 0, 59));
+void DurationInputWidget::set_duration(const time_duration& duration) {
+  m_hour_line_edit->setText(clamped_value(QString::number(duration.hours()), 0,
+    99));
+  m_minute_line_edit->setText(clamped_value(QString::number(
+    duration.minutes()), 0, 59));
+  m_second_line_edit->setText(clamped_value(QString::number(
+    duration.seconds()), 0, 59));
 }
 
 connection DurationInputWidget::connect_time_signal(
@@ -72,7 +66,7 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
       set_focus_style();
     } else if(event->type() == QEvent::FocusOut) {
       m_hour_line_edit->setText(clamped_value(
-        QString::number(m_last_valid_hour), 1, 12));
+        QString::number(m_last_valid_hour), 0, 99));
       set_unfocused_style();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
@@ -81,7 +75,7 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_hour_line_edit->setText(QString::number(0));
         }
         m_hour_line_edit->setText(get_line_edit_value(m_hour_line_edit->text(),
-          e->key(), 1, 12));
+          e->key(), 0, 99));
         on_time_changed();
       } else if(e->key() == Qt::Key_Right &&
           m_hour_line_edit->cursorPosition() ==
@@ -94,7 +88,7 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
       if(e->key() >= Qt::Key_0 && e->key() <= Qt::Key_9) {
         if(m_hour_line_edit->text().length() == 2) {
           m_hour_line_edit->setText(clamped_value(m_hour_line_edit->text(),
-            1, 12));
+            0, 99));
         }
         if(m_hour_line_edit->text() != "0") {
           on_time_changed();
@@ -121,12 +115,47 @@ bool DurationInputWidget::eventFilter(QObject* watched, QEvent* event) {
           m_minute_line_edit->cursorPosition() == 0) {
         m_hour_line_edit->setFocus();
         m_hour_line_edit->setCursorPosition(2);
+      } else if(e->key() == Qt::Key_Right &&
+          m_minute_line_edit->cursorPosition() == 2) {
+        m_second_line_edit->setFocus();
+        m_second_line_edit->setCursorPosition(0);
       }
     } else if(event->type() == QEvent::KeyRelease) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() >= Qt::Key_0 && e->key() <= Qt::Key_9) {
         if(m_minute_line_edit->text().length() == 2) {
           m_minute_line_edit->setText(clamped_value(m_minute_line_edit->text(),
+            0, 59));
+        }
+        on_time_changed();
+      }
+    }
+  } else if(watched == m_second_line_edit) {
+    if(event->type() == QEvent::FocusIn) {
+      set_focus_style();
+    } else if(event->type() == QEvent::FocusOut) {
+      m_second_line_edit->setText(clamped_value(
+        QString::number(m_last_valid_second), 0, 59));
+      set_unfocused_style();
+    } else if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
+        if(m_second_line_edit->text().isEmpty()) {
+          m_second_line_edit->setText(QString::number(-1));
+        }
+        m_second_line_edit->setText(get_line_edit_value(
+          m_second_line_edit->text(), e->key(), 0, 59));
+        on_time_changed();
+      } else if(e->key() == Qt::Key_Left &&
+          m_second_line_edit->cursorPosition() == 0) {
+        m_minute_line_edit->setFocus();
+        m_minute_line_edit->setCursorPosition(2);
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() >= Qt::Key_0 && e->key() <= Qt::Key_9) {
+        if(m_second_line_edit->text().length() == 2) {
+          m_second_line_edit->setText(clamped_value(m_second_line_edit->text(),
             0, 59));
         }
         on_time_changed();
@@ -211,29 +240,17 @@ void DurationInputWidget::set_style(const QString& border_hex) {
         .arg(scale_height(12)).arg(scale_width(2)));
 }
 
-void DurationInputWidget::on_drop_down_changed(const QString& item) {
-  m_hour_line_edit->setText(clamped_value(
-    QString::number(m_last_valid_hour), 1, 12));
-  m_minute_line_edit->setText(clamped_value(
-    QString::number(m_last_valid_minute), 0, 59));
-  on_time_changed();
-}
-
 void DurationInputWidget::on_time_changed() {
   auto hour_ok = false;
   auto minute_ok = false;
+  auto second_ok = false;
   auto hour = m_hour_line_edit->text().toInt(&hour_ok);
   auto minute = m_minute_line_edit->text().toInt(&minute_ok);
-  if(hour_ok && minute_ok) {
+  auto second = m_second_line_edit->text().toInt(&second_ok);
+  if(hour_ok && minute_ok && second_ok) {
     m_last_valid_hour = hour;
     m_last_valid_minute = minute;
-    //if(m_drop_down_menu->get_text() == tr("AM") && hour == 12) {
-    //  hour = 0;
-    //} else if(m_drop_down_menu->get_text() == tr("PM")) {
-    //  if(hour != 12) {
-    //    hour += 12;
-    //  }
-    //}
-    m_duration_signal(hours(hour) + minutes(minute));
+    m_last_valid_second = second;
+    m_duration_signal(hours(hour) + minutes(minute) + seconds(second));
   }
 }

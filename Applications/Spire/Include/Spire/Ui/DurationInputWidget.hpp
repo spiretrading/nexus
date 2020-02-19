@@ -15,7 +15,7 @@ namespace Spire {
 
       explicit DurationInputWidget(QWidget* parent = nullptr);
 
-      void set_time(const boost::posix_time::time_duration& time);
+      void set_duration(const boost::posix_time::time_duration& duration);
 
       boost::signals2::connection connect_time_signal(
         const DurationSignal::slot_type& slot) const;
@@ -31,7 +31,7 @@ namespace Spire {
             : QWidget(parent),
               m_border_color("#C8C8C8") {}
 
-          void set_style(const QString& color_hex) {
+          void set_style(const QColor& color_hex) {
             m_border_color = QColor(color_hex);
             update();
           }
@@ -72,7 +72,6 @@ namespace Spire {
       void set_focus_style();
       void set_unfocused_style();
       void set_style(const QString& border_hex);
-      void on_drop_down_changed(const QString& item);
       void on_time_changed();
   };
 }
