@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/ColonWidget.hpp"
 
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -53,6 +54,9 @@ void DurationInputWidget::set_duration(const time_duration& duration) {
     duration.minutes()), 0, 59));
   m_second_line_edit->setText(clamped_value(QString::number(
     duration.seconds()), 0, 59));
+  m_last_valid_hour = m_hour_line_edit->text().toInt();
+  m_last_valid_minute = m_minute_line_edit->text().toInt();
+  m_last_valid_second = m_second_line_edit->text().toInt();
 }
 
 connection DurationInputWidget::connect_time_signal(
@@ -195,14 +199,14 @@ QString DurationInputWidget::get_line_edit_value(const QString& text, int key,
 
 void DurationInputWidget::set_focus_style() {
   set_style("#4B23A0");
-  m_colon_widget1->set_style("#4B23A0");
-  m_colon_widget2->set_style("#4B23A0");
+  m_colon_widget1->set_active_style();
+  m_colon_widget2->set_active_style();
 }
 
 void DurationInputWidget::set_unfocused_style() {
   set_style("#C8C8C8");
-  m_colon_widget1->set_style("#C8C8C8");
-  m_colon_widget2->set_style("#C8C8C8");
+  m_colon_widget1->set_default_style();
+  m_colon_widget2->set_default_style();
 }
 
 void DurationInputWidget::set_style(const QString& border_hex) {
