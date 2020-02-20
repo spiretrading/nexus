@@ -11,6 +11,7 @@ namespace Spire {
   class CalendarModel;
   class CalendarWidget;
   class CheckBox;
+  class ColonWidget;
   class DateInputWidget;
   class Dialog;
   class DropDownMenu;
