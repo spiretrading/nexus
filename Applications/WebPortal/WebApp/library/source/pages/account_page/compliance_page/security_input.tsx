@@ -124,7 +124,7 @@ export class SecurityInput extends React.Component<Properties, State> {
           </div>);
       } else {
         return (
-          <div style={{...iconWrapperStyle}}>
+          <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
               src={SecurityInput.PATH + 'upload-grey.svg'}/>
             <div style={SecurityInput.STYLE.iconLabelReadonly}>

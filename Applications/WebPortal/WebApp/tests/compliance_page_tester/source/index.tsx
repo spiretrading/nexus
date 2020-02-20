@@ -28,15 +28,15 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return(
       <div style={{height: '100%'}}>
-      <WebPortal.PageWrapper>
-        <WebPortal.CompliancePage
-          onRuleAdd={this.onRuleAdd}
-          onRuleChange={this.onRuleChange}
-          displaySize={this.props.displaySize} 
-          schemas={this.state.schemas}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-          entries={this.state.entries}/>
-      </WebPortal.PageWrapper>
+        <WebPortal.PageWrapper>
+          <WebPortal.CompliancePage
+            onRuleAdd={this.onRuleAdd}
+            onRuleChange={this.onRuleChange}
+            displaySize={this.props.displaySize} 
+            schemas={this.state.schemas}
+            currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+            entries={this.state.entries}/>
+        </WebPortal.PageWrapper>
       </div>);
   }
 
