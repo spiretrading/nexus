@@ -64,6 +64,8 @@ bool DropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_menu_list->hide();
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      m_menu_list->hide();
     }
   }
   return false;
