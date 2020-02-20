@@ -69,12 +69,10 @@ connection CalendarWidget::connect_date_signal(
 }
 
 void CalendarWidget::on_date_selected(const date& date) {
-  if(date != m_selected_date) {
-    if(date.month() != m_month_spin_box->get_date().month() &&
-        date.year() != m_month_spin_box->get_date().year()) {
-      update_calendar(date);
-      m_month_spin_box->set_date(date);
-    }
+  if(date != m_selected_date ||
+      date.month() != m_month_spin_box->get_date().month()) {
+    update_calendar(date);
+    m_month_spin_box->set_date(date);
     m_date_signal(date);
   }
   m_selected_date = date;
