@@ -26,7 +26,7 @@ namespace Spire {
         \param selected_date The default selected date.
         \param parent The parent widget.
       */
-      CalendarWidget(boost::gregorian::date selected_date,
+      explicit CalendarWidget(boost::gregorian::date selected_date,
         QWidget* parent = nullptr);
 
       //! Sets the selected date, without triggering the date signal.

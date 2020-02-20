@@ -71,7 +71,7 @@ connection CalendarWidget::connect_date_signal(
 void CalendarWidget::on_date_selected(const date& date) {
   if(date != m_selected_date) {
     if(date.month() != m_month_spin_box->get_date().month() &&
-        date.year() != m_month_spin_box->get_date().month()) {
+        date.year() != m_month_spin_box->get_date().year()) {
       update_calendar(date);
       m_month_spin_box->set_date(date);
     }
@@ -119,9 +119,7 @@ void CalendarWidget::set_highlight() {
 
 void CalendarWidget::update_calendar(const date& displayed_date) {
   m_calendar_model.set_month(displayed_date.month(), displayed_date.year());
-  if(m_selected_date_widget) {
-    m_selected_date_widget = nullptr;
-  }
+  m_selected_date_widget = nullptr;
   while(auto item = m_calendar_layout->takeAt(0)) {
     delete item->widget();
     delete item;
@@ -131,15 +129,15 @@ void CalendarWidget::update_calendar(const date& displayed_date) {
       auto date = m_calendar_model.get_date(week, day);
       auto day_widget = [&] () {
         if(date.month() != displayed_date.month()) {
-            return new CalendarDayWidget(date, "#C8C8C8", this);
-          }
-          return new CalendarDayWidget(date, "#000000", this);
-        }();
+          return new CalendarDayWidget(date, "#C8C8C8", this);
+        }
+        return new CalendarDayWidget(date, "#000000", this);
+      }();
       day_widget->setFixedSize(scale(20, 20));
       m_calendar_layout->addWidget(day_widget, week, day);
       day_widget->connect_clicked_signal([=] (auto date) {
-          on_date_selected(date);
-        });
+        on_date_selected(date);
+      });
     }
   }
 }

@@ -8,7 +8,7 @@ using namespace boost::posix_time;
 using namespace boost::gregorian;
 using namespace Spire;
 
-DateInputWidget::DateInputWidget(ptime initial_date, QWidget* parent)
+DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
     : QLabel(parent) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName("dateinputwidget");
@@ -17,9 +17,9 @@ DateInputWidget::DateInputWidget(ptime initial_date, QWidget* parent)
   m_calendar_widget = new CalendarWidget(initial_date.date(), this);
   m_calendar_widget->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
   m_calendar_widget->connect_date_signal([=] (auto date) {
-      m_calendar_widget->hide();
-      update_label(date);
-    });
+    m_calendar_widget->hide();
+    update_label(date);
+  });
   auto shadow = std::make_unique<DropShadow>(false, m_calendar_widget);
   m_calendar_widget->hide();
   update_label(initial_date.date());

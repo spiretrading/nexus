@@ -14,7 +14,7 @@ namespace Spire {
         \param initial_date The initially selected date.
         \param parent The parent widget.
       */
-      DateInputWidget(boost::posix_time::ptime initial_date,
+      explicit DateInputWidget(const boost::posix_time::ptime& initial_date,
         QWidget* parent = nullptr);
 
     protected:
