@@ -73,7 +73,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
       } else {
         options.push(
           <div className={css(NewRuleModal.EXTRA_STYLE.optionRow)}
-            onClick={this.onClickRule.bind(this, i)}>
+              onClick={this.onClickRule.bind(this, i)}>
             {this.props.schemas[i].name}
           </div>);
       }

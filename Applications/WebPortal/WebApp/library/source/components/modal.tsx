@@ -30,10 +30,10 @@ export class Modal extends React.Component<Properties> {
   public render(): JSX.Element {
     const modalStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return {...Modal.STYLE.modalSmall};
+        return Modal.STYLE.modalSmall;
       } else {
         return {...Modal.STYLE.modalLarge,
-          ...{width: this.props.width, height: this.props.height}};
+          width: this.props.width, height: this.props.height};
       }
     })();
     const modalWrapperStyle = (() => {
@@ -52,8 +52,7 @@ export class Modal extends React.Component<Properties> {
     })();
     return (
       <div style={Modal.STYLE.wrapper}>
-        <div style={modalWrapperStyle}
-          onClick={this.outOfBoundsClick}>
+        <div style={modalWrapperStyle}onClick={this.outOfBoundsClick}>
           <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
           <div style={modalStyle}>
             {this.props.children}
