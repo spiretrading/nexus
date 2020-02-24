@@ -7,8 +7,12 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class CalendarDayWidget;
+  class CalendarModel;
+  class CalendarWidget;
   class CheckBox;
   class ColonWidget;
+  class DateInputWidget;
   class Dialog;
   class DropDownMenu;
   class DropDownMenuItem;
@@ -17,6 +21,7 @@ namespace Spire {
   class FlatButton;
   class IconButton;
   class MoneyInputWidget;
+  class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;
   class QuantityInputWidget;
   class RangeInputSlider;
