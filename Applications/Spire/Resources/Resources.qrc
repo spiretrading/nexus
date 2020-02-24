@@ -97,5 +97,7 @@
         <file>Icons/color-picker-display.png</file>
         <file>Icons/finger-cursor.svg</file>
         <file>Icons/slash-texture.svg</file>
+        <file>Icons/arrow-left.svg</file>
+        <file>Icons/arrow-right.svg</file>
     </qresource>
 </RCC>

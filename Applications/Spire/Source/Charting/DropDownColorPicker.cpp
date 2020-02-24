@@ -46,6 +46,8 @@ bool DropDownColorPicker::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
       move_color_picker();
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      m_color_picker->hide();
     }
   }
   return QWidget::eventFilter(watched, event);
