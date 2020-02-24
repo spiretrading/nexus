@@ -21,8 +21,7 @@ namespace Spire {
       */
       explicit DurationInputWidget(QWidget* parent = nullptr);
 
-      //! Sets the displayed time duration without trigger the duration
-      //! signal.
+      //! Sets the displayed time duration.
       /*
         \param duration The time duration to display.
       */

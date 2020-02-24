@@ -61,6 +61,7 @@ void CalendarWidget::set_date(const date& date) {
   }
   m_selected_date = date;
   set_highlight();
+  m_date_signal(date);
 }
 
 connection CalendarWidget::connect_date_signal(

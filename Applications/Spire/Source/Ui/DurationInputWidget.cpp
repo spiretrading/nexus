@@ -57,6 +57,7 @@ void DurationInputWidget::set_duration(const time_duration& duration) {
   m_last_valid_hour = m_hour_line_edit->text().toInt();
   m_last_valid_minute = m_minute_line_edit->text().toInt();
   m_last_valid_second = m_second_line_edit->text().toInt();
+  m_duration_signal(duration);
 }
 
 connection DurationInputWidget::connect_time_signal(
