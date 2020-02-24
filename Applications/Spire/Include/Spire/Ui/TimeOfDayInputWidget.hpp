@@ -19,7 +19,7 @@ namespace Spire {
       //! Constructs a TimeOfDayInputWidget.
       TimeOfDayInputWidget(QWidget* parent = nullptr);
 
-      //! Sets the widget's time without triggering the time change signal.
+      //! Sets the widget's time.
       void set_time(const boost::posix_time::time_duration& time);
 
       //! Connects a slot to the time signal.

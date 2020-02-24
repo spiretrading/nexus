@@ -29,7 +29,7 @@ namespace Spire {
       explicit CalendarWidget(boost::gregorian::date selected_date,
         QWidget* parent = nullptr);
 
-      //! Sets the selected date, without triggering the date signal.
+      //! Sets the selected date.
       void set_date(const boost::gregorian::date& date);
 
       //! Connects a slot to the date signal.
