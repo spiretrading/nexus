@@ -78,12 +78,8 @@ void MonexBoomFixApplication::Cancel(const OrderExecutionSession& session,
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
         Out<FIX44::OrderCancelRequest> orderCancelRequest) {
-      auto& fields = order.GetInfo().m_fields;
-      if(fields.m_security.GetMarket() == DefaultMarkets::HKEX()) {
-        orderCancelRequest->set(FIX::SecurityExchange("XHKG"));
-      } else {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid market."));
-      }
+      orderCancelRequest->set(FIX::SecurityExchange(
+        order.GetInfo().m_fields.m_security.GetMarket().GetData()));
       orderCancelRequest->set(
         FIX::Symbol(order.GetInfo().m_fields.m_security.GetSymbol()));
       orderCancelRequest->set(GetAccount());
