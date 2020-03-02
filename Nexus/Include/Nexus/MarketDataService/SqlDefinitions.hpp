@@ -76,8 +76,8 @@ namespace Nexus::MarketDataService {
   inline const auto& GetSecurityInfoRow() {
     static auto ROW = Viper::Row<SecurityInfo>().
       extend(GetSecurityRow(), &SecurityInfo::m_security).
-      add_column("name", &SecurityInfo::m_name).
-      add_column("sector", &SecurityInfo::m_sector).
+      add_column("name", Viper::varchar(256), &SecurityInfo::m_name).
+      add_column("sector", Viper::varchar(256), &SecurityInfo::m_sector).
       add_column("board_lot", &SecurityInfo::m_boardLot).
       set_primary_key({"symbol", "country"});
     return ROW;
