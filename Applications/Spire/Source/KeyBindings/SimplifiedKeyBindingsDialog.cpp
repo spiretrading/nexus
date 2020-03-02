@@ -4051,6 +4051,108 @@ namespace {
     orderTypes.emplace_back(marketOnCloseAsk.Build());
   }
 
+  void PopulateOseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "OSE Limit Bid"));
+    limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::OSE()));
+    limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitBid.Build());
+    CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "OSE Limit Ask"));
+    limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::OSE()));
+    limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitAsk.Build());
+    CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "OSE Market Bid"));
+    marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::OSE()));
+    marketBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketBid.Build());
+    CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "OSE Market Ask"));
+    marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::OSE()));
+    marketAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketAsk.Build());
+  }
+
+  void PopulateTseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "TSE Limit Bid"));
+    limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::TSE()));
+    limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitBid.Build());
+    CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "TSE Limit Ask"));
+    limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::TSE()));
+    limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitAsk.Build());
+    CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "TSE Market Bid"));
+    marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::TSE()));
+    marketBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketBid.Build());
+    CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "TSE Market Ask"));
+    marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::TSE()));
+    marketAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketAsk.Build());
+  }
+
   std::unordered_map<MarketCode, vector<unique_ptr<const CanvasNode>>>
       SetupOrderTypes() {
     std::unordered_map<MarketCode, vector<unique_ptr<const CanvasNode>>>
@@ -4101,6 +4203,10 @@ namespace {
     PopulateNyseOrders(nyseOrderTypes);
     PopulateNyseOpenCloseOrders(nyseOrderTypes);
     PopulateNasdaqOrders(nyseOrderTypes);
+    auto& oseOrderTypes = orderTypes[DefaultMarkets::OSE()];
+    PopulateOseOrders(oseOrderTypes);
+    auto& tseOrderTypes = orderTypes[DefaultMarkets::TSE()];
+    PopulateTseOrders(tseOrderTypes);
     auto& tsxOrderTypes = orderTypes[DefaultMarkets::TSX()];
     PopulateAlphaOrders(tsxOrderTypes);
     PopulateChixOrders(tsxOrderTypes);
