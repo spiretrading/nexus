@@ -85,7 +85,7 @@ export class NumberInput extends React.Component<Properties> {
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
+      ':active': {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {

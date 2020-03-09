@@ -60,12 +60,6 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const modalHeight = (() => {
-      return SingleSecurityInput.MODAL_HEIGHT;
-    })();
-    const headerText = (() => {
-      return SingleSecurityInput.MODAL_HEADER;
-    })();
     const inputField = (() => {
       return (
         <InputField
@@ -103,7 +97,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
               onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
                 style={SingleSecurityInput.STYLE.iconClickableStyle}
-                src={SingleSecurityInput.PATH + 'remove-purple.svg'} />
+                src={SingleSecurityInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
           return (
@@ -111,7 +105,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
               onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
                 style={SingleSecurityInput.STYLE.iconClickableStyle}
-                src={SingleSecurityInput.PATH + 'remove-purple.svg'} />
+                src={SingleSecurityInput.PATH + 'remove-purple.svg'}/>
               <div style={SingleSecurityInput.STYLE.iconLabel}>
                 {SingleSecurityInput.REMOVE_TEXT}
               </div>
@@ -122,14 +116,14 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
           return (
             <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
-                src={SingleSecurityInput.PATH + 'remove-grey.svg'} />
+                src={SingleSecurityInput.PATH + 'remove-grey.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                src={SingleSecurityInput.PATH + 'remove-grey.svg'} />
+                src={SingleSecurityInput.PATH + 'remove-grey.svg'}/>
               <div style={SingleSecurityInput.STYLE.iconLabelReadonly}>
                 {SingleSecurityInput.REMOVE_TEXT}
               </div>
@@ -156,21 +150,21 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
           className={css(SingleSecurityInput.EXTRA_STYLE.effects)}
           value={displayValue}
           onFocus={this.onOpen}
-          onClick={this.onOpen} />
+          onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize}
-            width='300px' height={modalHeight}
+            width='300px' height={SingleSecurityInput.MODAL_HEIGHT}
             onClose={this.onClose}>
             <div style={SingleSecurityInput.STYLE.modalPadding}>
               <div style={SingleSecurityInput.STYLE.header}>
                 <div style={SingleSecurityInput.STYLE.headerText}>
-                  {headerText}
+                  {SingleSecurityInput.MODAL_HEADER}
                 </div>
                 <img src={SingleSecurityInput.PATH + 'close.svg'}
                   height='20px'
                   width='20px'
                   style={SingleSecurityInput.STYLE.clickable}
-                  onClick={this.onClose} />
+                  onClick={this.onClose}/>
               </div>
               {inputField}
               <SymbolBox
@@ -181,7 +175,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
               <div style={iconRowStyle}>
                 {removeButton}
               </div>
-              <HLine color={'#e6e6e6'} />
+              <HLine color={'#e6e6e6'}/>
               <div style={SingleSecurityInput.STYLE.buttonWrapper}>
                 {confirmationButton}
               </div>
@@ -475,7 +469,7 @@ class InputField extends React.Component<InputFieldProperties> {
       placeholder={InputField.PLACEHOLDER_TEXT}
       onChange={this.onInputChange}
       onKeyDown={this.onKeyDown}
-      value={this.props.value} />);
+      value={this.props.value}/>);
   }
 
   private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
