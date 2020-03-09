@@ -77,6 +77,12 @@ namespace Nexus::Python {
   void ExportOrderRecord(pybind11::module& module);
 
   /**
+   * Exports the OrderWrapperReactor class.
+   * @param module The module to export to.
+   */
+  void ExportOrderWrapperReactor(pybind11::module& module);
+
+  /**
    * Exports the PrimitiveOrder class.
    * @param module The module to export to.
    */
