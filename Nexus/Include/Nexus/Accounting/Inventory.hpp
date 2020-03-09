@@ -1,5 +1,6 @@
 #ifndef NEXUS_INVENTORY_HPP
 #define NEXUS_INVENTORY_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Position.hpp"
@@ -50,6 +51,14 @@ namespace Nexus::Accounting {
       : m_position(key),
         m_volume(0),
         m_transactionCount(0) {}
+
+  template<typename Position>
+  std::ostream& operator <<(std::ostream& out,
+      const Inventory<Position>& inventory) {
+    return out << '(' << inventory.m_position << ' ' <<
+      inventory.m_grossProfitAndLoss << ' ' << inventory.m_fees << ' ' <<
+      inventory.m_volume << ' ' << inventory.m_transactionCount << ')';
+  }
 }
 
 namespace Beam::Serialization {

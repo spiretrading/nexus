@@ -5,13 +5,13 @@
 namespace Nexus::Python {
 
   /**
-   * Exports the AsxtFeeTable classes.
+   * Exports the AsxtFeeTable class.
    * @param module The module to export to.
    */
   void ExportAsxtFeeTable(pybind11::module& module);
 
   /**
-   * Exports the ChicFeeTable classes.
+   * Exports the ChicFeeTable class.
    * @param module The module to export to.
    */
   void ExportChicFeeTable(pybind11::module& module);
@@ -27,6 +27,18 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportFeeHandling(pybind11::module& module);
+
+  /**
+   * Exports the HkexFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportHkexFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the JpxFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportJpxFeeTable(pybind11::module& module);
 
   /**
    * Exports the LiquidityFlag enum.

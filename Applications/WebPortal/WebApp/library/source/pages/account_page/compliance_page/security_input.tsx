@@ -124,7 +124,7 @@ export class SecurityInput extends React.Component<Properties, State> {
           </div>);
       } else {
         return (
-          <div style={{...iconWrapperStyle}}>
+          <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
               src={SecurityInput.PATH + 'upload-grey.svg'}/>
             <div style={SecurityInput.STYLE.iconLabelReadonly}>
@@ -425,7 +425,7 @@ export class SecurityInput extends React.Component<Properties, State> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       cursor: 'pointer' as 'pointer',
-      ':active' : {
+      ':active': {
         backgroundColor: '#4B23A0'
       },
       ':focus': {

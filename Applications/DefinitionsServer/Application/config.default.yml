@@ -1,12 +1,12 @@
 ---
 server:
-  interface: local_interface:20200
-  addresses: [global_address:20200, local_interface:20200]
+  interface: $local_interface:20200
+  addresses: [$global_address:20200, $local_interface:20200]
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: definitions_service
-  password: admin_password
+  password: $admin_password
 
 minimum_spire_version: "1"
 ntp_pool: [0.pool.ntp.org:123,
@@ -20,15 +20,23 @@ markets: markets.yml
 time_zones: ./date_time_zonespec.csv
 exchange_rates:
   - symbol: USD/CAD
-    rate: 1.31
+    rate: 1.33
   - symbol: USD/AUD
-    rate: 1.46
+    rate: 1.49
   - symbol: AUD/CAD
-    rate: 0.90
+    rate: 0.89
   - symbol: HKD/CAD
     rate: 0.17
   - symbol: HKD/USD
     rate: 0.13
   - symbol: HKD/AUD
     rate: 0.19
+  - symbol: JPY/HKD
+    rate: 0.071
+  - symbol: JPY/CAD
+    rate: 0.012
+  - symbol: JPY/USD
+    rate: 0.0091
+  - symbol: JPY/AUD
+    rate: 0.012
 ...

@@ -278,7 +278,8 @@ void Nexus::Python::ExportApplicationMarketDataClient(
 }
 
 void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
-  class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore>(module,
+  class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
+      std::shared_ptr<VirtualHistoricalDataStore>>(module,
     "HistoricalDataStore")
     .def("load_order_imbalances",
       &VirtualHistoricalDataStore::LoadOrderImbalances)
@@ -499,7 +500,9 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
 
 void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
   class_<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
-      Viper::MySql::Connection>>, VirtualHistoricalDataStore>(module,
+      Viper::MySql::Connection>>, VirtualHistoricalDataStore,
+      std::shared_ptr<ToPythonHistoricalDataStore<SqlHistoricalDataStore<
+      Viper::MySql::Connection>>>>(module,
       "MySqlHistoricalDataStore")
     .def(init(
       [] (std::string host, unsigned int port, std::string username,
@@ -529,7 +532,8 @@ void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
 void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
   using PythonSqliteHistoricalDataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<Viper::Sqlite3::Connection>>;
-  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore>(module,
+  class_<PythonSqliteHistoricalDataStore, VirtualHistoricalDataStore,
+      std::shared_ptr<PythonSqliteHistoricalDataStore>>(module,
       "SqliteHistoricalDataStore")
     .def(init(
       [] (std::string path) {

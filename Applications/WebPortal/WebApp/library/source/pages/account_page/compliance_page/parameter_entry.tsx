@@ -129,7 +129,7 @@ export class ParameterEntry extends React.Component<Properties> {
       securityList.push(complianceValues[i].value);
     }
     return securityList;
-  };
+  }
 
   private onSecurityListChange(newValues: Nexus.Security[]) {
     const newParameterList = [];

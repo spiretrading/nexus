@@ -28,15 +28,15 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return(
       <div style={{height: '100%'}}>
-      <WebPortal.PageWrapper>
-        <WebPortal.CompliancePage
-          onRuleAdd={this.onRuleAdd}
-          onRuleChange={this.onRuleChange}
-          displaySize={this.props.displaySize} 
-          schemas={this.state.schemas}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-          entries={this.state.entries}/>
-      </WebPortal.PageWrapper>
+        <WebPortal.PageWrapper>
+          <WebPortal.CompliancePage
+            onRuleAdd={this.onRuleAdd}
+            onRuleChange={this.onRuleChange}
+            displaySize={this.props.displaySize} 
+            schemas={this.state.schemas}
+            currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+            entries={this.state.entries}/>
+        </WebPortal.PageWrapper>
       </div>);
   }
 
@@ -45,7 +45,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private generateSchemas() {
-        this.state.entries.push(new Nexus.ComplianceRuleEntry(
+    this.state.entries.push(new Nexus.ComplianceRuleEntry(
       52,
       Beam.DirectoryEntry.makeDirectory(124, 'Directory'),
       Nexus.ComplianceRuleEntry.State.ACTIVE,
@@ -212,10 +212,10 @@ class TestApp extends React.Component<Properties, State> {
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.DOUBLE, 123.4567)),
       ]));
-      this.setState({
-        entries: this.state.entries,
-        schemas: this.state.schemas
-      });
+    this.setState({
+      entries: this.state.entries,
+      schemas: this.state.schemas
+    });
   }
 
   private onRuleChange(updatedRule: Nexus.ComplianceRuleEntry) {

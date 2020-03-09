@@ -39,7 +39,7 @@ namespace OrderExecutionService {
       \brief Publishes a synchronized sequence of ExecutionReportEntries based
              off of the Orders published by an OrderExecutionPublisher.
    */
-  class ExecutionReportPublisher :
+  class ExecutionReportPublisher final :
       public Beam::Publisher<ExecutionReportEntry> {
     public:
 
@@ -51,10 +51,11 @@ namespace OrderExecutionService {
       ExecutionReportPublisher(
         const OrderExecutionPublisher& orderExecutionPublisher);
 
-      virtual void With(const std::function<void ()>& f) const override final;
+      void With(const std::function<void ()>& f) const override;
 
-      virtual void Monitor(std::shared_ptr<
-        Beam::QueueWriter<ExecutionReportEntry>> monitor) const override final;
+      void Monitor(
+        std::shared_ptr<Beam::QueueWriter<ExecutionReportEntry>> monitor)
+        const override;
 
     private:
       std::shared_ptr<Beam::SequencePublisher<ExecutionReportEntry>>
@@ -65,12 +66,12 @@ namespace OrderExecutionService {
   };
 
   inline ExecutionReportEntry::ExecutionReportEntry()
-      : m_order(nullptr) {}
+    : m_order(nullptr) {}
 
   inline ExecutionReportEntry::ExecutionReportEntry(const Order* order,
-      const ExecutionReport& executionReport)
-      : m_order(order),
-        m_executionReport(executionReport) {}
+    const ExecutionReport& executionReport)
+    : m_order(order),
+      m_executionReport(executionReport) {}
 
   inline ExecutionReportPublisher::ExecutionReportPublisher(
       const OrderExecutionPublisher& orderExecutionPublisher)
@@ -81,9 +82,9 @@ namespace OrderExecutionService {
           std::make_shared<Beam::CallbackWriterQueue<const Order*>>(
           [=] (const Order* order) {
             std::shared_ptr<Beam::QueueWriter<ExecutionReport>> converter =
-              Beam::MakeConverterWriterQueue<ExecutionReport>(m_publisher,
+              std::make_shared<Beam::CallbackWriterQueue<ExecutionReport>>(
               [=] (const ExecutionReport& executionReport) {
-                return ExecutionReportEntry(order, executionReport);
+                m_publisher->Push(ExecutionReportEntry(order, executionReport));
               });
             m_converters.push_back(converter);
             order->GetPublisher().Monitor(converter);
@@ -103,9 +104,10 @@ namespace OrderExecutionService {
             order->GetPublisher().With(
               [&] {
                 std::shared_ptr<Beam::QueueWriter<ExecutionReport>> converter =
-                  Beam::MakeConverterWriterQueue<ExecutionReport>(m_publisher,
+                  std::make_shared<Beam::CallbackWriterQueue<ExecutionReport>>(
                   [=] (const ExecutionReport& executionReport) {
-                    return ExecutionReportEntry(order, executionReport);
+                    m_publisher->Push(ExecutionReportEntry(order,
+                      executionReport));
                   });
                 boost::optional<std::vector<ExecutionReport>>
                   executionReportSnapshot;

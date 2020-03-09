@@ -38,6 +38,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
     this.state = {
       selection: -1
     }
+    this.addNewRule = this.addNewRule.bind(this);
   }
 
   public render(): JSX.Element {
@@ -73,7 +74,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
       } else {
         options.push(
           <div className={css(NewRuleModal.EXTRA_STYLE.optionRow)}
-            onClick={this.onClickRule.bind(this, i)}>
+              onClick={this.onClickRule.bind(this, i)}>
             {this.props.schemas[i].name}
           </div>);
       }
@@ -87,7 +88,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
               height={plusSignImageSize}
               width={plusSignImageSize}/>
           </div>
-          <div style={NewRuleModal.STYLE.newRuleText}>{'Add New Rule'}</div>
+          <div style={NewRuleModal.STYLE.newRuleText}>Add New Rule</div>
         </div>
         <div style={modalVisibility}>
           <Modal displaySize={this.props.displaySize}
@@ -107,7 +108,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
               <HLine color='#E6E6E6'/>
               <div style={buttonWrapper}>
                 <Button label='Select'
-                  onClick={this.addNewRule.bind(this)}/>
+                  onClick={this.addNewRule}/>
               </div>
             </div>
           </Modal>
