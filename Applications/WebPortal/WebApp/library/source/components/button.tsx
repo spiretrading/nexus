@@ -44,7 +44,7 @@ export class Button extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    default : {
+    default: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
@@ -57,7 +57,7 @@ export class Button extends React.Component<Properties> {
       MozAppearance: 'none' as 'none',
       cursor: 'pointer' as 'pointer'
     },
-    readonly : {
+    readonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '246px',
@@ -73,7 +73,7 @@ export class Button extends React.Component<Properties> {
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     button: {
-      ':active' : {
+      ':active': {
         backgroundColor: '#4B23A0'
       },
       ':focus': {
@@ -87,7 +87,7 @@ export class Button extends React.Component<Properties> {
         outlineStyle: 'none',
         MozAppearance: 'none' as 'none'
       },
-      ':hover':{
+      ':hover': {
         backgroundColor: '#4B23A0'
       },
       '::-moz-focus-inner': {

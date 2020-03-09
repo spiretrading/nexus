@@ -425,7 +425,7 @@ export class SecurityInput extends React.Component<Properties, State> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       cursor: 'pointer' as 'pointer',
-      ':active' : {
+      ':active': {
         backgroundColor: '#4B23A0'
       },
       ':focus': {
