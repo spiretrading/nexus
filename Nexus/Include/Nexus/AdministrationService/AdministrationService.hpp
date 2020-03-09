@@ -23,7 +23,7 @@ namespace Nexus::AdministrationService {
   template<typename ClientType> class WrapperAdministrationClient;
 
   // Standard name for the administration service.
-  static const std::string SERVICE_NAME = "administration_service";
+  inline const std::string SERVICE_NAME = "administration_service";
 }
 
 #endif

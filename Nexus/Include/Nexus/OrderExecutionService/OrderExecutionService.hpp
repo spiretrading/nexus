@@ -54,7 +54,7 @@ namespace Nexus::OrderExecutionService {
   template<typename DriverType> class WrapperOrderExecutionDriver;
 
   // Standard name for the order execution service.
-  static const std::string SERVICE_NAME = "order_execution_service";
+  inline const std::string SERVICE_NAME = "order_execution_service";
 }
 
 #endif
