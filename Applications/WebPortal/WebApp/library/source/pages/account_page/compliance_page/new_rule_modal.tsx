@@ -87,7 +87,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
               height={plusSignImageSize}
               width={plusSignImageSize}/>
           </div>
-          <div style={NewRuleModal.STYLE.newRuleText}>{'Add New Rule'}</div>
+          <div style={NewRuleModal.STYLE.newRuleText}>Add New Rule</div>
         </div>
         <div style={modalVisibility}>
           <Modal displaySize={this.props.displaySize}
