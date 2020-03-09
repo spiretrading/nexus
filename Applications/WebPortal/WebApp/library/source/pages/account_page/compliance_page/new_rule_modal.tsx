@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize,  HLine } from '../../..';
+import { Button, DisplaySize, HLine, Modal } from '../../..';
 
 interface Properties {
 
@@ -26,7 +26,7 @@ interface State {
 }
 
 /** Displays a component that allows a user to add a new rule. */
-export class NewRuleButton extends React.Component<Properties, State> {
+export class NewRuleModal extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isOpen: false,
     onToggleModal: () => {},
@@ -38,28 +38,15 @@ export class NewRuleButton extends React.Component<Properties, State> {
     this.state = {
       selection: -1
     }
+    this.addNewRule = this.addNewRule.bind(this);
   }
 
   public render(): JSX.Element {
-    const contentBoxStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return NewRuleButton.STYLE.smallOptionsBox;
-      } else {
-        return NewRuleButton.STYLE.largeOptionsBox;
-      }
-    })();
-    const shadowBoxStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return NewRuleButton.STYLE.boxShadowSmall;
-      } else {
-        return NewRuleButton.STYLE.boxShadowLarge;
-      }
-    })();
-    const modalStyle = (() => {
+    const modalVisibility = (() => {
       if(this.props.isOpen) {
         return null;
       } else {
-        return NewRuleButton.STYLE.hidden;
+        return NewRuleModal.STYLE.hidden;
       }
     })();
     const plusSignImageSize = (() => {
@@ -71,64 +58,60 @@ export class NewRuleButton extends React.Component<Properties, State> {
     })();
     const buttonWrapper = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return NewRuleButton.STYLE.buttonWrapperSmall;
+        return NewRuleModal.STYLE.buttonWrapperSmall;
       } else {
-        return NewRuleButton.STYLE.buttonWrapper;
+        return NewRuleModal.STYLE.buttonWrapper;
       }
     })();
     const options = [];
     for(let i = 0; i < this.props.schemas.length; ++i) {
       if(i === this.state.selection) {
         options.push(
-          <div className={css(NewRuleButton.EXTRA_STYLE.selectedRow)}
+          <div className={css(NewRuleModal.EXTRA_STYLE.selectedRow)}
               onClick={this.onClickRule.bind(this, i)}>
             {this.props.schemas[i].name}
           </div>);
       } else {
         options.push(
-          <div className={css(NewRuleButton.EXTRA_STYLE.optionRow)}
-            onClick={this.onClickRule.bind(this, i)}>
+          <div className={css(NewRuleModal.EXTRA_STYLE.optionRow)}
+              onClick={this.onClickRule.bind(this, i)}>
             {this.props.schemas[i].name}
           </div>);
       }
     }
     return (
       <div>
-        <div style={NewRuleButton.STYLE.newRuleRow}
+        <div style={NewRuleModal.STYLE.newRuleRow}
             onClick={this.props.onToggleModal}>
-          <div style={NewRuleButton.STYLE.imageWrapper}>
-            <img src='resources/account_page/compliance_page/add.svg'
+          <div style={NewRuleModal.STYLE.imageWrapper}>
+            <img src={NewRuleModal.ADD_PATH}
               height={plusSignImageSize}
               width={plusSignImageSize}/>
           </div>
-          <div style={NewRuleButton.STYLE.newRuleText}>{'Add New Rule'}</div>
+          <div style={NewRuleModal.STYLE.newRuleText}>Add New Rule</div>
         </div>
-        <div style={modalStyle}>
-          <div style={NewRuleButton.STYLE.overlay}/>
-          <div style={shadowBoxStyle}/>
-          <div style={contentBoxStyle}>
-            <div style={NewRuleButton.STYLE.header}>
-              <div style={NewRuleButton.STYLE.headerText}>
-                {'Add New Rule'}
+        <div style={modalVisibility}>
+          <Modal displaySize={this.props.displaySize}
+              height='461px' width='300px'>
+            <div style={NewRuleModal.STYLE.header}>
+              <div style={NewRuleModal.STYLE.headerText}>
+                Add New Rule
               </div>
               <img height={plusSignImageSize} width={plusSignImageSize}
                 onClick={this.props.onToggleModal}
-                src='resources/account_page/compliance_page/new_row_modal/remove.svg'/>
+                src={NewRuleModal.CLOSE_PATH}/>
             </div>
-            <div style={NewRuleButton.STYLE.ruleItemWraper}>
+            <div style={NewRuleModal.STYLE.ruleItemWrapper}>
               {options}
             </div>
-            <div style={NewRuleButton.STYLE.footerWrapper}>
+            <div style={NewRuleModal.STYLE.footerWrapper}>
               <HLine color='#E6E6E6'/>
               <div style={buttonWrapper}>
-                <button 
-                    className={css(NewRuleButton.EXTRA_STYLE.button)}
-                    onClick={this.addNewRule.bind(this)}>
-                  {'Select'}
-                </button>
+                <Button label='Select'
+                  onClick={this.addNewRule}/>
               </div>
             </div>
-          </div>
+          </Modal>
         </div>
       </div>);
   }
@@ -155,14 +138,15 @@ export class NewRuleButton extends React.Component<Properties, State> {
       height: '20px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      alignItems: 'center' as 'center',
+      cursor: 'pointer' as 'pointer',
+      width: '130px'
     },
     newRuleText: {
       font: '400 14px Roboto',
       paddingLeft: '18px'
     },
     imageWrapper: {
-      position: 'relative' as 'relative',
       display: 'flex' as 'flex',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
@@ -173,64 +157,6 @@ export class NewRuleButton extends React.Component<Properties, State> {
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    },
-    overlay: {
-      boxSizing: 'border-box' as 'border-box',
-      top: '0px',
-      left: '0px',
-      position: 'fixed' as 'fixed',
-      width: '100%',
-      height: '100%',
-      minHeight: '501px',
-      backgroundColor: '#FFFFFF',
-      opacity: 0.9
-    },
-    boxShadowSmall: {
-      boxSizing: 'border-box' as 'border-box', 
-      opacity: 0.4,
-      display: 'block',
-      boxShadow: '0px 0px 6px #000000',
-      position: 'absolute' as 'absolute',
-      border: '1px solid #FFFFFF',
-      backgroundColor: '#FFFFFF',
-      width: '282px',
-      height: '100%',
-      top: '0%',
-      right: '0%'
-    },
-    boxShadowLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      opacity: 0.4,
-      boxShadow: '0px 0px 6px #000000',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      backgroundColor: '#FFFFFF',
-      width: '360px',
-      height: '461px',
-      top: 'calc(50% - 230.5px)',
-      left: 'calc(50% - 180px)',
-    },
-    smallOptionsBox: {
-      opacity: 1,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      backgroundColor: '#FFFFFF',
-      width: '282px',
-      height: '100%',
-      top: '0%',
-      right: '0%'
-    },
-    largeOptionsBox: {
-      opacity: 1,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'block',
-      position: 'absolute' as 'absolute',
-      backgroundColor: '#FFFFFF',
-      width: '360px',
-      height: '461px',
-      top: 'calc(50% - 230.5px)',
-      left: 'calc(50% - 180px)'
     },
     header: {
       boxSizing: 'border-box' as 'border-box',
@@ -260,7 +186,7 @@ export class NewRuleButton extends React.Component<Properties, State> {
       height: '16px',
       width: '16px'
     },
-    ruleItemWraper: {
+    ruleItemWrapper: {
       paddingTop: '30px',
       paddingBottom: '30px'
     },
@@ -308,42 +234,10 @@ export class NewRuleButton extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       paddingLeft: '18px'
-    },
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none' as 'none',
-      ':active' : {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
-      },
-      ':hover':{
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
     }
   });
+  private static readonly CLOSE_PATH =
+    'resources/account_page/compliance_page/new_rule_modal/close.svg';
+  private static readonly ADD_PATH = 
+    'resources/account_page/compliance_page/new_rule_modal/add.svg';
 }

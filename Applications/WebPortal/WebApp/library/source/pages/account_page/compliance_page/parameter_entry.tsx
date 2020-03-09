@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
-  NumberInput, TextInputField } from '../../..';
+  NumberInput, SecurityInput, TextInputField } from '../../..';
 
 interface Properties {
 
@@ -23,6 +23,7 @@ export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
+    this.onSecurityListChange = this.onSecurityListChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -76,8 +77,6 @@ export class ParameterEntry extends React.Component<Properties> {
           return <NumberInput 
             value={this.props.parameter.value.value}
             onChange={this.onChange}/>;
-        case Nexus.ComplianceValue.Type.SECURITY:
-          return <div/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextInputField
             displaySize={this.props.displaySize}
@@ -85,7 +84,21 @@ export class ParameterEntry extends React.Component<Properties> {
             onInput={this.onChange}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.LIST:
-          return <div/>;
+          if(this.props.parameter.value.value.length > 0) {
+            if(this.props.parameter.value.value[0].type ===
+                Nexus.ComplianceValue.Type.SECURITY) {
+              return <SecurityInput
+                displaySize={this.props.displaySize}
+                onChange={this.onSecurityListChange}
+                value={this.convertFromParameterList(
+                  this.props.parameter.value.value)}/>;
+            }
+          } else {
+            return <SecurityInput
+              displaySize={this.props.displaySize}
+              onChange={this.onSecurityListChange}
+              value={[]}/>;
+          }
         default:
           return <div/>;
       }
@@ -102,6 +115,26 @@ export class ParameterEntry extends React.Component<Properties> {
   private onChange(newValue: any) {
     this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name, 
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
+  }
+
+  private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {
+    const securityList = [] as Nexus.Security[];
+    for(let i = 0; i < complianceValues.length; ++i) {
+      securityList.push(complianceValues[i].value);
+    }
+    return securityList;
+  }
+
+  private onSecurityListChange(newValues: Nexus.Security[]) {
+    const newParameterList = [];
+    for(let i = 0; i < newValues.length; ++i) {
+      newParameterList.push(
+        new Nexus.ComplianceValue(
+          Nexus.ComplianceValue.Type.SECURITY, newValues[i]));
+    }
+    this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
+      new Nexus.ComplianceValue(
+        Nexus.ComplianceValue.Type.LIST, newParameterList)));
   }
 
   private static readonly STYLE = {
@@ -129,7 +162,7 @@ export class ParameterEntry extends React.Component<Properties> {
       maxWidth: '424px',
       width: '100%',
       height: '34px',
-      font: '400 16px Roboto',
+      font: '400 14px Roboto',
       alignItems: 'center' as 'center'
     },
     rowLarge: {
