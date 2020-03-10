@@ -54,7 +54,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
 
   public render() {
     const visibility = (() => {
-      if (!this.state.isEditing) {
+      if(!this.state.isEditing) {
         return SingleSecurityInput.STYLE.hidden;
       } else {
         return null;
@@ -68,14 +68,14 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
           onEnter={this.addEntry}/>);
     })();
     const iconRowStyle = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return SingleSecurityInput.STYLE.iconRowSmall;
       } else {
         return SingleSecurityInput.STYLE.iconRowLarge;
       }
     })();
     const imageSize = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return SingleSecurityInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
         return SingleSecurityInput.IMAGE_SIZE_LARGE_VIEWPORT;
@@ -83,15 +83,15 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
     })();
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
-      if (displaySize === DisplaySize.SMALL) {
+      if(displaySize === DisplaySize.SMALL) {
         return SingleSecurityInput.STYLE.iconWrapperSmall;
       } else {
         return SingleSecurityInput.STYLE.iconWrapperLarge;
       }
     })();
     const removeButton = (() => {
-      if (this.state.isSelected) {
-        if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.state.isSelected) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
           return (
             <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
@@ -112,7 +112,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
             </div>);
         }
       } else {
-        if (this.props.displaySize === DisplaySize.SMALL) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
           return (
             <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
@@ -204,7 +204,7 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
   }
 
   private removeEntry() {
-    if (this.state.isSelected) {
+    if(this.state.isSelected) {
       this.setState({
         isSelected: false,
         localValue: null
@@ -434,7 +434,6 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
     'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
-  private static readonly UPLOAD_TEXT = 'Upload';
 }
 
 interface InputFieldProperties {
@@ -476,7 +475,7 @@ class InputField extends React.Component<InputFieldProperties> {
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.keyCode === 13) {
+    if(event.keyCode === 13) {
       const newSecurity =
           new Nexus.Security(
             this.props.value,
@@ -542,7 +541,7 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
   
   public render() {
     const scrollHeader = (() => {
-      if (this.props.displaySize === DisplaySize.SMALL) {
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <div style={SymbolBox.STYLE.scrollBoxHeaderSmall}>
             {'Added Symbols'}
@@ -556,7 +555,7 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
     })();
     const selectedSecuritiesBox = (() => {
       const displaySize = this.props.displaySize;
-      if (displaySize === DisplaySize.SMALL) {
+      if(displaySize === DisplaySize.SMALL) {
         return SymbolBox.STYLE.scrollBoxSmall;
       } else {
         return SymbolBox.STYLE.scrollBoxBig;
@@ -570,8 +569,7 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
           return '';
         }
       })();
-      console.log(this.props.value , displayValue);
-      if (this.props.isSelected) {
+      if(this.props.isSelected) {
         return (
           <div style={SymbolBox.STYLE.scrollBoxEntrySelected}
             onClick={this.onClick}>
