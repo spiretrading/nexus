@@ -89,7 +89,6 @@ export class ParameterEntry extends React.Component<Properties> {
             displaySize={this.props.displaySize}
             onChange={this.onChange}
             value={this.props.parameter.value.value}/>;
-          return 
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===
