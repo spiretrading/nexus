@@ -13,16 +13,11 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/DateTime.hpp>
 #include <Beam/Utilities/Math.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
-#include <boost/fusion/include/as_vector.hpp>
-#include <boost/fusion/include/copy.hpp>
-#include <boost/fusion/include/for_each.hpp>
-#include <boost/fusion/include/make_vector.hpp>
-#include <boost/fusion/include/transform.hpp>
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
+#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -1446,7 +1441,7 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
   m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
-    Aspen::constant(&node.GetOrder()));
+    OrderWrapperReactor(Ref(node.GetOrder())));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {

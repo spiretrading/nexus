@@ -49,14 +49,14 @@ namespace Nexus::MarketDataService {
   template<typename ClientType> class WrapperMarketDataFeedClient;
 
   // Standard name for the market data feed service.
-  static const std::string FEED_SERVICE_NAME = "market_data_feed_service";
+  inline const std::string FEED_SERVICE_NAME = "market_data_feed_service";
 
   // Standard name for the market data registry service.
-  static const std::string REGISTRY_SERVICE_NAME =
+  inline const std::string REGISTRY_SERVICE_NAME =
     "market_data_registry_service";
 
   // Standard name for the market data relay service.
-  static const std::string RELAY_SERVICE_NAME = "market_data_relay_service";
+  inline const std::string RELAY_SERVICE_NAME = "market_data_relay_service";
 }
 
 #endif

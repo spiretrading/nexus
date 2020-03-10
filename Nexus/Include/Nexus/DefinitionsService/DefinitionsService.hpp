@@ -1,9 +1,8 @@
-#ifndef NEXUS_DEFINITIONSSERVICE_HPP
-#define NEXUS_DEFINITIONSSERVICE_HPP
+#ifndef NEXUS_DEFINITIONS_SERVICE_HPP
+#define NEXUS_DEFINITIONS_SERVICE_HPP
 #include <string>
 
-namespace Nexus {
-namespace DefinitionsService {
+namespace Nexus::DefinitionsService {
   class ApplicationDefinitionsClient;
   template<typename ServiceProtocolClientBuilderType> class DefinitionsClient;
   template<typename ContainerType> class DefinitionsServlet;
@@ -12,8 +11,7 @@ namespace DefinitionsService {
   template<typename ClientType> class WrapperDefinitionsClient;
 
   // Standard name for the definitions service.
-  static const std::string SERVICE_NAME = "definitions_service";
-}
+  inline const std::string SERVICE_NAME = "definitions_service";
 }
 
 #endif

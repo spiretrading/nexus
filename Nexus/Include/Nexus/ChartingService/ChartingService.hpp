@@ -1,9 +1,8 @@
-#ifndef NEXUS_CHARTINGSERVICE_HPP
-#define NEXUS_CHARTINGSERVICE_HPP
+#ifndef NEXUS_CHARTING_SERVICE_HPP
+#define NEXUS_CHARTING_SERVICE_HPP
 #include <string>
 
-namespace Nexus {
-namespace ChartingService {
+namespace Nexus::ChartingService {
   class ApplicationChartingClient;
   template<typename ServiceProtocolClientBuilderType> class ChartingClient;
   template<typename ContainerType, typename MarketDataClientType>
@@ -13,8 +12,7 @@ namespace ChartingService {
   template<typename ClientType> class WrapperChartingClient;
 
   // Standard name for the charting service.
-  static const std::string SERVICE_NAME = "charting_service";
-}
+  inline const std::string SERVICE_NAME = "charting_service";
 }
 
 #endif

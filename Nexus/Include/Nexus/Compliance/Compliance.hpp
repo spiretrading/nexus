@@ -43,7 +43,7 @@ namespace Nexus::Compliance {
   class VirtualComplianceClient;
 
   // Standard name for the compliance service.
-  static const std::string SERVICE_NAME = "compliance_service";
+  inline const std::string SERVICE_NAME = "compliance_service";
 }
 
 #endif

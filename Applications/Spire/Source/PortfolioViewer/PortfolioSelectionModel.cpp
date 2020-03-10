@@ -16,7 +16,8 @@ using namespace std;
 PortfolioSelectionModel::PortfolioSelectionModel(
     Ref<UserProfile> userProfile,
     const PortfolioViewerProperties& properties, QObject* parent)
-    : m_userProfile(userProfile.Get()) {
+    : QAbstractItemModel(parent),
+      m_userProfile(userProfile.Get()) {
   for(size_t i = 0; i < SELECTION_TYPES_COUNT; ++i) {
     m_roots[i] = createIndex(i, 0, -1);
   }
@@ -99,7 +100,7 @@ bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
 }
 
 Qt::ItemFlags PortfolioSelectionModel::flags(const QModelIndex& index) const {
-  Qt::ItemFlags flags = QAbstractTableModel::flags(index);
+  Qt::ItemFlags flags = QAbstractItemModel::flags(index);
   if(index.isValid()) {
     flags |= Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     flags &= ~Qt::ItemNeverHasChildren;
@@ -359,7 +360,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
       }
     }
   }
-  return QAbstractTableModel::setData(index, value, role);
+  return QAbstractItemModel::setData(index, value, role);
 }
 
 QVariant PortfolioSelectionModel::headerData(int section,

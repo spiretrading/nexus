@@ -89,7 +89,7 @@ void Task::Execute() {
             value.get();
           } catch(...) {
             m_isFailed = true;
-            m_cancelToken->set(true);
+            m_cancelToken->set_complete(true);
           }
         }, std::move(translation))),
       Aspen::lift([=] {
@@ -99,10 +99,11 @@ void Task::Execute() {
         }
         m_context.GetOrderPublisher().Break();
       }),
-      Aspen::Box<void>(OrderCancellationReactor(
-        Ref(m_context.GetUserProfile().GetServiceClients().
-        GetOrderExecutionClient()), PublisherReactor(
-        m_context.GetOrderPublisher()))),
+      Aspen::until(!m_cancelToken,
+        Aspen::Box<void>(OrderCancellationReactor(
+          Ref(m_context.GetUserProfile().GetServiceClients().
+          GetOrderExecutionClient()), PublisherReactor(
+          m_context.GetOrderPublisher())))),
       Aspen::lift([=] {
         if(m_isFailed) {
           m_state = State::FAILED;
@@ -123,7 +124,7 @@ void Task::Cancel() {
     m_state = State::CANCELED;
     m_publisher.Push(StateEntry(m_state, "Canceled by user."));
   } else if(m_isCancelable.exchange(false)) {
-    m_cancelToken->set(true);
+    m_cancelToken->set_complete(true);
   }
 }
 

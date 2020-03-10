@@ -1,9 +1,8 @@
-#ifndef NEXUS_RISKSERVICE_HPP
-#define NEXUS_RISKSERVICE_HPP
+#ifndef NEXUS_RISK_SERVICE_HPP
+#define NEXUS_RISK_SERVICE_HPP
 #include <string>
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
   struct AccountRecord;
   template<typename ServiceProtocolClientBuilderType> class RiskClient;
   struct RiskParameters;
@@ -27,8 +26,7 @@ namespace RiskService {
   template<typename ClientType> class WrapperRiskClient;
 
   // Standard name for the risk service.
-  static const std::string SERVICE_NAME = "risk_service";
-}
+  inline const std::string SERVICE_NAME = "risk_service";
 }
 
 #endif

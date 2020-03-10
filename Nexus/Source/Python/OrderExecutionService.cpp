@@ -21,6 +21,7 @@
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
+#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/OrderExecutionService/VirtualOrderExecutionClient.hpp"
@@ -244,6 +245,7 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   ExportOrderRecord(submodule);
   ExportPrimitiveOrder(submodule);
   ExportStandardQueries(submodule);
+  ExportOrderWrapperReactor(submodule);
   auto testModule = submodule.def_submodule("tests");
   ExportOrderExecutionServiceTestEnvironment(testModule);
   ExportMockOrderExecutionDriver(testModule);
@@ -445,6 +447,11 @@ void Nexus::Python::ExportOrderRecord(pybind11::module& module) {
     .def(self != self);
   ExportQueueSuite<OrderRecord>(module, "OrderRecord");
   ExportQueueSuite<SequencedOrderRecord>(module, "SequencedOrderRecord");
+}
+
+void Nexus::Python::ExportOrderWrapperReactor(pybind11::module& module) {
+  Aspen::export_reactor<OrderWrapperReactor>(module, "OrderWrapperReactor")
+    .def(init<Ref<const Order>>());
 }
 
 void Nexus::Python::ExportPrimitiveOrder(pybind11::module& module) {
