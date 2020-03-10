@@ -32,7 +32,7 @@ class TestApp extends React.Component<Properties, State> {
           <WebPortal.CompliancePage
             onRuleAdd={this.onRuleAdd}
             onRuleChange={this.onRuleChange}
-            displaySize={this.props.displaySize} 
+            displaySize={this.props.displaySize}
             schemas={this.state.schemas}
             currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
             entries={this.state.entries}/>
@@ -57,7 +57,7 @@ class TestApp extends React.Component<Properties, State> {
               Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('1234.56'))),
           new Nexus.ComplianceParameter(
             'Currency',
-            new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY, 
+            new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY,
               Nexus.DefaultCurrencies.CAD)),
           new Nexus.ComplianceParameter(
             'Note',
@@ -90,46 +90,56 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Date/Time',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DATE_TIME, 
-            new Beam.DateTime(new Beam.Date(2004, 2, 4), 
+            Nexus.ComplianceValue.Type.DATE_TIME,
+            new Beam.DateTime(new Beam.Date(2004, 2, 4),
               new Beam.Duration(5105000)))),
-        new Nexus.ComplianceParameter(    
+        new Nexus.ComplianceParameter(
           'Securities',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.LIST, [
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('AST.XASX', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('AST.XASX',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('PST.CSE', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('PST.CSE',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('NQR.YYYY',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY, 
-              new Nexus.Security('AST.NYC', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+              Nexus.ComplianceValue.Type.SECURITY,
+              new Nexus.Security('AST.NYC',
+                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
             ])),
         new Nexus.ComplianceParameter(
           'Security',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.SECURITY,
-            new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)))
+            new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE,
+              Nexus.DefaultCountries.CA)))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [

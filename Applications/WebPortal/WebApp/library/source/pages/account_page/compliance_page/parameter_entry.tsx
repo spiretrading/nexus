@@ -1,7 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionBox, DisplaySize, DurationInput, MoneyInputBox,
-  NumberInput, SingleSecurityInput, SecurityInput, TextInputField } from '../../..';
+  NumberInput, SecurityInput, SingleSecurityInput, TextInputField } from
+  '../../..';
 
 interface Properties {
 

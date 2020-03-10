@@ -429,7 +429,6 @@ export class SingleSecurityInput extends React.Component<Properties, State> {
   private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
   private static readonly MODAL_HEADER = 'Edit Symbols';
-  private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
   private static readonly MODAL_HEIGHT = '363px';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
