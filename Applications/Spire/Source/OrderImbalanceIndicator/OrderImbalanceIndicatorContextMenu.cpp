@@ -1,4 +1,6 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorContextMenu.hpp"
+#include <QLabel>
+#include <QLayout>
 #include <QMenu>
 #include <QWidgetAction>
 #include "Spire/Spire/Dimensions.hpp"
@@ -42,7 +44,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     .arg(scale_height(12)).arg(scale_height(5))
     .arg(scale_height(3)).arg(scale_width(8)));
   auto table_columns_menu = new QMenu(tr("Table Columns"), this);
-  table_columns_menu->setFixedWidth(scale_width(140));
+  table_columns_menu->setFixedSize(scale(140, 200));
   addMenu(table_columns_menu);
   auto security_action = new QWidgetAction(this);
   add_check_box(m_security_check_box, tr("Security"), security_action);
@@ -77,6 +79,34 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
 void OrderImbalanceIndicatorContextMenu::add_check_box(CheckBox* check_box,
     const QString& text, QWidgetAction* action) {
   check_box = new CheckBox(text, this);
+  check_box->setFixedWidth(scale_width(140));
   check_box->setChecked(true);
+  auto text_style = QString(R"(
+    color: black;
+    font-family: Roboto;
+    font-size: %1px;
+    margin-bottom: %4px;
+    margin-top: %4px;
+    outline: none;
+    padding-right: %3px;
+    spacing: %2px;
+    text-align: left center;)")
+    .arg(scale_height(12)).arg(scale_width(40)).arg(scale_width(8))
+    .arg(scale_height(2));
+  auto indicator_style = QString(R"(
+    background-color: white;
+    border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+    height: %3px;
+    width: %4px;)").arg(scale_height(1))
+    .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
+  auto checked_style = QString(R"(
+    image: url(:/Icons/check-with-box.svg);)");
+  auto hover_style = QString(R"(
+    border: %1px solid #4B23A0 %2px solid #4B23A0;)")
+    .arg(scale_height(1)).arg(scale_width(1));
+  auto focused_style = QString(R"(border-color: #4B23A0;)");
+  check_box->set_stylesheet(text_style, indicator_style, checked_style,
+    hover_style, focused_style);
+  check_box->setLayoutDirection(Qt::RightToLeft);
   action->setDefaultWidget(check_box);
 }
