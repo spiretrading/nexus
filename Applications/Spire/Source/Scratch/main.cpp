@@ -3,11 +3,19 @@
 
 using namespace Spire;
 
+#include <QHBoxLayout>
 #include <QContextMenuEvent>
-#include <QWidget>
+#include <QLabel>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorContextMenu.hpp"
 
 class Widget : public QWidget {
+  public:
+    Widget() {
+      auto layout = new QHBoxLayout(this);
+      auto l = new QLabel("Right click to show context menu", this);
+      layout->addWidget(l);
+    }
+
   protected:
     void contextMenuEvent(QContextMenuEvent* event) override {
       auto menu = OrderImbalanceIndicatorContextMenu(this);
