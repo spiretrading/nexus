@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
-import { NewRuleButton, RulesList } from '.';
+import { NewRuleModal, RulesList } from '.';
 
 interface Properties {
   
@@ -21,7 +21,7 @@ interface Properties {
   /** Indicates if the page is readonly. */
   readonly?: boolean;
 
-  /** The callback for adding the rule. */
+  /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
 
   /** The callback for updating a changed rule. */
@@ -69,7 +69,7 @@ export class CompliancePage extends React.Component<Properties, State> {
           readonly={this.props.readonly}/>
         <div style={footerStyle}>
           <div style={CompliancePage.STYLE.paddingMedium}/>
-          <NewRuleButton displaySize={this.props.displaySize}
+          <NewRuleModal displaySize={this.props.displaySize}
             isOpen={this.state.isAddRuleModalOpen}
             onToggleModal={this.onToggleAddRuleModal}
             onAddNewRule={this.props.onRuleAdd}
