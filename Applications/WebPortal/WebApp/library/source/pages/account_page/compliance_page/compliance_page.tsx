@@ -18,7 +18,7 @@ interface Properties {
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
 
-  /** Indicates if the page is readonly. */
+  /** Determines if the component is readonly. */
   readonly?: boolean;
 
   /** The callback for adding the rule.*/

@@ -239,6 +239,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
       backgroundColor: '#684BC7',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
+      paddingLeft: '18px'
     }
   });
   private static readonly CLOSE_PATH =
