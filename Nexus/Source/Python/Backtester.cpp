@@ -28,6 +28,17 @@ namespace {
       : BacktesterEnvironment{startTime, endTime, Ref(*serviceClients)},
         m_serviceClients(std::move(serviceClients)) {}
   };
+
+  struct ToPythonBacktesterServiceClients :
+      ToPythonServiceClients<BacktesterServiceClients> {
+    std::shared_ptr<BacktesterEnvironment> m_environment;
+
+    ToPythonBacktesterServiceClients(
+      std::shared_ptr<BacktesterEnvironment> environment)
+      : ToPythonServiceClients<BacktesterServiceClients>(
+          std::make_unique<BacktesterServiceClients>(Ref(*environment))),
+        m_environment(std::move(environment)) {}
+  };
 }
 
 void Nexus::Python::ExportBacktester(pybind11::module& module) {
@@ -92,7 +103,7 @@ void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
       VirtualServiceClients>(module, "BacktesterServiceClients")
     .def(init(
       [] (std::shared_ptr<BacktesterEnvironment> environment) {
-        return MakeToPythonServiceClients(
-          std::make_unique<BacktesterServiceClients>(Ref(*environment)));
+        return std::make_shared<ToPythonBacktesterServiceClients>(
+          std::move(environment));
       }));
 }
