@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 
 interface Properties {
@@ -20,6 +21,9 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
+  /** Determines if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler for when a change is made. */
   onChange?: (value?: number) => (boolean | void);
 }
@@ -31,6 +35,7 @@ interface State {
 /** Displays an input box for modifying integer values. */
 export class IntegerInputBox extends React.Component<Properties, State> {
   public static readonly defaultProps = {
+    min: 0,
     value: 0,
     onChange: () => {}
   };
@@ -38,34 +43,28 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value || 0
+      value: props.value || this.props.min
     };
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
     this.onChange = this.onChange.bind(this);
+    this.onBlur = this.onBlur.bind(this);
   }
 
   public render(): JSX.Element {
-    const value = this.state.value.toString().padStart(
-      this.props.padding || 0, '0');
+    const shownValue =  ('0'.repeat(this.props.padding) +
+      this.state.value).slice(-1 * (this.props.padding));
     return (
-      <div>
-        <input style={{...IntegerInputBox.STYLE.input, ...this.props.style}} 
-          type='text'
-          className={this.props.className}
-          ref={(input) => { this._input = input; }} value={value}
-          onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-          onChange={this.onChange}/>
-      </div>);
-  }
-
-  public componentDidUpdate() {
-    if(this._start != null) {
-      this._input.setSelectionRange(this._start, this._end);
-      this._start = null;
-      this._end = null;
-    }
-    this._input.setSelectionRange(this.props.padding, this.props.padding);
+      <input
+        onBlur={this.onBlur}
+        style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}}
+        value={shownValue}
+        onChange={this.onChange}
+        readOnly={this.props.readonly}
+        disabled={this.props.readonly}
+        onKeyDown={this.onKeyDown} onWheel={this.onWheel}
+        className={css(IntegerInputBox.EXTRA_STYLE.effects)}
+        type={'text'}/>);
   }
 
   private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -88,26 +87,30 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    let value = (() => {
+    const value = (() => {
       if(event.target.value.length === 0) {
         return 0;
       } else {
-        return parseInt(event.target.value, 10);
+        return parseInt(event.target.value.slice(-1 * this.props.padding), 10);
       }
     })();
     if(isNaN(value)) {
-      this._start = this._input.selectionStart - 1;
-      this._end = this._input.selectionEnd - 1;
       this.forceUpdate();
       return;
     }
-    if(this.props.max != null && value > this.props.max) {
-      value = Math.trunc(value / 10);
-    }
-    if(this.props.min != null && value < this.props.min ||
-        this.props.max != null && value > this.props.max) {
-      return;
-    }
+    this.setState({value: value});
+  }
+
+  private onBlur() {
+    const value = (() => {
+      if(this.state.value < this.props.min) {
+        return this.props.min;
+      } else if(this.state.value > this.props.max) {
+        return this.props.max;
+      } else {
+        return this.state.value;
+      }
+    })();
     this.update(value);
   }
 
@@ -134,24 +137,50 @@ export class IntegerInputBox extends React.Component<Properties, State> {
         return;
       }
     }
-    this._start = this._input.selectionStart;
-    this._end = this._input.selectionEnd;
     this.setState({
       value: value
     });
   }
 
   private static readonly STYLE = {
-    input: {
+    editBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '16px Roboto',
       width: '66px',
       height: '34px',
       border: '1px solid #C8C8C8',
-      textAlign: 'center' as 'center'
+      color: '#333333',
+      textAlign: 'center' as 'center',
+      backgroundColor: '#FFFFFF'
     }
   };
-  private _input: HTMLInputElement;
-  private _start: number;
-  private _end: number;
+  private static EXTRA_STYLE = StyleSheet.create({
+    effects: {
+      '-moz-appearance': 'textfield',
+      ':focus': {
+        outline: 0,
+        borderColor: '#684BC7',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none'
+      },
+      ':active': {
+        borderColor: '#684BC7'
+      },
+      '::moz-focus-inner': {
+        border: 0
+      },
+      '::-webkit-inner-spin-button': {
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0
+      },
+      '::-webkit-outer-spin-button': {
+        '-webkit-appearance': 'none',
+        'appearance': 'none',
+        margin: 0
+      }
+    }
+  });
 }

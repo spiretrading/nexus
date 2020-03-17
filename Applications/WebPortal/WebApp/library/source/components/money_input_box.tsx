@@ -13,6 +13,9 @@ interface Properties {
   /** The initial value to display. */
   value?: Nexus.Money;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler for when a change is made. */
   onChange?: (value?: Nexus.Money) => (boolean | void);
 
@@ -37,7 +40,7 @@ export class MoneyInputBox extends React.Component<Properties, State> {
     super(props);
     this.state = {
       value: props.value || Nexus.Money.ZERO
-    }
+    };
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onWheel = this.onWheel.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -46,10 +49,11 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
         <input
-          style={{...MoneyInputBox.STYLE.input, ...this.props.style}} 
+          style={{...MoneyInputBox.STYLE.input, ...this.props.style}}
           className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           type='text'
+          disabled={this.props.readonly}
           ref={(input) => {this._input = input;}}
           value={this.state.value.toString()}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
@@ -165,31 +169,25 @@ export class MoneyInputBox extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      backgroundColor: '#FFFFFF',
+      color: '#333333',
       flexGrow: 1,
       maxWidth: '246px',
       width: '100%',
-      paddingLeft: '10px',
+      paddingLeft: '10px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        ouline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active': {
-        borderColor: '#684BC7'
-      },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::placeholder': {
-        color: '#8C8C8C'
       }
     }
   });

@@ -22,10 +22,9 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
-/** Displays a country seleciton box. */
+/** Displays a country selection box. */
 export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 
@@ -91,12 +90,11 @@ export class CountrySelectionBox extends React.Component<Properties> {
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '7px',
-      color: '#000000',
+      color: '#333333',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
-      backgroundImage:
-        'url(resources/account_page/profile_page/arrow-down.svg)',
+      backgroundImage: 'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
@@ -108,7 +106,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly EXTRA_STYLE = StyleSheet.create({
     noHighting: {
       ':focus': {
-        ouline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
