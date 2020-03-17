@@ -110,6 +110,7 @@ export class ParameterEntry extends React.Component<Properties> {
               return <SecurityInput
                 displaySize={this.props.displaySize}
                 onChange={this.onSecurityListChange}
+                readonly={this.props.readonly}
                 value={this.convertFromParameterList(
                   this.props.parameter.value.value)}/>;
             }
@@ -117,6 +118,7 @@ export class ParameterEntry extends React.Component<Properties> {
             return <SecurityInput
               displaySize={this.props.displaySize}
               onChange={this.onSecurityListChange}
+              readonly={this.props.readonly}
               value={[]}/>;
           }
         default:

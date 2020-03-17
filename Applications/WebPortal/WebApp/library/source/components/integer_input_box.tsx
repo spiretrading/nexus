@@ -53,7 +53,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const shownValue =  ('0'.repeat(this.props.padding) +
-        this.state.value).slice(-1 * (this.props.padding));
+      this.state.value).slice(-1 * (this.props.padding));
     return (
       <input
         onBlur={this.onBlur}
@@ -165,7 +165,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
+      ':active': {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
@@ -176,7 +176,7 @@ export class IntegerInputBox extends React.Component<Properties, State> {
         'appearance': 'none',
         margin: 0
       },
-      '::-webkit-outer-spin-button': { 
+      '::-webkit-outer-spin-button': {
         '-webkit-appearance': 'none',
         'appearance': 'none',
         margin: 0

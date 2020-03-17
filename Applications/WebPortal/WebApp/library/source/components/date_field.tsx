@@ -31,7 +31,7 @@ interface State {
   componentWidth: number
 }
 
-/** A component that displays the date. */
+/** A component that displays a date. */
 export class DateField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Date(1, 1, 1900),

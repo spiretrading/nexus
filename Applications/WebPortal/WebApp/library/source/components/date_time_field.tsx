@@ -34,7 +34,7 @@ interface State {
 /** A component that displays both date and time. */
 export class DateTimeField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: new Beam.DateTime(new Beam.Date(1, 1, 0), new Beam.Duration(0)),
+    value: new Beam.DateTime(new Beam.Date(1, 1, 1990), new Beam.Duration(0)),
     onChange: () => {}
   };
 
@@ -157,13 +157,13 @@ export class DateTimeField extends React.Component<Properties, State> {
       this.props.value.date(), this.getTimeIn24HourFormat()));
   }
 
-  private onDateChange(newDate: Beam.Date) {
+  private onDateChange(date: Beam.Date) {
     this.props.onChange(new Beam.DateTime(
-      newDate, this.props.value.timeOfDay()));
+      date, this.props.value.timeOfDay()));
   }
 
-  private onTimeChange(newTime: Beam.Duration) {
-    this.setState({displayedTime: newTime});
+  private onTimeChange(time: Beam.Duration) {
+    this.setState({displayedTime: time});
     this.props.onChange(new Beam.DateTime(
       this.props.value.date(), this.getTimeIn24HourFormat()));
   }

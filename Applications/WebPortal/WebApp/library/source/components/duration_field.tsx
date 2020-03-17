@@ -34,7 +34,7 @@ interface Properties {
 }
 
 interface State {
-  isInFocus: boolean,
+  isFocused: boolean,
   componentWidth: number
 }
 
@@ -50,10 +50,10 @@ export class DurationInputField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isInFocus: false,
+      isFocused: false,
       componentWidth: 0
     };
-    this.wrapperRef = React.createRef<HTMLDivElement>();
+    this.containerRef = React.createRef<HTMLDivElement>();
     this.handleResize = this.handleResize.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
@@ -61,15 +61,15 @@ export class DurationInputField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const splitTime = this.props.value.split();
-    const wrapperStyle = (() => {
+    const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.wrapperSmall;
+        return DurationInputField.STYLE.containerSmall;
       } else {
-        return DurationInputField.STYLE.wrapperLarge;
+        return DurationInputField.STYLE.containerLarge;
       }
     })();
     const focusClassName = (() => {
-      if(this.state.isInFocus) {
+      if(this.state.isFocused) {
         return DurationInputField.STYLE.focused;
       } else {
         return null;
@@ -79,7 +79,7 @@ export class DurationInputField extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.state.componentWidth >= 165) {
           return 'Hr : Min : Sec';
-        } else if(this.state.componentWidth >= 141){
+        } else if(this.state.componentWidth >= 141) {
           return 'H : M : S';
         } else {
           return '';
@@ -89,8 +89,8 @@ export class DurationInputField extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={{...wrapperStyle, ...focusClassName}}
-          ref={this.wrapperRef}
+      <div style={{...containerStyle, ...focusClassName}}
+          ref={this.containerRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DurationInputField.STYLE.inner}>
@@ -138,21 +138,21 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   private handleResize() {
-    if(this.props.displaySize === DisplaySize.SMALL && 
-        this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
-      this.setState({componentWidth: this.wrapperRef.current.clientWidth});
+    if(this.props.displaySize === DisplaySize.SMALL &&
+        this.state.componentWidth !== this.containerRef.current.clientWidth) {
+      this.setState({componentWidth: this.containerRef.current.clientWidth});
     }
   }
 
   private onFocus() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: true});
+      this.setState({isFocused: true});
     }
   }
 
   private onBlur() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: false});
+      this.setState({isFocused: false});
     }
   }
 
@@ -178,7 +178,7 @@ export class DurationInputField extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    wrapperSmall: {
+    containerSmall: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -192,7 +192,7 @@ export class DurationInputField extends React.Component<Properties, State> {
       borderRadius: '1px',
       height: '34px'
     },
-    wrapperLarge: {
+    containerLarge: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -262,5 +262,5 @@ export class DurationInputField extends React.Component<Properties, State> {
     }
   });
 
-  private wrapperRef: React.RefObject<HTMLDivElement>;
+  private containerRef: React.RefObject<HTMLDivElement>;
 }
