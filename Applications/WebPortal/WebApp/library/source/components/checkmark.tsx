@@ -16,7 +16,7 @@ interface Properties {
   /** Called when the check mark is clicked on.
    * @param value - The new value.
    */
-  onClick?: (value?: boolean) => void;
+  onClick?: () => void;
 }
 
 /** A checkmark component. */
@@ -62,7 +62,7 @@ export class Checkmark extends React.Component<Properties> {
 
   private onClick() {
     if(!this.props.readonly) {
-      this.props.onClick(!this.props.isChecked);
+      this.props.onClick();
     }
   }
 

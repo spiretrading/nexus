@@ -31,6 +31,7 @@ export class ParameterEntry extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
+    this.onCheckmarkChange = this.onCheckmarkChange.bind(this);
     this.onSecurityListChange = this.onSecurityListChange.bind(this);
   }
 
@@ -58,7 +59,7 @@ export class ParameterEntry extends React.Component<Properties> {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <Checkmark
-            onClick={this.onChange}
+            onClick={this.onCheckmarkChange}
             displaySize={this.props.displaySize}
             readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
@@ -139,6 +140,10 @@ export class ParameterEntry extends React.Component<Properties> {
   private onChange(newValue: any) {
     this.props.onChange(new Nexus.ComplianceParameter(this.props.parameter.name,
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
+  }
+
+  private onCheckmarkChange() {
+    this.onChange(!this.props.parameter.value.value);
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {

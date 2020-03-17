@@ -104,7 +104,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#FFFFFF',
-      backgroundImage:'url(resources/components/arrow-down-grey.svg)',
+      backgroundImage: 'url(resources/components/arrow-down-grey.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',

@@ -87,18 +87,18 @@ export class IntegerInputBox extends React.Component<Properties, State> {
   }
 
   private onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = (() => {
-      if(event.target.value.length === 0) {
-        return 0;
-      } else {
-        return parseInt(event.target.value.slice(-1 * this.props.padding), 10);
-      }
-    })();
-    if(isNaN(value)) {
-      this.forceUpdate();
-      return;
+  const value = (() => {
+    if(event.target.value.length === 0) {
+      return 0;
+    } else {
+      return parseInt(event.target.value.slice(-1 * this.props.padding), 10);
     }
-    this.setState({value: value});
+  })();
+  if(isNaN(value)) {
+    this.forceUpdate();
+    return;
+  }
+  this.setState({value: value});
   }
 
   private onBlur() {
