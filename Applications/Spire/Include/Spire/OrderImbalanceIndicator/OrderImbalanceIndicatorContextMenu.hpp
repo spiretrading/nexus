@@ -1,12 +1,11 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_CONTEXT_MENU_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_CONTEXT_MENU_HPP
 #include <QMenu>
-#include <QWidgetAction>
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/CheckBox.hpp"
 
 namespace Spire {
 
+  //! Displays a context menu for the order imbalance indicator window.
   class OrderImbalanceIndicatorContextMenu : public QMenu {
     public:
 
@@ -19,6 +18,10 @@ namespace Spire {
       */
       using ToggledSignal = Signal<void (bool is_checked)>;
 
+      //! Constructs an OrderImbalanceINdicatorContextMenu.
+      /*
+        \param parent The parent widget.
+      */
       OrderImbalanceIndicatorContextMenu(QWidget* parent = nullptr);
 
       //! Connects a slot to the export table signal.

@@ -1,8 +1,5 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorContextMenu.hpp"
 #include <QEvent>
-#include <QLabel>
-#include <QLayout>
-#include <QMenu>
 #include <QWidgetAction>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
