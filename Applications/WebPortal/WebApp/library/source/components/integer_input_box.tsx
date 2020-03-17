@@ -103,13 +103,13 @@ export class IntegerInputBox extends React.Component<Properties, State> {
 
   private onBlur() {
     const value = (() => {
-    if(this.state.value < this.props.min) {
-      return this.props.min;
-    } else if(this.state.value > this.props.max) {
-      return this.props.max;
-    } else {
-      return this.state.value;
-    }
+      if(this.state.value < this.props.min) {
+        return this.props.min;
+      } else if(this.state.value > this.props.max) {
+        return this.props.max;
+      } else {
+        return this.state.value;
+      }
     })();
     this.update(value);
   }
