@@ -16,10 +16,14 @@ namespace Spire {
 
       OrderImbalanceIndicatorContextMenu(QWidget* parent = nullptr);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable SelectedSignal m_export_table_signal;
       mutable SelectedSignal m_export_chart_signal;
       mutable SelectedSignal m_reset_signal;
+      QMenu* m_table_columns_menu;
       CheckBox* m_security_check_box;
       CheckBox* m_side_check_box;
       CheckBox* m_size_check_box;
