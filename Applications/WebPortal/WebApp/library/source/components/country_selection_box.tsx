@@ -22,7 +22,7 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
-/** Displays a country seleciton box. */
+/** Displays a country selection box. */
 export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
@@ -107,7 +107,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly EXTRA_STYLE = StyleSheet.create({
     noHighting: {
       ':focus': {
-        ouline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },

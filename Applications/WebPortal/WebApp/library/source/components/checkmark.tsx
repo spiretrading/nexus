@@ -19,7 +19,7 @@ interface Properties {
   onClick?: (value?: boolean) => void;
 }
 
-/** A check mark component. */
+/** A checkmark component. */
 export class Checkmark extends React.Component<Properties> {
   public static readonly defaultProps = {
     onClick: () => {}
@@ -45,15 +45,15 @@ export class Checkmark extends React.Component<Properties> {
         return '16px';
       }
     })();
-    const wrapperStyle = (() => {
+    const containerStyle = (() => {
       if(this.props.readonly) {
-        return Checkmark.STYLE.wrapperReadonly;
+        return Checkmark.STYLE.containerReadonly;
       } else {
-        return Checkmark.STYLE.wrapper;
+        return Checkmark.STYLE.container;
       }
     })();
     return (
-      <div style={wrapperStyle}
+      <div style={containerStyle}
           className={css(Checkmark.EXTRA_STYLE.noDefaults)}
           onClick={this.onClick}>
         <img height={size} width={size} src={imgSrc}/>
@@ -67,7 +67,7 @@ export class Checkmark extends React.Component<Properties> {
   }
 
   private static readonly STYLE = {
-    wrapper: {
+    container: {
       boxSizing: 'border-box' as 'border-box',
       height: '20px',
       width: '20px',
@@ -77,7 +77,7 @@ export class Checkmark extends React.Component<Properties> {
       justifyContent: 'center' as 'center',
       cursor: 'pointer' as 'pointer'
     },
-    wrapperReadonly: {
+    containerReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '20px',
       width: '20px',

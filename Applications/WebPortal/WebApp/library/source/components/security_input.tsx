@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Modal } from '../../..';
+import { Button, DisplaySize, HLine, Modal } from '..';
 
 interface Properties {
 

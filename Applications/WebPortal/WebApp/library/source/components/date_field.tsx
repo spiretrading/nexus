@@ -1,8 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize } from '../display_size';
-import { IntegerInputBox } from './integer_input_box';
+import { DisplaySize, IntegerInputBox } from '..';
 
 enum DateUnit {
   DAY,
@@ -18,7 +17,7 @@ interface Properties {
   /** The value to display in the field. */
   value?: Beam.Date;
 
-  /** Determines if the field box is read only. */
+  /** Determines if the component is readonly. */
   readonly?: boolean;
 
   /** Called when the value changes.
@@ -28,7 +27,7 @@ interface Properties {
 }
 
 interface State {
-  isInFocus: boolean,
+  isFocused: boolean,
   componentWidth: number
 }
 
@@ -42,25 +41,25 @@ export class DateField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isInFocus: false,
+      isFocused: false,
       componentWidth: 0
     };
-    this.wrapperRef = React.createRef<HTMLDivElement>();
+    this.containerRef = React.createRef<HTMLDivElement>();
     this.handleResize = this.handleResize.bind(this);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);
   } 
 
   public render(): JSX.Element {
-    const wrapperStyle = (() => {
+    const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DateField.STYLE.wrapperSmall;
+        return DateField.STYLE.containerSmall;
       } else {
-        return DateField.STYLE.wrapperLarge;
+        return DateField.STYLE.containerLarge;
       }
     })();
     const focusStyle = (() => {
-      if(this.state.isInFocus) {
+      if(this.state.isFocused) {
         return DateField.STYLE.focused;
       } else {
         return null;
@@ -89,7 +88,7 @@ export class DateField extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         if(this.state.componentWidth >= 227) {
           return 'Day / Month / Year';
-        } else if(this.state.componentWidth >= 161){
+        } else if(this.state.componentWidth >= 161) {
           return 'D / M / Y';
         } else {
           return '';
@@ -99,8 +98,8 @@ export class DateField extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={{...wrapperStyle, ...focusStyle}}
-          ref={this.wrapperRef}
+      <div style={{...containerStyle, ...focusStyle}}
+          ref={this.containerRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
@@ -148,20 +147,20 @@ export class DateField extends React.Component<Properties, State> {
 
   private handleResize() {
     if(this.props.displaySize === DisplaySize.SMALL && 
-        this.state.componentWidth !== this.wrapperRef.current.clientWidth) {
-      this.setState({componentWidth: this.wrapperRef.current.clientWidth});
+        this.state.componentWidth !== this.containerRef.current.clientWidth) {
+      this.setState({componentWidth: this.containerRef.current.clientWidth});
     }
   }
 
   private onFocus() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: true});
+      this.setState({isFocused: true});
     }
   }
 
   private onBlur() {
     if(!this.props.readonly) {
-      this.setState({isInFocus: false});
+      this.setState({isFocused: false});
     }
   }
 
@@ -181,7 +180,7 @@ export class DateField extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    wrapperSmall: {
+    containerSmall: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -195,7 +194,7 @@ export class DateField extends React.Component<Properties, State> {
       borderRadius: '1px',
       height: '34px'
     },
-    wrapperLarge: {
+    containerLarge: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -214,7 +213,7 @@ export class DateField extends React.Component<Properties, State> {
       flexGrow: 1,
       justifyContent: 'flex-start' as 'flex-start',
       alignItems: 'center',
-      marginLeft: '9px' 
+      marginLeft: '9px'
     },
     defaultIntegerBox: {
       boxSizing: 'border-box' as 'border-box',
@@ -270,7 +269,7 @@ export class DateField extends React.Component<Properties, State> {
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },
-      ':active' : {
+      ':active': {
         borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
@@ -279,5 +278,5 @@ export class DateField extends React.Component<Properties, State> {
     }
   });
 
-  private wrapperRef: React.RefObject<HTMLDivElement>;
+  private containerRef: React.RefObject<HTMLDivElement>;
 }
