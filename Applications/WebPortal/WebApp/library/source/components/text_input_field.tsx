@@ -4,6 +4,9 @@ import { DisplaySize } from '../display_size';
 
 interface Properties {
 
+  /** The size to display the component at. */
+  displaySize: DisplaySize;
+
   /** The value to display in the field. */
   value?: string;
 
@@ -19,13 +22,13 @@ interface Properties {
   /** The class name of the input box. */
   className?: string;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
   onInput?: (value: string) => void;
-  
-  /** The size to display the component at. */
-  displaySize: DisplaySize;
 }
 
 /** Displays a single text input field. */
@@ -56,6 +59,7 @@ export class TextInputField extends React.Component<Properties> {
     })();
     return (
       <input value={this.props.value}
+        disabled={this.props.readonly}
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,11 +80,12 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       flexGrow: 1,
       minWidth: '284px',
       width: '100%',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxMedium: {
       boxSizing: 'border-box' as 'border-box',
@@ -93,9 +98,10 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '284px',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     },
     boxLarge: {
       boxSizing: 'border-box' as 'border-box',
@@ -108,24 +114,21 @@ export class TextInputField extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       minWidth: '350px',
       paddingLeft: '10px',
+      backgroundColor: '#FFFFFF'
     }
   };
 
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
-        ouline: 0,
         borderColor: '#684BC7',
         boxShadow: 'none',
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none'
-      },
-      ':active' : {
-        borderColor: '#684BC7'
       },
       '::moz-focus-inner': {
         border: 0

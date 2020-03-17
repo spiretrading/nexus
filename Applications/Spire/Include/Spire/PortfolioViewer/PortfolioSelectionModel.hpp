@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/variant/variant.hpp>
-#include <QAbstractTableModel>
+#include <QAbstractItemModel>
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
@@ -15,7 +15,7 @@ namespace Spire {
   /*! \class PortfolioSelectionModel
       \brief Stores the selection of Portfolio items to display.
    */
-  class PortfolioSelectionModel : public QAbstractTableModel {
+  class PortfolioSelectionModel : public QAbstractItemModel {
     public:
 
       //! The number of columns available.

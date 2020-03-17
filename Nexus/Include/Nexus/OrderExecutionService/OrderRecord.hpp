@@ -1,42 +1,36 @@
-#ifndef NEXUS_ORDERRECORD_HPP
-#define NEXUS_ORDERRECORD_HPP
+#ifndef NEXUS_ORDER_RECORD_HPP
+#define NEXUS_ORDER_RECORD_HPP
+#include <ostream>
 #include <tuple>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/Utilities/Algorithm.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \struct OrderRecord
-      \brief Stores information about a single Order.
-   */
+  /** brief Stores information about a single Order. */
   struct OrderRecord {
 
-    //! The Order's submission info.
+    /** The Order's submission info. */
     OrderInfo m_info;
 
-    //! The list of ExecutionReports.
+    /** The list of ExecutionReports. */
     std::vector<ExecutionReport> m_executionReports;
 
-    //! Constructs an empty OrderRecord.
+    /** Constructs an empty OrderRecord. */
     OrderRecord() = default;
 
-    //! Constructs an OrderRecord.
-    /*!
-      \param info The Order's submission info.
-      \param executionReports The list of ExecutionReports.
-    */
+    /**
+     * Constructs an OrderRecord.
+     * @param info The Order's submission info.
+     * @param executionReports The list of ExecutionReports.
+     */
     OrderRecord(OrderInfo info, std::vector<ExecutionReport> executionReports);
   };
-
-  inline OrderRecord::OrderRecord(OrderInfo info,
-      std::vector<ExecutionReport> executionReports)
-      : m_info{std::move(info)},
-        m_executionReports(std::move(executionReports)) {}
 
   //! Tests if two OrderRecords are equal.
   /*!
@@ -58,11 +52,20 @@ namespace OrderExecutionService {
   inline bool operator !=(const OrderRecord& lhs, const OrderRecord& rhs) {
     return !(lhs == rhs);
   }
-}
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const OrderRecord& value) {
+    return ::operator <<(out << '(' << value.m_info << ' ',
+      value.m_executionReports) << ')';
+  }
+
+  inline OrderRecord::OrderRecord(OrderInfo info,
+    std::vector<ExecutionReport> executionReports)
+    : m_info(std::move(info)),
+      m_executionReports(std::move(executionReports)) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::OrderExecutionService::OrderRecord> {
     template<typename Shuttler>
@@ -73,7 +76,6 @@ namespace Serialization {
       shuttle.Shuttle("execution_reports", value.m_executionReports);
     }
   };
-}
 }
 
 #endif

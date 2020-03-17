@@ -16,7 +16,7 @@ using namespace std;
 
 AccountViewModel::AccountViewModel(Ref<UserProfile> userProfile,
     QObject* parent)
-    : QAbstractTableModel(parent),
+    : QAbstractItemModel(parent),
       m_userProfile(userProfile.Get()) {}
 
 AccountViewModel::~AccountViewModel() {}
@@ -117,7 +117,7 @@ void AccountViewModel::Expand(const QModelIndex& index) {
 }
 
 Qt::ItemFlags AccountViewModel::flags(const QModelIndex& index) const {
-  auto flags = QAbstractTableModel::flags(index);
+  auto flags = QAbstractItemModel::flags(index);
   if(!index.isValid()) {
     return flags;
   }

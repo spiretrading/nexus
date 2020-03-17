@@ -13,7 +13,7 @@ namespace Spire {
   /*! \class AccountViewModel
       \brief Stores the list of account entries.
    */
-  class AccountViewModel : public QAbstractTableModel {
+  class AccountViewModel : public QAbstractItemModel {
     public:
 
       //! The number of columns available.
