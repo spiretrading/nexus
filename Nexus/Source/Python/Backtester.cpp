@@ -27,9 +27,14 @@ namespace {
       std::shared_ptr<VirtualServiceClients> serviceClients)
       : BacktesterEnvironment{startTime, endTime, Ref(*serviceClients)},
         m_serviceClients(std::move(serviceClients)) {}
+
+    ~TrampolineBacktesterEnvironment() {
+      auto release = GilRelease();
+      Close();
+    }
   };
 
-  struct ToPythonBacktesterServiceClients :
+  struct ToPythonBacktesterServiceClients final :
       ToPythonServiceClients<BacktesterServiceClients> {
     std::shared_ptr<BacktesterEnvironment> m_environment;
 
@@ -38,6 +43,10 @@ namespace {
       : ToPythonServiceClients<BacktesterServiceClients>(
           std::make_unique<BacktesterServiceClients>(Ref(*environment))),
         m_environment(std::move(environment)) {}
+
+    ~ToPythonBacktesterServiceClients() override {
+      Close();
+    }
   };
 }
 
