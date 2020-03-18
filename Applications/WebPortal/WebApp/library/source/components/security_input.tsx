@@ -18,7 +18,7 @@ interface Properties {
   onEnter: (value: Nexus.Security) => void;
 }
 
-/** The field that allows the user to add a new entry to the list. */
+/** The component that takes user input to get a security. */
 export class SecurityInput extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
@@ -33,7 +33,7 @@ export class SecurityInput extends React.Component<Properties> {
       placeholder={SecurityInput.PLACEHOLDER_TEXT}
       onChange={this.onInputChange}
       onKeyDown={this.onKeyDown}
-      value={this.props.value} />);
+      value={this.props.value}/>);
   }
 
   private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
