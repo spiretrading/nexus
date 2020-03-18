@@ -22,7 +22,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      OrderImbalanceIndicatorContextMenu(QWidget* parent = nullptr);
+      explicit OrderImbalanceIndicatorContextMenu(QWidget* parent = nullptr);
 
       //! Connects a slot to the export table signal.
       boost::signals2::connection connect_export_table_signal(
@@ -80,7 +80,8 @@ namespace Spire {
       mutable ToggledSignal m_notional_value_signal;
       QMenu* m_table_columns_menu;
 
-      void add_check_box(const QString& text, QWidgetAction* action);
+      void add_check_box(const QString& text, ToggledSignal& signal);
+      void add_menu_item(const QString& text, SelectedSignal& signal);
   };
 }
 

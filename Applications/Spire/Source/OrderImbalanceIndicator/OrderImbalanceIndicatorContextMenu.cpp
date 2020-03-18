@@ -8,12 +8,26 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto CONTEXT_MENU_SIZE() {
+    return scale(140, 90);
+  }
+
+  auto SUB_MENU_SIZE() {
+    return scale(140, 150);
+  }
+
+  auto CHECK_BOX_SIZE() {
+    return scale(140, 20);
+  }
+}
+
 OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     QWidget* parent)
     : QMenu(parent) {
   setWindowFlag(Qt::NoDropShadowWindowHint);
   DropShadow context_menu_shadow(true, true, this);
-  setFixedSize(scale(140, 90));
+  setFixedSize(CONTEXT_MENU_SIZE());
   setStyleSheet(QString(R"(
     QMenu {
       background-color: #FFFFFF;
@@ -59,70 +73,20 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     .arg(scale_height(6)).arg(scale_width(4)));
   m_table_columns_menu = new QMenu(tr("Table Columns"), this);
   m_table_columns_menu->installEventFilter(this);
-  m_table_columns_menu->setFixedSize(scale(140, 150));
+  m_table_columns_menu->setFixedSize(SUB_MENU_SIZE());
   m_table_columns_menu->setContentsMargins(0, scale_height(0), 0,
     scale_height(4));
   addMenu(m_table_columns_menu);
-  auto security_action = new QWidgetAction(this);
-  add_check_box(tr("Security"), security_action);
-  connect(static_cast<QCheckBox*>(security_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_security_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(security_action);
-  auto side_action = new QWidgetAction(this);
-  add_check_box(tr("Side"), side_action);
-  connect(static_cast<QCheckBox*>(side_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_side_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(side_action);
-  auto size_action = new QWidgetAction(this);
-  add_check_box(tr("Size"), size_action);
-  connect(static_cast<QCheckBox*>(size_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_size_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(size_action);
-  auto ref_px_action = new QWidgetAction(this);
-  add_check_box(tr("Reference Px"), ref_px_action);
-  connect(static_cast<QCheckBox*>(ref_px_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_ref_px_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(ref_px_action);
-  auto date_action = new QWidgetAction(this);
-  add_check_box(tr("Date"), date_action);
-  connect(static_cast<QCheckBox*>(date_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_date_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(date_action);
-  auto time_action = new QWidgetAction(this);
-  add_check_box(tr("Time"), time_action);
-  connect(static_cast<QCheckBox*>(time_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_time_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(time_action);
-  auto notional_value_action = new QWidgetAction(this);
-  add_check_box(tr("Notional Value"), notional_value_action);
-  connect(static_cast<QCheckBox*>(notional_value_action->defaultWidget()),
-    &QCheckBox::stateChanged, [=] (int state) {
-        m_notional_value_signal(state == Qt::Checked);
-      });
-  m_table_columns_menu->addAction(notional_value_action);
-  auto export_table_action = new QAction(tr("Export Table"), this);
-  connect(export_table_action, &QAction::triggered,
-    [=] { m_export_table_signal(); });
-  addAction(export_table_action);
-  auto export_chart_action = new QAction(tr("Export Chart"), this);
-  connect(export_chart_action, &QAction::triggered,
-    [=] { m_export_chart_signal(); });
-  addAction(export_chart_action);
-  auto reset_action = new QAction(tr("Reset All Filters"), this);
-  connect(reset_action, &QAction::triggered, [=] { m_reset_signal(); });
-  addAction(reset_action);
+  add_check_box(tr("Security"), m_security_signal);
+  add_check_box(tr("Side"), m_side_signal);
+  add_check_box(tr("Size"), m_size_signal);
+  add_check_box(tr("Reference Px"), m_ref_px_signal);
+  add_check_box(tr("Date"), m_date_signal);
+  add_check_box(tr("Time"), m_time_signal);
+  add_check_box(tr("Notional Value"), m_notional_value_signal);
+  add_menu_item(tr("Export Table"), m_export_table_signal);
+  add_menu_item(tr("Export Chart"), m_export_chart_signal);
+  add_menu_item(tr("Reset All Filters"), m_reset_signal);
 }
 
 connection OrderImbalanceIndicatorContextMenu::connect_export_table_signal(
@@ -189,10 +153,7 @@ bool OrderImbalanceIndicatorContextMenu::eventFilter(QObject* watched,
 }
 
 void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
-    QWidgetAction* action) {
-  auto check_box = new CheckBox(text, this);
-  check_box->setFixedSize(scale(140, 20));
-  check_box->setChecked(true);
+    ToggledSignal& signal) {
   auto font = QFont("Roboto");
   font.setPixelSize(scale_height(12));
   auto metrics = QFontMetrics(font);
@@ -219,8 +180,24 @@ void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
     border: %1px solid #4B23A0 %2px solid #4B23A0;)")
     .arg(scale_height(1)).arg(scale_width(1));
   auto focused_style = QString(R"(border-color: #4B23A0;)");
+  auto check_box = new CheckBox(text, this);
+  check_box->setFixedSize(CHECK_BOX_SIZE());
+  check_box->setChecked(true);
   check_box->set_stylesheet(text_style, indicator_style, checked_style,
     hover_style, focused_style);
   check_box->setLayoutDirection(Qt::RightToLeft);
+  auto action = new QWidgetAction(this);
   action->setDefaultWidget(check_box);
+  m_table_columns_menu->addAction(action);
+  connect(static_cast<QCheckBox*>(action->defaultWidget()),
+    &QCheckBox::stateChanged, [&] (int state) {
+        signal(state == Qt::Checked);
+      });
+}
+
+void OrderImbalanceIndicatorContextMenu::add_menu_item(const QString& text,
+    SelectedSignal& signal) {
+  auto action = new QAction(text, this);
+  connect(action, &QAction::triggered, [&] { signal(); });
+  addAction(action);
 }
