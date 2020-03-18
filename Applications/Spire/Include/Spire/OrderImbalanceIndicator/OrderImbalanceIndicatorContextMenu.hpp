@@ -36,10 +36,6 @@ namespace Spire {
       boost::signals2::connection connect_reset_signal(
         const SelectedSignal::slot_type& slot) const;
 
-      //! Connects a slot to the security toggle signal.
-      boost::signals2::connection connect_security_toggled_signal(
-        const ToggledSignal::slot_type& slot) const;
-
       //! Connects a slot to the side toggle signal.
       boost::signals2::connection connect_side_toggled_signal(
         const ToggledSignal::slot_type& slot) const;
@@ -71,7 +67,6 @@ namespace Spire {
       mutable SelectedSignal m_export_table_signal;
       mutable SelectedSignal m_export_chart_signal;
       mutable SelectedSignal m_reset_signal;
-      mutable ToggledSignal m_security_signal;
       mutable ToggledSignal m_side_signal;
       mutable ToggledSignal m_size_signal;
       mutable ToggledSignal m_ref_px_signal;

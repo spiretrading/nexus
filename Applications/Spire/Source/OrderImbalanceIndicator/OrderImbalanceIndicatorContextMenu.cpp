@@ -14,7 +14,7 @@ namespace {
   }
 
   auto SUB_MENU_SIZE() {
-    return scale(140, 150);
+    return scale(140, 130);
   }
 
   auto CHECK_BOX_SIZE() {
@@ -77,7 +77,6 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
   m_table_columns_menu->setContentsMargins(0, scale_height(0), 0,
     scale_height(4));
   addMenu(m_table_columns_menu);
-  add_check_box(tr("Security"), m_security_signal);
   add_check_box(tr("Side"), m_side_signal);
   add_check_box(tr("Size"), m_size_signal);
   add_check_box(tr("Reference Px"), m_ref_px_signal);
@@ -102,11 +101,6 @@ connection OrderImbalanceIndicatorContextMenu::connect_export_chart_signal(
 connection OrderImbalanceIndicatorContextMenu::connect_reset_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_reset_signal.connect(slot);
-}
-
-connection OrderImbalanceIndicatorContextMenu::connect_security_toggled_signal(
-    const ToggledSignal::slot_type& slot) const {
-  return m_security_signal.connect(slot);
 }
 
 connection OrderImbalanceIndicatorContextMenu::connect_side_toggled_signal(
