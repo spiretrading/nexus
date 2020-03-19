@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Modal, SecurityInput } from '..';
+import { Button, DisplaySize, HLine, Modal, SecurityInputField } from '..';
 
 interface Properties {
 
@@ -28,7 +28,7 @@ interface State {
 }
 
 /** A component that displays a list of securities. */
-export class SecuritiesField extends React.Component<Properties, State> {
+export class SecuritiesInput extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: '',
     readonly: false,
@@ -55,23 +55,23 @@ export class SecuritiesField extends React.Component<Properties, State> {
   public render() {
     const visibility = (() => {
       if(!this.state.isEditing) {
-        return SecuritiesField.STYLE.hidden;
+        return SecuritiesInput.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const modalHeight = (() => {
       if(this.props.readonly) {
-        return SecuritiesField.MODAL_HEIGHT_READONLY;
+        return SecuritiesInput.MODAL_HEIGHT_READONLY;
       } else {
-        return SecuritiesField.MODAL_HEIGHT;
+        return SecuritiesInput.MODAL_HEIGHT;
       }
     })();
     const headerText = (() => {
       if(this.props.readonly) {
-        return SecuritiesField.MODAL_HEADER_READONLY;
+        return SecuritiesInput.MODAL_HEADER_READONLY;
       } else {
-        return SecuritiesField.MODAL_HEADER;
+        return SecuritiesInput.MODAL_HEADER;
       }
     })();
     const inputField = (() => {
@@ -79,7 +79,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
         return null;
       } else {
         return(
-          <SecurityInput
+          <SecurityInputField
             value={this.state.inputString}
             onChange={this.onInputChange}
             onEnter={this.addEntry}/>);
@@ -87,32 +87,32 @@ export class SecuritiesField extends React.Component<Properties, State> {
     })();
     const iconRowStyle = (() => {
       if(this.props.readonly) {
-        return SecuritiesField.STYLE.hidden;
+        return SecuritiesInput.STYLE.hidden;
       } else {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return SecuritiesField.STYLE.iconRowSmall;
+          return SecuritiesInput.STYLE.iconRowSmall;
         } else {
-          return SecuritiesField.STYLE.iconRowBig;
+          return SecuritiesInput.STYLE.iconRowBig;
         }
       }
     })();
     const imageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecuritiesField.IMAGE_SIZE_SMALL_VIEWPORT;
+        return SecuritiesInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
-        return SecuritiesField.IMAGE_SIZE_LARGE_VIEWPORT;
+        return SecuritiesInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
       if(displaySize=== DisplaySize.SMALL && this.props.readonly) {
-        return SecuritiesField.STYLE.iconWrapperSmallReadonly;
+        return SecuritiesInput.STYLE.iconWrapperSmallReadonly;
       } else if(displaySize=== DisplaySize.SMALL && !this.props.readonly) {
-        return SecuritiesField.STYLE.iconWrapperSmall;
+        return SecuritiesInput.STYLE.iconWrapperSmall;
       } else if(displaySize=== DisplaySize.LARGE && this.props.readonly) {
-        return SecuritiesField.STYLE.iconWrapperLargeReadonly;
+        return SecuritiesInput.STYLE.iconWrapperLargeReadonly;
       } else {
-        return SecuritiesField.STYLE.iconWrapperLarge;
+        return SecuritiesInput.STYLE.iconWrapperLarge;
       }
     })();
     const uploadButton = (() => {
@@ -120,15 +120,15 @@ export class SecuritiesField extends React.Component<Properties, State> {
         return (
           <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
-              src={SecuritiesField.PATH + 'upload-grey.svg'}/>
+              src={SecuritiesInput.PATH + 'upload-grey.svg'}/>
           </div>);
       } else {
         return (
           <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
-              src={SecuritiesField.PATH + 'upload-grey.svg'}/>
-            <div style={SecuritiesField.STYLE.iconLabelReadonly}>
-              {SecuritiesField.UPLOAD_TEXT}
+              src={SecuritiesInput.PATH + 'upload-grey.svg'}/>
+            <div style={SecuritiesInput.STYLE.iconLabelReadonly}>
+              {SecuritiesInput.UPLOAD_TEXT}
             </div>
           </div>);
       }
@@ -140,18 +140,18 @@ export class SecuritiesField extends React.Component<Properties, State> {
             <div style={iconWrapperStyle}
                 onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={SecuritiesField.STYLE.iconClickableStyle}
-                src={SecuritiesField.PATH + 'remove-purple.svg'}/>
+                style={SecuritiesInput.STYLE.iconClickableStyle}
+                src={SecuritiesInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle}
                 onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={SecuritiesField.STYLE.iconClickableStyle}
-                src={SecuritiesField.PATH + 'remove-purple.svg'}/>
-              <div style={SecuritiesField.STYLE.iconLabel}>
-                {SecuritiesField.REMOVE_TEXT}
+                style={SecuritiesInput.STYLE.iconClickableStyle}
+                src={SecuritiesInput.PATH + 'remove-purple.svg'}/>
+              <div style={SecuritiesInput.STYLE.iconLabel}>
+                {SecuritiesInput.REMOVE_TEXT}
               </div>
             </div>);
         }
@@ -160,16 +160,16 @@ export class SecuritiesField extends React.Component<Properties, State> {
           return (
             <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
-                src={SecuritiesField.PATH + 'remove-grey.svg'}/>
+                src={SecuritiesInput.PATH + 'remove-grey.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle}
                 onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                src={SecuritiesField.PATH + 'remove-grey.svg'}/>
-              <div style={SecuritiesField.STYLE.iconLabelReadonly}>
-                {SecuritiesField.REMOVE_TEXT}
+                src={SecuritiesInput.PATH + 'remove-grey.svg'}/>
+              <div style={SecuritiesInput.STYLE.iconLabelReadonly}>
+                {SecuritiesInput.REMOVE_TEXT}
               </div>
             </div>);
         }
@@ -178,11 +178,11 @@ export class SecuritiesField extends React.Component<Properties, State> {
     const confirmationButton = (() => {
       if(this.props.readonly) {
         return (
-          <Button label={SecuritiesField.CONFIRM_TEXT}
+          <Button label={SecuritiesInput.CONFIRM_TEXT}
             onClick={this.onClose}/>);
       } else {
         return (
-          <Button label={SecuritiesField.SUBMIT_CHANGES_TEXT}
+          <Button label={SecuritiesInput.SUBMIT_CHANGES_TEXT}
             onClick={this.onSubmitChange}/>);
       }
     })();
@@ -197,8 +197,8 @@ export class SecuritiesField extends React.Component<Properties, State> {
     return(
       <div>
         <input
-          style={SecuritiesField.STYLE.textBox}
-          className={css(SecuritiesField.EXTRA_STYLE.effects)}
+          style={SecuritiesInput.STYLE.textBox}
+          className={css(SecuritiesInput.EXTRA_STYLE.effects)}
           value={displayValue}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
@@ -206,15 +206,15 @@ export class SecuritiesField extends React.Component<Properties, State> {
           <Modal displaySize={this.props.displaySize} 
               width='300px' height={modalHeight}
               onClose={this.onClose}>
-            <div style={SecuritiesField.STYLE.modalPadding}>
-              <div style={SecuritiesField.STYLE.header}>
-                <div style={SecuritiesField.STYLE.headerText}>
+            <div style={SecuritiesInput.STYLE.modalPadding}>
+              <div style={SecuritiesInput.STYLE.header}>
+                <div style={SecuritiesInput.STYLE.headerText}>
                   {headerText}
                 </div>
-                <img src={SecuritiesField.PATH + 'close.svg'}
+                <img src={SecuritiesInput.PATH + 'close.svg'}
                   height='20px'
                   width='20px'
-                  style={SecuritiesField.STYLE.clickable}
+                  style={SecuritiesInput.STYLE.clickable}
                   onClick={this.onClose}/>
               </div>
               {inputField}
@@ -229,7 +229,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
                 {uploadButton}
               </div>
               <HLine color={'#e6e6e6'}/>
-              <div style={SecuritiesField.STYLE.buttonWrapper}>
+              <div style={SecuritiesInput.STYLE.buttonWrapper}>
                 {confirmationButton}
               </div>
             </div>

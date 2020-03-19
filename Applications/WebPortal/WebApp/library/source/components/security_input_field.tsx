@@ -19,7 +19,7 @@ interface Properties {
 }
 
 /** The component that uses user input to get a security. */
-export class SecurityInput extends React.Component<Properties> {
+export class SecurityInputField extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
     this.onInputChange = this.onInputChange.bind(this);
@@ -28,9 +28,9 @@ export class SecurityInput extends React.Component<Properties> {
 
   public render() {
     return (<input
-      className={css(SecurityInput.EXTRA_STYLE.effects)}
-      style={SecurityInput.STYLE.input}
-      placeholder={SecurityInput.PLACEHOLDER_TEXT}
+      className={css(SecurityInputField.EXTRA_STYLE.effects)}
+      style={SecurityInputField.STYLE.input}
+      placeholder={SecurityInputField.PLACEHOLDER_TEXT}
       onChange={this.onInputChange}
       onKeyDown={this.onKeyDown}
       value={this.props.value}/>);

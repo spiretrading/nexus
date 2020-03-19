@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Modal, SecurityInput } from '..';
+import { Button, DisplaySize, HLine, Modal, SecurityInputField } from '..';
 
 interface Properties {
 
@@ -28,7 +28,7 @@ interface State {
 }
 
 /** A component that displays a single security. */
-export class SecurityField extends React.Component<Properties, State> {
+export class SecurityInput extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Nexus.Security(
       '', Nexus.MarketCode.NONE, Nexus.CountryCode.NONE),
@@ -56,30 +56,30 @@ export class SecurityField extends React.Component<Properties, State> {
   public render() {
     const visibility = (() => {
       if(!this.state.isEditing) {
-        return SecurityField.STYLE.hidden;
+        return SecurityInput.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const iconRowStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityField.STYLE.iconRowSmall;
+        return SecurityInput.STYLE.iconRowSmall;
       } else {
-        return SecurityField.STYLE.iconRowLarge;
+        return SecurityInput.STYLE.iconRowLarge;
       }
     })();
     const imageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityField.IMAGE_SIZE_SMALL_VIEWPORT;
+        return SecurityInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
-        return SecurityField.IMAGE_SIZE_LARGE_VIEWPORT;
+        return SecurityInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
     const iconWrapperStyle = (() => {
       if (this.props.displaySize === DisplaySize.SMALL) {
-        return SecurityField.STYLE.iconWrapperSmall;
+        return SecurityInput.STYLE.iconWrapperSmall;
       } else {
-        return SecurityField.STYLE.iconWrapperLarge;
+        return SecurityInput.STYLE.iconWrapperLarge;
       }
     })();
     const removeButton = (() => {
@@ -88,10 +88,10 @@ export class SecurityField extends React.Component<Properties, State> {
           <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
             <img height={imageSize} width={imageSize}
-              style={SecurityField.STYLE.clickable}
-              src={SecurityField.PATH + 'remove-purple.svg'}/>
-            <div style={SecurityField.STYLE.iconLabel}>
-              {SecurityField.REMOVE_TEXT}
+              style={SecurityInput.STYLE.clickable}
+              src={SecurityInput.PATH + 'remove-purple.svg'}/>
+            <div style={SecurityInput.STYLE.iconLabel}>
+              {SecurityInput.REMOVE_TEXT}
             </div>
           </div>);
       } else {
@@ -99,9 +99,9 @@ export class SecurityField extends React.Component<Properties, State> {
           <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
             <img height={imageSize} width={imageSize}
-              src={SecurityField.PATH + 'remove-grey.svg'}/>
-            <div style={SecurityField.STYLE.iconLabelReadonly}>
-              {SecurityField.REMOVE_TEXT}
+              src={SecurityInput.PATH + 'remove-grey.svg'}/>
+            <div style={SecurityInput.STYLE.iconLabelReadonly}>
+              {SecurityInput.REMOVE_TEXT}
             </div>
           </div>);
       }
@@ -116,27 +116,27 @@ export class SecurityField extends React.Component<Properties, State> {
     return (
       <div>
         <input
-          style={SecurityField.STYLE.textBox}
-          className={css(SecurityField.EXTRA_STYLE.effects)}
+          style={SecurityInput.STYLE.textBox}
+          className={css(SecurityInput.EXTRA_STYLE.effects)}
           value={displayValue}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize}
-              width='300px' height={SecurityField.MODAL_HEIGHT}
+              width='300px' height={SecurityInput.MODAL_HEIGHT}
               onClose={this.onClose}>
-            <div style={SecurityField.STYLE.modalPadding}>
-              <div style={SecurityField.STYLE.header}>
-                <div style={SecurityField.STYLE.headerText}>
-                  {SecurityField.MODAL_HEADER}
+            <div style={SecurityInput.STYLE.modalPadding}>
+              <div style={SecurityInput.STYLE.header}>
+                <div style={SecurityInput.STYLE.headerText}>
+                  {SecurityInput.MODAL_HEADER}
                 </div>
-                <img src={SecurityField.PATH + 'close.svg'}
+                <img src={SecurityInput.PATH + 'close.svg'}
                   height='20px'
                   width='20px'
-                  style={SecurityField.STYLE.clickable}
+                  style={SecurityInput.STYLE.clickable}
                   onClick={this.onClose}/>
               </div>
-              <SecurityInput
+              <SecurityInputField
                 value={this.state.inputString}
                 onChange={this.onInputChange}
                 onEnter={this.addEntry}/>
@@ -149,8 +149,8 @@ export class SecurityField extends React.Component<Properties, State> {
                 {removeButton}
               </div>
               <HLine color={'#e6e6e6'}/>
-              <div style={SecurityField.STYLE.buttonWrapper}>
-                <Button label={SecurityField.SUBMIT_CHANGES_TEXT}
+              <div style={SecurityInput.STYLE.buttonWrapper}>
+                <Button label={SecurityInput.SUBMIT_CHANGES_TEXT}
                   onClick={this.onSubmitChange}/>
               </div>
             </div>
