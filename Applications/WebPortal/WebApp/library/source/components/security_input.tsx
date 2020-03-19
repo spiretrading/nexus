@@ -436,19 +436,13 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
     const displayValue = (() => {
       if(this.props.value !== null) {
         return this.props.value.symbol;
-      }else {
+      } else {
         return '';
       }
     })();
-    const isValidSecurity = (() => {
-      if(this.props.value === null) {
-        return false;
-      } else if(this.props.value.symbol === ''){
-        return false;
-      }
-      return true;
-    })();
     const entryStyle = (() => {
+      const isValidSecurity = this.props.value !== null &&
+        this.props.value.symbol !== '';
       if(this.props.isSelected && isValidSecurity) {
         return SymbolField.EXTRA_STYLE.scrollBoxEntrySelected;
       } else if(!this.props.isSelected && isValidSecurity) {
@@ -460,10 +454,10 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
     return (
       <div style={SymbolField.STYLE.scrollBoxSmall}>
         <div style={SymbolField.STYLE.scrollBoxHeader}>
-          {'Added Symbol'}
+          'Added Symbol'
         </div>
         <div className={css(entryStyle)}
-          onClick={this.onClick}>
+            onClick={this.onClick}>
           {displayValue}
         </div>
       </div>);

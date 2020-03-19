@@ -30,7 +30,7 @@ interface State {
 /** A component that displays a list of securities. */
 export class SecuritiesInput extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: '',
+    value: [] as Nexus.Security[],
     readonly: false,
     onChange: () => {}
   }
@@ -78,7 +78,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       if(this.props.readonly) {
         return null;
       } else {
-        return(
+        return (
           <SecurityInputField
             value={this.state.inputString}
             onChange={this.onInputChange}
@@ -105,11 +105,11 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     })();
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
-      if(displaySize=== DisplaySize.SMALL && this.props.readonly) {
+      if(displaySize === DisplaySize.SMALL && this.props.readonly) {
         return SecuritiesInput.STYLE.iconWrapperSmallReadonly;
-      } else if(displaySize=== DisplaySize.SMALL && !this.props.readonly) {
+      } else if(displaySize === DisplaySize.SMALL && !this.props.readonly) {
         return SecuritiesInput.STYLE.iconWrapperSmall;
-      } else if(displaySize=== DisplaySize.LARGE && this.props.readonly) {
+      } else if(displaySize === DisplaySize.LARGE && this.props.readonly) {
         return SecuritiesInput.STYLE.iconWrapperLargeReadonly;
       } else {
         return SecuritiesInput.STYLE.iconWrapperLarge;
@@ -194,7 +194,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
         displayValue = displayValue.concat(', ');
       }
     }
-    return(
+    return (
       <div>
         <input
           style={SecuritiesInput.STYLE.textBox}
@@ -492,14 +492,14 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     const scrollHeader = (() => {
       if(!this.props.readonly) {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return(
+          return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderSmall}>
-              {'Added Symbols'}
+              'Added Symbols'
             </div>);
         } else {
-          return(
+          return (
             <div style={SymbolsField.STYLE.scrollBoxHeaderLarge}>
-              {'Added Symbols'}
+              'Added Symbols'
             </div>);
         }
       } else {
@@ -510,7 +510,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       const displaySize = this.props.displaySize;
       if(displaySize === DisplaySize.SMALL && this.props.readonly) {
         return SymbolsField.STYLE.scrollBoxSmallReadonly;
-      } else if (displaySize === DisplaySize.SMALL && !this.props.readonly ) {
+      } else if(displaySize === DisplaySize.SMALL && !this.props.readonly) {
         return SymbolsField.STYLE.scrollBoxSmall;
       } else if(displaySize !== DisplaySize.SMALL && this.props.readonly) {
         return SymbolsField.STYLE.scrollBoxBigReadonly;
