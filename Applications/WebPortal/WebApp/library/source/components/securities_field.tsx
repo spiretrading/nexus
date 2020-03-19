@@ -218,7 +218,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
                   onClick={this.onClose}/>
               </div>
               {inputField}
-              <SymbolsBox 
+              <SymbolsField 
                 displaySize={this.props.displaySize}
                 readonly={this.props.readonly}
                 value={this.state.localValue}
@@ -466,7 +466,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
   private static readonly UPLOAD_TEXT = 'Upload';
 }
 
-interface SymbolsBoxProperties {
+interface SymbolsFieldProperties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -487,18 +487,18 @@ interface SymbolsBoxProperties {
 }
 
 /** A component that displays a list of symbols. */
-class SymbolsBox extends React.Component<SymbolsBoxProperties> {
+class SymbolsField extends React.Component<SymbolsFieldProperties> {
   public render() {
     const scrollHeader = (() => {
       if(!this.props.readonly) {
         if(this.props.displaySize === DisplaySize.SMALL) {
           return(
-            <div style={SymbolsBox.STYLE.scrollBoxHeaderSmall}>
+            <div style={SymbolsField.STYLE.scrollBoxHeaderSmall}>
               {'Added Symbols'}
             </div>);
         } else {
           return(
-            <div style={SymbolsBox.STYLE.scrollBoxHeaderLarge}>
+            <div style={SymbolsField.STYLE.scrollBoxHeaderLarge}>
               {'Added Symbols'}
             </div>);
         }
@@ -509,13 +509,13 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
     const selectedSecuritiesBox = (() => {
       const displaySize = this.props.displaySize;
       if(displaySize === DisplaySize.SMALL && this.props.readonly) {
-        return SymbolsBox.STYLE.scrollBoxSmallReadonly;
+        return SymbolsField.STYLE.scrollBoxSmallReadonly;
       } else if (displaySize === DisplaySize.SMALL && !this.props.readonly ) {
-        return SymbolsBox.STYLE.scrollBoxSmall;
+        return SymbolsField.STYLE.scrollBoxSmall;
       } else if(displaySize !== DisplaySize.SMALL && this.props.readonly) {
-        return SymbolsBox.STYLE.scrollBoxBigReadonly;
+        return SymbolsField.STYLE.scrollBoxBigReadonly;
       } else if (displaySize !== DisplaySize.SMALL && !this.props.readonly) {
-        return SymbolsBox.STYLE.scrollBoxBig;
+        return SymbolsField.STYLE.scrollBoxBig;
       }
     })();
     const entries = [];
@@ -523,18 +523,18 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
         const symbol = this.props.value[i].symbol;
         if(this.props.readonly) {
           entries.push(
-            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntryReadonly)}>
+            <div className={css(SymbolsField.EXTRA_STYLE.entryReadonly)}>
               {symbol}
             </div>);
         } else if(this.props.selection === i) {
           entries.push(
-            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntrySelected)}
+            <div className={css(SymbolsField.EXTRA_STYLE.entrySelected)}
                 onClick={this.selectEntry.bind(this, i)}>
               {symbol}
             </div>);
         } else {
           entries.push(
-            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntry)}
+            <div className={css(SymbolsField.EXTRA_STYLE.entry)}
                 onClick={this.selectEntry.bind(this, i)}>
               {symbol}
             </div>);
@@ -627,7 +627,7 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
-    scrollBoxEntry: {
+    entry: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '100%',
@@ -643,7 +643,7 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
         backgroundColor: '#F8F8F8',
       }
     },
-    scrollBoxEntryReadonly: {
+    entryReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '100%',
@@ -656,7 +656,7 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
       alignItems: 'center' as 'center',
       cursor: 'default' as 'default'
     },
-    scrollBoxEntrySelected: {
+    entrySelected: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       width: '100%',

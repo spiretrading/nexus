@@ -140,7 +140,7 @@ export class SecurityField extends React.Component<Properties, State> {
                 value={this.state.inputString}
                 onChange={this.onInputChange}
                 onEnter={this.addEntry}/>
-              <SymbolInput
+              <SymbolField
                 value={this.state.localValue}
                 displaySize={this.props.displaySize}
                 isSelected={this.state.isSelected}
@@ -408,7 +408,7 @@ export class SecurityField extends React.Component<Properties, State> {
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
 }
 
-interface SymbolInputProperties {
+interface SymbolFieldProperties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -426,8 +426,8 @@ interface SymbolInputProperties {
 }
 
 /** A component that displays a list of symbols. */
-class SymbolInput extends React.Component<SymbolInputProperties> {
-  constructor(props: SymbolInputProperties) {
+class SymbolField extends React.Component<SymbolFieldProperties> {
+  constructor(props: SymbolFieldProperties) {
     super(props);
     this.onClick = this.onClick.bind(this);
   }
@@ -450,16 +450,16 @@ class SymbolInput extends React.Component<SymbolInputProperties> {
     })();
     const entryStyle = (() => {
       if(this.props.isSelected && isValidSecurity) {
-        return SymbolInput.EXTRA_STYLE.scrollBoxEntrySelected;
+        return SymbolField.EXTRA_STYLE.scrollBoxEntrySelected;
       } else if(!this.props.isSelected && isValidSecurity) {
-        return SymbolInput.EXTRA_STYLE.scrollBoxEntry;
+        return SymbolField.EXTRA_STYLE.scrollBoxEntry;
       } else {
         return null;
       }
     })();
     return (
-      <div style={SymbolInput.STYLE.scrollBoxSmall}>
-        <div style={SymbolInput.STYLE.scrollBoxHeader}>
+      <div style={SymbolField.STYLE.scrollBoxSmall}>
+        <div style={SymbolField.STYLE.scrollBoxHeader}>
           {'Added Symbol'}
         </div>
         <div className={css(entryStyle)}
