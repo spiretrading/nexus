@@ -26,12 +26,6 @@ DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
   window()->installEventFilter(this);
 }
 
-void DateInputWidget::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ParentChange) {
-    window()->installEventFilter(this);
-  }
-}
-
 bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
