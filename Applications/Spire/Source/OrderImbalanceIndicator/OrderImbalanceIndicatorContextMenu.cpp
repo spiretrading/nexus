@@ -26,7 +26,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     QWidget* parent)
     : QMenu(parent) {
   setWindowFlag(Qt::NoDropShadowWindowHint);
-  DropShadow context_menu_shadow(true, true, this);
+  auto context_menu_shadow = DropShadow(true, true, this);
   setFixedSize(CONTEXT_MENU_SIZE());
   setStyleSheet(QString(R"(
     QMenu {
@@ -79,7 +79,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
   addMenu(m_table_columns_menu);
   add_check_box(tr("Side"), m_side_signal);
   add_check_box(tr("Size"), m_size_signal);
-  add_check_box(tr("Reference Px"), m_ref_px_signal);
+  add_check_box(tr("Reference Px"), m_reference_price_signal);
   add_check_box(tr("Date"), m_date_signal);
   add_check_box(tr("Time"), m_time_signal);
   add_check_box(tr("Notional Value"), m_notional_value_signal);
@@ -116,7 +116,7 @@ connection OrderImbalanceIndicatorContextMenu::connect_size_toggled_signal(
 connection
     OrderImbalanceIndicatorContextMenu::connect_reference_price_toggled_signal(
     const ToggledSignal::slot_type& slot) const {
-  return m_ref_px_signal.connect(slot);
+  return m_reference_price_signal.connect(slot);
 }
 
 connection OrderImbalanceIndicatorContextMenu::connect_date_toggled_signal(
@@ -184,14 +184,14 @@ void OrderImbalanceIndicatorContextMenu::add_check_box(const QString& text,
   action->setDefaultWidget(check_box);
   m_table_columns_menu->addAction(action);
   connect(static_cast<QCheckBox*>(action->defaultWidget()),
-    &QCheckBox::stateChanged, [&] (int state) {
-        signal(state == Qt::Checked);
-      });
+    &QCheckBox::stateChanged, [signal = &signal] (int state) {
+      (*signal)(state == Qt::Checked);
+    });
 }
 
 void OrderImbalanceIndicatorContextMenu::add_menu_item(const QString& text,
     SelectedSignal& signal) {
   auto action = new QAction(text, this);
-  connect(action, &QAction::triggered, [&] { signal(); });
+  connect(action, &QAction::triggered, [signal = &signal] { (*signal)(); });
   addAction(action);
 }

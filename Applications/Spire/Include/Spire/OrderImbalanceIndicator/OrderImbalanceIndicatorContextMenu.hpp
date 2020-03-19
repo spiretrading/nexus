@@ -69,7 +69,7 @@ namespace Spire {
       mutable SelectedSignal m_reset_signal;
       mutable ToggledSignal m_side_signal;
       mutable ToggledSignal m_size_signal;
-      mutable ToggledSignal m_ref_px_signal;
+      mutable ToggledSignal m_reference_price_signal;
       mutable ToggledSignal m_date_signal;
       mutable ToggledSignal m_time_signal;
       mutable ToggledSignal m_notional_value_signal;
