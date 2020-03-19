@@ -23,12 +23,7 @@ DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
   auto shadow = std::make_unique<DropShadow>(false, m_calendar_widget);
   m_calendar_widget->hide();
   update_label(initial_date.date());
-}
-
-void DateInputWidget::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ParentChange) {
-    window()->installEventFilter(this);
-  }
+  window()->installEventFilter(this);
 }
 
 bool DateInputWidget::eventFilter(QObject* watched, QEvent* event) {
