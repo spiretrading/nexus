@@ -8,7 +8,7 @@ export * from './date_time_field';
 export * from './drop_down_button';
 export * from './duration_field';
 export * from './hline';
-export * from './integer_input_box';
+export * from './integer_field';
 export * from './modal';
 export * from './money_field';
 export * from './number_field';
