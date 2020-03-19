@@ -13,12 +13,12 @@ interface Properties {
   onChange: (value: string) => void;
 
   /** Called when the value is submitted.
-   * @param value - The compliance value that is being submitted.
+   * @param value - The security.
    */
   onEnter: (value: Nexus.Security) => void;
 }
 
-/** The component that takes user input to get a security. */
+/** The component that uses user input to get a security. */
 export class SecurityInput extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);

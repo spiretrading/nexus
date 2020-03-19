@@ -523,18 +523,18 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
         const symbol = this.props.value[i].symbol;
         if(this.props.readonly) {
           entries.push(
-            <div style={SymbolsBox.STYLE.scrollBoxEntryReadonly}>
+            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntryReadonly)}>
               {symbol}
             </div>);
         } else if(this.props.selection === i) {
           entries.push(
-            <div style={SymbolsBox.STYLE.scrollBoxEntrySelected}
+            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntrySelected)}
                 onClick={this.selectEntry.bind(this, i)}>
               {symbol}
             </div>);
         } else {
           entries.push(
-            <div style={SymbolsBox.STYLE.scrollBoxEntry}
+            <div className={css(SymbolsBox.EXTRA_STYLE.scrollBoxEntry)}
                 onClick={this.selectEntry.bind(this, i)}>
               {symbol}
             </div>);
@@ -624,7 +624,9 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
       position: 'sticky' as 'sticky',
       top: 0,
       cursor: 'default' as 'default'
-    },
+    }
+  };
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     scrollBoxEntry: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -636,7 +638,10 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer' as 'pointer',
+      ':hover': {
+        backgroundColor: '#F8F8F8',
+      }
     },
     scrollBoxEntryReadonly: {
       boxSizing: 'border-box' as 'border-box',
@@ -664,5 +669,5 @@ class SymbolsBox extends React.Component<SymbolsBoxProperties> {
       alignItems: 'center' as 'center',
       cursor: 'pointer' as 'pointer'
     }
-  };
+  });
 }

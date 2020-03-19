@@ -11,11 +11,11 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
-  /** The list of securities to display. */
+  /** The security to display. */
   value?: Nexus.Security;
 
-  /** Called when the list of values changes.
-   * @param value - The new security
+  /** Called when the value changes.
+   * @param value - The new security.
    */
   onChange?: (value: Nexus.Security) => void;
 }
@@ -27,10 +27,11 @@ interface State {
   isSelected: boolean;
 }
 
-/** A component that displays a list of securities. */
+/** A component that displays a single security. */
 export class SecurityField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: '',
+    value: new Nexus.Security(
+      '', Nexus.MarketCode.NONE, Nexus.CountryCode.NONE),
     readonly: false,
     onChange: () => {}
   }
@@ -75,8 +76,7 @@ export class SecurityField extends React.Component<Properties, State> {
       }
     })();
     const iconWrapperStyle = (() => {
-      const displaySize = this.props.displaySize;
-      if(displaySize === DisplaySize.SMALL) {
+      if (this.props.displaySize === DisplaySize.SMALL) {
         return SecurityField.STYLE.iconWrapperSmall;
       } else {
         return SecurityField.STYLE.iconWrapperLarge;
@@ -84,50 +84,27 @@ export class SecurityField extends React.Component<Properties, State> {
     })();
     const removeButton = (() => {
       if(this.state.isSelected) {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return (
-            <div style={iconWrapperStyle}
+        return (
+          <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
-              <img height={imageSize} width={imageSize}
-                style={SecurityField.STYLE.iconClickableStyle}
-                src={SecurityField.PATH + 'remove-purple.svg'}/>
-            </div>);
-        } else {
-          return (
-            <div style={iconWrapperStyle}
-              onClick={this.removeEntry}>
-              <img height={imageSize} width={imageSize}
-                style={SecurityField.STYLE.iconClickableStyle}
-                src={SecurityField.PATH + 'remove-purple.svg'}/>
-              <div style={SecurityField.STYLE.iconLabel}>
-                {SecurityField.REMOVE_TEXT}
-              </div>
-            </div>);
-        }
+            <img height={imageSize} width={imageSize}
+              style={SecurityField.STYLE.clickable}
+              src={SecurityField.PATH + 'remove-purple.svg'}/>
+            <div style={SecurityField.STYLE.iconLabel}>
+              {SecurityField.REMOVE_TEXT}
+            </div>
+          </div>);
       } else {
-        if(this.props.displaySize === DisplaySize.SMALL) {
-          return (
-            <div style={iconWrapperStyle}>
-              <img height={imageSize} width={imageSize}
-                src={SecurityField.PATH + 'remove-grey.svg'}/>
-            </div>);
-        } else {
-          return (
-            <div style={iconWrapperStyle}
+        return (
+          <div style={iconWrapperStyle}
               onClick={this.removeEntry}>
-              <img height={imageSize} width={imageSize}
-                src={SecurityField.PATH + 'remove-grey.svg'}/>
-              <div style={SecurityField.STYLE.iconLabelReadonly}>
-                {SecurityField.REMOVE_TEXT}
-              </div>
-            </div>);
-        }
+            <img height={imageSize} width={imageSize}
+              src={SecurityField.PATH + 'remove-grey.svg'}/>
+            <div style={SecurityField.STYLE.iconLabelReadonly}>
+              {SecurityField.REMOVE_TEXT}
+            </div>
+          </div>);
       }
-    })();
-    const confirmationButton = (() => {
-      return (
-        <Button label={SecurityField.SUBMIT_CHANGES_TEXT}
-          onClick={this.onSubmitChange}/>);
     })();
     let displayValue = (() => {
       if(this.props.value !== null) {
@@ -146,8 +123,8 @@ export class SecurityField extends React.Component<Properties, State> {
           onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize}
-            width='300px' height={SecurityField.MODAL_HEIGHT}
-            onClose={this.onClose}>
+              width='300px' height={SecurityField.MODAL_HEIGHT}
+              onClose={this.onClose}>
             <div style={SecurityField.STYLE.modalPadding}>
               <div style={SecurityField.STYLE.header}>
                 <div style={SecurityField.STYLE.headerText}>
@@ -163,7 +140,7 @@ export class SecurityField extends React.Component<Properties, State> {
                 value={this.state.inputString}
                 onChange={this.onInputChange}
                 onEnter={this.addEntry}/>
-              <SymbolBox
+              <SymbolInput
                 value={this.state.localValue}
                 displaySize={this.props.displaySize}
                 isSelected={this.state.isSelected}
@@ -173,7 +150,8 @@ export class SecurityField extends React.Component<Properties, State> {
               </div>
               <HLine color={'#e6e6e6'}/>
               <div style={SecurityField.STYLE.buttonWrapper}>
-                {confirmationButton}
+                <Button label={SecurityField.SUBMIT_CHANGES_TEXT}
+                  onClick={this.onSubmitChange}/>
               </div>
             </div>
           </Modal>
@@ -208,8 +186,8 @@ export class SecurityField extends React.Component<Properties, State> {
     }
   }
 
-  private selectEntry(bool: boolean) {
-    this.setState({ isSelected: bool});
+  private selectEntry(isSelected: boolean) {
+    this.setState({ isSelected: isSelected});
   }
 
   private onOpen() {
@@ -295,9 +273,6 @@ export class SecurityField extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center', 
-    },
-    iconClickableStyle: {
-      cursor: 'pointer' as 'pointer'
     },
     iconWrapperSmall: {
       height: '24px',
@@ -433,8 +408,7 @@ export class SecurityField extends React.Component<Properties, State> {
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
 }
 
-
-interface SymbolsBoxProperties {
+interface SymbolInputProperties {
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -442,115 +416,75 @@ interface SymbolsBoxProperties {
   /** Determines if the security is selected or not. */
   isSelected: boolean;
 
-  /** The list of security to display. */
+  /** The security to display. */
   value: Nexus.Security;
 
-  /** Called when a list item is clicked on.
-   * @param index - The index of the selected security.
+  /** Called when security is clicked on.
+   * @param isSelected - The boolean that says if it should be selected or not.
    */
   onClick?: (isSelected: boolean) => void;
 }
 
 /** A component that displays a list of symbols. */
-class SymbolBox extends React.Component<SymbolsBoxProperties> {
-  constructor(props: SymbolsBoxProperties) {
+class SymbolInput extends React.Component<SymbolInputProperties> {
+  constructor(props: SymbolInputProperties) {
     super(props);
     this.onClick = this.onClick.bind(this);
   }
   
   public render() {
-    const scrollHeader = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return (
-          <div style={SymbolBox.STYLE.scrollBoxHeaderSmall}>
-            {'Added Symbols'}
-          </div>);
-      } else {
-        return (
-          <div style={SymbolBox.STYLE.scrollBoxHeaderLarge}>
-            {'Added Symbols'}
-          </div>);
+    const displayValue = (() => {
+      if(this.props.value !== null) {
+        return this.props.value.symbol;
+      }else {
+        return '';
       }
     })();
-    const selectedSecuritiesBox = (() => {
-      const displaySize = this.props.displaySize;
-      if(displaySize === DisplaySize.SMALL) {
-        return SymbolBox.STYLE.scrollBoxSmall;
-      } else {
-        return SymbolBox.STYLE.scrollBoxBig;
+    const isValidSecurity = (() => {
+      if(this.props.value === null) {
+        return false;
+      } else if(this.props.value.symbol === ''){
+        return false;
       }
+      return true;
     })();
-    const symbol = (() => {
-      const displayValue = (() => {
-        if(this.props.value !== null) {
-          return this.props.value.symbol;
-        }else {
-          return '';
-        }
-      })();
-      if(this.props.isSelected) {
-        return (
-          <div style={SymbolBox.STYLE.scrollBoxEntrySelected}
-            onClick={this.onClick}>
-            {displayValue}
-          </div>);
+    const entryStyle = (() => {
+      if(this.props.isSelected && isValidSecurity) {
+        return SymbolInput.EXTRA_STYLE.scrollBoxEntrySelected;
+      } else if(!this.props.isSelected && isValidSecurity) {
+        return SymbolInput.EXTRA_STYLE.scrollBoxEntry;
       } else {
-        return (
-          <div style={SymbolBox.STYLE.scrollBoxEntry}
-            onClick={this.onClick}>
-            {displayValue}
-          </div>);
+        return null;
       }
     })();
     return (
-      <div style={selectedSecuritiesBox}>
-        {scrollHeader}
-        {symbol}
+      <div style={SymbolInput.STYLE.scrollBoxSmall}>
+        <div style={SymbolInput.STYLE.scrollBoxHeader}>
+          {'Added Symbol'}
+        </div>
+        <div className={css(entryStyle)}
+          onClick={this.onClick}>
+          {displayValue}
+        </div>
       </div>);
   }
 
   private onClick() {
-    this.props.onClick(!this.props.isSelected);
+    if(this.props.value.symbol !== ''){
+      this.props.onClick(!this.props.isSelected);
+    }
   }
 
   private static readonly STYLE = {
-    headerText: {
-      font: '400 16px Roboto',
-      flexGrow: 1,
-      cursor: 'default' as 'default'
-    },
     scrollBoxSmall: {
       boxSizing: 'border-box' as 'border-box',
       height: '76px',
-      width: '246px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'auto' as 'auto'
     },
-    scrollBoxBig: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '76px',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
-    scrollBoxHeaderSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      backgroundColor: '#FFFFFF',
-      height: '40px',
-      maxWidth: '246px',
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      borderBottom: '1px solid #C8C8C8',
-      position: 'sticky' as 'sticky',
-      top: 0,
-      cursor: 'default' as 'default'
-    },
-    scrollBoxHeaderLarge: {
+    scrollBoxHeader: {
       boxSizing: 'border-box' as 'border-box',
       backgroundColor: '#FFFFFF',
       height: '40px',
@@ -565,7 +499,9 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
       position: 'sticky' as 'sticky',
       top: 0,
       cursor: 'default' as 'default'
-    },
+    }
+  };
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     scrollBoxEntry: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -577,20 +513,10 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
-    },
-    scrollBoxEntryReadonly: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '100%',
-      backgroundColor: '#FFFFFF',
-      color: '#000000',
-      font: '400 14px Roboto',
-      paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'default' as 'default'
+      cursor: 'pointer' as 'pointer',
+      ':hover': {
+        backgroundColor: '#F8F8F8',
+      }
     },
     scrollBoxEntrySelected: {
       boxSizing: 'border-box' as 'border-box',
@@ -605,5 +531,5 @@ class SymbolBox extends React.Component<SymbolsBoxProperties> {
       alignItems: 'center' as 'center',
       cursor: 'pointer' as 'pointer'
     }
-  };
+  });
 }
