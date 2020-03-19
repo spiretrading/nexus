@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Modal, SecurityInputField } from '..';
+import { Button, DisplaySize, HLine, Modal, SecurityInput } from '..';
 
 interface Properties {
 
@@ -136,7 +136,7 @@ export class SecurityField extends React.Component<Properties, State> {
                   style={SecurityField.STYLE.clickable}
                   onClick={this.onClose}/>
               </div>
-              <SecurityInputField
+              <SecurityInput
                 value={this.state.inputString}
                 onChange={this.onInputChange}
                 onEnter={this.addEntry}/>

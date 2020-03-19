@@ -13,6 +13,6 @@ export * from './modal';
 export * from './money_field';
 export * from './number_field';
 export * from './security_field';
-export * from './security_input_field';
+export * from './security_input';
 export * from './securities_field';
 export * from './text_input_field';
