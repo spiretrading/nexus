@@ -10,7 +10,7 @@ export * from './duration_field';
 export * from './hline';
 export * from './integer_input_box';
 export * from './modal';
-export * from './money_input_box';
+export * from './money_field';
 export * from './number_input';
 export * from './security_input';
 export * from './security_input_field';

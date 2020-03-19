@@ -4,7 +4,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionField, DisplaySize, IntegerInputBox,
-  MoneyInputBox } from '../../..';
+  MoneyField } from '../../..';
 
 interface Properties {
 
@@ -52,14 +52,14 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='30px'/>
           <Label text={`Buying Power (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyInputBox
+          <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.buyingPower}
             onChange={this.onBuyingPowerChange}/>
           <Padding size='30px'/>
           <Label text={`Net Loss (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyInputBox
+          <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.netLoss}
             onChange={this.onNetLossChange}/>
