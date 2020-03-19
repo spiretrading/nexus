@@ -3,7 +3,7 @@ import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, IntegerInputBox,
+import { CurrencySelectionField, DisplaySize, IntegerInputBox,
   MoneyInputBox } from '../../..';
 
 interface Properties {
@@ -44,7 +44,7 @@ export class RiskParametersView extends React.Component<Properties> {
         <VBoxLayout width='246px'>
           <Label text='Currency'/>
           <Padding size='12px'/>
-          <CurrencySelectionBox className={
+          <CurrencySelectionField className={
             css(RiskParametersView.STYLE.dropdownButton)}
             currencyDatabase={this.props.currencyDatabase}
             value={this.props.parameters.currency} onChange={

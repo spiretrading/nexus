@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Checkmark, CurrencySelectionBox, DateTimeField, DisplaySize,
+import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
   DurationInputField, MoneyInputBox, NumberInput, SecuritiesInput,
   SecurityInput, TextInputField } from '../../..';
 
@@ -64,7 +64,7 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return <CurrencySelectionBox
+          return <CurrencySelectionField
             value={this.props.parameter.value.value}
             style={inputWrapper}
             onChange={this.onChange}

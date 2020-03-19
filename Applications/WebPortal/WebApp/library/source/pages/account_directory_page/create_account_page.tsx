@@ -4,7 +4,7 @@ import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../..';
-import { CountrySelectionBox, TextInputField } from '../../components';
+import { CountrySelectionField, TextInputField } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField }
   from '../account_page/profile_page';
 import { GroupSelectionBox } from './group_selection_box';
@@ -297,7 +297,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
               <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Country'
                     displaySize={this.props.displaySize}>
-                  <CountrySelectionBox
+                  <CountrySelectionField
                     displaySize={this.props.displaySize}
                     countryDatabase={this.props.countryDatabase}
                     value={this.state.identity.country}

@@ -24,7 +24,7 @@ interface Properties {
 }
 
 /** Displays a selection box for currencies. */
-export class CurrencySelectionBox extends React.Component<Properties> {
+export class CurrencySelectionField extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
   };
@@ -37,9 +37,9 @@ export class CurrencySelectionBox extends React.Component<Properties> {
   public render(): JSX.Element {
     const style = (() => {
       if(this.props.readonly) {
-        return CurrencySelectionBox.STYLE.readonly;
+        return CurrencySelectionField.STYLE.readonly;
       } else {
-        return CurrencySelectionBox.STYLE.selectionBox;
+        return CurrencySelectionField.STYLE.selectionBox;
       }
     })();
     const defaultValue = (() => {
@@ -58,7 +58,7 @@ export class CurrencySelectionBox extends React.Component<Properties> {
     return (
       <select disabled={this.props.readonly}
           style={{...style, ...this.props.style}} 
-          className={css(CurrencySelectionBox.EXTRA_STYLE.effects) + ' ' +
+          className={css(CurrencySelectionField.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           onChange={this.onChange} defaultValue={defaultValue}>
         {currencyOptions}

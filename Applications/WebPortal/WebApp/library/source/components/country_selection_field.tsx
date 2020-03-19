@@ -23,7 +23,7 @@ interface Properties {
 }
 
 /** Displays a country selection box. */
-export class CountrySelectionBox extends React.Component<Properties> {
+export class CountrySelectionField extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
   };
@@ -36,9 +36,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public render(): JSX.Element {
     const boxSizing = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return CountrySelectionBox.STYLE.boxSmall;
+        return CountrySelectionField.STYLE.boxSmall;
       } else {
-        return CountrySelectionBox.STYLE.boxLarge;
+        return CountrySelectionField.STYLE.boxLarge;
       }
     })();
     const options = (() => {
@@ -60,9 +60,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
       } else {
         return (
           <select value={this.props.value.code}
-              className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+              className={css(CountrySelectionField.EXTRA_STYLE.noHighting)}
               style={{...boxSizing,
-                ...CountrySelectionBox.STYLE.selectionBoxStyle}}
+                ...CountrySelectionField.STYLE.selectionBoxStyle}}
               onChange={this.onChange}>
             {options}
           </select>);
