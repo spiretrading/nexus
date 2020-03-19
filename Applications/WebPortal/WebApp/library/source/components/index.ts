@@ -11,7 +11,7 @@ export * from './hline';
 export * from './integer_input_box';
 export * from './modal';
 export * from './money_field';
-export * from './number_input';
+export * from './number_field';
 export * from './security_input';
 export * from './security_input_field';
 export * from './securities_input';
