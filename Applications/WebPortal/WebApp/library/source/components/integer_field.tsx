@@ -32,7 +32,7 @@ interface State {
   value: number;
 }
 
-/** Displays an input box for modifying integer values. */
+/** A editable integer field. */
 export class IntegerField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     min: 0,

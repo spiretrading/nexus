@@ -4,7 +4,7 @@ import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../..';
-import { CountrySelectionField, TextInputField } from '../../components';
+import { CountrySelectionField, TextField } from '../../components';
 import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField }
   from '../account_page/profile_page';
 import { GroupSelectionBox } from './group_selection_box';
@@ -212,7 +212,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 {topPanelPhoto}
                 <FormEntry name='First Name'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.firstName}
                     displaySize={this.props.displaySize}
                     isError={this.state.hasFirstNameError}
@@ -221,7 +221,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Last Name'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.lastName}
                     displaySize={this.props.displaySize}
                     isError={this.state.hasLastNameError}
@@ -230,7 +230,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Username'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.username}
                     displaySize={this.props.displaySize}
                     isError={this.state.hasUserNameError}
@@ -264,7 +264,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Email'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.emailAddress}
                     displaySize={this.props.displaySize}
                     isError={this.state.hasEmailError}
@@ -273,7 +273,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Address'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.addressLineOne}
                     displaySize={this.props.displaySize}
                     onInput={this.onAddressChange}/>
@@ -281,7 +281,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='City'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.city}
                     displaySize={this.props.displaySize}
                     onInput={this.onCityChange}/>
@@ -289,7 +289,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Province/State'
                     displaySize={this.props.displaySize}>
-                  <TextInputField
+                  <TextField
                     value={this.state.identity.province}
                     displaySize={this.props.displaySize}
                     onInput={this.onProvinceChange}/>

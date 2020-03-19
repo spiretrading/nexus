@@ -23,7 +23,7 @@ interface Properties {
   onChange?: (currency: Nexus.Currency) => void;
 }
 
-/** Displays a selection box for currencies. */
+/** A selection field for currencies. */
 export class CurrencySelectionField extends React.Component<Properties> {
   public static readonly defaultProps = {
     onChange: () => {}
