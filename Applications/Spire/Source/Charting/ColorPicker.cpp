@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

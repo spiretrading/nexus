@@ -2,7 +2,7 @@
 #define SPIRE_DATE_INPUT_WIDGET_HPP
 #include <QLabel>
 #include "Spire/Ui/CalendarWidget.hpp"
-#include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

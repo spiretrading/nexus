@@ -8,7 +8,7 @@
 #include <QResizeEvent>
 #include <QWidgetAction>
 #include "Spire/Toolbar/Toolbar.hpp"
-#include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

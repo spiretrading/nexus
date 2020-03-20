@@ -1,7 +1,7 @@
 #include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/MenuIconSizeProxyStyle.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
