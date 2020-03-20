@@ -4,6 +4,7 @@
 #include <QPaintEvent>
 #include "Spire/Charting/StyleDropDownMenuList.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -17,6 +18,7 @@ TrendLineStyleDropDownMenu::TrendLineStyleDropDownMenu(
   m_menu_list = new StyleDropDownMenuList(this);
   m_menu_list->connect_selected_signal([=] (auto t) { on_item_selected(t); });
   m_menu_list->hide();
+  m_drop_shadow = std::make_unique<DropShadow>(false, m_menu_list);
   window()->installEventFilter(this);
 }
 

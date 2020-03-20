@@ -11,11 +11,11 @@ using namespace Spire;
 
 namespace {
   const auto TOP_STOPS = QGradientStops({
-    QGradientStop(0.0, QColor(255, 0, 0, 43)),
-    QGradientStop(0.05, QColor(255, 0, 0, 15)),
-    QGradientStop(0.1, QColor(255, 0, 0, 8)),
-    QGradientStop(0.20, QColor(255, 0, 0, 4)),
-    QGradientStop(0.50, QColor(255, 0, 0, 1)),
+    QGradientStop(0.0, QColor(0, 0, 0, 43)),
+    QGradientStop(0.05, QColor(0, 0, 0, 15)),
+    QGradientStop(0.1, QColor(0, 0, 0, 8)),
+    QGradientStop(0.20, QColor(0, 0, 0, 4)),
+    QGradientStop(0.50, QColor(0, 0, 0, 1)),
     QGradientStop(1, Qt::transparent)});
 
   const auto BOTTOM_STOPS = QGradientStops({
@@ -34,17 +34,16 @@ DropShadow::DropShadow(bool has_top, QWidget* parent)
     : DropShadow(false, has_top, parent) {}
 
 DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
-    : QWidget(nullptr,
+    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::Tool |
         Qt::WindowStaysOnTopHint),
       m_parent(parent),
       m_has_top(has_top),
       m_is_menu_shadow(is_menu_shadow),
       m_is_visible(false) {
-  //setAttribute(Qt::WA_TranslucentBackground);
+  setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
   qApp->installNativeEventFilter(this);
-  show();
 }
 
 bool DropShadow::event(QEvent* event) {
@@ -90,7 +89,6 @@ void DropShadow::paintEvent(QPaintEvent* event) {
     follow_parent();
     m_is_visible = true;
   }
-  qDebug() << "paint";
   QPainter painter(this);
   auto parent_size = m_parent->size();
   auto shadow_size = this->shadow_size();

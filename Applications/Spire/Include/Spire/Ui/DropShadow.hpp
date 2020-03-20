@@ -10,10 +10,6 @@ namespace Spire {
   class DropShadow : public QWidget, public QAbstractNativeEventFilter {
     public:
 
-      virtual ~DropShadow() {
-        qDebug() << "destroyed";
-      }
-
       //! Constructs a drop shadow.
       /*!
         \param parent The parent to add the drop shadow to.

@@ -26,7 +26,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     QWidget* parent)
     : QMenu(parent) {
   setWindowFlag(Qt::NoDropShadowWindowHint);
-  auto context_menu_shadow = DropShadow(true, true, this);
+  auto context_menu_shadow = new DropShadow(true, true, this);
   setFixedSize(CONTEXT_MENU_SIZE());
   setStyleSheet(QString(R"(
     QMenu {
