@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
   tool->setFixedSize(scale(80, 26));
   layout->addWidget(tool);
   auto date = new DateInputWidget(boost::posix_time::from_time_t(1000000), w);
-  date->setFixedSize(scale(80, 26));
+  date->setFixedSize(scale(112, 26));
   layout->addWidget(date);
   w->resize(600, 400);
   w->show();

@@ -36,6 +36,9 @@ namespace Spire {
       boost::signals2::connection connect_date_signal(
         const DateSignal::slot_type& slot) const;
 
+    protected:
+      void paintEvent(QPaintEvent* event);
+
     private:
       mutable DateSignal m_date_signal;
       MonthAndYearSpinBox* m_month_spin_box;

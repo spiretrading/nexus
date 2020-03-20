@@ -67,11 +67,7 @@ void DateInputWidget::moveEvent(QMoveEvent* event) {
 }
 
 void DateInputWidget::move_calendar() {
-  auto x_pos = window()->mapToGlobal(
-    geometry().bottomLeft()).x();
-  auto y_pos = window()->mapToGlobal(
-    frameGeometry().bottomLeft()).y();
-  m_calendar_widget->move(x_pos, y_pos + 1);
+  m_calendar_widget->move( window()->mapToGlobal(geometry().bottomLeft()));
   m_calendar_widget->raise();
 }
 

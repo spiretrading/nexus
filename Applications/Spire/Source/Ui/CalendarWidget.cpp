@@ -1,5 +1,6 @@
 #include "Spire/Ui/CalendarWidget.hpp"
 #include "boost/date_time/gregorian/gregorian_types.hpp"
+#include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/CalendarDayWidget.hpp"
@@ -67,6 +68,12 @@ void CalendarWidget::set_date(const date& date) {
 connection CalendarWidget::connect_date_signal(
     const DateSignal::slot_type& slot) const {
   return m_date_signal.connect(slot);
+}
+
+void CalendarWidget::paintEvent(QPaintEvent* event) {
+  QWidget::paintEvent(event);
+  auto painter = QPainter(this);
+  painter.fillRect(0, 0, scale_width(112), scale_height(1), QColor("#4B23A0"));
 }
 
 void CalendarWidget::on_date_selected(const date& date) {
