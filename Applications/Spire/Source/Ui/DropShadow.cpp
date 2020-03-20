@@ -144,6 +144,7 @@ void DropShadow::paintEvent(QPaintEvent* event) {
 }
 
 void DropShadow::follow_parent() {
+  raise();
   auto top_left = m_parent->window()->frameGeometry().topLeft();
   move(top_left.x() - shadow_size().width(),
     top_left.y() - shadow_size().height());
