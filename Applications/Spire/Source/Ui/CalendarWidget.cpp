@@ -18,7 +18,7 @@ CalendarWidget::CalendarWidget(date selected_date, QWidget* parent)
   setStyleSheet(QString(R"(
     #calendar_widget {
       background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      border: %1px solid #A0A0A0 %2px solid #A0A0A0;
     })").arg(scale_width(1)).arg(scale_height(1)));
   setFixedSize(scale(168, 201));
   auto layout = new QVBoxLayout(this);
