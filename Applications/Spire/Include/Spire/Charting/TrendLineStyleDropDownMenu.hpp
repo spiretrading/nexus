@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -45,7 +44,6 @@ namespace Spire {
       TrendLineStyle m_current_style;
       QImage m_dropdown_image;
       StyleDropDownMenuList* m_menu_list;
-      std::unique_ptr<DropShadow> m_drop_shadow;
 
       void move_menu_list();
       void on_clicked();

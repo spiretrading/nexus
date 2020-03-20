@@ -12,7 +12,7 @@ StyleDropDownMenuList::StyleDropDownMenuList(QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
       m_highlight_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
-  m_shadow = std::make_unique<DropShadow>(false, true, this);
+  m_shadow = std::make_unique<DropShadow>(true, true, this);
   setStyleSheet("background-color: #C8C8C8;");
   setFixedHeight(scale_height(120));
   auto layout = new QVBoxLayout(this);

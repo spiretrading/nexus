@@ -20,7 +20,7 @@ DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
     m_calendar_widget->hide();
     update_label(date);
   });
-  m_drop_shadow = std::make_unique<DropShadow>(false, true, m_calendar_widget);
+  m_drop_shadow = std::make_unique<DropShadow>(true, false, m_calendar_widget);
   m_calendar_widget->hide();
   update_label(initial_date.date());
   window()->installEventFilter(this);

@@ -15,7 +15,7 @@ ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
       m_empty_style(true) {
   setMenu(m_items);
   m_items->setWindowFlag(Qt::NoDropShadowWindowHint);
-  m_drop_shadow = std::make_unique<DropShadow>(false, true, m_items);
+  m_drop_shadow = std::make_unique<DropShadow>(true, true, m_items);
   m_items->setStyle(m_menu_icon_style.get());
   connect(m_items, &QMenu::triggered, this, &ToolbarMenu::on_triggered);
   m_empty_item = new QWidgetAction(this);
