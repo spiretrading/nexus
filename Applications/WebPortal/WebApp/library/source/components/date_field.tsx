@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize, IntegerInputBox } from '..';
+import { DisplaySize, IntegerField } from '..';
 
 enum DateUnit {
   DAY,
@@ -103,7 +103,7 @@ export class DateField extends React.Component<Properties, State> {
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DateField.STYLE.inner}>
-          <IntegerInputBox
+          <IntegerField
             min={1} max={maxDate}
             value={this.props.value.day()}
             readonly={this.props.readonly}
@@ -112,7 +112,7 @@ export class DateField extends React.Component<Properties, State> {
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>/</div>
-          <IntegerInputBox
+          <IntegerField
             min={1} max={12}
             value={this.props.value.month()}
             readonly={this.props.readonly}
@@ -121,7 +121,7 @@ export class DateField extends React.Component<Properties, State> {
             style={DateField.STYLE.defaultIntegerBox}
             padding={2}/>
           <div style={DateField.STYLE.slash}>/</div>
-          <IntegerInputBox
+          <IntegerField
             min={2000} max={3000}
             value={this.props.value.year()}
             readonly={this.props.readonly}

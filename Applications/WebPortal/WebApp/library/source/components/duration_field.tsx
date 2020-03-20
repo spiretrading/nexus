@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '../display_size';
-import { IntegerInputBox } from './integer_input_box';
+import { IntegerField } from './integer_field';
 
 enum TimeUnit {
   HOURS,
@@ -94,7 +94,7 @@ export class DurationInputField extends React.Component<Properties, State> {
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DurationInputField.STYLE.inner}>
-          <IntegerInputBox
+          <IntegerField
             min={this.props.minHourValue} max={this.props.maxHourValue}
             value={splitTime.hours}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
@@ -103,7 +103,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             readonly={this.props.readonly}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>:</div>
-          <IntegerInputBox
+          <IntegerField
             min={0} max={59}
             value={splitTime.minutes}
             className={css(DurationInputField.EXTRA_STYLE.effects)}
@@ -112,7 +112,7 @@ export class DurationInputField extends React.Component<Properties, State> {
             readonly={this.props.readonly}
             padding={2}/>
           <div style={DurationInputField.STYLE.colon}>:</div>
-          <IntegerInputBox
+          <IntegerField
             min={0} max={59}
             value={splitTime.seconds}
             className={css(DurationInputField.EXTRA_STYLE.effects)}

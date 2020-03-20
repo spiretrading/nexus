@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
+import { CountrySelectionField, DisplaySize, HLine, PhotoField } from '../../..';
 import { CommentBox } from '../comment_box';
 import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
   SubmitButton } from '.';
@@ -179,7 +179,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             readonly={this.props.readonly}/>);
       } else {
         return (
-          <CountrySelectionBox
+          <CountrySelectionField
             readonly={this.props.readonly}
             displaySize={this.props.displaySize}
             value={this.props.identity.country}

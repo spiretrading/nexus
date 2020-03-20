@@ -27,8 +27,8 @@ interface Properties {
   onChange?: (value: number) => void;
 }
 
-/** Displays a decimal number input field. */
-export class NumberInput extends React.Component<Properties> {
+/** A editable decimal number field. */
+export class NumberField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: 0,
     onChange: () => {}
@@ -42,9 +42,9 @@ export class NumberInput extends React.Component<Properties> {
   public render(): JSX.Element {
     const boxStyle = (() => {
       if(this.props.readonly) {
-        return NumberInput.STYLE.boxReadonly;
+        return NumberField.STYLE.boxReadonly;
       } else {
-        return NumberInput.STYLE.box;
+        return NumberField.STYLE.box;
       }
     })();
     return (
@@ -55,7 +55,7 @@ export class NumberInput extends React.Component<Properties> {
         style={{...boxStyle, ...this.props.style}}
         disabled={this.props.readonly}
         onChange={this.onChange}
-        className={css(NumberInput.EXTRA_STYLE.customHighlighting) + ' ' +
+        className={css(NumberField.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
   }
 

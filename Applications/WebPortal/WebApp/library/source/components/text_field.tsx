@@ -31,8 +31,8 @@ interface Properties {
   onInput?: (value: string) => void;
 }
 
-/** Displays a single text input field. */
-export class TextInputField extends React.Component<Properties> {
+/** Displays a component that displays a single line of text. */
+export class TextField extends React.Component<Properties> {
   public static readonly defaultProps = {
     value: '',
     placeholder: '',
@@ -43,16 +43,16 @@ export class TextInputField extends React.Component<Properties> {
   public render(): JSX.Element {
     const boxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return TextInputField.STYLE.boxSmall;
+        return TextField.STYLE.boxSmall;
       } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return TextInputField.STYLE.boxMedium;
+        return TextField.STYLE.boxMedium;
       } else {
-        return TextInputField.STYLE.boxLarge;
+        return TextField.STYLE.boxLarge;
       }
     })();
     const errorStyle = (() => {
       if(this.props.isError) {
-        return TextInputField.EXTRA_STYLE.errorBox;
+        return TextField.EXTRA_STYLE.errorBox;
       } else {
         return null;
       }
@@ -64,7 +64,7 @@ export class TextInputField extends React.Component<Properties> {
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.props.onInput(event.target.value);}}
-        className={css(TextInputField.EXTRA_STYLE.effects, errorStyle) + ' ' +
+        className={css(TextField.EXTRA_STYLE.effects, errorStyle) + ' ' +
           this.props.className}/>);
   }
 

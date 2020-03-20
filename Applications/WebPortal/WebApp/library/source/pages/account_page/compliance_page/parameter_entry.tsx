@@ -1,8 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Checkmark, CurrencySelectionBox, DateTimeField, DisplaySize,
-  DurationInputField, MoneyInputBox, NumberInput, SecuritiesInput,
-  SecurityInput, TextInputField } from '../../..';
+import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
+  DurationInputField, MoneyField, NumberField, SecuritiesField,
+  SecurityField, TextField } from '../../..';
 
 interface Properties {
 
@@ -64,7 +64,7 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return <CurrencySelectionBox
+          return <CurrencySelectionField
             value={this.props.parameter.value.value}
             style={inputWrapper}
             onChange={this.onChange}
@@ -77,7 +77,7 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
-          return <NumberInput 
+          return <NumberField 
             value={this.props.parameter.value.value}
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
@@ -88,24 +88,24 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
-          return <MoneyInputBox
+          return <MoneyField
             value={this.props.parameter.value.value}
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
-          return <NumberInput 
+          return <NumberField 
             value={this.props.parameter.value.value}
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.STRING:
-          return <TextInputField
+          return <TextField
             displaySize={this.props.displaySize}
             value={this.props.parameter.value.value}
             onInput={this.onChange}
             readonly={this.props.readonly}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.SECURITY:
-          return <SecurityInput
+          return <SecurityField
             displaySize={this.props.displaySize}
             onChange={this.onChange}
             value={this.props.parameter.value.value}/>;
@@ -113,7 +113,7 @@ export class ParameterEntry extends React.Component<Properties> {
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===
                 Nexus.ComplianceValue.Type.SECURITY) {
-              return <SecuritiesInput
+              return <SecuritiesField
                 displaySize={this.props.displaySize}
                 onChange={this.onSecurityListChange}
                 readonly={this.props.readonly}
@@ -121,7 +121,7 @@ export class ParameterEntry extends React.Component<Properties> {
                   this.props.parameter.value.value)}/>;
             }
           } else {
-            return <SecuritiesInput
+            return <SecuritiesField
               displaySize={this.props.displaySize}
               onChange={this.onSecurityListChange}
               readonly={this.props.readonly}

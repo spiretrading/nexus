@@ -30,8 +30,8 @@ interface State {
   value: Nexus.Money;
 }
 
-/** Displays an input box for money values. */
-export class MoneyInputBox extends React.Component<Properties, State> {
+/** A editable money field. */
+export class MoneyField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onChange: () => {}
   };
@@ -49,8 +49,8 @@ export class MoneyInputBox extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
         <input
-          style={{...MoneyInputBox.STYLE.input, ...this.props.style}}
-          className={css(MoneyInputBox.EXTRA_STYLE.effects) + ' ' +
+          style={{...MoneyField.STYLE.input, ...this.props.style}}
+          className={css(MoneyField.EXTRA_STYLE.effects) + ' ' +
             this.props.className}
           type='text'
           disabled={this.props.readonly}

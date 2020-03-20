@@ -32,8 +32,8 @@ interface State {
   value: number;
 }
 
-/** Displays an input box for modifying integer values. */
-export class IntegerInputBox extends React.Component<Properties, State> {
+/** A editable integer field. */
+export class IntegerField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     min: 0,
     value: 0,
@@ -57,13 +57,13 @@ export class IntegerInputBox extends React.Component<Properties, State> {
     return (
       <input
         onBlur={this.onBlur}
-        style={{...IntegerInputBox.STYLE.editBox, ...this.props.style}}
+        style={{...IntegerField.STYLE.editBox, ...this.props.style}}
         value={shownValue}
         onChange={this.onChange}
         readOnly={this.props.readonly}
         disabled={this.props.readonly}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-        className={css(IntegerInputBox.EXTRA_STYLE.effects)}
+        className={css(IntegerField.EXTRA_STYLE.effects)}
         type={'text'}/>);
   }
 
