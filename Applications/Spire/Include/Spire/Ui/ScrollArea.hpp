@@ -22,8 +22,8 @@ namespace Spire {
 
       void fade_out_horizontal_scroll_bar();
       void fade_out_vertical_scroll_bar();
-      bool is_within_horizontal_scroll_bar(const QPoint& pos);
-      bool is_within_vertical_scroll_bar(const QPoint& pos);
+      bool is_within_horizontal_scroll_bar(int pos_y);
+      bool is_within_vertical_scroll_bar(int pos_x);
       void set_scroll_bar_style(int handle_size);
   };
 }
