@@ -74,7 +74,7 @@ namespace Details {
       /*! \enum CancelAction
           \brief Represents an order cancellation action.
       */
-      enum class CancelAction : int {
+      enum class CancelAction {
 
         //! Cancels the most recent OrderAction.
         MOST_RECENT,
@@ -161,19 +161,19 @@ namespace Details {
       /*!
         \return The list of all order action bindings.
       */
-      OrderBindingsList list_order_bindings() const;
+      OrderBindingsList build_order_bindings_list() const;
       
       //! Lists all cancel action bindings.
       /*!
         \return The list of all cancel action bindings.
       */
-      CancelBindingsList list_cancel_bindings() const;
+      CancelBindingsList build_cancel_bindings_list() const;
 
       //! Lists all bindings.
       /*!
         \return The list of all bindings.
       */
-      ActionBindingsList list_action_bindings() const;
+      ActionBindingsList build_action_bindings_list() const;
   };
 }
 
