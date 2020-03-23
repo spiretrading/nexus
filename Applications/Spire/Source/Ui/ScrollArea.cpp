@@ -1,5 +1,5 @@
 #include "Spire/Ui/ScrollArea.hpp"
-#include <QMouseEvent>
+#include <QHoverEvent>
 #include <QScrollBar>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -15,7 +15,6 @@ namespace {
 ScrollArea::ScrollArea(QWidget* parent)
     : QScrollArea(parent) {
   setMouseTracking(true);
-  setAttribute(Qt::WA_Hover);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -28,38 +27,65 @@ ScrollArea::ScrollArea(QWidget* parent)
     &ScrollArea::fade_out_vertical_scroll_bar);
 }
 
-void ScrollArea::leaveEvent(QEvent* event) {
-  if(!m_h_scroll_bar_timer.isActive()) {
-  fade_out_horizontal_scroll_bar();
-  }
-  if(!m_v_scroll_bar_timer.isActive()) {
-  fade_out_vertical_scroll_bar();
-  }
+void ScrollArea::setWidget(QWidget* widget) {
+  widget->setMouseTracking(true);
+  widget->installEventFilter(this);
+  QScrollArea::setWidget(widget);
 }
 
-void ScrollArea::mouseMoveEvent(QMouseEvent* event) {
-  if(is_within_horizontal_scroll_bar(event->pos()) &&
-      !verticalScrollBar()->isVisible()) {
-    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  } else if(is_within_vertical_scroll_bar(event->pos()) &&
-      !horizontalScrollBar()->isSliderDown()) {
-    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  } else {
-    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
-    if(!m_v_scroll_bar_timer.isActive() &&
-        verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
-        !verticalScrollBar()->isSliderDown()) {
-      fade_out_vertical_scroll_bar();
-    }
-    if(!m_h_scroll_bar_timer.isActive() &&
-        horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+bool ScrollArea::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::HoverMove) {
+    auto e = static_cast<QHoverEvent*>(event);
+    //qDebug() << e->pos();
+    if(is_within_horizontal_scroll_bar(e->pos()) &&
+        !verticalScrollBar()->isVisible()) {
+      qDebug() << "hor shown";
+      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+      setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+      setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    } else if(is_within_vertical_scroll_bar(e->pos()) &&
         !horizontalScrollBar()->isSliderDown()) {
+      qDebug() << "vert shown";
+      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+      setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+      setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    } else {
+      set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+      if(!m_v_scroll_bar_timer.isActive() &&
+          verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+          !verticalScrollBar()->isSliderDown()) {
+        fade_out_vertical_scroll_bar();
+      }
+      if(!m_h_scroll_bar_timer.isActive() &&
+          horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+          !horizontalScrollBar()->isSliderDown()) {
+        fade_out_horizontal_scroll_bar();
+      }
+    }
+  } else if(event->type() == QEvent::HoverLeave) {
+    if(!m_h_scroll_bar_timer.isActive()) {
       fade_out_horizontal_scroll_bar();
     }
+    if(!m_v_scroll_bar_timer.isActive()) {
+      fade_out_vertical_scroll_bar();
+    }
+  }
+  return false;
+}
+
+void ScrollArea::wheelEvent(QWheelEvent* event) {
+  if(event->modifiers() & Qt::ShiftModifier) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    horizontalScrollBar()->setValue(horizontalScrollBar()->value() -
+      (event->delta() / 2));
+    m_h_scroll_bar_timer.start();
+  } else if(!event->modifiers().testFlag(Qt::ShiftModifier)) {
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    verticalScrollBar()->setValue(verticalScrollBar()->value() -
+      (event->delta() / 2));
+    m_v_scroll_bar_timer.start();
   }
 }
 
@@ -80,6 +106,8 @@ bool ScrollArea::is_within_horizontal_scroll_bar(
 
 bool ScrollArea::is_within_vertical_scroll_bar(
     const QPoint& pos) {
+  //qDebug() << "w: " << width();
+  qDebug() << pos.x();
   return pos.x() > width() - scale_width(SCROLL_BAR_MAX_SIZE);
 }
 

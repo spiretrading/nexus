@@ -10,9 +10,11 @@ namespace Spire {
 
       ScrollArea(QWidget* parent = nullptr);
 
+      void setWidget(QWidget* widget);
+
     protected:
-      void leaveEvent(QEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event);
+      void wheelEvent(QWheelEvent* event) override;
 
     private:
       QTimer m_h_scroll_bar_timer;
