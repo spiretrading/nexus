@@ -55,12 +55,38 @@ boost::optional<const KeyBindings::Action&>
 KeyBindings::OrderBindingsList
     KeyBindings::build_order_bindings_list() const {
   auto list = OrderBindingsList();
+  std::for_each(m_bindings.constKeyValueBegin(), m_bindings.constKeyValueEnd(),
+    [&] (auto& e) {
+      auto& elements = e.second;
+      for(auto i = elements.Begin(); i != elements.End(); ++i) {
+        auto& action = std::get<1>(*i);
+        if(action) {
+          auto order_action = std::get_if<OrderAction>(&(*action));
+          if(order_action != nullptr) {
+            list.emplace_back(e.first, *order_action);
+          }
+        }
+      }
+    });
   return list;
 }
 
 KeyBindings::CancelBindingsList
     KeyBindings::build_cancel_bindings_list() const {
   auto list = CancelBindingsList();
+  std::for_each(m_bindings.constKeyValueBegin(), m_bindings.constKeyValueEnd(),
+    [&] (auto& e) {
+      auto& elements = e.second;
+      for(auto i = elements.Begin(); i != elements.End(); ++i) {
+        auto& action = std::get<1>(*i);
+        if(action) {
+          auto cancel_action = std::get_if<CancelAction>(&(*action));
+          if(cancel_action != nullptr) {
+            list.emplace_back(e.first, *cancel_action);
+          }
+        }
+      }
+    });
   return list;
 }
 
@@ -70,16 +96,12 @@ KeyBindings::ActionBindingsList
   std::for_each(m_bindings.constKeyValueBegin(), m_bindings.constKeyValueEnd(),
     [&] (auto& e) {
       auto& elements = e.second;
-      auto region_actions = std::vector<std::tuple<const Region,
-        Actions::Element>>();
-      std::copy_if(elements.Begin(), elements.End(),
-        std::back_inserter(region_actions), [] (auto& element) {
-          return std::get<1>(element).is_initialized();
-        });
-      std::transform(region_actions.begin(), region_actions.end(),
-        std::back_inserter(list), [&] (auto& element) {
-          return std::make_pair(e.first, *std::get<1>(element));
-        });
+      for(auto i = elements.Begin(); i != elements.End(); ++i) {
+        auto& action = std::get<1>(*i);
+        if(action) {
+          list.emplace_back(e.first, *action);
+        }
+      }
     });
   return list;
 }
