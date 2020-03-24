@@ -13,7 +13,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      ScrollArea(QWidget* parent = nullptr);
+      explicit ScrollArea(QWidget* parent = nullptr);
 
       //! Sets the widget displayed in the scroll area.
       /*
@@ -27,13 +27,13 @@ namespace Spire {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
-      QTimer m_h_scroll_bar_timer;
-      QTimer m_v_scroll_bar_timer;
+      QTimer m_horizontal_scroll_bar_timer;
+      QTimer m_vertical_scroll_bar_timer;
 
       void hide_horizontal_scroll_bar();
       void hide_vertical_scroll_bar();
-      bool is_within_horizontal_scroll_bar(int pos_y);
-      bool is_within_vertical_scroll_bar(int pos_x);
+      bool is_within_scroll_bar(QScrollBar* scroll_bar, int pos,
+        int scroll_size, int widget_size);
       void set_scroll_bar_style(int handle_size);
   };
 }
