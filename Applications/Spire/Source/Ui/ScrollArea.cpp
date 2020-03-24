@@ -38,13 +38,13 @@ void ScrollArea::setWidget(QWidget* widget) {
 bool ScrollArea::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::HoverMove) {
     auto e = static_cast<QHoverEvent*>(event);
-    if(is_within_scroll_bar(horizontalScrollBar(), e->pos().y(),
+    if(is_within_opposite_scroll_bar(verticalScrollBar(), e->pos().y(),
         widget()->height(), height()) && !verticalScrollBar()->isVisible()) {
       set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
       setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    } else if(is_within_scroll_bar(verticalScrollBar(), e->pos().x(),
-        widget()->width(), width()) &&
+    } else if(is_within_opposite_scroll_bar(horizontalScrollBar(),
+        e->pos().x(), widget()->width(), width()) &&
         !horizontalScrollBar()->isSliderDown()) {
       set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -106,7 +106,7 @@ void ScrollArea::hide_vertical_scroll_bar() {
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-bool ScrollArea::is_within_scroll_bar(QScrollBar* scroll_bar, int pos,
+bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
     int scroll_size, int widget_size) {
   if(widget() == nullptr) {
     return false;
@@ -114,6 +114,7 @@ bool ScrollArea::is_within_scroll_bar(QScrollBar* scroll_bar, int pos,
   auto scroll_adjustment = map_to(static_cast<double>(scroll_bar->value()),
     static_cast<double>(scroll_bar->minimum()),
     static_cast<double>(scroll_bar->maximum()), 0, scroll_size - widget_size);
+  qDebug() << scroll_adjustment;
   return pos - scroll_adjustment > widget_size -
     scale_width(SCROLL_BAR_MAX_SIZE);
 }

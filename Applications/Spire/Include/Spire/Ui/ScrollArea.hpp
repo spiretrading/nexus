@@ -32,7 +32,7 @@ namespace Spire {
 
       void hide_horizontal_scroll_bar();
       void hide_vertical_scroll_bar();
-      bool is_within_scroll_bar(QScrollBar* scroll_bar, int pos,
+      bool is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
         int scroll_size, int widget_size);
       void set_scroll_bar_style(int handle_size);
   };
