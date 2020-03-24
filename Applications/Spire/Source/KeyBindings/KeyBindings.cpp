@@ -46,8 +46,7 @@ KeyBindings::OrderBindingsList
     [&] (auto& e) {
       auto& elements = e.second;
       for(auto i = elements.Begin(); i != elements.End(); ++i) {
-        auto& action = std::get<1>(*i);
-        if(action) {
+        if(auto& action = std::get<1>(*i)) {
           auto order_action = std::get_if<OrderAction>(&(*action));
           if(order_action != nullptr) {
             list.emplace_back(e.first, *order_action);
@@ -65,8 +64,7 @@ KeyBindings::CancelBindingsList
     [&] (auto& e) {
       auto& elements = e.second;
       for(auto i = elements.Begin(); i != elements.End(); ++i) {
-        auto& action = std::get<1>(*i);
-        if(action) {
+        if(auto& action = std::get<1>(*i)) {
           auto cancel_action = std::get_if<CancelAction>(&(*action));
           if(cancel_action != nullptr) {
             list.emplace_back(e.first, *cancel_action);
@@ -84,8 +82,7 @@ KeyBindings::ActionBindingsList
     [&] (auto& e) {
       auto& elements = e.second;
       for(auto i = elements.Begin(); i != elements.End(); ++i) {
-        auto& action = std::get<1>(*i);
-        if(action) {
+        if(auto& action = std::get<1>(*i)) {
           list.emplace_back(e.first, *action);
         }
       }
