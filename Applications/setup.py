@@ -10,7 +10,7 @@ def call(command):
 
 def translate(source, variables):
   for key in variables.keys():
-    source = source.replace('$' + key, '%s' % variables[key])
+    source = source.replace('$' + key, '"%s"' % variables[key])
   return source
 
 def main():
