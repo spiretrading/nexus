@@ -14,14 +14,15 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event);
+      void leaveEvent(QEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
     private:
       QTimer m_h_scroll_bar_timer;
       QTimer m_v_scroll_bar_timer;
 
-      void fade_out_horizontal_scroll_bar();
-      void fade_out_vertical_scroll_bar();
+      void hide_horizontal_scroll_bar();
+      void hide_vertical_scroll_bar();
       bool is_within_horizontal_scroll_bar(int pos_y);
       bool is_within_vertical_scroll_bar(int pos_x);
       void set_scroll_bar_style(int handle_size);

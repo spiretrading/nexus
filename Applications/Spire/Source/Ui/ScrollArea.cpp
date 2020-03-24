@@ -8,23 +8,24 @@ using namespace Spire;
 
 namespace {
   const auto MINIMUM_TABLE_WIDTH = 750;
-  const auto SCROLL_BAR_FADE_TIME_MS = 500;
+  const auto SCROLL_BAR_HIDE_TIME_MS = 500;
   const auto SCROLL_BAR_MAX_SIZE = 13;
   const auto SCROLL_BAR_MIN_SIZE = 6;
 }
 
 ScrollArea::ScrollArea(QWidget* parent)
     : QScrollArea(parent) {
+  setMouseTracking(true);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_h_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
+  m_h_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
   connect(&m_h_scroll_bar_timer, &QTimer::timeout, this,
-    &ScrollArea::fade_out_horizontal_scroll_bar);
-  m_v_scroll_bar_timer.setInterval(SCROLL_BAR_FADE_TIME_MS);
+    &ScrollArea::hide_horizontal_scroll_bar);
+  m_v_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
   connect(&m_v_scroll_bar_timer, &QTimer::timeout, this,
-    &ScrollArea::fade_out_vertical_scroll_bar);
+    &ScrollArea::hide_vertical_scroll_bar);
 }
 
 void ScrollArea::setWidget(QWidget* widget) {
@@ -52,25 +53,30 @@ bool ScrollArea::eventFilter(QObject* watched, QEvent* event) {
       if(!m_v_scroll_bar_timer.isActive() &&
           verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
           !verticalScrollBar()->isSliderDown()) {
-        fade_out_vertical_scroll_bar();
+        hide_vertical_scroll_bar();
       }
       if(!m_h_scroll_bar_timer.isActive() &&
           horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
           !horizontalScrollBar()->isSliderDown()) {
-        fade_out_horizontal_scroll_bar();
+        hide_horizontal_scroll_bar();
       }
     }
   } else if(event->type() == QEvent::HoverLeave) {
     if(!m_h_scroll_bar_timer.isActive() &&
         horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
-      fade_out_horizontal_scroll_bar();
+      hide_horizontal_scroll_bar();
     }
     if(!m_v_scroll_bar_timer.isActive() &&
         verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
-      fade_out_vertical_scroll_bar();
+      hide_vertical_scroll_bar();
     }
   }
-  return false;
+  return QScrollArea::eventFilter(watched, event);
+}
+
+void ScrollArea::leaveEvent(QEvent* event) {
+  hide_horizontal_scroll_bar();
+  hide_vertical_scroll_bar();
 }
 
 void ScrollArea::wheelEvent(QWheelEvent* event) {
@@ -89,12 +95,12 @@ void ScrollArea::wheelEvent(QWheelEvent* event) {
   }
 }
 
-void ScrollArea::fade_out_horizontal_scroll_bar() {
+void ScrollArea::hide_horizontal_scroll_bar() {
   m_h_scroll_bar_timer.stop();
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-void ScrollArea::fade_out_vertical_scroll_bar() {
+void ScrollArea::hide_vertical_scroll_bar() {
   m_v_scroll_bar_timer.stop();
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
