@@ -22,7 +22,7 @@ namespace Details {
 
   template<template<typename...> class C, typename... T>
   struct ToVariantOfOptionals<C<T...>> {
-    using Type = std::variant<std::optional<T>...>;
+    using Type = std::variant<boost::optional<T>...>;
   };
 
   using CustomTagType =
