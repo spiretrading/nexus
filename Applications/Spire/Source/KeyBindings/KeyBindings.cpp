@@ -37,19 +37,13 @@ void KeyBindings::reset_binding(const Region& region,
   }
 }
 
-boost::optional<const KeyBindings::Action&>
-    KeyBindings::find_binding(const Region& region,
-    const QKeySequence& sequence) const {
+boost::optional<KeyBindings::Action> KeyBindings::find_binding(
+    const Region& region, const QKeySequence& sequence) const {
   auto i = m_bindings.find(sequence);
   if(i == m_bindings.end()) {
     return boost::none;
   }
-  auto& action = i->Get(region);
-  if(action) {
-    return *action;
-  } else {
-    return boost::none;
-  }
+  return i->Get(region);
 }
 
 KeyBindings::OrderBindingsList

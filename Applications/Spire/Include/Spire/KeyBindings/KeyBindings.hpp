@@ -154,10 +154,9 @@ namespace Details {
       /*!
         \param region The region to look for a binding in.
         \param sequence The key sequence.
-        \return Reference to a action if the binding exists,
-                boost::none otherwise.
+        \return The action in the binding exists.
       */
-      boost::optional<const Action&> find_binding(const Nexus::Region& region,
+      boost::optional<Action> find_binding(const Nexus::Region& region,
         const QKeySequence& sequence) const;
 
       //! Lists all order action bindings.
