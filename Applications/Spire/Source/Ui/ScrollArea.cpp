@@ -14,7 +14,9 @@ namespace {
 }
 
 ScrollArea::ScrollArea(QWidget* parent)
-    : QScrollArea(parent) {
+    : QScrollArea(parent),
+      m_horizontal_scrolling_error(0.0),
+      m_vertical_scrolling_error(0.0) {
   setMouseTracking(true);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
@@ -84,14 +86,15 @@ void ScrollArea::wheelEvent(QWheelEvent* event) {
   if(event->modifiers().testFlag(Qt::ShiftModifier)) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    horizontalScrollBar()->setValue(horizontalScrollBar()->value() -
-      (event->delta() / 2));
+    auto delta = event->angleDelta().y() / 2 + m_horizontal_scrolling_error;
+    update_scrollbar_position(horizontalScrollBar(), event->angleDelta().y(),
+      m_horizontal_scrolling_error);
     m_horizontal_scroll_bar_timer.start();
   } else {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    verticalScrollBar()->setValue(verticalScrollBar()->value() -
-      (event->delta() / 2));
+    update_scrollbar_position(verticalScrollBar(), event->angleDelta().y(),
+      m_vertical_scrolling_error);
     m_vertical_scroll_bar_timer.start();
   }
 }
@@ -107,7 +110,7 @@ void ScrollArea::hide_vertical_scroll_bar() {
 }
 
 bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
-    int scroll_size, int widget_size) {
+    int scroll_size, int widget_size) const {
   if(widget() == nullptr) {
     return false;
   }
@@ -116,6 +119,14 @@ bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
     static_cast<double>(scroll_bar->maximum()), 0, scroll_size - widget_size);
   return pos - scroll_adjustment > widget_size -
     scale_width(SCROLL_BAR_MAX_SIZE);
+}
+
+void ScrollArea::update_scrollbar_position(QScrollBar* scroll_bar, int delta,
+    double& scrolling_error) {
+  auto adjusted_delta = delta / 2 + scrolling_error;
+  scrolling_error = modf(adjusted_delta, &adjusted_delta);
+  scroll_bar->setValue(scroll_bar->value() -
+    static_cast<int>(adjusted_delta));
 }
 
 void ScrollArea::set_scroll_bar_style(int handle_size) {

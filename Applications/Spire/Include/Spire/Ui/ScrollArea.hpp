@@ -29,11 +29,15 @@ namespace Spire {
     private:
       QTimer m_horizontal_scroll_bar_timer;
       QTimer m_vertical_scroll_bar_timer;
+      double m_horizontal_scrolling_error;
+      double m_vertical_scrolling_error;
 
       void hide_horizontal_scroll_bar();
       void hide_vertical_scroll_bar();
       bool is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
-        int scroll_size, int widget_size);
+        int scroll_size, int widget_size) const;
+      void update_scrollbar_position(QScrollBar* scroll_bar, int delta,
+        double& scrolling_error);
       void set_scroll_bar_style(int handle_size);
   };
 }
