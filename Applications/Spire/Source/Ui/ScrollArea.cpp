@@ -2,6 +2,7 @@
 #include <QHoverEvent>
 #include <QScrollBar>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Spire;
 
@@ -99,17 +100,25 @@ void ScrollArea::fade_out_vertical_scroll_bar() {
 }
 
 bool ScrollArea::is_within_horizontal_scroll_bar(int pos_y) {
-  qDebug() << "h: " << height();
-  qDebug() << "y: " << pos_y;
-  return pos_y > height() - scale_height(SCROLL_BAR_MAX_SIZE);
+  if(widget() == nullptr) {
+    return false;
+  }
+  auto bar = verticalScrollBar();
+  auto scroll_adj = map_to(static_cast<double>(bar->value()),
+    static_cast<double>(bar->minimum()), static_cast<double>(bar->maximum()),
+    0, widget()->height() - height());
+  return pos_y - scroll_adj > height() - scale_height(SCROLL_BAR_MAX_SIZE);
 }
 
 bool ScrollArea::is_within_vertical_scroll_bar(int pos_x) {
-  qDebug() << "w: " << width();
-  qDebug() << "x: " << pos_x;
-  qDebug() << verticalScrollBar()->minimum();
-  qDebug() << verticalScrollBar()->maximum();
-  return pos_x > width() - scale_width(SCROLL_BAR_MAX_SIZE);
+  if(widget() == nullptr) {
+    return false;
+  }
+  auto bar = horizontalScrollBar();
+  auto scroll_adj = map_to(static_cast<double>(bar->value()),
+    static_cast<double>(bar->minimum()), static_cast<double>(bar->maximum()),
+    0, widget()->width() - width());
+  return pos_x - scroll_adj > width() - scale_width(SCROLL_BAR_MAX_SIZE);
 }
 
 void ScrollArea::set_scroll_bar_style(int handle_size) {
