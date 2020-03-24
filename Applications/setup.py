@@ -98,10 +98,10 @@ def main():
     application_directory = os.path.join('.', application)
     files = [f for f in os.listdir(application_directory) if
       os.path.isfile(os.path.join(application_directory, f)) and
-      f.endswith('.default.yml')]
+      f.find('.default.') != -1]
     for file in files:
       file_path = os.path.join(application_directory, file)
-      destination_path = file_path.replace('.default.yml', '.yml')
+      destination_path = file_path.replace('.default.', '.')
       shutil.move(file_path, destination_path)
       with open(destination_path, 'r+') as file:
         source = translate(file.read(), variables)
