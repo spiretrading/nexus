@@ -4,8 +4,8 @@
 #include <variant>
 #include <vector>
 #include <boost/optional/optional.hpp>
-#include <QKeySequence>
 #include <QHash>
+#include <QKeySequence>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Region.hpp"
