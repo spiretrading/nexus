@@ -5,11 +5,20 @@
 
 namespace Spire {
 
+  //! Displays a scroll area with styled scroll bars.
   class ScrollArea : public QScrollArea {
     public:
 
+      //! Constructs an empty ScrollArea.
+      /*
+        \param parent The parent widget.
+      */
       ScrollArea(QWidget* parent = nullptr);
 
+      //! Sets the widget displayed in the scroll area.
+      /*
+        \param widget The widget to display.
+      */
       void setWidget(QWidget* widget);
 
     protected:
