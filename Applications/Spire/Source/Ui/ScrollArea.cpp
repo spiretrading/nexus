@@ -114,7 +114,6 @@ bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
   auto scroll_adjustment = map_to(static_cast<double>(scroll_bar->value()),
     static_cast<double>(scroll_bar->minimum()),
     static_cast<double>(scroll_bar->maximum()), 0, scroll_size - widget_size);
-  qDebug() << scroll_adjustment;
   return pos - scroll_adjustment > widget_size -
     scale_width(SCROLL_BAR_MAX_SIZE);
 }
