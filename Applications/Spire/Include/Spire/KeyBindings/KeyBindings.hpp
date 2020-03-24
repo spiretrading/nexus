@@ -61,9 +61,6 @@ namespace Details {
         //! The side of the order.
         boost::optional<Nexus::Side> m_side;
 
-        //! The destination of the order.
-        Nexus::Region m_region;
-
         //! The expiry of the order.
         boost::optional<Nexus::TimeInForce> m_time_in_force;
 
@@ -134,12 +131,14 @@ namespace Details {
       using ActionBindingsList = std::vector<std::pair<QKeySequence,
         Action>>;
 
-      //! Associates a key sequence with a action.
+      //! Associates a key sequence with a action for a region.
       /*!
         \param sequence The key sequence.
+        \param region The region.
         \param action The action.
       */
-      void set_binding(QKeySequence sequence, const Action& action);
+      void set_binding(QKeySequence sequence, const Nexus::Region& region,
+        const Action& action);
 
       //! Removes a binding for a key sequence within the provided region.
       /*!

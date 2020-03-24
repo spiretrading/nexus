@@ -5,15 +5,8 @@
 using namespace Nexus;
 using namespace Spire;
 
-void KeyBindings::set_binding(QKeySequence sequence, const Action& action) {
-  auto region = std::visit([] (auto& action) {
-    using Type = std::decay_t<decltype(action)>;
-    if constexpr(std::is_same_v<Type, CancelAction>) {
-      return Region(Region::GlobalTag());
-    } else {
-      return action.m_region;
-    }
-  }, action);
+void KeyBindings::set_binding(QKeySequence sequence, const Region& region,
+    const Action& action) {
   auto i = m_bindings.find(sequence);
   if(i == m_bindings.end()) {
     i = m_bindings.insert(sequence, Actions(boost::none));
