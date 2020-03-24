@@ -4,12 +4,15 @@
 #include <variant>
 #include <vector>
 #include <boost/optional/optional.hpp>
-#include <Nexus/Definitions/Definitions.hpp>
-#include <Nexus/Definitions/OrderType.hpp>
-#include <Nexus/Definitions/Region.hpp>
-#include <Nexus/Definitions/Side.hpp>
-#include <Nexus/Definitions/Tag.hpp>
+#include <QHash>
 #include <QKeySequence>
+#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/OrderType.hpp"
+#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Tag.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 
 namespace Spire {
 namespace Details {
@@ -19,7 +22,7 @@ namespace Details {
 
   template<template<typename...> class C, typename... T>
   struct ToVariantOfOptionals<C<T...>> {
-    using Type = std::variant<T...>;
+    using Type = std::variant<boost::optional<T>...>;
   };
 
   using CustomTagType =
@@ -46,7 +49,7 @@ namespace Details {
           std::string m_name;
 
           //! The optional value of the tag.
-          boost::optional<Type> m_value;
+          Type m_value;
         };
 
         //! The name of the action.
@@ -57,9 +60,6 @@ namespace Details {
 
         //! The side of the order.
         boost::optional<Nexus::Side> m_side;
-
-        //! The destination of the order.
-        Nexus::Region m_region;
 
         //! The expiry of the order.
         boost::optional<Nexus::TimeInForce> m_time_in_force;
@@ -131,12 +131,14 @@ namespace Details {
       using ActionBindingsList = std::vector<std::pair<QKeySequence,
         Action>>;
 
-      //! Associates a key sequence with a action.
+      //! Associates a key sequence with a action for a region.
       /*!
         \param sequence The key sequence.
+        \param region The region.
         \param action The action.
       */
-      void set_binding(QKeySequence sequence, Action action);
+      void set_binding(QKeySequence sequence, const Nexus::Region& region,
+        const Action& action);
 
       //! Removes a binding for a key sequence within the provided region.
       /*!
@@ -151,10 +153,9 @@ namespace Details {
       /*!
         \param region The region to look for a binding in.
         \param sequence The key sequence.
-        \return Reference to a action if the binding exists,
-                boost::none otherwise.
+        \return The action in the binding exists.
       */
-      boost::optional<const Action&> find_binding(const Nexus::Region& region,
+      boost::optional<Action> find_binding(const Nexus::Region& region,
         const QKeySequence& sequence) const;
 
       //! Lists all order action bindings.
@@ -174,6 +175,10 @@ namespace Details {
         \return The list of all bindings.
       */
       ActionBindingsList build_action_bindings_list() const;
+
+    private:
+      using Actions = Nexus::RegionMap<boost::optional<Action>>;
+      QHash<QKeySequence, Actions> m_bindings;
   };
 }
 
