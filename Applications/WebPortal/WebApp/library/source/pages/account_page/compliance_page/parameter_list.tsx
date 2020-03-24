@@ -8,11 +8,14 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The schema that provides the paramters. */
+  /** The schema that provides the parameters. */
   schema: Nexus.ComplianceRuleSchema;
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
 
   /** The event handler called when the schema changes. */
   onChange?: (schema: Nexus.ComplianceRuleSchema) => void;
@@ -20,19 +23,16 @@ interface Properties {
 
 /** Displays the a list of parameters associated with a schema. */
 export class ParametersList extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    onChange: () => {}
+  };
+
   constructor(props: Properties) {
     super(props);
     this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
-    const headerStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return ParametersList.STYLE.headerSmall;
-      } else {
-        return ParametersList.STYLE.headerLarge;
-      }
-    })();
     const leftPadding = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
@@ -50,13 +50,14 @@ export class ParametersList extends React.Component<Properties> {
       parameterEntries.push(<ParameterEntry 
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
+        readonly={this.props.readonly}
         onChange={this.onChange.bind(this, i)}
         parameter={rule}/>);
     }
     return (
       <div style={leftPadding}>
         <div id={'topFiller'}/>
-        <div style={headerStyle}>Parameters</div>
+        <div style={ParametersList.STYLE.header}>Parameters</div>
         <div id={'moreFiller'}/>
         {parameterEntries}
         <div style={ParametersList.STYLE.bottomFiller}/>
@@ -97,7 +98,7 @@ export class ParametersList extends React.Component<Properties> {
       flexDirection: 'row' as 'row',
       width: '246px',
       minWidth: '246px',
-      maxWidtH: '246px',
+      maxWidth: '246px',
       height: '34px',
       font: '400 14px Roboto',
       alignItems: 'center' as 'center'
@@ -109,21 +110,12 @@ export class ParametersList extends React.Component<Properties> {
     bottomFiller: {
       height: '30px'
     },
-    label: {
-      width: '100px',
-      font: '400 14px Roboto',
-    },
-    headerSmall: {
+    header: {
       color: '#4B23A0',
       font: '500 14px Roboto',
       marginTop: '10px',
-      marginBottom: '18px'
-    },
-    headerLarge: {
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      marginTop: '10px',
-      marginBottom: '18px'
+      marginBottom: '18px',
+      cursor: 'default' as 'default'
     }
   };
 }

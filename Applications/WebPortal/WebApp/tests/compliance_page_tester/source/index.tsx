@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { Date } from 'beam';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -11,6 +12,7 @@ interface Properties {
 interface State {
   entries: Nexus.ComplianceRuleEntry[];
   schemas: Nexus.ComplianceRuleSchema[];
+  readonly: boolean;
 }
 
 /** Displays a sample CompliancePage for testing. */
@@ -19,24 +21,33 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       entries: [],
-      schemas: []
+      schemas: [],
+      readonly: false
     };
     this.onRuleAdd = this.onRuleAdd.bind(this);
     this.onRuleChange = this.onRuleChange.bind(this);
+    this.toggleReadonly = this.toggleReadonly.bind(this);
   }
 
   public render(): JSX.Element {
     return(
-      <div style={{height: '100%'}}>
-        <WebPortal.PageWrapper>
-          <WebPortal.CompliancePage
-            onRuleAdd={this.onRuleAdd}
-            onRuleChange={this.onRuleChange}
-            displaySize={this.props.displaySize} 
-            schemas={this.state.schemas}
-            currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-            entries={this.state.entries}/>
-        </WebPortal.PageWrapper>
+      <div style={{backgroundColor: 'black', height: '100%'}}>
+        <div style={TestApp.STYLE.testingComponents}>
+          <button tabIndex={-1}
+            onClick={this.toggleReadonly}>
+            TOGGLE READONLY
+          </button>
+        </div>
+      <WebPortal.PageWrapper>
+        <WebPortal.CompliancePage
+          onRuleAdd={this.onRuleAdd}
+          onRuleChange={this.onRuleChange}
+          displaySize={this.props.displaySize} 
+          schemas={this.state.schemas}
+          readonly={this.state.readonly}
+          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          entries={this.state.entries}/>
+      </WebPortal.PageWrapper>
       </div>);
   }
 
@@ -57,7 +68,7 @@ class TestApp extends React.Component<Properties, State> {
               Nexus.ComplianceValue.Type.MONEY, Nexus.Money.parse('1234.56'))),
           new Nexus.ComplianceParameter(
             'Currency',
-            new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY, 
+            new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY,
               Nexus.DefaultCurrencies.CAD)),
           new Nexus.ComplianceParameter(
             'Note',
@@ -90,52 +101,56 @@ class TestApp extends React.Component<Properties, State> {
         new Nexus.ComplianceParameter(
           'Date/Time',
           new Nexus.ComplianceValue(
-            Nexus.ComplianceValue.Type.DATE_TIME, 
-            new Beam.DateTime(new Beam.Date(2004, 2, 4), 
+            Nexus.ComplianceValue.Type.DATE_TIME,
+            new Beam.DateTime(new Beam.Date(2004, 2, 4),
               new Beam.Duration(5105000)))),
-        new Nexus.ComplianceParameter(    
+        new Nexus.ComplianceParameter(
           'Securities',
           new Nexus.ComplianceValue(
             Nexus.ComplianceValue.Type.LIST, [
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('AST.XASX',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('PST.CSE',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('NQR.YYYY',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
               new Nexus.ComplianceValue(
-                Nexus.ComplianceValue.Type.SECURITY, 
+                Nexus.ComplianceValue.Type.SECURITY,
                 new Nexus.Security('AST.NYC',
                   Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
-            ]
-          )
-        )
+            ])),
+        new Nexus.ComplianceParameter(
+          'Security',
+          new Nexus.ComplianceValue(
+            Nexus.ComplianceValue.Type.SECURITY,
+            new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE,
+              Nexus.DefaultCountries.CA)))
       ])));
     this.state.schemas.push(
       new Nexus.ComplianceRuleSchema('Buying Power', [
@@ -244,6 +259,12 @@ class TestApp extends React.Component<Properties, State> {
       )
     );
     this.setState({entries: this.state.entries});
+  }
+
+  private toggleReadonly() {
+    this.setState({
+      readonly: !this.state.readonly
+    });
   }
 
   private static STYLE = {

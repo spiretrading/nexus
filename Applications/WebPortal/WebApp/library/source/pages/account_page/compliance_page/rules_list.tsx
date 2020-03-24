@@ -14,6 +14,9 @@ interface Properties {
   /** The list of compliance rules. */
   complianceList: Nexus.ComplianceRuleEntry[];
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+
   /** The event handler called when a rule entry changes. */
   onChange?: (updatedRule: Nexus.ComplianceRuleEntry) => void;
 }
@@ -33,6 +36,7 @@ export class RulesList extends React.Component<Properties> {
           displaySize={this.props.displaySize}
           complianceRule={rule}
           currencyDatabase={this.props.currencyDatabase}
+          readonly={this.props.readonly}
           onChange={this.props.onChange}/>);
     }
     return (
