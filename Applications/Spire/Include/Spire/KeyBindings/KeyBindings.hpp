@@ -4,12 +4,15 @@
 #include <variant>
 #include <vector>
 #include <boost/optional/optional.hpp>
-#include <Nexus/Definitions/Definitions.hpp>
-#include <Nexus/Definitions/OrderType.hpp>
-#include <Nexus/Definitions/Region.hpp>
-#include <Nexus/Definitions/Side.hpp>
-#include <Nexus/Definitions/Tag.hpp>
 #include <QKeySequence>
+#include <QHash>
+#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/OrderType.hpp"
+#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Tag.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 
 namespace Spire {
 namespace Details {
@@ -19,7 +22,7 @@ namespace Details {
 
   template<template<typename...> class C, typename... T>
   struct ToVariantOfOptionals<C<T...>> {
-    using Type = std::variant<T...>;
+    using Type = std::variant<std::optional<T>...>;
   };
 
   using CustomTagType =
@@ -46,7 +49,7 @@ namespace Details {
           std::string m_name;
 
           //! The optional value of the tag.
-          boost::optional<Type> m_value;
+          Type m_value;
         };
 
         //! The name of the action.
@@ -136,7 +139,7 @@ namespace Details {
         \param sequence The key sequence.
         \param action The action.
       */
-      void set_binding(QKeySequence sequence, Action action);
+      void set_binding(QKeySequence sequence, const Action& action);
 
       //! Removes a binding for a key sequence within the provided region.
       /*!
@@ -174,6 +177,10 @@ namespace Details {
         \return The list of all bindings.
       */
       ActionBindingsList build_action_bindings_list() const;
+
+    private:
+      using Actions = Nexus::RegionMap<boost::optional<Action>>;
+      QHash<QKeySequence, Actions> m_bindings;
   };
 }
 
