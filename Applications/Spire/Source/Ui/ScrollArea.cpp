@@ -17,7 +17,7 @@ ScrollArea::ScrollArea(QWidget* parent)
     : QScrollArea(parent),
       m_horizontal_scrolling_error(0.0),
       m_vertical_scrolling_error(0.0) {
-  setMouseTracking(true);
+  setFrameStyle(QFrame::NoFrame);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -28,6 +28,7 @@ ScrollArea::ScrollArea(QWidget* parent)
   m_vertical_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
   connect(&m_vertical_scroll_bar_timer, &QTimer::timeout, this,
     &ScrollArea::hide_vertical_scroll_bar);
+  set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
 }
 
 void ScrollArea::setWidget(QWidget* widget) {
