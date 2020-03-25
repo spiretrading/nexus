@@ -86,7 +86,6 @@ void ScrollArea::wheelEvent(QWheelEvent* event) {
   if(event->modifiers().testFlag(Qt::ShiftModifier)) {
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    auto delta = event->angleDelta().y() / 2 + m_horizontal_scrolling_error;
     update_scrollbar_position(horizontalScrollBar(), event->angleDelta().y(),
       m_horizontal_scrolling_error);
     m_horizontal_scroll_bar_timer.start();
@@ -124,7 +123,7 @@ bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
 void ScrollArea::update_scrollbar_position(QScrollBar* scroll_bar, int delta,
     double& scrolling_error) {
   auto adjusted_delta = delta / 2 + scrolling_error;
-  scrolling_error = modf(adjusted_delta, &adjusted_delta);
+  scrolling_error = std::modf(adjusted_delta, &adjusted_delta);
   scroll_bar->setValue(scroll_bar->value() -
     static_cast<int>(adjusted_delta));
 }

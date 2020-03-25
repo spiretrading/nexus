@@ -22,7 +22,7 @@ namespace Spire {
       void setWidget(QWidget* widget);
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event);
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void leaveEvent(QEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
