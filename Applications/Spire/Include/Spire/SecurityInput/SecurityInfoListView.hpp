@@ -50,7 +50,7 @@ namespace Spire {
     private:
       mutable ActivateSignal m_activate_signal;
       mutable CommitSignal m_commit_signal;
-      std::unique_ptr<DropShadow> m_shadow;
+      DropShadow* m_shadow;
       QScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;

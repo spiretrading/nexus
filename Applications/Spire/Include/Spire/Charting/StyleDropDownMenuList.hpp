@@ -48,7 +48,7 @@ namespace Spire {
 
     private:
       mutable SelectedSignal m_selected_signal;
-      std::unique_ptr<DropShadow> m_shadow;
+      DropShadow* m_shadow;
       QWidget* m_list_widget;
       int m_highlight_index;
 

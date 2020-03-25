@@ -75,8 +75,8 @@ namespace Spire {
       mutable ToggledSignal m_time_signal;
       mutable ToggledSignal m_notional_value_signal;
       QMenu* m_table_columns_menu;
-      std::unique_ptr<DropShadow> m_drop_shadow;
-      std::unique_ptr<DropShadow> m_sub_menu_drop_shadow;
+      DropShadow* m_drop_shadow;
+      DropShadow* m_sub_menu_drop_shadow;
 
       void add_check_box(const QString& text, ToggledSignal& signal);
       void add_menu_item(const QString& text, SelectedSignal& signal);

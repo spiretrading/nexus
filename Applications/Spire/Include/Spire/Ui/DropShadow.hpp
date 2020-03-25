@@ -6,7 +6,8 @@
 
 namespace Spire {
 
-  //! Paints a drop shadow around its parent widget.
+  //! Paints a drop shadow around its parent widget. The drop shadow instance
+  //! is deleted when its parent is deleted.
   class DropShadow : public QWidget, public QAbstractNativeEventFilter {
     public:
 

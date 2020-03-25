@@ -76,7 +76,7 @@ namespace Spire {
       mutable LoginSignal m_login_signal;
       mutable CancelSignal m_cancel_signal;
       State m_state;
-      std::unique_ptr<DropShadow> m_shadow;
+      DropShadow* m_shadow;
       QLabel* m_logo_widget;
       QLabel* m_status_label;
       QLineEdit* m_username_line_edit;

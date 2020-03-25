@@ -43,6 +43,9 @@ DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
+  connect(m_parent,
+    static_cast<void (QObject::*)(QObject*)>(&QObject::destroyed),
+    [=] (auto object) { deleteLater(); });
   qApp->installNativeEventFilter(this);
 }
 
