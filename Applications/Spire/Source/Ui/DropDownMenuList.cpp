@@ -14,7 +14,7 @@ DropDownMenuList::DropDownMenuList(
       m_highlight_index(-1) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
-  m_shadow = std::make_unique<DropShadow>(false, this);
+  m_shadow = std::make_unique<DropShadow>(true, false, this);
   setFixedHeight(1 + scale_height(20) * items.size());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});

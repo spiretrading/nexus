@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -15,7 +15,7 @@ ColorPicker::ColorPicker(int picker_width, int picker_height, QWidget* parent)
   setStyleSheet(QString(R"(
     #color_picker {
       background-color: #FFFFFF;
-      border: 1px solid #C8C8C8;
+      border: 1px solid #A0A0A0;
       border-top: none;
     })"));
   auto layout = new QHBoxLayout(this);

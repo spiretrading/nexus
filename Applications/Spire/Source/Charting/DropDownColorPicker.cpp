@@ -5,6 +5,7 @@
 #include <QPainter>
 #include "Spire/Charting/ColorPicker.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -30,6 +31,8 @@ DropDownColorPicker::DropDownColorPicker(QWidget* parent)
     [=] (auto& color) { on_color_preview(color); });
   m_color_picker->setFixedSize(scale(70, 70));
   m_color_picker->hide();
+  m_color_picker_drop_shadow = std::make_unique<DropShadow>(true, true,
+    m_color_picker);
 }
 
 connection DropDownColorPicker::connect_color_signal(

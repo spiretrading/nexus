@@ -2,6 +2,7 @@
 #define SPIRE_DROP_DOWN_COLOR_PICKER_HPP
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 namespace Spire {
 
@@ -43,6 +44,7 @@ namespace Spire {
       QColor m_current_color;
       QColor m_stored_color;
       bool m_has_mouse;
+      std::unique_ptr<DropShadow> m_color_picker_drop_shadow;
 
       void on_color_preview(const QColor& color);
       void on_color_selected(const QColor& color);

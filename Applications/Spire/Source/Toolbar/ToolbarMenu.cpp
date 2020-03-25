@@ -1,7 +1,7 @@
 #include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/MenuIconSizeProxyStyle.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -14,6 +14,8 @@ ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
         std::make_unique<MenuIconSizeProxyStyle>(scale_width(18))),
       m_empty_style(true) {
   setMenu(m_items);
+  m_items->setWindowFlag(Qt::NoDropShadowWindowHint);
+  m_drop_shadow = std::make_unique<DropShadow>(true, true, m_items);
   m_items->setStyle(m_menu_icon_style.get());
   connect(m_items, &QMenu::triggered, this, &ToolbarMenu::on_triggered);
   m_empty_item = new QWidgetAction(this);

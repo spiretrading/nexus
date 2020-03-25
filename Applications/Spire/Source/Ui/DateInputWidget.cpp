@@ -20,7 +20,7 @@ DateInputWidget::DateInputWidget(const ptime& initial_date, QWidget* parent)
     m_calendar_widget->hide();
     update_label(date);
   });
-  auto shadow = std::make_unique<DropShadow>(false, m_calendar_widget);
+  m_drop_shadow = std::make_unique<DropShadow>(true, false, m_calendar_widget);
   m_calendar_widget->hide();
   update_label(initial_date.date());
   window()->installEventFilter(this);
@@ -67,11 +67,7 @@ void DateInputWidget::moveEvent(QMoveEvent* event) {
 }
 
 void DateInputWidget::move_calendar() {
-  auto x_pos = window()->mapToGlobal(
-    geometry().bottomLeft()).x();
-  auto y_pos = window()->mapToGlobal(
-    frameGeometry().bottomLeft()).y();
-  m_calendar_widget->move(x_pos, y_pos + 1);
+  m_calendar_widget->move(window()->mapToGlobal(geometry().bottomLeft()));
   m_calendar_widget->raise();
 }
 

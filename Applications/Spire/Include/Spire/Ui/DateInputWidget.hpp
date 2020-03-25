@@ -2,6 +2,7 @@
 #define SPIRE_DATE_INPUT_WIDGET_HPP
 #include <QLabel>
 #include "Spire/Ui/CalendarWidget.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -26,6 +27,7 @@ namespace Spire {
 
     private:
       CalendarWidget* m_calendar_widget;
+      std::unique_ptr<DropShadow> m_drop_shadow;
 
       void move_calendar();
       void set_default_style();
