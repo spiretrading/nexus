@@ -69,7 +69,7 @@ void SecurityWidget::keyPressEvent(QKeyEvent* event) {
     event->accept();
   }
   auto pressed_key = event->text();
-  if(pressed_key[0].isLetterOrNumber()) {
+  if(!pressed_key.isEmpty() && pressed_key[0].isLetterOrNumber()) {
     auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
       this);
     dialog->setWindowModality(Qt::NonModal);
