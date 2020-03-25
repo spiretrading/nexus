@@ -1,9 +1,10 @@
 #ifndef SPIRE_KEY_BINDINGS_HPP
 #define SPIRE_KEY_BINDINGS_HPP
+#include <ostream>
 #include <string>
 #include <variant>
 #include <vector>
-#include <boost/optional/optional.hpp>
+#include <boost/optional.hpp>
 #include <QHash>
 #include <QKeySequence>
 #include "Nexus/Definitions/Definitions.hpp"
@@ -16,7 +17,6 @@
 
 namespace Spire {
 namespace Details {
-
   template<typename>
   struct ToVariantOfOptionals;
 
@@ -40,6 +40,9 @@ namespace Details {
       */
       struct OrderAction {
 
+        /*! \struct CustomTag
+            \brief Represents a tag other than the standard order fields.
+        */
         struct CustomTag {
 
           //! Specifies the types of values that can be stored by a CustomTag.
@@ -119,25 +122,62 @@ namespace Details {
       //! The type of any action supported by bindings.
       using Action = std::variant<OrderAction, CancelAction>;
 
-      //! the type of the result of ListOrderBindings query.
-      using OrderBindingsList = std::vector<std::pair<QKeySequence,
-        OrderAction>>;
+      /*! \struct OrderActionBinding
+          \brief Stores a key binding to an OrderAction.
+      */
+      struct OrderActionBinding {
 
-      //! The type of the result of ListCancelBindings query.
-      using CancelBindingsList = std::vector<std::pair<QKeySequence,
-        CancelAction>>;
+        //! The key sequence the binding is mapped to.
+        QKeySequence m_sequence;
 
-      //! The type of the result of ListActionBindings query.
-      using ActionBindingsList = std::vector<std::pair<QKeySequence,
-        Action>>;
+        //! The region the action belongs to.
+        Nexus::Region m_region;
 
-      //! Associates a key sequence with a action for a region.
+        //! The action to perform.
+        OrderAction m_action;
+      };
+
+      /*! \struct CancelActionBinding
+          \brief Stores a key binding to a CancelAction.
+      */
+      struct CancelActionBinding {
+
+        //! The key sequence the binding is mapped to.
+        QKeySequence m_sequence;
+
+        //! The region the action belongs to.
+        Nexus::Region m_region;
+
+        //! The action to perform.
+        CancelAction m_action;
+
+        bool operator ==(const CancelActionBinding& rhs) const;
+
+        bool operator !=(const CancelActionBinding& rhs) const;
+      };
+
+      /*! \struct ActionBinding
+          \brief Stores a key binding to an Action.
+      */
+      struct ActionBinding {
+
+        //! The key sequence the binding is mapped to.
+        QKeySequence m_sequence;
+
+        //! The region the action belongs to.
+        Nexus::Region m_region;
+
+        //! The action to perform.
+        Action m_action;
+      };
+
+      //! Associates a key sequence with an action for a region.
       /*!
         \param sequence The key sequence.
         \param region The region.
         \param action The action.
       */
-      void set_binding(QKeySequence sequence, const Nexus::Region& region,
+      void set(QKeySequence sequence, const Nexus::Region& region,
         const Action& action);
 
       //! Removes a binding for a key sequence within the provided region.
@@ -146,8 +186,7 @@ namespace Details {
         \param sequence The key sequence.
         \detail The region should be Global for cancellation actions.
       */
-      void reset_binding(const Nexus::Region& region,
-        const QKeySequence& sequence);
+      void reset(const Nexus::Region& region, const QKeySequence& sequence);
 
       //! Returns a action associated with a key sequence within a region.
       /*!
@@ -155,31 +194,40 @@ namespace Details {
         \param sequence The key sequence.
         \return The action in the binding exists.
       */
-      boost::optional<Action> find_binding(const Nexus::Region& region,
+      boost::optional<Action> find(const Nexus::Region& region,
         const QKeySequence& sequence) const;
 
       //! Lists all order action bindings.
       /*!
         \return The list of all order action bindings.
       */
-      OrderBindingsList build_order_bindings_list() const;
-      
+      std::vector<OrderActionBinding> build_order_bindings() const;
+
       //! Lists all cancel action bindings.
       /*!
         \return The list of all cancel action bindings.
       */
-      CancelBindingsList build_cancel_bindings_list() const;
+      std::vector<CancelActionBinding> build_cancel_bindings() const;
 
       //! Lists all bindings.
       /*!
         \return The list of all bindings.
       */
-      ActionBindingsList build_action_bindings_list() const;
+      std::vector<ActionBinding> build_action_bindings() const;
 
     private:
       using Actions = Nexus::RegionMap<boost::optional<Action>>;
       QHash<QKeySequence, Actions> m_bindings;
   };
+
+  std::ostream& operator <<(std::ostream& out,
+    const KeyBindings::OrderAction& action);
+
+  std::ostream& operator <<(std::ostream& out,
+    const KeyBindings::OrderAction::CustomTag& tag);
+
+  std::ostream& operator <<(std::ostream& out,
+    KeyBindings::CancelAction action);
 }
 
 #endif
