@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropdownMenuItem.hpp"
 #include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -18,41 +19,9 @@ DropDownMenuList::DropDownMenuList(
   setFixedHeight(1 + scale_height(20) * items.size());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
-  m_scroll_area = new QScrollArea(this);
+  m_scroll_area = new ScrollArea(this);
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
-  m_scroll_area->setFrameShape(QFrame::NoFrame);
-  m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  m_scroll_area->setStyleSheet(QString(R"(
-    #dropdown_menu_list_scroll_area {
-      background-color: #FFFFFF;
-      border-bottom: %2px solid #A0A0A0;
-      border-left: %2px solid #A0A0A0;
-      border-right: %2px solid #A0A0A0;
-      border-top: none;
-    }
-    
-    QScrollBar {
-      background-color: #FFFFFF;
-      border: none;
-    }
-
-    QScrollBar::handle:vertical {
-      background-color: #EBEBEB;
-      margin-left: %3px;
-      width: %1px;
-    }
-
-    QScrollBar::sub-line:vertical {
-      background: none;
-      border: none;
-    }
-
-    QScrollBar::add-line:vertical {
-      background: none;
-      border: none;
-    })").arg(scale_width(15)).arg(scale_width(1)).arg(scale_width(2)));
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
