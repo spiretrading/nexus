@@ -7,6 +7,6 @@ service_locator:
 enable_logging: false
 market: TSX
 sampling: 100ms
-host: 224.0.72.13:30680
-interface: $local_interface:30680
+host: "224.0.72.13:30680"
+interface: "$local_interface:30680"
 ...

@@ -7,8 +7,8 @@ service_locator:
 enable_logging: false
 market: XNYS
 sampling: 100ms
-host: 233.200.79.3:61003
-interface: $local_interface:61003
+host: "233.200.79.3:61003"
+interface: "$local_interface:61003"
 market_codes:
   - code: A
     market: XASE

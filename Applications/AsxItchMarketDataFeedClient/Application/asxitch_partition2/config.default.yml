@@ -8,9 +8,9 @@ enable_logging: false
 market: ASX
 is_time_and_sale: true
 sampling: 100ms
-host: 233.71.185.25:21302
-interface: $local_interface:21302
-glimpse_host: 203.0.119.216:21802
+host: "233.71.185.25:21302"
+interface: "$local_interface:21302"
+glimpse_host: "203.0.119.216:21802"
 glimpse_timeout: 5s
 username: $glimpse_username
 password: $glimpse_password

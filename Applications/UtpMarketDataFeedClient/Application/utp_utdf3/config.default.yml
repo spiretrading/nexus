@@ -7,8 +7,8 @@ service_locator:
 enable_logging: false
 market: XNAS
 sampling: 100ms
-host: 233.46.176.10:55642
-interface: $local_interface:55642
+host: "233.46.176.10:55642"
+interface: "$local_interface:55642"
 
 market_codes:
   - code: A
