@@ -37,7 +37,7 @@ namespace Spire {
         const DateSignal::slot_type& slot) const;
 
     protected:
-      void paintEvent(QPaintEvent* event);
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable DateSignal m_date_signal;
