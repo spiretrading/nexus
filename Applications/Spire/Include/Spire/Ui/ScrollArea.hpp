@@ -9,11 +9,20 @@ namespace Spire {
   class ScrollArea : public QScrollArea {
     public:
 
-      //! Constructs an empty ScrollArea.
+      //! Constructs an empty ScrollArea with static scroll bars.
       /*
         \param parent The parent widget.
       */
       explicit ScrollArea(QWidget* parent = nullptr);
+      
+      //! Constructs an empty ScrollArea.
+      /*
+        \param is_dynamic True if the scroll area should support dynamic-sized,
+                          auto-hiding scroll bars. False for static scroll
+                          bars.
+        \param parent The parent widget.
+      */
+      ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
 
       //! Sets the widget displayed in the scroll area.
       /*
@@ -27,6 +36,7 @@ namespace Spire {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      bool m_is_dynamic;
       QTimer m_horizontal_scroll_bar_timer;
       QTimer m_vertical_scroll_bar_timer;
       double m_horizontal_scrolling_error;

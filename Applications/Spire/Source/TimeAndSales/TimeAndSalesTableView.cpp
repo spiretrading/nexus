@@ -21,7 +21,7 @@ namespace {
 }
 
 TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
-    : ScrollArea(parent),
+    : ScrollArea(true, parent),
       m_model(nullptr) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
