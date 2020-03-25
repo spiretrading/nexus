@@ -26,7 +26,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     QWidget* parent)
     : QMenu(parent) {
   setWindowFlag(Qt::NoDropShadowWindowHint);
-  m_drop_shadow = std::make_unique<DropShadow>(true, true, this);
+  m_drop_shadow = new DropShadow(true, true, this);
   setFixedSize(CONTEXT_MENU_SIZE());
   setStyleSheet(QString(R"(
     QMenu {
@@ -73,8 +73,7 @@ OrderImbalanceIndicatorContextMenu::OrderImbalanceIndicatorContextMenu(
     .arg(scale_height(6)).arg(scale_width(4)));
   m_table_columns_menu = new QMenu(tr("Table Columns"), this);
   m_table_columns_menu->setWindowFlag(Qt::NoDropShadowWindowHint);
-  m_sub_menu_drop_shadow = std::make_unique<DropShadow>(false, true,
-    m_table_columns_menu);
+  m_sub_menu_drop_shadow = new DropShadow(false, true, m_table_columns_menu);
   m_table_columns_menu->installEventFilter(this);
   m_table_columns_menu->setFixedSize(SUB_MENU_SIZE());
   m_table_columns_menu->setContentsMargins(0, scale_height(0), 0,

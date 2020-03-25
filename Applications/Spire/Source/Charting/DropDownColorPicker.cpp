@@ -31,8 +31,7 @@ DropDownColorPicker::DropDownColorPicker(QWidget* parent)
     [=] (auto& color) { on_color_preview(color); });
   m_color_picker->setFixedSize(scale(70, 70));
   m_color_picker->hide();
-  m_color_picker_drop_shadow = std::make_unique<DropShadow>(true, true,
-    m_color_picker);
+  m_color_picker_drop_shadow = new DropShadow(true, true, m_color_picker);
 }
 
 connection DropDownColorPicker::connect_color_signal(

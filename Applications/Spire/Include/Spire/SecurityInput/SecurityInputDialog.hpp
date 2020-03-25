@@ -52,7 +52,7 @@ namespace Spire {
     private:
       Nexus::Security m_security;
       SecurityInputModel* m_model;
-      std::unique_ptr<DropShadow> m_shadow;
+      DropShadow* m_shadow;
       QVBoxLayout* m_layout;
       SecurityInputBox* m_security_input_box;
       QString m_initial_text;

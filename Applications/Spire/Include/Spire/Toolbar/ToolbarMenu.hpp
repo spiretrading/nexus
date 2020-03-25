@@ -62,7 +62,7 @@ namespace Spire {
       QWidgetAction* m_empty_item;
       std::unordered_map<QAction*, int> m_action_to_index;
       bool m_empty_style;
-      std::unique_ptr<DropShadow> m_drop_shadow;
+      DropShadow* m_drop_shadow;
 
       void remove_empty_item();
       void set_empty_menu_stylesheet();

@@ -27,7 +27,7 @@ namespace Spire {
 
     private:
       CalendarWidget* m_calendar_widget;
-      std::unique_ptr<DropShadow> m_drop_shadow;
+      DropShadow* m_drop_shadow;
 
       void move_calendar();
       void set_default_style();
