@@ -19,7 +19,19 @@ def needs_quotes(value):
 def translate(source, variables):
   for key in variables.keys():
     if needs_quotes(variables[key]):
-      source = source.replace('$' + key, '"%s"' % variables[key])
+      index = source.find('$' + key)
+      while index != -1:
+        c = source.rfind('\n', 0, index) + 1
+        q = False
+        while c < index:
+          if source[c] == '\"':
+            q = not q
+          c += 1
+        if q:
+          source = source.replace('$' + key, '%s' % variables[key], 1)
+        else:
+          source = source.replace('$' + key, '"%s"' % variables[key], 1)
+        index = source.find('$' + key, index + 1)
     else:
       source = source.replace('$' + key, '%s' % variables[key])
   return source

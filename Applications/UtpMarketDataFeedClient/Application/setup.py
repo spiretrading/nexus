@@ -9,9 +9,32 @@ def call(command):
     stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode(
     'utf-8')
 
+def needs_quotes(value):
+  special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
+    '-', '<', '>', '=', '!', '%', '@', '\\']
+  for c in value:
+    if c in special_characters:
+      return True
+  return False
+
 def translate(source, variables):
   for key in variables.keys():
-    source = source.replace('$' + key, '%s' % variables[key])
+    if needs_quotes(variables[key]):
+      index = source.find('$' + key)
+      while index != -1:
+        c = source.rfind('\n', 0, index) + 1
+        q = False
+        while c < index:
+          if source[c] == '\"':
+            q = not q
+          c += 1
+        if q:
+          source = source.replace('$' + key, '%s' % variables[key], 1)
+        else:
+          source = source.replace('$' + key, '"%s"' % variables[key], 1)
+        index = source.find('$' + key, index + 1)
+    else:
+      source = source.replace('$' + key, '%s' % variables[key])
   return source
 
 def main():
