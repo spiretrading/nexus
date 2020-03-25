@@ -1,7 +1,6 @@
 #ifndef SPIRE_SECURITY_INFO_LIST_VIEW_HPP
 #define SPIRE_SECURITY_INFO_LIST_VIEW_HPP
 #include <vector>
-#include <QScrollArea>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -51,7 +50,7 @@ namespace Spire {
       mutable ActivateSignal m_activate_signal;
       mutable CommitSignal m_commit_signal;
       DropShadow* m_shadow;
-      QScrollArea* m_scroll_area;
+      ScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       QWidget* m_key_widget;
       int m_highlighted_index;
