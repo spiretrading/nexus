@@ -27,6 +27,7 @@ namespace Spire {
   class RangeInputSlider;
   class RangeInputWidget;
   class ScalarWidget;
+  class ScrollArea;
   class SecurityStack;
   class SecurityWidget;
   class TitleBar;
