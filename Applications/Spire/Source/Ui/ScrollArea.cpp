@@ -22,11 +22,11 @@ ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
       m_horizontal_scrolling_error(0.0),
       m_vertical_scrolling_error(0.0) {
   setFrameStyle(QFrame::NoFrame);
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   if(m_is_dynamic) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_horizontal_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
     connect(&m_horizontal_scroll_bar_timer, &QTimer::timeout, this,
       &ScrollArea::hide_horizontal_scroll_bar);
@@ -35,6 +35,7 @@ ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
       &ScrollArea::hide_vertical_scroll_bar);
     set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
   } else {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
   }
 }
