@@ -44,8 +44,8 @@ namespace Spire {
       TimeAndSalesWindowModel* m_model;
       boost::signals2::scoped_connection m_model_begin_loading_connection;
       boost::signals2::scoped_connection m_model_end_loading_connection;
-      std::unique_ptr<SnapshotLoadingWidget> m_loading_widget;
-      std::unique_ptr<TransitionWidget> m_transition_widget;
+      SnapshotLoadingWidget* m_loading_widget;
+      TransitionWidget* m_transition_widget;
 
       void show_loading_widget();
       void update_table_height(int num_rows);

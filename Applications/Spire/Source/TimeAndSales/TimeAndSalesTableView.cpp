@@ -22,7 +22,9 @@ namespace {
 
 TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     : ScrollArea(true, parent),
-      m_model(nullptr) {
+      m_model(nullptr),
+      m_loading_widget(nullptr),
+      m_transition_widget(nullptr) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
@@ -86,9 +88,12 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
-  m_loading_widget.reset();
+  if(m_loading_widget != nullptr) {
+    m_loading_widget->deleteLater();
+    m_loading_widget = nullptr;
+  }
   if(m_model->is_loading() && m_transition_widget == nullptr) {
-    m_transition_widget = std::make_unique<TransitionWidget>(this);
+    m_transition_widget = new TransitionWidget(this);
   }
   m_model_begin_loading_connection = m_model->connect_begin_loading_signal(
     [=] { show_loading_widget(); });
@@ -139,8 +144,8 @@ void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
 }
 
 void TimeAndSalesTableView::show_loading_widget() {
-  m_loading_widget = std::make_unique<SnapshotLoadingWidget>(this);
-  m_layout->addWidget(m_loading_widget.get());
+  m_loading_widget = new SnapshotLoadingWidget(this);
+  m_layout->addWidget(m_loading_widget);
   update_table_height(m_table->model()->rowCount());
 }
 
@@ -154,8 +159,14 @@ void TimeAndSalesTableView::update_table_height(int num_rows) {
 }
 
 void TimeAndSalesTableView::on_end_loading_signal() {
-  m_transition_widget.reset();
-  m_loading_widget.reset();
+  if(m_transition_widget != nullptr) {
+    m_transition_widget->deleteLater();
+    m_transition_widget = nullptr;
+  }
+  if(m_loading_widget != nullptr) {
+    m_loading_widget->deleteLater();
+    m_loading_widget = nullptr;
+  }
 }
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,
