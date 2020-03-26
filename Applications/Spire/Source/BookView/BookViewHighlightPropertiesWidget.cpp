@@ -30,12 +30,14 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   auto generic_header_label_stylesheet = QString(R"(
     color: #4B23A0;
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12));
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(12));
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
   auto markets_scroll_area = new ScrollArea(this);
   markets_scroll_area->setFixedWidth(scale_width(140));
+  markets_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
   markets_scroll_area->setObjectName("markets_scroll_area");
   markets_scroll_area->setWidgetResizable(true);
   markets_layout->addWidget(markets_scroll_area, 222);

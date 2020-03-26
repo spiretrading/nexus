@@ -20,7 +20,9 @@ ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
     : QScrollArea(parent),
       m_is_dynamic(is_dynamic),
       m_horizontal_scrolling_error(0.0),
-      m_vertical_scrolling_error(0.0) {
+      m_vertical_scrolling_error(0.0),
+      m_border_color(Qt::transparent),
+      m_border_width(0) {
   setFrameStyle(QFrame::NoFrame);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
@@ -36,6 +38,16 @@ ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
     set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
   } else {
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+  }
+}
+
+void ScrollArea::set_border_style(int width, const QColor& color) {
+  m_border_color = color;
+  m_border_width = width;
+  if(verticalScrollBar()->width() == SCROLL_BAR_MIN_SIZE) {
+    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+  } else {
     set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
   }
 }
@@ -152,14 +164,16 @@ void ScrollArea::set_scroll_bar_style(int handle_size) {
   setStyleSheet(QString(R"(
     QWidget {
       background-color: #FFFFFF;
-      border: none;
+      border: %5px solid %6;
     }
 
     QScrollBar::horizontal {
+      border: none;
       height: %1px;
     }
 
     QScrollBar::vertical {
+      border: none;
       width: %2px;
     }
 
@@ -182,5 +196,6 @@ void ScrollArea::set_scroll_bar_style(int handle_size) {
       height: 0px;
       width: 0px;
     })").arg(scale_height(handle_size)).arg(scale_width(handle_size))
-        .arg(scale_width(60)).arg(scale_height(60)));
+        .arg(scale_width(60)).arg(scale_height(60)).arg(m_border_width)
+        .arg(m_border_color.name()));
 }

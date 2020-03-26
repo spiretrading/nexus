@@ -26,13 +26,16 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_appearance_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12)));
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(12)));
   layout->addWidget(band_appearance_label);
   layout->addStretch(10);
   auto horizontal_layout = new QHBoxLayout();
   horizontal_layout->setContentsMargins({});
   horizontal_layout->setSpacing(0);
   auto band_list_scroll_area = new ScrollArea(this);
+  band_list_scroll_area->setFixedSize(scale(140, 222));
+  band_list_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
   band_list_scroll_area->setWidgetResizable(true);
   horizontal_layout->addWidget(band_list_scroll_area, 222);
   m_band_list_widget = new QListWidget(this);

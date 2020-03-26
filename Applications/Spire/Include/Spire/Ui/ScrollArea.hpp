@@ -24,6 +24,13 @@ namespace Spire {
       */
       ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
 
+      //! Sets the scroll area's border style.
+      /*
+        \param width The border width.
+        \param color the Border color.
+      */
+      void set_border_style(int width, const QColor& color);
+
       //! Sets the widget displayed in the scroll area.
       /*
         \param widget The widget to display.
@@ -41,6 +48,8 @@ namespace Spire {
       QTimer m_vertical_scroll_bar_timer;
       double m_horizontal_scrolling_error;
       double m_vertical_scrolling_error;
+      QColor m_border_color;
+      int m_border_width;
 
       void hide_horizontal_scroll_bar();
       void hide_vertical_scroll_bar();
