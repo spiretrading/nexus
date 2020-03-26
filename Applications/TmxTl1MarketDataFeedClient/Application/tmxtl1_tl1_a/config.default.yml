@@ -2,11 +2,11 @@
 service_locator:
   address: $service_locator_address
   username: $username
-  password: $password
+  password: $admin_password
 
 enable_logging: false
 market: TSX
 sampling: 100ms
-host: 224.0.72.13:30680
-interface: $local_interface:30680
+host: "224.0.72.13:30680"
+interface: "$local_interface:30680"
 ...

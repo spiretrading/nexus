@@ -3,8 +3,8 @@ import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionBox, DisplaySize, IntegerInputBox,
-  MoneyInputBox } from '../../..';
+import { CurrencySelectionField, DisplaySize, IntegerField,
+  MoneyField } from '../../..';
 
 interface Properties {
 
@@ -44,7 +44,7 @@ export class RiskParametersView extends React.Component<Properties> {
         <VBoxLayout width='246px'>
           <Label text='Currency'/>
           <Padding size='12px'/>
-          <CurrencySelectionBox className={
+          <CurrencySelectionField className={
             css(RiskParametersView.STYLE.dropdownButton)}
             currencyDatabase={this.props.currencyDatabase}
             value={this.props.parameters.currency} onChange={
@@ -52,14 +52,14 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='30px'/>
           <Label text={`Buying Power (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyInputBox
+          <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.buyingPower}
             onChange={this.onBuyingPowerChange}/>
           <Padding size='30px'/>
           <Label text={`Net Loss (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyInputBox
+          <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.netLoss}
             onChange={this.onNetLossChange}/>
@@ -68,7 +68,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='12px'/>
           <HBoxLayout width='100%'>
             <VBoxLayout>
-              <IntegerInputBox min={0} value={splitTransitionTime.hours}
+              <IntegerField min={0} value={splitTransitionTime.hours}
                 padding={2} className={
                   css(RiskParametersView.STYLE.inputBox)}
                 onChange={(value) => this.onTransitionTimeChange(
@@ -87,7 +87,7 @@ export class RiskParametersView extends React.Component<Properties> {
             </Center>
             <Padding size='10px'/>
             <VBoxLayout>
-              <IntegerInputBox min={0} max={59} value={
+              <IntegerField min={0} max={59} value={
                 splitTransitionTime.minutes} padding={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
                 onChange={(value) => this.onTransitionTimeChange(
@@ -106,7 +106,7 @@ export class RiskParametersView extends React.Component<Properties> {
             </Center>
             <Padding size='10px'/>
             <VBoxLayout>
-              <IntegerInputBox min={0} max={59} value={
+              <IntegerField min={0} max={59} value={
                 splitTransitionTime.seconds} padding={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
                 onChange={(value) => this.onTransitionTimeChange(

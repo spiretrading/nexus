@@ -2,7 +2,7 @@
 service_locator:
   address: $service_locator_address
   username: $username
-  password: $password
+  password: $admin_password
 
 enable_logging: false
 symbol_list: "../symbols.yml"
@@ -10,10 +10,10 @@ sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
-host: 233.102.209.227:60006
-interface: $local_interface:60006
-retransmission_request_address: 142.201.149.44:60023
-retransmission_response_address: 142.201.149.44:60056
+host: "233.102.209.227:60006"
+interface: "$local_interface:60006"
+retransmission_request_address: "142.201.149.44:60023"
+retransmission_response_address: "142.201.149.44:60056"
 
 mpid_mappings:
   - source: 1

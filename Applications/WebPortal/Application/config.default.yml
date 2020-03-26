@@ -1,10 +1,10 @@
 ---
 server:
-  interface: local_interface:8080
-  addresses: [global_address:8080, local_interface:8080]
+  interface: "$local_interface:8080"
+  addresses: ["$global_address:8080", "$local_interface:8080"]
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: web_portal_service
-  password: admin_password
+  password: $admin_password
 ...

@@ -2,7 +2,7 @@
 service_locator:
   address: $service_locator_address
   username: $username
-  password: $password
+  password: $admin_password
 
 enable_logging: false
 mpid: NEOE
@@ -13,8 +13,8 @@ sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
-host: 233.102.209.247:61023
-interface: $local_interface:61023
-retransmission_request_address: 142.201.149.44:61030
-retransmission_response_address: 142.201.149.44:61031
+host: "233.102.209.247:61023"
+interface: "$local_interface:61023"
+retransmission_request_address: "142.201.149.44:61030"
+retransmission_response_address: "142.201.149.44:61031"
 ...

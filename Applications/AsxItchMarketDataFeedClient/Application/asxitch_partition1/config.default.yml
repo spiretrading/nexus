@@ -2,15 +2,15 @@
 service_locator:
   address: $service_locator_address
   username: $username
-  password: $password
+  password: $admin_password
 
 enable_logging: false
 market: ASX
 is_time_and_sale: true
 sampling: 100ms
-host: 233.71.185.8:21001
-interface: $local_interface:21001
-glimpse_host: 203.0.119.213:21801
+host: "233.71.185.24:21301"
+interface: "$local_interface:21301"
+glimpse_host: "203.0.119.216:21801"
 glimpse_timeout: 5s
 username: $glimpse_username
 password: $glimpse_password

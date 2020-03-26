@@ -300,7 +300,9 @@ namespace Nexus::MarketDataService {
     typename MessageProtocolType, typename HeartbeatTimerType>
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
-    auto id = bookQuote->m_mpid + "-" + bookQuote->m_quote.m_price.ToString() +
+    auto id = bookQuote.GetIndex().GetSymbol() + '-' +
+      std::to_string(bookQuote.GetIndex().GetCountry()) + bookQuote->m_mpid +
+      '-' + bookQuote->m_quote.m_price.ToString() +
       ToChar(bookQuote->m_quote.m_side);
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);

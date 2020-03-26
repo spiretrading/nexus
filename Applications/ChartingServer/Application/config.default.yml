@@ -1,10 +1,10 @@
 ---
 server:
-  interface: local_interface:21400
-  addresses: [global_address:21400, local_interface:21400]
+  interface: "$local_interface:21400"
+  addresses: ["$global_address:21400", "$local_interface:21400"]
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: charting_service
-  password: admin_password
+  password: $admin_password
 ...

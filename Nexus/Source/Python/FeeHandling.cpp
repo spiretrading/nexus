@@ -2,6 +2,8 @@
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
+#include "Nexus/FeeHandling/HkexFeeTable.hpp"
+#include "Nexus/FeeHandling/JpxFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/PureFeeTable.hpp"
@@ -101,8 +103,41 @@ void Nexus::Python::ExportFeeHandling(pybind11::module& module) {
   ExportAsxtFeeTable(module);
   ExportChicFeeTable(module);
   ExportConsolidatedTmxFeeTable(module);
+  ExportHkexFeeTable(module);
+  ExportJpxFeeTable(module);
   ExportLiquidityFlag(module);
   ExportPureFeeTable(module);
+}
+
+void Nexus::Python::ExportHkexFeeTable(pybind11::module& module) {
+  auto outer = class_<HkexFeeTable>(module, "HkexFeeTable")
+    .def(init())
+    .def(init<const HkexFeeTable&>())
+    .def_readwrite("spire_fee", &HkexFeeTable::m_spireFee)
+    .def_readwrite("stamp_tax", &HkexFeeTable::m_stampTax)
+    .def_readwrite("levy", &HkexFeeTable::m_levy)
+    .def_readwrite("trading_fee", &HkexFeeTable::m_tradingFee)
+    .def_readwrite("brokerage_fee", &HkexFeeTable::m_brokerageFee)
+    .def_readwrite("ccass_fee", &HkexFeeTable::m_ccassFee)
+    .def_readwrite("minimum_ccass_fee", &HkexFeeTable::m_minimumCcassFee)
+    .def_readwrite("stamp_applicability", &HkexFeeTable::m_stampApplicability);
+  module.def("parse_hkex_stamp_securities", &ParseHkexStampSecurities);
+  module.def("parse_hkex_fee_table", &ParseHkexFeeTable);
+  module.def("calculate_fee", static_cast<ExecutionReport (*)(
+    const HkexFeeTable&, const OrderFields&, const ExecutionReport&)>(
+    &CalculateFee));
+}
+
+void Nexus::Python::ExportJpxFeeTable(pybind11::module& module) {
+  auto outer = class_<JpxFeeTable>(module, "JpxFeeTable")
+    .def(init())
+    .def(init<const JpxFeeTable&>())
+    .def_readwrite("spire_fee", &JpxFeeTable::m_spireFee)
+    .def_readwrite("brokerage_fee", &JpxFeeTable::m_brokerageFee);
+  module.def("parse_jpx_fee_table", &ParseJpxFeeTable);
+  module.def("calculate_fee", static_cast<ExecutionReport (*)(
+    const JpxFeeTable&, const OrderFields&, const ExecutionReport&)>(
+    &CalculateFee));
 }
 
 void Nexus::Python::ExportLiquidityFlag(pybind11::module& module) {

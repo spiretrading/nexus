@@ -2,7 +2,7 @@
 service_locator:
   address: $service_locator_address
   username: $username
-  password: $password
+  password: $admin_password
 
 enable_logging: false
 use_broker_number: true
@@ -12,10 +12,10 @@ sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
-host: 233.102.209.224:60000
-interface: $local_interface:60000
-retransmission_request_address: 142.201.149.44:60020
-retransmission_response_address: 142.201.149.44:60050
+host: "233.102.209.224:60000"
+interface: "$local_interface:60000"
+retransmission_request_address: "142.201.149.44:60020"
+retransmission_response_address: "142.201.149.44:60050"
 
 mpid_mappings:
   - source: 1

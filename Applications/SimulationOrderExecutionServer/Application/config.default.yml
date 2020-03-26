@@ -1,16 +1,16 @@
 ---
 server:
-  interface: local_interface:20700
-  addresses: [global_address:20700, local_interface:20700]
-
-service_locator:
-  address: local_interface:20000
-  username: order_execution_service
-  password: admin_password
+  interface: "$local_interface:20700"
+  addresses: ["$global_address:20700", "$local_interface:20700"]
 
 data_store:
-  username: spireadmin
-  password: admin_password
-  schema: spire
-  address: 127.0.0.1:3306
+  address: $mysql_address
+  username: $mysql_username
+  password: $mysql_password
+  schema: $mysql_schema
+
+service_locator:
+  address: $service_locator_address
+  username: order_execution_service
+  password: $admin_password
 ...

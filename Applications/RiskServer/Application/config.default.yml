@@ -1,12 +1,12 @@
 ---
 server:
-  interface: local_interface:20600
-  addresses: [global_address:20600, local_interface:20600]
+  interface: "$local_interface:20600"
+  addresses: ["$global_address:20600", "$local_interface:20600"]
 
 service_locator:
-  address: local_interface:20000
+  address: $service_locator_address
   username: risk_service
-  password: admin_password
+  password: $admin_password
 
 #session_start_time: 2013-10-31 00:00:00
 ...
