@@ -14,7 +14,7 @@ namespace Spire {
         \param model The model to get the table data from.
         \param parent The parent to this widget.
       */
-      explicit BookQuoteTableView(std::unique_ptr<BookQuoteTableModel> model,
+      explicit BookQuoteTableView(BookQuoteTableModel* model,
         QWidget* parent = nullptr);
 
       //! Sets the properties of the table.
@@ -28,7 +28,7 @@ namespace Spire {
       QStyleOptionViewItem viewOptions() const override;
 
     private:
-      std::unique_ptr<BookQuoteTableModel> m_model;
+      BookQuoteTableModel* m_model;
   };
 }
 

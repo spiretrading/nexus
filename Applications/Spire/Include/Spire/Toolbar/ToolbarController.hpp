@@ -46,7 +46,7 @@ namespace Spire {
       Nexus::VirtualServiceClients* m_service_clients;
       RecentlyClosedModel m_model;
       std::unique_ptr<SecurityInputModel> m_security_input_model;
-      std::unique_ptr<ToolbarWindow> m_toolbar_window;
+      ToolbarWindow* m_toolbar_window;
       std::vector<std::unique_ptr<BaseController>> m_controllers;
 
       void on_open_window(RecentlyClosedModel::Type window);

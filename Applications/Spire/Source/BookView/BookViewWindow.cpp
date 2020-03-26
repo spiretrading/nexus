@@ -27,7 +27,9 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
       m_technicals_panel(nullptr),
-      m_transition_widget(nullptr) {
+      m_transition_widget(nullptr),
+      m_bbo_quote_panel(nullptr),
+      m_table(nullptr) {
   setMinimumSize(scale(220, 280));
   resize_body(scale(220, 410));
   setWindowTitle(tr("Book View"));
@@ -59,8 +61,14 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   } else {
     m_technicals_panel->reset_model();
   }
-  m_bbo_quote_panel.reset();
-  m_table.reset();
+  if(m_bbo_quote_panel != nullptr) {
+    m_bbo_quote_panel->deleteLater();
+    m_bbo_quote_panel = nullptr;
+  }
+  if(m_table != nullptr) {
+    m_table->deleteLater();
+    m_table = nullptr;
+  }
   if(m_transition_widget == nullptr) {
     m_transition_widget = new TransitionWidget(m_quote_widgets_container);
   }
@@ -146,8 +154,8 @@ void BookViewWindow::on_data_loaded(Expect<void> value) {
   }
   m_is_data_loaded = true;
   m_technicals_panel->set_model(m_model);
-  m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
-  m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<BookViewTableWidget>(*m_model, m_properties, this);
-  m_quote_widgets_container_layout->addWidget(m_table.get());
+  m_bbo_quote_panel = new BboQuotePanel(*m_model, this);
+  m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel);
+  m_table = new BookViewTableWidget(*m_model, m_properties, this);
+  m_quote_widgets_container_layout->addWidget(m_table);
 }

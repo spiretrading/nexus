@@ -13,7 +13,8 @@ BookViewController::BookViewController(Definitions definitions,
     Ref<VirtualServiceClients> service_clients)
     : m_definitions(std::move(definitions)),
       m_security_input_model(security_input_model.Get()),
-      m_service_clients(service_clients.Get()) {}
+      m_service_clients(service_clients.Get()),
+      m_window(nullptr) {}
 
 BookViewController::~BookViewController() {
   close();
@@ -23,7 +24,7 @@ void BookViewController::open() {
   if(m_window != nullptr) {
     return;
   }
-  m_window = std::make_unique<BookViewWindow>(BookViewProperties(),
+  m_window = new BookViewWindow(BookViewProperties(),
     Ref(*m_security_input_model));
   m_security_change_connection = m_window->connect_security_change_signal(
     [=] (const auto& security) { on_change_security(security); });
@@ -36,7 +37,8 @@ void BookViewController::close() {
   if(m_window == nullptr) {
     return;
   }
-  m_window.reset();
+  m_window->deleteLater();
+  m_window = nullptr;
   m_closed_signal();
 }
 
