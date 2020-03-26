@@ -27,7 +27,7 @@ namespace Spire {
       //! Sets the scroll area's border style.
       /*
         \param width The border width.
-        \param color the Border color.
+        \param color The border color.
       */
       void set_border_style(int width, const QColor& color);
 
