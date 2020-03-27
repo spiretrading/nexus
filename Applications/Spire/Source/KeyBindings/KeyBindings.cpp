@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/optional/optional_io.hpp>
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -16,6 +17,24 @@ bool KeyBindings::CancelActionBinding::operator ==(
 bool KeyBindings::CancelActionBinding::operator !=(
     const CancelActionBinding& rhs) const {
   return !(*this == rhs);
+}
+
+KeyBindings KeyBindings::get_default_key_bindings() {
+  auto bindings = KeyBindings();
+  auto region = GetDefaultMarketDatabase().FromDisplayName("NSDQ");
+  auto action1 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::BID,
+    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  bindings.set(Qt::Key_F5, region, action1);
+  auto action2 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::ASK,
+    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  bindings.set(Qt::Key_F6, region, action2);
+  auto action3 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::BID,
+    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  bindings.set(Qt::Key_F7, region, action3);
+  auto action4 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::ASK,
+    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  bindings.set(Qt::Key_F8, region, action4);
+  return bindings;
 }
 
 void KeyBindings::set(QKeySequence sequence, const Region& region,
