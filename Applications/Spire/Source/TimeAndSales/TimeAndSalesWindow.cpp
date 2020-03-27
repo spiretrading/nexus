@@ -114,7 +114,7 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
     context_menu.addAction(&export_action);
     context_menu.setFixedWidth(scale_width(140));
     context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
-    DropShadow context_menu_shadow(true, true, &context_menu);
+    auto context_menu_shadow = new DropShadow(true, true, &context_menu);
     context_menu.setStyleSheet(QString(R"(
       QMenu {
         background-color: #FFFFFF;

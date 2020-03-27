@@ -103,7 +103,7 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
   context_menu.addAction(&properties_action);
   context_menu.setFixedSize(scale(140, 28));
   context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
-  DropShadow context_menu_shadow(true, true, &context_menu);
+  auto context_menu_shadow = new DropShadow(true, true, &context_menu);
   context_menu.setStyleSheet(QString(R"(
     QMenu {
       background-color: #FFFFFF;
