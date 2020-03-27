@@ -9,6 +9,7 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/SecurityWidget.hpp"
@@ -26,7 +27,10 @@ BookViewWindow::BookViewWindow(const BookViewProperties& properties,
     : Window(parent),
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
-      m_technicals_panel(nullptr) {
+      m_technicals_panel(nullptr),
+      m_transition_widget(nullptr),
+      m_bbo_quote_panel(nullptr),
+      m_table(nullptr) {
   setMinimumSize(scale(220, 280));
   resize_body(scale(220, 410));
   setWindowTitle(tr("Book View"));
@@ -58,11 +62,10 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   } else {
     m_technicals_panel->reset_model();
   }
-  m_bbo_quote_panel.reset();
-  m_table.reset();
+  delete_later(m_bbo_quote_panel);
+  delete_later(m_table);
   if(m_transition_widget == nullptr) {
-    m_transition_widget = std::make_unique<TransitionWidget>(
-      m_quote_widgets_container);
+    m_transition_widget = new TransitionWidget(m_quote_widgets_container);
   }
   m_is_data_loaded = false;
   m_model = std::move(model);
@@ -140,11 +143,11 @@ void BookViewWindow::show_properties_dialog() {
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
-  m_transition_widget.reset();
+  delete_later(m_transition_widget);
   m_is_data_loaded = true;
   m_technicals_panel->set_model(m_model);
-  m_bbo_quote_panel = std::make_unique<BboQuotePanel>(*m_model, this);
-  m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel.get());
-  m_table = std::make_unique<BookViewTableWidget>(*m_model, m_properties, this);
-  m_quote_widgets_container_layout->addWidget(m_table.get());
+  m_bbo_quote_panel = new BboQuotePanel(*m_model, this);
+  m_quote_widgets_container_layout->addWidget(m_bbo_quote_panel);
+  m_table = new BookViewTableWidget(*m_model, m_properties, this);
+  m_quote_widgets_container_layout->addWidget(m_table);
 }

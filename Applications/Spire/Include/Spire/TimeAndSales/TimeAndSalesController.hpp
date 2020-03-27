@@ -44,7 +44,7 @@ namespace Spire {
       Definitions m_definitions;
       SecurityInputModel* m_security_input_model;
       Nexus::VirtualServiceClients* m_service_clients;
-      std::unique_ptr<TimeAndSalesWindow> m_window;
+      TimeAndSalesWindow* m_window;
 
       void on_change_security(const Nexus::Security& security);
       void on_closed();

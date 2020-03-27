@@ -1,6 +1,5 @@
 #ifndef SPIRE_DROP_DOWN_MENU_LIST_HPP
 #define SPIRE_DROP_DOWN_MENU_LIST_HPP
-#include <QScrollArea>
 #include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
@@ -50,7 +49,7 @@ namespace Spire {
     private:
       mutable SelectedSignal m_selected_signal;
       DropShadow* m_shadow;
-      QScrollArea* m_scroll_area;
+      ScrollArea* m_scroll_area;
       QWidget* m_list_widget;
       int m_highlight_index;
 

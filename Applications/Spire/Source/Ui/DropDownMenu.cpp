@@ -2,6 +2,7 @@
 #include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QScrollArea>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/DropdownMenuItem.hpp"
 #include "Spire/Ui/DropdownMenuList.hpp"

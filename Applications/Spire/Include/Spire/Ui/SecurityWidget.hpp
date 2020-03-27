@@ -66,8 +66,8 @@ namespace Spire {
       Nexus::Security m_current_security;
       QWidget* m_widget;
       QVBoxLayout* m_layout;
-      std::unique_ptr<QLabel> m_empty_window_label;
-      std::unique_ptr<QLabel> m_overlay_widget;
+      QLabel* m_empty_window_label;
+      QLabel* m_overlay_widget;
 
       void on_security_input_accept(SecurityInputDialog* dialog);
       void on_security_input_reject(SecurityInputDialog* dialog);

@@ -3,6 +3,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Login/LoginWindow.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -15,7 +16,8 @@ using namespace Spire;
 LoginController::LoginController(std::vector<ServerEntry> servers,
     ServiceClientsFactory service_clients_factory)
     : m_servers(std::move(servers)),
-      m_service_clients_factory(std::move(service_clients_factory)) {}
+      m_service_clients_factory(std::move(service_clients_factory)),
+      m_login_window(nullptr) {}
 
 LoginController::~LoginController() = default;
 
@@ -24,7 +26,7 @@ std::unique_ptr<VirtualServiceClients>& LoginController::get_service_clients() {
 }
 
 void LoginController::open() {
-  m_login_window = std::make_unique<LoginWindow>(SPIRE_VERSION);
+  m_login_window = new LoginWindow(SPIRE_VERSION);
   m_login_window->connect_login_signal(
     [=] (const auto& p1, const auto& p2) { on_login(p1, p2); });
   m_login_window->connect_cancel_signal([=] () { on_cancel(); });
@@ -59,7 +61,7 @@ void LoginController::on_login_promise(
   try {
     m_service_clients = std::move(service_clients.Get());
     m_login_window->close();
-    m_login_window.reset();
+    delete_later(m_login_window);
     auto definitions = Definitions(
       m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
       m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),

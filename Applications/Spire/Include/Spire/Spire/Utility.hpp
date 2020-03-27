@@ -1,7 +1,20 @@
 #ifndef SPIRE_UTILITY_HPP
 #define SPIRE_UTILITY_HPP
+#include <QObject>
 
 namespace Spire {
+
+  //! Deletes an object when control returns to the thread's event loop.
+  /*
+    \param object The object to schedule for deletion.
+  */
+  template<typename T>
+  std::enable_if_t<std::is_base_of_v<QObject, T>> delete_later(T*& object) {
+    if(object != nullptr) {
+      object->deleteLater();
+      object = nullptr;
+    }
+  }
 
   //! Returns the minimum of the given parameters. Returns the first given
   //! parameter if they are equal.

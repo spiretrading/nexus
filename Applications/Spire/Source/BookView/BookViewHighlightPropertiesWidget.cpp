@@ -4,16 +4,15 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
-#include <QScrollArea>
-#include <QScrollBar>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/BookView/MarketListItem.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -31,49 +30,16 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   auto generic_header_label_stylesheet = QString(R"(
     color: #4B23A0;
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12));
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(12));
   markets_label->setStyleSheet(generic_header_label_stylesheet);
   markets_layout->addWidget(markets_label, 14);
   markets_layout->addStretch(10);
-  auto markets_scroll_area = new QScrollArea(this);
+  auto markets_scroll_area = new ScrollArea(this);
   markets_scroll_area->setFixedWidth(scale_width(140));
+  markets_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
   markets_scroll_area->setObjectName("markets_scroll_area");
-  markets_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-  markets_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  markets_scroll_area->verticalScrollBar()->setContextMenuPolicy(
-    Qt::NoContextMenu);
   markets_scroll_area->setWidgetResizable(true);
-  markets_scroll_area->setFrameShape(QFrame::NoFrame);
-  markets_scroll_area->setStyleSheet(QString(R"(
-    #markets_scroll_area {
-      background-color: #FFFFFF;
-      border: %2px solid #A0A0A0;
-    }
-    
-    QScrollBar {
-      background-color: #FFFFFF;
-      border: %2px solid #FFFFFF;
-      width: %1px;
-    }
-
-    QScrollBar::handle:vertical {
-      background-color: #EBEBEB;
-      min-height: %3px;
-    }
-
-    QScrollBar::sub-line:vertical {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    }
-
-    QScrollBar::add-line:vertical {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    })").arg(scale_width(13)).arg(scale_width(1)).arg(scale_height(60)));
   markets_layout->addWidget(markets_scroll_area, 222);
   m_markets_list_widget = new QListWidget(this);
   markets_scroll_area->setWidget(m_markets_list_widget);

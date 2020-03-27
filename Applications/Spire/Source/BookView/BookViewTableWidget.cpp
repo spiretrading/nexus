@@ -15,12 +15,10 @@ BookViewTableWidget::BookViewTableWidget(const BookViewModel& model,
   m_layout->setContentsMargins({});
   m_layout->setSpacing(scale_width(2));
   m_bid_table_view = new BookQuoteTableView(
-    std::make_unique<BookQuoteTableModel>(model, Side::BID, m_properties),
-    this);
+    new BookQuoteTableModel(model, Side::BID, m_properties), this);
   m_layout->addWidget(m_bid_table_view);
   m_ask_table_view = new BookQuoteTableView(
-    std::make_unique<BookQuoteTableModel>(model, Side::ASK, m_properties),
-    this);
+    new BookQuoteTableModel(model, Side::ASK, m_properties), this);
   m_layout->addWidget(m_ask_table_view);
   set_properties(std::move(properties));
 }

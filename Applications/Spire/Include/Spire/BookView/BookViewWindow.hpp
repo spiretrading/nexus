@@ -61,11 +61,11 @@ namespace Spire {
       SecurityWidget* m_security_widget;
       QVBoxLayout* m_layout;
       TechnicalsPanel* m_technicals_panel;
-      std::unique_ptr<BboQuotePanel> m_bbo_quote_panel;
-      std::unique_ptr<TransitionWidget> m_transition_widget;
+      BboQuotePanel* m_bbo_quote_panel;
+      TransitionWidget* m_transition_widget;
       QWidget* m_quote_widgets_container;
       QVBoxLayout* m_quote_widgets_container_layout;
-      std::unique_ptr<BookViewTableWidget> m_table;
+      BookViewTableWidget* m_table;
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
       boost::signals2::scoped_connection m_dialog_apply_connection;

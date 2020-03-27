@@ -4,14 +4,13 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
-#include <QScrollArea>
-#include <QScrollBar>
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 using namespace Spire;
 
@@ -27,50 +26,17 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_appearance_label->setStyleSheet(QString(R"(
     color: #4B23A0;
     font-family: Roboto;
-    font-size: %1px;)").arg(scale_height(12)));
+    font-size: %1px;
+    font-weight: 550;)").arg(scale_height(12)));
   layout->addWidget(band_appearance_label);
   layout->addStretch(10);
   auto horizontal_layout = new QHBoxLayout();
   horizontal_layout->setContentsMargins({});
   horizontal_layout->setSpacing(0);
-  auto band_list_scroll_area = new QScrollArea(this);
+  auto band_list_scroll_area = new ScrollArea(this);
   band_list_scroll_area->setFixedSize(scale(140, 222));
-  band_list_scroll_area->setObjectName("band_list_scroll_area");
-  band_list_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  band_list_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  band_list_scroll_area->verticalScrollBar()->setContextMenuPolicy(
-    Qt::NoContextMenu);
+  band_list_scroll_area->set_border_style(scale_width(1), QColor("#C8C8C8"));
   band_list_scroll_area->setWidgetResizable(true);
-  band_list_scroll_area->setFrameShape(QFrame::NoFrame);
-  band_list_scroll_area->setStyleSheet(QString(R"(
-    #band_list_scroll_area {
-      background-color: #FFFFFF;
-      border: %2px solid #A0A0A0;
-    }
-    
-    QScrollBar {
-      background-color: #FFFFFF;
-      width: %1px;
-    }
-
-    QScrollBar::handle:vertical {
-      background-color: #EBEBEB;
-      min-height: %3px;
-    }
-
-    QScrollBar::sub-line:vertical {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    }
-
-    QScrollBar::add-line:vertical {
-      background: none;
-      border: none;
-      height: 0px;
-      width: 0px;
-    })").arg(scale_width(13)).arg(scale_width(1)).arg(scale_height(60)));
   horizontal_layout->addWidget(band_list_scroll_area, 222);
   m_band_list_widget = new QListWidget(this);
   band_list_scroll_area->setWidget(m_band_list_widget);

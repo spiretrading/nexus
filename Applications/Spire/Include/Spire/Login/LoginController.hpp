@@ -70,7 +70,7 @@ namespace Spire {
       mutable LoggedInSignal m_logged_in_signal;
       std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
-      std::unique_ptr<LoginWindow> m_login_window;
+      LoginWindow* m_login_window;
       QtPromise<std::unique_ptr<Nexus::VirtualServiceClients>> m_login_promise;
       std::unique_ptr<Nexus::VirtualServiceClients> m_service_clients;
 

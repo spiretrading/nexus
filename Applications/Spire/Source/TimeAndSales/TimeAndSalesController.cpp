@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesController.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
@@ -13,7 +14,8 @@ TimeAndSalesController::TimeAndSalesController(Definitions definitions,
     Ref<VirtualServiceClients> service_clients)
     : m_definitions(std::move(definitions)),
       m_security_input_model(security_input_model.Get()),
-      m_service_clients(service_clients.Get()) {}
+      m_service_clients(service_clients.Get()),
+      m_window(nullptr) {}
 
 TimeAndSalesController::~TimeAndSalesController() {
   close();
@@ -23,7 +25,7 @@ void TimeAndSalesController::open() {
   if(m_window != nullptr) {
     return;
   }
-  m_window = std::make_unique<TimeAndSalesWindow>(TimeAndSalesProperties(),
+  m_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
     Ref(*m_security_input_model));
   m_window->connect_change_security_signal(
     [=] (const auto& security) { on_change_security(security); });
@@ -36,7 +38,7 @@ void TimeAndSalesController::close() {
   if(m_window == nullptr) {
     return;
   }
-  m_window.reset();
+  delete_later(m_window);
   m_closed_signal();
 }
 

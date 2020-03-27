@@ -2,6 +2,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/SecurityInput/ServicesSecurityInputModel.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesController.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
@@ -44,7 +45,8 @@ ToolbarController::ToolbarController(Definitions definitions,
     : m_definitions(std::move(definitions)),
       m_service_clients(service_clients.Get()),
       m_security_input_model(std::make_unique<ServicesSecurityInputModel>(
-        Ref(m_service_clients->GetMarketDataClient()))) {}
+        Ref(m_service_clients->GetMarketDataClient()))),
+      m_toolbar_window(nullptr) {}
 
 ToolbarController::~ToolbarController() {
   close();
@@ -54,7 +56,7 @@ void ToolbarController::open() {
   if(m_toolbar_window != nullptr) {
     return;
   }
-  m_toolbar_window = std::make_unique<ToolbarWindow>(Ref(m_model),
+  m_toolbar_window = new ToolbarWindow(Ref(m_model),
     m_service_clients->GetServiceLocatorClient().GetAccount());
   m_toolbar_window->connect_open_signal(
     [=] (auto window) { on_open_window(window); });
@@ -69,7 +71,7 @@ void ToolbarController::close() {
   }
   auto controllers = std::move(m_controllers);
   controllers.clear();
-  m_toolbar_window.reset();
+  delete_later(m_toolbar_window);
   m_closed_signal();
 }
 

@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -11,7 +12,9 @@ using namespace Spire;
 SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     Theme theme, QWidget* parent)
     : QWidget(parent),
-      m_input_model(input_model.Get()) {
+      m_input_model(input_model.Get()),
+      m_empty_window_label(nullptr),
+      m_overlay_widget(nullptr) {
   setFocusPolicy(Qt::ClickFocus);
   auto empty_label_font_color = QColor();
   if(theme == Theme::DARK) {
@@ -23,8 +26,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
   }
   m_layout = new QVBoxLayout(this);
   m_layout->setContentsMargins({});
-  m_empty_window_label = std::make_unique<QLabel>(
-    tr("Enter a ticker symbol."), this);
+  m_empty_window_label = new QLabel(tr("Enter a ticker symbol."), this);
   m_empty_window_label->setAlignment(Qt::AlignCenter);
   m_empty_window_label->setStyleSheet(QString(R"(
     color: %3;
@@ -32,11 +34,11 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
     font-size: %1px;
     padding-top: %2px;)").arg(scale_height(12)).arg(scale_height(16))
     .arg(empty_label_font_color.name()));
-  m_layout->addWidget(m_empty_window_label.get());
+  m_layout->addWidget(m_empty_window_label);
 }
 
 void SecurityWidget::set_widget(QWidget* widget) {
-  m_empty_window_label.reset();
+  delete_later(m_empty_window_label);
   m_widget = widget;
   m_layout->addWidget(m_widget);
   m_widget->show();
@@ -69,7 +71,7 @@ void SecurityWidget::keyPressEvent(QKeyEvent* event) {
     event->accept();
   }
   auto pressed_key = event->text();
-  if(pressed_key[0].isLetterOrNumber()) {
+  if(!pressed_key.isEmpty() && pressed_key[0].isLetterOrNumber()) {
     auto dialog = new SecurityInputDialog(Ref(*m_input_model), pressed_key,
       this);
     dialog->setWindowModality(Qt::NonModal);
@@ -89,7 +91,7 @@ void SecurityWidget::keyPressEvent(QKeyEvent* event) {
 
 void SecurityWidget::show_overlay_widget() {
   auto p = static_cast<QWidget*>(parent());
-  m_overlay_widget = std::make_unique<QLabel>(p);
+  m_overlay_widget = new QLabel(p);
   m_overlay_widget->setStyleSheet(
     "background-color: rgba(245, 245, 245, 153);");
   m_overlay_widget->resize(p->size());
@@ -98,23 +100,23 @@ void SecurityWidget::show_overlay_widget() {
 }
 
 void SecurityWidget::hide_overlay_widget() {
-  m_overlay_widget.reset();
+  delete_later(m_overlay_widget);
 }
 
 void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
   auto& security = dialog->get_security();
   if(security != Security() && security != m_current_security) {
-    m_empty_window_label.reset();
+    delete_later(m_empty_window_label);
     m_securities.push(m_current_security);
     m_current_security = security;
     activateWindow();
     m_change_security_signal(security);
   }
   dialog->close();
-  m_overlay_widget.reset();
+  hide_overlay_widget();
 }
 
 void SecurityWidget::on_security_input_reject(SecurityInputDialog* dialog) {
   dialog->close();
-  m_overlay_widget.reset();
+  hide_overlay_widget();
 }

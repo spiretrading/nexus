@@ -14,87 +14,119 @@ namespace {
 }
 
 ScrollArea::ScrollArea(QWidget* parent)
+  : ScrollArea(false, parent) {}
+
+ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
     : QScrollArea(parent),
+      m_is_dynamic(is_dynamic),
       m_horizontal_scrolling_error(0.0),
-      m_vertical_scrolling_error(0.0) {
-  setMouseTracking(true);
+      m_vertical_scrolling_error(0.0),
+      m_border_color(Qt::transparent),
+      m_border_width(0) {
+  setFrameStyle(QFrame::NoFrame);
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_horizontal_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
-  connect(&m_horizontal_scroll_bar_timer, &QTimer::timeout, this,
-    &ScrollArea::hide_horizontal_scroll_bar);
-  m_vertical_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
-  connect(&m_vertical_scroll_bar_timer, &QTimer::timeout, this,
-    &ScrollArea::hide_vertical_scroll_bar);
+  if(m_is_dynamic) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_horizontal_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
+    connect(&m_horizontal_scroll_bar_timer, &QTimer::timeout, this,
+      &ScrollArea::hide_horizontal_scroll_bar);
+    m_vertical_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
+    connect(&m_vertical_scroll_bar_timer, &QTimer::timeout, this,
+      &ScrollArea::hide_vertical_scroll_bar);
+    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+  } else {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+  }
+}
+
+void ScrollArea::set_border_style(int width, const QColor& color) {
+  m_border_color = color;
+  m_border_width = width;
+  if(verticalScrollBar()->width() == SCROLL_BAR_MIN_SIZE) {
+    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+  } else {
+    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+  }
 }
 
 void ScrollArea::setWidget(QWidget* widget) {
-  widget->setMouseTracking(true);
-  widget->setAttribute(Qt::WA_Hover);
-  widget->installEventFilter(this);
+  if(m_is_dynamic) {
+    widget->setMouseTracking(true);
+    widget->setAttribute(Qt::WA_Hover);
+    widget->installEventFilter(this);
+  }
   QScrollArea::setWidget(widget);
 }
 
 bool ScrollArea::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::HoverMove) {
-    auto e = static_cast<QHoverEvent*>(event);
-    if(is_within_opposite_scroll_bar(verticalScrollBar(), e->pos().y(),
-        widget()->height(), height()) && !verticalScrollBar()->isVisible()) {
-      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
-      setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-      setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    } else if(is_within_opposite_scroll_bar(horizontalScrollBar(),
-        e->pos().x(), widget()->width(), width()) &&
-        !horizontalScrollBar()->isSliderDown()) {
-      set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
-      setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-      setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    } else {
-      set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
-      if(!m_vertical_scroll_bar_timer.isActive() &&
-          verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
-          !verticalScrollBar()->isSliderDown()) {
-        hide_vertical_scroll_bar();
-      }
-      if(!m_horizontal_scroll_bar_timer.isActive() &&
-          horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+  if(m_is_dynamic) {
+    if(event->type() == QEvent::HoverMove) {
+      auto e = static_cast<QHoverEvent*>(event);
+      if(is_within_opposite_scroll_bar(verticalScrollBar(), e->pos().y(),
+          widget()->height(), height()) && !verticalScrollBar()->isVisible()) {
+        set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      } else if(is_within_opposite_scroll_bar(horizontalScrollBar(),
+          e->pos().x(), widget()->width(), width()) &&
           !horizontalScrollBar()->isSliderDown()) {
+        set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      } else {
+        set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+        if(!m_vertical_scroll_bar_timer.isActive() &&
+            verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+            !verticalScrollBar()->isSliderDown()) {
+          hide_vertical_scroll_bar();
+        }
+        if(!m_horizontal_scroll_bar_timer.isActive() &&
+            horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff &&
+            !horizontalScrollBar()->isSliderDown()) {
+          hide_horizontal_scroll_bar();
+        }
+      }
+    } else if(event->type() == QEvent::HoverLeave) {
+      if(!m_horizontal_scroll_bar_timer.isActive() &&
+          horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
         hide_horizontal_scroll_bar();
       }
-    }
-  } else if(event->type() == QEvent::HoverLeave) {
-    if(!m_horizontal_scroll_bar_timer.isActive() &&
-        horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
-      hide_horizontal_scroll_bar();
-    }
-    if(!m_vertical_scroll_bar_timer.isActive() &&
-        verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
-      hide_vertical_scroll_bar();
+      if(!m_vertical_scroll_bar_timer.isActive() &&
+          verticalScrollBarPolicy() == Qt::ScrollBarAlwaysOff) {
+        hide_vertical_scroll_bar();
+      }
     }
   }
   return QScrollArea::eventFilter(watched, event);
 }
 
 void ScrollArea::leaveEvent(QEvent* event) {
-  hide_horizontal_scroll_bar();
-  hide_vertical_scroll_bar();
+  if(m_is_dynamic) {
+    hide_horizontal_scroll_bar();
+    hide_vertical_scroll_bar();
+  }
 }
 
 void ScrollArea::wheelEvent(QWheelEvent* event) {
   if(event->modifiers().testFlag(Qt::ShiftModifier)) {
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    if(m_is_dynamic) {
+      setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+      m_horizontal_scroll_bar_timer.start();
+    }
     update_scrollbar_position(horizontalScrollBar(), event->angleDelta().y(),
       m_horizontal_scrolling_error);
-    m_horizontal_scroll_bar_timer.start();
   } else {
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    if(m_is_dynamic) {
+      setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+      setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+      m_vertical_scroll_bar_timer.start();
+    }
     update_scrollbar_position(verticalScrollBar(), event->angleDelta().y(),
       m_vertical_scrolling_error);
-    m_vertical_scroll_bar_timer.start();
   }
 }
 
@@ -132,14 +164,16 @@ void ScrollArea::set_scroll_bar_style(int handle_size) {
   setStyleSheet(QString(R"(
     QWidget {
       background-color: #FFFFFF;
-      border: none;
+      border: %5px solid %6;
     }
 
     QScrollBar::horizontal {
+      border: none;
       height: %1px;
     }
 
     QScrollBar::vertical {
+      border: none;
       width: %2px;
     }
 
@@ -162,5 +196,6 @@ void ScrollArea::set_scroll_bar_style(int handle_size) {
       height: 0px;
       width: 0px;
     })").arg(scale_height(handle_size)).arg(scale_width(handle_size))
-        .arg(scale_width(60)).arg(scale_height(60)));
+        .arg(scale_width(60)).arg(scale_height(60)).arg(m_border_width)
+        .arg(m_border_color.name()));
 }
