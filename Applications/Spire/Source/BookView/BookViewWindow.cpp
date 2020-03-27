@@ -131,7 +131,7 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
 void BookViewWindow::show_properties_dialog() {
   BookViewPropertiesDialog dialog(get_properties(), Security(), this);
   m_dialog_apply_connection = dialog.connect_apply_signal(
-    [=, &dialog] { set_properties(dialog.get_properties()); });
+    [&] { set_properties(dialog.get_properties()); });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
