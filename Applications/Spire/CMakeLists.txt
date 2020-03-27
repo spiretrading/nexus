@@ -77,6 +77,7 @@ endmacro()
 
 add_subdirectory(Config/BookViewUiTester)
 add_subdirectory(Config/ChartingUiTester)
+add_subdirectory(Config/KeyBindingsUiTester)
 add_subdirectory(Config/Library)
 add_subdirectory(Config/LoginUiTester)
 add_subdirectory(Config/Resources)
