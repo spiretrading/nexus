@@ -10,7 +10,7 @@ using namespace Spire;
 BookQuoteTableView::BookQuoteTableView(
     BookQuoteTableModel* model, QWidget* parent)
     : QTableView(parent),
-      m_model(std::move(model)) {
+      m_model(model) {
   m_model->setParent(this);
   setStyleSheet(QString(R"(
     border: none;
