@@ -89,7 +89,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
-  Spire::deleteLater(m_loading_widget);
+  delete_later(m_loading_widget);
   if(m_model->is_loading() && m_transition_widget == nullptr) {
     m_transition_widget = new TransitionWidget(this);
   }
@@ -157,8 +157,8 @@ void TimeAndSalesTableView::update_table_height(int num_rows) {
 }
 
 void TimeAndSalesTableView::on_end_loading_signal() {
-  Spire::deleteLater(m_transition_widget);
-  Spire::deleteLater(m_loading_widget);
+  delete_later(m_transition_widget);
+  delete_later(m_loading_widget);
 }
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,

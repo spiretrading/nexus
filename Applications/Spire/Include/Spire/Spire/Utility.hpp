@@ -9,7 +9,7 @@ namespace Spire {
     \param object The object to schedule for deletion.
   */
   template<typename T>
-  std::enable_if_t<std::is_base_of_v<QObject, T>> deleteLater(T*& object) {
+  std::enable_if_t<std::is_base_of_v<QObject, T>> delete_later(T*& object) {
     if(object != nullptr) {
       object->deleteLater();
       object = nullptr;

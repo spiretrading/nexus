@@ -38,7 +38,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
 }
 
 void SecurityWidget::set_widget(QWidget* widget) {
-  Spire::deleteLater(m_empty_window_label);
+  delete_later(m_empty_window_label);
   m_widget = widget;
   m_layout->addWidget(m_widget);
   m_widget->show();
@@ -100,13 +100,13 @@ void SecurityWidget::show_overlay_widget() {
 }
 
 void SecurityWidget::hide_overlay_widget() {
-  Spire::deleteLater(m_overlay_widget);
+  delete_later(m_overlay_widget);
 }
 
 void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
   auto& security = dialog->get_security();
   if(security != Security() && security != m_current_security) {
-    Spire::deleteLater(m_empty_window_label);
+    delete_later(m_empty_window_label);
     m_securities.push(m_current_security);
     m_current_security = security;
     activateWindow();

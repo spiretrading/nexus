@@ -71,7 +71,7 @@ void ToolbarController::close() {
   }
   auto controllers = std::move(m_controllers);
   controllers.clear();
-  deleteLater(m_toolbar_window);
+  delete_later(m_toolbar_window);
   m_closed_signal();
 }
 

@@ -62,8 +62,8 @@ void BookViewWindow::set_model(std::shared_ptr<BookViewModel> model) {
   } else {
     m_technicals_panel->reset_model();
   }
-  Spire::deleteLater(m_bbo_quote_panel);
-  Spire::deleteLater(m_table);
+  delete_later(m_bbo_quote_panel);
+  delete_later(m_table);
   if(m_transition_widget == nullptr) {
     m_transition_widget = new TransitionWidget(m_quote_widgets_container);
   }
@@ -143,7 +143,7 @@ void BookViewWindow::show_properties_dialog() {
 }
 
 void BookViewWindow::on_data_loaded(Expect<void> value) {
-  Spire::deleteLater(m_transition_widget);
+  delete_later(m_transition_widget);
   m_is_data_loaded = true;
   m_technicals_panel->set_model(m_model);
   m_bbo_quote_panel = new BboQuotePanel(*m_model, this);

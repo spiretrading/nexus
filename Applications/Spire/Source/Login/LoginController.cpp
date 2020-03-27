@@ -61,7 +61,7 @@ void LoginController::on_login_promise(
   try {
     m_service_clients = std::move(service_clients.Get());
     m_login_window->close();
-    deleteLater(m_login_window);
+    delete_later(m_login_window);
     auto definitions = Definitions(
       m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
       m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),

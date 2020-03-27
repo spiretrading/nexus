@@ -38,7 +38,7 @@ void TimeAndSalesController::close() {
   if(m_window == nullptr) {
     return;
   }
-  deleteLater(m_window);
+  delete_later(m_window);
   m_closed_signal();
 }
 
