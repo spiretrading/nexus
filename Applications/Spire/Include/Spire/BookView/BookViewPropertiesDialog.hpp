@@ -13,15 +13,13 @@ namespace Spire {
     public:
 
       //! Signals that properties should be applied to the parent window.
-      using ApplySignal = Signal<void (const BookViewProperties& properties)>;
+      using ApplySignal = Signal<void ()>;
 
       //! Signals that properties should be applied to all windows.
-      using ApplyAllSignal = Signal<
-        void (const BookViewProperties& properties)>;
+      using ApplyAllSignal = Signal<void ()>;
 
       //! Signals that properties should be saved as the default.
-      using SaveDefaultSignal = Signal<
-        void (const BookViewProperties& properties)>;
+      using SaveDefaultSignal = Signal<void ()>;
 
       //! Constructs a book view properties dialog.
       /*!

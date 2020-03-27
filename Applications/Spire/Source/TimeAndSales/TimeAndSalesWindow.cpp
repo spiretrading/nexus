@@ -114,7 +114,7 @@ void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
     context_menu.addAction(&export_action);
     context_menu.setFixedWidth(scale_width(140));
     context_menu.setWindowFlag(Qt::NoDropShadowWindowHint);
-    DropShadow context_menu_shadow(true, true, &context_menu);
+    auto context_menu_shadow = new DropShadow(true, true, &context_menu);
     context_menu.setStyleSheet(QString(R"(
       QMenu {
         background-color: #FFFFFF;
@@ -164,7 +164,7 @@ void TimeAndSalesWindow::export_table() {
 
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, this);
-  dialog.connect_apply_signal([=] (auto p) { set_properties(p); });
+  dialog.connect_apply_signal([&] {set_properties(dialog.get_properties()); });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
