@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -37,10 +38,7 @@ SecurityWidget::SecurityWidget(Ref<SecurityInputModel> input_model,
 }
 
 void SecurityWidget::set_widget(QWidget* widget) {
-  if(m_empty_window_label != nullptr) {
-    m_empty_window_label->deleteLater();
-    m_empty_window_label = nullptr;
-  }
+  Spire::deleteLater(m_empty_window_label);
   m_widget = widget;
   m_layout->addWidget(m_widget);
   m_widget->show();
@@ -102,19 +100,13 @@ void SecurityWidget::show_overlay_widget() {
 }
 
 void SecurityWidget::hide_overlay_widget() {
-  if(m_overlay_widget != nullptr) {
-    m_overlay_widget->deleteLater();
-    m_overlay_widget = nullptr;
-  }
+  Spire::deleteLater(m_overlay_widget);
 }
 
 void SecurityWidget::on_security_input_accept(SecurityInputDialog* dialog) {
   auto& security = dialog->get_security();
   if(security != Security() && security != m_current_security) {
-    if(m_empty_window_label != nullptr) {
-      m_empty_window_label->deleteLater();
-      m_empty_window_label = nullptr;
-    }
+    Spire::deleteLater(m_empty_window_label);
     m_securities.push(m_current_security);
     m_current_security = security;
     activateWindow();

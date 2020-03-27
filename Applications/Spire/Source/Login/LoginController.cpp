@@ -3,6 +3,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Login/LoginWindow.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -60,8 +61,7 @@ void LoginController::on_login_promise(
   try {
     m_service_clients = std::move(service_clients.Get());
     m_login_window->close();
-    m_login_window->deleteLater();
-    m_login_window = nullptr;
+    deleteLater(m_login_window);
     auto definitions = Definitions(
       m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
       m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),

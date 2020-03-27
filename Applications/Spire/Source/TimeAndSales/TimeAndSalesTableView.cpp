@@ -5,6 +5,7 @@
 #include <QScrollBar>
 #include <QTableView>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/SnapshotLoadingWidget.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -88,10 +89,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_model = model;
-  if(m_loading_widget != nullptr) {
-    m_loading_widget->deleteLater();
-    m_loading_widget = nullptr;
-  }
+  Spire::deleteLater(m_loading_widget);
   if(m_model->is_loading() && m_transition_widget == nullptr) {
     m_transition_widget = new TransitionWidget(this);
   }
@@ -159,14 +157,8 @@ void TimeAndSalesTableView::update_table_height(int num_rows) {
 }
 
 void TimeAndSalesTableView::on_end_loading_signal() {
-  if(m_transition_widget != nullptr) {
-    m_transition_widget->deleteLater();
-    m_transition_widget = nullptr;
-  }
-  if(m_loading_widget != nullptr) {
-    m_loading_widget->deleteLater();
-    m_loading_widget = nullptr;
-  }
+  Spire::deleteLater(m_transition_widget);
+  Spire::deleteLater(m_loading_widget);
 }
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,

@@ -22,7 +22,7 @@ namespace Spire {
                           bars.
         \param parent The parent widget.
       */
-      ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
+      explicit ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
 
       //! Sets the scroll area's border style.
       /*

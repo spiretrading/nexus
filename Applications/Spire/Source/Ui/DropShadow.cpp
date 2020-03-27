@@ -44,7 +44,7 @@ DropShadow::DropShadow(bool is_menu_shadow, bool has_top, QWidget* parent)
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_parent->window()->installEventFilter(this);
   connect(m_parent, qOverload<QObject*>(&QObject::destroyed),
-    this, &DropShadow::on_parent_destroyed);
+    [=] (auto object) { deleteLater(); });
   qApp->installNativeEventFilter(this);
 }
 
@@ -158,8 +158,4 @@ QSize DropShadow::shadow_size() {
   } else {
     return scale(14, 14);
   }
-}
-
-void DropShadow::on_parent_destroyed(QObject* parent) {
-  deleteLater();
 }

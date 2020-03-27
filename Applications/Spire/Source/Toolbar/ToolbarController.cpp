@@ -2,6 +2,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/SecurityInput/ServicesSecurityInputModel.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesController.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
@@ -70,8 +71,7 @@ void ToolbarController::close() {
   }
   auto controllers = std::move(m_controllers);
   controllers.clear();
-  m_toolbar_window->deleteLater();
-  m_toolbar_window = nullptr;
+  deleteLater(m_toolbar_window);
   m_closed_signal();
 }
 

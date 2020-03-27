@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/BookView/ServicesBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -37,8 +38,7 @@ void BookViewController::close() {
   if(m_window == nullptr) {
     return;
   }
-  m_window->deleteLater();
-  m_window = nullptr;
+  deleteLater(m_window);
   m_closed_signal();
 }
 

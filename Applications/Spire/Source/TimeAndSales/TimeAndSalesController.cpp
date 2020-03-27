@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesController.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
@@ -37,8 +38,7 @@ void TimeAndSalesController::close() {
   if(m_window == nullptr) {
     return;
   }
-  m_window->deleteLater();
-  m_window = nullptr;
+  deleteLater(m_window);
   m_closed_signal();
 }
 

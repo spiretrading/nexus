@@ -48,7 +48,6 @@ namespace Spire {
 
       void follow_parent();
       QSize shadow_size();
-      void on_parent_destroyed(QObject* parent);
   };
 }
 
