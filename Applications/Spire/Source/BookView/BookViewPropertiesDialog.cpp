@@ -86,13 +86,13 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   auto button_group_widget = new PropertiesWindowButtonsWidget(this);
   layout->addWidget(button_group_widget);
   button_group_widget->connect_apply_signal(
-    [=] { m_apply_signal(get_properties()); });
+    [=] { m_apply_signal(); });
   button_group_widget->connect_apply_to_all_signal(
-    [=] { m_apply_all_signal(get_properties()); });
+    [=] { m_apply_all_signal(); });
   button_group_widget->connect_cancel_signal([=] { reject(); });
   button_group_widget->connect_ok_signal([=] { accept(); });
   button_group_widget->connect_save_as_default_signal(
-    [=] { m_save_default_signal(get_properties()); });
+    [=] { m_save_default_signal(); });
   Window::layout()->addWidget(body);
 }
 

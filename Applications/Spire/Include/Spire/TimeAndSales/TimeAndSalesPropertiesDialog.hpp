@@ -14,16 +14,13 @@ namespace Spire {
     public:
 
       //! Signals that properties should be applied to the parent window.
-      using ApplySignal = Signal<
-        void (const TimeAndSalesProperties& properties)>;
+      using ApplySignal = Signal<void ()>;
 
       //! Signals that properties should be applied to all windows.
-      using ApplyAllSignal = Signal<
-        void (const TimeAndSalesProperties& properties)>;
+      using ApplyAllSignal = Signal<void ()>;
 
       //! Signals that properties should be saved as the default.
-      using SaveDefaultSignal = Signal<
-        void (const TimeAndSalesProperties& properties)>;
+      using SaveDefaultSignal = Signal<void ()>;
 
       //! Constructs a time and sales properties dialog.
       /*!
