@@ -99,5 +99,6 @@
         <file>Icons/slash-texture.svg</file>
         <file>Icons/arrow-left.svg</file>
         <file>Icons/arrow-right.svg</file>
+        <file>Icons/key-bindings-grey.svg</file>
     </qresource>
 </RCC>
