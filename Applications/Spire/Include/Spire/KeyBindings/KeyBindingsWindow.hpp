@@ -10,10 +10,7 @@ namespace Spire {
     public:
 
       //! Signals that the user applied the current key bindings.
-      /*
-        /param key_bindings The applied key bindings.
-      */
-      using ApplySignal = Signal<void (const KeyBindings& binding)>;
+      using ApplySignal = Signal<void ()>;
 
       //! Constructs a key bindings window.
       /*

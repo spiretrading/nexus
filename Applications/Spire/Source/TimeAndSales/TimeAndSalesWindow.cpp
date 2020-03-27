@@ -165,8 +165,8 @@ void TimeAndSalesWindow::export_table() {
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, this);
   dialog.connect_apply_signal([=, &dialog] {
-      set_properties(dialog.get_properties());
-    });
+    set_properties(dialog.get_properties());
+  });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
