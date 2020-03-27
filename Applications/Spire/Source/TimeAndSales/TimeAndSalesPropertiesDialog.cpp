@@ -183,10 +183,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   auto buttons_widget = new PropertiesWindowButtonsWidget(this);
   buttons_widget->connect_save_as_default_signal(
     [=] { m_save_default_signal(); });
-  buttons_widget->connect_apply_to_all_signal(
-    [=] { m_apply_all_signal(); });
-  buttons_widget->connect_apply_signal(
-    [=] { m_apply_signal(); });
+  buttons_widget->connect_apply_to_all_signal([=] { m_apply_all_signal(); });
+  buttons_widget->connect_apply_signal([=] { m_apply_signal(); });
   buttons_widget->connect_ok_signal([=] { accept(); });
   buttons_widget->connect_cancel_signal([=] { reject(); });
   buttons_layout->addWidget(buttons_widget);

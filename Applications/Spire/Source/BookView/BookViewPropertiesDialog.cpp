@@ -85,8 +85,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     &BookViewPropertiesDialog::on_tab_bar_clicked);
   auto button_group_widget = new PropertiesWindowButtonsWidget(this);
   layout->addWidget(button_group_widget);
-  button_group_widget->connect_apply_signal(
-    [=] { m_apply_signal(); });
+  button_group_widget->connect_apply_signal([=] { m_apply_signal(); });
   button_group_widget->connect_apply_to_all_signal(
     [=] { m_apply_all_signal(); });
   button_group_widget->connect_cancel_signal([=] { reject(); });

@@ -5,6 +5,7 @@
 
 namespace Spire {
 
+  //! Displays the user's key bindings.
   class KeyBindingsWindow : public Window {
     public:
 
@@ -14,11 +15,18 @@ namespace Spire {
       */
       using ApplySignal = Signal<void (const KeyBindings& binding)>;
 
-      explicit KeyBindingsWindow(const KeyBindings& key_binding,
+      //! Constructs a key bindings window.
+      /*
+        \param key_bindings The initial key bindings.
+        \param parent The parent widget.
+      */
+      explicit KeyBindingsWindow(const KeyBindings& key_bindings,
         QWidget* parent = nullptr);
 
+      //! Returns the current key bindings.
       const KeyBindings& get_key_bindings() const;
 
+      //! Connects a slot to the applied signal.
       boost::signals2::connection connect_apply_signal(
         const ApplySignal::slot_type& slot) const;
 
