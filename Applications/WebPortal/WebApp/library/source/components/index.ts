@@ -1,6 +1,6 @@
 export * from './burger_button';
-export * from './checkmark';
 export * from './button';
+export * from './checkmark';
 export * from './country_selection_field';
 export * from './currency_selection_field';
 export * from './date_field';
@@ -12,6 +12,7 @@ export * from './integer_field';
 export * from './modal';
 export * from './money_field';
 export * from './number_field';
+export * from './role_panel';
 export * from './security_field';
 export * from './security_input';
 export * from './securities_field';

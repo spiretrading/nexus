@@ -4,9 +4,8 @@ import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../..';
-import { CountrySelectionField, TextField } from '../../components';
-import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField }
-  from '../account_page/profile_page';
+import { CountrySelectionField, TextField } from '../..';
+import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField } from '..';
 import { GroupSelectionBox } from './group_selection_box';
 import { GroupSuggestionModel } from './group_suggestion_model';
 

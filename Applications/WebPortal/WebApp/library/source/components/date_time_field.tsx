@@ -1,8 +1,9 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize } from '../display_size';
-import { DateField, DurationInputField } from '.';
+import { DisplaySize } from '..';
+import { DateField } from './date_field';
+import { DurationField } from './duration_field';
 
 enum Periods {
   AM,
@@ -66,7 +67,7 @@ export class DateTimeField extends React.Component<Properties, State> {
           onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>
         <div style={DateTimeField.STYLE.durationWrapper}>
-          <DurationInputField 
+          <DurationField 
             displaySize={this.props.displaySize}
             value={this.state.displayedTime}
             readonly={this.props.readonly}

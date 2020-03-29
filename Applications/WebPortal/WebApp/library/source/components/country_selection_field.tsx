@@ -1,8 +1,8 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import { DisplaySize } from '../display_size';
-import { TextField } from '.';
+import { DisplaySize } from '..';
+import { TextField } from './text_field';
 
 interface Properties {
 

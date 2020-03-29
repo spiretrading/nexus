@@ -1,34 +1,34 @@
 import * as Beam from 'beam';
-import { WebAdministrationClient, WebDefinitionsClient,
-  WebRiskClient } from '..';
-import { ServiceClients } from '.';
+import { HttpAdministrationClient, HttpDefinitionsClient, HttpRiskClient } from
+  '..';
+import { ServiceClients } from './service_clients';
 
-/** Implements the ServiceClients class using web services. */
-export class WebServiceClients extends ServiceClients {
+/** Implements the ServiceClients class using HTTP requests. */
+export class HttpServiceClients extends ServiceClients {
 
   /** Constructs all service clients. */
   constructor() {
     super();
     this.isOpen = false;
     this._serviceLocatorClient = new Beam.WebServiceLocatorClient();
-    this._administrationClient = new WebAdministrationClient();
-    this._definitionsClient = new WebDefinitionsClient();
-    this._riskClient = new WebRiskClient();
+    this._administrationClient = new HttpAdministrationClient();
+    this._definitionsClient = new HttpDefinitionsClient();
+    this._riskClient = new HttpRiskClient();
   }
 
   public get serviceLocatorClient(): Beam.WebServiceLocatorClient {
     return this._serviceLocatorClient;
   }
 
-  public get administrationClient(): WebAdministrationClient {
+  public get administrationClient(): HttpAdministrationClient {
     return this._administrationClient;
   }
 
-  public get definitionsClient(): WebDefinitionsClient {
+  public get definitionsClient(): HttpDefinitionsClient {
     return this._definitionsClient;
   }
 
-  public get riskClient(): WebRiskClient {
+  public get riskClient(): HttpRiskClient {
     return this._riskClient;
   }
 
@@ -59,7 +59,7 @@ export class WebServiceClients extends ServiceClients {
 
   private isOpen: boolean;
   private _serviceLocatorClient: Beam.WebServiceLocatorClient;
-  private _administrationClient: WebAdministrationClient;
-  private _definitionsClient: WebDefinitionsClient;
-  private _riskClient: WebRiskClient;
+  private _administrationClient: HttpAdministrationClient;
+  private _definitionsClient: HttpDefinitionsClient;
+  private _riskClient: HttpRiskClient;
 }

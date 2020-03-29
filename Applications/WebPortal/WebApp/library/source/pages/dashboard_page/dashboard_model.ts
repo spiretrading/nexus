@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountModel } from '../account_page';
+import { AccountModel } from '..';
 
 /** Base class for the model used by the DashboardPage. */
 export abstract class DashboardModel {

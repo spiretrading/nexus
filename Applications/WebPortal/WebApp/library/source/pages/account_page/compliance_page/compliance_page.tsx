@@ -2,7 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../../';
-import { NewRuleModal, RulesList } from '.';
+import { NewRuleModal } from './new_rule_modal';
+import { RulesList } from './rules_list';
 
 interface Properties {
   

@@ -1,14 +1,15 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountModel, LocalAccountModel } from '.';
-import { WebEntitlementsModel } from './entitlements_page';
+import { AccountModel } from './account_model';
+import { HttpEntitlementsModel } from './entitlements_page';
+import { LocalAccountModel } from './local_account_model';
 
-/** Implements an AccountModel using web services. */
-export class WebAccountModel extends AccountModel {
+/** Implements an AccountModel using HTTP services. */
+export class HttpAccountModel extends AccountModel {
 
-  /** Constructs a WebAccountModel.
+  /** Constructs an HttpAccountModel.
    * @param account - The account this model represents.
-   * @param serviceClients - The clients used to access the web services.
+   * @param serviceClients - The clients used to access the HTTP services.
    */
   constructor(account: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
@@ -25,8 +26,8 @@ export class WebAccountModel extends AccountModel {
     return this.model.roles;
   }
 
-  public makeEntitlementsModel(): WebEntitlementsModel {
-    return new WebEntitlementsModel(this.account, this.serviceClients);
+  public makeEntitlementsModel(): HttpEntitlementsModel {
+    return new HttpEntitlementsModel(this.account, this.serviceClients);
   }
 
   public async load(): Promise<void> {

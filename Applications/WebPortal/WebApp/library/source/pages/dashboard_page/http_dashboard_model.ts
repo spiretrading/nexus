@@ -1,13 +1,14 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { WebAccountModel } from '../account_page';
-import { DashboardModel, LocalDashboardModel } from '.';
+import { HttpAccountModel } from '..';
+import { DashboardModel } from './dashboard_model';
+import { LocalDashboardModel } from './local_dashboard_model';
 
-/** Implements the DashboardModel using web services. */
-export class WebDashboardModel extends DashboardModel {
+/** Implements the DashboardModel using HTTP requests. */
+export class HttpDashboardModel extends DashboardModel {
 
-  /** Constructs a WebDashboardModel.
-   * @param serviceClients - The service clients used to access the web
+  /** Constructs an HttpDashboardModel.
+   * @param serviceClients - The service clients used to access the HTTP
    *        services.
    */
   constructor(serviceClients: Nexus.ServiceClients) {
@@ -38,8 +39,8 @@ export class WebDashboardModel extends DashboardModel {
     return this.model.roles;
   }
 
-  public makeAccountModel(account: Beam.DirectoryEntry): WebAccountModel {
-    return new WebAccountModel(account, this.serviceClients);
+  public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
+    return new HttpAccountModel(account, this.serviceClients);
   }
 
   public async load(): Promise<void> {

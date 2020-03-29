@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { LocalAccountModel } from '../account_page';
-import { DashboardModel } from '.';
+import { LocalAccountModel } from '..';
+import { DashboardModel } from './dashboard_model';
 
 /** Implements the DashboardModel using local memory. */
 export class LocalDashboardModel extends DashboardModel {

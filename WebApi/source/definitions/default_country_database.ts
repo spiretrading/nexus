@@ -1,4 +1,4 @@
-import { CountryCode, CountryDatabase } from '.';
+import { CountryCode, CountryDatabase } from './country';
 
 /** Builds a CountryDatabase containing a set of common countries. */
 export function buildDefaultCountryDatabase(): CountryDatabase {

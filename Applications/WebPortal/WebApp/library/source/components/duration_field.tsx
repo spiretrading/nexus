@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize } from '../display_size';
+import { DisplaySize } from '..';
 import { IntegerField } from './integer_field';
 
 enum TimeUnit {
@@ -39,7 +39,7 @@ interface State {
 }
 
 /** A component that displays a duration. */
-export class DurationInputField extends React.Component<Properties, State> {
+export class DurationField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     value: new Beam.Duration(0),
     minHourValue: 0,
@@ -63,14 +63,14 @@ export class DurationInputField extends React.Component<Properties, State> {
     const splitTime = this.props.value.split();
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return DurationInputField.STYLE.containerSmall;
+        return DurationField.STYLE.containerSmall;
       } else {
-        return DurationInputField.STYLE.containerLarge;
+        return DurationField.STYLE.containerLarge;
       }
     })();
     const focusClassName = (() => {
       if(this.state.isFocused) {
-        return DurationInputField.STYLE.focused;
+        return DurationField.STYLE.focused;
       } else {
         return null;
       }
@@ -93,35 +93,35 @@ export class DurationInputField extends React.Component<Properties, State> {
           ref={this.containerRef}
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
-        <div style={DurationInputField.STYLE.inner}>
+        <div style={DurationField.STYLE.inner}>
           <IntegerField
             min={this.props.minHourValue} max={this.props.maxHourValue}
             value={splitTime.hours}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={DurationInputField.STYLE.integerBox}
+            className={css(DurationField.EXTRA_STYLE.effects)}
+            style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>:</div>
+          <div style={DurationField.STYLE.colon}>:</div>
           <IntegerField
             min={0} max={59}
             value={splitTime.minutes}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={DurationInputField.STYLE.integerBox}
+            className={css(DurationField.EXTRA_STYLE.effects)}
+            style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
             readonly={this.props.readonly}
             padding={2}/>
-          <div style={DurationInputField.STYLE.colon}>:</div>
+          <div style={DurationField.STYLE.colon}>:</div>
           <IntegerField
             min={0} max={59}
             value={splitTime.seconds}
-            className={css(DurationInputField.EXTRA_STYLE.effects)}
-            style={DurationInputField.STYLE.integerBox}
+            className={css(DurationField.EXTRA_STYLE.effects)}
+            style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
             readonly={this.props.readonly}
             padding={2}/>
         </div>
-        <div style={DurationInputField.STYLE.placeholder}>
+        <div style={DurationField.STYLE.placeholder}>
           {hintText}
         </div>
       </div>);

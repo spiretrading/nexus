@@ -1,10 +1,11 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
+import { DisplaySize } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
-import { DisplaySize } from '../../display_size';
 import { EntitlementsController, EntitlementsModel } from './entitlements_page';
+import { ProfileController } from './profile_page';
 import { SubPage } from './sub_page';
 
 interface Properties {
@@ -70,18 +71,16 @@ export class AccountController extends React.Component<Properties, State> {
       return <Router.Redirect to={`${this.props.urlPrefix}/profile`}/>;
     }
     return (
-      <Router.BrowserRouter>
-        <Router.Switch>
-          <AccountPage displaySize={this.props.displaySize}
-              subPage={subPage} account={this.props.model.account}
-              roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
-            <Router.Route path={`${this.props.urlPrefix}/profile`}
-              render={this.navigateToProfile}/>
-            <Router.Route path={`${this.props.urlPrefix}/entitlements`}
-              render={this.navigateToEntitlements}/>
-          </AccountPage>
-        </Router.Switch>
-      </Router.BrowserRouter>);
+      <Router.Switch>
+        <AccountPage displaySize={this.props.displaySize}
+            subPage={subPage} account={this.props.model.account}
+            roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
+          <Router.Route path={`${this.props.urlPrefix}/profile`}
+            render={this.navigateToProfile}/>
+          <Router.Route path={`${this.props.urlPrefix}/entitlements`}
+            render={this.navigateToEntitlements}/>
+        </AccountPage>
+      </Router.Switch>);
   }
 
   public componentWillMount(): void {
@@ -98,7 +97,7 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private navigateToProfile() {
-    return <div>Profile</div>;
+    return <ProfileController/>;
   }
 
   private navigateToEntitlements() {

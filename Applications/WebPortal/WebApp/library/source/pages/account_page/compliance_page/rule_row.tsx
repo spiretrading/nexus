@@ -2,8 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize } from '../../../display_size';
-import { DropDownButton, HLine } from '../../../components';
+import { DisplaySize } from '../../..';
+import { DropDownButton, HLine } from '../../..';
 import { ParametersList } from './parameter_list';
 import { RuleExecutionDropDown } from './rule_execution_drop_down';
 
