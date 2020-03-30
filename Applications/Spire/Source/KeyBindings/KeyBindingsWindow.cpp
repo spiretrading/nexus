@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include <QTabBar>
 #include <QVBoxLayout>
+#include "Spire/KeyBindings/CancelKeyBindingsTableWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
@@ -69,6 +70,19 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   auto task_keys_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(task_keys_widget, tr("Task Keys"));
   auto cancel_keys_widget = new QWidget(m_tab_widget);
+  auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);
+  cancel_keys_layout->setContentsMargins({});
+  cancel_keys_layout->setSpacing(0);
+  auto cancel_keys_label = new QLabel(tr(R"(Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.)"));
+  cancel_keys_label->setFixedHeight(scale_height(30));
+  cancel_keys_label->setStyleSheet(QString(R"(
+    font-family: Roboto;
+    font-size: %1px;
+  )").arg(scale_height(10)));
+  cancel_keys_layout->addWidget(cancel_keys_label);
+  auto cancel_keys_table = new CancelKeyBindingsTableWidget(
+    key_bindings.build_cancel_bindings(), this);
+  cancel_keys_layout->addWidget(cancel_keys_table);
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
