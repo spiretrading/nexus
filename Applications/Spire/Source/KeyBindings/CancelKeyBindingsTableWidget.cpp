@@ -96,6 +96,7 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
       background-position: left;
       background-repeat: repeat;
       border: none;
+      border-bottom: 1px solid #C8C8C8;
       color: #4B23A0;
       font-family: Roboto;
       font-weight: 550;
