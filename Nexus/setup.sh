@@ -2,10 +2,10 @@
 exit_status=0
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="28d4089d2a826340e828826a7e836b0bc1c30eaa"
+beam_commit="404ff39690eda6314dc0bc4d41954d32a3a3d5f1"
 build_beam=0
 if [ ! -d "Beam" ]; then
-  git clone https://www.github.com/eidolonsystems/beam.git Beam
+  git clone https://www.github.com/spiretrading/beam.git Beam
   if [ "$?" == "0" ]; then
     build_beam=1
   else
