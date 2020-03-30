@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DisplaySize } from '../display_size';
+import { DisplaySize } from '..';
 
 interface Properties {
 

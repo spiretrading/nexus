@@ -63,7 +63,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.setState({
@@ -97,7 +97,6 @@ export class EntitlementsController extends React.Component<Properties, State> {
         status: 'Saved.'
       });
     } catch(e) {
-      console.log(e);
       this.setState({
         isSubmitEnabled: true,
         isError: true,

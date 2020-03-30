@@ -3,8 +3,8 @@ import * as Router from 'react-router-dom';
 import * as React from 'react';
 import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
-import { DashboardController, DashboardModel } from './dashboard_page';
-import { LoginController, LoginModel } from './login_page';
+import { DashboardController } from './dashboard_page';
+import { LoginController } from './login_page';
 
 interface Properties {
 
@@ -27,12 +27,11 @@ export class ApplicationController extends React.Component<Properties, State> {
       account: Beam.DirectoryEntry.INVALID,
       isLoading: true
     };
-    this.dashboardModel = null;
     this.onResize = this.onResize.bind(this);
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
-    this.navigateToLogin = this.navigateToLogin.bind(this);
-    this.navigateToDashboard = this.navigateToDashboard.bind(this);
+    this.renderLoginPage = this.renderLoginPage.bind(this);
+    this.renderDashboardPage = this.renderDashboardPage.bind(this);
   }
 
   public render(): JSX.Element {
@@ -42,14 +41,15 @@ export class ApplicationController extends React.Component<Properties, State> {
     return (
       <Router.BrowserRouter>
         <Router.Switch>
-          <Router.Route exact path='/login' render={this.navigateToLogin}/>
+          <Router.Route exact path='/login' render={this.renderLoginPage}/>
           <AuthenticatedRoute path='/' account={this.state.account}
-            render={this.navigateToDashboard}/>
+            render={this.renderDashboardPage}/>
         </Router.Switch>
       </Router.BrowserRouter>);
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
+    window.addEventListener('resize', this.onResize);
     this.props.model.loadAccount().then(
       (account) => {
         this.setState({
@@ -57,10 +57,6 @@ export class ApplicationController extends React.Component<Properties, State> {
           isLoading: false
         });
       });
-  }
-
-  public componentDidMount(): void {
-    window.addEventListener('resize', this.onResize);
   }
 
   public componentWillUnmount(): void {
@@ -86,26 +82,18 @@ export class ApplicationController extends React.Component<Properties, State> {
     });
   }
 
-  private navigateToLogin() {
+  private renderLoginPage() {
     if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
-      if(this.loginModel == null) {
-        this.loginModel = this.props.model.makeLoginModel();
-      }
-      return <LoginController model={this.loginModel} onLogin={this.onLogin}/>;
+      return <LoginController model={this.props.model.loginModel}
+        onLogin={this.onLogin}/>;
     }
     return <Router.Redirect to='/'/>;
   }
 
-  private navigateToDashboard() {
-    if(this.dashboardModel === null) {
-      this.dashboardModel = this.props.model.makeDashboardModel();
-    }
-    return <DashboardController model={this.dashboardModel}
+  private renderDashboardPage() {
+    return <DashboardController model={this.props.model.dashboardModel}
       displaySize={this.state.displaySize} onLogout={this.onLogout}/>;
   }
-
-  private loginModel: LoginModel;
-  private dashboardModel: DashboardModel;
 }
 
 class AuthenticatedRoute extends React.Component<any> {

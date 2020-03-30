@@ -12,6 +12,8 @@ export class LocalAccountModel extends AccountModel {
     this._isLoaded = false;
     this._account = account;
     this._roles = roles;
+    this._entitlementsModel = new LocalEntitlementsModel(this._account,
+      new Beam.Set<Beam.DirectoryEntry>());
   }
 
   /** Returns true of this model has been loaded. */
@@ -33,9 +35,11 @@ export class LocalAccountModel extends AccountModel {
     return this._roles;
   }
 
-  public makeEntitlementsModel(): LocalEntitlementsModel {
-    return new LocalEntitlementsModel(this._account,
-      new Beam.Set<Beam.DirectoryEntry>());
+  public get entitlementsModel(): LocalEntitlementsModel {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return this._entitlementsModel;
   }
 
   public async load(): Promise<void> {
@@ -45,4 +49,5 @@ export class LocalAccountModel extends AccountModel {
   private _isLoaded: boolean;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
+  private _entitlementsModel: LocalEntitlementsModel;
 }

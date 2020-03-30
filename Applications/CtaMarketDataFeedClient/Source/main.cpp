@@ -66,7 +66,7 @@ int main(int argc, const char** argv) {
   string configFile;
   try {
     CmdLine cmd{"", ' ', "1.0-r" CTA_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2016 Eidolon Systems Ltd."};
+      "\nCopyright (C) 2020 Spire Trading Inc."};
     ValueArg<string> configArg{"c", "config", "Configuration file", false,
       "config.yml", "path"};
     cmd.add(configArg);

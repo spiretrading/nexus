@@ -21,7 +21,7 @@ interface Properties {
 export class LoginPage extends React.Component<Properties> {
   public static readonly defaultProps = {
     errorMessage: '',
-    onSubmit: (_u: string, _p: string) => {}
+    onSubmit: () => {}
   }
 
   constructor(properties: Properties) {

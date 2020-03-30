@@ -5,7 +5,7 @@
 !include "FileFunc.nsh"
 
 !define APPNAME "Spire"
-!define COMPANYNAME "Eidolon Systems Ltd."
+!define COMPANYNAME "Spire Trading Inc."
 !define VERSIONMAJOR 1
 !define VERSIONMINOR 0
 

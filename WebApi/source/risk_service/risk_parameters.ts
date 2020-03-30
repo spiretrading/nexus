@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
-import {Currency, Money} from '..';
-import {RiskState} from '.';
+import { Currency, Money } from '..';
+import { RiskState } from './risk_state';
 
 /** Stores an account's risk parameters. */
 export class RiskParameters {

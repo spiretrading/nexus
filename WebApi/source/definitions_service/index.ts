@@ -1,2 +1,2 @@
 export * from './definitions_client';
-export * from './web_definitions_client';
+export * from './http_definitions_client';

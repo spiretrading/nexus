@@ -38,7 +38,7 @@ def translate(source, variables):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2017 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
     default=call('hostname -I').strip())
   parser.add_argument('-w', '--world', type=str, help='Global interface.',

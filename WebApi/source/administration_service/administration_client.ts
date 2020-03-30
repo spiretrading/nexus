@@ -1,7 +1,10 @@
 import * as Beam from 'beam';
 import { Message, RiskParameters } from '..';
-import { AccountIdentity, AccountModificationRequest, AccountRoles,
-  EntitlementModification, RiskModification } from '.';
+import { AccountIdentity } from './account_identity';
+import { AccountModificationRequest } from './account_modification_request';
+import { AccountRoles } from './account_roles';
+import { EntitlementModification } from './entitlement_modification';
+import { RiskModification } from './risk_modification';
 
 /** Client used to access administration services. */
 export abstract class AdministrationClient {

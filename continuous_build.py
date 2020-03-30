@@ -168,9 +168,9 @@ def build_repo(repo, path, branch):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2019 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-r', '--repo', type=str, help='Remote repository.',
-    default='https://github.com/eidolonsystems/nexus.git')
+    default='https://github.com/spiretrading/nexus.git')
   parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
   parser.add_argument('-b', '--branch', type=str, help='Branch to build.',

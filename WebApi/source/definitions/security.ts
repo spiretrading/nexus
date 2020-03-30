@@ -1,4 +1,5 @@
-import { CountryCode, MarketCode } from '.';
+import { CountryCode } from './country';
+import { MarketCode } from './market';
 
 /** Identifies a financial security. */
 export class Security {

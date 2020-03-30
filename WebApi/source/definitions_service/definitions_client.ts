@@ -1,6 +1,4 @@
-import { CurrencyDatabase } from '..';
-import { EntitlementDatabase } from '../market_data_service';
-import { MarketDatabase } from '..';
+import { CurrencyDatabase, EntitlementDatabase, MarketDatabase } from '..';
 
 /** Client used to access definitions services. */
 export abstract class DefinitionsClient {
