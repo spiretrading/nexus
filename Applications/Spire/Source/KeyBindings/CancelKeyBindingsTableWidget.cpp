@@ -78,8 +78,9 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
     }
 
     QTableWidget::item {
-      padding-left: 50px;
-    })").arg(scale_height(12)));
+      border: 0px;
+      padding-left: %2px;
+    })").arg(scale_height(12)).arg(scale_width(8)));
   setHorizontalHeaderLabels({tr("Cancel Options"), tr("Key Bindings")});
   setFrameShape(QFrame::NoFrame);
   setFocusPolicy(Qt::NoFocus);
