@@ -10,13 +10,13 @@ export class HttpServiceClients extends ServiceClients {
   constructor() {
     super();
     this.isOpen = false;
-    this._serviceLocatorClient = new Beam.WebServiceLocatorClient();
+    this._serviceLocatorClient = new Beam.HttpServiceLocatorClient();
     this._administrationClient = new HttpAdministrationClient();
     this._definitionsClient = new HttpDefinitionsClient();
     this._riskClient = new HttpRiskClient();
   }
 
-  public get serviceLocatorClient(): Beam.WebServiceLocatorClient {
+  public get serviceLocatorClient(): Beam.HttpServiceLocatorClient {
     return this._serviceLocatorClient;
   }
 
@@ -58,7 +58,7 @@ export class HttpServiceClients extends ServiceClients {
   }
 
   private isOpen: boolean;
-  private _serviceLocatorClient: Beam.WebServiceLocatorClient;
+  private _serviceLocatorClient: Beam.HttpServiceLocatorClient;
   private _administrationClient: HttpAdministrationClient;
   private _definitionsClient: HttpDefinitionsClient;
   private _riskClient: HttpRiskClient;
