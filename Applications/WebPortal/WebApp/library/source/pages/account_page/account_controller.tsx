@@ -46,9 +46,8 @@ export class AccountController extends React.Component<Properties, State> {
       isLoaded: false,
       redirect: null,
     };
-    this.entitlementsModel = null;
-    this.navigateToProfile = this.navigateToProfile.bind(this);
-    this.navigateToEntitlements = this.navigateToEntitlements.bind(this);
+    this.renderProfilePage = this.renderProfilePage.bind(this);
+    this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
     this.onMenuClick = this.onMenuClick.bind(this);
   }
 
@@ -76,9 +75,9 @@ export class AccountController extends React.Component<Properties, State> {
             subPage={subPage} account={this.props.model.account}
             roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
           <Router.Route path={`${this.props.urlPrefix}/profile`}
-            render={this.navigateToProfile}/>
+            render={this.renderProfilePage}/>
           <Router.Route path={`${this.props.urlPrefix}/entitlements`}
-            render={this.navigateToEntitlements}/>
+            render={this.renderEntitlementsPage}/>
         </AccountPage>
       </Router.Switch>);
   }
@@ -96,16 +95,14 @@ export class AccountController extends React.Component<Properties, State> {
     }
   }
 
-  private navigateToProfile() {
+  private renderProfilePage() {
     return <ProfileController/>;
   }
 
-  private navigateToEntitlements() {
-    if(this.entitlementsModel === null) {
-      this.entitlementsModel = this.props.model.makeEntitlementsModel();
-    }
+  private renderEntitlementsPage() {
     return <EntitlementsController roles={this.props.model.roles}
-      entitlements={this.props.entitlements} model={this.entitlementsModel}
+      entitlements={this.props.entitlements}
+      model={this.props.model.entitlementsModel}
       currencyDatabase={this.props.currencyDatabase}
       marketDatabase={this.props.marketDatabase}
       displaySize={this.props.displaySize}/>;
@@ -122,6 +119,4 @@ export class AccountController extends React.Component<Properties, State> {
       });
     }
   }
-
-  private entitlementsModel: EntitlementsModel;
 }

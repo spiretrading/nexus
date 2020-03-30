@@ -11,8 +11,8 @@ export abstract class AccountModel {
   /** The account's roles. */
   public abstract get roles(): Nexus.AccountRoles;
 
-  /** Returns a new EntitlementsModel. */
-  public abstract makeEntitlementsModel(): EntitlementsModel;
+  /** Returns the account's EntitlementsModel. */
+  public abstract get entitlementsModel(): EntitlementsModel;
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;

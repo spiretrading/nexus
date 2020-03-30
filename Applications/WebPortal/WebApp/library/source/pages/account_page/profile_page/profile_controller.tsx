@@ -12,6 +12,6 @@ export class ProfileController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    return <div>Test</div>;
+    return <div>Profile Page</div>;
   }
 }

@@ -97,7 +97,6 @@ export class EntitlementsController extends React.Component<Properties, State> {
         status: 'Saved.'
       });
     } catch(e) {
-      console.log(e);
       this.setState({
         isSubmitEnabled: true,
         isError: true,

@@ -16,6 +16,8 @@ export class HttpAccountModel extends AccountModel {
     super();
     this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0));
     this.serviceClients = serviceClients;
+    this._entitlementsModel = new HttpEntitlementsModel(account,
+      this.serviceClients);
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -26,8 +28,8 @@ export class HttpAccountModel extends AccountModel {
     return this.model.roles;
   }
 
-  public makeEntitlementsModel(): HttpEntitlementsModel {
-    return new HttpEntitlementsModel(this.account, this.serviceClients);
+  public get entitlementsModel(): HttpEntitlementsModel {
+    return this._entitlementsModel;
   }
 
   public async load(): Promise<void> {
@@ -44,4 +46,5 @@ export class HttpAccountModel extends AccountModel {
 
   private model: LocalAccountModel;
   private serviceClients: Nexus.ServiceClients;
+  private _entitlementsModel: HttpEntitlementsModel;
 }
