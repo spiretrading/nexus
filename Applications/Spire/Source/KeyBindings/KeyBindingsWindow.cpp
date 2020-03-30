@@ -3,6 +3,7 @@
 #include <QTabBar>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -71,6 +72,54 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
+  auto button_layout = new QHBoxLayout();
+  button_layout->setContentsMargins(0, scale_height(18), 0, 0);
+  button_layout->setSpacing(0);
+  layout->addLayout(button_layout);
+  auto reset_button = new FlatButton(tr("Restore Defaults"));
+  reset_button->setFixedSize(scale(120, 26));
+  auto button_style = reset_button->get_style();
+  button_style.m_background_color = QColor("#EBEBEB");
+  auto button_hover_style = reset_button->get_hover_style();
+  button_hover_style.m_background_color = QColor("#4B23A0");
+  button_hover_style.m_text_color = Qt::white;
+  auto button_focus_style = reset_button->get_focus_style();
+  button_focus_style.m_background_color = QColor("#EBEBEB");
+  button_focus_style.m_border_color = QColor("#4B23A0");
+  auto button_font = QFont();
+  button_font.setFamily("Roboto");
+  button_font.setPixelSize(scale_height(12));
+  reset_button->setFont(button_font);
+  reset_button->set_style(button_style);
+  reset_button->set_hover_style(button_hover_style);
+  reset_button->set_focus_style(button_focus_style);
+  button_layout->addWidget(reset_button);
+  button_layout->addStretch(1);
+  auto cancel_button = new FlatButton(tr("Cancel"));
+  cancel_button->setFixedSize(scale(100, 26));
+  cancel_button->setFont(button_font);
+  cancel_button->set_style(button_style);
+  cancel_button->set_hover_style(button_hover_style);
+  cancel_button->set_focus_style(button_focus_style);
+  button_layout->addWidget(cancel_button);
+  button_layout->addSpacing(scale_width(8));
+  auto apply_button = new FlatButton(tr("Apply"));
+  apply_button->setFixedSize(scale(100, 26));
+  apply_button->setFont(button_font);
+  apply_button->set_style(button_style);
+  apply_button->set_hover_style(button_hover_style);
+  apply_button->set_focus_style(button_focus_style);
+  button_layout->addWidget(apply_button);
+  button_layout->addSpacing(scale_width(8));
+  auto ok_button = new FlatButton(tr("OK"));
+  ok_button->setFixedSize(scale(100, 26));
+  ok_button->setFont(button_font);
+  ok_button->set_style(button_style);
+  ok_button->set_hover_style(button_hover_style);
+  ok_button->set_focus_style(button_focus_style);
+  button_layout->addWidget(ok_button);
+  button_layout->addSpacing(scale_width(8));
+  m_tab_widget->setCurrentIndex(1);
 }
 
 const KeyBindings& KeyBindingsWindow::get_key_bindings() const {
