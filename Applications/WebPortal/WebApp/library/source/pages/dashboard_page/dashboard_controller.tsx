@@ -51,7 +51,7 @@ export class DashboardController extends React.Component<Properties, State> {
       onSideMenuClick={this.onSideMenuClick}>{page}</DashboardPage>;
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.accountModel = this.props.model.makeAccountModel(

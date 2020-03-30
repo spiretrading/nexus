@@ -48,7 +48,8 @@ export class ApplicationController extends React.Component<Properties, State> {
       </Router.BrowserRouter>);
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
+    window.addEventListener('resize', this.onResize);
     this.props.model.loadAccount().then(
       (account) => {
         this.setState({
@@ -56,10 +57,6 @@ export class ApplicationController extends React.Component<Properties, State> {
           isLoading: false
         });
       });
-  }
-
-  public componentDidMount(): void {
-    window.addEventListener('resize', this.onResize);
   }
 
   public componentWillUnmount(): void {
@@ -87,14 +84,14 @@ export class ApplicationController extends React.Component<Properties, State> {
 
   private navigateToLogin() {
     if(this.state.account.equals(Beam.DirectoryEntry.INVALID)) {
-      return <LoginController model={this.props.model.getLoginModel()}
+      return <LoginController model={this.props.model.loginModel}
         onLogin={this.onLogin}/>;
     }
     return <Router.Redirect to='/'/>;
   }
 
   private navigateToDashboard() {
-    return <DashboardController model={this.props.model.getDashboardModel()}
+    return <DashboardController model={this.props.model.dashboardModel}
       displaySize={this.state.displaySize} onLogout={this.onLogout}/>;
   }
 }

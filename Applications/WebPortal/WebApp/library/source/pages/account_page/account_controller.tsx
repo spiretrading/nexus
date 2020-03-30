@@ -83,7 +83,7 @@ export class AccountController extends React.Component<Properties, State> {
       </Router.Switch>);
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.setState({isLoaded: true});

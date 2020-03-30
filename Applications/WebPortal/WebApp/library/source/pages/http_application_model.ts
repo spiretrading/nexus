@@ -14,14 +14,16 @@ export class HttpApplicationModel extends ApplicationModel {
   constructor(serviceClients: Nexus.ServiceClients) {
     super();
     this.serviceClients = serviceClients;
+    this._loginModel = new HttpLoginModel(this.serviceClients);
+    this._dashboardModel = new HttpDashboardModel(this.serviceClients);
   }
 
-  public getLoginModel(): HttpLoginModel {
-    return new HttpLoginModel(this.serviceClients);
+  public get loginModel(): HttpLoginModel {
+    return this._loginModel;
   }
 
-  public getDashboardModel(): HttpDashboardModel {
-    return new HttpDashboardModel(this.serviceClients);
+  public get dashboardModel(): HttpDashboardModel {
+    return this._dashboardModel;
   }
 
   public async loadAccount(): Promise<Beam.DirectoryEntry> {
@@ -29,4 +31,6 @@ export class HttpApplicationModel extends ApplicationModel {
   }
 
   private serviceClients: Nexus.ServiceClients;
+  private _loginModel: HttpLoginModel;
+  private _dashboardModel: HttpDashboardModel;
 }
