@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
   freopen("stderr.log", "w", stderr);
 #endif
   QApplication application(argc, argv);
-  application.setOrganizationName(QObject::tr("Eidolon Systems"));
+  application.setOrganizationName(QObject::tr("Spire Trading"));
   application.setApplicationName(QObject::tr("Spire"));
   application.setApplicationVersion(SPIRE_VERSION);
   RegisterCustomQtVariants();

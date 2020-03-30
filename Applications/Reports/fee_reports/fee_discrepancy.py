@@ -73,7 +73,7 @@ def load_fee_table(config, market_database):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2017 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
   parser.add_argument('-s', '--start', type=parse_date, help='Start range',

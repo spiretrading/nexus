@@ -35,7 +35,7 @@ ln -sf /usr/local/n/versions/node/9.2.0/bin/node /usr/bin/nodejs
 
 # Checkout and install Nexus
 if [ ! -d "Nexus" ]; then
-  sudo -u $username git clone https://github.com/eidolonsystems/nexus.git Nexus
+  sudo -u $username git clone https://github.com/spiretrading/nexus Nexus
   if [ ! -f Nexus/configure.sh ]; then
     echo 'Failed to download Nexus.'
     exit 1
