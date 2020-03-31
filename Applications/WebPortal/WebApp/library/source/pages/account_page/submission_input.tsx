@@ -71,7 +71,7 @@ export class SubmissionInput extends React.Component<Properties> {
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={!this.props.isEnabled}
             roles={this.props.roles}
-            onClick={() => this.props.onSubmit()}/>
+            onClick={this.props.onSubmit}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
         <Padding size='18px'/>
