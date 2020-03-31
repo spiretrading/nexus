@@ -115,7 +115,7 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderRiskPage() {
-    return <RiskController/>
+    return <RiskController/>;
   }
 
   private onMenuClick(subPage: SubPage) {
