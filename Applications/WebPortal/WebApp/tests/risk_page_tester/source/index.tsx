@@ -33,34 +33,7 @@ class TestApp extends React.Component<Properties, State> {
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    const containerClassName = (() => {
-      switch(this.props.displaySize) {
-        case WebPortal.DisplaySize.SMALL:
-          return css([TestApp.CONTAINER_STYLE.small,
-            TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.DisplaySize.MEDIUM:
-          return css([TestApp.CONTAINER_STYLE.medium,
-            TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.DisplaySize.LARGE:
-          return css([TestApp.CONTAINER_STYLE.large,
-            TestApp.CONTAINER_STYLE.base]);
-        default:
-          return css([TestApp.CONTAINER_STYLE.medium,
-              TestApp.CONTAINER_STYLE.base]);
-      }
-    })();
-    const submissionBoxPadding = (() => {
-      switch(this.props.displaySize) {
-        case WebPortal.DisplaySize.SMALL:
-          return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
-        case WebPortal.DisplaySize.MEDIUM:
-          return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
-        case WebPortal.DisplaySize.LARGE:
-          return <div className={css(TestApp.CONTAINER_STYLE.largePadding)}/>;
-        default:
-          return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
-        }
-    })();
+
     const toggleAdminButtonText = (() => {
       if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Admin';
@@ -69,20 +42,11 @@ class TestApp extends React.Component<Properties, State> {
     })();
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
-        <Dali.Padding size='30px'/>
-        <Dali.HBoxLayout width='100%' className={
-          css(TestApp.STYLE.outerContainer)}>
-          <Dali.VBoxLayout className={containerClassName}>
-            <WebPortal.RiskParametersView parameters={parameters}
-              displaySize={this.props.displaySize}
-              currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
-            <Dali.Padding size='30px'/>
-            <Dali.HBoxLayout width='100%'>
-              <WebPortal.SubmissionBox roles={this.state.roles}
-                onSubmit={ this.onSubmit }/>
-            </Dali.HBoxLayout>
-          </Dali.VBoxLayout>
-        </Dali.HBoxLayout>
+        <WebPortal.RiskPage
+           displaySize={this.props.displaySize}
+           parameters={parameters}
+           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+           roles={this.state.roles}/>
         <button className={css(TestApp.STYLE.button)} onClick={
             this.onToggleIsAdmin}>
           {toggleAdminButtonText}
