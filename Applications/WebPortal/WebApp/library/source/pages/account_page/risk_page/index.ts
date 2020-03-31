@@ -1,1 +1,4 @@
-export { RiskParametersView } from './risk_parameters_view';
+export * from './risk_controller';
+export * from './risk_parameters_view';
+
+
