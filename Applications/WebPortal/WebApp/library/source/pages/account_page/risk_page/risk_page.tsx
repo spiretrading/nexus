@@ -18,11 +18,15 @@ interface Properties {
 
   roles: Nexus.AccountRoles;
 
-  onSubmit?: (comment: string) => void;
+  onSubmit?: () => void;
 
   status?: string;
 
   isError?: boolean;
+}
+
+interface State {
+  
 }
 
 export class RiskPage extends React.Component<Properties> {
@@ -49,8 +53,7 @@ export class RiskPage extends React.Component<Properties> {
             <HLine color={RiskPage.LINE_COLOR}/>
           </div>
           <div style={RiskPage.STYLE.mediumPadding}/>
-          <SubmissionBox roles={this.props.roles}
-            onSubmit={ this.props.onSubmit }/>
+          <SubmissionBox roles={this.props.roles}/>
         </div>
       </PageWrapper>);
   }
@@ -103,7 +106,5 @@ export class RiskPage extends React.Component<Properties> {
       width: '246px'
     }
   }
-  private static readonly BUTTON_TEXT = 'Save Changes';
   private static readonly LINE_COLOR = '#E6E6E6';
-  static readonly MEDIUM_PADDING_SIZE = '30px';
 }
