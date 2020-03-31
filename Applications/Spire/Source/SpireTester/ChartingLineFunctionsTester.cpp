@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/Charting/TrendLine.hpp"

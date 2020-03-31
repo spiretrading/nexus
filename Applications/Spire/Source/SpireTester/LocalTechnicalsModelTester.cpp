@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "Nexus/Definitions/Security.hpp"

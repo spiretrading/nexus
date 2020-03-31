@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 

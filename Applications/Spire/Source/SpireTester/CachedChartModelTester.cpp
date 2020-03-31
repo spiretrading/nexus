@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include "Spire/Charting/CachedChartModel.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
