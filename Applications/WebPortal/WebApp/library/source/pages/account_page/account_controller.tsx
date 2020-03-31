@@ -54,7 +54,6 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    console.log('heeey');
     if(this.state.redirect) {
       return <Router.Redirect push to={this.state.redirect}/>;
     }
