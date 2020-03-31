@@ -6,6 +6,9 @@ import { SubmitButton } from './submit_button';
 
 interface Properties {
 
+  /** The comment to be displayed. */
+  comment: string;
+
   /** Determines how a form gets submitted depending on the account's roles. */
   roles: Nexus.AccountRoles;
 
@@ -18,38 +21,30 @@ interface Properties {
   /** Determines if the submit button is enabled. */
   isEnabled?: boolean;
 
-  /** Indicates the form should be submitted.
-   * @param comment - The comment to submit with the form.
+  /** The callback function that updates the comment.
+   * @param comment - The new comment.
    */
-  onSubmit?: (comment: string) => void;
-}
+  onChange?: (comment: string) => void;
 
-interface State {
-  comment: string;
+  /** Indicates the form should be submitted. */
+  onSubmit?: () => void;
 }
 
 /** Displays the components needed to submit an account related form. */
-export class SubmissionBox extends React.Component<Properties, State> {
+export class SubmissionInput extends React.Component<Properties> {
   public static defaultProps = {
     isEnabled: false,
     isError: false,
     status: '',
+    onChange: () => {},
     onSubmit: () => {}
-  }
-
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      comment: ''
-    };
-    this.onInput = this.onInput.bind(this);
   }
 
   public render(): JSX.Element {
     const commentBox = (() => {
       if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <CommentBox comment={this.state.comment}
-          onInput={this.onInput}/>;
+        return <CommentBox comment={this.props.comment}
+          onInput={this.props.onChange}/>;
       }
     })();
     const commentBoxPadding = (() => {
@@ -61,11 +56,11 @@ export class SubmissionBox extends React.Component<Properties, State> {
       if(this.props.status === '') {
         return <div/>;
       } else if(this.props.isError) {
-        return <span style={{...SubmissionBox.STYLES.base,
-          ...SubmissionBox.STYLES.invalid}}>{this.props.status}</span>;
+        return <span style={{...SubmissionInput.STYLES.base,
+          ...SubmissionInput.STYLES.invalid}}>{this.props.status}</span>;
       } else {
-        return <span style={{...SubmissionBox.STYLES.base,
-          ...SubmissionBox.STYLES.valid}}>{this.props.status}</span>;
+        return <span style={{...SubmissionInput.STYLES.base,
+          ...SubmissionInput.STYLES.valid}}>{this.props.status}</span>;
       }
     })();
     return (
@@ -76,7 +71,7 @@ export class SubmissionBox extends React.Component<Properties, State> {
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={!this.props.isEnabled}
             roles={this.props.roles}
-            onClick={() => this.props.onSubmit(this.state.comment)}/>
+            onClick={() => this.props.onSubmit()}/>
           <Padding size='calc(50% - 123px)'/>
         </HBoxLayout>
         <Padding size='18px'/>
@@ -86,12 +81,6 @@ export class SubmissionBox extends React.Component<Properties, State> {
           <Padding/>
         </HBoxLayout>
       </VBoxLayout>);
-  }
-
-  private onInput(value: string) {
-    this.setState({
-      comment: value
-    });
   }
 
   private static readonly STYLES = {
