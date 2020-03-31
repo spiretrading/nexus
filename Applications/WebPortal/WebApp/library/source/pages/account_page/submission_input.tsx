@@ -20,7 +20,7 @@ interface Properties {
 
   /** Determines if the submit button is enabled. */
   isEnabled?: boolean;
-  
+
   /** The callback function that updates the comment.
    * @param comment - The new comment.
    */
