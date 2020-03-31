@@ -23,8 +23,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins(scale_width(8), scale_height(8), scale_width(8),
-    scale_height(8));
+  layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
   Window::layout()->addWidget(body);
   m_tab_widget = new QTabWidget(this);
@@ -43,7 +42,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
       font-family: Roboto;
       font-size: %1px;
       height: %2px;
-      margin: %3px %4px %3px 0px;
+      margin: %3px %4px %3px %7px;
       width: %5px;
     }
 
@@ -60,7 +59,8 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
       background-color: #F5F5F5;
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
+        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
+        .arg(scale_width(8)));
   layout->addWidget(m_tab_widget);
   connect(m_tab_widget, &QTabWidget::currentChanged, this,
     &KeyBindingsWindow::on_tab_changed);
@@ -78,7 +78,8 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   cancel_keys_label->setStyleSheet(QString(R"(
     font-family: Roboto;
     font-size: %1px;
-  )").arg(scale_height(10)));
+    margin-left: %2px;
+  )").arg(scale_height(10)).arg(scale_width(8)));
   cancel_keys_layout->addWidget(cancel_keys_label);
   auto cancel_keys_table = new CancelKeyBindingsTableWidget(
     key_bindings.build_cancel_bindings(), this);
@@ -87,7 +88,8 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
   auto button_layout = new QHBoxLayout();
-  button_layout->setContentsMargins(0, scale_height(18), 0, 0);
+  button_layout->setContentsMargins(scale_width(8), scale_height(18),
+    scale_width(8), scale_height(8));
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
   auto reset_button = new FlatButton(tr("Restore Defaults"));
@@ -134,6 +136,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->addWidget(ok_button);
   button_layout->addSpacing(scale_width(8));
   m_tab_widget->setCurrentIndex(1);
+  on_tab_bar_clicked(1);
 }
 
 const KeyBindings& KeyBindingsWindow::get_key_bindings() const {

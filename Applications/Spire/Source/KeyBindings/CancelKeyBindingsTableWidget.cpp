@@ -67,38 +67,51 @@ namespace {
 CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
     QWidget* parent)
-    : QTableWidget(ROW_COUNT, COLUMN_COUNT, parent) {
-  setStyleSheet(QString(R"(
+    : ScrollArea(true, parent) {
+  m_table = new QTableWidget(ROW_COUNT, COLUMN_COUNT, this);
+  m_table->setFixedSize(scale(852, 368));
+  m_table->setStyleSheet(QString(R"(
     QTableWidget {
       background-color: #FFFFFF;
       border: none;
       font-family: Roboto;
       font-size: %1px;
       gridline-color: #C8C8C8;
+      padding-left: %2px;
+      padding-right: %2px;
     }
 
     QTableWidget::item {
-      border: 0px;
       padding-left: %2px;
     })").arg(scale_height(12)).arg(scale_width(8)));
-  setHorizontalHeaderLabels({tr("Cancel Options"), tr("Key Bindings")});
-  setFrameShape(QFrame::NoFrame);
-  setFocusPolicy(Qt::NoFocus);
-  setSelectionMode(QAbstractItemView::NoSelection);
-  setColumnWidth(0, scale_width(238));
-  horizontalHeader()->setFixedHeight(scale_height(30));
-  horizontalHeader()->setSectionsMovable(true);
-  horizontalHeader()->setStretchLastSection(true);
-  horizontalHeader()->setStyleSheet(QString(R"(
+  m_table->setHorizontalHeaderLabels({tr("Cancel Options"),
+    tr("Key Bindings")});
+  m_table->horizontalHeader()->installEventFilter(this);
+  m_table->setFrameShape(QFrame::NoFrame);
+  m_table->setFocusPolicy(Qt::NoFocus);
+  m_table->setSelectionMode(QAbstractItemView::NoSelection);
+  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  m_table->setColumnWidth(0, scale_width(238));
+  m_table->horizontalHeader()->setFixedHeight(scale_height(30));
+  m_table->horizontalHeaderItem(0)->setTextAlignment(Qt::AlignLeft |
+    Qt::AlignVCenter);
+  m_table->horizontalHeaderItem(1)->setTextAlignment(Qt::AlignLeft |
+    Qt::AlignVCenter);
+  m_table->horizontalHeader()->setSectionsMovable(false);
+  m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  m_table->horizontalHeader()->setStretchLastSection(true);
+  m_table->horizontalHeader()->setStyleSheet(QString(R"(
     QHeaderView::section {
       background-color: #FFFFFF;
       background-image: url(:/Icons/column-border.png);
       background-position: left;
       background-repeat: repeat;
       border: none;
-      border-bottom: 1px solid #C8C8C8;
       color: #4B23A0;
       font-family: Roboto;
+      font-size: %2px;
       font-weight: 550;
       padding-left: %1px;
       padding-right: %1px;
@@ -107,10 +120,11 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
     QHeaderView::section::first {
       background: none;
       background-color: #FFFFFF;
-    })").arg(scale_width(8)));
-  verticalHeader()->hide();
-  verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  verticalHeader()->setDefaultSectionSize(scale_height(26));
+    })").arg(scale_width(8)).arg(scale_height(12)));
+  m_table->verticalHeader()->hide();
+  m_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
+  setWidget(m_table);
   set_key_bindings(bindings);
 }
 
@@ -125,7 +139,7 @@ void CancelKeyBindingsTableWidget::set_key_bindings(
     auto text_item = new QTableWidgetItem(get_action_text(
       m_key_bindings[i].m_action));
     text_item->setFlags(text_item->flags() & ~Qt::ItemIsEditable);
-    setItem(i, 0, text_item);
+    m_table->setItem(i, 0, text_item);
   }
 }
 

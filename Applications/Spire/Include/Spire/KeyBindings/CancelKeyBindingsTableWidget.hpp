@@ -2,12 +2,13 @@
 #define SPIRE_CANCEL_KEY_BINDINGS_TABLE_WIDGET_HPP
 #include <QTableWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 
   //! Displays a table for editing cancellation key bindings.
-  class CancelKeyBindingsTableWidget : public QTableWidget {
+  class CancelKeyBindingsTableWidget : public ScrollArea {
     public:
 
       //! Signals that a cancel key binding was modified.
@@ -41,6 +42,7 @@ namespace Spire {
     private:
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
+      QTableWidget* m_table;
   };
 }
 
