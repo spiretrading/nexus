@@ -122,8 +122,10 @@ void CancelKeyBindingsTableWidget::set_key_bindings(
     for(auto& binding : bindings) {
       
     }
-    setItem(i, 0, new QTableWidgetItem(get_action_text(
-      m_key_bindings[i].m_action)));
+    auto text_item = new QTableWidgetItem(get_action_text(
+      m_key_bindings[i].m_action));
+    text_item->setFlags(text_item->flags() & ~Qt::ItemIsEditable);
+    setItem(i, 0, text_item);
   }
 }
 
