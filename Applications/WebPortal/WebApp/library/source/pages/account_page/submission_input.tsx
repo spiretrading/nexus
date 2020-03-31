@@ -6,6 +6,7 @@ import { SubmitButton } from './submit_button';
 
 interface Properties {
 
+  /** The comment to be displayed. */
   comment: string;
 
   /** Determines how a form gets submitted depending on the account's roles. */
@@ -19,7 +20,10 @@ interface Properties {
 
   /** Determines if the submit button is enabled. */
   isEnabled?: boolean;
-
+  
+  /** The callback function that updates the comment.
+   * @param comment - The new comment.
+   */
   onChange?: (comment: string) => void;
 
   /** Indicates the form should be submitted. */
