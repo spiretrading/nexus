@@ -88,8 +88,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
   auto button_layout = new QHBoxLayout();
-  button_layout->setContentsMargins(scale_width(8), scale_height(18),
-    scale_width(8), scale_height(8));
+  button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
   auto reset_button = new FlatButton(tr("Restore Defaults"));

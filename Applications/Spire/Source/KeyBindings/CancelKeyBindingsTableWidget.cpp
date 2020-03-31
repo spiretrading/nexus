@@ -1,5 +1,7 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableWidget.hpp"
 #include <QHeaderView>
+#include <QLabel>
+#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ItemPaddingDelegate.hpp"
 
@@ -30,7 +32,7 @@ namespace {
       case KeyBindings::CancelAction::ALL_ASKS:
         return QObject::tr("All Asks");
       case KeyBindings::CancelAction::ALL_BIDS:
-        return QObject::tr("All Bid");
+        return QObject::tr("All Bids");
       case KeyBindings::CancelAction::CLOSEST_ASK:
         return QObject::tr("Closest Ask");
       case KeyBindings::CancelAction::CLOSEST_BID:
@@ -68,63 +70,66 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
     QWidget* parent)
     : ScrollArea(true, parent) {
+  auto main_widget = new QWidget(this);
+  main_widget->setFixedSize(scale(850, 338));
+  auto layout = new QVBoxLayout(main_widget);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  auto header_widget = new QWidget(this);
+  auto header_layout = new QHBoxLayout(header_widget);
+  header_layout->setContentsMargins(scale_width(8), 0, 0, 0);
+  header_layout->setSpacing(0);
+  layout->addLayout(header_layout);
+  auto options_label = new QLabel(tr("Cancel Options"), this);
+  options_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  auto label_style = QString(R"(
+      background-color: #FFFFFF;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-size: %1px;
+      font-weight: 550;
+    )").arg(scale_height(12));
+  options_label->setStyleSheet(label_style);
+  options_label->setFixedSize(scale(238, 30));
+  header_layout->addWidget(options_label);
+  auto bindings_label = new QLabel(tr("Key Binding"), this);
+  bindings_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  bindings_label->setStyleSheet(label_style);
+  bindings_label->setFixedSize(scale(596, 30));
+  header_layout->addWidget(bindings_label);
   m_table = new QTableWidget(ROW_COUNT, COLUMN_COUNT, this);
-  m_table->setFixedSize(scale(852, 368));
+  layout->addWidget(m_table);
+  m_table->setFixedSize(scale(852, 338));
   m_table->setStyleSheet(QString(R"(
     QTableWidget {
       background-color: #FFFFFF;
-      border: none;
+      border: 1px solid #C8C8C8;
       font-family: Roboto;
       font-size: %1px;
       gridline-color: #C8C8C8;
+      padding-bottom: %4px;
       padding-left: %2px;
       padding-right: %2px;
+      padding-top: %3px;
     }
 
     QTableWidget::item {
+      border: none;
       padding-left: %2px;
-    })").arg(scale_height(12)).arg(scale_width(8)));
-  m_table->setHorizontalHeaderLabels({tr("Cancel Options"),
-    tr("Key Bindings")});
-  m_table->horizontalHeader()->installEventFilter(this);
+    })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(30))
+        .arg(scale_height(8)));
   m_table->setFrameShape(QFrame::NoFrame);
   m_table->setFocusPolicy(Qt::NoFocus);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
-  m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setColumnWidth(0, scale_width(238));
-  m_table->horizontalHeader()->setFixedHeight(scale_height(30));
-  m_table->horizontalHeaderItem(0)->setTextAlignment(Qt::AlignLeft |
-    Qt::AlignVCenter);
-  m_table->horizontalHeaderItem(1)->setTextAlignment(Qt::AlignLeft |
-    Qt::AlignVCenter);
-  m_table->horizontalHeader()->setSectionsMovable(false);
-  m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  m_table->horizontalHeader()->hide();
   m_table->horizontalHeader()->setStretchLastSection(true);
-  m_table->horizontalHeader()->setStyleSheet(QString(R"(
-    QHeaderView::section {
-      background-color: #FFFFFF;
-      background-image: url(:/Icons/column-border.png);
-      background-position: left;
-      background-repeat: repeat;
-      border: none;
-      color: #4B23A0;
-      font-family: Roboto;
-      font-size: %2px;
-      font-weight: 550;
-      padding-left: %1px;
-      padding-right: %1px;
-    }
-
-    QHeaderView::section::first {
-      background: none;
-      background-color: #FFFFFF;
-    })").arg(scale_width(8)).arg(scale_height(12)));
   m_table->verticalHeader()->hide();
   m_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
-  setWidget(m_table);
+  setWidget(main_widget);
   set_key_bindings(bindings);
 }
 
