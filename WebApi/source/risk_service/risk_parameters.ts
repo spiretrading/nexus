@@ -5,6 +5,10 @@ import { RiskState } from './risk_state';
 /** Stores an account's risk parameters. */
 export class RiskParameters {
 
+  /** Represents an invalid value. */
+  public static readonly INVALID = new RiskParameters(Currency.NONE,
+    Money.ZERO, RiskState.NONE, Money.ZERO, 0, Beam.Duration.ZERO);
+
   /** Parses RiskParameters from JSON. */
   public static fromJson(value: any): RiskParameters {
     return new RiskParameters(Currency.fromJson(value.currency),
@@ -34,7 +38,7 @@ export class RiskParameters {
   }
 
   /** Makes a copy of this object. */
-  public copy(): RiskParameters {
+  public clone(): RiskParameters {
     return new RiskParameters(this._currency, this._buyingPower,
       this._allowedState, this._netLoss, this._lossFromTop,
       this._transitionTime);
@@ -64,7 +68,7 @@ export class RiskParameters {
   }
 
   public set allowedState(value: RiskState) {
-    this._allowedState = value.copy();
+    this._allowedState = value;
   }
 
   /** Returns the maximum net loss before entering closed orders mode. */
