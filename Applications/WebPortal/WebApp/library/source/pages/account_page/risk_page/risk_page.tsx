@@ -69,6 +69,13 @@ export class RiskPage extends React.Component<Properties, State> {
           return RiskPage.STYLE.contentLarge;
       }
     })();
+    const lineWrapperStyle = (() => {
+      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        return RiskPage.STYLE.lineWrapperAdmin;
+      } else {
+        return RiskPage.STYLE.lineWrapper;
+      }
+    })();
     return(
       <PageWrapper>
         <div style={containerStyle}>
@@ -78,7 +85,7 @@ export class RiskPage extends React.Component<Properties, State> {
             displaySize={this.props.displaySize}
             onChange={this.onParametersChange}/>
           <div style={RiskPage.STYLE.mediumPadding}/>
-          <div style={RiskPage.STYLE.lineWrapper}>
+          <div style={lineWrapperStyle}>
             <HLine color={RiskPage.LINE_COLOR}/>
           </div>
           <div style={RiskPage.STYLE.mediumPadding}/>
@@ -147,8 +154,11 @@ export class RiskPage extends React.Component<Properties, State> {
       width: '100%',
       height: '30px'
     },
-    lineWrapper: {
+    lineWrapperAdmin: {
       width: '246px'
+    },
+    lineWrapper: {
+      width: '100%'
     }
   }
   private static readonly LINE_COLOR = '#E6E6E6';
