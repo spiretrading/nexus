@@ -131,7 +131,6 @@ export class RiskParametersView extends React.Component<Properties> {
         <Padding/>
       </HBoxLayout>);
   }
-  
 
   private onCurrencyChange(value: Nexus.Currency) {
     const newParameters = this.props.parameters.clone();
