@@ -6,8 +6,9 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
- /** Determines the size to render components at. */
 interface Properties {
+
+  /** Determines the size to render components at. */
   displaySize: WebPortal.DisplaySize;
 }
 
@@ -18,6 +19,7 @@ interface State {
   isError: boolean,
 }
 
+/** Displays and test the RiskPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
@@ -73,8 +75,7 @@ class TestApp extends React.Component<Properties, State> {
           isSubmitEnabled={this.state.isSubmitEnabled}
           onSubmit={this.onSubmit}/>
         <div className={css(TestApp.STYLE.buttonWrapper)}>
-          <button className={css(TestApp.STYLE.button)} onClick={
-              this.onToggleIsAdmin}>
+          <button onClick={this.onToggleIsAdmin}>
             {toggleAdminButtonText}
           </button>
           <button onClick={this.onToggleEnabled}>
@@ -86,7 +87,7 @@ class TestApp extends React.Component<Properties, State> {
           <button onClick={this.clearStatus}>
             Clear Status
           </button>
-       </div>
+        </div>
       </Dali.VBoxLayout>);
   }
 
@@ -129,9 +130,6 @@ class TestApp extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       position: 'absolute' as 'absolute'
-    },
-    button: {
-      //position: 'absolute' as 'absolute'
     }
   });
 }
