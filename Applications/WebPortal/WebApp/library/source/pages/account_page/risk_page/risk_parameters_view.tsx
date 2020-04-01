@@ -133,7 +133,6 @@ export class RiskParametersView extends React.Component<Properties> {
   }
   
 
-
   private onCurrencyChange(value: Nexus.Currency) {
     const newParameters = this.props.parameters.clone();
     newParameters.currency = value;
