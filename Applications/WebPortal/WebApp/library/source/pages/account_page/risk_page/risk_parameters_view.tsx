@@ -16,6 +16,8 @@ interface Properties {
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  onChange?: (parameters: Nexus.RiskParameters) => void;
 }
 
 enum TimeUnit {
@@ -122,18 +124,35 @@ export class RiskParametersView extends React.Component<Properties> {
         <Padding/>
       </HBoxLayout>);
   }
+  
+  private copyParameter() {
+    const oldParameters = this.props.parameters;
+    const param = new Nexus.RiskParameters(
+      oldParameters.currency, 
+      oldParameters.buyingPower,
+      oldParameters.allowedState,
+      oldParameters.netLoss,
+      oldParameters.lossFromTop,
+      oldParameters.transitionTime);
+    return param;
+  }
 
   private onCurrencyChange(value: Nexus.Currency) {
-    this.props.parameters.currency = value;
-    this.forceUpdate();
+    const newParameters = this.copyParameter();
+    newParameters.currency = value;
+    this.props.onChange(newParameters);
   }
 
   private onBuyingPowerChange(value: Nexus.Money) {
-    this.props.parameters.buyingPower = value;
+    const newParameters = this.copyParameter();
+    newParameters.buyingPower = value;
+    this.props.onChange(newParameters);
   }
 
   private onNetLossChange(value: Nexus.Money) {
-    this.props.parameters.netLoss = value;
+    const newParameters = this.copyParameter();
+    newParameters.netLoss = value;
+    this.props.onChange(newParameters);
   }
 
   private onTransitionTimeChange(value: number, timeUnit: TimeUnit) {
@@ -160,10 +179,12 @@ export class RiskParametersView extends React.Component<Properties> {
           };
         }
     })();
-    this.props.parameters.transitionTime = Beam.Duration.HOUR.multiply(
+    const newParameters = this.copyParameter();
+    newParameters.transitionTime = Beam.Duration.HOUR.multiply(
       newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
       newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
       newTimeJSON.seconds));
+    this.props.onChange(newParameters);
   }
 
   private static TRANSITION_TIME_STYLE = StyleSheet.create({

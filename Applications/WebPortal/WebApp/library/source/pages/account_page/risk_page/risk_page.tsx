@@ -1,35 +1,63 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DisplaySize, PageWrapper } from '../../..';
-import { SubmissionBox } from '..';
+import { SubmissionInput } from '..';
 import { RiskParametersView } from '.';
 import { HLine } from '../../../components';
+import { stringify } from 'querystring';
 
 interface Properties {
-
-  /** The type of display to render on. */
-  displaySize: DisplaySize;
-
-  /** The parameters to display. */
-  parameters: Nexus.RiskParameters;
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** The type of display to render on. */
+  displaySize: DisplaySize;
+
+  /** The risk parameters to display. */
+  parameters: Nexus.RiskParameters;
+
+  /** The account's roles. */
   roles: Nexus.AccountRoles;
 
-  onSubmit?: () => void;
+  /** Whether an error occurred. */
+  isError?: boolean;
 
+  /** Whether the submit button is enabled. */
+  isSubmitEnabled?: boolean;
+
+  /** The status message to display. */
   status?: string;
 
-  isError?: boolean;
+  /** Indicates the form should be submitted.
+   * @param comment - The comment to submit with the form.
+   * @param parameters - The parameters to submit.
+   */
+  onSubmit?: (comments: string, parameters: Nexus.RiskParameters) => void;
 }
 
 interface State {
-  
+  comment: string;
+  parameters: Nexus.RiskParameters;
 }
 
-export class RiskPage extends React.Component<Properties> {
+export class RiskPage extends React.Component<Properties, State> {
+  public static readonly defaultProps = {
+    status: '',
+    onSubmit: () => {}
+  }
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      comment: '',
+      parameters: this.props.parameters
+    }
+    this.onCommentChange = this.onCommentChange.bind(this);
+    this.onParametersChange = this.onParametersChange.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+  }
+
   render() {
     const containerStyle= (() => {
       switch(this.props.displaySize) {
@@ -47,17 +75,34 @@ export class RiskPage extends React.Component<Properties> {
           <RiskParametersView
             parameters={this.props.parameters}
             currencyDatabase={this.props.currencyDatabase}
-            displaySize={this.props.displaySize}/>
+            displaySize={this.props.displaySize}
+            onChange={this.onParametersChange}/>
           <div style={RiskPage.STYLE.mediumPadding}/>
           <div style={RiskPage.STYLE.lineWrapper}>
             <HLine color={RiskPage.LINE_COLOR}/>
           </div>
           <div style={RiskPage.STYLE.mediumPadding}/>
-          <SubmissionBox roles={this.props.roles}/>
+          <SubmissionInput comment={this.state.comment}
+            roles={this.props.roles} isError={this.props.isError}
+            status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+            onChange={this.onCommentChange}
+            onSubmit={this.onSubmit}/>
         </div>
       </PageWrapper>);
   }
-  
+
+  private onCommentChange(comment: string) {
+    this.setState({comment: comment});
+  }
+
+  private onParametersChange(parameters: Nexus.RiskParameters) {
+    this.setState({parameters: parameters});
+  }
+
+  private onSubmit() {
+    this.props.onSubmit(this.state.comment, this.state.parameters);
+  }
+
   private static readonly STYLE = {
     contentSmall: {
       paddingTop: '30px',

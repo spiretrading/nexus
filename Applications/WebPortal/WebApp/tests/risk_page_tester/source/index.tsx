@@ -43,10 +43,10 @@ class TestApp extends React.Component<Properties, State> {
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.RiskPage
-           displaySize={this.props.displaySize}
-           parameters={parameters}
-           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
-           roles={this.state.roles}/>
+          displaySize={this.props.displaySize}
+          parameters={parameters}
+          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          roles={this.state.roles}/>
         <button className={css(TestApp.STYLE.button)} onClick={
             this.onToggleIsAdmin}>
           {toggleAdminButtonText}
@@ -74,34 +74,6 @@ class TestApp extends React.Component<Properties, State> {
     },
     button: {
       position: 'absolute' as 'absolute'
-    }
-  });
-  private static CONTAINER_STYLE = StyleSheet.create({
-    base: {
-      position: 'absolute' as 'absolute',
-      left: 0,
-      right: 0,
-      margin: 'auto'
-    },
-    small: {
-      width: '60%',
-      minWidth: '320px',
-      maxWidth: '460px'
-    },
-    medium: {
-      width: '732px'
-    },
-    large: {
-      width: '1000px'
-    },
-    smallPadding: {
-      width: '20%'
-    },
-    mediumPadding: {
-      width: 'calc(50% - 366px)'
-    },
-    largePadding: {
-      width: 'calc(50% - 500px)'
     }
   });
 }
