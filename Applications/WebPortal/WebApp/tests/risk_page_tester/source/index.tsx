@@ -19,7 +19,7 @@ interface State {
   isError: boolean,
 }
 
-/** Displays and test the RiskPage. */
+/** Displays and tests the RiskPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
