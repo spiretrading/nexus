@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
 import { HttpEntitlementsModel } from './entitlements_page';
+import { HttpRiskModel } from './risk_page';
 import { LocalAccountModel } from './local_account_model';
 
 /** Implements an AccountModel using HTTP services. */
@@ -18,6 +19,7 @@ export class HttpAccountModel extends AccountModel {
     this.serviceClients = serviceClients;
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
+    this._riskModel = new HttpRiskModel(account, this.serviceClients);
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -30,6 +32,10 @@ export class HttpAccountModel extends AccountModel {
 
   public get entitlementsModel(): HttpEntitlementsModel {
     return this._entitlementsModel;
+  }
+
+  public get riskModel(): HttpRiskModel {
+    return this._riskModel;
   }
 
   public async load(): Promise<void> {
@@ -47,4 +53,5 @@ export class HttpAccountModel extends AccountModel {
   private model: LocalAccountModel;
   private serviceClients: Nexus.ServiceClients;
   private _entitlementsModel: HttpEntitlementsModel;
+  private _riskModel: HttpRiskModel;
 }
