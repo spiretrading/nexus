@@ -6,17 +6,17 @@ import { RiskPage } from './risk_page';
 
 interface Properties {
   
-  /** The model representing an account's risk settings. */
-  model: RiskModel;
-
-  /** The account's roles. */
-  roles: Nexus.AccountRoles;
-
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
+
+  /** The model representing an account's risk settings. */
+  model: RiskModel;
+
+  /** The account's roles. */
+  roles: Nexus.AccountRoles;
 }
 
 interface State {

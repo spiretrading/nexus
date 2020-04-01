@@ -47,6 +47,7 @@ export class RiskParametersView extends React.Component<Properties> {
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
       this.props.parameters.currency).sign;
+    console.log(currencySign);
     return (
       <HBoxLayout width='100%'>
         <Padding/>
