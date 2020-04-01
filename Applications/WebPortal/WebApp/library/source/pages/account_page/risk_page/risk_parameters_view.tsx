@@ -17,6 +17,9 @@ interface Properties {
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
+  /** Callback for when the parameters are changed.
+   * @param parameters - The new parameters.
+   */
   onChange?: (parameters: Nexus.RiskParameters) => void;
 }
 
@@ -28,6 +31,10 @@ enum TimeUnit {
 
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    onChange: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.onCurrencyChange = this.onCurrencyChange.bind(this);
@@ -125,32 +132,22 @@ export class RiskParametersView extends React.Component<Properties> {
       </HBoxLayout>);
   }
   
-  private copyParameter() {
-    const oldParameters = this.props.parameters;
-    const parameters = new Nexus.RiskParameters(
-      oldParameters.currency, 
-      oldParameters.buyingPower,
-      oldParameters.allowedState,
-      oldParameters.netLoss,
-      oldParameters.lossFromTop,
-      oldParameters.transitionTime);
-    return parameters;
-  }
+
 
   private onCurrencyChange(value: Nexus.Currency) {
-    const newParameters = this.copyParameter();
+    const newParameters = this.props.parameters.clone();
     newParameters.currency = value;
     this.props.onChange(newParameters);
   }
 
   private onBuyingPowerChange(value: Nexus.Money) {
-    const newParameters = this.copyParameter();
+    const newParameters = this.props.parameters.clone();
     newParameters.buyingPower = value;
     this.props.onChange(newParameters);
   }
 
   private onNetLossChange(value: Nexus.Money) {
-    const newParameters = this.copyParameter();
+    const newParameters = this.props.parameters.clone();
     newParameters.netLoss = value;
     this.props.onChange(newParameters);
   }
@@ -179,7 +176,7 @@ export class RiskParametersView extends React.Component<Properties> {
           };
         }
     })();
-    const newParameters = this.copyParameter();
+    const newParameters = this.props.parameters.clone();
     newParameters.transitionTime = Beam.Duration.HOUR.multiply(
       newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
       newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(

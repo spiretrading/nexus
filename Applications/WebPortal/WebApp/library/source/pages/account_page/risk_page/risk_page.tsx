@@ -2,7 +2,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine, PageWrapper } from '../../..';
 import { SubmissionInput } from '..';
-import { RiskParametersView } from '.';
+import { RiskParametersView } from './risk_parameters_view';
 
 interface Properties {
 
@@ -21,9 +21,6 @@ interface Properties {
   /** Whether an error occurred. */
   isError?: boolean;
 
-  /** Whether the submit button is enabled. */
-  isSubmitEnabled?: boolean;
-
   /** The status message to display. */
   status?: string;
 
@@ -31,7 +28,7 @@ interface Properties {
    * @param comment - The comment to submit with the form.
    * @param parameters - The parameters to submit.
    */
-  onSubmit?: (comments: string, parameters: Nexus.RiskParameters) => void;
+  onSubmit?: (comment: string, parameters: Nexus.RiskParameters) => void;
 }
 
 interface State {
@@ -90,7 +87,8 @@ export class RiskPage extends React.Component<Properties, State> {
           <div style={RiskPage.STYLE.mediumPadding}/>
           <SubmissionInput comment={this.state.comment}
             roles={this.props.roles} isError={this.props.isError}
-            status={this.props.status} isEnabled={this.props.isSubmitEnabled}
+            status={this.props.status} 
+            isEnabled
             onChange={this.onCommentChange}
             onSubmit={this.onSubmit}/>
         </div>

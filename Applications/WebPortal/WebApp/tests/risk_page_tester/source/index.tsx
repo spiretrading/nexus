@@ -72,7 +72,6 @@ class TestApp extends React.Component<Properties, State> {
           roles={this.state.roles}
           status={this.state.status}
           isError={this.state.isError}
-          isSubmitEnabled={this.state.isSubmitEnabled}
           onSubmit={this.onSubmit}/>
         <div className={css(TestApp.STYLE.buttonWrapper)}>
           <button onClick={this.onToggleIsAdmin}>
