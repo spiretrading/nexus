@@ -1,10 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, PageWrapper } from '../../..';
+import { DisplaySize, HLine, PageWrapper } from '../../..';
 import { SubmissionInput } from '..';
 import { RiskParametersView } from '.';
-import { HLine } from '../../../components';
-import { stringify } from 'querystring';
 
 interface Properties {
 
@@ -41,6 +39,7 @@ interface State {
   parameters: Nexus.RiskParameters;
 }
 
+/** Displays a risk page. */
 export class RiskPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     status: '',
@@ -132,7 +131,7 @@ export class RiskPage extends React.Component<Properties, State> {
       paddingLeft: '18px',
       paddingRight: '18px',
       boxSizing: 'border-box' as 'border-box',
-      width: '732px',
+      width: '768px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       justifyContent: 'center' as 'center',
@@ -144,7 +143,7 @@ export class RiskPage extends React.Component<Properties, State> {
       paddingLeft: '18px',
       paddingRight: '18px',
       boxSizing: 'border-box' as 'border-box',
-      width: '1000px',
+      width: '1036px',
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       justifyContent: 'center' as 'center',

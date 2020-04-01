@@ -127,14 +127,14 @@ export class RiskParametersView extends React.Component<Properties> {
   
   private copyParameter() {
     const oldParameters = this.props.parameters;
-    const param = new Nexus.RiskParameters(
+    const parameters = new Nexus.RiskParameters(
       oldParameters.currency, 
       oldParameters.buyingPower,
       oldParameters.allowedState,
       oldParameters.netLoss,
       oldParameters.lossFromTop,
       oldParameters.transitionTime);
-    return param;
+    return parameters;
   }
 
   private onCurrencyChange(value: Nexus.Currency) {
