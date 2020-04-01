@@ -16,6 +16,11 @@ interface Properties {
 
   /** Used to lookup currency names and symbols. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** Callback for when the parameters are changed.
+   * @param parameters - The new parameters.
+   */
+  onChange?: (parameters: Nexus.RiskParameters) => void;
 }
 
 enum TimeUnit {
@@ -26,6 +31,10 @@ enum TimeUnit {
 
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties> {
+  public static readonly defaultProps = {
+    onChange: () => {}
+  }
+
   constructor(props: Properties) {
     super(props);
     this.onCurrencyChange = this.onCurrencyChange.bind(this);
@@ -124,16 +133,21 @@ export class RiskParametersView extends React.Component<Properties> {
   }
 
   private onCurrencyChange(value: Nexus.Currency) {
-    this.props.parameters.currency = value;
-    this.forceUpdate();
+    const newParameters = this.props.parameters.clone();
+    newParameters.currency = value;
+    this.props.onChange(newParameters);
   }
 
   private onBuyingPowerChange(value: Nexus.Money) {
-    this.props.parameters.buyingPower = value;
+    const newParameters = this.props.parameters.clone();
+    newParameters.buyingPower = value;
+    this.props.onChange(newParameters);
   }
 
   private onNetLossChange(value: Nexus.Money) {
-    this.props.parameters.netLoss = value;
+    const newParameters = this.props.parameters.clone();
+    newParameters.netLoss = value;
+    this.props.onChange(newParameters);
   }
 
   private onTransitionTimeChange(value: number, timeUnit: TimeUnit) {
@@ -160,10 +174,12 @@ export class RiskParametersView extends React.Component<Properties> {
           };
         }
     })();
-    this.props.parameters.transitionTime = Beam.Duration.HOUR.multiply(
+    const newParameters = this.props.parameters.clone();
+    newParameters.transitionTime = Beam.Duration.HOUR.multiply(
       newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
       newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
       newTimeJSON.seconds));
+    this.props.onChange(newParameters);
   }
 
   private static TRANSITION_TIME_STYLE = StyleSheet.create({
