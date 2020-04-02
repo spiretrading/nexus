@@ -20,11 +20,13 @@ namespace Spire {
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       QKeySequence m_key_sequence;
       std::set<Qt::Key> m_valid_keys;
       std::vector<Qt::Key> m_entered_keys;
+      QFont m_font;
 
       bool is_valid(const std::vector<Qt::Key>& keys);
   };
