@@ -3,6 +3,7 @@
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -28,13 +29,19 @@ namespace {
 KeySequenceItemDelegate::KeySequenceItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent) {}
 
+connection KeySequenceItemDelegate::connect_key_sequence_signal(
+    const KeySequenceSignal::slot_type& slot) const {
+  return m_key_sequence_signal.connect(slot);
+}
+
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new KeySequenceEditor(
-    index.data(Qt::DisplayRole).value<QKeySequence>(), {Qt::Key_Escape},
-    parent);
-  connect(editor, &KeySequenceEditor::editingFinished,
-    this, &KeySequenceItemDelegate::on_editing_finished);
+  auto editor = new KeySequenceEditor({Qt::Key_Escape}, parent);
+  editor->connect_key_sequence_signal(
+    [=, row = index.row(), column = index.column()] (auto sequence) {
+      m_key_sequence_signal(sequence, row, column);
+      editor->close();
+    });
   return editor;
 }
 
@@ -52,17 +59,6 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
     }
   }
   painter->restore();
-}
-
-void KeySequenceItemDelegate::setModelData(QWidget* editor,
-    QAbstractItemModel* model, const QModelIndex& index) const {
-  auto key_editor = reinterpret_cast<KeySequenceEditor*>(editor);
-  model->setData(index, key_editor->get_key_sequence(), Qt::DisplayRole);
-}
-
-QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
-    const QModelIndex& index) const {
-  return QStyledItemDelegate::sizeHint(option, index);
 }
 
 void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,
@@ -96,10 +92,4 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
   painter->setPen(Qt::black);
   painter->drawText(pos.x() + TEXT_PADDING(),
     pos.y() - (text_size.height() / 2), text);
-}
-
-void KeySequenceItemDelegate::on_editing_finished() {
-  auto editor = reinterpret_cast<KeySequenceEditor*>(sender());
-  emit commitData(editor);
-  emit closeEditor(editor);
 }
