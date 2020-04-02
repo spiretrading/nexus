@@ -76,7 +76,7 @@ export class RiskPage extends React.Component<Properties, State> {
       <PageWrapper>
         <div style={containerStyle}>
           <RiskParametersView
-            parameters={this.props.parameters}
+            parameters={this.state.parameters}
             currencyDatabase={this.props.currencyDatabase}
             displaySize={this.props.displaySize}
             onChange={this.onParametersChange}/>
