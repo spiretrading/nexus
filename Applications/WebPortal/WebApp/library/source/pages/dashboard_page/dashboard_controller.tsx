@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DisplaySize } from '../..';
+import { DisplaySize, LoadingPage } from '../..';
 import { AccountController, AccountModel } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
@@ -35,7 +35,7 @@ export class DashboardController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
-      return <div/>;
+      return <LoadingPage/>;
     }
     const page = (() => {
       switch(this.state.page) {

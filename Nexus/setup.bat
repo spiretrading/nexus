@@ -18,7 +18,7 @@ IF NOT EXIST Beam (
     SET EXIT_STATUS=1
   )
 )
-SET beam_commit="273f1e77f738162c15deb9bd0b36770ced85abd4"
+SET beam_commit="e7e3dcae29185c3be4bbd1e0c68d4ef6b675cfbf"
 IF EXIST Beam (
   PUSHD Beam
   git merge-base --is-ancestor "!beam_commit!" HEAD
