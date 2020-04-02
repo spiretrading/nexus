@@ -5,7 +5,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CurrencySelectionField, DisplaySize, IntegerField,
   MoneyField } from '../../..';
-import { Currency } from 'nexus';
 
 interface Properties {
 
