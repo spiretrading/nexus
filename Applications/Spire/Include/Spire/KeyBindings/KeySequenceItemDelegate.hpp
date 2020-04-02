@@ -1,11 +1,12 @@
 #ifndef SPIRE_KEY_SEQUENCE_ITEM_DELEGATE
 #define SPIRE_KEY_SEQUENCE_ITEM_DELEGATE
-#include <QAbstractItemDelegate>
+#include <QStyledItemDelegate>
+#include "Spire/KeyBindings/KeySequenceEditor.hpp"
 
 namespace Spire {
 
   //! An item delegate for drawing and editing key sequences.
-  class KeySequenceItemDelegate : public QAbstractItemDelegate {
+  class KeySequenceItemDelegate : public QStyledItemDelegate {
     public:
 
       //! Constructs a KeySequenceItemDelegate.
@@ -18,13 +19,7 @@ namespace Spire {
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
-      bool editorEvent(QEvent* event, QAbstractItemModel* model,
-        const QStyleOptionViewItem& option, const QModelIndex& index) override;
-
       void paint(QPainter* painter, const QStyleOptionViewItem& option,
-        const QModelIndex& index) const override;
-
-      void setEditorData(QWidget* editor,
         const QModelIndex& index) const override;
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
@@ -33,9 +28,12 @@ namespace Spire {
       QSize sizeHint(const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
-      void updateEditorGeometry(QWidget* editor,
-        const QStyleOptionViewItem& option,
-        const QModelIndex& index) const override;
+    private:
+      void draw_key_sequence(const QKeySequence& sequence, const QRect& rect,
+        QPainter* painter) const;
+      void draw_key(const QString& text, const QSize& text_size,
+        const QPoint& pos, QPainter* painter) const;
+      void on_editing_finished();
   };
 }
 

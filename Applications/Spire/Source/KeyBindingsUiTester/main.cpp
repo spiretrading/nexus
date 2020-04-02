@@ -11,7 +11,8 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Key Bindings UI Tester"));
   initialize_resources();
   auto bindings = KeyBindings::get_default_key_bindings();
-  bindings.set({}, Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+  bindings.set({Qt::Key_Shift, Qt::Key_Escape},
+    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
     KeyBindings::CancelAction::ALL);
   auto window = new KeyBindingsWindow(bindings);
   window->show();

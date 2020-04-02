@@ -43,6 +43,8 @@ namespace Spire {
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
       QTableWidget* m_table;
+
+      void on_cell_clicked(int row, int column);
   };
 }
 

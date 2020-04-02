@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Ui/ItemPaddingDelegate.hpp"
 
 using namespace boost::signals2;
@@ -130,6 +131,11 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
   m_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
   setWidget(main_widget);
+  m_table->setItemDelegateForColumn(1, new KeySequenceItemDelegate(this));
+  m_table->setEditTriggers(QAbstractItemView::EditTrigger::SelectedClicked);
+  connect(m_table, &QTableWidget::cellClicked, [=] (auto row, auto column) {
+    on_cell_clicked(row, column);
+  });
   set_key_bindings(bindings);
 }
 
@@ -139,16 +145,33 @@ void CancelKeyBindingsTableWidget::set_key_bindings(
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
     for(auto& binding : bindings) {
-      
+      auto iter = std::find_if(bindings.begin(), bindings.end(),
+        [&] (auto item) {
+          return m_key_bindings.back().m_action == item.m_action;
+        });
+      if(iter != bindings.end()) {
+        m_key_bindings.back().m_sequence = binding.m_sequence;
+      }
     }
     auto text_item = new QTableWidgetItem(get_action_text(
       m_key_bindings[i].m_action));
     text_item->setFlags(text_item->flags() & ~Qt::ItemIsEditable);
     m_table->setItem(i, 0, text_item);
+    auto key_item = new QTableWidgetItem();
+    key_item->setData(Qt::DisplayRole, QVariant::fromValue<QKeySequence>(
+      m_key_bindings.back().m_sequence));
+    m_table->setItem(i, 1, key_item);
   }
 }
 
 connection CancelKeyBindingsTableWidget::connect_modified_signal(
     const ModifiedSignal::slot_type& slot) const {
   return m_modified_signal.connect(slot);
+}
+
+void CancelKeyBindingsTableWidget::on_cell_clicked(int row, int column) {
+  if(column == 1) {
+    auto index = m_table->model()->index(row, column);
+    m_table->edit(index);
+  }
 }
