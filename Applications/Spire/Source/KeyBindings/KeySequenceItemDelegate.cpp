@@ -56,8 +56,16 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
 
 void KeySequenceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto key_editor = reinterpret_cast<KeySequenceEditor*>(editor);
-  model->setData(index, key_editor->get_key_sequence(), Qt::DisplayRole);
+  auto key_sequence = reinterpret_cast<KeySequenceEditor*>(
+    editor)->get_key_sequence();
+  model->setData(index, key_sequence, Qt::DisplayRole);
+  for(auto i = 0; i < model->rowCount(); ++i) {
+    auto current_index = model->index(i, 1);
+    if(current_index.row() != index.row() &&
+        current_index.data().value<QKeySequence>() == key_sequence) {
+      model->setData(current_index, QVariant());
+    }
+  }
 }
 
 QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
