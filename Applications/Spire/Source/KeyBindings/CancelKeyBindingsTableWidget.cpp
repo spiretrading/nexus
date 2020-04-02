@@ -131,7 +131,11 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
   m_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
   setWidget(main_widget);
-  m_table->setItemDelegateForColumn(1, new KeySequenceItemDelegate(this));
+  auto item_delegate = new KeySequenceItemDelegate(this);
+  item_delegate->connect_item_modified_signal([=] (auto row) {
+    on_key_sequence_modified(row);
+  });
+  m_table->setItemDelegateForColumn(1, item_delegate);
   m_table->setEditTriggers(QAbstractItemView::EditTrigger::SelectedClicked);
   connect(m_table, &QTableWidget::cellClicked, [=] (auto row, auto column) {
     on_cell_clicked(row, column);
@@ -174,4 +178,10 @@ void CancelKeyBindingsTableWidget::on_cell_clicked(int row, int column) {
     auto index = m_table->model()->index(row, column);
     m_table->edit(index);
   }
+}
+
+void CancelKeyBindingsTableWidget::on_key_sequence_modified(int row) {
+  m_modified_signal({
+    m_table->item(row, 1)->data(Qt::DisplayRole).value<QKeySequence>(), {},
+      get_action(row)});
 }

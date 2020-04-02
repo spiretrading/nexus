@@ -9,11 +9,21 @@ namespace Spire {
   class KeySequenceItemDelegate : public QStyledItemDelegate {
     public:
 
+      //! Signals that a table item's data was modified.
+      /*
+        \param row The row that was modified.
+      */
+      using ItemModifiedSignal = Signal<void (int row)>;
+
       //! Constructs a KeySequenceItemDelegate.
       /*
         \param The parent widget.
       */
 	    explicit KeySequenceItemDelegate(QWidget* parent = nullptr);
+
+      //! Connects a slot to the item modified signal.
+      boost::signals2::connection connect_item_modified_signal(
+        const ItemModifiedSignal::slot_type& slot) const;
 
       QWidget* createEditor(QWidget* parent,
         const QStyleOptionViewItem& option,
@@ -29,6 +39,8 @@ namespace Spire {
         const QModelIndex& index) const override;
 
     private:
+      mutable ItemModifiedSignal m_item_modified_signal;
+
       void draw_key_sequence(const QKeySequence& sequence, const QRect& rect,
         QPainter* painter) const;
       void draw_key(const QString& text, const QSize& text_size,

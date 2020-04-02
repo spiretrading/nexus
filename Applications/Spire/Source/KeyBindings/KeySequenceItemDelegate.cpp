@@ -3,6 +3,7 @@
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -27,6 +28,11 @@ namespace {
 
 KeySequenceItemDelegate::KeySequenceItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent) {}
+
+connection KeySequenceItemDelegate::connect_item_modified_signal(
+    const ItemModifiedSignal::slot_type& slot) const {
+  return m_item_modified_signal.connect(slot);
+}
 
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -64,8 +70,10 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
     if(current_index.row() != index.row() &&
         current_index.data().value<QKeySequence>() == key_sequence) {
       model->setData(current_index, QVariant());
+      m_item_modified_signal(current_index.row());
     }
   }
+  m_item_modified_signal(index.row());
 }
 
 QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,

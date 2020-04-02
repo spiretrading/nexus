@@ -45,6 +45,7 @@ namespace Spire {
       QTableWidget* m_table;
 
       void on_cell_clicked(int row, int column);
+      void on_key_sequence_modified(int row);
   };
 }
 
