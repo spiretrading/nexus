@@ -58,6 +58,12 @@ void ScrollArea::setWidget(QWidget* widget) {
     widget->setAttribute(Qt::WA_Hover);
     widget->installEventFilter(this);
   }
+  for(auto& child : widget->children()) {
+    auto c = qobject_cast<QWidget*>(child);
+    if(c != nullptr) {
+      c->installEventFilter(this);
+    }
+  }
   QScrollArea::setWidget(widget);
 }
 
@@ -145,9 +151,15 @@ bool ScrollArea::is_within_opposite_scroll_bar(QScrollBar* scroll_bar, int pos,
   if(widget() == nullptr) {
     return false;
   }
-  auto scroll_adjustment = map_to(static_cast<double>(scroll_bar->value()),
-    static_cast<double>(scroll_bar->minimum()),
-    static_cast<double>(scroll_bar->maximum()), 0, scroll_size - widget_size);
+  auto scroll_adjustment = [&] {
+    if(scroll_size < widget_size) {
+      return 0;
+    }
+    return map_to(static_cast<double>(scroll_bar->value()),
+      static_cast<double>(scroll_bar->minimum()),
+      static_cast<double>(scroll_bar->maximum()), 0,
+      scroll_size - widget_size);
+  }();
   return pos - scroll_adjustment > widget_size -
     scale_width(SCROLL_BAR_MAX_SIZE);
 }
