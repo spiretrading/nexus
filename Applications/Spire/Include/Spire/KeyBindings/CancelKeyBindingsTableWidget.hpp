@@ -2,6 +2,7 @@
 #define SPIRE_CANCEL_KEY_BINDINGS_TABLE_WIDGET_HPP
 #include <QTableWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/CustomGridTableWidget.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
@@ -42,7 +43,7 @@ namespace Spire {
     private:
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
-      QTableWidget* m_table;
+      CustomGridTableWidget* m_table;
 
       void on_cell_clicked(int row, int column);
       void on_key_sequence_modified(int row);

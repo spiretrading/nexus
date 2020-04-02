@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableWidget.hpp"
-#include <QHeaderView>
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -98,38 +97,9 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
   bindings_label->setStyleSheet(label_style);
   bindings_label->setFixedSize(scale(596, 30));
   header_layout->addWidget(bindings_label);
-  m_table = new QTableWidget(ROW_COUNT, COLUMN_COUNT, this);
+  m_table = new CustomGridTableWidget(ROW_COUNT, COLUMN_COUNT, this);
   layout->addWidget(m_table);
   m_table->setFixedSize(scale(852, 338));
-  m_table->setStyleSheet(QString(R"(
-    QTableWidget {
-      background-color: #FFFFFF;
-      border: 1px solid #C8C8C8;
-      font-family: Roboto;
-      font-size: %1px;
-      gridline-color: #C8C8C8;
-      padding-bottom: %4px;
-      padding-left: %2px;
-      padding-right: %2px;
-      padding-top: %3px;
-    }
-
-    QTableWidget::item {
-      border: none;
-      padding-left: %2px;
-    })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(30))
-        .arg(scale_height(8)));
-  m_table->setFrameShape(QFrame::NoFrame);
-  m_table->setFocusPolicy(Qt::NoFocus);
-  m_table->setSelectionMode(QAbstractItemView::NoSelection);
-  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setColumnWidth(0, scale_width(238));
-  m_table->horizontalHeader()->hide();
-  m_table->horizontalHeader()->setStretchLastSection(true);
-  m_table->verticalHeader()->hide();
-  m_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
   setWidget(main_widget);
   auto item_delegate = new KeySequenceItemDelegate(this);
   item_delegate->connect_item_modified_signal([=] (auto row) {

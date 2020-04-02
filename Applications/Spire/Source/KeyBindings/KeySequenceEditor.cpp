@@ -48,7 +48,7 @@ void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
 
 void KeySequenceEditor::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(0, 0, width(), height(), Qt::white);
+  painter.fillRect(0, scale_height(1), width(), height(), Qt::white);
   painter.setFont(m_font);
   painter.setPen(Qt::black);
   painter.drawText(0, scale_height(16), tr("Enter Keys"));
