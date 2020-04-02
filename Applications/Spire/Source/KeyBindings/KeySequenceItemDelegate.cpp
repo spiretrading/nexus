@@ -31,8 +31,8 @@ KeySequenceItemDelegate::KeySequenceItemDelegate(QWidget* parent)
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new KeySequenceEditor(
-    index.data(Qt::DisplayRole).value<QKeySequence>(), {Qt::Key_Escape},
-    parent);
+    index.data(Qt::DisplayRole).value<QKeySequence>(),
+    {Qt::Key_Shift, Qt::Key_Control, Qt::Key_Alt}, {Qt::Key_Escape}, parent);
   connect(editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
   return editor;

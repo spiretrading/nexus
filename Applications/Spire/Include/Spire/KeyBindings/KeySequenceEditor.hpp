@@ -9,10 +9,9 @@ namespace Spire {
   class KeySequenceEditor : public QLineEdit {
     public:
 
-      using FinishedSignal = Signal<void ()>;
-
       KeySequenceEditor(const QKeySequence& sequence,
-        const std::set<Qt::Key>& valid_keys,
+        const std::set<Qt::Key>& valid_first_keys,
+        const std::set<Qt::Key>& valid_second_keys,
         QWidget* parent = nullptr);
 
       const QKeySequence& get_key_sequence() const;
@@ -24,7 +23,8 @@ namespace Spire {
 
     private:
       QKeySequence m_key_sequence;
-      std::set<Qt::Key> m_valid_keys;
+      std::set<Qt::Key> m_valid_first_keys;
+      std::set<Qt::Key> m_valid_second_keys;
       std::vector<Qt::Key> m_entered_keys;
       QFont m_font;
 

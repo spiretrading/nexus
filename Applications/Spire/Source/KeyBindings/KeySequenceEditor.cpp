@@ -16,10 +16,12 @@ namespace {
 }
 
 KeySequenceEditor::KeySequenceEditor(const QKeySequence& sequence,
-    const std::set<Qt::Key>& valid_keys, QWidget* parent)
+    const std::set<Qt::Key>& valid_first_keys,
+    const std::set<Qt::Key>& valid_second_keys, QWidget* parent)
     : QLineEdit(parent),
       m_key_sequence(sequence),
-      m_valid_keys(valid_keys),
+      m_valid_first_keys(valid_first_keys),
+      m_valid_second_keys(valid_second_keys),
       m_font("Roboto") {
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);
@@ -53,8 +55,22 @@ void KeySequenceEditor::paintEvent(QPaintEvent* event) {
 }
 
 bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) {
-  if(keys.size() > 2) {
+  if(keys.empty() || keys.size() > 2) {
     return false;
+  }
+  if(!m_valid_first_keys.empty()) {
+    if(m_valid_first_keys.find(keys[0]) == m_valid_first_keys.end()) {
+      return false;
+    }
+  }
+  if(!m_valid_second_keys.empty()) {
+    if(keys.size() == 2) {
+      if(m_valid_second_keys.find(keys[1]) == m_valid_second_keys.end()) {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
   return true;
 }
