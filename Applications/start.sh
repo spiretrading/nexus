@@ -14,7 +14,7 @@ services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
 
 for directory in $services; do
-  sleep 5
+  sleep 10
   pushd $directory
   ./stop_server.sh
   ./start_server.sh

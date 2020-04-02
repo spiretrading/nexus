@@ -1,6 +1,6 @@
 import { Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
-import { HLine } from '.';
+import { HLine } from './hline';
 
 /** The properties used to display the BurgerButton. */
 interface Properties {

@@ -42,6 +42,7 @@ namespace Nexus::OrderExecutionService {
   class OrderSubmissionCheckException;
   class OrderSubmissionRegistry;
   class OrderUnrecoverableException;
+  class OrderWrapperReactor;
   class PrimitiveOrder;
   template<typename AdministrationClientType> class RiskStateCheck;
   template<typename C> class SqlOrderExecutionDataStore;
@@ -53,7 +54,7 @@ namespace Nexus::OrderExecutionService {
   template<typename DriverType> class WrapperOrderExecutionDriver;
 
   // Standard name for the order execution service.
-  static const std::string SERVICE_NAME = "order_execution_service";
+  inline const std::string SERVICE_NAME = "order_execution_service";
 }
 
 #endif

@@ -1,7 +1,9 @@
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../../display_size';
-import { NewRuleButton, RulesList } from '.';
+import { DisplaySize, HLine } from '../../../';
+import { NewRuleModal } from './new_rule_modal';
+import { RulesList } from './rules_list';
 
 interface Properties {
   
@@ -16,6 +18,9 @@ interface Properties {
 
   /** The list of rule schemas. Used in adding new rules. */
   schemas: Nexus.ComplianceRuleSchema[];
+
+  /** Determines if the component is readonly. */
+  readonly?: boolean;
 
   /** The callback for adding the rule.*/
   onRuleAdd?: (newSchema: Nexus.ComplianceRuleSchema) => void;
@@ -48,20 +53,39 @@ export class CompliancePage extends React.Component<Properties, State> {
         return CompliancePage.STYLE.largeContent;
       }
     })();
+    const footerStyle = (() => {
+      if(this.props.readonly) {
+        return CompliancePage.STYLE.hidden;
+      } else {
+        return CompliancePage.STYLE.footer;
+      }
+    })();
     return (
       <div style={contentStyle}>
         <RulesList
           displaySize={this.props.displaySize}
           currencyDatabase={this.props.currencyDatabase}
           complianceList={this.props.entries}
-          onChange={this.props.onRuleChange}/>
-        <div style={CompliancePage.STYLE.paddingMedium}/>
-        <NewRuleButton displaySize={this.props.displaySize}
-          isOpen={this.state.isAddRuleModalOpen}
-          onToggleModal={this.onToggleAddRuleModal}
-          onAddNewRule={this.props.onRuleAdd}
-          schemas={this.props.schemas}/>
-        <div style={CompliancePage.STYLE.paddingLarge}/>
+          onChange={this.props.onRuleChange}
+          readonly={this.props.readonly}/>
+        <div style={footerStyle}>
+          <div style={CompliancePage.STYLE.paddingMedium}/>
+          <NewRuleModal displaySize={this.props.displaySize}
+            isOpen={this.state.isAddRuleModalOpen}
+            onToggleModal={this.onToggleAddRuleModal}
+            onAddNewRule={this.props.onRuleAdd}
+            schemas={this.props.schemas}/>
+          <div style={CompliancePage.STYLE.paddingLarge}/>
+          <HLine color='#E6E6E6'/>
+          <div style={CompliancePage.STYLE.paddingLarge}/>
+          <button className={css(CompliancePage.EXTRA_STYLE.button)}>
+            {'Save Changes'}
+          </button>
+          <div style={CompliancePage.STYLE.paddingSmall}/>
+          <div style={CompliancePage.STYLE.statusBox}>
+            {'Saved'}
+          </div>
+        </div>
       </div>);
   }
 
@@ -70,6 +94,10 @@ export class CompliancePage extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
+    paddingSmall: {
+      width: '100%',
+      height: '18px'
+    },
     paddingMedium: {
       width: '100%',
       height: '20px'
@@ -107,6 +135,65 @@ export class CompliancePage extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       width: '1000px'
+    },
+    footer: {
+      display: 'flex' as 'flex',
+      flexDirection: 'column' as 'column',
+      flexWrap: 'nowrap' as 'nowrap',
+      justifyContent: 'center' as 'center',
+    },
+    hidden: {
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
+    },
+    statusBox: {
+      height: '19px',
+      width: '100%',
+      display: 'flex' as 'flex',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center',
+      font: '400 14px Roboto',
+      color: '#36BB55'
     }
   };
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    button: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '34px',
+      width: '246px',
+      backgroundColor: '#684BC7',
+      color: '#FFFFFF',
+      border: '0px solid #684BC7',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      outline: 'none',
+      MozAppearance: 'none' as 'none',
+      alignSelf: 'center' as 'center',
+      cursor: 'pointer' as 'pointer',
+      ':active' : {
+        backgroundColor: '#4B23A0'
+      },
+      ':focus': {
+        border: 0,
+        outline: 'none',
+        borderColor: '#4B23A0',
+        backgroundColor: '#4B23A0',
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none',
+        MozAppearance: 'none' as 'none'
+      },
+      ':hover':{
+        backgroundColor: '#4B23A0'
+      },
+      '::-moz-focus-inner': {
+        border: 0,
+        outline: 0
+      },
+      ':-moz-focusring': {
+        outline: 0
+      }
+    }
+  });
 }

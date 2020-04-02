@@ -1,11 +1,11 @@
 ---
 registry_server:
-  interface: $local_interface:20300
-  addresses: [$global_address:20300, $local_interface:20300]
+  interface: "$local_interface:20300"
+  addresses: ["$global_address:20300", "$local_interface:20300"]
 
 feed_server:
-  interface: $local_interface:20400
-  addresses: [$global_address:20400, $local_interface:20400]
+  interface: "$local_interface:20400"
+  addresses: ["$global_address:20400", "$local_interface:20400"]
 
 data_store:
   address: $mysql_address

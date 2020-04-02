@@ -12,7 +12,7 @@ export class RiskModification {
    * @param parameters - The risk parameters being requested.
    */
   constructor(parameters: RiskParameters) {
-    this._parameters = parameters.copy();
+    this._parameters = parameters.clone();
   }
 
   /** Returns the risk parameters. */

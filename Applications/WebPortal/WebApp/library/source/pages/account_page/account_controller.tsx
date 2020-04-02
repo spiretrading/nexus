@@ -1,10 +1,12 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
+import { DisplaySize } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
-import { DisplaySize } from '../../display_size';
 import { EntitlementsController, EntitlementsModel } from './entitlements_page';
+import { ProfileController } from './profile_page';
+import { RiskController } from './risk_page';
 import { SubPage } from './sub_page';
 
 interface Properties {
@@ -45,9 +47,9 @@ export class AccountController extends React.Component<Properties, State> {
       isLoaded: false,
       redirect: null,
     };
-    this.entitlementsModel = null;
-    this.navigateToProfile = this.navigateToProfile.bind(this);
-    this.navigateToEntitlements = this.navigateToEntitlements.bind(this);
+    this.renderProfilePage = this.renderProfilePage.bind(this);
+    this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
+    this.renderRiskPage = this.renderRiskPage.bind(this);
     this.onMenuClick = this.onMenuClick.bind(this);
   }
 
@@ -63,6 +65,8 @@ export class AccountController extends React.Component<Properties, State> {
         return SubPage.PROFILE;
       } else if(window.location.href.endsWith('/entitlements')) {
         return SubPage.ENTITLEMENTS;
+      } else if(window.location.href.endsWith('/risk')) {
+        return SubPage.RISK_CONTROLS;
       }
       return SubPage.NONE;
     })();
@@ -70,21 +74,21 @@ export class AccountController extends React.Component<Properties, State> {
       return <Router.Redirect to={`${this.props.urlPrefix}/profile`}/>;
     }
     return (
-      <Router.BrowserRouter>
-        <Router.Switch>
-          <AccountPage displaySize={this.props.displaySize}
-              subPage={subPage} account={this.props.model.account}
-              roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
-            <Router.Route path={`${this.props.urlPrefix}/profile`}
-              render={this.navigateToProfile}/>
-            <Router.Route path={`${this.props.urlPrefix}/entitlements`}
-              render={this.navigateToEntitlements}/>
-          </AccountPage>
-        </Router.Switch>
-      </Router.BrowserRouter>);
+      <Router.Switch>
+        <AccountPage displaySize={this.props.displaySize}
+            subPage={subPage} account={this.props.model.account}
+            roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
+          <Router.Route path={`${this.props.urlPrefix}/profile`}
+            render={this.renderProfilePage}/>
+          <Router.Route path={`${this.props.urlPrefix}/entitlements`}
+            render={this.renderEntitlementsPage}/>
+          <Router.Route path={`${this.props.urlPrefix}/risk`}
+            render={this.renderRiskPage}/>
+        </AccountPage>
+      </Router.Switch>);
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.setState({isLoaded: true});
@@ -97,19 +101,21 @@ export class AccountController extends React.Component<Properties, State> {
     }
   }
 
-  private navigateToProfile() {
-    return <div>Profile</div>;
+  private renderProfilePage() {
+    return <ProfileController/>;
   }
 
-  private navigateToEntitlements() {
-    if(this.entitlementsModel === null) {
-      this.entitlementsModel = this.props.model.makeEntitlementsModel();
-    }
+  private renderEntitlementsPage() {
     return <EntitlementsController roles={this.props.model.roles}
-      entitlements={this.props.entitlements} model={this.entitlementsModel}
+      entitlements={this.props.entitlements}
+      model={this.props.model.entitlementsModel}
       currencyDatabase={this.props.currencyDatabase}
       marketDatabase={this.props.marketDatabase}
       displaySize={this.props.displaySize}/>;
+  }
+
+  private renderRiskPage() {
+    return <RiskController/>;
   }
 
   private onMenuClick(subPage: SubPage) {
@@ -121,8 +127,10 @@ export class AccountController extends React.Component<Properties, State> {
       this.setState({
         redirect: `${this.props.urlPrefix}/entitlements`,
       });
+    } else if(subPage === SubPage.RISK_CONTROLS) {
+      this.setState({
+        redirect: `${this.props.urlPrefix}/risk`,
+      });
     }
   }
-
-  private entitlementsModel: EntitlementsModel;
 }

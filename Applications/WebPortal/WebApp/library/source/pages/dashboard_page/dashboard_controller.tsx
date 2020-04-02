@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { AccountController, AccountModel } from '../account_page';
+import { DisplaySize } from '../..';
+import { AccountController, AccountModel } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
-import { DisplaySize } from '../../display_size';
 import { SideMenu } from './side_menu';
 
 interface Properties {
@@ -51,7 +51,7 @@ export class DashboardController extends React.Component<Properties, State> {
       onSideMenuClick={this.onSideMenuClick}>{page}</DashboardPage>;
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.accountModel = this.props.model.makeAccountModel(

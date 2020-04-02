@@ -125,7 +125,7 @@ int main(int argc, const char** argv) {
   auto configFile = std::string();
   try {
     auto cmd = CmdLine("", ' ', "0.9-r" MARKET_DATA_SERVER_VERSION
-      "\nCopyright (C) 2009 Eidolon Systems Ltd.");
+      "\nCopyright (C) 2020 Spire Trading Inc.");
     auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
       false, "config.yml", "path");
     cmd.add(configArg);

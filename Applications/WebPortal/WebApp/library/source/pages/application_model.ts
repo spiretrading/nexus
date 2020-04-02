@@ -8,10 +8,10 @@ import { LoginModel } from './login_page';
 export abstract class ApplicationModel {
 
   /** Returns a new LoginModel. */
-  public abstract makeLoginModel(): LoginModel;
+  public abstract get loginModel(): LoginModel;
 
   /** Returns a new DashboardModel. */
-  public abstract makeDashboardModel(): DashboardModel;
+  public abstract get dashboardModel(): DashboardModel;
 
   /** Loads the account. */
   public abstract async loadAccount(): Promise<Beam.DirectoryEntry>;

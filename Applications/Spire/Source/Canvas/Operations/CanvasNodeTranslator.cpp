@@ -13,16 +13,11 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/DateTime.hpp>
 #include <Beam/Utilities/Math.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
-#include <boost/fusion/include/as_vector.hpp>
-#include <boost/fusion/include/copy.hpp>
-#include <boost/fusion/include/for_each.hpp>
-#include <boost/fusion/include/make_vector.hpp>
-#include <boost/fusion/include/transform.hpp>
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
+#include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -1445,8 +1440,26 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::SECURITY_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_security));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_type));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::SIDE_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_side));
+  m_context->Add(Ref(*node.FindChild(
+    SingleOrderTaskNode::DESTINATION_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_destination));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::PRICE_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_price));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::QUANTITY_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_quantity));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::CURRENCY_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_currency));
+  m_context->Add(Ref(*node.FindChild(
+    SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY)),
+    Aspen::constant(node.GetOrder().GetInfo().m_fields.m_timeInForce));
   m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
-    Aspen::constant(&node.GetOrder()));
+    OrderWrapperReactor(Ref(node.GetOrder())));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {

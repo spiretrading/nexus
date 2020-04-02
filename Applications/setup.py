@@ -8,14 +8,37 @@ def call(command):
     stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode(
     'utf-8')
 
+def needs_quotes(value):
+  special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
+    '-', '<', '>', '=', '!', '%', '@', '\\']
+  for c in value:
+    if c in special_characters:
+      return True
+  return False
+
 def translate(source, variables):
   for key in variables.keys():
-    source = source.replace('$' + key, '%s' % variables[key])
+    if needs_quotes(variables[key]):
+      index = source.find('$' + key)
+      while index != -1:
+        c = source.rfind('\n', 0, index) + 1
+        q = False
+        while c < index:
+          if source[c] == '\"':
+            q = not q
+          c += 1
+        if q:
+          source = source.replace('$' + key, '%s' % variables[key], 1)
+        else:
+          source = source.replace('$' + key, '"%s"' % variables[key], 1)
+        index = source.find('$' + key, index + 1)
+    else:
+      source = source.replace('$' + key, '%s' % variables[key])
   return source
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2017 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
     default=call('hostname -I').strip())
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
@@ -87,10 +110,10 @@ def main():
     application_directory = os.path.join('.', application)
     files = [f for f in os.listdir(application_directory) if
       os.path.isfile(os.path.join(application_directory, f)) and
-      f.endswith('.default.yml')]
+      f.find('.default.') != -1]
     for file in files:
       file_path = os.path.join(application_directory, file)
-      destination_path = file_path.replace('.default.yml', '.yml')
+      destination_path = file_path.replace('.default.', '.')
       shutil.move(file_path, destination_path)
       with open(destination_path, 'r+') as file:
         source = translate(file.read(), variables)

@@ -1,7 +1,6 @@
 import { HBoxLayout, VBoxLayout, Padding } from 'dali';
-import { DisplaySize } from '../../..';
 import * as React from 'react';
-import { ProfilePage } from './profile_page';
+import { DisplaySize } from '../../..';
 
 interface Properties {
 

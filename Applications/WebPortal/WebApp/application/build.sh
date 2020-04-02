@@ -72,7 +72,7 @@ else
 fi
 if [ "$UPDATE_BUILD" = "1" ]; then
   if [ -d application ]; then
-    rm -rf application
+    rm -rf application/*
   fi
   node node_modules/webpack/bin/webpack.js
   echo "timestamp" > mod_time.txt

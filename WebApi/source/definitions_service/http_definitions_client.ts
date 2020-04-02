@@ -1,11 +1,9 @@
 import * as Beam from 'beam';
-import { CurrencyDatabase } from '..';
-import { DefinitionsClient } from '.';
-import { EntitlementDatabase } from '..';
-import { MarketDatabase } from '..';
+import { CurrencyDatabase, EntitlementDatabase, MarketDatabase } from '..';
+import { DefinitionsClient } from './definitions_client';
 
-/** Implements the DefinitionsClient using web services. */
-export class WebDefinitionsClient extends DefinitionsClient {
+/** Implements the DefinitionsClient using HTTP requests. */
+export class HttpDefinitionsClient extends DefinitionsClient {
   public get entitlementDatabase(): EntitlementDatabase {
     return this._entitlementDatabase;
   }
