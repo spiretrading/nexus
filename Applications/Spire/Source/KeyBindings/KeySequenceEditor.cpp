@@ -15,32 +15,33 @@ namespace {
   }
 }
 
-KeySequenceEditor::KeySequenceEditor(const std::set<Qt::Key>& valid_keys,
-    QWidget* parent)
+KeySequenceEditor::KeySequenceEditor(const QKeySequence& sequence,
+    const std::set<Qt::Key>& valid_keys, QWidget* parent)
     : QLineEdit(parent),
+      m_key_sequence(sequence),
       m_valid_keys(valid_keys),
       m_font("Roboto") {
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);
 }
 
-connection KeySequenceEditor::connect_key_sequence_signal(
-    const KeySequenceSignal::slot_type& slot) const {
-  return m_key_sequence_signal.connect(slot);
+const QKeySequence& KeySequenceEditor::get_key_sequence() const {
+  return m_key_sequence;
 }
 
 void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
   if(!event->isAutoRepeat()) {
     m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
   }
-  //event->accept();
+  event->accept();
 }
 
 void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
-  if(!m_entered_keys.empty() && is_valid(m_entered_keys)) {
-    m_key_sequence_signal(make_key_sequence(m_entered_keys));
+  if(is_valid(m_entered_keys)) {
+    m_key_sequence = make_key_sequence(m_entered_keys);
   }
   m_entered_keys.clear();
+  emit editingFinished();
 }
 
 void KeySequenceEditor::paintEvent(QPaintEvent* event) {

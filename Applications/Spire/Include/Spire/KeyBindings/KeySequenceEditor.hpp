@@ -9,13 +9,13 @@ namespace Spire {
   class KeySequenceEditor : public QLineEdit {
     public:
 
-      using KeySequenceSignal = Signal<void (const QKeySequence& keys)>;
+      using FinishedSignal = Signal<void ()>;
 
-      KeySequenceEditor(const std::set<Qt::Key>& valid_keys,
+      KeySequenceEditor(const QKeySequence& sequence,
+        const std::set<Qt::Key>& valid_keys,
         QWidget* parent = nullptr);
 
-      boost::signals2::connection connect_key_sequence_signal(
-        const KeySequenceSignal::slot_type& slot) const;
+      const QKeySequence& get_key_sequence() const;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
@@ -23,7 +23,7 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
-      mutable KeySequenceSignal m_key_sequence_signal;
+      QKeySequence m_key_sequence;
       std::set<Qt::Key> m_valid_keys;
       std::vector<Qt::Key> m_entered_keys;
       QFont m_font;
