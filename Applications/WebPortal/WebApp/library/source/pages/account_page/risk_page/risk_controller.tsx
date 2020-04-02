@@ -20,17 +20,18 @@ interface Properties {
 }
 
 interface State {
-  isLoaded: boolean;
   isError: boolean;
+  isLoaded: boolean;
   status: string;
 }
 
+/** Implements a controller for the RiskPage. */
 export class RiskController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false,
       isError: false,
+      isLoaded: false,
       status: ''
     }
     this.onSubmit = this.onSubmit.bind(this);
