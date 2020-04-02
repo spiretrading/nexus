@@ -4,6 +4,7 @@ import * as React from 'react';
 import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
 import { DashboardController } from './dashboard_page';
+import { LoadingPage } from './loading_page';
 import { LoginController } from './login_page';
 
 interface Properties {
@@ -36,7 +37,7 @@ export class ApplicationController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(this.state.isLoading) {
-      return <div></div>;
+      return <LoadingPage/>;
     }
     return (
       <Router.BrowserRouter>

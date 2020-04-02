@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../..';
+import { DisplaySize, LoadingPage } from '../../..';
 import { RiskModel } from './risk_model';
 import { RiskPage } from './risk_page';
 
@@ -39,7 +39,7 @@ export class RiskController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
-      return <div/>;
+      return <LoadingPage/>;
     }
     return <RiskPage
       currencyDatabase={this.props.currencyDatabase}
