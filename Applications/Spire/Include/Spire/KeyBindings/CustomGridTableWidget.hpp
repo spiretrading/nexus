@@ -12,6 +12,12 @@ namespace Spire {
 
     protected:
       void paintEvent(QPaintEvent* event) override;
+
+    private:
+      QModelIndex m_selected_index;
+
+      void on_selection_changed(const QItemSelection &selected,
+        const QItemSelection &deselected);
   };
 }
 
