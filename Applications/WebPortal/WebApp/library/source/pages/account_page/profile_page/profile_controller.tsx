@@ -61,7 +61,7 @@ export class ProfileController extends React.Component<Properties, State> {
         onSubmit={this.onIdentitySubmit}
         hasPasswordError={this.state.hasPasswordError}
         submitPasswordStatus={this.state.passwordStatus}
-        onPasswordSubmit={this.onPasswordSubmit}/>;
+        onSubmitPassword={this.onPasswordSubmit}/>;
   }
 
   public componentDidMount(): void {
