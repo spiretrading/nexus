@@ -8,7 +8,6 @@ import { EntitlementsController } from './entitlements_page';
 import { ProfileController } from './profile_page';
 import { RiskController } from './risk_page';
 import { SubPage } from './sub_page';
-import { runInThisContext } from 'vm';
 
 interface Properties {
 
