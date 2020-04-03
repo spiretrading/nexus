@@ -91,7 +91,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
-  auto reset_button = new FlatButton(tr("Restore Defaults"));
+  auto reset_button = new FlatButton(tr("Reset Default"));
   reset_button->connect_clicked_signal([=] {
     on_reset_button_clicked();
   });
