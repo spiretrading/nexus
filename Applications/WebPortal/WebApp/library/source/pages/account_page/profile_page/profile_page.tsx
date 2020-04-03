@@ -109,7 +109,6 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    console.log(this.state.newIdentity);
     const contentWidth = (() => {
       switch(this.props.displaySize) {
         case DisplaySize.SMALL:
