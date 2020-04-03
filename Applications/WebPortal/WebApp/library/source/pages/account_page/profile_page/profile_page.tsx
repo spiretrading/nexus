@@ -47,9 +47,6 @@ interface Properties {
   /** Whether the option to change the password is available. */
   hasPassword?: boolean;
 
-  /** Whether the password button can be clicked. */
-  isPasswordSubmitEnabled?: boolean;
-
   /** The status of the password submission. */
   submitPasswordStatus?: string;
 
@@ -75,12 +72,10 @@ interface State {
 export class ProfilePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
-    isSubmitEnabled: false,
     submitStatus: '',
     hasError: false,
     onSubmit: () => {},
     hasPassword: false,
-    isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
     onPasswordSubmit: () => {}
@@ -250,9 +245,8 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
-        const passwordButtonEnabled = this.state.password1
-          && this.state.password2
-          && this.props.isPasswordSubmitEnabled;
+        const passwordButtonEnabled = this.state.password1 !== ''
+          && this.state.password2 !== '';
         const status = (() => {
           if(this.state.isPasswordChanged) {
             return '';

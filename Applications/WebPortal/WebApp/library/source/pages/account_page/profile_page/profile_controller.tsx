@@ -14,7 +14,7 @@ interface Properties {
   /** The model representing the account's profile. */
   model: ProfileModel;
 
-  countryDatabase: Nexus.CountryDatabase;
+  countryDatabase?: Nexus.CountryDatabase;
 }
 
 interface State {
@@ -47,20 +47,18 @@ export class ProfileController extends React.Component<Properties, State> {
         return false;
       }
     })();
-    return <div/>
-   /*<ProfilePage 
-      account={this.props.model.account}
-      roles={this.props.model.roles}
-      identity={this.props.model.identity}
-      groups={'missing'}
-      countryDatabase={'missing'}
-      displaySize={this.props.displaySize}
-      readonly={isReadonly}
-      isSubmitEnabled={isReadonly}
-      submitStatus={this.state.identityStatus}
-      hasError={this.state.isIdentityError}
-      onSubmit={this.onIdentitySubmit}
-       />;*/
+    return <ProfilePage 
+        account={this.props.model.account}
+        roles={this.props.model.roles}
+        identity={this.props.model.identity}
+        groups={[]}
+        countryDatabase={Nexus.buildDefaultCountryDatabase()}
+        displaySize={this.props.displaySize}
+        readonly={isReadonly}
+        isSubmitEnabled={isReadonly}
+        submitStatus={this.state.identityStatus}
+        hasError={this.state.isIdentityError}
+        onSubmit={this.onIdentitySubmit}/>;
   }
 
   public componentDidMount(): void {
