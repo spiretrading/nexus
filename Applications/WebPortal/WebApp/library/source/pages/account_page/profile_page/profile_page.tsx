@@ -194,8 +194,7 @@ export class ProfilePage extends React.Component<Properties, State> {
         return (
           <CountrySelectionField
             displaySize={this.props.displaySize}
-            value={this.state.newIdentity
-.country}
+            value={this.state.newIdentity.country}
             onChange={this.onCountryChange}
             countryDatabase={this.props.countryDatabase}/>);
       }

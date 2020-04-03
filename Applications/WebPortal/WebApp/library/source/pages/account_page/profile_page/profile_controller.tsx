@@ -7,11 +7,14 @@ import { AccountRoles } from 'nexus';
 
 interface Properties {
 
+
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
   /** The model representing the account's profile. */
   model: ProfileModel;
+
+  countryDatabase: Nexus.CountryDatabase;
 }
 
 interface State {
