@@ -81,9 +81,9 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
     margin-left: %2px;
   )").arg(scale_height(10)).arg(scale_width(8)));
   cancel_keys_layout->addWidget(cancel_keys_label);
-  auto cancel_keys_table = new CancelKeyBindingsTableWidget(
+  m_cancel_keys_table = new CancelKeyBindingsTableWidget(
     key_bindings.build_cancel_bindings(), this);
-  cancel_keys_layout->addWidget(cancel_keys_table);
+  cancel_keys_layout->addWidget(m_cancel_keys_table);
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
@@ -92,6 +92,9 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
   auto reset_button = new FlatButton(tr("Restore Defaults"));
+  reset_button->connect_clicked_signal([=] {
+    on_reset_button_clicked();
+  });
   reset_button->setFixedSize(scale(120, 26));
   auto button_style = reset_button->get_style();
   button_style.m_background_color = QColor("#EBEBEB");
@@ -111,6 +114,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->addWidget(reset_button);
   button_layout->addStretch(1);
   auto cancel_button = new FlatButton(tr("Cancel"));
+  cancel_button->connect_clicked_signal([=] { close(); });
   cancel_button->setFixedSize(scale(100, 26));
   cancel_button->setFont(button_font);
   cancel_button->set_style(button_style);
@@ -119,6 +123,9 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->addWidget(cancel_button);
   button_layout->addSpacing(scale_width(8));
   auto apply_button = new FlatButton(tr("Apply"));
+  apply_button->connect_clicked_signal([=] {
+    m_apply_signal();
+  });
   apply_button->setFixedSize(scale(100, 26));
   apply_button->setFont(button_font);
   apply_button->set_style(button_style);
@@ -127,6 +134,10 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->addWidget(apply_button);
   button_layout->addSpacing(scale_width(8));
   auto ok_button = new FlatButton(tr("OK"));
+  ok_button->connect_clicked_signal([=] {
+    m_apply_signal();
+    close();
+  });
   ok_button->setFixedSize(scale(100, 26));
   ok_button->setFont(button_font);
   ok_button->set_style(button_style);
@@ -160,6 +171,12 @@ bool KeyBindingsWindow::eventFilter(QObject* watched,
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void KeyBindingsWindow::on_reset_button_clicked() {
+  auto default_bindings = KeyBindings::get_default_key_bindings();
+  m_cancel_keys_table->set_key_bindings(
+    default_bindings.build_cancel_bindings());
 }
 
 void KeyBindingsWindow::on_tab_bar_clicked(int index) {

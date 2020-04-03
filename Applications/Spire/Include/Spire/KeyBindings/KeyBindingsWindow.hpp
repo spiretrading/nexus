@@ -1,6 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
 #include <QTabWidget>
+#include "Spire/KeyBindings/CancelKeyBindingsTableWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -36,7 +37,9 @@ namespace Spire {
       mutable ApplySignal m_apply_signal;
       QTabWidget* m_tab_widget;
       bool m_last_focus_was_key;
+      CancelKeyBindingsTableWidget* m_cancel_keys_table;
 
+      void on_reset_button_clicked();
       void on_tab_bar_clicked(int index);
       void on_tab_changed();
   };
