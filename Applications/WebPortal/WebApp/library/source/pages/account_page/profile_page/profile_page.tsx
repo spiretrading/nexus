@@ -45,7 +45,7 @@ interface Properties {
   hasError?: boolean;
 
   /** Indicates the profile is being submitted. */
-  onSubmit?: () => void;
+  onSubmit?: (roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => void;
 
   /** Whether the option to change the password is available. */
   hasPassword?: boolean;
@@ -480,7 +480,7 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onSubmitProfile() {
-    this.props.onSubmit();
+    this.props.onSubmit(null, this.state.newIdentity);
     this.setState({isProfileChanged: false});
   }
 
