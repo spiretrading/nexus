@@ -71,7 +71,8 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
     QWidget* parent)
     : ScrollArea(true, parent) {
   auto main_widget = new QWidget(this);
-  main_widget->setFixedSize(scale(850, 338));
+  main_widget->setFixedHeight(scale_height(338));
+  main_widget->setMinimumWidth(scale_width(850));
   auto layout = new QVBoxLayout(main_widget);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -99,7 +100,8 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
   header_layout->addWidget(bindings_label);
   m_table = new CustomGridTableWidget(ROW_COUNT, COLUMN_COUNT, this);
   layout->addWidget(m_table);
-  m_table->setFixedSize(scale(852, 338));
+  m_table->setFixedHeight(scale_height(338));
+  m_table->setMinimumWidth(scale_width(849));
   setWidget(main_widget);
   auto item_delegate = new KeySequenceItemDelegate(this);
   item_delegate->connect_item_modified_signal([=] (auto row) {

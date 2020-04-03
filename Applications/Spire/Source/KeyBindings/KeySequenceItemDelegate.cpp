@@ -89,7 +89,6 @@ void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,
   font.setPixelSize(scale_height(12));
   font.setWeight(55);
   painter->setFont(font);
-  painter->setRenderHint(QPainter::Antialiasing);
   auto metrics = QFontMetrics(font);
   for(auto i = 0; i < sequence.count(); ++i) {
     auto text = get_key_text(static_cast<Qt::Key>(sequence[i]));
@@ -104,7 +103,7 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
     const QSize& text_size, const QPoint& pos, QPainter* painter) const {
   auto path = QPainterPath();
   path.addRoundedRect(QRectF(pos.x(), pos.y() - scale_height(18) -
-    scale_height(2), text_size.width() + TEXT_PADDING() * 2,
+    scale_height(2) - 1, text_size.width() + TEXT_PADDING() * 2,
     scale_height(18)), scale_width(2), scale_height(2));
   painter->setPen({QColor("#E2C899"), static_cast<qreal>(scale_width(1))});
   painter->fillPath(path, QColor("#FFEDCD"));
