@@ -43,7 +43,6 @@ CustomGridTableWidget::CustomGridTableWidget(int row_count, int column_count,
   verticalHeader()->setDefaultSectionSize(scale_height(26));
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
     &CustomGridTableWidget::on_selection_changed);
-
 }
 
 void CustomGridTableWidget::paintEvent(QPaintEvent* event) {

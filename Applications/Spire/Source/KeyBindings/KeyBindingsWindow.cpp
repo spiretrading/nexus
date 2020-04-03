@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include <QTabBar>
 #include <QVBoxLayout>
-#include "Spire/KeyBindings/CancelKeyBindingsTableWidget.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
@@ -81,7 +81,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
     margin-left: %2px;
   )").arg(scale_height(10)).arg(scale_width(8)));
   cancel_keys_layout->addWidget(cancel_keys_label);
-  m_cancel_keys_table = new CancelKeyBindingsTableWidget(
+  m_cancel_keys_table = new CancelKeyBindingsTableView(
     key_bindings.build_cancel_bindings(), this);
   cancel_keys_layout->addWidget(m_cancel_keys_table);
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));

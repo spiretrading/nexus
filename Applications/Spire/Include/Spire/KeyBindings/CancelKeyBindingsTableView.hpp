@@ -1,15 +1,14 @@
-#ifndef SPIRE_CANCEL_KEY_BINDINGS_TABLE_WIDGET_HPP
-#define SPIRE_CANCEL_KEY_BINDINGS_TABLE_WIDGET_HPP
+#ifndef SPIRE_CANCEL_KEY_BINDINGS_TABLE_VIEW_HPP
+#define SPIRE_CANCEL_KEY_BINDINGS_TABLE_VIEW_HPP
 #include <QTableWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/KeyBindings/CustomGridTableWidget.hpp"
+#include "Spire/\KeyBindings/KeyBindingsTableView.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 
   //! Displays a table for editing cancellation key bindings.
-  class CancelKeyBindingsTableWidget : public ScrollArea {
+  class CancelKeyBindingsTableView : public KeyBindingsTableView {
     public:
 
       //! Signals that a cancel key binding was modified.
@@ -25,7 +24,7 @@ namespace Spire {
         \param bindings The initial cancel key bindings.
         \param parent The parent widget.
       */
-      explicit CancelKeyBindingsTableWidget(
+      explicit CancelKeyBindingsTableView(
         const std::vector<KeyBindings::CancelActionBinding>& bindings,
         QWidget* parent = nullptr);
 
@@ -43,10 +42,9 @@ namespace Spire {
     private:
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
-      CustomGridTableWidget* m_table;
 
-      void on_cell_clicked(int row, int column);
-      void on_key_sequence_modified(int row);
+      //void on_cell_clicked(int row, int column);
+      //void on_key_sequence_modified(int row);
   };
 }
 
