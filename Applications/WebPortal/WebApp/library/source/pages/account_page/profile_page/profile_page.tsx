@@ -101,6 +101,13 @@ export class ProfilePage extends React.Component<Properties, State> {
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false
     };
+    this.onFirstNameChange = this.onFirstNameChange.bind(this);
+    this.onLastNameChange = this.onLastNameChange.bind(this);
+    this.onAddressChange = this.onAddressChange.bind(this);
+    this.onCityChange = this.onCityChange.bind(this);
+    this.onProvinceChange = this.onProvinceChange.bind(this);
+    this.onCountryChange = this.onCountryChange.bind(this);
+    this.onRolesChange = this.onRolesChange.bind(this);
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onSubmitProfile = this.onSubmitProfile.bind(this);
     this.onPassword1Change = this.onPassword1Change.bind(this);
@@ -186,9 +193,10 @@ export class ProfilePage extends React.Component<Properties, State> {
       } else {
         return (
           <CountrySelectionField
-            readonly={this.props.readonly}
             displaySize={this.props.displaySize}
-            value={this.props.identity.country}
+            value={this.state.newIdentity
+.country}
+            onChange={this.onCountryChange}
             countryDatabase={this.props.countryDatabase}/>);
       }
     })();
@@ -312,8 +320,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='First Name'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.firstName}
+                    value={this.state.newIdentity.firstName}
                     displaySize={this.props.displaySize}
+                    onInput={this.onFirstNameChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -322,8 +331,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Last Name'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.lastName}
+                    value={this.state.newIdentity.lastName}
                     displaySize={this.props.displaySize}
+                    onInput={this.onLastNameChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -333,15 +343,16 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <TextField
                     value={this.props.account.name.toString()}
                     displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
+                    readonly/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Role(s)' displaySize={this.props.displaySize}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.props.roles}
-                      readonly={this.props.readonly}/>
+                    <RolesField roles={this.state.newRoles}
+                      readonly={this.props.readonly}
+                      onClick={this.onRolesChange}/>
                   </div>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -376,8 +387,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Email' displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.emailAddress}
+                    value={this.state.newIdentity.emailAddress}
                     displaySize={this.props.displaySize}
+                    onInput={this.onEmailChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -385,8 +397,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='Address' displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.addressLineOne}
+                    value={this.state.newIdentity.addressLineOne}
                     displaySize={this.props.displaySize}
+                    onInput={this.onAddressChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -394,8 +407,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <FormEntry name='City' displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.city}
+                    value={this.state.newIdentity.city}
                     displaySize={this.props.displaySize}
+                    onInput={this.onCityChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -404,8 +418,9 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Province/State'
                     displaySize={this.props.displaySize}>
                   <TextField
-                    value={this.props.identity.province}
+                    value={this.state.newIdentity.province}
                     displaySize={this.props.displaySize}
+                    onInput={this.onProvinceChange}
                     readonly={this.props.readonly}/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -454,22 +469,82 @@ export class ProfilePage extends React.Component<Properties, State> {
       </div>);
   }
 
+  private onFirstNameChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.firstName = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+    
+  }
+
+  private onLastNameChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.lastName = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+
+  private onEmailChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.emailAddress = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+  
+
+  private onAddressChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.addressLineOne = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+
+  private onCityChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.city = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+  
+
+  private onProvinceChange(value: string) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.province = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+
+  private onCountryChange(value: Nexus.CountryCode) {
+    if(!this.props.readonly) {
+      this.state.newIdentity.country = value;
+      this.setState({newIdentity: this.state.newIdentity});
+    }
+  }
+
   private onRolesChange(role: Nexus.AccountRoles.Role) {
-    //this.state.newRoles.
-    //this.setState({newIdentity: newIdentity})
+    if(!this.props.readonly) {
+      if(this.state.newRoles.test(role)) {
+        this.state.newRoles.unset(role);
+      } else {
+        this.state.newRoles.set(role);
+      }
+    }
+    this.setState({
+      newRoles: this.state.newRoles,
+      isProfileChanged: true
+    });
   }
 
   private onCommentChange(newComment: string) {
-    const testIdentity = this.state.newIdentity.clone();
-    testIdentity.userNotes = newComment;
-    if(this.props.identity.userNotes === testIdentity.userNotes) {
+    this.state.newIdentity.userNotes=newComment;
+    if(this.props.identity.userNotes ===this.state.newIdentity.userNotes) {
       this.setState({
-        newIdentity: this.props.identity,
+        newIdentity: this.state.newIdentity,
         isProfileChanged: false
       });
     } else {
       this.setState({
-        newIdentity: testIdentity,
+        newIdentity: this.state.newIdentity,
         isProfileChanged: true
       });
     }
@@ -484,11 +559,6 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onPassword2Change(newPassword: string) {
     this.setState({password2: newPassword});
-  }
-
-  private onSubmitProfile() {
-    this.props.onSubmit(null, this.state.newIdentity);
-    this.setState({isProfileChanged: false});
   }
 
   private onSubmitPassword() {
@@ -509,6 +579,11 @@ export class ProfilePage extends React.Component<Properties, State> {
       password2: '',
       isPasswordChanged: false
     });
+  }
+
+  private onSubmitProfile() {
+    this.props.onSubmit(this.state.newRoles, this.state.newIdentity);
+    this.setState({isProfileChanged: false});
   }
 
   private static readonly STYLE = {
