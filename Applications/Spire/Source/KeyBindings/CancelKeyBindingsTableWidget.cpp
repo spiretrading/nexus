@@ -120,14 +120,12 @@ void CancelKeyBindingsTableWidget::set_key_bindings(
   m_key_bindings.clear();
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
-    for(auto& binding : bindings) {
-      auto iter = std::find_if(bindings.begin(), bindings.end(),
-        [&] (auto item) {
-          return m_key_bindings.back().m_action == item.m_action;
-        });
-      if(iter != bindings.end()) {
-        m_key_bindings.back().m_sequence = binding.m_sequence;
-      }
+    auto iter = std::find_if(bindings.begin(), bindings.end(),
+      [&] (auto item) {
+        return m_key_bindings.back().m_action == item.m_action;
+      });
+    if(iter != bindings.end()) {
+      m_key_bindings.back().m_sequence = iter->m_sequence;
     }
     auto text_item = new QTableWidgetItem(get_action_text(
       m_key_bindings[i].m_action));

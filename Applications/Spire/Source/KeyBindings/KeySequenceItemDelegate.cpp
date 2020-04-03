@@ -71,6 +71,7 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
         current_index.data().value<QKeySequence>() == key_sequence) {
       model->setData(current_index, QVariant());
       m_item_modified_signal(current_index.row());
+      break;
     }
   }
   m_item_modified_signal(index.row());

@@ -14,6 +14,12 @@ int main(int argc, char** argv) {
   bindings.set({Qt::Key_Shift, Qt::Key_Escape},
     Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
     KeyBindings::CancelAction::ALL);
+  bindings.set({Qt::Key_Control, Qt::Key_Escape},
+    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+    KeyBindings::CancelAction::FURTHEST_ASK);
+  bindings.set({Qt::Key_Alt, Qt::Key_Escape},
+    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+    KeyBindings::CancelAction::CLOSEST_ASK);
   auto window = new KeyBindingsWindow(bindings);
   window->show();
   application->exec();
