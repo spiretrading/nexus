@@ -22,9 +22,9 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  isIdentityError: boolean;
+  hasIdentityError: boolean;
   identityStatus: string;
-  isPasswordError: boolean;
+  hasPasswordError: boolean;
   passwordStatus: string;
 }
 
@@ -34,9 +34,9 @@ export class ProfileController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      isIdentityError: false,
+      hasIdentityError: false,
       identityStatus: '',
-      isPasswordError: false,
+      hasPasswordError: false,
       passwordStatus: ''
     };
     this.onIdentitySubmit = this.onIdentitySubmit.bind(this);
@@ -57,8 +57,11 @@ export class ProfileController extends React.Component<Properties, State> {
         readonly={this.props.model.roles.test(
           Nexus.AccountRoles.Role.ADMINISTRATOR)}
         submitStatus={this.state.identityStatus}
-        hasError={this.state.isIdentityError}
-        onSubmit={this.onIdentitySubmit}/>;
+        hasError={this.state.hasIdentityError}
+        onSubmit={this.onIdentitySubmit}
+        hasPasswordError={this.state.hasPasswordError}
+        submitPasswordStatus={this.state.passwordStatus}
+        onPasswordSubmit={this.onPasswordSubmit}/>;
   }
 
   public componentDidMount(): void {
@@ -73,7 +76,7 @@ export class ProfileController extends React.Component<Properties, State> {
   private async onPasswordSubmit(password: string) {
     try {
       this.setState({
-        isPasswordError: false,
+        hasPasswordError: false,
         passwordStatus: ''
       });
       await this.props.model.updatePassword(password);
@@ -82,7 +85,7 @@ export class ProfileController extends React.Component<Properties, State> {
       });
     } catch(e) {
       this.setState({
-        isPasswordError: true,
+        hasPasswordError: true,
         passwordStatus: e.toString()
       });
     }
@@ -92,7 +95,7 @@ export class ProfileController extends React.Component<Properties, State> {
       roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) {
     try {
       this.setState({
-        isIdentityError: false,
+        hasIdentityError: false,
         identityStatus: ''
       });
       await this.props.model.updateIdentity(roles, identity);
@@ -101,7 +104,7 @@ export class ProfileController extends React.Component<Properties, State> {
       });
     } catch(e) {
       this.setState({
-        isIdentityError: true,
+        hasIdentityError: true,
         identityStatus: e.toString()
       });
     }
