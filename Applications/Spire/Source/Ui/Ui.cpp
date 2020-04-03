@@ -37,3 +37,50 @@ void Spire::apply_line_edit_style(QLineEdit* widget) {
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
         .arg(scale_width(6)));
 }
+
+QHeaderView* Spire::make_fixed_header(QWidget* parent) {
+  auto header = new QHeaderView(Qt::Horizontal, parent);
+  header->setStretchLastSection(true);
+  header->setSectionsClickable(false);
+  header->setSectionsMovable(false);
+  header->setSectionResizeMode(QHeaderView::Fixed);
+  header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  header->setStyleSheet(QString(R"(
+    QHeaderView::section {
+      background-color: #FFFFFF;
+      border: none;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-weight: 550;
+      padding-left: %1px;
+      padding-right: %1px;
+    })").arg(scale_width(8)));
+  return header;
+}
+
+QHeaderView* Spire::make_header(QWidget* parent) {
+  auto header = new QHeaderView(Qt::Horizontal, parent);
+  header->setStretchLastSection(true);
+  header->setSectionsClickable(false);
+  header->setSectionsMovable(true);
+  header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  header->setStyleSheet(QString(R"(
+    QHeaderView::section {
+      background-color: #FFFFFF;
+      background-image: url(:/Icons/column-border.png);
+      background-position: left;
+      background-repeat: repeat;
+      border: none;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-weight: 550;
+      padding-left: %1px;
+      padding-right: %1px;
+    }
+
+    QHeaderView::section::first {
+      background: none;
+      background-color: #FFFFFF;
+    })").arg(scale_width(8)));
+  return header;
+}
