@@ -111,7 +111,6 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
       m_ui(std::make_unique<Ui_BookViewWindow>()),
       m_userProfile(userProfile.Get()),
       m_properties(properties),
-      m_boardLot(1),
       m_taskEntryWidget(nullptr),
       m_isTaskEntryWidgetForInteractionsProperties(false),
       m_bidPanelGuard(false),
@@ -151,8 +150,6 @@ void BookViewWindow::SetProperties(const BookViewProperties& properties) {
 
 void BookViewWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  m_boardLot = m_userProfile->GetMarketDatabase().FromCode(
-    security.GetMarket()).m_boardLot;
   setWindowTitle(QString::fromStdString(
     ToString(security, m_userProfile->GetMarketDatabase())) +
     tr(" - Book View"));

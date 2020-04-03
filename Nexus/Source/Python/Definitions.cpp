@@ -307,10 +307,13 @@ void Nexus::Python::ExportMarket(pybind11::module& module) {
     .def_readwrite("country_code", &MarketDatabase::Entry::m_countryCode)
     .def_readwrite("time_zone", &MarketDatabase::Entry::m_timeZone)
     .def_readwrite("currency", &MarketDatabase::Entry::m_currency)
-    .def_readwrite("board_lot", &MarketDatabase::Entry::m_boardLot)
     .def_readwrite("description", &MarketDatabase::Entry::m_description)
-    .def_readwrite("display_name", &MarketDatabase::Entry::m_displayName);
+    .def_readwrite("display_name", &MarketDatabase::Entry::m_displayName)
+    .def(self == self)
+    .def(self != self)
+    .def("__str__", &lexical_cast<std::string, MarketDatabase::Entry>);
   module.def("parse_market_code", &ParseMarketCode);
+  module.def("parse_market_entry", &ParseMarketEntry);
 }
 
 void Nexus::Python::ExportMarketQuote(pybind11::module& module) {
@@ -519,6 +522,7 @@ void Nexus::Python::ExportSecurity(pybind11::module& module) {
     .def(init<const Security&>())
     .def(self < self)
     .def(self == self)
+    .def(self != self)
     .def("__hash__", static_cast<size_t (*)(const Security&)>(hash_value))
     .def("__str__", static_cast<std::string (*)(const Security&)>(&ToString))
     .def_property_readonly("symbol", &Security::GetSymbol)
@@ -538,9 +542,18 @@ void Nexus::Python::ExportSecurityInfo(pybind11::module& module) {
   class_<SecurityInfo>(module, "SecurityInfo")
     .def(init())
     .def(init<const SecurityInfo&>())
+    .def(init<const Security&, std::string, std::string, Quantity>())
     .def_readwrite("security", &SecurityInfo::m_security)
     .def_readwrite("name", &SecurityInfo::m_name)
-    .def_readwrite("sector", &SecurityInfo::m_sector);
+    .def_readwrite("sector", &SecurityInfo::m_sector)
+    .def_readwrite("board_lot", &SecurityInfo::m_boardLot)
+    .def(self == self)
+    .def(self != self)
+    .def("__hash__",
+      [] (const SecurityInfo& self) {
+        return std::hash<SecurityInfo>()(self);
+      })
+    .def("__str__", &lexical_cast<std::string, SecurityInfo>);
 }
 
 void Nexus::Python::ExportSecurityTechnicals(pybind11::module& module) {

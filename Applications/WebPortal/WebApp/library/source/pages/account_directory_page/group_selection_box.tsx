@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize } from '../../display_size';
+import { DisplaySize } from '../..';
 
 interface Properties {
 

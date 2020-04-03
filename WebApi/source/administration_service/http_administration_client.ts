@@ -1,11 +1,15 @@
 import * as Beam from 'beam';
 import { RiskParameters } from '..';
-import { AccountIdentity, AccountModificationRequest, AccountRoles,
-  AdministrationClient, EntitlementModification, Message,
-  RiskModification } from '.';
+import { AccountIdentity } from './account_identity';
+import { AccountModificationRequest } from './account_modification_request';
+import { AccountRoles } from './account_roles';
+import { AdministrationClient } from './administration_client';
+import { EntitlementModification } from './entitlement_modification';
+import { Message } from './message';
+import { RiskModification } from './risk_modification';
 
-/** Implements the AdministrationClient using web services. */
-export class WebAdministrationClient extends AdministrationClient {
+/** Implements the AdministrationClient using HTTP requests. */
+export class HttpAdministrationClient extends AdministrationClient {
   public async loadAccountRoles(account: Beam.DirectoryEntry):
       Promise<AccountRoles> {
     let response = await Beam.post(
@@ -16,7 +20,18 @@ export class WebAdministrationClient extends AdministrationClient {
     return AccountRoles.fromJson(response);
   }
 
-  public async loadIdentity(account: Beam.DirectoryEntry):
+  public async storeAccountRoles(account: Beam.DirectoryEntry,
+      roles: AccountRoles): Promise<AccountRoles> {
+    let response = await Beam.post(
+      '/api/administration_service/store_account_roles',
+      {
+        account: account.toJson(),
+        roles: roles.toJson()
+      });
+    return AccountRoles.fromJson(response);
+  }
+
+  public async loadAccountIdentity(account: Beam.DirectoryEntry):
       Promise<AccountIdentity> {
     let response = await Beam.post(
       '/api/administration_service/load_account_identity',
@@ -24,6 +39,15 @@ export class WebAdministrationClient extends AdministrationClient {
         account: account.toJson()
       });
     return AccountIdentity.fromJson(response);
+  }
+
+  public async storeAccountIdentity(account: Beam.DirectoryEntry,
+      identity: AccountIdentity): Promise<void> {
+    await Beam.post('/api/administration_service/store_account_identity',
+      {
+        account: account.toJson(),
+        roles: identity.toJson()
+      });
   }
 
   public async loadAccountEntitlements(account: Beam.DirectoryEntry):

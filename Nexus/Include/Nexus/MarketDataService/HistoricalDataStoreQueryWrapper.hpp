@@ -1,38 +1,36 @@
-#ifndef NEXUS_MARKETDATAHISTORICALDATASTOREWRAPPER_HPP
-#define NEXUS_MARKETDATAHISTORICALDATASTOREWRAPPER_HPP
+#ifndef NEXUS_MARKET_DATA_HISTORICAL_DATA_STORE_WRAPPER_HPP
+#define NEXUS_MARKET_DATA_HISTORICAL_DATA_STORE_WRAPPER_HPP
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class HistoricalDataStoreQueryWrapper
-      \brief Wraps a HistoricalDataStore decomposing it into a query DataStore.
-      \tparam ValueType The type of value to query.
-      \tparam DataStoreType The HistoricalDataStore to wrap.
+  /**
+   * Wraps a HistoricalDataStore decomposing it into a query DataStore.
+   * @param <V> The type of value to query.
+   * @param <D> The HistoricalDataStore to wrap.
    */
-  template<typename T, typename DataStoreType>
+  template<typename V, typename D>
   class HistoricalDataStoreQueryWrapper {};
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
+  template<typename Q, typename V, typename I, typename D>
   class BaseHistoricalDataStoreQueryWrapper {
     public:
-      typedef QueryType Query;
-      typedef ValueType Value;
-      typedef IndexType Index;
-      typedef typename Beam::TryDereferenceType<DataStoreType>::type DataStore;
-      typedef Beam::Queries::SequencedValue<Value> SequencedValue;
-      typedef Beam::Queries::SequencedValue<
-        Beam::Queries::IndexedValue<Value, Index>> IndexedValue;
+      using Query = Q;
+      using Value = V;
+      using Index = I;
+      using DataStore = Beam::GetTryDereferenceType<D>;
+      using SequencedValue = Beam::Queries::SequencedValue<Value>;
+      using IndexedValue = Beam::Queries::SequencedValue<
+        Beam::Queries::IndexedValue<Value, Index>>;
 
       template<typename DataStoreForward>
       BaseHistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore);
 
-      ~BaseHistoricalDataStoreQueryWrapper();
+      virtual ~BaseHistoricalDataStoreQueryWrapper();
 
       void Store(const IndexedValue& value);
 
@@ -43,19 +41,19 @@ namespace MarketDataService {
       void Close();
 
     protected:
-      typename Beam::OptionalLocalPtr<DataStoreType>::type m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
   };
 
-  template<typename DataStoreType>
-  class HistoricalDataStoreQueryWrapper<OrderImbalance, DataStoreType> :
+  template<typename D>
+  class HistoricalDataStoreQueryWrapper<OrderImbalance, D> :
       public BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-      OrderImbalance, MarketCode, DataStoreType> {
+      OrderImbalance, MarketCode, D> {
     public:
       template<typename DataStoreForward>
       HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-          : BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-              OrderImbalance, MarketCode, DataStoreType>(
-              std::forward<DataStoreForward>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
+            OrderImbalance, MarketCode, D>(
+            std::forward<DataStoreForward>(dataStore)) {}
 
       std::vector<SequencedOrderImbalance> Load(
           const MarketWideDataQuery& query) {
@@ -63,16 +61,15 @@ namespace MarketDataService {
       }
   };
 
-  template<typename DataStoreType>
-  class HistoricalDataStoreQueryWrapper<BboQuote, DataStoreType> :
+  template<typename D>
+  class HistoricalDataStoreQueryWrapper<BboQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      BboQuote, Security, DataStoreType> {
+      BboQuote, Security, D> {
     public:
       template<typename DataStoreForward>
       HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-          : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-              BboQuote, Security, DataStoreType>(
-              std::forward<DataStoreForward>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BboQuote,
+            Security, D>(std::forward<DataStoreForward>(dataStore)) {}
 
       std::vector<SequencedBboQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -80,16 +77,16 @@ namespace MarketDataService {
       }
   };
 
-  template<typename DataStoreType>
-  class HistoricalDataStoreQueryWrapper<BookQuote, DataStoreType> :
+  template<typename D>
+  class HistoricalDataStoreQueryWrapper<BookQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      BookQuote, Security, DataStoreType> {
+      BookQuote, Security, D> {
     public:
       template<typename DataStoreForward>
       HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-          : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-              BookQuote, Security, DataStoreType>(
-              std::forward<DataStoreForward>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
+            BookQuote, Security, D>(
+            std::forward<DataStoreForward>(dataStore)) {}
 
       std::vector<SequencedBookQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -97,16 +94,16 @@ namespace MarketDataService {
       }
   };
 
-  template<typename DataStoreType>
-  class HistoricalDataStoreQueryWrapper<MarketQuote, DataStoreType> :
+  template<typename D>
+  class HistoricalDataStoreQueryWrapper<MarketQuote, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      MarketQuote, Security, DataStoreType> {
+      MarketQuote, Security, D> {
     public:
       template<typename DataStoreForward>
       HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-          : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-              MarketQuote, Security, DataStoreType>(
-              std::forward<DataStoreForward>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
+            MarketQuote, Security, D>(
+            std::forward<DataStoreForward>(dataStore)) {}
 
       std::vector<SequencedMarketQuote> Load(
           const SecurityMarketDataQuery& query) {
@@ -114,16 +111,16 @@ namespace MarketDataService {
       }
   };
 
-  template<typename DataStoreType>
-  class HistoricalDataStoreQueryWrapper<TimeAndSale, DataStoreType> :
+  template<typename D>
+  class HistoricalDataStoreQueryWrapper<TimeAndSale, D> :
       public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-      TimeAndSale, Security, DataStoreType> {
+      TimeAndSale, Security, D> {
     public:
       template<typename DataStoreForward>
       HistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
-          : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-              TimeAndSale, Security, DataStoreType>(
-              std::forward<DataStoreForward>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
+            TimeAndSale, Security, D>(
+            std::forward<DataStoreForward>(dataStore)) {}
 
       std::vector<SequencedTimeAndSale> Load(
           const SecurityMarketDataQuery& query) {
@@ -131,49 +128,39 @@ namespace MarketDataService {
       }
   };
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
+  template<typename Q, typename V, typename I, typename D>
   template<typename DataStoreForward>
-  BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::BaseHistoricalDataStoreQueryWrapper(
-      DataStoreForward&& dataStore)
-      : m_dataStore(std::forward<DataStoreForward>(dataStore)) {}
+  BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::
+    BaseHistoricalDataStoreQueryWrapper(DataStoreForward&& dataStore)
+    : m_dataStore(std::forward<DataStoreForward>(dataStore)) {}
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
-  BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::~BaseHistoricalDataStoreQueryWrapper() {
+  template<typename Q, typename V, typename I, typename D>
+  BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::
+      ~BaseHistoricalDataStoreQueryWrapper() {
     Close();
   }
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
-  void BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::Store(const IndexedValue& value) {
+  template<typename Q, typename V, typename I, typename D>
+  void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Store(
+      const IndexedValue& value) {
     m_dataStore->Store(value);
   }
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
-  void BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::Store(const std::vector<IndexedValue>& values) {
+  template<typename Q, typename V, typename I, typename D>
+  void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Store(
+      const std::vector<IndexedValue>& values) {
     return m_dataStore->Store(values);
   }
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
-  void BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::Open() {
+  template<typename Q, typename V, typename I, typename D>
+  void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Open() {
     m_dataStore->Open();
   }
 
-  template<typename QueryType, typename ValueType, typename IndexType,
-    typename DataStoreType>
-  void BaseHistoricalDataStoreQueryWrapper<QueryType, ValueType, IndexType,
-      DataStoreType>::Close() {
+  template<typename Q, typename V, typename I, typename D>
+  void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Close() {
     m_dataStore->Close();
   }
-}
 }
 
 #endif

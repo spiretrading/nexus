@@ -11,26 +11,31 @@
 
 namespace Nexus {
 
-  /** Wraps a historical market data store and satisfies queries submitted to it
-      up to a certain date time.
-      \tparam H The underlying data store to wrap.
+  /**
+   * Wraps a historical market data store and satisfies queries submitted to it
+   * up to a certain date time.
+   * @param <H> The underlying data store to wrap.
    */
   template<typename H>
   class CutoffHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! The type of underlying data store to wrap.
+      /** The type of underlying data store to wrap. */
       using HistoricalDataStore = Beam::GetTryDereferenceType<H>;
 
-      //! Constructs a CutoffHistoricalDataStore.
-      /*!
-        \param dataStore Initializes the data store to wrap.
-        \param cutoff The date/time to satisfied queries to.
-      */
+      /**
+       * Constructs a CutoffHistoricalDataStore.
+       * @param dataStore Initializes the data store to wrap.
+       * @param cutoff The date/time to satisfied queries to.
+       */
       template<typename D>
       CutoffHistoricalDataStore(D&& dataStore, boost::posix_time::ptime cutoff);
 
       ~CutoffHistoricalDataStore();
+
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketDataService::MarketWideDataQuery& query);
@@ -46,6 +51,8 @@ namespace Nexus {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const MarketDataService::SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -99,13 +106,25 @@ namespace Nexus {
   template<typename H>
   template<typename D>
   CutoffHistoricalDataStore<H>::CutoffHistoricalDataStore(D&& dataStore,
-      boost::posix_time::ptime cutoff)
-      : m_dataStore(std::forward<D>(dataStore)),
-        m_cutoff(cutoff) {}
+    boost::posix_time::ptime cutoff)
+    : m_dataStore(std::forward<D>(dataStore)),
+      m_cutoff(cutoff) {}
 
   template<typename H>
   CutoffHistoricalDataStore<H>::~CutoffHistoricalDataStore() {
     Close();
+  }
+
+  template<typename H>
+  boost::optional<SecurityInfo> CutoffHistoricalDataStore<H>::LoadSecurityInfo(
+      const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename H>
+  std::vector<SecurityInfo> CutoffHistoricalDataStore<H>::
+      LoadAllSecurityInfo() {
+    return m_dataStore->LoadAllSecurityInfo();
   }
 
   template<typename H>
@@ -157,44 +176,69 @@ namespace Nexus {
   }
 
   template<typename H>
-  void CutoffHistoricalDataStore<H>::Store(
-    const SequencedMarketOrderImbalance& orderImbalance) {}
+  void CutoffHistoricalDataStore<H>::Store(const SecurityInfo& info) {
+    m_dataStore->Store(info);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {}
+      const SequencedMarketOrderImbalance& orderImbalance) {
+    m_dataStore->Store(orderImbalance);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const SequencedSecurityBboQuote& bboQuote) {}
+      const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
+    m_dataStore->Store(orderImbalances);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const std::vector<SequencedSecurityBboQuote>& bboQuotes) {}
+      const SequencedSecurityBboQuote& bboQuote) {
+    m_dataStore->Store(bboQuote);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const SequencedSecurityMarketQuote& marketQuote) {}
+      const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
+    m_dataStore->Store(bboQuotes);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {}
+      const SequencedSecurityMarketQuote& marketQuote) {
+    m_dataStore->Store(marketQuote);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const SequencedSecurityBookQuote& bookQuote) {}
+      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
+    m_dataStore->Store(marketQuotes);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const std::vector<SequencedSecurityBookQuote>& bookQuotes) {}
+      const SequencedSecurityBookQuote& bookQuote) {
+    m_dataStore->Store(bookQuote);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const SequencedSecurityTimeAndSale& timeAndSale) {}
+      const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
+    m_dataStore->Store(bookQuotes);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Store(
-    const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
+      const SequencedSecurityTimeAndSale& timeAndSale) {
+    m_dataStore->Store(timeAndSale);
+  }
+
+  template<typename H>
+  void CutoffHistoricalDataStore<H>::Store(
+      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
+    m_dataStore->Store(timeAndSales);
+  }
 
   template<typename H>
   void CutoffHistoricalDataStore<H>::Open() {

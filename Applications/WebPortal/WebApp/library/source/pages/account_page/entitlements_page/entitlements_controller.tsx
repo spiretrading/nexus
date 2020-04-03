@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../..';
+import { DisplaySize, LoadingPage } from '../../..';
 import { EntitlementsModel } from './entitlements_model';
 import { EntitlementsPage } from './entitlements_page';
 
@@ -51,7 +51,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
-      return <div/>;
+      return <LoadingPage/>;
     }
     return <EntitlementsPage roles={this.props.roles}
       entitlements={this.props.entitlements}
@@ -63,7 +63,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
   }
 
-  public componentWillMount(): void {
+  public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.setState({
@@ -97,7 +97,6 @@ export class EntitlementsController extends React.Component<Properties, State> {
         status: 'Saved.'
       });
     } catch(e) {
-      console.log(e);
       this.setState({
         isSubmitEnabled: true,
         isError: true,

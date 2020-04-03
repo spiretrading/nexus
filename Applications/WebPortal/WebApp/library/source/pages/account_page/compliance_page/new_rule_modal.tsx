@@ -14,7 +14,7 @@ interface Properties {
   /** Determines if the modal should be open or not. */
   isOpen?: boolean;
 
-  /** The callback to hide or show the uploader. */
+  /** The callback to hide or show the modal. */
   onToggleModal?: () => void;
 
   /** The callback to add a rule with the following schema. */
@@ -28,7 +28,6 @@ interface State {
 /** Displays a component that allows a user to add a new rule. */
 export class NewRuleModal extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    isOpen: false,
     onToggleModal: () => {},
     onAddNewRule: () => {}
   };
@@ -81,7 +80,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
     }
     return (
       <div>
-        <div style={NewRuleModal.STYLE.newRuleRow}
+        <div style={NewRuleModal.STYLE.modalButtonWrapper}
             onClick={this.props.onToggleModal}>
           <div style={NewRuleModal.STYLE.imageWrapper}>
             <img src={NewRuleModal.ADD_PATH}
@@ -134,17 +133,19 @@ export class NewRuleModal extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    newRuleRow: {
+    modalButtonWrapper: {
       height: '20px',
+      width: '130px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer',
-      width: '130px'
+      cursor: 'pointer' as 'pointer'
     },
     newRuleText: {
       font: '400 14px Roboto',
-      paddingLeft: '18px'
+      paddingLeft: '18px',
+      color: '#333333',
+      cursor: 'pointer' as 'pointer'
     },
     imageWrapper: {
       display: 'flex' as 'flex',
@@ -152,7 +153,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       width: '20px',
       height: '20px',
-      cursor: 'pointer'
+      cursor: 'pointer' as 'pointer'
     },
     hidden: {
       visibility: 'hidden' as 'hidden',
@@ -167,7 +168,8 @@ export class NewRuleModal extends React.Component<Properties, State> {
       height: '38px',
       paddingLeft: '18px',
       paddingRight: '18px',
-      paddingTop: '18px'
+      paddingTop: '18px',
+      cursor: 'default' as 'default'
     },
     footerWrapper: {
       boxSizing: 'border-box' as 'border-box',
@@ -177,14 +179,17 @@ export class NewRuleModal extends React.Component<Properties, State> {
     headerText: {
       font: '400 16px Roboto',
       height: '20px',
+      color: '#333333'
     },
     iconWrapperSmall: {
       height: '24px',
-      width: '24px'
+      width: '24px',
+      cursor: 'pointer' as 'pointer'
     },
     iconWrapperLarge: {
       height: '16px',
-      width: '16px'
+      width: '16px',
+      cursor: 'pointer' as 'pointer'
     },
     ruleItemWrapper: {
       paddingTop: '30px',
@@ -216,10 +221,11 @@ export class NewRuleModal extends React.Component<Properties, State> {
       height: '40px',
       width: '100%',
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       display: 'flex' as 'flex',
       alignItems: 'center' as 'center',
       paddingLeft: '18px',
+      cursor: 'pointer' as 'pointer',
       ':hover': {
         backgroundColor: '#F8F8F8'
       }

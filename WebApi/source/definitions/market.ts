@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
-import { CountryCode, Currency } from '.';
+import { CountryCode } from './country';
+import { Currency } from './currency';
 
 /** Stores a market's unique identifer. */
 export class MarketCode {

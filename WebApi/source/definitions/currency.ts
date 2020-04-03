@@ -33,6 +33,11 @@ export class Currency {
     return this._code;
   }
 
+  /** Returns a hash of this value. */
+  public hash(): number {
+    return this._code;
+  }
+
   private _code: number;
 }
 

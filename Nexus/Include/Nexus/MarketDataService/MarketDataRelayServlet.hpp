@@ -22,53 +22,54 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Implements a relay servlet for querying market data.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam MarketDataClientType The type of MarketDataClient connected to
-              the source providing market data queries.
-      \tparam AdministrationClientType The type of AdministrationClient to use.
+  /**
+   * Implements a relay servlet for querying market data.
+   * @param C container instantiating this servlet.
+   * @param M The type of MarketDataClient connected to the source providing
+   *          market data queries.
+   * @param A The type of AdministrationClient to use.
    */
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   class MarketDataRelayServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of MarketDataClient connected to the source providing market
-      //! data queries.
-      using MarketDataClient = Beam::GetTryDereferenceType<
-        MarketDataClientType>;
+      /**
+       * The type of MarketDataClient connected to the source providing market
+       * data queries.
+       */
+      using MarketDataClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of AdministrationClient to use.
-      using AdministrationClient = Beam::GetTryDereferenceType<
-        AdministrationClientType>;
+      /** The type of AdministrationClient to use. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of function used to builds MarketDataClients.
+      /** The type of function used to builds MarketDataClients. */
       using MarketDataClientBuilder =
         typename Beam::ResourcePool<MarketDataClient>::ObjectBuilder;
 
-      //! Constructs a MarketDataRelayServlet.
-      /*!
-        \param entitlementDatabase The database of all market data entitlements.
-        \param clientTimeout The amount of time to wait before building another
-               MarketDataClient.
-        \param marketDataClientBuilder Builds MarketDataClients used to
-               distribute queries.
-        \param minMarketDataClients The minimum number of MarketDataClients to
-               pool.
-        \param maxMarketDataClients The maximum number of MarketDataClients to
-               pool.
-        \param administrationClient Used to check for entitlements.
-        \param timerThreadPool The thread pool used for timed operations.
-      */
-      template<typename AdministrationClientForward>
+      /**
+       * Constructs a MarketDataRelayServlet.
+       * @param entitlementDatabase The database of all market data
+       *        entitlements.
+       * @param clientTimeout The amount of time to wait before building another
+       *        MarketDataClient.
+       * @param marketDataClientBuilder Builds MarketDataClients used to
+       *        distribute queries.
+       * @param minMarketDataClients The minimum number of MarketDataClients to
+       *        pool.
+       * @param maxMarketDataClients The maximum number of MarketDataClients to
+       *        pool.
+       * @param administrationClient Used to check for entitlements.
+       * @param timerThreadPool The thread pool used for timed operations.
+       */
+      template<typename AF>
       MarketDataRelayServlet(const EntitlementDatabase& entitlementDatabase,
         const boost::posix_time::time_duration& clientTimeout,
         const MarketDataClientBuilder& marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-        AdministrationClientForward&& administrationClient,
-        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
+        AF&& administrationClient, Beam::Ref<Beam::Threading::TimerThreadPool>
+        timerThreadPool);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -109,8 +110,7 @@ namespace Nexus::MarketDataService {
       RealTimeSubscriptionSet<Security> m_timeAndSaleRealTimeSubscriptions;
       EntitlementDatabase m_entitlementDatabase;
       Beam::ResourcePool<MarketDataClient> m_marketDataClients;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::IO::OpenState m_openState;
       std::vector<std::unique_ptr<RealTimeQueryEntry>> m_realTimeQueryEntries;
 
@@ -131,6 +131,8 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
         const Security& security);
+      boost::optional<SecurityInfo> OnLoadSecurityInfo(
+        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
       template<typename Index, typename Value, typename Subscriptions>
@@ -143,52 +145,45 @@ namespace Nexus::MarketDataService {
         Subscriptions& subscriptions);
   };
 
-  template<typename MarketDataClientType, typename AdministrationClientType>
+  template<typename M, typename A>
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
     static constexpr auto SupportsParallelism = true;
 
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = MarketDataRelayServlet<ContainerType, MarketDataClientType,
-        AdministrationClientType>;
+      using type = MarketDataRelayServlet<C, M, A>;
     };
   };
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::RealTimeQueryEntry::RealTimeQueryEntry(
-      std::unique_ptr<MarketDataClient> marketDataClient)
-      : m_marketDataClient(std::move(marketDataClient)) {}
+  template<typename C, typename M, typename A>
+  MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry::RealTimeQueryEntry(
+    std::unique_ptr<MarketDataClient> marketDataClient)
+    : m_marketDataClient(std::move(marketDataClient)) {}
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  template<typename AdministrationClientForward>
-  MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::MarketDataRelayServlet(
+  template<typename C, typename M, typename A>
+  template<typename AF>
+  MarketDataRelayServlet<C, M, A>::MarketDataRelayServlet(
       const EntitlementDatabase& entitlementDatabase,
       const boost::posix_time::time_duration& clientTimeout,
       const MarketDataClientBuilder& marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-      AdministrationClientForward&& administrationClient,
-      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
+      AF&& administrationClient, Beam::Ref<Beam::Threading::TimerThreadPool>
+      timerThreadPool)
       : m_entitlementDatabase(entitlementDatabase),
         m_marketDataClients(clientTimeout, marketDataClientBuilder,
           Beam::Ref(timerThreadPool), minMarketDataClients,
           maxMarketDataClients),
-        m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)) {
-    for(std::size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
+        m_administrationClient(std::forward<AF>(administrationClient)) {
+    for(auto i = std::size_t{0}; i < boost::thread::hardware_concurrency();
+        ++i) {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
     }
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::RegisterServices(
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(slots));
@@ -259,15 +254,16 @@ namespace Nexus::MarketDataService {
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityInfoService::AddSlot(Store(slots), std::bind(
+      &MarketDataRelayServlet::OnLoadSecurityInfo, this, std::placeholders::_1,
+      std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRelayServlet::OnLoadSecurityInfoFromPrefix, this,
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType, 
-      AdministrationClientType>::HandleClientAccepted(
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
     auto roles = m_administrationClient->LoadAccountRoles(session.GetAccount());
@@ -296,10 +292,8 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::HandleClientClosed(
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_orderImbalanceSubscriptions.RemoveAll(client);
     m_bboQuoteSubscriptions.RemoveAll(client);
@@ -308,53 +302,42 @@ namespace Nexus::MarketDataService {
     m_timeAndSaleSubscriptions.RemoveAll(client);
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::Open() {
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::Close() {
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::Shutdown() {
+  template<typename C, typename M, typename A>
+  void MarketDataRelayServlet<C, M, A>::Shutdown() {
     for(auto& entry : m_realTimeQueryEntries) {
       entry->m_marketDataClient->Close();
     }
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   template<typename T>
-  typename MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::RealTimeQueryEntry&
-      MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::GetRealTimeQueryEntry(const T& index) {
+  typename MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry&
+      MarketDataRelayServlet<C, M, A>::GetRealTimeQueryEntry(const T& index) {
     auto i = std::hash<T>()(index) % m_realTimeQueryEntries.size();
     return *m_realTimeQueryEntries[i];
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   template<typename Service, typename Query, typename Subscriptions,
     typename RealTimeSubscriptions>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::HandleQueryRequest(
+  void MarketDataRelayServlet<C, M, A>::HandleQueryRequest(
       Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
       const Query& query, Subscriptions& subscriptions,
       RealTimeSubscriptions& realTimeSubscriptions) {
@@ -427,20 +410,16 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   template<typename Subscriptions>
-  void MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::OnEndQuery(ServiceProtocolClient& client,
-      const typename Subscriptions::Index& index, int id,
-      Subscriptions& subscriptions) {
+  void MarketDataRelayServlet<C, M, A>::OnEndQuery(
+      ServiceProtocolClient& client, const typename Subscriptions::Index& index,
+      int id, Subscriptions& subscriptions) {
     subscriptions.End(index, id);
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  SecuritySnapshot MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::OnLoadSecuritySnapshot(
+  template<typename C, typename M, typename A>
+  SecuritySnapshot MarketDataRelayServlet<C, M, A>::OnLoadSecuritySnapshot(
       ServiceProtocolClient& client, const Security& security) {
     auto& session = client.GetSession();
     auto marketDataClient = m_marketDataClients.Acquire();
@@ -478,31 +457,33 @@ namespace Nexus::MarketDataService {
     return securitySnapshot;
   }
 
-   template<typename ContainerType, typename MarketDataClientType,
-     typename AdministrationClientType>
-  SecurityTechnicals MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::OnLoadSecurityTechnicals(
+  template<typename C, typename M, typename A>
+  SecurityTechnicals MarketDataRelayServlet<C, M, A>::OnLoadSecurityTechnicals(
       ServiceProtocolClient& client, const Security& security) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityTechnicals(security);
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
-  std::vector<SecurityInfo> MarketDataRelayServlet<ContainerType,
-      MarketDataClientType, AdministrationClientType>::
+  template<typename C, typename M, typename A>
+  boost::optional<SecurityInfo> MarketDataRelayServlet<C, M, A>::
+      OnLoadSecurityInfo(ServiceProtocolClient& client,
+      const Security& security) {
+    auto marketDataClient = m_marketDataClients.Acquire();
+    return marketDataClient->LoadSecurityInfo(security);
+  }
+
+  template<typename C, typename M, typename A>
+  std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
       const std::string& prefix) {
     auto marketDataClient = m_marketDataClients.Acquire();
     return marketDataClient->LoadSecurityInfoFromPrefix(prefix);
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
-      MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::OnRealTimeUpdate(const Index& index,
+      MarketDataRelayServlet<C, M, A>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto indexedValue = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
@@ -514,12 +495,10 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataClientType,
-    typename AdministrationClientType>
+  template<typename C, typename M, typename A>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
-      MarketDataRelayServlet<ContainerType, MarketDataClientType,
-      AdministrationClientType>::OnRealTimeUpdate(const Index& index,
+      MarketDataRelayServlet<C, M, A>::OnRealTimeUpdate(const Index& index,
       const Value& value, Subscriptions& subscriptions) {
     auto key = EntitlementKey{index.GetMarket(), value.GetValue().m_market};
     auto indexedValue = Beam::Queries::SequencedValue(

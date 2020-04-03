@@ -2,8 +2,11 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../../display_size';
-import { AccountDirectoryModel, AccountEntry, FilterBar, GroupCard } from '.';
+import { DisplaySize } from '../..';
+import { AccountDirectoryModel } from './account_directory_model';
+import { AccountEntry } from './account_entry';
+import { FilterBar } from './filter_bar';
+import { GroupCard } from './group_card';
 
 interface Properties {
 

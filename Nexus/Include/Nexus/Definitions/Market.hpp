@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_HPP
 #define NEXUS_MARKET_HPP
 #include <algorithm>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -37,9 +38,6 @@ namespace Nexus {
 
         //! The default currency used.
         CurrencyId m_currency;
-
-        //! The size of a board lot.
-        Quantity m_boardLot;
 
         //! The institution's description.
         std::string m_description;
@@ -114,26 +112,23 @@ namespace Nexus {
       const boost::posix_time::ptime& dateTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
-    boost::local_time::time_zone_ptr marketTimeZone =
-      timeZoneDatabase.time_zone_from_region(
+    auto marketTimeZone = timeZoneDatabase.time_zone_from_region(
       marketDatabase.FromCode(marketCode).m_timeZone);
-    boost::local_time::time_zone_ptr utcTimeZone =
-      timeZoneDatabase.time_zone_from_region("UTC");
-    boost::local_time::local_date_time universalDateTime(dateTime.date(),
+    auto utcTimeZone = timeZoneDatabase.time_zone_from_region("UTC");
+    auto universalDateTime = boost::local_time::local_date_time(dateTime.date(),
       dateTime.time_of_day(), utcTimeZone,
       boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    boost::local_time::local_date_time currentMarketDateTime =
-      universalDateTime.local_time_in(marketTimeZone);
-    boost::posix_time::ptime marketCutOffDateTime(
-      currentMarketDateTime.local_time().date(),
-      boost::posix_time::seconds(0));
-    boost::local_time::local_date_time marketCutOffLocalDateTime(
+    auto currentMarketDateTime = universalDateTime.local_time_in(
+      marketTimeZone);
+    auto marketCutOffDateTime = boost::posix_time::ptime(
+      currentMarketDateTime.local_time().date(), boost::posix_time::seconds(0));
+    auto marketCutOffLocalDateTime = boost::local_time::local_date_time(
       marketCutOffDateTime.date(), marketCutOffDateTime.time_of_day(),
       marketTimeZone,
       boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    boost::local_time::local_date_time universalCutOffTime =
-      marketCutOffLocalDateTime.local_time_in(utcTimeZone);
-    boost::posix_time::ptime utcMarketDate(
+    auto universalCutOffTime = marketCutOffLocalDateTime.local_time_in(
+      utcTimeZone);
+    auto utcMarketDate = boost::posix_time::ptime(
       universalCutOffTime.local_time().date(),
       universalCutOffTime.local_time().time_of_day());
     return utcMarketDate;
@@ -185,7 +180,7 @@ namespace Nexus {
   inline MarketDatabase::Entry ParseMarketDatabaseEntry(
       const YAML::Node& node, const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
-    MarketDatabase::Entry entry;
+    auto entry = MarketDatabase::Entry();
     entry.m_code = Beam::Extract<std::string>(node, "code");
     entry.m_countryCode = ParseCountryCode(
       Beam::Extract<std::string>(node, "country_code"), countryDatabase);
@@ -200,7 +195,6 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid currency.",
         node.Mark()));
     }
-    entry.m_boardLot = Beam::Extract<int>(node, "board_lot");
     entry.m_description = Beam::Extract<std::string>(node, "description");
     entry.m_displayName = Beam::Extract<std::string>(node, "display_name");
     return entry;
@@ -216,7 +210,7 @@ namespace Nexus {
   inline MarketDatabase ParseMarketDatabase(const YAML::Node& node,
       const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
-    MarketDatabase marketDatabase;
+    auto marketDatabase = MarketDatabase();
     for(auto& entryNode : node) {
       auto entry = ParseMarketDatabaseEntry(entryNode, countryDatabase,
         currencyDatabase);
@@ -235,7 +229,6 @@ namespace Nexus {
       const MarketDatabase::Entry& rhs) {
     return lhs.m_code == rhs.m_code && lhs.m_countryCode == rhs.m_countryCode &&
       lhs.m_timeZone == rhs.m_timeZone && lhs.m_currency == rhs.m_currency &&
-      lhs.m_boardLot == rhs.m_boardLot &&
       lhs.m_description == rhs.m_description &&
       lhs.m_displayName == rhs.m_displayName;
   }
@@ -263,7 +256,7 @@ namespace Nexus {
 
   inline const MarketDatabase::Entry& MarketDatabase::FromCode(
       MarketCode code) const {
-    Entry comparator;
+    auto comparator = Entry();
     comparator.m_code = code;
     auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
       comparator,
@@ -290,10 +283,10 @@ namespace Nexus {
 
   inline std::vector<MarketDatabase::Entry> MarketDatabase::FromCountry(
       CountryCode country) const {
-    std::vector<MarketDatabase::Entry> entries;
-    for(auto i = m_entries.begin(); i != m_entries.end(); ++i) {
-      if(i->m_countryCode == country) {
-        entries.push_back(*i);
+    auto entries = std::vector<MarketDatabase::Entry>();
+    for(auto& entry : m_entries) {
+      if(entry.m_countryCode == country) {
+        entries.push_back(entry);
       }
     }
     return entries;
@@ -323,12 +316,19 @@ namespace Nexus {
   }
 
   inline MarketDatabase::Entry MarketDatabase::MakeNoneEntry() {
-    Entry noneEntry;
-    noneEntry.m_code = MarketCode();
-    noneEntry.m_countryCode = CountryDatabase::NONE;
-    noneEntry.m_timeZone = "UTC";
-    noneEntry.m_description = "None";
-    return noneEntry;
+    auto entry = Entry();
+    entry.m_code = MarketCode();
+    entry.m_countryCode = CountryDatabase::NONE;
+    entry.m_timeZone = "UTC";
+    entry.m_description = "None";
+    return entry;
+  }
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const MarketDatabase::Entry& entry) {
+    return out << '(' << entry.m_code << ' ' << entry.m_countryCode << ' ' <<
+      entry.m_timeZone << ' ' << entry.m_currency << ' ' <<
+      entry.m_description << ' ' << entry.m_displayName << ')';
   }
 }
 
@@ -342,7 +342,6 @@ namespace Beam::Serialization {
       shuttle.Shuttle("country_code", value.m_countryCode);
       shuttle.Shuttle("time_zone", value.m_timeZone);
       shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("board_lot", value.m_boardLot);
       shuttle.Shuttle("description", value.m_description);
       shuttle.Shuttle("display_name", value.m_displayName);
     }

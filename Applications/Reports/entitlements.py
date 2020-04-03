@@ -45,7 +45,7 @@ class MonthlyReport:
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2009 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-d', '--directory', type=str, help='Log directory',
     default='.')
   parser.add_argument('-a', '--accounts', help='List all accounts',

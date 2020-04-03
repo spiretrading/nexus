@@ -17,26 +17,31 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Stores historical market data in an SQL database.
-      \tparam C The type of SQL connection.
+  /**
+   * Stores historical market data in an SQL database.
+   * @param <C> The type of SQL connection.
    */
   template<typename C>
   class SqlHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! The type of SQL connection.
+      /** The type of SQL connection. */
       using Connection = C;
 
-      //! The callable used to build SQL connections.
+      /** The callable used to build SQL connections. */
       using ConnectionBuilder = std::function<Connection ()>;
 
-      //! Constructs an SqlHistoricalDataStore.
-      /*!
-        \param connectionBuilder The callable used to build SQL connections.
-      */
+      /**
+       * Constructs an SqlHistoricalDataStore.
+       * @param connectionBuilder The callable used to build SQL connections.
+       */
       SqlHistoricalDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlHistoricalDataStore();
+
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -52,6 +57,8 @@ namespace Nexus::MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -102,27 +109,54 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
-      ConnectionBuilder connectionBuilder)
-      : m_connectionBuilder(std::move(connectionBuilder)),
-        m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
-          GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
-        m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
-        m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
-        m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)),
-        m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-          Beam::Ref(m_threadPool)) {}
+    ConnectionBuilder connectionBuilder)
+    : m_connectionBuilder(std::move(connectionBuilder)),
+      m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
+        GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        Beam::Ref(m_threadPool)),
+      m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
+        Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        Beam::Ref(m_threadPool)),
+      m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
+        GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        Beam::Ref(m_threadPool)),
+      m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
+        Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        Beam::Ref(m_threadPool)),
+      m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
+        GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        Beam::Ref(m_threadPool)) {}
 
   template<typename C>
   SqlHistoricalDataStore<C>::~SqlHistoricalDataStore() {
     Close();
+  }
+
+  template<typename C>
+  boost::optional<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
+      const Security& security) {
+    auto info = std::optional<SecurityInfo>();
+    {
+      auto reader = m_readerPool.Acquire();
+      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
+        Viper::sym("symbol") == security.GetSymbol() &&
+        Viper::sym("country") == security.GetCountry(), &info));
+    }
+    if(info.has_value()) {
+      return std::move(*info);
+    }
+    return boost::none;
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadAllSecurityInfo() {
+    auto result = std::vector<SecurityInfo>();
+    {
+      auto reader = m_readerPool.Acquire();
+      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
+        std::back_inserter(result)));
+    }
+    return result;
   }
 
   template<typename C>
@@ -156,63 +190,70 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C>
+  void SqlHistoricalDataStore<C>::Store(const SecurityInfo& info) {
+    auto writer = m_writerPool.Acquire();
+    writer->execute(Viper::upsert(GetSecurityInfoRow(), "security_info",
+      &info));
+  }
+
+  template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
-    return m_orderImbalanceDataStore.Store(orderImbalance);
+    m_orderImbalanceDataStore.Store(orderImbalance);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
-    return m_orderImbalanceDataStore.Store(orderImbalances);
+    m_orderImbalanceDataStore.Store(orderImbalances);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityBboQuote& bboQuote) {
-    return m_bboQuoteDataStore.Store(bboQuote);
+    m_bboQuoteDataStore.Store(bboQuote);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
-    return m_bboQuoteDataStore.Store(bboQuotes);
+    m_bboQuoteDataStore.Store(bboQuotes);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityMarketQuote& marketQuote) {
-    return m_marketQuoteDataStore.Store(marketQuote);
+    m_marketQuoteDataStore.Store(marketQuote);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-    return m_marketQuoteDataStore.Store(marketQuotes);
+    m_marketQuoteDataStore.Store(marketQuotes);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityBookQuote& bookQuote) {
-    return m_bookQuoteDataStore.Store(bookQuote);
+    m_bookQuoteDataStore.Store(bookQuote);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
-    return m_bookQuoteDataStore.Store(bookQuotes);
+    m_bookQuoteDataStore.Store(bookQuotes);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const SequencedSecurityTimeAndSale& timeAndSale) {
-    return m_timeAndSaleDataStore.Store(timeAndSale);
+    m_timeAndSaleDataStore.Store(timeAndSale);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
-    return m_timeAndSaleDataStore.Store(timeAndSales);
+    m_timeAndSaleDataStore.Store(timeAndSales);
   }
 
   template<typename C>
@@ -231,6 +272,8 @@ namespace Nexus::MarketDataService {
       auto writerConnection =
         std::make_unique<Connection>(m_connectionBuilder());
       writerConnection->open();
+      writerConnection->execute(Viper::create_if_not_exists(
+        GetSecurityInfoRow(), "security_info"));
       m_writerPool.Add(std::move(writerConnection));
       m_orderImbalanceDataStore.Open();
       m_bboQuoteDataStore.Open();

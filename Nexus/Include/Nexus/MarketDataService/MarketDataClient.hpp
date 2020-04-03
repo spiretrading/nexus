@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATACLIENT_HPP
-#define NEXUS_MARKETDATACLIENT_HPP
+#ifndef NEXUS_MARKET_DATA_CLIENT_HPP
+#define NEXUS_MARKET_DATA_CLIENT_HPP
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -14,131 +14,135 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class MarketDataClient
-      \brief Client used to access market data services.
-      \tparam ServiceProtocolClientBuilderType The type used to build
-              ServiceProtocolClients to the server.
+  /**
+   * Client used to access market data services.
+   * @param <B> The type used to build ServiceProtocolClients to the server.
    */
-  template<typename ServiceProtocolClientBuilderType>
+  template<typename B>
   class MarketDataClient : private boost::noncopyable {
     public:
 
-      //! The type used to build ServiceProtocolClients to the server.
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<
-        ServiceProtocolClientBuilderType>;
+      /** The type used to build ServiceProtocolClients to the server. */
+      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
 
-      //! Constructs a MarketDataClient.
-      /*!
-        \param clientBuilder Initializes the ServiceProtocolClientBuilder.
-      */
+      /**
+       * Constructs a MarketDataClient.
+       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       */
       template<typename ClientBuilderForward>
       MarketDataClient(ClientBuilderForward&& clientBuilder);
 
       ~MarketDataClient();
 
-      //! Submits a query for a Market's OrderImbalances.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Market's OrderImbalances.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedOrderImbalance>>&
         queue);
 
-      //! Submits a query for a Market's OrderImbalances.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Market's OrderImbalances.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue);
 
-      //! Submits a query for a Security's BboQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's BboQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue);
 
-      //! Submits a query for a Security's BboQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's BboQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue);
 
-      //! Submits a query for a Security's BookQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's BookQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue);
 
-      //! Submits a query for a Security's BookQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's BookQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue);
 
-      //! Submits a query for a Security's MarketQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's MarketQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue);
 
-      //! Submits a query for a Security's MarketQuotes.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's MarketQuotes.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue);
 
-      //! Submits a query for a Security's TimeAndSales.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's TimeAndSales.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue);
 
-      //! Submits a query for a Security's TimeAndSales.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's TimeAndSales.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
         const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue);
 
-      //! Loads a Security's real-time snapshot.
-      /*!
-        \param security The Security whose SecuritySnapshot is to be loaded.
-        \return The real-time snapshot of the specified <i>security</i>.
-      */
+      /**
+       * Loads a Security's real-time snapshot.
+       * @param security The Security whose SecuritySnapshot is to be loaded.
+       * @return The real-time snapshot of the specified <i>security</i>.
+       */
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
-      //! Loads the SecurityTechnicals for a specified Security.
-      /*!
-        \param security The Security whose SecurityTechnicals is to be loaded.
-        \return The SecurityTechnicals for the specified <i>security</i>.
-      */
+      /**
+       * Loads the SecurityTechnicals for a specified Security.
+       * @param security The Security whose SecurityTechnicals is to be loaded.
+       * @return The SecurityTechnicals for the specified <i>security</i>.
+       */
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
-      //! Loads SecurityInfo objects that match a prefix.
-      /*!
-        \param prefix The prefix to search for.
-        \return The list of SecurityInfo objects that match the <i>prefix</i>.
-      */
+      /**
+       * Loads the SecurityInfo for a specified Security.
+       * @param security The Security whose SecurityInfo is to be loaded.
+       * @return The SecurityInfo for the specified <i>security</i>.
+       */
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
+      /**
+       * Loads SecurityInfo objects that match a prefix.
+       * @param prefix The prefix to search for.
+       * @return The list of SecurityInfo objects that match the <i>prefix</i>.
+       */
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -151,12 +155,11 @@ namespace MarketDataService {
         typename EndQueryMessage>
       using QueryClientPublisher = Beam::Queries::QueryClientPublisher<Value,
         Query, Queries::EvaluatorTranslator,
-        Beam::Services::ServiceProtocolClientHandler<
-        ServiceProtocolClientBuilderType>, QueryService, EndQueryMessage>;
+        Beam::Services::ServiceProtocolClientHandler<B>, QueryService,
+        EndQueryMessage>;
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Services::ServiceProtocolClientHandler<
-        ServiceProtocolClientBuilderType> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       QueryClientPublisher<OrderImbalance, MarketWideDataQuery,
         QueryOrderImbalancesService, EndOrderImbalanceQueryMessage>
         m_orderImbalancePublisher;
@@ -176,10 +179,9 @@ namespace MarketDataService {
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
-  template<typename ServiceProtocolClientBuilderType>
+  template<typename B>
   template<typename ClientBuilderForward>
-  MarketDataClient<ServiceProtocolClientBuilderType>::MarketDataClient(
-      ClientBuilderForward&& clientBuilder)
+  MarketDataClient<B>::MarketDataClient(ClientBuilderForward&& clientBuilder)
       : m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder)),
         m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
         m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
@@ -200,106 +202,111 @@ namespace MarketDataService {
     m_timeAndSalePublisher.template AddMessageHandler<TimeAndSaleMessage>();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  MarketDataClient<ServiceProtocolClientBuilderType>::~MarketDataClient() {
+  template<typename B>
+  MarketDataClient<B>::~MarketDataClient() {
     Close();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryOrderImbalances(
+  template<typename B>
+  void MarketDataClient<B>::QueryOrderImbalances(
       const MarketWideDataQuery& query, const std::shared_ptr<
       Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
     m_orderImbalancePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryOrderImbalances(
+  template<typename B>
+  void MarketDataClient<B>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
     m_orderImbalancePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename B>
+  void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
     m_bboQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename B>
+  void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
     m_bboQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryBookQuotes(
+  template<typename B>
+  void MarketDataClient<B>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
     m_bookQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryBookQuotes(
+  template<typename B>
+  void MarketDataClient<B>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
     m_bookQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryMarketQuotes(
+  template<typename B>
+  void MarketDataClient<B>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
     m_marketQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryMarketQuotes(
+  template<typename B>
+  void MarketDataClient<B>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
     m_marketQuotePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryTimeAndSales(
+  template<typename B>
+  void MarketDataClient<B>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
     m_timeAndSalePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::QueryTimeAndSales(
+  template<typename B>
+  void MarketDataClient<B>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
       const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
     m_timeAndSalePublisher.SubmitQuery(query, queue);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  SecuritySnapshot MarketDataClient<ServiceProtocolClientBuilderType>::
-      LoadSecuritySnapshot(const Security& security) {
+  template<typename B>
+  SecuritySnapshot MarketDataClient<B>::LoadSecuritySnapshot(
+      const Security& security) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecuritySnapshotService>(security);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  SecurityTechnicals MarketDataClient<ServiceProtocolClientBuilderType>::
-      LoadSecurityTechnicals(const Security& security) {
+  template<typename B>
+  SecurityTechnicals MarketDataClient<B>::LoadSecurityTechnicals(
+      const Security& security) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityTechnicalsService>(
       security);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  std::vector<SecurityInfo> MarketDataClient<ServiceProtocolClientBuilderType>::
-      LoadSecurityInfoFromPrefix(const std::string& prefix) {
+  template<typename B>
+  boost::optional<SecurityInfo> MarketDataClient<B>::LoadSecurityInfo(
+      const Security& security) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadSecurityInfoService>(security);
+  }
+
+  template<typename B>
+  std::vector<SecurityInfo> MarketDataClient<B>::LoadSecurityInfoFromPrefix(
+      const std::string& prefix) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityInfoFromPrefixService>(
       prefix);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::Open() {
+  template<typename B>
+  void MarketDataClient<B>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -312,22 +319,22 @@ namespace MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::Close() {
+  template<typename B>
+  void MarketDataClient<B>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::Shutdown() {
+  template<typename B>
+  void MarketDataClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_openState.SetClosed();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void MarketDataClient<ServiceProtocolClientBuilderType>::OnReconnect(
+  template<typename B>
+  void MarketDataClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
     m_orderImbalancePublisher.Recover(*client);
     m_bboQuotePublisher.Recover(*client);
@@ -335,7 +342,6 @@ namespace MarketDataService {
     m_marketQuotePublisher.Recover(*client);
     m_timeAndSalePublisher.Recover(*client);
   }
-}
 }
 
 #endif

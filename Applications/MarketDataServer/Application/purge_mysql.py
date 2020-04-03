@@ -74,7 +74,7 @@ def purge_all_security(security, start, end, connection):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2018 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
   parser.add_argument('-s', '--start', type=parse_date, help='Start range',

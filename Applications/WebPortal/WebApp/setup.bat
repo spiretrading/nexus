@@ -3,7 +3,7 @@ SETLOCAL
 SET ROOT=%cd%
 CALL "%~dp0..\..\..\WebApi\setup.bat"
 IF NOT EXIST dali (
-  git clone https://www.github.com/eidolonsystems/dali
+  git clone https://www.github.com/spiretrading/dali
 )
 SET dali_commit="99a1f58c6c24b5553712b410186cb27119328bac"
 PUSHD dali

@@ -10,32 +10,35 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Buffers historical market data before committing it to an underlying data
-      store.
-      \tparam HistoricalDataStoreType The underlying data store to commit the
-              data to.
+  /**
+   * Buffers historical market data before committing it to an underlying data
+   * store.
+   * @param <D> The underlying data store to commit the data to.
    */
-  template<typename HistoricalDataStoreType>
+  template<typename D>
   class BufferedHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! The type of HistoricalDataStore to buffer.
-      using HistoricalDataStore =
-        Beam::GetTryDereferenceType<HistoricalDataStoreType>;
+      /** The type of HistoricalDataStore to buffer. */
+      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs a BufferedHistoricalDataStore.
-      /*!
-        \param dataStore Initializes the data store to commit data to.
-        \param bufferSize The number of messages to buffer before committing to
-               to the <i>dataStore</i>.
-        \param threadPool The ThreadPool to queue the writes to.
-      */
+      /**
+       * Constructs a BufferedHistoricalDataStore.
+       * @param dataStore Initializes the data store to commit data to.
+       * @param bufferSize The number of messages to buffer before committing to
+       *        to the <i>dataStore</i>.
+       * @param threadPool The ThreadPool to queue the writes to.
+       */
       template<typename HistoricalDataStoreForward>
       BufferedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
         std::size_t bufferSize,
         Beam::Ref<Beam::Threading::ThreadPool> threadPool);
 
       ~BufferedHistoricalDataStore();
+
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -51,6 +54,8 @@ namespace Nexus::MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -82,7 +87,7 @@ namespace Nexus::MarketDataService {
       using DataStore = Beam::Queries::BufferedDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         Queries::EvaluatorTranslator>;
-      Beam::GetOptionalLocalPtr<HistoricalDataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       DataStore<OrderImbalance> m_orderImbalanceDataStore;
       DataStore<BboQuote> m_bboQuoteDataStore;
       DataStore<BookQuote> m_bookQuoteDataStore;
@@ -93,124 +98,134 @@ namespace Nexus::MarketDataService {
       void Shutdown();
   };
 
-  template<typename HistoricalDataStoreType>
+  template<typename D>
   template<typename HistoricalDataStoreForward>
-  BufferedHistoricalDataStore<HistoricalDataStoreType>::
-      BufferedHistoricalDataStore(HistoricalDataStoreForward&& dataStore,
-      std::size_t bufferSize, Beam::Ref<Beam::Threading::ThreadPool> threadPool)
-      : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
-        m_orderImbalanceDataStore(&*m_dataStore, bufferSize,
-          Beam::Ref(threadPool)),
-        m_bboQuoteDataStore(&*m_dataStore, bufferSize, Beam::Ref(threadPool)),
-        m_bookQuoteDataStore(&*m_dataStore, bufferSize, Beam::Ref(threadPool)),
-        m_marketQuoteDataStore(&*m_dataStore, bufferSize,
-          Beam::Ref(threadPool)),
-        m_timeAndSaleDataStore(&*m_dataStore, bufferSize,
-          Beam::Ref(threadPool)) {}
+  BufferedHistoricalDataStore<D>::BufferedHistoricalDataStore(
+    HistoricalDataStoreForward&& dataStore, std::size_t bufferSize,
+    Beam::Ref<Beam::Threading::ThreadPool> threadPool)
+    : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
+      m_orderImbalanceDataStore(&*m_dataStore, bufferSize,
+        Beam::Ref(threadPool)),
+      m_bboQuoteDataStore(&*m_dataStore, bufferSize, Beam::Ref(threadPool)),
+      m_bookQuoteDataStore(&*m_dataStore, bufferSize, Beam::Ref(threadPool)),
+      m_marketQuoteDataStore(&*m_dataStore, bufferSize, Beam::Ref(threadPool)),
+      m_timeAndSaleDataStore(&*m_dataStore, bufferSize,
+        Beam::Ref(threadPool)) {}
 
-  template<typename HistoricalDataStoreType>
-  BufferedHistoricalDataStore<HistoricalDataStoreType>::
-      ~BufferedHistoricalDataStore() {
+  template<typename D>
+  BufferedHistoricalDataStore<D>::~BufferedHistoricalDataStore() {
     Close();
   }
 
-  template<typename HistoricalDataStoreType>
-  std::vector<SequencedOrderImbalance> BufferedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadOrderImbalances(
-      const MarketWideDataQuery& query) {
+  template<typename D>
+  boost::optional<SecurityInfo> BufferedHistoricalDataStore<D>::
+      LoadSecurityInfo(const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename D>
+  std::vector<SecurityInfo> BufferedHistoricalDataStore<D>::
+      LoadAllSecurityInfo() {
+    return m_dataStore->LoadAllSecurityInfo();
+  }
+
+  template<typename D>
+  std::vector<SequencedOrderImbalance> BufferedHistoricalDataStore<D>::
+      LoadOrderImbalances(const MarketWideDataQuery& query) {
     return m_orderImbalanceDataStore.Load(query);
   }
 
-  template<typename HistoricalDataStoreType>
-  std::vector<SequencedBboQuote> BufferedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadBboQuotes(
+  template<typename D>
+  std::vector<SequencedBboQuote> BufferedHistoricalDataStore<D>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
     return m_bboQuoteDataStore.Load(query);
   }
 
-  template<typename HistoricalDataStoreType>
-  std::vector<SequencedBookQuote> BufferedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadBookQuotes(
-      const SecurityMarketDataQuery& query) {
+  template<typename D>
+  std::vector<SequencedBookQuote> BufferedHistoricalDataStore<D>::
+      LoadBookQuotes(const SecurityMarketDataQuery& query) {
     return m_bookQuoteDataStore.Load(query);
   }
 
-  template<typename HistoricalDataStoreType>
-  std::vector<SequencedMarketQuote> BufferedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadMarketQuotes(
-      const SecurityMarketDataQuery& query) {
+  template<typename D>
+  std::vector<SequencedMarketQuote> BufferedHistoricalDataStore<D>::
+      LoadMarketQuotes(const SecurityMarketDataQuery& query) {
     return m_marketQuoteDataStore.Load(query);
   }
 
-  template<typename HistoricalDataStoreType>
-  std::vector<SequencedTimeAndSale> BufferedHistoricalDataStore<
-      HistoricalDataStoreType>::LoadTimeAndSales(
-      const SecurityMarketDataQuery& query) {
+  template<typename D>
+  std::vector<SequencedTimeAndSale> BufferedHistoricalDataStore<D>::
+      LoadTimeAndSales(const SecurityMarketDataQuery& query) {
     return m_timeAndSaleDataStore.Load(query);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(const SecurityInfo& info) {
+    m_dataStore->Store(info);
+  }
+
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const SequencedMarketOrderImbalance& orderImbalance) {
     m_orderImbalanceDataStore.Store(orderImbalance);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
     m_orderImbalanceDataStore.Store(orderImbalances);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const SequencedSecurityBboQuote& bboQuote) {
     m_bboQuoteDataStore.Store(bboQuote);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
     m_bboQuoteDataStore.Store(bboQuotes);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const SequencedSecurityMarketQuote& marketQuote) {
     m_marketQuoteDataStore.Store(marketQuote);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
     m_marketQuoteDataStore.Store(marketQuotes);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const SequencedSecurityBookQuote& bookQuote) {
     m_bookQuoteDataStore.Store(bookQuote);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
     m_bookQuoteDataStore.Store(bookQuotes);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const SequencedSecurityTimeAndSale& timeAndSale) {
     m_timeAndSaleDataStore.Store(timeAndSale);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Store(
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Open() {
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -228,16 +243,16 @@ namespace Nexus::MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Close() {
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename HistoricalDataStoreType>
-  void BufferedHistoricalDataStore<HistoricalDataStoreType>::Shutdown() {
+  template<typename D>
+  void BufferedHistoricalDataStore<D>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_marketQuoteDataStore.Close();
     m_bookQuoteDataStore.Close();

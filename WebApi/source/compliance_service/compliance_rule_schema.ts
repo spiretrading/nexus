@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { ComplianceParameter } from '.';
+import { ComplianceParameter } from './compliance_parameter';
 
 /** Provides a description for a single compliance rule. */
 export class ComplianceRuleSchema {

@@ -2,8 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize } from '../../../display_size';
-import { DropDownButton, HLine } from '../../../components';
+import { DisplaySize } from '../../..';
+import { DropDownButton, HLine } from '../../..';
 import { ParametersList } from './parameter_list';
 import { RuleExecutionDropDown } from './rule_execution_drop_down';
 
@@ -18,6 +18,9 @@ interface Properties {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
 
   /** The event handler called when the rule entry changes. */
   onChange? :(ruleEntry: Nexus.ComplianceRuleEntry) => void;
@@ -90,9 +93,10 @@ export class RuleRow extends React.Component<Properties, State> {
           {spacing}
           <div style={RuleRow.STYLE.paddingLeft}>
             <RuleExecutionDropDown
-              onChange={this.onRuleModeChange}
+              displaySize={this.props.displaySize}
               value={this.props.complianceRule.state}
-              displaySize={this.props.displaySize}/>
+              readonly={this.props.readonly}
+              onChange={this.onRuleModeChange}/>
           </div>
           {spacing}
         </div>
@@ -106,6 +110,7 @@ export class RuleRow extends React.Component<Properties, State> {
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
                   schema={this.props.complianceRule.schema}
+                  readonly={this.props.readonly}
                   onChange={this.onParameterChange}/>
               </div>)}
           </Transition>
@@ -152,11 +157,13 @@ export class RuleRow extends React.Component<Properties, State> {
     },
     closedText: {
       font: '400 14px Roboto',
-      color: '#333333'
+      color: '#333333',
+      cursor: 'default' as 'default'
     },
     openText: {
       font: '500 14px Roboto',
-      color: '#4B23A0'
+      color: '#4B23A0',
+      cursor: 'default' as 'default'
     },
     headerSmall: {
       minWidth: '284px',
@@ -165,7 +172,7 @@ export class RuleRow extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'column' as 'column',
       height: '84px',
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     },
     headerMedium: {
       width: '732px',

@@ -1,5 +1,5 @@
-#ifndef NEXUS_TMXIPSERVICEACCESSCLIENT_HPP
-#define NEXUS_TMXIPSERVICEACCESSCLIENT_HPP
+#ifndef NEXUS_TMX_IP_SERVICE_ACCESS_CLIENT_HPP
+#define NEXUS_TMX_IP_SERVICE_ACCESS_CLIENT_HPP
 #include <cstdint>
 #include <deque>
 #include <functional>
@@ -14,80 +14,70 @@
 #include "Nexus/StampProtocol/StampPacket.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct TmxIpServiceAccessConfiguration
-      \brief Stores the configuration used for a TmxIpServiceAccessClient.
-   */
+  /** Stores the configuration used for a TmxIpServiceAccessClient. */
   struct TmxIpServiceAccessConfiguration {
 
-    //! Whether retransmission is enabled.
+    /** Whether retransmission is enabled. */
     bool m_enableRetransmission;
 
-    //! The maximum number of retransmissions to perform.
+    /** The maximum number of retransmissions to perform. */
     int m_maxRetransmissionCount;
 
-    //! The size of the largest possible retransmission block.
+    /** The size of the largest possible retransmission block. */
     std::size_t m_maxRetransmissionBlock;
 
-    //! Constructs a TmxIpServiceAccessConfiguration with default values.
+    /** Constructs a TmxIpServiceAccessConfiguration with default values. */
     TmxIpServiceAccessConfiguration();
   };
 
-  /*! \class TmxIpServiceAccessClient
-      \brief Produces StampMessages received from a TMX Information Processor
-             service.
-      \tparam FeedChannelType The type of Channel receiving the market data
-              feed.
-      \tparam RetransmissionClientChannelType The type of Channel used to send
-              retransmission requests.
-      \tparam RetransmissionServerChannelType The type of Channel used to
-              receive retransmission messages.
+  /**
+   * Produces StampMessages received from a TMX Information Processor
+   * service.
+   * @param <F> The type of Channel receiving the market data feed.
+   * @param <C> The type of Channel used to send retransmission requests.
+   * @param <S> The type of Channel used to receive retransmission messages.
    */
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
+  template<typename F, typename C, typename S>
   class TmxIpServiceAccessClient : private boost::noncopyable {
     public:
 
-      //! The type of channel receiving the market data feed.
-      using FeedChannel = Beam::GetTryDereferenceType<FeedChannelType>;
+      /** The type of channel receiving the market data feed. */
+      using FeedChannel = Beam::GetTryDereferenceType<F>;
 
-      //! The type of Channel used to send retransmission requests.
-      using RetransmissionClientChannel = Beam::GetTryDereferenceType<
-        RetransmissionClientChannelType>;
+      /** The type of Channel used to send retransmission requests. */
+      using RetransmissionClientChannel = Beam::GetTryDereferenceType<C>;
 
-      //! The type of Channel used to receive retransmission messages.
-      using RetransmissionServerChannel = Beam::GetTryDereferenceType<
-        RetransmissionServerChannelType>;
+      /** The type of Channel used to receive retransmission messages. */
+      using RetransmissionServerChannel = Beam::GetTryDereferenceType<S>;
 
-      //! The type of function used to build instances of the
-      //! RetransmissionClientChannel.
-      /*!
-        \param channel Stores the Channel to build.
-      */
+      /**
+       * The type of function used to build instances of the
+       * RetransmissionClientChannel.
+       * @param channel Stores the Channel to build.
+       */
       using RetransmissionClientChannelBuilder = std::function<void (
         Beam::Out<std::optional<RetransmissionClientChannel>> channel)>;
 
-      //! Constructs a TmxIpServiceAccessClient.
-      /*!
-        \param config The configuration to use.
-        \param feedChannel The Channel receiving the market data feed.
-        \param retransmissionClientChannelBuilder Builds instances of the
-               Channel used to send retransmission requests.
-        \param retransmissionServerChannel The Channel receiving retransmission
-               messages.
-      */
-      template<typename FeedChannelForward,
-        typename RetransmissionServerChannelForward>
+      /**
+       * Constructs a TmxIpServiceAccessClient.
+       * @param config The configuration to use.
+       * @param feedChannel The Channel receiving the market data feed.
+       * @param retransmissionClientChannelBuilder Builds instances of the
+       *        Channel used to send retransmission requests.
+       * @param retransmissionServerChannel The Channel receiving retransmission
+       *        messages.
+       */
+      template<typename FF, typename SF>
       TmxIpServiceAccessClient(const TmxIpServiceAccessConfiguration& config,
-        FeedChannelForward&& feedChannel,
+        FF&& feedChannel,
         RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-        RetransmissionServerChannelForward&& retransmissionServerChannel);
+        SF&& retransmissionServerChannel);
 
       ~TmxIpServiceAccessClient();
 
-      //! Reads the next message from the feed.
+      /** Reads the next message from the feed. */
       StampProtocol::StampMessage Read();
 
       void Open();
@@ -103,10 +93,9 @@ namespace MarketDataService {
         BufferEntry(FeedBuffer buffer, std::uint32_t sequenceNumber);
       };
       TmxIpServiceAccessConfiguration m_config;
-      Beam::GetOptionalLocalPtr<FeedChannelType> m_feedChannel;
+      Beam::GetOptionalLocalPtr<F> m_feedChannel;
       RetransmissionClientChannelBuilder m_retransmissionClientChannelBuilder;
-      Beam::GetOptionalLocalPtr<RetransmissionServerChannelType>
-        m_retransmissionServerChannel;
+      Beam::GetOptionalLocalPtr<S> m_retransmissionServerChannel;
       int m_retransmissionCount;
       std::uint32_t m_sequenceNumber;
       std::vector<FeedBuffer> m_buffers;
@@ -127,62 +116,51 @@ namespace MarketDataService {
   };
 
   inline TmxIpServiceAccessConfiguration::TmxIpServiceAccessConfiguration()
-      : m_enableRetransmission(false),
-        m_maxRetransmissionCount(100),
-        m_maxRetransmissionBlock(20000) {}
+    : m_enableRetransmission(false),
+      m_maxRetransmissionCount(100),
+      m_maxRetransmissionBlock(20000) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  TmxIpServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::BufferEntry::BufferEntry(
-      FeedBuffer buffer, std::uint32_t sequenceNumber)
-      : m_buffer(std::move(buffer)),
-        m_sequenceNumber(sequenceNumber) {}
+  template<typename F, typename C, typename S>
+  TmxIpServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
+    std::uint32_t sequenceNumber)
+    : m_buffer(std::move(buffer)),
+      m_sequenceNumber(sequenceNumber) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  template<typename FeedChannelForward,
-    typename RetransmissionServerChannelForward>
-  TmxIpServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::TmxIpServiceAccessClient(
-      const TmxIpServiceAccessConfiguration& config,
-      FeedChannelForward&& feedChannel,
-      RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-      RetransmissionServerChannelForward&& retransmissionServerChannel)
-      : m_config(config),
-        m_feedChannel(std::forward<FeedChannelType>(feedChannel)),
-        m_retransmissionClientChannelBuilder(
-          std::move(retransmissionClientChannelBuilder)),
-        m_retransmissionServerChannel(
-          std::forward<RetransmissionServerChannelForward>(
-          retransmissionServerChannel)) {}
+  template<typename F, typename C, typename S>
+  template<typename FF, typename SF>
+  TmxIpServiceAccessClient<F, C, S>::TmxIpServiceAccessClient(
+    const TmxIpServiceAccessConfiguration& config, FF&& feedChannel,
+    RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
+    SF&& retransmissionServerChannel)
+    : m_config(config),
+      m_feedChannel(std::forward<FF>(feedChannel)),
+      m_retransmissionClientChannelBuilder(
+        std::move(retransmissionClientChannelBuilder)),
+      m_retransmissionServerChannel(std::forward<SF>(
+        retransmissionServerChannel)) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  TmxIpServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::~TmxIpServiceAccessClient() {
+  template<typename F, typename C, typename S>
+  TmxIpServiceAccessClient<F, C, S>::~TmxIpServiceAccessClient() {
     Close();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  StampProtocol::StampMessage TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Read() {
-    static const Beam::FixedString<2> HEARTBEAT_MESSAGE_TYPE = "V ";
+  template<typename F, typename C, typename S>
+  StampProtocol::StampMessage TmxIpServiceAccessClient<F, C, S>::Read() {
+    static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
     }
-    StampProtocol::StampPacket packet;
+    auto packet = StampProtocol::StampPacket();
     if(m_config.m_enableRetransmission) {
-      typename RetransmissionServerChannel::Reader::Buffer retransmissionBuffer;
+      auto retransmissionBuffer =
+        typename RetransmissionServerChannel::Reader::Buffer();
       while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
         retransmissionBuffer.Reset();
         m_retransmissionServerChannel->GetReader().Read(
           Beam::Store(retransmissionBuffer));
       }
     }
-    std::size_t bufferIndex = 0;
+    auto bufferIndex = std::size_t(0);
     while(true) {
       if(m_buffers.size() <= bufferIndex) {
         m_buffers.emplace_back();
@@ -233,8 +211,8 @@ namespace MarketDataService {
       }
       if(packet.m_header.m_continuationIndicator ==
           StampProtocol::ContinuationIndicator::STAND_ALONE) {
-        StampProtocol::StampMessage message(packet.m_header, packet.m_message,
-          packet.m_messageSize);
+        auto message = StampProtocol::StampMessage(packet.m_header,
+          packet.m_message, packet.m_messageSize);
         return message;
       } else if(packet.m_header.m_continuationIndicator ==
           StampProtocol::ContinuationIndicator::SPANNING) {
@@ -249,11 +227,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Open() {
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -271,25 +246,20 @@ namespace MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Close() {
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
+  template<typename F, typename C, typename S>
   template<typename Buffer>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
-      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
-    static const std::size_t SEQUENCE_NUMBER_SIZE = 9;
+  void TmxIpServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
+      Beam::Out<Buffer> buffer, std::size_t startSequenceNumber,
+      std::size_t endSequenceNumber) {
+    constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
     buffer->Append("SEQN", 4);
     auto messageStartNumber = boost::lexical_cast<std::string>(
       startSequenceNumber);
@@ -305,11 +275,8 @@ namespace MarketDataService {
     buffer->Append('\n');
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Shutdown() {
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::Shutdown() {
     if(m_config.m_enableRetransmission) {
       m_retransmissionServerChannel->GetConnection().Close();
     }
@@ -318,12 +285,10 @@ namespace MarketDataService {
     m_buffers.clear();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      AddPendingBuffer(FeedBuffer buffer, std::size_t sequenceNumber) {
-    BufferEntry entry(std::move(buffer), sequenceNumber);
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
+      std::size_t sequenceNumber) {
+    auto entry = BufferEntry(std::move(buffer), sequenceNumber);
     auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
       m_pendingBuffers.end(), entry,
       [] (const BufferEntry& lhs, const BufferEntry& rhs) {
@@ -335,24 +300,22 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      SendRetransmissionRequest(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
-    static const std::size_t RETRANSMISSION_RESPONSE_SIZE = 151;
-    typename RetransmissionClientChannel::Writer::Buffer
-      retransmissionRequestBuffer;
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::SendRetransmissionRequest(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
+    constexpr auto RETRANSMISSION_RESPONSE_SIZE = std::size_t(151);
+    auto retransmissionRequestBuffer =
+      typename RetransmissionClientChannel::Writer::Buffer();
     BuildRetransmissionRequestBuffer(Beam::Store(retransmissionRequestBuffer),
       startSequenceNumber, endSequenceNumber);
-    std::optional<RetransmissionClientChannel> retransmissionClientChannel;
+    auto retransmissionClientChannel =
+      std::optional<RetransmissionClientChannel>();
     m_retransmissionClientChannelBuilder(
       Beam::Store(retransmissionClientChannel));
     retransmissionClientChannel->GetConnection().Open();
     retransmissionClientChannel->GetWriter().Write(retransmissionRequestBuffer);
-    typename RetransmissionClientChannel::Reader::Buffer
-      retransmissionResponseBuffer;
+    auto retransmissionResponseBuffer =
+      typename RetransmissionClientChannel::Reader::Buffer();
     while(retransmissionResponseBuffer.GetSize() <
         RETRANSMISSION_RESPONSE_SIZE) {
       retransmissionClientChannel->GetReader().Read(
@@ -365,14 +328,12 @@ namespace MarketDataService {
     } catch(const std::exception&) {}
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      ReadRetransmissionResponse(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
-    StampProtocol::StampPacket packet;
-    typename RetransmissionServerChannel::Reader::Buffer retransmissionBuffer;
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
+    auto packet = StampProtocol::StampPacket();
+    auto retransmissionBuffer =
+      typename RetransmissionServerChannel::Reader::Buffer();
     while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
       retransmissionBuffer.Reset();
       m_retransmissionServerChannel->GetReader().Read(
@@ -389,12 +350,9 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void TmxIpServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Retransmit(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
+  template<typename F, typename C, typename S>
+  void TmxIpServiceAccessClient<F, C, S>::Retransmit(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     while(startSequenceNumber <= endSequenceNumber) {
       if(m_retransmissionCount > m_config.m_maxRetransmissionCount) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Too many retransmissions"));
@@ -407,7 +365,6 @@ namespace MarketDataService {
       startSequenceNumber = endBlock + 1;
     }
   }
-}
 }
 
 #endif

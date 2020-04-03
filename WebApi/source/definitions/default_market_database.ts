@@ -1,5 +1,6 @@
-import { DefaultCountries, DefaultCurrencies, MarketCode,
-         MarketDatabase } from '.';
+import { DefaultCountries } from './default_country_database';
+import { DefaultCurrencies } from './default_currency_database';
+import { MarketCode, MarketDatabase } from './market';
 
 /** Builds a MarketDatabase containing a set of common marketplaces. */
 export function buildDefaultMarketDatabase(): MarketDatabase {

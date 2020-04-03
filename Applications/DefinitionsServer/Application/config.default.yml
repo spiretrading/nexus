@@ -1,7 +1,7 @@
 ---
 server:
-  interface: $local_interface:20200
-  addresses: [$global_address:20200, $local_interface:20200]
+  interface: "$local_interface:20200"
+  addresses: ["$global_address:20200", "$local_interface:20200"]
 
 service_locator:
   address: $service_locator_address
@@ -9,15 +9,15 @@ service_locator:
   password: $admin_password
 
 minimum_spire_version: "1"
-ntp_pool: [0.pool.ntp.org:123,
-           1.pool.ntp.org:123,
-           2.pool.ntp.org:123,
-           3.pool.ntp.org:123]
+ntp_pool: ["0.pool.ntp.org:123",
+           "1.pool.ntp.org:123",
+           "2.pool.ntp.org:123",
+           "3.pool.ntp.org:123"]
 countries: countries.yml
 currencies: currencies.yml
 destinations: destinations.yml
 markets: markets.yml
-time_zones: ./date_time_zonespec.csv
+time_zones: date_time_zonespec.csv
 exchange_rates:
   - symbol: USD/CAD
     rate: 1.33

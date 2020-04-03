@@ -1,8 +1,8 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import * as Nexus from 'nexus';
-import { DisplaySize } from '../display_size';
-import { TextInputField } from '.';
+import { DisplaySize } from '..';
+import { TextField } from './text_field';
 
 interface Properties {
 
@@ -22,10 +22,9 @@ interface Properties {
   displaySize: DisplaySize;
 }
 
-/** Displays a country seleciton box. */
-export class CountrySelectionBox extends React.Component<Properties> {
+/** A country selection field. */
+export class CountrySelectionField extends React.Component<Properties> {
   public static readonly defaultProps = {
-    readonly: false,
     onChange: () => {}
   };
 
@@ -37,9 +36,9 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public render(): JSX.Element {
     const boxSizing = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return CountrySelectionBox.STYLE.boxSmall;
+        return CountrySelectionField.STYLE.boxSmall;
       } else {
-        return CountrySelectionBox.STYLE.boxLarge;
+        return CountrySelectionField.STYLE.boxLarge;
       }
     })();
     const options = (() => {
@@ -55,15 +54,15 @@ export class CountrySelectionBox extends React.Component<Properties> {
     const content = (() => {
       if(this.props.readonly) {
         return (
-          <TextInputField
+          <TextField
             value={this.props.countryDatabase.fromCode(this.props.value).name}
             displaySize={this.props.displaySize}/>);
       } else {
         return (
           <select value={this.props.value.code}
-              className={css(CountrySelectionBox.EXTRA_STYLE.noHighting)}
+              className={css(CountrySelectionField.EXTRA_STYLE.noHighting)}
               style={{...boxSizing,
-                ...CountrySelectionBox.STYLE.selectionBoxStyle}}
+                ...CountrySelectionField.STYLE.selectionBoxStyle}}
               onChange={this.onChange}>
             {options}
           </select>);
@@ -91,12 +90,11 @@ export class CountrySelectionBox extends React.Component<Properties> {
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '7px',
-      color: '#000000',
+      color: '#333333',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       backgroundColor: '#F2F2F2',
-      backgroundImage:
-        'url(resources/account_page/profile_page/arrow-down.svg)',
+      backgroundImage: 'url(resources/components/arrow-down.svg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
@@ -108,7 +106,6 @@ export class CountrySelectionBox extends React.Component<Properties> {
   public static readonly EXTRA_STYLE = StyleSheet.create({
     noHighting: {
       ':focus': {
-        ouline: 0,
         outlineColor: 'transparent',
         outlineStyle: 'none'
       },

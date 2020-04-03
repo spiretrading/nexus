@@ -12,13 +12,12 @@ export class PageWrapper extends React.Component {
 
   private static readonly STYLE = {
     page: {
-      boxSizing: 'border-box' as 'border-box',
+      backgroundColor: '#ffffff',
       width: '100%',
       height: '100%',
       display: 'flex' as 'flex',
       flex: 'column' as 'column',
-      flexWrap: 'nowrap' as 'nowrap',
-      overflowX: 'auto' as 'auto',
+      overflowX: 'hidden' as 'hidden',
       overflowY: 'auto' as 'auto',
       justifyContent: 'center' as 'center',
       alignItems: 'flex-start' as 'flex-start',

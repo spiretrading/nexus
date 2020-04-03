@@ -3,6 +3,9 @@ import * as Beam from 'beam';
 /** Stores the risk monitoring state of an account. */
 export class RiskState {
 
+  /** Represents a NONE state. */
+  public static readonly NONE = new RiskState(-1);
+
   /** Builds a RiskState from a JSON object. */
   public static fromJson(value: any): RiskState {
     return new RiskState(value.type, Beam.DateTime.fromJson(value.expiry));
@@ -16,11 +19,6 @@ export class RiskState {
       expiry: Beam.DateTime = Beam.DateTime.POS_INFIN) {
     this._type = type;
     this._expiry = expiry;
-  }
-
-  /** Returns a copy of this state. */
-  public copy(): RiskState {
-    return new RiskState(this._type, this._expiry);
   }
 
   /** Returns the state's type. */

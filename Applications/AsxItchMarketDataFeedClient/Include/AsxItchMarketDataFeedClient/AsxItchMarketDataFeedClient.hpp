@@ -1,5 +1,5 @@
-#ifndef NEXUS_ASXITCHMARKETDATAFEEDCLIENT_HPP
-#define NEXUS_ASXITCHMARKETDATAFEEDCLIENT_HPP
+#ifndef NEXUS_ASX_ITCH_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_ASX_ITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
 #include <string>
 #include <Beam/IO/OpenState.hpp>
@@ -19,92 +19,82 @@
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpClient.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \enum ProductType
-      \brief The type of product.
-   */
+  /** The type of product. */
   enum class ProductType {
 
-    //! An option.
+    /** An option. */
     OPTION,
 
-    //! A future.
+    /** A future. */
     FUTURE,
 
-    //! A cash equity.
+    /** A cash equity. */
     EQUITY,
   };
 
-  /*! \struct OrderBookDirectory
-      \brief Stores info needed to maintain a Security's order book.
-   */
+  /** Stores info needed to maintain a Security's order book. */
   struct OrderBookDirectory {
 
-    //! The order book id.
+    /** The order book id. */
     std::uint32_t m_id;
 
-    //! The type of product.
+    /** The type of product. */
     ProductType m_productType;
 
-    //! Details about the Security represented by this order book.
+    /** Details about the Security represented by this order book. */
     SecurityInfo m_security;
 
-    //! The book's currency.
+    /** The book's currency. */
     CurrencyId m_currency;
 
-    //! The number of decimal places used in the book's price.
+    /** The number of decimal places used in the book's price. */
     std::uint16_t m_priceDecimalPlaces;
 
-    //! The number of decimal places used in the book's nominal value.
+    /** The number of decimal places used in the book's nominal value. */
     std::uint16_t m_valueDecimalPlaces;
 
-    //! The size of an odd-lot.
+    /** The size of an odd-lot. */
     std::uint32_t m_oddLotSize;
 
-    //! The size of a round-lot.
-    std::uint32_t m_roundLotSize;
-
-    //! The size of a block-lot.
+    /** The size of a block-lot. */
     std::uint64_t m_blockLotSize;
   };
 
-  /*! \class AsxItchMarketDataFeedClient
-      \brief Parses packets from the ASX ITCH feed.
-      \tparam MarketDataFeedClientType The type of MarketDataFeedClient used to
-              update the MarketDataServer.
-      \tparam ItchClientType The type of client receiving ITCH messages.
-      \tparam GlimpseClientType The type of client connecting to Glimpse.
+  /**
+   * Parses packets from the ASX ITCH feed.
+   * @param <M> The type of MarketDataFeedClient used to update the
+   *            MarketDataServer.
+   * @param <I> The type of client receiving ITCH messages.
+   * @param <G> The type of client connecting to Glimpse.
    */
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
+  template<typename M, typename I, typename G>
   class AsxItchMarketDataFeedClient : private boost::noncopyable {
     public:
 
-      //! The type of MarketDataFeedClient used to update the MarketDataServer.
-      using MarketDataFeedClient =
-        Beam::GetTryDereferenceType<MarketDataFeedClientType>;
+      /**
+       * The type of MarketDataFeedClient used to update the MarketDataServer.
+       */
+      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of client receiving ITCH messages.
-      using ItchClient = Beam::GetTryDereferenceType<ItchClientType>;
+      /** The type of client receiving ITCH messages. */
+      using ItchClient = Beam::GetTryDereferenceType<I>;
 
-      //! The type of client connecting to Glimpse.
-      using GlimpseClient = Beam::GetTryDereferenceType<GlimpseClientType>;
+      /** The type of client connecting to Glimpse. */
+      using GlimpseClient = Beam::GetTryDereferenceType<G>;
 
-      //! Constructs a AsxItchMarketDataFeedClient.
-      /*!
-        \param config The configuration to use.
-        \param marketDataFeedClient Initializes the MarketDataFeedClient.
-        \param itchClient The client receiving ITCH messages.
-        \param glimpseClient The client connecting to Glimpse.
-      */
-      template<typename MarketDataFeedClientForward, typename ItchClientForward,
-        typename GlimpseClientForward>
+      /**
+       * Constructs a AsxItchMarketDataFeedClient.
+       * @param config The configuration to use.
+       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
+       * @param itchClient The client receiving ITCH messages.
+       * @param glimpseClient The client connecting to Glimpse.
+       */
+      template<typename MF, typename IF, typename GF>
       AsxItchMarketDataFeedClient(const AsxItchConfiguration& config,
-        Beam::Ref<CurrencyDatabase> currencyDatabase,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ItchClientForward&& itchClient, GlimpseClientForward&& glimpseClient);
+        Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
+        IF&& itchClient, GF&& glimpseClient);
 
       ~AsxItchMarketDataFeedClient();
 
@@ -128,10 +118,9 @@ namespace MarketDataService {
       };
       AsxItchConfiguration m_config;
       CurrencyDatabase* m_currencyDatabase;
-      Beam::GetOptionalLocalPtr<MarketDataFeedClientType>
-        m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<ItchClientType> m_itchClient;
-      Beam::GetOptionalLocalPtr<GlimpseClientType> m_glimpseClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
+      Beam::GetOptionalLocalPtr<I> m_itchClient;
+      Beam::GetOptionalLocalPtr<G> m_glimpseClient;
       boost::posix_time::ptime m_lastTimePoint;
       std::unordered_map<std::uint32_t, OrderBookDirectory>
         m_orderBookDirectories;
@@ -173,35 +162,26 @@ namespace MarketDataService {
       void ReadLoop();
   };
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  template<typename MarketDataFeedClientForward, typename ItchClientForward,
-    typename GlimpseClientForward>
-  AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
-      GlimpseClientType>::AsxItchMarketDataFeedClient(
-      const AsxItchConfiguration& config,
-      Beam::Ref<CurrencyDatabase> currencyDatabase,
-      MarketDataFeedClientForward&& marketDataFeedClient,
-      ItchClientForward&& itchClient, GlimpseClientForward&& glimpseClient)
-      : m_config{config},
-        m_currencyDatabase{currencyDatabase.Get()},
-        m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
-          marketDataFeedClient)},
-        m_itchClient{std::forward<ItchClientForward>(itchClient)},
-        m_glimpseClient{std::forward<GlimpseClientForward>(glimpseClient)},
-        m_lastTimePoint{boost::posix_time::not_a_date_time} {}
+  template<typename M, typename I, typename G>
+  template<typename MF, typename IF, typename GF>
+  AsxItchMarketDataFeedClient<M, I, G>::AsxItchMarketDataFeedClient(
+    const AsxItchConfiguration& config,
+    Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
+    IF&& itchClient, GF&& glimpseClient)
+    : m_config(config),
+      m_currencyDatabase(currencyDatabase.Get()),
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_itchClient(std::forward<IF>(itchClient)),
+      m_glimpseClient(std::forward<GF>(glimpseClient)),
+      m_lastTimePoint(boost::posix_time::not_a_date_time) {}
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
-      GlimpseClientType>::~AsxItchMarketDataFeedClient() {
+  template<typename M, typename I, typename G>
+  AsxItchMarketDataFeedClient<M, I, G>::~AsxItchMarketDataFeedClient() {
     Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::Open() {
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -219,20 +199,16 @@ namespace MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::Close() {
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::Shutdown() {
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::Shutdown() {
     m_glimpseClient->Close();
     m_itchClient->Close();
     m_marketDataFeedClient->Close();
@@ -240,10 +216,8 @@ namespace MarketDataService {
     m_openState.SetClosed();
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  boost::posix_time::ptime AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseTimestamp(
+  template<typename M, typename I, typename G>
+  boost::posix_time::ptime AsxItchMarketDataFeedClient<M, I, G>::ParseTimestamp(
       Beam::Out<const char*> cursor) {
     auto nanoseconds = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
@@ -255,10 +229,8 @@ namespace MarketDataService {
       boost::posix_time::microseconds(nanoseconds / 1000);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::uint8_t AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseChar(
+  template<typename M, typename I, typename G>
+  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseChar(
       Beam::Out<const char*> cursor) {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
@@ -266,10 +238,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::uint8_t AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseInt8(
+  template<typename M, typename I, typename G>
+  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt8(
       Beam::Out<const char*> cursor) {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
@@ -277,10 +247,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::uint16_t AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseInt16(
+  template<typename M, typename I, typename G>
+  std::uint16_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt16(
       Beam::Out<const char*> cursor) {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint16_t*>(*cursor));
@@ -288,10 +256,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::uint32_t AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseInt32(
+  template<typename M, typename I, typename G>
+  std::uint32_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt32(
       Beam::Out<const char*> cursor) {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
@@ -299,10 +265,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::uint64_t AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseInt64(
+  template<typename M, typename I, typename G>
+  std::uint64_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt64(
       Beam::Out<const char*> cursor) {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint64_t*>(*cursor));
@@ -310,10 +274,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::string AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseAlpha(std::size_t size,
+  template<typename M, typename I, typename G>
+  std::string AsxItchMarketDataFeedClient<M, I, G>::ParseAlpha(std::size_t size,
       Beam::Out<const char*> cursor) {
     if(size == 0) {
       return std::string{};
@@ -331,15 +293,13 @@ namespace MarketDataService {
         break;
       }
     }
-    std::string result(*cursor, lastCharacter + 1);
+    auto result = std::string(*cursor, lastCharacter + 1);
     *cursor += size;
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  Side AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParseSide(
+  template<typename M, typename I, typename G>
+  Side AsxItchMarketDataFeedClient<M, I, G>::ParseSide(
       Beam::Out<const char*> cursor) {
     auto s = ParseChar(Beam::Store(cursor));
     if(s == 'S') {
@@ -350,10 +310,8 @@ namespace MarketDataService {
     return Side::NONE;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  Money AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::ParsePrice(
+  template<typename M, typename I, typename G>
+  Money AsxItchMarketDataFeedClient<M, I, G>::ParsePrice(
       const OrderBookDirectory& directory, Beam::Out<const char*> cursor) {
     auto PowerOfTen =
       [] (std::uint16_t exponent) {
@@ -368,12 +326,10 @@ namespace MarketDataService {
     return price;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  std::string AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::BuildOrderKey(
+  template<typename M, typename I, typename G>
+  std::string AsxItchMarketDataFeedClient<M, I, G>::BuildOrderKey(
       const Security& security, Side side, std::uint64_t orderId) {
-    std::string result = security.GetSymbol();
+    auto result = security.GetSymbol();
     result += '-';
     if(side == Side::ASK) {
       result += 'A';
@@ -385,10 +341,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleSecondsMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleSecondsMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto epochTime = static_cast<std::time_t>(Beam::FromBigEndian(
@@ -396,15 +350,13 @@ namespace MarketDataService {
     m_lastTimePoint = boost::posix_time::from_time_t(epochTime);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::UpdateBbo(const Security& security,
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::UpdateBbo(const Security& security,
       Side side, Money price, Quantity delta,
       const boost::posix_time::ptime& timestamp) {
     auto& bboEntry = Beam::GetOrInsert(m_bboEntries, security,
       [] {
-        return BboEntry{};
+        return BboEntry();
       });
     auto& levels = Pick(side, bboEntry.m_asks, bboEntry.m_bids);
     auto positionIterator = std::lower_bound(levels.begin(),
@@ -421,19 +373,19 @@ namespace MarketDataService {
       if(delta <= 0) {
         return;
       }
-      PriceLevel level;
+      auto level = PriceLevel();
       level.m_price = price;
       level.m_quantity = delta;
       positionIterator = levels.insert(positionIterator, level);
     } else {
-      PriceLevel& level = *positionIterator;
+      auto& level = *positionIterator;
       level.m_quantity += delta;
       if(level.m_quantity <= 0) {
         positionIterator = levels.erase(positionIterator);
       }
     }
     if(positionIterator == levels.begin()) {
-      Quote ask;
+      auto ask = Quote();
       ask.m_side = Side::ASK;
       if(bboEntry.m_asks.empty()) {
         ask.m_price = Money::ZERO;
@@ -442,7 +394,7 @@ namespace MarketDataService {
         ask.m_price = bboEntry.m_asks.front().m_price;
         ask.m_size = bboEntry.m_asks.front().m_quantity;
       }
-      Quote bid;
+      auto bid = Quote();
       bid.m_side = Side::BID;
       if(bboEntry.m_bids.empty()) {
         bid.m_price = Money::ZERO;
@@ -451,15 +403,13 @@ namespace MarketDataService {
         bid.m_price = bboEntry.m_bids.front().m_price;
         bid.m_size = bboEntry.m_bids.front().m_quantity;
       }
-      BboQuote bbo(bid, ask, timestamp);
+      auto bbo = BboQuote(bid, ask, timestamp);
       m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo, security));
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleAddOrderMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleAddOrderMessage(
       bool isAnonymous, const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -478,15 +428,16 @@ namespace MarketDataService {
     auto price = ParsePrice(*directory, Beam::Store(cursor));
     auto type = ParseInt16(Beam::Store(cursor));
     auto lot = ParseInt8(Beam::Store(cursor));
-    std::string mpid;
-    if(isAnonymous) {
-      mpid = "AU000";
-    } else {
-      mpid = ParseAlpha(7, Beam::Store(cursor));
-    }
+    auto mpid = [&] {
+      if(isAnonymous) {
+        return std::string("AU000");
+      } else {
+        return ParseAlpha(7, Beam::Store(cursor));
+      }
+    }();
     auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
       orderId);
-    OrderEntry orderEntry;
+    auto orderEntry = OrderEntry();
     orderEntry.m_mpid = mpid;
     orderEntry.m_price = price;
     orderEntry.m_remainingQuantity = quantity;
@@ -498,10 +449,8 @@ namespace MarketDataService {
       timestamp);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleOrderExecutedMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderExecutedMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -522,9 +471,9 @@ namespace MarketDataService {
     if(orderEntry.is_initialized()) {
       orderEntry->m_remainingQuantity -= executedQuantity;
       if(m_config.m_isTimeAndSaleFeed) {
-        TimeAndSale::Condition condition;
+        auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
-        TimeAndSale timeAndSale(timestamp, orderEntry->m_price,
+        auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
           executedQuantity, std::move(condition),
           m_config.m_market.m_displayName);
         m_marketDataFeedClient->PublishTimeAndSale(
@@ -536,10 +485,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleOrderExecutedAtPriceMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderExecutedAtPriceMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -566,9 +513,9 @@ namespace MarketDataService {
     if(orderEntry.is_initialized()) {
       orderEntry->m_remainingQuantity -= executedQuantity;
       if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
-        TimeAndSale::Condition condition;
+        auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
-        TimeAndSale timeAndSale(timestamp, price, executedQuantity,
+        auto timeAndSale = TimeAndSale(timestamp, price, executedQuantity,
           std::move(condition), m_config.m_market.m_displayName);
         m_marketDataFeedClient->PublishTimeAndSale(
           SecurityTimeAndSale(std::move(timeAndSale),
@@ -579,10 +526,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleOrderReplaceMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderReplaceMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -617,10 +562,8 @@ namespace MarketDataService {
       timestamp);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleOrderDeleteMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderDeleteMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -643,10 +586,8 @@ namespace MarketDataService {
     m_orderEntries.erase(orderKey);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleTradeMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleTradeMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
@@ -664,9 +605,9 @@ namespace MarketDataService {
     auto printable = ParseChar(Beam::Store(cursor));
     auto atCross = ParseChar(Beam::Store(cursor));
     if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
-      TimeAndSale::Condition condition;
+      auto condition = TimeAndSale::Condition();
       condition.m_code = "@";
-      TimeAndSale timeAndSale(timestamp, price, quantity,
+      auto timeAndSale = TimeAndSale(timestamp, price, quantity,
         std::move(condition), m_config.m_market.m_displayName);
       m_marketDataFeedClient->PublishTimeAndSale(
         SecurityTimeAndSale(std::move(timeAndSale),
@@ -674,13 +615,11 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType,
-      ItchClientType, GlimpseClientType>::HandleOrderBookDirectoryMessage(
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderBookDirectoryMessage(
       const MoldUdp64::MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    OrderBookDirectory directory;
+    auto directory = OrderBookDirectory();
     auto timestamp = ParseTimestamp(Beam::Store(cursor));
     directory.m_id = ParseInt32(Beam::Store(cursor));
     auto symbol = ParseAlpha(32, Beam::Store(cursor));
@@ -701,7 +640,7 @@ namespace MarketDataService {
     directory.m_priceDecimalPlaces = ParseInt16(Beam::Store(cursor));
     directory.m_valueDecimalPlaces = ParseInt16(Beam::Store(cursor));
     directory.m_oddLotSize = ParseInt32(Beam::Store(cursor));
-    directory.m_roundLotSize = ParseInt32(Beam::Store(cursor));
+    directory.m_security.m_boardLot = ParseInt32(Beam::Store(cursor));
     directory.m_blockLotSize = ParseInt64(Beam::Store(cursor));
     if(directory.m_productType != ProductType::EQUITY) {
       return;
@@ -710,10 +649,9 @@ namespace MarketDataService {
     m_marketDataFeedClient->Add(directory.m_security);
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
-      GlimpseClientType>::Dispatch(const MoldUdp64::MoldUdp64Message& message) {
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::Dispatch(
+      const MoldUdp64::MoldUdp64Message& message) {
     if(message.m_messageType == 'T') {
       HandleSecondsMessage(message);
     } else if(message.m_messageType == 'A') {
@@ -735,13 +673,11 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ItchClientType,
-    typename GlimpseClientType>
-  void AsxItchMarketDataFeedClient<MarketDataFeedClientType, ItchClientType,
-      GlimpseClientType>::ReadLoop() {
-    std::uint64_t lastSequenceNumber = -1;
+  template<typename M, typename I, typename G>
+  void AsxItchMarketDataFeedClient<M, I, G>::ReadLoop() {
+    auto lastSequenceNumber = std::uint64_t(-1);
     while(true) {
-      SoupBinTcp::SoupBinTcpPacket packet;
+      auto packet = SoupBinTcp::SoupBinTcpPacket();
       try {
         packet = m_glimpseClient->Read();
       } catch(Beam::IO::NotConnectedException&) {
@@ -750,7 +686,7 @@ namespace MarketDataService {
         break;
       }
       if(packet.m_type == 'S') {
-        MoldUdp64::MoldUdp64Message message;
+        auto message = MoldUdp64::MoldUdp64Message();
         message.m_length = packet.m_length - 1;
         message.m_messageType = packet.m_payload[0];
         message.m_data = &packet.m_payload[1];
@@ -769,7 +705,7 @@ namespace MarketDataService {
     m_glimpseClient->Close();
     while(true) {
       try {
-        std::uint64_t sequenceNumber;
+        auto sequenceNumber = std::uint64_t();
         auto message = m_itchClient->Read(Beam::Store(sequenceNumber));
         if(lastSequenceNumber != -1 && sequenceNumber <= lastSequenceNumber) {
           continue;
@@ -788,7 +724,6 @@ namespace MarketDataService {
       }
     }
   }
-}
 }
 
 #endif

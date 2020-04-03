@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERMARKETDATACLIENT_HPP
-#define NEXUS_BACKTESTERMARKETDATACLIENT_HPP
+#ifndef NEXUS_BACKTESTER_MARKET_DATA_CLIENT_HPP
+#define NEXUS_BACKTESTER_MARKET_DATA_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
@@ -9,20 +9,17 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterMarketDataClient
-      \brief Implements a MarketDataClient used for backtesting.
-   */
+  /** Implements a MarketDataClient used for backtesting. */
   class BacktesterMarketDataClient : private boost::noncopyable {
     public:
 
-      //! Constructs a BacktesterMarketDataClient.
-      /*!
-        \param service The BacktesterMarketDataService to connect to.
-        \param marketDataClient The underlying MarketDataClient to submit
-               queries to.
-      */
-      BacktesterMarketDataClient(
-        Beam::Ref<BacktesterMarketDataService> service,
+      /**
+       * Constructs a BacktesterMarketDataClient.
+       * @param service The BacktesterMarketDataService to connect to.
+       * @param marketDataClient The underlying MarketDataClient to submit
+       *        queries to.
+       */
+      BacktesterMarketDataClient(Beam::Ref<BacktesterMarketDataService> service,
         std::unique_ptr<MarketDataService::VirtualMarketDataClient>
         marketDataClient);
 
@@ -78,6 +75,8 @@ namespace Nexus {
       SecurityTechnicals LoadSecurityTechnicals(
         const Security& security);
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -95,11 +94,11 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-      Beam::Ref<BacktesterMarketDataService> service,
-      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
-      marketDataClient)
-      : m_service{service.Get()},
-        m_marketDataClient{std::move(marketDataClient)} {}
+    Beam::Ref<BacktesterMarketDataService> service,
+    std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+    marketDataClient)
+    : m_service{service.Get()},
+      m_marketDataClient{std::move(marketDataClient)} {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
@@ -186,6 +185,11 @@ namespace Nexus {
   inline SecurityTechnicals BacktesterMarketDataClient::LoadSecurityTechnicals(
       const Security& security) {
     return m_marketDataClient->LoadSecurityTechnicals(security);
+  }
+
+  inline boost::optional<SecurityInfo>
+      BacktesterMarketDataClient::LoadSecurityInfo(const Security& security) {
+    return m_marketDataClient->LoadSecurityInfo(security);
   }
 
   inline std::vector<SecurityInfo> BacktesterMarketDataClient::

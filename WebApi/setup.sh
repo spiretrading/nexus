@@ -1,7 +1,7 @@
 #!/bin/bash
-beam_commit="c5f2491aaf245d7cad90cd6f05c1294f9906bd1d"
+beam_commit="e7e3dcae29185c3be4bbd1e0c68d4ef6b675cfbf"
 if [ ! -d "Beam" ]; then
-  git clone https://www.github.com/eidolonsystems/beam.git Beam
+  git clone https://www.github.com/spiretrading/beam.git Beam
 fi
 pushd Beam
 if ! git merge-base --is-ancestor "$beam_commit" HEAD; then

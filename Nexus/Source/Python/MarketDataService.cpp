@@ -46,6 +46,19 @@ using namespace pybind11;
 
 namespace {
   struct TrampolineHistoricalDataStore final : VirtualHistoricalDataStore {
+    boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(boost::optional<SecurityInfo>,
+        VirtualHistoricalDataStore, "load_security_info", LoadSecurityInfo,
+        security);
+    }
+
+    std::vector<SecurityInfo> LoadAllSecurityInfo() override {
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<SecurityInfo>,
+        VirtualHistoricalDataStore, "load_all_security_info",
+        LoadAllSecurityInfo);
+    }
+
     std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedOrderImbalance>,
@@ -77,6 +90,11 @@ namespace {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SequencedTimeAndSale>,
         VirtualHistoricalDataStore, "load_time_and_sales", LoadTimeAndSales,
         query);
+    }
+
+    void Store(const SecurityInfo& info) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "store",
+        Store, info);
     }
 
     void Store(const SequencedMarketOrderImbalance& orderImbalance) override {
@@ -224,6 +242,13 @@ namespace {
         "load_security_technicals", LoadSecurityTechnicals, security);
     }
 
+    boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override {
+      PYBIND11_OVERLOAD_PURE_NAME(boost::optional<SecurityInfo>,
+        VirtualMarketDataClient, "load_security_info", LoadSecurityInfo,
+        security);
+    }
+
     std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<SecurityInfo>,
@@ -281,12 +306,17 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
   class_<VirtualHistoricalDataStore, TrampolineHistoricalDataStore,
       std::shared_ptr<VirtualHistoricalDataStore>>(module,
     "HistoricalDataStore")
+    .def("load_security_info", &VirtualHistoricalDataStore::LoadSecurityInfo)
+    .def("load_all_security_info",
+      &VirtualHistoricalDataStore::LoadAllSecurityInfo)
     .def("load_order_imbalances",
       &VirtualHistoricalDataStore::LoadOrderImbalances)
     .def("load_bbo_quotes", &VirtualHistoricalDataStore::LoadBboQuotes)
     .def("load_book_quotes", &VirtualHistoricalDataStore::LoadBookQuotes)
     .def("load_market_quotes", &VirtualHistoricalDataStore::LoadMarketQuotes)
     .def("load_time_and_sales", &VirtualHistoricalDataStore::LoadTimeAndSales)
+    .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
+      const SecurityInfo&)>(&VirtualHistoricalDataStore::Store))
     .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const SequencedMarketOrderImbalance&)>(
       &VirtualHistoricalDataStore::Store))
@@ -368,6 +398,7 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
       &VirtualMarketDataClient::LoadSecuritySnapshot)
     .def("load_security_technicals",
       &VirtualMarketDataClient::LoadSecurityTechnicals)
+    .def("load_security_info", &VirtualMarketDataClient::LoadSecurityInfo)
     .def("load_security_info_from_prefix",
       &VirtualMarketDataClient::LoadSecurityInfoFromPrefix)
     .def("open", &VirtualMarketDataClient::Open)

@@ -444,7 +444,8 @@ void Nexus::Python::ExportOrderRecord(pybind11::module& module) {
     .def_readwrite("info", &OrderRecord::m_info)
     .def_readwrite("execution_reports", &OrderRecord::m_executionReports)
     .def(self == self)
-    .def(self != self);
+    .def(self != self)
+    .def("__str__", lexical_cast<std::string, OrderRecord>);
   ExportQueueSuite<OrderRecord>(module, "OrderRecord");
   ExportQueueSuite<SequencedOrderRecord>(module, "SequencedOrderRecord");
 }

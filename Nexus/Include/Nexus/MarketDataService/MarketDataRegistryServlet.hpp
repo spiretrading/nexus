@@ -19,40 +19,36 @@
 
 namespace Nexus::MarketDataService {
 
-  /*! Maintains a registry of all Securities and data subscriptions.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam MarketDataRegistryType The registry storing all market data
-              originating from this servlet.
-      \tparam HistoricalDataStoreType The type of data store storing historical
-              market data.
-      \tparam AdministrationClientType The type of AdministrationClient to use.
+  /**
+   * Maintains a registry of all Securities and data subscriptions.
+   * @param <C> The container instantiating this servlet.
+   * @param <R> The registry storing all market data originating from this
+   *        servlet.
+   * @param <D> The type of data store storing historical market data.
+   * @param <A> The type of AdministrationClient to use.
    */
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
+  template<typename C, typename R, typename D, typename A>
   class MarketDataRegistryServlet : private boost::noncopyable {
     public:
 
-      //! The registry storing all market data sent to this servlet.
-      using MarketDataRegistry = Beam::GetTryDereferenceType<
-        MarketDataRegistryType>;
+      /** The registry storing all market data sent to this servlet. */
+      using MarketDataRegistry = Beam::GetTryDereferenceType<R>;
 
-      //! The type of data store storing historical market data.
-      using HistoricalDataStore = Beam::GetTryDereferenceType<
-        HistoricalDataStoreType>;
-      using Container = ContainerType;
+      /** The type of data store storing historical market data. */
+      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of AdministrationClient to use.
-      using AdministrationClient = Beam::GetTryDereferenceType<
-        AdministrationClientType>;
+      /** The type of AdministrationClient to use. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! Constructs a MarketDataRegistryServlet.
-      /*!
-        \param administrationClient Used to check for entitlements.
-        \param marketDataRegistry The registry storing all market data
-               originating from this servlet.
-        \param dataStore Initializes the historical market data store.
-      */
+      /**
+       * Constructs a MarketDataRegistryServlet.
+       * @param administrationClient Used to check for entitlements.
+       * @param marketDataRegistry The registry storing all market data
+       *        originating from this servlet.
+       * @param dataStore Initializes the historical market data store.
+       */
       template<typename AdministrationClientForward,
         typename MarketDataRegistryForward,
         typename HistoricalDataStoreForward>
@@ -97,10 +93,9 @@ namespace Nexus::MarketDataService {
       using SecuritySubscriptions = Beam::Queries::IndexedSubscriptions<
         T, Security, ServiceProtocolClient>;
       EntitlementDatabase m_entitlementDatabase;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<MarketDataRegistryType> m_registry;
-      Beam::GetOptionalLocalPtr<HistoricalDataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<R> m_registry;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
       SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
       SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
@@ -138,51 +133,43 @@ namespace Nexus::MarketDataService {
         const Security& security);
       SecurityTechnicals OnLoadSecurityTechnicals(
         ServiceProtocolClient& client, const Security& security);
+      boost::optional<SecurityInfo> OnLoadSecurityInfo(
+        ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
 
-  template<typename MarketDataRegistryType, typename HistoricalDataStoreType,
-    typename AdministrationClientType>
+  template<typename R, typename D, typename A>
   struct MetaMarketDataRegistryServlet {
     using Session = MarketDataRegistrySession;
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = MarketDataRegistryServlet<ContainerType,
-        MarketDataRegistryType, HistoricalDataStoreType,
-        AdministrationClientType>;
+      using type = MarketDataRegistryServlet<C, R, D, A>;
     };
   };
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
+  template<typename C, typename R, typename D, typename A>
   template<typename AdministrationClientForward,
     typename MarketDataRegistryForward, typename HistoricalDataStoreForward>
-  MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      MarketDataRegistryServlet(
-      AdministrationClientForward&& administrationClient,
-      MarketDataRegistryForward&& registry,
-      HistoricalDataStoreForward&& dataStore)
-      : m_administrationClient(
-          std::forward<AdministrationClientForward>(administrationClient)),
-        m_registry(std::forward<MarketDataRegistryForward>(registry)),
-        m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)) {}
+  MarketDataRegistryServlet<C, R, D, A>::MarketDataRegistryServlet(
+    AdministrationClientForward&& administrationClient,
+    MarketDataRegistryForward&& registry,
+    HistoricalDataStoreForward&& dataStore)
+    : m_administrationClient(
+        std::forward<AdministrationClientForward>(administrationClient)),
+      m_registry(std::forward<MarketDataRegistryForward>(registry)),
+      m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)) {}
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::Add(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::Add(
       const SecurityInfo& securityInfo) {
+    m_dataStore->Store(securityInfo);
     m_registry->Add(securityInfo);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      PublishOrderImbalance(const MarketOrderImbalance& orderImbalance,
-      int sourceId) {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::PublishOrderImbalance(
+      const MarketOrderImbalance& orderImbalance, int sourceId) {
     m_registry->PublishOrderImbalance(orderImbalance, sourceId, *m_dataStore,
       [&] (const SequencedMarketOrderImbalance& orderImbalance) {
         m_dataStore->Store(orderImbalance);
@@ -194,10 +181,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::PublishBboQuote(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::PublishBboQuote(
       const SecurityBboQuote& bboQuote, int sourceId) {
     m_registry->PublishBboQuote(bboQuote, sourceId, *m_dataStore,
       [&] (const SequencedSecurityBboQuote& bboQuote) {
@@ -210,10 +195,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::PublishMarketQuote(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::PublishMarketQuote(
       const SecurityMarketQuote& marketQuote, int sourceId) {
     m_registry->PublishMarketQuote(marketQuote, sourceId, *m_dataStore,
       [&] (const SequencedSecurityMarketQuote& marketQuote) {
@@ -226,10 +209,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::UpdateBookQuote(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::UpdateBookQuote(
       const SecurityBookQuote& delta, int sourceId) {
     auto security = m_registry->GetPrimaryListing(delta.GetIndex());
     auto key = EntitlementKey{security.GetMarket(), delta.GetValue().m_market};
@@ -251,10 +232,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::PublishTimeAndSale(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::PublishTimeAndSale(
       const SecurityTimeAndSale& timeAndSale, int sourceId) {
     m_registry->PublishTimeAndSale(timeAndSale, sourceId, *m_dataStore,
       [&] (const SequencedSecurityTimeAndSale& timeAndSale) {
@@ -267,17 +246,13 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::Clear(int sourceId) {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::Clear(int sourceId) {
     m_registry->Clear(sourceId);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::RegisterServices(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Beam::Store(slots));
@@ -318,19 +293,19 @@ namespace Nexus::MarketDataService {
     LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadSecurityInfoService::AddSlot(Store(slots), std::bind(
+      &MarketDataRegistryServlet::OnLoadSecurityInfo, this,
+      std::placeholders::_1, std::placeholders::_2));
     LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind(
       &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this,
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::HandleClientAccepted(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    auto roles = m_administrationClient->LoadAccountRoles(
-      session.GetAccount());
+    auto roles = m_administrationClient->LoadAccountRoles(session.GetAccount());
     if(roles.Test(AdministrationService::AccountRole::SERVICE)) {
       auto& entitlements = m_entitlementDatabase.GetEntries();
       for(auto& entitlement : entitlements) {
@@ -356,10 +331,8 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::HandleClientClosed(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_orderImbalanceSubscriptions.RemoveAll(client);
     m_bboQuoteSubscriptions.RemoveAll(client);
@@ -368,16 +341,18 @@ namespace Nexus::MarketDataService {
     m_timeAndSaleSubscriptions.RemoveAll(client);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::Open() {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     try {
       m_administrationClient->Open();
       m_dataStore->Open();
+      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
+      for(auto& entry : securityInfo) {
+        m_registry->Add(entry);
+      }
       m_entitlementDatabase = m_administrationClient->LoadEntitlements();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
@@ -386,41 +361,34 @@ namespace Nexus::MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::Close() {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::Shutdown() {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::Shutdown() {
     m_dataStore->Close();
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      OnQueryOrderImbalances(Beam::Services::RequestToken<
-      ServiceProtocolClient, QueryOrderImbalancesService>& request,
-      const MarketWideDataQuery& query) {
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnQueryOrderImbalances(
+      Beam::Services::RequestToken<ServiceProtocolClient,
+      QueryOrderImbalancesService>& request, const MarketWideDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex(),
         MarketDataType::ORDER_IMBALANCE)) {
-      OrderImbalanceQueryResult result;
+      auto result = OrderImbalanceQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    OrderImbalanceQueryResult result;
+    auto result = OrderImbalanceQueryResult();
     result.m_queryId = m_orderImbalanceSubscriptions.Initialize(
       query.GetIndex(), request.GetClient(), query.GetRange(),
       std::move(filter));
@@ -431,32 +399,26 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      OnEndOrderImbalanceQuery(ServiceProtocolClient& client,
-      MarketCode market, int id) {
-    auto& session = client.GetSession();
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnEndOrderImbalanceQuery(
+      ServiceProtocolClient& client, MarketCode market, int id) {
     m_orderImbalanceSubscriptions.End(market, id);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnQueryBboQuotes(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnQueryBboQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
       QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex().GetMarket(),
         MarketDataType::BBO_QUOTE)) {
-      BboQuoteQueryResult result;
+      auto result = BboQuoteQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    BboQuoteQueryResult result;
+    auto result = BboQuoteQueryResult();
     result.m_queryId = m_bboQuoteSubscriptions.Initialize(query.GetIndex(),
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadBboQuotes(query);
@@ -466,31 +428,26 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnEndBboQuoteQuery(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnEndBboQuoteQuery(
       ServiceProtocolClient& client, const Security& security, int id) {
-    auto& session = client.GetSession();
     m_bboQuoteSubscriptions.End(security, id);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnQueryBookQuotes(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnQueryBookQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
       QueryBookQuotesService>& request, const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex().GetMarket(),
         MarketDataType::BOOK_QUOTE)) {
-      BookQuoteQueryResult result;
+      auto result = BookQuoteQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    BookQuoteQueryResult result;
+    auto result = BookQuoteQueryResult();
     result.m_queryId = m_bookQuoteSubscriptions.Initialize(query.GetIndex(),
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadBookQuotes(query);
@@ -500,32 +457,27 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnEndBookQuoteQuery(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnEndBookQuoteQuery(
       ServiceProtocolClient& client, const Security& security, int id) {
-    auto& session = client.GetSession();
     m_bookQuoteSubscriptions.End(security, id);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnQueryMarketQuotes(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnQueryMarketQuotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
       QueryMarketQuotesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex().GetMarket(),
         MarketDataType::MARKET_QUOTE)) {
-      MarketQuoteQueryResult result;
+      auto result = MarketQuoteQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    MarketQuoteQueryResult result;
+    auto result = MarketQuoteQueryResult();
     result.m_queryId = m_marketQuoteSubscriptions.Initialize(query.GetIndex(),
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadMarketQuotes(query);
@@ -535,33 +487,27 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      OnEndMarketQuoteQuery(ServiceProtocolClient& client,
-      const Security& security, int id) {
-    auto& session = client.GetSession();
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnEndMarketQuoteQuery(
+      ServiceProtocolClient& client, const Security& security, int id) {
     m_marketQuoteSubscriptions.End(security, id);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::OnQueryTimeAndSales(
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnQueryTimeAndSales(
       Beam::Services::RequestToken<ServiceProtocolClient,
       QueryTimeAndSalesService>& request,
       const SecurityMarketDataQuery& query) {
     auto& session = request.GetSession();
     if(!session.GetEntitlements().HasEntitlement(query.GetIndex().GetMarket(),
         MarketDataType::TIME_AND_SALE)) {
-      TimeAndSaleQueryResult result;
+      auto result = TimeAndSaleQueryResult();
       request.SetResult(result);
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
       query.GetFilter());
-    TimeAndSaleQueryResult result;
+    auto result = TimeAndSaleQueryResult();
     result.m_queryId = m_timeAndSaleSubscriptions.Initialize(query.GetIndex(),
       request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = m_dataStore->LoadTimeAndSales(query);
@@ -571,22 +517,16 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  void MarketDataRegistryServlet<ContainerType, MarketDataRegistryType,
-      HistoricalDataStoreType, AdministrationClientType>::
-      OnEndTimeAndSaleQuery(ServiceProtocolClient& client,
-      const Security& security, int id) {
-    auto& session = client.GetSession();
+  template<typename C, typename R, typename D, typename A>
+  void MarketDataRegistryServlet<C, R, D, A>::OnEndTimeAndSaleQuery(
+      ServiceProtocolClient& client, const Security& security, int id) {
     m_timeAndSaleSubscriptions.End(security, id);
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  SecuritySnapshot MarketDataRegistryServlet<ContainerType,
-      MarketDataRegistryType, HistoricalDataStoreType,
-      AdministrationClientType>::OnLoadSecuritySnapshot(
-      ServiceProtocolClient& client, const Security& security) {
+  template<typename C, typename R, typename D, typename A>
+  SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecuritySnapshot(ServiceProtocolClient& client,
+      const Security& security) {
     auto& session = client.GetSession();
     auto securitySnapshot = m_registry->FindSnapshot(security);
     if(!securitySnapshot.is_initialized()) {
@@ -625,26 +565,28 @@ namespace Nexus::MarketDataService {
     return *securitySnapshot;
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  SecurityTechnicals MarketDataRegistryServlet<ContainerType,
-      MarketDataRegistryType, HistoricalDataStoreType,
-      AdministrationClientType>::OnLoadSecurityTechnicals(
-      ServiceProtocolClient& client, const Security& security) {
-    auto& session = client.GetSession();
+  template<typename C, typename R, typename D, typename A>
+  SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecurityTechnicals(ServiceProtocolClient& client,
+      const Security& security) {
     auto securityTechnicals = m_registry->FindSecurityTechnicals(security);
     if(!securityTechnicals.is_initialized()) {
-      return SecurityTechnicals();
+      return {};
     }
     return *securityTechnicals;
   }
 
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
-  std::vector<SecurityInfo> MarketDataRegistryServlet<ContainerType,
-      MarketDataRegistryType, HistoricalDataStoreType,
-      AdministrationClientType>::OnLoadSecurityInfoFromPrefix(
-      ServiceProtocolClient& client, const std::string& prefix) {
+  template<typename C, typename R, typename D, typename A>
+  boost::optional<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecurityInfo(ServiceProtocolClient& client,
+      const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename C, typename R, typename D, typename A>
+  std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
+      OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
+      const std::string& prefix) {
     return m_registry->SearchSecurityInfo(prefix);
   }
 }

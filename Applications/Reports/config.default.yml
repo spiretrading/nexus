@@ -1,5 +1,5 @@
 ---
-service_locator: local_interface:20000
+service_locator: $service_locator_address
 username: risk_service
-password: admin_password
+password: $admin_password
 ...

@@ -33,7 +33,7 @@ def parse_ip_address(source):
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2019 Eidolon Systems Ltd.')
+    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
   parser.add_argument('-d', '--date', type=parse_date, help='Date',

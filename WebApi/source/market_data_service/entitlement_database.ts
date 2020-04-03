@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import { Currency, Money } from '..';
-import { EntitlementKey, MarketDataTypeSet } from '.';
+import { EntitlementKey } from './entitlement_key';
+import { MarketDataTypeSet } from './market_data_type';
 
 /** Stores the database of all market data entitlements. */
 export class EntitlementDatabase {

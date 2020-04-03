@@ -13,8 +13,8 @@ sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000
 retransmission_block_size: 20000
-host: 233.102.209.230:60010
-interface: $local_interface:60010
-retransmission_request_address: 142.201.149.44:60025
-retransmission_response_address: 142.201.149.44:60060
+host: "233.102.209.230:60010"
+interface: "$local_interface:60010"
+retransmission_request_address: "142.201.149.44:60025"
+retransmission_response_address: "142.201.149.44:60060"
 ...

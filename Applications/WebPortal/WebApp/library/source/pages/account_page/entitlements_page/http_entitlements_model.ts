@@ -3,12 +3,12 @@ import * as Nexus from 'nexus';
 import { EntitlementsModel } from './entitlements_model';
 import { LocalEntitlementsModel } from './local_entitlements_model';
 
-/** Implements an EntitlementsModel by accessing web services. */
-export class WebEntitlementsModel extends EntitlementsModel {
+/** Implements an EntitlementsModel by using HTTP requests. */
+export class HttpEntitlementsModel extends EntitlementsModel {
 
-  /** Constructs a WebEntitlementsModel.
+  /** Constructs an HttpEntitlementsModel.
    * @param account - The account to represent.
-   * @param serviceClients - The clients used to access the web services.
+   * @param serviceClients - The clients used to access the HTTP services.
    */
   constructor(account: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {

@@ -1,7 +1,7 @@
 ---
 server:
-  interface: $local_interface:20600
-  addresses: [$global_address:20600, $local_interface:20600]
+  interface: "$local_interface:20600"
+  addresses: ["$global_address:20600", "$local_interface:20600"]
 
 service_locator:
   address: $service_locator_address

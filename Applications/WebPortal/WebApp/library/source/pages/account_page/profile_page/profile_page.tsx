@@ -2,10 +2,14 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionBox, DisplaySize, HLine, PhotoField } from '../../..';
-import { CommentBox } from '../comment_box';
-import { ChangePasswordBox, FormEntry, PhotoFieldDisplayMode, RolesField,
-  SubmitButton } from '.';
+import { CountrySelectionField, DisplaySize, HLine, PhotoField } from
+  '../../..';
+import { CommentBox } from '..';
+import { ChangePasswordBox } from './change_password_box';
+import { FormEntry } from './form_entry';
+import { PhotoFieldDisplayMode } from './photo_field';
+import { RolesField } from './roles_field';
+import { SubmitButton } from './submit_button';
 import { TextField } from './text_field';
 
 interface Properties {
@@ -179,7 +183,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             readonly={this.props.readonly}/>);
       } else {
         return (
-          <CountrySelectionBox
+          <CountrySelectionField
             readonly={this.props.readonly}
             displaySize={this.props.displaySize}
             value={this.props.identity.country}
@@ -323,8 +327,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Username'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Username' displaySize={this.props.displaySize}>
                   <TextField
                     value={this.props.account.name.toString()}
                     displaySize={this.props.displaySize}
@@ -333,8 +336,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Role(s)'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Role(s)' displaySize={this.props.displaySize}>
                   <div style={ProfilePage.STYLE.rolesWrapper}>
                     <RolesField roles={this.props.roles}
                       readonly={this.props.readonly}/>
@@ -343,8 +345,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Group(s)'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Group(s)' displaySize={this.props.displaySize}>
                   <Dali.VBoxLayout>
                     {groupsList}
                   </Dali.VBoxLayout>
@@ -355,8 +356,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <FormEntry name='Registration Date'
                     displaySize={this.props.displaySize}>
                   <TextField displaySize={this.props.displaySize}
-                    value={this.props.identity.
-                      registrationTime.toString()}
+                    value={this.props.identity.registrationTime.toString()}
                     readonly/>
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -372,8 +372,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Email'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Email' displaySize={this.props.displaySize}>
                   <TextField
                     value={this.props.identity.emailAddress}
                     displaySize={this.props.displaySize}
@@ -382,8 +381,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Address'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Address' displaySize={this.props.displaySize}>
                   <TextField
                     value={this.props.identity.addressLineOne}
                     displaySize={this.props.displaySize}
@@ -392,8 +390,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='City'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='City' displaySize={this.props.displaySize}>
                   <TextField
                     value={this.props.identity.city}
                     displaySize={this.props.displaySize}
@@ -412,8 +409,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                 <HLine color={ProfilePage.LINE_COLOR}/>
                 <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Country'
-                    displaySize={this.props.displaySize}>
+                <FormEntry name='Country' displaySize={this.props.displaySize}>
                   {countryBox}
                 </FormEntry>
                 <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
@@ -433,9 +429,8 @@ export class ProfilePage extends React.Component<Properties, State> {
               <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
                 <div style={ProfilePage.STYLE.filler}/>
                 <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                  {profileSubmitStatus}
-                  <div style=
-                    {ProfilePage.STYLE.buttonPadding}/>
+                    {profileSubmitStatus}
+                  <div style={ProfilePage.STYLE.buttonPadding}/>
                 </div>
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
@@ -494,7 +489,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       this.props.onSubmitPassword(this.state.password1);
       this.setState({
         hasLocalPasswordError: false,
-        localPasswordMessage: ''});
+        localPasswordMessage: ''
+      });
     } else {
       this.setState({
         hasLocalPasswordError: true,
@@ -579,7 +575,6 @@ export class ProfilePage extends React.Component<Properties, State> {
       flexShrink: 0,
       width: '100%',
       height: '18px'
-
     },
     mediumPadding: {
       flexGrow: 1,

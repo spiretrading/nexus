@@ -3,10 +3,8 @@ import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine } from '../..';
-import { RolePanel } from '../account_page/role_panel';
-import { AccountEntry } from '.';
-
+import { DisplaySize, DropDownButton, HLine, RolePanel } from '../..';
+import { AccountEntry } from './account_entry';
 
 interface Properties {
 

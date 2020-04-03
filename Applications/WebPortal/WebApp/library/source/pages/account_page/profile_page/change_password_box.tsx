@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Dali from 'dali';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
-import { SubmitButton } from '.';
+import { SubmitButton } from './submit_button';
 
 interface Properties {
 
