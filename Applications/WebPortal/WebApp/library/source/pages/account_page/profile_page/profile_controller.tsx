@@ -7,9 +7,6 @@ import { AccountRoles } from 'nexus';
 
 interface Properties {
 
-  /** The database of currencies */
-  currencyDatabase: Nexus.CurrencyDatabase;
-
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
@@ -47,7 +44,8 @@ export class ProfileController extends React.Component<Properties, State> {
         return false;
       }
     })();
-    return <ProfilePage 
+    return <div/>
+   /*<ProfilePage 
       account={this.props.model.account}
       roles={this.props.model.roles}
       identity={this.props.model.identity}
@@ -59,7 +57,7 @@ export class ProfileController extends React.Component<Properties, State> {
       submitStatus={this.state.identityStatus}
       hasError={this.state.isIdentityError}
       onSubmit={this.onIdentitySubmit}
-       />;
+       />;*/
   }
 
   public componentDidMount(): void {

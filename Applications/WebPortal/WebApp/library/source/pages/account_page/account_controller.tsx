@@ -102,7 +102,9 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderProfilePage() {
-    return <ProfileController/>;
+    return <ProfileController
+      displaySize={this.props.displaySize}
+      model={null}/>;
   }
 
   private renderEntitlementsPage() {

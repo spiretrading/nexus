@@ -69,6 +69,7 @@ interface State {
   hasLocalPasswordError: boolean;
   localPasswordMessage: string;
   isPasswordChanged: boolean;
+  newRoles: Nexus.AccountRoles;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
 }
@@ -96,6 +97,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       hasLocalPasswordError: false,
       localPasswordMessage: '',
       isPasswordChanged: false,
+      newRoles: this.props.roles.clone(),
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false
     };
@@ -450,6 +452,11 @@ export class ProfilePage extends React.Component<Properties, State> {
         </div>
         <div style={ProfilePage.STYLE.pagePadding}/>
       </div>);
+  }
+
+  private onRolesChange(role: Nexus.AccountRoles.Role) {
+    //this.state.newRoles.
+    //this.setState({newIdentity: newIdentity})
   }
 
   private onCommentChange(newComment: string) {
