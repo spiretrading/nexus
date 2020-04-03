@@ -1,9 +1,9 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, LoadingPage } from '../../..'
 import { ProfileModel } from './profile_model';
 import { ProfilePage } from './profile_page';
-import { AccountRoles } from 'nexus';
 
 interface Properties {
 
@@ -11,10 +11,14 @@ interface Properties {
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
+  /** The database of all available countries. */
+  countryDatabase?: Nexus.CountryDatabase;
+
+  /** The names of the groups the account belongs to. */
+  groups: Beam.DirectoryEntry[];
+
   /** The model representing the account's profile. */
   model: ProfileModel;
-
-  countryDatabase?: Nexus.CountryDatabase;
 }
 
 interface State {
@@ -41,21 +45,18 @@ export class ProfileController extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const isReadonly = (() => {
-      if(this.props.model.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-      } else {
-        return false;
-      }
-    })();
+    if(!this.state.isLoaded) {
+      return <LoadingPage/>;
+    }
     return <ProfilePage 
         account={this.props.model.account}
         roles={this.props.model.roles}
         identity={this.props.model.identity}
-        groups={[]}
-        countryDatabase={Nexus.buildDefaultCountryDatabase()}
+        groups={this.props.groups}
+        countryDatabase={this.props.countryDatabase}
         displaySize={this.props.displaySize}
-        readonly={isReadonly}
-        isSubmitEnabled={isReadonly}
+        readonly={this.props.model.roles.test(
+          Nexus.AccountRoles.Role.ADMINISTRATOR)}
         submitStatus={this.state.identityStatus}
         hasError={this.state.isIdentityError}
         onSubmit={this.onIdentitySubmit}/>;

@@ -23,7 +23,7 @@ interface Properties {
   /** The account identity to display. */
   identity: Nexus.AccountIdentity;
 
-  /** The name of the group the account belongs to. */
+  /** The names of the groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
   /** The database of all available countries. */
