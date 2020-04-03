@@ -583,7 +583,7 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onCommentChange(newComment: string) {
-    this.state.newIdentity.userNotes=newComment;
+    this.state.newIdentity.userNotes = newComment;
     if(this.props.identity.userNotes === this.state.newIdentity.userNotes) {
       this.setState({
         newIdentity: this.state.newIdentity,
