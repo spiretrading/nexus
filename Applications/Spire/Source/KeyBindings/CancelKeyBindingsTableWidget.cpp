@@ -95,7 +95,7 @@ CancelKeyBindingsTableWidget::CancelKeyBindingsTableWidget(
   auto bindings_label = new QLabel(tr("Key Binding"), this);
   bindings_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   bindings_label->setStyleSheet(label_style);
-  bindings_label->setFixedSize(scale(596, 30));
+  bindings_label->setFixedSize(scale(606, 30));
   header_layout->addWidget(bindings_label);
   m_table = new CustomGridTableWidget(ROW_COUNT, COLUMN_COUNT, this);
   layout->addWidget(m_table);

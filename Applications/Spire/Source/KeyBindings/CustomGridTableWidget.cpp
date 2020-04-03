@@ -11,7 +11,6 @@ CustomGridTableWidget::CustomGridTableWidget(int row_count, int column_count,
   setStyleSheet(QString(R"(
     QTableWidget {
       background-color: #FFFFFF;
-      border: 1px solid #C8C8C8;
       font-family: Roboto;
       font-size: %1px;
       gridline-color: #C8C8C8;
@@ -32,6 +31,7 @@ CustomGridTableWidget::CustomGridTableWidget(int row_count, int column_count,
     })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(30))
         .arg(scale_height(8)));
   setFrameShape(QFrame::NoFrame);
+  setVerticalScrollMode(QTableWidget::ScrollPerPixel);
   setSelectionMode(QAbstractItemView::SingleSelection);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -50,15 +50,23 @@ void CustomGridTableWidget::paintEvent(QPaintEvent* event) {
   QTableWidget::paintEvent(event);
   auto painter = QPainter(viewport());
   painter.setPen(QColor("#C8C8C8"));
-  painter.drawLine(translate(0, 0), translate(852, 0));
+  if(rowViewportPosition(0) == 0) {
+    painter.drawLine(translate(0, 0), translate(852, 0));
+  }
   painter.drawLine(translate(0, 0), translate(0, 338));
   if(m_selected_index.isValid() && state() == QTableWidget::EditingState) {
     painter.setPen(QColor("#4B23A0"));
+    auto [pos_y, row_height] = [&] {
+      auto y = rowViewportPosition(m_selected_index.row());
+      auto height = rowHeight(m_selected_index.row());
+      if(m_selected_index.row() > 0) {
+        return std::make_pair(y - scale_height(1), height);
+      }
+      return std::make_pair(y, height - scale_height(1));
+    }();
     painter.drawRect(
       columnViewportPosition(m_selected_index.column()) - scale_width(1),
-      rowViewportPosition(m_selected_index.row()) - scale_height(1),
-      columnWidth(m_selected_index.column()),
-      rowHeight(m_selected_index.row()));
+      pos_y, columnWidth(m_selected_index.column()), row_height);
   }
 }
 
