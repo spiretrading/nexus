@@ -2,6 +2,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Ui/ItemPaddingDelegate.hpp"
 
@@ -83,7 +84,7 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
-
+  set_model(new CancelKeyBindingsTableModel(bindings));
 }
 
 connection CancelKeyBindingsTableView::connect_modified_signal(

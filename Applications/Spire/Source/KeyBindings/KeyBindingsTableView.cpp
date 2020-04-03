@@ -11,7 +11,8 @@ using namespace Spire;
 
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     QWidget* parent)
-    : ScrollArea(parent) {
+    : ScrollArea(parent),
+      m_header(header) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &KeyBindingsTableView::on_horizontal_slider_value_changed);
   connect(header, &QHeaderView::sectionResized, this,
