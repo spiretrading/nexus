@@ -35,9 +35,6 @@ interface Properties {
   /** Whether the form can be edited. */
   readonly?: boolean;
 
-  /** Whether the save changes button can be clicked. */
-  isSubmitEnabled?: boolean;
-
   /** The status of the submission. */
   submitStatus?: string;
 
@@ -103,6 +100,7 @@ export class ProfilePage extends React.Component<Properties, State> {
     };
     this.onFirstNameChange = this.onFirstNameChange.bind(this);
     this.onLastNameChange = this.onLastNameChange.bind(this);
+    this.onEmailChange = this.onEmailChange.bind(this);
     this.onAddressChange = this.onAddressChange.bind(this);
     this.onCityChange = this.onCityChange.bind(this);
     this.onProvinceChange = this.onProvinceChange.bind(this);
@@ -116,6 +114,7 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    console.log(this.state.newIdentity);
     const contentWidth = (() => {
       switch(this.props.displaySize) {
         case DisplaySize.SMALL:
@@ -451,8 +450,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
                   isSubmitEnabled=
-                    {this.props.isSubmitEnabled &&
-                      (this.state.isProfileChanged || this.props.hasError)}
+                    {(this.state.isProfileChanged || this.props.hasError)}
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
@@ -469,54 +467,111 @@ export class ProfilePage extends React.Component<Properties, State> {
   }
 
   private onFirstNameChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.firstName = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.firstName = value;
+    if(this.props.identity.firstName === this.state.newIdentity.firstName) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
-    
   }
 
   private onLastNameChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.lastName = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.lastName = value;
+    if(this.props.identity.lastName === this.state.newIdentity.lastName) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
 
   private onEmailChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.emailAddress = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.emailAddress = value;
+    if(this.props.identity.emailAddress ===
+        this.state.newIdentity.emailAddress) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
   
 
   private onAddressChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.addressLineOne = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.addressLineOne = value;
+    if(this.props.identity.addressLineOne ===
+        this.state.newIdentity.addressLineOne) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
 
   private onCityChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.city = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.city = value;
+    if(this.props.identity.city === this.state.newIdentity.city) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
   
 
   private onProvinceChange(value: string) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.province = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.province = value;
+    if(this.props.identity.province === this.state.newIdentity.province) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
 
   private onCountryChange(value: Nexus.CountryCode) {
-    if(!this.props.readonly) {
-      this.state.newIdentity.country = value;
-      this.setState({newIdentity: this.state.newIdentity});
+    this.state.newIdentity.country = value;
+    if(this.props.identity.country.equals(this.state.newIdentity.country)) {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: false
+      });
+    } else {
+      this.setState({
+        newIdentity: this.state.newIdentity,
+        isProfileChanged: true
+      });
     }
   }
 
@@ -536,7 +591,7 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onCommentChange(newComment: string) {
     this.state.newIdentity.userNotes=newComment;
-    if(this.props.identity.userNotes ===this.state.newIdentity.userNotes) {
+    if(this.props.identity.userNotes === this.state.newIdentity.userNotes) {
       this.setState({
         newIdentity: this.state.newIdentity,
         isProfileChanged: false
