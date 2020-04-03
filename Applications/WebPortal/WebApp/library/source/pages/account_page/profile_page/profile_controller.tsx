@@ -7,7 +7,6 @@ import { ProfilePage } from './profile_page';
 
 interface Properties {
 
-
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
