@@ -77,6 +77,7 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   private onLogout() {
+    this.props.model.reset();
     this.setState({
       account: Beam.DirectoryEntry.INVALID
     });
