@@ -66,7 +66,12 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     m_header->stretchLastSection());
   m_table->verticalHeader()->hide();
   m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-  m_table->setEditTriggers(QAbstractItemView::EditTrigger::AllEditTriggers);
+  m_table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
+  connect(m_table, &QTableView::clicked, [=] (auto index) {
+    if(index.flags().testFlag(Qt::ItemIsEditable)) {
+      m_table->edit(index);
+    }
+  });
   connect(m_table->selectionModel(), &QItemSelectionModel::selectionChanged,
     this, &KeyBindingsTableView::on_selection_changed);
   //m_table->installEventFilter(this);
