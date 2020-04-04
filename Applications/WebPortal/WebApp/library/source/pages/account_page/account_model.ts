@@ -12,6 +12,9 @@ export abstract class AccountModel {
   /** The account's roles. */
   public abstract get roles(): Nexus.AccountRoles;
 
+  /** The trading groups the account is a member of. */
+  public abstract get groups(): Beam.DirectoryEntry[];
+
   /** Returns the account's EntitlementsModel. */
   public abstract get entitlementsModel(): EntitlementsModel;
 

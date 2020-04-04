@@ -30,6 +30,10 @@ export class HttpAccountModel extends AccountModel {
     return this.model.roles;
   }
 
+  public get groups(): Beam.DirectoryEntry[] {
+    return this.model.groups;
+  }
+
   public get entitlementsModel(): HttpEntitlementsModel {
     return this._entitlementsModel;
   }
