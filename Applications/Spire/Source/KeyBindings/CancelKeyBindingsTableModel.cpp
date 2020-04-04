@@ -119,15 +119,46 @@ QVariant CancelKeyBindingsTableModel::data(const QModelIndex& index,
   return QVariant();
 }
 
-//QVariant CancelKeyBindingsTableModel::headerData(int section,
-//    Qt::Orientation orientation, int role) const {
-//  if(role == Qt::DisplayRole) {
-//    if(section == 0) {
-//      return tr("");
-//    }
-//    if(section == 1) {
-//      return tr("");
-//    }
-//  }
-//  return QVariant();
-//}
+Qt::ItemFlags CancelKeyBindingsTableModel::flags(
+    const QModelIndex& index) const {
+  if(!index.isValid()) {
+    return Qt::NoItemFlags;
+  }
+  auto flags = QAbstractItemModel::flags(index);
+  if(index.column() != 0) {
+    return flags |= Qt::ItemIsEditable;
+  }
+  return flags;
+}
+
+QVariant CancelKeyBindingsTableModel::headerData(int section,
+    Qt::Orientation orientation, int role) const {
+  if(orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+    if(section == 0) {
+      return tr("Cancel Options");
+    }
+    if(section == 1) {
+      return tr("Key Binding");
+    }
+  }
+  return QVariant();
+}
+
+bool CancelKeyBindingsTableModel::setData(const QModelIndex &index,
+    const QVariant &value, int role) {
+  if(!index.isValid()) {
+    return false;
+  }
+  if(role == Qt::DisplayRole && index.column() == 1) {
+    for(auto& binding : m_key_bindings) {
+      if(binding.m_sequence == value.value<QKeySequence>()) {
+        binding.m_sequence = QKeySequence();
+        break;
+      }
+    }
+    m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
+    emit dataChanged(index, index, {role});
+    return true;
+  }
+  return false;
+}

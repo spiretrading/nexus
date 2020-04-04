@@ -40,6 +40,7 @@ void Spire::apply_line_edit_style(QLineEdit* widget) {
 
 QHeaderView* Spire::make_fixed_header(QWidget* parent) {
   auto header = new QHeaderView(Qt::Horizontal, parent);
+  header->setFixedHeight(scale_height(30));
   header->setStretchLastSection(true);
   header->setSectionsClickable(false);
   header->setSectionsMovable(false);
@@ -60,6 +61,7 @@ QHeaderView* Spire::make_fixed_header(QWidget* parent) {
 
 QHeaderView* Spire::make_header(QWidget* parent) {
   auto header = new QHeaderView(Qt::Horizontal, parent);
+  header->setFixedHeight(scale_height(30));
   header->setStretchLastSection(true);
   header->setSectionsClickable(false);
   header->setSectionsMovable(true);

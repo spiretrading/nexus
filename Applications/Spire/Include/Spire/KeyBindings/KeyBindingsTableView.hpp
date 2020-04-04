@@ -15,9 +15,13 @@ namespace Spire {
       explicit KeyBindingsTableView(QHeaderView* header,
         QWidget* parent = nullptr);
 
+      void set_column_delegate(int column, QStyledItemDelegate* delegate);
+
+      void set_column_width(int column, int width);
+
       void set_model(QAbstractTableModel* model);
 
-      void set_column_delegate(int column, QStyledItemDelegate* delegate);
+      void set_width(int width);
 
     protected:
       void paintEvent(QPaintEvent* event) override;
