@@ -38,6 +38,13 @@ export class LocalAccountModel extends AccountModel {
     return this._roles;
   }
 
+  public get groups(): Beam.DirectoryEntry[] {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return [];
+  }
+
   public get entitlementsModel(): LocalEntitlementsModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
