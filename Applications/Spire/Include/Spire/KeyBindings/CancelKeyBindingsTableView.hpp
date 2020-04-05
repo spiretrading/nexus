@@ -43,8 +43,7 @@ namespace Spire {
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
 
-      //void on_cell_clicked(int row, int column);
-      //void on_key_sequence_modified(int row);
+      void on_key_sequence_modified(const QModelIndex& index);
   };
 }
 

@@ -70,11 +70,11 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
     if(current_index.row() != index.row() &&
         current_index.data().value<QKeySequence>() == key_sequence) {
       model->setData(current_index, QVariant());
-      m_item_modified_signal(current_index.row());
+      m_item_modified_signal(current_index);
       break;
     }
   }
-  m_item_modified_signal(index.row());
+  m_item_modified_signal(index);
 }
 
 QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,

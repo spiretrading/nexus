@@ -21,7 +21,11 @@ namespace Spire {
 
       void set_model(QAbstractTableModel* model);
 
+      void set_height(int height);
+
       void set_width(int width);
+
+      QVariant get_data(int row, int column);
 
     protected:
       void paintEvent(QPaintEvent* event) override;

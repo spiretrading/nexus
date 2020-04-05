@@ -14,10 +14,10 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     : ScrollArea(true, parent),
       m_header(header) {
   m_header->setParent(this);
-  m_header->setFixedWidth(scale_width(853));
+  //m_header->setFixedWidth(scale_width(853));
   auto main_widget = new QWidget(this);
-  main_widget->setFixedWidth(1000);
-  main_widget->setFixedHeight(scale_height(338));
+  //main_widget->setFixedWidth(1000);
+  //main_widget->setFixedHeight(scale_height(338));
   //main_widget->setMinimumWidth(MINIMUM_TABLE_WIDTH);
   auto layout = new QVBoxLayout(main_widget);
   layout->setContentsMargins({});
@@ -33,7 +33,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_table = new QTableView(this);
  // m_table->setMinimumWidth(MINIMUM_TABLE_WIDTH);
   layout->addWidget(m_table);
-  m_table->setFixedWidth(scale_width(853));
+  //m_table->setFixedWidth(scale_width(853));
   m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
   m_table->setStyleSheet(QString(R"(
     QTableView {
@@ -95,8 +95,14 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   m_table->setModel(model);
 }
 
+void KeyBindingsTableView::set_height(int height) {
+  widget()->setFixedHeight(height);
+  m_table->setFixedHeight(height);
+}
+
 void KeyBindingsTableView::set_width(int width) {
   widget()->setFixedWidth(width);
+  m_header->setFixedWidth(width);
   m_table->setFixedWidth(width);
 }
 

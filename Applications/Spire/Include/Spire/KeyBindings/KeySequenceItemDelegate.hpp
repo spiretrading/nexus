@@ -13,7 +13,7 @@ namespace Spire {
       /*
         \param row The row that was modified.
       */
-      using ItemModifiedSignal = Signal<void (int row)>;
+      using ItemModifiedSignal = Signal<void (const QModelIndex& index)>;
 
       //! Constructs a KeySequenceItemDelegate.
       /*
