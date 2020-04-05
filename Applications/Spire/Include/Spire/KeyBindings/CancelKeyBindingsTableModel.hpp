@@ -9,7 +9,8 @@ namespace Spire {
     public:
 
       CancelKeyBindingsTableModel(
-        const std::vector<KeyBindings::CancelActionBinding>& bindings);
+        const std::vector<KeyBindings::CancelActionBinding>& bindings,
+        QWidget* parent = nullptr);
 
       void set_key_bindings(
         const std::vector<KeyBindings::CancelActionBinding>& bindings);

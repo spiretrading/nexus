@@ -47,7 +47,7 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
-  set_model(new CancelKeyBindingsTableModel(bindings));
+  set_model(new CancelKeyBindingsTableModel(bindings, this));
 }
 
 connection CancelKeyBindingsTableView::connect_modified_signal(
