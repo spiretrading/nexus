@@ -34,8 +34,8 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
     QWidget* parent)
     : KeyBindingsTableView(make_fixed_header(parent), parent) {
-  setFixedWidth(scale_width(853));
   set_key_bindings(bindings);
+  setFixedWidth(scale_width(853));
   set_width(scale_width(853));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
