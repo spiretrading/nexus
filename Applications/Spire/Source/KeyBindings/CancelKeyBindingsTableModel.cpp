@@ -69,6 +69,11 @@ void CancelKeyBindingsTableModel::set_key_bindings(
   }
 }
 
+KeyBindings::CancelAction CancelKeyBindingsTableModel::get_cancel_action(
+    int row) {
+  return get_action(row);
+}
+
 int CancelKeyBindingsTableModel::rowCount(const QModelIndex& parent) const {
   return ROW_COUNT;
 }

@@ -2,38 +2,17 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Ui/ItemPaddingDelegate.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  auto get_action(int index) {
-    static auto actions = std::vector<KeyBindings::CancelAction>({
-      KeyBindings::CancelAction::ALL,
-      KeyBindings::CancelAction::ALL_ASKS,
-      KeyBindings::CancelAction::ALL_BIDS,
-      KeyBindings::CancelAction::CLOSEST_ASK,
-      KeyBindings::CancelAction::CLOSEST_BID,
-      KeyBindings::CancelAction::FURTHEST_BID,
-      KeyBindings::CancelAction::FURTHEST_ASK,
-      KeyBindings::CancelAction::MOST_RECENT,
-      KeyBindings::CancelAction::MOST_RECENT_ASK,
-      KeyBindings::CancelAction::MOST_RECENT_BID,
-      KeyBindings::CancelAction::OLDEST,
-      KeyBindings::CancelAction::OLDEST_ASK,
-      KeyBindings::CancelAction::OLDEST_BID
-    });
-    return actions[index];
-  }
-}
-
 CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
     QWidget* parent)
-    : KeyBindingsTableView(make_fixed_header(parent), parent) {
+    : KeyBindingsTableView(make_fixed_header(parent), parent),
+      m_table(nullptr) {
   set_key_bindings(bindings);
   setFixedWidth(scale_width(853));
   set_width(scale_width(853));
@@ -48,7 +27,8 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
-  set_model(new CancelKeyBindingsTableModel(bindings, this));
+  m_table = new CancelKeyBindingsTableModel(bindings, this);
+  set_model(m_table);
 }
 
 connection CancelKeyBindingsTableView::connect_modified_signal(
@@ -59,5 +39,5 @@ connection CancelKeyBindingsTableView::connect_modified_signal(
 void CancelKeyBindingsTableView::on_key_sequence_modified(
     const QModelIndex& index) {
   m_modified_signal({index.data(Qt::DisplayRole).value<QKeySequence>(), {},
-    get_action(index.row())});
+    m_table->get_cancel_action(index.row())});
 }

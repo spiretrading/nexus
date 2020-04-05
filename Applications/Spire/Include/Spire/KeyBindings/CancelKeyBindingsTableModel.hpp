@@ -15,6 +15,8 @@ namespace Spire {
       void set_key_bindings(
         const std::vector<KeyBindings::CancelActionBinding>& bindings);
 
+      KeyBindings::CancelAction get_cancel_action(int row);
+
       int rowCount(const QModelIndex& parent) const override;
 
       int columnCount(const QModelIndex& parent) const override;
