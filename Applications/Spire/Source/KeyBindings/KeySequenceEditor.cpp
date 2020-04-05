@@ -33,6 +33,10 @@ const QKeySequence& KeySequenceEditor::get_key_sequence() const {
 
 void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
   if(!event->isAutoRepeat()) {
+    if(event->key() == Qt::Key_Delete) {
+      m_key_sequence = QKeySequence();
+      commit_sequence();
+    }
     m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
   }
   event->accept();
@@ -42,8 +46,7 @@ void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }
-  m_entered_keys.clear();
-  emit editingFinished();
+  commit_sequence();
 }
 
 void KeySequenceEditor::paintEvent(QPaintEvent* event) {
@@ -52,6 +55,11 @@ void KeySequenceEditor::paintEvent(QPaintEvent* event) {
   painter.setFont(m_font);
   painter.setPen(Qt::black);
   painter.drawText(0, scale_height(16), tr("Enter Keys"));
+}
+
+void KeySequenceEditor::commit_sequence() {
+  m_entered_keys.clear();
+  emit editingFinished();
 }
 
 bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) {
