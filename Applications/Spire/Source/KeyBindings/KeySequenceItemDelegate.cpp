@@ -57,6 +57,10 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
       draw_key_sequence(sequence, option.rect, painter);
     }
   }
+  if(option.state.testFlag(QStyle::State_Selected)) {
+    painter->setPen(QColor("#4B23A0"));
+    painter->drawRect(400, 400, 400, 400);
+  }
   painter->restore();
 }
 
