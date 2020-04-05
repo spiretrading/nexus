@@ -39,7 +39,7 @@ namespace Spire {
       bool m_last_focus_was_key;
       CancelKeyBindingsTableView* m_cancel_keys_table;
 
-      void on_reset_button_clicked();
+      void on_restore_button_clicked();
       void on_tab_bar_clicked(int index);
       void on_tab_changed();
   };

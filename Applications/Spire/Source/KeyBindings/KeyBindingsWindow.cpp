@@ -91,27 +91,27 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
   layout->addLayout(button_layout);
-  auto reset_button = new FlatButton(tr("Reset Default"));
-  reset_button->connect_clicked_signal([=] {
-    on_reset_button_clicked();
+  auto restore_button = new FlatButton(tr("Restore Defaults"));
+  restore_button->connect_clicked_signal([=] {
+    on_restore_button_clicked();
   });
-  reset_button->setFixedSize(scale(120, 26));
-  auto button_style = reset_button->get_style();
+  restore_button->setFixedSize(scale(120, 26));
+  auto button_style = restore_button->get_style();
   button_style.m_background_color = QColor("#EBEBEB");
-  auto button_hover_style = reset_button->get_hover_style();
+  auto button_hover_style = restore_button->get_hover_style();
   button_hover_style.m_background_color = QColor("#4B23A0");
   button_hover_style.m_text_color = Qt::white;
-  auto button_focus_style = reset_button->get_focus_style();
+  auto button_focus_style = restore_button->get_focus_style();
   button_focus_style.m_background_color = QColor("#EBEBEB");
   button_focus_style.m_border_color = QColor("#4B23A0");
   auto button_font = QFont();
   button_font.setFamily("Roboto");
   button_font.setPixelSize(scale_height(12));
-  reset_button->setFont(button_font);
-  reset_button->set_style(button_style);
-  reset_button->set_hover_style(button_hover_style);
-  reset_button->set_focus_style(button_focus_style);
-  button_layout->addWidget(reset_button);
+  restore_button->setFont(button_font);
+  restore_button->set_style(button_style);
+  restore_button->set_hover_style(button_hover_style);
+  restore_button->set_focus_style(button_focus_style);
+  button_layout->addWidget(restore_button);
   button_layout->addStretch(1);
   auto cancel_button = new FlatButton(tr("Cancel"));
   cancel_button->connect_clicked_signal([=] { close(); });
@@ -173,7 +173,7 @@ bool KeyBindingsWindow::eventFilter(QObject* watched,
   return QWidget::eventFilter(watched, event);
 }
 
-void KeyBindingsWindow::on_reset_button_clicked() {
+void KeyBindingsWindow::on_restore_button_clicked() {
   auto default_bindings = KeyBindings::get_default_key_bindings();
   m_cancel_keys_table->set_key_bindings(
     default_bindings.build_cancel_bindings());

@@ -142,10 +142,10 @@ QVariant CancelKeyBindingsTableModel::headerData(int section,
     Qt::Orientation orientation, int role) const {
   if(orientation == Qt::Horizontal && role == Qt::DisplayRole) {
     if(section == 0) {
-      return tr("Cancel Options");
+      return tr("Cancel Option");
     }
     if(section == 1) {
-      return tr("Key Binding");
+      return tr("Key");
     }
   }
   return QVariant();
