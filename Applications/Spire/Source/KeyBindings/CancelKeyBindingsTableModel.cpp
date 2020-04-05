@@ -46,7 +46,7 @@ namespace {
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
-    QWidget* parent)
+    QObject* parent)
     : QAbstractTableModel(parent) {
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
