@@ -120,9 +120,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                 DashboardPage.FADE_TRANSITION_STYLE[status]])}/>);
           }}
         </Transition>
-   
-          {this.props.children}
-  
+        {this.props.children}
       </VBoxLayout>);
   }
 
