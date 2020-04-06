@@ -443,7 +443,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                 <SubmitButton label='Save Changes'
                   displaySize={this.props.displaySize}
                   isSubmitEnabled=
-                    {(this.state.isProfileChanged || this.props.hasError)}
+                    {this.state.isProfileChanged || this.props.hasError}
                   onClick={this.onSubmitProfile}/>
                 <div style={statusMessageFooter}>
                   <div style={ProfilePage.STYLE.smallPadding}/>
