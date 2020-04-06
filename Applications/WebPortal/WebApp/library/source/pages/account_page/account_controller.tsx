@@ -107,9 +107,9 @@ export class AccountController extends React.Component<Properties, State> {
   private renderProfilePage() {
     return <ProfileController
       displaySize={this.props.displaySize}
-      countryDatabase={}
-      groups={}
-      model={}/>;
+      countryDatabase={this.props.countryDatabase}
+      groups={this.props.model.groups}
+      model={this.props.model.profileModel}/>;
   }
 
   private renderEntitlementsPage() {
