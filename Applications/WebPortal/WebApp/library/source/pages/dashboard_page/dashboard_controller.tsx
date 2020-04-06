@@ -43,6 +43,7 @@ export class DashboardController extends React.Component<Properties, State> {
         case DashboardController.Page.ACCOUNT:
           return <AccountController
             entitlements={this.props.model.entitlementDatabase}
+            countryDatabase={this.props.model.countryDatabase}
             currencyDatabase={this.props.model.currencyDatabase}
             marketDatabase={this.props.model.marketDatabase}
             model={this.accountModel} displaySize={this.props.displaySize}/>;

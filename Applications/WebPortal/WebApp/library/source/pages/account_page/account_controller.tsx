@@ -14,7 +14,10 @@ interface Properties {
   /** Stores the entitlements to display. */
   entitlements: Nexus.EntitlementDatabase;
 
-  /** The database of currencies */
+  /** The database of currencies. */
+  countryDatabase: Nexus.CountryDatabase;
+
+  /** The database of countries. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The set of markets. */

@@ -1,5 +1,5 @@
-#ifndef NEXUS_DISTRIBUTEDMARKETDATACLIENT_HPP
-#define NEXUS_DISTRIBUTEDMARKETDATACLIENT_HPP
+#ifndef NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
+#define NEXUS_DISTRIBUTED_MARKET_DATA_CLIENT_HPP
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -8,29 +8,28 @@
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class DistributedMarketDataClient
-      \brief Implements a MarketDataClient whose servers are distributed among
-             multiple instances.
+  /**
+   * Implements a MarketDataClient whose servers are distributed among
+   * multiple instances.
    */
   class DistributedMarketDataClient : private boost::noncopyable {
     public:
 
-      //! Constructs a DistributedMarketDataClient.
-      /*!
-        \param countryToMarketDataClients Maps CountryCodes to
-               MarketDataClients.
-        \param marketToMarketDataClients Maps MarketCodes to MarketDataClients.
-      */
+      /**
+       * Constructs a DistributedMarketDataClient.
+       * @param countryToMarketDataClients Maps CountryCodes to
+       *        MarketDataClients.
+       * @param marketToMarketDataClients Maps MarketCodes to MarketDataClients.
+       */
       DistributedMarketDataClient(std::unordered_map<
         CountryCode, std::shared_ptr<VirtualMarketDataClient>>
         countryToMarketDataClients, std::unordered_map<
         MarketCode, std::shared_ptr<VirtualMarketDataClient>>
         marketToMarketDataClients);
 
-      virtual ~DistributedMarketDataClient();
+      ~DistributedMarketDataClient();
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
         const std::shared_ptr<
@@ -67,6 +66,8 @@ namespace MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -87,11 +88,11 @@ namespace MarketDataService {
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(
-      std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
-      countryToMarketDataClients, std::unordered_map<MarketCode,
-      std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
-      : m_countryToMarketDataClients{std::move(countryToMarketDataClients)},
-        m_marketToMarketDataClients{std::move(marketToMarketDataClients)} {}
+    std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
+    countryToMarketDataClients, std::unordered_map<MarketCode,
+    std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
+    : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
+      m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {}
 
   inline DistributedMarketDataClient::~DistributedMarketDataClient() {
     Close();
@@ -225,10 +226,20 @@ namespace MarketDataService {
     return marketDataClient->LoadSecurityTechnicals(security);
   }
 
+  inline boost::optional<SecurityInfo>
+      DistributedMarketDataClient::LoadSecurityInfo(const Security& security) {
+    auto marketDataClient = FindMarketDataClient(security);
+    if(marketDataClient == nullptr) {
+      return boost::none;
+    }
+    return marketDataClient->LoadSecurityInfo(security);
+  }
+
   inline std::vector<SecurityInfo> DistributedMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
-    std::vector<SecurityInfo> securityInfos;
-    std::unordered_set<std::shared_ptr<VirtualMarketDataClient>> clients;
+    auto securityInfos = std::vector<SecurityInfo>();
+    auto clients =
+      std::unordered_set<std::shared_ptr<VirtualMarketDataClient>>();
     for(auto& client :
         m_countryToMarketDataClients | boost::adaptors::map_values) {
       clients.insert(client);
@@ -287,7 +298,6 @@ namespace MarketDataService {
     }
     return marketDataClientIterator->second.get();
   }
-}
 }
 
 #endif

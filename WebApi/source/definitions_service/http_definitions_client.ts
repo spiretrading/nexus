@@ -1,11 +1,16 @@
 import * as Beam from 'beam';
-import { CurrencyDatabase, EntitlementDatabase, MarketDatabase } from '..';
+import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
+  MarketDatabase } from '..';
 import { DefinitionsClient } from './definitions_client';
 
 /** Implements the DefinitionsClient using HTTP requests. */
 export class HttpDefinitionsClient extends DefinitionsClient {
   public get entitlementDatabase(): EntitlementDatabase {
     return this._entitlementDatabase;
+  }
+
+  public get countryDatabase(): CountryDatabase {
+    return this._countryDatabase;
   }
 
   public get currencyDatabase(): CurrencyDatabase {
@@ -21,6 +26,9 @@ export class HttpDefinitionsClient extends DefinitionsClient {
       '/api/administration_service/load_entitlements_database', {});
     this._entitlementDatabase = EntitlementDatabase.fromJson(
       entitlementResponse);
+    const countryResponse = await Beam.post(
+      '/api/definitions_service/load_country_database', {});
+    this._countryDatabase = CountryDatabase.fromJson(countryResponse);
     const currencyResponse = await Beam.post(
       '/api/definitions_service/load_currency_database', {});
     this._currencyDatabase = CurrencyDatabase.fromJson(currencyResponse);
@@ -34,6 +42,7 @@ export class HttpDefinitionsClient extends DefinitionsClient {
   }
 
   private _entitlementDatabase: EntitlementDatabase;
+  private _countryDatabase: CountryDatabase;
   private _currencyDatabase: CurrencyDatabase;
   private _marketDatabase: MarketDatabase;
 }

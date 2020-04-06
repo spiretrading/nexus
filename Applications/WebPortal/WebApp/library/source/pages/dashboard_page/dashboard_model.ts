@@ -8,7 +8,10 @@ export abstract class DashboardModel {
   /** Returns the database of entitlements. */
   public abstract get entitlementDatabase(): Nexus.EntitlementDatabase;
 
-  /** Returns the database of currencies */
+  /** Returns the database of countries. */
+  public abstract get countryDatabase(): Nexus.CountryDatabase;
+
+  /** Returns the database of currencies. */
   public abstract get currencyDatabase(): Nexus.CurrencyDatabase;
 
   /** Returns the database of markets. */

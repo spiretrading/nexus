@@ -7,7 +7,7 @@
 #include <QAbstractItemModel>
 #include <QTimer>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -53,6 +53,9 @@ namespace Spire {
 
       virtual ~BookViewModel();
 
+      /** Returns the SecurityInfo this model represents. */
+      const Nexus::SecurityInfo& GetSecurityInfo() const;
+
       //! Sets the properties.
       /*!
         \param properties The display properties.
@@ -83,7 +86,7 @@ namespace Spire {
       BookViewProperties m_properties;
       Nexus::Security m_security;
       Nexus::Side m_side;
-      Nexus::Quantity m_boardLot;
+      Nexus::SecurityInfo m_securityInfo;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_marketQuotes;
       std::unordered_map<Nexus::MarketCode, Nexus::BookQuote> m_topLevels;
       std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
