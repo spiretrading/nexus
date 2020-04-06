@@ -581,8 +581,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
-      overflowY: 'auto' as 'auto'
+      justifyContent: 'space-between' as 'space-between'
     },
     hidden: {
       boxSizing: 'border-box' as 'border-box',
@@ -617,6 +616,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       flexShrink: 0
     },
     pagePadding: {
+      flexGrow: 0,
+      flexShrink: 0,
       width: '30px'
     },
     rolesWrapper: {
