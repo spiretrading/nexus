@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionField, DisplaySize, HLine, PhotoField } from
-  '../../..';
+import { CountrySelectionField, DisplaySize, HLine, PageWrapper, PhotoField } 
+  from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
 import { FormEntry } from './form_entry';
@@ -43,9 +43,6 @@ interface Properties {
 
   /** Indicates the profile is being submitted. */
   onSubmit?: (roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => void;
-
-  /** Whether the option to change the password is available. */
-  hasPassword?: boolean;
 
   /** The status of the password submission. */
   submitPasswordStatus?: string;
@@ -243,36 +240,32 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
-      if(this.props.hasPassword) {
-        const passwordButtonEnabled = this.state.password1 !== '' &&
-          this.state.password2 !== '';
-        const status = (() => {
-          if(this.state.isPasswordChanged) {
-            return '';
-          } else if(this.state.localPasswordMessage !== '') {
-            return this.state.localPasswordMessage;
-          } else {
-            return this.props.submitPasswordStatus;
-          }})();
-        return (
-          <Dali.VBoxLayout>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <HLine color={ProfilePage.LINE_COLOR}/>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.props.hasPasswordError ||
-                this.state.hasLocalPasswordError}
-              submitPasswordStatus={status}
-              isPasswordSubmitEnabled={passwordButtonEnabled}
-              onSubmitPassword={this.onSubmitPassword}
-              password1={this.state.password1}
-              password2={this.state.password2}
-              onPassword1Change={this.onPassword1Change}
-              onPassword2Change={this.onPassword2Change}/>
-          </Dali.VBoxLayout>);
-      } else {
-        return null;
-      }
+      const passwordButtonEnabled = this.state.password1 !== '' &&
+        this.state.password2 !== '';
+      const status = (() => {
+        if(this.state.isPasswordChanged) {
+          return '';
+        } else if(this.state.localPasswordMessage !== '') {
+          return this.state.localPasswordMessage;
+        } else {
+          return this.props.submitPasswordStatus;
+        }})();
+      return (
+        <Dali.VBoxLayout>
+          <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+          <HLine color={ProfilePage.LINE_COLOR}/>
+          <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+          <ChangePasswordBox displaySize={this.props.displaySize}
+            hasPasswordError={this.props.hasPasswordError ||
+              this.state.hasLocalPasswordError}
+            submitPasswordStatus={status}
+            isPasswordSubmitEnabled={passwordButtonEnabled}
+            onSubmitPassword={this.onSubmitPassword}
+            password1={this.state.password1}
+            password2={this.state.password2}
+            onPassword1Change={this.onPassword1Change}
+            onPassword2Change={this.onPassword2Change}/>
+        </Dali.VBoxLayout>);
     })();
     const commentBoxButtonStyle = (() => {
       if(this.props.readonly) {
@@ -290,173 +283,180 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={ProfilePage.STYLE.page}>
-        <div style={ProfilePage.STYLE.pagePadding}/>
-        <div style={contentWidth}>
-          <Dali.VBoxLayout width='100%'>
-            <Dali.Padding size='18px'/>
-            <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.toString()}
-            </div>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <div style={ProfilePage.STYLE.headerStyler}>
-              Account Information
-            </div>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <Dali.HBoxLayout>
-              {sidePanelPhoto}
-              <Dali.Padding size={sidePanelPhotoPadding}/>
-              <Dali.VBoxLayout width='100%'>
-                {topPanelPhoto}
-                <FormEntry name='First Name'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.firstName}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onFirstNameChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Last Name'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.lastName}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onLastNameChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Username' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.account.name.toString()}
-                    displaySize={this.props.displaySize}
-                    readonly/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Role(s)' displaySize={this.props.displaySize}>
-                  <div style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.state.newRoles}
-                      readonly={this.props.readonly}
-                      onClick={this.onRolesChange}/>
-                  </div>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Group(s)' displaySize={this.props.displaySize}>
-                  <Dali.VBoxLayout>
-                    {groupsList}
-                  </Dali.VBoxLayout>
-                </FormEntry>
-                <Dali.Padding size='9px'/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Registration Date'
-                    displaySize={this.props.displaySize}>
-                  <TextField displaySize={this.props.displaySize}
-                    value={this.props.identity.registrationTime.toString()}
-                    readonly/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='ID Number'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.account.id.toString()}
-                    displaySize={this.props.displaySize}
-                    readonly/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Email' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.emailAddress}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onEmailChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Address' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.addressLineOne}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onAddressChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='City' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.city}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onCityChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Province/State'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.newIdentity.province}
-                    displaySize={this.props.displaySize}
-                    onInput={this.onProvinceChange}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Country' displaySize={this.props.displaySize}>
-                  {countryBox}
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-                {formFooter}
-                <Dali.Padding size={formFooterPaddingSize}/>
-              </Dali.VBoxLayout>
-            </Dali.HBoxLayout>
-            <Dali.VBoxLayout style={null}>
-              <div style={ProfilePage.STYLE.headerStyler}>
-                User Notes
+      <PageWrapper>
+        <div style={ProfilePage.STYLE.page}>
+          <div style={ProfilePage.STYLE.pagePadding}/>
+          <div style={contentWidth}>
+            <Dali.VBoxLayout width='100%'>
+              <Dali.Padding size='18px'/>
+              <div style={ProfilePage.STYLE.lastLoginBox}>
+                {this.props.identity.lastLoginTime.toString()}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment={this.state.newIdentity.userNotes}
-                readonly={this.props.readonly}
-                onInput={this.onCommentChange}/>
-              <Dali.Padding size={commentFooterPaddingSize}/>
-              <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
-                <div style={ProfilePage.STYLE.filler}/>
-                <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                    {profileSubmitStatus}
-                  <div style={ProfilePage.STYLE.buttonPadding}/>
-                </div>
-                <SubmitButton label='Save Changes'
-                  displaySize={this.props.displaySize}
-                  isSubmitEnabled=
-                    {this.state.isProfileChanged || this.props.hasError}
-                  onClick={this.onSubmitProfile}/>
-                <div style={statusMessageFooter}>
-                  <div style={ProfilePage.STYLE.smallPadding}/>
-                  {profileSubmitStatus}
-                </div>
+              <div style={ProfilePage.STYLE.headerStyler}>
+                Account Information
               </div>
+              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+              <Dali.HBoxLayout>
+                {sidePanelPhoto}
+                <Dali.Padding size={sidePanelPhotoPadding}/>
+                <Dali.VBoxLayout width='100%'>
+                  {topPanelPhoto}
+                  <FormEntry name='First Name'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.firstName}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onFirstNameChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Last Name'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.lastName}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onLastNameChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Username'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.props.account.name.toString()}
+                      displaySize={this.props.displaySize}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Role(s)'
+                      displaySize={this.props.displaySize}>
+                    <div style={ProfilePage.STYLE.rolesWrapper}>
+                      <RolesField roles={this.state.newRoles}
+                        readonly={this.props.readonly}
+                        onClick={this.onRolesChange}/>
+                    </div>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Group(s)' 
+                      displaySize={this.props.displaySize}>
+                    <Dali.VBoxLayout>
+                      {groupsList}
+                    </Dali.VBoxLayout>
+                  </FormEntry>
+                  <Dali.Padding size='9px'/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Registration Date'
+                      displaySize={this.props.displaySize}>
+                    <TextField displaySize={this.props.displaySize}
+                      value={this.props.identity.registrationTime.toString()}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='ID Number'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.props.account.id.toString()}
+                      displaySize={this.props.displaySize}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Email' displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.emailAddress}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onEmailChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Address'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.addressLineOne}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onAddressChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='City' displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.city}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onCityChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Province/State'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.province}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onProvinceChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Country'
+                      displaySize={this.props.displaySize}>
+                    {countryBox}
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                  {formFooter}
+                  <Dali.Padding size={formFooterPaddingSize}/>
+                </Dali.VBoxLayout>
+              </Dali.HBoxLayout>
+              <Dali.VBoxLayout style={null}>
+                <div style={ProfilePage.STYLE.headerStyler}>
+                  User Notes
+                </div>
+                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                <CommentBox comment={this.state.newIdentity.userNotes}
+                  readonly={this.props.readonly}
+                  onInput={this.onCommentChange}/>
+                <Dali.Padding size={commentFooterPaddingSize}/>
+                <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
+                  <div style={ProfilePage.STYLE.filler}/>
+                  <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
+                      {profileSubmitStatus}
+                    <div style={ProfilePage.STYLE.buttonPadding}/>
+                  </div>
+                  <SubmitButton label='Save Changes'
+                    displaySize={this.props.displaySize}
+                    isSubmitEnabled=
+                      {this.state.isProfileChanged || this.props.hasError}
+                    onClick={this.onSubmitProfile}/>
+                  <div style={statusMessageFooter}>
+                    <div style={ProfilePage.STYLE.smallPadding}/>
+                    {profileSubmitStatus}
+                  </div>
+                </div>
+              </Dali.VBoxLayout>
+              {changePasswordBox}
+              <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
             </Dali.VBoxLayout>
-            {changePasswordBox}
-            <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
-          </Dali.VBoxLayout>
+          </div>
+          <div style={ProfilePage.STYLE.pagePadding}/>
         </div>
-        <div style={ProfilePage.STYLE.pagePadding}/>
-      </div>);
+      </PageWrapper>);
   }
 
   private onFirstNameChange(value: string) {
