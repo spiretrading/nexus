@@ -4,7 +4,6 @@ import { AccountModel } from './account_model';
 import { LocalEntitlementsModel } from './entitlements_page';
 import { LocalProfileModel } from './profile_page';
 import { LocalRiskModel } from './risk_page';
-import { AccountIdentity } from 'nexus';
 
 /** Implements an in-memory AccountModel. */
 export class LocalAccountModel extends AccountModel {
@@ -18,7 +17,7 @@ export class LocalAccountModel extends AccountModel {
     this._entitlementsModel = new LocalEntitlementsModel(this._account,
       new Beam.Set<Beam.DirectoryEntry>());
     this._profileModel = new LocalProfileModel(this._account, this._roles, 
-      new AccountIdentity());
+      new Nexus.AccountIdentity());
     this._riskModel = new LocalRiskModel(this._account,
       Nexus.RiskParameters.INVALID);
   }
