@@ -23,7 +23,7 @@ interface Properties {
   /** The account identity to display. */
   identity: Nexus.AccountIdentity;
 
-  /** The names of the groups the account belongs to. */
+  /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
   /** The database of all available countries. */
@@ -244,8 +244,8 @@ export class ProfilePage extends React.Component<Properties, State> {
     })();
     const changePasswordBox = (() => {
       if(this.props.hasPassword) {
-        const passwordButtonEnabled = this.state.password1 !== ''
-          && this.state.password2 !== '';
+        const passwordButtonEnabled = this.state.password1 !== '' &&
+          this.state.password2 !== '';
         const status = (() => {
           if(this.state.isPasswordChanged) {
             return '';

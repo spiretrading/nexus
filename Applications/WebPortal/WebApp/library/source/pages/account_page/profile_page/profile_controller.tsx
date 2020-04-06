@@ -13,7 +13,7 @@ interface Properties {
   /** The database of all available countries. */
   countryDatabase?: Nexus.CountryDatabase;
 
-  /** The names of the groups the account belongs to. */
+  /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
   /** The model representing the account's profile. */
@@ -39,8 +39,8 @@ export class ProfileController extends React.Component<Properties, State> {
       hasPasswordError: false,
       passwordStatus: ''
     };
-    this.onIdentitySubmit = this.onIdentitySubmit.bind(this);
-    this.onPasswordSubmit = this.onPasswordSubmit.bind(this);
+    this.onSubmitIdentity = this.onSubmitIdentity.bind(this);
+    this.onSubmitPassword = this.onSubmitPassword.bind(this);
   }
 
   public render(): JSX.Element {
@@ -48,20 +48,20 @@ export class ProfileController extends React.Component<Properties, State> {
       return <LoadingPage/>;
     }
     return <ProfilePage 
-        account={this.props.model.account}
-        roles={this.props.model.roles}
-        identity={this.props.model.identity}
-        groups={this.props.groups}
-        countryDatabase={this.props.countryDatabase}
-        displaySize={this.props.displaySize}
-        readonly={this.props.model.roles.test(
-          Nexus.AccountRoles.Role.ADMINISTRATOR)}
-        submitStatus={this.state.identityStatus}
-        hasError={this.state.hasIdentityError}
-        onSubmit={this.onIdentitySubmit}
-        hasPasswordError={this.state.hasPasswordError}
-        submitPasswordStatus={this.state.passwordStatus}
-        onSubmitPassword={this.onPasswordSubmit}/>;
+      account={this.props.model.account}
+      roles={this.props.model.roles}
+      identity={this.props.model.identity}
+      groups={this.props.groups}
+      countryDatabase={this.props.countryDatabase}
+      displaySize={this.props.displaySize}
+      readonly={this.props.model.roles.test(
+        Nexus.AccountRoles.Role.ADMINISTRATOR)}
+      submitStatus={this.state.identityStatus}
+      hasError={this.state.hasIdentityError}
+      onSubmit={this.onSubmitIdentity}
+      hasPasswordError={this.state.hasPasswordError}
+      submitPasswordStatus={this.state.passwordStatus}
+      onSubmitPassword={this.onSubmitPassword}/>;
   }
 
   public componentDidMount(): void {
@@ -73,7 +73,7 @@ export class ProfileController extends React.Component<Properties, State> {
       });
   }
 
-  private async onPasswordSubmit(password: string) {
+  private async onSubmitPassword(password: string) {
     try {
       this.setState({
         hasPasswordError: false,
@@ -91,7 +91,7 @@ export class ProfileController extends React.Component<Properties, State> {
     }
   }
 
-  private async onIdentitySubmit(
+  private async onSubmitIdentity(
       roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) {
     try {
       this.setState({
