@@ -20,8 +20,9 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
-    {std::vector<std::set<Qt::Key>>({{Qt::Key_Escape}}),
-    std::vector<std::set<Qt::Key>>({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_ContrastAdjust}, {Qt::Key_Escape}})});
+    {ValidSequence({{Qt::Key_Escape}}),
+    ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
+    {Qt::Key_Escape}})});
   auto item_delegate = new KeySequenceItemDelegate(valid_sequences, this);
   item_delegate->connect_item_modified_signal([=] (auto index) {
     on_key_sequence_modified(index);

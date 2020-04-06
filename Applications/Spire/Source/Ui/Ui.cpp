@@ -52,10 +52,11 @@ QHeaderView* Spire::make_fixed_header(QWidget* parent) {
       border: none;
       color: #4B23A0;
       font-family: Roboto;
+      font-size: %2px;
       font-weight: 550;
       padding-left: %1px;
       padding-right: %1px;
-    })").arg(scale_width(8)));
+    })").arg(scale_width(8)).arg(scale_height(12)));
   return header;
 }
 
@@ -83,6 +84,6 @@ QHeaderView* Spire::make_header(QWidget* parent) {
     QHeaderView::section::first {
       background: none;
       background-color: #FFFFFF;
-    })").arg(scale_width(8)));
+    })").arg(scale_width(8)).arg(scale_height(12)));
   return header;
 }
