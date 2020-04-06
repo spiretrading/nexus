@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
 import { HttpEntitlementsModel } from './entitlements_page';
+import { HttpProfileModel } from './profile_page';
 import { HttpRiskModel } from './risk_page';
 import { LocalAccountModel } from './local_account_model';
 
@@ -19,6 +20,7 @@ export class HttpAccountModel extends AccountModel {
     this.serviceClients = serviceClients;
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
+    this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
   }
 
@@ -36,6 +38,10 @@ export class HttpAccountModel extends AccountModel {
 
   public get entitlementsModel(): HttpEntitlementsModel {
     return this._entitlementsModel;
+  }
+
+  public get profileModel(): HttpProfileModel {
+    return this._profileModel;
   }
 
   public get riskModel(): HttpRiskModel {
@@ -57,5 +63,6 @@ export class HttpAccountModel extends AccountModel {
   private model: LocalAccountModel;
   private serviceClients: Nexus.ServiceClients;
   private _entitlementsModel: HttpEntitlementsModel;
+  private _profileModel: HttpProfileModel;
   private _riskModel: HttpRiskModel;
 }

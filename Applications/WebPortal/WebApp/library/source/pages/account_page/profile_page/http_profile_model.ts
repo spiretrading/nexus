@@ -4,7 +4,7 @@ import { LocalProfileModel } from './local_profile_model';
 import { ProfileModel } from './profile_model';
 
 /** Implements the ProfileModel using HTTP services. */
-export abstract class HttpProfileModel extends ProfileModel {
+export class HttpProfileModel extends ProfileModel {
 
   /** Constructs an HttpProfileModel.
    * @param account - The account to represent.

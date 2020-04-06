@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountModel } from './account_model';
 import { LocalEntitlementsModel } from './entitlements_page';
+import { LocalProfileModel } from './profile_page';
 import { LocalRiskModel } from './risk_page';
 
 /** Implements an in-memory AccountModel. */
@@ -15,6 +16,8 @@ export class LocalAccountModel extends AccountModel {
     this._roles = roles;
     this._entitlementsModel = new LocalEntitlementsModel(this._account,
       new Beam.Set<Beam.DirectoryEntry>());
+    this._profileModel = new LocalProfileModel(this._account, this._roles, 
+      new Nexus.AccountIdentity());
     this._riskModel = new LocalRiskModel(this._account,
       Nexus.RiskParameters.INVALID);
   }
@@ -52,6 +55,13 @@ export class LocalAccountModel extends AccountModel {
     return this._entitlementsModel;
   }
 
+  public get profileModel(): LocalProfileModel {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return this._profileModel;
+  }
+
   public get riskModel(): LocalRiskModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
@@ -67,5 +77,6 @@ export class LocalAccountModel extends AccountModel {
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _entitlementsModel: LocalEntitlementsModel;
+  private _profileModel: LocalProfileModel;
   private _riskModel: LocalRiskModel;
 }

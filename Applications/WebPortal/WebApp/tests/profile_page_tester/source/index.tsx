@@ -50,6 +50,7 @@ class TestApp extends React.Component<Properties, State> {
       testProfileError: false,
       testPasswordError: false
     };
+    this.initIdentity();
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
@@ -70,12 +71,10 @@ class TestApp extends React.Component<Properties, State> {
           countryDatabase={this.state.countryDatabase}
           displaySize={this.props.displaySize}
           readonly={this.state.readOnly}
-          isSubmitEnabled={true}
           onSubmit={this.profileSubmit}
           submitStatus={this.state.statusMessage}
           hasError={this.state.hasError}
           hasPassword={this.state.hasPassword}
-          isPasswordSubmitEnabled={true}
           submitPasswordStatus={this.state.passwordStatusMessage}
           hasPasswordError={this.state.hasPasswordError}
           onSubmitPassword={this.passwordSubmit}/>
@@ -104,22 +103,21 @@ class TestApp extends React.Component<Properties, State> {
       </Dali.VBoxLayout>);
   }
 
-  public componentDidMount() {
-    const testIdentity = this.state.identity.clone();
-    testIdentity.photoId = TestApp.SOME_IMAGE;
-    testIdentity.firstName = 'Frodo';
-    testIdentity.lastName = 'Baggins';
-    testIdentity.lastLoginTime = new Beam.DateTime(
+  private initIdentity() {
+    this.state.identity.photoId = TestApp.SOME_IMAGE;
+    this.state.identity.firstName = 'Frodo';
+    this.state.identity.lastName = 'Baggins';
+    this.state.identity.lastLoginTime = new Beam.DateTime(
       new Beam.Date(2018, Beam.Date.Month.DECEMBER, 20),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    testIdentity.province = 'Westfarthing';
-    testIdentity.country = Nexus.DefaultCountries.AU;
-    testIdentity.city = 'Hobbiton';
-    testIdentity.addressLineOne = '56 Bag End';
-    testIdentity.userNotes = '';
-    testIdentity.emailAddress = 'frodo@bagend.nz';
-    testIdentity.registrationTime = new Beam.DateTime(
+    this.state.identity.province = 'Westfarthing';
+    this.state.identity.country = Nexus.DefaultCountries.AU;
+    this.state.identity.city = 'Hobbiton';
+    this.state.identity.addressLineOne = '56 Bag End';
+    this.state.identity.userNotes = '';
+    this.state.identity.emailAddress = 'frodo@bagend.nz';
+    this.state.identity.registrationTime = new Beam.DateTime(
       new Beam.Date(2017, Beam.Date.Month.DECEMBER, 21),
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
@@ -127,7 +125,7 @@ class TestApp extends React.Component<Properties, State> {
       Beam.DirectoryEntry.Type.NONE, 18, 'shire_office'));
     this.state.groups.push(new Beam.DirectoryEntry(
       Beam.DirectoryEntry.Type.NONE, 19, 'bree_office'));
-    this.setState({identity: testIdentity});
+    this.setState({identity: this.state.identity});
   }
 
   private setStatusToNull() {
@@ -180,7 +178,7 @@ class TestApp extends React.Component<Properties, State> {
     }
   }
 
-  private profileSubmit() {
+  private profileSubmit(roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) {
     if(this.state.testProfileError) {
       this.setState({
         statusMessage: 'Profile not saved',
