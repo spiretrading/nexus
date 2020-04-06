@@ -25,6 +25,10 @@ KeySequenceEditor::KeySequenceEditor(const QKeySequence& sequence,
   m_font.setStyle(QFont::StyleItalic);
 }
 
+void KeySequenceEditor::add_key(Qt::Key key) {
+  m_entered_keys.push_back(key);
+}
+
 const QKeySequence& KeySequenceEditor::get_key_sequence() const {
   return m_key_sequence;
 }
@@ -41,7 +45,6 @@ void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
-  event->accept();
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }
@@ -67,7 +70,7 @@ bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) {
   }
   for(auto& sequence : m_valid_sequences) {
     for(auto i = std::size_t(0); i < sequence.size(); ++i) {
-      if(sequence[i].find(m_entered_keys[0]) == sequence[i].end()) {
+      if(sequence[i].find(m_entered_keys[i]) == sequence[i].end()) {
         break;
       }
       if(i == sequence.size() - 1) {

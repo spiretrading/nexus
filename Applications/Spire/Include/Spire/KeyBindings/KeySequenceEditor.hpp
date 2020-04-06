@@ -17,6 +17,8 @@ namespace Spire {
         const std::vector<ValidKeySequence>& valid_sequences,
         QWidget* parent = nullptr);
 
+      void add_key(Qt::Key key);
+
       const QKeySequence& get_key_sequence() const;
 
     protected:

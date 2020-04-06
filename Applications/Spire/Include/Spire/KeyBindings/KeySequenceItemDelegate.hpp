@@ -46,7 +46,7 @@ namespace Spire {
     private:
       mutable ItemModifiedSignal m_item_modified_signal;
        std::vector<KeySequenceEditor::ValidKeySequence> m_valid_key_sequences;
-       KeySequenceEditor* m_editor;
+       mutable KeySequenceEditor* m_editor;
 
       void draw_key_sequence(const QKeySequence& sequence, const QRect& rect,
         QPainter* painter) const;

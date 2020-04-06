@@ -40,12 +40,12 @@ connection KeySequenceItemDelegate::connect_item_modified_signal(
 
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new KeySequenceEditor(
+  m_editor = new KeySequenceEditor(
     index.data(Qt::DisplayRole).value<QKeySequence>(), m_valid_key_sequences,
     parent);
-  connect(editor, &KeySequenceEditor::editingFinished,
+  connect(m_editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
-  return editor;
+  return m_editor;
 }
 
 void KeySequenceItemDelegate::paint(QPainter* painter,
@@ -89,8 +89,9 @@ QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
 bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Escape) {
-      
+    if(e->key() == Qt::Key_Escape &&
+        e->modifiers() == Qt::KeyboardModifier::NoModifier) {
+      m_editor->add_key(Qt::Key_Escape);
       return true;
     }
   }
