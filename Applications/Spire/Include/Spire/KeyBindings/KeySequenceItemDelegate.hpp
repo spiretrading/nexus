@@ -9,15 +9,16 @@ namespace Spire {
   class KeySequenceItemDelegate : public QStyledItemDelegate {
     public:
 
-      //! Signals that a table item's data was modified.
+      //! Signals that the item's data was modified.
       /*
-        \param row The row that was modified.
+        \param index The index that was modified.
       */
       using ItemModifiedSignal = Signal<void (const QModelIndex& index)>;
 
       //! Constructs a KeySequenceItemDelegate.
       /*
-        \param The parent widget.
+        \param valid_key_sequences The list of accepted key sequences.
+        \param parent The parent widget.
       */
 	    explicit KeySequenceItemDelegate(
         const std::vector<KeySequenceEditor::ValidKeySequence>&

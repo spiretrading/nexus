@@ -73,7 +73,8 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);
   cancel_keys_layout->setContentsMargins({});
   cancel_keys_layout->setSpacing(0);
-  auto cancel_keys_label = new QLabel(tr(R"(Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.)"));
+  auto cancel_text = tr(R"(Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.)");
+  auto cancel_keys_label = new QLabel(cancel_text, this);
   cancel_keys_label->setFixedHeight(scale_height(30));
   cancel_keys_label->setStyleSheet(QString(R"(
     font-family: Roboto;

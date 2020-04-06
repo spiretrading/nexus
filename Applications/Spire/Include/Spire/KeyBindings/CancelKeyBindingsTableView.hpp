@@ -8,18 +8,18 @@
 
 namespace Spire {
 
-  //! Displays a table for editing cancellation key bindings.
+  //! Displays a table for editing cancel action key bindings.
   class CancelKeyBindingsTableView : public KeyBindingsTableView {
     public:
 
-      //! Signals that a cancel key binding was modified.
+      //! Signals that a cancel action key binding was modified.
       /*
         \param binding The modified cancel key binding.
       */
       using ModifiedSignal = Signal<void (
         const KeyBindings::CancelActionBinding& binding)>;
 
-      //! Constructs a cancel key bindings table widget with initial
+      //! Constructs a cancel action key bindings table widget with initial
       //! key bindings.
       /*
         \param bindings The initial cancel key bindings.
@@ -43,7 +43,7 @@ namespace Spire {
     private:
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
-      CancelKeyBindingsTableModel* m_table;
+      CancelKeyBindingsTableModel* m_model;
 
       void on_key_sequence_modified(const QModelIndex& index);
   };

@@ -9,20 +9,48 @@
 
 namespace Spire {
 
+  //! Represents a table for displaying key bindings.
   class KeyBindingsTableView : public ScrollArea {
     public:
 
+      //! Constructs a KeyBindingsTableView with a custom header.
+      /*
+        \param header The table's header.
+        \param parent The parent widget.
+      */
       explicit KeyBindingsTableView(QHeaderView* header,
         QWidget* parent = nullptr);
 
+      //! Sets the delegate for the specified column.
+      /*
+        \param column The index of the column to apply the delegate to.
+        \param delegate The delegate for the specified column.
+      */
       void set_column_delegate(int column, QStyledItemDelegate* delegate);
 
+      //! Sets the width of the specified column.
+      /*
+        \param column The index of the column to set the width of.
+        \param width The width of the specified column.
+      */
       void set_column_width(int column, int width);
 
+      //! Sets the model associated with the table view.
+      /*
+        \param model The model to use for this view.
+      */
       void set_model(QAbstractTableModel* model);
 
+      //! Sets the table height.
+      /*
+        \param height The table height.
+      */
       void set_height(int height);
 
+      //! Sets the table width.
+      /*
+        \param width The table width.
+      */
       void set_width(int width);
 
     private:

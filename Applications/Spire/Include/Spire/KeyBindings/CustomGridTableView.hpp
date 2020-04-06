@@ -4,9 +4,14 @@
 
 namespace Spire {
 
+  //! Represents a table view a cutom grid line and item highlight style.
   class CustomGridTableView : public QTableView {
     public:
 
+      //! Constructs a CustomGridTableView.
+      /*
+        \param parent The parent widget.
+      */
       CustomGridTableView(QWidget* parent = nullptr);
 
     protected:

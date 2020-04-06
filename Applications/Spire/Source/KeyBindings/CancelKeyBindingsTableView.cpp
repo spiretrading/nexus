@@ -13,7 +13,7 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
     QWidget* parent)
     : KeyBindingsTableView(make_fixed_header(parent), parent),
-      m_table(nullptr) {
+      m_model(nullptr) {
   set_key_bindings(bindings);
   setFixedWidth(scale_width(853));
   set_width(scale_width(853));
@@ -32,8 +32,8 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
-  m_table = new CancelKeyBindingsTableModel(bindings, this);
-  set_model(m_table);
+  m_model = new CancelKeyBindingsTableModel(bindings, this);
+  set_model(m_model);
 }
 
 connection CancelKeyBindingsTableView::connect_modified_signal(
@@ -44,5 +44,5 @@ connection CancelKeyBindingsTableView::connect_modified_signal(
 void CancelKeyBindingsTableView::on_key_sequence_modified(
     const QModelIndex& index) {
   m_modified_signal({index.data(Qt::DisplayRole).value<QKeySequence>(), {},
-    m_table->get_cancel_action(index.row())});
+    m_model->get_cancel_action(index.row())});
 }

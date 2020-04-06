@@ -6,19 +6,32 @@
 
 namespace Spire {
 
+  //! Displays an editor for inputting and validating key sequences.
   class KeySequenceEditor : public QLineEdit {
     public:
 
       //! Represents a valid key sequence, where the nth set in the list
-      //! represents the nth key of a valid sequence.
+      //! represents the nth key of a potential valid sequence.
       using ValidKeySequence = std::vector<std::set<Qt::Key>>;
 
+      //! Constructs a KeySequenceEditor.
+      /*
+        \param sequence The key sequence associated with the editor if a new
+                        valid key sequence isn't input.
+        \param valid_sequences The list of valid key sequences.
+        \param The parent widget.
+      */
       KeySequenceEditor(const QKeySequence& sequence,
         const std::vector<ValidKeySequence>& valid_sequences,
         QWidget* parent = nullptr);
 
+      //! Adds a key to the list of unvalidated input keys.
+      /*
+        \param key The key to add.
+      */
       void add_key(Qt::Key key);
 
+      //! Returns the last valid inputted key sequence.
       const QKeySequence& get_key_sequence() const;
 
     protected:
