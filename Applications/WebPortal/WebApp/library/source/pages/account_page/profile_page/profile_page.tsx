@@ -461,111 +461,59 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onFirstNameChange(value: string) {
     this.state.newIdentity.firstName = value;
-    if(this.props.identity.firstName === this.state.newIdentity.firstName) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onLastNameChange(value: string) {
     this.state.newIdentity.lastName = value;
-    if(this.props.identity.lastName === this.state.newIdentity.lastName) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onEmailChange(value: string) {
     this.state.newIdentity.emailAddress = value;
-    if(this.props.identity.emailAddress ===
-        this.state.newIdentity.emailAddress) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
-  
 
   private onAddressChange(value: string) {
     this.state.newIdentity.addressLineOne = value;
-    if(this.props.identity.addressLineOne ===
-        this.state.newIdentity.addressLineOne) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onCityChange(value: string) {
     this.state.newIdentity.city = value;
-    if(this.props.identity.city === this.state.newIdentity.city) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
   
 
   private onProvinceChange(value: string) {
     this.state.newIdentity.province = value;
-    if(this.props.identity.province === this.state.newIdentity.province) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onCountryChange(value: Nexus.CountryCode) {
     this.state.newIdentity.country = value;
-    if(this.props.identity.country.equals(this.state.newIdentity.country)) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onRolesChange(role: Nexus.AccountRoles.Role) {
@@ -584,17 +532,10 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onCommentChange(newComment: string) {
     this.state.newIdentity.userNotes = newComment;
-    if(this.props.identity.userNotes === this.state.newIdentity.userNotes) {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: this.state.newIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onPassword1Change(newPassword: string) {
