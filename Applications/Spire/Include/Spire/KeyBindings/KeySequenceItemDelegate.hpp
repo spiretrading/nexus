@@ -19,7 +19,9 @@ namespace Spire {
       /*
         \param The parent widget.
       */
-	    explicit KeySequenceItemDelegate(QWidget* parent = nullptr);
+	    explicit KeySequenceItemDelegate(
+        const std::vector<KeySequenceEditor::ValidKeySequence>&
+        valid_key_sequences, QWidget* parent = nullptr);
 
       //! Connects a slot to the item modified signal.
       boost::signals2::connection connect_item_modified_signal(
@@ -38,8 +40,13 @@ namespace Spire {
       QSize sizeHint(const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable ItemModifiedSignal m_item_modified_signal;
+       std::vector<KeySequenceEditor::ValidKeySequence> m_valid_key_sequences;
+       KeySequenceEditor* m_editor;
 
       void draw_key_sequence(const QKeySequence& sequence, const QRect& rect,
         QPainter* painter) const;

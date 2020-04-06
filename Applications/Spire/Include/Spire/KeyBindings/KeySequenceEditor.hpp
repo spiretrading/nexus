@@ -9,9 +9,12 @@ namespace Spire {
   class KeySequenceEditor : public QLineEdit {
     public:
 
+      //! Represents a valid key sequence, where the nth set in the list
+      //! represents the nth key of a valid sequence.
+      using ValidKeySequence = std::vector<std::set<Qt::Key>>;
+
       KeySequenceEditor(const QKeySequence& sequence,
-        const std::set<Qt::Key>& valid_first_keys,
-        const std::set<Qt::Key>& valid_second_keys,
+        const std::vector<ValidKeySequence>& valid_sequences,
         QWidget* parent = nullptr);
 
       const QKeySequence& get_key_sequence() const;
@@ -23,8 +26,7 @@ namespace Spire {
 
     private:
       QKeySequence m_key_sequence;
-      std::set<Qt::Key> m_valid_first_keys;
-      std::set<Qt::Key> m_valid_second_keys;
+      std::vector<ValidKeySequence> m_valid_sequences;
       std::vector<Qt::Key> m_entered_keys;
       QFont m_font;
 

@@ -16,12 +16,10 @@ namespace {
 }
 
 KeySequenceEditor::KeySequenceEditor(const QKeySequence& sequence,
-    const std::set<Qt::Key>& valid_first_keys,
-    const std::set<Qt::Key>& valid_second_keys, QWidget* parent)
+    const std::vector<ValidKeySequence>& valid_sequences, QWidget* parent)
     : QLineEdit(parent),
       m_key_sequence(sequence),
-      m_valid_first_keys(valid_first_keys),
-      m_valid_second_keys(valid_second_keys),
+      m_valid_sequences(valid_sequences),
       m_font("Roboto") {
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);
@@ -32,6 +30,7 @@ const QKeySequence& KeySequenceEditor::get_key_sequence() const {
 }
 
 void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
+  event->accept();
   if(!event->isAutoRepeat()) {
     if(event->key() == Qt::Key_Delete) {
       m_key_sequence = QKeySequence();
@@ -39,10 +38,10 @@ void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
     }
     m_entered_keys.push_back(static_cast<Qt::Key>(event->key()));
   }
-  event->accept();
 }
 
 void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
+  event->accept();
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }
@@ -66,19 +65,15 @@ bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) {
   if(keys.empty() || keys.size() > 2) {
     return false;
   }
-  if(!m_valid_first_keys.empty()) {
-    if(m_valid_first_keys.find(keys[0]) == m_valid_first_keys.end()) {
-      return false;
-    }
-  }
-  if(!m_valid_second_keys.empty()) {
-    if(keys.size() == 2) {
-      if(m_valid_second_keys.find(keys[1]) == m_valid_second_keys.end()) {
-        return false;
+  for(auto& sequence : m_valid_sequences) {
+    for(auto i = std::size_t(0); i < sequence.size(); ++i) {
+      if(sequence[i].find(m_entered_keys[0]) == sequence[i].end()) {
+        break;
       }
-    } else {
-      return false;
+      if(i == sequence.size() - 1) {
+        return true;
+      }
     }
   }
-  return true;
+  return false;
 }

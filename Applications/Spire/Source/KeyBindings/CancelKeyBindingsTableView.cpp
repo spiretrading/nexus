@@ -7,6 +7,7 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
 CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     const std::vector<KeyBindings::CancelActionBinding>& bindings,
@@ -18,7 +19,9 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_width(scale_width(853));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
-  auto item_delegate = new KeySequenceItemDelegate(this);
+  auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
+    {std::vector<std::set<Qt::Key>>({{Qt::Key_Escape}})});
+  auto item_delegate = new KeySequenceItemDelegate(valid_sequences, this);
   item_delegate->connect_item_modified_signal([=] (auto index) {
     on_key_sequence_modified(index);
   });

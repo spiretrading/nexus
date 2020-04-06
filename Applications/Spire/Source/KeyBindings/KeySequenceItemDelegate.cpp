@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include <QEvent>
+#include <QKeyEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -26,8 +27,11 @@ namespace {
   }
 }
 
-KeySequenceItemDelegate::KeySequenceItemDelegate(QWidget* parent)
-  : QStyledItemDelegate(parent) {}
+KeySequenceItemDelegate::KeySequenceItemDelegate(
+  const std::vector<KeySequenceEditor::ValidKeySequence>& valid_key_sequences,
+  QWidget* parent)
+  : QStyledItemDelegate(parent),
+    m_valid_key_sequences(valid_key_sequences) {}
 
 connection KeySequenceItemDelegate::connect_item_modified_signal(
     const ItemModifiedSignal::slot_type& slot) const {
@@ -37,8 +41,8 @@ connection KeySequenceItemDelegate::connect_item_modified_signal(
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new KeySequenceEditor(
-    index.data(Qt::DisplayRole).value<QKeySequence>(),
-    {Qt::Key_Shift, Qt::Key_Control, Qt::Key_Alt}, {Qt::Key_Escape}, parent);
+    index.data(Qt::DisplayRole).value<QKeySequence>(), m_valid_key_sequences,
+    parent);
   connect(editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
   return editor;
@@ -56,10 +60,6 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
     if(!sequence.isEmpty()) {
       draw_key_sequence(sequence, option.rect, painter);
     }
-  }
-  if(option.state.testFlag(QStyle::State_Selected)) {
-    painter->setPen(QColor("#4B23A0"));
-    painter->drawRect(400, 400, 400, 400);
   }
   painter->restore();
 }
@@ -84,6 +84,17 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
 QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
     const QModelIndex& index) const {
   return QStyledItemDelegate::sizeHint(option, index);
+}
+
+bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Escape) {
+      
+      return true;
+    }
+  }
+  return QStyledItemDelegate::eventFilter(watched, event);
 }
 
 void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,
