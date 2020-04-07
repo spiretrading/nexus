@@ -9,6 +9,10 @@ namespace Spire {
   class CancelKeyBindingsTableModel : public QAbstractTableModel {
     public:
 
+      using Action = KeyBindings::CancelAction;
+
+      using Binding = KeyBindings::CancelActionBinding;
+
       //! Constructs a CancelKeyBindingsTableModel with initial key
       //! bindings.
       /*
@@ -16,21 +20,20 @@ namespace Spire {
         \param parent The parent object.
       */
       explicit CancelKeyBindingsTableModel(
-        const std::vector<KeyBindings::CancelActionBinding>& bindings,
-        QObject* parent = nullptr);
+        const std::vector<Binding>& bindings, QObject* parent = nullptr);
 
       //! Updates the key bindings to display.
       /*
         \param bindings The updated key bindings.
       */
       void set_key_bindings(
-        const std::vector<KeyBindings::CancelActionBinding>& bindings);
+        const std::vector<Binding>& bindings);
 
       //! Returns the cancel action associated with the given row.
       /*
         \param row The row to get the associated cancel action from.
       */
-      KeyBindings::CancelAction get_cancel_action(int row);
+      static Action get_cancel_action(int row);
 
       int rowCount(const QModelIndex& parent) const override;
 
@@ -43,11 +46,11 @@ namespace Spire {
       QVariant headerData(int section, Qt::Orientation orientation,
         int role) const override;
 
-      bool setData(const QModelIndex &index, const QVariant &value,
+      bool setData(const QModelIndex& index, const QVariant& value,
         int role = Qt::EditRole) override;
 
     private:
-      std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
+      std::vector<Binding> m_key_bindings;
   };
 }
 

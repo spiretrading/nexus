@@ -46,7 +46,7 @@ namespace Spire {
       QFont m_font;
 
       void commit_sequence();
-      bool is_valid(const std::vector<Qt::Key>& keys);
+      bool is_valid(const std::vector<Qt::Key>& keys) const;
   };
 }
 

@@ -14,16 +14,16 @@ namespace {
   }
 
   auto get_key_text(Qt::Key key) {
-    if(key == Qt::Key_Shift) {
-      return QObject::tr("Shift");
+    switch(key) {
+      case Qt::Key_Shift:
+        return QObject::tr("Shift");
+      case Qt::Key_Alt:
+        return QObject::tr("Alt");
+      case Qt::Key_Control:
+        return QObject::tr("Ctrl");
+      default:
+        return QKeySequence(key).toString();
     }
-    if(key == Qt::Key_Alt) {
-      return QObject::tr("Alt");
-    }
-    if(key == Qt::Key_Control) {
-      return QObject::tr("Ctrl");
-    }
-    return QKeySequence(key).toString();
   }
 }
 

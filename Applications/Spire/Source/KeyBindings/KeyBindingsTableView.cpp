@@ -79,7 +79,11 @@ void KeyBindingsTableView::set_column_width(int column, int width) {
 
 void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   m_header->setModel(model);
+  auto old_model = m_table->model();
+  auto old_selection_model = m_table->selectionModel();
   m_table->setModel(model);
+  old_model->deleteLater();
+  old_selection_model->deleteLater();
 }
 
 void KeyBindingsTableView::set_height(int height) {

@@ -12,7 +12,7 @@ namespace Spire {
       /*
         \param parent The parent widget.
       */
-      CustomGridTableView(QWidget* parent = nullptr);
+      explicit CustomGridTableView(QWidget* parent = nullptr);
 
     protected:
       void paintEvent(QPaintEvent* event) override;

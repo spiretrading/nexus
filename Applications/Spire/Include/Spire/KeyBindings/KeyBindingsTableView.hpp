@@ -2,10 +2,10 @@
 #define SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #include <QHeaderView>
 #include <QStyledItemDelegate>
-#include "Spire/Ui/ScrollArea.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/CustomGridTableView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 

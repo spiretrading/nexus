@@ -45,7 +45,7 @@ namespace Spire {
       std::vector<KeyBindings::CancelActionBinding> m_key_bindings;
       CancelKeyBindingsTableModel* m_model;
 
-      void on_key_sequence_modified(const QModelIndex& index);
+      void on_key_sequence_modified(const QModelIndex& index) const;
   };
 }
 

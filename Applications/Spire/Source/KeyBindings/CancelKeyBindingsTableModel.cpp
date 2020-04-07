@@ -1,53 +1,117 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 
 using namespace Spire;
+using Action = CancelKeyBindingsTableModel::Action;
+using Binding = CancelKeyBindingsTableModel::Binding;
 
 namespace {
   const auto ROW_COUNT = 13;
   const auto COLUMN_COUNT = 2;
 
-  auto get_action(int index) {
-    static auto actions = std::vector<KeyBindings::CancelAction>({
-      KeyBindings::CancelAction::ALL,
-      KeyBindings::CancelAction::ALL_ASKS,
-      KeyBindings::CancelAction::ALL_BIDS,
-      KeyBindings::CancelAction::CLOSEST_ASK,
-      KeyBindings::CancelAction::CLOSEST_BID,
-      KeyBindings::CancelAction::FURTHEST_BID,
-      KeyBindings::CancelAction::FURTHEST_ASK,
-      KeyBindings::CancelAction::MOST_RECENT,
-      KeyBindings::CancelAction::MOST_RECENT_ASK,
-      KeyBindings::CancelAction::MOST_RECENT_BID,
-      KeyBindings::CancelAction::OLDEST,
-      KeyBindings::CancelAction::OLDEST_ASK,
-      KeyBindings::CancelAction::OLDEST_BID
-    });
-    return actions[index];
+  constexpr auto get_action(int index) {
+    switch(index) {
+      case 0:
+        return Action::ALL;
+      case 1:
+        return Action::ALL_ASKS;
+      case 2:
+        return Action::ALL_BIDS;
+      case 3:
+        return Action::CLOSEST_ASK;
+      case 4:
+        return Action::CLOSEST_BID;
+      case 5:
+        return Action::FURTHEST_BID;
+      case 6:
+        return Action::FURTHEST_ASK;
+      case 7:
+        return Action::MOST_RECENT;
+      case 8:
+        return Action::MOST_RECENT_ASK;
+      case 9:
+        return Action::MOST_RECENT_BID;
+      case 10:
+        return Action::OLDEST;
+      case 11:
+        return Action::OLDEST_ASK;
+      case 12:
+        return Action::OLDEST_BID;
+      default:
+        return Action::ALL;
+    }
   }
 
-  auto get_index(KeyBindings::CancelAction action) {
-    static auto indexes = std::unordered_map<KeyBindings::CancelAction, int>({
-      {KeyBindings::CancelAction::ALL, 0},
-      {KeyBindings::CancelAction::ALL_ASKS, 1},
-      {KeyBindings::CancelAction::ALL_BIDS, 2},
-      {KeyBindings::CancelAction::CLOSEST_ASK, 3},
-      {KeyBindings::CancelAction::CLOSEST_BID, 4},
-      {KeyBindings::CancelAction::FURTHEST_BID, 5},
-      {KeyBindings::CancelAction::FURTHEST_ASK, 6},
-      {KeyBindings::CancelAction::MOST_RECENT, 7},
-      {KeyBindings::CancelAction::MOST_RECENT_ASK, 8},
-      {KeyBindings::CancelAction::MOST_RECENT_BID, 9},
-      {KeyBindings::CancelAction::OLDEST, 10},
-      {KeyBindings::CancelAction::OLDEST_ASK, 11},
-      {KeyBindings::CancelAction::OLDEST_BID, 12}});
-    return indexes[action];
+  constexpr auto get_index(Action action) {
+    switch(action) {
+      case get_action(0):
+        return 0;
+      case get_action(1):
+        return 1;
+      case get_action(2):
+        return 2;
+      case get_action(3):
+        return 3;
+      case get_action(4):
+        return 4;
+      case get_action(5):
+        return 5;
+      case get_action(6):
+        return 6;
+      case get_action(7):
+        return 7;
+      case get_action(8):
+        return 8;
+      case get_action(9):
+        return 9;
+      case get_action(10):
+        return 10;
+      case get_action(11):
+        return 11;
+      case get_action(12):
+        return 12;
+      default:
+        return -1;
+    }
+  }
+
+  constexpr auto get_action_text(int row) {
+    switch(row) {
+      case 0:
+        return std::string_view("All");
+      case 1:
+        return std::string_view("All Asks");
+      case 2:
+        return std::string_view("All Bids");
+      case 3:
+        return std::string_view("Closest Ask");
+      case 4:
+        return std::string_view("Closest Bid");
+      case 5:
+        return std::string_view("Furthest Ask");
+      case 6:
+        return std::string_view("Furthest Bid");
+      case 7:
+        return std::string_view("Most Recent");
+      case 8:
+        return std::string_view("Most Recent Ask");
+      case 9:
+        return std::string_view("Most Recent Bid");
+      case 10:
+        return std::string_view("Oldest");
+      case 11:
+        return std::string_view("Oldest Ask");
+      case 12:
+        return std::string_view("Oldest Bid");
+      default:
+        return std::string_view("Invalid cancel action");
+    }
   }
 }
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
-    const std::vector<KeyBindings::CancelActionBinding>& bindings,
-    QObject* parent)
-    : QAbstractTableModel(parent) {
+    const std::vector<Binding>& bindings, QObject* parent)
+    : QAbstractTableModel(parent),
+      m_key_bindings(ROW_COUNT) {
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
   }
@@ -55,7 +119,7 @@ CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
 }
 
 void CancelKeyBindingsTableModel::set_key_bindings(
-    const std::vector<KeyBindings::CancelActionBinding>& bindings) {
+    const std::vector<Binding>& bindings) {
   for(auto& new_binding : bindings) {
     for(auto& existing_binding : m_key_bindings) {
       if(existing_binding.m_sequence == new_binding.m_sequence &&
@@ -69,8 +133,7 @@ void CancelKeyBindingsTableModel::set_key_bindings(
   }
 }
 
-KeyBindings::CancelAction CancelKeyBindingsTableModel::get_cancel_action(
-    int row) {
+Action CancelKeyBindingsTableModel::get_cancel_action(int row) {
   return get_action(row);
 }
 
@@ -89,36 +152,7 @@ QVariant CancelKeyBindingsTableModel::data(const QModelIndex& index,
   }
   if(role == Qt::DisplayRole) {
     if(index.column() == 0) {
-      switch(index.row()) {
-        case 0:
-          return QObject::tr("All");
-        case 1:
-          return QObject::tr("All Asks");
-        case 2:
-          return QObject::tr("All Bids");
-        case 3:
-          return QObject::tr("Closest Ask");
-        case 4:
-          return QObject::tr("Closest Bid");
-        case 5:
-          return QObject::tr("Furthest Ask");
-        case 6:
-          return QObject::tr("Furthest Bid");
-        case 7:
-          return QObject::tr("Most Recent");
-        case 8:
-          return QObject::tr("Most Recent Ask");
-        case 9:
-          return QObject::tr("Most Recent Bid");
-        case 10:
-          return QObject::tr("Oldest");
-        case 11:
-          return QObject::tr("Oldest Ask");
-        case 12:
-          return QObject::tr("Oldest Bid");
-        default:
-          return QObject::tr("Invalid cancel action");
-      }
+      return QString::fromStdString(std::string(get_action_text(index.row())));
     } else if(index.column() == 1) {
       return m_key_bindings[index.row()].m_sequence;
     }

@@ -1,8 +1,8 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include <QLabel>
 #include <QVBoxLayout>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ItemPaddingDelegate.hpp"
 
 using namespace boost::signals2;
@@ -42,7 +42,7 @@ connection CancelKeyBindingsTableView::connect_modified_signal(
 }
 
 void CancelKeyBindingsTableView::on_key_sequence_modified(
-    const QModelIndex& index) {
+    const QModelIndex& index) const {
   m_modified_signal({index.data(Qt::DisplayRole).value<QKeySequence>(), {},
     m_model->get_cancel_action(index.row())});
 }

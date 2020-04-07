@@ -64,7 +64,7 @@ void KeySequenceEditor::commit_sequence() {
   emit editingFinished();
 }
 
-bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) {
+bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) const {
   if(keys.empty() || keys.size() > 2) {
     return false;
   }

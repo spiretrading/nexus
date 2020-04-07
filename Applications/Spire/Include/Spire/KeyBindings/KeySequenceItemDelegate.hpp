@@ -20,7 +20,7 @@ namespace Spire {
         \param valid_key_sequences The list of accepted key sequences.
         \param parent The parent widget.
       */
-	    explicit KeySequenceItemDelegate(
+      explicit KeySequenceItemDelegate(
         const std::vector<KeySequenceEditor::ValidKeySequence>&
         valid_key_sequences, QWidget* parent = nullptr);
 
