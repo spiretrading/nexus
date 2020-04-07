@@ -112,7 +112,7 @@ void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,
     auto text_size = QSize(metrics.horizontalAdvance(text), metrics.height());
     draw_key(text, text_size, pos, painter);
     pos.setX(pos.x() + TEXT_PADDING() * 2 + text_size.width() +
-      scale_width(8));
+      scale_width(4));
   }
 }
 
