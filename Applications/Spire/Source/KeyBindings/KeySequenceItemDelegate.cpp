@@ -40,12 +40,15 @@ connection KeySequenceItemDelegate::connect_item_modified_signal(
 
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  m_editor = new KeySequenceEditor(
+  auto editor = new KeySequenceEditor(
     index.data(Qt::DisplayRole).value<QKeySequence>(), m_valid_key_sequences,
     parent);
-  connect(m_editor, &KeySequenceEditor::editingFinished,
+  m_key_connection = m_key_signal.connect([=] (auto key) {
+    editor->add_key(key);
+  });
+  connect(editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
-  return m_editor;
+  return editor;
 }
 
 void KeySequenceItemDelegate::paint(QPainter* painter,
@@ -91,7 +94,7 @@ bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Escape &&
         e->modifiers() == Qt::KeyboardModifier::NoModifier) {
-      m_editor->add_key(Qt::Key_Escape);
+      m_key_signal(Qt::Key_Escape);
       return true;
     }
   }
@@ -131,6 +134,7 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
 }
 
 void KeySequenceItemDelegate::on_editing_finished() {
-  auto editor = reinterpret_cast<QWidget*>(sender());
+  m_key_connection.disconnect();
+  auto editor = static_cast<QWidget*>(sender());
   editor->close();
 }
