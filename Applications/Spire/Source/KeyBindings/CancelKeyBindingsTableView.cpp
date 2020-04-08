@@ -10,11 +10,11 @@ using namespace Spire;
 using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
 CancelKeyBindingsTableView::CancelKeyBindingsTableView(
-    const std::vector<KeyBindings::CancelActionBinding>& bindings,
+    std::vector<KeyBindings::CancelActionBinding> bindings,
     QWidget* parent)
     : KeyBindingsTableView(make_fixed_header(parent), parent),
       m_model(nullptr) {
-  set_key_bindings(bindings);
+  set_key_bindings(std::move(bindings));
   setFixedWidth(scale_width(853));
   set_width(scale_width(853));
   set_height(scale_height(376));

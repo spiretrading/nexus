@@ -77,45 +77,45 @@ namespace {
   constexpr auto get_action_text(int row) {
     switch(row) {
       case 0:
-        return std::string_view("All");
+        return "All";
       case 1:
-        return std::string_view("All Asks");
+        return "All Asks";
       case 2:
-        return std::string_view("All Bids");
+        return "All Bids";
       case 3:
-        return std::string_view("Closest Ask");
+        return "Closest Ask";
       case 4:
-        return std::string_view("Closest Bid");
+        return "Closest Bid";
       case 5:
-        return std::string_view("Furthest Ask");
+        return "Furthest Ask";
       case 6:
-        return std::string_view("Furthest Bid");
+        return "Furthest Bid";
       case 7:
-        return std::string_view("Most Recent");
+        return "Most Recent";
       case 8:
-        return std::string_view("Most Recent Ask");
+        return "Most Recent Ask";
       case 9:
-        return std::string_view("Most Recent Bid");
+        return "Most Recent Bid";
       case 10:
-        return std::string_view("Oldest");
+        return "Oldest";
       case 11:
-        return std::string_view("Oldest Ask");
+        return "Oldest Ask";
       case 12:
-        return std::string_view("Oldest Bid");
+        return "Oldest Bid";
       default:
-        return std::string_view("Invalid cancel action");
+        return "Invalid cancel action";
     }
   }
 }
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
-    const std::vector<Binding>& bindings, QObject* parent)
+    std::vector<Binding> bindings, QObject* parent)
     : QAbstractTableModel(parent) {
   m_key_bindings.reserve(ROW_COUNT);
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
   }
-  set_key_bindings(bindings);
+  set_key_bindings(std::move(bindings));
 }
 
 void CancelKeyBindingsTableModel::set_key_bindings(

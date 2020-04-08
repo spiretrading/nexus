@@ -19,7 +19,7 @@ namespace Spire {
         \param key_bindings The initial key bindings.
         \param parent The parent widget.
       */
-      explicit KeyBindingsWindow(const KeyBindings& key_bindings,
+      explicit KeyBindingsWindow(KeyBindings key_bindings,
         QWidget* parent = nullptr);
 
       //! Returns the current key bindings.
@@ -39,6 +39,7 @@ namespace Spire {
       bool m_last_focus_was_key;
       CancelKeyBindingsTableView* m_cancel_keys_table;
 
+      void on_ok_button_clicked();
       void on_restore_button_clicked();
       void on_tab_bar_clicked(int index);
       void on_tab_changed();

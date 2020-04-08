@@ -21,8 +21,8 @@ namespace Spire {
         \param valid_sequences The list of valid key sequences.
         \param The parent widget.
       */
-      KeySequenceEditor(const QKeySequence& sequence,
-        const std::vector<ValidKeySequence>& valid_sequences,
+      KeySequenceEditor(QKeySequence sequence,
+        std::vector<ValidKeySequence> valid_sequences,
         QWidget* parent = nullptr);
 
       //! Adds a key to the list of unvalidated input keys.

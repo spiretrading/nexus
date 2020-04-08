@@ -8,7 +8,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  auto TEXT_PADDING() {
+  const auto& TEXT_PADDING() {
     static auto padding = scale_width(5);
     return padding;
   }
@@ -28,10 +28,10 @@ namespace {
 }
 
 KeySequenceItemDelegate::KeySequenceItemDelegate(
-  const std::vector<KeySequenceEditor::ValidKeySequence>& valid_key_sequences,
+  std::vector<KeySequenceEditor::ValidKeySequence> valid_key_sequences,
   QWidget* parent)
   : QStyledItemDelegate(parent),
-    m_valid_key_sequences(valid_key_sequences) {}
+    m_valid_key_sequences(std::move(valid_key_sequences)) {}
 
 connection KeySequenceItemDelegate::connect_item_modified_signal(
     const ItemModifiedSignal::slot_type& slot) const {
@@ -131,7 +131,6 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
 }
 
 void KeySequenceItemDelegate::on_editing_finished() {
-  auto editor = reinterpret_cast<KeySequenceEditor*>(sender());
-  emit commitData(editor);
-  emit closeEditor(editor);
+  auto editor = reinterpret_cast<QWidget*>(sender());
+  editor->close();
 }

@@ -26,7 +26,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit CancelKeyBindingsTableView(
-        const std::vector<KeyBindings::CancelActionBinding>& bindings,
+        std::vector<KeyBindings::CancelActionBinding> bindings,
         QWidget* parent = nullptr);
 
       //! Sets the current cancel key bindings.

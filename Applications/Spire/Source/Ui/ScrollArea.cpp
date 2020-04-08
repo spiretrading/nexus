@@ -59,8 +59,7 @@ void ScrollArea::setWidget(QWidget* widget) {
     widget->installEventFilter(this);
   }
   for(auto& child : widget->children()) {
-    auto c = qobject_cast<QWidget*>(child);
-    if(c != nullptr) {
+    if(auto c = qobject_cast<QWidget*>(child)) {
       c->installEventFilter(this);
     }
   }

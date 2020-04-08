@@ -31,10 +31,9 @@ namespace {
   }
 }
 
-KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
-    QWidget* parent)
+KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
     : Window(parent),
-      m_key_bindings(key_bindings),
+      m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
   set_fixed_body_size(scale(853, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -105,7 +104,7 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   )").arg(scale_height(10)).arg(scale_width(8)));
   cancel_keys_layout->addWidget(cancel_keys_label);
   m_cancel_keys_table = new CancelKeyBindingsTableView(
-    key_bindings.build_cancel_bindings(), this);
+    m_key_bindings.build_cancel_bindings(), this);
   cancel_keys_layout->addWidget(m_cancel_keys_table);
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
@@ -127,16 +126,13 @@ KeyBindingsWindow::KeyBindingsWindow(const KeyBindings& key_bindings,
   button_layout->addWidget(cancel_button);
   button_layout->addSpacing(scale_width(8));
   auto apply_button = create_button(tr("Apply"), this);
-  apply_button->connect_clicked_signal([=] {
-    m_apply_signal();
-  });
+  apply_button->connect_clicked_signal(m_apply_signal);
   apply_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(apply_button);
   button_layout->addSpacing(scale_width(8));
   auto ok_button = create_button(tr("OK"), this);
   ok_button->connect_clicked_signal([=] {
-    m_apply_signal();
-    close();
+    on_ok_button_clicked();
   });
   ok_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(ok_button);
@@ -167,6 +163,11 @@ bool KeyBindingsWindow::eventFilter(QObject* watched,
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void KeyBindingsWindow::on_ok_button_clicked() {
+  m_apply_signal();
+  close();
 }
 
 void KeyBindingsWindow::on_restore_button_clicked() {

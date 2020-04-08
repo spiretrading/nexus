@@ -60,11 +60,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_table->verticalHeader()->hide();
   m_table->setSelectionMode(QAbstractItemView::SingleSelection);
   m_table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
-  connect(m_table, &QTableView::clicked, [=] (auto index) {
-    if(index.flags().testFlag(Qt::ItemIsEditable)) {
-      m_table->edit(index);
-    }
-  });
+  connect(m_table, &QTableView::clicked, this,
+    &KeyBindingsTableView::on_table_clicked);
   setWidget(main_widget);
 }
 
@@ -113,5 +110,11 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
     m_header->move(widget()->pos().x(), m_header->pos().y());
   } else {
     m_header->move(0, m_header->pos().y());
+  }
+}
+
+void KeyBindingsTableView::on_table_clicked(const QModelIndex& index) {
+  if(index.flags().testFlag(Qt::ItemIsEditable)) {
+    m_table->edit(index);
   }
 }

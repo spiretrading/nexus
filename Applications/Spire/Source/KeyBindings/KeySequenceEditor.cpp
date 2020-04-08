@@ -15,11 +15,11 @@ namespace {
   }
 }
 
-KeySequenceEditor::KeySequenceEditor(const QKeySequence& sequence,
-    const std::vector<ValidKeySequence>& valid_sequences, QWidget* parent)
+KeySequenceEditor::KeySequenceEditor(QKeySequence sequence,
+    std::vector<ValidKeySequence> valid_sequences, QWidget* parent)
     : QLineEdit(parent),
-      m_key_sequence(sequence),
-      m_valid_sequences(valid_sequences),
+      m_key_sequence(std::move(sequence)),
+      m_valid_sequences(std::move(valid_sequences)),
       m_font("Roboto") {
   m_font.setPixelSize(scale_height(12));
   m_font.setStyle(QFont::StyleItalic);

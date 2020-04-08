@@ -29,9 +29,9 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
         auto y = rowViewportPosition(index.row());
         auto height = rowHeight(index.row());
         if(index.row() > 0) {
-          return std::make_pair(y - scale_height(1), height);
+          return std::tuple(y - scale_height(1), height);
         }
-        return std::make_pair(y, height - scale_height(1));
+        return std::tuple(y, height - scale_height(1));
       }();
       painter.drawRect(
         columnViewportPosition(index.column()) - scale_width(1),

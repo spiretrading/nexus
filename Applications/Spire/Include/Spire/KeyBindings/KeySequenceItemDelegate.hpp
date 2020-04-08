@@ -21,8 +21,8 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit KeySequenceItemDelegate(
-        const std::vector<KeySequenceEditor::ValidKeySequence>&
-        valid_key_sequences, QWidget* parent = nullptr);
+        std::vector<KeySequenceEditor::ValidKeySequence> valid_key_sequences,
+        QWidget* parent = nullptr);
 
       //! Connects a slot to the item modified signal.
       boost::signals2::connection connect_item_modified_signal(
@@ -46,8 +46,8 @@ namespace Spire {
 
     private:
       mutable ItemModifiedSignal m_item_modified_signal;
-       std::vector<KeySequenceEditor::ValidKeySequence> m_valid_key_sequences;
-       mutable KeySequenceEditor* m_editor;
+      std::vector<KeySequenceEditor::ValidKeySequence> m_valid_key_sequences;
+      mutable KeySequenceEditor* m_editor;
 
       void draw_key_sequence(const QKeySequence& sequence, const QRect& rect,
         QPainter* painter) const;
