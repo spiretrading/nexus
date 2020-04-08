@@ -1,11 +1,20 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../..';
 import { LoadingPage } from '..';
+import { AccountDirectoryModel } from '.';
+import { AccountDirectoryPage } from '.';
 
 interface Properties {
 
   /** The device's display size. */
   displaySize: DisplaySize;
+
+  /** Model that contains information about the accounts. */
+  model: AccountDirectoryModel;
+
+  /** The roles of the user looking at the directory page. */
+  roles: Nexus.AccountRoles;
 }
 
 interface State {
@@ -23,6 +32,12 @@ export class AccountDirectoryController extends
   }
 
   public render(): JSX.Element {
+    if(!this.state.isLoaded) {
     return <LoadingPage/>;
+    }
+    <AccountDirectoryPage
+      displaySize={this.props.displaySize}
+      model={this.props.model}
+      roles={this.props.roles}/>
   }
 }

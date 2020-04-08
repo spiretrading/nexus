@@ -13,7 +13,7 @@ interface Properties {
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
-  /** Model that contains imformation about the accounts. */
+  /** Model that contains information about the accounts. */
   model: AccountDirectoryModel;
 
   /** The roles of the user looking at the directory page. */
