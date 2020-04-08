@@ -9,8 +9,10 @@ namespace Spire {
   class CancelKeyBindingsTableModel : public QAbstractTableModel {
     public:
 
+      //! Specifies the action type used by the model.
       using Action = KeyBindings::CancelAction;
 
+      //! Specifies the binding type used by the model.
       using Binding = KeyBindings::CancelActionBinding;
 
       //! Constructs a CancelKeyBindingsTableModel with initial key

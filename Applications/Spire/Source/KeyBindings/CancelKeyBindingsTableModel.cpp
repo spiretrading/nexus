@@ -110,8 +110,8 @@ namespace {
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
     const std::vector<Binding>& bindings, QObject* parent)
-    : QAbstractTableModel(parent),
-      m_key_bindings(ROW_COUNT) {
+    : QAbstractTableModel(parent) {
+  m_key_bindings.reserve(ROW_COUNT);
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
   }
