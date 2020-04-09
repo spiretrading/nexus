@@ -45,10 +45,6 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      using KeySignal = Signal<void (Qt::Key)>;
-
-      mutable KeySignal m_key_signal;
-      mutable boost::signals2::scoped_connection m_key_connection;
       mutable ItemModifiedSignal m_item_modified_signal;
       std::vector<KeySequenceEditor::ValidKeySequence> m_valid_key_sequences;
 
