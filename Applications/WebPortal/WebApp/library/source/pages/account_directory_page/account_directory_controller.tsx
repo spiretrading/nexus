@@ -9,12 +9,6 @@ interface Properties {
 
   /** The device's display size. */
   displaySize: DisplaySize;
-
-  /** Model that contains information about the accounts. */
-  model: AccountDirectoryModel;
-
-  /** The roles of the user looking at the directory page. */
-  roles: Nexus.AccountRoles;
 }
 
 interface State {
@@ -35,9 +29,5 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
     return <LoadingPage/>;
     }
-    <AccountDirectoryPage
-      displaySize={this.props.displaySize}
-      model={this.props.model}
-      roles={this.props.roles}/>
   }
 }

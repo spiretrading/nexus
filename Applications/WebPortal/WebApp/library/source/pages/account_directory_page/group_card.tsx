@@ -27,13 +27,15 @@ interface Properties {
   onDropDownClick?: () => void;
 
   /** Called when a directory is clicked on.
-   * @param entry - A accounty or directory entry.
+   * @param entry - A account or directory entry.
    */
   onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
 interface State {
   isHeaderHovered: boolean;
+  isOpen: boolean;
+  accounts: AccountEntry[];
 }
 
 /** A card that displays a group and the accounts associated with it. */
@@ -46,7 +48,9 @@ export class GroupCard extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      isHeaderHovered: false
+      isHeaderHovered: false,
+      isOpen: false,
+      accounts: []
     };
     this.onGroupMouseEnter = this.onGroupMouseEnter.bind(this);
     this.onGroupMouseLeave = this.onGroupMouseLeave.bind(this);
@@ -67,7 +71,7 @@ export class GroupCard extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const accountsLableStyle = (() => {
+    const accountsLabelStyle = (() => {
       switch(this.props.displaySize) {
         case(DisplaySize.SMALL):
           return null;
@@ -120,7 +124,7 @@ export class GroupCard extends React.Component<Properties, State> {
               key={account.account.id}
               onClick={() =>
                 this.props.onDirectoryEntryClick(account.account)}>
-            <div style={{...accountsLableStyle,
+            <div style={{...accountsLabelStyle,
                 ...GroupCard.STYLE.accountLabelText}}>
               <div style={GroupCard.STYLE.highlightedText}>
                 {account.account.name.slice(0, this.props.filter.length)}
@@ -148,7 +152,7 @@ export class GroupCard extends React.Component<Properties, State> {
                       (GroupCard.accountLabelAnimationStyle as any)[state])}
                     onClick={() =>
                       this.props.onDirectoryEntryClick(account.account)}>
-                  <div style={{...accountsLableStyle,
+                  <div style={{...accountsLabelStyle,
                       ...GroupCard.STYLE.accountLabelText}}>
                     {account.account.name.toString()}
                   </div>
@@ -162,12 +166,12 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     } else {
       accounts.push(
-        <Transition in={this.props.isOpen}
+        <Transition in={this.state.isOpen}
             timeout={GroupCard.TIMEOUTS}
             key={this.props.group.id}>
           {(state) => (
-            <div key={this.props.group.id} style={{...accountsLableStyle,
-                ...GroupCard.STYLE.emptyLableText,
+            <div key={this.props.group.id} style={{...accountsLabelStyle,
+                ...GroupCard.STYLE.emptyLabelText,
                 ...(GroupCard.emptyLabelAnimationStyle as any)[state]}}>
               Empty
             </div>
@@ -202,6 +206,17 @@ export class GroupCard extends React.Component<Properties, State> {
           )}
         </Transition>
       </VBoxLayout>);
+  }
+
+  public getDerivedStateFromProps(props: Properties) {
+    const accounts = (() => {
+      if(props.isOpen) {
+        this.props.accounts;
+      } else {
+        this.state.accounts;
+      }
+    })();
+    return {isOpen: props.isOpen, accounts: props.accounts};
   }
 
   private onGroupMouseEnter() {
@@ -257,7 +272,7 @@ export class GroupCard extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap'
     },
-    emptyLableText: {
+    emptyLabelText: {
       font: '400 14px Roboto',
       color: '#8C8C8C',
       paddingLeft: '10px',
