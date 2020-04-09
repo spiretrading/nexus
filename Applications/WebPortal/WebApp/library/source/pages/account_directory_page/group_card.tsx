@@ -33,8 +33,9 @@ interface Properties {
 }
 
 interface State {
+  filter: string;
   isHeaderHovered: boolean;
-  localIsOpen: boolean;
+  isOpen: boolean;
   localAccounts: AccountEntry[];
 }
 
@@ -48,8 +49,9 @@ export class GroupCard extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
+      filter: '',
       isHeaderHovered: false,
-      localIsOpen: false,
+      isOpen: false,
       localAccounts: []
     };
     this.onGroupMouseEnter = this.onGroupMouseEnter.bind(this);
@@ -58,7 +60,7 @@ export class GroupCard extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const headerTextStyle = (() => {
-      if(this.props.isOpen) {
+      if(this.state.isOpen) {
         return GroupCard.STYLE.headerTextOpen;
       } else {
         return GroupCard.STYLE.headerText;
@@ -85,26 +87,26 @@ export class GroupCard extends React.Component<Properties, State> {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
           <DropDownButton size='20px'
-            isExpanded={this.props.isOpen}
+            isExpanded={this.state.isOpen}
             onClick={this.props.onDropDownClick}/>);
       } else {
         return (
           <div style={GroupCard.STYLE.dropDownButtonWrapper}
               onClick={this.props.onDropDownClick}>
             <DropDownButton size='16px'
-              isExpanded={this.props.isOpen}/>
+              isExpanded={this.state.isOpen}/>
           </div>);
       }
     })();
     const topAccountPadding = (() => {
-      if(this.props.accounts.length === 0) {
+      if(this.state.localAccounts.length === 0) {
         return '14px';
       } else {
         return '10px';
       }
     })();
     const lineWhenOpen = (() => {
-      if(this.props.isOpen) {
+      if(this.state.isOpen) {
         return (
           <div>
             <HLine color='#E6E6E6'/>
@@ -115,8 +117,8 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     })();
     const accounts: JSX.Element[] = [];
-    if(this.props.accounts.length > 0) {
-      for(const account of this.props.accounts) {
+    if(this.state.localAccounts.length > 0) {
+      for(const account of this.state.localAccounts) {
         if(account.account.name.indexOf(this.props.filter) === 0 &&
             this.props.filter) {
           accounts.push(
@@ -135,14 +137,14 @@ export class GroupCard extends React.Component<Properties, State> {
               <RolePanel roles={account.roles}/>
             </div>
           </div>);
-          if(!this.props.isOpen && this.props.accounts.indexOf(account) ===
-              this.props.accounts.length - 1) {
+          if(!this.state.isOpen && this.state.localAccounts.indexOf(account) ===
+              this.state.localAccounts.length - 1) {
             accounts.push(<div style={{height: topAccountPadding}}/>);
             accounts.push(<HLine key={this.props.group.id} color='#E6E6E6'/>);
           }
         } else {
           accounts.push(
-            <Transition in={this.props.isOpen}
+            <Transition in={this.state.isOpen}
                 appear={true}
                 key={account.account.id}
                 timeout={GroupCard.TIMEOUTS}>
@@ -166,7 +168,7 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     } else {
       accounts.push(
-        <Transition in={this.state.localIsOpen}
+        <Transition in={this.state.isOpen}
             timeout={GroupCard.TIMEOUTS}
             key={this.props.group.id}>
           {(state) => (
@@ -190,7 +192,7 @@ export class GroupCard extends React.Component<Properties, State> {
             {this.props.group.name}
           </div>
         </div>
-        <Transition in={this.props.isOpen}
+        <Transition in={this.state.isOpen}
             timeout={GroupCard.TIMEOUTS}>
           {(state) => (
             <div>
@@ -208,15 +210,16 @@ export class GroupCard extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  public getDerivedStateFromProps(props: Properties) {
-    const accounts = (() => {
-      if(props.isOpen) {
-        this.props.accounts;
-      } else {
-        this.state.localAccounts;
-      }
-    })();
-    return {isOpen: props.isOpen, accounts: props.accounts};
+  static getDerivedStateFromProps(props: Properties, state: State) {
+    if(!props.isOpen && !state.isOpen && props.accounts.length !== state.localAccounts.length) {
+      return {localAccounts: props.accounts};
+    }
+    if(props.isOpen && !state.isOpen) {
+      return {isOpen: true, localAccounts: props.accounts};
+    } else if(!props.isOpen && state.isOpen) {
+      return {isOpen: false};
+    }
+    return null;
   }
 
   private onGroupMouseEnter() {
@@ -353,7 +356,8 @@ export class GroupCard extends React.Component<Properties, State> {
       transform: 'scaleY(1)',
       transitionProperty: 'max-height, transform',
       transitionDuration: '200ms',
-      transformOrigin: 'top' as 'top'
+      transformOrigin: 'top' as 'top',
+      overflow: 'hidden' as 'hidden'
     },
     exiting: {
       width: '100%',
@@ -361,13 +365,15 @@ export class GroupCard extends React.Component<Properties, State> {
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
       transitionDuration: `200ms`,
-      transformOrigin: 'top' as 'top'
+      transformOrigin: 'top' as 'top',
+      overflow: 'hidden' as 'hidden'
     },
     exited: {
       width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)',
-      transformOrigin: 'top' as 'top'
+      transformOrigin: 'top' as 'top',
+      overflow: 'hidden' as 'hidden'
     }
   });
   private static readonly emptyLabelAnimationStyle = {
@@ -398,35 +404,7 @@ export class GroupCard extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top'
     }
   };
-  private static readonly  topPaddingAnimationStyle = {
-    entering: {
-      maxHeight: 0,
-      transform: 'scaleY(0)'
-    },
-    entered: {
-      maxHeight: '15px',
-      transform: 'scaleY(1)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exiting: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exited: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    }
-  };
-  private static readonly  bottomPaddingAnimationStyle = {
+  private static readonly bottomPaddingAnimationStyle = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(1)'
