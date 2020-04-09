@@ -34,8 +34,8 @@ interface Properties {
 
 interface State {
   isHeaderHovered: boolean;
-  isOpen: boolean;
-  accounts: AccountEntry[];
+  localIsOpen: boolean;
+  localAccounts: AccountEntry[];
 }
 
 /** A card that displays a group and the accounts associated with it. */
@@ -49,8 +49,8 @@ export class GroupCard extends React.Component<Properties, State> {
     super(properties);
     this.state = {
       isHeaderHovered: false,
-      isOpen: false,
-      accounts: []
+      localIsOpen: false,
+      localAccounts: []
     };
     this.onGroupMouseEnter = this.onGroupMouseEnter.bind(this);
     this.onGroupMouseLeave = this.onGroupMouseLeave.bind(this);
@@ -166,7 +166,7 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     } else {
       accounts.push(
-        <Transition in={this.state.isOpen}
+        <Transition in={this.state.localIsOpen}
             timeout={GroupCard.TIMEOUTS}
             key={this.props.group.id}>
           {(state) => (
@@ -213,7 +213,7 @@ export class GroupCard extends React.Component<Properties, State> {
       if(props.isOpen) {
         this.props.accounts;
       } else {
-        this.state.accounts;
+        this.state.localAccounts;
       }
     })();
     return {isOpen: props.isOpen, accounts: props.accounts};
