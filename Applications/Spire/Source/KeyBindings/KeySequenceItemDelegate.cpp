@@ -87,14 +87,14 @@ QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
 }
 
 bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Escape &&
-        e->modifiers() == Qt::KeyboardModifier::NoModifier) {
-      if(auto editor = dynamic_cast<KeySequenceEditor*>(watched)) {
+  if(auto editor = dynamic_cast<KeySequenceEditor*>(watched)) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape &&
+          e->modifiers() == Qt::KeyboardModifier::NoModifier) {
         editor->add_key(Qt::Key_Escape);
+        return true;
       }
-      return true;
     }
   }
   return QStyledItemDelegate::eventFilter(watched, event);
