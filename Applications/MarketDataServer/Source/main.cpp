@@ -21,7 +21,7 @@
 #include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
-#include "Nexus/MarketDataService/BufferedHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/AsyncHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
@@ -52,15 +52,14 @@ namespace {
   using RegistryServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRegistryServlet<
     MarketDataRegistry*, SessionCachedHistoricalDataStore<
-    BufferedHistoricalDataStore<SqlDataStore*>*>,
+    AsyncHistoricalDataStore<SqlDataStore*>*>,
     ApplicationAdministrationClient::Client*>,
     ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
     TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
     std::shared_ptr<LiveTimer>>;
   using BaseRegistryServlet = MarketDataRegistryServlet<
     RegistryServletContainer, MarketDataRegistry*,
-    SessionCachedHistoricalDataStore<
-    BufferedHistoricalDataStore<SqlDataStore*>*>,
+    SessionCachedHistoricalDataStore<AsyncHistoricalDataStore<SqlDataStore*>*>,
     ApplicationAdministrationClient::Client*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
@@ -223,20 +222,15 @@ int main(int argc, const char** argv) {
         mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
         mySqlConfig.m_password, mySqlConfig.m_schema);
     });
-  auto bufferedDataStore =
-    boost::optional<BufferedHistoricalDataStore<SqlDataStore*>>();
+  auto asyncDataStore =
+    boost::optional<AsyncHistoricalDataStore<SqlDataStore*>>();
   auto marketDataRegistry = MarketDataRegistry();
   auto baseRegistryServlet = boost::optional<BaseRegistryServlet>();
   try {
     auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
-    auto historicalBufferSize = static_cast<size_t>(Extract<int>(config,
-      "historical_buffer_size", 100000));
-    auto threadCount = static_cast<size_t>(Extract<int>(config,
-      "database_threads", boost::thread::hardware_concurrency()));
-    bufferedDataStore.emplace(&historicalDataStore, historicalBufferSize,
-      Ref(threadPool));
+    asyncDataStore.emplace(&historicalDataStore);
     baseRegistryServlet.emplace(&*administrationClient, &marketDataRegistry,
-      Initialize(&*bufferedDataStore, cacheBlockSize));
+      Initialize(&*asyncDataStore, cacheBlockSize));
   } catch(const std::exception& e) {
     std::cerr << "Error initializing server: " << e.what() << std::endl;
     return -1;

@@ -4,7 +4,7 @@
 
 namespace Nexus::MarketDataService {
   class ApplicationMarketDataClient;
-  template<typename D> class BufferedHistoricalDataStore;
+  template<typename D> class AsyncHistoricalDataStore;
   template<typename D> class CachedHistoricalDataStore;
   template<typename C> class ClientHistoricalDataStore;
   template<typename D> class DataStoreMarketDataClient;

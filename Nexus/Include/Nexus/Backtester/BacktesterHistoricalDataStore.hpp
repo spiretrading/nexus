@@ -1,10 +1,8 @@
-#ifndef BACKTESTER_HISTORICAL_DATA_STORE_HPP
-#define BACKTESTER_HISTORICAL_DATA_STORE_HPP
-#include <Beam/Threading/ThreadPool.hpp>
+#ifndef NEXUS_BACKTESTER_HISTORICAL_DATA_STORE_HPP
+#define NEXUS_BACKTESTER_HISTORICAL_DATA_STORE_HPP
 #include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/CutoffHistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/BufferedHistoricalDataStore.hpp"
 
 namespace Nexus {
 
@@ -77,17 +75,14 @@ namespace Nexus {
       void Close();
 
     private:
-      Beam::Threading::ThreadPool m_threadPool;
-      MarketDataService::BufferedHistoricalDataStore<
-        CutoffHistoricalDataStore<H>> m_dataStore;
+      CutoffHistoricalDataStore<H> m_dataStore;
   };
 
   template<typename H>
   template<typename D>
   BacktesterHistoricalDataStore<H>::BacktesterHistoricalDataStore(D&& dataStore,
     boost::posix_time::ptime cutoff)
-    : m_dataStore(Beam::Initialize(std::forward<D>(dataStore), cutoff),
-        std::numeric_limits<std::size_t>::max(), Beam::Ref(m_threadPool)) {}
+    : m_dataStore(std::forward<D>(dataStore), cutoff) {}
 
   template<typename H>
   BacktesterHistoricalDataStore<H>::~BacktesterHistoricalDataStore() {
