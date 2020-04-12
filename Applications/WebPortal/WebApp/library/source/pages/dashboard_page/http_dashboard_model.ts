@@ -16,11 +16,16 @@ export class HttpDashboardModel extends DashboardModel {
     this.serviceClients = serviceClients;
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
-      new Nexus.CurrencyDatabase(), new Nexus.MarketDatabase());
+      new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
+      new Nexus.MarketDatabase());
   }
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
     return this.model.entitlementDatabase;
+  }
+
+  public get countryDatabase(): Nexus.CountryDatabase {
+    return this.model.countryDatabase;
   }
 
   public get currencyDatabase(): Nexus.CurrencyDatabase {
@@ -54,6 +59,7 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.administrationClient.loadAccountRoles(account);
     this.model = new LocalDashboardModel(account, roles,
       this.serviceClients.definitionsClient.entitlementDatabase,
+      this.serviceClients.definitionsClient.countryDatabase,
       this.serviceClients.definitionsClient.currencyDatabase,
       this.serviceClients.definitionsClient.marketDatabase);
     return this.model.load();

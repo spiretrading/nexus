@@ -44,7 +44,8 @@ export class AccountPage extends React.Component<Properties> {
       }
     })();
     return (
-      <VBoxLayout height='100%' width='100%'>
+      <VBoxLayout height='100%' width='100%'
+          style={{overflow: 'hidden' as 'hidden'}}>
         <Header name={this.props.account.name} roles={this.props.roles}>
           <MenuBar displaySize={this.props.displaySize}
             selected={this.props.subPage} onClick={this.props.onMenuClick}/>

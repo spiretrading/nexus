@@ -1,10 +1,14 @@
-import { CurrencyDatabase, EntitlementDatabase, MarketDatabase } from '..';
+import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
+  MarketDatabase } from '..';
 
 /** Client used to access definitions services. */
 export abstract class DefinitionsClient {
 
   /** Returns the entitlement database. */
   public abstract get entitlementDatabase(): EntitlementDatabase;
+
+  /** Returns the country database. */
+  public abstract get countryDatabase(): CountryDatabase;
 
   /** Returns the currency database. */
   public abstract get currencyDatabase(): CurrencyDatabase;

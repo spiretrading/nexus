@@ -68,14 +68,16 @@ namespace {
 
   std::vector<SecurityInfo> ParseSecurityInfoList(const std::string& path) {
     auto config = Require(LoadFile, path);
-    std::vector<SecurityInfo> securities;
+    auto securities = std::vector<SecurityInfo>();
     for(auto node : config) {
       auto symbol = Extract<string>(node, "symbol");
       auto name = Extract<string>(node, "name");
-      SecurityInfo info;
+      auto boardLot = Extract<Quantity>(node, "board_lot");
+      auto info = SecurityInfo();
       info.m_name = name;
-      info.m_security = Security{symbol, DefaultMarkets::CSE(),
-        DefaultCountries::CA()};
+      info.m_security = Security(symbol, DefaultMarkets::CSE(),
+        DefaultCountries::CA());
+      info.m_boardLot = boardLot;
       securities.push_back(std::move(info));
     }
     return securities;
@@ -83,7 +85,7 @@ namespace {
 
   std::unordered_map<string, string> LoadMpidMappings(
       const YAML::Node& config) {
-    std::unordered_map<string, string> mappings;
+    auto mappings = std::unordered_map<string, string>();
     for(auto node : config) {
       auto source = Extract<string>(node, "source");
       auto name = Extract<string>(node, "name");
@@ -100,7 +102,7 @@ namespace {
     if(timeZone == nullptr) {
       BOOST_THROW_EXCEPTION(std::runtime_error{"Time zone not found."});
     }
-    CseConfiguration cseConfig;
+    auto cseConfig = CseConfiguration();
     cseConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
       false);
     cseConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);

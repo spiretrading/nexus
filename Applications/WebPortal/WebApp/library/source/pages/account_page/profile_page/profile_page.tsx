@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionField, DisplaySize, HLine, PhotoField } from
-  '../../..';
+import { CountrySelectionField, DisplaySize, HLine, PageWrapper, PhotoField } 
+  from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
 import { FormEntry } from './form_entry';
@@ -23,7 +23,7 @@ interface Properties {
   /** The account identity to display. */
   identity: Nexus.AccountIdentity;
 
-  /** The name of the group the account belongs to. */
+  /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
   /** The database of all available countries. */
@@ -35,9 +35,6 @@ interface Properties {
   /** Whether the form can be edited. */
   readonly?: boolean;
 
-  /** Whether the save changes button can be clicked. */
-  isSubmitEnabled?: boolean;
-
   /** The status of the submission. */
   submitStatus?: string;
 
@@ -45,13 +42,7 @@ interface Properties {
   hasError?: boolean;
 
   /** Indicates the profile is being submitted. */
-  onSubmit?: () => void;
-
-  /** Whether the option to change the password is available. */
-  hasPassword?: boolean;
-
-  /** Whether the password button can be clicked. */
-  isPasswordSubmitEnabled?: boolean;
+  onSubmit?: (roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => void;
 
   /** The status of the password submission. */
   submitPasswordStatus?: string;
@@ -69,6 +60,7 @@ interface State {
   hasLocalPasswordError: boolean;
   localPasswordMessage: string;
   isPasswordChanged: boolean;
+  newRoles: Nexus.AccountRoles;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
 }
@@ -77,12 +69,10 @@ interface State {
 export class ProfilePage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     readonly: false,
-    isSubmitEnabled: false,
     submitStatus: '',
     hasError: false,
     onSubmit: () => {},
     hasPassword: false,
-    isPasswordSubmitEnabled: false,
     submitPasswordStatus: '',
     hasPasswordError: false,
     onPasswordSubmit: () => {}
@@ -96,9 +86,18 @@ export class ProfilePage extends React.Component<Properties, State> {
       hasLocalPasswordError: false,
       localPasswordMessage: '',
       isPasswordChanged: false,
+      newRoles: this.props.roles.clone(),
       newIdentity: this.props.identity.clone(),
       isProfileChanged: false
     };
+    this.onFirstNameChange = this.onFirstNameChange.bind(this);
+    this.onLastNameChange = this.onLastNameChange.bind(this);
+    this.onEmailChange = this.onEmailChange.bind(this);
+    this.onAddressChange = this.onAddressChange.bind(this);
+    this.onCityChange = this.onCityChange.bind(this);
+    this.onProvinceChange = this.onProvinceChange.bind(this);
+    this.onCountryChange = this.onCountryChange.bind(this);
+    this.onRolesChange = this.onRolesChange.bind(this);
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onSubmitProfile = this.onSubmitProfile.bind(this);
     this.onPassword1Change = this.onPassword1Change.bind(this);
@@ -184,9 +183,9 @@ export class ProfilePage extends React.Component<Properties, State> {
       } else {
         return (
           <CountrySelectionField
-            readonly={this.props.readonly}
             displaySize={this.props.displaySize}
-            value={this.props.identity.country}
+            value={this.state.newIdentity.country}
+            onChange={this.onCountryChange}
             countryDatabase={this.props.countryDatabase}/>);
       }
     })();
@@ -241,37 +240,32 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
-      if(this.props.hasPassword) {
-        const passwordButtonEnabled = this.state.password1
-          && this.state.password2
-          && this.props.isPasswordSubmitEnabled;
-        const status = (() => {
-          if(this.state.isPasswordChanged) {
-            return '';
-          } else if(this.state.localPasswordMessage !== '') {
-            return this.state.localPasswordMessage;
-          } else {
-            return this.props.submitPasswordStatus;
-          }})();
-        return (
-          <Dali.VBoxLayout>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <HLine color={ProfilePage.LINE_COLOR}/>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <ChangePasswordBox displaySize={this.props.displaySize}
-              hasPasswordError={this.props.hasPasswordError ||
-                this.state.hasLocalPasswordError}
-              submitPasswordStatus={status}
-              isPasswordSubmitEnabled={passwordButtonEnabled}
-              onSubmitPassword={this.onSubmitPassword}
-              password1={this.state.password1}
-              password2={this.state.password2}
-              onPassword1Change={this.onPassword1Change}
-              onPassword2Change={this.onPassword2Change}/>
-          </Dali.VBoxLayout>);
-      } else {
-        return null;
-      }
+      const passwordButtonEnabled = this.state.password1 !== '' &&
+        this.state.password2 !== '';
+      const status = (() => {
+        if(this.state.isPasswordChanged) {
+          return '';
+        } else if(this.state.localPasswordMessage !== '') {
+          return this.state.localPasswordMessage;
+        } else {
+          return this.props.submitPasswordStatus;
+        }})();
+      return (
+        <Dali.VBoxLayout>
+          <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+          <HLine color={ProfilePage.LINE_COLOR}/>
+          <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+          <ChangePasswordBox displaySize={this.props.displaySize}
+            hasPasswordError={this.props.hasPasswordError ||
+              this.state.hasLocalPasswordError}
+            submitPasswordStatus={status}
+            isPasswordSubmitEnabled={passwordButtonEnabled}
+            onSubmitPassword={this.onSubmitPassword}
+            password1={this.state.password1}
+            password2={this.state.password2}
+            onPassword1Change={this.onPassword1Change}
+            onPassword2Change={this.onPassword2Change}/>
+        </Dali.VBoxLayout>);
     })();
     const commentBoxButtonStyle = (() => {
       if(this.props.readonly) {
@@ -289,183 +283,259 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div style={ProfilePage.STYLE.page}>
-        <div style={ProfilePage.STYLE.pagePadding}/>
-        <div style={contentWidth}>
-          <Dali.VBoxLayout width='100%'>
-            <Dali.Padding size='18px'/>
-            <div style={ProfilePage.STYLE.lastLoginBox}>
-              {this.props.identity.lastLoginTime.toString()}
-            </div>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <div style={ProfilePage.STYLE.headerStyler}>
-              Account Information
-            </div>
-            <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-            <Dali.HBoxLayout>
-              {sidePanelPhoto}
-              <Dali.Padding size={sidePanelPhotoPadding}/>
-              <Dali.VBoxLayout width='100%'>
-                {topPanelPhoto}
-                <FormEntry name='First Name'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.firstName}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Last Name'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.lastName}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Username' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.account.name.toString()}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Role(s)' displaySize={this.props.displaySize}>
-                  <div style={ProfilePage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.props.roles}
-                      readonly={this.props.readonly}/>
-                  </div>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Group(s)' displaySize={this.props.displaySize}>
-                  <Dali.VBoxLayout>
-                    {groupsList}
-                  </Dali.VBoxLayout>
-                </FormEntry>
-                <Dali.Padding size='9px'/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Registration Date'
-                    displaySize={this.props.displaySize}>
-                  <TextField displaySize={this.props.displaySize}
-                    value={this.props.identity.registrationTime.toString()}
-                    readonly/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='ID Number'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.account.id.toString()}
-                    displaySize={this.props.displaySize}
-                    readonly/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Email' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.emailAddress}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Address' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.addressLineOne}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='City' displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.city}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Province/State'
-                    displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.props.identity.province}
-                    displaySize={this.props.displaySize}
-                    readonly={this.props.readonly}/>
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <HLine color={ProfilePage.LINE_COLOR}/>
-                <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                <FormEntry name='Country' displaySize={this.props.displaySize}>
-                  {countryBox}
-                </FormEntry>
-                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-                {formFooter}
-                <Dali.Padding size={formFooterPaddingSize}/>
-              </Dali.VBoxLayout>
-            </Dali.HBoxLayout>
-            <Dali.VBoxLayout style={null}>
-              <div style={ProfilePage.STYLE.headerStyler}>
-                User Notes
+      <PageWrapper>
+        <div style={ProfilePage.STYLE.page}>
+          <div style={ProfilePage.STYLE.pagePadding}/>
+          <div style={contentWidth}>
+            <Dali.VBoxLayout width='100%'>
+              <Dali.Padding size='18px'/>
+              <div style={ProfilePage.STYLE.lastLoginBox}>
+                {this.props.identity.lastLoginTime.toString()}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
-              <CommentBox comment={this.state.newIdentity.userNotes}
-                readonly={this.props.readonly}
-                onInput={this.onCommentChange}/>
-              <Dali.Padding size={commentFooterPaddingSize}/>
-              <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
-                <div style={ProfilePage.STYLE.filler}/>
-                <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
-                    {profileSubmitStatus}
-                  <div style={ProfilePage.STYLE.buttonPadding}/>
-                </div>
-                <SubmitButton label='Save Changes'
-                  displaySize={this.props.displaySize}
-                  isSubmitEnabled=
-                    {this.props.isSubmitEnabled &&
-                      (this.state.isProfileChanged || this.props.hasError)}
-                  onClick={this.onSubmitProfile}/>
-                <div style={statusMessageFooter}>
-                  <div style={ProfilePage.STYLE.smallPadding}/>
-                  {profileSubmitStatus}
-                </div>
+              <div style={ProfilePage.STYLE.headerStyler}>
+                Account Information
               </div>
+              <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+              <Dali.HBoxLayout>
+                {sidePanelPhoto}
+                <Dali.Padding size={sidePanelPhotoPadding}/>
+                <Dali.VBoxLayout width='100%'>
+                  {topPanelPhoto}
+                  <FormEntry name='First Name'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.firstName}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onFirstNameChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Last Name'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.lastName}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onLastNameChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Username'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.props.account.name.toString()}
+                      displaySize={this.props.displaySize}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Role(s)'
+                      displaySize={this.props.displaySize}>
+                    <div style={ProfilePage.STYLE.rolesWrapper}>
+                      <RolesField roles={this.state.newRoles}
+                        readonly={this.props.readonly}
+                        onClick={this.onRolesChange}/>
+                    </div>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Group(s)' 
+                      displaySize={this.props.displaySize}>
+                    <Dali.VBoxLayout>
+                      {groupsList}
+                    </Dali.VBoxLayout>
+                  </FormEntry>
+                  <Dali.Padding size='9px'/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Registration Date'
+                      displaySize={this.props.displaySize}>
+                    <TextField displaySize={this.props.displaySize}
+                      value={this.props.identity.registrationTime.toString()}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='ID Number'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.props.account.id.toString()}
+                      displaySize={this.props.displaySize}
+                      readonly/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Email' displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.emailAddress}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onEmailChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Address'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.addressLineOne}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onAddressChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='City' displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.city}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onCityChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Province/State'
+                      displaySize={this.props.displaySize}>
+                    <TextField
+                      value={this.state.newIdentity.province}
+                      displaySize={this.props.displaySize}
+                      onInput={this.onProvinceChange}
+                      readonly={this.props.readonly}/>
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <HLine color={ProfilePage.LINE_COLOR}/>
+                  <Dali.Padding size={ProfilePage.LINE_PADDING}/>
+                  <FormEntry name='Country'
+                      displaySize={this.props.displaySize}>
+                    {countryBox}
+                  </FormEntry>
+                  <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                  {formFooter}
+                  <Dali.Padding size={formFooterPaddingSize}/>
+                </Dali.VBoxLayout>
+              </Dali.HBoxLayout>
+              <Dali.VBoxLayout style={null}>
+                <div style={ProfilePage.STYLE.headerStyler}>
+                  User Notes
+                </div>
+                <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
+                <CommentBox comment={this.state.newIdentity.userNotes}
+                  readonly={this.props.readonly}
+                  onInput={this.onCommentChange}/>
+                <Dali.Padding size={commentFooterPaddingSize}/>
+                <div style={{...commentBoxStyle, ...commentBoxButtonStyle}}>
+                  <div style={ProfilePage.STYLE.filler}/>
+                  <div style={{ ...commentBoxStyle, ...statusMessageInline}}>
+                      {profileSubmitStatus}
+                    <div style={ProfilePage.STYLE.buttonPadding}/>
+                  </div>
+                  <SubmitButton label='Save Changes'
+                    displaySize={this.props.displaySize}
+                    isSubmitEnabled=
+                      {this.state.isProfileChanged || this.props.hasError}
+                    onClick={this.onSubmitProfile}/>
+                  <div style={statusMessageFooter}>
+                    <div style={ProfilePage.STYLE.smallPadding}/>
+                    {profileSubmitStatus}
+                  </div>
+                </div>
+              </Dali.VBoxLayout>
+              {changePasswordBox}
+              <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
             </Dali.VBoxLayout>
-            {changePasswordBox}
-            <Dali.Padding size={ProfilePage.BOTTOM_PADDING}/>
-          </Dali.VBoxLayout>
+          </div>
+          <div style={ProfilePage.STYLE.pagePadding}/>
         </div>
-        <div style={ProfilePage.STYLE.pagePadding}/>
-      </div>);
+      </PageWrapper>);
+  }
+
+  private onFirstNameChange(value: string) {
+    this.state.newIdentity.firstName = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onLastNameChange(value: string) {
+    this.state.newIdentity.lastName = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onEmailChange(value: string) {
+    this.state.newIdentity.emailAddress = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onAddressChange(value: string) {
+    this.state.newIdentity.addressLineOne = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onCityChange(value: string) {
+    this.state.newIdentity.city = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+  
+
+  private onProvinceChange(value: string) {
+    this.state.newIdentity.province = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onCountryChange(value: Nexus.CountryCode) {
+    this.state.newIdentity.country = value;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
+  }
+
+  private onRolesChange(role: Nexus.AccountRoles.Role) {
+    if(!this.props.readonly) {
+      if(this.state.newRoles.test(role)) {
+        this.state.newRoles.unset(role);
+      } else {
+        this.state.newRoles.set(role);
+      }
+    }
+    this.setState({
+      newRoles: this.state.newRoles,
+      isProfileChanged: true
+    });
   }
 
   private onCommentChange(newComment: string) {
-    const testIdentity = this.state.newIdentity.clone();
-    testIdentity.userNotes = newComment;
-    if(this.props.identity.userNotes === testIdentity.userNotes) {
-      this.setState({
-        newIdentity: this.props.identity,
-        isProfileChanged: false
-      });
-    } else {
-      this.setState({
-        newIdentity: testIdentity,
-        isProfileChanged: true
-      });
-    }
+    this.state.newIdentity.userNotes = newComment;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onPassword1Change(newPassword: string) {
@@ -477,11 +547,6 @@ export class ProfilePage extends React.Component<Properties, State> {
 
   private onPassword2Change(newPassword: string) {
     this.setState({password2: newPassword});
-  }
-
-  private onSubmitProfile() {
-    this.props.onSubmit();
-    this.setState({isProfileChanged: false});
   }
 
   private onSubmitPassword() {
@@ -504,6 +569,11 @@ export class ProfilePage extends React.Component<Properties, State> {
     });
   }
 
+  private onSubmitProfile() {
+    this.props.onSubmit(this.state.newRoles, this.state.newIdentity);
+    this.setState({isProfileChanged: false});
+  }
+
   private static readonly STYLE = {
     page: {
       boxSizing: 'border-box' as 'border-box',
@@ -511,8 +581,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
-      overflowY: 'auto' as 'auto'
+      justifyContent: 'space-between' as 'space-between'
     },
     hidden: {
       boxSizing: 'border-box' as 'border-box',
@@ -547,6 +616,8 @@ export class ProfilePage extends React.Component<Properties, State> {
       flexShrink: 0
     },
     pagePadding: {
+      flexGrow: 0,
+      flexShrink: 0,
       width: '30px'
     },
     rolesWrapper: {

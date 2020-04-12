@@ -10,16 +10,19 @@ export class LocalDashboardModel extends DashboardModel {
    * @param account - The account that's logged in.
    * @param roles - The account's roles.
    * @param entitlementDatabase - The entitlement database to use.
+   * @param countryDatabase - The country database to use.
    * @param currencyDatabase - The currency database to use.
    * @param marketDatabase - The market database to use.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
       entitlementDatabase: Nexus.EntitlementDatabase,
+      countryDatabase: Nexus.CountryDatabase,
       currencyDatabase: Nexus.CurrencyDatabase,
       marketDatabase: Nexus.MarketDatabase) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
+    this._countryDatabase = countryDatabase;
     this._currencyDatabase = currencyDatabase;
     this._marketDatabase = marketDatabase;
     this._account = account;
@@ -33,6 +36,10 @@ export class LocalDashboardModel extends DashboardModel {
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
     return this._entitlementDatabase;
+  }
+
+  public get countryDatabase(): Nexus.CountryDatabase {
+    return this._countryDatabase;
   }
 
   public get currencyDatabase(): Nexus.CurrencyDatabase {
@@ -74,6 +81,7 @@ export class LocalDashboardModel extends DashboardModel {
 
   private _isLoaded: boolean;
   private _entitlementDatabase: Nexus.EntitlementDatabase;
+  private _countryDatabase: Nexus.CountryDatabase;
   private _currencyDatabase: Nexus.CurrencyDatabase;
   private _marketDatabase: Nexus.MarketDatabase;
   private _account: Beam.DirectoryEntry;

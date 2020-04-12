@@ -7,15 +7,15 @@ import { HttpLoginModel } from './login_page';
 /** Implements the ApplicationModel using HTTP requests. */
 export class HttpApplicationModel extends ApplicationModel {
 
-  /** Constructs an HttpApplicationModel from a set of ServiceClients.
+  /**
+   * Constructs an HttpApplicationModel from a set of ServiceClients.
    * @param serviceClients - The ServiceClients used to access the HTTP
    *                         services.
    */
   constructor(serviceClients: Nexus.ServiceClients) {
     super();
     this.serviceClients = serviceClients;
-    this._loginModel = new HttpLoginModel(this.serviceClients);
-    this._dashboardModel = new HttpDashboardModel(this.serviceClients);
+    this.reset();
   }
 
   public get loginModel(): HttpLoginModel {
@@ -28,6 +28,11 @@ export class HttpApplicationModel extends ApplicationModel {
 
   public async loadAccount(): Promise<Beam.DirectoryEntry> {
     return await this.serviceClients.serviceLocatorClient.loadCurrentAccount();
+  }
+
+  public reset(): void {
+    this._loginModel = new HttpLoginModel(this.serviceClients);
+    this._dashboardModel = new HttpDashboardModel(this.serviceClients);
   }
 
   private serviceClients: Nexus.ServiceClients;
