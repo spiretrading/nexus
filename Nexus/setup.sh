@@ -2,7 +2,7 @@
 exit_status=0
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="c527aeab1e52e149654dfdadfa5c8d4a275b7c70"
+beam_commit="7755eec09a6e6f3579812bcfb96710bc9e89b360"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
