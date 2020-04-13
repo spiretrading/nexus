@@ -59,6 +59,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
       case 6:
       case 7:
       case 8:
+        return m_key_bindings[index.row()].m_sequence;
       default:
         return QVariant();
     }
@@ -102,5 +103,19 @@ QVariant TaskKeyBindingsTableModel::headerData(int section,
 
 bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     const QVariant& value, int role) {
+  if(!index.isValid()) {
+    return false;
+  }
+  if(role == Qt::DisplayRole && index.column() == 8) {
+    for(auto& binding : m_key_bindings) {
+      if(binding.m_sequence == value.value<QKeySequence>()) {
+        binding.m_sequence = QKeySequence();
+        break;
+      }
+    }
+    m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
+    emit dataChanged(index, index, {role});
+    return true;
+  }
   return false;
 }

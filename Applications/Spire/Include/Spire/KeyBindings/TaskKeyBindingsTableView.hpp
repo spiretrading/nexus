@@ -10,6 +10,9 @@ namespace Spire {
   class TaskKeyBindingsTableView : public KeyBindingsTableView {
     public:
 
+      using ModifiedSignal = Signal<void (
+        const KeyBindings::OrderActionBinding& binding)>;
+
       explicit TaskKeyBindingsTableView(
         std::vector<KeyBindings::OrderActionBinding> bindings,
         QWidget* parent = nullptr);
@@ -18,8 +21,11 @@ namespace Spire {
         const std::vector<KeyBindings::OrderActionBinding>& bindings);
 
     private:
+      mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::OrderActionBinding> m_key_bindings;
       TaskKeyBindingsTableModel* m_model;
+
+      void on_key_sequence_modified(const QModelIndex& index) const;
   };
 }
 
