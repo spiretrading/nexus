@@ -1,9 +1,8 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine, RolePanel } from '../..';
+import { DisplaySize, DropDownButton, HLine } from '../..';
 import { AccountEntry } from './account_entry';
 import { AccountEntryRow } from './account_entry_row';
 
@@ -72,16 +71,6 @@ export class GroupCard extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const accountsLabelStyle = (() => {
-      switch(this.props.displaySize) {
-        case(DisplaySize.SMALL):
-          return null;
-        case(DisplaySize.MEDIUM):
-          return GroupCard.STYLE.accountLabelMedium;
-        case(DisplaySize.LARGE):
-          return GroupCard.STYLE.accountLabelLarge;
-      }
-    })();
     const dropDownButton = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
@@ -121,12 +110,12 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0 &&
             this.props.filter) {
           accounts.push(
-          <AccountEntryRow 
+            <AccountEntryRow 
               displaySize={this.props.displaySize}
               account={account}
               filter={this.props.filter}
               isOpen={this.state.isOpen}
-              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);;
+              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);
           if(!this.state.isOpen && this.state.localAccounts.indexOf(account) ===
               this.state.localAccounts.length - 1) {
             accounts.push(<div style={{height: topAccountPadding}}/>);
@@ -152,23 +141,20 @@ export class GroupCard extends React.Component<Properties, State> {
         <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
           {dropDownButton}
           <div style={headerTextStyle}
-              onClick={() =>
-                this.props.onDirectoryEntryClick(this.props.group)}
+              onClick={() => this.props.onDirectoryEntryClick(this.props.group)}
               onMouseEnter={this.onGroupMouseEnter}
               onMouseLeave={this.onGroupMouseLeave}>
             {this.props.group.name}
           </div>
         </div>
-        <Transition in={this.state.isOpen}
-            timeout={GroupCard.TIMEOUTS}>
+        <Transition in={this.state.isOpen} timeout={GroupCard.TIMEOUTS}>
           {(state) => (
             <div>
               {lineWhenOpen}
               <div style={GroupCard.STYLE.entryListWrapper}>
                 {accounts}
               </div>
-              <div style=
-                  {(GroupCard.bottomPaddingAnimationStyle as any)[state]}>
+              <div style= {(GroupCard.animationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
               </div>
             </div>
@@ -227,44 +213,10 @@ export class GroupCard extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'flex-start' as 'flex-start'
     },
-    accountLabelMedium: {
-      marginLeft: '38px'
-    },
-    accountLabelLarge: {
-      marginLeft: '38px'
-    },
-    accountLabelText: {
-      font: '400 14px Roboto',
-      color: '#000000',
-      flexGrow: 0,
-      flexShrink: 0,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap'
-    },
-    emptyLabelText: {
-      font: '400 14px Roboto',
-      color: '#8C8C8C',
-      paddingLeft: '10px',
-      cursor: 'default' as 'default'
-    },
     entryListWrapper: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       flexDirection: 'column-reverse' as 'column-reverse'
-    },
-    highlightedText: {
-      font: '400 14px Roboto',
-      color: '#000000',
-      backgroundColor: '#FFF7C4',
-      flexGrow: 0,
-      flexShrink: 0
-    },
-    rolesWrapper: {
-      width: '80px',
-      flexGrow: 0,
-      flexShrink: 0
     },
     dropDownButtonWrapper: {
       width: '20px',
@@ -292,87 +244,7 @@ export class GroupCard extends React.Component<Properties, State> {
       paddingRight: '10px'
     }
   };
-  private static DYNAMIC_STYLE = StyleSheet.create({
-    accountBox: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between' as 'space-between',
-      paddingLeft: '10px',
-      paddingRight: '10px',
-      cursor: 'pointer' as 'pointer',
-      ':hover' : {
-        backgroundColor: '#F8F8F8'
-      },
-      ':active' : {
-        backgroundColor: '#F8F8F8'
-      }
-    }
-  });
-  private static readonly accountLabelAnimationStyle = StyleSheet.create({
-    entering: {
-      width: '100%',
-      maxHeight: 0,
-      transform: 'scaleY(0)'
-    },
-    entered: {
-      width: '100%',
-      maxHeight: '34px',
-      transform: 'scaleY(1)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: '200ms',
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
-    },
-    exiting: {
-      width: '100%',
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
-    },
-    exited: {
-      width: '100%',
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
-    }
-  });
-  private static readonly emptyLabelAnimationStyle = {
-    entering: {
-      maxHeight: 0,
-      transform: 'scaleY(0)'
-    },
-    entered: {
-      maxHeight: '34px',
-      transform: 'scaleY(1)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: '200ms',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exiting: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    },
-    exited: {
-      maxHeight: 0,
-      transform: 'scaleY(0)',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
-    }
-  };
-  private static readonly bottomPaddingAnimationStyle = {
+  private static readonly animationStyle = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(1)'
