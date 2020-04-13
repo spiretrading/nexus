@@ -5,10 +5,22 @@ import { Transition } from 'react-transition-group';
 import { AccountEntry, DisplaySize, RolePanel } from '../..';
 
 interface Properties {
+
+  /** The size to display the component at. */
   displaySize: DisplaySize;
+
+  /** Determines if the entry is visible and open. */
   isOpen: boolean;
+
+  /** The account to display. */
   account?: AccountEntry;
+
+  /** The filter. Used to determine highlighting. */
   filter?: string;
+
+  /** Called when the account is clicked on.
+   * @param entry - The updated entry of the account that was clicked on.
+   */
   onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
@@ -105,9 +117,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) => (
           <div key={id}
-              className={css(dynamic_style, (animation_style as any)[state])}
-              onClick={() =>
-                this.props.onDirectoryEntryClick(this.props.account.account)}>
+              className={css(dynamic_style, (animation_style as any)[state])}>
             {text}
             {roles}
           </div>
