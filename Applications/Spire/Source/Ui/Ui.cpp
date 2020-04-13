@@ -77,6 +77,7 @@ QHeaderView* Spire::make_header(QWidget* parent) {
       border: none;
       color: #4B23A0;
       font-family: Roboto;
+      font-size: %2px;
       font-weight: 550;
       padding-left: %1px;
       padding-right: %1px;
