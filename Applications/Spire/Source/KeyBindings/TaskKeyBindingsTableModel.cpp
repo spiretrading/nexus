@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 using namespace Spire;
@@ -42,7 +43,19 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
       case 2:
       case 3:
       case 4:
+        {
+          auto side = m_key_bindings[index.row()].m_action.m_side;
+          if(side) {
+            return tr(ToString(*side).c_str());
+          }
+        }
       case 5:
+        {
+          auto quantity = m_key_bindings[index.row()].m_action.m_quantity;
+          if(quantity) {
+            return QVariant::fromValue<Nexus::Quantity>(*quantity);
+          }
+        }
       case 6:
       case 7:
       case 8:
@@ -63,14 +76,23 @@ QVariant TaskKeyBindingsTableModel::headerData(int section,
   if(orientation == Qt::Horizontal && role == Qt::DisplayRole) {
     switch(section) {
       case 0:
+        return tr("Name");
       case 1:
+        return tr("Security");
       case 2:
+        return tr("Destination");
       case 3:
+        return tr("Order Type");
       case 4:
+        return tr("Side");
       case 5:
+        return tr("Quantity");
       case 6:
+        return tr("Time in Force");
       case 7:
+        return tr("Custom Tags");
       case 8:
+        return tr("Key");
       default:
         return QVariant();
     }

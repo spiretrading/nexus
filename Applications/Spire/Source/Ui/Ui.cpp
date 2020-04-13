@@ -64,10 +64,27 @@ QHeaderView* Spire::make_header(QWidget* parent) {
   auto header = make_fixed_header(parent);
   header->setSectionsMovable(true);
   header->setSectionResizeMode(QHeaderView::Interactive);
-  header->setStyleSheet(header->styleSheet() + QString(R"(
+  header->setStyleSheet(QString(R"(
+    QHeaderView {
+      padding-left: %1px;
+    }
+
+    QHeaderView::section {
+      background-color: #FFFFFF;
+      background-image: url(:/Icons/column-border.png);
+      background-position: left;
+      background-repeat: repeat;
+      border: none;
+      color: #4B23A0;
+      font-family: Roboto;
+      font-weight: 550;
+      padding-left: %1px;
+      padding-right: %1px;
+    }
+
     QHeaderView::section::first {
       background: none;
       background-color: #FFFFFF;
-    })"));
+    })").arg(scale_width(8)).arg(scale_height(12)));
   return header;
 }
