@@ -578,8 +578,34 @@ namespace Nexus::MarketDataService {
     if(!symbol.is_initialized()) {
       return;
     }
-    auto security = Security(std::move(*symbol), m_config.m_market,
-      m_config.m_country);
+    auto listingMarket = message.GetBusinessField<std::string>(554);
+    if(!listingMarket) {
+      return;
+    }
+    auto market = [&] {
+      if(*listingMarket == "T") {
+        return DefaultMarkets::TSX();
+      } else if(*listingMarket == "V") {
+        return DefaultMarkets::TSXV();
+      } else if(*listingMarket == "N") {
+        return DefaultMarkets::CSE();
+      } else if(*listingMarket == "O") {
+        return DefaultMarkets::OMGA();
+      } else if(*listingMarket == "Y") {
+        return DefaultMarkets::NYSE();
+      } else if(*listingMarket == "Q") {
+        return DefaultMarkets::NASDAQ();
+      } else if(*listingMarket == "A") {
+        return DefaultMarkets::ASEX();
+      } else if(*listingMarket == "E") {
+        return DefaultMarkets::NEOE();
+      }
+      return MarketCode();
+    }();
+    if(market == MarketCode()) {
+      return;
+    }
+    auto security = Security(std::move(*symbol), market, m_config.m_country);
     auto name = message.GetBusinessField<std::string>(177).value_or("");
     auto boardLot = message.GetBusinessField<std::int64_t>(115).value_or(0);
     auto info = SecurityInfo(std::move(security), std::move(name), "",
