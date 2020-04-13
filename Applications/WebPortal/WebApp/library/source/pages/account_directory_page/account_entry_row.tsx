@@ -4,12 +4,11 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { AccountEntry, DisplaySize, RolePanel } from '../..';
 
-
 interface Properties {
   displaySize: DisplaySize;
+  isOpen: boolean;
   account?: AccountEntry;
   filter?: string;
-  isOpen: boolean;
   onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
@@ -21,8 +20,8 @@ interface State {
 /** Displays a account entry or a empty entry. */
 export class AccountEntryRow extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    filter: '',
     account: null as AccountEntry,
+    filter: '',
     onDirectoryEntryClick: () => {}
   }
 
@@ -53,7 +52,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       }
     })();
     const dynamic_style = (() => {
-      if(this.props.account){
+      if(this.props.account) {
         return AccountEntryRow.DYNAMIC_STYLE.entry;
       } else {
         return null;
@@ -91,7 +90,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     const roles = (() =>{
       if(this.props.account) {
-        return ( 
+        return (
           <div style={AccountEntryRow.STYLE.rolesWrapper}>
             <RolePanel roles={this.props.account.roles}/>
           </div>);
@@ -106,7 +105,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) => (
           <div key={id}
-              className={css( dynamic_style, (animation_style as any)[state])}
+              className={css(dynamic_style, (animation_style as any)[state])}
               onClick={() =>
                 this.props.onDirectoryEntryClick(this.props.account.account)}>
             {text}
@@ -232,7 +231,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     }
   });
   private static readonly TIMEOUTS = {
-    enter: 1,
+    enter: 5,
     entered: 200,
     exit: 200,
     exited:  200

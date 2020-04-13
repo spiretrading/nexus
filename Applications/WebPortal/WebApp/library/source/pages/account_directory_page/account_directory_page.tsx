@@ -166,7 +166,6 @@ export class AccountDirectoryPage extends React.Component<Properties> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      overflowY: 'auto' as 'auto',
       justifyContent: 'center',
       padding: '18px',
       paddingBottom: '40px'
