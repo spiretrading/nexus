@@ -155,8 +155,8 @@ export class AccountDirectoryPage extends React.Component<Properties> {
               {cards}
             </div>
           </div>
-      </div>
-    </PageWrapper>);
+        </div>
+      </PageWrapper>);
   }
 
   private static readonly STYLE = {
