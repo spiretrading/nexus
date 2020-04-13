@@ -3,7 +3,6 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../..';
-import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
@@ -16,14 +15,16 @@ interface Properties {
   /** The roles of the user looking at the directory page. */
   roles: Nexus.AccountRoles;
 
+  /** The groups to display. */
   groups: Beam.Set<Beam.DirectoryEntry>;
 
-  // The groups that are open and the accounts that belong to   those groups.
+  /** The groups that are open and the accounts that belong to those groups. */
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
+  /** The filter used to return a subset of groups. */
   filter : string;
 
-  // The groups that have one or more accounts that match a filter.
+  /** The accounts that match the current filter. */
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
  /** Called when the value inside the filter changes. */
@@ -46,12 +47,6 @@ export class AccountDirectoryPage extends React.Component<Properties> {
     onNewGroupClick: () => {},
     onNewAccountClick: () => {}
   };
-
-  constructor(props: Properties) {
-    super(props);
-    //this.onChange = this.onChange.bind(this);
-    //this.onCardClick = this.onCardClick.bind(this);
-  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
