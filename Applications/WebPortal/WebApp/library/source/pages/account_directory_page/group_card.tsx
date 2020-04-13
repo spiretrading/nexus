@@ -201,7 +201,7 @@ export class GroupCard extends React.Component<Properties, State> {
                 {accounts}
               </div>
               <div style={
-                    (GroupCard.bottomPaddingAnimationStyle as any)[state]}>
+(GroupCard.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
               </div>
             </div>
@@ -212,11 +212,18 @@ export class GroupCard extends React.Component<Properties, State> {
 
   static getDerivedStateFromProps(props: Properties, state: State) {
     if(!props.isOpen && !state.isOpen && props.accounts.length !== state.localAccounts.length) {
+      console.log('filter :D');  
+      return {localAccounts: props.accounts};
+    }
+    if(props.isOpen && !state.isOpen && state.localAccounts.length === 0) {
+      console.log('yooooo');
       return {localAccounts: props.accounts};
     }
     if(props.isOpen && !state.isOpen) {
-      return {isOpen: true, localAccounts: props.accounts};
+      console.log('opening');
+      return {isOpen: true};
     } else if(!props.isOpen && state.isOpen) {
+      console.log('closing');
       return {isOpen: false};
     }
     return null;
