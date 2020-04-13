@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../..';
+import { DisplaySize, PageWrapper } from '../..';
 import { AccountEntry } from './account_entry';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
@@ -117,11 +117,28 @@ export class AccountDirectoryPage extends React.Component<Properties> {
           onDropDownClick={() => this.props.onCardClick(group)}/>);
     }
     return (
-      <div style={AccountDirectoryPage.STYLE.page}>
-        <div style={contentWidth}>
-          <div id='header' style={headerBoxStyle}>
-            <div style={verticalButtonVisibility}>
-              <div style={buttonBoxStyle}>
+      <PageWrapper>
+        <div style={AccountDirectoryPage.STYLE.page}>
+          <div style={contentWidth}>
+            <div id='header' style={headerBoxStyle}>
+              <div style={verticalButtonVisibility}>
+                <div style={buttonBoxStyle}>
+                  <button className={css(buttonStyle)}
+                      onClick={this.props.onNewAccountClick}>
+                    New Account
+                  </button>
+                  <div style={AccountDirectoryPage.STYLE.spacing}/>
+                  <button onClick={this.props.onNewGroupClick}
+                      className={css(buttonStyle)}>
+                    New Group
+                  </button>
+                </div>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
+              </div>
+              <FilterBar value={this.props.filter} 
+                onChange={this.props.onFilterChange}/>
+              <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
                 <button className={css(buttonStyle)}
                     onClick={this.props.onNewAccountClick}>
                   New Account
@@ -132,28 +149,14 @@ export class AccountDirectoryPage extends React.Component<Properties> {
                   New Group
                 </button>
               </div>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
             </div>
-            <FilterBar value={this.props.filter} onChange={this.props.onFilterChange}/>
-            <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button className={css(buttonStyle)}
-                  onClick={this.props.onNewAccountClick}>
-                New Account
-              </button>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button onClick={this.props.onNewGroupClick}
-                  className={css(buttonStyle)}>
-                New Group
-              </button>
+            <div style={AccountDirectoryPage.STYLE.spacing}/>
+            <div id='group_cards'>
+              {cards}
             </div>
           </div>
-          <div style={AccountDirectoryPage.STYLE.spacing}/>
-          <div id='group_cards'>
-            {cards}
-          </div>
-        </div>
-    </div>);
+      </div>
+    </PageWrapper>);
   }
 
   private static readonly STYLE = {
