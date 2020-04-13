@@ -27,10 +27,10 @@ interface Properties {
   /** The accounts that match the current filter. */
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
- /** Called when the value inside the filter changes. */
+  /** Called when the filter value changes. */
   onFilterChange?:(filter: string) => void;
 
- /** Called when a card is clicked on. */
+  /** Called when a card is clicked on. */
   onCardClick?:(group: Beam.DirectoryEntry) => void;
 
   /** Called when the user wants to make a new group. */
