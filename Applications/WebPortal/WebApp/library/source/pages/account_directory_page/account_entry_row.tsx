@@ -89,8 +89,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           </div>);
       } else if(this.props.account) {
         return (
-          <div style={{...rowStyle,
-              ...AccountEntryRow.STYLE.text}}>
+          <div style={{...rowStyle, ...AccountEntryRow.STYLE.text}}>
             {this.props.account.account.name.toString()}
           </div>);
       } else {
