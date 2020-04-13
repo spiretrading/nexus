@@ -75,7 +75,28 @@ namespace Nexus::MarketDataService {
   /** Returns a row representing a SecurityInfo. */
   inline const auto& GetSecurityInfoRow() {
     static auto ROW = Viper::Row<SecurityInfo>().
-      extend(GetSecurityRow(), &SecurityInfo::m_security).
+      extend(Viper::Row<Security>().
+        add_column("symbol", Viper::varchar(16),
+          [] (const auto& row) {
+            return row.GetSymbol();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(value), row.GetMarket(), row.GetCountry());
+          }).
+        add_column("market", Viper::varchar(4),
+          [] (const auto& row) {
+            return row.GetMarket();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(row.GetSymbol()), value, row.GetCountry());
+          }).
+        add_column("country",
+          [] (const auto& row) {
+            return row.GetCountry();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(row.GetSymbol()), row.GetMarket(), value);
+          }), &SecurityInfo::m_security).
       add_column("name", Viper::varchar(256), &SecurityInfo::m_name).
       add_column("sector", Viper::varchar(256), &SecurityInfo::m_sector).
       add_column("board_lot", &SecurityInfo::m_boardLot).
