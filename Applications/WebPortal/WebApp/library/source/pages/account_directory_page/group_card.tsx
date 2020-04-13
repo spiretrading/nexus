@@ -33,7 +33,6 @@ interface Properties {
 }
 
 interface State {
-  filter: string;
   isHeaderHovered: boolean;
   isOpen: boolean;
   localAccounts: AccountEntry[];
@@ -49,7 +48,6 @@ export class GroupCard extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
-      filter: '',
       isHeaderHovered: false,
       isOpen: false,
       localAccounts: []
@@ -200,8 +198,8 @@ export class GroupCard extends React.Component<Properties, State> {
               <div style={GroupCard.STYLE.entryListWrapper}>
                 {accounts}
               </div>
-              <div style={
-                    (GroupCard.bottomPaddingAnimationStyle as any)[state]}>
+              <div style=
+                  {(GroupCard.bottomPaddingAnimationStyle as any)[state]}>
                 <div style={{height:'20px'}}/>
               </div>
             </div>
@@ -210,19 +208,17 @@ export class GroupCard extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  static getDerivedStateFromProps(props: Properties, state: State) {
-    if(!props.isOpen && !state.isOpen && props.accounts.length !== state.localAccounts.length) {
-      console.log('filter :D');  
+  public static getDerivedStateFromProps(props: Properties, state: State) {
+    if(!props.isOpen && !state.isOpen && props.accounts.length !==
+        state.localAccounts.length) {
       return {localAccounts: props.accounts};
-    }
-    if(props.isOpen && !state.isOpen) {
-      console.log('opening');
+    }else if(props.isOpen && !state.isOpen) {
       return {isOpen: true, localAccounts: props.accounts};
     } else if(!props.isOpen && state.isOpen) {
-      console.log('closing');
       return {isOpen: false};
+    } else {
+      return null;
     }
-    return null;
   }
 
   private onGroupMouseEnter() {
