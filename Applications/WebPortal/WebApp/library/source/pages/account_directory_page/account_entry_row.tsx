@@ -2,8 +2,8 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, RolePanel, AccountEntry} from '../..';
-import { AccountDirectoryController } from './account_directory_controller';
+import { AccountEntry, DisplaySize, RolePanel } from '../..';
+
 
 interface Properties {
   displaySize: DisplaySize;
@@ -18,6 +18,7 @@ interface State {
   isOpen: boolean;
 }
 
+/** Displays a account entry or a empty entry. */
 export class AccountEntryRow extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     filter: '',
@@ -34,7 +35,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    console.log('render');
     const accountsLabelStyle = (() => {
       switch(this.props.displaySize) {
         case(DisplaySize.SMALL):
@@ -45,7 +45,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           return AccountEntryRow.STYLE.accountLabelLarge;
       }
     })();
-    console.log();
     const id = (() => {
       if(this.props.account) {
         return this.props.account.account.id;
@@ -53,15 +52,13 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return 0;
       }
     })();
-    console.log('id');
     const dynamic_style = (() => {
       if(this.props.account){
-        return AccountEntryRow.DYNAMIC_STYLE.accountBox;
+        return AccountEntryRow.DYNAMIC_STYLE.entry;
       } else {
         return null;
       }
     })();
-    console.log('dynamic style');
     const animation_style = (() => {
       if(!this.props.filter) {
         return AccountEntryRow.accountLabelAnimationStyle;
@@ -69,7 +66,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return AccountEntryRow.noAnimationStyle;
       }
     })();
-    console.log('animation style');
     const text = (() => {
       if(this.props.filter !== '' && this.props.account) {
         return (
@@ -94,7 +90,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           </div>);
       }
     })();
-    console.log('content stuffs');
     const roles = (() =>{
       if(this.props.account) {
         return ( 
@@ -105,7 +100,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return null;
       }
     })();
-    console.log('roles');
     return (
       <Transition in={this.state.isOpen}
           appear={true}
@@ -113,8 +107,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) => (
           <div key={id}
-              className={css( dynamic_style,
-                (animation_style as any)[state])}
+              className={css( dynamic_style, (animation_style as any)[state])}
               onClick={() =>
                 this.props.onDirectoryEntryClick(this.props.account.account)}>
             {text}
@@ -123,7 +116,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         )}
       </Transition>);
   }
-  
 
   public componentDidMount() {
     this.setState({afterFirstRender: true});
@@ -142,34 +134,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    headerTextOpen: {
-      marginLeft: '18px',
-      font: '500 14px Roboto',
-      color: '#4B23A0',
-      cursor: 'pointer' as 'pointer',
-      flexGrow: 1,
-      height: '34px',
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'flex-start' as 'flex-start'
-    },
-    headerText: {
-      marginLeft: '18px',
-      font: '400 14px Roboto',
-      color: '#000000',
-      cursor: 'pointer' as 'pointer',
-      flexGrow: 1,
-      height: '34px',
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'flex-start' as 'flex-start'
-    },
     accountLabelMedium: {
       marginLeft: '38px'
     },
@@ -236,7 +200,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
-    accountBox: {
+    entry: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
       display: 'flex' as 'flex',
@@ -257,12 +221,10 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   });
   private static readonly accountLabelAnimationStyle = StyleSheet.create({
     entering: {
-      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)'
     },
     entered: {
-      width: '100%',
       maxHeight: '34px',
       transform: 'scaleY(1)',
       transitionProperty: 'max-height, transform',
@@ -271,7 +233,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       overflow: 'hidden' as 'hidden'
     },
     exiting: {
-      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
@@ -280,7 +241,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       overflow: 'hidden' as 'hidden'
     },
     exited: {
-      width: '100%',
       maxHeight: 0,
       transform: 'scaleY(0)',
       transformOrigin: 'top' as 'top',
@@ -289,17 +249,12 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   });
   private static readonly noAnimationStyle = StyleSheet.create({
     entering: {
-      width: '100%'
     },
     entered: {
-      width: '100%'
-
     },
     exiting: {
-      width: '100%'
     },
     exited: {
-      width: '100%'
     }
   });
   private static readonly TIMEOUTS = {
