@@ -2,6 +2,7 @@ export * from './account_directory_controller';
 export * from './account_directory_model';
 export * from './account_directory_page';
 export * from './account_entry';
+export * from './account_entry_row';
 export * from './cached_account_directory_model';
 export * from './create_account_page';
 export * from './filter_bar';

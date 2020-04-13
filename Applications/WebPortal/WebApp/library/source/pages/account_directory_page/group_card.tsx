@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine, RolePanel } from '../..';
 import { AccountEntry } from './account_entry';
+import { AccountEntryRow } from './account_entry_row';
 
 interface Properties {
 
@@ -120,21 +121,12 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0 &&
             this.props.filter) {
           accounts.push(
-            <div className={css(GroupCard.DYNAMIC_STYLE.accountBox)}
-              key={account.account.id}
-              onClick={() =>
-                this.props.onDirectoryEntryClick(account.account)}>
-            <div style={{...accountsLabelStyle,
-                ...GroupCard.STYLE.accountLabelText}}>
-              <div style={GroupCard.STYLE.highlightedText}>
-                {account.account.name.slice(0, this.props.filter.length)}
-              </div>
-              {account.account.name.slice(this.props.filter.length)}
-            </div>
-            <div style={GroupCard.STYLE.rolesWrapper}>
-              <RolePanel roles={account.roles}/>
-            </div>
-          </div>);
+          <AccountEntryRow 
+              displaySize={this.props.displaySize}
+              account={account}
+              filter={this.props.filter}
+              isOpen={this.state.isOpen}
+              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);;
           if(!this.state.isOpen && this.state.localAccounts.indexOf(account) ===
               this.state.localAccounts.length - 1) {
             accounts.push(<div style={{height: topAccountPadding}}/>);
@@ -142,41 +134,18 @@ export class GroupCard extends React.Component<Properties, State> {
           }
         } else {
           accounts.push(
-            <Transition in={this.state.isOpen}
-                appear={true}
-                key={account.account.id}
-                timeout={GroupCard.TIMEOUTS}>
-              {(state) => (
-                <div key={account.account.id}
-                    className={css(GroupCard.DYNAMIC_STYLE.accountBox,
-                      (GroupCard.accountLabelAnimationStyle as any)[state])}
-                    onClick={() =>
-                      this.props.onDirectoryEntryClick(account.account)}>
-                  <div style={{...accountsLabelStyle,
-                      ...GroupCard.STYLE.accountLabelText}}>
-                    {account.account.name.toString()}
-                  </div>
-                  <div style={GroupCard.STYLE.rolesWrapper}>
-                    <RolePanel roles={account.roles}/>
-                  </div>
-                </div>
-              )}
-            </Transition>);
+            <AccountEntryRow 
+              displaySize={this.props.displaySize}
+              account={account}
+              isOpen={this.state.isOpen}
+              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);
         }
       }
     } else {
       accounts.push(
-        <Transition in={this.state.isOpen}
-            timeout={GroupCard.TIMEOUTS}
-            key={this.props.group.id}>
-          {(state) => (
-            <div key={this.props.group.id} style={{...accountsLabelStyle,
-                ...GroupCard.STYLE.emptyLabelText,
-                ...(GroupCard.emptyLabelAnimationStyle as any)[state]}}>
-              Empty
-            </div>
-          )}
-        </Transition>);
+        <AccountEntryRow 
+          displaySize={this.props.displaySize}
+          isOpen={this.state.isOpen}/>);
     }
     return (
       <VBoxLayout width='100%'>
