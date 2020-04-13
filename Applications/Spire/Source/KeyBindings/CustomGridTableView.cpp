@@ -1,12 +1,23 @@
 #include "Spire/KeyBindings/CustomGridTableView.hpp"
 #include <QHeaderView>
+#include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 
 CustomGridTableView::CustomGridTableView(QWidget* parent)
-  : QTableView(parent) {}
+    : QTableView(parent) {
+  setMouseTracking(true);
+}
+
+void CustomGridTableView::leaveEvent(QEvent* event) {
+  m_last_mouse_pos.reset();
+}
+
+void CustomGridTableView::mouseMoveEvent(QMouseEvent* event) {
+  m_last_mouse_pos = event->pos();
+}
 
 void CustomGridTableView::paintEvent(QPaintEvent* event) {
   QTableView::paintEvent(event);
@@ -23,19 +34,30 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
   if(selectionModel()->hasSelection() &&
       state() == QAbstractItemView::EditingState) {
     auto index = selectionModel()->selection().indexes().first();
-    if(index.flags().testFlag(Qt::ItemIsEditable)) {
-      painter.setPen(QColor("#4B23A0"));
-      auto [pos_y, row_height] = [&] {
-        auto y = rowViewportPosition(index.row());
-        auto height = rowHeight(index.row());
-        if(index.row() > 0) {
-          return std::tuple(y - scale_height(1), height);
-        }
-        return std::tuple(y, height - scale_height(1));
-      }();
-      painter.drawRect(
-        columnViewportPosition(index.column()) - scale_width(1),
-        pos_y, columnWidth(index.column()), row_height);
+    draw_border(index, &painter);
+  }
+  if(m_last_mouse_pos) {
+    auto index = indexAt(*m_last_mouse_pos);
+    if(index.isValid() && index.flags().testFlag(Qt::ItemIsEditable)) {
+      draw_border(index, &painter);
     }
+  }
+}
+
+void CustomGridTableView::draw_border(const QModelIndex& index,
+    QPainter* painter) {
+  if(index.flags().testFlag(Qt::ItemIsEditable)) {
+    painter->setPen(QColor("#4B23A0"));
+    auto [pos_y, row_height] = [&] {
+      auto y = rowViewportPosition(index.row());
+      auto height = rowHeight(index.row());
+      if(index.row() > 0) {
+        return std::tuple(y - scale_height(1), height);
+      }
+      return std::tuple(y, height - scale_height(1));
+    }();
+    painter->drawRect(
+      columnViewportPosition(index.column()) - scale_width(1),
+      pos_y, columnWidth(index.column()), row_height);
   }
 }
