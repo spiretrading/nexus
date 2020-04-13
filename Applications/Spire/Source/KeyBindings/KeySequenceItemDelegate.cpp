@@ -52,10 +52,7 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   painter->save();
   painter->fillRect(option.rect, Qt::white);
-  if(option.state.testFlag(QStyle::State_Editing)) {
-    painter->setPen(QColor("#4B23A0"));
-    painter->drawRect(option.rect);
-  } else {
+  if(!option.state.testFlag(QStyle::State_Editing)) {
     auto sequence = index.data(Qt::DisplayRole).value<QKeySequence>();
     if(!sequence.isEmpty()) {
       draw_key_sequence(sequence, option.rect, painter);
