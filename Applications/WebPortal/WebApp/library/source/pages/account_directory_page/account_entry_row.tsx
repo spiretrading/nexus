@@ -35,14 +35,14 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const accountsLabelStyle = (() => {
+    const rowStyle = (() => {
       switch(this.props.displaySize) {
         case(DisplaySize.SMALL):
           return null;
         case(DisplaySize.MEDIUM):
-          return AccountEntryRow.STYLE.accountLabelMedium;
+          return AccountEntryRow.STYLE.contentMedium;
         case(DisplaySize.LARGE):
-          return AccountEntryRow.STYLE.accountLabelLarge;
+          return AccountEntryRow.STYLE.contentLarge;
       }
     })();
     const id = (() => {
@@ -61,7 +61,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     const animation_style = (() => {
       if(!this.props.filter) {
-        return AccountEntryRow.accountLabelAnimationStyle;
+        return AccountEntryRow.animationStyle;
       }else {
         return AccountEntryRow.noAnimationStyle;
       }
@@ -69,23 +69,22 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     const text = (() => {
       if(this.props.filter !== '' && this.props.account) {
         return (
-          <div style={{...accountsLabelStyle,
-              ...AccountEntryRow.STYLE.accountLabelText}}>
+          <div style={{...rowStyle, ...AccountEntryRow.STYLE.text}}>
             <div style={AccountEntryRow.STYLE.highlightedText}>
-              {this.props.account.account.name.slice(0, this.props.filter.length)}
+              {this.props.account.account.name.slice(
+                0, this.props.filter.length)}
             </div>
             {this.props.account.account.name.slice(this.props.filter.length)}
           </div>);
       } else if(this.props.account) {
         return (
-          <div style={{...accountsLabelStyle,
-              ...AccountEntryRow.STYLE.accountLabelText}}>
+          <div style={{...rowStyle,
+              ...AccountEntryRow.STYLE.text}}>
             {this.props.account.account.name.toString()}
           </div>);
       } else {
         return (
-          <div style={{...accountsLabelStyle,
-              ...AccountEntryRow.STYLE.accountLabelText}}>
+          <div style={{...rowStyle, ...AccountEntryRow.STYLE.emptyText}}>
             Empty
           </div>);
       }
@@ -134,13 +133,13 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE = {
-    accountLabelMedium: {
+    contentMedium: {
       marginLeft: '38px'
     },
-    accountLabelLarge: {
+    contentLarge: {
       marginLeft: '38px'
     },
-    accountLabelText: {
+    text: {
       font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 0,
@@ -150,7 +149,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       flexDirection: 'row' as 'row',
       flexWrap: 'nowrap' as 'nowrap'
     },
-    emptyLabelText: {
+    emptyText: {
       font: '400 14px Roboto',
       color: '#8C8C8C',
       paddingLeft: '10px',
@@ -172,34 +171,9 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       width: '80px',
       flexGrow: 0,
       flexShrink: 0
-    },
-    dropDownButtonWrapper: {
-      width: '20px',
-      height: '20px',
-      flexGrow: 0,
-      flexShrink: 0,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center'
-    },
-    mouseOverStyle: {
-      backgroundColor: '#F8F8F8'
-    },
-    header: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '40px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      paddingLeft: '10px',
-      paddingRight: '10px'
     }
   };
-  private static DYNAMIC_STYLE = StyleSheet.create({
+  private static readonly DYNAMIC_STYLE = StyleSheet.create({
     entry: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -219,7 +193,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly accountLabelAnimationStyle = StyleSheet.create({
+  private static readonly animationStyle = StyleSheet.create({
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'
