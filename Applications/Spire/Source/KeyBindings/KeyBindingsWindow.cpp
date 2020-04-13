@@ -90,18 +90,30 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
     &KeyBindingsWindow::on_tab_bar_clicked);
   auto task_keys_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(task_keys_widget, tr("Task Keys"));
+  auto task_keys_layout = new QVBoxLayout(task_keys_widget);
+  task_keys_layout->setContentsMargins({});
+  task_keys_layout->setSpacing(0);
+  auto task_text = tr("Use <b>F1-F12</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a key binding.");
+  auto task_keys_label = new QLabel(task_text, this);
+  task_keys_label->setFixedHeight(scale_height(30));
+  auto tab_label_style = QString(R"(
+    font-family: Roboto;
+    font-size: %1px;
+    margin-left: %2px;
+  )").arg(scale_height(10)).arg(scale_width(8));
+  task_keys_label->setStyleSheet(tab_label_style);
+  task_keys_layout->addWidget(task_keys_label);
+  m_task_keys_table = new TaskKeyBindingsTableView(
+    m_key_bindings.build_order_bindings(), this);
+  task_keys_layout->addWidget(m_task_keys_table);
   auto cancel_keys_widget = new QWidget(m_tab_widget);
   auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);
   cancel_keys_layout->setContentsMargins({});
   cancel_keys_layout->setSpacing(0);
-  auto cancel_text = tr(R"(Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.)");
+  auto cancel_text = tr("Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.");
   auto cancel_keys_label = new QLabel(cancel_text, this);
   cancel_keys_label->setFixedHeight(scale_height(30));
-  cancel_keys_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;
-    margin-left: %2px;
-  )").arg(scale_height(10)).arg(scale_width(8)));
+  cancel_keys_label->setStyleSheet(tab_label_style);
   cancel_keys_layout->addWidget(cancel_keys_label);
   m_cancel_keys_table = new CancelKeyBindingsTableView(
     m_key_bindings.build_cancel_bindings(), this);
@@ -137,8 +149,8 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
   ok_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(ok_button);
   button_layout->addSpacing(scale_width(8));
-  m_tab_widget->setCurrentIndex(1);
-  on_tab_bar_clicked(1);
+  m_tab_widget->setCurrentIndex(0);
+  on_tab_bar_clicked(0);
 }
 
 const KeyBindings& KeyBindingsWindow::get_key_bindings() const {

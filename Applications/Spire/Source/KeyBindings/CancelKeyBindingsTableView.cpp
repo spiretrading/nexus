@@ -3,7 +3,6 @@
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ItemPaddingDelegate.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
