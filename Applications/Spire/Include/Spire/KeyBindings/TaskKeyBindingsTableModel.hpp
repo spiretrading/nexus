@@ -2,6 +2,7 @@
 #define SPIRE_TASK_KEY_BINDINGS_TABLE_MODEL_HPP
 #include <QAbstractTableModel>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
   
@@ -36,6 +37,7 @@ namespace Spire {
 
     private:
       std::vector<Action> m_key_bindings;
+      CustomVariantItemDelegate* m_item_delegate;
   };
 }
 

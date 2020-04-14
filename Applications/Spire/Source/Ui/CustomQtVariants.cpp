@@ -35,6 +35,8 @@ namespace {
       return QVariant::fromValue(any_cast<Money>(value));
     } else if(value.type() == typeid(Quantity)) {
       return QVariant::fromValue(any_cast<Quantity>(value));
+    } else if(value.type() == typeid(Region)) {
+      return QVariant::fromValue(any_cast<Region>(value));
     } else if(value.type() == typeid(OrderStatus)) {
       return QVariant::fromValue(any_cast<OrderStatus>(value));
     } else if(value.type() == typeid(OrderType)) {
@@ -140,6 +142,12 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().to_string();
+  } else if(value.canConvert<Region>()) {
+    auto region = value.value<Region>();
+    if(region.IsGlobal()) {
+      return QObject::tr("Global");
+    }
+    return QString::fromStdString(region.GetName());
   } else if(value.canConvert<Security>()) {
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));

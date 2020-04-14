@@ -2,18 +2,38 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Spire/Utility.hpp"
 
+using namespace boost;
+using namespace Nexus;
 using namespace Spire;
 using Action = TaskKeyBindingsTableModel::Action;
 
 namespace {
   const auto COLUMN_COUNT = 9;
   const auto MIN_ROW_COUNT = 10;
+
+  QVariant to_variant(const any& value) {
+    if(value.type() == typeid(Quantity)) {
+      return QVariant::fromValue(any_cast<Quantity>(value));
+    } else if(value.type() == typeid(Region)) {
+      return QVariant::fromValue(any_cast<Region>(value));
+    } else if(value.type() == typeid(OrderType)) {
+      return QVariant::fromValue(any_cast<OrderType>(value));
+    } else if(value.type() == typeid(Security)) {
+      return QVariant::fromValue(any_cast<Security>(value));
+    } else if(value.type() == typeid(Side)) {
+      return QVariant::fromValue(any_cast<Side>(value));
+    } else if(value.type() == typeid(TimeInForce)) {
+      return QVariant::fromValue(any_cast<TimeInForce>(value));
+    }
+    return QVariant();
+  }
 }
 
 TaskKeyBindingsTableModel::TaskKeyBindingsTableModel(
   std::vector<Action> bindings, QObject* parent)
   : QAbstractTableModel(parent),
-    m_key_bindings(std::move(bindings)) {}
+    m_key_bindings(std::move(bindings)),
+    m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
 void TaskKeyBindingsTableModel::set_key_bindings(
     const std::vector<Action>& bindings) {
@@ -40,24 +60,55 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
         return QString::fromStdString(
           m_key_bindings[index.row()].m_action.m_name);
       case 1:
+        {
+          auto& securities =
+            m_key_bindings[index.row()].m_region.GetSecurities();
+          if(!securities.empty()) {
+            return QString::fromStdString(securities.begin()->GetSymbol());
+          }
+        }
+        break;
       case 2:
+        return m_item_delegate->displayText(
+          to_variant(m_key_bindings[index.row()].m_region), QLocale());
       case 3:
+        {
+          auto type = m_key_bindings[index.row()].m_action.m_type;
+          if(type) {
+            return m_item_delegate->displayText(to_variant(*type), QLocale());
+          }
+        }
+        break;
       case 4:
         {
           auto side = m_key_bindings[index.row()].m_action.m_side;
           if(side) {
-            return tr(ToString(*side).c_str());
+            return m_item_delegate->displayText(to_variant(*side), QLocale());
           }
         }
+        break;
       case 5:
         {
           auto quantity = m_key_bindings[index.row()].m_action.m_quantity;
           if(quantity) {
-            return QVariant::fromValue<Nexus::Quantity>(*quantity);
+            return m_item_delegate->displayText(to_variant(*quantity),
+              QLocale());
           }
         }
+        break;
       case 6:
+        {
+          auto time_in_force =
+            m_key_bindings[index.row()].m_action.m_time_in_force;
+          if(time_in_force &&
+              time_in_force->GetType() != TimeInForce::Type::NONE) {
+            return m_item_delegate->displayText(to_variant(*time_in_force),
+              QLocale());
+          }
+        }
+        break;
       case 7:
+        return "";
       case 8:
         return m_key_bindings[index.row()].m_sequence;
       default:
