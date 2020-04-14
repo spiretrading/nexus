@@ -147,19 +147,17 @@ export class GroupCard extends React.Component<Properties, State> {
             {this.props.group.name}
           </div>
         </div>
-    
-          {lineWhenOpen}
-          <div style={GroupCard.STYLE.entryListWrapper}>
-            {accounts}
-          </div>
-          <Transition in={this.state.isOpen} timeout={GroupCard.TIMEOUTS}>
-            {(state) => (
-              <div style= {(GroupCard.animationStyle as any)[state]}>
-                <div style={{height:'20px'}}/>
-              </div>
-            )}
-          </Transition>
-
+        {lineWhenOpen}
+        <div style={GroupCard.STYLE.entryListWrapper}>
+          {accounts}
+        </div>
+        <Transition in={this.state.isOpen} timeout={GroupCard.TIMEOUTS}>
+          {(state) => (
+            <div style= {(GroupCard.animationStyle as any)[state]}>
+              <div style={{height:'20px'}}/>
+            </div>
+          )}
+        </Transition>
       </VBoxLayout>);
   }
 

@@ -153,9 +153,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
               </div>
             </div>
             <div style={AccountDirectoryPage.STYLE.spacing}/>
-            <div>
-              {cards}
-            </div>
+            {cards}
           </div>
         </div>
       </PageWrapper>);
