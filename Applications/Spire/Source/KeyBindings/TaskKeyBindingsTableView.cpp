@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
+#include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -28,11 +29,16 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
-  auto item_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  item_delegate->connect_item_modified_signal([=] (auto index) {
-    on_key_sequence_modified(index);
+  auto security_delegate = new InputFieldItemDelegate({"One", "Two", "Three"}, this);
+  security_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
   });
-  set_column_delegate(8, item_delegate);
+  set_column_delegate(1, security_delegate);
+  auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
+  key_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(8, key_delegate);
 }
 
 void TaskKeyBindingsTableView::set_key_bindings(
@@ -41,7 +47,7 @@ void TaskKeyBindingsTableView::set_key_bindings(
   set_model(m_model);
 }
 
-void TaskKeyBindingsTableView::on_key_sequence_modified(
+void TaskKeyBindingsTableView::on_item_modified(
     const QModelIndex& index) const {
   m_modified_signal(KeyBindings::OrderActionBinding{});
 }

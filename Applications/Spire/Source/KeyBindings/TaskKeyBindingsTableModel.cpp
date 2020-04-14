@@ -9,7 +9,6 @@ using Action = TaskKeyBindingsTableModel::Action;
 
 namespace {
   const auto COLUMN_COUNT = 9;
-  const auto MIN_ROW_COUNT = 10;
 
   QVariant to_variant(const any& value) {
     if(value.type() == typeid(Quantity)) {
@@ -41,7 +40,7 @@ void TaskKeyBindingsTableModel::set_key_bindings(
 }
 
 int TaskKeyBindingsTableModel::rowCount(const QModelIndex& parent) const {
-  return max(static_cast<int>(m_key_bindings.size()) + 1, MIN_ROW_COUNT);
+  return m_key_bindings.size() + 1;
 }
 
 int TaskKeyBindingsTableModel::columnCount(const QModelIndex& parent) const {
