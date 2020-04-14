@@ -49,7 +49,9 @@ export class DashboardController extends React.Component<Properties, State> {
             model={this.accountModel} displaySize={this.props.displaySize}/>;
         case DashboardController.Page.DIRECTORY:
           return <AccountDirectoryController
-            displaySize={this.props.displaySize}/>;
+            displaySize={this.props.displaySize}
+            roles={this.props.model.roles}
+            model={this.props.model}/>;
       }
     })();
     return <DashboardPage roles={this.props.model.roles}
