@@ -34,6 +34,7 @@ interface Properties {
 interface State {
   comment: string;
   parameters: Nexus.RiskParameters;
+  isSubmitEnabled: boolean;
 }
 
 /** Displays a risk page. */
@@ -47,7 +48,8 @@ export class RiskPage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       comment: '',
-      parameters: this.props.parameters
+      parameters: this.props.parameters,
+      isSubmitEnabled: false
     }
     this.onCommentChange = this.onCommentChange.bind(this);
     this.onParametersChange = this.onParametersChange.bind(this);
@@ -88,7 +90,7 @@ export class RiskPage extends React.Component<Properties, State> {
           <SubmissionInput comment={this.state.comment}
             roles={this.props.roles} isError={this.props.isError}
             status={this.props.status} 
-            isEnabled
+            isEnabled={this.state.isSubmitEnabled}
             onChange={this.onCommentChange}
             onSubmit={this.onSubmit}/>
         </div>
@@ -96,11 +98,11 @@ export class RiskPage extends React.Component<Properties, State> {
   }
 
   private onCommentChange(comment: string) {
-    this.setState({comment: comment});
+    this.setState({isSubmitEnabled: true, comment: comment});
   }
 
   private onParametersChange(parameters: Nexus.RiskParameters) {
-    this.setState({parameters: parameters});
+    this.setState({isSubmitEnabled: true, parameters: parameters});
   }
 
   private onSubmit() {
