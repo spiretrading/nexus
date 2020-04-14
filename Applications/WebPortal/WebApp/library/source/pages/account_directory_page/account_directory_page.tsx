@@ -28,10 +28,10 @@ interface Properties {
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
   /** Called when the filter value changes. */
-  onFilterChange?:(filter: string) => void;
+  onFilterChange?: (filter: string) => void;
 
   /** Called when a card is clicked on. */
-  onCardClick?:(group: Beam.DirectoryEntry) => void;
+  onCardClick?: (group: Beam.DirectoryEntry) => void;
 
   /** Called when the user wants to make a new group. */
   onNewGroupClick?: () => void;
@@ -44,6 +44,8 @@ interface Properties {
 /** Displays a directory of accounts. */
 export class AccountDirectoryPage extends React.Component<Properties> {
   public static readonly defaultProps = {
+    onFilterChange: () => {},
+    onCardClick: () => {},
     onNewGroupClick: () => {},
     onNewAccountClick: () => {}
   };
@@ -120,7 +122,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
       <PageWrapper>
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
-            <div id='header' style={headerBoxStyle}>
+            <div style={headerBoxStyle}>
               <div style={verticalButtonVisibility}>
                 <div style={buttonBoxStyle}>
                   <button className={css(buttonStyle)}
@@ -151,7 +153,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
               </div>
             </div>
             <div style={AccountDirectoryPage.STYLE.spacing}/>
-            <div id='group_cards'>
+            <div>
               {cards}
             </div>
           </div>

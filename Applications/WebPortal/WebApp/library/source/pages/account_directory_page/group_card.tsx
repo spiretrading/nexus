@@ -27,7 +27,7 @@ interface Properties {
   onDropDownClick?: () => void;
 
   /** Called when a directory is clicked on.
-   * @param entry - A account or directory entry.
+   * @param entry - The account or directory entry.
    */
   onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
@@ -147,7 +147,7 @@ export class GroupCard extends React.Component<Properties, State> {
             {this.props.group.name}
           </div>
         </div>
-        <div>
+    
           {lineWhenOpen}
           <div style={GroupCard.STYLE.entryListWrapper}>
             {accounts}
@@ -159,7 +159,7 @@ export class GroupCard extends React.Component<Properties, State> {
               </div>
             )}
           </Transition>
-        </div>
+
       </VBoxLayout>);
   }
 
@@ -167,7 +167,7 @@ export class GroupCard extends React.Component<Properties, State> {
     if(!props.isOpen && !state.isOpen && props.accounts.length !==
         state.localAccounts.length) {
       return {localAccounts: props.accounts};
-    }else if(props.isOpen && !state.isOpen) {
+    } else if(props.isOpen && !state.isOpen) {
       return {isOpen: true, localAccounts: props.accounts};
     } else if(!props.isOpen && state.isOpen) {
       return {isOpen: false};

@@ -73,7 +73,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     const animation_style = (() => {
       if(!this.props.filter) {
         return AccountEntryRow.animationStyle;
-      }else {
+      } else {
         return AccountEntryRow.noAnimationStyle;
       }
     })();
