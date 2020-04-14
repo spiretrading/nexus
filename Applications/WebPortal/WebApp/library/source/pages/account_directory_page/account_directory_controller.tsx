@@ -1,9 +1,6 @@
-import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../..';
 import { LoadingPage } from '..';
-import { AccountDirectoryModel } from '.';
-import { AccountDirectoryPage } from '.';
 
 interface Properties {
 
@@ -27,7 +24,7 @@ export class AccountDirectoryController extends
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
-    return <LoadingPage/>;
+      return <LoadingPage/>;
     }
   }
 }
