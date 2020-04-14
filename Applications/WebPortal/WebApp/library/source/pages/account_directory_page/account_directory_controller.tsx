@@ -50,7 +50,7 @@ export class AccountDirectoryController extends
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
-      onFilterChange={this.onChange} 
+      onFilterChange={this.onFilterChange} 
       onCardClick={this.onCardClick}/>
   }
 
@@ -67,7 +67,7 @@ export class AccountDirectoryController extends
     this.setState({openedGroups: this.state.openedGroups});
   }
 
-  private async onChange(newFilter: string) {
+  private async onFilterChange(newFilter: string) {
     clearTimeout(this.timerId);
     this.setState({filter: newFilter});
     if(newFilter !== '') {
