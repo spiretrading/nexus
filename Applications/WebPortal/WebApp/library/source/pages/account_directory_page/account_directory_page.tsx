@@ -2,8 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../..';
-import { AccountDirectoryModel } from './account_directory_model';
+import { DisplaySize, PageWrapper } from '../..';
 import { AccountEntry } from './account_entry';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
@@ -13,11 +12,26 @@ interface Properties {
   /** Determines the layout used to display the page. */
   displaySize: DisplaySize;
 
-  /** Model that contains imformation about the accounts. */
-  model: AccountDirectoryModel;
-
   /** The roles of the user looking at the directory page. */
   roles: Nexus.AccountRoles;
+
+  /** The groups to display. */
+  groups: Beam.Set<Beam.DirectoryEntry>;
+
+  /** The groups that are open and the accounts that belong to those groups. */
+  openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
+
+  /** The filter used to return a subset of groups. */
+  filter : string;
+
+  /** The accounts that match the current filter. */
+  filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
+
+  /** Called when the filter value changes. */
+  onFilterChange?: (filter: string) => void;
+
+  /** Called when a card is clicked on. */
+  onCardClick?: (group: Beam.DirectoryEntry) => void;
 
   /** Called when the user wants to make a new group. */
   onNewGroupClick?: () => void;
@@ -26,29 +40,15 @@ interface Properties {
   onNewAccountClick?: () => void;
 }
 
-interface State {
-  filter: string;
-  accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
-  openedGroups: Beam.Set<Beam.DirectoryEntry>;
-}
 
 /** Displays a directory of accounts. */
-export class AccountDirectoryPage extends React.Component<Properties, State> {
+export class AccountDirectoryPage extends React.Component<Properties> {
   public static readonly defaultProps = {
+    onFilterChange: () => {},
+    onCardClick: () => {},
     onNewGroupClick: () => {},
     onNewAccountClick: () => {}
   };
-
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      filter: '',
-      accounts: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
-      openedGroups: new Beam.Set<Beam.DirectoryEntry>()
-    };
-    this.onChange = this.onChange.bind(this);
-    this.onCardClick = this.onCardClick.bind(this);
-  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -101,23 +101,46 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     })();
     const cards = [];
-    for (const group of this.props.model.groups) {
-      const accounts = this.state.accounts.get(group) || [];
+    for (const group of this.props.groups) {
+      const accounts = (() => {
+        if(this.props.filter && !this.props.openedGroups.get(group)) {
+          return this.props.filteredGroups.get(group) || [];
+        } else {
+          return this.props.openedGroups.get(group) || [];
+        }
+      })();
       cards.push(
         <GroupCard key={group.id}
           displaySize={this.props.displaySize}
           group={group}
           accounts={accounts}
-          filter={this.state.filter}
-          isOpen={this.state.openedGroups.test(group)}
-          onDropDownClick={() => this.onCardClick(group)}/>);
+          filter={this.props.filter}
+          isOpen={this.props.openedGroups.get(group) !== undefined}
+          onDropDownClick={() => this.props.onCardClick(group)}/>);
     }
     return (
-      <div style={AccountDirectoryPage.STYLE.page}>
-        <div style={contentWidth}>
-          <div id='header' style={headerBoxStyle}>
-            <div style={verticalButtonVisibility}>
-              <div style={buttonBoxStyle}>
+      <PageWrapper>
+        <div style={AccountDirectoryPage.STYLE.page}>
+          <div style={contentWidth}>
+            <div style={headerBoxStyle}>
+              <div style={verticalButtonVisibility}>
+                <div style={buttonBoxStyle}>
+                  <button className={css(buttonStyle)}
+                      onClick={this.props.onNewAccountClick}>
+                    New Account
+                  </button>
+                  <div style={AccountDirectoryPage.STYLE.spacing}/>
+                  <button onClick={this.props.onNewGroupClick}
+                      className={css(buttonStyle)}>
+                    New Group
+                  </button>
+                </div>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
+              </div>
+              <FilterBar value={this.props.filter} 
+                onChange={this.props.onFilterChange}/>
+              <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
                 <button className={css(buttonStyle)}
                     onClick={this.props.onNewAccountClick}>
                   New Account
@@ -128,58 +151,12 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                   New Group
                 </button>
               </div>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
             </div>
-            <FilterBar value={this.state.filter} onChange={this.onChange}/>
-            <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button className={css(buttonStyle)}
-                  onClick={this.props.onNewAccountClick}>
-                New Account
-              </button>
-              <div style={AccountDirectoryPage.STYLE.spacing}/>
-              <button onClick={this.props.onNewGroupClick}
-                  className={css(buttonStyle)}>
-                New Group
-              </button>
-            </div>
-          </div>
-          <div style={AccountDirectoryPage.STYLE.spacing}/>
-          <div id='group_cards'>
+            <div style={AccountDirectoryPage.STYLE.spacing}/>
             {cards}
           </div>
         </div>
-    </div>);
-  }
-
-  private onChange(newFilter: string) {
-    clearTimeout(this.timerId);
-    this.setState({filter: newFilter});
-    if(newFilter !== '') {
-      this.timerId = setTimeout(
-        async () => {
-          const newAccounts =
-            await this.props.model.loadFilteredAccounts(newFilter);
-          this.setState({
-            openedGroups: new Beam.Set<Beam.DirectoryEntry>(),
-            accounts: newAccounts
-          });
-        }, 400);
-    }
-  }
-
-  private async onCardClick(group: Beam.DirectoryEntry) {
-    if(this.state.openedGroups.test(group)) {
-      this.state.openedGroups.remove(group);
-    } else {
-      const accounts = await this.props.model.loadAccounts(group);
-      this.state.accounts.set(group, accounts);
-      this.state.openedGroups.add(group);
-    }
-    this.setState({
-      openedGroups: this.state.openedGroups,
-      accounts: this.state.accounts
-    });
+      </PageWrapper>);
   }
 
   private static readonly STYLE = {
@@ -189,7 +166,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       width: '100%',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
-      overflowY: 'auto' as 'auto',
       justifyContent: 'center',
       padding: '18px',
       paddingBottom: '40px'

@@ -23,6 +23,8 @@ export class AccountDirectoryController extends
   }
 
   public render(): JSX.Element {
-    return <LoadingPage/>;
+    if(!this.state.isLoaded) {
+      return <LoadingPage/>;
+    }
   }
 }
