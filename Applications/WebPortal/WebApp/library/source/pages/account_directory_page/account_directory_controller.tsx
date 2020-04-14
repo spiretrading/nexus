@@ -43,7 +43,7 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    <AccountDirectoryPage
+    return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
       groups={this.props.model.groups}
@@ -51,36 +51,25 @@ export class AccountDirectoryController extends
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
       onFilterChange={this.onFilterChange} 
-      onCardClick={this.onCardClick}/>
+      onCardClick={this.onCardClick}/>;
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {
     if(this.state.openedGroups.get(group)) {
       this.state.openedGroups.remove(group);
     } else {
-      this.timerId = setTimeout(
-        async () => {
-          const accounts = await this.props.model.loadAccounts(group);
-          this.state.openedGroups.set(group, accounts);
-        }, 400);
+      const accounts = await this.props.model.loadAccounts(group);
+      this.state.openedGroups.set(group, accounts);
     }
     this.setState({openedGroups: this.state.openedGroups});
   }
 
   private async onFilterChange(newFilter: string) {
-    clearTimeout(this.timerId);
-    this.setState({filter: newFilter});
     if(newFilter !== '') {
-      this.timerId = setTimeout(
-        async () => {
-          const newAccounts = 
-            await this.props.model.loadFilteredAccounts(newFilter);
-          this.setState({
-            filteredGroups: newAccounts
-          });
-        }, 400);
+      const accounts = await this.props.model.loadFilteredAccounts(newFilter);
+      this.setState({filter: newFilter, filteredGroups: accounts});
+    } else {
+      this.setState({filter: newFilter});
     }
   }
-
-  private timerId: NodeJS.Timer; 
 }
