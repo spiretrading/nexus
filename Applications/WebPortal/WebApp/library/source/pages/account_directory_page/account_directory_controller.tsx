@@ -3,9 +3,9 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../..';
 import { LoadingPage } from '..';
-import { AccountEntry } from './account_entry';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountDirectoryPage } from './account_directory_page';
+import { AccountEntry } from './account_entry';
 
 interface Properties {
 
