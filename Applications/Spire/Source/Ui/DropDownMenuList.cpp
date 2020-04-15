@@ -21,6 +21,7 @@ DropDownMenuList::DropDownMenuList(
   layout->setContentsMargins({});
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setWidgetResizable(true);
+  m_scroll_area->setFocusProxy(this);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
