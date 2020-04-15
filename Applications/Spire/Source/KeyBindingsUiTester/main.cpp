@@ -1,8 +1,10 @@
 #include <QApplication>
 #include "Nexus/Definitions/Region.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
@@ -27,7 +29,29 @@ int main(int argc, char** argv) {
   bindings.set({Qt::Key_Alt, Qt::Key_Escape},
     Region(Region(Region::GlobalTag{})),
     KeyBindings::CancelAction::CLOSEST_ASK);
-  auto window = new KeyBindingsWindow(bindings);
+  auto input_model = LocalSecurityInputModel();
+  input_model.add(SecurityInfo(
+    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
+    "Microsoft Corp", "Software"));
+  input_model.add(SecurityInfo(
+    Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Magna International Inc.", "Automotive, probably"));
+  input_model.add(SecurityInfo(
+    Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Manulife Financial Corporation", "Finance"));
+  input_model.add(SecurityInfo(
+    Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Methanex Corporation", ""));
+  input_model.add(SecurityInfo(
+    Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
+    "Metro Inc.", ""));
+  input_model.add(SecurityInfo(
+    Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    "Monsanto Co.", ""));
+  input_model.add(SecurityInfo(
+    Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
+    "Morgan Stanley", "Finance"));
+  auto window = new KeyBindingsWindow(bindings, Ref(input_model));
   window->show();
   application->exec();
 }

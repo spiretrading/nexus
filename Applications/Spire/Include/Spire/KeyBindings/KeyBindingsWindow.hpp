@@ -21,7 +21,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit KeyBindingsWindow(KeyBindings key_bindings,
-        QWidget* parent = nullptr);
+        Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Returns the current key bindings.
       const KeyBindings& get_key_bindings() const;

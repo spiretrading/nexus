@@ -3,9 +3,11 @@
 #include <QTabBar>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
+using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -31,7 +33,8 @@ namespace {
   }
 }
 
-KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
+KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
@@ -104,7 +107,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
   task_keys_label->setStyleSheet(tab_label_style);
   task_keys_layout->addWidget(task_keys_label);
   m_task_keys_table = new TaskKeyBindingsTableView(
-    m_key_bindings.build_order_bindings(), this);
+    m_key_bindings.build_order_bindings(), input_model, this);
   task_keys_layout->addWidget(m_task_keys_table);
   auto cancel_keys_widget = new QWidget(m_tab_widget);
   auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);

@@ -62,6 +62,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   m_securities->setVisible(false);
   window()->installEventFilter(this);
   m_security_line_edit->setText(initial_text);
+  setFocusProxy(m_security_line_edit);
 }
 
 connection SecurityInputBox::connect_commit_signal(

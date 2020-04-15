@@ -1,5 +1,5 @@
 #include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
-#include <QPainter>
+#include "Spire/KeyBindings/InputFieldEditor.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

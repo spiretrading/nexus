@@ -2,15 +2,17 @@
 #include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
+using namespace Beam;
 using namespace Spire;
 using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
 TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     std::vector<KeyBindings::OrderActionBinding> bindings,
-    QWidget* parent)
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : KeyBindingsTableView(make_header(parent), parent),
       m_model(nullptr) {
   set_key_bindings(std::move(bindings));
@@ -25,15 +27,18 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_column_width(5, scale_width(80));
   set_column_width(6, scale_width(98));
   set_column_width(7, scale_width(144));
+  auto security_delegate = new SecurityInputItemDelegate(input_model, this);
+  set_column_delegate(1, security_delegate);
+  auto region_delegate = new InputFieldItemDelegate({"One", "Two", "Three"},
+    this);
+  region_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(2, region_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
-  auto security_delegate = new InputFieldItemDelegate({"One", "Two", "Three"}, this);
-  security_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(1, security_delegate);
   auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
   key_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);

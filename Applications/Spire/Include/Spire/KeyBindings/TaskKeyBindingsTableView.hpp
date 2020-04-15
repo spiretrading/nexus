@@ -3,6 +3,7 @@
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsTableView.hpp"
 #include "Spire/KeyBindings/TaskKeyBindingsTableModel.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -15,6 +16,7 @@ namespace Spire {
 
       explicit TaskKeyBindingsTableView(
         std::vector<KeyBindings::OrderActionBinding> bindings,
+        Beam::Ref<SecurityInputModel> input_model,
         QWidget* parent = nullptr);
 
       void set_key_bindings(
