@@ -22,21 +22,9 @@ QWidget* InputFieldItemDelegate::createEditor(QWidget* parent,
   return editor;
 }
 
-void InputFieldItemDelegate::paint(QPainter* painter,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  QStyledItemDelegate::paint(painter, option, index);
-  painter->save();
-  painter->restore();
-}
-
 void InputFieldItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   m_item_modified_signal(index);
-}
-
-QSize InputFieldItemDelegate::sizeHint(const QStyleOptionViewItem& option,
-    const QModelIndex& index) const {
-  return QStyledItemDelegate::sizeHint(option, index);
 }
 
 void InputFieldItemDelegate::on_editing_finished() {
