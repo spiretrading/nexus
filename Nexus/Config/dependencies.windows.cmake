@@ -7,6 +7,12 @@ set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/_beam.lib")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/_beam.lib")
+set(CPPUNIT_INCLUDE_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/cppunit-1.14.0/include")
+set(CPPUNIT_LIBRARY_DEBUG_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/cppunit-1.14.0/lib/cppunitd.lib")
+set(CPPUNIT_LIBRARY_OPTIMIZED_PATH
+  "${PROJECT_BINARY_DIR}/Dependencies/cppunit-1.14.0/lib/cppunit.lib")
 set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/src")
 set(LUA_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/lua-5.3.5/src/Debug/lua.lib")
