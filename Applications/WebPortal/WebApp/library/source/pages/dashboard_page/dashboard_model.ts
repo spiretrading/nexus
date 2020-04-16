@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountModel } from '..';
+import { AccountDirectoryModel, AccountModel } from '..';
 
 /** Base class for the model used by the DashboardPage. */
 export abstract class DashboardModel {
@@ -22,6 +22,9 @@ export abstract class DashboardModel {
 
   /** The account's roles. */
   public abstract get roles(): Nexus.AccountRoles;
+
+  /** Returns the AccountDirectoryModel. */
+  public abstract get accountDirectoryModel(): AccountDirectoryModel;
 
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;

@@ -5,7 +5,7 @@ import { AccountEntry } from './account_entry';
 /** Implements an AccountDirectoryModel in memory. */
 export class LocalAccountDirectoryModel extends AccountDirectoryModel {
 
-  /** Constructs an new model.
+  /** Constructs a new model.
    * @param groups - A set of groups.
    * @param accounts - A map of all the accounts associated with
    *        each group.
@@ -47,6 +47,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
         resolve(this._accounts.get(group).slice());}, 100);
       });
   }
+
   public async loadFilteredAccounts(
       filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
     if(!this.isLoaded) {

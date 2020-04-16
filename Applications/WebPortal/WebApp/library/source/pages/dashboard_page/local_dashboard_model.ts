@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { LocalAccountModel } from '..';
+import { AccountDirectoryModel, LocalAccountModel } from '..';
 import { DashboardModel } from './dashboard_model';
 
 /** Implements the DashboardModel using local memory. */
@@ -13,12 +13,14 @@ export class LocalDashboardModel extends DashboardModel {
    * @param countryDatabase - The country database to use.
    * @param currencyDatabase - The currency database to use.
    * @param marketDatabase - The market database to use.
+   * @param accountDirectoryModel - The AccountDirectoryModel to return.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
       entitlementDatabase: Nexus.EntitlementDatabase,
       countryDatabase: Nexus.CountryDatabase,
       currencyDatabase: Nexus.CurrencyDatabase,
-      marketDatabase: Nexus.MarketDatabase) {
+      marketDatabase: Nexus.MarketDatabase,
+      accountDirectoryModel: AccountDirectoryModel) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
@@ -27,6 +29,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._marketDatabase = marketDatabase;
     this._account = account;
     this._roles = roles;
+    this._accountDirectoryModel = accountDirectoryModel;
   }
 
   /** Returns true of this model has been loaded. */
@@ -64,6 +67,10 @@ export class LocalDashboardModel extends DashboardModel {
     return this._roles;
   }
 
+  public get accountDirectoryModel(): AccountDirectoryModel {
+    return this._accountDirectoryModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     if(account.equals(this._account)) {
       return new LocalAccountModel(this.account, this.roles);
@@ -86,4 +93,5 @@ export class LocalDashboardModel extends DashboardModel {
   private _marketDatabase: Nexus.MarketDatabase;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
+  private _accountDirectoryModel: AccountDirectoryModel;
 }
