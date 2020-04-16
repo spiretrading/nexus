@@ -25,25 +25,25 @@ namespace {
     return list;
   }
 
-  auto get_time_in_force(const QString& text) {
+  auto get_time_in_force_variant(const QString& text) {
     if(text == to_qstring(TimeInForce::Type::DAY)) {
-      return TimeInForce::Type::DAY;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::DAY});
     } else if(text == to_qstring(TimeInForce::Type::FOK)) {
-      return TimeInForce::Type::FOK;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::FOK});
     } else if(text == to_qstring(TimeInForce::Type::GTC)) {
-      return TimeInForce::Type::GTC;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTC});
     } else if(text == to_qstring(TimeInForce::Type::GTD)) {
-      return TimeInForce::Type::GTD;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTD});
     } else if(text == to_qstring(TimeInForce::Type::GTX)) {
-      return TimeInForce::Type::GTX;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTX});
     } else if(text == to_qstring(TimeInForce::Type::IOC)) {
-      return TimeInForce::Type::IOC;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::IOC});
     } else if(text == to_qstring(TimeInForce::Type::MOC)) {
-      return TimeInForce::Type::MOC;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::MOC});
     } else if(text == to_qstring(TimeInForce::Type::OPG)) {
-      return TimeInForce::Type::OPG;
+      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::OPG});
     }
-    return TimeInForce::Type::NONE;
+    return QVariant();
   }
 }
 
@@ -80,9 +80,7 @@ QString TimeInForceItemDelegate::displayText(const QVariant& value,
 void TimeInForceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-  model->setData(index,
-    QVariant::fromValue<TimeInForce>({get_time_in_force(item)}),
-    Qt::DisplayRole);
+  model->setData(index, get_time_in_force_variant(item), Qt::DisplayRole);
   m_item_modified_signal(index);
 }
 

@@ -2,6 +2,7 @@
 #include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
 #include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
 #include "Spire/KeyBindings/SideItemDelegate.hpp"
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
@@ -57,6 +58,11 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     on_item_modified(index);
   });
   set_column_delegate(2, region_delegate);
+  auto order_type_delegate = new OrderTypeItemDelegate(this);
+  order_type_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(3, order_type_delegate);
   auto side_delegate = new SideItemDelegate(this);
   side_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);

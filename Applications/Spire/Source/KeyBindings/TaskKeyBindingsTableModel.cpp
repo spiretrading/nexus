@@ -153,11 +153,25 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     return false;
   }
   if(role == Qt::DisplayRole) {
-    if(index.column() == 4) {
-      m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+    if(index.column() == 3) {
+      if(value.isValid()) {
+        m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
+      } else {
+        m_key_bindings[index.row()].m_action.m_type = {};
+      }
+    } else if(index.column() == 4) {
+      if(value.isValid()) {
+        m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+      } else {
+        m_key_bindings[index.row()].m_action.m_side = {};
+      }
     } else if(index.column() == 6) {
-      m_key_bindings[index.row()].m_action.m_time_in_force =
-        value.value<TimeInForce>();
+      if(value.isValid()) {
+        m_key_bindings[index.row()].m_action.m_time_in_force =
+          value.value<TimeInForce>();
+      } else {
+        m_key_bindings[index.row()].m_action.m_time_in_force = {};
+      }
     } else if(index.column() == 8) {
       for(auto& binding : m_key_bindings) {
         if(binding.m_sequence == value.value<QKeySequence>()) {
