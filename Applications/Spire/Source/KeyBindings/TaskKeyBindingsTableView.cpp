@@ -3,12 +3,33 @@
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
+#include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace Spire;
 using ValidSequence = KeySequenceEditor::ValidKeySequence;
+
+namespace {
+  const auto& FUNCTION_KEYS() {
+    static auto function_keys = std::set<Qt::Key>({
+      Qt::Key_F1,
+      Qt::Key_F2,
+      Qt::Key_F3,
+      Qt::Key_F4,
+      Qt::Key_F5,
+      Qt::Key_F6,
+      Qt::Key_F7,
+      Qt::Key_F8,
+      Qt::Key_F9,
+      Qt::Key_F10,
+      Qt::Key_F11,
+      Qt::Key_F12,
+    });
+    return function_keys;
+  }
+}
 
 TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     std::vector<KeyBindings::OrderActionBinding> bindings,
@@ -35,10 +56,15 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     on_item_modified(index);
   });
   set_column_delegate(2, region_delegate);
+  auto time_in_force_delegate = new TimeInForceItemDelegate(this);
+  time_in_force_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(6, time_in_force_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
-    {ValidSequence({{Qt::Key_Escape}}),
+    {ValidSequence({FUNCTION_KEYS()}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
-    {Qt::Key_Escape}})});
+    FUNCTION_KEYS()})});
   auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
   key_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);
