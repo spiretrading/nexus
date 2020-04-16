@@ -8,6 +8,7 @@ namespace Spire {
   class InputFieldEditor : public QLineEdit {
     public:
 
+      // TODO: try to make this take a variant
       explicit InputFieldEditor(QString initial_value,
         std::vector<QString> items, QWidget* parent = nullptr);
 

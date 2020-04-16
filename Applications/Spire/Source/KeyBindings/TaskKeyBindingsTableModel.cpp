@@ -153,7 +153,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     return false;
   }
   if(role == Qt::DisplayRole) {
-    if(index.column() == 6) {
+    if(index.column() == 4) {
+      m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+    } else if(index.column() == 6) {
       m_key_bindings[index.row()].m_action.m_time_in_force =
         value.value<TimeInForce>();
     } else if(index.column() == 8) {

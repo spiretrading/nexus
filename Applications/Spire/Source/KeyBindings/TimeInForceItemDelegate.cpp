@@ -59,9 +59,9 @@ connection TimeInForceItemDelegate::connect_item_modified_signal(
 QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto current_data = [&] {
-    auto data = index.data(Qt::DisplayRole).value<TimeInForce>().GetType();
-    if(data != TimeInForce::Type::NONE) {
-      return to_qstring(data);
+    auto data = index.data(Qt::DisplayRole);
+    if(data.isValid()) {
+      return to_qstring(data.value<TimeInForce>().GetType());
     }
     return QString();
   }();
