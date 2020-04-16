@@ -40,6 +40,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void leaveEvent(QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
     private:
