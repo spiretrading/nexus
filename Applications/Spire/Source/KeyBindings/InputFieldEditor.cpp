@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include <QEvent>
+#include <QKeyEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -40,8 +41,10 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
   return QLineEdit::eventFilter(watched, event);
 }
 
-void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
-  on_item_selected("");
+void InputFieldEditor::keyReleaseEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Delete) {
+    on_item_selected("");
+  }
 }
 
 void InputFieldEditor::showEvent(QShowEvent* event) {
@@ -69,6 +72,7 @@ void InputFieldEditor::on_item_selected(const QString& text) {
 void InputFieldEditor::on_text_changed(const QString& text) {
   if(text.isEmpty()) {
     m_menu_list->set_items(m_items);
+    m_menu_list->show();
     return;
   }
   auto displayed_items = [&] {

@@ -2,12 +2,17 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/DropdownMenuItem.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  const auto MAX_VISIBLE_ITEMS = 5;
+}
 
 DropDownMenuList::DropDownMenuList(
     const std::vector<QString>& items, QWidget* parent)
@@ -19,7 +24,7 @@ DropDownMenuList::DropDownMenuList(
   setFixedHeight(1 + scale_height(20) * items.size());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
-  m_scroll_area = new ScrollArea(this);
+  m_scroll_area = new ScrollArea(false, this);
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
@@ -28,11 +33,7 @@ DropDownMenuList::DropDownMenuList(
   auto list_layout = new QVBoxLayout(m_list_widget);
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
-  for(auto& item : items) {
-    auto menu_item = new DropDownMenuItem(item, m_list_widget);
-    menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
-    list_layout->addWidget(menu_item);
-  }
+  set_items(items);
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
   parent->installEventFilter(this);
@@ -43,7 +44,8 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     delete item->widget();
     delete item;
   }
-  setFixedHeight(1 + scale_height(20) * items.size());
+  setFixedHeight(scale_height(20) *
+    min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
   for(auto& item : items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });

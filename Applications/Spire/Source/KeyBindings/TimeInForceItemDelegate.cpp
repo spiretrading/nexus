@@ -1,7 +1,6 @@
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -49,7 +48,8 @@ namespace {
 }
 
 TimeInForceItemDelegate::TimeInForceItemDelegate(QWidget* parent)
-  : QStyledItemDelegate(parent) {}
+  : QStyledItemDelegate(parent),
+    m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
 connection TimeInForceItemDelegate::connect_item_modified_signal(
     const ItemModifiedSignal::slot_type& slot) const {
@@ -65,12 +65,16 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     }
     return QString();
   }();
-  qDebug() << current_data;
   auto editor = new InputFieldEditor(current_data,
     create_time_in_force_item_list(), parent);
   connect(editor, &InputFieldEditor::editingFinished,
     this, &TimeInForceItemDelegate::on_editing_finished);
   return editor;
+}
+
+QString TimeInForceItemDelegate::displayText(const QVariant& value,
+    const QLocale& locale) const {
+  return m_item_delegate->displayText(value, locale);
 }
 
 void TimeInForceItemDelegate::setModelData(QWidget* editor,
