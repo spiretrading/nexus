@@ -16,7 +16,7 @@ connection InputFieldItemDelegate::connect_item_modified_signal(
 
 QWidget* InputFieldItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new InputFieldEditor(m_items, option.rect.width(), parent);
+  auto editor = new InputFieldEditor("", m_items, parent);
   connect(editor, &InputFieldEditor::editingFinished,
     this, &InputFieldItemDelegate::on_editing_finished);
   return editor;

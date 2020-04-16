@@ -31,8 +31,7 @@ namespace {
 TaskKeyBindingsTableModel::TaskKeyBindingsTableModel(
   std::vector<Action> bindings, QObject* parent)
   : QAbstractTableModel(parent),
-    m_key_bindings(std::move(bindings)),
-    m_item_delegate(new CustomVariantItemDelegate(this)) {}
+    m_key_bindings(std::move(bindings)) {}
 
 void TaskKeyBindingsTableModel::set_key_bindings(
     const std::vector<Action>& bindings) {
@@ -63,18 +62,17 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           auto& securities =
             m_key_bindings[index.row()].m_region.GetSecurities();
           if(!securities.empty()) {
-            return QString::fromStdString(securities.begin()->GetSymbol());
+            return to_variant(*(securities.begin()));
           }
         }
         break;
       case 2:
-        return m_item_delegate->displayText(
-          to_variant(m_key_bindings[index.row()].m_region), QLocale());
+        return to_variant(m_key_bindings[index.row()].m_region);
       case 3:
         {
           auto type = m_key_bindings[index.row()].m_action.m_type;
           if(type) {
-            return m_item_delegate->displayText(to_variant(*type), QLocale());
+            return to_variant(*type);
           }
         }
         break;
@@ -82,7 +80,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
         {
           auto side = m_key_bindings[index.row()].m_action.m_side;
           if(side) {
-            return m_item_delegate->displayText(to_variant(*side), QLocale());
+            return to_variant(*side);
           }
         }
         break;
@@ -90,8 +88,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
         {
           auto quantity = m_key_bindings[index.row()].m_action.m_quantity;
           if(quantity) {
-            return m_item_delegate->displayText(to_variant(*quantity),
-              QLocale());
+            return to_variant(*quantity);
           }
         }
         break;
@@ -101,8 +98,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
             m_key_bindings[index.row()].m_action.m_time_in_force;
           if(time_in_force &&
               time_in_force->GetType() != TimeInForce::Type::NONE) {
-            return m_item_delegate->displayText(to_variant(*time_in_force),
-              QLocale());
+            return to_variant(*time_in_force);
           }
         }
         break;
@@ -156,14 +152,19 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
   if(!index.isValid()) {
     return false;
   }
-  if(role == Qt::DisplayRole && index.column() == 8) {
-    for(auto& binding : m_key_bindings) {
-      if(binding.m_sequence == value.value<QKeySequence>()) {
-        binding.m_sequence = QKeySequence();
-        break;
+  if(role == Qt::DisplayRole) {
+    if(index.column() == 6) {
+      m_key_bindings[index.row()].m_action.m_time_in_force =
+        value.value<TimeInForce>();
+    } else if(index.column() == 8) {
+      for(auto& binding : m_key_bindings) {
+        if(binding.m_sequence == value.value<QKeySequence>()) {
+          binding.m_sequence = QKeySequence();
+          break;
+        }
       }
+      m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
     }
-    m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
     emit dataChanged(index, index, {role});
     return true;
   }

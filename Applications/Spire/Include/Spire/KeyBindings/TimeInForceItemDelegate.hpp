@@ -22,6 +22,10 @@ namespace Spire {
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
 
+      void updateEditorGeometry(QWidget* editor,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
+
     private:
       mutable ItemModifiedSignal m_item_modified_signal;
 

@@ -37,7 +37,6 @@ namespace Spire {
 
     private:
       std::vector<Action> m_key_bindings;
-      CustomVariantItemDelegate* m_item_delegate;
   };
 }
 

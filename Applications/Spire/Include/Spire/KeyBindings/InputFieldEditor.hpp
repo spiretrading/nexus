@@ -8,22 +8,22 @@ namespace Spire {
   class InputFieldEditor : public QLineEdit {
     public:
 
-      // TODO: get list_width from something instead of passing it in,
-      //      maybe a sizeHint from the model.
-      explicit InputFieldEditor(std::vector<QString> items,
-        int list_width, QWidget* parent = nullptr);
+      explicit InputFieldEditor(QString initial_value,
+        std::vector<QString> items, QWidget* parent = nullptr);
+
+      const QString& get_item() const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
+      QString m_selected_item;
       std::vector<QString> m_items;
       DropDownMenuList* m_menu_list;
-      int m_list_width;
 
       void move_menu_list();
-      void on_clicked();
       void on_item_selected(const QString& text);
       void on_text_changed(const QString& text);
   };

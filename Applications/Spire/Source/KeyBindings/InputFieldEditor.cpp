@@ -5,11 +5,16 @@
 
 using namespace Spire;
 
-InputFieldEditor::InputFieldEditor(std::vector<QString> items,
-    int list_width, QWidget* parent)
+InputFieldEditor::InputFieldEditor(QString initial_value,
+    std::vector<QString> items, QWidget* parent)
     : QLineEdit(parent),
-      m_items(std::move(items)),
-      m_list_width(list_width) {
+      m_selected_item(std::move(initial_value)),
+      m_items(std::move(items)) {
+  setObjectName("input_field_editor");
+  setStyleSheet(QString(R"(
+    #input_field_editor {
+      padding-left: %1px;
+    })").arg(scale_width(8)));
   connect(this, &QLineEdit::textChanged, this,
     &InputFieldEditor::on_text_changed);
   m_menu_list = new DropDownMenuList(m_items, this);
@@ -18,6 +23,10 @@ InputFieldEditor::InputFieldEditor(std::vector<QString> items,
     on_item_selected(item);
   });
   window()->installEventFilter(this);
+}
+
+const QString& InputFieldEditor::get_item() const {
+  return m_selected_item;
 }
 
 bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
@@ -31,27 +40,28 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
   return QLineEdit::eventFilter(watched, event);
 }
 
+void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
+  on_item_selected("");
+}
+
 void InputFieldEditor::showEvent(QShowEvent* event) {
-  on_clicked();
+  move_menu_list();
+  m_menu_list->setFixedWidth(width());
+  m_menu_list->show();
+  m_menu_list->raise();
 }
 
 void InputFieldEditor::move_menu_list() {
   auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-    geometry().bottomLeft()).x() - scale_width(8);
+    geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     frameGeometry().bottomLeft()).y();
   m_menu_list->move(x_pos, y_pos + 2);
   m_menu_list->raise();
 }
 
-void InputFieldEditor::on_clicked() {
-  move_menu_list();
-  m_menu_list->setFixedWidth(m_list_width);
-  m_menu_list->show();
-  m_menu_list->raise();
-}
-
 void InputFieldEditor::on_item_selected(const QString& text) {
+  m_selected_item = text;
   m_menu_list->hide();
   emit editingFinished();
 }
