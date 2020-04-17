@@ -89,4 +89,5 @@ void InputFieldEditor::on_text_changed(const QString& text) {
     return;
   }
   m_menu_list->set_items(displayed_items);
+  m_menu_list->show();
 }
