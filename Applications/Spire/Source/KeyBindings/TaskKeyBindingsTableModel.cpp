@@ -167,7 +167,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         m_key_bindings[index.row()].m_action.m_side = {};
       }
     } else if(index.column() == 5) {
-      if(value.isValid()) {
+      if(value.isValid() && value.value<Quantity>() > 0) {
         m_key_bindings[index.row()].m_action.m_quantity =
           value.value<Quantity>();
       } else {

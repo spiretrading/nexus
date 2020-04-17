@@ -1,7 +1,6 @@
 #include "Spire/KeyBindings/QuantityItemDelegate.hpp"
-#include <QIntValidator>
-#include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/KeyBindings/QuantityInputEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
@@ -19,17 +18,7 @@ connection QuantityItemDelegate::connect_item_modified_signal(
 
 QWidget* QuantityItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new QLineEdit(parent);
-  auto validator = new QIntValidator(editor);
-  editor->setValidator(validator);
-  editor->setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
-    border: none;
-    color: #000000;
-    font-family: Roboto;
-    font-size: %1px;
-    padding-left: %2px;
-  )").arg(scale_height(12)).arg(scale_width(8)));
+  auto editor = new QuantityInputEditor(parent);
   connect(editor, &QLineEdit::editingFinished,
     this, &QuantityItemDelegate::on_editing_finished);
   return editor;
