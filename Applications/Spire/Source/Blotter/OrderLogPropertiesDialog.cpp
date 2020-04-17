@@ -21,6 +21,8 @@ OrderLogPropertiesDialog::OrderLogPropertiesDialog(
       m_properties(blotterModel->GetOrderLogModel().GetProperties()) {
   m_ui->setupUi(this);
   for(auto status : MakeRange<OrderStatus>()) {
+
+    // TOSTRING TODO
     QCheckBox* checkBox = new QCheckBox(
       QString::fromStdString(ToString(status)));
     m_orderStatusCheckBoxes.insert(make_pair(status, checkBox));

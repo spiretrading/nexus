@@ -410,6 +410,8 @@ void OpenEditorCanvasNodeVisitor::Visit(const OptionalPriceNode& node) {
 void OpenEditorCanvasNodeVisitor::Visit(const OrderStatusNode& node) {
   auto editor = new QComboBox();
   for(size_t i = 0; i < OrderStatus::COUNT; ++i) {
+
+    // TOSTRING TODO
     editor->addItem(QString::fromStdString(
       ToString(static_cast<OrderStatus>(i))));
   }

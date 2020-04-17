@@ -7,17 +7,23 @@ using namespace std;
 
 OrderStatusNode::OrderStatusNode()
     : ValueNode(OrderStatus::NEW) {
+
+    // TOSTRING TODO
   SetText(ToString(GetValue()));
 }
 
 OrderStatusNode::OrderStatusNode(OrderStatus value)
     : ValueNode(value) {
+
+    // TOSTRING TODO
   SetText(ToString(GetValue()));
 }
 
 unique_ptr<OrderStatusNode> OrderStatusNode::SetValue(OrderStatus value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
+
+    // TOSTRING TODO
   clone->SetText(ToString(clone->GetValue()));
   return clone;
 }

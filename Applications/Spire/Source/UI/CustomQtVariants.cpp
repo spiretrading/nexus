@@ -150,11 +150,15 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(
       lexical_cast<std::string>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
+
+    // TOSTRING TODO
     return QString::fromStdString(ToString(value.value<OrderStatus>()));
   } else if(value.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
     return QString::fromStdString(lexical_cast<string>(
       value.value<Task::State>()));
   } else if(value.canConvert<OrderType>()) {
+
+    // TOSTRING TODO
     return QString::fromStdString(ToString(value.value<OrderType>()));
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
@@ -162,6 +166,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       m_userProfile->GetMarketDatabase(), m_userProfile->GetCountryDatabase()));
   } else if(value.canConvert<Side>()) {
+
+    // TOSTRING TODO
     return QString::fromStdString(ToString(value.value<Side>()));
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
@@ -211,9 +217,13 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return Compare(leftVariant.value<Quantity>(),
       rightVariant.value<Quantity>(), left, right);
   } else if(leftVariant.canConvert<OrderStatus>()) {
+
+    // TOSTRING TODO
     return Compare(ToString(leftVariant.value<OrderStatus>()),
       ToString(rightVariant.value<OrderStatus>()), left, right);
   } else if(leftVariant.canConvert<OrderType>()) {
+
+    // TOSTRING TODO
     return Compare(ToString(leftVariant.value<OrderType>()),
       ToString(rightVariant.value<OrderType>()), left, right);
   } else if(leftVariant.canConvert<Security>()) {
@@ -222,6 +232,8 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       ToString(rightVariant.value<Security>(),
       m_userProfile->GetMarketDatabase()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
+
+    // TOSTRING TODO
     return Compare(ToString(leftVariant.value<Side>()),
       ToString(rightVariant.value<Side>()), left, right);
   } else if(leftVariant.canConvert<TimeInForce>()) {

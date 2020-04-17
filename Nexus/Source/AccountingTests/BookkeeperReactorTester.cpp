@@ -33,19 +33,20 @@ TEST_SUITE("BookkeeperReactor") {
     auto order = PrimitiveOrder(OrderInfo(OrderFields::BuildLimitOrder(
       TST_SECURITY, DefaultCurrencies::USD(), Side::BID, "NYSE", 1000,
       Money::ONE), 10, ptime(date(2019, 10, 3))));
-    auto bookkeeper = BookkeeperReactor<TestBookkeeper>(constant(&order));
     SetOrderStatus(order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
     FillOrder(order, 100, ptime(date(2019, 10, 3)));
-    REQUIRE(!Aspen::has_evaluation(bookkeeper.commit(0)));
-    commits.Top();
-    commits.Pop();
-    REQUIRE(!Aspen::has_evaluation(bookkeeper.commit(1)));
-    commits.Top();
-    commits.Pop();
-    REQUIRE(!Aspen::has_evaluation(bookkeeper.commit(2)));
-    commits.Top();
-    commits.Pop();
-    REQUIRE(Aspen::has_evaluation(bookkeeper.commit(3)));
+    auto bookkeeper = BookkeeperReactor<TestBookkeeper>(constant(&order));
+    for(auto i = 0; i < 10; ++i) {
+      auto state = bookkeeper.commit(i);
+      if(Aspen::has_evaluation(state)) {
+        break;
+      } else if(Aspen::has_continuation(state)) {
+        continue;
+      } else {
+        commits.Top();
+        commits.Pop();
+      }
+    }
     auto inventory = bookkeeper.eval();
     REQUIRE(inventory.m_volume == 100);
     REQUIRE(inventory.m_transactionCount == 1);

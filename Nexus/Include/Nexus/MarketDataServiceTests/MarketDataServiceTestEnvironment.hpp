@@ -250,11 +250,11 @@ namespace Nexus::MarketDataService::Tests {
       Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [&] {
+      [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_market_data_client", Beam::Ref(m_serverConnection));
       },
-      [&] {
+      [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
     auto client = std::make_unique<MarketDataService::MarketDataClient<
