@@ -82,8 +82,8 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
       if(key_event->key() == Qt::Key_Tab || key_event->key() == Qt::Key_Down) {
         focus_next();
         return true;
-      } else if((key_event->key() & Qt::Key_Tab &&
-          key_event->modifiers() & Qt::ShiftModifier) ||
+      } else if((key_event->key() == Qt::Key_Tab &&
+          key_event->modifiers().testFlag(Qt::ShiftModifier)) ||
           key_event->key() == Qt::Key_Up) {
         focus_previous();
         return true;
