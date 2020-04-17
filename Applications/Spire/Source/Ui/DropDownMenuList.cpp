@@ -139,7 +139,8 @@ void DropDownMenuList::focus_next() {
 }
 
 void DropDownMenuList::focus_previous() {
-  if(m_highlight_index < 0) {
+  if(m_highlight_index < 0 &&
+      m_highlight_index > m_list_widget->layout()->count() - 1) {
     m_highlight_index = 0;
   }
   auto index = m_highlight_index - 1;
