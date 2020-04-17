@@ -70,6 +70,7 @@ void InputFieldEditor::on_item_selected(const QString& text) {
 }
 
 void InputFieldEditor::on_text_changed(const QString& text) {
+  m_selected_item = text;
   if(text.isEmpty()) {
     m_menu_list->set_items(m_items);
     m_menu_list->show();
