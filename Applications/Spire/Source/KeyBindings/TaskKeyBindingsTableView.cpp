@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
+#include "Spire/KeyBindings/DestinationItemDelegate.hpp"
 #include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
@@ -52,12 +53,11 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_column_width(7, scale_width(144));
   auto security_delegate = new SecurityInputItemDelegate(input_model, this);
   set_column_delegate(1, security_delegate);
-  auto region_delegate = new InputFieldItemDelegate({"One", "Two", "Three"},
-    this);
-  region_delegate->connect_item_modified_signal([=] (auto index) {
+  auto destination_delegate = new DestinationItemDelegate(this);
+  destination_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);
   });
-  set_column_delegate(2, region_delegate);
+  set_column_delegate(2, destination_delegate);
   auto order_type_delegate = new OrderTypeItemDelegate(this);
   order_type_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);
