@@ -2,7 +2,7 @@
 exit_status=0
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="c9d1d3ad9de4241a5b74c6268ff72d9f57e522ff"
+beam_commit="8cd3d175118a9c9f17feb5ab272472de6ddc0327"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -32,6 +32,24 @@ if [ -d "Beam" ]; then
     popd
   fi
   popd
+fi
+if [ ! -d "cppunit-1.14.0" ]; then
+  wget http://dev-www.libreoffice.org/src/cppunit-1.14.0.tar.gz --no-check-certificate
+  if [ "$?" == "0" ]; then
+    gzip -d -c cppunit-1.14.0.tar.gz | tar -x
+    pushd cppunit-1.14.0
+    touch configure.new
+    cat configure | sed "s/\/\* automatically generated \*\//\$ac_prefix_conf_INP/" > configure.new
+    mv configure.new configure
+    chmod +x configure
+    ./configure LDFLAGS='-ldl' --prefix="$root/cppunit-1.14.0"
+    make -j $cores
+    make install
+    popd
+  else
+    exit_status=1
+  fi
+  rm -f cppunit-1.14.0.tar.gz
 fi
 if [ ! -d "lua-5.3.5" ]; then
   wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
