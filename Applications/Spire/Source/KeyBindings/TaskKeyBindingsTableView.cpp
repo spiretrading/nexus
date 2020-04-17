@@ -4,6 +4,7 @@
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
+#include "Spire/KeyBindings/QuantityItemDelegate.hpp"
 #include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
 #include "Spire/KeyBindings/SideItemDelegate.hpp"
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
@@ -72,6 +73,11 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   time_in_force_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);
   });
+  auto quantity_delegate = new QuantityItemDelegate(this);
+  quantity_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(5, quantity_delegate);
   set_column_delegate(6, time_in_force_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
     {ValidSequence({FUNCTION_KEYS()}),

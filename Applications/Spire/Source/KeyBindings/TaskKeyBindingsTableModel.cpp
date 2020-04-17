@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableModel.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Spire/Utility.hpp"
 
@@ -164,6 +165,13 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
       } else {
         m_key_bindings[index.row()].m_action.m_side = {};
+      }
+    } else if(index.column() == 5) {
+      if(value.isValid()) {
+        m_key_bindings[index.row()].m_action.m_quantity =
+          value.value<Quantity>();
+      } else {
+        m_key_bindings[index.row()].m_action.m_quantity = {};
       }
     } else if(index.column() == 6) {
       if(value.isValid()) {
