@@ -15,7 +15,6 @@ QuantityInputEditor::QuantityInputEditor(QWidget* parent)
     font-family: Roboto;
     font-size: %1px;
     padding-left: %2px;
-    padding-top: -1px;
   )").arg(scale_height(12)).arg(scale_width(8)));
 }
 

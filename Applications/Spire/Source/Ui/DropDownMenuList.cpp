@@ -152,10 +152,14 @@ void DropDownMenuList::focus_previous() {
 }
 
 void DropDownMenuList::update_highlights(int old_index, int new_index) {
-  auto previous_widget = m_list_widget->layout()->itemAt(old_index)->widget();
-  static_cast<DropDownMenuItem*>(previous_widget)->remove_highlight();
-  previous_widget->update();
-  auto current_widget = m_list_widget->layout()->itemAt(new_index)->widget();
-  static_cast<DropDownMenuItem*>(current_widget)->set_highlight();
-  current_widget->update();
+  if(auto previous_widget = m_list_widget->layout()->itemAt(old_index)) {
+    static_cast<DropDownMenuItem*>(
+      previous_widget->widget())->remove_highlight();
+    previous_widget->widget()->update();
+  }
+  if(auto current_widget = m_list_widget->layout()->itemAt(new_index)) {
+    static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
+    current_widget->widget()->update();
+    m_scroll_area->ensureWidgetVisible(current_widget->widget());
+  }
 }
