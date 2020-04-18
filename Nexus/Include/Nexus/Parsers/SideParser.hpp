@@ -2,6 +2,7 @@
 #define NEXUS_SIDEPARSER_HPP
 #include <Beam/Collections/EnumIterator.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Side.hpp"
 
 namespace Nexus {
@@ -17,9 +18,9 @@ namespace Nexus {
   };
 
   inline SideParser::SideParser()
-      : Beam::Parsers::EnumeratorParser<Side>(begin(Beam::MakeRange<Side>()),
-          end(Beam::MakeRange<Side>()),
-          static_cast<std::string (*)(Side)>(ToString)) {}
+    : Beam::Parsers::EnumeratorParser<Side>(begin(Beam::MakeRange<Side>()),
+        end(Beam::MakeRange<Side>()),
+        &boost::lexical_cast<std::string, Side>) {}
 }
 
 #endif

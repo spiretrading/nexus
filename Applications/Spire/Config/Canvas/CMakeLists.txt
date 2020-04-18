@@ -110,25 +110,12 @@ install(TARGETS Canvas CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Canvas CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB test_header_files ${SPIRE_INCLUDE_PATH}/Spire/CanvasTests/*.hpp)
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasTests/*.cpp)
-add_library(CanvasTests ${test_header_files} ${test_source_files})
-set_source_files_properties(${test_header_files}
-  PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(CanvasTests PROPERTIES
-  STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
-  OUTPUT_NAME spire_canvas_tests)
-install(TARGETS CanvasTests CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS CanvasTests CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-add_executable(CanvasTester ${SPIRE_SOURCE_PATH}/CanvasTester/main.cpp)
-target_link_libraries(CanvasTester Dashboard Charting PortfolioViewer
+add_executable(CanvasTests ${test_source_files})
+target_link_libraries(CanvasTests Dashboard Charting PortfolioViewer
   Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
-  TimeAndSales OrderImbalanceIndicator InputWidgets CanvasTests CanvasView
-  Canvas UI Resources
-  debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
-  optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
+  TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas UI
+  Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
@@ -165,7 +152,7 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 if(UNIX)
-  target_link_libraries(CanvasTester
+  target_link_libraries(CanvasTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
@@ -179,7 +166,7 @@ if(UNIX)
     pthread rt)
 endif()
 if(WIN32)
-  target_link_libraries(CanvasTester
+  target_link_libraries(CanvasTests
     debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
@@ -188,10 +175,10 @@ if(WIN32)
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
-  target_link_libraries(CanvasTester rt socket nsl)
+  target_link_libraries(CanvasTests rt socket nsl)
 endif()
-add_custom_command(TARGET CanvasTester POST_BUILD COMMAND CanvasTester)
-install(TARGETS CanvasTester CONFIGURATIONS Debug
+add_custom_command(TARGET CanvasTests POST_BUILD COMMAND CanvasTests)
+install(TARGETS CanvasTests CONFIGURATIONS Debug
   DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
-install(TARGETS CanvasTester CONFIGURATIONS Release
+install(TARGETS CanvasTests CONFIGURATIONS Release
   RelWithDebInfo DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)
