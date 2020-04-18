@@ -1,4 +1,4 @@
-#include "Nexus/FeeHandlingTests/HkexFeeHandlingTester.hpp"
+#include <doctest/doctest.h>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -12,7 +12,6 @@ using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
-using namespace std;
 
 namespace {
   auto GetTestSecurity() {
@@ -20,17 +19,18 @@ namespace {
   }
 
   auto BuildOrderFields(Money price) {
-    auto fields = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
       GetTestSecurity(), DefaultCurrencies::HKD(), Side::BID,
       DefaultDestinations::HKEX(), 100, price);
-    return fields;
   }
 }
 
-void HkexFeeHandlingTester::TestZeroQuantity() {
-  auto feeTable = HkexFeeTable();
-}
+TEST_SUITE("HkexFeeHandling") {
+  TEST_CASE("zero_quantity") {
+    auto feeTable = HkexFeeTable();
+  }
 
-void HkexFeeHandlingTester::TestDefault() {
-  auto feeTable = HkexFeeTable();
+  TEST_CASE("default") {
+    auto feeTable = HkexFeeTable();
+  }
 }
