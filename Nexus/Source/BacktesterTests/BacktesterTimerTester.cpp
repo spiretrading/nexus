@@ -1,7 +1,7 @@
-#include <doctest/doctest.h>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
 

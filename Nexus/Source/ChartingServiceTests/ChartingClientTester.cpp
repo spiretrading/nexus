@@ -1,7 +1,7 @@
-#include <doctest/doctest.h>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
 #include <boost/functional/factory.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 

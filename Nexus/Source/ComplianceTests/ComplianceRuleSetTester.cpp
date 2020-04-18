@@ -1,8 +1,8 @@
-#include <doctest/doctest.h>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/optional/optional.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"

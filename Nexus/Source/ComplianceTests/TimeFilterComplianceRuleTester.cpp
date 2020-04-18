@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
 #include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"

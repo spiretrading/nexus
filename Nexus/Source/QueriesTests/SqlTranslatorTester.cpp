@@ -1,27 +1,30 @@
-#include "Nexus/QueriesTests/SqlTranslatorTester.hpp"
 #include <Beam/Queries/StandardValues.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Queries/SqlTranslator.hpp"
 
+using namespace Beam;
+using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::Queries;
-using namespace Nexus::Queries::Tests;
 
-void SqlTranslatorTester::TestQueryOrderFields() {
-  Beam::Queries::ParameterExpression infoParameterExpression(
-    0, Nexus::Queries::OrderInfoType());
-  Beam::Queries::MemberAccessExpression fieldsAccessExpression("fields",
-    Nexus::Queries::OrderFieldsType(), infoParameterExpression);
-  Beam::Queries::MemberAccessExpression securityAccessExpression("security",
-    Nexus::Queries::SecurityType(), fieldsAccessExpression);
-  Beam::Queries::MemberAccessExpression marketAccessExpression("market",
-    Beam::Queries::StringType(), securityAccessExpression);
-  Beam::Queries::StringValue queryMarketCode("XTSX");
-  Beam::Queries::ConstantExpression marketCodeExpression(queryMarketCode);
-  auto equalExpression = Beam::Queries::MakeEqualsExpression(
-    marketCodeExpression, marketAccessExpression);
-  SqlTranslator translator("submissions", equalExpression);
-  auto translation = translator.Build();
-  std::string query;
-  translation.append_query(query);
-  CPPUNIT_ASSERT(query == "(\"XTSX\" = market)");
+TEST_SUITE("SqlTranslator") {
+  TEST_CASE("query_order_fields") {
+    auto infoParameterExpression = ParameterExpression(0, OrderInfoType());
+    auto fieldsAccessExpression = MemberAccessExpression("fields",
+      OrderFieldsType(), infoParameterExpression);
+    auto securityAccessExpression = MemberAccessExpression("security",
+      SecurityType(), fieldsAccessExpression);
+    auto marketAccessExpression = MemberAccessExpression("market", StringType(),
+      securityAccessExpression);
+    auto queryMarketCode = StringValue("XTSX");
+    auto marketCodeExpression = ConstantExpression(queryMarketCode);
+    auto equalExpression = MakeEqualsExpression(marketCodeExpression,
+      marketAccessExpression);
+    auto translator = Nexus::Queries::SqlTranslator("submissions",
+      equalExpression);
+    auto translation = translator.Build();
+    auto query = std::string();
+    translation.append_query(query);
+    REQUIRE(query == "(\"XTSX\" = market)");
+  }
 }

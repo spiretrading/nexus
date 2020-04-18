@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <boost/optional/optional.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"

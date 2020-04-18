@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/FeeHandling/OmgaFeeTable.hpp"
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 

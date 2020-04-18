@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <Beam/Queues/SequencePublisher.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Accounting/PortfolioMonitor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"

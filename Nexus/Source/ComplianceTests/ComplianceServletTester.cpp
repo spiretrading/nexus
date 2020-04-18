@@ -1,8 +1,8 @@
-#include <doctest/doctest.h>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/IncrementalTimeClient.hpp>
 #include <boost/optional/optional.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"

@@ -1,7 +1,7 @@
-#include <doctest/doctest.h>
 #include <Beam/ServicesTests/TestServices.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/functional/factory.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/ChartingService/ChartingServlet.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"

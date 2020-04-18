@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"

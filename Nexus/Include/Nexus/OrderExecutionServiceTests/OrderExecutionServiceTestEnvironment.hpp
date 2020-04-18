@@ -28,9 +28,7 @@
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
-namespace Tests {
+namespace Nexus::OrderExecutionService::Tests {
 
   /*! \class OrderExecutionServiceTestEnvironment
       \brief Wraps most components needed to run an instance of the
@@ -200,8 +198,6 @@ namespace Tests {
       ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualOrderExecutionClient(std::move(client));
   }
-}
-}
 }
 
 #endif

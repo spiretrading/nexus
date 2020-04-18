@@ -182,24 +182,23 @@ namespace Nexus::MarketDataService::Tests {
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient,
-      std::shared_ptr<VirtualHistoricalDataStore> dataStore)
-      : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-        m_administrationClient(std::move(administrationClient)),
-        m_dataStore(std::move(dataStore)) {}
+    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+    serviceLocatorClient,
+    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+    administrationClient,
+    std::shared_ptr<VirtualHistoricalDataStore> dataStore)
+    : m_serviceLocatorClient(std::move(serviceLocatorClient)),
+      m_administrationClient(std::move(administrationClient)),
+      m_dataStore(std::move(dataStore)) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient)
-      : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
-          std::move(administrationClient),
-          MakeVirtualHistoricalDataStore(
-          std::make_unique<LocalHistoricalDataStore>())) {}
+    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+    serviceLocatorClient,
+    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+    administrationClient)
+    : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
+        std::move(administrationClient), MakeVirtualHistoricalDataStore(
+        std::make_unique<LocalHistoricalDataStore>())) {}
 
   inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();

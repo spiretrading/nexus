@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
