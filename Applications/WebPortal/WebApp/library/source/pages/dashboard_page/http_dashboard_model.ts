@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { HttpAccountModel } from '..';
+import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
+  HttpAccountModel, LocalAccountDirectoryModel } from '..';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -16,11 +17,18 @@ export class HttpDashboardModel extends DashboardModel {
     this.serviceClients = serviceClients;
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
-      new Nexus.CurrencyDatabase(), new Nexus.MarketDatabase());
+      new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
+      new Nexus.MarketDatabase(), new LocalAccountDirectoryModel(
+      new Beam.Set<Beam.DirectoryEntry>(),
+      new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()));
   }
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
     return this.model.entitlementDatabase;
+  }
+
+  public get countryDatabase(): Nexus.CountryDatabase {
+    return this.model.countryDatabase;
   }
 
   public get currencyDatabase(): Nexus.CurrencyDatabase {
@@ -39,6 +47,10 @@ export class HttpDashboardModel extends DashboardModel {
     return this.model.roles;
   }
 
+  public get accountDirectoryModel(): AccountDirectoryModel {
+    return this.model.accountDirectoryModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
     return new HttpAccountModel(account, this.serviceClients);
   }
@@ -54,8 +66,10 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.administrationClient.loadAccountRoles(account);
     this.model = new LocalDashboardModel(account, roles,
       this.serviceClients.definitionsClient.entitlementDatabase,
+      this.serviceClients.definitionsClient.countryDatabase,
       this.serviceClients.definitionsClient.currencyDatabase,
-      this.serviceClients.definitionsClient.marketDatabase);
+      this.serviceClients.definitionsClient.marketDatabase,
+      new HttpAccountDirectoryModel(this.serviceClients));
     return this.model.load();
   }
 

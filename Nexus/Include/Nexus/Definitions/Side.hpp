@@ -87,25 +87,13 @@ namespace Nexus {
     return '?';
   }
 
-  //! Returns the string representation of a Side.
-  inline std::string ToString(Side value) {
-    if(value == Side::ASK) {
-      return "Ask";
-    } else if(value == Side::BID) {
-      return "Bid";
-    }
-    return "None";
-  }
-
   inline std::ostream& operator <<(std::ostream& out, Side side) {
     if(side == Side::ASK) {
-      out << "Ask";
+      return out << "ASK";
     } else if(side == Side::BID) {
-      out << "Bid";
-    } else {
-      out << "None";
+      return out << "BID";
     }
-    return out;
+    return out << "NONE";
   }
 }
 

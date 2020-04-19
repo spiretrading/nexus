@@ -1,8 +1,13 @@
+import * as Beam from 'beam';
 import { CountryCode } from './country';
 import { MarketCode } from './market';
 
 /** Identifies a financial security. */
 export class Security {
+
+  /** Represents no Security. */
+  public static readonly NONE = new Security('', MarketCode.NONE,
+    CountryCode.NONE);
 
   /** Makes a value from a JSON object. */
   public static fromJson(value: any): Security {
@@ -36,6 +41,11 @@ export class Security {
     return this._country;
   }
 
+  /** Tests if two Securities are equal. */
+  public equals(other: Security): boolean {
+    return this.symbol == other.symbol && this.country.equals(other.country);
+  }
+
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
@@ -43,6 +53,11 @@ export class Security {
       market: this._market.toJson(),
       country: this._country.toJson()
     };
+  }
+
+  /** Returns a hash of this value. */
+  public hash(): number {
+    return Beam.hashCombine(Beam.hash(this.symbol), Beam.hash(this.country));
   }
 
   private _symbol: string;

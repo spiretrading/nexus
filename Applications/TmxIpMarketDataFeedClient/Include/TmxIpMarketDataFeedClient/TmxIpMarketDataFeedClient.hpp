@@ -11,46 +11,41 @@
 #include "TmxIpMarketDataFeedClient/TmxIpConfiguration.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpServiceAccessClient.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class TmxIpMarketDataFeedClient
-      \brief Parses packets from the TMX Information Processor feed.
-      \tparam MarketDataFeedClientType The type of MarketDataFeedClient used to
-              update the MarketDataServer.
-      \tparam ServiceAccessClientType The type of service access client
-              receiving messages.
-      \tparam TimeClientType The type of TimeClient used for timestamps.
+  /**
+   * Parses packets from the TMX Information Processor feed.
+   * @param <M> The type of MarketDataFeedClient used to update the
+   *            MarketDataServer.
+   * @param <S> The type of service access client receiving messages.
+   * @param <T> The type of TimeClient used for timestamps.
    */
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
+  template<typename M, typename S, typename T>
   class TmxIpMarketDataFeedClient : private boost::noncopyable {
     public:
 
-      //! The type of MarketDataFeedClient used to update the MarketDataServer.
-      using MarketDataFeedClient = Beam::GetTryDereferenceType<
-        MarketDataFeedClientType>;
+      /**
+       * The type of MarketDataFeedClient used to update the MarketDataServer.
+       */
+      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of channel receiving the market data feed.
-      using ServiceAccessClient = Beam::GetTryDereferenceType<
-        ServiceAccessClientType>;
+      /** The type of channel receiving the market data feed. */
+      using ServiceAccessClient = Beam::GetTryDereferenceType<S>;
 
-      //! The type of TimeClient used for timestamps.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient used for timestamps. */
+      using TimeClient = Beam::GetTryDereferenceType<T>;
 
-      //! Constructs a TmxIpMarketDataFeedClient.
-      /*!
-        \param config The configuration to use.
-        \param marketDataFeedClient Initializes the MarketDataFeedClient.
-        \param serviceAccessClient The service access client receiving messages.
-        \param timeClient The TimeClient used for timestamps.
-      */
-      template<typename MarketDataFeedClientForward,
-        typename ServiceAccessClientForward, typename TimeClientForward>
+      /**
+       * Constructs a TmxIpMarketDataFeedClient.
+       * @param config The configuration to use.
+       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
+       * @param serviceAccessClient The service access client receiving
+       *        messages.
+       * @param timeClient The TimeClient used for timestamps.
+       */
+      template<typename MF, typename SF, typename TF>
       TmxIpMarketDataFeedClient(const TmxIpConfiguration& config,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ServiceAccessClientForward&& serviceAccessClient,
-        TimeClientForward&& timeClient);
+        MF&& marketDataFeedClient, SF&& serviceAccessClient, TF&& timeClient);
 
       ~TmxIpMarketDataFeedClient();
 
@@ -60,10 +55,9 @@ namespace MarketDataService {
 
     private:
       TmxIpConfiguration m_config;
-      Beam::GetOptionalLocalPtr<MarketDataFeedClientType>
-        m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<ServiceAccessClientType> m_serviceAccessClient;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
+      Beam::GetOptionalLocalPtr<S> m_serviceAccessClient;
+      Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
@@ -92,37 +86,27 @@ namespace MarketDataService {
         const StampProtocol::StampMessage& message);
       void HandleMbxAssignLimit(const StampProtocol::StampMessage& message);
       void HandleMbxMessage(const StampProtocol::StampMessage& message);
+      void HandleSymbolInfo(const StampProtocol::StampMessage& message);
       void ReadLoop();
   };
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  template<typename MarketDataFeedClientForward,
-    typename ServiceAccessClientForward, typename TimeClientForward>
-  TmxIpMarketDataFeedClient<MarketDataFeedClientType, ServiceAccessClientType,
-      TimeClientType>::TmxIpMarketDataFeedClient(
-      const TmxIpConfiguration& config,
-      MarketDataFeedClientForward&& marketDataFeedClient,
-      ServiceAccessClientForward&& serviceAccessClient,
-      TimeClientForward&& timeClient)
-      : m_config(config),
-        m_marketDataFeedClient(std::forward<MarketDataFeedClientForward>(
-          marketDataFeedClient)),
-        m_serviceAccessClient(std::forward<ServiceAccessClientForward>(
-          serviceAccessClient)),
-        m_timeClient(std::forward<TimeClientForward>(timeClient)) {}
+  template<typename M, typename S, typename T>
+  template<typename MF, typename SF, typename TF>
+  TmxIpMarketDataFeedClient<M, S, T>::TmxIpMarketDataFeedClient(
+    const TmxIpConfiguration& config, MF&& marketDataFeedClient,
+    SF&& serviceAccessClient, TF&& timeClient)
+    : m_config(config),
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
+      m_timeClient(std::forward<TF>(timeClient)) {}
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  TmxIpMarketDataFeedClient<MarketDataFeedClientType, ServiceAccessClientType,
-      TimeClientType>::~TmxIpMarketDataFeedClient() {
+  template<typename M, typename S, typename T>
+  TmxIpMarketDataFeedClient<M, S, T>::~TmxIpMarketDataFeedClient() {
     Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::Open() {
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -139,20 +123,16 @@ namespace MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::Close() {
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  std::int64_t TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::GetBoardLotPortion(
+  template<typename M, typename S, typename T>
+  std::int64_t TmxIpMarketDataFeedClient<M, S, T>::GetBoardLotPortion(
       std::int64_t quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity - (quantity % 1000);
@@ -163,10 +143,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  std::int64_t TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::RoundToBoardLotPortion(
+  template<typename M, typename S, typename T>
+  std::int64_t TmxIpMarketDataFeedClient<M, S, T>::RoundToBoardLotPortion(
       std::int64_t quantity, Money price) {
     if(price < 10 * Money::CENT) {
       return quantity + 1000 - (quantity % 1000);
@@ -177,10 +155,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::Shutdown() {
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::Shutdown() {
     m_timeClient->Close();
     m_serviceAccessClient->Close();
     m_marketDataFeedClient->Close();
@@ -188,10 +164,8 @@ namespace MarketDataService {
     m_openState.SetClosed();
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  boost::optional<boost::posix_time::ptime> TmxIpMarketDataFeedClient<
-      MarketDataFeedClientType, ServiceAccessClientType, TimeClientType>::
+  template<typename M, typename S, typename T>
+  boost::optional<boost::posix_time::ptime> TmxIpMarketDataFeedClient<M, S, T>::
       GetTimestamp(const StampProtocol::StampMessage& message, int index) {
     auto timestamp = message.GetBusinessField<boost::posix_time::ptime>(index);
     if(timestamp.is_initialized()) {
@@ -200,10 +174,8 @@ namespace MarketDataService {
     return timestamp;
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  std::string TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::GetOrderId(
+  template<typename M, typename S, typename T>
+  std::string TmxIpMarketDataFeedClient<M, S, T>::GetOrderId(
       const boost::optional<std::string>& symbol,
       const boost::optional<std::string>& brokerNumber,
       const std::string& orderNumber) {
@@ -226,10 +198,8 @@ namespace MarketDataService {
     return result;
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleQuote(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleQuote(
       const StampProtocol::StampMessage& message) {
     auto symbol = message.GetBusinessField<std::string>(55);
     if(!symbol.is_initialized()) {
@@ -257,19 +227,17 @@ namespace MarketDataService {
         return;
       }
     }
-    Security security(std::move(*symbol), m_config.m_market,
+    auto security = Security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
-    Quote bid(*bidPrice, *bidVolume, Side::BID);
-    Quote ask(*askPrice, *askVolume, Side::ASK);
-    BboQuote bbo(bid, ask, m_timeClient->GetTime());
+    auto bid = Quote(*bidPrice, *bidVolume, Side::BID);
+    auto ask = Quote(*askPrice, *askVolume, Side::ASK);
+    auto bbo = BboQuote(bid, ask, m_timeClient->GetTime());
     m_marketDataFeedClient->PublishBboQuote(SecurityBboQuote(bbo,
       std::move(security)));
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleLastSaleTradeReport(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleLastSaleTradeReport(
       const StampProtocol::StampMessage& message) {
     auto businessAction = message.GetBusinessField<std::string>(5);
     if(!businessAction.is_initialized()) {
@@ -298,28 +266,24 @@ namespace MarketDataService {
     if(!exchangeId.is_initialized()) {
       return;
     }
-    Security security(std::move(*symbol), m_config.m_market,
+    auto security = Security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
-    TimeAndSale::Condition condition;
+    auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
-    TimeAndSale timeAndSale(*timestamp, *price, *volume, std::move(condition),
-      *exchangeId);
+    auto timeAndSale = TimeAndSale(*timestamp, *price, *volume,
+      std::move(condition), *exchangeId);
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale(timeAndSale, std::move(security)));
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleOrderInfo(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleOrderInfo(
       const StampProtocol::StampMessage& message) {
     HandleBookedOrder(message);
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleBookedOrder(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleBookedOrder(
       const StampProtocol::StampMessage& message) {
     auto nonResidentFlag = message.GetBusinessField<std::string>(168);
     if(nonResidentFlag.is_initialized() && *nonResidentFlag == "Y") {
@@ -348,8 +312,8 @@ namespace MarketDataService {
     if(!orderNumber.is_initialized()) {
       return;
     }
-    std::string mpid;
-    bool isPrimaryMpid;
+    auto mpid = std::string();
+    auto isPrimaryMpid = bool();
     if(m_config.m_consolidateMpids) {
       if(!m_config.m_isNeoBook) {
         mpid = m_config.m_defaultMpid;
@@ -410,17 +374,15 @@ namespace MarketDataService {
     } else if(m_config.m_isNeoBook && !isPrimaryMpid) {
       m_marketDataFeedClient->DeleteOrder(orderId, *timestamp);
     }
-    Security security(std::move(*symbol), m_config.m_market,
+    auto security = Security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     *quantity = GetBoardLotPortion(*quantity, *price);
     m_marketDataFeedClient->AddOrder(security, m_config.m_market, mpid,
       isPrimaryMpid, orderId, *side, *price, *quantity, *timestamp);
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleCancelledOrder(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleCancelledOrder(
       const StampProtocol::StampMessage& message) {
     auto orderNumber = [&] {
       if(!m_config.m_isNeoBook) {
@@ -447,10 +409,8 @@ namespace MarketDataService {
     m_marketDataFeedClient->DeleteOrder(orderId, *timestamp);
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandlePriceAssignedOrder(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandlePriceAssignedOrder(
       const StampProtocol::StampMessage& message) {
     auto price = message.GetBusinessField<Money>(196);
     if(!price.is_initialized()) {
@@ -470,10 +430,8 @@ namespace MarketDataService {
     m_marketDataFeedClient->ModifyOrderPrice(orderId, *price, *timestamp);
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::
       HandleOrderOrCancelConfirmationReport(
       const StampProtocol::StampMessage& message) {
     auto confirmationType = message.GetBusinessField<std::string>(16);
@@ -489,10 +447,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleOrderTradeReport(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleOrderTradeReport(
       const StampProtocol::StampMessage& message) {
     auto timestamp = GetTimestamp(message, 57);
     if(!timestamp.is_initialized()) {
@@ -561,10 +517,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleImbalanceStatus(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleImbalanceStatus(
       const StampProtocol::StampMessage& message) {
     auto timestamp = GetTimestamp(message, 57);
     if(!timestamp.is_initialized()) {
@@ -586,33 +540,27 @@ namespace MarketDataService {
     if(!imbalanceVolume.is_initialized()) {
       return;
     }
-    Security security(std::move(*symbol), m_config.m_market,
+    auto security = Security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
-    MarketOrderImbalance imbalance(OrderImbalance(std::move(security),
+    auto imbalance = MarketOrderImbalance(OrderImbalance(std::move(security),
       *imbalanceSide, *imbalanceVolume, Money::ZERO, *timestamp),
       m_config.m_market);
     m_marketDataFeedClient->PublishOrderImbalance(imbalance);
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::
-      HandleMbxAssignCalculatedOpeningPrice(
-      const StampProtocol::StampMessage& message) {}
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::
+    HandleMbxAssignCalculatedOpeningPrice(
+    const StampProtocol::StampMessage& message) {}
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleMbxAssignLimit(
-      const StampProtocol::StampMessage& message) {}
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleMbxAssignLimit(
+    const StampProtocol::StampMessage& message) {}
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::HandleMbxMessage(
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleMbxMessage(
       const StampProtocol::StampMessage& message) {
-    auto businessAction = message.GetBusinessField<std::string>(5);
+    auto businessAction = message.GetBusinessField<std::string>(55);
     if(!businessAction.is_initialized()) {
       return;
     }
@@ -623,13 +571,53 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ServiceAccessClientType,
-    typename TimeClientType>
-  void TmxIpMarketDataFeedClient<MarketDataFeedClientType,
-      ServiceAccessClientType, TimeClientType>::ReadLoop() {
-    static const auto BUSINESS_CLASS_FIELD_ID = 6;
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::HandleSymbolInfo(
+      const StampProtocol::StampMessage& message) {
+    auto symbol = message.GetBusinessField<std::string>(55);
+    if(!symbol.is_initialized()) {
+      return;
+    }
+    auto listingMarket = message.GetBusinessField<std::string>(554);
+    if(!listingMarket) {
+      return;
+    }
+    auto market = [&] {
+      if(*listingMarket == "T") {
+        return DefaultMarkets::TSX();
+      } else if(*listingMarket == "V") {
+        return DefaultMarkets::TSXV();
+      } else if(*listingMarket == "N") {
+        return DefaultMarkets::CSE();
+      } else if(*listingMarket == "O") {
+        return DefaultMarkets::OMGA();
+      } else if(*listingMarket == "Y") {
+        return DefaultMarkets::NYSE();
+      } else if(*listingMarket == "Q") {
+        return DefaultMarkets::NASDAQ();
+      } else if(*listingMarket == "A") {
+        return DefaultMarkets::ASEX();
+      } else if(*listingMarket == "E") {
+        return DefaultMarkets::NEOE();
+      }
+      return MarketCode();
+    }();
+    if(market == MarketCode()) {
+      return;
+    }
+    auto security = Security(std::move(*symbol), market, m_config.m_country);
+    auto name = message.GetBusinessField<std::string>(177).value_or("");
+    auto boardLot = message.GetBusinessField<std::int64_t>(115).value_or(0);
+    auto info = SecurityInfo(std::move(security), std::move(name), "",
+      boardLot);
+    m_marketDataFeedClient->Add(info);
+  }
+
+  template<typename M, typename S, typename T>
+  void TmxIpMarketDataFeedClient<M, S, T>::ReadLoop() {
+    constexpr auto BUSINESS_CLASS_FIELD_ID = 6;
     while(true) {
-      std::optional<StampProtocol::StampMessage> message;
+      auto message = std::optional<StampProtocol::StampMessage>();
       try {
         message.emplace(m_serviceAccessClient->Read());
       } catch(const Beam::IO::NotConnectedException&) {
@@ -663,10 +651,11 @@ namespace MarketDataService {
         HandleImbalanceStatus(*message);
       } else if(*businessClass == "MBXMessage") {
         HandleMbxMessage(*message);
+      } else if(*businessClass == "SymbolInfo") {
+        HandleSymbolInfo(*message);
       }
     }
   }
-}
 }
 
 #endif

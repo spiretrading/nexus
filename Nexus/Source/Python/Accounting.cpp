@@ -3,6 +3,7 @@
 #include <Beam/Python/Beam.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
+#include "Nexus/Accounting/BuyingPowerTracker.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -40,8 +41,18 @@ namespace {
   }
 }
 
+void Nexus::Python::ExportBuyingPowerTracker(pybind11::module& module) {
+  auto outer = class_<BuyingPowerTracker>(module, "BuyingPowerTracker")
+    .def(init())
+    .def("has_order", &BuyingPowerTracker::HasOrder)
+    .def("get_buying_power", &BuyingPowerTracker::GetBuyingPower)
+    .def("submit", &BuyingPowerTracker::Submit)
+    .def("update", &BuyingPowerTracker::Update);
+}
+
 void Nexus::Python::ExportAccounting(pybind11::module& module) {
   auto submodule = module.def_submodule("accounting");
+  ExportBuyingPowerTracker(submodule);
   ExportPositionOrderBook(submodule);
   ExportPosition(submodule);
   ExportSecurityInventory(submodule);

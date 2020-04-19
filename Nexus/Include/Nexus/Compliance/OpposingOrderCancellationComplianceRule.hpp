@@ -53,6 +53,11 @@ namespace Compliance {
       boost::posix_time::ptime m_lastBidFillTime;
   };
 
+  template<typename TimeClient>
+  OpposingOrderCancellationComplianceRule(boost::posix_time::time_duration,
+    TimeClient&& timeClient) -> OpposingOrderCancellationComplianceRule<
+    std::decay_t<TimeClient>>;
+
   //! Builds a ComplianceRuleSchema representing an
   //! OpposingOrderCancellationComplianceRule.
   inline ComplianceRuleSchema

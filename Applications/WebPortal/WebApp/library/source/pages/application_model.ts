@@ -15,4 +15,7 @@ export abstract class ApplicationModel {
 
   /** Loads the account. */
   public abstract async loadAccount(): Promise<Beam.DirectoryEntry>;
+
+  /** Resets the model. */
+  public abstract reset(): void;
 }

@@ -7,9 +7,6 @@ endif()
 
 add_executable(QueriesTests ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(QueriesTests
-  debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
-  optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH})
 
 if(UNIX)
   target_link_libraries(QueriesTests

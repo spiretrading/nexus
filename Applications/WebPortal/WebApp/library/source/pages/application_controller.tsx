@@ -36,7 +36,7 @@ export class ApplicationController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(this.state.isLoading) {
-      return <div></div>;
+      return <div/>;
     }
     return (
       <Router.BrowserRouter>
@@ -77,6 +77,7 @@ export class ApplicationController extends React.Component<Properties, State> {
   }
 
   private onLogout() {
+    this.props.model.reset();
     this.setState({
       account: Beam.DirectoryEntry.INVALID
     });

@@ -1,5 +1,7 @@
-#ifndef NEXUS_ORDERTYPE_HPP
-#define NEXUS_ORDERTYPE_HPP
+#ifndef NEXUS_ORDER_TYPE_HPP
+#define NEXUS_ORDER_TYPE_HPP
+#include <ostream>
+#include <stdexcept>
 #include <Beam/Collections/Enum.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/throw_exception.hpp>
@@ -39,19 +41,17 @@ namespace Nexus {
       boost::lexical_cast<std::string>(static_cast<int>(value))));
   }
 
-  //! Returns the string representation of an OrderType.
-  inline std::string ToString(OrderType value) {
+  inline std::ostream& operator <<(std::ostream& out, OrderType value) {
     if(value == OrderType::MARKET) {
-      return "MKT";
+      return out << "MARKET";
     } else if(value == OrderType::LIMIT) {
-      return "LMT";
+      return out << "LIMIT";
     } else if(value == OrderType::PEGGED) {
-      return "PEG";
+      return out << "PEGGED";
     } else if(value == OrderType::STOP) {
-      return "STP";
+      return out << "STOP";
     }
-    BOOST_THROW_EXCEPTION(std::runtime_error("OrderType not found: " +
-      boost::lexical_cast<std::string>(static_cast<int>(value))));
+    return out << "NONE";
   }
 }
 

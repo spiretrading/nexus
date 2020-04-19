@@ -8,5 +8,5 @@ export * from './http_account_model';
 export * from './local_account_model';
 export * from './profile_page';
 export * from './risk_page';
-export * from './submission_box';
+export * from './submission_input';
 export * from './sub_page';

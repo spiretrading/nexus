@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <doctest/doctest.h>
 #include <boost/optional/optional_io.hpp>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 
@@ -9,7 +9,7 @@ namespace std {
   std::ostream& operator <<(std::ostream& out,
       const KeyBindings::Action& action) {
     return std::visit(
-      [&](auto& value) -> decltype(auto) {
+      [&] (auto& value) -> decltype(auto) {
         return out << value;
       }, action);
   }
@@ -125,498 +125,500 @@ namespace {
   }
 }
 
-TEST_CASE("test_no_bindings", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  REQUIRE(bindings.find(Region(Region::GlobalTag()),
-    QKeySequence(Qt::CTRL + Qt::Key_F1)) == boost::none);
-  REQUIRE(bindings.find(Region(CountryCode(8)),
-    QKeySequence(Qt::SHIFT + Qt::Key_F2)) == boost::none);
-  REQUIRE(bindings.find(Region(Security("MSFT", 8)),
-    QKeySequence(Qt::Key_F8)) == boost::none);
-}
+TEST_SUITE("KeyBindings") {
+  TEST_CASE("no_bindings") {
+    auto bindings = KeyBindings();
+    REQUIRE(bindings.find(Region::Global(),
+      QKeySequence(Qt::CTRL + Qt::Key_F1)) == boost::none);
+    REQUIRE(bindings.find(Region(CountryCode(8)),
+      QKeySequence(Qt::SHIFT + Qt::Key_F2)) == boost::none);
+    REQUIRE(bindings.find(Region(Security("MSFT", 8)),
+      QKeySequence(Qt::Key_F8)) == boost::none);
+  }
 
-TEST_CASE("test_global_set_and_get", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  auto region = Region(Region::GlobalTag());
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
+  TEST_CASE("global_set_and_get") {
+    auto bindings = KeyBindings();
+    auto region = Region::Global();
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+      require_cancel_action(bindings, region, sequence, action);
+    }
+    require_no_binding(bindings, region, Qt::Key_F1);
+    require_no_binding(bindings, region, Qt::SHIFT + Qt::Key_F1);
+    require_no_binding(bindings, region, Qt::Key_F2);
+    require_no_binding(bindings, region, Qt::Key_F3);
   }
-  {
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-  }
-  {
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-    require_cancel_action(bindings, region, sequence, action);
-  }
-  require_no_binding(bindings, region, Qt::Key_F1);
-  require_no_binding(bindings, region, Qt::SHIFT + Qt::Key_F1);
-  require_no_binding(bindings, region, Qt::Key_F2);
-  require_no_binding(bindings, region, Qt::Key_F3);
-}
 
-TEST_CASE("test_global_override", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  auto region = Region(Region::GlobalTag());
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
+  TEST_CASE("global_override") {
+    auto bindings = KeyBindings();
+    auto region = Region::Global();
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+      require_cancel_action(bindings, region, sequence, action);
+    }
   }
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-  }
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-    require_cancel_action(bindings, region, sequence, action);
-  }
-}
 
-TEST_CASE("test_local_set_and_get", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
+  TEST_CASE("local_set_and_get") {
+    auto bindings = KeyBindings();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
+    {
+      auto region = Region("named_region");
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+    }
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-  }
-  {
-    auto region = Region("named_region");
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-  }
-}
 
-TEST_CASE("test_distinct_regions", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(CountryCode(4)), sequence);
+  TEST_CASE("distinct_regions") {
+    auto bindings = KeyBindings();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region(CountryCode(4)), sequence);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region(Security("GOOG", CountryCode(4))),
+        sequence);
+    }
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(Security("GOOG", CountryCode(4))),
-      sequence);
-  }
-}
 
-TEST_CASE("test_wider_regions", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(Region::GlobalTag()), sequence);
+  TEST_CASE("wider_regions") {
+    auto bindings = KeyBindings();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region::Global(), sequence);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region(CountryCode(4)), sequence);
+      require_no_binding(bindings, Region::Global(), sequence);
+    }
+    {
+      auto region = Region(Security("MSFT", MarketCode("NSDQ"), CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 50, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region(CountryCode(4)), sequence);
+      require_no_binding(bindings, Region::Global(), sequence);
+    }
+    {
+      auto region = Region("named_region");
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+      require_no_binding(bindings, Region::Global(), sequence);
+    }
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(CountryCode(4)), sequence);
-    require_no_binding(bindings, Region(Region::GlobalTag()), sequence);
-  }
-  {
-    auto region = Region(Security("MSFT", MarketCode("NSDQ"), CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 50, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(CountryCode(4)), sequence);
-    require_no_binding(bindings, Region(Region::GlobalTag()), sequence);
-  }
-  {
-    auto region = Region("named_region");
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-    require_no_binding(bindings, Region(Region::GlobalTag()), sequence);
-  }
-}
 
-TEST_CASE("test_narrower_regions", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, Region(Security("MSFT", CountryCode(8))),
-      sequence, action);
-    require_order_action(bindings, Region(Security("GOOG", CountryCode(8))),
-      sequence, action);
-    require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
-      CountryCode(8))), sequence, action);
-    require_order_action(bindings, Region(Security("GOOG", MarketCode("NYSE"),
-      CountryCode(8))), sequence, action);
+  TEST_CASE("narrower_regions") {
+    auto bindings = KeyBindings();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, Region(Security("MSFT", CountryCode(8))),
+        sequence, action);
+      require_order_action(bindings, Region(Security("GOOG", CountryCode(8))),
+        sequence, action);
+      require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
+        CountryCode(8))), sequence, action);
+      require_order_action(bindings, Region(Security("GOOG", MarketCode("NYSE"),
+        CountryCode(8))), sequence, action);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
+        CountryCode(4))), sequence, action);
+      require_order_action(bindings, Region(Security("MSFT", MarketCode("NYSE"),
+        CountryCode(4))), sequence, action);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, Region(CountryCode(8)),
+        sequence, action);
+      require_order_action(bindings, Region(Security("GOOG", CountryCode(8))),
+        sequence, action);
+      require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
+        CountryCode(8))), sequence, action);
+    }
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
-      CountryCode(4))), sequence, action);
-    require_order_action(bindings, Region(Security("MSFT", MarketCode("NYSE"),
-      CountryCode(4))), sequence, action);
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, Region(CountryCode(8)),
-      sequence, action);
-    require_order_action(bindings, Region(Security("GOOG", CountryCode(8))),
-      sequence, action);
-    require_order_action(bindings, Region(Security("MSFT", MarketCode("NSDQ"),
-      CountryCode(8))), sequence, action);
-  }
-}
 
-TEST_CASE("test_different_actions_in_distinct_regions", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto region1 = Region(CountryCode(8)); 
-    auto action1 = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region1, action1);
-    auto region2 = Region(CountryCode(4)); 
-    auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
-    bindings.set(sequence, region2, action2);
-    require_order_action(bindings, region1, sequence, action1);
-    require_order_action(bindings, region2, sequence, action2);
+  TEST_CASE("different_actions_in_distinct_regions") {
+    auto bindings = KeyBindings();
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto region1 = Region(CountryCode(8)); 
+      auto action1 = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region1, action1);
+      auto region2 = Region(CountryCode(4)); 
+      auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
+      bindings.set(sequence, region2, action2);
+      require_order_action(bindings, region1, sequence, action1);
+      require_order_action(bindings, region2, sequence, action2);
+    }
+    {
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto region1 = Region(Security("MSFT", CountryCode(4)));
+      auto action1 = KeyBindings::OrderAction{"action3", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region1, action1);
+      auto region2 = Region(Security("GOOG", CountryCode(4)));
+      auto action2 = KeyBindings::OrderAction{"action4", OrderType::LIMIT,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 1, {}};
+      bindings.set(sequence, region2, action2);
+      require_order_action(bindings, region1, sequence, action1);
+      require_order_action(bindings, region2, sequence, action2);
+    }
   }
-  {
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto region1 = Region(Security("MSFT", CountryCode(4)));
-    auto action1 = KeyBindings::OrderAction{"action3", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region1, action1);
-    auto region2 = Region(Security("GOOG", CountryCode(4)));
-    auto action2 = KeyBindings::OrderAction{"action4", OrderType::LIMIT,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 1, {}};
-    bindings.set(sequence, region2, action2);
-    require_order_action(bindings, region1, sequence, action1);
-    require_order_action(bindings, region2, sequence, action2);
-  }
-}
 
-TEST_CASE("test_different_actions_in_region_hierarchy", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto region1 = Region(CountryCode(8));
-    auto action1 = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region1, action1);
-    auto region2 = Region(CountryCode(4));
-    auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
-    bindings.set(sequence, region2, action2);
-    auto region3 = Region(Security("MSFT", CountryCode(8)));
-    auto action3 = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
-    bindings.set(sequence, region3, action3);
-    auto region4 = Region(Security("GOOG", CountryCode(8)));
-    auto action4 = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 25, {}};
-    bindings.set(sequence, region4, action4);
-    auto region5 = Region(Security("MSFT", CountryCode(4)));
-    auto action5 = KeyBindings::OrderAction{"action5", OrderType::MARKET,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 35, {}};
-    bindings.set(sequence, region5, action5);
-    auto region6 = Region(Security("MSFT", CountryCode(1)));
-    auto action6 = KeyBindings::OrderAction{"action5", OrderType::MARKET,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 45, {}};
-    bindings.set(sequence, region6, action6);
-    require_order_action(bindings, region1, sequence, action1);
-    require_order_action(bindings, region2, sequence, action2);
-    require_order_action(bindings, region3, sequence, action3);
-    require_order_action(bindings, region4, sequence, action4);
-    require_order_action(bindings, region5, sequence, action5);
-    require_order_action(bindings, region6, sequence, action6);
-    require_no_binding(bindings, Region(Region::GlobalTag()), sequence);
-    require_no_binding(bindings, Region(CountryCode(1)), sequence);
-    require_order_action(bindings, Region(Security("TSLA", CountryCode(8))),
-      sequence, action1);
-    require_order_action(bindings, Region(Security("GOOG", CountryCode(4))),
-      sequence, action2);
+  TEST_CASE("different_actions_in_region_hierarchy") {
+    auto bindings = KeyBindings();
+    {
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto region1 = Region(CountryCode(8));
+      auto action1 = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region1, action1);
+      auto region2 = Region(CountryCode(4));
+      auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
+      bindings.set(sequence, region2, action2);
+      auto region3 = Region(Security("MSFT", CountryCode(8)));
+      auto action3 = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
+      bindings.set(sequence, region3, action3);
+      auto region4 = Region(Security("GOOG", CountryCode(8)));
+      auto action4 = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 25, {}};
+      bindings.set(sequence, region4, action4);
+      auto region5 = Region(Security("MSFT", CountryCode(4)));
+      auto action5 = KeyBindings::OrderAction{"action5", OrderType::MARKET,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 35, {}};
+      bindings.set(sequence, region5, action5);
+      auto region6 = Region(Security("MSFT", CountryCode(1)));
+      auto action6 = KeyBindings::OrderAction{"action5", OrderType::MARKET,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 45, {}};
+      bindings.set(sequence, region6, action6);
+      require_order_action(bindings, region1, sequence, action1);
+      require_order_action(bindings, region2, sequence, action2);
+      require_order_action(bindings, region3, sequence, action3);
+      require_order_action(bindings, region4, sequence, action4);
+      require_order_action(bindings, region5, sequence, action5);
+      require_order_action(bindings, region6, sequence, action6);
+      require_no_binding(bindings, Region::Global(), sequence);
+      require_no_binding(bindings, Region(CountryCode(1)), sequence);
+      require_order_action(bindings, Region(Security("TSLA", CountryCode(8))),
+        sequence, action1);
+      require_order_action(bindings, Region(Security("GOOG", CountryCode(4))),
+        sequence, action2);
+    }
+    {
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto region1 = Region::Global();
+      auto action1 = KeyBindings::OrderAction{"action1", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region1, action1);
+      auto region2 = Region(CountryCode(4));
+      auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
+      bindings.set(sequence, region2, action2);
+      auto region3 = Region(Security("MSFT", CountryCode(4)));
+      auto action3 = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
+      bindings.set(sequence, region3, action3);
+      auto region4 = Region(Security("GOOG", CountryCode(8)));
+      auto action4 = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
+      bindings.set(sequence, region4, action4);
+      require_order_action(bindings, region1, sequence, action1);
+      require_order_action(bindings, region2, sequence, action2);
+      require_order_action(bindings, region3, sequence, action3);
+      require_order_action(bindings, region4, sequence, action4);
+      require_order_action(bindings, Region(CountryCode(1)), sequence, action1);
+      require_order_action(bindings, Region(CountryCode(8)), sequence, action1);
+      require_order_action(bindings, Region(Security("GOOG", CountryCode(4))),
+        sequence, action2);
+      require_order_action(bindings, Region(Security("TSLA", CountryCode(8))),
+        sequence, action1);
+      require_order_action(bindings, Region(Security("MSFT", CountryCode(1))),
+        sequence, action1);
+    }
   }
-  {
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto region1 = Region(Region::GlobalTag());
-    auto action1 = KeyBindings::OrderAction{"action1", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region1, action1);
-    auto region2 = Region(CountryCode(4));
-    auto action2 = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 8, {}};
-    bindings.set(sequence, region2, action2);
-    auto region3 = Region(Security("MSFT", CountryCode(4)));
-    auto action3 = KeyBindings::OrderAction{"action3", OrderType::PEGGED,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
-    bindings.set(sequence, region3, action3);
-    auto region4 = Region(Security("GOOG", CountryCode(8)));
-    auto action4 = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 15, {}};
-    bindings.set(sequence, region4, action4);
-    require_order_action(bindings, region1, sequence, action1);
-    require_order_action(bindings, region2, sequence, action2);
-    require_order_action(bindings, region3, sequence, action3);
-    require_order_action(bindings, region4, sequence, action4);
-    require_order_action(bindings, Region(CountryCode(1)), sequence, action1);
-    require_order_action(bindings, Region(CountryCode(8)), sequence, action1);
-    require_order_action(bindings, Region(Security("GOOG", CountryCode(4))),
-      sequence, action2);
-    require_order_action(bindings, Region(Security("TSLA", CountryCode(8))),
-      sequence, action1);
-    require_order_action(bindings, Region(Security("MSFT", CountryCode(1))),
-      sequence, action1);
-  }
-}
 
-TEST_CASE("test_reset", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
+  TEST_CASE("reset") {
+    auto bindings = KeyBindings();
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+      require_cancel_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action4", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
+    {
+      auto region = Region("named_region");
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::OrderAction{"action5", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+      require_order_action(bindings, region, sequence, action);
+      bindings.reset(region, sequence);
+      require_no_binding(bindings, region, sequence);
+    }
   }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-    require_cancel_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
-  }
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
-  }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action4", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
-  }
-  {
-    auto region = Region("named_region");
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::OrderAction{"action5", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-    require_order_action(bindings, region, sequence, action);
-    bindings.reset(region, sequence);
-    require_no_binding(bindings, region, sequence);
-  }
-}
 
-TEST_CASE("test_order_bindings_list", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  auto expected = std::vector<KeyBindings::OrderActionBinding>();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
+  TEST_CASE("order_bindings_list") {
+    auto bindings = KeyBindings();
+    auto expected = std::vector<KeyBindings::OrderActionBinding>();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region(CountryCode(4));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region("named_region");
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action5", OrderType::LIMIT,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+    }
+    require_same_lists(bindings.build_order_bindings(), expected);
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(CountryCode(4));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region("named_region");
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::OrderAction{"action4", OrderType::PEGGED,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action5", OrderType::LIMIT,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-  }
-  require_same_lists(bindings.build_order_bindings(), expected);
-}
 
-TEST_CASE("test_cancel_bindings_list", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  auto expected = std::vector<KeyBindings::CancelActionBinding>();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
+  TEST_CASE("cancel_bindings_list") {
+    auto bindings = KeyBindings();
+    auto expected = std::vector<KeyBindings::CancelActionBinding>();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_BID;
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::MOST_RECENT;
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    require_same_lists(bindings.build_cancel_bindings(), expected);
   }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_BID;
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::MOST_RECENT;
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  require_same_lists(bindings.build_cancel_bindings(), expected);
-}
 
-TEST_CASE("test_action_bindings_list", "[KeyBindings]") {
-  auto bindings = KeyBindings();
-  auto expected = std::vector<KeyBindings::ActionBinding>();
-  {
-    auto region = Region(CountryCode(8));
-    auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
-    auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
-      Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
+  TEST_CASE("action_bindings_list") {
+    auto bindings = KeyBindings();
+    auto expected = std::vector<KeyBindings::ActionBinding>();
+    {
+      auto region = Region(CountryCode(8));
+      auto sequence = QKeySequence(Qt::CTRL + Qt::Key_F1);
+      auto action = KeyBindings::OrderAction{"action1", OrderType::MARKET,
+        Side::BID, TimeInForce(TimeInForce::Type::DAY), 5, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region(Security("MSFT", CountryCode(4)));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region(CountryCode(4));
+      auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
+      auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F4);
+      auto action = KeyBindings::OrderAction{"action4", OrderType::MARKET,
+        Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
+      bindings.set(sequence, region, action);
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F8);
+      auto action = KeyBindings::CancelAction::CLOSEST_ASK;
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    {
+      auto region = Region::Global();
+      auto sequence = QKeySequence(Qt::Key_F4);
+      auto action = KeyBindings::CancelAction::MOST_RECENT;
+      bindings.set(sequence, region, action);
+      expected.push_back({sequence, region, action});
+    }
+    require_same_lists(bindings.build_action_bindings(), expected);
   }
-  {
-    auto region = Region(Security("MSFT", CountryCode(4)));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action2", OrderType::LIMIT,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(CountryCode(4));
-    auto sequence = QKeySequence(Qt::SHIFT + Qt::Key_F3);
-    auto action = KeyBindings::OrderAction{"action3", OrderType::MARKET,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 10, {}};
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F4);
-    auto action = KeyBindings::OrderAction{"action4", OrderType::MARKET,
-      Side::ASK, TimeInForce(TimeInForce::Type::DAY), 100, {}};
-    bindings.set(sequence, region, action);
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F8);
-    auto action = KeyBindings::CancelAction::CLOSEST_ASK;
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  {
-    auto region = Region(Region::GlobalTag());
-    auto sequence = QKeySequence(Qt::Key_F4);
-    auto action = KeyBindings::CancelAction::MOST_RECENT;
-    bindings.set(sequence, region, action);
-    expected.push_back({sequence, region, action});
-  }
-  require_same_lists(bindings.build_action_bindings(), expected);
 }

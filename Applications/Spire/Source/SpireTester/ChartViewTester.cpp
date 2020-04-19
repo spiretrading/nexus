@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <doctest/doctest.h>
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/Charting/ChartView.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
@@ -100,43 +100,43 @@ namespace {
   }
 }
 
-TEST_CASE("test_to_chart_point", "[Charting]") {
-  REQUIRE(test_pixel_to_point(0, 900));
-  REQUIRE(test_pixel_to_point(10, 902.5));
-  REQUIRE(test_pixel_to_point(20, 905));
-  REQUIRE(test_pixel_to_point(30, 907.5));
-  REQUIRE(test_pixel_to_point(40, 910));
-  REQUIRE(test_pixel_to_point(50, 910 + 10.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(60, 910 + 20.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(70, 910 + 30.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(80, 921.25));
-  REQUIRE(test_pixel_to_point(90, 923.75));
-  REQUIRE(test_pixel_to_point(100, 926.25));
-  REQUIRE(test_pixel_to_point(110, 928.75));
-  REQUIRE(test_pixel_to_point(120, 930 + 5.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(130, 930 + 15.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(140, 930 + 25.0 / 35.0 * 10.0));
-  REQUIRE(test_pixel_to_point(150, 940));
-  REQUIRE(test_pixel_to_point(160, 942.5));
-  REQUIRE(test_pixel_to_point(170, 945));
-  REQUIRE(test_pixel_to_point(180, 947.5));
-  REQUIRE(test_pixel_to_point(190, 950));
-  REQUIRE(test_pixel_to_point(200, 952.5));
-  print_test_name("test_to_chart_point");
-}
+TEST_SUITE("Charting") {
+  TEST_CASE("to_chart_point") {
+    REQUIRE(test_pixel_to_point(0, 900));
+    REQUIRE(test_pixel_to_point(10, 902.5));
+    REQUIRE(test_pixel_to_point(20, 905));
+    REQUIRE(test_pixel_to_point(30, 907.5));
+    REQUIRE(test_pixel_to_point(40, 910));
+    REQUIRE(test_pixel_to_point(50, 910 + 10.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(60, 910 + 20.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(70, 910 + 30.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(80, 921.25));
+    REQUIRE(test_pixel_to_point(90, 923.75));
+    REQUIRE(test_pixel_to_point(100, 926.25));
+    REQUIRE(test_pixel_to_point(110, 928.75));
+    REQUIRE(test_pixel_to_point(120, 930 + 5.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(130, 930 + 15.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(140, 930 + 25.0 / 35.0 * 10.0));
+    REQUIRE(test_pixel_to_point(150, 940));
+    REQUIRE(test_pixel_to_point(160, 942.5));
+    REQUIRE(test_pixel_to_point(170, 945));
+    REQUIRE(test_pixel_to_point(180, 947.5));
+    REQUIRE(test_pixel_to_point(190, 950));
+    REQUIRE(test_pixel_to_point(200, 952.5));
+  }
 
-TEST_CASE("test_to_pixel", "[Charting]") {
-  REQUIRE(to_pixel({Scalar(900), Scalar(1)}) == QPoint(0, 0));
-  REQUIRE(to_pixel({Scalar(905), Scalar(1)}) == QPoint(20, 0));
-  REQUIRE(to_pixel({Scalar(910), Scalar(1)}) == QPoint(40, 0));
-  REQUIRE(to_pixel({Scalar(915), Scalar(1)}) == QPoint(57, 0));
-  REQUIRE(to_pixel({Scalar(920), Scalar(1)}) == QPoint(75, 0));
-  REQUIRE(to_pixel({Scalar(925), Scalar(1)}) == QPoint(95, 0));
-  REQUIRE(to_pixel({Scalar(930), Scalar(1)}) == QPoint(115, 0));
-  REQUIRE(to_pixel({Scalar(935), Scalar(1)}) == QPoint(132, 0));
-  REQUIRE(to_pixel({Scalar(940), Scalar(1)}) == QPoint(150, 0));
-  REQUIRE(to_pixel({Scalar(945), Scalar(1)}) == QPoint(170, 0));
-  REQUIRE(to_pixel({Scalar(950), Scalar(1)}) == QPoint(190, 0));
-  REQUIRE(to_pixel({Scalar(952.5), Scalar(1)}) == QPoint(200, 0));
-  print_test_name("test_to_pixel");
+  TEST_CASE("to_pixel") {
+    REQUIRE(to_pixel({Scalar(900), Scalar(1)}) == QPoint(0, 0));
+    REQUIRE(to_pixel({Scalar(905), Scalar(1)}) == QPoint(20, 0));
+    REQUIRE(to_pixel({Scalar(910), Scalar(1)}) == QPoint(40, 0));
+    REQUIRE(to_pixel({Scalar(915), Scalar(1)}) == QPoint(57, 0));
+    REQUIRE(to_pixel({Scalar(920), Scalar(1)}) == QPoint(75, 0));
+    REQUIRE(to_pixel({Scalar(925), Scalar(1)}) == QPoint(95, 0));
+    REQUIRE(to_pixel({Scalar(930), Scalar(1)}) == QPoint(115, 0));
+    REQUIRE(to_pixel({Scalar(935), Scalar(1)}) == QPoint(132, 0));
+    REQUIRE(to_pixel({Scalar(940), Scalar(1)}) == QPoint(150, 0));
+    REQUIRE(to_pixel({Scalar(945), Scalar(1)}) == QPoint(170, 0));
+    REQUIRE(to_pixel({Scalar(950), Scalar(1)}) == QPoint(190, 0));
+    REQUIRE(to_pixel({Scalar(952.5), Scalar(1)}) == QPoint(200, 0));
+  }
 }

@@ -35,7 +35,7 @@ void KeyBindings::reset(const Region& region, const QKeySequence& sequence) {
       actions.Set(region, boost::none);
     } else {
       actions.Erase(region);
-      if(actions.GetSize() == 1 && actions.Get(Region(Region::GlobalTag()))) {
+      if(actions.GetSize() == 1 && actions.Get(Region::Global())) {
         m_bindings.erase(i);
       }
     }

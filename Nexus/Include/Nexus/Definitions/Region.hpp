@@ -1,5 +1,6 @@
 #ifndef NEXUS_REGION_HPP
 #define NEXUS_REGION_HPP
+#include <string>
 #include <unordered_set>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
@@ -16,20 +17,17 @@ namespace Nexus {
   class Region {
     public:
 
-      //! Tag used to mark a Region as global.
-      struct GlobalTag {};
-
-      //! Constructs an empty Region.
-      Region();
-
-      //! Constructs a global Region.
-      explicit Region(GlobalTag);
+      //! Returns the global Region.
+      static Region Global();
 
       //! Constructs a global named Region.
       /*!
         \param name The name of the Region.
       */
-      Region(GlobalTag, const std::string& name);
+      static Region Global(const std::string& name);
+
+      //! Constructs an empty Region.
+      Region();
 
       //! Constructs an empty named Region.
       /*!
@@ -102,11 +100,12 @@ namespace Nexus {
       bool operator >(const Region& region) const;
 
     private:
+      struct GlobalTag {};
       struct MarketEntry {
         MarketCode m_market;
         CountryCode m_country;
 
-        MarketEntry();
+        MarketEntry() = default;
         MarketEntry(MarketCode market, CountryCode country);
         bool operator ==(const MarketEntry& marketEntry) const;
         friend struct Beam::Serialization::Shuttle<MarketEntry>;
@@ -121,14 +120,15 @@ namespace Nexus {
       std::unordered_set<CountryCode> m_countries;
       std::unordered_set<MarketEntry, MarketEntryHash> m_markets;
       std::unordered_set<Security> m_securities;
+
+      explicit Region(GlobalTag);
+      Region(GlobalTag, const std::string& name);
   };
 
-  inline Region::MarketEntry::MarketEntry() {}
-
   inline Region::MarketEntry::MarketEntry(MarketCode market,
-      CountryCode country)
-      : m_market(market),
-        m_country(country) {}
+    CountryCode country)
+    : m_market(market),
+      m_country(country) {}
 
   inline bool Region::MarketEntry::operator ==(
       const MarketEntry& marketEntry) const {
@@ -140,19 +140,20 @@ namespace Nexus {
     return std::hash<MarketCode>()(value.m_market);
   }
 
+  inline Region Region::Global() {
+    return Region(GlobalTag{});
+  }
+
+  inline Region Region::Global(const std::string& name) {
+    return Region(GlobalTag{}, name);
+  }
+
   inline Region::Region()
-      : m_isGlobal(false) {}
-
-  inline Region::Region(GlobalTag)
-      : m_isGlobal(true) {}
-
-  inline Region::Region(GlobalTag, const std::string& name)
-      : m_isGlobal(true),
-        m_name(name) {}
+    : m_isGlobal(false) {}
 
   inline Region::Region(const std::string& name)
-      : m_isGlobal(false),
-        m_name(name) {}
+    : m_isGlobal(false),
+      m_name(name) {}
 
   inline Region::Region(CountryCode country)
       : m_isGlobal(false) {
@@ -286,6 +287,13 @@ namespace Nexus {
   inline bool Region::operator >(const Region& region) const {
     return (*this >= region) && *this != region;
   }
+
+  inline Region::Region(GlobalTag)
+    : m_isGlobal(true) {}
+
+  inline Region::Region(GlobalTag, const std::string& name)
+    : m_isGlobal(true),
+      m_name(name) {}
 }
 
 namespace Beam {

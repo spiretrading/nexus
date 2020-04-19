@@ -4,9 +4,9 @@
 
 namespace Nexus::MarketDataService {
   class ApplicationMarketDataClient;
-  template<typename HistoricalDataStoreType> class BufferedHistoricalDataStore;
-  template<typename HistoricalDataStoreType> class CachedHistoricalDataStore;
-  template<typename MarketDataClientType> class ClientHistoricalDataStore;
+  template<typename D> class AsyncHistoricalDataStore;
+  template<typename D> class CachedHistoricalDataStore;
+  template<typename C> class ClientHistoricalDataStore;
   template<typename D> class DataStoreMarketDataClient;
   template<typename MarketExpressionType> class DefaultCurrencyExpression;
   class DistributedMarketDataClient;
@@ -15,10 +15,9 @@ namespace Nexus::MarketDataService {
   class EntitlementSet;
   struct HistoricalDataStore;
   class HistoricalDataStoreException;
-  template<typename T, typename DataStoreType>
-    class HistoricalDataStoreQueryWrapper;
+  template<typename V, typename D> class HistoricalDataStoreQueryWrapper;
   class LocalHistoricalDataStore;
-  template<typename ServiceProtocolClientBuilderType> class MarketDataClient;
+  template<typename B> class MarketDataClient;
   template<typename OrderIdType, typename SamplingTimerType,
     typename MessageProtocolType, typename HeartbeatTimerType>
     class MarketDataFeedClient;
@@ -26,8 +25,7 @@ namespace Nexus::MarketDataService {
     class MarketDataFeedServlet;
   template<typename MarketDataType> struct MarketDataQueryType;
   class MarketDataRegistry;
-  template<typename ContainerType, typename MarketDataRegistryType,
-    typename HistoricalDataStoreType, typename AdministrationClientType>
+  template<typename C, typename R, typename D, typename A>
     class MarketDataRegistryServlet;
   class MarketDataRegistrySession;
   template<typename ContainerType, typename MarketDataClientType,
@@ -35,17 +33,15 @@ namespace Nexus::MarketDataService {
   class MarketEntry;
   template<typename MarketDataClientType, typename MarketExpressionType,
     typename TimeRangeExpressionType> class MarketOrderImbalanceExpression;
-  template<typename MarketDataClientType> class RealTimeMarketDataPublisher;
   class SecurityEntry;
   struct SecuritySnapshot;
-  template<typename HistoricalDataStoreType>
-    class SessionCachedHistoricalDataStore;
+  template<typename D> class SessionCachedHistoricalDataStore;
   template<typename C> class SqlHistoricalDataStore;
   class VirtualHistoricalDataStore;
   class VirtualMarketDataClient;
   class VirtualMarketDataFeedClient;
   template<typename C> class WrapperHistoricalDataStore;
-  template<typename ClientType> class WrapperMarketDataClient;
+  template<typename C> class WrapperMarketDataClient;
   template<typename ClientType> class WrapperMarketDataFeedClient;
 
   // Standard name for the market data feed service.

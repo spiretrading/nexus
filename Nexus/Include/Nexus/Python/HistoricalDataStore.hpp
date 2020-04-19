@@ -26,6 +26,11 @@ namespace Nexus::MarketDataService {
 
       ~ToPythonHistoricalDataStore() override;
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(
+        const Security& security) override;
+
+      std::vector<SecurityInfo> LoadAllSecurityInfo() override;
+
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query) override;
 
@@ -40,6 +45,8 @@ namespace Nexus::MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query) override;
+
+      void Store(const SecurityInfo& info) override;
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance) override;
 
@@ -97,6 +104,20 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename D>
+  boost::optional<SecurityInfo> ToPythonHistoricalDataStore<D>::
+      LoadSecurityInfo(const Security& security) {
+    auto release = Beam::Python::GilRelease();
+    return m_dataStore->LoadSecurityInfo(security);
+  }
+
+  template<typename D>
+  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::
+      LoadAllSecurityInfo() {
+    auto release = Beam::Python::GilRelease();
+    return m_dataStore->LoadAllSecurityInfo();
+  }
+
+  template<typename D>
   std::vector<SequencedOrderImbalance>
       ToPythonHistoricalDataStore<D>::LoadOrderImbalances(
       const MarketWideDataQuery& query) {
@@ -133,6 +154,12 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->LoadTimeAndSales(query);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::Store(const SecurityInfo& info) {
+    auto release = Beam::Python::GilRelease();
+    m_dataStore->Store(info);
   }
 
   template<typename D>
