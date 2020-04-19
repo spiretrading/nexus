@@ -23,11 +23,11 @@ using namespace Nexus::OrderExecutionService;
 
 namespace {
   struct Fixture {
-    using BoardLotCheck = BoardLotCheck<VirtualMarketDataClient*>;
+    using TestBoardLotCheck = BoardLotCheck<VirtualMarketDataClient*>;
 
     TestEnvironment m_environment;
     TestServiceClients m_serviceClients;
-    BoardLotCheck m_check;
+    TestBoardLotCheck m_check;
 
     Fixture()
         : m_serviceClients(Ref(m_environment)),
