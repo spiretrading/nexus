@@ -21,7 +21,7 @@ bool KeyBindings::CancelActionBinding::operator !=(
 
 KeyBindings KeyBindings::get_default_key_bindings() {
   auto bindings = KeyBindings();
-  auto region = Region(Region::GlobalTag{});
+  auto region = Region::Global();
   auto action1 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::BID,
     TimeInForce(TimeInForce::Type::NONE), 100, {}};
   bindings.set(Qt::Key_F5, region, action1);
