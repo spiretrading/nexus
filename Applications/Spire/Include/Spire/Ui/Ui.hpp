@@ -1,5 +1,6 @@
 #ifndef SPIRE_UI_HPP
 #define SPIRE_UI_HPP
+#include <QHeaderView>
 #include <QImage>
 #include <QLineEdit>
 #include <QRect>
@@ -60,6 +61,19 @@ namespace Spire {
     \param widget The line edit to apply the style to.
   */
   void apply_line_edit_style(QLineEdit* widget);
+
+  //! Constructs a horizontal Spire-styled table header with fixed size,
+  //! immovable, column headers.
+  /*
+    \param parent The parent widget.
+  */
+  QHeaderView* make_fixed_header(QWidget* parent);
+
+  //! Constructs a horizontal, Spire-styled, table header.
+  /*
+    \param parent The parent widget.
+  */
+  QHeaderView* make_header(QWidget* parent);
 }
 
 #endif

@@ -1,5 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
+#include <QTabWidget>
+#include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -17,7 +19,7 @@ namespace Spire {
         \param key_bindings The initial key bindings.
         \param parent The parent widget.
       */
-      explicit KeyBindingsWindow(const KeyBindings& key_bindings,
+      explicit KeyBindingsWindow(KeyBindings key_bindings,
         QWidget* parent = nullptr);
 
       //! Returns the current key bindings.
@@ -27,9 +29,20 @@ namespace Spire {
       boost::signals2::connection connect_apply_signal(
         const ApplySignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       KeyBindings m_key_bindings;
       mutable ApplySignal m_apply_signal;
+      QTabWidget* m_tab_widget;
+      bool m_last_focus_was_key;
+      CancelKeyBindingsTableView* m_cancel_keys_table;
+
+      void on_ok_button_clicked();
+      void on_restore_button_clicked();
+      void on_tab_bar_clicked(int index);
+      void on_tab_changed();
   };
 }
 

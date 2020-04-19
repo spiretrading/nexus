@@ -171,6 +171,9 @@ namespace Details {
         Action m_action;
       };
 
+      //! Returns the default key bindings.
+      static KeyBindings get_default_key_bindings();
+
       //! Associates a key sequence with an action for a region.
       /*!
         \param sequence The key sequence.
