@@ -199,7 +199,7 @@ CustomVariantItemDelegate::~CustomVariantItemDelegate() {}
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
-   if(value.canConvert<ptime>()) {
+  if(value.canConvert<ptime>()) {
     ptime timeValue = ToLocalTime(value.value<ptime>());
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
