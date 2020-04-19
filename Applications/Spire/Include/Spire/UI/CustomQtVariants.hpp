@@ -93,6 +93,15 @@ namespace Spire::UI {
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
 
+  //! Returns the test representation of a Side.
+  const QString& displayText(Nexus::Side side);
+
+  //! Returns the test representation of an OrderStatus.
+  const QString& displayText(Nexus::OrderStatus status);
+
+  //! Returns the test representation of an OrderType.
+  const QString& displayText(Nexus::OrderType type);
+
   /*! \class CustomVariantItemDelegate
       \brief Extends Qt's item delegate to support the custom QVariant types.
    */

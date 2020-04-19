@@ -3,12 +3,14 @@
 #include <QCheckBox>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_OrderLogPropertiesDialog.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 OrderLogPropertiesDialog::OrderLogPropertiesDialog(
@@ -21,10 +23,7 @@ OrderLogPropertiesDialog::OrderLogPropertiesDialog(
       m_properties(blotterModel->GetOrderLogModel().GetProperties()) {
   m_ui->setupUi(this);
   for(auto status : MakeRange<OrderStatus>()) {
-
-    // TOSTRING TODO
-    QCheckBox* checkBox = new QCheckBox(
-      QString::fromStdString(ToString(status)));
+    QCheckBox* checkBox = new QCheckBox(displayText(status));
     m_orderStatusCheckBoxes.insert(make_pair(status, checkBox));
     m_ui->m_orderStatusGroup->layout()->addWidget(checkBox);
     checkBox->setChecked(m_properties.m_orderStatusFilter.Test(status));
