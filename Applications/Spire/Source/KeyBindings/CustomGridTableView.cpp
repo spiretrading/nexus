@@ -6,6 +6,10 @@
 
 using namespace Spire;
 
+namespace {
+  const auto PLACEHOLDER_ROW_COUNT = 10;
+}
+
 CustomGridTableView::CustomGridTableView(QWidget* parent)
     : QTableView(parent) {
   setMouseTracking(true);
@@ -31,6 +35,22 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
   }
   painter.drawLine(0, 0, 0, rowViewportPosition(model()->rowCount() - 1) +
     rowHeight(model()->rowCount() - 1) - scale_height(1));
+  if(model()->rowCount() < PLACEHOLDER_ROW_COUNT) {
+    painter.setPen(QColor("#EBEBEB"));
+    auto row_height = rowHeight(0);
+    auto row_y = rowViewportPosition(model()->rowCount() - 1) + row_height;
+    for(auto i = model()->rowCount(); i < 10; ++i) {
+      painter.drawLine(0, row_y, 0, row_y + row_height);
+      for(auto column = 0; column < horizontalHeader()->count(); ++column) {
+        auto column_x = horizontalHeader()->sectionViewportPosition(column) - 1;
+        painter.drawLine(column_x, row_y, column_x, row_y + row_height);
+      }
+      painter.drawLine(width() - scale_width(17), row_y,
+        width() - scale_width(17), row_y + row_height);
+      painter.drawLine(0, row_y + row_height, width() - 1, row_y + row_height);
+      row_y += row_height;
+    }
+  }
   if(selectionModel()->hasSelection() &&
       state() == QAbstractItemView::EditingState) {
     auto index = selectionModel()->selection().indexes().first();

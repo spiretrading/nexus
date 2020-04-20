@@ -44,7 +44,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   connect(m_security_line_edit, &QLineEdit::textEdited,
     [=] { on_text_edited(); });
   m_security_line_edit->setStyleSheet(QString(R"(
-    background-color: #FFFFF;
+    background-color: #FFFFFF;
     border: none;
     font-family: Roboto;
     font-size: %1px;
