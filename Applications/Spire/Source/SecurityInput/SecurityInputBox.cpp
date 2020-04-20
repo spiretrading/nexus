@@ -1,6 +1,7 @@
 #include "Spire/SecurityInput/SecurityInputBox.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QLabel>
 #include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/SecurityInput/SecurityInfoListView.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -15,21 +16,24 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
-    QWidget* parent)
-    : SecurityInputBox(Ref(model), "", parent) {}
+    bool has_border, QWidget* parent)
+    : SecurityInputBox(Ref(model), "", has_border, parent) {}
 
 SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
-    const QString& initial_text, QWidget* parent)
+    const QString& initial_text, bool has_border, QWidget* parent)
     : QWidget(parent),
+      m_has_border(has_border),
       m_model(model.Get()) {
   setObjectName("SecurityInputBox");
-  setStyleSheet(QString(R"(
-    #SecurityInputBox {
-      border: %1px solid #C8C8C8;
-    }
-    :hover {
-      border: %1px solid #4b23A0;
-    })").arg(scale_width(1)));
+  if(m_has_border) {
+    setStyleSheet(QString(R"(
+      #SecurityInputBox {
+        border: %1px solid #C8C8C8;
+      }
+      :hover {
+        border: %1px solid #4b23A0;
+      })").arg(scale_width(1)));
+  }
   auto layout = new QHBoxLayout(this);
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
@@ -40,22 +44,24 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   connect(m_security_line_edit, &QLineEdit::textEdited,
     [=] { on_text_edited(); });
   m_security_line_edit->setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
+    background-color: #FFFFF;
     border: none;
     font-family: Roboto;
     font-size: %1px;
     padding: %2px 0px %2px %3px;)")
     .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(8)));
   layout->addWidget(m_security_line_edit);
-  m_icon_label = new QLabel(this);
-  m_icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(":/Icons/search.svg",
-    scale(10, 10))));
-  m_icon_label->setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
-    border: none;
-    padding: %1px %2px %1px 0px;)")
-    .arg(scale_height(9)).arg(scale_width(8)));
-  layout->addWidget(m_icon_label);
+  if(m_has_border) {
+    auto icon_label = new QLabel(this);
+    icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(
+      ":/Icons/search.svg", scale(10, 10))));
+    icon_label->setStyleSheet(QString(R"(
+      background-color: #FFFFFF;
+      border: none;
+      padding: %1px %2px %1px 0px;)")
+      .arg(scale_height(9)).arg(scale_width(8)));
+    layout->addWidget(icon_label);
+  }
   m_securities = new SecurityInfoListView(this);
   m_securities->connect_activate_signal(
     [=] (auto& s) { on_activated(s); });
@@ -81,7 +87,7 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
         m_securities->activate_previous();
       }
     }
-    if(event->type() == QEvent::FocusIn) {
+    if(event->type() == QEvent::FocusIn && m_has_border) {
       setStyleSheet(QString(R"(
         #SecurityInputBox {
           border: %1px solid #4b23A0;
@@ -89,7 +95,7 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
         #SecurityInputBox:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
-    } else if(event->type() == QEvent::FocusOut) {
+    } else if(event->type() == QEvent::FocusOut && m_has_border) {
       setStyleSheet(QString(R"(
         #SecurityInputBox {
           border: %1px solid #C8C8C8;

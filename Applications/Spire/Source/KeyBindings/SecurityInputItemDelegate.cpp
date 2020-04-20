@@ -15,12 +15,10 @@ connection SecurityInputItemDelegate::connect_item_modified_signal(
   return m_item_modified_signal.connect(slot);
 }
 
-#include <QComboBox>
-
 QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new SecurityInputBox(Ref<SecurityInputModel>(*m_model),
-    parent);
+    false, parent);
   //connect(editor, &SecurityInputBox::editingFinished,
   //  this, &InputFieldItemDelegate::on_editing_finished);
   return editor;
@@ -33,8 +31,15 @@ void SecurityInputItemDelegate::setModelData(QWidget* editor,
 
 void SecurityInputItemDelegate::updateEditorGeometry(QWidget* editor,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  editor->move(option.rect.topLeft());
-  editor->resize(option.rect.size());
+  if(index.row() == 0) {
+    auto rect = option.rect.translated(0, 1);
+    editor->move(rect.topLeft());
+    rect.setHeight(rect.height() - 1);
+    editor->resize(rect.size());
+  } else {
+    editor->move(option.rect.topLeft());
+    editor->resize(option.rect.size());
+  }
 }
 
 void SecurityInputItemDelegate::on_editing_finished() {
