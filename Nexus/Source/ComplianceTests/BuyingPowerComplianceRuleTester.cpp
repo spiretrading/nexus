@@ -1,55 +1,60 @@
-#include "Nexus/ComplianceTests/BuyingPowerComplianceRuleTester.hpp"
+#include <boost/optional/optional.hpp>
+#include <doctest/doctest.h>
+#include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
-  Security TST{"TST", DefaultMarkets::NYSE(), DefaultCountries::US()};
+  const auto TST = Security("TST", DefaultMarkets::NYSE(),
+    DefaultCountries::US());
+
+  struct Fixture {
+    TestEnvironment m_testEnvironment;
+    std::shared_ptr<Beam::Queue<const Order*>> m_orderSubmissions;
+    TestServiceClients m_serviceClients;
+
+    Fixture()
+        : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
+          m_serviceClients(Ref(m_testEnvironment)) {
+      m_testEnvironment.Open();
+      m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissions);
+      m_testEnvironment.UpdateBboPrice(TST, Money::ONE,
+        Money::ONE + Money::CENT);
+      m_serviceClients.Open();
+    }
+  };
 }
 
-void BuyingPowerComplianceRuleTester::setUp() {
-  m_testEnvironment.emplace();
-  m_orderSubmissions = std::make_shared<Queue<const Order*>>();
-  m_testEnvironment->Open();
-  m_testEnvironment->MonitorOrderSubmissions(m_orderSubmissions);
-  m_testEnvironment->UpdateBboPrice(TST, Money::ONE, Money::ONE + Money::CENT);
-  m_serviceClients.emplace(Ref(*m_testEnvironment));
-  m_serviceClients->Open();
-}
-
-void BuyingPowerComplianceRuleTester::tearDown() {
-  m_serviceClients.reset();
-  m_orderSubmissions.reset();
-  m_testEnvironment.reset();
-}
-
-void BuyingPowerComplianceRuleTester::TestOrderRecovery() {
-  vector<ComplianceParameter> parameters;
-  parameters.emplace_back("currency", DefaultCurrencies::USD());
-  parameters.emplace_back("buying_power", 1000 * Money::ONE);
-  std::vector<ComplianceValue> symbols;
-  symbols.push_back(SecuritySet::GetSecurityWildCard());
-  parameters.emplace_back("symbols", symbols);
-  BuyingPowerComplianceRule rule{parameters, vector<ExchangeRate>{},
-    &m_serviceClients->GetMarketDataClient()};
-  auto recoveryFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
-    Money::ONE);
-  auto& recoverOrder = m_serviceClients->GetOrderExecutionClient().Submit(
-    recoveryFields);
-  auto submittedRecoveryOrder = m_orderSubmissions->Top();
-  m_orderSubmissions->Pop();
-  m_testEnvironment->AcceptOrder(*submittedRecoveryOrder);
-  m_testEnvironment->FillOrder(*submittedRecoveryOrder, 100);
-  CPPUNIT_ASSERT_NO_THROW(rule.Add(*submittedRecoveryOrder));
-  auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
-    2 * Money::ONE);
-  auto& submissionOrder = m_serviceClients->GetOrderExecutionClient().Submit(
-    submissionFields);
-  auto submittedOrder = m_orderSubmissions->Top();
-  m_orderSubmissions->Pop();
-  CPPUNIT_ASSERT_NO_THROW(rule.Submit(*submittedOrder));
+TEST_SUITE("BuyingPowerComplianceRule") {
+  TEST_CASE_FIXTURE(Fixture, "order_recovery") {
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back("currency", DefaultCurrencies::USD());
+    parameters.emplace_back("buying_power", 1000 * Money::ONE);
+    auto symbols = std::vector<ComplianceValue>();
+    symbols.push_back(SecuritySet::GetSecurityWildCard());
+    parameters.emplace_back("symbols", symbols);
+    auto rule = BuyingPowerComplianceRule(parameters, {},
+      &m_serviceClients.GetMarketDataClient());
+    auto recoveryFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+      Money::ONE);
+    auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
+      recoveryFields);
+    auto submittedRecoveryOrder = m_orderSubmissions->Top();
+    m_orderSubmissions->Pop();
+    m_testEnvironment.AcceptOrder(*submittedRecoveryOrder);
+    m_testEnvironment.FillOrder(*submittedRecoveryOrder, 100);
+    REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
+    auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
+      2 * Money::ONE);
+    auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
+      submissionFields);
+    auto submittedOrder = m_orderSubmissions->Top();
+    m_orderSubmissions->Pop();
+    REQUIRE_NOTHROW(rule.Submit(*submittedOrder));
+  }
 }

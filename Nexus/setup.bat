@@ -18,7 +18,7 @@ IF NOT EXIST Beam (
     SET EXIT_STATUS=1
   )
 )
-SET beam_commit="8cd3d175118a9c9f17feb5ab272472de6ddc0327"
+SET beam_commit="3031e63b83b897292fc6c91e7c64d4371a135946"
 IF EXIST Beam (
   PUSHD Beam
   git merge-base --is-ancestor "!beam_commit!" HEAD
@@ -38,20 +38,6 @@ IF EXIST Beam (
     POPD
   )
   POPD
-)
-IF NOT EXIST cppunit-1.14.0 (
-  wget https://github.com/freedesktop/libreoffice-cppunit/archive/cppunit-1.14.0.zip -O cppunit-1.14.0.zip --no-check-certificate
-  IF !ERRORLEVEL! LEQ 0 (
-    unzip cppunit-1.14.0.zip
-    MV libreoffice-cppunit-cppunit-1.14.0 cppunit-1.14.0
-    PUSHD cppunit-1.14.0\src\cppunit
-    msbuild cppunit.vcxproj /p:UseEnv=True /p:PlatformToolset=v142 /p:Configuration=Debug
-    msbuild cppunit.vcxproj /p:UseEnv=True /p:PlatformToolset=v142 /p:Configuration=Release
-    POPD
-  ) ELSE (
-    SET EXIT_STATUS=1
-  )
-  DEL /F /Q cppunit-1.14.0.zip
 )
 SET PATH=!PATH!;!ROOT!\Strawberry\perl\site\bin;!ROOT!\Strawberry\perl\bin;!ROOT!\Strawberry\c\bin
 IF NOT EXIST qt-5.14.0 (

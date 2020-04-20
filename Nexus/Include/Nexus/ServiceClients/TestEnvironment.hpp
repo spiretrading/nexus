@@ -7,7 +7,6 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/optional/optional.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -28,7 +27,7 @@ namespace Nexus {
     public:
 
       //! Constructs a TestEnvironment.
-      TestEnvironment() = default;
+      TestEnvironment();
 
       //! Constructs a TestEnvironment using historical market data.
       /*!
@@ -192,23 +191,19 @@ namespace Nexus {
       Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
         m_serviceLocatorEnvironment;
-      std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         m_serviceLocatorClient;
       Beam::UidService::Tests::UidServiceTestEnvironment m_uidEnvironment;
-      boost::optional<
-        DefinitionsService::Tests::DefinitionsServiceTestEnvironment>
+      DefinitionsService::Tests::DefinitionsServiceTestEnvironment
         m_definitionsEnvironment;
-      boost::optional<
-        AdministrationService::Tests::AdministrationServiceTestEnvironment>
+      AdministrationService::Tests::AdministrationServiceTestEnvironment
         m_administrationEnvironment;
-      boost::optional<
-        MarketDataService::Tests::MarketDataServiceTestEnvironment>
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+        m_administrationClient;
+      MarketDataService::Tests::MarketDataServiceTestEnvironment
         m_marketDataEnvironment;
-      boost::optional<
-        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
+      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment
         m_orderExecutionEnvironment;
-      std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
-        m_historicalDataStore;
       Beam::IO::OpenState m_openState;
 
       template<typename Index, typename Value>
@@ -216,9 +211,25 @@ namespace Nexus {
       void Shutdown();
   };
 
-  inline TestEnvironment::TestEnvironment(std::shared_ptr<
-      MarketDataService::VirtualHistoricalDataStore> historicalDataStore)
-      : m_historicalDataStore(std::move(historicalDataStore)) {}
+  inline TestEnvironment::TestEnvironment()
+    : TestEnvironment(MarketDataService::MakeVirtualHistoricalDataStore(
+        std::make_unique<MarketDataService::LocalHistoricalDataStore>())) {}
+
+  inline TestEnvironment::TestEnvironment(
+    std::shared_ptr<MarketDataService::VirtualHistoricalDataStore>
+    historicalDataStore)
+    : m_serviceLocatorClient(m_serviceLocatorEnvironment.BuildClient()),
+      m_definitionsEnvironment(m_serviceLocatorClient),
+      m_administrationEnvironment(m_serviceLocatorClient),
+      m_administrationClient(m_administrationEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
+        std::move(historicalDataStore)),
+      m_orderExecutionEnvironment(GetDefaultMarketDatabase(),
+        GetDefaultDestinationDatabase(), m_serviceLocatorClient,
+        m_uidEnvironment.BuildClient(), m_administrationClient) {
+    m_serviceLocatorClient->SetCredentials("root", "");
+  }
 
   inline TestEnvironment::~TestEnvironment() {
     Close();
@@ -263,8 +274,8 @@ namespace Nexus {
   inline void TestEnvironment::UpdateBboPrice(const Security& security,
       Money bidPrice, Money askPrice,
       const boost::posix_time::ptime& timestamp) {
-    BboQuote quote{Quote{bidPrice, 100, Side::BID},
-      Quote{askPrice, 100, Side::ASK}, timestamp};
+    auto quote = BboQuote(Quote(bidPrice, 100, Side::BID),
+      Quote(askPrice, 100, Side::ASK), timestamp);
     Publish(security, quote);
   }
 
@@ -284,8 +295,7 @@ namespace Nexus {
       OrderExecutionService::WrapperOrderExecutionDriver<
       OrderExecutionService::Tests::MockOrderExecutionDriver>&>(
       GetOrderExecutionEnvironment().GetDriver()).GetDriver();
-    driver.GetPublisher().Monitor(
-      Beam::MakeAliasQueue(conversionQueue, queue));
+    driver.GetPublisher().Monitor(Beam::MakeAliasQueue(conversionQueue, queue));
   }
 
   inline void TestEnvironment::AcceptOrder(
@@ -294,13 +304,13 @@ namespace Nexus {
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
-        TestEnvironmentException{"Invalid Order specified."});
+        TestEnvironmentException("Invalid Order specified."));
     }
     primitiveOrder->With(
       [&] (auto status, auto& executionReports) {
         if(status != OrderStatus::PENDING_NEW) {
           BOOST_THROW_EXCEPTION(
-            TestEnvironmentException{"Order must be PENDING_NEW."});
+            TestEnvironmentException("Order must be PENDING_NEW."));
         }
       });
     OrderExecutionService::Tests::SetOrderStatus(
@@ -315,13 +325,13 @@ namespace Nexus {
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
-        TestEnvironmentException{"Invalid Order specified."});
+        TestEnvironmentException("Invalid Order specified."));
     }
     primitiveOrder->With(
       [&] (auto status, auto& executionReports) {
         if(IsTerminal(status)) {
           BOOST_THROW_EXCEPTION(
-            TestEnvironmentException{"Order is already TERMINAL."});
+            TestEnvironmentException("Order is already TERMINAL."));
         }
       });
     OrderExecutionService::Tests::SetOrderStatus(
@@ -336,13 +346,13 @@ namespace Nexus {
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
-        TestEnvironmentException{"Invalid Order specified."});
+        TestEnvironmentException("Invalid Order specified."));
     }
     primitiveOrder->With(
       [&] (auto status, auto& executionReports) {
         if(IsTerminal(status)) {
           BOOST_THROW_EXCEPTION(
-            TestEnvironmentException{"Order is already TERMINAL."});
+            TestEnvironmentException("Order is already TERMINAL."));
         }
       });
     OrderExecutionService::Tests::CancelOrder(
@@ -358,13 +368,13 @@ namespace Nexus {
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
-        TestEnvironmentException{"Invalid Order specified."});
+        TestEnvironmentException("Invalid Order specified."));
     }
     primitiveOrder->With(
       [&] (auto status, auto& executionReports) {
         if(IsTerminal(status)) {
           BOOST_THROW_EXCEPTION(
-            TestEnvironmentException{"Order is already TERMINAL."});
+            TestEnvironmentException("Order is already TERMINAL."));
         }
       });
     OrderExecutionService::Tests::FillOrder(
@@ -385,13 +395,13 @@ namespace Nexus {
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
       BOOST_THROW_EXCEPTION(
-        TestEnvironmentException{"Invalid Order specified."});
+        TestEnvironmentException("Invalid Order specified."));
     }
     primitiveOrder->With(
       [&] (auto status, auto& executionReports) {
         if(IsTerminal(status)) {
           BOOST_THROW_EXCEPTION(
-            TestEnvironmentException{"Order is already TERMINAL."});
+            TestEnvironmentException("Order is already TERMINAL."));
         }
       });
     auto revisedExecutionReport = executionReport;
@@ -428,22 +438,22 @@ namespace Nexus {
 
   inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
       TestEnvironment::GetDefinitionsEnvironment() {
-    return *m_definitionsEnvironment;
+    return m_definitionsEnvironment;
   }
 
   inline AdministrationService::Tests::AdministrationServiceTestEnvironment&
       TestEnvironment::GetAdministrationEnvironment() {
-    return *m_administrationEnvironment;
+    return m_administrationEnvironment;
   }
 
   inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
       TestEnvironment::GetMarketDataEnvironment() {
-    return *m_marketDataEnvironment;
+    return m_marketDataEnvironment;
   }
 
   inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
       TestEnvironment::GetOrderExecutionEnvironment() {
-    return *m_orderExecutionEnvironment;
+    return m_orderExecutionEnvironment;
   }
 
   inline void TestEnvironment::Open() {
@@ -453,55 +463,11 @@ namespace Nexus {
     try {
       m_timeEnvironment.Open();
       m_serviceLocatorEnvironment.Open();
-      m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
-      m_serviceLocatorClient->SetCredentials("root", "");
-      m_serviceLocatorClient->Open();
       m_uidEnvironment.Open();
-      auto definitionsServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      definitionsServiceLocatorClient->SetCredentials("root", "");
-      definitionsServiceLocatorClient->Open();
-      m_definitionsEnvironment.emplace(
-        std::move(definitionsServiceLocatorClient));
-      m_definitionsEnvironment->Open();
-      auto administrationServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      administrationServiceLocatorClient->SetCredentials("root", "");
-      administrationServiceLocatorClient->Open();
-      m_administrationEnvironment.emplace(
-        std::move(administrationServiceLocatorClient));
-      m_administrationEnvironment->Open();
-      auto marketDataServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      marketDataServiceLocatorClient->SetCredentials("root", "");
-      marketDataServiceLocatorClient->Open();
-      auto marketDataAdministrationClient =
-        m_administrationEnvironment->BuildClient(
-        Beam::Ref(*marketDataServiceLocatorClient));
-      if(m_historicalDataStore == nullptr) {
-        m_marketDataEnvironment.emplace(
-          std::move(marketDataServiceLocatorClient),
-          std::move(marketDataAdministrationClient));
-      } else {
-        m_marketDataEnvironment.emplace(
-          std::move(marketDataServiceLocatorClient),
-          std::move(marketDataAdministrationClient), m_historicalDataStore);
-      }
-      m_marketDataEnvironment->Open();
-      auto orderExecutionServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      orderExecutionServiceLocatorClient->SetCredentials("root", "");
-      orderExecutionServiceLocatorClient->Open();
-      auto uidClient = m_uidEnvironment.BuildClient();
-      uidClient->Open();
-      auto administrationClient = m_administrationEnvironment->BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
-      administrationClient->Open();
-      m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
-        GetDefaultDestinationDatabase(),
-        std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
-        std::move(administrationClient));
-      m_orderExecutionEnvironment->Open();
+      m_definitionsEnvironment.Open();
+      m_administrationEnvironment.Open();
+      m_marketDataEnvironment.Open();
+      m_orderExecutionEnvironment.Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -532,10 +498,10 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::Shutdown() {
-    m_orderExecutionEnvironment.reset();
-    m_marketDataEnvironment.reset();
-    m_administrationEnvironment.reset();
-    m_definitionsEnvironment.reset();
+    m_orderExecutionEnvironment.Close();
+    m_marketDataEnvironment.Close();
+    m_administrationEnvironment.Close();
+    m_definitionsEnvironment.Close();
     m_uidEnvironment.Close();
     m_serviceLocatorClient.reset();
     m_serviceLocatorEnvironment.Close();

@@ -46,8 +46,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
   RegionEntry globalRegion;
-  globalRegion.m_region = Region(Region::GlobalTag());
-  globalRegion.m_region.SetName("Global");
+  globalRegion.m_region = Region::Global("Global");
   AddRegion(globalRegion);
   const vector<CountryDatabase::Entry>& countries =
     m_userProfile->GetCountryDatabase().GetEntries();

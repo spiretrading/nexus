@@ -2,6 +2,7 @@
 #define NEXUS_ORDERTYPEPARSER_HPP
 #include <Beam/Collections/EnumIterator.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/OrderType.hpp"
 
 namespace Nexus {
@@ -17,10 +18,10 @@ namespace Nexus {
   };
 
   inline OrderTypeParser::OrderTypeParser()
-      : Beam::Parsers::EnumeratorParser<OrderType>(
-          begin(Beam::MakeRange<OrderType>()),
-          end(Beam::MakeRange<OrderType>()),
-          static_cast<std::string (*)(OrderType)>(ToString)) {}
+    : Beam::Parsers::EnumeratorParser<OrderType>(
+        begin(Beam::MakeRange<OrderType>()),
+        end(Beam::MakeRange<OrderType>()),
+        &boost::lexical_cast<std::string, OrderType>) {}
 }
 
 #endif

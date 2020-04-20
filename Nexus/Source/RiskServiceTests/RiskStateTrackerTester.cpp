@@ -1,8 +1,5 @@
-#include "Nexus/RiskServiceTests/RiskStateTrackerTester.hpp"
+#include <doctest/doctest.h>
 
-using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::RiskService;
-using namespace Nexus::RiskService::Tests;
-
-void RiskStateTrackerTester::TestOpenPosition() {}
+TEST_SUITE("RiskStateTracker") {
+  TEST_CASE("open_position") {}
+}

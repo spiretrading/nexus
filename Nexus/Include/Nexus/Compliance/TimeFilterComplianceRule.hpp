@@ -49,6 +49,12 @@ namespace Compliance {
       bool IsWithinTimePeriod();
   };
 
+  template<typename TimeClient>
+  TimeFilterComplianceRule(boost::posix_time::time_duration,
+    boost::posix_time::time_duration, TimeClient&&,
+    std::unique_ptr<ComplianceRule>) -> TimeFilterComplianceRule<
+    std::decay_t<TimeClient>>;
+
   template<typename TimeClientType>
   template<typename TimeClientForward>
   TimeFilterComplianceRule<TimeClientType>::TimeFilterComplianceRule(

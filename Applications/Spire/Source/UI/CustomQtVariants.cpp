@@ -115,6 +115,81 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 
 void Spire::UI::RegisterCustomQtVariants() {}
 
+const QString& Spire::UI::displayText(Side side) {
+  if(side == Side::ASK) {
+    static const auto value = QObject::tr("Ask");
+    return value;
+  } else if(side == Side::BID) {
+    static const auto value = QObject::tr("Bid");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
+const QString& Spire::UI::displayText(OrderStatus status) {
+  if(status == OrderStatus::PENDING_NEW) {
+    static const auto value = QObject::tr("Pending New");
+    return value;
+  } else if(status ==  OrderStatus::REJECTED) {
+    static const auto value = QObject::tr("Rejected");
+    return value;
+  } else if(status ==  OrderStatus::NEW) {
+    static const auto value = QObject::tr("New");
+    return value;
+  } else if(status ==  OrderStatus::PARTIALLY_FILLED) {
+    static const auto value = QObject::tr("Partially Filled");
+    return value;
+  } else if(status ==  OrderStatus::EXPIRED) {
+    static const auto value = QObject::tr("Expired");
+    return value;
+  } else if(status ==  OrderStatus::CANCELED) {
+    static const auto value = QObject::tr("Canceled");
+    return value;
+  } else if(status ==  OrderStatus::SUSPENDED) {
+    static const auto value = QObject::tr("Suspended");
+    return value;
+  } else if(status ==  OrderStatus::STOPPED) {
+    static const auto value = QObject::tr("Stopped");
+    return value;
+  } else if(status ==  OrderStatus::FILLED) {
+    static const auto value = QObject::tr("Filled");
+    return value;
+  } else if(status ==  OrderStatus::DONE_FOR_DAY) {
+    static const auto value = QObject::tr("Done For Day");
+    return value;
+  } else if(status ==  OrderStatus::PENDING_CANCEL) {
+    static const auto value = QObject::tr("Pending Cancel");
+    return value;
+  } else if(status == OrderStatus::CANCEL_REJECT) {
+    static const auto value = QObject::tr("Cancel Reject");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
+const QString& Spire::UI::displayText(OrderType type) {
+  if(type == OrderType::MARKET) {
+    static const auto value = QObject::tr("MKT");
+    return value;
+  } else if(type == OrderType::LIMIT) {
+    static const auto value = QObject::tr("LMT");
+    return value;
+  } else if(type == OrderType::PEGGED) {
+    static const auto value = QObject::tr("PEG");
+    return value;
+  } else if(type == OrderType::STOP) {
+    static const auto value = QObject::tr("STP");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
 CustomVariantItemDelegate::CustomVariantItemDelegate(
     Ref<UserProfile> userProfile, QObject* parent)
     : QStyledItemDelegate(parent),
@@ -124,7 +199,7 @@ CustomVariantItemDelegate::~CustomVariantItemDelegate() {}
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
-   if(value.canConvert<ptime>()) {
+  if(value.canConvert<ptime>()) {
     ptime timeValue = ToLocalTime(value.value<ptime>());
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
@@ -150,19 +225,19 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(
       lexical_cast<std::string>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
-    return QString::fromStdString(ToString(value.value<OrderStatus>()));
+    return Spire::UI::displayText(value.value<OrderStatus>());
   } else if(value.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
     return QString::fromStdString(lexical_cast<string>(
       value.value<Task::State>()));
   } else if(value.canConvert<OrderType>()) {
-    return QString::fromStdString(ToString(value.value<OrderType>()));
+    return Spire::UI::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
   } else if(value.canConvert<Security>()) {
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       m_userProfile->GetMarketDatabase(), m_userProfile->GetCountryDatabase()));
   } else if(value.canConvert<Side>()) {
-    return QString::fromStdString(ToString(value.value<Side>()));
+    return Spire::UI::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
       ToString(value.value<TimeInForce>().GetType()));
@@ -211,19 +286,19 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return Compare(leftVariant.value<Quantity>(),
       rightVariant.value<Quantity>(), left, right);
   } else if(leftVariant.canConvert<OrderStatus>()) {
-    return Compare(ToString(leftVariant.value<OrderStatus>()),
-      ToString(rightVariant.value<OrderStatus>()), left, right);
+    return Compare(displayText(leftVariant.value<OrderStatus>()),
+      displayText(rightVariant.value<OrderStatus>()), left, right);
   } else if(leftVariant.canConvert<OrderType>()) {
-    return Compare(ToString(leftVariant.value<OrderType>()),
-      ToString(rightVariant.value<OrderType>()), left, right);
+    return Compare(displayText(leftVariant.value<OrderType>()),
+      displayText(rightVariant.value<OrderType>()), left, right);
   } else if(leftVariant.canConvert<Security>()) {
     return Compare(ToString(leftVariant.value<Security>(),
       m_userProfile->GetMarketDatabase()),
       ToString(rightVariant.value<Security>(),
       m_userProfile->GetMarketDatabase()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
-    return Compare(ToString(leftVariant.value<Side>()),
-      ToString(rightVariant.value<Side>()), left, right);
+    return Compare(displayText(leftVariant.value<Side>()),
+      displayText(rightVariant.value<Side>()), left, right);
   } else if(leftVariant.canConvert<TimeInForce>()) {
     return Compare(ToString(leftVariant.value<TimeInForce>().GetType()),
       ToString(rightVariant.value<TimeInForce>().GetType()), left, right);

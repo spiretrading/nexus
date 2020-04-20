@@ -1,24 +1,26 @@
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 OrderStatusNode::OrderStatusNode()
     : ValueNode(OrderStatus::NEW) {
-  SetText(ToString(GetValue()));
+  SetText(displayText(GetValue()).toStdString());
 }
 
 OrderStatusNode::OrderStatusNode(OrderStatus value)
     : ValueNode(value) {
-  SetText(ToString(GetValue()));
+  SetText(displayText(GetValue()).toStdString());
 }
 
 unique_ptr<OrderStatusNode> OrderStatusNode::SetValue(OrderStatus value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(ToString(clone->GetValue()));
+  clone->SetText(displayText(clone->GetValue()).toStdString());
   return clone;
 }
 
