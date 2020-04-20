@@ -54,18 +54,18 @@ export class AccountDirectoryController extends
       onCardClick={this.onCardClick}/>;
   }
 
-
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
         this.setState({
-          isLoaded: false
-        });
+          isLoaded: true
       });
+    });
   }
+
   private async onCardClick(group: Beam.DirectoryEntry) {
     if(this.state.openedGroups.get(group)) {
-      //this.state.openedGroups.remove(group);
+      this.state.openedGroups.remove(group);
     } else {
       const accounts = await this.props.model.loadAccounts(group);
       this.state.openedGroups.set(group, accounts);
