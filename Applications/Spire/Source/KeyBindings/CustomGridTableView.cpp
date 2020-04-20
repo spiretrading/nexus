@@ -56,8 +56,14 @@ void CustomGridTableView::draw_border(const QModelIndex& index,
       }
       return std::tuple(y, height - scale_height(1));
     }();
-    painter->drawRect(
-      columnViewportPosition(index.column()) - scale_width(1),
-      pos_y, columnWidth(index.column()), row_height);
+    auto [pos_x, column_width] = [&] {
+      auto x = columnViewportPosition(index.column());
+      auto width = columnWidth(index.column());
+      if(index.column() > 0) {
+        return std::tuple(x - scale_width(1), width);
+      }
+      return std::tuple(x, width - scale_width(1));
+    }();
+    painter->drawRect(pos_x, pos_y, column_width, row_height);
   }
 }
