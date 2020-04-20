@@ -54,11 +54,11 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
   }
   if(role == Qt::DisplayRole &&
       index.row() < static_cast<int>(m_key_bindings.size())) {
-    switch(index.column()) {
-      case 0:
+    switch(static_cast<Columns>(index.column())) {
+      case Columns::NAME:
         return QString::fromStdString(
           m_key_bindings[index.row()].m_action.m_name);
-      case 1:
+      case Columns::SECURITY:
         {
           auto& securities =
             m_key_bindings[index.row()].m_region.GetSecurities();
@@ -67,9 +67,9 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           }
         }
         break;
-      case 2:
+      case Columns::DESTINATION:
         return to_variant(m_key_bindings[index.row()].m_region);
-      case 3:
+      case Columns::ORDER_TYPE:
         {
           auto type = m_key_bindings[index.row()].m_action.m_type;
           if(type) {
@@ -77,7 +77,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           }
         }
         break;
-      case 4:
+      case Columns::SIDE:
         {
           auto side = m_key_bindings[index.row()].m_action.m_side;
           if(side) {
@@ -85,7 +85,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           }
         }
         break;
-      case 5:
+      case Columns::QUANTITY:
         {
           auto quantity = m_key_bindings[index.row()].m_action.m_quantity;
           if(quantity) {
@@ -93,7 +93,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           }
         }
         break;
-      case 6:
+      case Columns::TIME_IN_FORCE:
         {
           auto time_in_force =
             m_key_bindings[index.row()].m_action.m_time_in_force;
@@ -103,9 +103,9 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
           }
         }
         break;
-      case 7:
+      case Columns::CUSTOM_TAGS:
         return "";
-      case 8:
+      case Columns::KEY_BINDING:
         return m_key_bindings[index.row()].m_sequence;
       default:
         return QVariant();
@@ -122,24 +122,24 @@ Qt::ItemFlags TaskKeyBindingsTableModel::flags(
 QVariant TaskKeyBindingsTableModel::headerData(int section,
     Qt::Orientation orientation, int role) const {
   if(orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-    switch(section) {
-      case 0:
+    switch(static_cast<Columns>(section)) {
+      case Columns::NAME:
         return tr("Name");
-      case 1:
+      case Columns::SECURITY:
         return tr("Security");
-      case 2:
+      case Columns::DESTINATION:
         return tr("Destination");
-      case 3:
+      case Columns::ORDER_TYPE:
         return tr("Order Type");
-      case 4:
+      case Columns::SIDE:
         return tr("Side");
-      case 5:
+      case Columns::QUANTITY:
         return tr("Quantity");
-      case 6:
+      case Columns::TIME_IN_FORCE:
         return tr("Time in Force");
-      case 7:
+      case Columns::CUSTOM_TAGS:
         return tr("Custom Tags");
-      case 8:
+      case Columns::KEY_BINDING:
         return tr("Key");
       default:
         return QVariant();
@@ -154,62 +154,80 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     return false;
   }
   if(role == Qt::DisplayRole) {
-    if(index.column() == 3) {
-      if(value.isValid()) {
-        if(index.row() == m_key_bindings.size()) {
-          m_key_bindings.push_back({});
-        }
-        m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
-      } else {
-        m_key_bindings[index.row()].m_action.m_type = {};
-      }
-    } else if(index.column() == 4) {
-      if(value.isValid()) {
-        if(index.row() == m_key_bindings.size()) {
-          m_key_bindings.push_back({});
-        }
-        m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
-      } else {
-        m_key_bindings[index.row()].m_action.m_side = {};
-      }
-    } else if(index.column() == 5) {
-      if(value.isValid() && value.value<Quantity>() > 0) {
-        if(index.row() == m_key_bindings.size()) {
-          m_key_bindings.push_back({});
-        }
-        m_key_bindings[index.row()].m_action.m_quantity =
-          value.value<Quantity>();
-      } else {
-        m_key_bindings[index.row()].m_action.m_quantity = {};
-      }
-    } else if(index.column() == 6) {
-      if(value.isValid()) {
-        if(index.row() == m_key_bindings.size()) {
-          m_key_bindings.push_back({});
-        }
-        m_key_bindings[index.row()].m_action.m_time_in_force =
-          value.value<TimeInForce>();
-      } else {
-        m_key_bindings[index.row()].m_action.m_time_in_force = {};
-      }
-    } else if(index.column() == 8) {
-      if(index.row() == m_key_bindings.size()) {
-        if(!value.value<QKeySequence>().isEmpty()) {
-          m_key_bindings.push_back({});
+    switch(static_cast<Columns>(index.column())) {
+      case Columns::NAME:
+        return false;
+      case Columns::SECURITY:
+        return false;
+      case Columns::DESTINATION:
+        return false;
+      case Columns::ORDER_TYPE:
+        if(value.isValid()) {
+          if(index.row() == m_key_bindings.size()) {
+            m_key_bindings.push_back({});
+          }
+          m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
         } else {
-          return false;
+          m_key_bindings[index.row()].m_action.m_type = {};
         }
-      }
-      for(auto& binding : m_key_bindings) {
-        if(binding.m_sequence == value.value<QKeySequence>()) {
-          binding.m_sequence = QKeySequence();
-          break;
+        emit dataChanged(index, index, {role});
+        return true;
+      case Columns::SIDE:
+        if(value.isValid()) {
+          if(index.row() == m_key_bindings.size()) {
+            m_key_bindings.push_back({});
+          }
+          m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+        } else {
+          m_key_bindings[index.row()].m_action.m_side = {};
         }
-      }
-      m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
+        emit dataChanged(index, index, {role});
+        return true;
+      case Columns::QUANTITY:
+        if(value.isValid() && value.value<Quantity>() > 0) {
+          if(index.row() == m_key_bindings.size()) {
+            m_key_bindings.push_back({});
+          }
+          m_key_bindings[index.row()].m_action.m_quantity =
+            value.value<Quantity>();
+        } else {
+          m_key_bindings[index.row()].m_action.m_quantity = {};
+        }
+        emit dataChanged(index, index, {role});
+        return true;
+      case Columns::TIME_IN_FORCE:
+        if(value.isValid()) {
+          if(index.row() == m_key_bindings.size()) {
+            m_key_bindings.push_back({});
+          }
+          m_key_bindings[index.row()].m_action.m_time_in_force =
+            value.value<TimeInForce>();
+        } else {
+          m_key_bindings[index.row()].m_action.m_time_in_force = {};
+        }
+        emit dataChanged(index, index, {role});
+        return true;
+      case Columns::CUSTOM_TAGS:
+      case Columns::KEY_BINDING:
+        if(index.row() == m_key_bindings.size()) {
+          if(!value.value<QKeySequence>().isEmpty()) {
+            m_key_bindings.push_back({});
+          } else {
+            return false;
+          }
+        }
+        for(auto& binding : m_key_bindings) {
+          if(binding.m_sequence == value.value<QKeySequence>()) {
+            binding.m_sequence = QKeySequence();
+            break;
+          }
+        }
+        m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
+        emit dataChanged(index, index, {role});
+        return true;
+      default:
+        return false;
     }
-    emit dataChanged(index, index, {role});
-    return true;
   }
   return false;
 }

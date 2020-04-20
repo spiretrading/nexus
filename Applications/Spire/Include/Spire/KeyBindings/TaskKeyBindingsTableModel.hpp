@@ -9,6 +9,37 @@ namespace Spire {
   class TaskKeyBindingsTableModel : public QAbstractTableModel {
     public:
 
+      //! The columns represented by the model.
+      enum class Columns {
+
+        //! The key binding name column.
+        NAME,
+
+        //! The security column.
+        SECURITY,
+
+        //! The destination column.
+        DESTINATION,
+
+        //! The order type column.
+        ORDER_TYPE,
+
+        //! The order side column.
+        SIDE,
+
+        //! The quantity column.
+        QUANTITY,
+
+        //! The time in force column.
+        TIME_IN_FORCE,
+
+        //! The custom tags column.
+        CUSTOM_TAGS,
+
+        //! The key binding column.
+        KEY_BINDING
+      };
+
       //! Specifies the action type used by the model.
       using Action = KeyBindings::OrderActionBinding;
 
