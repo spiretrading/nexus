@@ -13,9 +13,14 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
       m_items(std::move(items)) {
   setObjectName("input_field_editor");
   setStyleSheet(QString(R"(
-    #input_field_editor {
-      padding-left: %1px;
-    })").arg(scale_width(8)));
+      #input_field_editor {
+      background-color: #FFFFFF;
+      border: none;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %1px;
+      padding-left: %2px;
+    })").arg(scale_height(12)).arg(scale_width(8)));
   connect(this, &QLineEdit::textChanged, this,
     &InputFieldEditor::on_text_changed);
   m_menu_list = new DropDownMenuList(m_items, this);

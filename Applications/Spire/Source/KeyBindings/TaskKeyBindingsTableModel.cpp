@@ -156,18 +156,27 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
   if(role == Qt::DisplayRole) {
     if(index.column() == 3) {
       if(value.isValid()) {
+        if(index.row() == m_key_bindings.size()) {
+          m_key_bindings.push_back({});
+        }
         m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
       } else {
         m_key_bindings[index.row()].m_action.m_type = {};
       }
     } else if(index.column() == 4) {
       if(value.isValid()) {
+        if(index.row() == m_key_bindings.size()) {
+          m_key_bindings.push_back({});
+        }
         m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
       } else {
         m_key_bindings[index.row()].m_action.m_side = {};
       }
     } else if(index.column() == 5) {
       if(value.isValid() && value.value<Quantity>() > 0) {
+        if(index.row() == m_key_bindings.size()) {
+          m_key_bindings.push_back({});
+        }
         m_key_bindings[index.row()].m_action.m_quantity =
           value.value<Quantity>();
       } else {
@@ -175,12 +184,22 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       }
     } else if(index.column() == 6) {
       if(value.isValid()) {
+        if(index.row() == m_key_bindings.size()) {
+          m_key_bindings.push_back({});
+        }
         m_key_bindings[index.row()].m_action.m_time_in_force =
           value.value<TimeInForce>();
       } else {
         m_key_bindings[index.row()].m_action.m_time_in_force = {};
       }
     } else if(index.column() == 8) {
+      if(index.row() == m_key_bindings.size()) {
+        if(!value.value<QKeySequence>().isEmpty()) {
+          m_key_bindings.push_back({});
+        } else {
+          return false;
+        }
+      }
       for(auto& binding : m_key_bindings) {
         if(binding.m_sequence == value.value<QKeySequence>()) {
           binding.m_sequence = QKeySequence();
