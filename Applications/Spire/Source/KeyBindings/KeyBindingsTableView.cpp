@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace Spire;
 
@@ -96,8 +97,19 @@ void KeyBindingsTableView::set_width(int width) {
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
     int new_size) {
+  if(index == 8) {
+    return;
+  }
   m_table->horizontalHeader()->resizeSection(index,
      m_header->sectionSize(index));
+  auto width = [&] {
+    auto width = 0;
+    for(auto i = 0; i < m_table->horizontalHeader()->count(); ++i) {
+      width += m_header->sectionSize(i);
+    }
+    return width;
+  }();
+  set_width(max(width, scale_width(853)));
 }
 
 void KeyBindingsTableView::on_header_move(int logical_index, int old_index,
