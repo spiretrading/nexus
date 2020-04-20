@@ -4,6 +4,7 @@
 #include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
 #include "Spire/SecurityInput/SecurityInfoListView.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -114,12 +115,12 @@ void SecurityInputBox::hideEvent(QHideEvent* event) {
 }
 
 void SecurityInputBox::resizeEvent(QResizeEvent* event) {
-  m_securities->setFixedWidth(width());
+  m_securities->setFixedWidth(max(width(), scale_width(142)));
 }
 
 void SecurityInputBox::showEvent(QShowEvent* event) {
   on_text_edited();
-  m_securities->setFixedWidth(width());
+  m_securities->setFixedWidth(max(width(), scale_width(142)));
 }
 
 void SecurityInputBox::on_text_edited() {
