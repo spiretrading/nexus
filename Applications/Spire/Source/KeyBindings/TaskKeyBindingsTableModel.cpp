@@ -148,6 +148,17 @@ QVariant TaskKeyBindingsTableModel::headerData(int section,
   return QVariant();
 }
 
+bool TaskKeyBindingsTableModel::removeRows(int row, int count,
+    const QModelIndex &parent) {
+  if(row >= static_cast<int>(m_key_bindings.size())) {
+    return false;
+  }
+  beginRemoveRows(parent, row, row + count);
+  m_key_bindings.erase(m_key_bindings.begin() + row);
+  endRemoveRows();
+  return true;
+}
+
 bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     const QVariant& value, int role) {
   if(!index.isValid()) {

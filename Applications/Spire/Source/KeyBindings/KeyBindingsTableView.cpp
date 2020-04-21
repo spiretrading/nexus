@@ -7,8 +7,19 @@
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/IconButton.hpp"
 
 using namespace Spire;
+
+namespace {
+  auto create_delete_button(QWidget* parent) {
+    auto button_size = scale(8, 8);
+    auto close_box = QRect(QPoint(0, 0), scale(8, 8));
+    return new IconButton(
+      imageFromSvg(":/Icons/close-purple.svg", button_size, close_box),
+      imageFromSvg(":/Icons/close-red.svg", button_size, close_box), parent);
+  }
+}
 
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     bool can_delete_rows, QWidget* parent)
@@ -89,6 +100,13 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   m_table->setModel(model);
   old_model->deleteLater();
   old_selection_model->deleteLater();
+  if(m_can_delete_rows) {
+    connect(model, &QAbstractItemModel::dataChanged,
+      [=] (auto top_left, auto bottom_right) {
+        update_delete_buttons();
+      });
+    update_delete_buttons();
+  }
 }
 
 void KeyBindingsTableView::set_height(int height) {
@@ -103,6 +121,24 @@ void KeyBindingsTableView::set_width(int width) {
   }
   m_header->setFixedWidth(width);
   m_table->setFixedWidth(width);
+}
+
+void KeyBindingsTableView::update_delete_buttons() {
+  for(auto* button : m_delete_buttons) {
+    button->deleteLater();
+  }
+  m_delete_buttons.clear();
+  for(auto i = 0; i < m_table->model()->rowCount(); ++i) {
+    auto button = create_delete_button(this);
+    button->move(scale_width(12), i * scale_height(26) + scale_height(39));
+    button->connect_clicked_signal([=] {
+      on_delete_button_clicked(i);
+    });
+  }
+}
+
+void KeyBindingsTableView::on_delete_button_clicked(int index) {
+  m_table->model()->removeRow(index);
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,

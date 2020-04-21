@@ -63,6 +63,9 @@ namespace Spire {
       QVariant headerData(int section, Qt::Orientation orientation,
         int role) const override;
 
+      bool removeRows(int row, int count,
+        const QModelIndex& parent = QModelIndex()) override;
+
       bool setData(const QModelIndex& index, const QVariant& value,
         int role = Qt::EditRole) override;
 

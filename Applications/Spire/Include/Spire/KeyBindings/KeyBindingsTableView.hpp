@@ -59,7 +59,10 @@ namespace Spire {
       CustomGridTableView* m_table;
       QHeaderView* m_header;
       bool m_can_delete_rows;
+      std::vector<QWidget*> m_delete_buttons;
 
+      void update_delete_buttons();
+      void on_delete_button_clicked(int index);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
