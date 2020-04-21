@@ -3,7 +3,7 @@ import { Padding, VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../..';
-import { SubmissionBox } from '..';
+import { SubmissionInput } from '..';
 import { EntitlementRow } from './entitlement_row';
 
 interface Properties {
@@ -44,14 +44,27 @@ interface Properties {
   onSubmit?: (comment: string) => void;
 }
 
+interface State {
+  comment: string;
+}
+
 /* Displays a list of entitlements. */
-export class EntitlementsPage extends React.Component<Properties> {
+export class EntitlementsPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     isSubmitEnabled: false,
     isError: false,
     status: '',
     onEntitlementClick: () => {},
     onSubmit: () => {}
+  }
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      comment: ''
+    }
+    this.onCommentChange = this.onCommentChange.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -91,14 +104,24 @@ export class EntitlementsPage extends React.Component<Properties> {
             <Padding size={EntitlementsPage.LINE_PADDING}/>
             <HLine color={EntitlementsPage.LINE_COLOR}/>
             <Padding size={EntitlementsPage.LINE_PADDING}/>
-            <SubmissionBox roles={this.props.roles} isError={this.props.isError}
+            <SubmissionInput comment={this.state.comment}
+              roles={this.props.roles} isError={this.props.isError}
               status={this.props.status} isEnabled={this.props.isSubmitEnabled}
-              onSubmit={this.props.onSubmit}/>
+              onChange={this.onCommentChange}
+              onSubmit={this.onSubmit}/>
             <Padding size={EntitlementsPage.BOTTOM_PADDING}/>
           </VBoxLayout>
         </div>
         <div style={EntitlementsPage.STYLE.pagePadding}/>
       </div>);
+  }
+
+  private onCommentChange(comment: string) {
+    this.setState({comment: comment});  
+  }
+
+  private onSubmit() {
+    this.props.onSubmit(this.state.comment);
   }
 
   private static readonly STYLE = {

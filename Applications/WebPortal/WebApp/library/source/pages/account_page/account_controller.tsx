@@ -1,10 +1,10 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
-import { DisplaySize } from '../..';
+import { DisplaySize, LoadingPage } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
-import { EntitlementsController, EntitlementsModel } from './entitlements_page';
+import { EntitlementsController } from './entitlements_page';
 import { ProfileController } from './profile_page';
 import { RiskController } from './risk_page';
 import { SubPage } from './sub_page';
@@ -14,7 +14,10 @@ interface Properties {
   /** Stores the entitlements to display. */
   entitlements: Nexus.EntitlementDatabase;
 
-  /** The database of currencies */
+  /** The database of currencies. */
+  countryDatabase: Nexus.CountryDatabase;
+
+  /** The database of countries. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The set of markets. */
@@ -58,7 +61,7 @@ export class AccountController extends React.Component<Properties, State> {
       return <Router.Redirect push to={this.state.redirect}/>;
     }
     if(!this.state.isLoaded) {
-      return <div/>;
+      return <LoadingPage/>;
     }
     const subPage = (() => {
       if(window.location.href.endsWith('/profile')) {
@@ -102,7 +105,11 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderProfilePage() {
-    return <ProfileController/>;
+    return <ProfileController
+      displaySize={this.props.displaySize}
+      countryDatabase={this.props.countryDatabase}
+      groups={this.props.model.groups}
+      model={this.props.model.profileModel}/>;
   }
 
   private renderEntitlementsPage() {
@@ -115,7 +122,11 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private renderRiskPage() {
-    return <RiskController/>;
+    return <RiskController
+      currencyDatabase={this.props.currencyDatabase}
+      displaySize={this.props.displaySize}
+      model={this.props.model.riskModel}
+      roles={this.props.model.roles}/>;
   }
 
   private onMenuClick(subPage: SubPage) {

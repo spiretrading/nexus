@@ -11,25 +11,29 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Wraps a MarketDataClient for use as a HistoricalDataStore.
-      \tparam MarketDataClientType The type of MarketDataClient to wrap.
+  /**
+   * Wraps a MarketDataClient for use as a HistoricalDataStore.
+   * @param <C> The type of MarketDataClient to wrap.
    */
-  template<typename MarketDataClientType>
+  template<typename C>
   class ClientHistoricalDataStore : private boost::noncopyable {
     public:
 
-      //! The type of MarketDataClient to wrap.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /** The type of MarketDataClient to wrap. */
+      using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a ClientHistoricalDataStore.
-      /*!
-        \param client Initializes the client to wrap.
-      */
+      /**
+       * Constructs a ClientHistoricalDataStore.
+       * @param client Initializes the client to wrap.
+       */
       template<typename MarketDataClientForward>
       ClientHistoricalDataStore(MarketDataClientForward&& client);
 
       ~ClientHistoricalDataStore();
+
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
+      std::vector<SecurityInfo> LoadAllSecurityInfo();
 
       std::vector<SequencedOrderImbalance> LoadOrderImbalances(
         const MarketWideDataQuery& query);
@@ -45,6 +49,8 @@ namespace Nexus::MarketDataService {
 
       std::vector<SequencedTimeAndSale> LoadTimeAndSales(
         const SecurityMarketDataQuery& query);
+
+      void Store(const SecurityInfo& info);
 
       void Store(const SequencedMarketOrderImbalance& orderImbalance);
 
@@ -72,7 +78,9 @@ namespace Nexus::MarketDataService {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_client;
+      using ClientType = std::remove_reference_t<
+        decltype(*std::declval<Beam::GetOptionalLocalPtr<C>>())>;
+      Beam::GetOptionalLocalPtr<C> m_client;
       Beam::IO::OpenState m_openState;
 
       template<typename T, typename Query, typename F>
@@ -80,120 +88,119 @@ namespace Nexus::MarketDataService {
       void Shutdown();
   };
 
-  template<typename MarketDataClientType>
+  template<typename C>
   template<typename MarketDataClientForward>
-  ClientHistoricalDataStore<MarketDataClientType>::ClientHistoricalDataStore(
-      MarketDataClientForward&& client)
-      : m_client{std::forward<MarketDataClientForward>(client)} {}
+  ClientHistoricalDataStore<C>::ClientHistoricalDataStore(
+    MarketDataClientForward&& client)
+    : m_client{std::forward<MarketDataClientForward>(client)} {}
 
-  template<typename MarketDataClientType>
-  ClientHistoricalDataStore<MarketDataClientType>::
-      ~ClientHistoricalDataStore() {
+  template<typename C>
+  ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
     Close();
   }
 
-  template<typename MarketDataClientType>
-  std::vector<SequencedOrderImbalance> ClientHistoricalDataStore<
-      MarketDataClientType>::LoadOrderImbalances(
-      const MarketWideDataQuery& query) {
-    using ClientType =
-      typename std::remove_reference<decltype(*m_client)>::type;
+  template<typename C>
+  boost::optional<SecurityInfo> ClientHistoricalDataStore<C>::LoadSecurityInfo(
+      const Security& security) {
+    return m_client->LoadSecurityInfo(security);
+  }
+
+  template<typename C>
+  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::
+      LoadAllSecurityInfo() {
+    return {};
+  }
+
+  template<typename C>
+  std::vector<SequencedOrderImbalance> ClientHistoricalDataStore<C>::
+      LoadOrderImbalances(const MarketWideDataQuery& query) {
     using MemberType = void (ClientType::*)(const MarketWideDataQuery&,
       const std::shared_ptr<Beam::QueueWriter<SequencedOrderImbalance>>&);
     return SubmitQuery<SequencedOrderImbalance>(query,
       static_cast<MemberType>(&ClientType::QueryOrderImbalances));
   }
 
-  template<typename MarketDataClientType>
-  std::vector<SequencedBboQuote> ClientHistoricalDataStore<
-      MarketDataClientType>::LoadBboQuotes(
+  template<typename C>
+  std::vector<SequencedBboQuote> ClientHistoricalDataStore<C>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
-    using ClientType =
-      typename std::remove_reference<decltype(*m_client)>::type;
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
       const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>&);
     return SubmitQuery<SequencedBboQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBboQuotes));
   }
 
-  template<typename MarketDataClientType>
-  std::vector<SequencedBookQuote> ClientHistoricalDataStore<
-      MarketDataClientType>::LoadBookQuotes(
+  template<typename C>
+  std::vector<SequencedBookQuote> ClientHistoricalDataStore<C>::LoadBookQuotes(
       const SecurityMarketDataQuery& query) {
-    using ClientType =
-      typename std::remove_reference<decltype(*m_client)>::type;
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
       const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>&);
     return SubmitQuery<SequencedBookQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBookQuotes));
   }
 
-  template<typename MarketDataClientType>
-  std::vector<SequencedMarketQuote> ClientHistoricalDataStore<
-      MarketDataClientType>::LoadMarketQuotes(
-      const SecurityMarketDataQuery& query) {
-    using ClientType =
-      typename std::remove_reference<decltype(*m_client)>::type;
+  template<typename C>
+  std::vector<SequencedMarketQuote> ClientHistoricalDataStore<C>::
+      LoadMarketQuotes(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
       const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>&);
     return SubmitQuery<SequencedMarketQuote>(query,
       static_cast<MemberType>(&ClientType::QueryMarketQuotes));
   }
 
-  template<typename MarketDataClientType>
-  std::vector<SequencedTimeAndSale> ClientHistoricalDataStore<
-      MarketDataClientType>::LoadTimeAndSales(
-      const SecurityMarketDataQuery& query) {
-    using ClientType =
-      typename std::remove_reference<decltype(*m_client)>::type;
+  template<typename C>
+  std::vector<SequencedTimeAndSale> ClientHistoricalDataStore<C>::
+      LoadTimeAndSales(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
       const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>&);
     return SubmitQuery<SequencedTimeAndSale>(query,
       static_cast<MemberType>(&ClientType::QueryTimeAndSales));
   }
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const SequencedMarketOrderImbalance& orderImbalance) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(const SecurityInfo& info) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const SequencedMarketOrderImbalance& orderImbalance) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const SequencedSecurityBboQuote& bboQuote) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const std::vector<SequencedSecurityBboQuote>& bboQuotes) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const SequencedSecurityBboQuote& bboQuote) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const SequencedSecurityMarketQuote& marketQuote) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const std::vector<SequencedSecurityBboQuote>& bboQuotes) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const SequencedSecurityMarketQuote& marketQuote) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const SequencedSecurityBookQuote& bookQuote) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const std::vector<SequencedSecurityBookQuote>& bookQuotes) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const SequencedSecurityBookQuote& bookQuote) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const SequencedSecurityTimeAndSale& timeAndSale) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const std::vector<SequencedSecurityBookQuote>& bookQuotes) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Store(
-      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const SequencedSecurityTimeAndSale& timeAndSale) {}
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Open() {
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Store(
+    const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
+
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -206,18 +213,18 @@ namespace Nexus::MarketDataService {
     m_openState.SetOpen();
   }
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Close() {
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename MarketDataClientType>
+  template<typename C>
   template<typename T, typename Query, typename F>
-  std::vector<T> ClientHistoricalDataStore<MarketDataClientType>::SubmitQuery(
-      const Query& query, F f) {
+  std::vector<T> ClientHistoricalDataStore<C>::SubmitQuery(const Query& query,
+      F f) {
     auto queue = std::make_shared<Beam::Queue<T>>();
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       auto revisedQuery = query;
@@ -232,8 +239,8 @@ namespace Nexus::MarketDataService {
     return matches;
   }
 
-  template<typename MarketDataClientType>
-  void ClientHistoricalDataStore<MarketDataClientType>::Shutdown() {
+  template<typename C>
+  void ClientHistoricalDataStore<C>::Shutdown() {
     m_openState.SetClosed();
   }
 }

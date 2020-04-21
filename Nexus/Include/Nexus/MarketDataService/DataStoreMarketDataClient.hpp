@@ -16,20 +16,21 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Implements a MarketDataClient that directly queries a data store.
-      \tparam D The type of HistoricalDataStore to query.
+  /**
+   * Implements a MarketDataClient that directly queries a data store.
+   * @param <D> The type of HistoricalDataStore to query.
    */
   template<typename D>
   class DataStoreMarketDataClient : private boost::noncopyable {
     public:
 
-      //! The type of HistoricalDataStore to query.
+      /** The type of HistoricalDataStore to query. */
       using DataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs a DataStoreMarketDataClient.
-      /*!
-        \param dataStore Initializes the HistoricalDataStore.
-      */
+      /**
+       * Constructs a DataStoreMarketDataClient.
+       * @param dataStore Initializes the HistoricalDataStore.
+       */
       template<typename S>
       DataStoreMarketDataClient(S&& dataStore);
 
@@ -70,6 +71,8 @@ namespace Nexus::MarketDataService {
 
       SecurityTechnicals LoadSecurityTechnicals(const Security& security);
 
+      boost::optional<SecurityInfo> LoadSecurityInfo(const Security& security);
+
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
@@ -87,7 +90,7 @@ namespace Nexus::MarketDataService {
   template<typename D>
   template<typename S>
   DataStoreMarketDataClient<D>::DataStoreMarketDataClient(S&& dataStore)
-      : m_dataStore(std::forward<S>(dataStore)) {}
+    : m_dataStore(std::forward<S>(dataStore)) {}
 
   template<typename D>
   DataStoreMarketDataClient<D>::~DataStoreMarketDataClient() {
@@ -214,6 +217,12 @@ namespace Nexus::MarketDataService {
   SecurityTechnicals DataStoreMarketDataClient<D>::LoadSecurityTechnicals(
       const Security& security) {
     return {};
+  }
+
+  template<typename D>
+  boost::optional<SecurityInfo> DataStoreMarketDataClient<D>::LoadSecurityInfo(
+      const Security& security) {
+    return m_dataStore->LoadSecurityInfo(security);
   }
 
   template<typename D>

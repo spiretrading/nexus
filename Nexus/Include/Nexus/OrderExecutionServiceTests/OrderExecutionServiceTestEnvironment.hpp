@@ -16,7 +16,6 @@
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/Destination.hpp"
@@ -29,9 +28,7 @@
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
-namespace Tests {
+namespace Nexus::OrderExecutionService::Tests {
 
   /*! \class OrderExecutionServiceTestEnvironment
       \brief Wraps most components needed to run an instance of the
@@ -190,19 +187,17 @@ namespace Tests {
       Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     ServiceProtocolClientBuilder builder{Beam::Ref(serviceLocatorClient),
-      [&] {
+      [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_order_execution_client", Beam::Ref(m_serverConnection));
       },
-      [&] {
+      [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       }};
     auto client = std::make_unique<OrderExecutionService::OrderExecutionClient<
       ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualOrderExecutionClient(std::move(client));
   }
-}
-}
 }
 
 #endif

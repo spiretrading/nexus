@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { DisplaySize } from '../..';
-import { AccountController, AccountModel } from '..';
+import { DisplaySize, LoadingPage } from '../..';
+import { AccountController, AccountDirectoryController, AccountModel }
+  from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -35,16 +36,20 @@ export class DashboardController extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
-      return <div/>;
+      return <LoadingPage/>;
     }
     const page = (() => {
       switch(this.state.page) {
         case DashboardController.Page.ACCOUNT:
           return <AccountController
             entitlements={this.props.model.entitlementDatabase}
+            countryDatabase={this.props.model.countryDatabase}
             currencyDatabase={this.props.model.currencyDatabase}
             marketDatabase={this.props.model.marketDatabase}
             model={this.accountModel} displaySize={this.props.displaySize}/>;
+        case DashboardController.Page.DIRECTORY:
+          return <AccountDirectoryController
+            displaySize={this.props.displaySize}/>;
       }
     })();
     return <DashboardPage roles={this.props.model.roles}
@@ -66,6 +71,8 @@ export class DashboardController extends React.Component<Properties, State> {
         () => {
           this.props.onLogout();
         });
+    } else if(item === SideMenu.Item.ACCOUNTS) {
+      this.setState({page: DashboardController.Page.DIRECTORY});
     }
   }
 
@@ -77,7 +84,10 @@ export namespace DashboardController {
   /** Lists the different pages this controller can display. */
   export enum Page {
 
-    /** The account page. */
+    /** The directory page. */
+    DIRECTORY,
+
+    /** The profile page. */
     ACCOUNT
   }
 }

@@ -6,23 +6,32 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
- /** Determines the size to render components at. */
 interface Properties {
+
+  /** Determines the size to render components at. */
   displaySize: WebPortal.DisplaySize;
 }
 
 interface State {
   roles: Nexus.AccountRoles;
+  status: string,
+  isError: boolean,
 }
 
+/** Displays and tests the RiskPage. */
 class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      roles: new Nexus.AccountRoles(8)
+      roles: new Nexus.AccountRoles(8),
+      status: '',
+      isError: false,
     };
     this.onSubmit = this.onSubmit.bind(this);
     this.onToggleIsAdmin = this.onToggleIsAdmin.bind(this);
+    this.onToggleError = this.onToggleError.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+    this.clearStatus = this.clearStatus.bind(this);
   }
 
   public render(): JSX.Element {
@@ -33,65 +42,40 @@ class TestApp extends React.Component<Properties, State> {
       Nexus.Money.ONE.multiply(1000), 100,
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
-    const containerClassName = (() => {
-      switch(this.props.displaySize) {
-        case WebPortal.DisplaySize.SMALL:
-          return css([TestApp.CONTAINER_STYLE.small,
-            TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.DisplaySize.MEDIUM:
-          return css([TestApp.CONTAINER_STYLE.medium,
-            TestApp.CONTAINER_STYLE.base]);
-        case WebPortal.DisplaySize.LARGE:
-          return css([TestApp.CONTAINER_STYLE.large,
-            TestApp.CONTAINER_STYLE.base]);
-        default:
-          return css([TestApp.CONTAINER_STYLE.medium,
-              TestApp.CONTAINER_STYLE.base]);
-      }
-    })();
-    const submissionBoxPadding = (() => {
-      switch(this.props.displaySize) {
-        case WebPortal.DisplaySize.SMALL:
-          return <div className={css(TestApp.CONTAINER_STYLE.smallPadding)}/>;
-        case WebPortal.DisplaySize.MEDIUM:
-          return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
-        case WebPortal.DisplaySize.LARGE:
-          return <div className={css(TestApp.CONTAINER_STYLE.largePadding)}/>;
-        default:
-          return <div className={css(TestApp.CONTAINER_STYLE.mediumPadding)}/>;
-        }
-    })();
     const toggleAdminButtonText = (() => {
       if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         return 'Admin';
       }
       return 'Not Admin';
     })();
+    const toggleErrorText = (() => {
+      if(this.state.isError) {
+        return 'Error';
+      }
+      return 'No Error';
+    })();
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
-        <Dali.Padding size='30px'/>
-        <Dali.HBoxLayout width='100%' className={
-          css(TestApp.STYLE.outerContainer)}>
-          <Dali.VBoxLayout className={containerClassName}>
-            <WebPortal.RiskParametersView parameters={parameters}
-              displaySize={this.props.displaySize}
-              currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}/>
-            <Dali.Padding size='30px'/>
-            <Dali.HBoxLayout width='100%'>
-              <WebPortal.SubmissionBox roles={this.state.roles}
-                onSubmit={ this.onSubmit }/>
-            </Dali.HBoxLayout>
-          </Dali.VBoxLayout>
-        </Dali.HBoxLayout>
-        <button className={css(TestApp.STYLE.button)} onClick={
-            this.onToggleIsAdmin}>
-          {toggleAdminButtonText}
-        </button>
+        <WebPortal.RiskPage
+          displaySize={this.props.displaySize}
+          parameters={parameters}
+          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          roles={this.state.roles}
+          status={this.state.status}
+          isError={this.state.isError}
+          onSubmit={this.onSubmit}/>
+        <div className={css(TestApp.STYLE.buttonWrapper)}>
+          <button onClick={this.onToggleIsAdmin}>
+            {toggleAdminButtonText}
+          </button>
+          <button onClick={this.onToggleError}>
+            {toggleErrorText}
+          </button>
+          <button onClick={this.clearStatus}>
+            Clear Status
+          </button>
+        </div>
       </Dali.VBoxLayout>);
-  }
-
-  private onSubmit(comment: string) {
-    console.log(comment);
   }
 
   private onToggleIsAdmin() {
@@ -104,40 +88,31 @@ class TestApp extends React.Component<Properties, State> {
     this.setState({ roles: roles });
   }
 
+  private onToggleError() {
+    this.setState({isError: !this.state.isError});
+  }
+
+  private onSubmit(comments: string, parameters: Nexus.RiskParameters) {
+    if(this.state.isError) {
+      this.setState({status: 'Not Saved'});
+    } else {
+      this.setState({status: 'Saved'});
+    }
+    return;
+  }
+
+  private clearStatus() {
+    this.setState({status: ''});
+  }
+
   private static STYLE = StyleSheet.create({
     outerContainer: {
       position: 'relative' as 'relative'
     },
-    button: {
+    buttonWrapper: {
+      display: 'flex' as 'flex',
+      flexDirection: 'row' as 'row',
       position: 'absolute' as 'absolute'
-    }
-  });
-  private static CONTAINER_STYLE = StyleSheet.create({
-    base: {
-      position: 'absolute' as 'absolute',
-      left: 0,
-      right: 0,
-      margin: 'auto'
-    },
-    small: {
-      width: '60%',
-      minWidth: '320px',
-      maxWidth: '460px'
-    },
-    medium: {
-      width: '732px'
-    },
-    large: {
-      width: '1000px'
-    },
-    smallPadding: {
-      width: '20%'
-    },
-    mediumPadding: {
-      width: 'calc(50% - 366px)'
-    },
-    largePadding: {
-      width: 'calc(50% - 500px)'
     }
   });
 }

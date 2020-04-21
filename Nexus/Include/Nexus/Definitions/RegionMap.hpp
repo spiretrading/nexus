@@ -301,13 +301,13 @@ namespace Details {
 
   template<typename T>
   RegionMap<T>::RegionMap(const T& globalValue)
-      : m_root(Region(Region::GlobalTag()), globalValue),
-        m_size(1) {}
+    : m_root(Region::Global(), globalValue),
+      m_size(1) {}
 
   template<typename T>
   RegionMap<T>::RegionMap(const std::string& name, const T& globalValue)
-      : m_root(Region(Region::GlobalTag(), name), globalValue),
-        m_size(1) {}
+    : m_root(Region::Global(name), globalValue),
+      m_size(1) {}
 
   template<typename T>
   std::size_t RegionMap<T>::GetSize() const {
@@ -392,8 +392,8 @@ namespace Details {
 
   template<typename T>
   RegionMap<T>::RegionMap(Beam::Serialization::ReceiveBuilder)
-      : m_root(Region(Region::GlobalTag(), ""), T()),
-        m_size(1) {}
+    : m_root(Region::Global(), T()),
+      m_size(1) {}
 
   template<typename T>
   void RegionMap<T>::Insert(Details::Node<T>& root, const Region& region,

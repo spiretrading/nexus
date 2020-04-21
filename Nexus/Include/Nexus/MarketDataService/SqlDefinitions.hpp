@@ -7,20 +7,21 @@
 #include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 
-  //! Returns a row representing a market code.
+  /** Returns a row representing a market code. */
   inline const auto& GetMarketCodeRow() {
     static auto ROW = Viper::Row<MarketCode>().
       add_column("market", Viper::varchar(16));
     return ROW;
   }
 
-  //! Returns a row representing an order imbalance.
+  /** Returns a row representing an order imbalance. */
   inline const auto& GetOrderImbalanceRow() {
     static auto ROW = Viper::Row<OrderImbalance>().
       extend(Viper::Row<Security>().
@@ -51,7 +52,7 @@ namespace Nexus::MarketDataService {
     return ROW;
   }
 
-  //! Returns a row representing a security.
+  /** Returns a row representing a security. */
   inline const auto& GetSecurityRow() {
     static auto ROW = Viper::Row<Security>().
       add_column("symbol", Viper::varchar(16),
@@ -71,7 +72,39 @@ namespace Nexus::MarketDataService {
     return ROW;
   }
 
-  //! Returns a row representing a bbo quote.
+  /** Returns a row representing a SecurityInfo. */
+  inline const auto& GetSecurityInfoRow() {
+    static auto ROW = Viper::Row<SecurityInfo>().
+      extend(Viper::Row<Security>().
+        add_column("symbol", Viper::varchar(16),
+          [] (const auto& row) {
+            return row.GetSymbol();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(value), row.GetMarket(), row.GetCountry());
+          }).
+        add_column("market", Viper::varchar(4),
+          [] (const auto& row) {
+            return row.GetMarket();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(row.GetSymbol()), value, row.GetCountry());
+          }).
+        add_column("country",
+          [] (const auto& row) {
+            return row.GetCountry();
+          },
+          [] (auto& row, auto value) {
+            row = Security(std::move(row.GetSymbol()), row.GetMarket(), value);
+          }), &SecurityInfo::m_security).
+      add_column("name", Viper::varchar(256), &SecurityInfo::m_name).
+      add_column("sector", Viper::varchar(256), &SecurityInfo::m_sector).
+      add_column("board_lot", &SecurityInfo::m_boardLot).
+      set_primary_key({"symbol", "country"});
+    return ROW;
+  }
+
+  /** Returns a row representing a bbo quote. */
   inline const auto& GetBboQuoteRow() {
     static auto ROW = Viper::Row<BboQuote>().
       extend(Viper::Row<Quote>().
@@ -83,7 +116,7 @@ namespace Nexus::MarketDataService {
     return ROW;
   }
 
-  //! Returns a row representing a market quote.
+  /** Returns a row representing a market quote. */
   inline const auto& GetMarketQuoteRow() {
     static auto ROW = Viper::Row<MarketQuote>().
       add_column("market", Viper::varchar(16), &MarketQuote::m_market).
@@ -96,7 +129,7 @@ namespace Nexus::MarketDataService {
     return ROW;
   }
 
-  //! Returns a row representing a book quote.
+  /** Returns a row representing a book quote. */
   inline const auto& GetBookQuoteRow() {
     static auto ROW = Viper::Row<BookQuote>().
       add_column("mpid", Viper::varchar(16), &BookQuote::m_mpid).
@@ -109,7 +142,7 @@ namespace Nexus::MarketDataService {
     return ROW;
   }
 
-  //! Returns a row representing a time and sale.
+  /** Returns a row representing a time and sale. */
   inline const auto& GetTimeAndSaleRow() {
     static auto ROW = Viper::Row<TimeAndSale>().
       add_column("price", &TimeAndSale::m_price).

@@ -108,8 +108,83 @@ posix_time::ptime Spire::to_ptime(const QDateTime& time) {
 
 void Spire::register_custom_qt_variants() {}
 
+const QString& Spire::displayText(Side side) {
+  if(side == Side::ASK) {
+    static const auto value = QObject::tr("Ask");
+    return value;
+  } else if(side == Side::BID) {
+    static const auto value = QObject::tr("Bid");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
+const QString& Spire::displayText(OrderStatus status) {
+  if(status == OrderStatus::PENDING_NEW) {
+    static const auto value = QObject::tr("Pending New");
+    return value;
+  } else if(status ==  OrderStatus::REJECTED) {
+    static const auto value = QObject::tr("Rejected");
+    return value;
+  } else if(status ==  OrderStatus::NEW) {
+    static const auto value = QObject::tr("New");
+    return value;
+  } else if(status ==  OrderStatus::PARTIALLY_FILLED) {
+    static const auto value = QObject::tr("Partially Filled");
+    return value;
+  } else if(status ==  OrderStatus::EXPIRED) {
+    static const auto value = QObject::tr("Expired");
+    return value;
+  } else if(status ==  OrderStatus::CANCELED) {
+    static const auto value = QObject::tr("Canceled");
+    return value;
+  } else if(status ==  OrderStatus::SUSPENDED) {
+    static const auto value = QObject::tr("Suspended");
+    return value;
+  } else if(status ==  OrderStatus::STOPPED) {
+    static const auto value = QObject::tr("Stopped");
+    return value;
+  } else if(status ==  OrderStatus::FILLED) {
+    static const auto value = QObject::tr("Filled");
+    return value;
+  } else if(status ==  OrderStatus::DONE_FOR_DAY) {
+    static const auto value = QObject::tr("Done For Day");
+    return value;
+  } else if(status ==  OrderStatus::PENDING_CANCEL) {
+    static const auto value = QObject::tr("Pending Cancel");
+    return value;
+  } else if(status == OrderStatus::CANCEL_REJECT) {
+    static const auto value = QObject::tr("Cancel Reject");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
+const QString& Spire::displayText(OrderType type) {
+  if(type == OrderType::MARKET) {
+    static const auto value = QObject::tr("MKT");
+    return value;
+  } else if(type == OrderType::LIMIT) {
+    static const auto value = QObject::tr("LMT");
+    return value;
+  } else if(type == OrderType::PEGGED) {
+    static const auto value = QObject::tr("PEG");
+    return value;
+  } else if(type == OrderType::STOP) {
+    static const auto value = QObject::tr("STP");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
-    : QStyledItemDelegate(parent) {}
+  : QStyledItemDelegate(parent) {}
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
@@ -137,9 +212,9 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<Quantity>()) {
     return locale.toString(static_cast<double>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
-    return QString::fromStdString(ToString(value.value<OrderStatus>()));
+    return Spire::displayText(value.value<OrderStatus>());
   } else if(value.canConvert<OrderType>()) {
-    return QString::fromStdString(ToString(value.value<OrderType>()));
+    return Spire::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().to_string();
   } else if(value.canConvert<Region>()) {
@@ -152,7 +227,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
       GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
   } else if(value.canConvert<Side>()) {
-    return QString::fromStdString(ToString(value.value<Side>()));
+    return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
       ToString(value.value<TimeInForce>().GetType()));
@@ -195,18 +270,18 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return compare(left_variant.value<Quantity>(),
       right_variant.value<Quantity>(), left, right);
   } else if(left_variant.canConvert<OrderStatus>()) {
-    return compare(ToString(left_variant.value<OrderStatus>()),
-      ToString(right_variant.value<OrderStatus>()), left, right);
+    return compare(displayText(left_variant.value<OrderStatus>()),
+      displayText(right_variant.value<OrderStatus>()), left, right);
   } else if(left_variant.canConvert<OrderType>()) {
-    return compare(ToString(left_variant.value<OrderType>()),
-      ToString(right_variant.value<OrderType>()), left, right);
+    return compare(displayText(left_variant.value<OrderType>()),
+      displayText(right_variant.value<OrderType>()), left, right);
   } else if(left_variant.canConvert<Security>()) {
     return compare(ToString(left_variant.value<Security>(),
       GetDefaultMarketDatabase()), ToString(right_variant.value<Security>(),
       GetDefaultMarketDatabase()), left, right);
   } else if(left_variant.canConvert<Side>()) {
-    return compare(ToString(left_variant.value<Side>()),
-      ToString(right_variant.value<Side>()), left, right);
+    return compare(displayText(left_variant.value<Side>()),
+      displayText(right_variant.value<Side>()), left, right);
   } else if(left_variant.canConvert<TimeInForce>()) {
     return compare(ToString(left_variant.value<TimeInForce>().GetType()),
       ToString(right_variant.value<TimeInForce>().GetType()), left, right);

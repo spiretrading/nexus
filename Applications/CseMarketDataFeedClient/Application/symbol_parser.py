@@ -17,6 +17,7 @@ def main():
       if row[4] == 'CAD' and row[5] == 'CSE':
         output.write('  - symbol: %s\n' % row[1])
         output.write('    name: %s\n' % row[2])
+        output.write('    board_lot: %s\n' % row[6])
     output.write('...\n')
 
 if __name__ == '__main__':

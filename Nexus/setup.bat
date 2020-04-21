@@ -18,7 +18,7 @@ IF NOT EXIST Beam (
     SET EXIT_STATUS=1
   )
 )
-SET beam_commit="273f1e77f738162c15deb9bd0b36770ced85abd4"
+SET beam_commit="3031e63b83b897292fc6c91e7c64d4371a135946"
 IF EXIST Beam (
   PUSHD Beam
   git merge-base --is-ancestor "!beam_commit!" HEAD
@@ -61,7 +61,7 @@ IF NOT EXIST qt-5.14.0 (
 )
 IF NOT EXIST lua-5.3.5 (
   wget http://www.lua.org/ftp/lua-5.3.5.tar.gz --no-check-certificate
-  IF !ERRORLEVEL! EQU 0 (
+  IF !ERRORLEVEL! LEQ 0 (
     gzip -d -c lua-5.3.5.tar.gz | tar -xf -
     PUSHD lua-5.3.5\src
     COPY %~dp0\Config\lua.cmake CMakeLists.txt
@@ -76,7 +76,7 @@ IF NOT EXIST lua-5.3.5 (
 )
 IF NOT EXIST quickfix-v.1.15.1 (
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
-  IF !ERRORLEVEL! EQU 0 (
+  IF !ERRORLEVEL! LEQ 0 (
     unzip quickfix-v.1.15.1.zip
     mv quickfix-49b3508e48f0bbafbab13b68be72250bdd971ac2 quickfix-v.1.15.1
     PUSHD quickfix-v.1.15.1

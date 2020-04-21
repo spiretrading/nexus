@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETDATAREGISTRYSERVICES_HPP
-#define NEXUS_MARKETDATAREGISTRYSERVICES_HPP
+#ifndef NEXUS_MARKET_DATA_REGISTRY_SERVICES_HPP
+#define NEXUS_MARKET_DATA_REGISTRY_SERVICES_HPP
 #include <Beam/Queries/QueryResult.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -10,16 +10,15 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
-  typedef Beam::Queries::QueryResult<SequencedOrderImbalance>
-    OrderImbalanceQueryResult;
-  typedef Beam::Queries::QueryResult<SequencedBboQuote> BboQuoteQueryResult;
-  typedef Beam::Queries::QueryResult<SequencedBookQuote> BookQuoteQueryResult;
-  typedef Beam::Queries::QueryResult<SequencedMarketQuote>
-    MarketQuoteQueryResult;
-  typedef Beam::Queries::QueryResult<SequencedTimeAndSale>
-    TimeAndSaleQueryResult;
+namespace Nexus::MarketDataService {
+  using OrderImbalanceQueryResult =
+    Beam::Queries::QueryResult<SequencedOrderImbalance>;
+  using BboQuoteQueryResult = Beam::Queries::QueryResult<SequencedBboQuote>;
+  using BookQuoteQueryResult = Beam::Queries::QueryResult<SequencedBookQuote>;
+  using MarketQuoteQueryResult =
+    Beam::Queries::QueryResult<SequencedMarketQuote>;
+  using TimeAndSaleQueryResult =
+    Beam::Queries::QueryResult<SequencedTimeAndSale>;
 
   BEAM_DEFINE_SERVICES(MarketDataRegistryServices,
 
@@ -107,7 +106,18 @@ namespace MarketDataService {
       SecurityTechnicals, Security, security),
     //! \endcond
 
-    /*! \interface Nexus::MarketDataService::LoadSecurityInfoFromPrefix
+    /*! \interface Nexus::MarketDataService::LoadSecurityInfoService
+        \brief Loads the SecurityInfo for a specified Security.
+        \param security <code>Security</code> The Security whose SecurityInfo is
+               to be loaded.
+        \return <code>SecurityInfo</code> The SecurityInfo for the specified
+                <i>security</i>.
+    */
+    //! \cond
+    (LoadSecurityInfoService, "Nexus.MarketDataService.LoadSecurityInfoService",
+      boost::optional<SecurityInfo>, Security, security),
+
+    /*! \interface Nexus::MarketDataService::LoadSecurityInfoFromPrefixService
         \brief Loads all SecurityInfo objects that match a prefix.
         \param prefix <code>std::string</code> The prefix to search for.
         \return <code>std::vector\<SecurityInfo\></code> The list of
@@ -260,7 +270,6 @@ namespace MarketDataService {
   struct MarketDataMessageType<TimeAndSale> {
     using type = TimeAndSaleMessage;
   };
-}
 }
 
 #endif

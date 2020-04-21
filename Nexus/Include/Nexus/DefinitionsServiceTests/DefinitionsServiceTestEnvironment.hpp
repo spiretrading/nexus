@@ -14,7 +14,6 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -104,15 +103,15 @@ namespace Nexus::DefinitionsService::Tests {
       Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [&] {
+      [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_definitions_client", Beam::Ref(m_serverConnection));
       },
-      [&] {
+      [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
     auto client = std::make_unique<DefinitionsService::DefinitionsClient<
-        ServiceProtocolClientBuilder>>(builder);
+      ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualDefinitionsClient(std::move(client));
   }
 

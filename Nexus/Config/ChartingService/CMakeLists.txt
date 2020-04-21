@@ -1,15 +1,11 @@
-file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/ChartingServiceTests/*.hpp)
 file(GLOB source_files ${NEXUS_SOURCE_PATH}/ChartingServiceTests/*.cpp)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
-add_executable(ChartingServiceTests ${header_files} ${source_files})
-set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+add_executable(ChartingServiceTests ${source_files})
 target_link_libraries(ChartingServiceTests
-  debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
-  optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 

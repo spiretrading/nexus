@@ -1,7 +1,8 @@
-#ifndef NEXUS_ORDERSTATUSPARSER_HPP
-#define NEXUS_ORDERSTATUSPARSER_HPP
+#ifndef NEXUS_ORDER_STATUS_PARSER_HPP
+#define NEXUS_ORDER_STATUS_PARSER_HPP
 #include <Beam/Collections/EnumIterator.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/OrderStatus.hpp"
 
 namespace Nexus {
@@ -18,10 +19,10 @@ namespace Nexus {
   };
 
   inline OrderStatusParser::OrderStatusParser()
-      : Beam::Parsers::EnumeratorParser<OrderStatus>(
-          begin(Beam::MakeRange<OrderStatus>()),
-          end(Beam::MakeRange<OrderStatus>()),
-          static_cast<std::string (*)(OrderStatus)>(ToString)) {}
+    : Beam::Parsers::EnumeratorParser<OrderStatus>(
+        begin(Beam::MakeRange<OrderStatus>()),
+        end(Beam::MakeRange<OrderStatus>()),
+        &boost::lexical_cast<std::string, OrderStatus>) {}
 }
 
 #endif

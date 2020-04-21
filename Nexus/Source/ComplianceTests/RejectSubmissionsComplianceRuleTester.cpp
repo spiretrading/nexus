@@ -1,4 +1,4 @@
-#include "Nexus/ComplianceTests/RejectSubmissionsComplianceRuleTester.hpp"
+#include <doctest/doctest.h>
 #include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -12,38 +12,37 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
-  const auto TIMESTAMP = ptime{date{1984, May, 6}, seconds(10)};
+  const auto TIMESTAMP = ptime(date(1984, May, 6), seconds(10));
 
-  OrderFields BuildOrderFields() {
-    auto fields = OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
-      Security{"TST", DefaultMarkets::TSX(), DefaultCountries::CA()},
+  auto BuildOrderFields() {
+    return OrderFields::BuildLimitOrder(DirectoryEntry::GetRootAccount(),
+      Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
       DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
       Money::ONE);
-    return fields;
   }
 }
 
-void RejectSubmissionsComplianceRuleTester::TestAdd() {
-  RejectSubmissionsComplianceRule rule{"message"};
-  PrimitiveOrder order{{BuildOrderFields(), 1, TIMESTAMP}};
-  CPPUNIT_ASSERT_NO_THROW(rule.Add(order));
-}
+TEST_SUITE("RejectSubmissionsComplianceRule") {
+  TEST_CASE("add") {
+    auto rule = RejectSubmissionsComplianceRule("message");
+    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    REQUIRE_NOTHROW(rule.Add(order));
+  }
 
-void RejectSubmissionsComplianceRuleTester::TestSubmit() {
-  RejectSubmissionsComplianceRule rule{"message"};
-  PrimitiveOrder order{{BuildOrderFields(), 1, TIMESTAMP}};
-  CPPUNIT_ASSERT_THROW_MESSAGE("message", rule.Submit(order),
-    ComplianceCheckException);
-}
+  TEST_CASE("submit") {
+    auto rule = RejectSubmissionsComplianceRule("message");
+    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    REQUIRE_THROWS_WITH_AS(rule.Submit(order), "message",
+      ComplianceCheckException);
+  }
 
-void RejectSubmissionsComplianceRuleTester::TestCancel() {
-  RejectSubmissionsComplianceRule rule{"message"};
-  PrimitiveOrder order{{BuildOrderFields(), 1, TIMESTAMP}};
-  rule.Add(order);
-  CPPUNIT_ASSERT_NO_THROW(rule.Cancel(order));
+  TEST_CASE("cancel") {
+    auto rule = RejectSubmissionsComplianceRule("message");
+    auto order = PrimitiveOrder({BuildOrderFields(), 1, TIMESTAMP});
+    rule.Add(order);
+    REQUIRE_NOTHROW(rule.Cancel(order));
+  }
 }

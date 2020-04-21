@@ -120,8 +120,8 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request_status"),
-    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus, this,
-    std::placeholders::_1));
+    std::bind(&AdministrationWebServlet::OnLoadAccountModificationRequestStatus,
+    this, std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/approve_account_modification_request"),
     std::bind(&AdministrationWebServlet::OnApproveAccountModificationRequest,

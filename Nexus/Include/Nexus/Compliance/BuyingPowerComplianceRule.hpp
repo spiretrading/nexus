@@ -79,6 +79,12 @@ namespace Compliance {
         const OrderExecutionService::OrderFields& orderFields);
   };
 
+
+  template<typename MarketDataClient>
+  BuyingPowerComplianceRule(const std::vector<ComplianceParameter>&,
+    const std::vector<ExchangeRate>&, MarketDataClient&&) ->
+    BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
+
   //! Builds a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
   inline ComplianceRuleSchema BuildBuyingPowerComplianceRuleSchema() {
     std::vector<ComplianceParameter> parameters;

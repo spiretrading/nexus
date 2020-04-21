@@ -1,15 +1,11 @@
-file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/ComplianceTests/*.hpp)
 file(GLOB source_files ${NEXUS_SOURCE_PATH}/ComplianceTests/*.cpp)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
-add_executable(ComplianceTests ${header_files} ${source_files})
-set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+add_executable(ComplianceTests ${source_files})
 target_link_libraries(ComplianceTests
-  debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
-  optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 

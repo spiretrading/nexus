@@ -1,8 +1,10 @@
-#ifndef NEXUS_SECURITYINFO_HPP
-#define NEXUS_SECURITYINFO_HPP
+#ifndef NEXUS_SECURITY_INFO_HPP
+#define NEXUS_SECURITY_INFO_HPP
 #include <string>
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
 
 namespace Nexus {
@@ -21,6 +23,9 @@ namespace Nexus {
     //! The sector the Security belongs to.
     std::string m_sector;
 
+    //! The board lot.
+    Quantity m_boardLot;
+
     //! Constructs an empty SecurityInfo.
     SecurityInfo() = default;
 
@@ -29,9 +34,10 @@ namespace Nexus {
       \param security The Security represented.
       \param name The full name of the entity.
       \param sector The sector the Security belongs to.
+      \param boardLot The board lot.
     */
-    SecurityInfo(const Security& security, std::string name,
-      std::string sector);
+    SecurityInfo(Security security, std::string name, std::string sector,
+      Quantity boardLot);
 
     //! Tests whether this SecurityInfo is structurally equal to another.
     /*!
@@ -50,15 +56,22 @@ namespace Nexus {
     bool operator !=(const SecurityInfo& rhs) const;
   };
 
-  inline SecurityInfo::SecurityInfo(const Security& security, std::string name,
-      std::string sector)
-      : m_security{security},
-        m_name{std::move(name)},
-        m_sector{std::move(sector)} {}
+  inline std::ostream& operator <<(std::ostream& out,
+      const SecurityInfo& value) {
+    return out << '(' << value.m_security << ' ' << value.m_name << ' ' <<
+      value.m_sector << ' ' << value.m_boardLot << ')';
+  }
+
+  inline SecurityInfo::SecurityInfo(Security security, std::string name,
+    std::string sector, Quantity boardLot)
+    : m_security(std::move(security)),
+      m_name(std::move(name)),
+      m_sector(std::move(sector)),
+      m_boardLot(std::move(boardLot)) {}
 
   inline bool SecurityInfo::operator ==(const SecurityInfo& rhs) const {
-    return std::tie(m_security, m_name, m_sector) ==
-      std::tie(rhs.m_security, rhs.m_name, rhs.m_sector);
+    return std::tie(m_security, m_name, m_sector, m_boardLot) ==
+      std::tie(rhs.m_security, rhs.m_name, rhs.m_sector, rhs.m_boardLot);
   }
 
   inline bool SecurityInfo::operator !=(const SecurityInfo& rhs) const {
@@ -66,8 +79,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::SecurityInfo> {
     template<typename Shuttler>
@@ -76,9 +88,9 @@ namespace Serialization {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("sector", value.m_sector);
+      shuttle.Shuttle("board_lot", value.m_boardLot);
     }
   };
-}
 }
 
 namespace std {
@@ -88,6 +100,6 @@ namespace std {
       return Nexus::hash_value(value.m_security);
     }
   };
-};
+}
 
 #endif
