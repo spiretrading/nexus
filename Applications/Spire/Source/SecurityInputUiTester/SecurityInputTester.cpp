@@ -14,25 +14,25 @@ SecurityInputTester::SecurityInputTester(QWidget* parent)
   setFixedSize(scale(100, 250));
   m_model.add(SecurityInfo(
     Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
-    "Microsoft Corp", "Software"));
+    "Microsoft Corp", "Software", 100));
   m_model.add(SecurityInfo(
     Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive, probably"));
+    "Magna International Inc.", "Automotive, probably", 100));
   m_model.add(SecurityInfo(
     Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Manulife Financial Corporation", "Finance"));
+    "Manulife Financial Corporation", "Finance", 100));
   m_model.add(SecurityInfo(
     Security("MX", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Methanex Corporation", ""));
+    "Methanex Corporation", "", 100));
   m_model.add(SecurityInfo(
     Security("MRU", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Metro Inc.", ""));
+    "Metro Inc.", "", 100));
   m_model.add(SecurityInfo(
     Security("MON", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Monsanto Co.", ""));
+    "Monsanto Co.", "", 100));
   m_model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
-    "Morgan Stanley", "Finance"));
+    "Morgan Stanley", "Finance", 100));
 }
 
 void SecurityInputTester::closeEvent(QCloseEvent* event) {
