@@ -2,7 +2,7 @@
 #define SPIRE_QUEUEDASHBOARDCELL_HPP
 #include <Beam/Queues/ConverterReaderQueue.hpp>
 #include <Beam/Queues/QueueReader.hpp>
-#include <Beam/Utilities/Convert.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <QTimer>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"

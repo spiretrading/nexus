@@ -220,7 +220,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
                 Beam::IO::ConnectException{"No time services available."});
             }
             auto& timeService = timeServices.front();
-            auto ntpPool = Beam::FromString<
+            auto ntpPool = Beam::Parsers::Parse<
               std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
               timeService.GetProperties().At("addresses")));
             client.emplace(Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,

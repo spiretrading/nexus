@@ -59,7 +59,7 @@ TEST_SUITE("ValueType") {
     REQUIRE(DateTimeType::GetInstance().GetNativeType() == typeid(ptime));
     REQUIRE(DecimalType::GetInstance().GetNativeType() == typeid(double));
     REQUIRE(DestinationType::GetInstance().GetNativeType() ==
-      typeid(string));
+      typeid(std::string));
     REQUIRE(DurationType::GetInstance().GetNativeType() ==
       typeid(time_duration));
     REQUIRE(IntegerType::GetInstance().GetNativeType() ==
@@ -78,7 +78,7 @@ TEST_SUITE("ValueType") {
     REQUIRE(SequenceType::GetInstance().GetNativeType() ==
       typeid(Beam::Queries::Sequence));
     REQUIRE(SideType::GetInstance().GetNativeType() == typeid(Side));
-    REQUIRE(TextType::GetInstance().GetNativeType() == typeid(string));
+    REQUIRE(TextType::GetInstance().GetNativeType() == typeid(std::string));
     REQUIRE(TimeInForceType::GetInstance().GetNativeType() ==
       typeid(TimeInForce));
     REQUIRE(TimeRangeType::GetInstance().GetNativeType() ==

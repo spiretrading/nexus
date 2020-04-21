@@ -13,7 +13,6 @@
 #include "Nexus/Parsers/OrderTypeParser.hpp"
 #include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
-#include "Nexus/Parsers/TimeInForceParser.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
 

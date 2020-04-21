@@ -150,21 +150,21 @@ namespace Nexus {
     auto lastMarket = [&] {
       auto& destination = order.GetInfo().m_fields.m_destination;
       if(destination == DefaultDestinations::AMEX()) {
-        return ToString(DefaultMarkets::ASEX());
+        return boost::lexical_cast<std::string>(DefaultMarkets::ASEX());
       } else if(destination == DefaultDestinations::ARCA()) {
-        return ToString(DefaultMarkets::ARCX());
+        return boost::lexical_cast<std::string>(DefaultMarkets::ARCX());
       } else if(destination == DefaultDestinations::BATS()) {
-        return ToString(DefaultMarkets::BATS());
+        return boost::lexical_cast<std::string>(DefaultMarkets::BATS());
       } else if(destination == DefaultDestinations::BATY()) {
-        return ToString(DefaultMarkets::BATY());
+        return boost::lexical_cast<std::string>(DefaultMarkets::BATY());
       } else if(destination == DefaultDestinations::EDGA()) {
-        return ToString(DefaultMarkets::EDGA());
+        return boost::lexical_cast<std::string>(DefaultMarkets::EDGA());
       } else if(destination == DefaultDestinations::EDGX()) {
-        return ToString(DefaultMarkets::EDGX());
+        return boost::lexical_cast<std::string>(DefaultMarkets::EDGX());
       } else if(destination == DefaultDestinations::NASDAQ()) {
-        return ToString(DefaultMarkets::NASDAQ());
+        return boost::lexical_cast<std::string>(DefaultMarkets::NASDAQ());
       } else if(destination == DefaultDestinations::NYSE()) {
-        return ToString(DefaultMarkets::NYSE());
+        return boost::lexical_cast<std::string>(DefaultMarkets::NYSE());
       } else {
         return std::string{};
       }

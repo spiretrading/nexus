@@ -6,6 +6,7 @@
 #include <Beam/Queries/EvaluatorTranslator.hpp>
 #include <Beam/Queries/FunctionEvaluatorNode.hpp>
 #include <Beam/Queries/MemberAccessEvaluatorNode.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
@@ -132,8 +133,8 @@ namespace Queries {
   inline void EvaluatorTranslator::TranslateSecurityMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto securityExpression = Beam::UniqueStaticCast<
-      Beam::Queries::EvaluatorNode<Security>>(GetEvaluator());
+    auto securityExpression = Beam::StaticCast<std::unique_ptr<
+      Beam::Queries::EvaluatorNode<Security>>>(GetEvaluator());
     if(expression.GetName() == "symbol") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (Security security) {
@@ -157,8 +158,8 @@ namespace Queries {
   inline void EvaluatorTranslator::TranslateTimeAndSaleMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto timeAndSaleExpression = Beam::UniqueStaticCast<
-      Beam::Queries::EvaluatorNode<TimeAndSale>>(GetEvaluator());
+    auto timeAndSaleExpression = Beam::StaticCast<std::unique_ptr<
+      Beam::Queries::EvaluatorNode<TimeAndSale>>>(GetEvaluator());
     if(expression.GetName() == "timestamp") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<boost::posix_time::ptime,
@@ -184,8 +185,8 @@ namespace Queries {
   inline void EvaluatorTranslator::TranslateOrderFieldsMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto orderFieldsExpression = Beam::UniqueStaticCast<
-      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderFields>>(
+    auto orderFieldsExpression = Beam::StaticCast<std::unique_ptr<
+      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderFields>>>(
       GetEvaluator());
     if(expression.GetName() == "security") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
@@ -200,8 +201,8 @@ namespace Queries {
   inline void EvaluatorTranslator::TranslateOrderInfoMemberAccessExpression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto orderInfoExpression = Beam::UniqueStaticCast<
-      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderInfo>>(
+    auto orderInfoExpression = Beam::StaticCast<std::unique_ptr<
+      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderInfo>>>(
       GetEvaluator());
     if(expression.GetName() == "fields") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<

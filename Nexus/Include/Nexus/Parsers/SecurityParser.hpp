@@ -4,6 +4,7 @@
 #include <Beam/Parsers/Parser.hpp>
 #include <Beam/Parsers/SubParserStream.hpp>
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Parsers/Parsers.hpp"
 
 namespace Nexus {
@@ -11,9 +12,12 @@ namespace Nexus {
   /*! \class SecurityParser
       \brief Matches a Security.
    */
-  class SecurityParser : public Beam::Parsers::ParserOperators {
+  class SecurityParser {
     public:
-      typedef Security Result;
+      using Result = Security;
+
+      //! Constructs a SecurityParser using the default MarketDatabase.
+      SecurityParser();
 
       //! Constructs a SecurityParser.
       /*!
@@ -21,23 +25,26 @@ namespace Nexus {
       */
       SecurityParser(const MarketDatabase& marketDatabase);
 
-      template<typename ParserStreamType>
-      bool Read(ParserStreamType& source, Result& value);
+      template<typename Stream>
+      bool Read(Stream& source, Result& value) const;
 
-      template<typename ParserStreamType>
-      bool Read(ParserStreamType& source);
+      template<typename Stream>
+      bool Read(Stream& source) const;
 
     private:
       MarketDatabase m_marketDatabase;
   };
 
-  inline SecurityParser::SecurityParser(const MarketDatabase& marketDatabase)
-      : m_marketDatabase(marketDatabase) {}
+  inline SecurityParser::SecurityParser()
+    : SecurityParser(GetDefaultMarketDatabase()) {}
 
-  template<typename ParserStreamType>
-  bool SecurityParser::Read(ParserStreamType& source, Result& value) {
-    Beam::Parsers::SubParserStream<ParserStreamType> context(source);
-    std::string symbol;
+  inline SecurityParser::SecurityParser(const MarketDatabase& marketDatabase)
+    : m_marketDatabase(marketDatabase) {}
+
+  template<typename Stream>
+  bool SecurityParser::Read(Stream& source, Result& value) const {
+    auto context = Beam::Parsers::SubParserStream<Stream>(source);
+    auto symbol = std::string();
     while(context.Read()) {
       if(std::isalnum(context.GetChar()) || context.GetChar() == '.') {
         symbol += std::toupper(context.GetChar());
@@ -54,9 +61,9 @@ namespace Nexus {
     return true;
   }
 
-  template<typename ParserStreamType>
-  bool SecurityParser::Read(ParserStreamType& source) {
-    Security security;
+  template<typename Stream>
+  bool SecurityParser::Read(Stream& source) const {
+    auto security = Security();
     return Read(source, security);
   }
 }

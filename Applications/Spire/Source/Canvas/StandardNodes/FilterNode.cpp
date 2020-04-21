@@ -33,7 +33,7 @@ FilterNode::FilterNode() {
 
 unique_ptr<CanvasNode> FilterNode::Replace(const CanvasNode& child,
     unique_ptr<CanvasNode> replacement) const {
-  auto clone = UniqueStaticCast<FilterNode>(
+  auto clone = StaticCast<std::unique_ptr<FilterNode>>(
     SignatureNode::Replace(child, std::move(replacement)));
   clone->SetType(clone->GetChildren().front().GetType());
   return std::move(clone);

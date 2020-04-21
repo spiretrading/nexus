@@ -1,27 +1,26 @@
-#ifndef NEXUS_ORDERTYPEPARSER_HPP
-#define NEXUS_ORDERTYPEPARSER_HPP
+#ifndef NEXUS_ORDER_TYPE_PARSER_HPP
+#define NEXUS_ORDER_TYPE_PARSER_HPP
 #include <Beam/Collections/EnumIterator.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
+#include <Beam/Parsers/Types.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/OrderType.hpp"
 
 namespace Nexus {
 
-  /*! \class OrderTypeParser
-      \brief Matches an OrderType.
-   */
-  class OrderTypeParser : public Beam::Parsers::EnumeratorParser<OrderType> {
-    public:
+  /** Parses an OrderType. */
+  inline const auto& OrderTypeParser() {
+    static const auto parser = Beam::Parsers::EnumeratorParser(
+      begin(Beam::MakeRange<OrderType>()),
+      end(Beam::MakeRange<OrderType>()),
+      &boost::lexical_cast<std::string, OrderType>);
+    return parser;
+  }
+}
 
-      //! Constructs a OrderTypeParser.
-      OrderTypeParser();
-  };
-
-  inline OrderTypeParser::OrderTypeParser()
-    : Beam::Parsers::EnumeratorParser<OrderType>(
-        begin(Beam::MakeRange<OrderType>()),
-        end(Beam::MakeRange<OrderType>()),
-        &boost::lexical_cast<std::string, OrderType>) {}
+namespace Beam::Parsers {
+  template<>
+  const auto default_parser<Nexus::OrderType> = Nexus::OrderTypeParser();
 }
 
 #endif
