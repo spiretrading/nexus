@@ -1,5 +1,6 @@
 #ifndef SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #define SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
+#include <QHBoxLayout>
 #include <QHeaderView>
 #include <QStyledItemDelegate>
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
@@ -59,9 +60,9 @@ namespace Spire {
       CustomGridTableView* m_table;
       QHeaderView* m_header;
       bool m_can_delete_rows;
-      std::vector<QWidget*> m_delete_buttons;
+      QVBoxLayout* m_delete_buttons_layout;
 
-      void update_delete_buttons();
+      void update_delete_buttons(int selected_index);
       void on_delete_button_clicked(int index);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);

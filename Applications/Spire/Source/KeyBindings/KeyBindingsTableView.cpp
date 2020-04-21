@@ -29,23 +29,37 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_header->setParent(this);
   auto main_widget = new QWidget(this);
   auto layout = new QVBoxLayout(main_widget);
-  if(m_can_delete_rows) {
-    layout->setContentsMargins(scale_width(26), 0, 0, 0);
-  } else {
-    layout->setContentsMargins({});
-  }
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
   auto header_layout = new QVBoxLayout();
-  header_layout->setContentsMargins({});
+  if(m_can_delete_rows) {
+    header_layout->setContentsMargins(scale_width(26), 0, 0, 0);
+  } else {
+    header_layout->setContentsMargins({});
+  }
   header_layout->setSpacing(0);
   header_layout->addWidget(m_header);
   layout->addLayout(header_layout);
   m_table = new CustomGridTableView(this);
-  layout->addWidget(m_table);
+  m_table->setStyleSheet("background-color: red;");
+  if(m_can_delete_rows) {
+    auto table_layout = new QHBoxLayout();
+    table_layout->setContentsMargins({});
+    table_layout->setSpacing(0);
+    m_delete_buttons_layout = new QVBoxLayout();
+    m_delete_buttons_layout->setContentsMargins(scale_width(10),
+      scale_height(9), 0, 0);
+    m_delete_buttons_layout->setSpacing(scale_height(18));
+    table_layout->addLayout(m_delete_buttons_layout);
+    table_layout->addWidget(m_table);
+    layout->addLayout(table_layout);
+  } else {
+    layout->addWidget(m_table);
+  }
   m_table->setStyleSheet(QString(R"(
     QTableView {
       background-color: #FFFFFF;
@@ -101,11 +115,11 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   old_model->deleteLater();
   old_selection_model->deleteLater();
   if(m_can_delete_rows) {
-    connect(model, &QAbstractItemModel::dataChanged,
-      [=] (auto top_left, auto bottom_right) {
-        update_delete_buttons();
+    connect(model, &QAbstractItemModel::rowsRemoved,
+      [=] (auto index, auto first, auto last) {
+        update_delete_buttons(first);
       });
-    update_delete_buttons();
+    update_delete_buttons(0);
   }
 }
 
@@ -123,18 +137,19 @@ void KeyBindingsTableView::set_width(int width) {
   m_table->setFixedWidth(width);
 }
 
-void KeyBindingsTableView::update_delete_buttons() {
-  for(auto* button : m_delete_buttons) {
-    button->deleteLater();
+void KeyBindingsTableView::update_delete_buttons(int selected_index) {
+  while(auto item = m_delete_buttons_layout->takeAt(selected_index)) {
+    delete item->widget();
+    delete item;
   }
-  m_delete_buttons.clear();
-  for(auto i = 0; i < m_table->model()->rowCount(); ++i) {
+  for(auto i = selected_index; i < m_table->model()->rowCount() - 1; ++i) {
     auto button = create_delete_button(this);
-    button->move(scale_width(12), i * scale_height(26) + scale_height(39));
+    m_delete_buttons_layout->addWidget(button);
     button->connect_clicked_signal([=] {
       on_delete_button_clicked(i);
     });
   }
+  m_delete_buttons_layout->addStretch(1);
 }
 
 void KeyBindingsTableView::on_delete_button_clicked(int index) {
