@@ -7,28 +7,24 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto to_qstring(OrderType type) {
-    return QString::fromStdString(ToString(type));
-  }
-
   auto create_order_type_item_list() {
     static auto list = std::vector<QString>({
-        to_qstring(OrderType::LIMIT),
-        to_qstring(OrderType::MARKET),
-        to_qstring(OrderType::PEGGED),
-        to_qstring(OrderType::STOP)
+        displayText(OrderType::LIMIT),
+        displayText(OrderType::MARKET),
+        displayText(OrderType::PEGGED),
+        displayText(OrderType::STOP)
       });
     return list;
   }
 
   auto get_order_type_variant(const QString& text) {
-    if(text == to_qstring(OrderType::LIMIT)) {
+    if(text == displayText(OrderType::LIMIT)) {
       return QVariant::fromValue<OrderType>(OrderType::LIMIT);
-    } else if(text == to_qstring(OrderType::MARKET)) {
+    } else if(text == displayText(OrderType::MARKET)) {
       return QVariant::fromValue<OrderType>(OrderType::MARKET);
-    } else if(text == to_qstring(OrderType::PEGGED)) {
+    } else if(text == displayText(OrderType::PEGGED)) {
       return QVariant::fromValue<OrderType>(OrderType::PEGGED);
-    } else if(text == to_qstring(OrderType::STOP)) {
+    } else if(text == displayText(OrderType::STOP)) {
       return QVariant::fromValue<OrderType>(OrderType::STOP);
     }
     return QVariant();
@@ -49,7 +45,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   auto current_data = [&] {
     auto data = index.data(Qt::DisplayRole);
     if(data.isValid()) {
-      return to_qstring(data.value<OrderType>());
+      return displayText(data, QLocale());
     }
     return QString();
   }();

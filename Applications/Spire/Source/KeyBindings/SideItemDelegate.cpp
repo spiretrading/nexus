@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/SideItemDelegate.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -20,13 +21,13 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
   auto current_data = [&] {
     auto data = index.data(Qt::DisplayRole);
     if(data.isValid()) {
-      return QString::fromStdString(ToString(data.value<Side>()));
+      return displayText(data, QLocale());
     }
     return QString();
   }();
   auto editor = new InputFieldEditor(current_data,
-    {QString::fromStdString(ToString(Side::ASK)),
-    QString::fromStdString(ToString(Side::BID))}, parent);
+    {displayText(Side::ASK, QLocale()), displayText(Side::BID, QLocale())},
+    parent);
   connect(editor, &InputFieldEditor::editingFinished,
     this, &SideItemDelegate::on_editing_finished);
   return editor;
@@ -41,9 +42,9 @@ void SideItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto variant = [&] {
     auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-    if(item.toStdString() == ToString(Side::BID)) {
+    if(item == displayText(Side::BID, QLocale())) {
       return QVariant::fromValue<Side>(Side::BID);
-    } else if(item.toStdString() == ToString(Side::ASK)) {
+    } else if(item == displayText(Side::ASK, QLocale())) {
       return QVariant::fromValue<Side>(Side::ASK);
     }
     return QVariant();
