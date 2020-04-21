@@ -166,7 +166,8 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           if(index.row() == m_key_bindings.size()) {
             m_key_bindings.push_back({});
           }
-          m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
+          m_key_bindings[index.row()].m_action.m_type =
+            value.value<OrderType>();
         } else {
           m_key_bindings[index.row()].m_action.m_type = {};
         }

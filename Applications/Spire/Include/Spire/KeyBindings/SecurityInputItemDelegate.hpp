@@ -4,6 +4,7 @@
 #include "Beam/Pointers/Ref.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 
@@ -21,6 +22,9 @@ namespace Spire {
       QWidget* createEditor(QWidget* parent,
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
+
+      QString displayText(const QVariant& value,
+        const QLocale& locale) const override;
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
@@ -31,6 +35,7 @@ namespace Spire {
 
     private:
       SecurityInputModel* m_model;
+      CustomVariantItemDelegate* m_item_delegate;
       mutable ItemModifiedSignal m_item_modified_signal;
       std::vector<QString> m_items;
 

@@ -8,6 +8,7 @@ using namespace Spire;
 SecurityInputItemDelegate::SecurityInputItemDelegate(
   Ref<SecurityInputModel> model, QWidget* parent)
   : QStyledItemDelegate(parent),
+    m_item_delegate(new CustomVariantItemDelegate(this)),
     m_model(model.Get()) {}
 
 connection SecurityInputItemDelegate::connect_item_modified_signal(
@@ -22,6 +23,11 @@ QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
   //connect(editor, &SecurityInputBox::editingFinished,
   //  this, &InputFieldItemDelegate::on_editing_finished);
   return editor;
+}
+
+QString SecurityInputItemDelegate::displayText(const QVariant& value,
+    const QLocale& locale) const {
+  return m_item_delegate->displayText(value, locale);
 }
 
 void SecurityInputItemDelegate::setModelData(QWidget* editor,

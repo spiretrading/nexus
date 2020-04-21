@@ -156,7 +156,11 @@ void SecurityInputBox::move_line_edit() {
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     frameGeometry().bottomLeft()).y();
-  m_securities->move(x_pos, y_pos + 1);
+  if(m_has_border) {
+    m_securities->move(x_pos, y_pos + 1);
+  } else {
+    m_securities->move(x_pos, y_pos + 2);
+  }
 }
 
 void SecurityInputBox::enter_pressed() {
