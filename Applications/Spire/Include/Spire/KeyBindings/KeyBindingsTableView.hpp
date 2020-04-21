@@ -62,7 +62,9 @@ namespace Spire {
       bool m_can_delete_rows;
       QVBoxLayout* m_delete_buttons_layout;
 
+      void add_delete_button(int index);
       void update_delete_buttons(int selected_index);
+      void on_data_changed(const QModelIndex& index);
       void on_delete_button_clicked(int index);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);

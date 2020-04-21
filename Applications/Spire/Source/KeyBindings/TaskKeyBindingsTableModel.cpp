@@ -164,7 +164,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
   if(!index.isValid()) {
     return false;
   }
-  if(role == Qt::DisplayRole) {
+  if(role == Qt::DisplayRole && value.isValid()) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
         return false;
@@ -173,6 +173,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       case Columns::DESTINATION:
         return false;
       case Columns::ORDER_TYPE:
+        emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
             m_key_bindings.push_back({});
@@ -182,9 +183,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_type = {};
         }
-        emit dataChanged(index, index, {role});
         return true;
       case Columns::SIDE:
+        emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
             m_key_bindings.push_back({});
@@ -193,9 +194,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_side = {};
         }
-        emit dataChanged(index, index, {role});
         return true;
       case Columns::QUANTITY:
+        emit dataChanged(index, index, {role});
         if(value.isValid() && value.value<Quantity>() > 0) {
           if(index.row() == m_key_bindings.size()) {
             m_key_bindings.push_back({});
@@ -205,9 +206,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_quantity = {};
         }
-        emit dataChanged(index, index, {role});
         return true;
       case Columns::TIME_IN_FORCE:
+        emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
             m_key_bindings.push_back({});
@@ -217,7 +218,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_time_in_force = {};
         }
-        emit dataChanged(index, index, {role});
         return true;
       case Columns::CUSTOM_TAGS:
       case Columns::KEY_BINDING:

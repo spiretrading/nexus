@@ -119,6 +119,10 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
       [=] (auto index, auto first, auto last) {
         update_delete_buttons(first);
       });
+    connect(model, &QAbstractItemModel::dataChanged,
+      [=] (auto top_left, auto top_right) {
+        on_data_changed(top_left);
+      });
     update_delete_buttons(0);
   }
 }
@@ -137,19 +141,30 @@ void KeyBindingsTableView::set_width(int width) {
   m_table->setFixedWidth(width);
 }
 
+void KeyBindingsTableView::add_delete_button(int index) {
+  auto button = create_delete_button(this);
+  m_delete_buttons_layout->insertWidget(index, button);
+  button->connect_clicked_signal([=] {
+    on_delete_button_clicked(index);
+  });
+}
+
 void KeyBindingsTableView::update_delete_buttons(int selected_index) {
   while(auto item = m_delete_buttons_layout->takeAt(selected_index)) {
     delete item->widget();
     delete item;
   }
   for(auto i = selected_index; i < m_table->model()->rowCount() - 1; ++i) {
-    auto button = create_delete_button(this);
-    m_delete_buttons_layout->addWidget(button);
-    button->connect_clicked_signal([=] {
-      on_delete_button_clicked(i);
-    });
+    add_delete_button(i);
   }
   m_delete_buttons_layout->addStretch(1);
+}
+
+void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
+  auto a = m_table->model()->rowCount();
+  if(index.row() == m_table->model()->rowCount() - 1) {
+    add_delete_button(index.row());
+  }
 }
 
 void KeyBindingsTableView::on_delete_button_clicked(int index) {
