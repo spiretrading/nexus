@@ -161,7 +161,6 @@ void KeyBindingsTableView::update_delete_buttons(int selected_index) {
 }
 
 void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
-  auto a = m_table->model()->rowCount();
   if(index.row() == m_table->model()->rowCount() - 1) {
     add_delete_button(index.row());
   }
