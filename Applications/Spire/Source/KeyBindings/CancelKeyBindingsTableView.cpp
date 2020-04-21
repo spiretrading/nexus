@@ -11,11 +11,11 @@ using ValidSequence = KeySequenceEditor::ValidKeySequence;
 CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     std::vector<KeyBindings::CancelActionBinding> bindings,
     QWidget* parent)
-    : KeyBindingsTableView(make_fixed_header(parent), parent),
+    : KeyBindingsTableView(make_fixed_header(parent), false, parent),
       m_model(nullptr) {
   set_key_bindings(std::move(bindings));
-  setFixedWidth(scale_width(853));
-  set_width(scale_width(853));
+  setFixedWidth(scale_width(871));
+  set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(

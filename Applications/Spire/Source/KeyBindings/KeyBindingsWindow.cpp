@@ -38,7 +38,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
-  set_fixed_body_size(scale(853, 442));
+  set_fixed_body_size(scale(871, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setWindowIcon(QIcon(":/Icons/key-bindings-icon-256x256.png"));
   setWindowTitle(tr("Key Bindings"));

@@ -16,10 +16,12 @@ namespace Spire {
       //! Constructs a KeyBindingsTableView with a custom header.
       /*
         \param header The table's header.
+        \param can_delete_columns True if the rows should have a button to
+                                  remove the entire row.
         \param parent The parent widget.
       */
       explicit KeyBindingsTableView(QHeaderView* header,
-        QWidget* parent = nullptr);
+        bool can_delete_rows, QWidget* parent = nullptr);
 
       //! Sets the delegate for the specified column.
       /*
@@ -56,6 +58,7 @@ namespace Spire {
     private:
       CustomGridTableView* m_table;
       QHeaderView* m_header;
+      bool m_can_delete_rows;
 
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);

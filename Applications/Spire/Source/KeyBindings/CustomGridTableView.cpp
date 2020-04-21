@@ -39,7 +39,7 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
     painter.setPen(QColor("#EBEBEB"));
     auto row_height = rowHeight(0);
     auto row_y = rowViewportPosition(model()->rowCount() - 1) + row_height;
-    for(auto i = model()->rowCount(); i < 10; ++i) {
+    for(auto i = model()->rowCount(); i < PLACEHOLDER_ROW_COUNT; ++i) {
       painter.drawLine(0, row_y, 0, row_y + row_height);
       for(auto column = 0; column < horizontalHeader()->count(); ++column) {
         auto column_x = horizontalHeader()->sectionViewportPosition(column) - 1;

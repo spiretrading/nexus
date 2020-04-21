@@ -38,20 +38,21 @@ namespace {
 TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     std::vector<KeyBindings::OrderActionBinding> bindings,
     Ref<SecurityInputModel> input_model, QWidget* parent)
-    : KeyBindingsTableView(make_header(parent), parent),
+    : KeyBindingsTableView(make_header(parent), true, parent),
       m_model(nullptr) {
   set_key_bindings(std::move(bindings));
-  setFixedWidth(scale_width(853));
-  set_width(scale_width(853));
+  setFixedWidth(scale_width(871));
+  set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(80));
-  set_column_width(1, scale_width(80));
+  set_column_width(1, scale_width(100));
   set_column_width(2, scale_width(89));
   set_column_width(3, scale_width(89));
   set_column_width(4, scale_width(59));
   set_column_width(5, scale_width(80));
   set_column_width(6, scale_width(98));
-  set_column_width(7, scale_width(144));
+  set_column_width(7, scale_width(124));
+  set_column_width(8, scale_width(110));
   auto security_delegate = new SecurityInputItemDelegate(input_model, this);
   set_column_delegate(1, security_delegate);
   auto destination_delegate = new DestinationItemDelegate(this);

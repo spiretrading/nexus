@@ -11,21 +11,28 @@
 using namespace Spire;
 
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
-    QWidget* parent)
+    bool can_delete_rows, QWidget* parent)
     : ScrollArea(true, parent),
-      m_header(header) {
+      m_header(header),
+      m_can_delete_rows(can_delete_rows) {
   m_header->setParent(this);
   auto main_widget = new QWidget(this);
   auto layout = new QVBoxLayout(main_widget);
-  layout->setContentsMargins({});
+  if(m_can_delete_rows) {
+    layout->setContentsMargins(scale_width(26), 0, 0, 0);
+  } else {
+    layout->setContentsMargins({});
+  }
   layout->setSpacing(0);
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
-  auto header_padding = new QWidget(this);
-  header_padding->setFixedHeight(m_header->height());
-  layout->addWidget(header_padding);
+  auto header_layout = new QVBoxLayout();
+  header_layout->setContentsMargins({});
+  header_layout->setSpacing(0);
+  header_layout->addWidget(m_header);
+  layout->addLayout(header_layout);
   m_table = new CustomGridTableView(this);
   layout->addWidget(m_table);
   m_table->setStyleSheet(QString(R"(
@@ -91,6 +98,9 @@ void KeyBindingsTableView::set_height(int height) {
 
 void KeyBindingsTableView::set_width(int width) {
   widget()->setFixedWidth(width);
+  if(m_can_delete_rows) {
+    width -= scale_width(26);
+  }
   m_header->setFixedWidth(width);
   m_table->setFixedWidth(width);
 }
@@ -109,7 +119,7 @@ void KeyBindingsTableView::on_header_resize(int index, int old_size,
     }
     return width;
   }();
-  set_width(max(width, scale_width(853)));
+  set_width(max(width, scale_width(871)));
 }
 
 void KeyBindingsTableView::on_header_move(int logical_index, int old_index,
