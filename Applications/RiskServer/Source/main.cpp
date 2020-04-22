@@ -16,7 +16,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -241,11 +241,11 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    JsonObject riskService;
-    riskService["addresses"] =
-      ToString(riskServerConnectionInitializer.m_addresses);
+    auto service = JsonObject();
+    service["addresses"] = lexical_cast<std::string>(
+      Stream(riskServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
-      riskServerConnectionInitializer.m_serviceName, riskService);
+      riskServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;

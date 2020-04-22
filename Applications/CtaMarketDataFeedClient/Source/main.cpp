@@ -115,8 +115,8 @@ int main(int argc, const char** argv) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService->GetProperties().At("addresses")));
+    auto marketDataAddresses = lexical_cast<std::vector<IpAddress>>(Stream(
+      get<std::string>(marketDataService->GetProperties().At("addresses"))));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),
