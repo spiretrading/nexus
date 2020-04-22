@@ -126,6 +126,13 @@ export abstract class AdministrationClient {
     comment: Message): Promise<AccountModificationRequest>;
 
   /**
+   * Creates a new trading group.
+   * @param name The name of the group.
+   * @return The new group's DirectoryEntry.
+   */
+  public abstract async createGroup(name: string): Promise<Beam.DirectoryEntry>;
+
+  /**
    * Connects to the service.
    * @throws ServiceError Indicates the connection failed.
    */

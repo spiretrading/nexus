@@ -14,9 +14,11 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
       accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>) {
     super();
     this._isLoaded = false;
+    this.nextId = 1;
     this._groups = groups.clone();
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     for(const group of this._groups) {
+      this.nextId = Math.max(this.nextId, group.id + 1);
       this._accounts.set(group, accounts.get(group).slice());
     }
   }
@@ -35,6 +37,18 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
       throw Error('Model not loaded.');
     }
     return this._groups.clone();
+  }
+
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    for(const group of this._groups) {
+      if(group.name === name) {
+        throw new Beam.ServiceError('Group already exists.');
+      }
+    }
+    const group = Beam.DirectoryEntry.makeAccount(this.nextId, name);
+    this._groups.add(group);
+    ++this.nextId;
+    return group;
   }
 
   public async loadAccounts(
@@ -73,6 +87,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
   }
 
   private _isLoaded: boolean;
+  private nextId: number;
   private _groups: Beam.Set<Beam.DirectoryEntry>;
   private _accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
 }

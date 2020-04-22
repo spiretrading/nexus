@@ -153,6 +153,14 @@ export class HttpAdministrationClient extends AdministrationClient {
     return AccountModificationRequest.fromJson(response);
   }
 
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post('/api/service_locator/create_group',
+      {
+        name: name
+      });
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
   public async open(): Promise<void> {
     return;
   }

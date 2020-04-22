@@ -31,6 +31,10 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     return this._groups.clone();
   }
 
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    return await this.serviceClients.administrationClient.createGroup(name);
+  }
+
   public async loadAccounts(group: Beam.DirectoryEntry):
       Promise<AccountEntry[]> {
     const tradingGroup =
