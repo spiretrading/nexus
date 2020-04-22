@@ -47,7 +47,8 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   QStyledItemDelegate::paint(painter, option, index);
   painter->save();
-  painter->fillRect(option.rect, m_background_color);
+  painter->fillRect(option.rect,
+    index.data(Qt::BackgroundRole).value<QColor>());
   if(!option.state.testFlag(QStyle::State_Editing)) {
     auto sequence = index.data(Qt::DisplayRole).value<QKeySequence>();
     if(!sequence.isEmpty()) {

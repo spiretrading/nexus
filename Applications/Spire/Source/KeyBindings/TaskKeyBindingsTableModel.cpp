@@ -52,6 +52,12 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
   if(!index.isValid()) {
     return QVariant();
   }
+  if(role == Qt::BackgroundRole) {
+    if(m_highlighted_row && index.row() == m_highlighted_row) {
+      return QColor("#FFF1F1");
+    }
+    return QVariant::fromValue<QColor>(Qt::white);
+  }
   if(role == Qt::DisplayRole &&
       index.row() < static_cast<int>(m_key_bindings.size())) {
     switch(static_cast<Columns>(index.column())) {
@@ -163,6 +169,14 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     const QVariant& value, int role) {
   if(!index.isValid()) {
     return false;
+  }
+  if(role == Qt::BackgroundRole) {
+    if(value.isValid()) {
+      m_highlighted_row = index.row();
+    } else {
+      m_highlighted_row.reset();
+    }
+    emit dataChanged(index, index, {role});
   }
   if(role == Qt::DisplayRole && value.isValid()) {
     switch(static_cast<Columns>(index.column())) {

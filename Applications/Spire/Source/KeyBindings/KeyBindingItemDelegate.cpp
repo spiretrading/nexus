@@ -8,12 +8,7 @@ using namespace Spire;
 
 KeyBindingItemDelegate::KeyBindingItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent),
-    m_item_delegate(new CustomVariantItemDelegate(this)),
-    m_background_color(Qt::white) {}
-
-void KeyBindingItemDelegate::set_background_color(const QColor& color) {
-  m_background_color = color;
-}
+    m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
 connection KeyBindingItemDelegate::connect_item_modified_signal(
     const ItemModifiedSignal::slot_type& slot) const {
@@ -23,7 +18,8 @@ connection KeyBindingItemDelegate::connect_item_modified_signal(
 void KeyBindingItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   painter->save();
-  painter->fillRect(option.rect, m_background_color);
+  painter->fillRect(option.rect,
+    index.data(Qt::BackgroundRole).value<QColor>());
   auto font = QFont("Roboto");
   font.setPixelSize(scale_height(12));
   painter->setFont(font);

@@ -17,8 +17,6 @@ namespace Spire {
 
       explicit KeyBindingItemDelegate(QWidget* parent = nullptr);
 
-      void set_background_color(const QColor& color);
-
       //! Connects a slot to the item modified signal.
       boost::signals2::connection connect_item_modified_signal(
         const ItemModifiedSignal::slot_type& slot) const;
@@ -32,7 +30,6 @@ namespace Spire {
 
     protected:
       mutable ItemModifiedSignal m_item_modified_signal;
-      QColor m_background_color;
 
       void on_editing_finished();
 

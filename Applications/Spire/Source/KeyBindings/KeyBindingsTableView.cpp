@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/KeyBindingsTableView.hpp"
 #include <QHeaderView>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -87,10 +88,11 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   connect(m_table, &QTableView::clicked, this,
     &KeyBindingsTableView::on_table_clicked);
   setWidget(main_widget);
+  m_table->selectRow(3);
 }
 
 void KeyBindingsTableView::set_column_delegate(int column,
-    QStyledItemDelegate* delegate) {
+    KeyBindingItemDelegate* delegate) {
   m_table->setItemDelegateForColumn(column, delegate);
 }
 
@@ -132,8 +134,24 @@ void KeyBindingsTableView::set_width(int width) {
   m_table->setFixedWidth(width);
 }
 
+bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(auto button = dynamic_cast<IconButton*>(watched)) {
+    if(event->type() == QEvent::MouseMove) {
+      auto index = m_delete_buttons_layout->indexOf(button);
+      m_table->model()->setData(m_table->model()->index(index, 0),
+        QColor("#FFF1F1"), Qt::BackgroundRole);
+    } else if(event->type() == QEvent::Leave) {
+      auto index = m_delete_buttons_layout->indexOf(button);
+      m_table->model()->setData(m_table->model()->index(index, 0),
+        QVariant(), Qt::BackgroundRole);
+    }
+  }
+  return ScrollArea::eventFilter(watched, event);
+}
+
 void KeyBindingsTableView::add_delete_button(int index) {
   auto button = create_delete_button(this);
+  button->installEventFilter(this);
   m_delete_buttons_layout->insertWidget(index, button);
   button->connect_clicked_signal([=] {
     on_delete_button_clicked(index);
@@ -158,6 +176,8 @@ void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
 }
 
 void KeyBindingsTableView::on_delete_button_clicked(int index) {
+  m_table->model()->setData(m_table->model()->index(index, 0), QVariant(),
+    Qt::BackgroundRole);
   m_table->model()->removeRow(index);
 }
 

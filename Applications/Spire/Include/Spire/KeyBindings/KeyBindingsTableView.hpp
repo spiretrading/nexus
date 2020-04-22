@@ -2,9 +2,9 @@
 #define SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QStyledItemDelegate>
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/CustomGridTableView.hpp"
+#include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
@@ -29,7 +29,7 @@ namespace Spire {
         \param column The index of the column to apply the delegate to.
         \param delegate The delegate for the specified column.
       */
-      void set_column_delegate(int column, QStyledItemDelegate* delegate);
+      void set_column_delegate(int column, KeyBindingItemDelegate* delegate);
 
       //! Sets the width of the specified column.
       /*
@@ -55,6 +55,9 @@ namespace Spire {
         \param width The table width.
       */
       void set_width(int width);
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       CustomGridTableView* m_table;
