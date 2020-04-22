@@ -5,7 +5,7 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
@@ -55,8 +55,8 @@ namespace Nexus::OrderExecutionService {
 
   inline std::ostream& operator <<(std::ostream& out,
       const OrderRecord& value) {
-    return ::operator <<(out << '(' << value.m_info << ' ',
-      value.m_executionReports) << ')';
+    return out << '(' << value.m_info << ' ' <<
+      Beam::Stream(value.m_executionReports) << ')';
   }
 
   inline OrderRecord::OrderRecord(OrderInfo info,

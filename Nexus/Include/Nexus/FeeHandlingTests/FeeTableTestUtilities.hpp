@@ -3,7 +3,7 @@
 #include <array>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <cppunit/extensions/HelperMacros.h>
+#include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -11,12 +11,10 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
-#include "Nexus/FeeHandlingTests/FeeHandlingTests.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Tests {
+namespace Nexus::Tests {
 
   //! Populates a fee table with incremental CENT values.
   /*!
@@ -65,15 +63,15 @@ namespace Tests {
     using ColumnType = typename boost::function_traits<
       IndexFunction>::arg2_type;
     using RowType = typename boost::function_traits<IndexFunction>::arg3_type;
-    CPPUNIT_ASSERT(COLUMNS == expectedColumns);
-    CPPUNIT_ASSERT(ROWS == expectedRows);
+    REQUIRE(COLUMNS == expectedColumns);
+    REQUIRE(ROWS == expectedRows);
     for(auto i = 0; i < ROWS; ++i) {
       for(auto j = 0; j < COLUMNS; ++j) {
         auto row = static_cast<RowType>(i);
         auto column = static_cast<ColumnType>(j);
         auto fee = indexFunction(parentTable, column, row);
         auto expectedFee = feeTable[i][j];
-        CPPUNIT_ASSERT(expectedFee == fee);
+        REQUIRE(expectedFee == fee);
       }
     }
   }
@@ -97,7 +95,7 @@ namespace Tests {
     executionReport.m_lastQuantity = quantity;
     executionReport.m_liquidityFlag = ToString(liquidityFlag);
     auto calculatedTotal = calculateFee(feeTable, executionReport);
-    CPPUNIT_ASSERT(calculatedTotal == expectedFee);
+    REQUIRE(calculatedTotal == expectedFee);
   }
 
   //! Tests a notional value fee calculation.
@@ -118,7 +116,7 @@ namespace Tests {
     auto calculatedTotal = calculateFee(feeTable, executionReport);
     auto expectedTotal = expectedRate *
       (executionReport.m_lastQuantity * executionReport.m_lastPrice);
-    CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
+    REQUIRE(calculatedTotal == expectedTotal);
   }
 
   //! Tests a per share fee calculation.
@@ -141,7 +139,7 @@ namespace Tests {
     executionReport.m_liquidityFlag = liquidityFlag;
     auto calculatedTotal = calculateFee(feeTable, orderFields, executionReport);
     auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
-    CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
+    REQUIRE(calculatedTotal == expectedTotal);
   }
 
   //! Tests a per share fee calculation.
@@ -181,7 +179,7 @@ namespace Tests {
     executionReport.m_liquidityFlag = liquidityFlag;
     auto calculatedTotal = calculateFee(feeTable, executionReport);
     auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
-    CPPUNIT_ASSERT(calculatedTotal == expectedTotal);
+    REQUIRE(calculatedTotal == expectedTotal);
   }
 
   //! Tests a per share fee calculation.
@@ -201,7 +199,6 @@ namespace Tests {
       ToString(liquidityFlag), std::forward<CalculateFeeType>(calculateFee),
       expectedFee);
   }
-}
 }
 
 #endif

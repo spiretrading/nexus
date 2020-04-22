@@ -8,7 +8,6 @@
 #include <Beam/Queues/WeakQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/Convert.hpp>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>

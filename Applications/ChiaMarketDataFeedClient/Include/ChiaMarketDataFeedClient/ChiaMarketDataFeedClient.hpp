@@ -181,7 +181,7 @@ namespace MarketDataService {
     }
     if(m_config.m_isLoggingMessages) {
       std::cout << timestamp << "," << message.m_type << "," <<
-        orderReference << "," << ToString(side) << "," << shares << "," <<
+        orderReference << "," << side << "," << shares << "," <<
         symbol << "," << price.ToString() << "\n";
       std::cout << std::flush;
     }

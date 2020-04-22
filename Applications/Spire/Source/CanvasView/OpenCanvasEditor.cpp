@@ -46,6 +46,7 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/MaxFloorSpinBox.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/OptionalPriceSpinBox.hpp"
@@ -410,8 +411,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const OptionalPriceNode& node) {
 void OpenEditorCanvasNodeVisitor::Visit(const OrderStatusNode& node) {
   auto editor = new QComboBox();
   for(size_t i = 0; i < OrderStatus::COUNT; ++i) {
-    editor->addItem(QString::fromStdString(
-      ToString(static_cast<OrderStatus>(i))));
+    editor->addItem(displayText(static_cast<OrderStatus>(i)));
   }
   editor->setCurrentIndex(static_cast<int>(node.GetValue()));
   if(m_event != nullptr) {

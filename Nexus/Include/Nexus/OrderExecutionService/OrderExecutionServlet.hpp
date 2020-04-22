@@ -462,7 +462,7 @@ namespace Nexus::OrderExecutionService {
     executionReportResult.m_queryId = m_orderSubscriptions.Initialize(
       revisedQuery.GetIndex(), request.GetClient(),
       Beam::Queries::Range::Total(),
-      Beam::Queries::Translate(Beam::Queries::MakeConstantExpression(true)));
+      Beam::Queries::Translate(Beam::Queries::ConstantExpression(true)));
     submissionResult.m_snapshot = m_dataStore->LoadOrderSubmissions(
       revisedQuery);
     m_submissionSubscriptions.Commit(revisedQuery.GetIndex(),

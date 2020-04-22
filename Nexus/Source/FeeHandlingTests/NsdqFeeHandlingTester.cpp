@@ -1,4 +1,4 @@
-#include "Nexus/FeeHandlingTests/NsdqFeeHandlingTester.hpp"
+#include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -12,22 +12,23 @@ using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
-using namespace std;
 
 namespace {
-  Security GetUsSecurity() {
-    return {"TST", DefaultMarkets::NASDAQ(), DefaultCountries::US()};
+  auto GetUsSecurity() {
+    return Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
   }
 
-  NsdqFeeTable BuildFeeTable() {
-    NsdqFeeTable feeTable;
+  auto BuildFeeTable() {
+    auto feeTable = NsdqFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     return feeTable;
   }
 }
 
-void NsdqFeeHandlingTester::TestZeroQuantity() {
-  auto feeTable = BuildFeeTable();
-  TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-    CalculateFee, Money::ZERO);
+TEST_SUITE("NsdqFeeHandling") {
+  TEST_CASE("zero_quantity") {
+    auto feeTable = BuildFeeTable();
+    TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
+      CalculateFee, Money::ZERO);
+  }
 }

@@ -7,7 +7,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
@@ -310,11 +310,11 @@ namespace OrderExecutionService {
 
   inline std::ostream& operator <<(std::ostream& out,
       const OrderFields& value) {
-    out << "(" << value.m_account << " " << value.m_security << " " <<
+    return out << "(" << value.m_account << " " << value.m_security << " " <<
       value.m_currency << " " << value.m_type << " " << value.m_side << " " <<
       value.m_destination << " " << value.m_quantity << " " << value.m_price <<
-      " " << value.m_timeInForce << " ";
-    return ::operator <<(out, value.m_additionalFields) << ")";
+      " " << value.m_timeInForce << " " <<
+      Beam::Stream(value.m_additionalFields) << ")";
   }
 
   inline OrderFields OrderFields::BuildLimitOrder(

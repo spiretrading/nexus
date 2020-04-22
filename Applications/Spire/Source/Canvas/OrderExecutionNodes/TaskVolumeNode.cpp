@@ -1,5 +1,5 @@
 #include "Spire/Canvas/OrderExecutionNodes/TaskVolumeNode.hpp"
-#include <Beam/Pointers/UniquePtr.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/ExecutionReportMonitorNode.hpp"
@@ -23,7 +23,7 @@ unique_ptr<CanvasNode> Spire::BuildTaskVolumeNode() {
   executionReportMonitor = executionReportMonitor->Replace(
     executionReportMonitor->GetChildren().front(), std::move(taskReference));
   auto quantityQuery = make_unique<QueryNode>();
-  quantityQuery = UniqueStaticCast<QueryNode>(quantityQuery->Replace(
+  quantityQuery = StaticCast<std::unique_ptr<QueryNode>>(quantityQuery->Replace(
     quantityQuery->GetChildren().front(), std::move(executionReportMonitor)));
   quantityQuery = quantityQuery->SetField("last_quantity");
   unique_ptr<CanvasNode> additionCombiner = make_unique<AdditionNode>();

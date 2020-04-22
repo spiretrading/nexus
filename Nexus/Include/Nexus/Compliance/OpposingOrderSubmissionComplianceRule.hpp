@@ -65,6 +65,11 @@ namespace Compliance {
         const OrderExecutionService::Order& order);
   };
 
+  template<typename TimeClient>
+  OpposingOrderSubmissionComplianceRule(boost::posix_time::time_duration, Money,
+    TimeClient&& timeClient) -> OpposingOrderSubmissionComplianceRule<
+    std::decay_t<TimeClient>>;
+
   //! Builds a ComplianceRuleSchema representing an
   //! OpposingOrderSubmissionComplianceRule.
   inline ComplianceRuleSchema

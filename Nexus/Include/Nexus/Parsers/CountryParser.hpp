@@ -1,44 +1,35 @@
 #ifndef NEXUS_COUNTRYPARSER_HPP
 #define NEXUS_COUNTRYPARSER_HPP
 #include <Beam/Parsers/EnumeratorParser.hpp>
-#include <Beam/Parsers/SubParserStream.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Parsers/Parsers.hpp"
 
 namespace Nexus {
 
-  /*! \class CountryParser
-      \brief Matches a CountryCode.
+  /**
+   * Parses a CountryCode.
+   * @param countryDatabase The database used to lookup country codes.
    */
-  class CountryParser : public Beam::Parsers::EnumeratorParser<CountryCode> {
-    public:
+  inline auto CountryParser(const CountryDatabase& countryDatabase) {
+    auto code = [] (const auto& entry) {
+      return entry.m_code;
+    };
+    return Beam::Parsers::EnumeratorParser(boost::make_transform_iterator(
+      countryDatabase.GetEntries().cbegin(), code),
+      boost::make_transform_iterator(countryDatabase.GetEntries().cend(), code),
+      [&] (auto code) {
+        return boost::lexical_cast<std::string>(
+          countryDatabase.FromCode(code).m_threeLetterCode);
+      });
+  }
 
-      //! Constructs a CountryParser.
-      /*!
-        \param countryDatabase The database of countries to match against.
-      */
-      CountryParser(const CountryDatabase& countryDatabase);
-
-    private:
-      typedef boost::transform_iterator<
-        CountryCode (*)(const CountryDatabase::Entry&),
-        std::vector<CountryDatabase::Entry>::const_iterator>
-        CountryCodeIterator;
-      static CountryCode GetCode(const CountryDatabase::Entry& entry);
-  };
-
-  inline CountryParser::CountryParser(const CountryDatabase& countryDatabase)
-      : Beam::Parsers::EnumeratorParser<CountryCode>(
-          CountryCodeIterator(countryDatabase.GetEntries().cbegin(), &GetCode),
-          CountryCodeIterator(countryDatabase.GetEntries().cend(), &GetCode),
-          [&] (CountryCode code) {
-            return ToString(countryDatabase.FromCode(code).m_threeLetterCode);
-          }) {}
-
-  inline CountryCode CountryParser::GetCode(
-      const CountryDatabase::Entry& entry) {
-    return entry.m_code;
+  /** Parses a CountryCode using the default CountryDatabase. */
+  inline const auto& CountryParser() {
+    static const auto& parser = CountryParser(GetDefaultCountryDatabase());
+    return parser;
   }
 }
 

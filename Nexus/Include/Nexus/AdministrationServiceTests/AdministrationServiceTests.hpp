@@ -1,13 +1,8 @@
-#ifndef NEXUS_ADMINISTRATIONSERVICETESTS_HPP
-#define NEXUS_ADMINISTRATIONSERVICETESTS_HPP
+#ifndef NEXUS_ADMINISTRATION_SERVICE_TESTS_HPP
+#define NEXUS_ADMINISTRATION_SERVICE_TESTS_HPP
 
-namespace Nexus {
-namespace AdministrationService {
-namespace Tests {
-  class AdministrationServletTester;
+namespace Nexus::AdministrationService::Tests {
   class AdministrationServiceTestEnvironment;
-}
-}
 }
 
 #endif

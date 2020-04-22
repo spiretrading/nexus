@@ -8,6 +8,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/variant/variant.hpp>
@@ -244,7 +245,7 @@ namespace Spire {
 
   template<typename T>
   std::unique_ptr<T> CanvasNode::Clone(const T& node) {
-    return Beam::UniqueStaticCast<T>(
+    return Beam::StaticCast<std::unique_ptr<T>>(
       static_cast<const CanvasNode&>(node).Clone());
   }
 

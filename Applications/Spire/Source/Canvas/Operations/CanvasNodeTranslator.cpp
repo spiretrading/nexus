@@ -18,6 +18,15 @@
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
+#include "Nexus/Parsers/CountryParser.hpp"
+#include "Nexus/Parsers/CurrencyParser.hpp"
+#include "Nexus/Parsers/MarketParser.hpp"
+#include "Nexus/Parsers/MoneyParser.hpp"
+#include "Nexus/Parsers/OrderStatusParser.hpp"
+#include "Nexus/Parsers/OrderTypeParser.hpp"
+#include "Nexus/Parsers/QuantityParser.hpp"
+#include "Nexus/Parsers/SecurityParser.hpp"
+#include "Nexus/Parsers/SideParser.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -50,6 +59,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
+#include "Spire/Canvas/Records/RecordParser.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/StandardNodes/AbsNode.hpp"
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
@@ -88,7 +98,6 @@
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
-#include "Spire/Canvas/Types/ParserTypes.hpp"
 #include "Spire/Canvas/Types/QuoteRecordType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/TimeAndSaleRecordType.hpp"
@@ -485,11 +494,11 @@ namespace {
 
       // TODO
       if constexpr(std::is_same_v<T, Beam::Queries::Sequence> ||
-          std::is_same_v<T, Beam::Queries::Range>) {
+          std::is_same_v<T, Beam::Queries::Range> ||
+          std::is_same_v<T, TimeInForce>) {
         return Aspen::none<T>();
       } else {
-        using BaseParser = typename ParserType<T>::type;
-        auto parser = BuildParser(BaseParser());
+        auto parser = BuildParser(default_parser<T>);
         using Parser = decltype(parser);
         auto publisher = std::make_shared<
           ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
@@ -502,8 +511,8 @@ namespace {
     static Translation Template<CurrencyId>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      using BaseParser = ParserType<CurrencyId>::type;
-      auto parser = BuildParser(BaseParser(userProfile->GetCurrencyDatabase()));
+      auto parser = BuildParser(CurrencyParser(
+        userProfile->GetCurrencyDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
@@ -515,8 +524,8 @@ namespace {
     static Translation Template<MarketCode>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      using BaseParser = ParserType<MarketCode>::type;
-      auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
+      auto parser = BuildParser(MarketParser(
+        userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,
@@ -528,8 +537,7 @@ namespace {
     static Translation Template<Record>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      using BaseParser = ParserType<Record>::type;
-      auto parser = BuildParser(BaseParser(
+      auto parser = BuildParser(RecordParser(
         static_cast<const RecordType&>(nativeType), Ref(userProfile)));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
@@ -542,8 +550,8 @@ namespace {
     static Translation Template<Security>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const string& path) {
-      using BaseParser = ParserType<Security>::type;
-      auto parser = BuildParser(BaseParser(userProfile->GetMarketDatabase()));
+      auto parser = BuildParser(SecurityParser(
+        userProfile->GetMarketDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<
         ParserPublisher<BasicIStreamReader<ifstream>, Parser>>(path, parser,

@@ -36,6 +36,15 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
 
+namespace {
+  template<typename T>
+  auto bind_integer_precision(T (*function)(T, int)) {
+    return [=] (T object) {
+      return function(std::move(object), 0);
+    };
+  }
+}
+
 void Nexus::Python::ExportBboQuote(pybind11::module& module) {
   class_<BboQuote>(module, "BboQuote")
     .def(init())
@@ -347,6 +356,14 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
       &Money::FromValue))
     .def("__str__", &Money::ToString)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
+    .def("__floor__", bind_integer_precision(
+      static_cast<Money (*)(Money, int)>(&Floor)))
+    .def("__ceil__", bind_integer_precision(
+      static_cast<Money (*)(Money, int)>(&Ceil)))
+    .def("__trunc__", bind_integer_precision(
+      static_cast<Money (*)(Money, int)>(&Truncate)))
+    .def("__round__", bind_integer_precision(
+      static_cast<Money (*)(Money, int)>(&Round)))
     .def("__float__",
       [] (Money self) {
         return static_cast<double>(self);
@@ -431,6 +448,14 @@ void Nexus::Python::ExportQuantity(pybind11::module& module) {
       &Quantity::FromValue))
     .def("__str__", &lexical_cast<std::string, Quantity>)
     .def("__abs__", static_cast<Quantity (*)(Quantity)>(&Abs))
+    .def("__floor__", bind_integer_precision(
+      static_cast<Quantity (*)(Quantity, int)>(&Floor)))
+    .def("__ceil__", bind_integer_precision(
+      static_cast<Quantity (*)(Quantity, int)>(&Ceil)))
+    .def("__trunc__", bind_integer_precision(
+      static_cast<Quantity (*)(Quantity, int)>(&Truncate)))
+    .def("__round__", bind_integer_precision(
+      static_cast<Quantity (*)(Quantity, int)>(&Round)))
     .def("__int__",
       [] (Quantity self) {
         return static_cast<int>(self);

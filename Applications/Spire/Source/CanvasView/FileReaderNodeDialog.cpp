@@ -40,7 +40,7 @@ unique_ptr<FileReaderNode> FileReaderNodeDialog::GetNode() {
   std::shared_ptr<NativeType> readType;
   if(m_fields.empty()) {
     FileReaderNode baseNode;
-    auto emptyFileReader = UniqueStaticCast<FileReaderNode>(
+    auto emptyFileReader = StaticCast<std::unique_ptr<FileReaderNode>>(
       baseNode.Replace(baseNode.GetChildren().front(),
       CanvasNode::Clone(m_originalNode->GetChildren().front())));
     return emptyFileReader;

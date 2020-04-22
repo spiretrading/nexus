@@ -1,12 +1,13 @@
-#include "Nexus/ComplianceTests/SubmissionRestrictionPeriodComplianceRuleTester.hpp"
+#include <doctest/doctest.h>
+#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::OrderExecutionService;
-using namespace std;
 
-void SubmissionRestrictionPeriodComplianceRuleTester::TestEmptyPeriod() {
+TEST_SUITE("SubmissionRestrictionPeriodComplianceRule") {
+  TEST_CASE("empty_period") {
+  }
 }

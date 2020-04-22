@@ -1,4 +1,4 @@
-#include "Nexus/FeeHandlingTests/Xcx2FeeHandlingTester.hpp"
+#include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -8,10 +8,11 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
-using namespace std;
 
 namespace {
   auto BuildFeeTable() {
@@ -45,293 +46,302 @@ namespace {
   }
 }
 
-void Xcx2FeeHandlingTester::TestZeroQuantity() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  fields.m_quantity = 0;
-  auto expectedFee = Money::ZERO;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveDefault() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
-    Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveDefault() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
-    Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargeActiveDefault() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargePassiveDefault() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenActiveOverDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenPassiveOverDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveOddLotOverDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  fields.m_quantity = 50;
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveOddLotOverDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  fields.m_quantity = 50;
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
-    Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
-    Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
-    Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
-    Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargeActiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargePassiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargeActiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestLargePassiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  fields.m_quantity = feeTable.m_largeTradeSize;
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenActiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, "r",
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenPassiveSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenActiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenPassiveSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields,
-    Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
-  TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveOddLotSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  fields.m_quantity = 50;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveOddLotSubDollar() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  fields.m_quantity = 50;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestActiveOddLotSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::SUB_DIME);
-  fields.m_quantity = 50;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestPassiveOddLotSubDime() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::SUB_DIME);
-  fields.m_quantity = 50;
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-    CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestHiddenOddLot() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(20 * Money::CENT);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
-    Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-  fields.m_quantity = 50;
-  TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee, expectedFee);
-}
-
-void Xcx2FeeHandlingTester::TestUnknownLiquidityFlag() {
-  auto feeTable = BuildFeeTable();
-  {
-    auto executionReport = ExecutionReport::BuildInitialReport(0,
-      boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = 20 * Money::CENT;
-    executionReport.m_lastQuantity = 100;
-    executionReport.m_liquidityFlag = "AP";
-    auto fields = BuildOrderFields(20 * Money::CENT);
-    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
-    auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      fields, Xcx2FeeTable::Type::PASSIVE,
-      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
-    CPPUNIT_ASSERT(calculatedFee == expectedFee);
-  }
-  {
-    auto executionReport = ExecutionReport::BuildInitialReport(0,
-      boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = Money::ONE;
-    executionReport.m_lastQuantity = 100;
-    executionReport.m_liquidityFlag = "PA";
+TEST_SUITE("Xcx2FeeHandling") {
+  TEST_CASE("zero_quantity") {
+    auto feeTable = BuildFeeTable();
     auto fields = BuildOrderFields(Money::ONE);
-    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
-    auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      fields, Xcx2FeeTable::Type::PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
-    CPPUNIT_ASSERT(calculatedFee == expectedFee);
+    fields.m_quantity = 0;
+    auto expectedFee = Money::ZERO;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
+      CalculateFee, expectedFee);
   }
-  {
-    auto executionReport = ExecutionReport::BuildInitialReport(0,
-      boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = Money::CENT;
-    executionReport.m_lastQuantity = 100;
-    executionReport.m_liquidityFlag = "?";
-    auto fields = BuildOrderFields(Money::CENT);
-    auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
-    auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-      fields, Xcx2FeeTable::Type::PASSIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
-    CPPUNIT_ASSERT(calculatedFee == expectedFee);
-  }
-}
 
-void Xcx2FeeHandlingTester::TestEmptyLiquidityFlag() {
-  auto feeTable = BuildFeeTable();
-  auto fields = BuildOrderFields(Money::ONE);
-  auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
-    Xcx2FeeTable::PriceClass::DEFAULT);
-  TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-    CalculateFee, expectedFee);
+  TEST_CASE("active_default") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
+      Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_default") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
+      Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_active_default") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_passive_default") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("hidden_active_over_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("hidden_passive_over_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("active_odd_lot_over_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    fields.m_quantity = 50;
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_odd_lot_over_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    fields.m_quantity = 50;
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("active_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
+      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
+      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("active_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ACTIVE,
+      Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
+      Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_active_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_passive_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_active_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("large_passive_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    fields.m_quantity = feeTable.m_largeTradeSize;
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("hidden_active_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    TestPerShareFeeCalculation(feeTable, fields, "r",
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("hidden_passive_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("hidden_active_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("hidden_passive_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields,
+      Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUB_DIME);
+    TestPerShareFeeCalculation(feeTable, fields, "a", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("active_odd_lot_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    fields.m_quantity = 50;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_odd_lot_sub_dollar") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    fields.m_quantity = 50;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("active_odd_lot_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::SUB_DIME);
+    fields.m_quantity = 50;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("passive_odd_lot_sub_dime") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::SUB_DIME);
+    fields.m_quantity = 50;
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
+      CalculateFee, expectedFee);
+  }
+
+  TEST_CASE("hidden_odd_lot") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(20 * Money::CENT);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::ODD_LOT,
+      Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+    fields.m_quantity = 50;
+    TestPerShareFeeCalculation(feeTable, fields, "r", CalculateFee,
+      expectedFee);
+  }
+
+  TEST_CASE("unknown_liquidity_flag") {
+    auto feeTable = BuildFeeTable();
+    {
+      auto executionReport = ExecutionReport::BuildInitialReport(0,
+        second_clock::universal_time());
+      executionReport.m_lastPrice = 20 * Money::CENT;
+      executionReport.m_lastQuantity = 100;
+      executionReport.m_liquidityFlag = "AP";
+      auto fields = BuildOrderFields(20 * Money::CENT);
+      auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
+      auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
+        fields, Xcx2FeeTable::Type::PASSIVE,
+        Xcx2FeeTable::PriceClass::SUB_DOLLAR);
+      REQUIRE(calculatedFee == expectedFee);
+    }
+    {
+      auto executionReport = ExecutionReport::BuildInitialReport(0,
+        second_clock::universal_time());
+      executionReport.m_lastPrice = Money::ONE;
+      executionReport.m_lastQuantity = 100;
+      executionReport.m_liquidityFlag = "PA";
+      auto fields = BuildOrderFields(Money::ONE);
+      auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
+      auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
+        fields, Xcx2FeeTable::Type::PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
+      REQUIRE(calculatedFee == expectedFee);
+    }
+    {
+      auto executionReport = ExecutionReport::BuildInitialReport(0,
+        second_clock::universal_time());
+      executionReport.m_lastPrice = Money::CENT;
+      executionReport.m_lastQuantity = 100;
+      executionReport.m_liquidityFlag = "?";
+      auto fields = BuildOrderFields(Money::CENT);
+      auto calculatedFee = CalculateFee(feeTable, fields, executionReport);
+      auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
+        fields, Xcx2FeeTable::Type::PASSIVE,
+        Xcx2FeeTable::PriceClass::SUB_DIME);
+      REQUIRE(calculatedFee == expectedFee);
+    }
+  }
+
+  TEST_CASE("empty_liquidity_flag") {
+    auto feeTable = BuildFeeTable();
+    auto fields = BuildOrderFields(Money::ONE);
+    auto expectedFee = LookupFee(feeTable, fields, Xcx2FeeTable::Type::PASSIVE,
+      Xcx2FeeTable::PriceClass::DEFAULT);
+    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
+      CalculateFee, expectedFee);
+  }
 }

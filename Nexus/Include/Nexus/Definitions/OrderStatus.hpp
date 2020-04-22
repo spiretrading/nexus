@@ -1,5 +1,6 @@
-#ifndef NEXUS_ORDERSTATUS_HPP
-#define NEXUS_ORDERSTATUS_HPP
+#ifndef NEXUS_ORDER_STATUS_HPP
+#define NEXUS_ORDER_STATUS_HPP
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <Beam/Collections/Enum.hpp>
@@ -62,35 +63,33 @@ namespace Nexus {
     return false;
   }
 
-  //! Returns the string representation of an OrderStatus.
-  inline std::string ToString(OrderStatus value) {
+  inline std::ostream& operator <<(std::ostream& out, OrderStatus value) {
     if(value == OrderStatus::PENDING_NEW) {
-      return "Pending New";
+      return out << "PENDING_NEW";
     } else if(value ==  OrderStatus::REJECTED) {
-      return "Rejected";
+      return out << "REJECTED";
     } else if(value ==  OrderStatus::NEW) {
-      return "New";
+      return out << "NEW";
     } else if(value ==  OrderStatus::PARTIALLY_FILLED) {
-      return "Partially Filled";
+      return out << "PARTIALLY_FILLED";
     } else if(value ==  OrderStatus::EXPIRED) {
-      return "Expired";
+      return out << "EXPIRED";
     } else if(value ==  OrderStatus::CANCELED) {
-      return "Canceled";
+      return out << "CANCELED";
     } else if(value ==  OrderStatus::SUSPENDED) {
-      return "Suspended";
+      return out << "SUSPENDED";
     } else if(value ==  OrderStatus::STOPPED) {
-      return "Stopped";
+      return out << "STOPPED";
     } else if(value ==  OrderStatus::FILLED) {
-      return "Filled";
+      return out << "FILLED";
     } else if(value ==  OrderStatus::DONE_FOR_DAY) {
-      return "Done For Day";
+      return out << "DONE_FOR_DAY";
     } else if(value ==  OrderStatus::PENDING_CANCEL) {
-      return "Pending Cancel";
+      return out << "PENDING_CANCEL";
     } else if(value == OrderStatus::CANCEL_REJECT) {
-      return "Cancel Reject";
+      return out << "CANCEL_REJECT";
     }
-    BOOST_THROW_EXCEPTION(std::runtime_error("OrderStatus not found: " +
-      boost::lexical_cast<std::string>(static_cast<int>(value))));
+    return out << "NONE";
   }
 }
 

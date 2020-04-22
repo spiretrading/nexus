@@ -304,29 +304,29 @@ namespace Nexus {
         } else {
           auto& destination = order.GetInfo().m_fields.m_destination;
           if(destination == DefaultDestinations::ALPHA()) {
-            return ToString(DefaultMarkets::XATS());
+            return boost::lexical_cast<std::string>(DefaultMarkets::XATS());
           } else if(destination == DefaultDestinations::CHIX()) {
-            return ToString(DefaultMarkets::CHIC());
+            return boost::lexical_cast<std::string>(DefaultMarkets::CHIC());
           } else if(destination == DefaultDestinations::CSE()) {
-            return ToString(DefaultMarkets::CSE());
+            return boost::lexical_cast<std::string>(DefaultMarkets::CSE());
           } else if(destination == DefaultDestinations::CX2()) {
-            return ToString(DefaultMarkets::XCX2());
+            return boost::lexical_cast<std::string>(DefaultMarkets::XCX2());
           } else if(destination == DefaultDestinations::LYNX()) {
-            return ToString(DefaultMarkets::LYNX());
+            return boost::lexical_cast<std::string>(DefaultMarkets::LYNX());
           } else if(destination == DefaultDestinations::MATNLP()) {
-            return ToString(DefaultMarkets::MATN());
+            return boost::lexical_cast<std::string>(DefaultMarkets::MATN());
           } else if(destination == DefaultDestinations::MATNMF()) {
-            return ToString(DefaultMarkets::MATN());
+            return boost::lexical_cast<std::string>(DefaultMarkets::MATN());
           } else if(destination == DefaultDestinations::NEOE()) {
-            return ToString(DefaultMarkets::NEOE());
+            return boost::lexical_cast<std::string>(DefaultMarkets::NEOE());
           } else if(destination == DefaultDestinations::OMEGA()) {
-            return ToString(DefaultMarkets::OMGA());
+            return boost::lexical_cast<std::string>(DefaultMarkets::OMGA());
           } else if(destination == DefaultDestinations::PURE()) {
-            return ToString(DefaultMarkets::PURE());
+            return boost::lexical_cast<std::string>(DefaultMarkets::PURE());
           } else if(destination == DefaultDestinations::TSX()) {
-            return ToString(DefaultMarkets::TSX());
+            return boost::lexical_cast<std::string>(DefaultMarkets::TSX());
           } else {
-            return std::string{};
+            return std::string();
           }
         }
       }();

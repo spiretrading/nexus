@@ -20,7 +20,7 @@ namespace Nexus::Accounting {
     return Aspen::lift(
       [bookkeeper = Bookkeeper()] (
           const std::tuple<const OrderExecutionService::Order*,
-            OrderExecutionService::ExecutionReport> update) mutable ->
+            OrderExecutionService::ExecutionReport>& update) mutable ->
             std::optional<typename Bookkeeper::Inventory> {
         auto& order = *std::get<0>(update);
         auto& report = std::get<1>(update);

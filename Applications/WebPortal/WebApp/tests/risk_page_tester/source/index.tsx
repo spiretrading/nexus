@@ -15,7 +15,6 @@ interface Properties {
 interface State {
   roles: Nexus.AccountRoles;
   status: string,
-  isSubmitEnabled: boolean,
   isError: boolean,
 }
 
@@ -26,12 +25,10 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
       roles: new Nexus.AccountRoles(8),
       status: '',
-      isSubmitEnabled: false,
       isError: false,
     };
     this.onSubmit = this.onSubmit.bind(this);
     this.onToggleIsAdmin = this.onToggleIsAdmin.bind(this);
-    this.onToggleEnabled = this.onToggleEnabled.bind(this);
     this.onToggleError = this.onToggleError.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.clearStatus = this.clearStatus.bind(this);
@@ -50,12 +47,6 @@ class TestApp extends React.Component<Properties, State> {
         return 'Admin';
       }
       return 'Not Admin';
-    })();
-    const toggleEnabledText = (() => {
-      if(this.state.isSubmitEnabled) {
-        return 'Enabled';
-      }
-      return 'Not Enabled';
     })();
     const toggleErrorText = (() => {
       if(this.state.isError) {
@@ -77,9 +68,6 @@ class TestApp extends React.Component<Properties, State> {
           <button onClick={this.onToggleIsAdmin}>
             {toggleAdminButtonText}
           </button>
-          <button onClick={this.onToggleEnabled}>
-            {toggleEnabledText}
-          </button>
           <button onClick={this.onToggleError}>
             {toggleErrorText}
           </button>
@@ -98,10 +86,6 @@ class TestApp extends React.Component<Properties, State> {
       return new Nexus.AccountRoles();
     })();
     this.setState({ roles: roles });
-  }
-
-  private onToggleEnabled() {
-    this.setState({isSubmitEnabled: !this.state.isSubmitEnabled});
   }
 
   private onToggleError() {

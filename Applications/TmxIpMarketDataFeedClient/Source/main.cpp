@@ -13,6 +13,7 @@
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -37,6 +38,7 @@ using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
@@ -161,7 +163,7 @@ int main(int argc, const char** argv) {
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
@@ -183,7 +185,7 @@ int main(int argc, const char** argv) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto marketDataAddresses = FromString<vector<IpAddress>>(
+    auto marketDataAddresses = Parse<vector<IpAddress>>(
       get<string>(marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(

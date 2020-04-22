@@ -11,7 +11,9 @@ interface Properties {
 interface State {
   roles: Nexus.AccountRoles;
   groups: Beam.Set<Beam.DirectoryEntry>;
-  accounts: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
+  openedGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
+  filter: string;
+  filteredGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   model: WebPortal.AccountDirectoryModel;
 }
 
@@ -21,13 +23,17 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       roles: new Nexus.AccountRoles(),
-      groups : new Beam.Set<Beam.DirectoryEntry>(),
-      accounts: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      groups: new Beam.Set<Beam.DirectoryEntry>(),
+      openedGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      filter: '',
+      filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
         new Beam.Set<Beam.DirectoryEntry>(),
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
     };
     this.changeRole = this.changeRole.bind(this);
+    this.onCardClick = this.onCardClick.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -35,8 +41,13 @@ class TestApp extends React.Component<Properties, State> {
       <div>
       <WebPortal.AccountDirectoryPage
         displaySize={this.props.displaySize}
-        model={this.state.model}
-        roles={this.state.roles}/>
+        roles={this.state.roles}
+        groups={this.state.groups}
+        openedGroups={this.state.openedGroups}
+        filter={this.state.filter}
+        filteredGroups={this.state.filteredGroups}
+        onFilterChange={this.onChange} 
+        onCardClick={this.onCardClick}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>
@@ -57,6 +68,8 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public componentDidMount() {
+    const accounts = 
+      new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>();
     this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
     this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
@@ -116,13 +129,13 @@ class TestApp extends React.Component<Properties, State> {
     testArray.push(accountEntry7);
     for(const group of this.state.groups) {
       if(group.id % 2 === 0) {
-        this.state.accounts.set(group, testArray);
+        accounts.set(group, testArray);
       } else {
-        this.state.accounts.set(group, []);
+        accounts.set(group, []);
       }
     }
     const testModel = new WebPortal.LocalAccountDirectoryModel(
-      this.state.groups, this.state.accounts);
+      this.state.groups, accounts);
     testModel.load();
     const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
     this.setState({model: newModel});
@@ -139,9 +152,36 @@ class TestApp extends React.Component<Properties, State> {
       this.setState({ roles: this.testManager });
     }
   }
+
+  private onChange(newFilter: string) {
+    clearTimeout(this.timerId);
+    this.setState({filter: newFilter});
+    if(newFilter !== '') {
+      this.timerId = setTimeout(
+        async () => {
+          const newAccounts =
+            await this.state.model.loadFilteredAccounts(newFilter);
+          this.setState({
+            filteredGroups: newAccounts
+          });
+        }, 400);
+    }
+  }
+
+  private async onCardClick(group: Beam.DirectoryEntry) {
+    if(this.state.openedGroups.get(group)) {
+      this.state.openedGroups.remove(group);
+    } else {
+      const accounts = await this.state.model.loadAccounts(group);
+      this.state.openedGroups.set(group, accounts);
+    }
+    this.setState({openedGroups: this.state.openedGroups});
+  }
+
   private testAdmin = new Nexus.AccountRoles();
   private testTrader = new Nexus.AccountRoles();
   private testManager = new Nexus.AccountRoles();
+  private timerId: any; 
   private static STYLE = {
     testingComponents: {
       position: 'fixed' as 'fixed',

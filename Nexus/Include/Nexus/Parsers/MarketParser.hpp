@@ -1,42 +1,34 @@
 #ifndef NEXUS_MARKETPARSER_HPP
 #define NEXUS_MARKETPARSER_HPP
 #include <Beam/Parsers/EnumeratorParser.hpp>
-#include <Beam/Parsers/SubParserStream.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Parsers/Parsers.hpp"
 
 namespace Nexus {
 
-  /*! \class MarketParser
-      \brief Matches a MarketCode.
+  /**
+   * Parses a MarketCode.
+   * @param marketDatabase The database used to lookup market codes.
    */
-  class MarketParser : public Beam::Parsers::EnumeratorParser<MarketCode> {
-    public:
+  inline auto MarketParser(const MarketDatabase& marketDatabase) {
+    auto code = [] (const auto& entry) {
+      return entry.m_code;
+    };
+    return Beam::Parsers::EnumeratorParser(boost::make_transform_iterator(
+      marketDatabase.GetEntries().cbegin(), code),
+      boost::make_transform_iterator(marketDatabase.GetEntries().cend(), code),
+      [&] (auto code) {
+        return marketDatabase.FromCode(code).m_displayName;
+      });
+  }
 
-      //! Constructs a MarketParser.
-      /*!
-        \param marketDatabase The database of markets to match against.
-      */
-      MarketParser(const MarketDatabase& marketDatabase);
-
-    private:
-      typedef boost::transform_iterator<
-        MarketCode (*)(const MarketDatabase::Entry&),
-        std::vector<MarketDatabase::Entry>::const_iterator> MarketCodeIterator;
-      static MarketCode GetCode(const MarketDatabase::Entry& entry);
-  };
-
-  inline MarketParser::MarketParser(const MarketDatabase& marketDatabase)
-      : Beam::Parsers::EnumeratorParser<MarketCode>(
-          MarketCodeIterator(marketDatabase.GetEntries().cbegin(), &GetCode),
-          MarketCodeIterator(marketDatabase.GetEntries().cend(), &GetCode),
-          [&] (MarketCode code) {
-            return marketDatabase.FromCode(code).m_displayName;
-          }) {}
-
-  inline MarketCode MarketParser::GetCode(const MarketDatabase::Entry& entry) {
-    return entry.m_code;
+  /** Parses a MarketCode using the default MarketDatabase. */
+  inline const auto& MarketParser() {
+    static const auto& parser = MarketParser(GetDefaultMarketDatabase());
+    return parser;
   }
 }
 

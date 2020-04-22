@@ -8,8 +8,6 @@ endif()
 add_executable(AccountingTests ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(AccountingTests
-  debug ${CPPUNIT_LIBRARY_DEBUG_PATH}
-  optimized ${CPPUNIT_LIBRARY_OPTIMIZED_PATH}
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})
 

@@ -351,8 +351,7 @@ namespace OrderExecutionService {
           0, Queries::OrderInfoType());
         auto memberExpression = Beam::Queries::MemberAccessExpression(
           "order_id", Beam::Queries::IdType(), parameterExpression);
-        auto orderIdExpression = Beam::Queries::MakeConstantExpression(
-          orderId);
+        auto orderIdExpression = Beam::Queries::ConstantExpression(orderId);
         auto equalsExpression = Beam::Queries::MakeEqualsExpression(
           memberExpression, orderIdExpression);
         orderIdExpressions.push_back(equalsExpression);

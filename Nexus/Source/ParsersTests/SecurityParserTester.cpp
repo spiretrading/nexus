@@ -1,34 +1,34 @@
-#include "Nexus/ParsersTests/SecurityParserTester.hpp"
 #include <Beam/IO/BufferReader.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Parsers/ReaderParserStream.hpp>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include <doctest/doctest.h>
 #include "Nexus/Parsers/SecurityParser.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Parsers;
 using namespace Nexus;
-using namespace Nexus::Tests;
 
-void SecurityParserTester::TestWellFormedSecurity() {
-  SecurityParser parser(GetDefaultMarketDatabase());
-  auto stream = ParserStreamFromString("ABX.TSX");
-  Security security;
-  CPPUNIT_ASSERT(parser.Read(stream, security));
-  CPPUNIT_ASSERT(security.GetSymbol() == "ABX");
-  CPPUNIT_ASSERT(security.GetMarket() == DefaultMarkets::TSX());
-  CPPUNIT_ASSERT(security.GetCountry() == DefaultCountries::CA());
-  stream = ParserStreamFromString("ABX.XST");
-  CPPUNIT_ASSERT(!parser.Read(stream, security));
-}
+TEST_SUITE("SecurityParser") {
+  TEST_CASE("well_formed_security") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString("ABX.TSX");
+    auto security = Security();
+    REQUIRE(parser.Read(stream, security));
+    REQUIRE(security.GetSymbol() == "ABX");
+    REQUIRE(security.GetMarket() == DefaultMarkets::TSX());
+    REQUIRE(security.GetCountry() == DefaultCountries::CA());
+    stream = ParserStreamFromString("ABX.XST");
+    REQUIRE(!parser.Read(stream, security));
+  }
 
-void SecurityParserTester::TestUpperCaseSecurity() {
-  SecurityParser parser(GetDefaultMarketDatabase());
-  auto stream = ParserStreamFromString("aBx.TsX");
-  Security security;
-  CPPUNIT_ASSERT(parser.Read(stream, security));
-  CPPUNIT_ASSERT(security.GetSymbol() == "ABX");
-  CPPUNIT_ASSERT(security.GetMarket() == DefaultMarkets::TSX());
-  CPPUNIT_ASSERT(security.GetCountry() == DefaultCountries::CA());
+  TEST_CASE("upper_case_security") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString("aBx.TsX");
+    auto security = Security();
+    REQUIRE(parser.Read(stream, security));
+    REQUIRE(security.GetSymbol() == "ABX");
+    REQUIRE(security.GetMarket() == DefaultMarkets::TSX());
+    REQUIRE(security.GetCountry() == DefaultCountries::CA());
+  }
 }

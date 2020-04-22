@@ -123,7 +123,7 @@ namespace Nexus::AdministrationService::Tests {
       Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [&, serviceLocatorClient = serviceLocatorClient.Get()] {
+      [=, serviceLocatorClient = serviceLocatorClient.Get()] {
         if(m_globalEntitlementGroup.m_type !=
             Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
           m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
@@ -132,7 +132,7 @@ namespace Nexus::AdministrationService::Tests {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_administration_client", Beam::Ref(m_serverConnection));
       },
-      [&] {
+      [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
     auto client = std::make_unique<AdministrationService::AdministrationClient<
@@ -185,8 +185,10 @@ namespace Nexus::AdministrationService::Tests {
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {
-    m_container->Close();
-    m_container.reset();
+    if(m_container.is_initialized()) {
+      m_container->Close();
+      m_container.reset();
+    }
   }
 }
 

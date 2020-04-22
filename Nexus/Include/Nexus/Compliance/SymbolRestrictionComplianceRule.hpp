@@ -23,14 +23,14 @@ namespace Compliance {
       /*!
         \param parameters The list of parameters used by this rule.
       */
-      SymbolRestrictionComplianceRule(
+      explicit SymbolRestrictionComplianceRule(
         const std::vector<ComplianceParameter>& parameters);
 
       //! Constructs a SymbolRestrictionComplianceRule.
       /*!
         \param restrictions The set of Securities to restrict.
       */
-      SymbolRestrictionComplianceRule(SecuritySet restrictions);
+      explicit SymbolRestrictionComplianceRule(SecuritySet restrictions);
 
       virtual void Submit(const OrderExecutionService::Order& order);
 

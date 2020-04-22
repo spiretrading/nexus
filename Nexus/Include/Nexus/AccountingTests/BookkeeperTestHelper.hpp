@@ -1,13 +1,9 @@
-#ifndef NEXUS_BOOKKEEPERTESTHELPER_HPP
-#define NEXUS_BOOKKEEPERTESTHELPER_HPP
-#include <Beam/Utilities/BeamWorkaround.hpp>
-#include "Nexus/AccountingTests/AccountingTests.hpp"
+#ifndef NEXUS_BOOKKEEPER_TEST_HELPER_HPP
+#define NEXUS_BOOKKEEPER_TEST_HELPER_HPP
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
-namespace Nexus {
-namespace Accounting {
-namespace Tests {
+namespace Nexus::Accounting::Tests {
 
   //! Helper test for adding and then removing inventory from a Bookkeeper.
   /*!
@@ -24,7 +20,7 @@ namespace Tests {
   void TestAddRemoveHelper(Quantity addQuantity, Money addValue, Money addFees,
       Quantity removeQuantity, Money removeValue, Money removeFees,
       Money expectedCostBasis, Money expectedEarnings) {
-    BookkeeperType bookkeeper;
+    auto bookkeeper = BookkeeperType();
 
     // Execute the two transactions.
     bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(), addQuantity,
@@ -34,29 +30,25 @@ namespace Tests {
 
     // Pull out the inventory and run tests on it.
     auto cokeEntry = bookkeeper.GetInventory("Coke", DefaultCurrencies::USD());
-    CPPUNIT_ASSERT(cokeEntry.m_position.m_costBasis == expectedCostBasis);
-    CPPUNIT_ASSERT(cokeEntry.m_fees == addFees + removeFees);
-    CPPUNIT_ASSERT(cokeEntry.m_grossProfitAndLoss == expectedEarnings);
-    CPPUNIT_ASSERT(cokeEntry.m_position.m_quantity == addQuantity +
-      removeQuantity);
+    REQUIRE(cokeEntry.m_position.m_costBasis == expectedCostBasis);
+    REQUIRE(cokeEntry.m_fees == addFees + removeFees);
+    REQUIRE(cokeEntry.m_grossProfitAndLoss == expectedEarnings);
+    REQUIRE(cokeEntry.m_position.m_quantity == addQuantity + removeQuantity);
 
     // Do it in reverse order.
-    BookkeeperType reverseBookkeeper;
+    auto reverseBookkeeper = BookkeeperType();
     reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(),
       removeQuantity, removeValue, removeFees);
     reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(),
       addQuantity, addValue, addFees);
     auto reverseCokeEntry = reverseBookkeeper.GetInventory("Coke",
       DefaultCurrencies::USD());
-    CPPUNIT_ASSERT(reverseCokeEntry.m_position.m_costBasis ==
-      expectedCostBasis);
-    CPPUNIT_ASSERT(reverseCokeEntry.m_fees == addFees + removeFees);
-    CPPUNIT_ASSERT(reverseCokeEntry.m_grossProfitAndLoss == expectedEarnings);
-    CPPUNIT_ASSERT(reverseCokeEntry.m_position.m_quantity ==
+    REQUIRE(reverseCokeEntry.m_position.m_costBasis == expectedCostBasis);
+    REQUIRE(reverseCokeEntry.m_fees == addFees + removeFees);
+    REQUIRE(reverseCokeEntry.m_grossProfitAndLoss == expectedEarnings);
+    REQUIRE(reverseCokeEntry.m_position.m_quantity ==
       addQuantity + removeQuantity);
   }
-}
-}
 }
 
 #endif

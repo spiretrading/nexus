@@ -54,7 +54,7 @@ unique_ptr<CustomNode> CustomNodeDialog::GetNode() {
     builder.Replace(customNode->GetChildren()[i],
       CanvasNode::Clone(*m_nodes[i]));
   }
-  return UniqueStaticCast<CustomNode>(builder.Build());
+  return StaticCast<std::unique_ptr<CustomNode>>(builder.Build());
 }
 
 void CustomNodeDialog::Setup(const CustomNode& customNode) {

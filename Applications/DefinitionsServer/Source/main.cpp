@@ -12,9 +12,11 @@
 #include <Beam/TimeService/TimeService.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
@@ -190,11 +192,11 @@ int main(int argc, const char** argv) {
   try {
     auto ntpPool = Extract<vector<IpAddress>>(config, "ntp_pool");
     JsonObject ntpService;
-    ntpService["addresses"] = ToString(ntpPool);
+    ntpService["addresses"] = lexical_cast<std::string>(Stream(ntpPool));
     serviceLocatorClient->Register(TimeService::SERVICE_NAME, ntpService);
     JsonObject definitionsService;
-    definitionsService["addresses"] =
-      ToString(definitionsServerConnectionInitializer.m_addresses);
+    definitionsService["addresses"] = lexical_cast<std::string>(
+      Stream(definitionsServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
       definitionsServerConnectionInitializer.m_serviceName, definitionsService);
   } catch(const std::exception& e) {

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -14,6 +15,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
@@ -26,6 +28,7 @@ using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
@@ -122,7 +125,7 @@ auto configFile = string();
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
@@ -170,8 +173,8 @@ auto configFile = string();
   }
   try {
     auto service = JsonObject();
-    service["addresses"] =
-      ToString(complianceServerConnectionInitializer.m_addresses);
+    service["addresses"] = lexical_cast<std::string>(
+      Stream(complianceServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
       complianceServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
