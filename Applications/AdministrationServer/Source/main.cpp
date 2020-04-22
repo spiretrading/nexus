@@ -13,6 +13,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
@@ -208,12 +209,11 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    auto administrationService = JsonObject();
-    administrationService["addresses"] =
-      ToString(administrationServerConnectionInitializer.m_addresses);
+    auto service = JsonObject();
+    service["addresses"] = lexical_cast<std::string>(
+      Stream(administrationServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
-      administrationServerConnectionInitializer.m_serviceName,
-      administrationService);
+      administrationServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;

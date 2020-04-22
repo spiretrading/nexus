@@ -4,7 +4,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/Utilities/DefaultValue.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
