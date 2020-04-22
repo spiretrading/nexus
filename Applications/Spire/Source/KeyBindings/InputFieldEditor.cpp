@@ -20,7 +20,7 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
       font-family: Roboto;
       font-size: %1px;
       padding-left: %2px;
-    })").arg(scale_height(12)).arg(scale_width(8)));
+    })").arg(scale_height(12)).arg(scale_width(6)));
   connect(this, &QLineEdit::textChanged, this,
     &InputFieldEditor::on_text_changed);
   m_menu_list = new DropDownMenuList(m_items, this);

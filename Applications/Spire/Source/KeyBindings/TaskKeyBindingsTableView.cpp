@@ -2,6 +2,7 @@
 #include "Spire/KeyBindings/DestinationItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/KeyBindings/NameItemDelegate.hpp"
 #include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
 #include "Spire/KeyBindings/QuantityItemDelegate.hpp"
 #include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
@@ -52,6 +53,11 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_column_width(6, scale_width(98));
   set_column_width(7, scale_width(124));
   set_column_width(8, scale_width(110));
+  auto name_delegate = new NameItemDelegate(this);
+  name_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
+  set_column_delegate(0, name_delegate);
   auto security_delegate = new SecurityInputItemDelegate(input_model, this);
   set_column_delegate(1, security_delegate);
   auto destination_delegate = new DestinationItemDelegate(this);
@@ -69,15 +75,15 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
     on_item_modified(index);
   });
   set_column_delegate(4, side_delegate);
-  auto time_in_force_delegate = new TimeInForceItemDelegate(this);
-  time_in_force_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
   auto quantity_delegate = new QuantityItemDelegate(this);
   quantity_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);
   });
   set_column_delegate(5, quantity_delegate);
+  auto time_in_force_delegate = new TimeInForceItemDelegate(this);
+  time_in_force_delegate->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
   set_column_delegate(6, time_in_force_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
     {ValidSequence({FUNCTION_KEYS()}),

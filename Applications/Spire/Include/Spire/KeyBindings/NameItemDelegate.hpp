@@ -1,14 +1,14 @@
-#ifndef SPIRE_DESTINATION_ITEM_DELEGATE_HPP
-#define SPIRE_DESTINATION_ITEM_DELEGATE_HPP
+#ifndef SPIRE_NAME_ITEM_DELEGATE_HPP
+#define SPIRE_NAME_ITEM_DELEGATE_HPP
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  class DestinationItemDelegate : public KeyBindingItemDelegate {
+  class NameItemDelegate : public KeyBindingItemDelegate {
     public:
 
-      explicit DestinationItemDelegate(QWidget* parent = nullptr);
+      explicit NameItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,
         const QStyleOptionViewItem& option,

@@ -7,14 +7,8 @@ using namespace Spire;
 
 SecurityInputItemDelegate::SecurityInputItemDelegate(
   Ref<SecurityInputModel> model, QWidget* parent)
-  : QStyledItemDelegate(parent),
-    m_item_delegate(new CustomVariantItemDelegate(this)),
+  : KeyBindingItemDelegate(parent),
     m_model(model.Get()) {}
-
-connection SecurityInputItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
 
 QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -25,30 +19,7 @@ QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
   return editor;
 }
 
-QString SecurityInputItemDelegate::displayText(const QVariant& value,
-    const QLocale& locale) const {
-  return m_item_delegate->displayText(value, locale);
-}
-
 void SecurityInputItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   m_item_modified_signal(index);
-}
-
-void SecurityInputItemDelegate::updateEditorGeometry(QWidget* editor,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  if(index.row() == 0) {
-    auto rect = option.rect.translated(0, 1);
-    editor->move(rect.topLeft());
-    rect.setHeight(rect.height() - 1);
-    editor->resize(rect.size());
-  } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
-  }
-}
-
-void SecurityInputItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }

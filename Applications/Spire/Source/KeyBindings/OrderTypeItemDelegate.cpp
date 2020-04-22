@@ -32,13 +32,7 @@ namespace {
 }
 
 OrderTypeItemDelegate::OrderTypeItemDelegate(QWidget* parent)
-  : QStyledItemDelegate(parent),
-    m_item_delegate(new CustomVariantItemDelegate(this)) {}
-
-connection OrderTypeItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
+  : KeyBindingItemDelegate(parent) {}
 
 QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -56,32 +50,9 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   return editor;
 }
 
-QString OrderTypeItemDelegate::displayText(const QVariant& value,
-    const QLocale& locale) const {
-  return m_item_delegate->displayText(value, locale);
-}
-
 void OrderTypeItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
   model->setData(index, get_order_type_variant(item), Qt::DisplayRole);
   m_item_modified_signal(index);
-}
-
-void OrderTypeItemDelegate::updateEditorGeometry(QWidget* editor,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  if(index.row() == 0) {
-    auto rect = option.rect.translated(0, 1);
-    editor->move(rect.topLeft());
-    rect.setHeight(rect.height() - 1);
-    editor->resize(rect.size());
-  } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
-  }
-}
-
-void OrderTypeItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }

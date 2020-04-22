@@ -48,13 +48,7 @@ namespace {
 }
 
 TimeInForceItemDelegate::TimeInForceItemDelegate(QWidget* parent)
-  : QStyledItemDelegate(parent),
-    m_item_delegate(new CustomVariantItemDelegate(this)) {}
-
-connection TimeInForceItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
+  : KeyBindingItemDelegate(parent) {}
 
 QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -72,32 +66,9 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
   return editor;
 }
 
-QString TimeInForceItemDelegate::displayText(const QVariant& value,
-    const QLocale& locale) const {
-  return m_item_delegate->displayText(value, locale);
-}
-
 void TimeInForceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
   model->setData(index, get_time_in_force_variant(item), Qt::DisplayRole);
   m_item_modified_signal(index);
-}
-
-void TimeInForceItemDelegate::updateEditorGeometry(QWidget* editor,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  if(index.row() == 0) {
-    auto rect = option.rect.translated(0, 1);
-    editor->move(rect.topLeft());
-    rect.setHeight(rect.height() - 1);
-    editor->resize(rect.size());
-  } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
-  }
-}
-
-void TimeInForceItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }

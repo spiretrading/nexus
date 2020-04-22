@@ -27,21 +27,25 @@ void KeyBindingItemDelegate::paint(QPainter* painter,
   auto font = QFont("Roboto");
   font.setPixelSize(scale_height(12));
   painter->setFont(font);
-  painter->drawText(QPoint(scale_width(8), scale_height(6)),
+  auto pos = QPoint(option.rect.left() + scale_width(8),
+    option.rect.bottom() - scale_height(7));
+  painter->drawText(pos,
     m_item_delegate->displayText(index.data(), QLocale()));
   painter->restore();
 }
 
 void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  editor->move(option.rect.topLeft());
+  editor->resize(option.rect.size());
   if(index.row() == 0) {
     auto rect = option.rect.translated(0, 1);
     editor->move(rect.topLeft());
-    rect.setHeight(rect.height() - 1);
-    editor->resize(rect.size());
-  } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
+    editor->resize(rect.width(), rect.height() - 1);
+  }
+  if(index.column() == 0) {
+    editor->move(editor->pos().x() + 1, editor->pos().y());
+    editor->resize(editor->width() - 1, editor->height());
   }
 }
 
