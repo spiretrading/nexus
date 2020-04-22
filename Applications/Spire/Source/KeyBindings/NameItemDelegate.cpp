@@ -14,7 +14,7 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
   editor->setStyleSheet(QString(R"(
     font-family: Roboto;
     font-size: %1px;
-    padding-left: %2px;)").arg(scale_height(12)).arg(scale_width(6)));
+    padding-left: %2px;)").arg(scale_height(12)).arg(scale_width(5)));
   connect(editor, &QLineEdit::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;
@@ -22,7 +22,7 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
 
 void NameItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto name = static_cast<QLineEdit*>(editor)->text();
-  model->setData(index, name, Qt::DisplayRole);
+  auto text = static_cast<QLineEdit*>(editor)->text();
+  model->setData(index, text, Qt::DisplayRole);
   m_item_modified_signal(index);
 }

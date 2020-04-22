@@ -167,7 +167,10 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
   if(role == Qt::DisplayRole && value.isValid()) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
-        return false;
+        emit dataChanged(index, index, {role});
+        m_key_bindings[index.row()].m_action.m_name =
+          value.value<QString>().toStdString();
+        return true;
       case Columns::SECURITY:
         return false;
       case Columns::DESTINATION:
