@@ -50,8 +50,10 @@ QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
 
 void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  QStyledItemDelegate::paint(painter, option, index);
   painter->save();
-  painter->fillRect(option.rect, Qt::white);
+  painter->fillRect(option.rect,
+    index.model()->data(index, Qt::BackgroundRole).value<QColor>());
   if(!option.state.testFlag(QStyle::State_Editing)) {
     auto sequence = index.data(Qt::DisplayRole).value<QKeySequence>();
     if(!sequence.isEmpty()) {
@@ -81,6 +83,19 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
 QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
     const QModelIndex& index) const {
   return QStyledItemDelegate::sizeHint(option, index);
+}
+
+void KeySequenceItemDelegate::updateEditorGeometry(QWidget* editor,
+    const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  if(index.row() == 0) {
+    auto rect = option.rect.translated(0, 1);
+    editor->move(rect.topLeft());
+    rect.setHeight(rect.height() - 1);
+    editor->resize(rect.size());
+  } else {
+    editor->move(option.rect.topLeft());
+    editor->resize(option.rect.size());
+  }
 }
 
 bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {

@@ -70,15 +70,6 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       padding-bottom: %3px;
       padding-left: %2px;
       padding-right: %2px;
-    }
-
-    QTableView::item {
-      border: none;
-      padding-left: %2px;
-    }
-
-    QTableView::item:selected {
-      color: black;
     })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(8)));
   m_table->setFrameShape(QFrame::NoFrame);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

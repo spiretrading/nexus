@@ -41,6 +41,10 @@ namespace Spire {
       QSize sizeHint(const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
 
+      void updateEditorGeometry(QWidget* editor,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
 

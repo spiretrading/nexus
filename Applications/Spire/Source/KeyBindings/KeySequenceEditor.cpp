@@ -56,7 +56,7 @@ void KeySequenceEditor::paintEvent(QPaintEvent* event) {
   painter.fillRect(0, scale_height(1), width(), height(), Qt::white);
   painter.setFont(m_font);
   painter.setPen(Qt::black);
-  painter.drawText(0, scale_height(16), tr("Enter Keys"));
+  painter.drawText(scale_width(8), scale_height(16), tr("Enter Keys"));
 }
 
 void KeySequenceEditor::commit_sequence() {
