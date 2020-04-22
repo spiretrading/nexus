@@ -8,6 +8,9 @@ if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
   if [ "$?" == "0" ]; then
     build_beam=1
+    pushd Beam
+    git checkout "$beam_commit"
+    popd
   else
     rm -rf Beam
     exit_status=1
