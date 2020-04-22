@@ -30,13 +30,8 @@ namespace {
 KeySequenceItemDelegate::KeySequenceItemDelegate(
   std::vector<KeySequenceEditor::ValidKeySequence> valid_key_sequences,
   QWidget* parent)
-  : QStyledItemDelegate(parent),
+  : KeyBindingItemDelegate(parent),
     m_valid_key_sequences(std::move(valid_key_sequences)) {}
-
-connection KeySequenceItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
 
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -52,8 +47,7 @@ void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   QStyledItemDelegate::paint(painter, option, index);
   painter->save();
-  painter->fillRect(option.rect,
-    index.model()->data(index, Qt::BackgroundRole).value<QColor>());
+  painter->fillRect(option.rect, m_background_color);
   if(!option.state.testFlag(QStyle::State_Editing)) {
     auto sequence = index.data(Qt::DisplayRole).value<QKeySequence>();
     if(!sequence.isEmpty()) {
@@ -78,24 +72,6 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
     }
   }
   m_item_modified_signal(index);
-}
-
-QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
-    const QModelIndex& index) const {
-  return QStyledItemDelegate::sizeHint(option, index);
-}
-
-void KeySequenceItemDelegate::updateEditorGeometry(QWidget* editor,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  if(index.row() == 0) {
-    auto rect = option.rect.translated(0, 1);
-    editor->move(rect.topLeft());
-    rect.setHeight(rect.height() - 1);
-    editor->resize(rect.size());
-  } else {
-    editor->move(option.rect.topLeft());
-    editor->resize(option.rect.size());
-  }
 }
 
 bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
@@ -142,9 +118,4 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
   painter->setPen(Qt::black);
   painter->drawText(pos.x() + TEXT_PADDING(),
     pos.y() - (text_size.height() / 2), text);
-}
-
-void KeySequenceItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }

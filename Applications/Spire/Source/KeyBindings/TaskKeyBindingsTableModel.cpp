@@ -52,9 +52,6 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
   if(!index.isValid()) {
     return QVariant();
   }
-  if(role == Qt::BackgroundRole) {
-    return QVariant::fromValue<QColor>(Qt::blue);
-  }
   if(role == Qt::DisplayRole &&
       index.row() < static_cast<int>(m_key_bindings.size())) {
     switch(static_cast<Columns>(index.column())) {

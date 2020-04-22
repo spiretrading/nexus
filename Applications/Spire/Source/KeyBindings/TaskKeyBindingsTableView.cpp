@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
 #include "Spire/KeyBindings/DestinationItemDelegate.hpp"
-#include "Spire/KeyBindings/InputFieldItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/KeyBindings/OrderTypeItemDelegate.hpp"
