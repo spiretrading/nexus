@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
-#include <QTabWidget>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
+#include "Spire/KeyBindings/CustomTabWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -36,7 +36,7 @@ namespace Spire {
     private:
       KeyBindings m_key_bindings;
       mutable ApplySignal m_apply_signal;
-      QTabWidget* m_tab_widget;
+      CustomTabWidget* m_tab_widget;
       bool m_last_focus_was_key;
       TaskKeyBindingsTableView* m_task_keys_table;
       CancelKeyBindingsTableView* m_cancel_keys_table;

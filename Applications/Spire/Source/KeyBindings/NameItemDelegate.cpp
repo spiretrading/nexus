@@ -10,7 +10,8 @@ NameItemDelegate::NameItemDelegate(QWidget* parent)
 
 QWidget* NameItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new QLineEdit(parent);
+  auto str = index.data().value<QString>();
+  auto editor = new QLineEdit("test", parent);
   editor->setStyleSheet(QString(R"(
     font-family: Roboto;
     font-size: %1px;
@@ -18,6 +19,13 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
   connect(editor, &QLineEdit::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;
+}
+
+void NameItemDelegate::setEditorData(QWidget *editor,
+    const QModelIndex &index) const {
+  auto line_edit = static_cast<QLineEdit*>(editor);
+  line_edit->setText(index.data().value<QString>());
+  line_edit->setCursorPosition(line_edit->text().length());
 }
 
 void NameItemDelegate::setModelData(QWidget* editor,

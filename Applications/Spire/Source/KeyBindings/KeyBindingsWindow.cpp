@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include <QKeyEvent>
-#include <QTabBar>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
@@ -50,41 +49,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
   Window::layout()->addWidget(body);
-  m_tab_widget = new QTabWidget(this);
-  m_tab_widget->tabBar()->setFixedHeight(scale_height(40));
-  m_tab_widget->setStyleSheet(QString(R"(
-    QWidget {
-      outline: none;
-    }
-
-    QTabWidget::pane {
-      border: none;
-    }
-
-    QTabBar::tab {
-      background-color: #EBEBEB;
-      font-family: Roboto;
-      font-size: %1px;
-      height: %2px;
-      margin: %3px %4px %3px %7px;
-      width: %5px;
-    }
-
-    QTabBar::tab:focus {
-      border: %6px solid #4B23A0;
-      padding: -%6px 0px 0px -%6px;
-    }
-
-    QTabBar::tab:hover {
-      color: #4B23A0;
-    }
-
-    QTabBar::tab:selected {
-      background-color: #F5F5F5;
-      color: #4B23A0;
-    })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
-        .arg(scale_width(8)));
+  m_tab_widget = new CustomTabWidget(this);
   layout->addWidget(m_tab_widget);
   connect(m_tab_widget, &QTabWidget::currentChanged, this,
     &KeyBindingsWindow::on_tab_changed);

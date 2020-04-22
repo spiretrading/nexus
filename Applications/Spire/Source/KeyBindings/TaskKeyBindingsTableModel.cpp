@@ -167,7 +167,14 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
   if(role == Qt::DisplayRole && value.isValid()) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
+        if(index.row() == m_key_bindings.size() &&
+            value.value<QString>().isEmpty()) {
+          return false;
+        }
         emit dataChanged(index, index, {role});
+        if(index.row() == m_key_bindings.size()) {
+          m_key_bindings.push_back({});
+        }
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
         return true;
