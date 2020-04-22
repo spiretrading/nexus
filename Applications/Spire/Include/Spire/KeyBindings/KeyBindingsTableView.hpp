@@ -44,6 +44,8 @@ namespace Spire {
       */
       void set_model(QAbstractTableModel* model);
 
+      void set_sorting_enabled(bool is_sorting_enabled);
+
       //! Sets the table height.
       /*
         \param height The table height.
@@ -66,6 +68,7 @@ namespace Spire {
       void update_delete_buttons(int selected_index);
       void on_data_changed(const QModelIndex& index);
       void on_delete_button_clicked(int index);
+      void on_header_clicked(int index);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
