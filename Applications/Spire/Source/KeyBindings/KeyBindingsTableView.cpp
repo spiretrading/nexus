@@ -38,7 +38,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_move);
   auto header_layout = new QVBoxLayout();
   if(m_can_delete_rows) {
-    header_layout->setContentsMargins(scale_width(26), 0, 0, 0);
+    header_layout->setContentsMargins(scale_width(22), 0, 0, 0);
   } else {
     header_layout->setContentsMargins({});
   }
@@ -46,13 +46,12 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   header_layout->addWidget(m_header);
   layout->addLayout(header_layout);
   m_table = new CustomGridTableView(this);
-  m_table->setStyleSheet("background-color: red;");
   if(m_can_delete_rows) {
     auto table_layout = new QHBoxLayout();
     table_layout->setContentsMargins({});
     table_layout->setSpacing(0);
     m_delete_buttons_layout = new QVBoxLayout();
-    m_delete_buttons_layout->setContentsMargins(scale_width(10),
+    m_delete_buttons_layout->setContentsMargins(scale_width(6),
       scale_height(9), 0, 0);
     m_delete_buttons_layout->setSpacing(scale_height(18));
     table_layout->addLayout(m_delete_buttons_layout);
