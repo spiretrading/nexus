@@ -9,23 +9,24 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
+SET BEAM_COMMIT="3031e63b83b897292fc6c91e7c64d4371a135946"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
     SET BUILD_BEAM=1
+    git checkout "!BEAM_COMMIT!"
   ) ELSE (
     RD /S /Q Beam
     SET EXIT_STATUS=1
   )
 )
-SET beam_commit="3031e63b83b897292fc6c91e7c64d4371a135946"
 IF EXIST Beam (
   PUSHD Beam
-  git merge-base --is-ancestor "!beam_commit!" HEAD
+  git merge-base --is-ancestor "!BEAM_COMMIT!" HEAD
   IF !ERRORLEVEL! NEQ 0 (
     git checkout master
     git pull
-    git checkout "!beam_commit!"
+    git checkout "!BEAM_COMMIT!"
     SET BUILD_BEAM=1
   )
   IF !BUILD_BEAM! EQU 1 (
