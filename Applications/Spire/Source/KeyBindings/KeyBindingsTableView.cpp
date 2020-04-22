@@ -31,8 +31,6 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   auto layout = new QVBoxLayout(main_widget);
   layout->setContentsMargins({});
   layout->setSpacing(0);
-  connect(m_header, &QHeaderView::sectionClicked, this,
-    &KeyBindingsTableView::on_header_clicked);
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
@@ -120,10 +118,6 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   }
 }
 
-void KeyBindingsTableView::set_sorting_enabled(bool is_sorting_enabled) {
-  m_table->setSortingEnabled(is_sorting_enabled);
-}
-
 void KeyBindingsTableView::set_height(int height) {
   widget()->setFixedHeight(height);
   m_table->setFixedHeight(height);
@@ -165,10 +159,6 @@ void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
 
 void KeyBindingsTableView::on_delete_button_clicked(int index) {
   m_table->model()->removeRow(index);
-}
-
-void KeyBindingsTableView::on_header_clicked(int index) {
-  m_table->sortByColumn(index, m_header->sortIndicatorOrder());
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
