@@ -59,8 +59,8 @@ export class AccountDirectoryController extends
       () => {
         this.setState({
           isLoaded: true
+        });
       });
-    });
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {
