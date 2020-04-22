@@ -131,11 +131,11 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    JsonObject chartingService;
-    chartingService["addresses"] =
-      ToString(chartingServerConnectionInitializer.m_addresses);
+    auto service = JsonObject();
+    service["addresses"] = lexical_cast<std::string>(
+      Stream(chartingServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
-      chartingServerConnectionInitializer.m_serviceName, chartingService);
+      chartingServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;

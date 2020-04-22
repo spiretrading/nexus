@@ -1,5 +1,5 @@
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
-#include <Beam/Pointers/UniquePtr.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -46,7 +46,8 @@ void TranslationPreprocessor::Visit(const CanvasNode& node) {
 }
 
 void TranslationPreprocessor::Visit(const FoldNode& node) {
-  auto translatedNode = UniqueStaticCast<FoldNode>(DefaultTranslation(node));
+  auto translatedNode = StaticCast<std::unique_ptr<FoldNode>>(
+    DefaultTranslation(node));
   if(translatedNode == nullptr) {
     translatedNode = CanvasNode::Clone(node);
   }

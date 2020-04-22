@@ -3,6 +3,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Queues/AggregateQueue.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
@@ -16,7 +17,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -32,6 +33,7 @@ using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::Queries;
 using namespace Beam::Routines;
 using namespace Beam::Serialization;
@@ -165,7 +167,7 @@ int main(int argc, const char** argv) {
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
@@ -241,11 +243,11 @@ int main(int argc, const char** argv) {
     return -1;
   }
   try {
-    JsonObject riskService;
-    riskService["addresses"] =
-      ToString(riskServerConnectionInitializer.m_addresses);
+    auto service = JsonObject();
+    service["addresses"] = lexical_cast<std::string>(
+      Stream(riskServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
-      riskServerConnectionInitializer.m_serviceName, riskService);
+      riskServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
     cerr << "Error registering service: " << e.what() << endl;
     return -1;

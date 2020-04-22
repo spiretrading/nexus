@@ -2,7 +2,7 @@
 #define SPIRE_LINKEDNODE_HPP
 #include <memory>
 #include <string>
-#include <Beam/Pointers/UniquePtr.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <boost/optional/optional.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
@@ -56,7 +56,7 @@ namespace Spire {
   template<typename T>
   std::unique_ptr<T> LinkedNode::SetReferent(const T& node,
       const std::string& referent) {
-    return Beam::UniqueStaticCast<T>(node.SetReferent(referent));
+    return Beam::StaticCast<std::unique_ptr<T>>(node.SetReferent(referent));
   }
 }
 

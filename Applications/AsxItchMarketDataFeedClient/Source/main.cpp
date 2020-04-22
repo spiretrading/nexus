@@ -11,6 +11,7 @@
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -20,6 +21,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "AsxItchMarketDataFeedClient/AsxItchMarketDataFeedClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -32,6 +34,7 @@ using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
@@ -130,8 +133,8 @@ int main(int argc, const char** argv) {
       cerr << "No market data services available." << endl;
       return -1;
     }
-    auto marketDataAddresses = FromString<vector<IpAddress>>(
-      get<string>(marketDataService->GetProperties().At("addresses")));
+    auto marketDataAddresses = Parse<std::vector<IpAddress>>(get<std::string>(
+      marketDataService->GetProperties().At("addresses")));
     auto samplingTime = Extract<time_duration>(config, "sampling");
     baseMarketDataFeedClient.emplace(
       Initialize(marketDataAddresses, Ref(socketThreadPool)),

@@ -85,7 +85,8 @@ namespace {
         unique_ptr<UserCatalogEntry> entry = std::make_unique<UserCatalogEntry>(
           settings.GetSettingsPath());
         receiver.Shuttle(*entry);
-        settings.Add(UniqueStaticCast<CatalogEntry>(std::move(entry)));
+        settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
+          std::move(entry)));
       } catch(std::exception&) {
         warnings += QObject::tr("Failed to load: ") +
           QString::fromStdString(path(*i).string()) + "\n";
@@ -118,7 +119,8 @@ namespace {
           CatalogSettings::GetCatalogLibraryRegistryPath(),
           Ref(registryClient));
         receiver.Shuttle(*entry);
-        settings.Add(UniqueStaticCast<CatalogEntry>(std::move(entry)));
+        settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
+          std::move(entry)));
       } catch(std::exception&) {}
     }
   }

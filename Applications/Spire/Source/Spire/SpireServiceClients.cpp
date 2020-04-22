@@ -27,6 +27,7 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::RegistryService;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
@@ -210,7 +211,7 @@ void SpireServiceClients::Open() {
     BOOST_THROW_EXCEPTION(ConnectException{"No time services available."});
   }
   auto& timeService = timeServices.front();
-  auto ntpPool = FromString<vector<IpAddress>>(get<string>(
+  auto ntpPool = Parse<vector<IpAddress>>(get<string>(
     timeService.GetProperties().At("addresses")));
   auto timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(*m_socketThreadPool),
     Ref(*m_timerThreadPool));

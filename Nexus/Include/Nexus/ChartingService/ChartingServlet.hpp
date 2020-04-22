@@ -1,12 +1,12 @@
 #ifndef NEXUS_CHARTING_SERVLET_HPP
 #define NEXUS_CHARTING_SERVLET_HPP
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Pointers/UniquePtr.hpp>
 #include <Beam/Queries/ConversionEvaluatorNode.hpp>
 #include <Beam/Queries/IndexedExpressionSubscriptions.hpp>
 #include <Beam/Queries/ExpressionSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Utilities/Casts.hpp>
 #include <Beam/Utilities/InstantiateTemplate.hpp>
 #include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
@@ -26,8 +26,8 @@ namespace Details {
     template<typename T>
     static std::unique_ptr<Beam::Queries::BaseEvaluatorNode> Template(
         std::unique_ptr<Beam::Queries::BaseEvaluatorNode> baseExpression) {
-      auto expression = Beam::UniqueStaticCast<
-        Beam::Queries::EvaluatorNode<T>>(std::move(baseExpression));
+      auto expression = Beam::StaticCast<std::unique_ptr<
+        Beam::Queries::EvaluatorNode<T>>>(std::move(baseExpression));
       return Beam::Queries::MakeConstructEvaluatorNode<
         T, Queries::QueryVariant>(std::move(expression));
     }

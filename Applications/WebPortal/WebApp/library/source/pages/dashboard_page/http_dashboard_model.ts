@@ -69,7 +69,7 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.definitionsClient.countryDatabase,
       this.serviceClients.definitionsClient.currencyDatabase,
       this.serviceClients.definitionsClient.marketDatabase,
-      new HttpAccountDirectoryModel(this.serviceClients));
+      new HttpAccountDirectoryModel(account, this.serviceClients));
     return this.model.load();
   }
 
