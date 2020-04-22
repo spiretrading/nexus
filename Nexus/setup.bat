@@ -14,7 +14,9 @@ IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
     SET BUILD_BEAM=1
+    PUSHD Beam
     git checkout "!BEAM_COMMIT!"
+    POPD
   ) ELSE (
     RD /S /Q Beam
     SET EXIT_STATUS=1
