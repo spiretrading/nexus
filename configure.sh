@@ -40,6 +40,6 @@ for i in $targets; do
     mkdir -p "$i"
   fi
   pushd "$i"
-  "$directory/$i/configure.sh" -DD="$root/Dependencies" "$@"
+  "$directory/$i/configure.sh" -DD="$root/Nexus/Dependencies" "$@"
   popd
 done
