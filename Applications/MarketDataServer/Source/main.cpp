@@ -15,8 +15,10 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
@@ -248,8 +250,8 @@ int main(int argc, const char** argv) {
   }
   try {
     auto registryService = JsonObject();
-    registryService["addresses"] =
-      ToString(registryServerConnectionInitializer.m_addresses);
+    registryService["addresses"] = lexical_cast<std::string>(Stream(
+      registryServerConnectionInitializer.m_addresses));
     if(countries != JsonNull{}) {
       registryService["countries"] = countries;
     }
@@ -272,8 +274,8 @@ int main(int argc, const char** argv) {
   }
   try {
     auto feedService = JsonObject();
-    feedService["addresses"] =
-      ToString(feedServerConnectionInitializer.m_addresses);
+    feedService["addresses"] = lexical_cast<std::string>(
+      Stream(feedServerConnectionInitializer.m_addresses));
     if(countries != JsonNull()) {
       feedService["countries"] = countries;
     }
