@@ -178,14 +178,14 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     }
     emit dataChanged(index, index, {role});
   }
-  if(role == Qt::DisplayRole && value.isValid()) {
+  if(role == Qt::DisplayRole) {
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
+        emit dataChanged(index, index, {role});
         if(index.row() == m_key_bindings.size() &&
             value.value<QString>().isEmpty()) {
           return false;
         }
-        emit dataChanged(index, index, {role});
         if(index.row() == m_key_bindings.size()) {
           beginInsertRows(QModelIndex(), index.row(), index.row());
           m_key_bindings.push_back({});
@@ -212,6 +212,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           m_key_bindings[index.row()].m_action.m_type =
             value.value<OrderType>();
         } else {
+          if(index.row() == m_key_bindings.size()) {
+            return false;
+          }
           m_key_bindings[index.row()].m_action.m_type = {};
         }
         if(is_row_empty(index.row())) {
@@ -228,6 +231,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           }
           m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
         } else {
+          if(index.row() == m_key_bindings.size()) {
+            return false;
+          }
           m_key_bindings[index.row()].m_action.m_side = {};
         }
         if(is_row_empty(index.row())) {
@@ -245,6 +251,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           m_key_bindings[index.row()].m_action.m_quantity =
             value.value<Quantity>();
         } else {
+          if(index.row() == m_key_bindings.size()) {
+            return false;
+          }
           m_key_bindings[index.row()].m_action.m_quantity = {};
         }
         if(is_row_empty(index.row())) {
@@ -262,6 +271,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           m_key_bindings[index.row()].m_action.m_time_in_force =
             value.value<TimeInForce>();
         } else {
+          if(index.row() == m_key_bindings.size()) {
+            return false;
+          }
           m_key_bindings[index.row()].m_action.m_time_in_force = {};
         }
         if(is_row_empty(index.row())) {
