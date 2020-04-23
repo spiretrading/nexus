@@ -72,6 +72,8 @@ namespace Spire {
     private:
       std::vector<Action> m_key_bindings;
       boost::optional<int> m_highlighted_row;
+
+      bool is_row_empty(int row);
   };
 }
 

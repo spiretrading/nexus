@@ -193,6 +193,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
+        }
         return true;
       case Columns::SECURITY:
         return false;
@@ -211,6 +214,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_type = {};
         }
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
+        }
         return true;
       case Columns::SIDE:
         emit dataChanged(index, index, {role});
@@ -223,6 +229,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
         } else {
           m_key_bindings[index.row()].m_action.m_side = {};
+        }
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
         }
         return true;
       case Columns::QUANTITY:
@@ -238,6 +247,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         } else {
           m_key_bindings[index.row()].m_action.m_quantity = {};
         }
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
+        }
         return true;
       case Columns::TIME_IN_FORCE:
         emit dataChanged(index, index, {role});
@@ -251,6 +263,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             value.value<TimeInForce>();
         } else {
           m_key_bindings[index.row()].m_action.m_time_in_force = {};
+        }
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
         }
         return true;
       case Columns::CUSTOM_TAGS:
@@ -272,10 +287,25 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
         emit dataChanged(index, index, {role});
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
+        }
         return true;
       default:
         return false;
     }
   }
   return false;
+}
+
+bool TaskKeyBindingsTableModel::is_row_empty(int row) {
+  auto binding = m_key_bindings[row];
+  return binding.m_action.m_name.empty() &&
+      !binding.m_action.m_quantity.is_initialized() &&
+      !binding.m_action.m_side.is_initialized() &&
+      binding.m_action.m_tags.empty() &&
+      !binding.m_action.m_time_in_force.is_initialized() &&
+      !binding.m_action.m_type.is_initialized() &&
+      binding.m_region.GetSecurities().empty() &&
+      binding.m_sequence.isEmpty();
 }
