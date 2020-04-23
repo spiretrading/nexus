@@ -22,7 +22,7 @@ CustomTabWidget::CustomTabWidget(QWidget* parent)
       font-family: Roboto;
       font-size: %1px;
       height: %2px;
-      margin: %3px %4px %3px %7px;
+      margin: %3px %4px %3px 0px;
       width: %5px;
     }
 
@@ -39,8 +39,7 @@ CustomTabWidget::CustomTabWidget(QWidget* parent)
       background-color: #F5F5F5;
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
-        .arg(scale_width(8)));
+        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
 }
 
 void CustomTabWidget::paintEvent(QPaintEvent* event) {
