@@ -4,8 +4,10 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, PageWrapper } from '../..';
 import { AccountEntry } from './account_entry';
+import { CreateGroupModal } from './create_group_modal';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
+
 
 interface Properties {
 
@@ -40,15 +42,26 @@ interface Properties {
   onNewAccountClick?: () => void;
 }
 
+interface State {
+  isCreateGroupModalOpen: boolean;
+}
+
 
 /** Displays a directory of accounts. */
-export class AccountDirectoryPage extends React.Component<Properties> {
+export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},
     onNewGroupClick: () => {},
     onNewAccountClick: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isCreateGroupModalOpen: true
+    };
+  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -100,6 +113,13 @@ export class AccountDirectoryPage extends React.Component<Properties> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
+    const createGroupModal = (() => {
+      if(this.state.isCreateGroupModalOpen) {
+        return <CreateGroupModal displaySize={this.props.displaySize}/>
+      } else {
+        return true;
+      }
+    })();
     const cards = [];
     for (const group of this.props.groups) {
       const accounts = (() => {
@@ -120,6 +140,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
     }
     return (
       <PageWrapper>
+        {createGroupModal}
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
