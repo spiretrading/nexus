@@ -89,6 +89,9 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
+  auto padding_widget = new QWidget(this);
+  padding_widget->setFixedHeight(scale_height(12));
+  layout->addWidget(padding_widget);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);

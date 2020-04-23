@@ -44,7 +44,7 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_key_bindings(std::move(bindings));
   setFixedWidth(scale_width(871));
   set_width(scale_width(871));
-  set_height(scale_height(308));
+  set_height(scale_height(296));
   set_column_width(0, scale_width(80));
   set_minimum_column_width(0, scale_width(80));
   set_column_width(1, scale_width(100));
@@ -127,7 +127,7 @@ void TaskKeyBindingsTableView::on_item_modified(
 
 void TaskKeyBindingsTableView::on_row_count_changed() {
   if(m_model->rowCount(QModelIndex()) <= 10) {
-    set_height(scale_height(308));
+    set_height(scale_height(296));
     return;
   }
   set_height(m_model->rowCount(QModelIndex()) * scale_height(26) +
