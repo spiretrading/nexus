@@ -39,7 +39,7 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
   auto current_data = [&] {
     auto data = index.data(Qt::DisplayRole);
     if(data.isValid()) {
-      return displayText(data, QLocale());
+      return Spire::displayText(data.value<OrderType>());
     }
     return QString();
   }();
