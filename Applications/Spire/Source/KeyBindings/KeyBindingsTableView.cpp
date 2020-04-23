@@ -99,6 +99,10 @@ void KeyBindingsTableView::set_column_width(int column, int width) {
   m_header->resizeSection(column, width);
 }
 
+void KeyBindingsTableView::set_minimum_column_width(int column, int width) {
+  m_minimum_column_widths[column] = width;
+}
+
 void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   m_header->setModel(model);
   auto old_model = m_table->model();
@@ -184,6 +188,14 @@ void KeyBindingsTableView::on_header_resize(int index, int old_size,
     int new_size) {
   if(index == 8) {
     return;
+  }
+  if(m_minimum_column_widths.find(index) != m_minimum_column_widths.end()) {
+    auto min_width = m_minimum_column_widths[index];
+    if(new_size <= min_width) {
+      m_header->blockSignals(true);
+      m_header->resizeSection(index, min_width);
+      m_header->blockSignals(false);
+    }
   }
   m_table->horizontalHeader()->resizeSection(index,
      m_header->sectionSize(index));

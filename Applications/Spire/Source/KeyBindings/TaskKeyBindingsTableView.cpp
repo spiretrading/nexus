@@ -45,14 +45,23 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(80));
+  set_minimum_column_width(0, scale_width(80));
   set_column_width(1, scale_width(100));
+  set_minimum_column_width(1, scale_width(100));
   set_column_width(2, scale_width(89));
+  set_minimum_column_width(2, scale_width(89));
   set_column_width(3, scale_width(89));
+  set_minimum_column_width(3, scale_width(89));
   set_column_width(4, scale_width(59));
+  set_minimum_column_width(4, scale_width(59));
   set_column_width(5, scale_width(80));
+  set_minimum_column_width(5, scale_width(80));
   set_column_width(6, scale_width(98));
+  set_minimum_column_width(6, scale_width(98));
   set_column_width(7, scale_width(124));
+  set_minimum_column_width(7, scale_width(124));
   set_column_width(8, scale_width(110));
+  set_minimum_column_width(8, scale_width(110));
   auto name_delegate = new NameItemDelegate(this);
   name_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);

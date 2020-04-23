@@ -38,6 +38,8 @@ namespace Spire {
       */
       void set_column_width(int column, int width);
 
+      void set_minimum_column_width(int column, int width);
+
       //! Sets the model associated with the table view.
       /*
         \param model The model to use for this view.
@@ -64,6 +66,7 @@ namespace Spire {
       QHeaderView* m_header;
       bool m_can_delete_rows;
       QVBoxLayout* m_delete_buttons_layout;
+      std::unordered_map<int, int> m_minimum_column_widths;
 
       void add_delete_button(int index);
       void update_delete_buttons(int selected_index);
