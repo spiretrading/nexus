@@ -49,7 +49,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     font-family: Roboto;
     font-size: %1px;
     padding: %2px 0px %2px %3px;)")
-    .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(8)));
+    .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(5)));
   layout->addWidget(m_security_line_edit);
   if(m_has_border) {
     auto icon_label = new QLabel(this);
