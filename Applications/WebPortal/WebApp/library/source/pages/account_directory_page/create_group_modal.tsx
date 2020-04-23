@@ -51,9 +51,11 @@ export class CreateGroupModal extends React.Component<Properties> {
           height={modalDimensions.height}
           width={modalDimensions.width}>
         <div style={CreateGroupModal.STYLE.wrapper}>
-          <span>
-            <span>{CreateGroupModal.HEADER_TEXT}</span>
-            <span>X</span>
+          <span style={CreateGroupModal.STYLE.headerWrapper}>
+            <span style={CreateGroupModal.STYLE.header}>
+              {CreateGroupModal.HEADER_TEXT}
+            </span>
+            <span><img src={'/resources/account_directory_page/create_group_modal/remove.svg'}/></span>
           </span>
           <div style={inputStyle}>
             <TextField displaySize={this.props.displaySize}/>
@@ -69,6 +71,17 @@ export class CreateGroupModal extends React.Component<Properties> {
       padding: '18px',
       display: 'flex',
       flexDirection: 'column'
+    } as React.CSSProperties,
+    headerWrapper: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between'
+    } as React.CSSProperties,
+    header: {
+      font: '400 16px Roboto',
+      color: '#333333'
+    }as React.CSSProperties,
+    closeWrapper: {
     } as React.CSSProperties,
     stacked: {
       display: 'flex',
