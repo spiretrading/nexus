@@ -28,6 +28,7 @@ namespace Spire {
       TaskKeyBindingsTableModel* m_model;
 
       void on_item_modified(const QModelIndex& index) const;
+      void on_row_count_changed();
   };
 }
 

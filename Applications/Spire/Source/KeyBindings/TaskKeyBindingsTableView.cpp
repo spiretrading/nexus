@@ -9,6 +9,7 @@
 #include "Spire/KeyBindings/SideItemDelegate.hpp"
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
@@ -43,7 +44,7 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_key_bindings(std::move(bindings));
   setFixedWidth(scale_width(871));
   set_width(scale_width(871));
-  set_height(scale_height(376));
+  set_height(scale_height(308));
   set_column_width(0, scale_width(80));
   set_minimum_column_width(0, scale_width(80));
   set_column_width(1, scale_width(100));
@@ -108,10 +109,27 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
 void TaskKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::OrderActionBinding>& bindings) {
   m_model = new TaskKeyBindingsTableModel(bindings, this);
+  connect(m_model, &QAbstractItemModel::rowsInserted,
+    [=] (auto parent, auto first, auto last) {
+      on_row_count_changed();
+    });
+  connect(m_model, &QAbstractItemModel::rowsRemoved,
+    [=] (auto parent, auto first, auto last) {
+      on_row_count_changed();
+    });
   set_model(m_model);
 }
 
 void TaskKeyBindingsTableView::on_item_modified(
     const QModelIndex& index) const {
   m_modified_signal(KeyBindings::OrderActionBinding{});
+}
+
+void TaskKeyBindingsTableView::on_row_count_changed() {
+  if(m_model->rowCount(QModelIndex()) <= 10) {
+    set_height(scale_height(308));
+    return;
+  }
+  set_height(m_model->rowCount(QModelIndex()) * scale_height(26) +
+    scale_height(30) + scale_height(8));
 }

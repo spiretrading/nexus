@@ -187,7 +187,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         emit dataChanged(index, index, {role});
         if(index.row() == m_key_bindings.size()) {
+          beginInsertRows(QModelIndex(), index.row(), index.row());
           m_key_bindings.push_back({});
+          endInsertRows();
         }
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
@@ -200,7 +202,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
+            endInsertRows();
           }
           m_key_bindings[index.row()].m_action.m_type =
             value.value<OrderType>();
@@ -212,7 +216,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
+            endInsertRows();
           }
           m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
         } else {
@@ -223,7 +229,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         emit dataChanged(index, index, {role});
         if(value.isValid() && value.value<Quantity>() > 0) {
           if(index.row() == m_key_bindings.size()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
+            endInsertRows();
           }
           m_key_bindings[index.row()].m_action.m_quantity =
             value.value<Quantity>();
@@ -235,7 +243,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         emit dataChanged(index, index, {role});
         if(value.isValid()) {
           if(index.row() == m_key_bindings.size()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
+            endInsertRows();
           }
           m_key_bindings[index.row()].m_action.m_time_in_force =
             value.value<TimeInForce>();
@@ -247,7 +257,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       case Columns::KEY_BINDING:
         if(index.row() == m_key_bindings.size()) {
           if(!value.value<QKeySequence>().isEmpty()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
+            endInsertRows();
           } else {
             return false;
           }
