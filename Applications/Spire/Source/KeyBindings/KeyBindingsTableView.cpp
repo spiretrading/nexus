@@ -223,6 +223,16 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
 }
 
 void KeyBindingsTableView::on_table_clicked(const QModelIndex& index) {
+  auto cell_top = m_table->rowViewportPosition(index.row()) +
+    m_header->height();
+  auto cell_bottom = cell_top + m_table->rowHeight(index.row());
+  auto region = visibleRegion();
+  region.translate(0, verticalScrollBar()->value());
+  if(!region.contains(QPoint(0, cell_top))) {
+    ensureVisible(0, cell_top, 0, scale_height(8));
+  } else if(!region.contains(QPoint(0, cell_bottom))) {
+    ensureVisible(0, cell_bottom, 0, scale_height(8));
+  }
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     m_table->edit(index);
   }
