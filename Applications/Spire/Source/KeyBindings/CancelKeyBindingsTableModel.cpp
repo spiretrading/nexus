@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
+#include <QColor>
 
 using namespace Spire;
 using Action = CancelKeyBindingsTableModel::Action;
@@ -149,6 +150,9 @@ QVariant CancelKeyBindingsTableModel::data(const QModelIndex& index,
     int role) const {
   if(!index.isValid()) {
     return QVariant();
+  }
+  if(role == Qt::BackgroundRole) {
+    return QVariant::fromValue<QColor>(Qt::white);
   }
   if(role == Qt::DisplayRole) {
     if(index.column() == 0) {
