@@ -31,6 +31,12 @@ namespace Spire {
       */
       void set_border_style(int width, const QColor& color);
 
+      //! Disables scrolling with the mouse wheel.
+      /*
+        \param is_disabled True if mouse wheel scrolling is disabled.
+      */
+      void set_wheel_disabled(bool is_disabled);
+
       //! Sets the widget displayed in the scroll area.
       /*
         \param widget The widget to display.
@@ -45,6 +51,7 @@ namespace Spire {
 
     private:
       bool m_is_dynamic;
+      bool m_is_wheel_disabled;
       QTimer m_horizontal_scroll_bar_timer;
       QTimer m_vertical_scroll_bar_timer;
       double m_horizontal_scrolling_error;

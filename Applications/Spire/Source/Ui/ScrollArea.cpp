@@ -19,6 +19,7 @@ ScrollArea::ScrollArea(QWidget* parent)
 ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
     : QScrollArea(parent),
       m_is_dynamic(is_dynamic),
+      m_is_wheel_disabled(false),
       m_horizontal_scrolling_error(0.0),
       m_vertical_scrolling_error(0.0),
       m_border_color(Qt::transparent),
@@ -37,6 +38,10 @@ void ScrollArea::set_border_style(int width, const QColor& color) {
   } else {
     set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
   }
+}
+
+void ScrollArea::set_wheel_disabled(bool is_disabled) {
+  m_is_wheel_disabled = is_disabled;
 }
 
 void ScrollArea::setWidget(QWidget* widget) {
@@ -120,6 +125,9 @@ void ScrollArea::showEvent(QShowEvent* event) {
 }
 
 void ScrollArea::wheelEvent(QWheelEvent* event) {
+  if(m_is_wheel_disabled) {
+    return;
+  }
   if(event->modifiers().testFlag(Qt::ShiftModifier)) {
     if(m_is_dynamic) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
