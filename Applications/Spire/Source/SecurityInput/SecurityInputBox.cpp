@@ -111,7 +111,7 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::FocusIn) {
       m_security_line_edit->setFocus();
     } else if(event->type() == QEvent::WindowDeactivate) {
-      m_security_line_edit->hide();
+      m_securities->hide();
     }
   } else if(watched == parent()) {
     if(event->type() == QEvent::Wheel) {
