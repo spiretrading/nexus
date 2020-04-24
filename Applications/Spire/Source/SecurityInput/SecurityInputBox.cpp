@@ -40,8 +40,6 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   layout->setSpacing(0);
   m_security_line_edit = new QLineEdit(this);
   m_security_line_edit->installEventFilter(this);
-  connect(m_security_line_edit, &QLineEdit::returnPressed,
-    [=] { enter_pressed(); });
   connect(m_security_line_edit, &QLineEdit::textEdited,
     [=] { on_text_edited(); });
   m_security_line_edit->setStyleSheet(QString(R"(
@@ -87,6 +85,9 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       } else if(e->key() == Qt::Key_Up) {
         m_securities->activate_previous();
+        return true;
+      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+        enter_pressed();
         return true;
       }
     }
