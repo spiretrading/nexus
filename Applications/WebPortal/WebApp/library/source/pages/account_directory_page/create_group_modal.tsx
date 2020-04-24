@@ -25,6 +25,7 @@ export class CreateGroupModal extends React.Component<Properties> {
   
   public render(): JSX.Element {
     const hidden = (() => {
+      console.log(this.props.isOpen);
       if(!this.props.isOpen) {
         return CreateGroupModal.STYLE.hidden;
       } else {

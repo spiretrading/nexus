@@ -148,7 +148,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                     New Account
                   </button>
                   <div style={AccountDirectoryPage.STYLE.spacing}/>
-                  <button onClick={this.props.onNewGroupClick}
+                  <button onClick={this.onCreateGroupClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
@@ -179,6 +179,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
 
 
   private onCreateGroupClick = () => {
+    console.log('open modal!');
     this.setState({isCreateGroupModalOpen: true});
   }
 
