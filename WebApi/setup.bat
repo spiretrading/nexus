@@ -3,7 +3,7 @@ SETLOCAL
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
 )
-SET beam_commit="9e2b013020de342e10d40018a47ef350a8dd57a9"
+SET beam_commit="cfb05f2182b9cfb7314e9f164b2ff58611aee9cd"
 PUSHD Beam
 git merge-base --is-ancestor "%beam_commit%" HEAD
 IF NOT "%ERRORLEVEL%" == "0" (
