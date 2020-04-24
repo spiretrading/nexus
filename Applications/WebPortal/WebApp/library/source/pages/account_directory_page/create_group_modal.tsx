@@ -1,5 +1,4 @@
-import * as Beam from 'beam';
-import * as Nexus from 'nexus';
+import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { Button, DisplaySize, TextField} from '../..';
@@ -54,8 +53,9 @@ export class CreateGroupModal extends React.Component<Properties> {
       }
     })();
     return(
-      <div style={hidden}>
-      <OffCenterModal
+      <div>
+      <OffCenterModal 
+          isOpen={this.props.isOpen}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
           width={modalDimensions.width}
@@ -153,6 +153,8 @@ interface ModalProperties {
   /** The width of the modal. */
   width: string;
 
+  isOpen: boolean;
+
   /** Called when the modal should be closed. */
   onClose?: () => void;
 }
@@ -180,16 +182,24 @@ class OffCenterModal extends React.Component<ModalProperties> {
       return OffCenterModal.STYLE.filler;
     })();
     return (
-      <div style={OffCenterModal.STYLE.wrapper}>
-        <div style={modalWrapperStyle}onClick={this.outOfBoundsClick}>
-          <div style={OffCenterModal.STYLE.filler} onClick={this.props.onClose}/>
-          <div style={modalStyle}>
-            {this.props.children}
-          </div>
-          <div style={bottomPadding} onClick={this.props.onClose}/>
-        </div>
-        <div style={OffCenterModal.STYLE.overlay} onClick={this.props.onClose}/>
-      </div>);
+      <Transition in={this.props.isOpen}
+            timeout={OffCenterModal.MENU_TRANSITION_LENGTH_MS}
+            component={null}>
+          {(status: string) => {
+            return (
+              <div style={OffCenterModal.STYLE.wrapper}
+                className={css([OffCenterModal.ANIMATION.base, OffCenterModal.ANIMATION[status]])}>
+                <div style={modalWrapperStyle}onClick={this.outOfBoundsClick}>
+                  <div style={OffCenterModal.STYLE.filler} onClick={this.props.onClose}/>
+                  <div style={modalStyle}>
+                    {this.props.children}
+                  </div>
+                  <div style={bottomPadding} onClick={this.props.onClose}/>
+                </div>
+                <div style={OffCenterModal.STYLE.overlay} onClick={this.props.onClose}/>
+              </div>);
+          }}
+      </Transition>);
   }
 
   private outOfBoundsClick(event: React.MouseEvent<HTMLDivElement>) {
@@ -282,4 +292,21 @@ class OffCenterModal extends React.Component<ModalProperties> {
       flexShrink: 0
     }
   };
+  private static readonly MENU_TRANSITION_LENGTH_MS = 500;
+  private static readonly ANIMATION : any = StyleSheet.create({
+    base: {
+      opacity: 0,
+      transition:
+        `opacity ${OffCenterModal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
+    },
+    entering: {
+      opacity: 1,
+    },
+    entered: {
+      opacity: 1
+    },
+    exited: {
+      visibility: 'hidden' as 'hidden'
+    }
+  });
 }
