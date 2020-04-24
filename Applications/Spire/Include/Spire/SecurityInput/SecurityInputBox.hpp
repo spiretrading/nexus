@@ -22,21 +22,23 @@ namespace Spire {
       //! Constructs a blank security input box.
       /*!
         \param model The model to query for securities.
-        \param has_border True if the input box should have a styled border.
+        \param is_compact True if the input box should have a minimal style
+                          for embedding in a table.
         \param parent The parent to this widget.
       */
       explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
-        bool has_border, QWidget* parent = nullptr);
+        bool is_compact, QWidget* parent = nullptr);
 
       //! Constructs a security input box with an initial text value.
       /*!
         \param model The model to query for securities.
         \param initial_text The initial text to display in the line edit.
-        \param has_border True if the input box should have a styled border.
+        \param is_compact True if the input box should have a minimal style
+                          for embedding in a table.
         \param parent The parent to this widget.
       */
       explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
-        const QString& initial_text, bool has_border,
+        const QString& initial_text, bool is_compact,
         QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
@@ -52,7 +54,7 @@ namespace Spire {
     private:
       mutable CommitSignal m_commit_signal;
       SecurityInputModel* m_model;
-      bool m_has_border;
+      bool m_is_compact;
       QLineEdit* m_security_line_edit;
       SecurityInfoListView* m_securities;
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;

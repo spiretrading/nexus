@@ -16,16 +16,16 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
-    bool has_border, QWidget* parent)
-    : SecurityInputBox(Ref(model), "", has_border, parent) {}
+    bool is_compact, QWidget* parent)
+    : SecurityInputBox(Ref(model), "", is_compact, parent) {}
 
 SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
-    const QString& initial_text, bool has_border, QWidget* parent)
+    const QString& initial_text, bool is_compact, QWidget* parent)
     : QWidget(parent),
-      m_has_border(has_border),
+      m_is_compact(is_compact),
       m_model(model.Get()) {
   setObjectName("SecurityInputBox");
-  if(m_has_border) {
+  if(!m_is_compact) {
     setStyleSheet(QString(R"(
       #SecurityInputBox {
         border: %1px solid #C8C8C8;
@@ -51,7 +51,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     padding: %2px 0px %2px %3px;)")
     .arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(5)));
   layout->addWidget(m_security_line_edit);
-  if(m_has_border) {
+  if(!m_is_compact) {
     auto icon_label = new QLabel(this);
     icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(
       ":/Icons/search.svg", scale(10, 10))));
@@ -87,7 +87,7 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
         m_securities->activate_previous();
       }
     }
-    if(event->type() == QEvent::FocusIn && m_has_border) {
+    if(event->type() == QEvent::FocusIn && !m_is_compact) {
       setStyleSheet(QString(R"(
         #SecurityInputBox {
           border: %1px solid #4b23A0;
@@ -95,7 +95,7 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
         #SecurityInputBox:hover {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
-    } else if(event->type() == QEvent::FocusOut && m_has_border) {
+    } else if(event->type() == QEvent::FocusOut && !m_is_compact) {
       setStyleSheet(QString(R"(
         #SecurityInputBox {
           border: %1px solid #C8C8C8;
@@ -108,9 +108,10 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
       move_line_edit();
-    }
-    if(event->type() == QEvent::FocusIn) {
+    } else if(event->type() == QEvent::FocusIn) {
       m_security_line_edit->setFocus();
+    } else if(event->type() == QEvent::WindowDeactivate) {
+      m_security_line_edit->hide();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -156,7 +157,7 @@ void SecurityInputBox::move_line_edit() {
     geometry().bottomLeft()).x();
   auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     frameGeometry().bottomLeft()).y();
-  if(m_has_border) {
+  if(!m_is_compact) {
     m_securities->move(x_pos, y_pos + 1);
   } else {
     m_securities->move(x_pos, y_pos + 2);

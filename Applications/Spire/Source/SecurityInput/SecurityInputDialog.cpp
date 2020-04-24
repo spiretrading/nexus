@@ -117,7 +117,8 @@ void SecurityInputDialog::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void SecurityInputDialog::showEvent(QShowEvent* event) {
-  m_security_input_box = new SecurityInputBox(Ref(*m_model), m_initial_text, this);
+  m_security_input_box = new SecurityInputBox(Ref(*m_model), m_initial_text,
+    false, this);
   m_security_input_box->connect_commit_signal(
     [=] (const auto& s) { set_security(s); });
   m_layout->addWidget(m_security_input_box);

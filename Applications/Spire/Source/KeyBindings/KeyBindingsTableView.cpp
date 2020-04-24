@@ -212,7 +212,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
   if(new_value != 0) {
     auto x = [&] {
       if(m_can_delete_rows) {
-        // TODO: fix this magic number
+        // TODO: fix this magic number, clean up header layout
         return widget()->pos().x() + scale_width(21);
       }
       return widget()->pos().x();
