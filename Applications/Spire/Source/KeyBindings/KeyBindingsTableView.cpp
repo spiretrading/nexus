@@ -180,6 +180,10 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
     int new_size) {
+  if(m_table->isPersistentEditorOpen(m_table->currentIndex())) {
+    m_table->closePersistentEditor(m_table->currentIndex());
+    m_table->update();
+  }
   if(index == 8) {
     return;
   }
