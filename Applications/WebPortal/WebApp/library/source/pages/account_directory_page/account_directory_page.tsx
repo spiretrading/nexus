@@ -59,7 +59,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isCreateGroupModalOpen: true
+      isCreateGroupModalOpen: false
     };
   }
 
@@ -113,13 +113,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
-    const createGroupModal = (() => {
-      if(this.state.isCreateGroupModalOpen) {
-        return <CreateGroupModal displaySize={this.props.displaySize}/>
-      } else {
-        return true;
-      }
-    })();
+
     const cards = [];
     for (const group of this.props.groups) {
       const accounts = (() => {
@@ -140,7 +134,10 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     }
     return (
       <PageWrapper>
-        {createGroupModal}
+        <CreateGroupModal 
+          displaySize={this.props.displaySize}
+          isOpen={this.state.isCreateGroupModalOpen}
+          onClose={this.onCloseCreateGroup}/>
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
@@ -167,7 +164,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                   New Account
                 </button>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
-                <button onClick={this.props.onNewGroupClick}
+                <button onClick={this.onCreateGroupClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
@@ -178,6 +175,15 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           </div>
         </div>
       </PageWrapper>);
+  }
+
+
+  private onCreateGroupClick = () => {
+    this.setState({isCreateGroupModalOpen: true});
+  }
+
+  private onCloseCreateGroup = () => {
+    this.setState({isCreateGroupModalOpen: false});
   }
 
   private static readonly STYLE = {

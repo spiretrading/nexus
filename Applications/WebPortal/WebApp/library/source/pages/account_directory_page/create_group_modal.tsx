@@ -9,11 +9,11 @@ interface Properties {
   /** The size of the viewport. */
   displaySize: DisplaySize;
 
-  //isOpen: boolean;
+  isOpen: boolean;
 
-  //onClose: () => void;
+  onClose?: () => void;
 
-  //onCreateGroup: (name: string) => void;
+  onCreateGroup?: (name: string) => void;
 
 }
 
@@ -24,6 +24,13 @@ export class CreateGroupModal extends React.Component<Properties> {
   }
   
   public render(): JSX.Element {
+    const hidden = (() => {
+      if(!this.props.isOpen) {
+        return CreateGroupModal.STYLE.hidden;
+      } else {
+        return null;
+      }
+    })();
     const modalDimensions = (() => {
       if(this.props.displaySize === DisplaySize.SMALL){
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
@@ -38,13 +45,6 @@ export class CreateGroupModal extends React.Component<Properties> {
         return CreateGroupModal.STYLE.linear;
       }
     })();
-    const textFieldOverride = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL){
-        return CreateGroupModal.STYLE.textInputOverride;
-      } else {
-        return null;
-      }
-    })();
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL){
         return null;
@@ -53,10 +53,12 @@ export class CreateGroupModal extends React.Component<Properties> {
       }
     })();
     return(
+      <div style={hidden}>
       <OffCenterModal
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
-          width={modalDimensions.width}>
+          width={modalDimensions.width}
+          onClose={this.props.onClose}>
         <div style={CreateGroupModal.STYLE.wrapper}>
           <span style={CreateGroupModal.STYLE.headerWrapper}>
             <span style={CreateGroupModal.STYLE.header}>
@@ -65,7 +67,8 @@ export class CreateGroupModal extends React.Component<Properties> {
             <span>
               <img src={CreateGroupModal.IMAGE_SOURCE}
                 height={CreateGroupModal.IMAGE_SIZE} 
-                width={CreateGroupModal.IMAGE_SIZE}/>
+                width={CreateGroupModal.IMAGE_SIZE}
+                onClick={this.props.onClose}/>
             </span>
           </span>
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
@@ -76,10 +79,16 @@ export class CreateGroupModal extends React.Component<Properties> {
             <Button label={CreateGroupModal.BUTTON_TEXT} style={buttonStyle}/>
           </div>
         </div>
-      </OffCenterModal> );
+      </OffCenterModal>
+      </div>);
   }
 
   private static readonly STYLE = {
+    hidden: {
+      opacity: 0,
+      visibility: 'hidden' as 'hidden',
+      display: 'none' as 'none'
+    } as React.CSSProperties,
     wrapper: {
       boxSizing: 'border-box',
       padding: '18px',
