@@ -8,6 +8,35 @@ setup_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup_utils)
 
 
+def make_sub_args(arg_vars, *args):
+  sub_args = []
+  for arg in args:
+    if arg_vars[arg]:
+      sub_args += ['--' + arg, arg_vars[arg]]
+  return sub_args
+
+
+def setup_administration_server(arg_vars):
+  root_path = os.getcwd()
+  try:
+    os.chdir(os.path.join('AdministrationServer', 'Application'))
+    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
+      'local', 'world', 'address', 'password', 'mysql_address',
+      'mysql_username', 'mysql_password', 'mysql_schema'))
+  finally:
+    os.chdir(root_path)
+
+
+def setup_charting_server(arg_vars):
+  root_path = os.getcwd()
+  try:
+    os.chdir(os.path.join('ChartingServer', 'Application'))
+    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
+      'local', 'world', 'address', 'password'))
+  finally:
+    os.chdir(root_path)
+
+
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
@@ -20,33 +49,16 @@ def main():
   parser.add_argument('-p', '--password', type=str, help='Password.',
     required=False)
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
-    default='127.0.0.1:3306')
+    required=False)
   parser.add_argument('-mu', '--mysql_username', type=str,
     help='MySQL username.', required=False)
   parser.add_argument('-mp', '--mysql_password', type=str,
     help='MySQL password.', required=False)
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     required=False)
-  args = parser.parse_args()
-  os.chdir(os.path.join('AdministrationServer', 'Application'))
-  sub_args = []
-  if args.local:
-    sub_args += ['-l', args.local]
-  if args.password:
-    sub_args += ['-p', args.password]
-  if args.world:
-    sub_args += ['-w', args.world]
-  if args.address:
-    sub_args += ['-a', args.address]
-  if args.mysql_address:
-    sub_args += ['-ma', args.mysql_address]
-  if args.mysql_username:
-    sub_args += ['-mu', args.mysql_username]
-  if args.mysql_password:
-    sub_args += ['-mp', args.mysql_password]
-  if args.mysql_schema:
-    sub_args += ['-ms', args.mysql_schema]
-  setup_utils.run_subscript('setup.py', sub_args)
+  arg_vars = vars(parser.parse_args())
+  setup_administration_server(arg_vars)
+  setup_charting_server(arg_vars)
 
 
 if __name__ == '__main__':
