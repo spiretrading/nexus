@@ -10,11 +10,6 @@ using namespace Spire;
 QuantityItemDelegate::QuantityItemDelegate(QWidget* parent)
   : KeyBindingItemDelegate(parent) {}
 
-connection QuantityItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
-
 QWidget* QuantityItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new QuantityInputEditor(parent);
@@ -32,9 +27,4 @@ void QuantityItemDelegate::setModelData(QWidget* editor,
       Qt::DisplayRole);
     m_item_modified_signal(index);
   }
-}
-
-void QuantityItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }

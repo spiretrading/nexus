@@ -146,6 +146,10 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
   return ScrollArea::eventFilter(watched, event);
 }
 
+void KeyBindingsTableView::hideEvent(QHideEvent* event) {
+  m_table->closePersistentEditor(m_table->currentIndex());
+}
+
 void KeyBindingsTableView::add_delete_button(int index) {
   auto button = create_delete_button(this);
   button->installEventFilter(this);

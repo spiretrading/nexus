@@ -8,12 +8,7 @@ namespace Spire {
   class QuantityItemDelegate : public KeyBindingItemDelegate {
     public:
 
-      using ItemModifiedSignal = Signal<void (const QModelIndex& index)>;
-
       explicit QuantityItemDelegate(QWidget* parent = nullptr);
-
-      boost::signals2::connection connect_item_modified_signal(
-        const ItemModifiedSignal::slot_type& slot) const;
 
       QWidget* createEditor(QWidget* parent,
         const QStyleOptionViewItem& option,
@@ -21,12 +16,6 @@ namespace Spire {
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
-
-    private:
-      mutable ItemModifiedSignal m_item_modified_signal;
-      CustomVariantItemDelegate* m_item_delegate;
-
-      void on_editing_finished();
   };
 }
 
