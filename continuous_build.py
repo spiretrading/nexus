@@ -134,13 +134,10 @@ def build_repo(repo, path, branch):
       terminal_output += output[1] + b'\n\n\n\n'
     destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
-    nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
-      'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
-      'CseMarketDataFeedClient', 'CtaMarketDataFeedClient', 'DefinitionsServer',
-      'MarketDataRelayServer', 'MarketDataServer', 'RiskServer',
-      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
-      'UtpMarketDataFeedClient', 'WebPortal']
+    nexus_applications = ['AdministrationServer', 'ChartingServer',
+      'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
+      'MarketDataServer', 'RiskServer', 'SimulationMarketDataFeedClient',
+      'SimulationOrderExecutionServer', 'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
     copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)

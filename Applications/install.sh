@@ -13,13 +13,6 @@ nexus_applications+=" RiskServer"
 nexus_applications+=" SimulationOrderExecutionServer"
 nexus_applications+=" SimulationMarketDataFeedClient"
 nexus_applications+=" WebPortal"
-feed_applications="AsxItchMarketDataFeedClient"
-feed_applications+=" ChiaMarketDataFeedClient"
-feed_applications+=" CseMarketDataFeedClient"
-feed_applications+=" CtaMarketDataFeedClient"
-feed_applications+=" TmxIpMarketDataFeedClient"
-feed_applications+=" TmxTl1MarketDataFeedClient"
-feed_applications+=" UtpMarketDataFeedClient"
 
 make_copy() {
   cp_path="$1"
@@ -47,33 +40,6 @@ for application in $nexus_applications; do
   path="Nexus/Applications/$application/Application"
   make_copy "$path"
 done
-if [ "$1" = "-f" ]; then
-  for application in $feed_applications; do
-    path="Nexus/Applications/$application/Application"
-    make_copy "$path"
-    pushd "$application"
-    for sub_feed in $(ls -d "../$path/"*/ | xargs -L 1 basename); do
-      if [ ! -d "$sub_feed" ]; then
-        cp -r "../$path/$sub_feed" .
-      else
-        if [ ! -f "$sub_feed/config.yml" ]; then
-          cp "../$path/$sub_feed/config.default.yml" "$sub_feed"
-        fi
-      fi
-    done
-    ./create_softlinks.sh
-    popd
-  done
-fi
 
-python_directory=$(python3 -m site --user-site)
 cp -R Nexus/Applications/WebPortal/Application/web_app WebPortal
-cp Nexus/Dependencies/aspen/Libraries/Release/aspen.so $python_directory
-mkdir -p $python_directory/beam
-cp Nexus/Dependencies/Beam/Applications/Python/__init__.py \
-  $python_directory/beam
-cp Nexus/Dependencies/Beam/Beam/Libraries/Release/_beam.so \
-  $python_directory/beam
-mkdir -p $python_directory/nexus
-cp Nexus/Applications/Python/__init__.py $python_directory/nexus
-cp Nexus/Nexus/Libraries/Release/_nexus.so $python_directory/nexus
+./install_python.sh

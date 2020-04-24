@@ -10,8 +10,8 @@ services+=" ChartingServer"
 services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
-services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
+services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory

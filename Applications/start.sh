@@ -10,15 +10,15 @@ services+=" ChartingServer"
 services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
-services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
+services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
-  sleep 10
   pushd $directory
   ./stop_server.sh
   ./start_server.sh
   popd
+  sleep 3
 done
 
 pushd AdministrationServer
