@@ -23,14 +23,6 @@ export class CreateGroupModal extends React.Component<Properties> {
   }
   
   public render(): JSX.Element {
-    const hidden = (() => {
-      console.log(this.props.isOpen);
-      if(!this.props.isOpen) {
-        return CreateGroupModal.STYLE.hidden;
-      } else {
-        return null;
-      }
-    })();
     const modalDimensions = (() => {
       if(this.props.displaySize === DisplaySize.SMALL){
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
