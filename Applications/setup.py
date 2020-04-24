@@ -1,9 +1,11 @@
 import argparse
-import importlib.machinery
+import importlib.util
 import os
 
-setup_utils = importlib.machinery.SourceFileLoader('setup_utils',
-  os.path.join('..', 'Utilities', 'setup_utils.py')).load_module()
+spec = importlib.util.spec_from_file_location('setup_utils',
+  os.path.join('..', 'Utilities', 'setup_utils.py'))
+setup_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup_utils)
 
 
 def main():
