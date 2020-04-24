@@ -14,13 +14,14 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Key Bindings UI Tester"));
   initialize_resources();
   auto bindings = KeyBindings::get_default_key_bindings();
-  auto region = Region(Security("ASDF", 0));
+  auto region = Region(Security("MSFT", DefaultMarkets::NASDAQ(),
+    DefaultCountries::US()));
   auto action1 = KeyBindings::OrderAction{"Name 1", OrderType::LIMIT,
     Side::BID, TimeInForce(TimeInForce::Type::GTC), 456, {}};
   bindings.set(Qt::Key_F1, region, action1);
   auto action2 = KeyBindings::OrderAction{"Name 2", OrderType::LIMIT,
     Side::BID, TimeInForce(TimeInForce::Type::DAY), 789, {}};
-  bindings.set(Qt::Key_F2, Region(Region::Global()), action2);
+  bindings.set(Qt::Key_F2, region, action2);
   bindings.set({Qt::Key_Shift, Qt::Key_Escape},
     Region(Region(Region::Global())), KeyBindings::CancelAction::ALL);
   bindings.set({Qt::Key_Control, Qt::Key_Escape},
