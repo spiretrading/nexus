@@ -24,29 +24,28 @@ export class CreateGroupModal extends React.Component<Properties> {
   
   public render(): JSX.Element {
     const modalDimensions = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL){
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
       } else {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS;
       }
     })();
     const inputStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL){
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return CreateGroupModal.STYLE.stacked;
       } else {
         return CreateGroupModal.STYLE.linear;
       }
     })();
     const buttonStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL){
+      if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
         return CreateGroupModal.STYLE.buttonOverride;
       }
     })();
     return(
-      <div>
-      <OffCenterModal 
+      <OffCenterModal
           isOpen={this.props.isOpen}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
@@ -66,14 +65,13 @@ export class CreateGroupModal extends React.Component<Properties> {
           </span>
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
-            <TextField displaySize={this.props.displaySize} 
-                style={CreateGroupModal.STYLE.textInputOverride}/>
-            <div style={CreateGroupModal.STYLE.filler}/>
+            <TextField displaySize={this.props.displaySize}
+              style={CreateGroupModal.STYLE.textInputOverride}/>
+            <div style={CreateGroupModal.STYLE.inputFiller}/>
             <Button label={CreateGroupModal.BUTTON_TEXT} style={buttonStyle}/>
           </div>
         </div>
-      </OffCenterModal>
-      </div>);
+      </OffCenterModal>);
   }
 
   private static readonly STYLE = {
@@ -102,25 +100,25 @@ export class CreateGroupModal extends React.Component<Properties> {
     mediumPadding: {
       height: '30px',
       width: '100%'
-    },
+    } as React.CSSProperties,
     closeWrapper: {
     } as React.CSSProperties,
     stacked: {
       display: 'flex',
       flexDirection: 'column'
-    }as React.CSSProperties,
+    } as React.CSSProperties,
     linear: {
       display: 'flex',
       flexDirection: 'row'
-    }as React.CSSProperties,
-    filler: {
+    } as React.CSSProperties,
+    inputFiller: {
       height: '30px',
       width: '20px'
     }as React.CSSProperties,
     textInputOverride: {
       minWidth: '246px',
       flexGrow: 1
-    },
+    } as React.CSSProperties,
     buttonOverride: {
       width: '140px'
     }as React.CSSProperties
@@ -145,6 +143,7 @@ interface ModalProperties {
   /** The width of the modal. */
   width: string;
 
+  /** Determines if the modal is open. */
   isOpen: boolean;
 
   /** Called when the modal should be closed. */
@@ -163,16 +162,6 @@ class OffCenterModal extends React.Component<ModalProperties> {
   }
 
   public render(): JSX.Element {
-    const modalStyle = (() => {
-      return {...OffCenterModal.STYLE.modalLarge,
-        width: this.props.width, height: this.props.height};
-    })();
-    const modalWrapperStyle = (() => {
-      return OffCenterModal.STYLE.modalWrapperLarge;
-    })();
-    const bottomPadding = (() => {
-      return OffCenterModal.STYLE.filler;
-    })();
     return (
       <Transition in={this.props.isOpen}
             timeout={OffCenterModal.MENU_TRANSITION_LENGTH_MS}
@@ -181,12 +170,15 @@ class OffCenterModal extends React.Component<ModalProperties> {
             return (
               <div style={OffCenterModal.STYLE.wrapper}
                 className={css([OffCenterModal.ANIMATION.base, OffCenterModal.ANIMATION[status]])}>
-                <div style={modalWrapperStyle}onClick={this.outOfBoundsClick}>
-                  <div style={OffCenterModal.STYLE.filler} onClick={this.props.onClose}/>
-                  <div style={modalStyle}>
+                <div style={OffCenterModal.STYLE.modalWrapperLarge}
+                    onClick={this.outOfBoundsClick}>
+                  <div style={OffCenterModal.STYLE.topFiller} onClick={this.props.onClose}/>
+                  <div style={{...OffCenterModal.STYLE.modalLarge,
+                      width: this.props.width,
+                      height: this.props.height}}>
                     {this.props.children}
                   </div>
-                  <div style={bottomPadding} onClick={this.props.onClose}/>
+                  <div style={OffCenterModal.STYLE.bottomFiller} onClick={this.props.onClose}/>
                 </div>
                 <div style={OffCenterModal.STYLE.overlay} onClick={this.props.onClose}/>
               </div>);
@@ -207,8 +199,13 @@ class OffCenterModal extends React.Component<ModalProperties> {
       position: 'fixed' as 'fixed',
       zIndex: 9998000
     },
-    filler: {
-      flexBasis: '20px',
+    topFiller: {
+      flexBasis: '150px',
+      flexGrow: 0,
+      flexShrink: 0
+    },
+    bottomFiller: {
+      flexBasis: '40px',
       flexGrow: 1,
       flexShrink: 0
     },
@@ -225,37 +222,6 @@ class OffCenterModal extends React.Component<ModalProperties> {
       left: 0,
       right: 0,
       zIndex: 9998000
-    },
-    modalWrapperSmall: {
-      overflowY: 'auto' as 'auto',
-      overflowX: 'hidden' as 'hidden',
-      height: '100%',
-      maxHeight: '100%',
-      width: '100%',
-      position: 'fixed' as 'fixed',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      margin: 0,
-      padding: 0,
-      display: 'flex' as 'flex',
-      flexWrap: 'nowrap' as 'nowrap',
-      flexDirection: 'row' as 'row',
-      zIndex: 100000000
-    },
-    modalSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      paddingBottom: '40px',
-      backgroundColor: '#FFFFFF',
-      boxShadow: '0px 0px 6px #00000066',
-      height: '100%',
-      display: 'flex' as 'flex',
-      flexWrap: 'nowrap' as 'nowrap',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'flex-start' as 'flex-start',
-      flexGrow: 0,
-      flexShrink: 0
     },
     modalWrapperLarge: {
       overflowY: 'auto' as 'auto',
