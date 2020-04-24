@@ -1,11 +1,22 @@
 #!/bin/bash
-beam_commit="afe2841ee216d75ea3686ccb0e46d064f0f1a1ab"
+beam_commit="d3d0194c57868cab3c252efe56117b050c7969f9"
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
+  if [ "$?" == "0" ]; then
+    pushd Beam
+    git checkout "$beam_commit"
+    popd
+  else
+    rm -rf Beam
+    exit_status=1
+  fi
 fi
-pushd Beam
-if ! git merge-base --is-ancestor "$beam_commit" HEAD; then
-  git checkout master
-  git pull
-  git checkout "$beam_commit"
+if [ -d "Beam" ]; then
+  pushd Beam
+  if ! git merge-base --is-ancestor "$beam_commit" HEAD; then
+    git checkout master
+    git pull
+    git checkout "$beam_commit"
+  fi
+  popd
 fi

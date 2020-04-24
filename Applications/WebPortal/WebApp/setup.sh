@@ -8,17 +8,28 @@ done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
 "$directory/../../../WebApi/setup.sh"
+
 dali_commit="99a1f58c6c24b5553712b410186cb27119328bac"
 if [ ! -d "dali" ]; then
-  git clone https://www.github.com/spiretrading/dali.git
+  git clone https://www.github.com/spiretrading/dali
+  if [ "$?" == "0" ]; then
+    pushd dali
+    git checkout "$dali_commit"
+    popd
+  else
+    rm -rf dali
+    exit_status=1
+  fi
 fi
-pushd dali
-if ! git merge-base --is-ancestor "$dali_commit" HEAD; then
-  git checkout master
-  git pull
-  git checkout "$dali_commit"
+if [ -d "dali" ]; then
+  pushd dali
+  if ! git merge-base --is-ancestor "$dali_commit" HEAD; then
+    git checkout master
+    git pull
+    git checkout "$dali_commit"
+  fi
+  popd
 fi
-popd
 if [ ! -d WebApi ]; then
   mkdir WebApi
   pushd WebApi

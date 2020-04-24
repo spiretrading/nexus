@@ -1,12 +1,27 @@
 import argparse
+import importlib.util
+from mock import patch
 import os
 import shutil
-import subprocess
+import socket
 
-def call(command):
-  return subprocess.Popen(command, shell=True, executable='/bin/bash',
-    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode(
-    'utf-8')
+
+def get_ip():
+  with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as test_socket:
+    try:
+      test_socket.connect(('10.255.255.255', 1))
+      return test_socket.getsockname()[0]
+    except:
+      return '127.0.0.1'
+
+
+def run_subscript(path, arguments):
+  spec = importlib.util.spec_from_file_location('subscript', path)
+  subscript = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(subscript)
+  with patch.object(sys, 'argv', [path] + arguments):
+    subscript.main()
+
 
 def needs_quotes(value):
   special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
@@ -15,6 +30,7 @@ def needs_quotes(value):
     if c in special_characters:
       return True
   return False
+
 
 def translate(source, variables):
   for key in variables.keys():
@@ -36,11 +52,12 @@ def translate(source, variables):
       source = source.replace('$' + key, '%s' % variables[key])
   return source
 
+
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
-    default=call('hostname -I').strip())
+    default=get_ip())
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
     required=False)
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
@@ -56,9 +73,9 @@ def main():
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     default='spire')
   parser.add_argument('-gu', '--glimpse_username', type=str,
-    help='ASX Glimpse username.', default='""')
+    help='ASX Glimpse username.', default='')
   parser.add_argument('-gp', '--glimpse_password', type=str,
-    help='ASX Glimpse password.', default='""')
+    help='ASX Glimpse password.', default='')
   parser.add_argument('-cru', '--chia_retrans_username', type=str,
     help='CHIA retransmission username.', default='""')
   parser.add_argument('-crp', '--chia_retrans_password', type=str,
@@ -88,23 +105,25 @@ def main():
       'UtpMarketDataFeedClient']:
     if os.path.isdir(feed):
       os.chdir(feed)
-      call('python3 setup.py -l "%s" -a "%s" -p "%s"' %
-        (variables['local_interface'], variables['service_locator_address'],
-        variables['admin_password']))
+      run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
+        '-a', '"%s"' % variables['service_locator_address'],
+        '-p', '"%s"' % variables['admin_password']])
       os.chdir('..')
   if os.path.isdir('AsxItchMarketDataFeedClient'):
     os.chdir('AsxItchMarketDataFeedClient')
-    call('python3 setup.py -l "%s" -a "%s" -p "%s" -gu "%s" -gp "%s"' %
-      (variables['local_interface'], variables['service_locator_address'],
-      variables['admin_password'], variables['glimpse_username'],
-      variables['glimpse_password']))
+    run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
+      '-a', '"%s"' % variables['service_locator_address'],
+      '-p', '"%s"' % variables['admin_password'],
+      '-gu', '"%s"' % variables['glimpse_username'],
+      '-gp', '"%s"' % variables['glimpse_password']])
     os.chdir('..')
   if os.path.isdir('ChiaMarketDataFeedClient'):
     os.chdir('ChiaMarketDataFeedClient')
-    call('python3 setup.py -l "%s" -a "%s" -p "%s" -ru "%s" -rp "%s"' %
-      (variables['local_interface'], variables['service_locator_address'],
-      variables['admin_password'], variables['chia_retransmission_username'],
-      variables['chia_retransmission_password']))
+    run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
+      '-a', '"%s"' % variables['service_locator_address'],
+      '-p', '"%s"' % variables['admin_password'],
+      '-ru', '"%s"' % variables['chia_retransmission_username'],
+      '-rp', '"%s"' % variables['chia_retransmission_password']])
     os.chdir('..')
   for application in applications:
     application_directory = os.path.join('.', application)
@@ -120,6 +139,7 @@ def main():
         file.seek(0)
         file.write(source)
         file.truncate()
+
 
 if __name__ == '__main__':
   main()
