@@ -2,6 +2,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/KeyBindings/NameItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
@@ -18,15 +19,17 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
+  auto default_delegate = new NameItemDelegate(this);
+  set_column_delegate(0, default_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
-  auto item_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  item_delegate->connect_item_modified_signal([=] (auto index) {
+  auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
+  key_delegate->connect_item_modified_signal([=] (auto index) {
     on_key_sequence_modified(index);
   });
-  set_column_delegate(1, item_delegate);
+  set_column_delegate(1, key_delegate);
 }
 
 void CancelKeyBindingsTableView::set_key_bindings(
