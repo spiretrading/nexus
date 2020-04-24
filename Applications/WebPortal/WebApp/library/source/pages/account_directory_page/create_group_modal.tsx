@@ -38,6 +38,13 @@ export class CreateGroupModal extends React.Component<Properties> {
         return CreateGroupModal.STYLE.linear;
       }
     })();
+    const textFieldOverride = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL){
+        return CreateGroupModal.STYLE.textInputOverride;
+      } else {
+        return null;
+      }
+    })();
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL){
         return null;
@@ -55,10 +62,16 @@ export class CreateGroupModal extends React.Component<Properties> {
             <span style={CreateGroupModal.STYLE.header}>
               {CreateGroupModal.HEADER_TEXT}
             </span>
-            <span><img src={'/resources/account_directory_page/create_group_modal/remove.svg'}/></span>
+            <span>
+              <img src={CreateGroupModal.IMAGE_SOURCE}
+                height={CreateGroupModal.IMAGE_SIZE} 
+                width={CreateGroupModal.IMAGE_SIZE}/>
+            </span>
           </span>
+          <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
-            <TextField displaySize={this.props.displaySize}/>
+            <TextField displaySize={this.props.displaySize} 
+                style={CreateGroupModal.STYLE.textInputOverride}/>
             <div style={CreateGroupModal.STYLE.filler}/>
             <Button label={CreateGroupModal.BUTTON_TEXT} style={buttonStyle}/>
           </div>
@@ -68,11 +81,14 @@ export class CreateGroupModal extends React.Component<Properties> {
 
   private static readonly STYLE = {
     wrapper: {
+      boxSizing: 'border-box',
       padding: '18px',
       display: 'flex',
       flexDirection: 'column'
     } as React.CSSProperties,
     headerWrapper: {
+      boxSizing: 'border-box' as 'border-box',
+      height: '20px',
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between'
@@ -81,6 +97,10 @@ export class CreateGroupModal extends React.Component<Properties> {
       font: '400 16px Roboto',
       color: '#333333'
     }as React.CSSProperties,
+    mediumPadding: {
+      height: '30px',
+      width: '100%'
+    },
     closeWrapper: {
     } as React.CSSProperties,
     stacked: {
@@ -95,12 +115,19 @@ export class CreateGroupModal extends React.Component<Properties> {
       height: '30px',
       width: '20px'
     }as React.CSSProperties,
+    textInputOverride: {
+      minWidth: '246px',
+      flexGrow: 1
+    },
     buttonOverride: {
       width: '140px'
     }as React.CSSProperties
   }
-  private static readonly BUTTON_TEXT = 'CREATE';
-  private static readonly HEADER_TEXT = 'CREATE GROUP';
+  private static readonly BUTTON_TEXT = 'Create';
+  private static readonly HEADER_TEXT = 'Create Group';
+  private static readonly IMAGE_SIZE = '20px';
+  private static readonly IMAGE_SOURCE =
+    'resources/account_directory_page/create_group_modal/close.svg';
   private static readonly MODAL_SMALL_DIMENSIONS = {width: '282px', height: '184px'};
   private static readonly MODAL_LARGE_DIMENSIONS  = {width: '550px', height: '120px'}
 }
