@@ -10,12 +10,19 @@ function print_usage() {
 }
 
 function install_dependencies() {
-  apt-get update
-  apt-get install -y automake cmake g++ gcc gdb git libncurses5-dev \
-    libreadline6-dev libtool libxml2 libxml2-dev m4 make mysql-server nodejs \
-    npm parallel python3 python3-dev python3-pip ruby zip
+  if [ $is_root -eq 1 ]; then
+    apt-get update
+    apt-get install -y automake cmake g++ gcc gdb git libncurses5-dev \
+      libreadline6-dev libtool libxml2 libxml2-dev m4 make mysql-server nodejs \
+      npm parallel python3 python3-dev python3-pip ruby zip
+  fi
 }
 
+if [ "$EUID" == "0" ]; then
+  is_root=1
+else
+  is_root=0
+fi
 username=$(echo ${SUDO_USER:-${USER}})
 local_interface=$(echo -n `ip addr | \
   grep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
@@ -73,7 +80,11 @@ GRANT ALL PRIVILEGES ON market_data.* TO '$mysql_username'@'localhost'
   IDENTIFIED BY '$mysql_password';
 exit
 "
-mysql -uroot <<< "$mysql_input"
+if [ $is_root -eq 1 ]; then
+  mysql -uroot <<< "$mysql_input"
+else
+  sudo -u mysql -u$mysql_username -p$mysql_password <<< "$mysql_input"
+fi
 pushd Applications
 #sudo -u $username python3 setup.py -u "spireadmin"
 sudo -u $username ./install_python.sh
