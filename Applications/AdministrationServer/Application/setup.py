@@ -1,9 +1,10 @@
 import argparse
 import importlib.machinery
+import os
 import shutil
 
 setup_utils = importlib.machinery.SourceFileLoader('setup_utils',
-  '../../../Utilities/setup_utils.py').load_module()
+  os.path.join('..', '..', '..', 'Utilities', 'setup_utils.py')).load_module()
 
 
 def main():
