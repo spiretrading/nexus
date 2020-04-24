@@ -49,6 +49,7 @@ done
 if [ "$mysql_password" == "" ]; then
   echo "Missing argument -m for MySQL password."
   print_usage
+  exit 1
 fi
 if [ "$mysql_username" == "" ]; then
   mysql_username="spireadmin"
