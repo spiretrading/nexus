@@ -36,15 +36,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
-  auto header_layout = new QVBoxLayout();
-  if(m_can_delete_rows) {
-    header_layout->setContentsMargins(scale_width(22), 0, 0, 0);
-  } else {
-    header_layout->setContentsMargins({});
-  }
-  header_layout->setSpacing(0);
-  header_layout->addWidget(m_header);
-  layout->addLayout(header_layout);
+  auto header_padding = new QWidget(this);
+  header_padding->setFixedHeight(m_header->height());
+  layout->addWidget(header_padding);
   m_table = new CustomGridTableView(this);
   if(m_can_delete_rows) {
     auto table_layout = new QHBoxLayout();
@@ -57,6 +51,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     table_layout->addLayout(m_delete_buttons_layout);
     table_layout->addWidget(m_table);
     layout->addLayout(table_layout);
+    on_horizontal_slider_value_changed(0);
   } else {
     layout->addWidget(m_table);
   }
@@ -87,7 +82,6 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   connect(m_table, &QTableView::clicked, this,
     &KeyBindingsTableView::on_table_clicked);
   setWidget(main_widget);
-  m_table->selectRow(3);
 }
 
 void KeyBindingsTableView::set_column_delegate(int column,
@@ -216,9 +210,23 @@ void KeyBindingsTableView::on_header_move(int logical_index, int old_index,
 
 void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
   if(new_value != 0) {
-    m_header->move(widget()->pos().x(), m_header->pos().y());
+    auto x = [&] {
+      if(m_can_delete_rows) {
+        // TODO: fix this magic number
+        return widget()->pos().x() + scale_width(21);
+      }
+      return widget()->pos().x();
+    }();
+    m_header->move(x, m_header->pos().y());
   } else {
-    m_header->move(0, m_header->pos().y());
+    auto x = [&] {
+      if(m_can_delete_rows) {
+        // TODO: fix this magic number
+        return scale_width(21);
+      }
+      return 0;
+    }();
+    m_header->move(x, m_header->pos().y());
   }
 }
 

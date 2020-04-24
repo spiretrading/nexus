@@ -144,7 +144,7 @@ QVariant TaskKeyBindingsTableModel::headerData(int section,
       case Columns::TIME_IN_FORCE:
         return tr("Time in Force");
       case Columns::CUSTOM_TAGS:
-        return tr("Custom Tags");
+        return tr("Custom Tag");
       case Columns::KEY_BINDING:
         return tr("Key");
       default:
