@@ -84,8 +84,10 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Down) {
         m_securities->activate_next();
+        return true;
       } else if(e->key() == Qt::Key_Up) {
         m_securities->activate_previous();
+        return true;
       }
     }
     if(event->type() == QEvent::FocusIn && !m_is_compact) {
