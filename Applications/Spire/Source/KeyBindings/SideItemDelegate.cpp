@@ -15,12 +15,12 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
   auto current_data = [&] {
     auto data = index.data(Qt::DisplayRole);
     if(data.isValid()) {
-      return displayText(data, QLocale());
+      return Spire::displayText(data.value<Side>());
     }
     return QString();
   }();
   auto editor = new InputFieldEditor(current_data,
-    {displayText(Side::ASK, QLocale()), displayText(Side::BID, QLocale())},
+    {Spire::displayText(Side::ASK), Spire::displayText(Side::BID)},
     parent);
   connect(editor, &InputFieldEditor::editingFinished,
     this, &SideItemDelegate::on_editing_finished);
@@ -30,10 +30,10 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
 void SideItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto variant = [&] {
-    auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-    if(item == displayText(Side::BID, QLocale())) {
+    auto item = static_cast<InputFieldEditor*>(editor)->get_item().toLower();
+    if(item == Spire::displayText(Side::BID).toLower()) {
       return QVariant::fromValue<Side>(Side::BID);
-    } else if(item == displayText(Side::ASK, QLocale())) {
+    } else if(item == Spire::displayText(Side::ASK).toLower()) {
       return QVariant::fromValue<Side>(Side::ASK);
     }
     return QVariant();
