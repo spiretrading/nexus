@@ -20,6 +20,12 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     return this._model.groups;
   }
 
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    const group = await this._model.createGroup(name);
+    this._model.groups.add(group);
+    return group;
+  }
+
   public async loadAccounts(
       group: Beam.DirectoryEntry): Promise<AccountEntry[]> {
     if(!this._accounts.get(group)) {

@@ -1,13 +1,17 @@
 import argparse
 import os
 import shutil
-import subprocess
-import sys
+import socket
 
-def call(command):
-  return subprocess.Popen(command, shell=True, executable='/bin/bash',
-    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0].decode(
-    'utf-8')
+
+def get_ip():
+  with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as test_socket:
+    try:
+      test_socket.connect(('10.255.255.255', 1))
+      return test_socket.getsockname()[0]
+    except:
+      return '127.0.0.1'
+
 
 def needs_quotes(value):
   special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
@@ -16,6 +20,7 @@ def needs_quotes(value):
     if c in special_characters:
       return True
   return False
+
 
 def translate(source, variables):
   for key in variables.keys():
@@ -37,11 +42,12 @@ def translate(source, variables):
       source = source.replace('$' + key, '%s' % variables[key])
   return source
 
+
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
-    default=call('hostname -I').strip())
+    default=get_ip())
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
   parser.add_argument('-u', '--username', type=str, help='Username',
@@ -72,6 +78,7 @@ def main():
         file.write(source)
         file.truncate()
         shutil.move(default_path, os.path.join(filename, 'config.yml'))
+
 
 if __name__ == '__main__':
   main()

@@ -7,28 +7,70 @@ import { AccountEntry } from './account_entry';
 export class HttpAccountDirectoryModel extends AccountDirectoryModel {
 
   /** Constructs an HttpAccountDirectoryModel.
+   * @param account The account whose trading groups are modelled.
    * @param serviceClients - The ServiceClients used to query.
    */
-  constructor(serviceClients: Nexus.ServiceClients) {
+  constructor(account: Beam.DirectoryEntry,
+      serviceClients: Nexus.ServiceClients) {
     super();
+    this.account = account;
     this.serviceClients = serviceClients;
   }
 
-  public async load(): Promise<void> {}
-
-  public get groups(): Beam.Set<Beam.DirectoryEntry> {
-    return new Beam.Set<Beam.DirectoryEntry>();
+  public async load(): Promise<void> {
+    const groups =
+      await this.serviceClients.administrationClient.loadManagedTradingGroups(
+      this.account);
+    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    for(const group of groups) {
+      this._groups.add(group);
+    }
   }
 
-  public async loadAccounts(
-      group: Beam.DirectoryEntry): Promise<AccountEntry[]> {
-    return [];
+  public get groups(): Beam.Set<Beam.DirectoryEntry> {
+    return this._groups.clone();
+  }
+
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    return await this.serviceClients.administrationClient.createGroup(name);
+  }
+
+  public async loadAccounts(group: Beam.DirectoryEntry):
+      Promise<AccountEntry[]> {
+    const tradingGroup =
+      await this.serviceClients.administrationClient.loadTradingGroup(group);
+    const accounts = [];
+    for(const manager of tradingGroup.managers) {
+      const roles =
+        await this.serviceClients.administrationClient.loadAccountRoles(
+        manager);
+      accounts.push(new AccountEntry(manager, roles));
+    }
+    for(const trader of tradingGroup.traders) {
+      const roles =
+        await this.serviceClients.administrationClient.loadAccountRoles(trader);
+      accounts.push(new AccountEntry(trader, roles));
+    }
+    return accounts;
   }
 
   public async loadFilteredAccounts(
       filter: string): Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
-    return new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
+    const matches =
+      await this.serviceClients.administrationClient.searchAccounts(filter);
+    const result = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
+    for(const match of matches) {
+      let entries = result.get(match[0]);
+      if(entries === undefined) {
+        entries = []
+        result.set(match[0], entries);
+      }
+      entries.push(new AccountEntry(match[1], match[2]));
+    }
+    return result;
   }
 
+  private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
+  private _groups: Beam.Set<Beam.DirectoryEntry>;
 }

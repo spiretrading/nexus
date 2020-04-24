@@ -7,6 +7,13 @@ export abstract class AccountDirectoryModel {
   /** Returns a list of all groups. */
   public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;
 
+  /**
+   * Creates a new group.
+   * @param name The name of the group.
+   * @return The newly created group's DirectoryEntry.
+   */
+  public abstract async createGroup(name: string): Promise<Beam.DirectoryEntry>;
+
   /** Returns the accounts that belong to a particular group. */
   public abstract async loadAccounts(
     group: Beam.DirectoryEntry): Promise<AccountEntry[]>;

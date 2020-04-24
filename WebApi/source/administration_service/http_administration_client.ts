@@ -7,12 +7,50 @@ import { AdministrationClient } from './administration_client';
 import { EntitlementModification } from './entitlement_modification';
 import { Message } from './message';
 import { RiskModification } from './risk_modification';
+import { TradingGroup } from './trading_group';
 
 /** Implements the AdministrationClient using HTTP requests. */
 export class HttpAdministrationClient extends AdministrationClient {
+  public async searchAccounts(prefix: string):
+      Promise<[Beam.DirectoryEntry, Beam.DirectoryEntry, AccountRoles][]> {
+    const response = await Beam.post(
+      '/api/service_locator/search_directory_entry',
+      {
+        name: prefix
+      });
+    const matches: [Beam.DirectoryEntry, Beam.DirectoryEntry, AccountRoles][] =
+      [];
+    for(const result of response) {
+      matches.push([Beam.DirectoryEntry.fromJson(result.group),
+        Beam.DirectoryEntry.fromJson(result.directory_entry),
+        AccountRoles.fromJson(result.roles)]);
+    }
+    return matches;
+  }
+
+  public async loadTradingGroup(directoryEntry: Beam.DirectoryEntry):
+      Promise<TradingGroup> {
+    const response = await Beam.post(
+      '/api/administration_service/load_trading_group',
+      {
+        directory_entry: directoryEntry.toJson()
+      });
+    return TradingGroup.fromJson(response);
+  }
+
+  public async loadManagedTradingGroups(account: Beam.DirectoryEntry):
+      Promise<Beam.DirectoryEntry[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_managed_trading_groups',
+      {
+        account: account.toJson()
+      });
+    return Beam.arrayFromJson(Beam.DirectoryEntry, response);
+  }
+
   public async loadAccountRoles(account: Beam.DirectoryEntry):
       Promise<AccountRoles> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_account_roles',
       {
         account: account.toJson()
@@ -22,7 +60,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async storeAccountRoles(account: Beam.DirectoryEntry,
       roles: AccountRoles): Promise<AccountRoles> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/store_account_roles',
       {
         account: account.toJson(),
@@ -33,7 +71,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async loadAccountIdentity(account: Beam.DirectoryEntry):
       Promise<AccountIdentity> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_account_identity',
       {
         account: account.toJson()
@@ -52,7 +90,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async loadAccountEntitlements(account: Beam.DirectoryEntry):
       Promise<Beam.Set<Beam.DirectoryEntry>> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_account_entitlements',
       {
         account: account.toJson()
@@ -62,7 +100,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async loadEntitlementModification(id: number):
       Promise<EntitlementModification> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_entitlement_modification',
       {
         id: id
@@ -73,7 +111,7 @@ export class HttpAdministrationClient extends AdministrationClient {
   public async submitEntitlementModificationRequest(
       account: Beam.DirectoryEntry, modification: EntitlementModification,
       comment: Message): Promise<AccountModificationRequest> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/submit_entitlement_modification_request',
       {
         account: account.toJson(),
@@ -85,7 +123,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async loadRiskParameters(account: Beam.DirectoryEntry):
       Promise<RiskParameters> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_risk_parameters',
       {
         account: account.toJson()
@@ -94,7 +132,7 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async loadRiskModification(id: number): Promise<RiskModification> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/load_risk_modification',
       {
         id: id
@@ -105,7 +143,7 @@ export class HttpAdministrationClient extends AdministrationClient {
   public async submitRiskModificationRequest(account: Beam.DirectoryEntry,
       modification: RiskModification, comment: Message):
       Promise<AccountModificationRequest> {
-    let response = await Beam.post(
+    const response = await Beam.post(
       '/api/administration_service/submit_risk_modification_request',
       {
         account: account.toJson(),
@@ -113,6 +151,14 @@ export class HttpAdministrationClient extends AdministrationClient {
         comment: comment.toJson()
       });
     return AccountModificationRequest.fromJson(response);
+  }
+
+  public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post('/api/service_locator/create_group',
+      {
+        name: name
+      });
+    return Beam.DirectoryEntry.fromJson(response);
   }
 
   public async open(): Promise<void> {
