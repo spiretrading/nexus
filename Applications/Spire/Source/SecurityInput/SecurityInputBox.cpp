@@ -24,6 +24,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     : QWidget(parent),
       m_is_compact(is_compact),
       m_model(model.Get()) {
+  parent->installEventFilter(this);
   setObjectName("SecurityInputBox");
   if(!m_is_compact) {
     setStyleSheet(QString(R"(
@@ -104,14 +105,17 @@ bool SecurityInputBox::eventFilter(QObject* watched, QEvent* event) {
           border: %1px solid #4b23A0;
         })").arg(scale_width(1)));
     }
-  }
-  if(watched == window()) {
+  } else if(watched == window()) {
     if(event->type() == QEvent::Move) {
       move_line_edit();
     } else if(event->type() == QEvent::FocusIn) {
       m_security_line_edit->setFocus();
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_security_line_edit->hide();
+    }
+  } else if(watched == parent()) {
+    if(event->type() == QEvent::Wheel) {
+      m_securities->hide();
     }
   }
   return QWidget::eventFilter(watched, event);

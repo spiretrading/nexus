@@ -29,6 +29,7 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
     on_item_selected(item);
   });
   window()->installEventFilter(this);
+  parent->installEventFilter(this);
 }
 
 const QString& InputFieldEditor::get_item() const {
@@ -41,6 +42,10 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
       if(m_menu_list->isVisible()) {
         move_menu_list();
       }
+    }
+  } else if(watched == parent()) {
+    if(event->type() == QEvent::Wheel) {
+      m_menu_list->hide();
     }
   }
   return QLineEdit::eventFilter(watched, event);
