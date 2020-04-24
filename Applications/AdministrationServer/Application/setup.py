@@ -16,7 +16,7 @@ def main():
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
-    default='1234')
+    required=True)
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
     default='127.0.0.1:3306')
   parser.add_argument('-mu', '--mysql_username', type=str,
