@@ -29,14 +29,19 @@ interface Properties {
   /** The accounts that match the current filter. */
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
+  /** The error message from when a new group was created. */
+  errorMessageForCreateGroup?: string;
+
   /** Called when the filter value changes. */
   onFilterChange?: (filter: string) => void;
 
   /** Called when a card is clicked on. */
   onCardClick?: (group: Beam.DirectoryEntry) => void;
 
-  /** Called when the user wants to make a new group. */
-  onNewGroupClick?: () => void;
+  /** Called when the user wants to make a new group. 
+   * @param name - The name of the group.
+   */
+  submitNewGroup?: (name: string) => void;
 
   /** Called when the user wants to make a new account. */
   onNewAccountClick?: () => void;
@@ -46,13 +51,12 @@ interface State {
   isCreateGroupModalOpen: boolean;
 }
 
-
 /** Displays a directory of accounts. */
 export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},
-    onNewGroupClick: () => {},
+    submitNewGroup: () => {},
     onNewAccountClick: () => {}
   };
 
@@ -113,7 +117,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
-
     const cards = [];
     for (const group of this.props.groups) {
       const accounts = (() => {
@@ -136,8 +139,10 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       <PageWrapper>
         <CreateGroupModal 
           displaySize={this.props.displaySize}
+          errorStatus={this.props.errorMessageForCreateGroup}
           isOpen={this.state.isCreateGroupModalOpen}
-          onClose={this.onCloseCreateGroup}/>
+          onClose={this.onCloseCreateGroupModal}
+          onCreateGroup={this.props.submitNewGroup}/>
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
@@ -148,7 +153,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                     New Account
                   </button>
                   <div style={AccountDirectoryPage.STYLE.spacing}/>
-                  <button onClick={this.onCreateGroupClick}
+                  <button onClick={this.onCreateGroupButtonClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
@@ -164,7 +169,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                   New Account
                 </button>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
-                <button onClick={this.onCreateGroupClick}
+                <button onClick={this.onCreateGroupButtonClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
@@ -177,13 +182,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       </PageWrapper>);
   }
 
-
-  private onCreateGroupClick = () => {
-    console.log('open modal!');
+  private onCreateGroupButtonClick = () => {
     this.setState({isCreateGroupModalOpen: true});
   }
 
-  private onCloseCreateGroup = () => {
+  private onCloseCreateGroupModal = () => {
     this.setState({isCreateGroupModalOpen: false});
   }
 
@@ -290,6 +293,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
+      cursor: 'pointer' as 'pointer',
       borderRadius: 1,
       ':active' : {
         backgroundColor: '#4B23A0'

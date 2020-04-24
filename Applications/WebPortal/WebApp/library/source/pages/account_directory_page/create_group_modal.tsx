@@ -8,23 +8,56 @@ interface Properties {
   /** The size of the viewport. */
   displaySize: DisplaySize;
 
+  /** Determines if the modal is open. */
   isOpen: boolean;
 
+  /** The error message to display. */
+  errorStatus?: string;
+
+  /** Callback to close the modal. */
   onClose?: () => void;
 
+  /** Callback to create a new group.
+   * @param name - The name of the group.
+   */
   onCreateGroup?: (name: string) => void;
-
 }
 
-export class CreateGroupModal extends React.Component<Properties> {
+interface State {
+  groupName: string,
+  isSubmitted: boolean,
+  isLocalError: boolean,
+  localErrorMessage: string
+}
+
+/** The modal that is used to create new groups. */
+export class CreateGroupModal extends React.Component<Properties, State> {
   public static readonly defaultProps = {
+    errorStatus: '',
     onClose: () => {},
     onCreateGroup: () => {}
   }
-  
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      groupName: '',
+      isSubmitted: false,
+      isLocalError: false,
+      localErrorMessage: ''
+    };
+  }
+
   public render(): JSX.Element {
     const modalDimensions = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
+      if(this.state.localErrorMessage !== '' &&
+          this.props.displaySize === DisplaySize.SMALL) {
+        return CreateGroupModal.MODAL_SMALL_DIMENSIONS_ERROR;
+      } else if(this.state.localErrorMessage !== '' &&
+          this.props.displaySize !== DisplaySize.SMALL) {
+        return CreateGroupModal.MODAL_LARGE_DIMENSIONS_ERROR;
+      } else if(this.state.localErrorMessage === '' &&
+        this.props.displaySize == DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
       } else {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS;
@@ -42,6 +75,23 @@ export class CreateGroupModal extends React.Component<Properties> {
         return null;
       } else {
         return CreateGroupModal.STYLE.buttonOverride;
+      }
+    })();
+    const errorStatus = (() => {
+      console.log(this.props.displaySize, this.state.localErrorMessage);
+      if(this.props.displaySize === DisplaySize.SMALL &&
+          this.state.localErrorMessage) {
+        return (
+          <div style={CreateGroupModal.STYLE.errorMessageSmall}>
+            {this.state.localErrorMessage}
+          </div>);
+      } else if(this.state.localErrorMessage) {
+        return (
+          <div style={CreateGroupModal.STYLE.errorMessage}>
+            {this.state.localErrorMessage}
+          </div>);
+      } else {
+        return null;
       }
     })();
     return(
@@ -65,15 +115,48 @@ export class CreateGroupModal extends React.Component<Properties> {
           </span>
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
-            <TextField displaySize={this.props.displaySize}
+            <TextField 
+              displaySize={this.props.displaySize}
+              value={this.state.groupName}
+              isError={this.state.isLocalError}
+              onInput={this.onNameChange}
               style={CreateGroupModal.STYLE.textInputOverride}/>
             <div style={CreateGroupModal.STYLE.inputFiller}/>
-            <Button label={CreateGroupModal.BUTTON_TEXT} style={buttonStyle}/>
+            <Button 
+              label={CreateGroupModal.BUTTON_TEXT} 
+              style={buttonStyle}
+              onClick={this.onCreateClick}/>
           </div>
+          {errorStatus}
         </div>
       </OffCenterModal>);
   }
 
+  public componentDidUpdate(prevProps: Properties) {
+    if(!prevProps.isOpen && this.props.isOpen) {
+      this.setState({groupName: '', localErrorMessage: '', isLocalError: false});
+    }
+    if(this.state.isSubmitted && this.props.errorStatus === '') {
+      this.setState({isSubmitted: false});
+      this.props.onClose();
+    } else if(this.state.isSubmitted && this.props.errorStatus !== '') {
+      this.setState({isSubmitted: false, localErrorMessage: this.props.errorStatus});
+    }
+  }
+
+  private onNameChange = (newValue: string) => {
+    this.setState({groupName: newValue, isLocalError: false});
+  }
+
+  private onCreateClick = () => {
+    if(this.state.groupName === '') {
+      this.setState({isLocalError: true, localErrorMessage: 'Invalid input'});
+      return;
+    }
+    this.props.onCreateGroup(this.state.groupName);
+    this.setState({isSubmitted: true});
+  }
+  
   private static readonly STYLE = {
     hidden: {
       opacity: 0,
@@ -101,7 +184,25 @@ export class CreateGroupModal extends React.Component<Properties> {
       height: '30px',
       width: '100%'
     } as React.CSSProperties,
-    closeWrapper: {
+    errorMessageSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      font: '400 14px Roboto',
+      color: '#E63F44',
+      height: '16px',
+      marginTop: '18px'
+    } as React.CSSProperties,
+    errorMessage: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex',
+      justifyContent: 'flex-start',
+      width: '100%',
+      font: '400 14px Roboto',
+      color: '#E63F44',
+      height: '16px',
+      marginTop: '18px'
     } as React.CSSProperties,
     stacked: {
       display: 'flex',
@@ -121,7 +222,10 @@ export class CreateGroupModal extends React.Component<Properties> {
     } as React.CSSProperties,
     buttonOverride: {
       width: '140px'
-    }as React.CSSProperties
+    }as React.CSSProperties,
+    clickable: {
+      cursor: 'pointer' as 'pointer'
+    } as React.CSSProperties
   }
   private static readonly BUTTON_TEXT = 'Create';
   private static readonly HEADER_TEXT = 'Create Group';
@@ -129,7 +233,9 @@ export class CreateGroupModal extends React.Component<Properties> {
   private static readonly IMAGE_SOURCE =
     'resources/account_directory_page/create_group_modal/close.svg';
   private static readonly MODAL_SMALL_DIMENSIONS = {width: '282px', height: '184px'};
-  private static readonly MODAL_LARGE_DIMENSIONS  = {width: '550px', height: '120px'}
+  private static readonly MODAL_LARGE_DIMENSIONS  = {width: '550px', height: '120px'};
+  private static readonly MODAL_SMALL_DIMENSIONS_ERROR = {width: '282px', height: '218px'};
+  private static readonly MODAL_LARGE_DIMENSIONS_ERROR  = {width: '550px', height: '154px'};
 }
 
 interface ModalProperties {
@@ -178,7 +284,8 @@ class OffCenterModal extends React.Component<ModalProperties> {
                       height: this.props.height}}>
                     {this.props.children}
                   </div>
-                  <div style={OffCenterModal.STYLE.bottomFiller} onClick={this.props.onClose}/>
+                  <div style={OffCenterModal.STYLE.bottomFiller}
+                    onClick={this.props.onClose}/>
                 </div>
                 <div style={OffCenterModal.STYLE.overlay} onClick={this.props.onClose}/>
               </div>);
@@ -250,7 +357,7 @@ class OffCenterModal extends React.Component<ModalProperties> {
       flexShrink: 0
     }
   };
-  private static readonly MENU_TRANSITION_LENGTH_MS = 500;
+  private static readonly MENU_TRANSITION_LENGTH_MS = 200;
   private static readonly ANIMATION : any = StyleSheet.create({
     base: {
       opacity: 0,
@@ -258,7 +365,7 @@ class OffCenterModal extends React.Component<ModalProperties> {
         `opacity ${OffCenterModal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
     entering: {
-      opacity: 1,
+      opacity: 1
     },
     entered: {
       opacity: 1

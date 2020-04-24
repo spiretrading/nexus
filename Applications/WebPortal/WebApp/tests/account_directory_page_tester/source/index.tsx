@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
+import { GroupSelectionBox } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -15,6 +16,7 @@ interface State {
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   model: WebPortal.AccountDirectoryModel;
+  statusCreateGroup: string;
 }
 
 /**  Displays and tests the AccountDirectoryPage. */
@@ -29,7 +31,8 @@ class TestApp extends React.Component<Properties, State> {
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
         new Beam.Set<Beam.DirectoryEntry>(),
-        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>())
+        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
+      statusCreateGroup: ''
     };
     this.changeRole = this.changeRole.bind(this);
     this.onCardClick = this.onCardClick.bind(this);
@@ -37,17 +40,26 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const errorButtonText = (() => {
+      if(this.state.statusCreateGroup === '') {
+        return 'NO ERROR';
+      } else {
+        return 'ERROR'
+      }
+    })();
     return (
       <div>
-      <WebPortal.AccountDirectoryPage
-        displaySize={this.props.displaySize}
-        roles={this.state.roles}
-        groups={this.state.groups}
-        openedGroups={this.state.openedGroups}
-        filter={this.state.filter}
-        filteredGroups={this.state.filteredGroups}
-        onFilterChange={this.onChange} 
-        onCardClick={this.onCardClick}/>
+        <WebPortal.AccountDirectoryPage
+          displaySize={this.props.displaySize}
+          roles={this.state.roles}
+          groups={this.state.groups}
+          openedGroups={this.state.openedGroups}
+          filter={this.state.filter}
+          filteredGroups={this.state.filteredGroups}
+          onFilterChange={this.onChange}
+          onCardClick={this.onCardClick}
+          createGroupErrorMessage={this.state.statusCreateGroup}
+          submitNewGroup={this.onCreateNewGroup}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>
@@ -61,6 +73,9 @@ class TestApp extends React.Component<Properties, State> {
           <button tabIndex={-1}
               onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
             MANAGER
+          </button>
+          <button tabIndex={-1} onClick={this.onToggleError}>
+            {errorButtonText}
           </button>
         </div>
       </div>
@@ -143,13 +158,13 @@ class TestApp extends React.Component<Properties, State> {
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
-      this.setState({ roles: this.testAdmin });
+      this.setState({roles: this.testAdmin, statusCreateGroup: ''});
     }
     if(newRole === Nexus.AccountRoles.Role.TRADER) {
-      this.setState({ roles: this.testTrader });
+      this.setState({roles: this.testTrader, statusCreateGroup: ''});
     }
     if(newRole === Nexus.AccountRoles.Role.MANAGER) {
-      this.setState({ roles: this.testManager });
+      this.setState({ roles: this.testManager, statusCreateGroup: ''});
     }
   }
 
@@ -165,6 +180,28 @@ class TestApp extends React.Component<Properties, State> {
             filteredGroups: newAccounts
           });
         }, 400);
+    }
+  }
+  
+
+  private onToggleError = () => {
+    if(this.state.statusCreateGroup === '') {
+      this.setState({statusCreateGroup: 'Server Issue'});
+    } else {
+      this.setState({statusCreateGroup: ''});
+    }
+  }
+
+  private onCreateNewGroup = (groupName: string) => {
+    if(this.state.statusCreateGroup === '') {
+      clearTimeout(this.timerId);
+      this.timerId = setTimeout(
+        async () => {
+          const newGroup =
+            await this.state.model.createGroup(groupName);
+          this.state.groups.add(newGroup);
+          this.setState({groups: this.state.groups});
+        }, 100);
     }
   }
 
