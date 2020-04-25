@@ -59,7 +59,7 @@ class TestApp extends React.Component<Properties, State> {
           onFilterChange={this.onChange}
           onCardClick={this.onCardClick}
           createGroupErrorMessage={this.state.statusCreateGroup}
-          submitNewGroup={this.onCreateNewGroup}/>
+          onCreateGroup={this.onCreateNewGroup}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
               onClick={() =>

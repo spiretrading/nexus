@@ -41,7 +41,7 @@ interface Properties {
   /** Called when the user wants to make a new group. 
    * @param name - The name of the group.
    */
-  submitNewGroup?: (name: string) => void;
+  onCreateGroup?: (name: string) => void;
 
   /** Called when the user wants to make a new account. */
   onNewAccountClick?: () => void;
@@ -142,7 +142,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           errorStatus={this.props.errorMessageForCreateGroup}
           isOpen={this.state.isCreateGroupModalOpen}
           onClose={this.onCloseCreateGroupModal}
-          onCreateGroup={this.props.submitNewGroup}/>
+          onCreateGroup={this.props.onCreateGroup}/>
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>

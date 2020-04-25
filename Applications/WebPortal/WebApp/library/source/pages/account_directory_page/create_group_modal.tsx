@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { Button, DisplaySize, TextField} from '../..';
+import { GroupCard } from './group_card';
 
 interface Properties {
 
@@ -78,7 +79,6 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       }
     })();
     const errorStatus = (() => {
-      console.log(this.props.displaySize, this.state.localErrorMessage);
       if(this.props.displaySize === DisplaySize.SMALL &&
           this.state.localErrorMessage) {
         return (
@@ -118,6 +118,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
             <TextField 
               displaySize={this.props.displaySize}
               value={this.state.groupName}
+              placeholder={CreateGroupModal.PLACEHOLDER}
               isError={this.state.isLocalError}
               onInput={this.onNameChange}
               style={CreateGroupModal.STYLE.textInputOverride}/>
@@ -232,6 +233,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly IMAGE_SIZE = '20px';
   private static readonly IMAGE_SOURCE =
     'resources/account_directory_page/create_group_modal/close.svg';
+  private static readonly PLACEHOLDER = 'Type here';
   private static readonly MODAL_SMALL_DIMENSIONS = {width: '282px', height: '184px'};
   private static readonly MODAL_LARGE_DIMENSIONS  = {width: '550px', height: '120px'};
   private static readonly MODAL_SMALL_DIMENSIONS_ERROR = {width: '282px', height: '218px'};

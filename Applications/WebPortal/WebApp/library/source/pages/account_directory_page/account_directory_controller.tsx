@@ -24,6 +24,7 @@ interface State {
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
+  errorStatusOnCreateGroup: string;
 }
 
 /** Implements the controller for the AccountDirectoryPage. */
@@ -35,8 +36,12 @@ export class AccountDirectoryController extends
       isLoaded: false, 
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
-      filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()
+      filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
+      errorStatusOnCreateGroup: ''
     };
+    this.onCardClick = this.onCardClick.bind(this);
+    this.onFilterChange = this.onFilterChange.bind(this);
+    this.onCreateGroup = this.onCreateGroup.bind(this);
   }
 
   public render(): JSX.Element {
@@ -51,7 +56,8 @@ export class AccountDirectoryController extends
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
       onFilterChange={this.onFilterChange} 
-      onCardClick={this.onCardClick}/>;
+      onCardClick={this.onCardClick}
+      onCreateGroup={this.onCreateGroup}/>;
   }
 
   public componentDidMount(): void {
@@ -63,7 +69,7 @@ export class AccountDirectoryController extends
       });
   }
 
-  private async onCardClick(group: Beam.DirectoryEntry) {
+  private async onCardClick (group: Beam.DirectoryEntry) {
     if(this.state.openedGroups.get(group)) {
       this.state.openedGroups.remove(group);
     } else {
@@ -71,6 +77,14 @@ export class AccountDirectoryController extends
       this.state.openedGroups.set(group, accounts);
     }
     this.setState({openedGroups: this.state.openedGroups});
+  }
+
+  private async onCreateGroup(name: string) {
+    try{
+      await this.props.model.createGroup(name);
+    } catch (e) {
+      this.setState({errorStatusOnCreateGroup: e.toString()});
+    }
   }
 
   private async onFilterChange(newFilter: string) {
