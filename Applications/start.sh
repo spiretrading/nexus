@@ -14,13 +14,13 @@ services+=" WebPortal"
 services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
-  pushd $directory
+  pushd $directory/Application
   ./stop_server.sh
   ./start_server.sh
   popd
   sleep 3
 done
 
-pushd AdministrationServer
+pushd AdministrationServer/Application
 python3 reset_risk_states.py
 popd
