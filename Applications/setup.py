@@ -1,11 +1,21 @@
 import argparse
 import importlib.util
 import os
+import subprocess
+import sys
 
 spec = importlib.util.spec_from_file_location('setup_utils',
   os.path.join('Python', 'setup_utils.py'))
 setup_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup_utils)
+
+
+def create_symlink(source, target):
+  if sys.platform == 'win32':
+    subprocess.Popen(['cmd', '/c', 'mklink /j %s %s' % (source, target)],
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  else:
+    os.symlink(source, target, target_is_directory=True)
 
 
 def make_sub_args(arg_vars, *args):
@@ -14,6 +24,20 @@ def make_sub_args(arg_vars, *args):
     if arg_vars[arg]:
       sub_args += ['--' + arg, arg_vars[arg]]
   return sub_args
+
+
+def setup_beam(arg_vars):
+  root_path = os.getcwd()
+  os.chdir(os.path.join('..', 'Nexus', 'Dependencies', 'Beam', 'Applications'))
+  try:
+    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
+      *[key for key in arg_vars.keys()]))
+  finally:
+    os.chdir(root_path)
+  for beam_service in ['RegistryServer', 'ServiceLocator', 'UidServer']:
+    if not os.path.exists(beam_service):
+      create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
+      'Beam', 'Applications', beam_service))
 
 
 def setup_server(server, arg_vars):
@@ -57,6 +81,7 @@ def main():
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     required=False)
   arg_vars = vars(parser.parse_args())
+  setup_beam(arg_vars)
   for server in ['AdministrationServer', 'ComplianceServer', 'MarketDataServer',
       'SimulationOrderExecutionServer']:
     setup_server_with_mysql(server, arg_vars)
@@ -64,9 +89,6 @@ def main():
       'ReplayMarketDataFeedClient', 'RiskServer',
       'SimulationMarketDataFeedClient', 'WebPortal']:
     setup_server(server, arg_vars)
-  os.chdir(os.path.join('..', 'Nexus', 'Dependencies', 'Beam', 'Applications'))
-  setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-    *[key for key in arg_vars.keys()]))
 
 
 if __name__ == '__main__':
