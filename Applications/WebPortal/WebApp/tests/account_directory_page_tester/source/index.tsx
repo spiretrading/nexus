@@ -182,7 +182,6 @@ class TestApp extends React.Component<Properties, State> {
         }, 400);
     }
   }
-  
 
   private onToggleError = () => {
     if(this.state.statusCreateGroup === '') {
@@ -197,8 +196,7 @@ class TestApp extends React.Component<Properties, State> {
       clearTimeout(this.timerId);
       this.timerId = setTimeout(
         async () => {
-          const newGroup =
-            await this.state.model.createGroup(groupName);
+          const newGroup = await this.state.model.createGroup(groupName);
           this.state.groups.add(newGroup);
           this.setState({groups: this.state.groups});
         }, 100);
