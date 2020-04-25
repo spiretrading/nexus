@@ -25,8 +25,8 @@ else
 fi
 username=$(echo ${SUDO_USER:-${USER}})
 local_interface=$(echo -n `ip addr | \
-  grep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
-  grep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
+  egrep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
+  egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
   head -1`)
 
 while getopts "u:m:p:i:h" opt; do
