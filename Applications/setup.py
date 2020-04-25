@@ -16,23 +16,23 @@ def make_sub_args(arg_vars, *args):
   return sub_args
 
 
-def setup_administration_server(arg_vars):
+def setup_server(server, arg_vars):
   root_path = os.getcwd()
   try:
-    os.chdir(os.path.join('AdministrationServer', 'Application'))
+    os.chdir(os.path.join(server, 'Application'))
     setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-      'local', 'world', 'address', 'password', 'mysql_address',
-      'mysql_username', 'mysql_password', 'mysql_schema'))
+      'local', 'world', 'address', 'password'))
   finally:
     os.chdir(root_path)
 
 
-def setup_charting_server(arg_vars):
+def setup_server_with_mysql(server, arg_vars):
   root_path = os.getcwd()
   try:
-    os.chdir(os.path.join('ChartingServer', 'Application'))
+    os.chdir(os.path.join(server, 'Application'))
     setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-      'local', 'world', 'address', 'password'))
+      'local', 'world', 'address', 'password', 'mysql_address',
+      'mysql_username', 'mysql_password', 'mysql_schema'))
   finally:
     os.chdir(root_path)
 
@@ -57,8 +57,13 @@ def main():
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     required=False)
   arg_vars = vars(parser.parse_args())
-  setup_administration_server(arg_vars)
-  setup_charting_server(arg_vars)
+  for server in ['AdministrationServer', 'ComplianceServer', 'MarketDataServer',
+      'SimulationOrderExecutionServer']:
+    setup_server_with_mysql(server, arg_vars)
+  for server in ['ChartingServer', 'DefinitionsServer', 'MarketDataRelayServer',
+      'ReplayMarketDataFeedClient', 'RiskServer',
+      'SimulationMarketDataFeedClient', 'WebPortal']:
+    setup_server(server, arg_vars)
 
 
 if __name__ == '__main__':
