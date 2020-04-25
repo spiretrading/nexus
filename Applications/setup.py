@@ -3,7 +3,7 @@ import importlib.util
 import os
 
 spec = importlib.util.spec_from_file_location('setup_utils',
-  os.path.join('..', 'Utilities', 'setup_utils.py'))
+  os.path.join('Python', 'setup_utils.py'))
 setup_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup_utils)
 
@@ -64,6 +64,9 @@ def main():
       'ReplayMarketDataFeedClient', 'RiskServer',
       'SimulationMarketDataFeedClient', 'WebPortal']:
     setup_server(server, arg_vars)
+  os.chdir(os.path.join('..', 'Nexus', 'Dependencies', 'Beam', 'Applications'))
+  setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
+    *[key for key in arg_vars.keys()]))
 
 
 if __name__ == '__main__':

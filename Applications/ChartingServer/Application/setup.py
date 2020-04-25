@@ -4,7 +4,7 @@ import os
 import shutil
 
 spec = importlib.util.spec_from_file_location('setup_utils',
-  os.path.join('..', '..', '..', 'Utilities', 'setup_utils.py'))
+  os.path.join('..', '..', 'Python', 'setup_utils.py'))
 setup_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup_utils)
 
