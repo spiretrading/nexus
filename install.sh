@@ -86,6 +86,8 @@ else
   sudo -u mysql -u$mysql_username -p$mysql_password <<< "$mysql_input"
 fi
 pushd Applications
-#sudo -u $username python3 setup.py -u "spireadmin"
+sudo -u $username python3 setup.py -l "$local_interface" -w "global_interface" \
+  -a "$local_interface" -p "$spire_password" -ma "$local_interface" \
+  -mu "$mysql_username" -mp "$mysql_password"
 sudo -u $username ./install_python.sh
 popd
