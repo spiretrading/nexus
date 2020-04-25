@@ -72,22 +72,72 @@ sudo -u $username ./configure.sh
 sudo -u $username ./build.sh
 
 mysql_input="
-CREATE DATABASE spire;
-GRANT ALL PRIVILEGES ON spire.* TO '$mysql_username'@'localhost' IDENTIFIED BY
-  '$mysql_password';
-CREATE DATABASE market_data;
-GRANT ALL PRIVILEGES ON market_data.* TO '$mysql_username'@'localhost'
-  IDENTIFIED BY '$mysql_password';
+CREATE USER '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
+GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
 exit
 "
 if [ $is_root -eq 1 ]; then
+  mysql -uroot -e "use spire"
+  if [ "$?" != "0" ]; then
+    mysql -uroot -e "CREATE DATABASE spire;"
+  fi
   mysql -uroot <<< "$mysql_input"
 else
-  sudo -u mysql -u$mysql_username -p$mysql_password <<< "$mysql_input"
+  sudo -u $username mysql -u$mysql_username -p$mysql_password -e "use spire"
+  if [ "$?" != "0" ]; then
+    sudo -u $username mysql -u$mysql_username -p$mysql_password -e \
+      "CREATE DATABASE spire;"
+  fi
+  sudo -u $username mysql -u$mysql_username -p$mysql_password \
+    <<< "$mysql_input"
 fi
 pushd Applications
 sudo -u $username python3 setup.py -l "$local_interface" -w "global_interface" \
   -a "$local_interface" -p "$spire_password" -ma "$local_interface" \
   -mu "$mysql_username" -mp "$mysql_password"
 sudo -u $username ./install_python.sh
+pushd ServiceLocator/Application
+sudo -u $username ./start_server.sh
+sleep 10
+popd
+admin_input="
+mkdir administrators
+mkdir services
+mkdir trading_groups
+cd services
+mkacc uid_service $spire_password
+mkacc market_data_service $spire_password
+mkacc market_data_relay_service $spire_password
+mkacc market_data_feed $spire_password
+mkacc charting_service $spire_password
+mkacc compliance_service $spire_password
+mkacc order_execution_service $spire_password
+mkacc risk_service $spire_password
+mkacc administration_service $spire_password
+mkacc definitions_service $spire_password
+mkacc registry_service $spire_password
+mkacc web_portal_service $spire_password
+chmod administration_service @0 7
+chmod charting_service @0 1
+chmod compliance_service @0 7
+chmod market_data_relay_service @0 1
+chmod market_data_service @0 1
+chmod order_execution_service @0 7
+chmod risk_service @0 7
+chmod web_portal_service @0 7
+cd @0
+cd administrators
+associate administration_service
+associate risk_service
+associate order_execution_service
+associate compliance_service
+associate web_portal_service
+exit
+"
+pushd ../Nexus/Dependencies/Beam/Applications/AdminClient/Application
+sudo -u $username ./AdminClient <<< "$admin_input"
+popd
+pushd ServiceLocator/Application
+sudo -u $username ./stop_server.sh
+popd
 popd

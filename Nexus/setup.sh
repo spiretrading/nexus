@@ -67,9 +67,9 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
     exit_status=1
   fi
   rm -rf quickfix-v.1.15.1.zip
+fip
+python3 -c "import git"
+if [ "$?" != "0" ]; then
+  pip3 install GitPython
 fi
-
-pip3 install argparse
-pip3 install HTMLParser
-pip3 install GitPython
 exit $exit_status

@@ -15,7 +15,7 @@ def create_symlink(source, target):
     subprocess.Popen(['cmd', '/c', 'mklink /j %s %s' % (source, target)],
       stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
   else:
-    os.symlink(source, target, target_is_directory=True)
+    os.symlink(target, source, target_is_directory=True)
 
 
 def make_sub_args(arg_vars, *args):
