@@ -95,8 +95,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       }
     })();
     return(
-      <Modal
-          isOpen={this.props.isOpen}
+      <Modal isOpen={this.props.isOpen}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
           width={modalDimensions.width}
@@ -135,13 +134,20 @@ export class CreateGroupModal extends React.Component<Properties, State> {
 
   public componentDidUpdate(prevProps: Properties) {
     if(!prevProps.isOpen && this.props.isOpen) {
-      this.setState({groupName: '', localErrorMessage: '', isLocalError: false});
+      this.setState({
+        groupName: '',
+        localErrorMessage: '',
+        isLocalError: false
+      });
     }
     if(this.state.isSubmitted && this.props.errorStatus === '') {
       this.setState({isSubmitted: false});
       this.props.onClose();
     } else if(this.state.isSubmitted && this.props.errorStatus !== '') {
-      this.setState({isSubmitted: false, localErrorMessage: this.props.errorStatus});
+      this.setState({
+        isSubmitted: false,
+        localErrorMessage: this.props.errorStatus
+      });
     }
   }
 
@@ -157,7 +163,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     this.props.onCreateGroup(this.state.groupName);
     this.setState({isSubmitted: true});
   }
-  
+
   private static readonly STYLE = {
     hidden: {
       opacity: 0,
@@ -235,10 +241,14 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly IMAGE_SOURCE =
     'resources/account_directory_page/create_group_modal/close.svg';
   private static readonly PLACEHOLDER = 'Type here';
-  private static readonly MODAL_SMALL_DIMENSIONS = {width: '282px', height: '184px'};
-  private static readonly MODAL_LARGE_DIMENSIONS  = {width: '550px', height: '120px'};
-  private static readonly MODAL_SMALL_DIMENSIONS_ERROR = {width: '282px', height: '218px'};
-  private static readonly MODAL_LARGE_DIMENSIONS_ERROR  = {width: '550px', height: '154px'};
+  private static readonly MODAL_SMALL_DIMENSIONS =
+    {width: '282px', height: '184px'};
+  private static readonly MODAL_LARGE_DIMENSIONS =
+    {width: '550px', height: '120px'};
+  private static readonly MODAL_SMALL_DIMENSIONS_ERROR =
+    {width: '282px', height: '218px'};
+  private static readonly MODAL_LARGE_DIMENSIONS_ERROR =
+    {width: '550px', height: '154px'};
 }
 
 interface ModalProperties {
