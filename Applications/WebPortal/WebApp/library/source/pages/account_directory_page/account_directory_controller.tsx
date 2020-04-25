@@ -57,6 +57,7 @@ export class AccountDirectoryController extends
       filteredGroups={this.state.filteredGroups}
       onFilterChange={this.onFilterChange} 
       onCardClick={this.onCardClick}
+      createGroupStatus={this.state.createGroupStatus}
       onCreateGroup={this.onCreateGroup}/>;
   }
 
