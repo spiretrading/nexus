@@ -8,7 +8,6 @@ import { CreateGroupModal } from './create_group_modal';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
 
-
 interface Properties {
 
   /** Determines the layout used to display the page. */
@@ -56,7 +55,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},
-    submitNewGroup: () => {},
+    onCreateGroup: () => {},
     onNewAccountClick: () => {}
   };
 
@@ -153,7 +152,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                     New Account
                   </button>
                   <div style={AccountDirectoryPage.STYLE.spacing}/>
-                  <button onClick={this.onCreateGroupButtonClick}
+                  <button onClick={this.onCreateGroupClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
@@ -169,7 +168,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                   New Account
                 </button>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
-                <button onClick={this.onCreateGroupButtonClick}
+                <button onClick={this.onCreateGroupClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
@@ -182,7 +181,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       </PageWrapper>);
   }
 
-  private onCreateGroupButtonClick = () => {
+  private onCreateGroupClick = () => {
     this.setState({isCreateGroupModalOpen: true});
   }
 
@@ -306,5 +305,4 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     }
   });
-  private timerId: NodeJS.Timeout;
 }
