@@ -30,7 +30,7 @@ interface Properties {
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
   /** The error message from when a new group was created. */
-  errorMessageForCreateGroup?: string;
+  createGroupStatus?: string;
 
   /** Called when the filter value changes. */
   onFilterChange?: (filter: string) => void;
@@ -139,7 +139,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       <PageWrapper>
         <CreateGroupModal 
           displaySize={this.props.displaySize}
-          errorStatus={this.props.errorMessageForCreateGroup}
+          errorStatus={this.props.createGroupStatus}
           isOpen={this.state.isCreateGroupModalOpen}
           onClose={this.onCloseCreateGroupModal}
           onCreateGroup={this.props.onCreateGroup}/>

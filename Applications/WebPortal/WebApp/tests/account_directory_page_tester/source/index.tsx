@@ -58,7 +58,7 @@ class TestApp extends React.Component<Properties, State> {
           filteredGroups={this.state.filteredGroups}
           onFilterChange={this.onChange}
           onCardClick={this.onCardClick}
-          createGroupErrorMessage={this.state.statusCreateGroup}
+          createGroupStatus={this.state.statusCreateGroup}
           onCreateGroup={this.onCreateNewGroup}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}

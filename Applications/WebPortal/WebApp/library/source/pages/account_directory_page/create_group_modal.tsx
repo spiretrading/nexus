@@ -2,7 +2,6 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { Button, DisplaySize, TextField} from '../..';
-import { GroupCard } from './group_card';
 
 interface Properties {
 
@@ -58,7 +57,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           this.props.displaySize !== DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS_ERROR;
       } else if(this.state.localErrorMessage === '' &&
-        this.props.displaySize == DisplaySize.SMALL) {
+          this.props.displaySize == DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
       } else {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS;
@@ -85,7 +84,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           <div style={CreateGroupModal.STYLE.errorMessageSmall}>
             {this.state.localErrorMessage}
           </div>);
-      } else if(this.state.localErrorMessage) {
+      } else if(this.props.displaySize !== DisplaySize.SMALL &&
+          this.state.localErrorMessage) {
         return (
           <div style={CreateGroupModal.STYLE.errorMessage}>
             {this.state.localErrorMessage}
@@ -95,7 +95,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       }
     })();
     return(
-      <OffCenterModal
+      <Modal
           isOpen={this.props.isOpen}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
@@ -106,9 +106,9 @@ export class CreateGroupModal extends React.Component<Properties, State> {
             <span style={CreateGroupModal.STYLE.header}>
               {CreateGroupModal.HEADER_TEXT}
             </span>
-            <span>
+            <span style={CreateGroupModal.STYLE.clickable}>
               <img src={CreateGroupModal.IMAGE_SOURCE}
-                height={CreateGroupModal.IMAGE_SIZE} 
+                height={CreateGroupModal.IMAGE_SIZE}
                 width={CreateGroupModal.IMAGE_SIZE}
                 onClick={this.props.onClose}/>
             </span>
@@ -130,7 +130,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           </div>
           {errorStatus}
         </div>
-      </OffCenterModal>);
+      </Modal>);
   }
 
   public componentDidUpdate(prevProps: Properties) {
@@ -179,7 +179,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     } as React.CSSProperties,
     header: {
       font: '400 16px Roboto',
-      color: '#333333'
+      color: '#333333',
+      cursor: 'default'
     }as React.CSSProperties,
     mediumPadding: {
       height: '30px',
@@ -259,43 +260,38 @@ interface ModalProperties {
 }
 
 /** This is a component that wraps a child component to style it as a modal. */
-class OffCenterModal extends React.Component<ModalProperties> {
+class Modal extends React.Component<ModalProperties> {
   public static readonly defaultProps = {
     onClose: () => {}
   };
 
-  constructor(props: ModalProperties) {
-    super(props);
-    this.outOfBoundsClick = this.outOfBoundsClick.bind(this);
-  }
-
   public render(): JSX.Element {
     return (
       <Transition in={this.props.isOpen}
-            timeout={OffCenterModal.MENU_TRANSITION_LENGTH_MS}
-            component={null}>
-          {(status: string) => {
-            return (
-              <div style={OffCenterModal.STYLE.wrapper}
-                className={css([OffCenterModal.ANIMATION.base, OffCenterModal.ANIMATION[status]])}>
-                <div style={OffCenterModal.STYLE.modalWrapperLarge}
-                    onClick={this.outOfBoundsClick}>
-                  <div style={OffCenterModal.STYLE.topFiller} onClick={this.props.onClose}/>
-                  <div style={{...OffCenterModal.STYLE.modalLarge,
-                      width: this.props.width,
-                      height: this.props.height}}>
-                    {this.props.children}
-                  </div>
-                  <div style={OffCenterModal.STYLE.bottomFiller}
-                    onClick={this.props.onClose}/>
+          timeout={Modal.MENU_TRANSITION_LENGTH_MS}>
+        {(status: string) => {
+          return (
+            <div style={Modal.STYLE.wrapper}
+                className={css([Modal.ANIMATION.base,Modal.ANIMATION[status]])}>
+              <div style={Modal.STYLE.modalWrapper}
+                  onClick={this.outOfBoundsClick}>
+                <div style={Modal.STYLE.topFiller}
+                  onClick={this.props.onClose}/>
+                <div style={{...Modal.STYLE.modal,
+                    width: this.props.width,
+                    height: this.props.height}}>
+                  {this.props.children}
                 </div>
-                <div style={OffCenterModal.STYLE.overlay} onClick={this.props.onClose}/>
-              </div>);
+                <div style={Modal.STYLE.bottomFiller}
+                  onClick={this.props.onClose}/>
+              </div>
+              <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
+            </div>);
           }}
       </Transition>);
   }
 
-  private outOfBoundsClick(event: React.MouseEvent<HTMLDivElement>) {
+  private outOfBoundsClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if(event.target === event.currentTarget) {
       this.props.onClose();
     }
@@ -332,7 +328,7 @@ class OffCenterModal extends React.Component<ModalProperties> {
       right: 0,
       zIndex: 9998000
     },
-    modalWrapperLarge: {
+    modalWrapper: {
       overflowY: 'auto' as 'auto',
       overflowX: 'hidden' as 'hidden',
       height: '100%',
@@ -350,7 +346,7 @@ class OffCenterModal extends React.Component<ModalProperties> {
       flexDirection: 'column' as 'column',
       zIndex: 100000000
     },
-    modalLarge: {
+    modal: {
       boxSizing: 'border-box' as 'border-box',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
@@ -364,7 +360,7 @@ class OffCenterModal extends React.Component<ModalProperties> {
     base: {
       opacity: 0,
       transition:
-        `opacity ${OffCenterModal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
+        `opacity ${Modal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
     entering: {
       opacity: 1
