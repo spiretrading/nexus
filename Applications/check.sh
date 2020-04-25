@@ -14,7 +14,7 @@ services+=" WebPortal"
 services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
-  pushd $directory/Application
+  pushd $directory/Application > /dev/null
   ./check_server.sh
-  popd
+  popd > /dev/null
 done

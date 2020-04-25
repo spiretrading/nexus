@@ -93,12 +93,12 @@ else
 fi
 pushd Applications
 sudo -u $username python3 setup.py -l "$local_interface" \
-  -w "$global_interface" -a "$local_interface" -p "$spire_password" \
-  -ma "$local_interface" -mu "$mysql_username" -mp "$mysql_password"
+  -w "$global_interface" -a "$local_interface:20000" -p "$spire_password" \
+  -mu "$mysql_username" -mp "$mysql_password"
 sudo -u $username ./install_python.sh
 pushd ServiceLocator/Application
 sudo -u $username ./start_server.sh
-sleep 10
+sleep 3
 popd
 admin_input="
 mkdir administrators

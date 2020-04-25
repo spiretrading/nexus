@@ -14,8 +14,8 @@ services+=" UidServer"
 services+=" ServiceLocator"
 
 for directory in $services; do
-  pushd $directory/Application
+  pushd $directory/Application > /dev/null
   ./stop_server.sh
-  popd
+  popd > /dev/null
   sleep 3
 done
