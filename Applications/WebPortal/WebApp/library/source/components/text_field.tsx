@@ -40,6 +40,11 @@ export class TextField extends React.Component<Properties> {
     onInput: (_: string) => {}
   };
 
+  constructor(props: Properties) {
+    super(props);
+    this.inputRef = React.createRef<HTMLInputElement>();
+  }
+
   public render(): JSX.Element {
     const boxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -59,6 +64,7 @@ export class TextField extends React.Component<Properties> {
     })();
     return (
       <input value={this.props.value}
+        ref={this.inputRef}
         disabled={this.props.readonly}
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
@@ -66,6 +72,11 @@ export class TextField extends React.Component<Properties> {
           this.props.onInput(event.target.value);}}
         className={css(TextField.EXTRA_STYLE.effects, errorStyle) + ' ' +
           this.props.className}/>);
+  }
+
+  /** Gives focus to the component. */
+  public focus(): void {
+    this.inputRef.current.focus();
   }
 
   private static readonly STYLE = {
@@ -120,7 +131,6 @@ export class TextField extends React.Component<Properties> {
       backgroundColor: '#FFFFFF'
     }
   };
-
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
@@ -144,4 +154,6 @@ export class TextField extends React.Component<Properties> {
       flexGrow: 1
     }
   });
+
+  private inputRef : React.RefObject<HTMLInputElement>;
 }
