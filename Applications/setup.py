@@ -26,39 +26,49 @@ def make_sub_args(arg_vars, *args):
   return sub_args
 
 
-def setup_beam(arg_vars):
+def setup_application(application, arg_vars, *args):
   root_path = os.getcwd()
-  os.chdir(os.path.join('..', 'Nexus', 'Dependencies', 'Beam', 'Applications'))
   try:
-    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-      *[key for key in arg_vars.keys()]))
+    os.chdir(os.path.join(application, 'Application'))
+    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars, *args))
   finally:
     os.chdir(root_path)
+
+
+def setup_application_with_mysql(server, arg_vars):
+  if arg_vars['mysql_password'] is None:
+    arg_vars = arg_vars.copy()
+    arg_vars['mysql_password'] = arg_vars['password']
+  setup_application(server, arg_vars, 'mysql_address', 'mysql_username',
+    'mysql_password', 'mysql_schema')
+
+
+def setup_server(server, arg_vars):
+  setup_application(server, arg_vars, 'local', 'world', 'address', 'password')
+
+
+def setup_server_with_mysql(server, arg_vars):
+  setup_application(server, arg_vars, 'local', 'world', 'address', 'password',
+    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
+
+
+def setup_service_locator(arg_vars):
+  if arg_vars['mysql_password'] is None:
+    arg_vars = arg_vars.copy()
+    arg_vars['mysql_password'] = arg_vars['password']
+  setup_application('ServiceLocator', arg_vars, 'local', 'world',
+    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
+
+
+def setup_beam(arg_vars):
   for beam_service in ['RegistryServer', 'ServiceLocator', 'UidServer']:
     if not os.path.exists(beam_service):
       create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
       'Beam', 'Applications', beam_service))
-
-
-def setup_server(server, arg_vars):
-  root_path = os.getcwd()
-  try:
-    os.chdir(os.path.join(server, 'Application'))
-    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-      'local', 'world', 'address', 'password'))
-  finally:
-    os.chdir(root_path)
-
-
-def setup_server_with_mysql(server, arg_vars):
-  root_path = os.getcwd()
-  try:
-    os.chdir(os.path.join(server, 'Application'))
-    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars,
-      'local', 'world', 'address', 'password', 'mysql_address',
-      'mysql_username', 'mysql_password', 'mysql_schema'))
-  finally:
-    os.chdir(root_path)
+  setup_application('RegistryServer', arg_vars, 'local', 'world', 'address',
+    'password')
+  setup_service_locator(arg_vars)
+  setup_server_with_mysql('UidServer', arg_vars)
 
 
 def main():

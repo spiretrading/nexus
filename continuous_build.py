@@ -122,8 +122,8 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call('configure.%s' % extension))
-    result.append(call('build.%s' % extension))
+    result.append(call('configure.%s' % extension, repo.working_dir))
+    result.append(call('build.%s' % extension, repo.working_dir))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
