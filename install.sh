@@ -1,10 +1,10 @@
 #!/bin/bash
 function print_usage() {
-  echo "Usage: install.sh -m [-u] [-p] [-i] [-h]"
-  echo "  -m: The MySQL password to create or use."
-  echo "  -u: The MySQL username to create or use (default is spireadmin)."
+  echo "Usage: install.sh -p [-u] [-m] [-i] [-h]"
   echo "  -p: The password to create or use for Spire services."
-  echo "      By default it's set to the MySQL password."
+  echo "  -u: The MySQL username to create or use (default is spireadmin)."
+  echo "  -m: The MySQL password to create or use."
+  echo "      By default it's set to the Spire password."
   echo "  -i: The global network interface to bind to."
   echo "      The default value is ($local_interface)."
 }
@@ -31,14 +31,14 @@ local_interface=$(echo -n `ip addr | \
 
 while getopts "u:m:p:i:h" opt; do
   case ${opt} in
-    m)
-      mysql_password="$OPTARG"
+    p)
+      spire_password="$OPTARG"
       ;;
     u)
       mysql_username="$OPTARG"
       ;;
-    p)
-      spire_password="$OPTARG"
+    m)
+      mysql_password="$OPTARG"
       ;;
     i)
       global_interface="$OPTARG"
@@ -53,16 +53,19 @@ while getopts "u:m:p:i:h" opt; do
       ;;
   esac
 done
-if [ "$mysql_password" == "" ]; then
-  echo "Missing argument -m for MySQL password."
+if [ "$spire_password" == "" ] && [ "$mysql_password" == "" ]; then
+  echo "Missing argument -p."
   print_usage
   exit 1
+fi
+if [ "$spire_password" == "" ]; then
+  spire_password="$mysql_password"
 fi
 if [ "$mysql_username" == "" ]; then
   mysql_username="spireadmin"
 fi
-if [ "$spire_password" == "" ]; then
-  spire_password="$mysql_password"
+if [ "$mysql_password" == "" ]; then
+  mysql_password="$spire_password"
 fi
 if [ "$global_interface" == "" ]; then
   global_interface="$local_interface"
