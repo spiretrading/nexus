@@ -14,8 +14,8 @@ using namespace Spire;
 
 namespace {
   auto create_delete_button(QWidget* parent) {
-    auto button_size = scale(8, 8);
-    auto close_box = QRect(QPoint(0, 0), scale(8, 8));
+    auto button_size = scale(16, 16);
+    auto close_box = QRect(QPoint(4, 4), scale(8, 8));
     return new IconButton(
       imageFromSvg(":/Icons/close-purple.svg", button_size, close_box),
       imageFromSvg(":/Icons/close-red.svg", button_size, close_box), parent);
@@ -45,16 +45,25 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     table_layout->setContentsMargins({});
     table_layout->setSpacing(0);
     m_delete_buttons_layout = new QVBoxLayout();
-    m_delete_buttons_layout->setContentsMargins(scale_width(6),
-      scale_height(9), 0, 0);
-    m_delete_buttons_layout->setSpacing(scale_height(18));
+    m_delete_buttons_layout->setContentsMargins(scale_width(3),
+      scale_height(5), scale_width(3), 0);
+    m_delete_buttons_layout->setSpacing(scale_height(10));
     table_layout->addLayout(m_delete_buttons_layout);
     table_layout->addWidget(m_table);
     layout->addLayout(table_layout);
     on_horizontal_slider_value_changed(0);
+    auto button_cover_widget = new QWidget(this);
+    button_cover_widget->setStyleSheet("background-color: #FFFFFF;");
+    button_cover_widget->resize(scale_width(22), m_header->height());
   } else {
     layout->addWidget(m_table);
   }
+  auto table_padding_left = [&] {
+    if(m_can_delete_rows) {
+      return 0;
+    }
+    return scale_width(8);
+  }(); 
   m_table->setStyleSheet(QString(R"(
     QTableView {
       background-color: #FFFFFF;
@@ -64,8 +73,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       outline: 0;
       padding-bottom: %3px;
       padding-left: %2px;
-      padding-right: %2px;
-    })").arg(scale_height(12)).arg(scale_width(8)).arg(scale_height(8)));
+      padding-right: %4px;
+    })").arg(scale_height(12)).arg(table_padding_left).arg(scale_height(8))
+        .arg(scale_width(8)));
   m_table->setFrameShape(QFrame::NoFrame);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -221,7 +231,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
     auto x = [&] {
       if(m_can_delete_rows) {
         // TODO: fix this magic number, clean up header layout
-        return widget()->pos().x() + scale_width(21);
+        return widget()->pos().x() + scale_width(15);
       }
       return widget()->pos().x();
     }();
@@ -230,7 +240,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
     auto x = [&] {
       if(m_can_delete_rows) {
         // TODO: fix this magic number
-        return scale_width(21);
+        return scale_width(15);
       }
       return 0;
     }();

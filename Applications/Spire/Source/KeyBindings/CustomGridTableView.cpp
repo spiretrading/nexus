@@ -25,7 +25,7 @@ void CustomGridTableView::mouseMoveEvent(QMouseEvent* event) {
 
 void CustomGridTableView::paintEvent(QPaintEvent* event) {
   QTableView::paintEvent(event);
-  if(model()->rowCount() == 0) {
+  if(model()->rowCount() == 0 || horizontalHeader()->count() == 0) {
     return;
   }
   auto painter = QPainter(viewport());
@@ -45,8 +45,11 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
         auto column_x = horizontalHeader()->sectionViewportPosition(column) - 1;
         painter.drawLine(column_x, row_y, column_x, row_y + row_height);
       }
-      painter.drawLine(width() - scale_width(17), row_y,
-        width() - scale_width(17), row_y + row_height);
+      auto last_column_end_x = horizontalHeader()->sectionViewportPosition(
+        horizontalHeader()->count() - 1) +
+        horizontalHeader()->sectionSize(horizontalHeader()->count() - 1) - 1;
+      painter.drawLine(last_column_end_x, row_y, last_column_end_x,
+        row_y + row_height);
       painter.drawLine(0, row_y + row_height, width() - 1, row_y + row_height);
       row_y += row_height;
     }
