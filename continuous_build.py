@@ -122,11 +122,8 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call('%s -DD=%s' % (
-      os.path.join(repo.working_dir, 'configure.%s' % extension),
-      os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir))
-    result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
-      repo.working_dir))
+    result.append(call('configure.%s' % extension))
+    result.append(call('build.%s' % extension))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
@@ -143,8 +140,8 @@ def build_repo(repo, path, branch):
     copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
-    beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
-    copy_build(beam_applications, version, 'Beam', beam_path, path)
+    copy_build(beam_applications, version, 'Beam',
+      os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
       os.path.join(destination_path, 'setup.py'))
     copy_python_libraries(path, version)
@@ -166,26 +163,21 @@ def build_repo(repo, path, branch):
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
-  parser.add_argument('-r', '--repo', type=str, help='Remote repository.',
-    default='https://github.com/spiretrading/nexus.git')
   parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
-  parser.add_argument('-b', '--branch', type=str, help='Branch to build.',
-    default='master')
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
-  repo_path = os.path.join(os.getcwd(), 'Nexus')
-  shutil.rmtree(repo_path, True)
-  repo = git.Repo.clone_from(args.repo, repo_path)
   makedirs(args.path)
+  repo = git.Repo('.')
+  branch = repo.active_branch.name
   while True:
     try:
-      repo.git.checkout(args.branch)
+      repo.git.checkout(branch)
       repo.git.pull()
     except:
       print('Failed to pull: ', sys.exc_info()[0])
-    build_repo(repo, args.path, args.branch)
+    build_repo(repo, args.path, branch)
     time.sleep(args.period)
 
 if __name__ == '__main__':
