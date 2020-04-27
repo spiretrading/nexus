@@ -70,15 +70,15 @@ def copy_build(applications, version, name, source, path):
   except OSError:
     return
 
-def copy_python_libraries(path, version):
-  beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
+def copy_python_libraries(path, version, repo_path):
+  beam_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam')
   python_path = os.path.join(path, str(version), 'Python')
   makedirs(python_path)
   if sys.platform == 'win32':
     python_ext = '.pyd'
   else:
     python_ext = '.so'
-  aspen_path = os.path.join(os.getcwd(), 'Dependencies', 'aspen')
+  aspen_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'aspen')
   aspen_lib = os.path.join(aspen_path, 'Libraries', 'Release',
     'aspen%s' % python_ext)
   if os.path.isfile(aspen_lib):
@@ -93,11 +93,11 @@ def copy_python_libraries(path, version):
       '__init__.py'), beam_python_path)
   nexus_python_path = os.path.join(python_path, 'nexus')
   makedirs(nexus_python_path)
-  nexus_lib = os.path.join(os.getcwd(), 'Nexus', 'Nexus', 'Libraries',
-    'Release', '_nexus%s' % python_ext)
+  nexus_lib = os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
+    '_nexus%s' % python_ext)
   if os.path.isfile(nexus_lib):
     shutil.copy2(nexus_lib, nexus_python_path)
-    shutil.copy2(os.path.join(os.getcwd(), 'Nexus', 'Applications', 'Python',
+    shutil.copy2(os.path.join(repo_path, 'Applications', 'Python',
       '__init__.py'), nexus_python_path)
 
 def build_repo(repo, path, branch):
@@ -144,7 +144,9 @@ def build_repo(repo, path, branch):
       os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
       os.path.join(destination_path, 'setup.py'))
-    copy_python_libraries(path, version)
+    shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
+      os.path.join(destination_path, 'Python'))
+    copy_python_libraries(path, version, repo.working_dir)
     if sys.platform == 'win32':
       archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)
@@ -173,11 +175,11 @@ def main():
   branch = repo.active_branch.name
   while True:
     try:
-      repo.git.checkout(branch)
       repo.git.pull()
     except:
       print('Failed to pull: ', sys.exc_info()[0])
     build_repo(repo, args.path, branch)
+    repo.git.checkout(branch)
     time.sleep(args.period)
 
 if __name__ == '__main__':
