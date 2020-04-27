@@ -28,7 +28,6 @@ interface State {
   isSubmitted: boolean,
   isLocalError: boolean,
   localErrorMessage: string,
-  isJustOpened: boolean,
   isOpenLocally: boolean
 }
 
@@ -47,10 +46,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       isSubmitted: false,
       isLocalError: false,
       localErrorMessage: '',
-      isJustOpened: false,
       isOpenLocally: false
     };
-    this.textRef = React.createRef<TextField>();
   }
 
   public render(): JSX.Element {
@@ -100,7 +97,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       }
     })();
     return(
-      <Modal isOpen={this.props.isOpen}
+      <Modal isOpen={this.state.isOpenLocally}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
           width={modalDimensions.width}
@@ -120,7 +117,6 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
             <TextField
-              ref={this.textRef}
               autoFocus
               displaySize={this.props.displaySize}
               value={this.state.groupName}
@@ -139,18 +135,26 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       </Modal>);
   }
 
-  public componentDidUpdate(prevProps: Properties, prevState: State) {
+  public componentDidMount() {
+    if(this.props.isOpen) {
+      this.setState({
+        groupName: '',
+        localErrorMessage: '',
+        isSubmitted: false,
+        isLocalError: false,
+        isOpenLocally: true
+      });
+    }
+  }
+  public componentDidUpdate(prevProps: Properties) {
     if(!prevProps.isOpen && this.props.isOpen) {
       this.setState({
         groupName: '',
         localErrorMessage: '',
         isSubmitted: false,
         isLocalError: false,
-        isJustOpened: true
+        isOpenLocally: true
       });
-    }
-    if(!prevState.isJustOpened && this.state.isJustOpened) {
-      this.textRef.current.focus();
     }
     if(this.state.isSubmitted && this.props.errorStatus === '') {
       this.onClose();
@@ -167,7 +171,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   }
 
   private onClose = () => {
-    this.setState({isSubmitted: false, isJustOpened: false});
+    this.setState({isSubmitted: false, isOpenLocally: false});
     this.props.onClose();
   }
 
@@ -265,8 +269,6 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     {width: '282px', height: '218px'};
   private static readonly MODAL_LARGE_DIMENSIONS_ERROR =
     {width: '550px', height: '154px'};
-
-  private textRef: React.RefObject<TextField>;
 }
 
 interface ModalProperties {
@@ -383,7 +385,7 @@ class Modal extends React.Component<ModalProperties> {
       flexShrink: 0
     }
   };
-  private static readonly MENU_TRANSITION_LENGTH_MS = 200;
+  private static readonly MENU_TRANSITION_LENGTH_MS = 600;
   private static readonly ANIMATION : any = StyleSheet.create({
     base: {
       opacity: 0,

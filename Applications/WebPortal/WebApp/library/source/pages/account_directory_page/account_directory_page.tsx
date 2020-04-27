@@ -123,7 +123,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           errorStatus={this.props.createGroupStatus}
           isOpen={this.state.isCreateGroupModalOpen}
           onClose={this.onCloseCreateGroupModal}
-          onCreateGroup={this.props.onCreateGroup}/>
+          onCreateGroup={this.props.onCreateGroup}/>;
       } else {
         return null;
       }
