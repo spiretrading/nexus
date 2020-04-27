@@ -179,6 +179,15 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     emit dataChanged(index, index, {role});
   }
   if(role == Qt::DisplayRole) {
+    if(value == index.data()) {
+      return false;
+    }
+    if(static_cast<Columns>(index.column()) == Columns::NAME) {
+      if(value.value<QString>().isEmpty() &&
+          index.data().value<QString>().isEmpty()) {
+        return false;
+      }
+    }
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
         emit dataChanged(index, index, {role});
