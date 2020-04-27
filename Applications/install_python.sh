@@ -1,6 +1,6 @@
 #!/bin/bash
 python_directory=$(python3 -m site --user-site)
-pushd ../Nexus/Dependencies/Applications
+pushd ../Nexus/Dependencies/Beam/Applications
 ./install_python.sh
 popd
 mkdir -p $python_directory/nexus
