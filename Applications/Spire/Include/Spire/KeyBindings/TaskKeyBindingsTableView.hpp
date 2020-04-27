@@ -27,6 +27,7 @@ namespace Spire {
       std::vector<KeyBindings::OrderActionBinding> m_key_bindings;
       TaskKeyBindingsTableModel* m_model;
 
+      bool is_valid(int row, int column) const;
       void on_item_modified(const QModelIndex& index) const;
       void on_row_count_changed();
   };

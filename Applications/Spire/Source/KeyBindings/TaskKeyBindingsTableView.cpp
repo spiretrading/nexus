@@ -1,4 +1,10 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
+#include "Nexus/Definitions/OrderType.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/KeyBindings/DestinationItemDelegate.hpp"
 #include "Spire/KeyBindings/KeySequenceEditor.hpp"
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
@@ -13,6 +19,7 @@
 #include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
+using namespace Nexus;
 using namespace Spire;
 using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
@@ -120,9 +127,39 @@ void TaskKeyBindingsTableView::set_key_bindings(
   set_model(m_model);
 }
 
+bool TaskKeyBindingsTableView::is_valid(int row, int column) const {
+  return m_model->index(row, column).data().isValid();
+}
+
 void TaskKeyBindingsTableView::on_item_modified(
     const QModelIndex& index) const {
-  m_modified_signal(KeyBindings::OrderActionBinding{});
+  auto row = index.row();
+  auto binding = KeyBindings::OrderActionBinding{};
+  auto name = m_model->index(row, 0).data().value<QString>();
+  if(!name.isEmpty()) {
+    binding.m_action.m_name = name.toStdString();
+  }
+  if(is_valid(row, 1)) {
+    binding.m_region = Region(m_model->index(row, 1).data().value<Security>());
+  }
+  if(is_valid(row, 3)) {
+    binding.m_action.m_type = m_model->index(row, 3).data().value<OrderType>();
+  }
+  if(is_valid(row, 4)) {
+    binding.m_action.m_side = m_model->index(row, 4).data().value<Side>();
+  }
+  if(is_valid(row, 5)) {
+    binding.m_action.m_quantity =
+      m_model->index(row, 5).data().value<Quantity>();
+  }
+  if(is_valid(row, 6)) {
+    binding.m_action.m_time_in_force =
+      m_model->index(row, 6).data().value<TimeInForce>();
+  }
+  if(is_valid(row, 8)) {
+    binding.m_sequence = m_model->index(row, 8).data().value<QKeySequence>();
+  }
+  m_modified_signal(binding);
 }
 
 void TaskKeyBindingsTableView::on_row_count_changed() {
