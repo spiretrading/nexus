@@ -29,6 +29,7 @@ interface State {
   isLocalError: boolean,
   localErrorMessage: string,
   isJustOpened: boolean,
+  isOpenLocally: boolean
 }
 
 /** The modal that is used to create new groups. */
@@ -46,7 +47,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       isSubmitted: false,
       isLocalError: false,
       localErrorMessage: '',
-      isJustOpened: false
+      isJustOpened: false,
+      isOpenLocally: false
     };
     this.textRef = React.createRef<TextField>();
   }
@@ -119,6 +121,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           <div style={inputStyle}>
             <TextField
               ref={this.textRef}
+              autoFocus
               displaySize={this.props.displaySize}
               value={this.state.groupName}
               placeholder={CreateGroupModal.PLACEHOLDER}

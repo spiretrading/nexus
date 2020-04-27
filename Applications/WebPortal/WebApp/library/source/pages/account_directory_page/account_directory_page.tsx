@@ -116,6 +116,18 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
+    const createGroupModal = (() => {
+      if(this.state.isCreateGroupModalOpen) {
+        return <CreateGroupModal 
+          displaySize={this.props.displaySize}
+          errorStatus={this.props.createGroupStatus}
+          isOpen={this.state.isCreateGroupModalOpen}
+          onClose={this.onCloseCreateGroupModal}
+          onCreateGroup={this.props.onCreateGroup}/>
+      } else {
+        return null;
+      }
+    })();
     const cards = [];
     for (const group of this.props.groups) {
       const accounts = (() => {
@@ -136,12 +148,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     }
     return (
       <PageWrapper>
-        <CreateGroupModal 
-          displaySize={this.props.displaySize}
-          errorStatus={this.props.createGroupStatus}
-          isOpen={this.state.isCreateGroupModalOpen}
-          onClose={this.onCloseCreateGroupModal}
-          onCreateGroup={this.props.onCreateGroup}/>
+        {createGroupModal}
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
