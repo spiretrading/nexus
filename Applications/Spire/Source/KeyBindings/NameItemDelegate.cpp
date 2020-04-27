@@ -26,7 +26,7 @@ void NameItemDelegate::setEditorData(QWidget *editor,
 
 void NameItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
-  auto text = static_cast<QLineEdit*>(editor)->text();
+  auto text = static_cast<QLineEdit*>(editor)->text().trimmed();
   model->setData(index, text, Qt::DisplayRole);
   m_item_modified_signal(index);
 }
