@@ -182,14 +182,12 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     if(value == index.data()) {
       return false;
     }
-    if(static_cast<Columns>(index.column()) == Columns::NAME) {
-      if(value.value<QString>().isEmpty() &&
-          index.data().value<QString>().isEmpty()) {
-        return false;
-      }
-    }
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
+        if(value.value<QString>().isEmpty() &&
+            index.data().value<QString>().isEmpty()) {
+          return false;
+        }
         emit dataChanged(index, index, {role});
         if(index.row() == m_key_bindings.size() &&
             value.value<QString>().isEmpty()) {
@@ -207,6 +205,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         return true;
       case Columns::SECURITY:
+        if(value.value<Security>().GetSymbol().empty()) {
+          return false;
+        }
         emit dataChanged(index, index, {role});
         if(!value.value<Security>().GetSymbol().empty()) {
           if(index.row() == m_key_bindings.size()) {

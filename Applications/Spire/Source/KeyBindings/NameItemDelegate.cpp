@@ -1,4 +1,6 @@
 #include "Spire/KeyBindings/NameItemDelegate.hpp"
+#include <QFontMetrics>
+#include <QPainter>
 #include "Spire/KeyBindings/NameInputEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -15,6 +17,23 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
   connect(editor, &NameInputEditor::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;
+}
+
+void NameItemDelegate::paint(QPainter* painter,
+    const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  painter->save();
+  painter->fillRect(option.rect,
+    index.data(Qt::BackgroundRole).value<QColor>());
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  painter->setFont(font);
+  auto pos = QPoint(option.rect.left() + scale_width(8),
+    option.rect.bottom() - scale_height(7));
+  auto metrics = QFontMetrics(font);
+  auto shortened_text = metrics.elidedText(index.data().toString(),
+    Qt::ElideRight, option.rect.width() - scale_width(8));
+  painter->drawText(pos, shortened_text);
+  painter->restore();
 }
 
 void NameItemDelegate::setEditorData(QWidget *editor,
