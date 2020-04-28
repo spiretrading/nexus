@@ -385,18 +385,23 @@ class Modal extends React.Component<ModalProperties> {
       flexShrink: 0
     }
   };
-  private static readonly MENU_TRANSITION_LENGTH_MS = 600;
+  private static readonly MENU_TRANSITION_LENGTH_MS = 200;
   private static readonly ANIMATION : any = StyleSheet.create({
     base: {
-      opacity: 0,
+
+    },
+    entering: {
+      opacity: 0
+    },
+    entered: {
+      opacity: 1,
       transition:
         `opacity ${Modal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
-    entering: {
-      opacity: 1
-    },
-    entered: {
-      opacity: 1
+    exiting: {
+      opacity: 0,
+      transition:
+        `opacity ${Modal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
     exited: {
       visibility: 'hidden' as 'hidden'
