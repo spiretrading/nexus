@@ -59,12 +59,10 @@ const Security& SecurityInputDialog::get_security() const noexcept {
 void SecurityInputDialog::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ActivationChange) {
     if(QApplication::activeWindow() != this) {
-      for(auto& child : m_security_input_box->children()) {
-        auto c = qobject_cast<QWidget*>(child);
-        if(c != nullptr && c->isActiveWindow()) {
-          c->installEventFilter(this);
-          return;
-        }
+      if(auto a = m_security_input_box->findChild<SecurityInfoListView*>(
+          "SecurityInputLineEdit")) {
+        a->installEventFilter(this);
+        return;
       }
       reject();
     }
