@@ -208,7 +208,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         return true;
       case Columns::SECURITY:
         emit dataChanged(index, index, {role});
-        if(value.isValid()) {
+        if(!value.value<Security>().GetSymbol().empty()) {
           if(index.row() == m_key_bindings.size()) {
             beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
@@ -345,6 +345,6 @@ bool TaskKeyBindingsTableModel::is_row_empty(int row) {
       binding.m_action.m_tags.empty() &&
       !binding.m_action.m_time_in_force.is_initialized() &&
       !binding.m_action.m_type.is_initialized() &&
-      binding.m_region.GetSecurities().empty() &&
+      binding.m_region == Region() &&
       binding.m_sequence.isEmpty();
 }
