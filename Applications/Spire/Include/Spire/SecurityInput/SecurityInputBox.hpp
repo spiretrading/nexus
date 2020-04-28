@@ -1,11 +1,10 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 
 namespace Spire {
 
@@ -22,24 +21,19 @@ namespace Spire {
       //! Constructs a blank security input box.
       /*!
         \param model The model to query for securities.
-        \param is_compact True if the input box should have a minimal style
-                          for embedding in a table.
         \param parent The parent to this widget.
       */
       explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
-        bool is_compact, QWidget* parent = nullptr);
+        QWidget* parent = nullptr);
 
       //! Constructs a security input box with an initial text value.
       /*!
         \param model The model to query for securities.
         \param initial_text The initial text to display in the line edit.
-        \param is_compact True if the input box should have a minimal style
-                          for embedding in a table.
         \param parent The parent to this widget.
       */
       explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
-        const QString& initial_text, bool is_compact,
-        QWidget* parent = nullptr);
+        const QString& initial_text, QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
@@ -47,22 +41,11 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
-      void showEvent(QShowEvent* event) override;
 
     private:
       mutable CommitSignal m_commit_signal;
-      SecurityInputModel* m_model;
-      bool m_is_compact;
-      QLineEdit* m_security_line_edit;
-      SecurityInfoListView* m_securities;
-      QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
+      SecurityInputLineEdit* m_security_line_edit;
 
-      void on_text_edited();
-      void move_line_edit();
-      void enter_pressed();
-      void on_activated(const Nexus::Security& security);
       void on_commit(const Nexus::Security& security);
   };
 }

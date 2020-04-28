@@ -1,5 +1,5 @@
 #include "Spire/KeyBindings/SecurityInputItemDelegate.hpp"
-#include "Spire/SecurityInput/SecurityInputBox.hpp"
+#include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -12,8 +12,8 @@ SecurityInputItemDelegate::SecurityInputItemDelegate(
 
 QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new SecurityInputBox(Ref<SecurityInputModel>(*m_model),
-    true, parent);
+  auto editor = new SecurityInputLineEdit("",
+    Ref<SecurityInputModel>(*m_model), parent);
   return editor;
 }
 
