@@ -11,9 +11,11 @@ import tarfile
 import time
 import zipfile
 
+
 def call(command, cwd=None):
   return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
     stderr=subprocess.PIPE).communicate()
+
 
 def makedirs(path):
   try:
@@ -22,10 +24,12 @@ def makedirs(path):
     if e.errno != errno.EEXIST:
       raise
 
+
 def make_tarfile(source, destination):
   with tarfile.open(destination, 'w:gz') as tar:
     for file in os.listdir(source):
       tar.add(os.path.join(source, file), arcname=file)
+
 
 def make_zipfile(source, destination):
   archive = zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED)
@@ -36,6 +40,7 @@ def make_zipfile(source, destination):
       archive.write(os.path.join(root, file),
         arcname=absolute_path[len(source) + 1:])
   archive.close()
+
 
 def copy_build(applications, version, name, source, path):
   try:
@@ -70,6 +75,7 @@ def copy_build(applications, version, name, source, path):
   except OSError:
     return
 
+
 def copy_python_libraries(path, version, repo_path):
   beam_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam')
   python_path = os.path.join(path, str(version), 'Python')
@@ -100,6 +106,7 @@ def copy_python_libraries(path, version, repo_path):
     shutil.copy2(os.path.join(repo_path, 'Applications', 'Python',
       '__init__.py'), nexus_python_path)
 
+
 def build_repo(repo, path, branch):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
   commits.reverse()
@@ -122,8 +129,12 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call('configure.%s' % extension, repo.working_dir))
-    result.append(call('build.%s' % extension, repo.working_dir))
+    result.append(
+      call(os.path.join(repo.working_dir, 'configure.%s' % extension),
+      repo.working_dir))
+    result.append(
+      call(os.path.join(repo.working_dir, 'build.%s' % extension),
+      repo.working_dir))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
@@ -162,6 +173,7 @@ def build_repo(repo, path, branch):
       log_file.write(terminal_output)
     shutil.move(archive_path, destination_path)
 
+
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
@@ -181,6 +193,7 @@ def main():
     build_repo(repo, args.path, branch)
     repo.git.checkout(branch)
     time.sleep(args.period)
+
 
 if __name__ == '__main__':
   main()
