@@ -205,11 +205,12 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         return true;
       case Columns::SECURITY:
-        if(value.value<Security>().GetSymbol().empty()) {
+        if(value.value<Security>() == Security() &&
+            index.data().value<Security>() == Security()) {
           return false;
         }
         emit dataChanged(index, index, {role});
-        if(!value.value<Security>().GetSymbol().empty()) {
+        if(value.value<Security>() != Security()) {
           if(index.row() == m_key_bindings.size()) {
             beginInsertRows(QModelIndex(), index.row(), index.row());
             m_key_bindings.push_back({});
