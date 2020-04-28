@@ -29,7 +29,10 @@ def make_sub_args(arg_vars, *args):
 def setup_application(application, arg_vars, *args):
   root_path = os.getcwd()
   try:
-    os.chdir(os.path.join(application, 'Application'))
+    try:
+      os.chdir(os.path.join(application, 'Application'))
+    except FileNotFoundError:
+      os.chdir(os.path.join(application))
     setup_utils.run_subscript('setup.py', make_sub_args(arg_vars, *args))
   finally:
     os.chdir(root_path)
