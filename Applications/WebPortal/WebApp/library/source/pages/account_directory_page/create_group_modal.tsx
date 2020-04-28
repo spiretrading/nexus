@@ -172,7 +172,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
 
   private onClose = () => {
     this.setState({isSubmitted: false, isOpenLocally: false});
-    this.props.onClose();
+    setTimeout(() => this.props.onClose(), 200);
   }
 
   private onCreateClick = () => {
@@ -302,7 +302,7 @@ class Modal extends React.Component<ModalProperties> {
         {(status: string) => {
           return (
             <div style={Modal.STYLE.wrapper}
-                className={css([Modal.ANIMATION.base,Modal.ANIMATION[status]])}>
+                className={css(Modal.ANIMATION[status])}>
               <div style={Modal.STYLE.modalWrapper}
                   onClick={this.outOfBoundsClick}>
                 <div style={Modal.STYLE.topFiller}
@@ -387,9 +387,6 @@ class Modal extends React.Component<ModalProperties> {
   };
   private static readonly MENU_TRANSITION_LENGTH_MS = 200;
   private static readonly ANIMATION : any = StyleSheet.create({
-    base: {
-
-    },
     entering: {
       opacity: 0
     },
