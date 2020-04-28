@@ -159,10 +159,14 @@ def build_repo(repo, path, branch):
       os.path.join(destination_path, 'Python'))
     copy_python_libraries(path, version, repo.working_dir)
     if sys.platform == 'win32':
+      for file in ['install_python.bat', 'setup.py']:
+        shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+          os.path.join(destination_path, file))
       archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)
     else:
-      for file in ['check.sh', 'install.sh', 'start.sh', 'stop.sh']:
+      for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
+          'stop.sh']:
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           os.path.join(destination_path, file))
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
