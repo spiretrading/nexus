@@ -338,7 +338,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
 }
 
 bool TaskKeyBindingsTableModel::is_row_empty(int row) {
-  auto binding = m_key_bindings[row];
+  auto& binding = m_key_bindings[row];
   return binding.m_action.m_name.empty() &&
       !binding.m_action.m_quantity.is_initialized() &&
       !binding.m_action.m_side.is_initialized() &&

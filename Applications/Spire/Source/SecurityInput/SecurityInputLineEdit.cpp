@@ -22,13 +22,15 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
       font-family: Roboto;
       font-size: %1px;
       padding: %2px 0px %2px %3px;
-    })").arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(5)));
+    })").arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(6)));
   connect(this, &QLineEdit::textEdited, this,
     &SecurityInputLineEdit::on_text_edited);
   m_securities = new SecurityInfoListView(this);
   m_securities->connect_activate_signal(
     [=] (auto& s) { on_activated(s); });
-  m_securities->connect_commit_signal([=] (auto& s) { on_commit(s); });
+  m_securities->connect_commit_signal([=] (auto& s) {
+    on_commit(s);
+  });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
 }
@@ -67,8 +69,10 @@ void SecurityInputLineEdit::hideEvent(QHideEvent* event) {
 void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Down) {
     m_securities->activate_next();
+    return;
   } else if(event->key() == Qt::Key_Up) {
     m_securities->activate_previous();
+    return;
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     on_commit(ParseSecurity(text().toUpper().toStdString()));
   }
