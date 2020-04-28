@@ -20,6 +20,8 @@ namespace Spire {
       SecurityInputLineEdit(const QString& initial_text,
         Beam::Ref<SecurityInputModel> model, QWidget* parent = nullptr);
 
+      const Nexus::Security& get_security() const;
+
       //! Connects a slot to the commit signal.
       boost::signals2::connection connect_commit_signal(
         const CommitSignal::slot_type& slot) const;
@@ -37,6 +39,7 @@ namespace Spire {
       SecurityInputModel* m_model;
       SecurityInfoListView* m_securities;
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
+      Nexus::Security m_security;
 
       void move_securities_list();
       void on_activated(const Nexus::Security& security);

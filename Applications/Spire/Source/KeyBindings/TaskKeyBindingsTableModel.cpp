@@ -207,7 +207,24 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         return true;
       case Columns::SECURITY:
-        return false;
+        emit dataChanged(index, index, {role});
+        if(value.isValid()) {
+          if(index.row() == m_key_bindings.size()) {
+            beginInsertRows(QModelIndex(), index.row(), index.row());
+            m_key_bindings.push_back({});
+            endInsertRows();
+          }
+          m_key_bindings[index.row()].m_region = value.value<Security>();
+        } else {
+          if(index.row() == m_key_bindings.size()) {
+            return false;
+          }
+          m_key_bindings[index.row()].m_region = {};
+        }
+        if(is_row_empty(index.row())) {
+          removeRow(index.row());
+        }
+        return true;
       case Columns::DESTINATION:
         return false;
       case Columns::ORDER_TYPE:
@@ -290,6 +307,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }
         return true;
       case Columns::CUSTOM_TAGS:
+        return false;
       case Columns::KEY_BINDING:
         if(index.row() == m_key_bindings.size()) {
           if(!value.value<QKeySequence>().isEmpty()) {

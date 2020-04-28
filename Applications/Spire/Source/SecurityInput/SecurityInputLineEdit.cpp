@@ -33,6 +33,10 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
   window()->installEventFilter(this);
 }
 
+const Nexus::Security& SecurityInputLineEdit::get_security() const {
+  return m_security;
+}
+
 connection SecurityInputLineEdit::connect_commit_signal(
     const CommitSignal::slot_type& slot) const {
   return m_commit_signal.connect(slot);
@@ -66,7 +70,7 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Up) {
     m_securities->activate_previous();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    m_commit_signal(ParseSecurity(text().toUpper().toStdString()));
+    on_commit(ParseSecurity(text().toUpper().toStdString()));
   }
   QLineEdit::keyPressEvent(event);
 }
@@ -110,6 +114,8 @@ void SecurityInputLineEdit::on_activated(const Security& security) {
 }
 
 void SecurityInputLineEdit::on_commit(const Security& security) {
+  m_security = security;
+  emit editingFinished();
   m_commit_signal(security);
 }
 
