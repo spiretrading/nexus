@@ -190,6 +190,8 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
   m_table->model()->setData(m_table->model()->index(index, 0), QVariant(),
     Qt::BackgroundRole);
   m_table->model()->removeRow(index);
+  //TODO: workaround for ignored repaint
+  setStyleSheet(styleSheet());
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
