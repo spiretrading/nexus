@@ -135,6 +135,7 @@ associate risk_service
 associate order_execution_service
 associate compliance_service
 associate web_portal_service
+del @1
 exit
 "
 pushd ../Nexus/Dependencies/Beam/Applications/AdminClient/Application
