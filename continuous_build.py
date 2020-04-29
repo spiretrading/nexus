@@ -162,8 +162,12 @@ def build_repo(repo, path, branch):
     else:
       for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
           'stop.sh']:
+        copy_path = os.path.join(destination_path, file)
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-          os.path.join(destination_path, file))
+          copy_path)
+        if file.endswith('.sh'):
+          open(copy_path, 'w').write(open(copy_path, 'r').read().replace(
+            '/Application', ''))
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
       make_tarfile(destination_path, archive_path)
     shutil.rmtree(destination_path)
