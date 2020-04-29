@@ -25,6 +25,7 @@ interface Properties {
   /** Indicates if the component is readonly. */
   readonly?: boolean;
 
+  /** Grants the component focus on mount. */
   autoFocus?: boolean;
 
   /** Called when the value changes.
@@ -41,6 +42,11 @@ export class TextField extends React.Component<Properties> {
     isError: false,
     onInput: (_: string) => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.inputRef = React.createRef();
+  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -62,13 +68,19 @@ export class TextField extends React.Component<Properties> {
     return (
       <input value={this.props.value}
         disabled={this.props.readonly}
-        autoFocus={this.props.autoFocus}
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
+        ref={this.inputRef}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.props.onInput(event.target.value);}}
         className={css(TextField.EXTRA_STYLE.effects, errorStyle) + ' ' +
           this.props.className}/>);
+  }
+
+  public componentDidMount() {
+    if(this.props.autoFocus) {
+      this.inputRef.current.focus();
+    }
   }
 
   private static readonly STYLE = {
@@ -146,4 +158,5 @@ export class TextField extends React.Component<Properties> {
       flexGrow: 1
     }
   });
+  private inputRef: React.RefObject<HTMLInputElement>;
 }
