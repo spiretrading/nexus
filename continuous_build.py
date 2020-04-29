@@ -166,8 +166,10 @@ def build_repo(repo, path, branch):
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
           copy_path)
         if file.endswith('.sh'):
-          open(copy_path, 'w').write(open(copy_path, 'r').read().replace(
-            '/Application', ''))
+          with open(copy_path, 'r') as f:
+            translation = f.read().replace('/Application', '')
+          with open(copy_path, 'w') as f:
+            f.write(translation)
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
       make_tarfile(destination_path, archive_path)
     shutil.rmtree(destination_path)
