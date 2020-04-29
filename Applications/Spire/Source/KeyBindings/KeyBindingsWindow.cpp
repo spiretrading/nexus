@@ -155,6 +155,7 @@ void KeyBindingsWindow::on_ok_button_clicked() {
 
 void KeyBindingsWindow::on_restore_button_clicked() {
   auto default_bindings = KeyBindings::get_default_key_bindings();
+  m_task_keys_table->set_key_bindings(default_bindings.build_order_bindings());
   m_cancel_keys_table->set_key_bindings(
     default_bindings.build_cancel_bindings());
 }
