@@ -24,7 +24,7 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      roles: new Nexus.AccountRoles(),
+      roles: this.testAdmin,
       groups: new Beam.Set<Beam.DirectoryEntry>(),
       openedGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       filter: '',

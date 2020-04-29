@@ -298,7 +298,7 @@ class Modal extends React.Component<ModalProperties> {
   public render(): JSX.Element {
     return (
       <Transition in={this.props.isOpen}
-          timeout={Modal.MENU_TRANSITION_LENGTH_MS}>
+          timeout={Modal.TIMEOUTS}>
         {(status: string) => {
           return (
             <div style={Modal.STYLE.wrapper}
@@ -386,6 +386,12 @@ class Modal extends React.Component<ModalProperties> {
     }
   };
   private static readonly MENU_TRANSITION_LENGTH_MS = 200;
+  private static readonly TIMEOUTS = {
+    enter: 10,
+    entered: 200,
+    exit: 200,
+    exited:  200
+  };
   private static readonly ANIMATION : any = StyleSheet.create({
     entering: {
       opacity: 0
