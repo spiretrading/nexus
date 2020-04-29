@@ -200,9 +200,6 @@ void KeyBindingsTableView::on_header_resize(int index, int old_size,
     m_table->closePersistentEditor(m_table->currentIndex());
     m_table->update();
   }
-  if(index == 8) {
-    return;
-  }
   if(m_minimum_column_widths.find(index) != m_minimum_column_widths.end()) {
     auto min_width = m_minimum_column_widths[index];
     if(new_size <= min_width) {
