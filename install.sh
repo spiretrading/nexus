@@ -75,7 +75,7 @@ sudo -u $username ./configure.sh
 sudo -u $username ./build.sh
 
 mysql_input="
-CREATE USER '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
+CREATE USER '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
 GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
 exit
 "
