@@ -66,12 +66,6 @@ def copy_build(applications, version, name, source, path):
         else:
           if extension in ['', '.sh']:
             shutil.copy2(file_path, os.path.join(application_path, file))
-    library_destination_path = os.path.join(destination_path, 'Libraries')
-    makedirs(library_destination_path)
-    library_source_path = os.path.join(source, name, 'Libraries', 'Release')
-    for file in os.listdir(library_source_path):
-      shutil.copy2(os.path.join(library_source_path, file),
-        os.path.join(library_destination_path, file))
   except OSError:
     return
 
