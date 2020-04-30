@@ -124,6 +124,9 @@ void TaskKeyBindingsTableView::set_key_bindings(
     [=] (auto parent, auto first, auto last) {
       on_row_count_changed();
     });
+  m_model->connect_item_modified_signal([=] (auto index) {
+    on_item_modified(index);
+  });
   set_model(m_model);
 }
 

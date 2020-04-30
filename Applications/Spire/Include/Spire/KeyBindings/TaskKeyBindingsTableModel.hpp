@@ -40,6 +40,12 @@ namespace Spire {
         KEY_BINDING
       };
 
+      //! Signals that an item's data was modified.
+      /*
+        \param index The index that was modified.
+      */
+      using ItemModifiedSignal = Signal<void (const QModelIndex& index)>;
+
       //! Specifies the action type used by the model.
       using Action = KeyBindings::OrderActionBinding;
 
@@ -51,6 +57,10 @@ namespace Spire {
         \param bindings The updated key bindings.
       */
       void set_key_bindings(const std::vector<Action>& bindings);
+
+      //! Connects a slot to the item modified signal.
+      boost::signals2::connection connect_item_modified_signal(
+        const ItemModifiedSignal::slot_type& slot) const;
 
       int rowCount(const QModelIndex& parent) const override;
 
@@ -70,6 +80,7 @@ namespace Spire {
         int role = Qt::EditRole) override;
 
     private:
+      mutable ItemModifiedSignal m_modified_signal;
       std::vector<Action> m_key_bindings;
       boost::optional<int> m_highlighted_row;
 

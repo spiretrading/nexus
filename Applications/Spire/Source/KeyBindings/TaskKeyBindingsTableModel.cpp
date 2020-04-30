@@ -4,6 +4,7 @@
 #include "Spire/Spire/Utility.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using Action = TaskKeyBindingsTableModel::Action;
@@ -64,6 +65,11 @@ TaskKeyBindingsTableModel::TaskKeyBindingsTableModel(
 void TaskKeyBindingsTableModel::set_key_bindings(
     const std::vector<Action>& bindings) {
   m_key_bindings = bindings;
+}
+
+connection TaskKeyBindingsTableModel::connect_item_modified_signal(
+    const ItemModifiedSignal::slot_type& slot) const {
+  return m_modified_signal.connect(slot);
 }
 
 int TaskKeyBindingsTableModel::rowCount(const QModelIndex& parent) const {
@@ -267,10 +273,11 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         if(!value.value<QKeySequence>().isEmpty()) {
           auto binding_index = index.row();
           for(auto i = 0; i < rowCount(index); ++i) {
-            auto sequence =
-              this->index(i, index.column()).data().value<QKeySequence>();
+            auto current_index = this->index(i, index.column());
+            auto sequence = current_index.data().value<QKeySequence>();
             if(sequence == value.value<QKeySequence>()) {
               m_key_bindings[i].m_sequence = QKeySequence();
+              m_modified_signal(current_index);
               if(is_row_empty(i)) {
                 removeRow(i);
                 if(i < binding_index) {
