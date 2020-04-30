@@ -18,6 +18,8 @@ namespace Spire {
       //! Constructs a key bindings window.
       /*
         \param key_bindings The initial key bindings.
+        \param input_model The input model used for selecting order binding
+                           securities.
         \param parent The parent widget.
       */
       explicit KeyBindingsWindow(KeyBindings key_bindings,

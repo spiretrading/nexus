@@ -4,9 +4,14 @@
 
 namespace Spire {
 
+  //! Represents a line input for editing Quantities.
   class QuantityInputEditor : public QLineEdit {
     public:
 
+      //! Constructs a QuantityInputEditor.
+      /*
+        \param parent The parent widget.
+      */
       explicit QuantityInputEditor(QWidget* parent = nullptr);
 
     protected:

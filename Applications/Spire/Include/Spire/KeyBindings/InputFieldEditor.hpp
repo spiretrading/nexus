@@ -5,13 +5,22 @@
 
 namespace Spire {
 
+  //! Represents a line edit with a dynamic drop down list that displays a list
+  //! of auto-complete suggestions.
   class InputFieldEditor : public QLineEdit {
     public:
 
-      // TODO: try to make this take a variant
+      //! Constructs an InputFieldEditor.
+      /*
+        \param initial_value The initial value displayed in the line edit.
+        \param items The list of valid inputs.
+        \param parent The parent widget.
+      */
       explicit InputFieldEditor(QString initial_value,
         std::vector<QString> items, QWidget* parent = nullptr);
 
+      //! Returns the selected item, or an empty string if the input was
+      //! invalid.
       const QString& get_item() const;
 
     protected:

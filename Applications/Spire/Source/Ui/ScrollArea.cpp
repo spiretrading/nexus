@@ -40,10 +40,6 @@ void ScrollArea::set_border_style(int width, const QColor& color) {
   }
 }
 
-void ScrollArea::set_wheel_disabled(bool is_disabled) {
-  m_is_wheel_disabled = is_disabled;
-}
-
 void ScrollArea::setWidget(QWidget* widget) {
   if(m_is_dynamic) {
     widget->setMouseTracking(true);

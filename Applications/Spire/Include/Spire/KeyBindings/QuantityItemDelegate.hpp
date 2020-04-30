@@ -5,9 +5,15 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the quantity of a
+  //! key binding.
   class QuantityItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a QuantityItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit QuantityItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

@@ -6,6 +6,7 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for the KeyBindingsTableView.
   class KeyBindingItemDelegate : public QStyledItemDelegate {
     public:
 
@@ -15,6 +16,10 @@ namespace Spire {
       */
       using ItemModifiedSignal = Signal<void (const QModelIndex& index)>;
 
+      //! Constructs a KeyBindingsItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit KeyBindingItemDelegate(QWidget* parent = nullptr);
 
       //! Connects a slot to the item modified signal.

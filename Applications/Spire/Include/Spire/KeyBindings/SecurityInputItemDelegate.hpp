@@ -7,9 +7,16 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the security of a
+  //! key binding.
   class SecurityInputItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a SecurityInputItemDelegate.
+      /*
+        \param model The security input model.
+        \param parent The parent widget.
+      */
       explicit SecurityInputItemDelegate(Beam::Ref<SecurityInputModel> model,
         QWidget* parent = nullptr);
 

@@ -225,7 +225,6 @@ namespace Details {
         Actions m_actions;
       };
 
-      //QHash<QKeySequence, Actions> m_bindings;
       std::vector<KeyBindingMapping> m_bindings;
   };
 

@@ -31,12 +31,6 @@ namespace Spire {
       */
       void set_border_style(int width, const QColor& color);
 
-      //! Disables scrolling with the mouse wheel.
-      /*
-        \param is_disabled True if mouse wheel scrolling is disabled.
-      */
-      void set_wheel_disabled(bool is_disabled);
-
       //! Sets the widget displayed in the scroll area.
       /*
         \param widget The widget to display.

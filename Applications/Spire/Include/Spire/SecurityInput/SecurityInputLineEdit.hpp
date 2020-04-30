@@ -8,6 +8,7 @@
 
 namespace Spire {
 
+  //! Displays a line edit with a drop down list of securities.
   class SecurityInputLineEdit : public QLineEdit {
     public:
 
@@ -17,9 +18,17 @@ namespace Spire {
       */
       using CommitSignal = Signal<void (const Nexus::Security& s)>;
 
+      //! Constructs a SecurityInputLineEdit.
+      /*
+        \param initial_text The initial text to display.
+        \param model The security input model.
+        \param parent The parent widget.
+      */
       SecurityInputLineEdit(const QString& initial_text,
         Beam::Ref<SecurityInputModel> model, QWidget* parent = nullptr);
 
+      //! Returns the selected security, or an empty Security if there was no
+      //! selection.
       const Nexus::Security& get_security() const;
 
       //! Connects a slot to the commit signal.

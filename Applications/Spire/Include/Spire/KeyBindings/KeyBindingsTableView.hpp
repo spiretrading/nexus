@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #define SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
-#include <QHBoxLayout>
 #include <QHeaderView>
+#include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/CustomGridTableView.hpp"
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
@@ -38,6 +38,11 @@ namespace Spire {
       */
       void set_column_width(int column, int width);
 
+      //! Sets the minimum width of the specified column.
+      /*
+        \param column The index of the column to set the minimum width of.
+        \param width The minimum width of the specified column.
+      */
       void set_minimum_column_width(int column, int width);
 
       //! Sets the model associated with the table view.

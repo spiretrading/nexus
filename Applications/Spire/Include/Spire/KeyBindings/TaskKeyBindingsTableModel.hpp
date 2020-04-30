@@ -6,6 +6,7 @@
 
 namespace Spire {
   
+  //! Represents a model for displaying order key bindings.
   class TaskKeyBindingsTableModel : public QAbstractTableModel {
     public:
 
@@ -49,6 +50,11 @@ namespace Spire {
       //! Specifies the action type used by the model.
       using Action = KeyBindings::OrderActionBinding;
 
+      //! Constructs a TaskKeyBindingsTableModel.
+      /*
+        \param bindings The initial key bindings.
+        \param parent The parent object.
+      */
       explicit TaskKeyBindingsTableModel(std::vector<Action> bindings,
         QObject* parent = nullptr);
 

@@ -5,9 +5,15 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the side of a key
+  //! binding.
   class SideItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a SideItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit SideItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

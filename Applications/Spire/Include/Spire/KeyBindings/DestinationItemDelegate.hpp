@@ -5,9 +5,14 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for editing key binding destinations.
   class DestinationItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a DestinationItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit DestinationItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

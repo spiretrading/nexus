@@ -5,9 +5,15 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the time in force
+  //! of a key binding.
   class TimeInForceItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a TimeInForceItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit TimeInForceItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

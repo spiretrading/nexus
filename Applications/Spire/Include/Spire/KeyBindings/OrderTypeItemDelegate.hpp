@@ -5,9 +5,15 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the order type of
+  //! a key binding.
   class OrderTypeItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs an OrderTypeItemDelegate.
+      /*
+        \param parent The parent widget.
+      */
       explicit OrderTypeItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

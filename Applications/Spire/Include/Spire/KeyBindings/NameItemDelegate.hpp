@@ -5,9 +5,15 @@
 
 namespace Spire {
 
+  //! Represents an item delegate for displaying and editing the name of a key
+  //! binding.
   class NameItemDelegate : public KeyBindingItemDelegate {
     public:
 
+      //! Constructs a NameItemDelegate.
+      /*
+        \parent The parent widget.
+      */
       explicit NameItemDelegate(QWidget* parent = nullptr);
 
       QWidget* createEditor(QWidget* parent,

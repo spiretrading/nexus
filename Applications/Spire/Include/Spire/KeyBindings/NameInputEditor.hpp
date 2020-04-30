@@ -4,9 +4,14 @@
 
 namespace Spire {
 
+  //! Represents a line edit for editing a key binding's name value.
   class NameInputEditor : public QLineEdit {
     public:
 
+      //! Constructs a NameInputEditor.
+      /*
+        \param parent The parent widget.
+      */
       explicit NameInputEditor(QWidget* parent = nullptr);
 
     protected:

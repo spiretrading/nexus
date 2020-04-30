@@ -4,10 +4,15 @@
 
 namespace Spire {
 
+  //! Represents a Spire-style tab widget.
   class CustomTabWidget : public QTabWidget {
     public:
 
-      CustomTabWidget(QWidget* parent = nullptr);
+      //! Constructs a CustomTabWidget.
+      /*
+        \param parent The parent widget.
+      */
+      explicit CustomTabWidget(QWidget* parent = nullptr);
 
     protected:
       void paintEvent(QPaintEvent* event) override;
