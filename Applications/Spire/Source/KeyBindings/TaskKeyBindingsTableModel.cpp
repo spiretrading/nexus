@@ -208,34 +208,82 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       case Columns::NAME:
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
+        break;
       case Columns::SECURITY:
         m_key_bindings[index.row()].m_region = value.value<Security>();
+        m_key_bindings[index.row()].m_region = [&] () -> Region {
+          auto security = value.value<Security>();
+          if(security != Security()) {
+            return security;
+          }
+          return Region();
+        }();
+        break;
       case Columns::DESTINATION:
-        return false;
+        break;
       case Columns::ORDER_TYPE:
-        m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
+        m_key_bindings[index.row()].m_action.m_type =
+          [&] () -> boost::optional<OrderType> {
+            auto type = value.value<OrderType>();
+            if(type != OrderType::NONE) {
+              return type;
+            }
+            return boost::none;
+          }();
         break;
       case Columns::SIDE:
-        m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+        m_key_bindings[index.row()].m_action.m_side =
+          [&] () -> boost::optional<Side> {
+            auto side = value.value<Side>();
+            if(side != Side::NONE) {
+              return side;
+            }
+            return boost::none;
+          }();
         break;
       case Columns::QUANTITY:
         m_key_bindings[index.row()].m_action.m_quantity =
-          value.value<Quantity>();
+          [&] () -> boost::optional<Quantity> {
+            auto quantity = value.value<Quantity>();
+            if(quantity > 0) {
+              return quantity;
+            }
+            return boost::none;
+          }();
         break;
       case Columns::TIME_IN_FORCE:
         m_key_bindings[index.row()].m_action.m_time_in_force =
-          value.value<TimeInForce>();
+          [&] () -> boost::optional<TimeInForce> {
+            auto time = value.value<TimeInForce>();
+            if(time.GetType() != TimeInForce::Type::NONE) {
+              return time;
+            }
+            return boost::none;
+          }();
         break;
       case Columns::CUSTOM_TAGS:
         break;
       case Columns::KEY_BINDING:
-        for(auto& binding : m_key_bindings) {
-          if(binding.m_sequence == value.value<QKeySequence>()) {
-            binding.m_sequence = QKeySequence();
-            break;
+        if(!value.value<QKeySequence>().isEmpty()) {
+          auto binding_index = index.row();
+          for(auto i = 0; i < rowCount(index); ++i) {
+            auto sequence =
+              this->index(i, index.column()).data().value<QKeySequence>();
+            if(sequence == value.value<QKeySequence>()) {
+              m_key_bindings[i].m_sequence = QKeySequence();
+              if(is_row_empty(i)) {
+                removeRow(i);
+                --i;
+                --binding_index;
+              }
+              m_key_bindings[binding_index].m_sequence =
+                value.value<QKeySequence>();
+              return true;
+            }
           }
         }
-        m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
+        m_key_bindings[index.row()].m_sequence =
+          value.value<QKeySequence>();
         break;
       default:
         break;
