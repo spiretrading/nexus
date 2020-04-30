@@ -210,7 +210,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           value.value<QString>().toStdString();
         break;
       case Columns::SECURITY:
-        m_key_bindings[index.row()].m_region = value.value<Security>();
         m_key_bindings[index.row()].m_region = [&] () -> Region {
           auto security = value.value<Security>();
           if(security != Security()) {
