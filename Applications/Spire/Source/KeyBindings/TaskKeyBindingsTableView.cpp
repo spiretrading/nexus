@@ -68,8 +68,8 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_minimum_column_width(6, scale_width(98));
   set_column_width(7, scale_width(124));
   set_minimum_column_width(7, scale_width(124));
-  set_column_width(8, scale_width(110));
-  set_minimum_column_width(8, scale_width(110));
+  set_column_width(8, scale_width(116));
+  set_minimum_column_width(8, scale_width(116));
   auto name_delegate = new NameItemDelegate(this);
   name_delegate->connect_item_modified_signal([=] (auto index) {
     on_item_modified(index);

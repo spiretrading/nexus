@@ -67,6 +67,7 @@ namespace Spire {
       QHeaderView* m_header;
       bool m_can_delete_rows;
       QVBoxLayout* m_delete_buttons_layout;
+      QWidget* m_delete_buttons_widget;
       std::unordered_map<int, int> m_minimum_column_widths;
 
       void add_delete_button(int index);

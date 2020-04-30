@@ -28,35 +28,25 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       m_header(header),
       m_can_delete_rows(can_delete_rows) {
   m_header->setParent(this);
+  m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
-  auto layout = new QVBoxLayout(main_widget);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   connect(m_header, &QHeaderView::sectionResized, this,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
-  auto header_padding = new QWidget(this);
-  header_padding->setFixedHeight(m_header->height());
-  layout->addWidget(header_padding);
-  m_table = new CustomGridTableView(this);
+  m_table = new CustomGridTableView(main_widget);
   if(m_can_delete_rows) {
-    auto table_layout = new QHBoxLayout();
-    table_layout->setContentsMargins({});
-    table_layout->setSpacing(0);
-    m_delete_buttons_layout = new QVBoxLayout();
-    m_delete_buttons_layout->setContentsMargins(scale_width(3),
-      scale_height(5), scale_width(3), 0);
+    m_header->move(scale_width(17), 0);
+    m_table->move(scale_width(26), m_header->height());
+    m_delete_buttons_widget = new QWidget(main_widget);
+    m_delete_buttons_widget->setFixedWidth(scale_width(26));
+    m_delete_buttons_widget->move(0, m_header->height());
+    m_delete_buttons_layout = new QVBoxLayout(m_delete_buttons_widget);
+    m_delete_buttons_layout->setContentsMargins(scale_width(5),
+      scale_height(5), scale_width(7), 0);
     m_delete_buttons_layout->setSpacing(scale_height(10));
-    table_layout->addLayout(m_delete_buttons_layout);
-    table_layout->addWidget(m_table);
-    layout->addLayout(table_layout);
-    on_horizontal_slider_value_changed(0);
-    auto button_cover_widget = new QWidget(this);
-    button_cover_widget->setStyleSheet("background-color: #FFFFFF;");
-    button_cover_widget->resize(scale_width(22), m_header->height());
   } else {
-    layout->addWidget(m_table);
+    m_table->move(scale_width(8), m_header->height());
   }
   auto table_padding_left = [&] {
     if(m_can_delete_rows) {
@@ -71,11 +61,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       font-size: %1px;
       gridline-color: #C8C8C8;
       outline: 0;
-      padding-bottom: %3px;
-      padding-left: %2px;
-      padding-right: %4px;
-    })").arg(scale_height(12)).arg(table_padding_left).arg(scale_height(8))
-        .arg(scale_width(8)));
+      padding-bottom: %2px;
+    })").arg(scale_height(12)).arg(scale_height(8)));
   m_table->setFrameShape(QFrame::NoFrame);
   m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -130,15 +117,14 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
 void KeyBindingsTableView::set_height(int height) {
   widget()->setFixedHeight(height);
   m_table->setFixedHeight(height);
+  if(m_can_delete_rows) {
+    m_delete_buttons_widget->setFixedHeight(height);
+  }
 }
 
 void KeyBindingsTableView::set_width(int width) {
-  widget()->setFixedWidth(width);
-  if(m_can_delete_rows) {
-    width -= scale_width(26);
-  }
   m_header->setFixedWidth(width);
-  m_table->setFixedWidth(width);
+  widget()->setFixedWidth(width);
 }
 
 bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
@@ -217,7 +203,9 @@ void KeyBindingsTableView::on_header_resize(int index, int old_size,
     }
     return width;
   }();
-  set_width(max(width, scale_width(871)));
+  m_header->setFixedWidth(width + 8);
+  m_table->setFixedWidth(width);
+  widget()->setFixedWidth(width + scale_width(8) + scale_width(26));
 }
 
 void KeyBindingsTableView::on_header_move(int logical_index, int old_index,
@@ -230,7 +218,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
     auto x = [&] {
       if(m_can_delete_rows) {
         // TODO: fix this magic number, clean up header layout
-        return widget()->pos().x() + scale_width(15);
+        return widget()->pos().x() + scale_width(17);
       }
       return widget()->pos().x();
     }();
@@ -239,7 +227,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
     auto x = [&] {
       if(m_can_delete_rows) {
         // TODO: fix this magic number
-        return scale_width(15);
+        return scale_width(17);
       }
       return 0;
     }();

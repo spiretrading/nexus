@@ -19,6 +19,7 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
+  set_column_width(1, scale_width(616));
   auto default_delegate = new NameItemDelegate(this);
   set_column_delegate(0, default_delegate);
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
