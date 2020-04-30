@@ -20,6 +20,21 @@ namespace {
       imageFromSvg(":/Icons/close-purple.svg", button_size, close_box),
       imageFromSvg(":/Icons/close-red.svg", button_size, close_box), parent);
   }
+
+  auto DELETE_ROW_LAYOUT_WIDTH() {
+    static auto width = scale_width(26);
+    return width;
+  }
+
+  auto HEADER_PADDING() {
+    static auto padding = scale_width(17);
+    return padding;
+  }
+
+  auto TABLE_PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
 }
 
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
@@ -36,7 +51,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_move);
   m_table = new CustomGridTableView(main_widget);
   if(m_can_delete_rows) {
-    m_header->move(scale_width(17), 0);
+    m_header->move(HEADER_PADDING(), 0);
     m_table->move(scale_width(26), m_header->height());
     m_delete_buttons_widget = new QWidget(main_widget);
     m_delete_buttons_widget->setFixedWidth(scale_width(26));
@@ -46,13 +61,13 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       scale_height(5), scale_width(7), 0);
     m_delete_buttons_layout->setSpacing(scale_height(10));
   } else {
-    m_table->move(scale_width(8), m_header->height());
+    m_table->move(TABLE_PADDING(), m_header->height());
   }
   auto table_padding_left = [&] {
     if(m_can_delete_rows) {
       return 0;
     }
-    return scale_width(8);
+    return TABLE_PADDING();
   }(); 
   m_table->setStyleSheet(QString(R"(
     QTableView {
@@ -203,9 +218,9 @@ void KeyBindingsTableView::on_header_resize(int index, int old_size,
     }
     return width;
   }();
-  m_header->setFixedWidth(width + 8);
+  m_header->setFixedWidth(width + TABLE_PADDING());
   m_table->setFixedWidth(width);
-  widget()->setFixedWidth(width + scale_width(8) + scale_width(26));
+  widget()->setFixedWidth(width + TABLE_PADDING() + DELETE_ROW_LAYOUT_WIDTH());
 }
 
 void KeyBindingsTableView::on_header_move(int logical_index, int old_index,
@@ -217,8 +232,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
   if(new_value != 0) {
     auto x = [&] {
       if(m_can_delete_rows) {
-        // TODO: fix this magic number, clean up header layout
-        return widget()->pos().x() + scale_width(17);
+        return widget()->pos().x() + HEADER_PADDING();
       }
       return widget()->pos().x();
     }();
@@ -226,8 +240,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
   } else {
     auto x = [&] {
       if(m_can_delete_rows) {
-        // TODO: fix this magic number
-        return scale_width(17);
+        return HEADER_PADDING();
       }
       return 0;
     }();
