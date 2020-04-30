@@ -79,7 +79,7 @@ export class TextField extends React.Component<Properties> {
 
   public componentDidMount() {
     if(this.props.autoFocus) {
-      this.inputRef.current.focus();
+      setTimeout(()=>{this.inputRef.current.focus();}, 1);
     }
   }
 
