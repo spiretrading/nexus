@@ -14,7 +14,7 @@ SecurityInputItemDelegate::SecurityInputItemDelegate(
 QWidget* SecurityInputItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new SecurityInputLineEdit("",
-    Ref<SecurityInputModel>(*m_model), parent);
+    Ref<SecurityInputModel>(*m_model), false, parent);
   connect(editor, &SecurityInputLineEdit::editingFinished, this,
     &SecurityInputItemDelegate::on_editing_finished);
   return editor;

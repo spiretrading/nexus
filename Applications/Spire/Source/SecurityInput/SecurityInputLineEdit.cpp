@@ -1,5 +1,6 @@
 #include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 #include <QKeyEvent>
+#include <QPainter>
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -9,10 +10,29 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  auto ICON_HEIGHT() {
+    static auto height = scale_height(10);
+    return height;
+  }
+
+  auto ICON_WIDTH() {
+    static auto width = scale_width(10);
+    return width;
+  }
+
+  auto SEARCH_ICON() {
+    static auto icon = imageFromSvg(":/Icons/search.svg",
+      {ICON_HEIGHT(), ICON_WIDTH()});
+    return icon;
+  }
+}
+
 SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
-    Beam::Ref<SecurityInputModel> model, QWidget* parent)
+    Beam::Ref<SecurityInputModel> model, bool is_icon_visible, QWidget* parent)
     : QLineEdit(initial_text, parent),
-      m_model(model.Get()) {
+      m_model(model.Get()),
+      m_is_icon_visible(is_icon_visible) {
   parent->installEventFilter(this);
   setObjectName("SecurityInputLineEdit");
   setStyleSheet(QString(R"(
@@ -83,18 +103,11 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
 
 void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
   QLineEdit::paintEvent(event);
-  // TODO: draw this
-  //if(!m_is_compact) {
-  //  auto icon_label = new QLabel(this);
-  //  icon_label->setPixmap(QPixmap::fromImage(imageFromSvg(
-  //    ":/Icons/search.svg", scale(10, 10))));
-  //  icon_label->setStyleSheet(QString(R"(
-  //    background-color: #FFFFFF;
-  //    border: none;
-  //    padding: %1px %2px %1px 0px;)")
-  //    .arg(scale_height(9)).arg(scale_width(8)));
-  //  layout->addWidget(icon_label);
-  //}
+  if(m_is_icon_visible) {
+    auto painter = QPainter(this);
+    painter.drawImage(width() - ICON_WIDTH() - scale_width(8),
+      height() - (height() / 2) - (ICON_HEIGHT() / 2), SEARCH_ICON());
+  }
 }
 
 void SecurityInputLineEdit::resizeEvent(QResizeEvent* event) {

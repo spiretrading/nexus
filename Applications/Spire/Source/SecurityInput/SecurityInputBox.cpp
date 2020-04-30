@@ -34,7 +34,8 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
-  m_security_line_edit = new SecurityInputLineEdit(initial_text, model, this);
+  m_security_line_edit = new SecurityInputLineEdit(initial_text, model, true,
+    this);
   m_security_line_edit->connect_commit_signal([=] (auto& s) { on_commit(s); });
   m_security_line_edit->installEventFilter(this);
   layout->addWidget(m_security_line_edit);

@@ -52,9 +52,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_table = new CustomGridTableView(main_widget);
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
-    m_table->move(scale_width(26), m_header->height());
+    m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
     m_delete_buttons_widget = new QWidget(main_widget);
-    m_delete_buttons_widget->setFixedWidth(scale_width(26));
+    m_delete_buttons_widget->setFixedWidth(DELETE_ROW_LAYOUT_WIDTH());
     m_delete_buttons_widget->move(0, m_header->height());
     m_delete_buttons_layout = new QVBoxLayout(m_delete_buttons_widget);
     m_delete_buttons_layout->setContentsMargins(scale_width(5),

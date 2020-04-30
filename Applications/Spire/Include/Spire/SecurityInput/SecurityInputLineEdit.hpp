@@ -22,10 +22,12 @@ namespace Spire {
       /*
         \param initial_text The initial text to display.
         \param model The security input model.
+        \param is_icon_visible True if the search icon should be displayed.
         \param parent The parent widget.
       */
       SecurityInputLineEdit(const QString& initial_text,
-        Beam::Ref<SecurityInputModel> model, QWidget* parent = nullptr);
+        Beam::Ref<SecurityInputModel> model, bool is_icon_visible,
+        QWidget* parent = nullptr);
 
       //! Returns the selected security, or an empty Security if there was no
       //! selection.
@@ -49,6 +51,7 @@ namespace Spire {
       SecurityInfoListView* m_securities;
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
       Nexus::Security m_security;
+      bool m_is_icon_visible;
 
       void move_securities_list();
       void on_activated(const Nexus::Security& security);
