@@ -272,8 +272,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
               m_key_bindings[i].m_sequence = QKeySequence();
               if(is_row_empty(i)) {
                 removeRow(i);
-                --i;
-                --binding_index;
+                if(i < binding_index) {
+                  --binding_index;
+                }
               }
               m_key_bindings[binding_index].m_sequence =
                 value.value<QKeySequence>();
