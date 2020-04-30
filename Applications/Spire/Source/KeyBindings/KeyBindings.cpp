@@ -22,17 +22,17 @@ bool KeyBindings::CancelActionBinding::operator !=(
 KeyBindings KeyBindings::get_default_key_bindings() {
   auto bindings = KeyBindings();
   auto region = Region::Global();
-  auto action1 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::BID,
-    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  auto action1 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::BID, {},
+    100, {}};
   bindings.set(Qt::Key_F5, region, action1);
-  auto action2 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::ASK,
-    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  auto action2 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::ASK, {},
+    100, {}};
   bindings.set(Qt::Key_F6, region, action2);
-  auto action3 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::BID,
-    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  auto action3 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::BID, {},
+    100, {}};
   bindings.set(Qt::Key_F7, region, action3);
-  auto action4 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::ASK,
-    TimeInForce(TimeInForce::Type::NONE), 100, {}};
+  auto action4 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::ASK, {},
+    100, {}};
   bindings.set(Qt::Key_F8, region, action4);
   return bindings;
 }

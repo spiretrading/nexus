@@ -203,7 +203,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     }
     emit dataChanged(index, index, {role});
     insert_row_if_empty(index);
-    auto column = static_cast<Columns>(index.column());
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
         m_key_bindings[index.row()].m_action.m_name =
@@ -219,6 +218,8 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         }();
         break;
       case Columns::DESTINATION:
+        // TODO: update with legitimate values.
+        m_key_bindings[index.row()].m_region = Region();
         break;
       case Columns::ORDER_TYPE:
         m_key_bindings[index.row()].m_action.m_type =
