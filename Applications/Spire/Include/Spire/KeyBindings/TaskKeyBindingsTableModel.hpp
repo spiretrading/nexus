@@ -73,6 +73,7 @@ namespace Spire {
       std::vector<Action> m_key_bindings;
       boost::optional<int> m_highlighted_row;
 
+      void insert_row_if_empty(const QModelIndex& index);
       bool is_row_empty(int row);
   };
 }

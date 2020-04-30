@@ -7,6 +7,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using Action = TaskKeyBindingsTableModel::Action;
+using Columns = TaskKeyBindingsTableModel::Columns;
 
 namespace {
   const auto COLUMN_COUNT = 9;
@@ -26,6 +27,32 @@ namespace {
       return QVariant::fromValue(any_cast<TimeInForce>(value));
     }
     return QVariant();
+  }
+
+  bool is_same_value(const QVariant& value, const QModelIndex& index) {
+    switch(static_cast<TaskKeyBindingsTableModel::Columns>(index.column())) {
+      case Columns::NAME:
+        return value.value<QString>() == index.data().value<QString>();
+      case Columns::SECURITY:
+        return value.value<Security>() == index.data().value<Security>();
+      case Columns::DESTINATION:
+        return value.value<Region>() == index.data().value<Region>();
+      case Columns::ORDER_TYPE:
+        return value.value<OrderType>() == index.data().value<OrderType>();
+      case Columns::SIDE:
+        return value.value<Side>() == index.data().value<Side>();
+      case Columns::QUANTITY:
+        return value.value<Quantity>() == index.data().value<Quantity>();
+      case Columns::TIME_IN_FORCE:
+        return value.value<TimeInForce>() == index.data().value<TimeInForce>();
+      case Columns::CUSTOM_TAGS:
+        return false;
+      case Columns::KEY_BINDING:
+        return value.value<QKeySequence>() ==
+          index.data().value<QKeySequence>();
+      default:
+        return false;
+    }
   }
 }
 
@@ -56,7 +83,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
     if(m_highlighted_row && index.row() == m_highlighted_row) {
       return QColor("#FFF1F1");
     }
-    return QVariant::fromValue<QColor>(Qt::white);
+    return QColor(Qt::white);
   }
   if(role == Qt::DisplayRole &&
       index.row() < static_cast<int>(m_key_bindings.size())) {
@@ -76,27 +103,18 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
       case Columns::DESTINATION:
         return to_variant(m_key_bindings[index.row()].m_region);
       case Columns::ORDER_TYPE:
-        {
-          auto type = m_key_bindings[index.row()].m_action.m_type;
-          if(type) {
-            return to_variant(*type);
-          }
+        if(auto type = m_key_bindings[index.row()].m_action.m_type) {
+          return to_variant(*type);
         }
         break;
       case Columns::SIDE:
-        {
-          auto side = m_key_bindings[index.row()].m_action.m_side;
-          if(side) {
-            return to_variant(*side);
-          }
+        if(auto side = m_key_bindings[index.row()].m_action.m_side) {
+          return to_variant(*side);
         }
         break;
       case Columns::QUANTITY:
-        {
-          auto quantity = m_key_bindings[index.row()].m_action.m_quantity;
-          if(quantity) {
-            return to_variant(*quantity);
-          }
+        if(auto quantity = m_key_bindings[index.row()].m_action.m_quantity) {
+          return to_variant(*quantity);
         }
         break;
       case Columns::TIME_IN_FORCE:
@@ -177,149 +195,40 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       m_highlighted_row.reset();
     }
     emit dataChanged(index, index, {role});
+    return true;
   }
   if(role == Qt::DisplayRole) {
-    if(value == index.data()) {
+    if(is_same_value(value, index)) {
       return false;
     }
+    emit dataChanged(index, index, {role});
+    insert_row_if_empty(index);
+    auto column = static_cast<Columns>(index.column());
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
-        if(value.value<QString>().isEmpty() &&
-            index.data().value<QString>().isEmpty()) {
-          return false;
-        }
-        emit dataChanged(index, index, {role});
-        if(index.row() == m_key_bindings.size() &&
-            value.value<QString>().isEmpty()) {
-          return false;
-        }
-        if(index.row() == m_key_bindings.size()) {
-          beginInsertRows(QModelIndex(), index.row(), index.row());
-          m_key_bindings.push_back({});
-          endInsertRows();
-        }
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
       case Columns::SECURITY:
-        if(value.value<Security>() == Security() &&
-            index.data().value<Security>() == Security()) {
-          return false;
-        }
-        emit dataChanged(index, index, {role});
-        if(value.value<Security>() != Security()) {
-          if(index.row() == m_key_bindings.size()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          }
-          m_key_bindings[index.row()].m_region = value.value<Security>();
-        } else {
-          if(index.row() == m_key_bindings.size()) {
-            return false;
-          }
-          m_key_bindings[index.row()].m_region = {};
-        }
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        m_key_bindings[index.row()].m_region = value.value<Security>();
       case Columns::DESTINATION:
         return false;
       case Columns::ORDER_TYPE:
-        emit dataChanged(index, index, {role});
-        if(value.isValid()) {
-          if(index.row() == m_key_bindings.size()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          }
-          m_key_bindings[index.row()].m_action.m_type =
-            value.value<OrderType>();
-        } else {
-          if(index.row() == m_key_bindings.size()) {
-            return false;
-          }
-          m_key_bindings[index.row()].m_action.m_type = {};
-        }
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        m_key_bindings[index.row()].m_action.m_type = value.value<OrderType>();
+        break;
       case Columns::SIDE:
-        emit dataChanged(index, index, {role});
-        if(value.isValid()) {
-          if(index.row() == m_key_bindings.size()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          }
-          m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
-        } else {
-          if(index.row() == m_key_bindings.size()) {
-            return false;
-          }
-          m_key_bindings[index.row()].m_action.m_side = {};
-        }
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        m_key_bindings[index.row()].m_action.m_side = value.value<Side>();
+        break;
       case Columns::QUANTITY:
-        emit dataChanged(index, index, {role});
-        if(value.isValid() && value.value<Quantity>() > 0) {
-          if(index.row() == m_key_bindings.size()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          }
-          m_key_bindings[index.row()].m_action.m_quantity =
-            value.value<Quantity>();
-        } else {
-          if(index.row() == m_key_bindings.size()) {
-            return false;
-          }
-          m_key_bindings[index.row()].m_action.m_quantity = {};
-        }
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        m_key_bindings[index.row()].m_action.m_quantity =
+          value.value<Quantity>();
+        break;
       case Columns::TIME_IN_FORCE:
-        emit dataChanged(index, index, {role});
-        if(value.isValid()) {
-          if(index.row() == m_key_bindings.size()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          }
-          m_key_bindings[index.row()].m_action.m_time_in_force =
-            value.value<TimeInForce>();
-        } else {
-          if(index.row() == m_key_bindings.size()) {
-            return false;
-          }
-          m_key_bindings[index.row()].m_action.m_time_in_force = {};
-        }
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        m_key_bindings[index.row()].m_action.m_time_in_force =
+          value.value<TimeInForce>();
+        break;
       case Columns::CUSTOM_TAGS:
-        return false;
+        break;
       case Columns::KEY_BINDING:
-        if(index.row() == m_key_bindings.size()) {
-          if(!value.value<QKeySequence>().isEmpty()) {
-            beginInsertRows(QModelIndex(), index.row(), index.row());
-            m_key_bindings.push_back({});
-            endInsertRows();
-          } else {
-            return false;
-          }
-        }
         for(auto& binding : m_key_bindings) {
           if(binding.m_sequence == value.value<QKeySequence>()) {
             binding.m_sequence = QKeySequence();
@@ -327,16 +236,24 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           }
         }
         m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
-        emit dataChanged(index, index, {role});
-        if(is_row_empty(index.row())) {
-          removeRow(index.row());
-        }
-        return true;
+        break;
       default:
-        return false;
+        break;
     }
+    if(is_row_empty(index.row())) {
+      removeRow(index.row());
+    }
+    return true;
   }
   return false;
+}
+
+void TaskKeyBindingsTableModel::insert_row_if_empty(const QModelIndex& index) {
+  if(index.row() == m_key_bindings.size()) {
+    beginInsertRows(QModelIndex(), index.row(), index.row());
+    m_key_bindings.push_back({});
+    endInsertRows();
+  }
 }
 
 bool TaskKeyBindingsTableModel::is_row_empty(int row) {

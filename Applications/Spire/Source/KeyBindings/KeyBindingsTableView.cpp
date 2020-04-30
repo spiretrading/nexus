@@ -179,6 +179,8 @@ void KeyBindingsTableView::update_delete_buttons(int selected_index) {
     add_delete_button(i);
   }
   m_delete_buttons_layout->addStretch(1);
+  //TODO: workaround for ignored repaint
+  setStyleSheet(styleSheet());
 }
 
 void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
@@ -191,8 +193,6 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
   m_table->model()->setData(m_table->model()->index(index, 0), QVariant(),
     Qt::BackgroundRole);
   m_table->model()->removeRow(index);
-  //TODO: workaround for ignored repaint
-  setStyleSheet(styleSheet());
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
