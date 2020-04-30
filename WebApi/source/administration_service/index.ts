@@ -6,3 +6,4 @@ export * from './entitlement_modification';
 export * from './http_administration_client';
 export * from './message';
 export * from './risk_modification';
+export * from './trading_group';

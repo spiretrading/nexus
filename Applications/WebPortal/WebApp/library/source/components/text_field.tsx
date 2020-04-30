@@ -25,6 +25,8 @@ interface Properties {
   /** Indicates if the component is readonly. */
   readonly?: boolean;
 
+  autoFocus?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -60,6 +62,7 @@ export class TextField extends React.Component<Properties> {
     return (
       <input value={this.props.value}
         disabled={this.props.readonly}
+        autoFocus={this.props.autoFocus}
         style={{...boxStyle, ...this.props.style}}
         placeholder={this.props.placeholder}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,7 +123,6 @@ export class TextField extends React.Component<Properties> {
       backgroundColor: '#FFFFFF'
     }
   };
-
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       ':focus': {
