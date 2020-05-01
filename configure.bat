@@ -12,8 +12,12 @@ IF NOT EXIST build.bat (
 CALL:configure Nexus %*
 CALL:configure WebApi %*
 CALL:configure Applications\AdministrationServer %*
+CALL:configure Applications\AsxItchMarketDataFeedClient %*
 CALL:configure Applications\ChartingServer %*
+CALL:configure Applications\ChiaMarketDataFeedClient %*
 CALL:configure Applications\ComplianceServer %*
+CALL:configure Applications\CseMarketDataFeedClient %*
+CALL:configure Applications\CtaMarketDataFeedClient %*
 CALL:configure Applications\DefinitionsServer %*
 CALL:configure Applications\HkexMarketDataFeedClient %*
 CALL:configure Applications\JpxFlexMarketDataFeedClient %*
@@ -25,6 +29,9 @@ CALL:configure Applications\RiskServer %*
 CALL:configure Applications\SimulationMarketDataFeedClient %*
 CALL:configure Applications\SimulationOrderExecutionServer %*
 CALL:configure Applications\Spire %*
+CALL:configure Applications\TmxIpMarketDataFeedClient %*
+CALL:configure Applications\TmxTl1MarketDataFeedClient %*
+CALL:configure Applications\UtpMarketDataFeedClient %*
 CALL:configure Applications\WebPortal %*
 CALL:configure Applications\WebPortal\WebApp %*
 ENDLOCAL

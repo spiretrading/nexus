@@ -12,10 +12,24 @@ services+=" DefinitionsServer"
 services+=" RegistryServer"
 services+=" UidServer"
 services+=" ServiceLocator"
+feeds="AsxItchMarketDataFeedClient"
+feeds+=" ChiaMarketDataFeedClient"
+feeds+=" CseMarketDataFeedClient"
+feeds+=" CtaMarketDataFeedClient"
+feeds+=" HkexMarketDataFeedClient"
+feeds+=" JpxFlexMarketDataFeedClient"
+feeds+=" TmxTl1MarketDataFeedClient"
+feeds+=" TmxIpMarketDataFeedClient"
+feeds+=" UtpMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
   ./stop_server.sh
   popd > /dev/null
   sleep 1
+done
+for directory in $feeds; do
+  pushd $directory/Application > /dev/null
+  ./stop_feed.sh all
+  popd > /dev/null
 done
