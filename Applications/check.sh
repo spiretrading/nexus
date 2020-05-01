@@ -8,9 +8,9 @@ services+=" MarketDataServer"
 services+=" MarketDataRelayServer"
 services+=" ChartingServer"
 services+=" ComplianceServer"
+services+=" SimulationMarketDataFeedClient"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
-services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
 feeds="AsxItchMarketDataFeedClient"
 feeds+=" ChiaMarketDataFeedClient"
@@ -23,9 +23,9 @@ feeds+=" TmxIpMarketDataFeedClient"
 feeds+=" UtpMarketDataFeedClient"
 
 for directory in $services; do
-  pushd $directory
+  pushd $directory/Application > /dev/null
   ./check_server.sh
-  popd
+  popd > /dev/null
 done
 for directory in $feeds; do
   pushd $directory

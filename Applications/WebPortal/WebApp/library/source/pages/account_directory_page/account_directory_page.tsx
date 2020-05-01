@@ -4,6 +4,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, PageWrapper } from '../..';
 import { AccountEntry } from './account_entry';
+import { CreateGroupModal } from './create_group_modal';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
 
@@ -27,28 +28,43 @@ interface Properties {
   /** The accounts that match the current filter. */
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
+  /** The error message from when a new group was created. */
+  createGroupStatus?: string;
+
   /** Called when the filter value changes. */
   onFilterChange?: (filter: string) => void;
 
   /** Called when a card is clicked on. */
   onCardClick?: (group: Beam.DirectoryEntry) => void;
 
-  /** Called when the user wants to make a new group. */
-  onNewGroupClick?: () => void;
+  /** Called when the user wants to make a new group. 
+   * @param name - The name of the group.
+   */
+  onCreateGroup?: (name: string) => void;
 
   /** Called when the user wants to make a new account. */
   onNewAccountClick?: () => void;
 }
 
+interface State {
+  isCreateGroupModalOpen: boolean;
+}
 
 /** Displays a directory of accounts. */
-export class AccountDirectoryPage extends React.Component<Properties> {
+export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},
-    onNewGroupClick: () => {},
+    onCreateGroup: () => {},
     onNewAccountClick: () => {}
   };
+
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isCreateGroupModalOpen: false
+    };
+  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -100,6 +116,18 @@ export class AccountDirectoryPage extends React.Component<Properties> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
+    const createGroupModal = (() => {
+      if(this.state.isCreateGroupModalOpen) {
+        return <CreateGroupModal 
+          displaySize={this.props.displaySize}
+          errorStatus={this.props.createGroupStatus}
+          isOpen={this.state.isCreateGroupModalOpen}
+          onClose={this.onCloseCreateGroupModal}
+          onCreateGroup={this.props.onCreateGroup}/>;
+      } else {
+        return null;
+      }
+    })();
     const cards = [];
     for (const group of this.props.groups) {
       const accounts = (() => {
@@ -120,6 +148,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
     }
     return (
       <PageWrapper>
+        {createGroupModal}
         <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
@@ -130,7 +159,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
                     New Account
                   </button>
                   <div style={AccountDirectoryPage.STYLE.spacing}/>
-                  <button onClick={this.props.onNewGroupClick}
+                  <button onClick={this.onCreateGroupClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
@@ -146,7 +175,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
                   New Account
                 </button>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
-                <button onClick={this.props.onNewGroupClick}
+                <button onClick={this.onCreateGroupClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
@@ -157,6 +186,14 @@ export class AccountDirectoryPage extends React.Component<Properties> {
           </div>
         </div>
       </PageWrapper>);
+  }
+
+  private onCreateGroupClick = () => {
+    this.setState({isCreateGroupModalOpen: true});
+  }
+
+  private onCloseCreateGroupModal = () => {
+    this.setState({isCreateGroupModalOpen: false});
   }
 
   private static readonly STYLE = {
@@ -262,6 +299,7 @@ export class AccountDirectoryPage extends React.Component<Properties> {
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
+      cursor: 'pointer' as 'pointer',
       borderRadius: 1,
       ':active' : {
         backgroundColor: '#4B23A0'
@@ -274,5 +312,4 @@ export class AccountDirectoryPage extends React.Component<Properties> {
       }
     }
   });
-  private timerId: NodeJS.Timeout;
 }

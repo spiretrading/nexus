@@ -4,6 +4,7 @@ export * from './account_directory_page';
 export * from './account_entry';
 export * from './cached_account_directory_model';
 export * from './create_account_page';
+export * from './create_group_modal';
 export * from './filter_bar';
 export * from './group_card';
 export * from './group_selection_box';
