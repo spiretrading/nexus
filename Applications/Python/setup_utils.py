@@ -27,6 +27,8 @@ def run_subscript(path, arguments):
 
 
 def needs_quotes(value):
+  if value.strip() != value or len(value) == 0:
+    return True
   special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
     '-', '<', '>', '=', '!', '%', '@', '\\']
   for c in value:
