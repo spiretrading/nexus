@@ -105,6 +105,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
   connect(m_table, &QTableView::clicked, this,
     &KeyBindingsTableView::on_table_clicked);
+  connect(m_table, &QTableView::activated, this,
+    &KeyBindingsTableView::on_table_clicked);
   setWidget(main_widget);
   setFocusProxy(m_table);
   m_navigation_keys = {Qt::Key_Tab, Qt::Key_Backtab, Qt::Key_Left,
