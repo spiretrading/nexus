@@ -162,9 +162,9 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(m_navigation_keys.find(static_cast<Qt::Key>(e->key())) !=
         m_navigation_keys.end()) {
+      m_table->selectionModel()->clearSelection();
       if(!m_current_index.isValid()) {
-        m_table->selectionModel()->setCurrentIndex(
-          m_table->model()->index(0, 0), QItemSelectionModel::Select);
+        m_current_index = m_table->model()->index(0, 0);
       } else {
         if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
           m_current_index = get_index(m_current_index.row(),
@@ -179,9 +179,9 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
           m_current_index = get_index(m_current_index.row() + 1,
             m_current_index.column());
         }
-        m_table->selectionModel()->setCurrentIndex(m_current_index,
-          QItemSelectionModel::Select);
       }
+      m_table->selectionModel()->setCurrentIndex(m_current_index,
+        QItemSelectionModel::Select);
       update();
       return true;
     }
