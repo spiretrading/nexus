@@ -54,8 +54,7 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
       row_y += row_height;
     }
   }
-  if(selectionModel()->hasSelection() &&
-      state() == QAbstractItemView::EditingState) {
+  if(selectionModel()->hasSelection()) {
     auto index = selectionModel()->selection().indexes().first();
     draw_border(index, &painter);
   }

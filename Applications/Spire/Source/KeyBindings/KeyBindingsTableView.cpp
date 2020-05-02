@@ -35,7 +35,18 @@ namespace {
     static auto padding = scale_width(8);
     return padding;
   }
+
+  auto bounded_value(int value, int max) {
+    if(value < 0) {
+      return max;
+    } else if(value > max) {
+      return 0;
+    }
+    return value;
+  }
 }
+
+#include <QApplication>
 
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     bool can_delete_rows, QWidget* parent)
@@ -50,6 +61,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
   m_table = new CustomGridTableView(main_widget);
+  m_table->installEventFilter(this);
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
@@ -94,6 +106,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   connect(m_table, &QTableView::clicked, this,
     &KeyBindingsTableView::on_table_clicked);
   setWidget(main_widget);
+  setFocusProxy(m_table);
+  m_navigation_keys = {Qt::Key_Tab, Qt::Key_Backtab, Qt::Key_Left,
+    Qt::Key_Right, Qt::Key_Up, Qt::Key_Down};
 }
 
 void KeyBindingsTableView::set_column_delegate(int column,
@@ -143,6 +158,34 @@ void KeyBindingsTableView::set_width(int width) {
 }
 
 bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_table && event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(m_navigation_keys.find(static_cast<Qt::Key>(e->key())) !=
+        m_navigation_keys.end()) {
+      if(!m_current_index.isValid()) {
+        m_table->selectionModel()->setCurrentIndex(
+          m_table->model()->index(0, 0), QItemSelectionModel::Select);
+      } else {
+        if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
+          m_current_index = get_index(m_current_index.row(),
+            m_current_index.column() + 1);
+        } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
+          m_current_index = get_index(m_current_index.row(),
+            m_current_index.column() - 1);
+        } else if(e->key() == Qt::Key_Up) {
+          m_current_index = get_index(m_current_index.row() - 1,
+            m_current_index.column());
+        } else if(e->key() == Qt::Key_Down) {
+          m_current_index = get_index(m_current_index.row() + 1,
+            m_current_index.column());
+        }
+        m_table->selectionModel()->setCurrentIndex(m_current_index,
+          QItemSelectionModel::Select);
+      }
+      update();
+      return true;
+    }
+  }
   if(auto button = dynamic_cast<IconButton*>(watched)) {
     if(event->type() == QEvent::MouseMove) {
       auto index = m_delete_buttons_layout->indexOf(button);
@@ -168,6 +211,14 @@ void KeyBindingsTableView::add_delete_button(int index) {
   button->connect_clicked_signal([=] {
     on_delete_button_clicked(index);
   });
+}
+
+QModelIndex KeyBindingsTableView::get_index(int row, int column) {
+  auto bounded_row = bounded_value(row,
+    m_table->model()->rowCount() - 1);
+  auto bounded_column = bounded_value(column,
+    m_table->model()->columnCount() - 1);
+  return m_table->model()->index(bounded_row, bounded_column);
 }
 
 void KeyBindingsTableView::update_delete_buttons(int selected_index) {
