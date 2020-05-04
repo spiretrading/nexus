@@ -46,8 +46,6 @@ namespace {
   }
 }
 
-#include <QApplication>
-
 KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     bool can_delete_rows, QWidget* parent)
     : ScrollArea(true, parent),
@@ -216,6 +214,11 @@ void KeyBindingsTableView::add_delete_button(int index) {
 }
 
 QModelIndex KeyBindingsTableView::get_index(int row, int column) {
+  if(column > m_table->model()->columnCount() - 1) {
+    ++row;
+  } else if(column < 0) {
+    --row;
+  }
   auto bounded_row = bounded_value(row,
     m_table->model()->rowCount() - 1);
   auto bounded_column = bounded_value(column,
