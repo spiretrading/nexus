@@ -133,6 +133,18 @@ export abstract class AdministrationClient {
   public abstract async createGroup(name: string): Promise<Beam.DirectoryEntry>;
 
   /**
+   * Creates a new account.
+   * @param name The name of the account.
+   * @param group The group the account belongs to.
+   * @param identity The new account's identity.
+   * @param roles The new account's roles.
+   * @return The new account's DirectoryEntry.
+   */
+  public abstract async createAccount(name: string, group: Beam.DirectoryEntry,
+    identity: AccountIdentity, roles: AccountRoles):
+    Promise<Beam.DirectoryEntry>;
+
+  /**
    * Connects to the service.
    * @throws ServiceError Indicates the connection failed.
    */

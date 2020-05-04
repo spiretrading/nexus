@@ -2,7 +2,7 @@
 exit_status=0
 let cores="`grep -c "processor" < /proc/cpuinfo`"
 root="$(pwd)"
-beam_commit="d3d0194c57868cab3c252efe56117b050c7969f9"
+beam_commit="8bf99e402066b650223dfb5ddde1ad0b5f0fe42c"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -68,8 +68,8 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
   fi
   rm -rf quickfix-v.1.15.1.zip
 fi
-
-pip3 install argparse
-pip3 install HTMLParser
-pip3 install GitPython
+python3 -c "import git"
+if [ "$?" != "0" ]; then
+  pip3 install GitPython
+fi
 exit $exit_status

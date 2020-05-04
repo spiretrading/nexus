@@ -1,144 +1,113 @@
 import argparse
 import importlib.util
-from mock import patch
 import os
-import shutil
-import socket
+import subprocess
+import sys
+
+try:
+  spec = importlib.util.spec_from_file_location('setup_utils',
+    os.path.join('..', 'Python', 'setup_utils.py'))
+  setup_utils = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(setup_utils)
+except FileNotFoundError:
+  spec = importlib.util.spec_from_file_location('setup_utils',
+    os.path.join('Python', 'setup_utils.py'))
+  setup_utils = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(setup_utils)
 
 
-def get_ip():
-  with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as test_socket:
+def create_symlink(source, target):
+  if sys.platform == 'win32':
+    subprocess.Popen(['cmd', '/c', 'mklink /j %s %s' % (source, target)],
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+  else:
+    os.symlink(target, source, target_is_directory=True)
+
+
+def make_sub_args(arg_vars, *args):
+  sub_args = []
+  for arg in args:
+    if arg_vars[arg]:
+      sub_args += ['--' + arg, arg_vars[arg]]
+  return sub_args
+
+
+def setup_application(application, arg_vars, *args):
+  root_path = os.getcwd()
+  try:
     try:
-      test_socket.connect(('10.255.255.255', 1))
-      return test_socket.getsockname()[0]
-    except:
-      return '127.0.0.1'
+      os.chdir(os.path.join(application, 'Application'))
+    except FileNotFoundError:
+      os.chdir(os.path.join(application))
+    setup_utils.run_subscript('setup.py', make_sub_args(arg_vars, *args))
+  finally:
+    os.chdir(root_path)
 
 
-def run_subscript(path, arguments):
-  spec = importlib.util.spec_from_file_location('subscript', path)
-  subscript = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(subscript)
-  with patch.object(sys, 'argv', [path] + arguments):
-    subscript.main()
+def setup_application_with_mysql(server, arg_vars):
+  if arg_vars['mysql_password'] is None:
+    arg_vars = arg_vars.copy()
+    arg_vars['mysql_password'] = arg_vars['password']
+  setup_application(server, arg_vars, 'mysql_address', 'mysql_username',
+    'mysql_password', 'mysql_schema')
 
 
-def needs_quotes(value):
-  special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
-    '-', '<', '>', '=', '!', '%', '@', '\\']
-  for c in value:
-    if c in special_characters:
-      return True
-  return False
+def setup_server(server, arg_vars):
+  setup_application(server, arg_vars, 'local', 'world', 'address', 'password')
 
 
-def translate(source, variables):
-  for key in variables.keys():
-    if needs_quotes(variables[key]):
-      index = source.find('$' + key)
-      while index != -1:
-        c = source.rfind('\n', 0, index) + 1
-        q = False
-        while c < index:
-          if source[c] == '\"':
-            q = not q
-          c += 1
-        if q:
-          source = source.replace('$' + key, '%s' % variables[key], 1)
-        else:
-          source = source.replace('$' + key, '"%s"' % variables[key], 1)
-        index = source.find('$' + key, index + 1)
-    else:
-      source = source.replace('$' + key, '%s' % variables[key])
-  return source
+def setup_server_with_mysql(server, arg_vars):
+  setup_application(server, arg_vars, 'local', 'world', 'address', 'password',
+    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
+
+
+def setup_service_locator(arg_vars):
+  if arg_vars['mysql_password'] is None:
+    arg_vars = arg_vars.copy()
+    arg_vars['mysql_password'] = arg_vars['password']
+  setup_application('ServiceLocator', arg_vars, 'local', 'world',
+    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
+
+
+def setup_beam(arg_vars):
+  for beam_service in ['RegistryServer', 'ServiceLocator', 'UidServer']:
+    if not os.path.exists(beam_service):
+      create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
+      'Beam', 'Applications', beam_service))
+  setup_application('RegistryServer', arg_vars, 'local', 'world', 'address',
+    'password')
+  setup_service_locator(arg_vars)
+  setup_server_with_mysql('UidServer', arg_vars)
 
 
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
-    default=get_ip())
+    required=False)
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
     required=False)
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
-    default='1234')
+    required=False)
   parser.add_argument('-ma', '--mysql_address', type=str, help='MySQL address.',
-    default='127.0.0.1:3306')
+    required=False)
   parser.add_argument('-mu', '--mysql_username', type=str,
-    help='MySQL username.', default='spireadmin')
+    help='MySQL username.', required=False)
   parser.add_argument('-mp', '--mysql_password', type=str,
     help='MySQL password.', required=False)
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
-    default='spire')
-  parser.add_argument('-gu', '--glimpse_username', type=str,
-    help='ASX Glimpse username.', default='')
-  parser.add_argument('-gp', '--glimpse_password', type=str,
-    help='ASX Glimpse password.', default='')
-  parser.add_argument('-cru', '--chia_retrans_username', type=str,
-    help='CHIA retransmission username.', default='""')
-  parser.add_argument('-crp', '--chia_retrans_password', type=str,
-    help='CHIA retransmission password.', default='""')
-  args = parser.parse_args()
-  variables = {}
-  variables['local_interface'] = args.local
-  variables['global_address'] = \
-    variables['local_interface'] if args.world is None else args.world
-  variables['service_locator_address'] = \
-    ('%s:20000' % variables['local_interface']) if args.address is None else \
-    args.address
-  variables['admin_password'] = args.password
-  variables['mysql_address'] = args.mysql_address
-  variables['mysql_username'] = args.mysql_username
-  variables['mysql_password'] = \
-    variables['admin_password'] if args.mysql_password is None else \
-    args.mysql_password
-  variables['mysql_schema'] = args.mysql_schema
-  variables['glimpse_username'] = args.glimpse_username
-  variables['glimpse_password'] = args.glimpse_password
-  variables['chia_retransmission_username'] = args.chia_retrans_username
-  variables['chia_retransmission_password'] = args.chia_retrans_password
-  applications = [d for d in os.listdir('./') if os.path.isdir(d)]
-  for feed in ['CseMarketDataFeedClient', 'CtaMarketDataFeedClient',
-      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
-      'UtpMarketDataFeedClient']:
-    if os.path.isdir(feed):
-      os.chdir(feed)
-      run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
-        '-a', '"%s"' % variables['service_locator_address'],
-        '-p', '"%s"' % variables['admin_password']])
-      os.chdir('..')
-  if os.path.isdir('AsxItchMarketDataFeedClient'):
-    os.chdir('AsxItchMarketDataFeedClient')
-    run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
-      '-a', '"%s"' % variables['service_locator_address'],
-      '-p', '"%s"' % variables['admin_password'],
-      '-gu', '"%s"' % variables['glimpse_username'],
-      '-gp', '"%s"' % variables['glimpse_password']])
-    os.chdir('..')
-  if os.path.isdir('ChiaMarketDataFeedClient'):
-    os.chdir('ChiaMarketDataFeedClient')
-    run_subscript('setup.py', ['-l', '"%s"' % variables['local_interface'],
-      '-a', '"%s"' % variables['service_locator_address'],
-      '-p', '"%s"' % variables['admin_password'],
-      '-ru', '"%s"' % variables['chia_retransmission_username'],
-      '-rp', '"%s"' % variables['chia_retransmission_password']])
-    os.chdir('..')
-  for application in applications:
-    application_directory = os.path.join('.', application)
-    files = [f for f in os.listdir(application_directory) if
-      os.path.isfile(os.path.join(application_directory, f)) and
-      f.find('.default.') != -1]
-    for file in files:
-      file_path = os.path.join(application_directory, file)
-      destination_path = file_path.replace('.default.', '.')
-      shutil.move(file_path, destination_path)
-      with open(destination_path, 'r+') as file:
-        source = translate(file.read(), variables)
-        file.seek(0)
-        file.write(source)
-        file.truncate()
+    required=False)
+  arg_vars = vars(parser.parse_args())
+  setup_beam(arg_vars)
+  for server in ['AdministrationServer', 'ComplianceServer', 'MarketDataServer',
+      'SimulationOrderExecutionServer']:
+    setup_server_with_mysql(server, arg_vars)
+  for server in ['ChartingServer', 'DefinitionsServer', 'MarketDataRelayServer',
+      'ReplayMarketDataFeedClient', 'RiskServer',
+      'SimulationMarketDataFeedClient', 'WebPortal']:
+    setup_server(server, arg_vars)
 
 
 if __name__ == '__main__':

@@ -11,9 +11,11 @@ import tarfile
 import time
 import zipfile
 
+
 def call(command, cwd=None):
   return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
     stderr=subprocess.PIPE).communicate()
+
 
 def makedirs(path):
   try:
@@ -22,10 +24,12 @@ def makedirs(path):
     if e.errno != errno.EEXIST:
       raise
 
+
 def make_tarfile(source, destination):
   with tarfile.open(destination, 'w:gz') as tar:
     for file in os.listdir(source):
       tar.add(os.path.join(source, file), arcname=file)
+
 
 def make_zipfile(source, destination):
   archive = zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED)
@@ -36,6 +40,7 @@ def make_zipfile(source, destination):
       archive.write(os.path.join(root, file),
         arcname=absolute_path[len(source) + 1:])
   archive.close()
+
 
 def copy_build(applications, version, name, source, path):
   try:
@@ -61,24 +66,19 @@ def copy_build(applications, version, name, source, path):
         else:
           if extension in ['', '.sh']:
             shutil.copy2(file_path, os.path.join(application_path, file))
-    library_destination_path = os.path.join(destination_path, 'Libraries')
-    makedirs(library_destination_path)
-    library_source_path = os.path.join(source, name, 'Libraries', 'Release')
-    for file in os.listdir(library_source_path):
-      shutil.copy2(os.path.join(library_source_path, file),
-        os.path.join(library_destination_path, file))
   except OSError:
     return
 
-def copy_python_libraries(path, version):
-  beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
+
+def copy_python_libraries(path, version, repo_path):
+  beam_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam')
   python_path = os.path.join(path, str(version), 'Python')
   makedirs(python_path)
   if sys.platform == 'win32':
     python_ext = '.pyd'
   else:
     python_ext = '.so'
-  aspen_path = os.path.join(os.getcwd(), 'Dependencies', 'aspen')
+  aspen_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'aspen')
   aspen_lib = os.path.join(aspen_path, 'Libraries', 'Release',
     'aspen%s' % python_ext)
   if os.path.isfile(aspen_lib):
@@ -93,12 +93,13 @@ def copy_python_libraries(path, version):
       '__init__.py'), beam_python_path)
   nexus_python_path = os.path.join(python_path, 'nexus')
   makedirs(nexus_python_path)
-  nexus_lib = os.path.join(os.getcwd(), 'Nexus', 'Nexus', 'Libraries',
-    'Release', '_nexus%s' % python_ext)
+  nexus_lib = os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
+    '_nexus%s' % python_ext)
   if os.path.isfile(nexus_lib):
     shutil.copy2(nexus_lib, nexus_python_path)
-    shutil.copy2(os.path.join(os.getcwd(), 'Nexus', 'Applications', 'Python',
+    shutil.copy2(os.path.join(repo_path, 'Applications', 'Python',
       '__init__.py'), nexus_python_path)
+
 
 def build_repo(repo, path, branch):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
@@ -122,10 +123,11 @@ def build_repo(repo, path, branch):
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
     result = []
-    result.append(call('%s -DD=%s' % (
-      os.path.join(repo.working_dir, 'configure.%s' % extension),
-      os.path.join(os.getcwd(), 'Dependencies')), repo.working_dir))
-    result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
+    result.append(
+      call(os.path.join(repo.working_dir, 'configure.%s' % extension),
+      repo.working_dir))
+    result.append(
+      call(os.path.join(repo.working_dir, 'build.%s' % extension),
       repo.working_dir))
     terminal_output = b''
     for output in result:
@@ -134,30 +136,40 @@ def build_repo(repo, path, branch):
       terminal_output += output[1] + b'\n\n\n\n'
     destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
-    nexus_applications = ['AdministrationServer', 'AsxItchMarketDataFeedClient',
-      'ChartingServer', 'ChiaMarketDataFeedClient', 'ComplianceServer',
-      'CseMarketDataFeedClient', 'CtaMarketDataFeedClient', 'DefinitionsServer',
-      'MarketDataRelayServer', 'MarketDataServer', 'RiskServer',
+    nexus_applications = ['AdministrationServer', 'ChartingServer',
+      'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
+      'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'TmxIpMarketDataFeedClient', 'TmxTl1MarketDataFeedClient',
-      'UtpMarketDataFeedClient', 'WebPortal']
+      'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
     copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
     beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
       'UidServer']
-    beam_path = os.path.join(os.getcwd(), 'Dependencies', 'Beam')
-    copy_build(beam_applications, version, 'Beam', beam_path, path)
+    copy_build(beam_applications, version, 'Beam',
+      os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
       os.path.join(destination_path, 'setup.py'))
-    copy_python_libraries(path, version)
+    shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
+      os.path.join(destination_path, 'Python'))
+    copy_python_libraries(path, version, repo.working_dir)
     if sys.platform == 'win32':
+      for file in ['install_python.bat', 'setup.py']:
+        shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+          os.path.join(destination_path, file))
       archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
       make_zipfile(destination_path, archive_path)
     else:
-      for file in ['check.sh', 'install.sh', 'start.sh', 'stop.sh']:
+      for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
+          'stop.sh']:
+        copy_path = os.path.join(destination_path, file)
         shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-          os.path.join(destination_path, file))
+          copy_path)
+        if file.endswith('.sh'):
+          with open(copy_path, 'r') as f:
+            translation = f.read().replace('/Application', '')
+          with open(copy_path, 'w') as f:
+            f.write(translation)
       archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
       make_tarfile(destination_path, archive_path)
     shutil.rmtree(destination_path)
@@ -166,30 +178,27 @@ def build_repo(repo, path, branch):
       log_file.write(terminal_output)
     shutil.move(archive_path, destination_path)
 
+
 def main():
   parser = argparse.ArgumentParser(
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
-  parser.add_argument('-r', '--repo', type=str, help='Remote repository.',
-    default='https://github.com/spiretrading/nexus.git')
   parser.add_argument('-p', '--path', type=str, help='Destination path.',
     required=True)
-  parser.add_argument('-b', '--branch', type=str, help='Branch to build.',
-    default='master')
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
   args = parser.parse_args()
-  repo_path = os.path.join(os.getcwd(), 'Nexus')
-  shutil.rmtree(repo_path, True)
-  repo = git.Repo.clone_from(args.repo, repo_path)
   makedirs(args.path)
+  repo = git.Repo('.')
+  branch = repo.active_branch.name
   while True:
     try:
-      repo.git.checkout(args.branch)
       repo.git.pull()
     except:
       print('Failed to pull: ', sys.exc_info()[0])
-    build_repo(repo, args.path, args.branch)
+    build_repo(repo, args.path, branch)
+    repo.git.checkout(branch)
     time.sleep(args.period)
+
 
 if __name__ == '__main__':
   main()
