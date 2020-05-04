@@ -139,7 +139,10 @@ del @1
 exit
 "
 pushd ../Nexus/Dependencies/Beam/Applications/AdminClient/Application
+sudo -u $username python3 setup.py -a "$local_interface:20000" -u "root" -p ""
 sudo -u $username ./AdminClient <<< "$admin_input"
+sudo -u $username python3 setup.py -a "$local_interface:20000" \
+  -u "administration_service" -p "$spire_password"
 popd
 pushd ServiceLocator/Application
 sudo -u $username ./stop_server.sh
