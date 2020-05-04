@@ -12,13 +12,13 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto bindings = KeyBindings::get_default_key_bindings();
   bindings.set({Qt::Key_Shift, Qt::Key_Escape},
-    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+    Nexus::Region(Nexus::Region(Nexus::Region::Global())),
     KeyBindings::CancelAction::ALL);
   bindings.set({Qt::Key_Control, Qt::Key_Escape},
-    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+    Nexus::Region(Nexus::Region(Nexus::Region::Global())),
     KeyBindings::CancelAction::FURTHEST_ASK);
   bindings.set({Qt::Key_Alt, Qt::Key_Escape},
-    Nexus::Region(Nexus::Region(Nexus::Region::GlobalTag{})),
+    Nexus::Region(Nexus::Region(Nexus::Region::Global())),
     KeyBindings::CancelAction::CLOSEST_ASK);
   auto window = new KeyBindingsWindow(bindings);
   window->show();
