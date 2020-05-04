@@ -2,6 +2,7 @@
 #define SPIRE_CANCEL_KEY_BINDINGS_TABLE_MODEL_HPP
 #include <QAbstractTableModel>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

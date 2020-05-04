@@ -39,5 +39,4 @@ void SideItemDelegate::setModelData(QWidget* editor,
     return QVariant();
   }();
   model->setData(index, variant, Qt::DisplayRole);
-  m_item_modified_signal(index);
 }

@@ -187,6 +187,10 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         QItemSelectionModel::Select);
       update();
       return true;
+    } else if(e->key() == Qt::Key_Delete) {
+      m_table->model()->setData(m_table->currentIndex(), QVariant(),
+        Qt::DisplayRole);
+      return true;
     }
   }
   if(auto button = dynamic_cast<IconButton*>(watched)) {

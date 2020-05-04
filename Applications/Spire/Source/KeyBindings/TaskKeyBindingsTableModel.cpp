@@ -213,6 +213,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
       case Columns::NAME:
         m_key_bindings[index.row()].m_action.m_name =
           value.value<QString>().toStdString();
+        m_modified_signal(index);
         break;
       case Columns::SECURITY:
         m_key_bindings[index.row()].m_region = [&] () -> Region {
@@ -222,10 +223,12 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
           }
           return Region();
         }();
+        m_modified_signal(index);
         break;
       case Columns::DESTINATION:
         // TODO: update with legitimate values.
         m_key_bindings[index.row()].m_region = Region();
+        m_modified_signal(index);
         break;
       case Columns::ORDER_TYPE:
         m_key_bindings[index.row()].m_action.m_type =
@@ -236,6 +239,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             }
             return boost::none;
           }();
+        m_modified_signal(index);
         break;
       case Columns::SIDE:
         m_key_bindings[index.row()].m_action.m_side =
@@ -246,6 +250,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             }
             return boost::none;
           }();
+        m_modified_signal(index);
         break;
       case Columns::QUANTITY:
         m_key_bindings[index.row()].m_action.m_quantity =
@@ -256,6 +261,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             }
             return boost::none;
           }();
+        m_modified_signal(index);
         break;
       case Columns::TIME_IN_FORCE:
         m_key_bindings[index.row()].m_action.m_time_in_force =
@@ -266,6 +272,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             }
             return boost::none;
           }();
+        m_modified_signal(index);
         break;
       case Columns::CUSTOM_TAGS:
         break;
@@ -286,12 +293,14 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
               }
               m_key_bindings[binding_index].m_sequence =
                 value.value<QKeySequence>();
+              m_modified_signal(this->index(binding_index, 8));
               return true;
             }
           }
         }
         m_key_bindings[index.row()].m_sequence =
           value.value<QKeySequence>();
+        m_modified_signal(index);
         break;
       default:
         break;

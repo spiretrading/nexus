@@ -37,13 +37,17 @@ namespace Spire {
       void set_key_bindings(
         const std::vector<KeyBindings::OrderActionBinding>& bindings);
 
+      //! Connects a slot to the modified signal.
+      boost::signals2::connection connect_modified_signal(
+        const ModifiedSignal::slot_type& slot) const;
+
     private:
       mutable ModifiedSignal m_modified_signal;
       std::vector<KeyBindings::OrderActionBinding> m_key_bindings;
       TaskKeyBindingsTableModel* m_model;
 
       bool is_valid(int row, int column) const;
-      void on_item_modified(const QModelIndex& index) const;
+      void on_item_modified(const QModelIndex& index);
       void on_row_count_changed();
   };
 }

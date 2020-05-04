@@ -25,6 +25,5 @@ void QuantityItemDelegate::setModelData(QWidget* editor,
   if(ok) {
     model->setData(index, QVariant::fromValue<Quantity>(value),
       Qt::DisplayRole);
-    m_item_modified_signal(index);
   }
 }

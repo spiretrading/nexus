@@ -11,11 +11,6 @@ KeyBindingItemDelegate::KeyBindingItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent),
     m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
-connection KeyBindingItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
-
 void KeyBindingItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   painter->save();

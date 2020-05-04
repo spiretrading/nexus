@@ -70,47 +70,18 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_minimum_column_width(7, scale_width(124));
   set_column_width(8, scale_width(116));
   set_minimum_column_width(8, scale_width(116));
-  auto name_delegate = new NameItemDelegate(this);
-  name_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(0, name_delegate);
-  auto security_delegate = new SecurityInputItemDelegate(input_model, this);
-  set_column_delegate(1, security_delegate);
-  auto destination_delegate = new DestinationItemDelegate(this);
-  destination_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(2, destination_delegate);
-  auto order_type_delegate = new OrderTypeItemDelegate(this);
-  order_type_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(3, order_type_delegate);
-  auto side_delegate = new SideItemDelegate(this);
-  side_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(4, side_delegate);
-  auto quantity_delegate = new QuantityItemDelegate(this);
-  quantity_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(5, quantity_delegate);
-  auto time_in_force_delegate = new TimeInForceItemDelegate(this);
-  time_in_force_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(6, time_in_force_delegate);
+  set_column_delegate(0, new NameItemDelegate(this));
+  set_column_delegate(1, new SecurityInputItemDelegate(input_model, this));
+  set_column_delegate(2, new DestinationItemDelegate(this));
+  set_column_delegate(3, new OrderTypeItemDelegate(this));
+  set_column_delegate(4, new SideItemDelegate(this));
+  set_column_delegate(5, new QuantityItemDelegate(this));
+  set_column_delegate(6, new TimeInForceItemDelegate(this));
   auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
     {ValidSequence({FUNCTION_KEYS()}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     FUNCTION_KEYS()})});
-  auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  key_delegate->connect_item_modified_signal([=] (auto index) {
-    on_item_modified(index);
-  });
-  set_column_delegate(8, key_delegate);
+  set_column_delegate(8, new KeySequenceItemDelegate(valid_sequences, this));
 }
 
 void TaskKeyBindingsTableView::set_key_bindings(
@@ -135,7 +106,7 @@ bool TaskKeyBindingsTableView::is_valid(int row, int column) const {
 }
 
 void TaskKeyBindingsTableView::on_item_modified(
-    const QModelIndex& index) const {
+    const QModelIndex& index) {
   auto row = index.row();
   auto binding = KeyBindings::OrderActionBinding{};
   auto name = m_model->index(row, 0).data().value<QString>();
@@ -163,6 +134,7 @@ void TaskKeyBindingsTableView::on_item_modified(
     binding.m_sequence = m_model->index(row, 8).data().value<QKeySequence>();
   }
   m_modified_signal(binding);
+  update();
 }
 
 void TaskKeyBindingsTableView::on_row_count_changed() {

@@ -27,15 +27,16 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
   auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  key_delegate->connect_item_modified_signal([=] (auto index) {
-    on_key_sequence_modified(index);
-  });
   set_column_delegate(1, key_delegate);
 }
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
   m_model = new CancelKeyBindingsTableModel(bindings, this);
+  m_model->connect(m_model, &QAbstractItemModel::dataChanged,
+    [=] (auto top_left, auto bottom_right) {
+      on_key_sequence_modified(top_left);
+    });
   set_model(m_model);
 }
 

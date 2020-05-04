@@ -70,5 +70,4 @@ void TimeInForceItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item().toUpper();
   model->setData(index, get_time_in_force_variant(item), Qt::DisplayRole);
-  m_item_modified_signal(index);
 }

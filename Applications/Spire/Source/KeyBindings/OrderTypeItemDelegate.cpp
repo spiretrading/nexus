@@ -54,5 +54,4 @@ void OrderTypeItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item().toUpper();
   model->setData(index, get_order_type_variant(item), Qt::DisplayRole);
-  m_item_modified_signal(index);
 }

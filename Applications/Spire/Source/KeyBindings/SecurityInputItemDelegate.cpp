@@ -25,5 +25,4 @@ void SecurityInputItemDelegate::setModelData(QWidget* editor,
   auto line_edit = static_cast<SecurityInputLineEdit*>(editor);
   model->setData(index,
     QVariant::fromValue<Security>(line_edit->get_security()), Qt::DisplayRole);
-  m_item_modified_signal(index);
 }

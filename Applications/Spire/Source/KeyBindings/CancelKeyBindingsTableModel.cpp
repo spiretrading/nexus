@@ -195,9 +195,11 @@ bool CancelKeyBindingsTableModel::setData(const QModelIndex &index,
     return false;
   }
   if(role == Qt::DisplayRole && index.column() == 1) {
-    for(auto& binding : m_key_bindings) {
-      if(binding.m_sequence == value.value<QKeySequence>()) {
-        binding.m_sequence = QKeySequence();
+    for(auto i = 0; i < static_cast<int>(m_key_bindings.size()); ++i) {
+      if(m_key_bindings[i].m_sequence == value.value<QKeySequence>()) {
+        m_key_bindings[i].m_sequence = QKeySequence();
+        auto updated_index = this->index(i, 1);
+        emit dataChanged(updated_index, updated_index);
         break;
       }
     }
