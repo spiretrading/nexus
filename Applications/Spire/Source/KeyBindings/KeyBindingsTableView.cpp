@@ -61,7 +61,6 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_move);
   m_table = new CustomGridTableView(main_widget);
   m_table->installEventFilter(this);
-  m_table->setTabKeyNavigation(false);
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
