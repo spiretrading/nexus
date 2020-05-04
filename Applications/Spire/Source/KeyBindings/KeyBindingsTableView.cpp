@@ -50,7 +50,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     bool can_delete_rows, QWidget* parent)
     : ScrollArea(true, parent),
       m_header(header),
-      m_can_delete_rows(can_delete_rows) {
+      m_can_delete_rows(can_delete_rows),
+      m_was_navigation_key_pressed(false) {
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
@@ -163,24 +164,25 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
     if(m_navigation_keys.find(static_cast<Qt::Key>(e->key())) !=
         m_navigation_keys.end()) {
       m_table->selectionModel()->clearSelection();
-      if(!m_current_index.isValid()) {
-        m_current_index = m_table->model()->index(0, 0);
-      } else {
-        if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
-          m_current_index = get_index(m_current_index.row(),
-            m_current_index.column() + 1);
-        } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
-          m_current_index = get_index(m_current_index.row(),
-            m_current_index.column() - 1);
-        } else if(e->key() == Qt::Key_Up) {
-          m_current_index = get_index(m_current_index.row() - 1,
-            m_current_index.column());
-        } else if(e->key() == Qt::Key_Down) {
-          m_current_index = get_index(m_current_index.row() + 1,
-            m_current_index.column());
+      auto current_index = [&] {
+        if(!m_was_navigation_key_pressed) {
+          return m_table->model()->index(0, 0);
+        } else {
+          auto index = m_table->currentIndex();
+          if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
+            return get_index(index.row(), index.column() + 1);
+          } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
+            return get_index(index.row(), index.column() - 1);
+          } else if(e->key() == Qt::Key_Up) {
+            return get_index(index.row() - 1, index.column());
+          } else if(e->key() == Qt::Key_Down) {
+            return get_index(index.row() + 1, index.column());
+          }
         }
-      }
-      m_table->selectionModel()->setCurrentIndex(m_current_index,
+        return QModelIndex();
+      }();
+      m_was_navigation_key_pressed = true;
+      m_table->selectionModel()->setCurrentIndex(current_index,
         QItemSelectionModel::Select);
       update();
       return true;
