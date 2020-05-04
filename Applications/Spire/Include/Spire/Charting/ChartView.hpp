@@ -75,7 +75,19 @@ namespace Spire {
       /*!
         \param region The region the chart will display.
       */
-      void set_region(const Region& region);
+      QtPromise<void> set_region(const Region& region);
+
+      //! Adjusts the visible region by a QPoint.
+      /*!
+        \param offset The offset to adjust the region by.
+      */
+      QtPromise<void> translate(const QPoint& offset);
+
+      //! Zooms the visible region by a factor.
+      /*!
+        \param factor The factor to zoom by.
+      */
+      QtPromise<void> zoom(double factor);
 
       //! Returns true if auto scale is enabled, false otherwise.
       bool is_auto_scale_enabled() const;
