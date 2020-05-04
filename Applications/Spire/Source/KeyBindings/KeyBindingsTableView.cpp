@@ -184,6 +184,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       m_is_default_cell_selected = false;
       m_table->selectionModel()->setCurrentIndex(current_index,
         QItemSelectionModel::Select);
+      scroll_to_index(current_index);
       update();
       return true;
     } else if(e->key() == Qt::Key_Delete) {
@@ -217,6 +218,19 @@ void KeyBindingsTableView::add_delete_button(int index) {
   button->connect_clicked_signal([=] {
     on_delete_button_clicked(index);
   });
+}
+
+void KeyBindingsTableView::scroll_to_index(const QModelIndex& index) {
+  auto cell_top = m_table->rowViewportPosition(index.row());
+  auto cell_bottom = cell_top + m_table->rowHeight(index.row()) +
+    m_header->height();
+  auto region = visibleRegion();
+  region.translate(0, verticalScrollBar()->value());
+  if(!region.contains(QPoint(0, cell_top - m_header->height()))) {
+    ensureVisible(0, cell_top, 0, scale_height(8));
+  } else if(!region.contains(QPoint(0, cell_bottom))) {
+    ensureVisible(0, cell_bottom, 0, scale_height(8));
+  }
 }
 
 QModelIndex KeyBindingsTableView::get_editable_index(int row,
@@ -324,16 +338,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
 }
 
 void KeyBindingsTableView::on_table_clicked(const QModelIndex& index) {
-  auto cell_top = m_table->rowViewportPosition(index.row()) +
-    m_header->height();
-  auto cell_bottom = cell_top + m_table->rowHeight(index.row());
-  auto region = visibleRegion();
-  region.translate(0, verticalScrollBar()->value());
-  if(!region.contains(QPoint(0, cell_top))) {
-    ensureVisible(0, cell_top, 0, scale_height(8));
-  } else if(!region.contains(QPoint(0, cell_bottom))) {
-    ensureVisible(0, cell_bottom, 0, scale_height(8));
-  }
+  scroll_to_index(index);
   m_table->setCurrentIndex(index);
   m_is_default_cell_selected = false;
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
