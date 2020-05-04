@@ -45,7 +45,7 @@ QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
 
 void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  QStyledItemDelegate::paint(painter, option, index);
+  KeyBindingItemDelegate::paint(painter, option, index);
   painter->save();
   painter->fillRect(option.rect,
     index.data(Qt::BackgroundRole).value<QColor>());
@@ -86,7 +86,7 @@ bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
       }
     }
   }
-  return QStyledItemDelegate::eventFilter(watched, event);
+  return KeyBindingItemDelegate::eventFilter(watched, event);
 }
 
 void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,

@@ -18,12 +18,15 @@ QuantityInputEditor::QuantityInputEditor(QWidget* parent)
   )").arg(scale_height(12)).arg(scale_width(6)));
 }
 
-void QuantityInputEditor::keyReleaseEvent(QKeyEvent* event) {
+void QuantityInputEditor::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Delete) {
     setText("0");
     emit editingFinished();
+    return;
   } else if(event->key() == Qt::Key_Enter ||
       event->key() == Qt::Key_Return) {
     emit editingFinished();
+    return;
   }
+  insert(event->text());
 }

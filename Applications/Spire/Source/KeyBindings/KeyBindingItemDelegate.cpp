@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
+#include <QKeyEvent>
 #include <QPainter>
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -48,4 +49,14 @@ void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
 void KeyBindingItemDelegate::on_editing_finished() {
   auto editor = static_cast<QWidget*>(sender());
   editor->close();
+}
+
+bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+      return true;
+    }
+  }
+  return QStyledItemDelegate::eventFilter(watched, event);
 }

@@ -15,7 +15,7 @@ namespace Spire {
       explicit QuantityInputEditor(QWidget* parent = nullptr);
 
     protected:
-      void keyReleaseEvent(QKeyEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
   };
 }
 

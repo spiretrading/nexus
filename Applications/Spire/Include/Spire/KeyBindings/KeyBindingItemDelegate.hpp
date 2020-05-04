@@ -37,6 +37,7 @@ namespace Spire {
       mutable ItemModifiedSignal m_item_modified_signal;
 
       void on_editing_finished();
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       CustomVariantItemDelegate* m_item_delegate;
