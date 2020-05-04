@@ -51,7 +51,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     : ScrollArea(true, parent),
       m_header(header),
       m_can_delete_rows(can_delete_rows),
-      m_was_navigation_key_pressed(false) {
+      m_is_default_cell_selected(true) {
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
@@ -61,6 +61,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_move);
   m_table = new CustomGridTableView(main_widget);
   m_table->installEventFilter(this);
+  m_table->setTabKeyNavigation(false);
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
@@ -79,7 +80,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       return 0;
     }
     return TABLE_PADDING();
-  }(); 
+  }();
   m_table->setStyleSheet(QString(R"(
     QTableView {
       background-color: #FFFFFF;
@@ -165,7 +166,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         m_navigation_keys.end()) {
       m_table->selectionModel()->clearSelection();
       auto current_index = [&] {
-        if(!m_was_navigation_key_pressed) {
+        if(m_is_default_cell_selected) {
           return m_table->model()->index(0, 0);
         } else {
           auto index = m_table->currentIndex();
@@ -181,7 +182,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         }
         return QModelIndex();
       }();
-      m_was_navigation_key_pressed = true;
+      m_is_default_cell_selected = false;
       m_table->selectionModel()->setCurrentIndex(current_index,
         QItemSelectionModel::Select);
       update();
@@ -317,6 +318,8 @@ void KeyBindingsTableView::on_table_clicked(const QModelIndex& index) {
   } else if(!region.contains(QPoint(0, cell_bottom))) {
     ensureVisible(0, cell_bottom, 0, scale_height(8));
   }
+  m_table->setCurrentIndex(index);
+  m_is_default_cell_selected = false;
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     m_table->edit(index);
   }

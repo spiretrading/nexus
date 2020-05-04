@@ -45,6 +45,9 @@ void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    return;
+  }
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }

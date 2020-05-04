@@ -16,12 +16,15 @@ NameInputEditor::NameInputEditor(QWidget* parent)
   )").arg(scale_height(12)).arg(scale_width(5)));
 }
 
-void NameInputEditor::keyReleaseEvent(QKeyEvent* event) {
+void NameInputEditor::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Delete) {
     setText("");
     emit editingFinished();
+    return;
   } else if(event->key() == Qt::Key_Enter ||
       event->key() == Qt::Key_Return) {
     emit editingFinished();
+    return;
   }
+  insert(event->text());
 }

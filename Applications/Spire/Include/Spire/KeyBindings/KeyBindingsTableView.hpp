@@ -74,7 +74,7 @@ namespace Spire {
       QVBoxLayout* m_delete_buttons_layout;
       QWidget* m_delete_buttons_widget;
       std::unordered_map<int, int> m_minimum_column_widths;
-      bool m_was_navigation_key_pressed;
+      bool m_is_default_cell_selected;
       std::set<Qt::Key> m_navigation_keys;
 
       void add_delete_button(int index);
