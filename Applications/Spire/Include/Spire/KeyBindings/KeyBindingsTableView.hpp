@@ -78,7 +78,8 @@ namespace Spire {
       std::set<Qt::Key> m_navigation_keys;
 
       void add_delete_button(int index);
-      QModelIndex get_index(int row, int column);
+      QModelIndex get_editable_index(int row, int column) const;
+      QModelIndex get_first_editable_index() const;
       void update_delete_buttons(int selected_index);
       void on_data_changed(const QModelIndex& index);
       void on_delete_button_clicked(int index);

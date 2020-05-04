@@ -166,17 +166,17 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       m_table->selectionModel()->clearSelection();
       auto current_index = [&] {
         if(m_is_default_cell_selected) {
-          return m_table->model()->index(0, 0);
+          return get_first_editable_index();
         } else {
           auto index = m_table->currentIndex();
           if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
-            return get_index(index.row(), index.column() + 1);
+            return get_editable_index(index.row(), index.column() + 1);
           } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
-            return get_index(index.row(), index.column() - 1);
+            return get_editable_index(index.row(), index.column() - 1);
           } else if(e->key() == Qt::Key_Up) {
-            return get_index(index.row() - 1, index.column());
+            return get_editable_index(index.row() - 1, index.column());
           } else if(e->key() == Qt::Key_Down) {
-            return get_index(index.row() + 1, index.column());
+            return get_editable_index(index.row() + 1, index.column());
           }
         }
         return QModelIndex();
@@ -219,7 +219,8 @@ void KeyBindingsTableView::add_delete_button(int index) {
   });
 }
 
-QModelIndex KeyBindingsTableView::get_index(int row, int column) {
+QModelIndex KeyBindingsTableView::get_editable_index(int row,
+    int column) const {
   if(column > m_table->model()->columnCount() - 1) {
     ++row;
   } else if(column < 0) {
@@ -230,6 +231,18 @@ QModelIndex KeyBindingsTableView::get_index(int row, int column) {
   auto bounded_column = bounded_value(column,
     m_table->model()->columnCount() - 1);
   return m_table->model()->index(bounded_row, bounded_column);
+}
+
+QModelIndex KeyBindingsTableView::get_first_editable_index() const {
+  if(m_table->model()->rowCount() == 0) {
+    return QModelIndex();
+  }
+  for(auto i = 0; i < m_table->model()->columnCount(); ++i) {
+    if(m_table->model()->index(0, i).flags().testFlag(Qt::ItemIsEditable)) {
+      return m_table->model()->index(0, i);
+    }
+  }
+  return QModelIndex();
 }
 
 void KeyBindingsTableView::update_delete_buttons(int selected_index) {
