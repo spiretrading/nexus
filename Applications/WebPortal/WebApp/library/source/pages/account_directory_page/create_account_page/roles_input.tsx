@@ -7,8 +7,10 @@ interface Properties {
   /** The size of the element to display. */
   displaySize: DisplaySize;
 
+  /** The selected roles. */
   roles: Nexus.AccountRoles;
 
+  /** Is there an error. */
   isError?: boolean;
 
     /** Called when the user clicks on a role
