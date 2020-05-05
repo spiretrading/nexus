@@ -51,6 +51,13 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
   return QLineEdit::eventFilter(watched, event);
 }
 
+void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    return;
+  }
+  QLineEdit::keyPressEvent(event);
+}
+
 void InputFieldEditor::keyReleaseEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Delete) {
     on_item_selected("");
