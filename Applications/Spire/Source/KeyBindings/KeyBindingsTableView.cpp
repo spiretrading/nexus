@@ -51,7 +51,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     : ScrollArea(true, parent),
       m_header(header),
       m_can_delete_rows(can_delete_rows),
-      m_is_default_cell_selected(true) {
+      m_is_default_cell_selected(true),
+      m_is_editing_cell(false) {
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
   auto main_widget = new QWidget(this);
@@ -103,9 +104,9 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   m_table->setSelectionMode(QAbstractItemView::SingleSelection);
   m_table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
   connect(m_table, &QTableView::clicked, this,
-    &KeyBindingsTableView::on_table_clicked);
+    &KeyBindingsTableView::on_cell_activated);
   connect(m_table, &QTableView::activated, this,
-    &KeyBindingsTableView::on_table_clicked);
+    &KeyBindingsTableView::on_cell_activated);
   setWidget(main_widget);
   setFocusProxy(m_table);
   m_navigation_keys = {Qt::Key_Tab, Qt::Key_Backtab, Qt::Key_Left,
@@ -143,6 +144,9 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
       });
     update_delete_buttons(0);
   }
+  connect(m_table->selectionModel(),
+    &QItemSelectionModel::currentColumnChanged, this,
+    &KeyBindingsTableView::on_column_selection_changed);
 }
 
 void KeyBindingsTableView::set_height(int height) {
@@ -276,6 +280,17 @@ void KeyBindingsTableView::update_delete_buttons(int selected_index) {
   setStyleSheet(styleSheet());
 }
 
+void KeyBindingsTableView::on_column_selection_changed(
+    const QModelIndex &current, const QModelIndex &previous) {
+  if(m_is_editing_cell) {
+    m_is_editing_cell = false;
+    m_table->selectionModel()->clearSelection();
+    m_table->selectionModel()->setCurrentIndex(previous,
+      QItemSelectionModel::Select);
+    update();
+  }
+}
+
 void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
   if(index.row() == m_table->model()->rowCount() - 1) {
     add_delete_button(index.row());
@@ -341,11 +356,12 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
   }
 }
 
-void KeyBindingsTableView::on_table_clicked(const QModelIndex& index) {
+void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
-  m_table->setCurrentIndex(index);
-  m_is_default_cell_selected = false;
+  m_table->selectionModel()->setCurrentIndex(index,
+    QItemSelectionModel::Select);
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
+    m_is_editing_cell = true;
     m_table->edit(index);
   }
 }

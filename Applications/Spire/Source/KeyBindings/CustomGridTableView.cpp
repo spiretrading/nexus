@@ -55,10 +55,7 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
     }
   }
   if(selectionModel()->hasSelection()) {
-    auto indexes = selectionModel()->selection().indexes();
-    if(!indexes.empty()) {
-      draw_border(indexes.first(), &painter);
-    }
+    draw_border(selectionModel()->currentIndex(), &painter);
   }
   if(m_last_mouse_pos) {
     auto index = indexAt(*m_last_mouse_pos);

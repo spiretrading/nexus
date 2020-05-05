@@ -76,18 +76,21 @@ namespace Spire {
       std::unordered_map<int, int> m_minimum_column_widths;
       bool m_is_default_cell_selected;
       std::set<Qt::Key> m_navigation_keys;
+      bool m_is_editing_cell;
 
       void add_delete_button(int index);
       void scroll_to_index(const QModelIndex& index);
       QModelIndex get_editable_index(int row, int column_visual_index) const;
       QModelIndex get_first_editable_index() const;
       void update_delete_buttons(int selected_index);
+      void on_cell_activated(const QModelIndex& index);
+      void on_column_selection_changed(const QModelIndex &current,
+        const QModelIndex &previous);
       void on_data_changed(const QModelIndex& index);
       void on_delete_button_clicked(int index);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
-      void on_table_clicked(const QModelIndex& index);
   };
 }
 
