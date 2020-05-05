@@ -338,6 +338,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                       displaySize={this.props.displaySize}>
                     <div style={ProfilePage.STYLE.rolesWrapper}>
                       <RolesField roles={this.state.newRoles}
+                        displaySize={this.props.displaySize}
                         readonly={this.props.readonly}
                         onClick={this.onRolesChange}/>
                     </div>

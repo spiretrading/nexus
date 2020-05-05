@@ -1,9 +1,13 @@
 import { HBoxLayout, Padding } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import { DisplaySize } from '../../..';
 import { RoleIcon } from './role_icon';
 
 interface Properties {
+
+  /** The size of the element to display. */
+  displaySize: DisplaySize;
 
   /** The roles to highlight. */
   roles: Nexus.AccountRoles;
@@ -41,6 +45,7 @@ export class RolesField extends React.Component<Properties, State> {
       <HBoxLayout width={RolesField.COMPONENT_WIDTH}
           height={RolesField.IMAGE_SIZE}>
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -50,6 +55,7 @@ export class RolesField extends React.Component<Properties, State> {
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -59,6 +65,7 @@ export class RolesField extends React.Component<Properties, State> {
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -69,6 +76,7 @@ export class RolesField extends React.Component<Properties, State> {
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -76,8 +84,7 @@ export class RolesField extends React.Component<Properties, State> {
           onTouch={() =>
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.SERVICE)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
-      </HBoxLayout>
-     );
+      </HBoxLayout>);
   }
 
   private onTouchTooltipEvent(role: Nexus.AccountRoles.Role) {

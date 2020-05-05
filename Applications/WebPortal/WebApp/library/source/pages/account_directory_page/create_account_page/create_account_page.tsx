@@ -3,11 +3,12 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HLine } from '../..';
-import { CountrySelectionField, TextField } from '../..';
-import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField } from '..';
-import { GroupSelectionBox } from './group_selection_box';
-import { GroupSuggestionModel } from './group_suggestion_model';
+import { DisplaySize, HLine } from '../../..';
+import { CountrySelectionField, TextField } from '../../..';
+import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField } from '../..';
+import { GroupSelectionBox } from '../group_selection_box';
+import { GroupSuggestionModel } from '../group_suggestion_model';
+import { RolesInput } from './roles_input';
 
 interface Properties {
 
@@ -119,7 +120,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     })();
     const topPadding = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-       return <Dali.Padding size='30px'/>;
+        return <Dali.Padding size='30px'/>;
       } else {
         return <Dali.Padding size='60px'/>;
       }
@@ -235,12 +236,15 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     isError={this.state.hasUserNameError}
                     onInput={this.onUsernameChange}/>
                 </FormEntry>
-                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                 <FormEntry name='Role(s)'
+                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
+                  <FormEntry name='Roleeeee(s)'
                     displaySize={this.props.displaySize}>
                   <div style={CreateAccountPage.STYLE.rolesWrapper}>
-                    <RolesField roles={this.state.roles}
-                      onClick={this.onRoleClick}/>
+                    <RolesInput
+                        displaySize={this.props.displaySize}
+                        roles={this.state.roles}
+                        isError={true}
+                        onClick={this.onRoleClick}/>
                       <div style={CreateAccountPage.STYLE.filler}/>
                       <div style={CreateAccountPage.STYLE.roleErrorStatus}>
                         {this.state.roleErrorMessage}
