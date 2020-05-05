@@ -167,12 +167,11 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(m_navigation_keys.find(static_cast<Qt::Key>(e->key())) !=
         m_navigation_keys.end()) {
-      m_table->selectionModel()->clearSelection();
       auto current_index = [&] {
         if(m_is_default_cell_selected) {
           return get_first_editable_index();
         } else {
-          auto index = m_table->currentIndex();
+          auto index = m_table->selectionModel()->currentIndex();
           if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
             return get_editable_index(index.row(),
               m_table->horizontalHeader()->visualIndex(index.column()) + 1);
@@ -190,6 +189,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         return QModelIndex();
       }();
       m_is_default_cell_selected = false;
+      m_is_editing_cell = false;
       m_table->selectionModel()->setCurrentIndex(current_index,
         QItemSelectionModel::Select);
       scroll_to_index(current_index);
@@ -284,7 +284,6 @@ void KeyBindingsTableView::on_column_selection_changed(
     const QModelIndex &current, const QModelIndex &previous) {
   if(m_is_editing_cell) {
     m_is_editing_cell = false;
-    m_table->selectionModel()->clearSelection();
     m_table->selectionModel()->setCurrentIndex(previous,
       QItemSelectionModel::Select);
     update();
@@ -360,6 +359,7 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
   m_table->selectionModel()->setCurrentIndex(index,
     QItemSelectionModel::Select);
+  m_is_default_cell_selected = false;
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     m_is_editing_cell = true;
     m_table->edit(index);
