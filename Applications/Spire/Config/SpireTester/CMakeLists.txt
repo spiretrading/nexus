@@ -107,7 +107,4 @@ if(UNIX)
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 add_custom_command(TARGET SpireTester POST_BUILD COMMAND SpireTester)
-install(TARGETS SpireTester CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
-install(TARGETS SpireTester CONFIGURATIONS Release RelWithDebInfo
-  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)
+install(TARGETS SpireTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})

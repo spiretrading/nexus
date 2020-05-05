@@ -131,6 +131,7 @@ namespace Spire {
       });
     while(!future.has_value()) {
       QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+      QCoreApplication::sendPostedEvents();
     }
     if constexpr(std::is_same_v<T, void>) {
       return future->Get();
