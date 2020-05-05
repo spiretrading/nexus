@@ -95,6 +95,7 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
     return;
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     on_commit(ParseSecurity(text().toUpper().toStdString()));
+    return;
   } else if(event->key() == Qt::Key_Delete) {
     on_commit({});
   }
