@@ -30,20 +30,20 @@ namespace MarketDataService {
   class MarketOrderImbalanceExpression :
       public Beam::Expressions::IterationExpression<OrderImbalance> {
     public:
-      typedef OrderImbalance Type;
+      using Type = OrderImbalance;
 
       //! The type of MarketDataClient used to request market data from.
-      typedef typename Beam::TryDereferenceType<MarketDataClientType>::type
-        MarketDataClient;
+      using MarketDataClient =
+        typename Beam::TryDereferenceType<MarketDataClientType>::type;
 
       //! The type of Expression evaluating to the market to get the imbalances
       //! for.
-      typedef typename Beam::TryDereferenceType<MarketExpressionType>::type
-        MarketExpression;
+      using MarketExpression =
+        typename Beam::TryDereferenceType<MarketExpressionType>::type;
 
       //! The type of Expression evaluating to the range of time to query.
-      typedef typename Beam::TryDereferenceType<TimeRangeExpressionType>::type
-        TimeRangeExpression;
+      using TimeRangeExpression =
+        typename Beam::TryDereferenceType<TimeRangeExpressionType>::type;
 
       //! Constructs a MarketOrderImbalanceExpression.
       /*!
