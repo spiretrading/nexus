@@ -51,6 +51,7 @@ export class RolesInput extends React.Component<Properties> {
       flexWrap: 'nowrap',
       width: '100%',
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'space-between'
     } as React.CSSProperties,
     errorText: {
