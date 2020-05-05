@@ -28,16 +28,16 @@ namespace Details {
   };
 
   template<typename T>
-  const T MoneyDefinitions<T>::ZERO(0);
+  constexpr const T MoneyDefinitions<T>::ZERO(0);
 
   template<typename T>
-  const T MoneyDefinitions<T>::ONE(1);
+  constexpr const T MoneyDefinitions<T>::ONE(1);
 
   template<typename T>
-  const T MoneyDefinitions<T>::CENT(ONE / 100);
+  constexpr const T MoneyDefinitions<T>::CENT(ONE / 100);
 
   template<typename T>
-  const T MoneyDefinitions<T>::BIP(CENT / 100);
+  constexpr const T MoneyDefinitions<T>::BIP(CENT / 100);
 }
 
   /** Used to represent money without rounding or floating point issues. */
