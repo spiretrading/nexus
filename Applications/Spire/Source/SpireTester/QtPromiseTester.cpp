@@ -25,19 +25,17 @@ TEST_SUITE("QtPromise") {
 
   TEST_CASE("chaining_promise_then") {
     run_test([] {
-      auto p = QtPromise(
-        [] {
-          return 123;
+      auto p = QtPromise([] {
+        return 123;
+      }).then([] (auto result) {
+        return QtPromise([=] {
+          return 2 * result.Get();
         }).then([] (auto result) {
-          return QtPromise(
-            [=] {
-              return 2 * result.Get();
-            }).then([] (auto result) {
-              return 3 * result.Get();
-            });
-        }).then([] (auto result) {
-          return 6 * result.Get();
+          return 3 * result.Get();
         });
+      }).then([] (auto result) {
+        return 6 * result.Get();
+      });
       auto r = wait(std::move(p));
       REQUIRE(r == 4428);
     });
@@ -131,18 +129,6 @@ TEST_SUITE("QtPromise") {
       auto all_promise = all(std::move(promises));
       wait(std::move(all_promise));
       REQUIRE(value == 4);
-    });
-  }
-
-  TEST_CASE("void_then") {
-    run_test([] {
-      auto x = 0;
-      auto p = QtPromise([&] {
-        x += 5;
-      }).then([&] (Beam::Expect<void>) {
-        x += 10;
-      });
-      REQUIRE(x == 15);
     });
   }
 }
