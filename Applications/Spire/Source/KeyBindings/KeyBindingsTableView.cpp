@@ -170,13 +170,17 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         } else {
           auto index = m_table->currentIndex();
           if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
-            return get_editable_index(index.row(), index.column() + 1);
+            return get_editable_index(index.row(),
+              m_table->horizontalHeader()->visualIndex(index.column()) + 1);
           } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
-            return get_editable_index(index.row(), index.column() - 1);
+            return get_editable_index(index.row(),
+              m_table->horizontalHeader()->visualIndex(index.column()) - 1);
           } else if(e->key() == Qt::Key_Up) {
-            return get_editable_index(index.row() - 1, index.column());
+            return get_editable_index(index.row() - 1,
+              m_table->horizontalHeader()->visualIndex(index.column()));
           } else if(e->key() == Qt::Key_Down) {
-            return get_editable_index(index.row() + 1, index.column());
+            return get_editable_index(index.row() + 1,
+              m_table->horizontalHeader()->visualIndex(index.column()));
           }
         }
         return QModelIndex();
@@ -234,17 +238,17 @@ void KeyBindingsTableView::scroll_to_index(const QModelIndex& index) {
 }
 
 QModelIndex KeyBindingsTableView::get_editable_index(int row,
-    int column) const {
-  if(column > m_table->model()->columnCount() - 1) {
+    int column_visual_index) const {
+  if(column_visual_index > m_table->model()->columnCount() - 1) {
     ++row;
-  } else if(column < 0) {
+  } else if(column_visual_index < 0) {
     --row;
   }
   auto bounded_row = bounded_value(row,
     m_table->model()->rowCount() - 1);
-  auto bounded_column = bounded_value(column,
-    m_table->model()->columnCount() - 1);
-  return m_table->model()->index(bounded_row, bounded_column);
+  auto column = m_table->horizontalHeader()->logicalIndex(
+    bounded_value(column_visual_index, m_table->model()->columnCount() - 1));
+  return m_table->model()->index(bounded_row, column);
 }
 
 QModelIndex KeyBindingsTableView::get_first_editable_index() const {
