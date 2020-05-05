@@ -131,4 +131,16 @@ TEST_SUITE("QtPromise") {
       REQUIRE(value == 4);
     });
   }
+
+  TEST_CASE("void_then") {
+    run_test([] {
+      auto x = 0;
+      auto p = QtPromise([&] {
+        x += 5;
+      }).then([&] (Beam::Expect<void>) {
+        x += 10;
+      });
+      REQUIRE(x == 15);
+    });
+  }
 }

@@ -43,16 +43,7 @@ namespace Spire {
         \param continuation The function to call when the computation completes.
       */
       template<typename F>
-      std::enable_if_t<std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-        void>> then(F&& continuation);
-
-      //! Assigns a function to be called when the computation completes.
-      /*!
-        \param continuation The function to call when the computation completes.
-      */
-      template<typename F>
-      std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-        void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>> then(
+      QtPromise<promise_executor_result_t<F, Beam::Expect<T>>> then(
         F&& continuation);
 
       //! Disconnects from this promise, upon disconnection the callback
@@ -171,16 +162,8 @@ namespace Spire {
 
   template<typename T>
   template<typename F>
-  std::enable_if_t<std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-      void>> QtPromise<T>::then(F&& continuation) {
-    m_imp->then(std::forward<F>(continuation));
-  }
-
-  template<typename T>
-  template<typename F>
-  std::enable_if_t<!std::is_same_v<std::invoke_result_t<F, Beam::Expect<T>>,
-      void>, QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>>
-      QtPromise<T>::then(F&& continuation) {
+  QtPromise<promise_executor_result_t<F, Beam::Expect<T>>> QtPromise<T>::then(
+      F&& continuation) {
     return QtPromise<promise_executor_result_t<F, Beam::Expect<T>>>(
       std::move(*this), std::forward<F>(continuation));
   }
