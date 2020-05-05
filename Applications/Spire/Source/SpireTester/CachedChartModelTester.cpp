@@ -36,7 +36,7 @@ namespace {
 
 TEST_SUITE("CachedChartModel") {
   TEST_CASE("right_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 10, 20, SnapshotLimit::Unlimited());
@@ -45,11 +45,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 30, 40, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 30, 40, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "right_no_overlap");
+    });
   }
 
   TEST_CASE("left_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 20, 30, SnapshotLimit::Unlimited());
@@ -58,11 +58,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 10, 18, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 10, 18, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "left_no_overlap");
+    });
   }
 
   TEST_CASE("right_overlap") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 25, 50, SnapshotLimit::Unlimited());
@@ -71,11 +71,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 40, 60, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 40, 60, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "right_overlap");
+    });
   }
 
   TEST_CASE("left_overlap") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 25, 50, SnapshotLimit::Unlimited());
@@ -84,11 +84,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 10, 30, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 10, 30, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "left_overlap");
+    });
   }
 
   TEST_CASE("subset") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 25, 75, SnapshotLimit::Unlimited());
@@ -97,11 +97,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 40, 60, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 40, 60, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "subset");
+    });
   }
 
   TEST_CASE("single_superset") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 40, 60, SnapshotLimit::Unlimited());
@@ -110,11 +110,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 20, 80, SnapshotLimit::Unlimited());
       auto test_sticks = load(&cache, 20, 80, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "single_superset");
+    });
   }
 
   TEST_CASE("multiple_supersets") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 40, 60, SnapshotLimit::Unlimited());
@@ -126,11 +126,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 10, 90, SnapshotLimit::Unlimited());
       test_sticks = load(&cache, 10, 90, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "multiple_supersets");
+    });
   }
 
   TEST_CASE("multiple_subsets_and_supersets") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       auto model_sticks = load(model.get(), 40, 50, SnapshotLimit::Unlimited());
@@ -151,11 +151,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 40, 60, SnapshotLimit::Unlimited());
       test_sticks = load(&cache, 40, 60, SnapshotLimit::Unlimited());
       REQUIRE(test_sticks == model_sticks);
-    }, "multiple_subsets_and_supersets");
+    });
   }
 
   TEST_CASE("multiple_cache_hits") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto test_model = TestChartModel(model->get_x_axis_type(),
         model->get_y_axis_type());
@@ -182,11 +182,11 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(cache_load2->get_first() == Scalar(70 * Money::ONE));
       REQUIRE(cache_load2->get_last() == Scalar(75 * Money::ONE));
       cache_load2->set_result({});
-    }, "multiple_cache_hits");
+    });
   }
 
   TEST_CASE("cached_model_loads_from_head") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       model->load(Scalar(0), Scalar(100), SnapshotLimit::Unlimited());
@@ -206,11 +206,11 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(load4.size() == 7);
       REQUIRE(load4.front().GetStart() == Scalar(94));
       REQUIRE(load4.back().GetEnd() == Scalar(101));
-    }, "cached_model_loads_from_head");
+    });
   }
 
   TEST_CASE("cache_model_loads_from_tail") {
-    run_test([=] {
+    run_test([] {
       auto model = create_model();
       auto cache = CachedChartModel(*model);
       model->load(Scalar(0), Scalar(100), SnapshotLimit::Unlimited());
@@ -230,11 +230,11 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(load4.size() == 7);
       REQUIRE(load4.front().GetStart() == Scalar(94));
       REQUIRE(load4.back().GetEnd() == Scalar(101));
-    }, "cache_model_loads_from_tail");
+    });
   }
 
   TEST_CASE("empty_intervals_with_head_limit") {
-    run_test([=] {
+    run_test([] {
       auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
         Scalar::Type::MONEY,
         std::vector<Candlestick>({make(30, 40), make(39, 40)}));
@@ -245,11 +245,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
       cache_sticks = load(&cache1, 40, 40, SnapshotLimit::Unlimited());
       REQUIRE(cache_sticks == model_sticks);
-    }, "empty_intervals_with_head_limit");
+    });
   }
 
   TEST_CASE("empty_intervals_with_tail_limit") {
-    run_test([=] {
+    run_test([] {
       auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
         Scalar::Type::MONEY,
         std::vector<Candlestick>({make(30, 40), make(39, 40)}));
@@ -260,11 +260,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
       cache_sticks = load(&cache, 40, 40, SnapshotLimit::Unlimited());
       REQUIRE(cache_sticks == model_sticks);
-    }, "empty_intervals_with_tail_limit");
+    });
   }
 
   TEST_CASE("coincident_open_intervals") {
-    run_test([=] {
+    run_test([] {
       auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
         Scalar::Type::MONEY,
         std::vector<Candlestick>({make(20, 39), make(39, 40), make(39, 40),
@@ -279,11 +279,11 @@ TEST_SUITE("CachedChartModel") {
       model_sticks = load(model.get(), 39, 39, SnapshotLimit::Unlimited());
       cache_sticks = load(&cache, 39, 39, SnapshotLimit::Unlimited());
       REQUIRE(cache_sticks == model_sticks);
-    }, "coincident_open_intervals");
+    });
   }
 
   TEST_CASE("limits_with_no_data") {
-    run_test([=] {
+    run_test([] {
       auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
         Scalar::Type::MONEY, std::vector<Candlestick>());
       auto test_model = TestChartModel(model->get_x_axis_type(),
@@ -302,6 +302,6 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(cache_load2->get_first() == Scalar(30 * Money::ONE));
       REQUIRE(cache_load2->get_last() == Scalar(40 * Money::ONE));
       cache_load2->set_result({});
-    }, "limits_with_no_data");
+    });
   }
 }

@@ -2,12 +2,7 @@ find_package(Qt5Widgets REQUIRED)
 file(GLOB header_files ../../Include/Spire/SpireTester/*.hpp)
 file(GLOB source_files ../../Source/SpireTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-if(WIN32)
-  set(app_type WIN32)
-elseif(APPLE)
-  set(app_type MACOSX_BUNDLE)
-endif()
-add_executable(SpireTester ${app_type} ${header_files} ${source_files})
+add_executable(SpireTester ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(SpireTester
@@ -111,4 +106,8 @@ if(UNIX)
     dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(TARGETS SpireTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+add_custom_command(TARGET SpireTester POST_BUILD COMMAND SpireTester)
+install(TARGETS SpireTester CONFIGURATIONS Debug
+  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
+install(TARGETS SpireTester CONFIGURATIONS Release RelWithDebInfo
+  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)

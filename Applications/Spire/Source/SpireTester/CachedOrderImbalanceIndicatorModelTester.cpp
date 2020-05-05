@@ -52,7 +52,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(200)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, B}));
-    }, "cached_publishing_subscribing");
+    });
   }
 
   TEST_CASE("cached_single_security_load_imbalances_pre_cached") {
@@ -77,7 +77,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise2));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
-    }, "cached_single_security_load_imbalances_pre_cached");
+    });
   }
 
   TEST_CASE("cached_subscribing_last_value") {
@@ -95,7 +95,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto result3 = cached_model.subscribe([=] (const auto& imbalance) {});
       auto snapshot3 = wait(std::move(result3.m_snapshot));
       REQUIRE(*snapshot3 == B);
-    }, "cached_subscribing_last_value");
+    });
   }
 
   TEST_CASE("cached_duplicate_timestamps_value") {
@@ -115,7 +115,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto expected2 = std::vector<OrderImbalance>({A, A2});
       REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
         expected2.end()));
-    }, "cached_duplicate_timestamps_value");
+    });
   }
 
   TEST_CASE("cached_loading") {
@@ -137,7 +137,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data2 = wait(std::move(promise2));
       REQUIRE(data2 == std::vector<OrderImbalance>({C, D, E}));
-    }, "cached_loading");
+    });
   }
 
   TEST_CASE("cached_disconnection") {
@@ -154,7 +154,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       local_model->publish(A);
       REQUIRE(slot_data1 == A);
       REQUIRE(slot_data2 == OrderImbalance());
-    }, "cached_disconnection");
+    });
   }
 
   TEST_CASE("cached_out_of_order_inserting") {
@@ -169,7 +169,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(400)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, B, C, D}));
-    }, "cached_out_of_order_inserting");
+    });
   }
 
   TEST_CASE("cached_loading_left_open_interval") {
@@ -183,7 +183,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(100), from_time_t(300)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({B, C}));
-    }, "cached_loading_left_open_interval");
+    });
   }
 
   TEST_CASE("cached_loading_right_open_interval") {
@@ -197,7 +197,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(100), from_time_t(300)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, B}));
-    }, "cached_loading_right_open_interval");
+    });
   }
 
   TEST_CASE("cached_loading_open_interval") {
@@ -211,11 +211,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(100), from_time_t(300)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({B}));
-    }, "cached_loading_open_interval");
+    });
   }
 
   TEST_CASE("cached_imbalance_right_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(
@@ -228,11 +228,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(400)));
       request->set_result({});
-    }, "cached_imbalance_right_no_overlap");
+    });
   }
 
   TEST_CASE("cached_imbalance_left_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(
@@ -245,11 +245,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(200)));
       request->set_result({});
-    }, "cached_imbalance_left_no_overlap");
+    });
   }
 
   TEST_CASE("cached_imbalance_right_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(
@@ -262,11 +262,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(500)));
       request->set_result({});
-    }, "cached_imbalance_right_overlap");
+    });
   }
 
   TEST_CASE("cached_imbalance_left_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(300),
@@ -279,11 +279,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(300)));
       request->set_result({});
-    }, "cached_imbalance_left_overlap");
+    });
   }
 
   TEST_CASE("cached_imbalance_superset") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(200),
@@ -300,11 +300,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(400),
         from_time_t(500)));
       request2->set_result({});
-    }, "cached_imbalance_superset");
+    });
   }
 
   TEST_CASE("cached_imbalance_mixed_subsets_and_supersets") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(
@@ -329,11 +329,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request3->get_interval() == TimeInterval::closed(from_time_t(450),
         from_time_t(500)));
       request3->set_result({});
-    }, "cached_imbalance_mixed_subsets_and_supersets");
+    });
   }
 
   TEST_CASE("cached_imbalance_async_loads") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(TimeInterval::closed(from_time_t(100),
@@ -356,7 +356,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(test_model->get_load_entry_count() == 0);
       auto cached_data = wait(std::move(promise3));
       REQUIRE(cached_data == std::vector<OrderImbalance>({A, B, C, D, E}));
-    }, "cached_imbalance_async_loads");
+    });
   }
 
   TEST_CASE("cached_single_security_load") {
@@ -378,11 +378,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
         from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
-    }, "cached_single_security_load");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_right_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(
@@ -395,11 +395,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(400)));
       request->set_result({});
-    }, "cached_single_security_imbalance_right_no_overlap");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_left_no_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(
@@ -412,11 +412,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(200)));
       request->set_result({});
-    }, "cached_single_security_imbalance_left_no_overlap");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_right_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(
@@ -429,11 +429,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(500)));
       request->set_result({});
-    }, "cached_single_security_imbalance_right_overlap");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_left_overlap") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(from_time_t(300),
@@ -446,11 +446,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(300)));
       request->set_result({});
-    }, "cached_single_security_imbalance_left_overlap");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_superset") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(from_time_t(200),
@@ -467,11 +467,11 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(400),
         from_time_t(500)));
       request2->set_result({});
-    }, "cached_single_security_imbalance_superset");
+    });
   }
 
   TEST_CASE("cached_single_security_imbalance_mixed_subsets_and_supersets") {
-    run_test([=] {
+    run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
       auto cache_model = CachedOrderImbalanceIndicatorModel(test_model);
       auto promise1 = cache_model.load(S, TimeInterval::closed(
@@ -496,6 +496,6 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request3->get_interval() == TimeInterval::closed(from_time_t(450),
         from_time_t(500)));
       request3->set_result({});
-    }, "cached_single_security_imbalance_mixed_subsets_and_supersets");
+    });
   }
 }

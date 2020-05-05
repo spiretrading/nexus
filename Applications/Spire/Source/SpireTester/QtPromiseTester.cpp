@@ -20,7 +20,7 @@ TEST_SUITE("QtPromise") {
       auto p = inc(1, end);
       auto r = wait(std::move(p));
       REQUIRE(r == 10);
-    }, "arbitrary_chaining");
+    });
   }
 
   TEST_CASE("chaining_promise_then") {
@@ -40,7 +40,7 @@ TEST_SUITE("QtPromise") {
         });
       auto r = wait(std::move(p));
       REQUIRE(r == 4428);
-    }, "chaining_promise_then");
+    });
   }
 
   TEST_CASE("empty_promise") {
@@ -48,7 +48,7 @@ TEST_SUITE("QtPromise") {
       auto promises = std::vector<QtPromise<std::vector<int>>>();
       auto result = wait(std::move(all(std::move(promises))));
       REQUIRE(result == std::vector<std::vector<int>>());
-    }, "empty_promise");
+    });
   }
 
   TEST_CASE("single_promise") {
@@ -59,7 +59,7 @@ TEST_SUITE("QtPromise") {
       }));
       auto result = wait(std::move(all(std::move(promises))));
       REQUIRE(result == std::vector<int>{1});
-    }, "single_promise");
+    });
   }
 
   TEST_CASE("multiple_promises") {
@@ -80,7 +80,7 @@ TEST_SUITE("QtPromise") {
       auto all_promise = std::move(all(std::move(promises)));
       auto result = wait(std::move(all_promise));
       REQUIRE(result == std::vector<int>{1, 2, 3, 4});
-    }, "multiple_promises");
+    });
   }
 
   TEST_CASE("move_only_type") {
@@ -109,7 +109,7 @@ TEST_SUITE("QtPromise") {
         expected_result.end(), [](const auto& lhs, const auto& rhs) {
           return *lhs == *rhs;
         }));
-    }, "move_only_type");
+    });
   }
 
   TEST_CASE("void_all") {
@@ -131,6 +131,6 @@ TEST_SUITE("QtPromise") {
       auto all_promise = all(std::move(promises));
       wait(std::move(all_promise));
       REQUIRE(value == 4);
-    }, "void_all");
+    });
   }
 }
