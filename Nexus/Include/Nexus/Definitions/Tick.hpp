@@ -1,30 +1,24 @@
 #ifndef NEXUS_TICK_HPP
 #define NEXUS_TICK_HPP
-#include <Beam/Utilities/Enumerator.hpp>
+#include <Beam/Collections/Enum.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
-namespace Details {
 
-  /*! \struct TickDirectionDefinition
+  /*! \enum TickDirection
       \brief The direction of a Security's tick.
     */
-  struct TickDirectionDefinition {
-    enum Type {
+  BEAM_ENUM(TickDirection,
 
-      //! Neutral tick.
-      NEUTRAL,
+    //! Neutral tick.
+    NEUTRAL,
 
-      //! Up tick.
-      UP,
+    //! Up tick.
+    UP,
 
-      //! Down tick.
-      DOWN
-    };
-  };
-}
-
-  typedef Beam::Enumerator<Details::TickDirectionDefinition> TickDirection;
+    //! Down tick.
+    DOWN
+  );
 
   //! Returns the single character representation of a TickDirection.
   inline char ToChar(TickDirection tick) {
