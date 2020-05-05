@@ -58,7 +58,7 @@ namespace Spire {
   void ChainedQtPromise<P, E>::bind(std::shared_ptr<void> self) {
     m_self = std::move(self);
     if constexpr(is_promise_v<std::invoke_result_t<Executor,
-        Beam::Expect<typename Promise::Type>>>) {
+        Beam::Expect<typename Promise::Type>&&>>) {
       m_promise.then([=, self = m_self] (auto&& result) {
         auto continuation = std::make_shared<std::invoke_result_t<Executor,
           Beam::Expect<typename Promise::Type>>>(
@@ -71,9 +71,10 @@ namespace Spire {
       });
     } else {
       m_promise.then([=] (auto&& result) {
+        using Result = decltype(std::forward<decltype(result)>(result));
         QCoreApplication::postEvent(this, details::make_qt_promise_event(
           Beam::Try([&] {
-            return m_executor(std::forward<decltype(result)>(result));
+            return m_executor(static_cast<Result>(result));
           })));
       });
     }
