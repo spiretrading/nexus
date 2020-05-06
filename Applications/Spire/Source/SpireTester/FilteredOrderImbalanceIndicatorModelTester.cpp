@@ -74,7 +74,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3 == std::vector<OrderImbalance>({C, D, E}));
-    }, "unfiltered_loading");
+    });
   }
 
   TEST_CASE("security_list_filter") {
@@ -97,7 +97,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3.empty());
-    }, "security_list_filter");
+    });
   }
 
   TEST_CASE("security_list_filter_with_duplicate_symbols") {
@@ -120,7 +120,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(0), from_time_t(500)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({first_imbalance}));
-    }, "security_list_filter_with_duplicate_symbols");
+    });
   }
 
   TEST_CASE("security_filter") {
@@ -143,7 +143,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3 == std::vector<OrderImbalance>({A, B, C, D, E}));
-    }, "security_filter");
+    });
   }
 
   TEST_CASE("market_list_filter") {
@@ -166,7 +166,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3.empty());
-    }, "market_list_filter");
+    });
   }
 
   TEST_CASE("market_filter") {
@@ -189,7 +189,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3 == std::vector<OrderImbalance>({A, B, C, D, E}));
-    }, "market_filter");
+    });
   }
 
   TEST_CASE("side_filter") {
@@ -206,7 +206,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data2 = wait(std::move(promise2));
       REQUIRE(data2 == std::vector<OrderImbalance>({C, D, E}));
-    }, "side_filter");
+    });
   }
 
   TEST_CASE("size_filter") {
@@ -229,7 +229,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3.empty());
-    }, "size_filter");
+    });
   }
 
   TEST_CASE("reference_price_filter") {
@@ -254,7 +254,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3.empty());
-    }, "reference_price_filter");
+    });
   }
 
   TEST_CASE("notional_value_filter") {
@@ -280,7 +280,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(500)));
       auto data3 = wait(std::move(promise3));
       REQUIRE(data3.empty());
-    }, "notional_value_filter");
+    });
   }
 
   TEST_CASE("unfiltered_signals") {
@@ -293,7 +293,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
       REQUIRE(slot_data == A);
       local_model->publish(B);
       REQUIRE(slot_data == B);
-    }, "unfiltered_signals");
+    });
   }
 
   TEST_CASE("filtered_signals") {
@@ -316,7 +316,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
       REQUIRE(signal_data == C);
       local_model->publish(E);
       REQUIRE(signal_data == C);
-    }, "filtered_signals");
+    });
   }
 
   TEST_CASE("filtered_loads_don't_crash_on_model_destruction") {
@@ -330,7 +330,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
       auto test_load = wait(test_model->pop_load());
       test_load->set_result({A, B, C});
       wait(std::move(promise));
-    }, "filtered_loads_don't_crash_on_model_destruction");
+    });
   }
 
   TEST_CASE("filtered_subscribes_don't_crash_on_model_destruction") {
@@ -345,7 +345,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
       filtered_model.reset();
       local_model->publish(A);
       wait(std::move(promise.m_snapshot));
-    }, "filtered_subscribes_don't_crash_on_model_destruction");
+    });
   }
 
   TEST_CASE("unfiltered_single_security_loading") {
@@ -364,7 +364,7 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(100), from_time_t(500)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({F, G, H}));
-    }, "unfiltered_single_security_loading");
+    });
   }
 
   TEST_CASE("filtered_single_security_loading") {
@@ -386,6 +386,6 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
         from_time_t(100), from_time_t(500)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({G}));
-    }, "filtered_single_security_loading");
+    });
   }
 }

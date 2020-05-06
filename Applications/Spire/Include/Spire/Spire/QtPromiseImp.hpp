@@ -219,9 +219,9 @@ namespace details {
       } else {
         auto promise = std::make_shared<Result>(std::move(result.Get()));
         promise->then(
-          [=, promise = std::move(promise)] (auto result) mutable {
+          [=, promise = std::move(promise)] (auto&& result) mutable {
             QCoreApplication::postEvent(this,
-              make_qt_promise_event(std::move(result)));
+              make_qt_promise_event(std::forward<decltype(result)>(result)));
             promise.reset();
           });
       }

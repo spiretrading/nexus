@@ -18,7 +18,7 @@ namespace Nexus {
     public:
 
       //! The type used to order events with the same time point.
-      typedef SequenceType Sequence;
+      using Sequence = SequenceType;
 
       //! Constructs an empty Timestamp.
       Timestamp();

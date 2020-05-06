@@ -41,8 +41,8 @@ namespace Details {
     public:
 
       //! Defines the standard OrderExecutionClient used for applications.
-      typedef OrderExecutionClient<Details::OrderExecutionClientSessionBuilder>
-        Client;
+      using Client = OrderExecutionClient<
+        Details::OrderExecutionClientSessionBuilder>;
 
       //! Constructs an ApplicationOrderExecutionClient.
       ApplicationOrderExecutionClient() = default;
