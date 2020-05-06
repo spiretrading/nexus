@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include <QKeyEvent>
 #include <QPainter>
+#include <QTableView>
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -35,7 +36,8 @@ void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
     editor->move(rect.topLeft());
     editor->resize(rect.width(), rect.height() - 1);
   }
-  if(index.column() == 0) {
+  auto table = reinterpret_cast<QTableView*>(parent());
+  if(table->horizontalHeader()->visualIndex(index.column()) == 0) {
     editor->move(editor->pos().x() + 1, editor->pos().y());
     editor->resize(editor->width() - 1, editor->height());
   }
