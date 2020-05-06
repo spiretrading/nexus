@@ -95,6 +95,7 @@ export class AddressField extends React.Component<Properties, State> {
     })();
     this.setState({displayValue: displayText});
   }
+
   private onBlur = () => {
     this.setState({isEditing: false});
     this.onSubmitChange();
