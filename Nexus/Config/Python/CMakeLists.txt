@@ -20,6 +20,10 @@ if(MSVC)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd" LINK_FLAGS /SAFESEH:NO
     LINK_FLAGS_RELEASE /LTCG)
 endif()
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR
+    ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsized-deallocation")
+endif()
 if(UNIX)
   set_target_properties(Python PROPERTIES PREFIX "")
 endif()

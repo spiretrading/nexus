@@ -55,7 +55,7 @@ namespace Details {
     public:
 
       //! The type of value to associate with a Region.
-      typedef T Element;
+      using Element = T;
 
       /*! \class Iterator
           \brief Allows iterating over a RegionMap.
