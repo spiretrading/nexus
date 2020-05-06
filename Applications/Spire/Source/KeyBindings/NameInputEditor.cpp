@@ -14,17 +14,21 @@ NameInputEditor::NameInputEditor(QWidget* parent)
     font-size: %1px;
     padding-left: %2px;
   )").arg(scale_height(12)).arg(scale_width(5)));
+  setContextMenuPolicy(Qt::NoContextMenu);
 }
 
 void NameInputEditor::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Delete) {
+  auto key = event->key();
+  if(key == Qt::Key_Up || key == Qt::Key_Down) {
+    return;
+  }
+  if(key == Qt::Key_Delete) {
     setText("");
     emit editingFinished();
     return;
-  } else if(event->key() == Qt::Key_Enter ||
-      event->key() == Qt::Key_Return) {
+  } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
     emit editingFinished();
     return;
   }
-  insert(event->text());
+  QLineEdit::keyPressEvent(event);
 }

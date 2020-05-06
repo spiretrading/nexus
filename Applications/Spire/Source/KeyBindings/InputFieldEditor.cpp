@@ -12,6 +12,7 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
       m_selected_item(std::move(initial_value)),
       m_items(std::move(items)) {
   setObjectName("input_field_editor");
+  setContextMenuPolicy(Qt::NoContextMenu);
   setStyleSheet(QString(R"(
       #input_field_editor {
       background-color: #FFFFFF;

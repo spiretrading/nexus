@@ -42,6 +42,7 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
   setText(initial_text);
   parent->installEventFilter(this);
   setObjectName("SecurityInputLineEdit");
+  setContextMenuPolicy(Qt::NoContextMenu);
   setStyleSheet(QString(R"(
     #SecurityInputLineEdit {
       background-color: #FFFFFF;

@@ -8,6 +8,7 @@ using namespace Spire;
 QuantityInputEditor::QuantityInputEditor(int initial_value, QWidget* parent)
     : QLineEdit(parent),
       m_initial_value(initial_value) {
+  setContextMenuPolicy(Qt::NoContextMenu);
   setValidator(new QIntValidator(0, std::numeric_limits<int>::max(), this));
   setStyleSheet(QString(R"(
     background-color: #FFFFFF;
