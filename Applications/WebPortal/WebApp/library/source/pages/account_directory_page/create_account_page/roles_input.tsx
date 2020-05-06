@@ -13,7 +13,7 @@ interface Properties {
   /** Is there an error. */
   isError?: boolean;
 
-    /** Called when the user clicks on a role
+  /** Called when the user clicks on a role
    * @param value - The role of the icon clicked.
    */
   onClick?: (role: Nexus.AccountRoles.Role) => void;
