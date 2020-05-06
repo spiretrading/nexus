@@ -6,13 +6,13 @@ interface Properties {
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
-  /** The first address line.*/
+  /** The first address line. */
   addressLineOne?: string;
 
-  /** The second address line.*/
+  /** The second address line. */
   addressLineTwo?: string;
 
-  /** The third address line.*/
+  /** The third address line. */
   addressLineThree?: string;
 
   /** Called when the value has changed.
