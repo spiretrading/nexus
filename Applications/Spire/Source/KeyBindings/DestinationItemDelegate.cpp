@@ -9,7 +9,8 @@ DestinationItemDelegate::DestinationItemDelegate(QWidget* parent)
 
 QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new InputFieldEditor("", {"One", "Two", "Three"}, parent);
+  auto editor = new InputFieldEditor("", {"One", "Two", "Three"},
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &InputFieldEditor::editingFinished,
     this, &DestinationItemDelegate::on_editing_finished);
   return editor;

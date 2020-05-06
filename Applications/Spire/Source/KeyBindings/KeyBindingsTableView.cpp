@@ -115,6 +115,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
 
 void KeyBindingsTableView::set_column_delegate(int column,
     KeyBindingItemDelegate* delegate) {
+  delegate->setParent(m_table);
   m_table->setItemDelegateForColumn(column, delegate);
 }
 

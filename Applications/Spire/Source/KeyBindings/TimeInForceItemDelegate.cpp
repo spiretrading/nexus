@@ -60,7 +60,7 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
     return QString();
   }();
   auto editor = new InputFieldEditor(current_data,
-    create_time_in_force_item_list(), parent);
+    create_time_in_force_item_list(), static_cast<QWidget*>(this->parent()));
   connect(editor, &InputFieldEditor::editingFinished,
     this, &TimeInForceItemDelegate::on_editing_finished);
   return editor;

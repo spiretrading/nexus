@@ -13,7 +13,7 @@ NameItemDelegate::NameItemDelegate(QWidget* parent)
 QWidget* NameItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto str = index.data().value<QString>();
-  auto editor = new NameInputEditor(parent);
+  auto editor = new NameInputEditor(static_cast<QWidget*>(this->parent()));
   connect(editor, &NameInputEditor::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;

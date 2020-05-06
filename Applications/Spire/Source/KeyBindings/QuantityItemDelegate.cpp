@@ -14,7 +14,8 @@ QuantityItemDelegate::QuantityItemDelegate(QWidget* parent)
 QWidget* QuantityItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new QuantityInputEditor(
-    static_cast<int>(index.data().value<Quantity>()), parent);
+    static_cast<int>(index.data().value<Quantity>()),
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &QLineEdit::editingFinished,
     this, &QuantityItemDelegate::on_editing_finished);
   return editor;

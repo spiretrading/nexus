@@ -21,7 +21,7 @@ QWidget* SideItemDelegate::createEditor(QWidget* parent,
   }();
   auto editor = new InputFieldEditor(current_data,
     {Spire::displayText(Side::ASK), Spire::displayText(Side::BID)},
-    parent);
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &InputFieldEditor::editingFinished,
     this, &SideItemDelegate::on_editing_finished);
   return editor;

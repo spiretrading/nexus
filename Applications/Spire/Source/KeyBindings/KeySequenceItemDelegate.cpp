@@ -37,7 +37,7 @@ QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new KeySequenceEditor(
     index.data(Qt::DisplayRole).value<QKeySequence>(), m_valid_key_sequences,
-    parent);
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
   return editor;
