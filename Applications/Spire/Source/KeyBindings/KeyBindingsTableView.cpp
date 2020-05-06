@@ -139,6 +139,10 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
       [=] (auto index, auto first, auto last) {
         update_delete_buttons(first);
       });
+    connect(model, &QAbstractItemModel::rowsInserted,
+      [=] (auto top_left, auto bottom_right) {
+        on_row_inserted();
+      });
     connect(model, &QAbstractItemModel::dataChanged,
       [=] (auto top_left, auto top_right) {
         on_data_changed(top_left);
@@ -365,4 +369,12 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
     m_is_editing_cell = true;
     m_table->edit(index);
   }
+}
+
+void KeyBindingsTableView::on_row_inserted() {
+  auto current = m_table->selectionModel()->currentIndex();
+  auto previous_index = m_table->model()->index(current.row() - 1,
+    current.column());
+  m_table->selectionModel()->setCurrentIndex(previous_index,
+    QItemSelectionModel::Select);
 }
