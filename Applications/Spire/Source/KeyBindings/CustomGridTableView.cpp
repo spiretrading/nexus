@@ -80,7 +80,7 @@ void CustomGridTableView::draw_border(const QModelIndex& index,
     auto [pos_x, column_width] = [&] {
       auto x = columnViewportPosition(index.column());
       auto width = columnWidth(index.column());
-      if(index.column() > 0) {
+      if(horizontalHeader()->visualIndex(index.column()) > 0) {
         return std::tuple(x - scale_width(1), width);
       }
       return std::tuple(x, width - scale_width(1));
