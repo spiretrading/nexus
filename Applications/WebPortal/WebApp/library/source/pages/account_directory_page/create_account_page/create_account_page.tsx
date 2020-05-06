@@ -5,7 +5,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../..';
 import { CountrySelectionField, TextField } from '../../..';
-import { FormEntry, PhotoField, PhotoFieldDisplayMode, RolesField } from '../..';
+import { FormEntry, PhotoField, PhotoFieldDisplayMode, AddressField } 
+  from '../..';
 import { GroupSelectionBox } from '../group_selection_box';
 import { GroupSuggestionModel } from '../group_suggestion_model';
 import { RolesInput } from './roles_input';
@@ -270,10 +271,12 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Address'
                     displaySize={this.props.displaySize}>
-                  <TextField
-                    value={this.state.identity.addressLineOne}
+                  <AddressField
+                    addressLineOne={this.state.identity.addressLineOne}
+                    addressLineTwo={this.state.identity.addressLineTwo}
+                    addressLineThree={this.state.identity.addressLineThree}
                     displaySize={this.props.displaySize}
-                    onInput={this.onAddressChange}/>
+                    onChange={this.onAddressChange}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='City'
@@ -422,8 +425,11 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.enableSubmit();
   }
 
-  private onAddressChange(newValue: string) {
-    this.state.identity.addressLineOne = newValue;
+  private onAddressChange(addressLineOne: string, addressLineTwo: string,
+      addressLineThree: string) {
+    this.state.identity.addressLineOne = addressLineOne;
+    this.state.identity.addressLineTwo = addressLineTwo;
+    this.state.identity.addressLineThree = addressLineThree;
     this.setState({ identity: this.state.identity });
     this.enableSubmit();
   }

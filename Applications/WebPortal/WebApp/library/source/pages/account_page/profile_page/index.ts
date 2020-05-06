@@ -1,3 +1,4 @@
+export * from './address_field';
 export * from './change_password_box';
 export * from './form_entry';
 export * from './http_profile_model';
