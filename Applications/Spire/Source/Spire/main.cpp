@@ -64,9 +64,7 @@ namespace {
           "---\n"
           "servers:\n"
           "  - name: Live Trading\n"
-          "    address: 69.90.18.212:20000\n"
-          "  - name: Replay Simulator\n"
-          "    address: 64.34.75.195:20000\n"
+          "    address: 69.90.18.214:20000\n"
           "...\n";
       }
       std::ifstream configStream(configPath);
@@ -100,7 +98,7 @@ namespace {
       marketEntry.m_countryCode));
     defaultSecurities.push_back(Security("SU", marketEntry.m_code,
       marketEntry.m_countryCode));
-    defaultSecurities.push_back(Security("COS", marketEntry.m_code,
+    defaultSecurities.push_back(Security("TD", marketEntry.m_code,
       marketEntry.m_countryCode));
     auto index = std::size_t{0};
     while(instantiateSecurityWindows && index < defaultSecurities.size()) {
@@ -170,9 +168,7 @@ int main(int argc, char* argv[]) {
       "---\n"
       "servers:\n"
       "  - name: Live Trading\n"
-      "    address: 69.90.18.212:20000\n"
-      "  - name: Replay Simulator\n"
-      "    address: 64.34.75.195:20000\n"
+      "    address: 69.90.18.214:20000\n"
       "...\n";
   }
   YAML::Node config;
