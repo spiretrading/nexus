@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DisplaySize } from '../../..';
 
 interface Properties {
+
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
