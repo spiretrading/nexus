@@ -5,7 +5,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, HLine } from '../../..';
 import { CountrySelectionField, TextField } from '../../..';
-import { FormEntry, PhotoField, PhotoFieldDisplayMode, AddressField } 
+import { AddressField, FormEntry, PhotoField, PhotoFieldDisplayMode } 
   from '../..';
 import { GroupSelectionBox } from '../group_selection_box';
 import { GroupSuggestionModel } from '../group_suggestion_model';
