@@ -70,7 +70,7 @@ namespace Spire {
         });
       });
     } else {
-      m_promise.then([=] (auto&& result) {
+      m_promise.finish([=] (auto&& result) {
         using Result = decltype(std::forward<decltype(result)>(result));
         QCoreApplication::postEvent(this, details::make_qt_promise_event(
           Beam::Try([&] {

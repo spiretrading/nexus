@@ -4,20 +4,10 @@
 
 using namespace Spire;
 
-namespace {
-  QtPromise<int> inc(int num, int end) {
-    if(num != end) {
-      return inc(num + 1, end);
-    }
-    return QtPromise<int>([=] { return num; });
-  }
-}
-
 TEST_SUITE("QtPromise") {
-  TEST_CASE("arbitrary_chaining") {
+  TEST_CASE("immediate_value") {
     run_test([] {
-      auto end = 10;
-      auto p = inc(1, end);
+      auto p = QtPromise<int>([] { return 10; });
       auto r = wait(std::move(p));
       REQUIRE(r == 10);
     });
@@ -44,7 +34,7 @@ TEST_SUITE("QtPromise") {
   TEST_CASE("empty_promise") {
     run_test([] {
       auto promises = std::vector<QtPromise<std::vector<int>>>();
-      auto result = wait(std::move(all(std::move(promises))));
+      auto result = wait(all(std::move(promises)));
       REQUIRE(result == std::vector<std::vector<int>>());
     });
   }
@@ -55,7 +45,7 @@ TEST_SUITE("QtPromise") {
       promises.push_back(QtPromise([] {
         return 1;
       }));
-      auto result = wait(std::move(all(std::move(promises))));
+      auto result = wait(all(std::move(promises)));
       REQUIRE(result == std::vector<int>{1});
     });
   }
@@ -75,7 +65,7 @@ TEST_SUITE("QtPromise") {
       promises.push_back(QtPromise([] {
         return 4;
       }));
-      auto all_promise = std::move(all(std::move(promises)));
+      auto all_promise = all(std::move(promises));
       auto result = wait(std::move(all_promise));
       REQUIRE(result == std::vector<int>{1, 2, 3, 4});
     });
@@ -102,7 +92,7 @@ TEST_SUITE("QtPromise") {
       expected_result.push_back(std::make_unique<int>(3));
       expected_result.push_back(std::make_unique<int>(4));
       auto all_promise = all(std::move(promises));
-      auto result = std::move(wait(std::move(all_promise)));
+      auto result = wait(std::move(all_promise));
       REQUIRE(std::equal(result.begin(), result.end(), expected_result.begin(),
         expected_result.end(), [](const auto& lhs, const auto& rhs) {
           return *lhs == *rhs;
@@ -140,6 +130,7 @@ TEST_SUITE("QtPromise") {
       }).then([&] (Beam::Expect<void>) {
         x += 10;
       });
+      wait(std::move(p));
       REQUIRE(x == 15);
     });
   }

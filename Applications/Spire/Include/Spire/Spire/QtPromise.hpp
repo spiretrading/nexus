@@ -55,10 +55,13 @@ namespace Spire {
 
     private:
       template<typename> friend class QtPromise;
+      template<typename, typename> friend class ChainedQtPromise;
       std::shared_ptr<details::BaseQtPromiseImp<Type>> m_imp;
 
       template<typename U, typename F>
       QtPromise(QtPromise<U> promise, F&& continuation);
+      template<typename F>
+      void finish(F&& continuation);
   };
 
   template<typename Executor>
@@ -67,9 +70,6 @@ namespace Spire {
   template<typename Executor>
   QtPromise(Executor&&, LaunchPolicy) ->
     QtPromise<promise_executor_result_t<Executor>>;
-
-  template<typename U, typename F>
-  QtPromise(QtPromise<U>, F&&) -> QtPromise<promise_executor_result_t<F>>;
 
   QtPromise() -> QtPromise<void>;
 
@@ -153,7 +153,7 @@ namespace Spire {
 
   template<typename T>
   QtPromise<T>::QtPromise(QtPromise&& other)
-      : m_imp(std::move(other.m_imp)) {}
+    : m_imp(std::move(other.m_imp)) {}
 
   template<typename T>
   QtPromise<T>::~QtPromise() {
@@ -191,6 +191,12 @@ namespace Spire {
       std::forward<F>(continuation));
     chain->bind(chain);
     m_imp = std::move(chain);
+  }
+
+  template<typename T>
+  template<typename F>
+  void QtPromise<T>::finish(F&& continuation) {
+    m_imp->then(std::forward<F>(continuation));
   }
 }
 
