@@ -137,7 +137,7 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
   if(m_can_delete_rows) {
     connect(model, &QAbstractItemModel::rowsRemoved,
       [=] (auto index, auto first, auto last) {
-        update_delete_buttons(first);
+        on_row_removed(first);
       });
     connect(model, &QAbstractItemModel::rowsInserted,
       [=] (auto top_left, auto bottom_right) {
@@ -377,4 +377,16 @@ void KeyBindingsTableView::on_row_inserted() {
     current.column());
   m_table->selectionModel()->setCurrentIndex(previous_index,
     QItemSelectionModel::Select);
+}
+
+void KeyBindingsTableView::on_row_removed(int row) {
+  update_delete_buttons(row);
+  if(row == m_table->model()->rowCount() - 1) {
+    --row;
+  }
+  if(row == m_table->selectionModel()->currentIndex().row()) {
+    m_is_default_cell_selected = true;
+    m_table->selectionModel()->clearSelection();
+    m_table->setFocus();
+  }
 }

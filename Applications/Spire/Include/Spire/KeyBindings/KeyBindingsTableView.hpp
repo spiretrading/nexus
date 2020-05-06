@@ -92,6 +92,7 @@ namespace Spire {
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
       void on_row_inserted();
+      void on_row_removed(int row);
   };
 }
 
