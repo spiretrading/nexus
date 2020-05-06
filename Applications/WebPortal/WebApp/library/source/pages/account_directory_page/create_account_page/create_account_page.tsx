@@ -241,10 +241,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <FormEntry name='Role(s)'
                     displaySize={this.props.displaySize}>
                     <RolesInput
-                        displaySize={this.props.displaySize}
-                        roles={this.state.roles}
-                        isError={this.state.hasRoleError}
-                        onClick={this.onRoleClick}/>
+                      displaySize={this.props.displaySize}
+                      roles={this.state.roles}
+                      isError={this.state.hasRoleError}
+                      onClick={this.onRoleClick}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
                 <FormEntry name='Groups(s)'
