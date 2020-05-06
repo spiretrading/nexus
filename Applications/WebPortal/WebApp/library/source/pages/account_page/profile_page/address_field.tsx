@@ -29,7 +29,7 @@ interface State {
   isEditing: boolean
 }
 
-/** Displays a editable address field. */
+/** Displays a address field. */
 export class AddressField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     addressLineOne: '',
