@@ -29,6 +29,18 @@ namespace Spire {
         Beam::Ref<SecurityInputModel> model, bool is_icon_visible,
         QWidget* parent = nullptr);
 
+      //! Constructs a SecurityInputLineEdit.
+      /*
+        \param security Sets the security that is committed if the line edit
+                        is submitted with an empty string.
+        \param model The security input model.
+        \param is_icon_visible True if the search icon should be displayed.
+        \param parent The parent widget.
+      */
+      SecurityInputLineEdit(Nexus::Security security,
+        Beam::Ref<SecurityInputModel> model, bool is_icon_visible,
+        QWidget* parent = nullptr);
+
       //! Returns the selected security, or an empty Security if there was no
       //! selection.
       const Nexus::Security& get_security() const;

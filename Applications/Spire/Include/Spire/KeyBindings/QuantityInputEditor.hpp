@@ -10,12 +10,18 @@ namespace Spire {
 
       //! Constructs a QuantityInputEditor.
       /*
+        \param initial_value Value submitted if the editor is closed with no
+                             value.
         \param parent The parent widget.
       */
-      explicit QuantityInputEditor(QWidget* parent = nullptr);
+      explicit QuantityInputEditor(int initial_value,
+        QWidget* parent = nullptr);
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
+
+    private:
+      int m_initial_value;
   };
 }
 

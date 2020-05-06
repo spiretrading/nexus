@@ -28,11 +28,18 @@ namespace {
   }
 }
 
+SecurityInputLineEdit::SecurityInputLineEdit(Security security,
+    Beam::Ref<SecurityInputModel> model, bool is_icon_visible, QWidget* parent)
+    : SecurityInputLineEdit("", model, is_icon_visible, parent) {
+  m_security = std::move(security);
+}
+
 SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
     Beam::Ref<SecurityInputModel> model, bool is_icon_visible, QWidget* parent)
     : QLineEdit(initial_text, parent),
       m_model(model.Get()),
       m_is_icon_visible(is_icon_visible) {
+  setText(initial_text);
   parent->installEventFilter(this);
   setObjectName("SecurityInputLineEdit");
   setStyleSheet(QString(R"(
@@ -134,7 +141,9 @@ void SecurityInputLineEdit::on_activated(const Security& security) {
 }
 
 void SecurityInputLineEdit::on_commit(const Security& security) {
-  m_security = security;
+  if(!security.GetSymbol().empty()) {
+    m_security = security;
+  }
   emit editingFinished();
   m_commit_signal(security);
 }
