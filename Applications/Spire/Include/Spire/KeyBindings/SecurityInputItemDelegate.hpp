@@ -27,9 +27,6 @@ namespace Spire {
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-
     private:
       SecurityInputModel* m_model;
       std::vector<QString> m_items;

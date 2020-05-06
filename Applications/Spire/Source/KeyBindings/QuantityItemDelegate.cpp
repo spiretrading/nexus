@@ -29,13 +29,3 @@ void QuantityItemDelegate::setModelData(QWidget* editor,
       Qt::DisplayRole);
   }
 }
-
-bool QuantityItemDelegate::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-      return false;
-    }
-  }
-  return KeyBindingItemDelegate::eventFilter(watched, event);
-}

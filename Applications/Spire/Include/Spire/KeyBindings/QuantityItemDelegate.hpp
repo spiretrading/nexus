@@ -22,9 +22,6 @@ namespace Spire {
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
-
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
   };
 }
 

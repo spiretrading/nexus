@@ -94,8 +94,8 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
             on_select(static_cast<DropDownMenuItem*>(
               widget->widget())->text());
           }
+          return true;
         }
-        return true;
       } else if(key_event->key() == Qt::Key_Escape) {
         close();
       }

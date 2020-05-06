@@ -52,6 +52,9 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
     if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
       return true;
     }
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      return false;
+    }
   }
   return QStyledItemDelegate::eventFilter(watched, event);
 }

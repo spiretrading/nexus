@@ -53,6 +53,7 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
 
 void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    on_item_selected(text());
     return;
   }
   QLineEdit::keyPressEvent(event);
@@ -81,13 +82,16 @@ void InputFieldEditor::move_menu_list() {
 }
 
 void InputFieldEditor::on_item_selected(const QString& text) {
-  m_selected_item = text;
+  auto iter = std::find_if(m_items.begin(), m_items.end(),
+    [&] (auto value) { return value.toLower() == text.toLower(); });
+  if(iter != m_items.end()) {
+    m_selected_item = text;
+  }
   m_menu_list->hide();
   emit editingFinished();
 }
 
 void InputFieldEditor::on_text_changed(const QString& text) {
-  m_selected_item = text;
   if(text.isEmpty()) {
     m_menu_list->set_items(m_items);
     m_menu_list->show();
