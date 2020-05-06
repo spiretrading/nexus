@@ -112,6 +112,6 @@ export class RolesField extends React.Component<Properties, State> {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center'
-    }as React.CSSProperties
+    } as React.CSSProperties
   };
 }
