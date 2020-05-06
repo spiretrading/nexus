@@ -11,9 +11,9 @@
 
 namespace Nexus {
 namespace MarketDataService {
-  typedef boost::variant<SecurityBboQuote, SecurityBookQuote,
-    SecurityMarketQuote, SecurityTimeAndSale, MarketOrderImbalance>
-    MarketDataFeedMessage;
+  using MarketDataFeedMessage = boost::variant<SecurityBboQuote,
+    SecurityBookQuote, SecurityMarketQuote, SecurityTimeAndSale,
+    MarketOrderImbalance>;
 
   BEAM_DEFINE_MESSAGES(MarketDataFeedMessages,
 

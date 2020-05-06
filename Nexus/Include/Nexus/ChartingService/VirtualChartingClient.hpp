@@ -50,7 +50,7 @@ namespace ChartingService {
     public:
 
       //! The ChartingClient to wrap.
-      typedef typename Beam::TryDereferenceType<ClientType>::type Client;
+      using Client = typename Beam::TryDereferenceType<ClientType>::type;
 
       //! Constructs a WrapperChartingClient.
       /*!

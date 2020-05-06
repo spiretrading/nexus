@@ -161,6 +161,19 @@ export class HttpAdministrationClient extends AdministrationClient {
     return Beam.DirectoryEntry.fromJson(response);
   }
 
+  public async createAccount(name: string, group: Beam.DirectoryEntry,
+      identity: AccountIdentity, roles: AccountRoles):
+      Promise<Beam.DirectoryEntry> {
+    const response = await Beam.post('/api/service_locator/create_account',
+      {
+        name: name,
+        group: group.toJson(),
+        identity: identity.toJson(),
+        roles: roles.toJson()
+      });
+    return Beam.DirectoryEntry.fromJson(response);
+  }
+
   public async open(): Promise<void> {
     return;
   }
