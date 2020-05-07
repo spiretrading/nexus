@@ -1,5 +1,4 @@
 #include "Spire/Charting/ChartView.hpp"
-#include <locale>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QFontMetrics>
 #include <QPainter>
@@ -209,38 +208,40 @@ void ChartView::reset_crosshair() {
   m_crosshair_pos = std::nullopt;
 }
 
-const ChartView::Region& ChartView::get_region() const {
-  return m_region;
+void ChartView::set_region(const Region& region) {
+  m_region_updates = m_region_updates.then(
+    [=] (auto&& result) {
+      if(m_region == region) {
+        return QtPromise();
+      }
+      m_region = region;
+      auto required_data = LoadedData();
+      required_data.m_start = m_region.m_top_left.m_x;
+      required_data.m_end = m_region.m_bottom_right.m_x;
+      required_data.m_current_x = 0;
+      required_data.m_end_x = m_bottom_right_pixel.x();
+      required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
+        m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
+      update();
+      return load_data(m_model->load(required_data.m_start,
+        required_data.m_end, SnapshotLimit::Unlimited()), required_data,
+        m_model).then([=] (auto&& result) {
+          m_candlesticks = std::move(result.Get().m_candlesticks);
+          m_gaps = std::move(result.Get().m_gaps);
+          m_gap_adjusted_bottom_right = {result.Get().m_end,
+            m_region.m_bottom_right.m_y};
+          if(m_is_auto_scaled) {
+            update_auto_scale();
+          }
+          update_origins();
+          update();
+        });
+    });
 }
 
-void ChartView::set_region(const Region& region) {
-  if(m_region == region) {
-    return;
-  }
-  m_region = region;
-  auto required_data = LoadedData();
-  required_data.m_start = m_region.m_top_left.m_x;
-  required_data.m_end = m_region.m_bottom_right.m_x;
-  required_data.m_current_x = 0;
-  required_data.m_end_x = m_bottom_right_pixel.x();
-  required_data.m_values_per_pixel = (m_region.m_bottom_right.m_x -
-    m_region.m_top_left.m_x) / m_bottom_right_pixel.x();
-  m_loaded_data_promise = load_data(m_model->load(required_data.m_start,
-    required_data.m_end, SnapshotLimit::Unlimited()), required_data, m_model);
-  // TODO: Potential crash
-  m_loaded_data_promise.then([=] (auto result) {
-    m_candlesticks = std::move(result.Get().m_candlesticks);
-    m_gaps = std::move(result.Get().m_gaps);
-    m_gap_adjusted_bottom_right = {result.Get().m_end,
-      m_region.m_bottom_right.m_y};
-    if(m_is_auto_scaled) {
-      update_auto_scale();
-    }
-    update_origins();
-    update();
-  });
-  update();
-}
+void ChartView::translate(const QPoint& offset) {}
+
+void ChartView::zoom(double factor) {}
 
 bool ChartView::is_auto_scale_enabled() const {
   return m_is_auto_scaled;
@@ -526,7 +527,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
       return load_data(model->load(data.m_start, data.m_end,
         SnapshotLimit::Unlimited()), std::move(data), model);
     }
-    return QtPromise<LoadedData>([data = std::move(data)] () mutable {
+    return QtPromise([data = std::move(data)] () mutable {
       return std::move(data);
     });
   });

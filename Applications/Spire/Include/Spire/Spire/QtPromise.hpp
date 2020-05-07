@@ -23,7 +23,7 @@ namespace Spire {
       using Type = T;
 
       //! Constructs an empty promise.
-      QtPromise() = default;
+      QtPromise();
 
       //! Constructs a Qt promise.
       /*!
@@ -33,6 +33,9 @@ namespace Spire {
       template<typename Executor>
       explicit QtPromise(Executor&& executor, LaunchPolicy launch_policy =
         LaunchPolicy::DEFERRED);
+
+      template<typename U, typename = std::enable_if_t<std::is_same_v<T, void>>>
+      QtPromise(QtPromise<U>&& other);
 
       QtPromise(QtPromise&& other);
 
@@ -140,6 +143,18 @@ namespace Spire {
   template<typename T>
   T wait(QtPromise<T> promise) {
     return static_cast<T (*)(QtPromise<T>&)>(wait)(promise);
+  }
+
+  template<typename T>
+  QtPromise<T>::QtPromise() {
+    if constexpr(std::is_same_v<T, void>) {
+      auto executor = [] {};
+      using Executor = decltype(executor);
+      auto imp = std::make_shared<details::qt_promise_imp<Executor>>(executor,
+        LaunchPolicy::ASYNC);
+      imp->bind(imp);
+      m_imp = std::move(imp);
+    }
   }
 
   template<typename T>

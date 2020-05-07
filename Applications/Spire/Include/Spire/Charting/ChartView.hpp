@@ -68,26 +68,23 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
-      //! Returns the region of the ChartView.
-      const ChartView::Region& get_region() const;
-
       //! Sets the visible region of the chart to display.
       /*!
         \param region The region the chart will display.
       */
-      QtPromise<void> set_region(const Region& region);
+      void set_region(const Region& region);
 
       //! Adjusts the visible region by a QPoint.
       /*!
         \param offset The offset to adjust the region by.
       */
-      QtPromise<void> translate(const QPoint& offset);
+      void translate(const QPoint& offset);
 
       //! Zooms the visible region by a factor.
       /*!
         \param factor The factor to zoom by.
       */
-      QtPromise<void> zoom(double factor);
+      void zoom(double factor);
 
       //! Returns true if auto scale is enabled, false otherwise.
       bool is_auto_scale_enabled() const;
@@ -181,6 +178,7 @@ namespace Spire {
       std::vector<Scalar> m_x_axis_values;
       std::vector<Scalar> m_y_axis_values;
       bool m_is_auto_scaled;
+      QtPromise<void> m_region_updates;
       QtPromise<LoadedData> m_loaded_data_promise;
       std::vector<Candlestick> m_candlesticks;
       TrendLineModel m_trend_line_model;
