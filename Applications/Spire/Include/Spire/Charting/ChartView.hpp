@@ -179,7 +179,6 @@ namespace Spire {
       std::vector<Scalar> m_y_axis_values;
       bool m_is_auto_scaled;
       QtPromise<void> m_region_updates;
-      QtPromise<LoadedData> m_loaded_data_promise;
       std::vector<Candlestick> m_candlesticks;
       TrendLineModel m_trend_line_model;
       DrawState m_draw_state;
