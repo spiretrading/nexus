@@ -12,15 +12,15 @@ namespace Spire {
 
       //! Constructs an InputFieldEditor.
       /*
-        \param initial_value The initial value displayed in the line edit.
+        \param initial_value The default value of the input field.
         \param items The list of valid inputs.
         \param parent The parent widget.
       */
       explicit InputFieldEditor(QString initial_value,
         std::vector<QString> items, QWidget* parent = nullptr);
 
-      //! Returns the selected item, or an empty string if the input was
-      //! invalid.
+      //! Returns the selected item, or the initial item if an invalid input
+      //! was entered.
       const QString& get_item() const;
 
     protected:
