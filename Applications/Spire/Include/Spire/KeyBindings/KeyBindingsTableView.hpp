@@ -49,7 +49,7 @@ namespace Spire {
       /*
         \param model The model to use for this view.
       */
-      void set_model(QAbstractTableModel* model);
+      void set_model(KeyBindingsTableModel* model);
 
       //! Sets the table height.
       /*

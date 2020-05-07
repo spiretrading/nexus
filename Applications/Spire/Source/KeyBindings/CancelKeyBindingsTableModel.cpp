@@ -111,7 +111,7 @@ namespace {
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
     std::vector<Binding> bindings, QObject* parent)
-    : QAbstractTableModel(parent) {
+    : KeyBindingsTableModel(parent) {
   m_key_bindings.reserve(ROW_COUNT);
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
@@ -152,7 +152,7 @@ QVariant CancelKeyBindingsTableModel::data(const QModelIndex& index,
     return QVariant();
   }
   if(role == Qt::BackgroundRole) {
-    return QVariant::fromValue<QColor>(Qt::white);
+    return KeyBindingsTableModel::data(index, role);
   }
   if(role == Qt::DisplayRole) {
     if(index.column() == 0) {

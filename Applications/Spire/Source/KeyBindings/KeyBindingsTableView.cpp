@@ -62,6 +62,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_move);
   m_table = new CustomGridTableView(main_widget);
   m_table->installEventFilter(this);
+  m_table->viewport()->installEventFilter(this);
+  m_table->viewport()->setMouseTracking(true);
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
@@ -127,7 +129,7 @@ void KeyBindingsTableView::set_minimum_column_width(int column, int width) {
   m_minimum_column_widths[column] = width;
 }
 
-void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
+void KeyBindingsTableView::set_model(KeyBindingsTableModel* model) {
   m_header->setModel(model);
   auto old_model = m_table->model();
   auto old_selection_model = m_table->selectionModel();
@@ -144,8 +146,10 @@ void KeyBindingsTableView::set_model(QAbstractTableModel* model) {
         on_row_inserted();
       });
     connect(model, &QAbstractItemModel::dataChanged,
-      [=] (auto top_left, auto top_right) {
-        on_data_changed(top_left);
+      [=] (auto top_left, auto top_right, auto roles) {
+        if(!roles.contains(Qt::BackgroundRole)) {
+          on_data_changed(top_left);
+        }
       });
     update_delete_buttons(0);
   }
@@ -198,6 +202,8 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       m_table->selectionModel()->setCurrentIndex(current_index,
         QItemSelectionModel::Select);
       scroll_to_index(current_index);
+      auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+      table_model->set_focus_highlight(current_index);
       update();
       return true;
     } else if(e->key() == Qt::Key_Delete) {
@@ -205,16 +211,28 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         Qt::DisplayRole);
       return true;
     }
-  }
-  if(auto button = dynamic_cast<IconButton*>(watched)) {
+  } else if(auto button = dynamic_cast<IconButton*>(watched)) {
     if(event->type() == QEvent::MouseMove) {
+      auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
       auto index = m_delete_buttons_layout->indexOf(button);
-      m_table->model()->setData(m_table->model()->index(index, 0),
-        QColor("#FFF1F1"), Qt::BackgroundRole);
+      table_model->set_row_highlight(index);
+      update();
     } else if(event->type() == QEvent::Leave) {
-      auto index = m_delete_buttons_layout->indexOf(button);
-      m_table->model()->setData(m_table->model()->index(index, 0),
-        QVariant(), Qt::BackgroundRole);
+      auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+      table_model->reset_row_highlight();
+      update();
+    }
+  } else if(watched == m_table->viewport()) {
+    if(event->type() == QEvent::MouseMove) {
+      auto pos = static_cast<QMouseEvent*>(event)->pos();
+      auto index = m_table->indexAt(pos);
+      auto table_model = static_cast<KeyBindingsTableModel*>(
+        m_table->model());
+      if(index.isValid()) {
+        table_model->set_hover_highlight(index);
+      } else {
+        table_model->reset_hover_highlight();
+      }
     }
   }
   return ScrollArea::eventFilter(watched, event);
@@ -291,6 +309,8 @@ void KeyBindingsTableView::on_column_selection_changed(
     m_is_editing_cell = false;
     m_table->selectionModel()->setCurrentIndex(previous,
       QItemSelectionModel::Select);
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->set_focus_highlight(previous);
     update();
   }
 }
@@ -302,8 +322,8 @@ void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
 }
 
 void KeyBindingsTableView::on_delete_button_clicked(int index) {
-  m_table->model()->setData(m_table->model()->index(index, 0), QVariant(),
-    Qt::BackgroundRole);
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->reset_row_highlight();
   m_table->model()->removeRow(index);
 }
 
@@ -364,6 +384,8 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
   m_table->selectionModel()->setCurrentIndex(index,
     QItemSelectionModel::Select);
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->set_focus_highlight(index);
   m_is_default_cell_selected = false;
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     m_is_editing_cell = true;
@@ -377,6 +399,8 @@ void KeyBindingsTableView::on_row_inserted() {
     current.column());
   m_table->selectionModel()->setCurrentIndex(previous_index,
     QItemSelectionModel::Select);
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->set_focus_highlight(previous_index);
 }
 
 void KeyBindingsTableView::on_row_removed(int row) {
@@ -387,6 +411,8 @@ void KeyBindingsTableView::on_row_removed(int row) {
   if(row == m_table->selectionModel()->currentIndex().row()) {
     m_is_default_cell_selected = true;
     m_table->selectionModel()->clearSelection();
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->reset_focus_highlight();
     m_table->setFocus();
   }
 }

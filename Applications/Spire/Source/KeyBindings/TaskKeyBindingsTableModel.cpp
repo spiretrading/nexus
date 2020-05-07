@@ -59,7 +59,7 @@ namespace {
 
 TaskKeyBindingsTableModel::TaskKeyBindingsTableModel(
   std::vector<Action> bindings, QObject* parent)
-  : QAbstractTableModel(parent),
+  : KeyBindingsTableModel(parent),
     m_key_bindings(std::move(bindings)) {}
 
 void TaskKeyBindingsTableModel::set_key_bindings(
@@ -86,10 +86,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
     return QVariant();
   }
   if(role == Qt::BackgroundRole) {
-    if(m_highlighted_row && index.row() == m_highlighted_row) {
-      return QColor("#FFF1F1");
-    }
-    return QColor(Qt::white);
+    return KeyBindingsTableModel::data(index, role);
   }
   if(role == Qt::DisplayRole &&
       index.row() < static_cast<int>(m_key_bindings.size())) {
@@ -193,15 +190,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     const QVariant& value, int role) {
   if(!index.isValid()) {
     return false;
-  }
-  if(role == Qt::BackgroundRole) {
-    if(value.isValid()) {
-      m_highlighted_row = index.row();
-    } else {
-      m_highlighted_row.reset();
-    }
-    emit dataChanged(index, index, {role});
-    return true;
   }
   if(role == Qt::DisplayRole) {
     if(is_same_value(value, index)) {

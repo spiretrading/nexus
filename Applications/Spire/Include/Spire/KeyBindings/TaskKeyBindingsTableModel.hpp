@@ -1,13 +1,13 @@
 #ifndef SPIRE_TASK_KEY_BINDINGS_TABLE_MODEL_HPP
 #define SPIRE_TASK_KEY_BINDINGS_TABLE_MODEL_HPP
-#include <QAbstractTableModel>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsTableModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
   
   //! Represents a model for displaying order key bindings.
-  class TaskKeyBindingsTableModel : public QAbstractTableModel {
+  class TaskKeyBindingsTableModel : public KeyBindingsTableModel {
     public:
 
       //! The columns represented by the model.
@@ -88,7 +88,6 @@ namespace Spire {
     private:
       mutable ItemModifiedSignal m_modified_signal;
       std::vector<Action> m_key_bindings;
-      boost::optional<int> m_highlighted_row;
 
       void insert_row_if_empty(const QModelIndex& index);
       bool is_row_empty(int row);
