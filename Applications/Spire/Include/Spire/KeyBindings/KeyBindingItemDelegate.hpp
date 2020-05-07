@@ -10,11 +10,21 @@ namespace Spire {
   class KeyBindingItemDelegate : public QStyledItemDelegate {
     public:
 
+      //! Signals that a key was filtered from the current editor.
+      /*
+        \param key The key that was pressed.
+      */
+      using KeySignal = Signal<void (Qt::Key key)>;
+
       //! Constructs a KeyBindingsItemDelegate.
       /*
         \param parent The parent widget.
       */
       explicit KeyBindingItemDelegate(QWidget* parent = nullptr);
+
+      //! Connects a slot to the key signal.
+      boost::signals2::connection connect_key_signal(
+        const KeySignal::slot_type& slot) const;
 
       void paint(QPainter* painter, const QStyleOptionViewItem& option,
         const QModelIndex& index) const override;
@@ -28,6 +38,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      mutable KeySignal m_key_signal;
       CustomVariantItemDelegate* m_item_delegate;
   };
 }

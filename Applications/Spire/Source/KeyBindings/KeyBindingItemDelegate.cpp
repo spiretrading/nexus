@@ -12,6 +12,11 @@ KeyBindingItemDelegate::KeyBindingItemDelegate(QWidget* parent)
   : QStyledItemDelegate(parent),
     m_item_delegate(new CustomVariantItemDelegate(this)) {}
 
+connection KeyBindingItemDelegate::connect_key_signal(
+    const KeySignal::slot_type& slot) const {
+  return m_key_signal.connect(slot);
+}
+
 void KeyBindingItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   painter->save();
@@ -52,6 +57,7 @@ bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+      m_key_signal(static_cast<Qt::Key>(e->key()));
       return true;
     }
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {

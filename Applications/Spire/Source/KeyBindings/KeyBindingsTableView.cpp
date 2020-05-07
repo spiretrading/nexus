@@ -118,6 +118,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
 void KeyBindingsTableView::set_column_delegate(int column,
     KeyBindingItemDelegate* delegate) {
   delegate->setParent(m_table);
+  delegate->connect_key_signal([=] (auto key) { on_editor_key(key); });
   m_table->setItemDelegateForColumn(column, delegate);
 }
 
@@ -325,6 +326,14 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
   auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
   table_model->reset_row_highlight();
   m_table->model()->removeRow(index);
+}
+
+void KeyBindingsTableView::on_editor_key(Qt::Key key) {
+  if(key == Qt::Key_Tab) {
+
+  } else if(key == Qt::Key_Backtab) {
+
+  }
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,

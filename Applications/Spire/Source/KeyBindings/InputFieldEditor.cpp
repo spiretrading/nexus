@@ -53,6 +53,10 @@ bool InputFieldEditor::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab) {
+    event->ignore();
+    return;
+  }
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     on_item_selected(text());
     return;
