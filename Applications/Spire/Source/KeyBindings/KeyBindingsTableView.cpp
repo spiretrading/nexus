@@ -234,6 +234,10 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       } else {
         table_model->reset_hover_highlight();
       }
+    } else if(event->type() == QEvent::Leave) {
+      auto table_model = static_cast<KeyBindingsTableModel*>(
+        m_table->model());
+      table_model->reset_hover_highlight();
     }
   }
   return ScrollArea::eventFilter(watched, event);
