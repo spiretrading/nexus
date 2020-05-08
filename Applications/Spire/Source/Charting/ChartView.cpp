@@ -237,6 +237,12 @@ void ChartView::set_region(const Region& region) {
 void ChartView::translate(const QPoint& offset) {
   m_region_updates = m_region_updates.then([=] (auto&& result) {
     auto region = m_region;
+    auto a1 = static_cast<ptime>(to_chart_point(offset).m_x);
+    auto a2 = static_cast<ptime>(m_region.m_top_left.m_x);
+    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a1));
+    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a2));
+    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a1 - a2));
+    qDebug() << "Done";
     auto delta = to_chart_point(offset) - m_region.m_top_left;
     region.m_top_left.m_x -= delta.m_x;
     region.m_bottom_right.m_x -= delta.m_x;
@@ -244,7 +250,29 @@ void ChartView::translate(const QPoint& offset) {
       region.m_top_left.m_y -= delta.m_y;
       region.m_bottom_right.m_y -= delta.m_y;
     }
-    set_region(region);
+    return [=] {
+      auto required_data = LoadedData();
+      required_data.m_start = region.m_top_left.m_x;
+      required_data.m_end = region.m_bottom_right.m_x;
+      required_data.m_current_x = 0;
+      required_data.m_end_x = m_bottom_right_pixel.x();
+      required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
+        region.m_top_left.m_x) / m_bottom_right_pixel.x();
+      return load_data(m_model->load(required_data.m_start, required_data.m_end,
+        SnapshotLimit::Unlimited()), required_data, m_model).then(
+        [=] (auto&& result) {
+          m_region = region;
+          m_candlesticks = std::move(result.Get().m_candlesticks);
+          m_gaps = std::move(result.Get().m_gaps);
+          m_gap_adjusted_bottom_right = {result.Get().m_end,
+            m_region.m_bottom_right.m_y};
+          if(m_is_auto_scaled) {
+            update_auto_scale();
+          }
+          update_origins();
+          update();
+        });
+    }();
   });
 }
 
