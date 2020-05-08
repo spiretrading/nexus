@@ -139,12 +139,11 @@ void SecurityInputLineEdit::move_securities_list() {
 void SecurityInputLineEdit::on_activated(const Security& security) {
   auto item_delegate = CustomVariantItemDelegate();
   setText(item_delegate.displayText(QVariant::fromValue(security), QLocale()));
+  m_security = ParseSecurity(text().toUpper().toStdString());
 }
 
 void SecurityInputLineEdit::on_commit(const Security& security) {
-  if(!security.GetSymbol().empty()) {
-    m_security = security;
-  }
+  m_security = security;
   emit editingFinished();
   m_commit_signal(security);
 }
@@ -168,4 +167,5 @@ void SecurityInputLineEdit::on_text_edited() {
       m_securities->raise();
     }
   });
+  m_security = ParseSecurity(text().toUpper().toStdString());
 }

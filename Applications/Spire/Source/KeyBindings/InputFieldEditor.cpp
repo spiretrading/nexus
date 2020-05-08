@@ -87,16 +87,16 @@ void InputFieldEditor::move_menu_list() {
 }
 
 void InputFieldEditor::on_item_selected(const QString& text) {
-  auto iter = std::find_if(m_items.begin(), m_items.end(),
-    [&] (auto value) { return value.toLower() == text.toLower(); });
-  if(iter != m_items.end()) {
-    m_selected_item = text;
-  }
   m_menu_list->hide();
   emit editingFinished();
 }
 
 void InputFieldEditor::on_text_changed(const QString& text) {
+  auto iter = std::find_if(m_items.begin(), m_items.end(),
+    [&] (auto value) { return value.toLower() == text.toLower(); });
+  if(iter != m_items.end()) {
+    m_selected_item = text;
+  }
   if(text.isEmpty()) {
     m_menu_list->set_items(m_items);
     m_menu_list->show();

@@ -329,10 +329,23 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 }
 
 void KeyBindingsTableView::on_editor_key(Qt::Key key) {
-  if(key == Qt::Key_Tab) {
-
-  } else if(key == Qt::Key_Backtab) {
-
+  if(key == Qt::Key_Tab || key == Qt::Key_Backtab) {
+    auto current_index = m_table->currentIndex();
+    auto new_index = [&] {
+      if(key == Qt::Key_Tab) {
+        return get_editable_index(current_index.row(),
+          m_table->horizontalHeader()->visualIndex(
+          current_index.column()) + 1);
+      }
+      return get_editable_index(current_index.row(),
+        m_table->horizontalHeader()->visualIndex(
+        current_index.column()) - 1);
+    }();
+    m_is_editing_cell = false;
+    m_table->selectionModel()->setCurrentIndex(new_index,
+      QItemSelectionModel::Select);
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->set_focus_highlight(new_index);
   }
 }
 
