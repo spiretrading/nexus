@@ -20,10 +20,7 @@ void LocalOrderImbalanceIndicatorModel::insert(
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(const TimeInterval& interval) {
   auto [first, last] = get_iterators_from_interval(interval);
-  return QtPromise(
-    [imbalances = std::vector<OrderImbalance>(first, last)] () mutable {
-      return std::move(imbalances);
-  });
+  return std::vector<OrderImbalance>(first, last);
 }
 
 QtPromise<std::vector<Nexus::OrderImbalance>>
@@ -36,9 +33,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
       imbalances.push_back(*i);
     }
   }
-  return QtPromise([imbalances = std::move(imbalances)] () mutable {
-    return std::move(imbalances);
-  });
+  return imbalances;
 }
 
 SubscriptionResult<optional<Nexus::OrderImbalance>>
@@ -51,8 +46,7 @@ SubscriptionResult<optional<Nexus::OrderImbalance>>
     return m_imbalances.back();
   }();
   return {m_imbalance_published_signal.connect(slot),
-    QtPromise([imbalance = std::move(last_imbalance)] () mutable {
-      return std::move(imbalance); })};
+    QtPromise(std::move(last_imbalance))};
 }
 
 void LocalOrderImbalanceIndicatorModel::insert_sorted(

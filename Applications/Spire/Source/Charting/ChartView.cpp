@@ -209,18 +209,19 @@ void ChartView::reset_crosshair() {
 }
 
 void ChartView::set_region(const Region& region) {
+  auto required_data = LoadedData();
+  required_data.m_start = region.m_top_left.m_x;
+  required_data.m_end = region.m_bottom_right.m_x;
+  required_data.m_current_x = 0;
+  required_data.m_end_x = m_bottom_right_pixel.x();
+  required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
+    region.m_top_left.m_x) / m_bottom_right_pixel.x();
+  m_region = region;
+  update();
   m_region_updates = m_region_updates.then([=] (auto&& result) {
-    auto required_data = LoadedData();
-    required_data.m_start = region.m_top_left.m_x;
-    required_data.m_end = region.m_bottom_right.m_x;
-    required_data.m_current_x = 0;
-    required_data.m_end_x = m_bottom_right_pixel.x();
-    required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
-      region.m_top_left.m_x) / m_bottom_right_pixel.x();
     return load_data(m_model->load(required_data.m_start, required_data.m_end,
       SnapshotLimit::Unlimited()), required_data, m_model).then(
       [=] (auto&& result) {
-        m_region = region;
         m_candlesticks = std::move(result.Get().m_candlesticks);
         m_gaps = std::move(result.Get().m_gaps);
         m_gap_adjusted_bottom_right = {result.Get().m_end,
@@ -235,52 +236,28 @@ void ChartView::set_region(const Region& region) {
 }
 
 void ChartView::translate(const QPoint& offset) {
-  m_region_updates = m_region_updates.then([=] (auto&& result) {
-    auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
-    auto x_sign = [&] {
-      if(offset.x() >= 0) {
-        return 1;
-      }
-      return -1;
-    }();
-    auto y_sign = [&] {
-      if(offset.y() >= 0) {
-        return 1;
-      }
-      return -1;
-    }();
-    auto region = m_region;
-    auto delta = to_chart_point(absolute_offset) - m_region.m_top_left;
-    region.m_top_left.m_x -= x_sign * delta.m_x;
-    region.m_bottom_right.m_x -= x_sign * delta.m_x;
-    if(!is_auto_scale_enabled()) {
-      region.m_top_left.m_y -= y_sign * delta.m_y;
-      region.m_bottom_right.m_y -= y_sign * delta.m_y;
+  auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
+  auto x_sign = [&] {
+    if(offset.x() >= 0) {
+      return 1;
     }
-    return [=] {
-      auto required_data = LoadedData();
-      required_data.m_start = region.m_top_left.m_x;
-      required_data.m_end = region.m_bottom_right.m_x;
-      required_data.m_current_x = 0;
-      required_data.m_end_x = m_bottom_right_pixel.x();
-      required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
-        region.m_top_left.m_x) / m_bottom_right_pixel.x();
-      return load_data(m_model->load(required_data.m_start, required_data.m_end,
-        SnapshotLimit::Unlimited()), required_data, m_model).then(
-        [=] (auto&& result) {
-          m_region = region;
-          m_candlesticks = std::move(result.Get().m_candlesticks);
-          m_gaps = std::move(result.Get().m_gaps);
-          m_gap_adjusted_bottom_right = {result.Get().m_end,
-            m_region.m_bottom_right.m_y};
-          if(m_is_auto_scaled) {
-            update_auto_scale();
-          }
-          update_origins();
-          update();
-        });
-    }();
-  });
+    return -1;
+  }();
+  auto y_sign = [&] {
+    if(offset.y() >= 0) {
+      return 1;
+    }
+    return -1;
+  }();
+  auto region = m_region;
+  auto delta = to_chart_point(absolute_offset) - region.m_top_left;
+  region.m_top_left.m_x -= x_sign * delta.m_x;
+  region.m_bottom_right.m_x -= x_sign * delta.m_x;
+  if(!is_auto_scale_enabled()) {
+    region.m_top_left.m_y -= y_sign * delta.m_y;
+    region.m_bottom_right.m_y -= y_sign * delta.m_y;
+  }
+  set_region(region);
 }
 
 void ChartView::zoom(double factor) {}
@@ -401,17 +378,14 @@ void ChartView::paintEvent(QPaintEvent* event) {
       if(open.y() > close.y() && close.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(start_x, close.y()),
           QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          min(open.y(), m_bottom_right_pixel.y() - 1))),
-          QColor("#8AF5C0"));
+          min(open.y(), m_bottom_right_pixel.y() - 1))), QColor("#8AF5C0"));
         painter.fillRect(QRect(QPoint(start_x + 1, close.y() + 1),
           QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
-          min(open.y() - 1, m_bottom_right_pixel.y() - 1))),
-          QColor("#1FD37A"));
+          min(open.y() - 1, m_bottom_right_pixel.y() - 1))), QColor("#1FD37A"));
       } else if(open.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect({start_x, open.y()},
           QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          min(close.y(), m_bottom_right_pixel.y() - 1))),
-          QColor("#FFA7A0"));
+          min(close.y(), m_bottom_right_pixel.y() - 1))), QColor("#FFA7A0"));
         painter.fillRect(QRect(QPoint(start_x + 1, open.y() + 1),
           QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
           min(close.y() - 1, m_bottom_right_pixel.y() - 1))),
@@ -539,8 +513,8 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
   return promise.then([=] (auto result) mutable {
     auto new_candlesticks = std::move(result.Get());
     if(!data.m_candlesticks.empty()) {
-      auto last = std::find_if(new_candlesticks.begin(),
-        new_candlesticks.end(), [&] (const auto& candlestick) {
+      auto last = std::find_if(new_candlesticks.begin(), new_candlesticks.end(),
+        [&] (const auto& candlestick) {
           return candlestick.GetStart() >=
             data.m_candlesticks.back().GetStart();
         });
@@ -569,9 +543,7 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
       return load_data(model->load(data.m_start, data.m_end,
         SnapshotLimit::Unlimited()), std::move(data), model);
     }
-    return QtPromise([data = std::move(data)] () mutable {
-      return std::move(data);
-    });
+    return QtPromise(data);
   });
 }
 
@@ -776,8 +748,7 @@ void ChartView::on_left_mouse_button_press(const QPoint& pos) {
       m_current_stationary_point = m_current_trend_line_point;
       m_current_trend_line_id = m_trend_line_model.add(
         TrendLine({m_current_trend_line_point, m_current_trend_line_point},
-        m_current_trend_line_color,
-        m_current_trend_line_style));
+        m_current_trend_line_color, m_current_trend_line_style));
       m_draw_state = DrawState::NEW;
     } else {
       m_trend_line_model.clear_selected();

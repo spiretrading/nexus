@@ -7,8 +7,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 CachedChartModel::CachedChartModel(ChartModel& model)
-    : m_chart_model(&model),
-      m_cache(model.get_x_axis_type(), model.get_y_axis_type(), {}) {}
+  : m_chart_model(&model),
+    m_cache(model.get_x_axis_type(), model.get_y_axis_type(), {}) {}
 
 Scalar::Type CachedChartModel::get_x_axis_type() const {
   return m_chart_model->get_x_axis_type();
@@ -36,10 +36,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
       if(static_cast<int>(result.Get().size()) == info.m_limit.GetSize() ||
           contains(m_ranges, continuous_interval<Scalar>::closed(
           info.m_requested_first, info.m_requested_last))) {
-        return QtPromise<std::vector<Candlestick>>(
-          [data = std::move(result.Get())] () mutable {
-            return std::move(data);
-          });
+        return QtPromise(std::move(result.Get()));
       }
       auto load_first = info.m_requested_first;
       auto load_last = info.m_requested_last;
@@ -78,10 +75,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_model(
     [=] (auto result) {
       if(info.m_requested_first == info.m_requested_last &&
           info.m_limit.GetSize() >= static_cast<int>(result.Get().size())) {
-        return QtPromise<std::vector<Candlestick>>(
-          [data = std::move(result.Get())] () mutable {
-            return std::move(data);
-          });
+        return QtPromise(std::move(result.Get()));
       }
       on_data_loaded(std::move(result.Get()), info);
       return load_from_cache(info);
