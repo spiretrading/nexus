@@ -1,10 +1,14 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
+import { DisplaySize } from '../../..';
 
 interface Properties {
 
-  /** The role the icon respresents. */
+  /** The size of the element to display. */
+  displaySize: DisplaySize;
+
+  /** The role the icon represents. */
   role: Nexus.AccountRoles.Role;
 
   /** Whether the roles can be changed. */
@@ -60,8 +64,15 @@ export class RoleIcon extends React.Component<Properties, State> {
         return RoleIcon.STYLE.clickable;
       }
     })();
+    const iconWrapper = (() => {
+      if(this.props.displaySize === DisplaySize.SMALL) {
+        return RoleIcon.STYLE.iconWrapperSmall;
+      } else {
+        return RoleIcon.STYLE.iconWrapperLarge;
+      }
+    })();
     return (
-      <div style={{...RoleIcon.STYLE.iconWrapper, ...iconStyle}}
+      <div style={{...iconWrapper, ...iconStyle}}
           onClick={this.onClick}
           onTouchStart={this.onTouch}
           onMouseEnter={this.showTooltipMouse}
@@ -71,7 +82,7 @@ export class RoleIcon extends React.Component<Properties, State> {
           width={RoleIcon.IMAGE_SIZE}
           height={RoleIcon.IMAGE_SIZE}/>
         <div style={RoleIcon.STYLE.tooltipAnchor}>
-          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLIP}
+          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLTIP}
               in={this.props.isTouchTooltipShown}>
             {(state) => (
               <div style={{...RoleIcon.STYLE.animationBase,
@@ -155,13 +166,25 @@ export class RoleIcon extends React.Component<Properties, State> {
     }
   };
   private static readonly STYLE = {
-    iconWrapper: {
+    iconWrapperLarge: {
+      boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center',
       height: '24px',
       width: '24px',
-      ouline: 0
+      padding: '2px',
+      outline: 0
+    },
+    iconWrapperSmall: {
+      boxSizing: 'border-box' as 'border-box',
+      display: 'flex' as 'flex',
+      justifyContent: 'center' as 'center',
+      alignItems: 'center' as 'center',
+      height: '34px',
+      width: '34px',
+      padding: '7px',
+      outline: 0
     },
     clickable: {
       cursor: 'pointer'
@@ -203,7 +226,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     exit: 200,
     exited: 1
   };
-  private static readonly TIMEOUT_MOBILE_TOOLIP = {
+  private static readonly TIMEOUT_MOBILE_TOOLTIP = {
     enter: 1,
     entered: 200,
     exit: 200,

@@ -1,9 +1,13 @@
 import { HBoxLayout, Padding } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import { DisplaySize } from '../../..';
 import { RoleIcon } from './role_icon';
 
 interface Properties {
+
+  /** Determines the layout used to display the page. */
+  displaySize: DisplaySize;
 
   /** The roles to highlight. */
   roles: Nexus.AccountRoles;
@@ -37,10 +41,17 @@ export class RolesField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const containerStyle = (() => {
+      if(this.props.displaySize ==- DisplaySize.SMALL) {
+        return RolesField.STYLE.containerSmall;
+      } else {
+        return RolesField.STYLE.containerLarge;
+      }
+    })();
     return (
-      <HBoxLayout width={RolesField.COMPONENT_WIDTH}
-          height={RolesField.IMAGE_SIZE}>
+      <div style={containerStyle}>
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -48,8 +59,8 @@ export class RolesField extends React.Component<Properties, State> {
           onTouch={() =>
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.TRADER)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
-        <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -57,8 +68,8 @@ export class RolesField extends React.Component<Properties, State> {
           onTouch={() =>
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.MANAGER)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
-        <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -67,8 +78,8 @@ export class RolesField extends React.Component<Properties, State> {
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           onClick={() =>
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
-        <Padding size={RolesField.IMAGE_PADDING}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
+          displaySize={this.props.displaySize}
           readonly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -76,8 +87,7 @@ export class RolesField extends React.Component<Properties, State> {
           onTouch={() =>
             this.onTouchTooltipEvent(Nexus.AccountRoles.Role.SERVICE)}
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.SERVICE)}/>
-      </HBoxLayout>
-     );
+      </div>);
   }
 
   private onTouchTooltipEvent(role: Nexus.AccountRoles.Role) {
@@ -88,7 +98,20 @@ export class RolesField extends React.Component<Properties, State> {
   }
 
   private timerID: NodeJS.Timeout;
-  private static readonly IMAGE_SIZE = '20px';
-  private static readonly IMAGE_PADDING = '10px';
-  private static readonly COMPONENT_WIDTH = '122px';
+  private static readonly STYLE = {
+    containerSmall: {
+      height: '34px',
+      width: '161px',
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center'
+    } as React.CSSProperties,
+    containerLarge: {
+      height: '34px',
+      width: '146px',
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center'
+    } as React.CSSProperties
+  };
 }
