@@ -181,19 +181,17 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         if(m_is_default_cell_selected) {
           return get_first_editable_index();
         } else {
-          auto index = m_table->selectionModel()->currentIndex();
+          auto index = m_table->currentIndex();
           if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
-            return get_editable_index(index.row(),
-              m_table->horizontalHeader()->visualIndex(index.column()) + 1);
+            return get_next_editable_index(index);
           } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
-            return get_editable_index(index.row(),
-              m_table->horizontalHeader()->visualIndex(index.column()) - 1);
+            return get_previous_editable_index(index);
           } else if(e->key() == Qt::Key_Up) {
-            return get_editable_index(index.row() - 1,
-              m_table->horizontalHeader()->visualIndex(index.column()));
+            return m_table->model()->index(bounded_value(index.row() - 1,
+              m_table->model()->rowCount() - 1), index.column());
           } else if(e->key() == Qt::Key_Down) {
-            return get_editable_index(index.row() + 1,
-              m_table->horizontalHeader()->visualIndex(index.column()));
+            return m_table->model()->index(bounded_value(index.row() + 1,
+              m_table->model()->rowCount() - 1), index.column());
           }
         }
         return QModelIndex();
@@ -235,7 +233,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       auto index = m_table->indexAt(pos);
       auto table_model = static_cast<KeyBindingsTableModel*>(
         m_table->model());
-      if(index.isValid()) {
+      if(index.isValid() && index.flags().testFlag(Qt::ItemIsEditable)) {
         table_model->set_hover_highlight(index);
       } else {
         table_model->reset_hover_highlight();
@@ -273,6 +271,27 @@ void KeyBindingsTableView::scroll_to_index(const QModelIndex& index) {
   } else if(!region.contains(QPoint(0, cell_bottom))) {
     ensureVisible(0, cell_bottom, 0, scale_height(8));
   }
+}
+
+QModelIndex KeyBindingsTableView::get_next_editable_index(
+    const QModelIndex& index) const {
+  auto next_index = index;
+  do {
+    next_index = get_editable_index(next_index.row(),
+      m_header->visualIndex(next_index.column()) + 1);
+  } while(!m_table->model()->flags(next_index).testFlag(Qt::ItemIsEditable));
+  return next_index;
+}
+
+QModelIndex KeyBindingsTableView::get_previous_editable_index(
+    const QModelIndex& index) const {
+  auto previous_index = index;
+  do {
+    previous_index = get_editable_index(previous_index.row(),
+      m_header->visualIndex(previous_index.column()) - 1);
+  } while(!m_table->model()->flags(previous_index).testFlag(
+    Qt::ItemIsEditable));
+  return previous_index;
 }
 
 QModelIndex KeyBindingsTableView::get_editable_index(int row,
@@ -340,16 +359,15 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 
 void KeyBindingsTableView::on_editor_key(Qt::Key key) {
   if(key == Qt::Key_Tab || key == Qt::Key_Backtab) {
-    auto current_index = m_table->currentIndex();
+    auto current_index = m_table->model()->index(
+      m_table->selectionModel()->currentIndex().row(),
+      m_table->horizontalHeader()->visualIndex(
+      m_table->selectionModel()->currentIndex().column()));
     auto new_index = [&] {
       if(key == Qt::Key_Tab) {
-        return get_editable_index(current_index.row(),
-          m_table->horizontalHeader()->visualIndex(
-          current_index.column()) + 1);
+        return get_next_editable_index(current_index);
       }
-      return get_editable_index(current_index.row(),
-        m_table->horizontalHeader()->visualIndex(
-        current_index.column()) - 1);
+      return get_previous_editable_index(current_index);
     }();
     m_is_editing_cell = false;
     m_table->selectionModel()->setCurrentIndex(new_index,
