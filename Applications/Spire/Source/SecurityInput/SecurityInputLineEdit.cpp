@@ -167,5 +167,8 @@ void SecurityInputLineEdit::on_text_edited() {
       m_securities->raise();
     }
   });
-  m_security = ParseSecurity(text().toUpper().toStdString());
+  auto current_security = ParseSecurity(text().toUpper().toStdString());
+  if(!current_security.GetSymbol().empty()) {
+    m_security = current_security;
+  }
 }
