@@ -236,19 +236,26 @@ void ChartView::set_region(const Region& region) {
 
 void ChartView::translate(const QPoint& offset) {
   m_region_updates = m_region_updates.then([=] (auto&& result) {
+    auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
+    auto x_sign = [&] {
+      if(offset.x() >= 0) {
+        return 1;
+      }
+      return -1;
+    }();
+    auto y_sign = [&] {
+      if(offset.y() >= 0) {
+        return 1;
+      }
+      return -1;
+    }();
     auto region = m_region;
-    auto a1 = static_cast<ptime>(to_chart_point(offset).m_x);
-    auto a2 = static_cast<ptime>(m_region.m_top_left.m_x);
-    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a1));
-    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a2));
-    qDebug() << QString::fromStdString(boost::lexical_cast<std::string>(a1 - a2));
-    qDebug() << "Done";
-    auto delta = to_chart_point(offset) - m_region.m_top_left;
-    region.m_top_left.m_x -= delta.m_x;
-    region.m_bottom_right.m_x -= delta.m_x;
+    auto delta = to_chart_point(absolute_offset) - m_region.m_top_left;
+    region.m_top_left.m_x -= x_sign * delta.m_x;
+    region.m_bottom_right.m_x -= x_sign * delta.m_x;
     if(!is_auto_scale_enabled()) {
-      region.m_top_left.m_y -= delta.m_y;
-      region.m_bottom_right.m_y -= delta.m_y;
+      region.m_top_left.m_y -= y_sign * delta.m_y;
+      region.m_bottom_right.m_y -= y_sign * delta.m_y;
     }
     return [=] {
       auto required_data = LoadedData();
