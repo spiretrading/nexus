@@ -32,6 +32,9 @@ void KeyBindingItemDelegate::paint(QPainter* painter,
   painter->restore();
 }
 
+void KeyBindingItemDelegate::setEditorData(QWidget* editor,
+  const QModelIndex& index) const {}
+
 void KeyBindingItemDelegate::updateEditorGeometry(QWidget* editor,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   editor->move(option.rect.topLeft());
