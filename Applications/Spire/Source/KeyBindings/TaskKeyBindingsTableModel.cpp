@@ -143,6 +143,9 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
 
 Qt::ItemFlags TaskKeyBindingsTableModel::flags(
     const QModelIndex& index) const {
+  if(static_cast<Columns>(index.column()) == Columns::CUSTOM_TAGS) {
+    return QAbstractItemModel::flags(index);
+  }
   return QAbstractItemModel::flags(index) |= Qt::ItemIsEditable;
 }
 
@@ -215,7 +218,8 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         break;
       case Columns::DESTINATION:
         // TODO: update with legitimate values.
-        m_key_bindings[index.row()].m_region = Region();
+        m_key_bindings[index.row()].m_region.SetName(
+          value.value<QString>().toStdString());
         m_modified_signal(index);
         break;
       case Columns::ORDER_TYPE:

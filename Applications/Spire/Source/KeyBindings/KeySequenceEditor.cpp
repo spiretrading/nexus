@@ -48,6 +48,10 @@ void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     return;
   }
+  if(m_entered_keys.empty() && (event->key() == Qt::Key_Tab ||
+      event->key() == Qt::Key_Backtab)) {
+    return;
+  }
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }

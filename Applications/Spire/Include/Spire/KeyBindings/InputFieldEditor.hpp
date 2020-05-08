@@ -35,7 +35,8 @@ namespace Spire {
       DropDownMenuList* m_menu_list;
 
       void move_menu_list();
-      void on_item_selected(const QString& text);
+      void on_item_clicked(const QString& item);
+      void on_item_committed(const QString& text);
       void on_text_changed(const QString& text);
   };
 }

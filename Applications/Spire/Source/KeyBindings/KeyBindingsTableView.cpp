@@ -205,6 +205,12 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       scroll_to_index(current_index);
       auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
       table_model->set_focus_highlight(current_index);
+      if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+        if(current_index.flags().testFlag(Qt::ItemIsEditable)) {
+          m_is_editing_cell = true;
+          m_table->edit(current_index);
+        }
+      }
       update();
       return true;
     } else if(e->key() == Qt::Key_Delete) {
@@ -350,6 +356,11 @@ void KeyBindingsTableView::on_editor_key(Qt::Key key) {
       QItemSelectionModel::Select);
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->set_focus_highlight(new_index);
+    if(new_index.flags().testFlag(Qt::ItemIsEditable)) {
+      m_is_editing_cell = true;
+      m_table->edit(new_index);
+    }
+    update();
   }
 }
 

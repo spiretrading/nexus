@@ -27,7 +27,7 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
   m_menu_list = new DropDownMenuList(m_items, this);
   m_menu_list->hide();
   m_menu_list->connect_selected_signal([=] (auto item) {
-    on_item_selected(item);
+    on_item_clicked(item);
   });
   window()->installEventFilter(this);
   parent->installEventFilter(this);
@@ -58,7 +58,7 @@ void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
     return;
   }
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    on_item_selected(text());
+    on_item_committed(text());
     return;
   }
   QLineEdit::keyPressEvent(event);
@@ -66,7 +66,7 @@ void InputFieldEditor::keyPressEvent(QKeyEvent* event) {
 
 void InputFieldEditor::keyReleaseEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Delete) {
-    on_item_selected("");
+    on_item_committed("");
   }
 }
 
@@ -86,7 +86,12 @@ void InputFieldEditor::move_menu_list() {
   m_menu_list->raise();
 }
 
-void InputFieldEditor::on_item_selected(const QString& text) {
+void InputFieldEditor::on_item_clicked(const QString& item) {
+  m_selected_item = item;
+  on_item_committed(item);
+}
+
+void InputFieldEditor::on_item_committed(const QString& text) {
   m_menu_list->hide();
   emit editingFinished();
 }
@@ -95,7 +100,7 @@ void InputFieldEditor::on_text_changed(const QString& text) {
   auto iter = std::find_if(m_items.begin(), m_items.end(),
     [&] (auto value) { return value.toLower() == text.toLower(); });
   if(iter != m_items.end()) {
-    m_selected_item = text;
+    m_selected_item = *iter;
   }
   if(text.isEmpty()) {
     m_menu_list->set_items(m_items);
