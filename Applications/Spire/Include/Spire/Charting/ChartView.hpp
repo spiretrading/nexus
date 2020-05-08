@@ -68,23 +68,14 @@ namespace Spire {
       //! Removes the crosshair from the chart.
       void reset_crosshair();
 
+      //! Returns the visible Region.
+      const Region& get_region() const;
+
       //! Sets the visible region of the chart to display.
       /*!
         \param region The region the chart will display.
       */
       void set_region(const Region& region);
-
-      //! Adjusts the visible region by a QPoint.
-      /*!
-        \param offset The offset to adjust the region by.
-      */
-      void translate(const QPoint& offset);
-
-      //! Zooms the visible region by a factor.
-      /*!
-        \param factor The factor to zoom by.
-      */
-      void zoom(double factor);
 
       //! Returns true if auto scale is enabled, false otherwise.
       bool is_auto_scale_enabled() const;
@@ -210,6 +201,20 @@ namespace Spire {
       void on_left_mouse_button_release();
       void on_right_mouse_button_press();
   };
+
+  //! Adjusts the visible region of a ChartView by a QPoint.
+  /*!
+    \param view The ChartView to adjust.
+    \param offset The offset to adjust the region by.
+  */
+  void translate(ChartView& view, const QPoint& offset);
+
+  //! Zooms the visible region of a ChartView by a factor.
+  /*!
+    \param view The ChartView to zoom.
+    \param factor The factor to zoom by.
+  */
+  void zoom(ChartView& view, double factor);
 }
 
 #endif

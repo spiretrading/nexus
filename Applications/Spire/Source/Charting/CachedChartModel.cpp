@@ -1,7 +1,10 @@
 #include "Spire/Charting/CachedChartModel.hpp"
+#include <boost/range/adaptor/reversed.hpp>
 #include "Spire/Spire/Utility.hpp"
 
 using namespace Beam::Queries;
+using namespace boost;
+using namespace boost::adaptors;
 using namespace boost::icl;
 using namespace boost::signals2;
 using namespace Spire;
@@ -53,14 +56,14 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
           }
         }
       } else {
-        for(auto i = m_ranges.rbegin(); i != m_ranges.rend(); ++i) {
+        for(auto& range : reverse(m_ranges)) {
           auto last = continuous_interval<Scalar>::closed(load_last, load_last);
-          if(last > *i) {
-            load_first = max(load_first, i->upper());
+          if(last > range) {
+            load_first = max(load_first, range.upper());
             break;
           }
-          if(intersects(last, *i)) {
-            load_last = i->lower();
+          if(intersects(last, range)) {
+            load_last = range.lower();
           }
         }
       }

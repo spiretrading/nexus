@@ -208,6 +208,10 @@ void ChartView::reset_crosshair() {
   m_crosshair_pos = std::nullopt;
 }
 
+const ChartView::Region& ChartView::get_region() const {
+  return m_region;
+}
+
 void ChartView::set_region(const Region& region) {
   auto required_data = LoadedData();
   required_data.m_start = region.m_top_left.m_x;
@@ -218,49 +222,20 @@ void ChartView::set_region(const Region& region) {
     region.m_top_left.m_x) / m_bottom_right_pixel.x();
   m_region = region;
   update();
-  m_region_updates = m_region_updates.then([=] (auto&& result) {
-    return load_data(m_model->load(required_data.m_start, required_data.m_end,
-      SnapshotLimit::Unlimited()), required_data, m_model).then(
-      [=] (auto&& result) {
-        m_candlesticks = std::move(result.Get().m_candlesticks);
-        m_gaps = std::move(result.Get().m_gaps);
-        m_gap_adjusted_bottom_right = {result.Get().m_end,
-          m_region.m_bottom_right.m_y};
-        if(m_is_auto_scaled) {
-          update_auto_scale();
-        }
-        update_origins();
-        update();
-      });
-  });
+  m_region_updates = load_data(m_model->load(required_data.m_start,
+    required_data.m_end, SnapshotLimit::Unlimited()), required_data,
+    m_model).then([=] (auto&& result) {
+      m_candlesticks = std::move(result.Get().m_candlesticks);
+      m_gaps = std::move(result.Get().m_gaps);
+      m_gap_adjusted_bottom_right = {result.Get().m_end,
+        m_region.m_bottom_right.m_y};
+      if(m_is_auto_scaled) {
+        update_auto_scale();
+      }
+      update_origins();
+      update();
+    });
 }
-
-void ChartView::translate(const QPoint& offset) {
-  auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
-  auto x_sign = [&] {
-    if(offset.x() >= 0) {
-      return 1;
-    }
-    return -1;
-  }();
-  auto y_sign = [&] {
-    if(offset.y() >= 0) {
-      return 1;
-    }
-    return -1;
-  }();
-  auto region = m_region;
-  auto delta = to_chart_point(absolute_offset) - region.m_top_left;
-  region.m_top_left.m_x -= x_sign * delta.m_x;
-  region.m_bottom_right.m_x -= x_sign * delta.m_x;
-  if(!is_auto_scale_enabled()) {
-    region.m_top_left.m_y -= y_sign * delta.m_y;
-    region.m_bottom_right.m_y -= y_sign * delta.m_y;
-  }
-  set_region(region);
-}
-
-void ChartView::zoom(double factor) {}
 
 bool ChartView::is_auto_scale_enabled() const {
   return m_is_auto_scaled;
@@ -778,3 +753,30 @@ void ChartView::on_right_mouse_button_press() {
     m_draw_state = DrawState::IDLE;
   }
 }
+
+void Spire::translate(ChartView& view, const QPoint& offset) {
+  auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
+  auto x_sign = [&] {
+    if(offset.x() >= 0) {
+      return 1;
+    }
+    return -1;
+  }();
+  auto y_sign = [&] {
+    if(offset.y() >= 0) {
+      return 1;
+    }
+    return -1;
+  }();
+  auto region = view.get_region();
+  auto delta = view.to_chart_point(absolute_offset) - region.m_top_left;
+  region.m_top_left.m_x -= x_sign * delta.m_x;
+  region.m_bottom_right.m_x -= x_sign * delta.m_x;
+  if(!view.is_auto_scale_enabled()) {
+    region.m_top_left.m_y -= y_sign * delta.m_y;
+    region.m_bottom_right.m_y -= y_sign * delta.m_y;
+  }
+  view.set_region(region);
+}
+
+void Spire::zoom(ChartView& view, double factor) {}

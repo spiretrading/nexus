@@ -190,7 +190,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
     if(event->type() == QEvent::MouseMove) {
       auto e = static_cast<QMouseEvent*>(event);
       if(m_is_mouse_dragging && !m_chart->is_draw_mode_enabled()) {
-        m_chart->translate(e->pos() - m_last_chart_mouse_pos);
+        translate(*m_chart, e->pos() - m_last_chart_mouse_pos);
         m_last_chart_mouse_pos = e->pos();
       }
       m_chart->set_crosshair(e->pos(), e->buttons());
@@ -215,7 +215,7 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
         }
         return ZOOM_FACTOR;
       }();
-      m_chart->zoom(factor);
+      zoom(*m_chart, factor);
     } else if(event->type() == QEvent::HoverLeave) {
       m_chart->reset_crosshair();
     } else if(event->type() == QEvent::HoverEnter) {
