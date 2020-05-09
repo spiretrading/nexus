@@ -359,15 +359,11 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 
 void KeyBindingsTableView::on_editor_key(Qt::Key key) {
   if(key == Qt::Key_Tab || key == Qt::Key_Backtab) {
-    auto current_index = m_table->model()->index(
-      m_table->selectionModel()->currentIndex().row(),
-      m_table->horizontalHeader()->visualIndex(
-      m_table->selectionModel()->currentIndex().column()));
     auto new_index = [&] {
       if(key == Qt::Key_Tab) {
-        return get_next_editable_index(current_index);
+        return get_next_editable_index(m_table->currentIndex());
       }
-      return get_previous_editable_index(current_index);
+      return get_previous_editable_index(m_table->currentIndex());
     }();
     m_is_editing_cell = false;
     m_table->selectionModel()->setCurrentIndex(new_index,
