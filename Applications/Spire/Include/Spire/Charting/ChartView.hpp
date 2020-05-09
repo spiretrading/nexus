@@ -188,6 +188,7 @@ namespace Spire {
       static QtPromise<ChartView::LoadedData> load_data(
         QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
         ChartModel* model);
+      void commit_region(const Region& region);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);

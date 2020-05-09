@@ -220,20 +220,14 @@ void ChartView::set_region(const Region& region) {
   required_data.m_end_x = m_bottom_right_pixel.x();
   required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
     region.m_top_left.m_x) / m_bottom_right_pixel.x();
-  m_region = region;
-  update();
+  commit_region(region);
   m_region_updates = load_data(m_model->load(required_data.m_start,
     required_data.m_end, SnapshotLimit::Unlimited()), required_data,
     m_model).then([=] (auto&& result) {
       m_candlesticks = std::move(result.Get().m_candlesticks);
       m_gaps = std::move(result.Get().m_gaps);
       m_gap_adjusted_bottom_right = {result.Get().m_end,
-        m_region.m_bottom_right.m_y};
-      if(m_is_auto_scaled) {
-        update_auto_scale();
-      }
-      update_origins();
-      update();
+        region.m_bottom_right.m_y};
     });
 }
 
@@ -520,6 +514,15 @@ QtPromise<ChartView::LoadedData> ChartView::load_data(
     }
     return QtPromise(data);
   });
+}
+
+void ChartView::commit_region(const Region& region) {
+  m_region = region;
+  if(m_is_auto_scaled) {
+    update_auto_scale();
+  }
+  update_origins();
+  update();
 }
 
 void ChartView::draw_gap(QPainter& painter, int start, int end) {
