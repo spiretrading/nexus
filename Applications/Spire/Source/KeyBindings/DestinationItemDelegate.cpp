@@ -19,5 +19,5 @@ QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
 void DestinationItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-  model->setData(index, QVariant(item), Qt::DisplayRole);
+  model->setData(index, item, Qt::DisplayRole);
 }

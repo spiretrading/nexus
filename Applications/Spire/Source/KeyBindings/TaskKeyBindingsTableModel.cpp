@@ -207,19 +207,37 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         m_modified_signal(index);
         break;
       case Columns::SECURITY:
-        m_key_bindings[index.row()].m_region = [&] () -> Region {
-          auto security = value.value<Security>();
-          if(security != Security()) {
-            return security;
-          }
-          return Region();
-        }();
+        {
+          auto& binding = m_key_bindings[index.row()];
+          binding.m_region = [&] () -> Region {
+            auto security = value.value<Security>();
+            if(security != Security()) {
+              auto new_binding = Region(security);
+              new_binding.SetName(binding.m_region.GetName());
+              return new_binding;
+            }
+            if(!binding.m_region.GetName().empty()) {
+              return binding.m_region;
+            }
+            return Region();
+          }();
+        }
         m_modified_signal(index);
         break;
       case Columns::DESTINATION:
-        // TODO: update with legitimate values.
-        m_key_bindings[index.row()].m_region.SetName(
-          value.value<QString>().toStdString());
+        {
+          auto& binding = m_key_bindings[index.row()];
+          auto name = value.toString();
+          if(name.isEmpty()) {
+            if(binding.m_region.GetSecurities().empty()) {
+              binding.m_region = Region();
+            } else {
+              binding.m_region = *(binding.m_region.GetSecurities().begin());
+            }
+          } else {
+            binding.m_region.SetName(name.toStdString());
+          }
+        }
         m_modified_signal(index);
         break;
       case Columns::ORDER_TYPE:
