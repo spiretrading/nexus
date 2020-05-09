@@ -229,15 +229,34 @@ void ChartView::set_region(const Region& region) {
   commit_region(region);
   m_region_updates = m_region_updates.then([=] (auto&& result) {
     m_model->load(get_lowest(m_model->get_x_axis_type()), region.m_top_left.m_x,
-    SnapshotLimit::FromTail(1)).then([=] (auto left_candlestick) {
-      return load_region(region, 0, std::move(left_candlestick.Get()));
-    });
+      SnapshotLimit::FromTail(1)).then([=] (
+          std::vector<Candlestick> left_candlestick) {
+        auto density = (region.m_bottom_right.m_x - region.m_top_left.m_x) /
+          m_bottom_right_pixel.x();
+        auto x = [&] {
+          if(left_candlestick.empty()) {
+            return 0;
+          } else {
+            return map_to(left_candlestick.back().GetEnd(),
+              region.m_top_left.m_x, region.m_bottom_right.m_x, 0,
+              m_bottom_right_pixel.x());
+          }
+        }();
+        return load_region(region, density, x, std::move(left_candlestick));
+      });
   });
 }
 
-QtPromise<void> ChartView::load_region(const Region& region, int x,
-    std::vector<Candlestick> candlesticks) {
-  return m_model->load(candlesticks.back().GetEnd(), region.m_bottom_right.m_x,
+QtPromise<void> ChartView::load_region(Region region, Scalar density,
+    int x, std::vector<Candlestick> candlesticks) {
+  auto start = [&] {
+    if(candlesticks.empty()) {
+      return region.m_top_left.m_x;
+    } else {
+      return candlesticks.back().GetEnd();
+    }
+  }();
+  return m_model->load(start, region.m_bottom_right.m_x,
     SnapshotLimit::Unlimited()).then(
     [=, candlesticks = std::move(candlesticks)] (
         std::vector<Candlestick> next_candlesticks) mutable {
@@ -249,6 +268,14 @@ QtPromise<void> ChartView::load_region(const Region& region, int x,
       candlesticks.insert(candlesticks.end(),
         std::make_move_iterator(next_candlesticks.begin()),
         std::make_move_iterator(next_candlesticks.end()));
+      m_candlesticks = std::move(candlesticks);
+      m_gaps.clear();
+      m_gap_adjusted_bottom_right = region.m_bottom_right;
+      if(m_is_auto_scaled) {
+        update_auto_scale();
+      }
+      update_origins();
+      update();
     });
 }
 

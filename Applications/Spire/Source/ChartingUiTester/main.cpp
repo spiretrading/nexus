@@ -5,7 +5,6 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
-#include "Spire/Charting/CachedChartModel.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
 #include "Spire/Charting/ChartingWindow.hpp"
 #include "Spire/SecurityInput/LocalSecurityInputModel.hpp"
@@ -79,17 +78,17 @@ int main(int argc, char** argv) {
           time -= boost::posix_time::minutes(1);
         }
       }
-      auto chart_model = new LocalChartModel(Scalar::Type::TIMESTAMP,
-        Scalar::Type::MONEY, candlesticks);
-      auto cached_model = std::make_shared<CachedChartModel>(*chart_model);
-      auto technicals_model = std::make_shared<LocalTechnicalsModel>(Security());
+      auto chart_model = std::make_shared<LocalChartModel>(
+        Scalar::Type::TIMESTAMP, Scalar::Type::MONEY, candlesticks);
+      auto technicals_model = std::make_shared<LocalTechnicalsModel>(
+        security);
       test_timer.start(1500);
       QObject::connect(&test_timer, &QTimer::timeout, [=] {
         auto rand = std::default_random_engine(std::random_device()())() % 100;
         technicals_model->update(TimeAndSale(boost::posix_time::ptime(),
           Money(rand * Money::ONE), 100, TimeAndSale::Condition(), "null"));
       });
-      window->set_models(std::move(cached_model), technicals_model);
+      window->set_models(chart_model, technicals_model);
     });
   window->show();
   application->exec();

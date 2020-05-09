@@ -171,7 +171,7 @@ namespace Spire {
       std::vector<Gap> m_gaps;
 
       void commit_region(const Region& region);
-      QtPromise<void> load_region(const Region& region, int x,
+      QtPromise<void> load_region(Region region, Scalar density, int x,
         std::vector<Candlestick> candlesticks);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
