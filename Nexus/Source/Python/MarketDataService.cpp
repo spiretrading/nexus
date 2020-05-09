@@ -31,6 +31,7 @@ using namespace Beam;
 using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
+using namespace Beam::Parsers;
 using namespace Beam::Python;
 using namespace Beam::Queries;
 using namespace Beam::Serialization;
@@ -342,6 +343,42 @@ namespace {
         Close);
     }
   };
+
+  using PythonMarketDataFeedClient = MarketDataFeedClient<std::string,
+    LiveTimer, MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
+    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+
+  auto MakePythonMarketDataFeedClient(
+      VirtualServiceLocatorClient& serviceLocatorClient,
+      time_duration sampling) {
+    auto addresses = LocateServiceAddresses(serviceLocatorClient,
+      MarketDataService::FEED_SERVICE_NAME);
+    return MakeToPythonMarketDataFeedClient(
+      std::make_unique<PythonMarketDataFeedClient>(
+      Initialize(addresses, Ref(*GetSocketThreadPool())),
+      SessionAuthenticator<VirtualServiceLocatorClient>(
+      Ref(serviceLocatorClient)),
+      Initialize(sampling, Ref(*GetTimerThreadPool())),
+      Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
+  }
+
+  auto MakePythonMarketDataFeedClient(
+      VirtualServiceLocatorClient& serviceLocatorClient, CountryCode country,
+      time_duration sampling) {
+    auto service = FindMarketDataFeedService(country, serviceLocatorClient);
+    if(!service.is_initialized()) {
+      return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
+    }
+    auto addresses = Parse<std::vector<IpAddress>>(
+      get<std::string>(service->GetProperties().At("addresses")));
+    return MakeToPythonMarketDataFeedClient(
+      std::make_unique<PythonMarketDataFeedClient>(
+      Initialize(addresses, Ref(*GetSocketThreadPool())),
+      SessionAuthenticator<VirtualServiceLocatorClient>(
+      Ref(serviceLocatorClient)),
+      Initialize(sampling, Ref(*GetTimerThreadPool())),
+      Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
+  }
 }
 
 void Nexus::Python::ExportApplicationMarketDataClient(
@@ -388,15 +425,25 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(
       module, "ApplicationMarketDataFeedClient")
     .def(init(
       [] (VirtualServiceLocatorClient& serviceLocatorClient,
+          CountryCode country, time_duration sampling) {
+        return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
+          sampling);
+      }))
+    .def(init(
+      [] (VirtualServiceLocatorClient& serviceLocatorClient,
+          CountryCode country) {
+        return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
+          milliseconds(10));
+      }))
+    .def(init(
+      [] (VirtualServiceLocatorClient& serviceLocatorClient,
           time_duration sampling) {
-        auto addresses = LocateServiceAddresses(serviceLocatorClient,
-          MarketDataService::FEED_SERVICE_NAME);
-        return MakeToPythonMarketDataFeedClient(std::make_unique<Client>(
-          Initialize(addresses, Ref(*GetSocketThreadPool())),
-          SessionAuthenticator<VirtualServiceLocatorClient>(
-          Ref(serviceLocatorClient)),
-          Initialize(sampling, Ref(*GetTimerThreadPool())),
-          Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
+        return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
+      }))
+    .def(init(
+      [] (VirtualServiceLocatorClient& serviceLocatorClient) {
+        return MakePythonMarketDataFeedClient(serviceLocatorClient,
+          milliseconds(10));
       }));
 }
 
