@@ -50,8 +50,7 @@ def main():
     service_locator_client.set_credentials(username, password)
     service_locator_client.open()
     feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
-      nexus.default_countries.HK, datetime.timedelta(seconds=1),
-      service_locator_client)
+      service_locator_client, nexus.default_countries.HK)
     feed_client.open()
   with urllib.request.urlopen(URL) as response, open('hkex.xlsx', 'wb') as \
       destination:
