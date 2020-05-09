@@ -17,6 +17,7 @@
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -24,6 +25,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Python/HistoricalDataStore.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
+#include "Nexus/Python/MarketDataFeedClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -265,6 +267,81 @@ namespace {
         Close);
     }
   };
+
+  struct TrampolineMarketDataFeedClient final : VirtualMarketDataFeedClient {
+    void Add(const SecurityInfo& securityInfo) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient, "add",
+        Add, securityInfo);
+    }
+
+    void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance)
+        override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "publish_order_imbalance", PublishOrderImbalance, orderImbalance);
+    }
+
+    void PublishBboQuote(const SecurityBboQuote& bboQuote) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "publish_bbo_quote", PublishBboQuote, bboQuote);
+    }
+
+    void PublishMarketQuote(const SecurityMarketQuote& marketQuote) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "publish_market_quote", PublishMarketQuote, marketQuote);
+    }
+
+    void SetBookQuote(const SecurityBookQuote& bookQuote) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "set_book_quote", SetBookQuote, bookQuote);
+    }
+
+    void AddOrder(const Security& security, MarketCode market,
+        const std::string& mpid, bool isPrimaryMpid, const std::string& id,
+        Side side, Money price, Quantity size,
+        const ptime& timestamp) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "add_order", AddOrder, security, market, mpid, isPrimaryMpid, id, side,
+        price, size, timestamp);
+    }
+
+    void ModifyOrderSize(const std::string& id, Quantity size,
+        const ptime& timestamp) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "modify_order_size", ModifyOrderSize, id, size, timestamp);
+    }
+
+    void OffsetOrderSize(const std::string& id, Quantity delta,
+        const ptime& timestamp) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "offset_order_size", OffsetOrderSize, id, delta, timestamp);
+    }
+
+    void ModifyOrderPrice(const std::string& id, Money price,
+        const ptime& timestamp) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "modify_order_price", ModifyOrderPrice, id, price, timestamp);
+    }
+
+    void DeleteOrder(const std::string& id, const ptime& timestamp) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "delete_order", DeleteOrder, id, timestamp);
+    }
+
+    void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
+        "publish_time_and_sale", PublishTimeAndSale, timeAndSale);
+    }
+
+    void Open() override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient, "open",
+        Open);
+    }
+
+    void Close() override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient, "close",
+        Close);
+    }
+  };
 }
 
 void Nexus::Python::ExportApplicationMarketDataClient(
@@ -299,6 +376,27 @@ void Nexus::Python::ExportApplicationMarketDataClient(
           });
         return MakeToPythonMarketDataClient(std::make_unique<Client>(
           sessionBuilder));
+      }));
+}
+
+void Nexus::Python::ExportApplicationMarketDataFeedClient(
+    pybind11::module& module) {
+  using Client = MarketDataFeedClient<std::string, LiveTimer,
+    MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
+    SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
+  class_<ToPythonMarketDataFeedClient<Client>, VirtualMarketDataFeedClient>(
+      module, "ApplicationMarketDataFeedClient")
+    .def(init(
+      [] (VirtualServiceLocatorClient& serviceLocatorClient,
+          time_duration sampling) {
+        auto addresses = LocateServiceAddresses(serviceLocatorClient,
+          MarketDataService::FEED_SERVICE_NAME);
+        return MakeToPythonMarketDataFeedClient(std::make_unique<Client>(
+          Initialize(addresses, Ref(*GetSocketThreadPool())),
+          SessionAuthenticator<VirtualServiceLocatorClient>(
+          Ref(serviceLocatorClient)),
+          Initialize(sampling, Ref(*GetTimerThreadPool())),
+          Initialize(seconds(10), Ref(*GetTimerThreadPool()))));
       }));
 }
 
@@ -405,6 +503,27 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
     .def("close", &VirtualMarketDataClient::Close);
 }
 
+void Nexus::Python::ExportMarketDataFeedClient(pybind11::module& module) {
+  class_<VirtualMarketDataFeedClient, TrampolineMarketDataFeedClient>(module,
+      "MarketDataFeedClient")
+    .def("add", &VirtualMarketDataFeedClient::Add)
+    .def("publish_order_imbalance",
+      &VirtualMarketDataFeedClient::PublishOrderImbalance)
+    .def("publish_bbo_quote", &VirtualMarketDataFeedClient::PublishBboQuote)
+    .def("publish_market_quote",
+      &VirtualMarketDataFeedClient::PublishMarketQuote)
+    .def("set_book_quote", &VirtualMarketDataFeedClient::SetBookQuote)
+    .def("add_order", &VirtualMarketDataFeedClient::AddOrder)
+    .def("modify_order_size", &VirtualMarketDataFeedClient::ModifyOrderSize)
+    .def("offset_order_size", &VirtualMarketDataFeedClient::OffsetOrderSize)
+    .def("modify_order_price", &VirtualMarketDataFeedClient::ModifyOrderPrice)
+    .def("delete_order", &VirtualMarketDataFeedClient::DeleteOrder)
+    .def("publish_time_and_sale",
+      &VirtualMarketDataFeedClient::PublishTimeAndSale)
+    .def("open", &VirtualMarketDataFeedClient::Open)
+    .def("close", &VirtualMarketDataFeedClient::Close);
+}
+
 void Nexus::Python::ExportMarketDataReactors(pybind11::module& module) {
   auto aspenModule = pybind11::module::import("aspen");
   Aspen::export_box<SecurityMarketDataQuery>(aspenModule,
@@ -476,7 +595,9 @@ void Nexus::Python::ExportMarketDataService(pybind11::module& module) {
   auto submodule = module.def_submodule("market_data_service");
   ExportHistoricalDataStore(submodule);
   ExportMarketDataClient(submodule);
+  ExportMarketDataFeedClient(submodule);
   ExportApplicationMarketDataClient(submodule);
+  ExportApplicationMarketDataFeedClient(submodule);
   ExportSecuritySnapshot(submodule);
   ExportMarketDataReactors(submodule);
   ExportMySqlHistoricalDataStore(submodule);
