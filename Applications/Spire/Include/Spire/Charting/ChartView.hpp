@@ -134,19 +134,6 @@ namespace Spire {
         Scalar m_start;
         Scalar m_end;
       };
-      struct GapInfo {
-        int gap_count;
-        Scalar total_gaps_value;
-      };
-      struct LoadedData {
-        std::vector<Candlestick> m_candlesticks;
-        std::vector<ChartView::Gap> m_gaps;
-        Scalar m_start;
-        Scalar m_end;
-        int m_current_x;
-        int m_end_x;
-        Scalar m_values_per_pixel;
-      };
       struct LineMouseOffset {
         QPoint m_first;
         QPoint m_second;
@@ -183,12 +170,9 @@ namespace Spire {
       std::optional<LineMouseOffset> m_line_mouse_offset;
       std::vector<Gap> m_gaps;
 
-      static GapInfo update_gaps(std::vector<ChartView::Gap>& gaps,
-        std::vector<Candlestick>& candlesticks, Scalar start);
-      static QtPromise<ChartView::LoadedData> load_data(
-        QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
-        ChartModel* model);
       void commit_region(const Region& region);
+      QtPromise<void> load_region(const Region& region, int x,
+        std::vector<Candlestick> candlesticks);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);

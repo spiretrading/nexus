@@ -14,6 +14,28 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  auto GAP_SIZE() {
+    static auto size = scale_width(35);
+    return size;
+  }
+
+  const auto& HAND_CURSOR() {
+    static auto cursor = QCursor(QPixmap::fromImage(
+      imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
+    return cursor;
+  }
+
+  const auto& CROSSHAIR_CURSOR() {
+    static auto cursor = QCursor(QPixmap::fromImage(
+      imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
+    return cursor;
+  }
+
+  const auto& GAP_SLASH_IMAGE() {
+    static auto cursor = imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3));
+    return cursor;
+  }
+
   QVariant to_variant(Scalar::Type type, Scalar value) {
     if(type == Scalar::Type::DURATION) {
       return QVariant::fromValue(static_cast<time_duration>(value));
@@ -36,26 +58,17 @@ namespace {
     return Scalar();
   }
 
-  const auto GAP_SIZE() {
-    static auto size = scale_width(35);
-    return size;
-  }
-
-  const auto& HAND_CURSOR() {
-    static auto cursor = QCursor(QPixmap::fromImage(
-      imageFromSvg(":/Icons/finger-cursor.svg", scale(18, 18))), 0, 0);
-    return cursor;
-  }
-
-  const auto& CROSSHAIR_CURSOR() {
-    static auto cursor = QCursor(QPixmap::fromImage(
-      imageFromSvg(":/Icons/chart-cursor.svg", scale(18, 18))));
-    return cursor;
-  }
-
-  const auto& GAP_SLASH_IMAGE() {
-    static auto cursor = imageFromSvg(":/Icons/slash-texture.svg", scale(4, 3));
-    return cursor;
+  Scalar get_lowest(Scalar::Type type) {
+    if(type == Scalar::Type::DURATION) {
+      return Scalar(std::numeric_limits<time_duration>::lowest());
+    } else if(type == Scalar::Type::MONEY) {
+      return Scalar(std::numeric_limits<Money>::lowest());
+    } else if(type == Scalar::Type::QUANTITY) {
+      return Scalar(std::numeric_limits<Quantity>::lowest());
+    } else if(type == Scalar::Type::TIMESTAMP) {
+      return Scalar(std::numeric_limits<ptime>::lowest());
+    }
+    return Scalar(std::numeric_limits<Quantity>::lowest());
   }
 }
 
@@ -213,21 +226,29 @@ const ChartView::Region& ChartView::get_region() const {
 }
 
 void ChartView::set_region(const Region& region) {
-  auto required_data = LoadedData();
-  required_data.m_start = region.m_top_left.m_x;
-  required_data.m_end = region.m_bottom_right.m_x;
-  required_data.m_current_x = 0;
-  required_data.m_end_x = m_bottom_right_pixel.x();
-  required_data.m_values_per_pixel = (region.m_bottom_right.m_x -
-    region.m_top_left.m_x) / m_bottom_right_pixel.x();
   commit_region(region);
-  m_region_updates = load_data(m_model->load(required_data.m_start,
-    required_data.m_end, SnapshotLimit::Unlimited()), required_data,
-    m_model).then([=] (auto&& result) {
-      m_candlesticks = std::move(result.Get().m_candlesticks);
-      m_gaps = std::move(result.Get().m_gaps);
-      m_gap_adjusted_bottom_right = {result.Get().m_end,
-        region.m_bottom_right.m_y};
+  m_region_updates = m_region_updates.then([=] (auto&& result) {
+    m_model->load(get_lowest(m_model->get_x_axis_type()), region.m_top_left.m_x,
+    SnapshotLimit::FromTail(1)).then([=] (auto left_candlestick) {
+      return load_region(region, 0, std::move(left_candlestick.Get()));
+    });
+  });
+}
+
+QtPromise<void> ChartView::load_region(const Region& region, int x,
+    std::vector<Candlestick> candlesticks) {
+  return m_model->load(candlesticks.back().GetEnd(), region.m_bottom_right.m_x,
+    SnapshotLimit::Unlimited()).then(
+    [=, candlesticks = std::move(candlesticks)] (
+        std::vector<Candlestick> next_candlesticks) mutable {
+      if(!candlesticks.empty() && !next_candlesticks.empty() &&
+          candlesticks.back().GetStart() ==
+          next_candlesticks.front().GetStart()) {
+        next_candlesticks.erase(next_candlesticks.begin());
+      }
+      candlesticks.insert(candlesticks.end(),
+        std::make_move_iterator(next_candlesticks.begin()),
+        std::make_move_iterator(next_candlesticks.end()));
     });
 }
 
@@ -459,61 +480,6 @@ void ChartView::showEvent(QShowEvent* event) {
     set_region({top_left, bottom_right});
   }
   QWidget::showEvent(event);
-}
-
-ChartView::GapInfo ChartView::update_gaps(std::vector<ChartView::Gap>& gaps,
-    std::vector<Candlestick>& candlesticks, Scalar start) {
-  auto gap_info = GapInfo{0, Scalar()};
-  for(auto& candlestick : candlesticks) {
-    auto end = candlestick.GetStart();
-    if(start != end) {
-      gaps.push_back({start, end});
-      gap_info.total_gaps_value += end - start;
-      ++gap_info.gap_count;
-    }
-    start = candlestick.GetEnd();
-  }
-  return gap_info;
-}
-
-QtPromise<ChartView::LoadedData> ChartView::load_data(
-    QtPromise<std::vector<Candlestick>>& promise, LoadedData data,
-    ChartModel* model) {
-  return promise.then([=] (auto result) mutable {
-    auto new_candlesticks = std::move(result.Get());
-    if(!data.m_candlesticks.empty()) {
-      auto last = std::find_if(new_candlesticks.begin(), new_candlesticks.end(),
-        [&] (const auto& candlestick) {
-          return candlestick.GetStart() >=
-            data.m_candlesticks.back().GetStart();
-        });
-      if(last != new_candlesticks.end()) {
-        ++last;
-      }
-      new_candlesticks.erase(new_candlesticks.begin(), last);
-    }
-    auto last = [&] {
-      if(data.m_candlesticks.empty() && new_candlesticks.empty()) {
-        return Scalar();
-      } else if(data.m_candlesticks.empty()) {
-        return new_candlesticks.front().GetStart();
-      }
-      return data.m_candlesticks.back().GetEnd();
-    }();
-    auto gap_info = update_gaps(data.m_gaps, new_candlesticks, last);
-    data.m_candlesticks.insert(data.m_candlesticks.end(),
-      new_candlesticks.begin(), new_candlesticks.end());
-    data.m_current_x += static_cast<int>(std::ceil((
-      data.m_end - data.m_start - gap_info.total_gaps_value) /
-      data.m_values_per_pixel + gap_info.gap_count * GAP_SIZE()));
-    data.m_start = data.m_end;
-    data.m_end += (data.m_end_x - data.m_current_x) * data.m_values_per_pixel;
-    if(data.m_current_x < data.m_end_x) {
-      return load_data(model->load(data.m_start, data.m_end,
-        SnapshotLimit::Unlimited()), std::move(data), model);
-    }
-    return QtPromise(data);
-  });
 }
 
 void ChartView::commit_region(const Region& region) {
