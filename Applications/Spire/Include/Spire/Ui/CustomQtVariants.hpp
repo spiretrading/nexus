@@ -108,7 +108,7 @@ namespace Spire {
       explicit CustomVariantItemDelegate(QObject* parent = nullptr);
 
       QString displayText(const QVariant& value,
-        const QLocale& locale) const override;
+        const QLocale& locale = QLocale()) const override;
   };
 
   /*! Implements Qt's proxy model to support the custom QVariant types. */

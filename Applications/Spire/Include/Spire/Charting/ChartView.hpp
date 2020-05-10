@@ -140,7 +140,7 @@ namespace Spire {
       };
       ChartModel* m_model;
       Region m_region;
-      ChartPoint m_gap_adjusted_bottom_right;
+      Region m_extended_region;
       QPoint m_bottom_right_pixel;
       Scalar m_x_axis_step;
       Scalar m_x_range;
@@ -172,7 +172,7 @@ namespace Spire {
 
       void commit_region(const Region& region);
       QtPromise<void> load_region(Region region, Scalar density, int x,
-        std::vector<Candlestick> candlesticks);
+        std::vector<Candlestick> candlesticks, std::vector<Gap> gaps);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);
