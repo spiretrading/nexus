@@ -83,6 +83,11 @@ namespace {
     }
     return Scalar(std::numeric_limits<Quantity>::max());
   }
+
+  void foo(Scalar x) {
+    qDebug() << CustomVariantItemDelegate().displayText(
+      QVariant::fromValue(static_cast<ptime>(x)));
+  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
@@ -143,6 +148,15 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
 }
 
 QPoint ChartView::to_pixel(const ChartPoint& point) const {
+  if(point.m_x < m_region.m_top_left.m_x) {
+    auto adjusted_region = Region{{point.m_x, m_region.m_top_left.m_y},
+      {point.m_x + (m_region.m_bottom_right.m_x - m_region.m_top_left.m_x),
+      m_region.m_bottom_right.m_y}};
+    std::swap(adjusted_region, const_cast<Region&>(m_region));
+    auto adjusted_point = to_pixel({adjusted_region.m_top_left.m_x, point.m_y});
+    std::swap(adjusted_region, const_cast<Region&>(m_region));
+    return {-adjusted_point.x(), adjusted_point.y()};
+  }
   auto x = map_to(point.m_x, m_region.m_top_left.m_x,
     m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
   auto y = map_to(point.m_y, m_region.m_bottom_right.m_y,
@@ -250,6 +264,9 @@ void ChartView::set_region(const Region& region) {
           if(left_candlestick.empty()) {
             return 0;
           } else {
+
+            // TODO: This starting point is a huge negative number because it
+            // assumes no gaps.
             return map_to(left_candlestick.back().GetEnd(),
               region.m_top_left.m_x, region.m_bottom_right.m_x, 0,
               m_bottom_right_pixel.x());
@@ -258,69 +275,6 @@ void ChartView::set_region(const Region& region) {
         return load_region(region, density, x, std::move(left_candlestick), {});
       });
   });
-}
-
-QtPromise<void> ChartView::load_region(Region region, Scalar density,
-    int x, std::vector<Candlestick> candlesticks, std::vector<Gap> gaps) {
-  auto start = [&] {
-    if(candlesticks.empty()) {
-      return region.m_top_left.m_x;
-    } else {
-      return candlesticks.back().GetEnd();
-    }
-  }();
-  return m_model->load(start, region.m_bottom_right.m_x,
-    SnapshotLimit::Unlimited()).then(
-    [=] (std::vector<Candlestick> next_candlesticks) mutable {
-      if(!candlesticks.empty() && !next_candlesticks.empty() &&
-          candlesticks.back().GetStart() ==
-          next_candlesticks.front().GetStart()) {
-        next_candlesticks.erase(next_candlesticks.begin());
-      }
-      if(next_candlesticks.empty()) {
-        return m_model->load(region.m_bottom_right.m_x,
-          get_highest(m_model->get_x_axis_type()), SnapshotLimit::FromHead(1));
-      }
-      return QtPromise(std::move(next_candlesticks));
-    }).then([=, candlesticks = std::move(candlesticks)] (
-        std::vector<Candlestick> next_candlesticks) mutable {
-      if(!next_candlesticks.empty()) {
-        auto i = candlesticks.size();
-        candlesticks.insert(candlesticks.end(),
-          std::make_move_iterator(next_candlesticks.begin()),
-          std::make_move_iterator(next_candlesticks.end()));
-        while(i != candlesticks.size()) {
-          auto& candlestick = candlesticks[i];
-          if(i != 0 && candlestick.GetStart() != candlesticks[i - 1].GetEnd()) {
-            auto gap = Gap{candlesticks[i - 1].GetEnd(),
-              candlestick.GetStart()};
-            x += GAP_WIDTH();
-            auto gap_width = gap.m_end - gap.m_start;
-            region.m_bottom_right.m_x += gap_width - GAP_WIDTH() * density;
-            gaps.push_back(gap);
-          }
-          x += static_cast<int>(std::ceil(
-            (candlestick.GetEnd() - candlestick.GetStart()) / density));
-          ++i;
-        }
-      } else {
-        x = m_bottom_right_pixel.x() + 1;
-      }
-      if(x <= m_bottom_right_pixel.x()) {
-        return load_region(region, density, x, std::move(candlesticks),
-          std::move(gaps));
-      } else {
-        m_candlesticks = std::move(candlesticks);
-        m_gaps = std::move(gaps);
-        m_extended_region = region;
-        if(m_is_auto_scaled) {
-          update_auto_scale();
-        }
-        update_origins();
-        update();
-        return QtPromise();
-      }
-    });
 }
 
 bool ChartView::is_auto_scale_enabled() const {
@@ -562,6 +516,77 @@ void ChartView::commit_region(const Region& region) {
   update();
 }
 
+QtPromise<void> ChartView::load_region(Region region, Scalar density,
+    int x, std::vector<Candlestick> candlesticks, std::vector<Gap> gaps) {
+  auto start = [&] {
+    if(candlesticks.empty()) {
+      return region.m_top_left.m_x;
+    } else {
+      return candlesticks.back().GetEnd();
+    }
+  }();
+  return m_model->load(start, region.m_bottom_right.m_x,
+    SnapshotLimit::Unlimited()).then(
+    [=] (std::vector<Candlestick> next_candlesticks) mutable {
+      if(!candlesticks.empty() && !next_candlesticks.empty() &&
+          candlesticks.back().GetStart() ==
+          next_candlesticks.front().GetStart()) {
+        next_candlesticks.erase(next_candlesticks.begin());
+      }
+      if(next_candlesticks.empty()) {
+        return m_model->load(region.m_bottom_right.m_x,
+          get_highest(m_model->get_x_axis_type()), SnapshotLimit::FromHead(1));
+      }
+      return QtPromise(std::move(next_candlesticks));
+    }).then([=, candlesticks = std::move(candlesticks)] (
+        std::vector<Candlestick> next_candlesticks) mutable {
+      if(!next_candlesticks.empty()) {
+        auto i = candlesticks.size();
+        candlesticks.insert(candlesticks.end(),
+          std::make_move_iterator(next_candlesticks.begin()),
+          std::make_move_iterator(next_candlesticks.end()));
+        while(i != candlesticks.size()) {
+          auto& candlestick = candlesticks[i];
+          if(i != 0 && candlestick.GetStart() != candlesticks[i - 1].GetEnd()) {
+            auto gap = Gap{candlesticks[i - 1].GetEnd(),
+              candlestick.GetStart()};
+            gaps.push_back(gap);
+            x += GAP_WIDTH();
+            auto gap_width = gap.m_end - gap.m_start;
+
+            // TODO: This only needs to be applied if x >= 0.
+            qDebug() << "Xtend";
+            foo(region.m_bottom_right.m_x);
+            foo(gap_width - GAP_WIDTH() * density);
+            region.m_bottom_right.m_x += gap_width - GAP_WIDTH() * density;
+          }
+          x += static_cast<int>(std::ceil(
+            (candlestick.GetEnd() - candlestick.GetStart()) / density));
+          ++i;
+        }
+      } else {
+        x = m_bottom_right_pixel.x() + 1;
+      }
+      if(x <= m_bottom_right_pixel.x()) {
+        return load_region(region, density, x, std::move(candlesticks),
+          std::move(gaps));
+      } else {
+        m_candlesticks = std::move(candlesticks);
+        m_gaps = std::move(gaps);
+        m_extended_region = region;
+        qDebug() << "XRegion";
+        foo(m_extended_region.m_top_left.m_x);
+        foo(m_extended_region.m_bottom_right.m_x);
+        if(m_is_auto_scaled) {
+          update_auto_scale();
+        }
+        update_origins();
+        update();
+        return QtPromise();
+      }
+    });
+}
+
 void ChartView::draw_gap(QPainter& painter, int start, int end) {
   painter.fillRect(start, m_bottom_right_pixel.y(), end - start,
     scale_height(3), QColor("#25212E"));
@@ -795,23 +820,10 @@ void ChartView::on_right_mouse_button_press() {
 }
 
 void Spire::translate(ChartView& view, const QPoint& offset) {
-  auto absolute_offset = QPoint(std::abs(offset.x()), std::abs(offset.y()));
-  auto x_sign = [&] {
-    if(offset.x() >= 0) {
-      return 1;
-    }
-    return -1;
-  }();
-  auto y_sign = [&] {
-    if(offset.y() >= 0) {
-      return 1;
-    }
-    return -1;
-  }();
   auto region = view.get_region();
-  auto delta = view.to_chart_point(absolute_offset) - region.m_top_left;
-  region.m_top_left.m_x -= x_sign * delta.m_x;
-  region.m_bottom_right.m_x -= x_sign * delta.m_x;
+  auto delta = view.to_chart_point(offset) - region.m_top_left;
+  region.m_top_left.m_x -= delta.m_x;
+  region.m_bottom_right.m_x -= delta.m_x;
   view.set_region(region);
 }
 
