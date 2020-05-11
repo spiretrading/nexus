@@ -198,8 +198,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       }();
       m_is_default_cell_selected = false;
       m_is_editing_cell = false;
-      m_table->selectionModel()->setCurrentIndex(current_index,
-        QItemSelectionModel::Select);
+      m_table->setCurrentIndex(current_index);
       scroll_to_index(current_index);
       auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
       table_model->set_focus_highlight(current_index);
@@ -337,8 +336,7 @@ void KeyBindingsTableView::on_column_selection_changed(
     const QModelIndex &current, const QModelIndex &previous) {
   if(m_is_editing_cell) {
     m_is_editing_cell = false;
-    m_table->selectionModel()->setCurrentIndex(previous,
-      QItemSelectionModel::Select);
+    m_table->setCurrentIndex(previous);
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->set_focus_highlight(previous);
     update();
@@ -366,8 +364,7 @@ void KeyBindingsTableView::on_editor_key(Qt::Key key) {
       return get_previous_editable_index(m_table->currentIndex());
     }();
     m_is_editing_cell = false;
-    m_table->selectionModel()->setCurrentIndex(new_index,
-      QItemSelectionModel::Select);
+    m_table->setCurrentIndex(new_index);
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->set_focus_highlight(new_index);
     if(new_index.flags().testFlag(Qt::ItemIsEditable)) {
@@ -433,8 +430,7 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
 
 void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
-  m_table->selectionModel()->setCurrentIndex(index,
-    QItemSelectionModel::Select);
+  m_table->setCurrentIndex(index);
   auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
   table_model->set_focus_highlight(index);
   m_is_default_cell_selected = false;
@@ -445,11 +441,10 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
 }
 
 void KeyBindingsTableView::on_row_inserted() {
-  auto current = m_table->selectionModel()->currentIndex();
+  auto current = m_table->currentIndex();
   auto previous_index = m_table->model()->index(current.row() - 1,
     current.column());
-  m_table->selectionModel()->setCurrentIndex(previous_index,
-    QItemSelectionModel::Select);
+  m_table->setCurrentIndex(previous_index);
   auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
   table_model->set_focus_highlight(previous_index);
 }
@@ -461,7 +456,7 @@ void KeyBindingsTableView::on_row_removed(int row) {
   }
   if(row == m_table->selectionModel()->currentIndex().row()) {
     m_is_default_cell_selected = true;
-    m_table->selectionModel()->clearSelection();
+    m_table->clearSelection();
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->reset_focus_highlight();
     m_table->setFocus();
