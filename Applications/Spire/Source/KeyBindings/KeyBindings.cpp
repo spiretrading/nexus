@@ -1,10 +1,11 @@
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include <algorithm>
 #include <type_traits>
-#include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
@@ -129,10 +130,9 @@ std::vector<KeyBindings::ActionBinding>
 
 std::ostream& Spire::operator <<(std::ostream& out,
     const KeyBindings::OrderAction& action) {
-  out << '(' << action.m_name << ", " << action.m_type << ", " <<
+  return out << '(' << action.m_name << ", " << action.m_type << ", " <<
     action.m_side << ", " << action.m_time_in_force << ", " <<
-    action.m_quantity << ", ";
-  return ::operator <<(out, action.m_tags) << ')';
+    action.m_quantity << ", " << Stream(action.m_tags) << ')';
 }
 
 std::ostream& Spire::operator <<(std::ostream& out,

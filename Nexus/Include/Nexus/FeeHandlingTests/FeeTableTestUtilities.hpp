@@ -108,7 +108,7 @@ namespace Nexus::Tests {
   template<typename FeeTable, typename CalculateFeeType>
   void TestNotionalValueFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& orderFields,
-      CalculateFeeType&& calculateFee, Money expectedRate) {
+      CalculateFeeType&& calculateFee, Quantity expectedRate) {
     auto executionReport = OrderExecutionService::ExecutionReport::
       BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = orderFields.m_price;

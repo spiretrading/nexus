@@ -1,26 +1,25 @@
-#ifndef NEXUS_SIDEPARSER_HPP
-#define NEXUS_SIDEPARSER_HPP
+#ifndef NEXUS_SIDE_PARSER_HPP
+#define NEXUS_SIDE_PARSER_HPP
 #include <Beam/Collections/EnumIterator.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
+#include <Beam/Parsers/Types.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Side.hpp"
 
 namespace Nexus {
 
-  /*! \class SideParser
-      \brief Matches a Side.
-   */
-  class SideParser : public Beam::Parsers::EnumeratorParser<Side> {
-    public:
+  /** Parses a Side. */
+  inline const auto& SideParser() {
+    static const auto parser = Beam::Parsers::EnumeratorParser(
+      begin(Beam::MakeRange<Side>()), end(Beam::MakeRange<Side>()),
+      &boost::lexical_cast<std::string, Side>);
+    return parser;
+  }
+}
 
-      //! Constructs a SideParser.
-      SideParser();
-  };
-
-  inline SideParser::SideParser()
-    : Beam::Parsers::EnumeratorParser<Side>(begin(Beam::MakeRange<Side>()),
-        end(Beam::MakeRange<Side>()),
-        &boost::lexical_cast<std::string, Side>) {}
+namespace Beam::Parsers {
+  template<>
+  const auto default_parser<Nexus::Side> = Nexus::SideParser();
 }
 
 #endif

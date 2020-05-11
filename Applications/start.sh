@@ -10,17 +10,17 @@ services+=" ChartingServer"
 services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
-services+=" SimulationMarketDataFeedClient"
 services+=" WebPortal"
+services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
-  sleep 10
-  pushd $directory
+  pushd $directory/Application > /dev/null
   ./stop_server.sh
   ./start_server.sh
-  popd
+  popd > /dev/null
+  sleep 1
 done
 
-pushd AdministrationServer
+pushd AdministrationServer/Application > /dev/null
 python3 reset_risk_states.py
-popd
+popd > /dev/null

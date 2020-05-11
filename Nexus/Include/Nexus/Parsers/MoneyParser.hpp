@@ -1,39 +1,25 @@
 #ifndef NEXUS_MONEYPARSER_HPP
 #define NEXUS_MONEYPARSER_HPP
-#include <Beam/Parsers/DecimalParser.hpp>
+#include <Beam/Parsers/ConversionParser.hpp>
+#include <Beam/Parsers/Types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Parsers/Parsers.hpp"
 
 namespace Nexus {
 
-  /*! \class MoneyParser
-      \brief Matches a Money value.
-   */
-  class MoneyParser : public Beam::Parsers::ParserOperators {
-    public:
-      typedef Money Result;
-
-      template<typename ParserStreamType>
-      bool Read(ParserStreamType& source, Result& value);
-
-      template<typename ParserStreamType>
-      bool Read(ParserStreamType& source);
-  };
-
-  template<typename ParserStreamType>
-  bool MoneyParser::Read(ParserStreamType& source, Result& value) {
-    double rawValue;
-    if(!Beam::Parsers::DecimalParser<double>().Read(source, rawValue)) {
-      return false;
-    }
-    value = Money{Quantity{rawValue}};
-    return true;
+  /** Parses a Money value. */
+  inline const auto& MoneyParser() {
+    static const auto parser = Beam::Parsers::Convert(
+      Beam::Parsers::double_p, [] (double value) {
+        return Money(Quantity(value));
+      });
+    return parser;
   }
+}
 
-  template<typename ParserStreamType>
-  bool MoneyParser::Read(ParserStreamType& source) {
-    return Beam::Parsers::DecimalParser<double>().Read(source);
-  }
+namespace Beam::Parsers {
+  template<>
+  const auto default_parser<Nexus::Money> = Nexus::MoneyParser();
 }
 
 #endif

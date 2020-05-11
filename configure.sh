@@ -16,12 +16,8 @@ fi
 targets="Nexus"
 targets+=" WebApi"
 targets+=" Applications/AdministrationServer"
-targets+=" Applications/AsxItchMarketDataFeedClient"
 targets+=" Applications/ChartingServer"
-targets+=" Applications/ChiaMarketDataFeedClient"
 targets+=" Applications/ComplianceServer"
-targets+=" Applications/CseMarketDataFeedClient"
-targets+=" Applications/CtaMarketDataFeedClient"
 targets+=" Applications/DefinitionsServer"
 targets+=" Applications/MarketDataRelayServer"
 targets+=" Applications/MarketDataServer"
@@ -29,9 +25,6 @@ targets+=" Applications/ReplayMarketDataFeedClient"
 targets+=" Applications/RiskServer"
 targets+=" Applications/SimulationMarketDataFeedClient"
 targets+=" Applications/SimulationOrderExecutionServer"
-targets+=" Applications/TmxIpMarketDataFeedClient"
-targets+=" Applications/TmxTl1MarketDataFeedClient"
-targets+=" Applications/UtpMarketDataFeedClient"
 targets+=" Applications/WebPortal"
 targets+=" Applications/WebPortal/WebApp"
 
@@ -40,6 +33,6 @@ for i in $targets; do
     mkdir -p "$i"
   fi
   pushd "$i"
-  "$directory/$i/configure.sh" -DD="$root/Dependencies" "$@"
+  "$directory/$i/configure.sh" -DD="$root/Nexus/Dependencies" "$@"
   popd
 done

@@ -17,7 +17,7 @@ SecurityInputTester::SecurityInputTester(QWidget* parent)
     "Microsoft Corp", "Software", 100));
   m_model.add(SecurityInfo(
     Security("MG", DefaultMarkets::TSX(), DefaultCountries::CA()),
-    "Magna International Inc.", "Automotive, probably", 100));
+    "Magna International Inc.", "Automotive", 100));
   m_model.add(SecurityInfo(
     Security("MFC", DefaultMarkets::TSX(), DefaultCountries::CA()),
     "Manulife Financial Corporation", "Finance", 100));

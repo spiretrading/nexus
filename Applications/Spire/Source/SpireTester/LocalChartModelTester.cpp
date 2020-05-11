@@ -66,7 +66,7 @@ namespace {
 
 TEST_SUITE("LocalChartModel") {
   TEST_CASE("unlimited_loads") {
-    run_test([=] {
+    run_test([] {
       auto load1 = load(0, 100, SnapshotLimit::Unlimited());
       REQUIRE(load1.size() == 101);
       REQUIRE(load1.front().GetStart() == Scalar(0));
@@ -83,11 +83,11 @@ TEST_SUITE("LocalChartModel") {
       REQUIRE(load4.size() == 27);
       REQUIRE(load4.front().GetStart() == Scalar(74));
       REQUIRE(load4.back().GetEnd() == Scalar(101));
-    }, "unlimited_loads");
+    });
   }
 
   TEST_CASE("loads_from_head") {
-    run_test([=] {
+    run_test([] {
       auto load1 = load(0, 100, SnapshotLimit::FromHead(25));
       REQUIRE(load1.size() == 25);
       REQUIRE(load1.front().GetStart() == Scalar(0));
@@ -104,11 +104,11 @@ TEST_SUITE("LocalChartModel") {
       REQUIRE(load4.size() == 7);
       REQUIRE(load4.front().GetStart() == Scalar(94));
       REQUIRE(load4.back().GetEnd() == Scalar(101));
-    }, "loads_from_head");
+    });
   }
 
   TEST_CASE("loads_from_tail") {
-    run_test([=] {
+    run_test([] {
       auto load1 = load(0, 100, SnapshotLimit::FromTail(25));
       REQUIRE(load1.size() == 25);
       REQUIRE(load1.front().GetStart() == Scalar(76));
@@ -125,11 +125,11 @@ TEST_SUITE("LocalChartModel") {
       REQUIRE(load4.size() == 7);
       REQUIRE(load4.front().GetStart() == Scalar(94));
       REQUIRE(load4.back().GetEnd() == Scalar(101));
-    }, "loads_from_tail");
+    });
   }
 
   TEST_CASE("storing_and_loading") {
-    run_test([=] {
+    run_test([] {
       auto model = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
         {});
       auto load1 = load(&model, 0, 100, SnapshotLimit::Unlimited());
@@ -148,11 +148,11 @@ TEST_SUITE("LocalChartModel") {
       REQUIRE(load4.size() == 20);
       REQUIRE(load4.front().GetStart() == Scalar(10));
       REQUIRE(load4.back().GetEnd() == Scalar(40));
-    }, "storing_and_loading");
+    });
   }
 
   TEST_CASE("merging_data") {
-    run_test([=] {
+    run_test([] {
       auto model1 = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
         {});
       model1.store({make(0, 1), make(2, 3), make(4, 5), make(6, 7),
@@ -170,17 +170,17 @@ TEST_SUITE("LocalChartModel") {
       model2.store({make(1, 2), make(2, 3), make(3, 4)});
       auto load3 = load(&model2, 1, 9, SnapshotLimit::Unlimited());
       REQUIRE(load3 == generate_range(1, 9));
-    }, "merging_data");
+    });
   }
 
   TEST_CASE("coincidental_values") {
-    run_test([=] {
+    run_test([] {
       auto model = create_coincident_model();
       auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
       auto result = std::vector<Candlestick>({make(39, 40), make(39, 40),
         make(39, 40), make(39, 40), make(39, 40), make(40, 41), make(40, 41),
         make(40, 41), make(40, 41), make(40, 41)});
       REQUIRE(model_sticks == result);
-    }, "coincidental_values");
+    });
   }
 }

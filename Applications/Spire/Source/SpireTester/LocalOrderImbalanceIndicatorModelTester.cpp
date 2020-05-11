@@ -38,7 +38,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected = std::vector<OrderImbalance>({A, B});
       REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
         expected.end()));
-    }, "local_publishing_subscribing");
+    });
   }
 
   TEST_CASE("local_single_security_load") {
@@ -59,7 +59,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
         from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
-    }, "local_single_security_load");
+    });
   }
 
   TEST_CASE("local_subscribing_last_value") {
@@ -76,7 +76,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto result3 = model.subscribe([=] (const auto& imbalance) {});
       auto snapshot3 = wait(std::move(result3.m_snapshot));
       REQUIRE(*snapshot3 == B);
-    }, "local_subscribing_last_value");
+    });
   }
 
   TEST_CASE("local_inserting_loading") {
@@ -99,7 +99,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected2 = std::vector<OrderImbalance>({C, D, E});
       REQUIRE(std::is_permutation(data2.begin(), data2.end(), expected2.begin(),
         expected2.end()));
-    }, "local_inserting_loading");
+    });
   }
 
   TEST_CASE("local_disconnection") {
@@ -114,7 +114,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       model.publish(A);
       REQUIRE(slot_data1 == A);
       REQUIRE(slot_data2 == OrderImbalance());
-    }, "local_disconnection");
+    });
   }
 
   TEST_CASE("local_out_of_order_inserting") {
@@ -130,7 +130,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected = std::vector<OrderImbalance>({A, B, C, D});
       REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
         expected.end()));
-    }, "local_out_of_order_inserting");
+    });
   }
 
   TEST_CASE("local_loading_left_open_interval") {
@@ -145,7 +145,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected = std::vector<OrderImbalance>({B, C});
       REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
         expected.end()));
-    }, "local_loading_left_open_interval");
+    });
   }
 
   TEST_CASE("local_loading_right_open_interval") {
@@ -160,7 +160,7 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected = std::vector<OrderImbalance>({A, B});
       REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
         expected.end()));
-    }, "local_loading_right_open_interval");
+    });
   }
 
   TEST_CASE("local_loading_open_interval") {
@@ -175,6 +175,6 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       auto expected = std::vector<OrderImbalance>({B});
       REQUIRE(std::is_permutation(data.begin(), data.end(), expected.begin(),
         expected.end()));
-    }, "local_loading_open_interval");
+    });
   }
 }

@@ -22,13 +22,11 @@ int main(int argc, char** argv) {
   auto action2 = KeyBindings::OrderAction{"Name 2", OrderType::LIMIT,
     Side::BID, TimeInForce(TimeInForce::Type::DAY), 789, {}};
   bindings.set(Qt::Key_F2, region, action2);
-  bindings.set({Qt::Key_Shift, Qt::Key_Escape},
-    Region(Region(Region::Global())), KeyBindings::CancelAction::ALL);
-  bindings.set({Qt::Key_Control, Qt::Key_Escape},
-    Region(Region(Region::Global())),
+  bindings.set({Qt::Key_Shift, Qt::Key_Escape}, Region::Global(),
+    KeyBindings::CancelAction::ALL);
+  bindings.set({Qt::Key_Control, Qt::Key_Escape}, Region::Global(),
     KeyBindings::CancelAction::FURTHEST_ASK);
-  bindings.set({Qt::Key_Alt, Qt::Key_Escape},
-    Region(Region(Region::Global())),
+  bindings.set({Qt::Key_Alt, Qt::Key_Escape}, Region::Global(),
     KeyBindings::CancelAction::CLOSEST_ASK);
   auto input_model = LocalSecurityInputModel();
   input_model.add(SecurityInfo(

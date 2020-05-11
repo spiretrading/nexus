@@ -2,7 +2,6 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Parsers/ReaderParserStream.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Parsers/SecurityParser.hpp"
 
 using namespace Beam;
@@ -12,7 +11,7 @@ using namespace Nexus;
 
 TEST_SUITE("SecurityParser") {
   TEST_CASE("well_formed_security") {
-    auto parser = SecurityParser(GetDefaultMarketDatabase());
+    auto parser = SecurityParser();
     auto stream = ParserStreamFromString("ABX.TSX");
     auto security = Security();
     REQUIRE(parser.Read(stream, security));
@@ -24,7 +23,7 @@ TEST_SUITE("SecurityParser") {
   }
 
   TEST_CASE("upper_case_security") {
-    auto parser = SecurityParser(GetDefaultMarketDatabase());
+    auto parser = SecurityParser();
     auto stream = ParserStreamFromString("aBx.TsX");
     auto security = Security();
     REQUIRE(parser.Read(stream, security));

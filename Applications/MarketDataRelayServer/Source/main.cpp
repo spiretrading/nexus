@@ -14,9 +14,11 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
@@ -252,7 +254,8 @@ int main(int argc, const char** argv) {
   }
   try {
     JsonObject service;
-    service["addresses"] = ToString(serverConnectionInitializer.m_addresses);
+    service["addresses"] = lexical_cast<std::string>(Stream(
+      serverConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(serverConnectionInitializer.m_serviceName,
       service);
   } catch(const std::exception& e) {
