@@ -1,6 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #define SPIRE_KEY_BINDINGS_TABLE_VIEW_HPP
 #include <QHeaderView>
+#include <QSet>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/CustomGridTableView.hpp"
@@ -75,7 +76,7 @@ namespace Spire {
       QWidget* m_delete_buttons_widget;
       std::unordered_map<int, int> m_minimum_column_widths;
       bool m_is_default_cell_selected;
-      std::set<Qt::Key> m_navigation_keys;
+      QSet<Qt::Key> m_navigation_keys;
       bool m_is_editing_cell;
 
       void add_delete_button(int index);

@@ -66,7 +66,7 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
 }
 
 void CustomGridTableView::draw_border(const QModelIndex& index,
-    QPainter* painter) {
+    QPainter* painter) const {
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     painter->setPen(QColor("#4B23A0"));
     auto [pos_y, row_height] = [&] {

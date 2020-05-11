@@ -77,7 +77,7 @@ bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) const {
   }
   for(auto& sequence : m_valid_sequences) {
     for(auto i = std::size_t(0); i < sequence.size(); ++i) {
-      if(sequence[i].find(m_entered_keys[i]) == sequence[i].end()) {
+      if(!sequence[i].contains(m_entered_keys[i])) {
         break;
       }
       if(i == sequence.size() - 1) {

@@ -165,8 +165,6 @@ void KeyBindingsWindow::on_tab_bar_clicked(int index) {
     m_task_keys_table->setFocus();
   } else if(index == 1) {
     m_cancel_keys_table->setFocus();
-  } else if(index == 2) {
-  
   }
 }
 

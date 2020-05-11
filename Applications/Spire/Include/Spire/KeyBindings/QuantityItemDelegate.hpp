@@ -1,5 +1,9 @@
 #ifndef SPIRE_QUANTITY_ITEM_DELEGATE_HPP
 #define SPIRE_QUANTITY_ITEM_DELEGATE_HPP
+#include <QAbstractItemModel>
+#include <QModelIndex>
+#include <QStyleOptionViewItem>
+#include <QWidget>
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include "Spire/Spire/Spire.hpp"
 

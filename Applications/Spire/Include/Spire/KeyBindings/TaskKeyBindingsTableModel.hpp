@@ -90,7 +90,7 @@ namespace Spire {
       std::vector<Action> m_key_bindings;
 
       void insert_row_if_empty(const QModelIndex& index);
-      bool is_row_empty(int row);
+      bool is_row_empty(int row) const;
   };
 }
 

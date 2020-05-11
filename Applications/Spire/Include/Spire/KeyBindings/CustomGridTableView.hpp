@@ -23,7 +23,7 @@ namespace Spire {
     private:
       boost::optional<QPoint> m_last_mouse_pos;
 
-      void draw_border(const QModelIndex& index, QPainter* painter);
+      void draw_border(const QModelIndex& index, QPainter* painter) const;
   };
 }
 

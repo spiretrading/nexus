@@ -25,7 +25,7 @@ namespace Spire {
         \param input_model The input model for editing a binding's securtiy.
         \param parent The parent widget.
       */
-      explicit TaskKeyBindingsTableView(
+      TaskKeyBindingsTableView(
         std::vector<KeyBindings::OrderActionBinding> bindings,
         Beam::Ref<SecurityInputModel> input_model,
         QWidget* parent = nullptr);

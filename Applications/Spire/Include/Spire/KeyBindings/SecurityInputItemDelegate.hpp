@@ -1,5 +1,11 @@
 #ifndef SPIRE_SECURITY_INPUT_ITEM_DELEGATE_HPP
 #define SPIRE_SECURITY_INPUT_ITEM_DELEGATE_HPP
+#include <vector>
+#include <QAbstractItemModel>
+#include <QModelIndex>
+#include <QString>
+#include <QStyleOptionViewItem>
+#include <QWidget>
 #include "Beam/Pointers/Ref.hpp"
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"

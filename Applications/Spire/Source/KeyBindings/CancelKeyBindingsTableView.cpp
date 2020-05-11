@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include <QLabel>
+#include <QSet>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
 #include "Spire/KeyBindings/NameItemDelegate.hpp"
@@ -22,7 +23,7 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_column_width(1, scale_width(616));
   auto default_delegate = new NameItemDelegate(this);
   set_column_delegate(0, default_delegate);
-  auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
+  auto valid_sequences = std::vector<std::vector<QSet<Qt::Key>>>(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
@@ -34,7 +35,7 @@ void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
   m_model = new CancelKeyBindingsTableModel(bindings, this);
   m_model->connect(m_model, &QAbstractItemModel::dataChanged,
-    [=] (auto top_left, auto bottom_right) {
+    [=] (auto top_left, auto) {
       on_key_sequence_modified(top_left);
     });
   set_model(m_model);

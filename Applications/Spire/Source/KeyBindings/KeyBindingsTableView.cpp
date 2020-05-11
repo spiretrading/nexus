@@ -175,8 +175,7 @@ void KeyBindingsTableView::set_width(int width) {
 bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_table && event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(m_navigation_keys.find(static_cast<Qt::Key>(e->key())) !=
-        m_navigation_keys.end()) {
+    if(m_navigation_keys.contains(static_cast<Qt::Key>(e->key()))) {
       auto current_index = [&] {
         if(m_is_default_cell_selected) {
           return get_first_editable_index();

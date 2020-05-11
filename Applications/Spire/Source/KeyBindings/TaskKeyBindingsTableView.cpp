@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
+#include <QSet>
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Region.hpp"
@@ -25,7 +26,7 @@ using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
 namespace {
   const auto& FUNCTION_KEYS() {
-    static auto function_keys = std::set<Qt::Key>({
+    static auto function_keys = QSet<Qt::Key>({
       Qt::Key_F1,
       Qt::Key_F2,
       Qt::Key_F3,
@@ -77,7 +78,7 @@ TaskKeyBindingsTableView::TaskKeyBindingsTableView(
   set_column_delegate(4, new SideItemDelegate(this));
   set_column_delegate(5, new QuantityItemDelegate(this));
   set_column_delegate(6, new TimeInForceItemDelegate(this));
-  auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
+  auto valid_sequences = std::vector<std::vector<QSet<Qt::Key>>>(
     {ValidSequence({FUNCTION_KEYS()}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     FUNCTION_KEYS()})});

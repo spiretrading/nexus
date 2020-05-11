@@ -1,6 +1,6 @@
 #ifndef SPIRE_KEY_SEQUENCE_EDITOR_HPP
 #define SPIRE_KEY_SEQUENCE_EDITOR_HPP
-#include <set>
+#include <QSet>
 #include <QLineEdit>
 #include "Spire/Ui/Ui.hpp"
 
@@ -12,7 +12,7 @@ namespace Spire {
 
       //! Represents a valid key sequence, where the nth set in the list
       //! represents the nth key of a potential valid sequence.
-      using ValidKeySequence = std::vector<std::set<Qt::Key>>;
+      using ValidKeySequence = std::vector<QSet<Qt::Key>>;
 
       //! Constructs a KeySequenceEditor.
       /*

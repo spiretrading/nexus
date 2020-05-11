@@ -32,7 +32,7 @@ namespace Spire {
         \param initial_text The initial text to display in the line edit.
         \param parent The parent to this widget.
       */
-      explicit SecurityInputBox(Beam::Ref<SecurityInputModel> model,
+      SecurityInputBox(Beam::Ref<SecurityInputModel> model,
         const QString& initial_text, QWidget* parent = nullptr);
 
       //! Connects a slot to the commit signal.
