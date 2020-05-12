@@ -46,8 +46,8 @@ void KeyBindings::set(QKeySequence sequence, const Region& region,
     });
   if(i == m_bindings.end()) {
     auto binding = KeyBindingMapping{sequence, Actions(boost::none)};
+    binding.m_actions.Set(region, action);
     m_bindings.push_back(std::move(binding));
-    m_bindings.back().m_actions.Set(region, action);
   } else {
     i->m_actions.Set(region, action);
   }

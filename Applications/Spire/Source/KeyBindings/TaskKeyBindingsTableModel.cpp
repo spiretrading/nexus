@@ -14,7 +14,7 @@ namespace {
   const auto COLUMN_COUNT = 9;
 
   QVariant to_variant(const any& value) {
-    const auto& type = value.type();
+    auto& type = value.type();
     if(type == typeid(Quantity)) {
       return QVariant::fromValue(any_cast<Quantity>(value));
     } else if(type == typeid(Region)) {
@@ -32,7 +32,7 @@ namespace {
   }
 
   bool is_same_value(const QVariant& value, const QModelIndex& index) {
-    const auto data = index.data();
+    auto data = index.data();
     switch(static_cast<TaskKeyBindingsTableModel::Columns>(index.column())) {
       case Columns::NAME:
         return value.value<QString>() == data.value<QString>();
@@ -91,7 +91,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
   }
   if(role == Qt::DisplayRole &&
       static_cast<std::size_t>(index.row()) < m_key_bindings.size()) {
-    const auto& binding = m_key_bindings[index.row()];
+    auto binding = m_key_bindings[index.row()];
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
         return QString::fromStdString(binding.m_action.m_name);

@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_SEQUENCE_EDITOR_HPP
 #define SPIRE_KEY_SEQUENCE_EDITOR_HPP
-#include <QSet>
 #include <QLineEdit>
+#include <QSet>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
