@@ -1,6 +1,6 @@
 #include "Spire/Charting/CachedChartModel.hpp"
+#include <algorithm>
 #include <boost/range/adaptor/reversed.hpp>
-#include "Spire/Spire/Utility.hpp"
 
 using namespace Beam::Queries;
 using namespace boost;
@@ -51,7 +51,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
             load_first = range.upper();
           }
           if(exclusive_less(first, range)) {
-            load_last = min(load_last, range.lower());
+            load_last = std::min(load_last, range.lower());
             break;
           }
         }
@@ -59,7 +59,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_from_cache(
         for(auto& range : reverse(m_ranges)) {
           auto last = continuous_interval<Scalar>::closed(load_last, load_last);
           if(last > range) {
-            load_first = max(load_first, range.upper());
+            load_first = std::max(load_first, range.upper());
             break;
           }
           if(intersects(last, range)) {
@@ -131,11 +131,11 @@ void CachedChartModel::on_data_loaded(const std::vector<Candlestick>& data,
       info.m_last));
   } else if(info.m_limit.GetType() == SnapshotLimit::Type::HEAD) {
     auto range = continuous_interval<Scalar>::right_open(info.m_first,
-      min(data.back().GetEnd(), info.m_last));
+      std::min(data.back().GetEnd(), info.m_last));
     on_data_loaded(data, range);
   } else {
     auto range = continuous_interval<Scalar>::left_open(
-      max(data.front().GetStart(), info.m_first), info.m_last);
+      std::max(data.front().GetStart(), info.m_first), info.m_last);
     on_data_loaded(data, range);
   }
 }

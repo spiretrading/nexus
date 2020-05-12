@@ -1,5 +1,6 @@
 #ifndef SPIRE_UTILITY_HPP
 #define SPIRE_UTILITY_HPP
+#include <cmath>
 #include <QObject>
 
 namespace Spire {
@@ -14,34 +15,6 @@ namespace Spire {
       object->deleteLater();
       object = nullptr;
     }
-  }
-
-  //! Returns the minimum of the given parameters. Returns the first given
-  //! parameter if they are equal.
-  /*!
-    \param first The first value to compare.
-    \param second The second value to compare.
-  */
-  template<typename T>
-  T min(const T& first, const T& second) {
-    if(second < first) {
-      return second;
-    }
-    return first;
-  }
-
-  //! Returns the maximum of the given parameters. Returns the first given
-  //! parameter if they are equal.
-  /*!
-    \param first The first value to compare.
-    \param second The second value to compare.
-  */
-  template<typename T>
-  T max(const T& first, const T& second) {
-    if(first < second) {
-      return second;
-    }
-    return first;
   }
 
   //! Calculates a value from a second interval as a relative equivalent of a
@@ -89,8 +62,8 @@ namespace Spire {
   */
   template<typename T>
   int map_to(T value, T a, T b, int c, int d) {
-    return static_cast<int>(
-      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d)));
+    return static_cast<int>(std::round(
+      map_to(value, a, b, static_cast<double>(c), static_cast<double>(d))));
   }
 }
 

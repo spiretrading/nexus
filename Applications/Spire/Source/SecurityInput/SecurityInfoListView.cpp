@@ -1,8 +1,8 @@
 #include "Spire/SecurityInput/SecurityInfoListView.hpp"
+#include <algorithm>
 #include <QVBoxLayout>
 #include "Spire/SecurityInput/SecurityInfoWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
@@ -62,7 +62,7 @@ void SecurityInfoListView::set_list(const std::vector<SecurityInfo>& list) {
     return;
   }
   auto item_height = m_list_widget->layout()->itemAt(0)->widget()->height();
-  auto h = min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
+  auto h = std::min(MAX_VISIBLE_ITEMS, m_list_widget->layout()->count()) *
     item_height;
   setFixedHeight(h + scale_width(1));
 }

@@ -1,5 +1,5 @@
 #include "Spire/Charting/TrendLineModel.hpp"
-#include "Spire/Spire/Utility.hpp"
+#include <algorithm>
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -88,7 +88,7 @@ int TrendLineModel::find_closest(const ChartPoint& point) const {
           calculate_y(line_slope, line_point_x, line_b)});
       }
     }
-    auto min_distance_squared = min(dist_squared, point_distance_squared);
+    auto min_distance_squared = std::min(dist_squared, point_distance_squared);
     if(min_distance_squared < closest_distance) {
       closest_id = line.m_id;
       closest_distance = min_distance_squared;

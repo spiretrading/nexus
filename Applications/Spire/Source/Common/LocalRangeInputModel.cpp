@@ -1,5 +1,5 @@
 #include "Spire/Spire/LocalRangeInputModel.hpp"
-#include "Spire/Spire/Utility.hpp"
+#include <algorithm>
 
 using namespace Nexus;
 using namespace Spire;
@@ -13,8 +13,8 @@ LocalRangeInputModel::LocalRangeInputModel(std::vector<Scalar> data)
     m_minimum_value = m_data.front();
     m_maximum_value = m_data.front();
     for(auto& value : m_data) {
-      m_minimum_value = min(value, m_minimum_value);
-      m_maximum_value = max(value, m_maximum_value);
+      m_minimum_value = std::min(value, m_minimum_value);
+      m_maximum_value = std::max(value, m_maximum_value);
     }
   }
 }
@@ -35,12 +35,11 @@ RangeInputModel::Histogram
   auto histogram = std::vector<int>(bin_count, 0);
   auto highest_frequency = 0;
   for(auto& value : m_data) {
-    auto index =
-      static_cast<int>((value - m_minimum_value) /
+    auto index = static_cast<int>((value - m_minimum_value) /
       (m_maximum_value - m_minimum_value) * bin_count);
-    index = min(bin_count - 1, index);
+    index = std::min(bin_count - 1, index);
     histogram[index]++;
-    highest_frequency = max(histogram[index], highest_frequency);
+    highest_frequency = std::max(histogram[index], highest_frequency);
   }
   return {histogram, highest_frequency};
 }

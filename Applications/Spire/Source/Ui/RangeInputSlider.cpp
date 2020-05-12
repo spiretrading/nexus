@@ -1,8 +1,9 @@
 #include "Spire/Ui/RangeInputSlider.hpp"
+#include <algorithm>
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
-#include "spire/Spire/Utility.hpp"
+#include "Spire/Spire/Utility.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -95,15 +96,15 @@ void RangeInputSlider::mouseMoveEvent(QMouseEvent* event) {
     m_current_max_value = rounded_value(map_x_to_value(m_max_handle_x));
     m_max_changed_signal(m_current_max_value);
   } else if(m_is_dragging_min) {
-    auto pos_x = max(RANGE_MARGIN(), x - m_mouse_offset);
-    pos_x = min(pos_x, m_max_handle_x);
+    auto pos_x = std::min(std::max(RANGE_MARGIN(), x - m_mouse_offset),
+      m_max_handle_x);
     m_min_handle_x = pos_x;
     m_current_min_value = rounded_value(map_x_to_value(m_min_handle_x));
     m_min_changed_signal(m_current_min_value);
   } else if(m_is_dragging_max) {
-    auto pos_x = min(x - m_mouse_offset,
+    auto pos_x = std::min(x - m_mouse_offset,
       width() - MARGIN() - HANDLE_SIZE());
-    pos_x = max(m_min_handle_x, pos_x);
+    pos_x = std::max(m_min_handle_x, pos_x);
     m_max_handle_x = pos_x;
     m_current_max_value = rounded_value(map_x_to_value(m_max_handle_x));
     m_max_changed_signal(m_current_max_value);

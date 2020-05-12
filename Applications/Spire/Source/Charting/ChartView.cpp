@@ -1,4 +1,5 @@
 #include "Spire/Charting/ChartView.hpp"
+#include <algorithm>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QFontMetrics>
 #include <QPainter>
@@ -348,23 +349,26 @@ void ChartView::paintEvent(QPaintEvent* event) {
       if(open.x() < m_bottom_right_pixel.x() && high <
           m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(open.x(), high),
-          QPoint(open.x(), min(low, m_bottom_right_pixel.y() - 1))),
+          QPoint(open.x(), std::min(low, m_bottom_right_pixel.y() - 1))),
           QColor("#A0A0A0"));
       }
       if(open.y() > close.y() && close.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect(QPoint(start_x, close.y()),
-          QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          min(open.y(), m_bottom_right_pixel.y() - 1))), QColor("#8AF5C0"));
+          QPoint(std::min(end_x - 1, m_bottom_right_pixel.x() - 1),
+          std::min(open.y(), m_bottom_right_pixel.y() - 1))),
+          QColor("#8AF5C0"));
         painter.fillRect(QRect(QPoint(start_x + 1, close.y() + 1),
-          QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
-          min(open.y() - 1, m_bottom_right_pixel.y() - 1))), QColor("#1FD37A"));
+          QPoint(std::min(end_x - 2, m_bottom_right_pixel.x() - 1),
+          std::min(open.y() - 1, m_bottom_right_pixel.y() - 1))),
+          QColor("#1FD37A"));
       } else if(open.y() < m_bottom_right_pixel.y()) {
         painter.fillRect(QRect({start_x, open.y()},
-          QPoint(min(end_x - 1, m_bottom_right_pixel.x() - 1),
-          min(close.y(), m_bottom_right_pixel.y() - 1))), QColor("#FFA7A0"));
+          QPoint(std::min(end_x - 1, m_bottom_right_pixel.x() - 1),
+          std::min(close.y(), m_bottom_right_pixel.y() - 1))),
+          QColor("#FFA7A0"));
         painter.fillRect(QRect(QPoint(start_x + 1, open.y() + 1),
-          QPoint(min(end_x - 2, m_bottom_right_pixel.x() - 1),
-          min(close.y() - 1, m_bottom_right_pixel.y() - 1))),
+          QPoint(std::min(end_x - 2, m_bottom_right_pixel.x() - 1),
+          std::min(close.y() - 1, m_bottom_right_pixel.y() - 1))),
           QColor("#EF5357"));
       }
     }
@@ -485,18 +489,18 @@ QPoint ChartView::to_pixel(const Region& region, const QSize& size,
   for(auto& gap : gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       auto new_x = to_pixel(region, size, gaps, {gap.m_start, Scalar()}).x() +
-        static_cast<int>((GAP_WIDTH() * (point.m_x - gap.m_start)) /
-        (gap.m_end - gap.m_start));
+        static_cast<int>(std::round((GAP_WIDTH() * (point.m_x - gap.m_start)) /
+        (gap.m_end - gap.m_start)));
       return {new_x, y};
     }
     if(gap.m_end >= region.m_top_left.m_x && point.m_x > gap.m_start) {
-      auto visible_start = max(gap.m_start, region.m_top_left.m_x);
+      auto visible_start = std::max(gap.m_start, region.m_top_left.m_x);
       auto gap_start = map_to(visible_start, region.m_top_left.m_x,
         region.m_bottom_right.m_x, 0, size.width());
       auto gap_end = map_to(gap.m_end, region.m_top_left.m_x,
         region.m_bottom_right.m_x, 0, size.width());
-      x -= gap_end - gap_start - static_cast<int>(GAP_WIDTH() *
-        ((gap.m_end - visible_start) / (gap.m_end - gap.m_start)));
+      x -= gap_end - gap_start - static_cast<int>(std::round(GAP_WIDTH() *
+        ((gap.m_end - visible_start) / (gap.m_end - gap.m_start))));
     }
   }
   return {x, y};
@@ -592,11 +596,10 @@ void ChartView::draw_gap(QPainter& painter, int start, int end) {
     painter.drawLine(end, m_bottom_right_pixel.y(), end,
       m_bottom_right_pixel.y() + scale_height(2));
   }
-  end = min(end, m_bottom_right_pixel.x());
+  end = std::min(end, m_bottom_right_pixel.x());
   painter.setPen("#8C8C8C");
-  auto slash_count = (static_cast<double>(end) - static_cast<double>(start)) /
-    (static_cast<double>(scale_width(4)) +
-    static_cast<double>(scale_width(1))) - 1.0;
+  auto slash_count = static_cast<double>(end - start) /
+    (scale_width(4) + scale_width(1)) - 1.0;
   auto padding = std::fmod(slash_count, scale_width(4) + scale_width(1)) / 2;
   auto x = start + static_cast<int>(padding) + scale_width(1);
   for(auto i = 0; i < slash_count; ++i) {
@@ -650,8 +653,8 @@ void ChartView::update_auto_scale() {
   auto auto_scale_top = m_candlesticks.front().GetHigh();
   auto auto_scale_bottom = m_candlesticks.front().GetLow();
   for(auto& candle : m_candlesticks) {
-    auto_scale_top = max(auto_scale_top, candle.GetHigh());
-    auto_scale_bottom = min(auto_scale_bottom, candle.GetLow());
+    auto_scale_top = std::max(auto_scale_top, candle.GetHigh());
+    auto_scale_bottom = std::min(auto_scale_bottom, candle.GetLow());
   }
   m_region.m_top_left.m_y = auto_scale_top;
   m_region.m_bottom_right.m_y = auto_scale_bottom;
@@ -744,11 +747,11 @@ void ChartView::update_origins() {
     auto origin = width() - (m_font_metrics.horizontalAdvance("M") * (
       m_item_delegate->displayText(to_variant(m_model->get_y_axis_type(),
       y_value), QLocale()).length()) - scale_width(4));
-    m_bottom_right_pixel.setX(min(m_bottom_right_pixel.x(), origin));
+    m_bottom_right_pixel.setX(std::min(m_bottom_right_pixel.x(), origin));
     y_value += m_y_axis_step;
   }
-  m_bottom_right_pixel.setY(height() - (m_font_metrics.height() +
-    scale_height(9)));
+  m_bottom_right_pixel.setY(height() - m_font_metrics.height() -
+    scale_height(9));
 }
 
 void ChartView::update_selected_line_styles() {

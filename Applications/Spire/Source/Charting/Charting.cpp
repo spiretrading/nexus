@@ -1,5 +1,5 @@
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Spire/Utility.hpp"
+#include <algorithm>
 
 using namespace Spire;
 
@@ -37,7 +37,6 @@ double Spire::calculate_y(double m, double x, double b) {
 
 double Spire::closest_point_distance_squared(QPointF point,
     const QPointF& first, const QPointF& second) {
-  auto pt1_distance = distance_squared(point, first);
-  auto pt2_distance = distance_squared(point, second);
-  return min(pt1_distance, pt2_distance);
+  return std::min(distance_squared(point, first),
+    distance_squared(point, second));
 }

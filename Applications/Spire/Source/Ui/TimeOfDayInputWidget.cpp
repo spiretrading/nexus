@@ -1,8 +1,8 @@
 #include "Spire/Ui/TimeOfDayInputWidget.hpp"
+#include <algorithm>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QRegularExpressionValidator>
-#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/ColonWidget.hpp"
 #include "Spire/Ui/DropDownMenu.hpp"
 
@@ -150,7 +150,7 @@ QString TimeOfDayInputWidget::clamped_value(const QString& text, int min_value,
   auto value = text.toInt(&ok);
   if(ok) {
     value += addend;
-    value = min(max_value, max(min_value, value));
+    value = std::min(max_value, std::max(min_value, value));
     if(value < 10) {
       return QString("0" + QString::number(value));
     }
