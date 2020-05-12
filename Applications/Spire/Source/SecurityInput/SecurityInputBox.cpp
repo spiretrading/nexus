@@ -34,10 +34,13 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   auto layout = new QHBoxLayout(this);
   layout->setMargin(scale_width(1));
   layout->setSpacing(0);
-  m_security_line_edit = new SecurityInputLineEdit(initial_text, model, true,
-    this);
-  m_security_line_edit->connect_commit_signal([=] (auto& s) { on_commit(s); });
-  m_security_line_edit->installEventFilter(this);
+  m_security_line_edit = [&] {
+    auto line_edit = new SecurityInputLineEdit(initial_text, model, true,
+      this);
+    line_edit->connect_commit_signal([=] (auto& s) { on_commit(s); });
+    line_edit->installEventFilter(this);
+    return line_edit;
+  }();
   layout->addWidget(m_security_line_edit);
   setFocusProxy(m_security_line_edit);
 }

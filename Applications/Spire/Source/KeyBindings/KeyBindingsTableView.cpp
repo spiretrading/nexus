@@ -60,10 +60,39 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     &KeyBindingsTableView::on_header_resize);
   connect(m_header, &QHeaderView::sectionMoved, this,
     &KeyBindingsTableView::on_header_move);
-  m_table = new CustomGridTableView(main_widget);
-  m_table->installEventFilter(this);
-  m_table->viewport()->installEventFilter(this);
-  m_table->viewport()->setMouseTracking(true);
+  m_table = [&] {
+    auto table = new CustomGridTableView(main_widget);
+    auto table_padding_left = [&] {
+      if(m_can_delete_rows) {
+        return 0;
+      }
+      return TABLE_PADDING();
+    }();
+    table->setStyleSheet(QString(R"(
+      QTableView {
+        background-color: #FFFFFF;
+        font-family: Roboto;
+        font-size: %1px;
+        gridline-color: #C8C8C8;
+        outline: 0;
+        padding-bottom: %2px;
+      })").arg(scale_height(12)).arg(scale_height(8)));
+    table->setFrameShape(QFrame::NoFrame);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->horizontalHeader()->hide();
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    table->horizontalHeader()->setStretchLastSection(
+      m_header->stretchLastSection());
+    table->verticalHeader()->setDefaultSectionSize(scale_height(26));
+    table->verticalHeader()->hide();
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
+    table->viewport()->setMouseTracking(true);
+    table->installEventFilter(this);
+    table->viewport()->installEventFilter(this);
+    return table;
+  }();
   if(m_can_delete_rows) {
     m_header->move(HEADER_PADDING(), 0);
     m_table->move(DELETE_ROW_LAYOUT_WIDTH(), m_header->height());
@@ -77,34 +106,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
   } else {
     m_table->move(TABLE_PADDING(), m_header->height());
   }
-  auto table_padding_left = [&] {
-    if(m_can_delete_rows) {
-      return 0;
-    }
-    return TABLE_PADDING();
-  }();
-  m_table->setStyleSheet(QString(R"(
-    QTableView {
-      background-color: #FFFFFF;
-      font-family: Roboto;
-      font-size: %1px;
-      gridline-color: #C8C8C8;
-      outline: 0;
-      padding-bottom: %2px;
-    })").arg(scale_height(12)).arg(scale_height(8)));
-  m_table->setFrameShape(QFrame::NoFrame);
-  m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &KeyBindingsTableView::on_horizontal_slider_value_changed);
-  m_table->horizontalHeader()->hide();
-  m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-  m_table->horizontalHeader()->setStretchLastSection(
-    m_header->stretchLastSection());
-  m_table->verticalHeader()->setDefaultSectionSize(scale_height(26));
-  m_table->verticalHeader()->hide();
-  m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-  m_table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
   connect(m_table, &QTableView::clicked, this,
     &KeyBindingsTableView::on_cell_activated);
   connect(m_table, &QTableView::activated, this,
