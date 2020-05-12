@@ -564,7 +564,7 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
           ChartPoint(candlesticks.back().GetEnd(), Scalar())).x();
       }();
       auto remaining_position = m_bottom_right_pixel.x() - position;
-      if(remaining_position >= 0) {
+      if(remaining_position > 0) {
         if(position >= 0) {
           region.m_bottom_right.m_x = candlesticks.back().GetEnd() +
             remaining_position * density;
@@ -818,9 +818,14 @@ void ChartView::on_right_mouse_button_press() {
 
 void Spire::translate(ChartView& view, const QPoint& offset) {
   auto region = view.get_region();
-  auto delta = view.to_chart_point(offset) - region.m_top_left;
-  region.m_top_left.m_x -= delta.m_x;
-  region.m_bottom_right.m_x -= delta.m_x;
+  auto delta = [&] {
+    if(offset.x() <= 0) {
+      return view.to_chart_point({-offset.x(), offset.y()}) - region.m_top_left;
+    }
+    return region.m_top_left;
+  }();
+  region.m_top_left.m_x += delta.m_x;
+  region.m_bottom_right.m_x += delta.m_x;
   view.set_region(region);
 }
 

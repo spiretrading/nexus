@@ -39,16 +39,16 @@ int main(int argc, char** argv) {
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(
         security);
       window->set_models(chart_model, technicals_model);
-/*
       window->m_chart->set_region(ChartView::Region{ChartPoint(
         Scalar(ptime(d, time_duration(0, 59, 0))), Scalar(10 * Money::ONE)),
         ChartPoint(Scalar(ptime(d, time_duration(2, 39, 0))),
         Scalar(Money::ZERO))});
-*/
+/*
       window->m_chart->set_region(ChartView::Region{ChartPoint(
         Scalar(ptime(d, time_duration(10, 50, 0))), Scalar(10 * Money::ONE)),
         ChartPoint(Scalar(ptime(d, time_duration(13, 30, 0))),
         Scalar(Money::ZERO))});
+*/
     });
   window->show();
   application->exec();
