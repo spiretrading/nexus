@@ -89,6 +89,11 @@ namespace {
     qDebug() << CustomVariantItemDelegate().displayText(
       QVariant::fromValue(static_cast<ptime>(x)));
   }
+
+  void boo(Scalar x) {
+    qDebug() << CustomVariantItemDelegate().displayText(
+      QVariant::fromValue(static_cast<time_duration>(x)));
+  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
@@ -206,6 +211,9 @@ const ChartView::Region& ChartView::get_region() const {
 }
 
 void ChartView::set_region(const Region& region) {
+  if(region == m_region) {
+    return;
+  }
   commit_region(region);
   m_region_updates = m_region_updates.then([=] (auto&& result) {
     m_model->load(get_lowest(m_model->get_x_axis_type()), region.m_top_left.m_x,
@@ -849,15 +857,26 @@ void ChartView::on_right_mouse_button_press() {
 }
 
 void Spire::translate(ChartView& view, const QPoint& offset) {
+  if(offset.x() == 0) {
+    return;
+  }
+  qDebug() << "Offset:";
+  qDebug() << offset;
   auto region = view.get_region();
-  auto delta = [&] {
-    if(offset.x() <= 0) {
-      return view.to_chart_point({-offset.x(), offset.y()}) - region.m_top_left;
-    }
-    return region.m_top_left;
-  }();
-  region.m_top_left.m_x += delta.m_x;
-  region.m_bottom_right.m_x += delta.m_x;
+  qDebug() << "Region:";
+  foo(region.m_top_left.m_x);
+  foo(region.m_bottom_right.m_x);
+  qDebug() << "Next:";
+  foo(view.to_chart_point({-offset.x(), 0}).m_x);
+  auto delta = view.to_chart_point({-offset.x(), 0}).m_x -
+    region.m_top_left.m_x;
+  qDebug() << "Delta";
+  boo(delta);
+  region.m_top_left.m_x += delta;
+  region.m_bottom_right.m_x += delta;
+  qDebug() << "Final:";
+  foo(region.m_top_left.m_x);
+  foo(region.m_bottom_right.m_x);
   view.set_region(region);
 }
 

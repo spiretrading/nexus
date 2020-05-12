@@ -188,8 +188,6 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<ptime>()) {
     auto time_value = ToLocalTime(value.value<ptime>());
-    auto a = to_simple_string(value.value<ptime>());
-    auto b = to_simple_string(time_value);
     auto currentTime = ToLocalTime(
       boost::posix_time::second_clock::universal_time());
     if(time_value.date() == currentTime.date()) {
@@ -197,6 +195,9 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     } else {
       return QString::fromStdString(to_simple_string(time_value));
     }
+  } else if(value.canConvert<posix_time::time_duration>()) {
+    return QString::fromStdString(to_simple_string(
+      value.value<posix_time::time_duration>()));
   } else if(value.canConvert<CurrencyId>()) {
     auto& entry = GetDefaultCurrencyDatabase().FromId(
       value.value<CurrencyId>());
