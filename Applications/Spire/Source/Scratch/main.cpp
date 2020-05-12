@@ -21,7 +21,10 @@ int main(int argc, char** argv) {
   initialize_resources();
   LocalSecurityInputModel model;
   model.add(SecurityInfo(
-    Security("MSFT", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
+    Security("A", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
+    "Microsoft Corp", "Software", 100));
+  model.add(SecurityInfo(
+    Security("B", DefaultMarkets::NASDAQ(), DefaultCountries::US()),
     "Microsoft Corp", "Software", 100));
   auto window = new ChartingWindow(Ref(model));
   window->connect_security_change_signal(

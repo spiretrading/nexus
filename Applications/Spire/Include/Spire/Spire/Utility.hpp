@@ -29,6 +29,9 @@ namespace Spire {
   */
   template<typename T, typename U>
   U map_to(T value, T a, T b, U c, U d) {
+    if(value - a == a - a) {
+      return c;
+    }
     return static_cast<U>((value - a) / (b - a) * (d - c) + c);
   }
 
