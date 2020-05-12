@@ -170,8 +170,10 @@ namespace Spire {
       std::optional<LineMouseOffset> m_line_mouse_offset;
       std::vector<Gap> m_gaps;
 
+      static QPoint to_pixel(const Region& region, const QSize& size,
+        const std::vector<Gap>& gaps, const ChartPoint& point);
       void commit_region(const Region& region);
-      QtPromise<void> load_region(Region region, Scalar density, int x,
+      QtPromise<void> load_region(Region region, Scalar density,
         std::vector<Candlestick> candlesticks, std::vector<Gap> gaps);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,

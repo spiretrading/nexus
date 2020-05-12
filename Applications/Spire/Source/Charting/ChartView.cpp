@@ -133,7 +133,7 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
         return map_to(point.x(), lower_x_pixel, gap_start_pixel,
           lower_x_chart_value, gap.m_start);
       }
-      auto gap_end_pixel = to_pixel({gap.m_end, y}).x();
+      auto gap_end_pixel = gap_start_pixel + GAP_WIDTH() - 1;
       if(point.x() < gap_end_pixel) {
         return map_to(point.x(), gap_start_pixel, gap_end_pixel,
           gap.m_start, gap.m_end);
@@ -148,35 +148,8 @@ ChartPoint ChartView::to_chart_point(const QPoint& point) const {
 }
 
 QPoint ChartView::to_pixel(const ChartPoint& point) const {
-  if(point.m_x < m_region.m_top_left.m_x) {
-    auto adjusted_region = Region{{point.m_x, m_region.m_top_left.m_y},
-      {point.m_x + (m_region.m_bottom_right.m_x - m_region.m_top_left.m_x),
-      m_region.m_bottom_right.m_y}};
-    std::swap(adjusted_region, const_cast<Region&>(m_region));
-    auto adjusted_point = to_pixel({adjusted_region.m_top_left.m_x, point.m_y});
-    std::swap(adjusted_region, const_cast<Region&>(m_region));
-    return {-adjusted_point.x(), adjusted_point.y()};
-  }
-  auto x = map_to(point.m_x, m_region.m_top_left.m_x,
-    m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-  auto y = map_to(point.m_y, m_region.m_bottom_right.m_y,
-    m_region.m_top_left.m_y, m_bottom_right_pixel.y(), 0);
-  for(auto& gap : m_gaps) {
-    if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
-      auto new_x = to_pixel({gap.m_start, Scalar()}).x() +
-        static_cast<int>((GAP_WIDTH() * (point.m_x - gap.m_start)) /
-        (gap.m_end - gap.m_start));
-      return {new_x, y};
-    }
-    if(point.m_x > gap.m_start) {
-      auto gap_start = map_to(gap.m_start, m_region.m_top_left.m_x,
-        m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-      auto gap_end = map_to(gap.m_end, m_region.m_top_left.m_x,
-        m_region.m_bottom_right.m_x, 0, m_bottom_right_pixel.x());
-      x -= gap_end - gap_start - GAP_WIDTH();
-    }
-  }
-  return {x, y};
+  return to_pixel(m_region,
+    QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), m_gaps, point);
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
@@ -260,19 +233,7 @@ void ChartView::set_region(const Region& region) {
           std::vector<Candlestick> left_candlestick) {
         auto density = (region.m_bottom_right.m_x - region.m_top_left.m_x) /
           m_bottom_right_pixel.x();
-        auto x = [&] {
-          if(left_candlestick.empty()) {
-            return 0;
-          } else {
-
-            // TODO: This starting point is a huge negative number because it
-            // assumes no gaps.
-            return map_to(left_candlestick.back().GetEnd(),
-              region.m_top_left.m_x, region.m_bottom_right.m_x, 0,
-              m_bottom_right_pixel.x());
-          }
-        }();
-        return load_region(region, density, x, std::move(left_candlestick), {});
+        return load_region(region, density, std::move(left_candlestick), {});
       });
   });
 }
@@ -507,6 +468,40 @@ void ChartView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+QPoint ChartView::to_pixel(const Region& region, const QSize& size,
+    const std::vector<Gap>& gaps, const ChartPoint& point) {
+  if(point.m_x < region.m_top_left.m_x) {
+    auto adjusted_region = Region{{point.m_x, point.m_y},
+      {point.m_x + (region.m_bottom_right.m_x - region.m_top_left.m_x),
+       point.m_y + (region.m_bottom_right.m_y - region.m_top_left.m_y)}};
+    auto adjusted_point = to_pixel(adjusted_region, size, gaps,
+      {region.m_top_left.m_x, region.m_top_left.m_y});
+    return {-adjusted_point.x(), -adjusted_point.y()};
+  }
+  auto x = map_to(point.m_x, region.m_top_left.m_x, region.m_bottom_right.m_x,
+    0, size.width());
+  auto y = map_to(point.m_y, region.m_bottom_right.m_y, region.m_top_left.m_y,
+    size.height(), 0);
+  for(auto& gap : gaps) {
+    if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
+      auto new_x = to_pixel(region, size, gaps, {gap.m_start, Scalar()}).x() +
+        static_cast<int>((GAP_WIDTH() * (point.m_x - gap.m_start)) /
+        (gap.m_end - gap.m_start));
+      return {new_x, y};
+    }
+    if(gap.m_end >= region.m_top_left.m_x && point.m_x > gap.m_start) {
+      auto visible_start = max(gap.m_start, region.m_top_left.m_x);
+      auto gap_start = map_to(visible_start, region.m_top_left.m_x,
+        region.m_bottom_right.m_x, 0, size.width());
+      auto gap_end = map_to(gap.m_end, region.m_top_left.m_x,
+        region.m_bottom_right.m_x, 0, size.width());
+      x -= gap_end - gap_start - static_cast<int>(GAP_WIDTH() *
+        ((gap.m_end - visible_start) / (gap.m_end - gap.m_start)));
+    }
+  }
+  return {x, y};
+}
+
 void ChartView::commit_region(const Region& region) {
   m_region = region;
   if(m_is_auto_scaled) {
@@ -517,7 +512,7 @@ void ChartView::commit_region(const Region& region) {
 }
 
 QtPromise<void> ChartView::load_region(Region region, Scalar density,
-    int x, std::vector<Candlestick> candlesticks, std::vector<Gap> gaps) {
+    std::vector<Candlestick> candlesticks, std::vector<Gap> gaps) {
   auto start = [&] {
     if(candlesticks.empty()) {
       return region.m_top_left.m_x;
@@ -540,43 +535,42 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
       return QtPromise(std::move(next_candlesticks));
     }).then([=, candlesticks = std::move(candlesticks)] (
         std::vector<Candlestick> next_candlesticks) mutable {
-      if(!next_candlesticks.empty()) {
-        auto i = candlesticks.size();
-        candlesticks.insert(candlesticks.end(),
-          std::make_move_iterator(next_candlesticks.begin()),
-          std::make_move_iterator(next_candlesticks.end()));
-        while(i != candlesticks.size()) {
-          auto& candlestick = candlesticks[i];
-          if(i != 0 && candlestick.GetStart() != candlesticks[i - 1].GetEnd()) {
-            auto gap = Gap{candlesticks[i - 1].GetEnd(),
-              candlestick.GetStart()};
-            gaps.push_back(gap);
-            x += GAP_WIDTH();
-            auto gap_width = gap.m_end - gap.m_start;
-
-            // TODO: This only needs to be applied if x >= 0.
-            qDebug() << "Xtend";
-            foo(region.m_bottom_right.m_x);
-            foo(gap_width - GAP_WIDTH() * density);
-            region.m_bottom_right.m_x += gap_width - GAP_WIDTH() * density;
-          }
-          x += static_cast<int>(std::ceil(
-            (candlestick.GetEnd() - candlestick.GetStart()) / density));
-          ++i;
+      auto i = candlesticks.size();
+      candlesticks.insert(candlesticks.end(),
+        std::make_move_iterator(next_candlesticks.begin()),
+        std::make_move_iterator(next_candlesticks.end()));
+      while(i != candlesticks.size()) {
+        auto& candlestick = candlesticks[i];
+        if(i != 0 && candlestick.GetStart() != candlesticks[i - 1].GetEnd()) {
+          auto gap = Gap{candlesticks[i - 1].GetEnd(),
+            candlestick.GetStart()};
+          gaps.push_back(gap);
         }
-      } else {
-        x = m_bottom_right_pixel.x() + 1;
+        ++i;
       }
-      if(x <= m_bottom_right_pixel.x()) {
-        return load_region(region, density, x, std::move(candlesticks),
+      auto position = [&] {
+        if(next_candlesticks.empty()) {
+          return m_bottom_right_pixel.x() + 1;
+        }
+        auto base_region = Region{region.m_top_left,
+          {region.m_top_left.m_x + m_bottom_right_pixel.x() * density,
+           region.m_bottom_right.m_y}};
+        return to_pixel(base_region,
+          QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), gaps,
+          ChartPoint(candlesticks.back().GetEnd(), Scalar())).x();
+      }();
+      auto remaining_position = m_bottom_right_pixel.x() - position;
+      if(remaining_position >= 0) {
+        if(position >= 0) {
+          region.m_bottom_right.m_x = candlesticks.back().GetEnd() +
+            remaining_position * density;
+        }
+        return load_region(region, density, std::move(candlesticks),
           std::move(gaps));
       } else {
         m_candlesticks = std::move(candlesticks);
         m_gaps = std::move(gaps);
         m_extended_region = region;
-        qDebug() << "XRegion";
-        foo(m_extended_region.m_top_left.m_x);
-        foo(m_extended_region.m_bottom_right.m_x);
         if(m_is_auto_scaled) {
           update_auto_scale();
         }

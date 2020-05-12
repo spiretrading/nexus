@@ -26,23 +26,28 @@ int main(int argc, char** argv) {
   auto window = new ChartingWindow(Ref(model));
   window->connect_security_change_signal(
     [=] (const auto& security) {
-      auto d = date(2020, 1, 5);
+      auto d = date(2020, 5, 5);
       auto candlesticks = std::vector<Candlestick>();
-      candlesticks.emplace_back(Scalar(ptime(d, time_duration(0, 59, 0)) -
-        years(1)),
-        Scalar(ptime(d, time_duration(1, 0, 0)) - years(1)), Scalar(Money::ZERO),
+      candlesticks.emplace_back(Scalar(ptime(d, time_duration(0, 59, 0))),
+        Scalar(ptime(d, time_duration(1, 0, 0))), Scalar(Money::ZERO),
         Scalar(Money::ONE), Scalar(Money::ONE), Scalar(Money::ZERO));
-      candlesticks.emplace_back(Scalar(ptime(d, time_duration(1, 10, 0))),
-        Scalar(ptime(d, time_duration(1, 11, 0))), Scalar(Money::ZERO),
+      candlesticks.emplace_back(Scalar(ptime(d, time_duration(10, 59, 0))),
+        Scalar(ptime(d, time_duration(11, 0, 0))), Scalar(Money::ZERO),
         Scalar(Money::ONE), Scalar(Money::ONE), Scalar(Money::ZERO));
       auto chart_model = std::make_shared<LocalChartModel>(
         Scalar::Type::TIMESTAMP, Scalar::Type::MONEY, candlesticks);
       auto technicals_model = std::make_shared<LocalTechnicalsModel>(
         security);
       window->set_models(chart_model, technicals_model);
+/*
       window->m_chart->set_region(ChartView::Region{ChartPoint(
-        Scalar(ptime(d, time_duration(1, 5, 0))), Scalar(10 * Money::ONE)),
-        ChartPoint(Scalar(ptime(d, time_duration(2, 45, 0))),
+        Scalar(ptime(d, time_duration(0, 59, 0))), Scalar(10 * Money::ONE)),
+        ChartPoint(Scalar(ptime(d, time_duration(2, 39, 0))),
+        Scalar(Money::ZERO))});
+*/
+      window->m_chart->set_region(ChartView::Region{ChartPoint(
+        Scalar(ptime(d, time_duration(10, 50, 0))), Scalar(10 * Money::ONE)),
+        ChartPoint(Scalar(ptime(d, time_duration(13, 30, 0))),
         Scalar(Money::ZERO))});
     });
   window->show();
