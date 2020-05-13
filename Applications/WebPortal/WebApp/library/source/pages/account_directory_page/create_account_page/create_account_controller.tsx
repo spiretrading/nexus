@@ -63,10 +63,8 @@ export class CreateAccountController extends
       this.setState({
         errorStatus: ''
       });
-      await this.props.createAccountModel.onSubmitNewAccount(roles, identity);
-      this.setState({
-        errorStatus: 'Created.'
-      });
+      await this.props.createAccountModel.onSubmitNewAccount(
+        username, groups, identity, roles);
     } catch(e) {
       this.setState({
         errorStatus: e.toString()
