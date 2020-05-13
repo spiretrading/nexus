@@ -18,14 +18,11 @@ namespace {
   }
 
   auto get_order_type_variant(const QString& text) {
-    if(text == displayText(OrderType::LIMIT)) {
-      return QVariant::fromValue<OrderType>(OrderType::LIMIT);
-    } else if(text == displayText(OrderType::MARKET)) {
-      return QVariant::fromValue<OrderType>(OrderType::MARKET);
-    } else if(text == displayText(OrderType::PEGGED)) {
-      return QVariant::fromValue<OrderType>(OrderType::PEGGED);
-    } else if(text == displayText(OrderType::STOP)) {
-      return QVariant::fromValue<OrderType>(OrderType::STOP);
+    for(auto type : { OrderType::LIMIT, OrderType::MARKET, OrderType::PEGGED,
+        OrderType::STOP }) {
+      if(text == displayText(type)) {
+        return QVariant::fromValue<OrderType>(type);
+      }
     }
     return QVariant();
   }
