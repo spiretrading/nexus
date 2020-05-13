@@ -6,6 +6,7 @@ import { CreateAccountModel } from './create_account_model';
 import { CreateAccountPage } from './create_account_page';
 
 interface Properties {
+
   /** The size of the viewport. */
   displaySize: DisplaySize;
   
@@ -20,26 +21,20 @@ interface Properties {
 }
 
 interface State {
-  isLoaded: boolean;
   errorStatus: string;
 }
 
-/** Implements the controller for the AccountDirectoryPage. */
+/** Implements the controller for the CreateAccountPage. */
 export class CreateAccountController extends
     React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false,
       errorStatus: ''
     };
-    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
-    if(!this.state.isLoaded) {
-      return <div/>;
-    }
     return <CreateAccountPage
       displaySize={this.props.displaySize}
       errorStatus={this.state.errorStatus}
@@ -48,17 +43,8 @@ export class CreateAccountController extends
       onSubmit={this.onSubmit}/>;
   }
 
-  public componentDidMount(): void {
-    this.props.createAccountModel.load().then(
-      () => {
-        this.setState({
-          isLoaded: true
-        });
-      });
-  }
-
-  private async onSubmit(username: string, groups: Beam.DirectoryEntry[],
-      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {
+  private onSubmit = async (username: string, groups: Beam.DirectoryEntry[],
+      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => {
     try {
       this.setState({
         errorStatus: ''
