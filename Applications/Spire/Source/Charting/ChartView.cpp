@@ -84,6 +84,16 @@ namespace {
     }
     return Scalar(std::numeric_limits<Quantity>::max());
   }
+
+  void foo(Scalar x) {
+    qDebug() << CustomVariantItemDelegate().displayText(
+      QVariant::fromValue(static_cast<ptime>(x)));
+  }
+
+  void boo(Scalar x) {
+    qDebug() << CustomVariantItemDelegate().displayText(
+      QVariant::fromValue(static_cast<time_duration>(x)));
+  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
@@ -498,8 +508,14 @@ ChartPoint ChartView::to_chart_point(const Region& region,
     for(auto& gap : gaps) {
       auto gap_start_pixel = to_pixel(region, size, gaps, {gap.m_start, y}).x();
       if(point.x() <= gap_start_pixel) {
-        return map_to(point.x(), left_x_pixel, gap_start_pixel,
-          left_x_chart_value, gap.m_start);
+        if(gap_start_pixel == 0 && left_x_pixel == 0) {
+          auto density = (region.m_bottom_right.m_x - region.m_top_left.m_x) /
+            size.width();
+          return extended_region.m_top_left.m_x + point.x() * density;
+        } else {
+          return map_to(point.x(), left_x_pixel, gap_start_pixel,
+            left_x_chart_value, gap.m_start);
+        }
       }
       auto gap_end_pixel = to_pixel(region, size, gaps, {gap.m_end, y}).x();
       if(point.x() < gap_end_pixel) {
@@ -851,15 +867,10 @@ void Spire::translate(ChartView& view, const QPoint& offset) {
     return;
   }
   auto region = view.get_region();
-  auto delta = view.to_chart_point({std::abs(offset.x()), 0}).m_x -
-    region.m_top_left.m_x;
-  if(offset.x() >= 0) {
-    region.m_top_left.m_x -= delta;
-    region.m_bottom_right.m_x -= delta;
-  } else {
-    region.m_top_left.m_x += delta;
-    region.m_bottom_right.m_x += delta;
-  }
+  auto delta = region.m_top_left.m_x -
+    view.to_chart_point({-offset.x(), 0}).m_x;
+  region.m_top_left.m_x -= delta;
+  region.m_bottom_right.m_x -= delta;
   view.set_region(region);
 }
 
