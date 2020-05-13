@@ -626,12 +626,12 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
 }
 
 void ChartView::draw_gap(QPainter& painter, int start, int end) {
-  painter.fillRect(start, m_bottom_right_pixel.y(), end - start,
+  painter.fillRect(start, m_bottom_right_pixel.y(), end - start + 1,
     scale_height(3), QColor("#25212E"));
   painter.save();
   painter.setPen(Qt::white);
   painter.drawLine(start, m_bottom_right_pixel.y(), start,
-    m_bottom_right_pixel.y() +  scale_height(2));
+    m_bottom_right_pixel.y() + scale_height(2));
   if(end <= m_bottom_right_pixel.x()) {
     painter.drawLine(end, m_bottom_right_pixel.y(), end,
       m_bottom_right_pixel.y() + scale_height(2));
@@ -860,23 +860,16 @@ void Spire::translate(ChartView& view, const QPoint& offset) {
   if(offset.x() == 0) {
     return;
   }
-  qDebug() << "Offset:";
-  qDebug() << offset;
   auto region = view.get_region();
-  qDebug() << "Region:";
-  foo(region.m_top_left.m_x);
-  foo(region.m_bottom_right.m_x);
-  qDebug() << "Next:";
-  foo(view.to_chart_point({-offset.x(), 0}).m_x);
-  auto delta = view.to_chart_point({-offset.x(), 0}).m_x -
+  auto delta = view.to_chart_point({std::abs(offset.x()), 0}).m_x -
     region.m_top_left.m_x;
-  qDebug() << "Delta";
-  boo(delta);
-  region.m_top_left.m_x += delta;
-  region.m_bottom_right.m_x += delta;
-  qDebug() << "Final:";
-  foo(region.m_top_left.m_x);
-  foo(region.m_bottom_right.m_x);
+  if(offset.x() >= 0) {
+    region.m_top_left.m_x -= delta;
+    region.m_bottom_right.m_x -= delta;
+  } else {
+    region.m_top_left.m_x += delta;
+    region.m_bottom_right.m_x += delta;
+  }
   view.set_region(region);
 }
 

@@ -43,8 +43,8 @@ int main(int argc, char** argv) {
         security);
       window->set_models(chart_model, technicals_model);
       window->m_chart->set_region(ChartView::Region{ChartPoint(
-        Scalar(ptime(d, time_duration(0, 59, 0))), Scalar(10 * Money::ONE)),
-        ChartPoint(Scalar(ptime(d, time_duration(2, 39, 0))),
+        Scalar(ptime(d, time_duration(10, 59, 0))), Scalar(10 * Money::ONE)),
+        ChartPoint(Scalar(ptime(d, time_duration(12, 39, 0))),
         Scalar(Money::ZERO))});
 /*
       window->m_chart->set_region(ChartView::Region{ChartPoint(
