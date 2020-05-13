@@ -511,7 +511,7 @@ ChartPoint ChartView::to_chart_point(const Region& region,
         return map_to(point.x(), left_x_pixel, gap_start_pixel,
           left_x_chart_value, gap.m_start);
       }
-      auto gap_end_pixel = gap_start_pixel + GAP_WIDTH() - 1;
+      auto gap_end_pixel = to_pixel(region, size, gaps, {gap.m_end, y}).x();
       if(point.x() < gap_end_pixel) {
         return map_to(point.x(), gap_start_pixel, gap_end_pixel, gap.m_start,
           gap.m_end);
