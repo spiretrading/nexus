@@ -45,7 +45,7 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     delete item;
   }
   setFixedHeight(scale_height(20) *
-    min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
+    std::min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
   for(auto& item : items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });

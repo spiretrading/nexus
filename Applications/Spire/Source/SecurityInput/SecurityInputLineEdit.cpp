@@ -120,12 +120,12 @@ void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
 }
 
 void SecurityInputLineEdit::resizeEvent(QResizeEvent* event) {
-  m_securities->setFixedWidth(max(width(), scale_width(142)));
+  m_securities->setFixedWidth(std::max(width(), scale_width(142)));
 }
 
 void SecurityInputLineEdit::showEvent(QShowEvent* event) {
   on_text_edited();
-  m_securities->setFixedWidth(max(width(), scale_width(142)));
+  m_securities->setFixedWidth(std::max(width(), scale_width(142)));
 }
 
 void SecurityInputLineEdit::move_securities_list() {
