@@ -68,7 +68,7 @@ void KeySequenceEditor::paintEvent(QPaintEvent* event) {
 
 void KeySequenceEditor::commit_sequence() {
   m_entered_keys.clear();
-  emit editingFinished();
+  Q_EMIT editingFinished();
 }
 
 bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) const {

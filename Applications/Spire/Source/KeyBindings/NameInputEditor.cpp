@@ -24,10 +24,10 @@ void NameInputEditor::keyPressEvent(QKeyEvent* event) {
   }
   if(key == Qt::Key_Delete) {
     setText("");
-    emit editingFinished();
+    Q_EMIT editingFinished();
     return;
   } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
-    emit editingFinished();
+    Q_EMIT editingFinished();
     return;
   }
   QLineEdit::keyPressEvent(event);

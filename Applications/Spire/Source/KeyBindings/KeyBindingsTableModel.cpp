@@ -8,7 +8,7 @@ KeyBindingsTableModel::KeyBindingsTableModel(QObject* parent)
 
 void KeyBindingsTableModel::set_focus_highlight(const QModelIndex& index) {
   m_focused_cell = index;
-  emit dataChanged(m_focused_cell, m_focused_cell,
+  Q_EMIT dataChanged(m_focused_cell, m_focused_cell,
     {Qt::BackgroundRole});
 }
 
@@ -16,13 +16,13 @@ void KeyBindingsTableModel::reset_focus_highlight() {
   if(m_focused_cell.isValid()) {
     auto old_index = m_focused_cell;
     m_focused_cell = QModelIndex();
-    emit dataChanged(old_index, old_index, {Qt::BackgroundRole});
+    Q_EMIT dataChanged(old_index, old_index, {Qt::BackgroundRole});
   }
 }
 
 void KeyBindingsTableModel::set_hover_highlight(const QModelIndex& index) {
   m_hovered_cell = index;
-  emit dataChanged(m_hovered_cell, m_hovered_cell,
+  Q_EMIT dataChanged(m_hovered_cell, m_hovered_cell,
     {Qt::BackgroundRole});
 }
 
@@ -30,21 +30,21 @@ void KeyBindingsTableModel::reset_hover_highlight() {
   if(m_hovered_cell.isValid()) {
     auto old_index = m_hovered_cell;
     m_hovered_cell = QModelIndex();
-    emit dataChanged(old_index, old_index, {Qt::BackgroundRole});
+    Q_EMIT dataChanged(old_index, old_index, {Qt::BackgroundRole});
   }
 }
 
 void KeyBindingsTableModel::set_row_highlight(int row) {
   m_highlighted_row = row;
   auto highlight_index = index(row, 0);
-  emit dataChanged(highlight_index, highlight_index, {Qt::BackgroundRole});
+  Q_EMIT dataChanged(highlight_index, highlight_index, {Qt::BackgroundRole});
 }
 
 void KeyBindingsTableModel::reset_row_highlight() {
   if(m_highlighted_row) {
     auto highlight_index = index(*m_highlighted_row, 0);
     m_highlighted_row = boost::none;
-    emit dataChanged(highlight_index, highlight_index, {Qt::BackgroundRole});
+    Q_EMIT dataChanged(highlight_index, highlight_index, {Qt::BackgroundRole});
   }
 }
 

@@ -7,13 +7,13 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto create_order_type_item_list() {
+  const auto& ORDER_TYPE_NAMES() {
     static auto list = std::vector<QString>({
-        displayText(OrderType::LIMIT),
-        displayText(OrderType::MARKET),
-        displayText(OrderType::PEGGED),
-        displayText(OrderType::STOP)
-      });
+      displayText(OrderType::LIMIT),
+      displayText(OrderType::MARKET),
+      displayText(OrderType::PEGGED),
+      displayText(OrderType::STOP)
+    });
     return list;
   }
 
@@ -43,8 +43,8 @@ QWidget* OrderTypeItemDelegate::createEditor(QWidget* parent,
     }
     return QString();
   }();
-  auto editor = new InputFieldEditor(current_data,
-    create_order_type_item_list(), static_cast<QWidget*>(this->parent()));
+  auto editor = new InputFieldEditor(current_data, ORDER_TYPE_NAMES(),
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &InputFieldEditor::editingFinished,
     this, &OrderTypeItemDelegate::on_editing_finished);
   return editor;

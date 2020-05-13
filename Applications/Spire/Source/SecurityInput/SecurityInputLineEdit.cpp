@@ -21,7 +21,7 @@ namespace {
     return width;
   }
 
-  auto SEARCH_ICON() {
+  const auto& SEARCH_ICON() {
     static auto icon = imageFromSvg(":/Icons/search.svg",
       {ICON_HEIGHT(), ICON_WIDTH()});
     return icon;
@@ -144,7 +144,7 @@ void SecurityInputLineEdit::on_activated(const Security& security) {
 
 void SecurityInputLineEdit::on_commit(const Security& security) {
   m_security = security;
-  emit editingFinished();
+  Q_EMIT editingFinished();
   m_commit_signal(security);
 }
 

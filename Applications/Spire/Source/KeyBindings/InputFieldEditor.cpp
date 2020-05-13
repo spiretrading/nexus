@@ -93,7 +93,7 @@ void InputFieldEditor::on_item_clicked(const QString& item) {
 
 void InputFieldEditor::on_item_committed(const QString& text) {
   m_menu_list->hide();
-  emit editingFinished();
+  Q_EMIT editingFinished();
 }
 
 void InputFieldEditor::on_text_changed(const QString& text) {

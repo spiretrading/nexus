@@ -13,35 +13,26 @@ namespace {
 
   auto create_time_in_force_item_list() {
     static auto list = std::vector<QString>({
-        to_qstring(TimeInForce::Type::DAY),
-        to_qstring(TimeInForce::Type::FOK),
-        to_qstring(TimeInForce::Type::GTC),
-        to_qstring(TimeInForce::Type::GTD),
-        to_qstring(TimeInForce::Type::GTX),
-        to_qstring(TimeInForce::Type::IOC),
-        to_qstring(TimeInForce::Type::MOC),
-        to_qstring(TimeInForce::Type::OPG)
-      });
+      to_qstring(TimeInForce::Type::DAY),
+      to_qstring(TimeInForce::Type::FOK),
+      to_qstring(TimeInForce::Type::GTC),
+      to_qstring(TimeInForce::Type::GTD),
+      to_qstring(TimeInForce::Type::GTX),
+      to_qstring(TimeInForce::Type::IOC),
+      to_qstring(TimeInForce::Type::MOC),
+      to_qstring(TimeInForce::Type::OPG)
+    });
     return list;
   }
 
   auto get_time_in_force_variant(const QString& text) {
-    if(text == to_qstring(TimeInForce::Type::DAY)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::DAY});
-    } else if(text == to_qstring(TimeInForce::Type::FOK)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::FOK});
-    } else if(text == to_qstring(TimeInForce::Type::GTC)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTC});
-    } else if(text == to_qstring(TimeInForce::Type::GTD)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTD});
-    } else if(text == to_qstring(TimeInForce::Type::GTX)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::GTX});
-    } else if(text == to_qstring(TimeInForce::Type::IOC)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::IOC});
-    } else if(text == to_qstring(TimeInForce::Type::MOC)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::MOC});
-    } else if(text == to_qstring(TimeInForce::Type::OPG)) {
-      return QVariant::fromValue<TimeInForce>({TimeInForce::Type::OPG});
+    for(auto type : { TimeInForce::Type::DAY, TimeInForce::Type::FOK,
+        TimeInForce::Type::GTC, TimeInForce::Type::GTD, TimeInForce::Type::GTX,
+        TimeInForce::Type::IOC, TimeInForce::Type::MOC,
+        TimeInForce::Type::OPG }) {
+      if(text == to_qstring(type)) {
+        return QVariant::fromValue<TimeInForce>({type});
+      }
     }
     return QVariant();
   }

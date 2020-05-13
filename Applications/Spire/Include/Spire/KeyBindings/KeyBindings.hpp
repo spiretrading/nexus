@@ -219,7 +219,6 @@ namespace Details {
 
     private:
       using Actions = Nexus::RegionMap<boost::optional<Action>>;
-
       struct KeyBindingMapping {
         QKeySequence m_key_sequence;
         Actions m_actions;

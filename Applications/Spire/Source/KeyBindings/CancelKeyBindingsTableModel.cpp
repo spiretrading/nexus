@@ -200,12 +200,12 @@ bool CancelKeyBindingsTableModel::setData(const QModelIndex &index,
       if(binding.m_sequence == value.value<QKeySequence>()) {
         binding.m_sequence = QKeySequence();
         auto updated_index = this->index(i, 1);
-        emit dataChanged(updated_index, updated_index);
+        Q_EMIT dataChanged(updated_index, updated_index);
         break;
       }
     }
     m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
-    emit dataChanged(index, index, {role});
+    Q_EMIT dataChanged(index, index, {role});
     return true;
   }
   return false;

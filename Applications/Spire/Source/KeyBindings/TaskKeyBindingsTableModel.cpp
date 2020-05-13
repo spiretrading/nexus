@@ -197,7 +197,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     if(is_same_value(value, index)) {
       return false;
     }
-    emit dataChanged(index, index, {role});
+    Q_EMIT dataChanged(index, index, {role});
     insert_row_if_empty(index);
     auto& binding = m_key_bindings[index.row()];
     switch(static_cast<Columns>(index.column())) {
@@ -329,11 +329,11 @@ bool TaskKeyBindingsTableModel::is_row_empty(int row) const {
   auto& binding = m_key_bindings[row];
   auto& action = binding.m_action;
   return action.m_name.empty() &&
-      !action.m_quantity.is_initialized() &&
-      !action.m_side.is_initialized() &&
-      action.m_tags.empty() &&
-      !action.m_time_in_force.is_initialized() &&
-      !action.m_type.is_initialized() &&
-      binding.m_region == Region() &&
-      binding.m_sequence.isEmpty();
+    !action.m_quantity.is_initialized() &&
+    !action.m_side.is_initialized() &&
+    action.m_tags.empty() &&
+    !action.m_time_in_force.is_initialized() &&
+    !action.m_type.is_initialized() &&
+    binding.m_region == Region() &&
+    binding.m_sequence.isEmpty();
 }
