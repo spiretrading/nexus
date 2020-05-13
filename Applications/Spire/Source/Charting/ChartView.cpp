@@ -84,16 +84,6 @@ namespace {
     }
     return Scalar(std::numeric_limits<Quantity>::max());
   }
-
-  void foo(Scalar x) {
-    qDebug() << CustomVariantItemDelegate().displayText(
-      QVariant::fromValue(static_cast<ptime>(x)));
-  }
-
-  void boo(Scalar x) {
-    qDebug() << CustomVariantItemDelegate().displayText(
-      QVariant::fromValue(static_cast<time_duration>(x)));
-  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
