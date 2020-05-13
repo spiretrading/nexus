@@ -45,6 +45,13 @@ void KeySequenceEditor::keyPressEvent(QKeyEvent* event) {
 }
 
 void KeySequenceEditor::keyReleaseEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    return;
+  }
+  if(m_entered_keys.empty() && (event->key() == Qt::Key_Tab ||
+      event->key() == Qt::Key_Backtab)) {
+    return;
+  }
   if(is_valid(m_entered_keys)) {
     m_key_sequence = make_key_sequence(m_entered_keys);
   }
@@ -56,12 +63,12 @@ void KeySequenceEditor::paintEvent(QPaintEvent* event) {
   painter.fillRect(0, scale_height(1), width(), height(), Qt::white);
   painter.setFont(m_font);
   painter.setPen(Qt::black);
-  painter.drawText(0, scale_height(16), tr("Enter Keys"));
+  painter.drawText(scale_width(8), scale_height(16), tr("Enter Keys"));
 }
 
 void KeySequenceEditor::commit_sequence() {
   m_entered_keys.clear();
-  emit editingFinished();
+  Q_EMIT editingFinished();
 }
 
 bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) const {
@@ -70,7 +77,7 @@ bool KeySequenceEditor::is_valid(const std::vector<Qt::Key>& keys) const {
   }
   for(auto& sequence : m_valid_sequences) {
     for(auto i = std::size_t(0); i < sequence.size(); ++i) {
-      if(sequence[i].find(m_entered_keys[i]) == sequence[i].end()) {
+      if(!sequence[i].contains(m_entered_keys[i])) {
         break;
       }
       if(i == sequence.size() - 1) {

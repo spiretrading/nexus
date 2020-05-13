@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
+#include <QColor>
 
 using namespace Spire;
 using Action = CancelKeyBindingsTableModel::Action;
@@ -110,7 +111,7 @@ namespace {
 
 CancelKeyBindingsTableModel::CancelKeyBindingsTableModel(
     std::vector<Binding> bindings, QObject* parent)
-    : QAbstractTableModel(parent) {
+    : KeyBindingsTableModel(parent) {
   m_key_bindings.reserve(ROW_COUNT);
   for(auto i = 0; i < ROW_COUNT; ++i) {
     m_key_bindings.push_back({{}, {}, get_action(i)});
@@ -150,6 +151,9 @@ QVariant CancelKeyBindingsTableModel::data(const QModelIndex& index,
   if(!index.isValid()) {
     return QVariant();
   }
+  if(role == Qt::BackgroundRole) {
+    return KeyBindingsTableModel::data(index, role);
+  }
   if(role == Qt::DisplayRole) {
     if(index.column() == 0) {
       return QString::fromStdString(std::string(get_action_text(index.row())));
@@ -169,7 +173,7 @@ Qt::ItemFlags CancelKeyBindingsTableModel::flags(
   if(index.column() != 0) {
     return flags |= Qt::ItemIsEditable;
   }
-  return flags;
+  return flags.setFlag(Qt::ItemIsSelectable, false);
 }
 
 QVariant CancelKeyBindingsTableModel::headerData(int section,
@@ -191,14 +195,17 @@ bool CancelKeyBindingsTableModel::setData(const QModelIndex &index,
     return false;
   }
   if(role == Qt::DisplayRole && index.column() == 1) {
-    for(auto& binding : m_key_bindings) {
+    for(auto i = std::size_t(0); i < m_key_bindings.size(); ++i) {
+      auto& binding = m_key_bindings[i];
       if(binding.m_sequence == value.value<QKeySequence>()) {
         binding.m_sequence = QKeySequence();
+        auto updated_index = this->index(i, 1);
+        Q_EMIT dataChanged(updated_index, updated_index);
         break;
       }
     }
     m_key_bindings[index.row()].m_sequence = value.value<QKeySequence>();
-    emit dataChanged(index, index, {role});
+    Q_EMIT dataChanged(index, index, {role});
     return true;
   }
   return false;
