@@ -40,11 +40,12 @@ export class CreateAccountController extends
       errorStatus={this.state.errorStatus}
       countryDatabase={this.props.countryDatabase}
       groupSuggestionModel={this.props.groupSuggestionModel}
-      onSubmit={this.onSubmit}/>;
+      onSubmit={this.createAccount}/>;
   }
 
-  private onSubmit = async (username: string, groups: Beam.DirectoryEntry[],
-      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => {
+  private createAccount = async (username: string,
+      groups: Beam.DirectoryEntry[], identity: Nexus.AccountIdentity,
+      roles: Nexus.AccountRoles) => {
     try {
       this.setState({
         errorStatus: ''
