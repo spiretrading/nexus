@@ -12,7 +12,7 @@ export abstract class CreateAccountModel {
     @param identity - The identity of the new account.
     @param roles - The roles associated with the new account.
    */
-  public abstract async onSubmitNewAccount(username: string, 
+  public abstract async createAccount(username: string, 
     groups: Beam.DirectoryEntry[], identity: Nexus.AccountIdentity,
     roles: Nexus.AccountRoles): Promise<void>;
 }
