@@ -1,8 +1,9 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
-#include <QTabWidget>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
+#include "Spire/KeyBindings/CustomTabWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -17,10 +18,12 @@ namespace Spire {
       //! Constructs a key bindings window.
       /*
         \param key_bindings The initial key bindings.
+        \param input_model The input model used for selecting order binding
+                           securities.
         \param parent The parent widget.
       */
       explicit KeyBindingsWindow(KeyBindings key_bindings,
-        QWidget* parent = nullptr);
+        Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Returns the current key bindings.
       const KeyBindings& get_key_bindings() const;
@@ -35,8 +38,9 @@ namespace Spire {
     private:
       KeyBindings m_key_bindings;
       mutable ApplySignal m_apply_signal;
-      QTabWidget* m_tab_widget;
+      CustomTabWidget* m_tab_widget;
       bool m_last_focus_was_key;
+      TaskKeyBindingsTableView* m_task_keys_table;
       CancelKeyBindingsTableView* m_cancel_keys_table;
 
       void on_ok_button_clicked();

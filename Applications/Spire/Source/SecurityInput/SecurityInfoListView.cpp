@@ -30,6 +30,7 @@ SecurityInfoListView::SecurityInfoListView(QWidget* parent)
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setObjectName("security_info_list_view_scroll_area");
+  m_scroll_area->setFocusProxy(parent);
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
@@ -54,7 +55,9 @@ void SecurityInfoListView::set_list(const std::vector<SecurityInfo>& list) {
     security_widget->connect_highlighted_signal(
       [=] (auto value) { on_highlight(i, value); });
     security_widget->connect_commit_signal(
-      [=] { on_commit(security.m_security); });
+      [=] {
+        on_commit(security.m_security);
+      });
     m_list_widget->layout()->addWidget(security_widget);
   }
   if(m_list_widget->layout()->count() == 0) {

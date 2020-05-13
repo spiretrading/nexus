@@ -1,9 +1,10 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
 #include <QLabel>
+#include <QSet>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/KeySequenceItemDelegate.hpp"
+#include "Spire/KeyBindings/NameItemDelegate.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ItemPaddingDelegate.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -12,27 +13,31 @@ using ValidSequence = KeySequenceEditor::ValidKeySequence;
 CancelKeyBindingsTableView::CancelKeyBindingsTableView(
     std::vector<KeyBindings::CancelActionBinding> bindings,
     QWidget* parent)
-    : KeyBindingsTableView(make_fixed_header(parent), parent),
+    : KeyBindingsTableView(make_fixed_header(parent), false, parent),
       m_model(nullptr) {
   set_key_bindings(std::move(bindings));
-  setFixedWidth(scale_width(853));
-  set_width(scale_width(853));
+  setFixedWidth(scale_width(871));
+  set_width(scale_width(871));
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
-  auto valid_sequences = std::vector<std::vector<std::set<Qt::Key>>>(
+  set_column_width(1, scale_width(616));
+  auto default_delegate = new NameItemDelegate(this);
+  set_column_delegate(0, default_delegate);
+  auto valid_sequences = std::vector<std::vector<QSet<Qt::Key>>>(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
-  auto item_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  item_delegate->connect_item_modified_signal([=] (auto index) {
-    on_key_sequence_modified(index);
-  });
-  set_column_delegate(1, item_delegate);
+  auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
+  set_column_delegate(1, key_delegate);
 }
 
 void CancelKeyBindingsTableView::set_key_bindings(
     const std::vector<KeyBindings::CancelActionBinding>& bindings) {
   m_model = new CancelKeyBindingsTableModel(bindings, this);
+  m_model->connect(m_model, &QAbstractItemModel::dataChanged,
+    [=] (auto top_left, auto) {
+      on_key_sequence_modified(top_left);
+    });
   set_model(m_model);
 }
 

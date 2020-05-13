@@ -30,19 +30,14 @@ namespace {
 KeySequenceItemDelegate::KeySequenceItemDelegate(
   std::vector<KeySequenceEditor::ValidKeySequence> valid_key_sequences,
   QWidget* parent)
-  : QStyledItemDelegate(parent),
+  : KeyBindingItemDelegate(parent),
     m_valid_key_sequences(std::move(valid_key_sequences)) {}
-
-connection KeySequenceItemDelegate::connect_item_modified_signal(
-    const ItemModifiedSignal::slot_type& slot) const {
-  return m_item_modified_signal.connect(slot);
-}
 
 QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
   auto editor = new KeySequenceEditor(
     index.data(Qt::DisplayRole).value<QKeySequence>(), m_valid_key_sequences,
-    parent);
+    static_cast<QWidget*>(this->parent()));
   connect(editor, &KeySequenceEditor::editingFinished,
     this, &KeySequenceItemDelegate::on_editing_finished);
   return editor;
@@ -50,12 +45,11 @@ QWidget* KeySequenceItemDelegate::createEditor(QWidget* parent,
 
 void KeySequenceItemDelegate::paint(QPainter* painter,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
+  KeyBindingItemDelegate::paint(painter, option, index);
   painter->save();
-  painter->fillRect(option.rect, Qt::white);
-  if(option.state.testFlag(QStyle::State_Editing)) {
-    painter->setPen(QColor("#4B23A0"));
-    painter->drawRect(option.rect);
-  } else {
+  painter->fillRect(option.rect,
+    index.data(Qt::BackgroundRole).value<QColor>());
+  if(!option.state.testFlag(QStyle::State_Editing)) {
     auto sequence = index.data(Qt::DisplayRole).value<QKeySequence>();
     if(!sequence.isEmpty()) {
       draw_key_sequence(sequence, option.rect, painter);
@@ -74,16 +68,9 @@ void KeySequenceItemDelegate::setModelData(QWidget* editor,
     if(current_index.row() != index.row() &&
         current_index.data().value<QKeySequence>() == key_sequence) {
       model->setData(current_index, QVariant());
-      m_item_modified_signal(current_index);
       break;
     }
   }
-  m_item_modified_signal(index);
-}
-
-QSize KeySequenceItemDelegate::sizeHint(const QStyleOptionViewItem& option,
-    const QModelIndex& index) const {
-  return QStyledItemDelegate::sizeHint(option, index);
 }
 
 bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
@@ -97,7 +84,7 @@ bool KeySequenceItemDelegate::eventFilter(QObject* watched, QEvent* event) {
       }
     }
   }
-  return QStyledItemDelegate::eventFilter(watched, event);
+  return KeyBindingItemDelegate::eventFilter(watched, event);
 }
 
 void KeySequenceItemDelegate::draw_key_sequence(const QKeySequence& sequence,
@@ -130,9 +117,4 @@ void KeySequenceItemDelegate::draw_key(const QString& text,
   painter->setPen(Qt::black);
   painter->drawText(pos.x() + TEXT_PADDING(),
     pos.y() - (text_size.height() / 2), text);
-}
-
-void KeySequenceItemDelegate::on_editing_finished() {
-  auto editor = static_cast<QWidget*>(sender());
-  editor->close();
 }
