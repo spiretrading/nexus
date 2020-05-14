@@ -510,29 +510,19 @@ ChartPoint ChartView::to_chart_point(const Region& region,
   auto left_x_pixel = 0.0;
   auto left_x_chart_value = region.m_top_left.m_x;
   auto x = [&] {
-/*
-    if(!gaps.empty()) {
-      auto gap_start_pixel = to_pixel(region, size, gaps,
-        {gaps.front().m_start, y}).x();
-      if(point.x() < gap_start_pixel) {
-        return extended_region.m_top_left.m_x + point.x() *
-          calculate_density(region, size);
-      }
-    }
-*/
     for(auto& gap : gaps) {
       auto gap_start_pixel = to_pixel(region, size, gaps, {gap.m_start, y}).x();
+      if(gap_start_pixel <= left_x_pixel) {
+        left_x_pixel = gap_start_pixel;
+        left_x_chart_value = gap.m_start;
+      }
       if(point.x() <= gap_start_pixel) {
-        if(point.x() < 0 && gap_start_pixel < 0) {
-          qDebug() << "uh oh";
+        if(left_x_pixel == gap_start_pixel) {
+          auto density = calculate_density(region, size);
+          return gap.m_start - (gap_start_pixel - point.x()) * density;
         }
-        if(gap_start_pixel == 0 && left_x_pixel == 0) {
-          return extended_region.m_top_left.m_x + point.x() *
-            calculate_density(region, size);
-        } else {
-          return map_to(point.x(), left_x_pixel, gap_start_pixel,
-            left_x_chart_value, gap.m_start);
-        }
+        return map_to(point.x(), left_x_pixel, gap_start_pixel,
+          left_x_chart_value, gap.m_start);
       }
       auto gap_end_pixel = to_pixel(region, size, gaps, {gap.m_end, y}).x();
       if(point.x() < gap_end_pixel) {
