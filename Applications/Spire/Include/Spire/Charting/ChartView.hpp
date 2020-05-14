@@ -40,14 +40,14 @@ namespace Spire {
         \param point The point in pixels to convert.
         \return The corresponding point on the chart.
       */
-      ChartPoint to_chart_point(const QPoint& point) const;
+      ChartPoint to_chart_point(const QPointF& point) const;
 
       //! Converts a point on the chart to a point in pixels.
       /*!
         \param point The point on the chart to convert.
         \return The corresponding point in pixels.
       */
-      QPoint to_pixel(const ChartPoint& point) const;
+      QPointF to_pixel(const ChartPoint& point) const;
 
       //! Sets the position of the crosshair and sets the status of the mouse
       //! buttons.
@@ -170,11 +170,11 @@ namespace Spire {
       std::optional<LineMouseOffset> m_line_mouse_offset;
       std::vector<Gap> m_gaps;
 
-      static QPoint to_pixel(const Region& region, const QSize& size,
+      static QPointF to_pixel(const Region& region, const QSize& size,
         const std::vector<Gap>& gaps, const ChartPoint& point);
       static ChartPoint to_chart_point(const Region& region,
         const Region& extended_region, const QSize& size,
-        const std::vector<Gap>& gaps, const QPoint& point);
+        const std::vector<Gap>& gaps, const QPointF& point);
       void commit_region(const Region& region);
       void commit_extended_region(const Region& region);
       QtPromise<void> load_region(Region region, Scalar density,
