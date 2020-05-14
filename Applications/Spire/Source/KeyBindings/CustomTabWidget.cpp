@@ -13,6 +13,10 @@ CustomTabWidget::CustomTabWidget(QWidget* parent)
       outline: none;
     }
 
+    QTabWidget::tab-bar {
+      left: %7px;
+    }
+
     QTabWidget::pane {
       border: none;
     }
@@ -39,7 +43,8 @@ CustomTabWidget::CustomTabWidget(QWidget* parent)
       background-color: #F5F5F5;
       color: #4B23A0;
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
+        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
+        .arg(scale_width(8)));
 }
 
 void CustomTabWidget::paintEvent(QPaintEvent* event) {
