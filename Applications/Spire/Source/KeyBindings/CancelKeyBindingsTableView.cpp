@@ -21,14 +21,12 @@ CancelKeyBindingsTableView::CancelKeyBindingsTableView(
   set_height(scale_height(376));
   set_column_width(0, scale_width(238));
   set_column_width(1, scale_width(616));
-  auto default_delegate = new NameItemDelegate(this);
-  set_column_delegate(0, default_delegate);
+  set_column_delegate(0, new NameItemDelegate(this));
   auto valid_sequences = std::vector<std::vector<QSet<Qt::Key>>>(
     {ValidSequence({{Qt::Key_Escape}}),
     ValidSequence({{Qt::Key_Shift, Qt::Key_Alt, Qt::Key_Control},
     {Qt::Key_Escape}})});
-  auto key_delegate = new KeySequenceItemDelegate(valid_sequences, this);
-  set_column_delegate(1, key_delegate);
+  set_column_delegate(1, new KeySequenceItemDelegate(valid_sequences, this));
 }
 
 void CancelKeyBindingsTableView::set_key_bindings(
