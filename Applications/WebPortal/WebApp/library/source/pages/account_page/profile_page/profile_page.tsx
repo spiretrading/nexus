@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionField, DisplaySize, HLine, PageWrapper, PhotoField } 
-  from '../../..';
+import { AddressField, CountrySelectionField, DisplaySize, HLine, PageWrapper,
+  PhotoField } from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
 import { FormEntry } from './form_entry';
@@ -384,10 +384,12 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                   <FormEntry name='Address'
                       displaySize={this.props.displaySize}>
-                    <TextField
-                      value={this.state.newIdentity.addressLineOne}
+                    <AddressField
+                      addressLineOne={this.state.newIdentity.addressLineOne}
+                      addressLineTwo={this.state.newIdentity.addressLineTwo}
+                      addressLineThree={this.state.newIdentity.addressLineThree}
                       displaySize={this.props.displaySize}
-                      onInput={this.onAddressChange}
+                      onChange={this.onAddressChange}
                       readonly={this.props.readonly}/>
                   </FormEntry>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -482,8 +484,11 @@ export class ProfilePage extends React.Component<Properties, State> {
     });
   }
 
-  private onAddressChange(value: string) {
-    this.state.newIdentity.addressLineOne = value;
+  private onAddressChange(addressLineOne: string, addressLineTwo: string,
+      addressLineThree: string) {
+    this.state.newIdentity.addressLineOne = addressLineOne;
+    this.state.newIdentity.addressLineTwo = addressLineTwo;
+    this.state.newIdentity.addressLineThree = addressLineThree;
     this.setState({
       newIdentity: this.state.newIdentity,
       isProfileChanged: true
