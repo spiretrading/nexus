@@ -222,8 +222,8 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         break;
       case Columns::DESTINATION:
         {
-          auto name = value.toString();
-          if(name.isEmpty()) {
+          auto name = value.value<Region>().GetName();
+          if(name.empty()) {
             if(binding.m_region.GetSecurities().empty()) {
               binding.m_region = Region();
             } else {
@@ -233,7 +233,7 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
             if(binding.m_region.GetSecurities().empty()) {
               binding.m_region = Security();
             }
-            binding.m_region.SetName(name.toStdString());
+            binding.m_region.SetName(name);
           }
         }
         m_modified_signal(index);
