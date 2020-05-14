@@ -230,6 +230,9 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
               binding.m_region = *(binding.m_region.GetSecurities().begin());
             }
           } else {
+            if(binding.m_region.GetSecurities().empty()) {
+              binding.m_region = Security();
+            }
             binding.m_region.SetName(name.toStdString());
           }
         }
