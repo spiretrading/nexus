@@ -177,8 +177,8 @@ namespace Spire {
       static ChartPoint to_chart_point(const Region& region,
         const Region& extended_region, const QSize& size,
         const std::vector<Gap>& gaps, const QPointF& point);
-      void commit_region(const Region& region);
-      void commit_extended_region(const Region& region);
+      void update_region(const Region& region);
+      void update_extended_region(const Region& region);
       QtPromise<void> load_region(Region region, Scalar density,
         std::vector<Candlestick> candlesticks, std::vector<Gap> gaps,
         std::uint32_t sequence);

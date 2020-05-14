@@ -211,9 +211,9 @@ bool ChartingWindow::eventFilter(QObject* object, QEvent* event) {
       auto e = static_cast<QWheelEvent*>(event);
       auto factor = [&] {
         if(e->angleDelta().y() < 0) {
-          return 1.0 / ZOOM_FACTOR;
+          return ZOOM_FACTOR;
         }
-        return ZOOM_FACTOR;
+        return 1.0 / ZOOM_FACTOR;
       }();
       zoom(*m_chart, factor);
     } else if(event->type() == QEvent::HoverLeave) {

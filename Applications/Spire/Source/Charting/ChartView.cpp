@@ -88,16 +88,6 @@ namespace {
   Scalar calculate_density(const ChartView::Region& region, const QSize& size) {
     return (region.m_bottom_right.m_x - region.m_top_left.m_x) / size.width();
   }
-
-  void foo(Scalar x) {
-    qDebug() << CustomVariantItemDelegate().displayText(
-      QVariant::fromValue(static_cast<ptime>(x)));
-  }
-
-  void boo(Scalar x) {
-    qDebug() << CustomVariantItemDelegate().displayText(
-      QVariant::fromValue(static_cast<time_duration>(x)));
-  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
@@ -219,9 +209,8 @@ void ChartView::set_region(const Region& region) {
   if(region == m_region) {
     return;
   }
-  auto sequence = m_sequence;
-  ++m_sequence;
-  commit_region(region);
+  auto sequence = ++m_sequence;
+  update_region(region);
   m_region_updates = m_region_updates.then([=] (auto&& result) {
     m_model->load(get_lowest(m_model->get_x_axis_type()), region.m_top_left.m_x,
       SnapshotLimit::FromTail(1)).then([=] (
@@ -546,17 +535,17 @@ ChartPoint ChartView::to_chart_point(const Region& region,
   return {x, y};
 }
 
-void ChartView::commit_region(const Region& region) {
+void ChartView::update_region(const Region& region) {
   m_region = region;
   if(m_is_auto_scaled) {
     update_auto_scale();
   }
-  commit_extended_region(m_region);
+  update_extended_region(m_region);
   update_origins();
   update();
 }
 
-void ChartView::commit_extended_region(const Region& region) {
+void ChartView::update_extended_region(const Region& region) {
   m_extended_region.m_top_left = region.m_top_left;
   auto density = calculate_density(region,
     QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()));
@@ -642,12 +631,20 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
           std::move(gaps), sequence);
       } else {
         m_candlesticks = std::move(candlesticks);
-        m_gaps = std::move(gaps);
+        for(auto& gap : gaps) {
+          auto i = std::lower_bound(m_gaps.begin(), m_gaps.end(), gap,
+            [] (auto& left, auto& right) {
+              return left.m_start < right.m_start;
+            });
+          if(i == m_gaps.end() || i->m_start != gap.m_start) {
+            m_gaps.insert(i, gap);
+          }
+        }
         if(sequence == m_sequence) {
           if(m_is_auto_scaled) {
             update_auto_scale();
           }
-          commit_extended_region(region);
+          update_extended_region(region);
           update_origins();
           update();
         }
@@ -888,28 +885,26 @@ void ChartView::on_right_mouse_button_press() {
 }
 
 void Spire::translate(ChartView& view, const QPoint& offset) {
-  if(offset.x() == 0) {
+  if(offset == QPoint(0, 0)) {
     return;
   }
-  static int I = 0;
-  ++I;
-  qDebug() << "Translate: " << I;
-  qDebug() << "Offset: " << offset;
   auto region = view.get_region();
-  qDebug() << "Region:";
-  foo(region.m_top_left.m_x);
-  foo(region.m_bottom_right.m_x);
-  qDebug() << "ToChartPoint";
-  foo(view.to_chart_point(QPoint{-offset.x(), 0}).m_x);
-  auto delta = region.m_top_left.m_x -
-    view.to_chart_point(QPoint{-offset.x(), 0}).m_x;
-  boo(delta);
-  region.m_top_left.m_x -= delta;
-  region.m_bottom_right.m_x -= delta;
-  qDebug() << "New Region:";
-  foo(region.m_top_left.m_x);
-  foo(region.m_bottom_right.m_x);
+  auto delta = region.m_top_left - view.to_chart_point(-offset);
+  region.m_top_left -= delta;
+  region.m_bottom_right -= delta;
   view.set_region(region);
 }
 
-void Spire::zoom(ChartView& view, double factor) {}
+void Spire::zoom(ChartView& view, double factor) {
+  auto region = view.get_region();
+  auto width = region.m_top_left.m_x - region.m_bottom_right.m_x;
+  auto height = region.m_top_left.m_y - region.m_bottom_right.m_y;
+  auto new_width = factor * width;
+  auto new_height = factor * height;
+  auto width_change = (new_width - width) / 2;
+  auto height_change = (new_height - height) / 2;
+  view.set_region({{region.m_top_left.m_x + width_change,
+    region.m_top_left.m_y + height_change},
+    {region.m_bottom_right.m_x - width_change,
+    region.m_bottom_right.m_y - height_change}});
+}

@@ -45,8 +45,6 @@ namespace Spire {
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
 
-      ChartView* m_chart;
-
     protected:
       bool eventFilter(QObject* object, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -65,6 +63,7 @@ namespace Spire {
       TrendLineEditor* m_trend_line_editor_widget;
       QWidget* m_security_widget_container;
       ChartingTechnicalsPanel* m_technicals_panel;
+      ChartView* m_chart;
       bool m_is_mouse_dragging;
       QPoint m_last_chart_mouse_pos;
 
