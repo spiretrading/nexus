@@ -1,5 +1,6 @@
 #ifndef SPIRE_CHART_VIEW_HPP
 #define SPIRE_CHART_VIEW_HPP
+#include <cstdint>
 #include <QPen>
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
@@ -169,6 +170,7 @@ namespace Spire {
       bool m_is_multi_select_enabled;
       std::optional<LineMouseOffset> m_line_mouse_offset;
       std::vector<Gap> m_gaps;
+      std::uint32_t m_sequence;
 
       static QPointF to_pixel(const Region& region, const QSize& size,
         const std::vector<Gap>& gaps, const ChartPoint& point);
@@ -178,7 +180,8 @@ namespace Spire {
       void commit_region(const Region& region);
       void commit_extended_region(const Region& region);
       QtPromise<void> load_region(Region region, Scalar density,
-        std::vector<Candlestick> candlesticks, std::vector<Gap> gaps);
+        std::vector<Candlestick> candlesticks, std::vector<Gap> gaps,
+        std::uint32_t sequence);
       void draw_gap(QPainter& paitner, int start, int end);
       void draw_point(QPainter& painter, const QColor& color,
         const QPoint& pos);

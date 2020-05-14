@@ -43,24 +43,36 @@ int main(int argc, char** argv) {
         security);
       window->set_models(chart_model, technicals_model);
       window->m_chart->set_region(ChartView::Region{ChartPoint(
-        Scalar(ptime(d, duration_from_string("01:11:31.153000"))),
-        Scalar(10 * Money::ONE)),
-        ChartPoint(Scalar(ptime(d, duration_from_string("02:51:31.153000"))),
+        Scalar(ptime(d, time_duration(9, 50, 0))), Scalar(10 * Money::ONE)),
+        ChartPoint(Scalar(ptime(d, time_duration(12, 30, 0))),
         Scalar(Money::ZERO))});
+#if 0
 /*
+      window->m_chart->set_region(ChartView::Region{ChartPoint(
+        Scalar(ptime(d, duration_from_string("11:02:07.870000"))),
+        Scalar(10 * Money::ONE)),
+        ChartPoint(Scalar(ptime(d, duration_from_string("12:42:07.870000"))),
+        Scalar(Money::ZERO))});
+*/
       auto t = new QTimer();
+      auto q = false;
       t->callOnTimeout(
-        [&] {
-          translate(*window->m_chart, QPoint{3, 0});
+        [=] () mutable {
+          window->m_chart->set_region(ChartView::Region{ChartPoint(
+            Scalar(ptime(d, duration_from_string("11:02:07.870000"))),
+            Scalar(10 * Money::ONE)),
+            ChartPoint(Scalar(ptime(d, duration_from_string("12:42:07.870000"))),
+            Scalar(Money::ZERO))});
+          translate(*window->m_chart, QPoint{-3, 0});
         });
       t->start(5000);
-*/
 /*
       window->m_chart->set_region(ChartView::Region{ChartPoint(
         Scalar(ptime(d, time_duration(10, 50, 0))), Scalar(10 * Money::ONE)),
         ChartPoint(Scalar(ptime(d, time_duration(13, 30, 0))),
         Scalar(Money::ZERO))});
 */
+#endif
     });
   window->show();
   application->exec();
