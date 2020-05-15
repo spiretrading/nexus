@@ -169,11 +169,10 @@ Qt::ItemFlags CancelKeyBindingsTableModel::flags(
   if(!index.isValid()) {
     return Qt::NoItemFlags;
   }
-  auto flags = QAbstractItemModel::flags(index);
   if(index.column() != 0) {
-    return flags |= Qt::ItemIsEditable;
+    return QAbstractItemModel::flags(index).setFlag(Qt::ItemIsEditable, true);
   }
-  return flags.setFlag(Qt::ItemIsSelectable, false);
+  return QAbstractItemModel::flags(index);
 }
 
 QVariant CancelKeyBindingsTableModel::headerData(int section,

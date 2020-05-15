@@ -432,11 +432,11 @@ void KeyBindingsTableView::on_horizontal_slider_value_changed(int new_value) {
 
 void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
-  m_table->setCurrentIndex(index);
-  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-  table_model->set_focus_highlight(index);
-  m_is_default_cell_selected = false;
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
+    m_table->setCurrentIndex(index);
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->set_focus_highlight(index);
+    m_is_default_cell_selected = false;
     m_is_editing_cell = true;
     m_table->edit(index);
   }
