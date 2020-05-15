@@ -3,9 +3,6 @@ import * as Nexus from 'nexus';
 
 export abstract class CreateAccountModel {
 
-  /** Loads this model. */
-  public abstract async load(): Promise<void>;
-
   /** Submits information to create an account.
     @param username - The username of the new account.
     @param groups - The groups associated with the new account.
