@@ -1,10 +1,10 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel } from './account_directory_model';
+import { AccountDirectoryHomeModel } from './account_directory_home_model';
 import { AccountEntry } from './account_entry';
 
 /** Implements an AccountDirectoryModel using HTTP requests. */
-export class HttpAccountDirectoryModel extends AccountDirectoryModel {
+export class HttpAccountDirectoryModel extends AccountDirectoryHomeModel {
 
   /** Constructs an HttpAccountDirectoryModel.
    * @param account The account whose trading groups are modelled.

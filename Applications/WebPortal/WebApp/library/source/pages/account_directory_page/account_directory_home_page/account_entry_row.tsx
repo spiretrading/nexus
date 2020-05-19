@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { AccountEntry, DisplaySize, RolePanel } from '../..';
+import { AccountEntry, DisplaySize, RolePanel } from '../../..';
 
 interface Properties {
 

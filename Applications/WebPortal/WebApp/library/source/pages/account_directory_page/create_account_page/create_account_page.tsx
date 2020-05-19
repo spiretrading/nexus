@@ -7,8 +7,8 @@ import { DisplaySize, HLine } from '../../..';
 import { CountrySelectionField, TextField } from '../../..';
 import { AddressField, FormEntry, PhotoField, PhotoFieldDisplayMode } 
   from '../..';
-import { GroupSelectionBox } from '../group_selection_box';
-import { GroupSuggestionModel } from '../group_suggestion_model';
+import { GroupSelectionBox } from '../account_directory_home_page/group_selection_box';
+import { GroupSuggestionModel } from '../create_group_modal/group_suggestion_model';
 import { RolesInput } from './roles_input';
 
 interface Properties {

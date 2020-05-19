@@ -1,10 +1,10 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize } from '../..';
-import { LoadingPage } from '..';
-import { AccountDirectoryModel } from './account_directory_model';
-import { AccountDirectoryPage } from './account_directory_page';
+import { DisplaySize } from '../../..';
+import { LoadingPage } from '../..';
+import { AccountDirectoryHomeModel } from './account_directory_home_model';
+import { AccountDirectoryHomePage } from './account_directory_home_page';
 import { AccountEntry } from './account_entry';
 
 interface Properties {
@@ -16,7 +16,7 @@ interface Properties {
   roles: Nexus.AccountRoles;
   
   /** The model representing the account directory. */
-  model: AccountDirectoryModel;
+  model: AccountDirectoryHomeModel;
 }
 
 interface State {
@@ -28,7 +28,7 @@ interface State {
 }
 
 /** Implements the controller for the AccountDirectoryPage. */
-export class AccountDirectoryController extends
+export class AccountDirectoryHomeController extends
     React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
@@ -48,7 +48,7 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    return <AccountDirectoryPage
+    return <AccountDirectoryHomePage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
       groups={this.props.model.groups}

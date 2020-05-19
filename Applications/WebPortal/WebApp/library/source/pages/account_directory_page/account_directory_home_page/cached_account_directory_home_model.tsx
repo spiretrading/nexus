@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { AccountDirectoryModel } from './account_directory_model';
+import { AccountDirectoryModel } from './account_directory_home_model';
 import { AccountEntry } from './account_entry';
 
 /** Implements an AccountDirectoryModel that caches. */
