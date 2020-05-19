@@ -1,9 +1,9 @@
 import * as Beam from 'beam';
-import { AccountDirectoryHomeModel } from './account_directory_home_model';
+import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
 /** Implements an AccountDirectoryModel in memory. */
-export class LocalAccountDirectoryModel extends AccountDirectoryHomeModel {
+export class LocalAccountDirectoryModel extends AccountDirectoryModel {
 
   /** Constructs a new model.
    * @param groups - A set of groups.

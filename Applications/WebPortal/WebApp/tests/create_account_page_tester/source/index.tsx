@@ -129,7 +129,7 @@ class TestApp extends React.Component<Properties, State> {
     });
   }
 
-  private onSubmit(username: string, groups: Beam.DirectoryEntry[],
+  private onSubmit(username: string, groups: Beam.DirectoryEntry,
       identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) {
     this.setState({displayStatus: this.state.errorStatus});
   }

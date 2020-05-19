@@ -44,7 +44,7 @@ export class CreateAccountController extends
   }
 
   private createAccount = async (username: string,
-      groups: Beam.DirectoryEntry[], identity: Nexus.AccountIdentity,
+      groups: Beam.DirectoryEntry, identity: Nexus.AccountIdentity,
       roles: Nexus.AccountRoles) => {
     try {
       this.setState({

@@ -4,7 +4,7 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, PageWrapper } from '../../..';
 import { AccountEntry } from './account_entry';
-import { CreateGroupModal } from '../create_group_modal/create_group_modal';
+import { CreateGroupModal } from './create_group_modal';
 import { FilterBar } from './filter_bar';
 import { GroupCard } from './group_card';
 
@@ -51,7 +51,7 @@ interface State {
 }
 
 /** Displays a directory of accounts. */
-export class AccountDirectoryHomePage extends React.Component<
+export class AccountDirectoryPage extends React.Component<
     Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
@@ -71,41 +71,41 @@ export class AccountDirectoryHomePage extends React.Component<
     const contentWidth = (() => {
       switch(this.props.displaySize) {
         case DisplaySize.SMALL:
-          return AccountDirectoryHomePage.STYLE.contentSmall;
+          return AccountDirectoryPage.STYLE.contentSmall;
         case DisplaySize.MEDIUM:
-          return AccountDirectoryHomePage.STYLE.contentMedium;
+          return AccountDirectoryPage.STYLE.contentMedium;
         case DisplaySize.LARGE:
-          return AccountDirectoryHomePage.STYLE.contentLarge;
+          return AccountDirectoryPage.STYLE.contentLarge;
       }
     })();
     const headerBoxStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return AccountDirectoryHomePage.STYLE.verticalHeaderBox;
+        return AccountDirectoryPage.STYLE.verticalHeaderBox;
       } else {
-        return AccountDirectoryHomePage.STYLE.horizontalHeaderBox;
+        return AccountDirectoryPage.STYLE.horizontalHeaderBox;
       }
     })();
     const buttonBoxStyle = (() => {
       if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return AccountDirectoryHomePage.STYLE.buttonBoxSmall;
+          return AccountDirectoryPage.STYLE.buttonBoxSmall;
         } else {
-          return AccountDirectoryHomePage.STYLE.buttonBox;
+          return AccountDirectoryPage.STYLE.buttonBox;
         }
       } else {
-        return AccountDirectoryHomePage.STYLE.hidden;
+        return AccountDirectoryPage.STYLE.hidden;
       }
     })();
     const buttonStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return AccountDirectoryHomePage.DYNAMIC_STYLE.buttonSmall;
+        return AccountDirectoryPage.DYNAMIC_STYLE.buttonSmall;
       } else {
-        return AccountDirectoryHomePage.DYNAMIC_STYLE.button;
+        return AccountDirectoryPage.DYNAMIC_STYLE.button;
       }
     })();
     const horizontalButtonVisibility = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return AccountDirectoryHomePage.STYLE.hidden;
+        return AccountDirectoryPage.STYLE.hidden;
       } else {
         return null;
       }
@@ -114,7 +114,7 @@ export class AccountDirectoryHomePage extends React.Component<
       if(this.props.displaySize === DisplaySize.SMALL) {
         return null;
       } else {
-        return AccountDirectoryHomePage.STYLE.hidden;
+        return AccountDirectoryPage.STYLE.hidden;
       }
     })();
     const createGroupModal = (() => {
@@ -150,7 +150,7 @@ export class AccountDirectoryHomePage extends React.Component<
     return (
       <PageWrapper>
         {createGroupModal}
-        <div style={AccountDirectoryHomePage.STYLE.page}>
+        <div style={AccountDirectoryPage.STYLE.page}>
           <div style={contentWidth}>
             <div style={headerBoxStyle}>
               <div style={verticalButtonVisibility}>
@@ -159,30 +159,30 @@ export class AccountDirectoryHomePage extends React.Component<
                       onClick={this.props.onNewAccountClick}>
                     New Account
                   </button>
-                  <div style={AccountDirectoryHomePage.STYLE.spacing}/>
+                  <div style={AccountDirectoryPage.STYLE.spacing}/>
                   <button onClick={this.onCreateGroupClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
                 </div>
-                <div style={AccountDirectoryHomePage.STYLE.spacing}/>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
               </div>
               <FilterBar value={this.props.filter} 
                 onChange={this.props.onFilterChange}/>
               <div style={{...buttonBoxStyle, ...horizontalButtonVisibility}}>
-                <div style={AccountDirectoryHomePage.STYLE.spacing}/>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
                 <button className={css(buttonStyle)}
                     onClick={this.props.onNewAccountClick}>
                   New Account
                 </button>
-                <div style={AccountDirectoryHomePage.STYLE.spacing}/>
+                <div style={AccountDirectoryPage.STYLE.spacing}/>
                 <button onClick={this.onCreateGroupClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
               </div>
             </div>
-            <div style={AccountDirectoryHomePage.STYLE.spacing}/>
+            <div style={AccountDirectoryPage.STYLE.spacing}/>
             {cards}
           </div>
         </div>

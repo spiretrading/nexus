@@ -13,7 +13,7 @@ export class HttpCreateAccountModel extends CreateAccountModel {
     this.serviceClients = serviceClients;
   }
 
-  public async createAccount(username: string, groups: Beam.DirectoryEntry[],
+  public async createAccount(username: string, groups: Beam.DirectoryEntry,
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles): Promise<void> {
     await this.serviceClients.administrationClient.createAccount(
       username, groups, identity, roles);

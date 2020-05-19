@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import { AccountEntry } from './account_entry';
 
 /** Interface for a model representing a directory of accounts. */
-export abstract class AccountDirectoryHomeModel {
+export abstract class AccountDirectoryModel {
 
   /** Returns a list of all groups. */
   public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;

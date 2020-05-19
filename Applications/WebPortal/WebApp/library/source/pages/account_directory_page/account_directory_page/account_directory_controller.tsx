@@ -3,8 +3,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../..';
 import { LoadingPage } from '../..';
-import { AccountDirectoryHomeModel } from './account_directory_home_model';
-import { AccountDirectoryHomePage } from './account_directory_home_page';
+import { AccountDirectoryModel } from './account_directory_model';
+import { AccountDirectoryPage } from './account_directory_page';
 import { AccountEntry } from './account_entry';
 
 interface Properties {
@@ -16,7 +16,7 @@ interface Properties {
   roles: Nexus.AccountRoles;
   
   /** The model representing the account directory. */
-  model: AccountDirectoryHomeModel;
+  model: AccountDirectoryModel;
 }
 
 interface State {
@@ -25,10 +25,11 @@ interface State {
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   createGroupStatus: string;
+  redirect: string;
 }
 
 /** Implements the controller for the AccountDirectoryPage. */
-export class AccountDirectoryHomeController extends
+export class AccountDirectoryController extends
     React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
@@ -37,7 +38,8 @@ export class AccountDirectoryHomeController extends
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
-      createGroupStatus: ''
+      createGroupStatus: '',
+      redirect: ''
     };
     this.onCardClick = this.onCardClick.bind(this);
     this.onCreateGroup = this.onCreateGroup.bind(this);
@@ -48,7 +50,7 @@ export class AccountDirectoryHomeController extends
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    return <AccountDirectoryHomePage
+    return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
       groups={this.props.model.groups}
@@ -69,6 +71,8 @@ export class AccountDirectoryHomeController extends
         });
       });
   }
+
+  
 
   private async onCardClick(group: Beam.DirectoryEntry) {
     if(this.state.openedGroups.get(group)) {
