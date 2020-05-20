@@ -16,16 +16,14 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
     this._model = new LocalGroupSuggestionModel([]);
   }
 
-  public isLoaded(): boolean {
-    return this._isLoaded;
-  }
-
   public async load(): Promise<void> {
-    const groups = await 
-      this.serviceClients.administrationClient.loadManagedTradingGroups(
-      this.account);
-    this._model = new LocalGroupSuggestionModel(groups);
-    this._model.load();
+    if(!this._model.isLoaded) {
+      const groups = await 
+        this.serviceClients.administrationClient.loadManagedTradingGroups(
+        this.account);
+      this._model = new LocalGroupSuggestionModel(groups);
+      this._model.load();
+    }
   }
 
   public async loadSuggestions(prefix: string): Promise<Beam.DirectoryEntry[]> {
@@ -34,6 +32,5 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
 
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
-  private _isLoaded: boolean;
   private _model: LocalGroupSuggestionModel;
 }
