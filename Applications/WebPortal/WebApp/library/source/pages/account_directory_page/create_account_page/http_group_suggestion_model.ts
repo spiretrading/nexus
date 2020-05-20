@@ -23,7 +23,7 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
   public async load(): Promise<void> {
     const groups = await 
       this.serviceClients.administrationClient.loadManagedTradingGroups(
-        this.account);
+      this.account);
     this._model = new LocalGroupSuggestionModel(groups);
     this._model.load();
   }
