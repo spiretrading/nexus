@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 import { DisplaySize, GroupSuggestionModel } from '../../..';
 import { CreateAccountModel } from './create_account_model';
 import { CreateAccountPage } from './create_account_page';
@@ -22,6 +23,7 @@ interface Properties {
 
 interface State {
   errorStatus: string;
+  isDone: boolean;
 }
 
 /** Implements the controller for the CreateAccountPage. */
@@ -30,11 +32,15 @@ export class CreateAccountController extends
   constructor(props: Properties) {
     super(props);
     this.state = {
-      errorStatus: ''
+      errorStatus: '',
+      isDone: false
     };
   }
 
   public render(): JSX.Element {
+    if(this.state.isDone) {
+      //return <Router.Redirect to='/'/>;
+    }
     return <CreateAccountPage
       displaySize={this.props.displaySize}
       errorStatus={this.state.errorStatus}
@@ -56,6 +62,7 @@ export class CreateAccountController extends
       this.setState({
         errorStatus: e.toString()
       });
-    }
+    } 
+    this.setState({isDone:true});
   }
 }

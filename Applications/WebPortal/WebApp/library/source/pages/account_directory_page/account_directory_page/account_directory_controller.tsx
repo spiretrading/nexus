@@ -62,7 +62,7 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
       return <div/>;
     }
-    if(!window.location.href.endsWith('/create') &&
+    if(!window.location.href.endsWith('/create_new_account') &&
         !window.location.href.endsWith('/accounts')) {
       return <Router.Redirect to={`${this.props.urlPrefix}/accounts`}/>;
     }
@@ -70,7 +70,7 @@ export class AccountDirectoryController extends
       <Router.Switch>
         <Router.Route path={`${this.props.urlPrefix}/accounts`}
           render={this.renderAccountPage}/>
-        <Router.Route path={`${this.props.urlPrefix}/create`}
+        <Router.Route path={`${this.props.urlPrefix}/create_new_account`}
           render={this.renderCreateAccountPage}/>
       </Router.Switch>);
   }
@@ -133,7 +133,7 @@ export class AccountDirectoryController extends
 
   private onNewAccountClick = () => {
     this.setState({
-      redirect: '/create',
+      redirect: '/create_new_account'
     });
   }
 
