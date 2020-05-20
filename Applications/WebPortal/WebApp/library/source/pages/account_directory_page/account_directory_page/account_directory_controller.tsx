@@ -35,9 +35,6 @@ interface State {
 /** Implements the controller for the AccountDirectoryPage. */
 export class AccountDirectoryController extends
     React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    urlPrefix: ''
-  }
 
   constructor(props: Properties) {
     super(props);
