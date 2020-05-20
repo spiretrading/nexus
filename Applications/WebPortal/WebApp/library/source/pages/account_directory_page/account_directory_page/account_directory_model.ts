@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
+import { CreateAccountModel, GroupSuggestionModel } from
+  '../create_account_page';
 import { AccountEntry } from './account_entry';
-import { CreateAccountModel, GroupSuggestionModel } from '../create_account_page';
 
 /** Interface for a model representing a directory of accounts. */
 export abstract class AccountDirectoryModel {
