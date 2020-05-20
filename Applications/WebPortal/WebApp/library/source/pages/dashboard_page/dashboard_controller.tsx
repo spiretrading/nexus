@@ -51,6 +51,7 @@ export class DashboardController extends React.Component<Properties, State> {
           return <AccountDirectoryController
             displaySize={this.props.displaySize}
             roles={this.props.model.roles}
+            countryDatabase={this.props.model.countryDatabase}
             model={this.props.model.accountDirectoryModel}/>;
       }
     })();

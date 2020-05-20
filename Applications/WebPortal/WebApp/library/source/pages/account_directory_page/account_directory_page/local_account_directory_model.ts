@@ -39,6 +39,14 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     return this._groups.clone();
   }
 
+  public get createAccountModel(): import("..").CreateAccountModel {
+    throw new Error("Method not implemented.");
+  }
+
+  public get groupSuggestionModel(): import("..").GroupSuggestionModel {
+    throw new Error("Method not implemented.");
+  }
+
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
     for(const group of this._groups) {
       if(group.name === name) {

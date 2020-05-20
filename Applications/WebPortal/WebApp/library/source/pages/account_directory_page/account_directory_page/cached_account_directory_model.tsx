@@ -4,7 +4,7 @@ import { AccountEntry } from './account_entry';
 
 /** Implements an AccountDirectoryModel that caches. */
 export class CachedAccountDirectoryModel extends AccountDirectoryModel {
-
+  
   /** Constructs an cached model from a existing model
    * @param model - The model to be used.
    */
@@ -18,6 +18,14 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
 
   public get groups(): Beam.Set<Beam.DirectoryEntry> {
     return this._model.groups;
+  }
+
+  public get createAccountModel(): import("..").CreateAccountModel {
+    throw new Error("Method not implemented.");
+  }
+
+  public get groupSuggestionModel(): import("..").GroupSuggestionModel {
+    throw new Error("Method not implemented.");
   }
 
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
