@@ -51,8 +51,7 @@ interface State {
 }
 
 /** Displays a directory of accounts. */
-export class AccountDirectoryPage extends React.Component<
-    Properties, State> {
+export class AccountDirectoryPage extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},

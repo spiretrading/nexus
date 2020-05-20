@@ -2,11 +2,11 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
-import { DisplaySize } from '../../..';
+import { DisplaySize, LoadingPage } from '../../..';
+import { CreateAccountController } from '../create_account_page';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountDirectoryPage } from './account_directory_page';
 import { AccountEntry } from './account_entry';
-import { CreateAccountController } from '../create_account_page';
 
 interface Properties {
 
@@ -19,12 +19,8 @@ interface Properties {
   /** The database of countries. */
   countryDatabase: Nexus.CountryDatabase;
 
-  /** The URL prefix to match. */
-  urlPrefix?: string;
-
   /** The model representing the account directory. */
   model: AccountDirectoryModel;
-
 }
 
 interface State {
@@ -37,7 +33,7 @@ interface State {
 }
 
 /** Implements the controller for the AccountDirectoryPage. */
-export class AccountDirectoryController extends 
+export class AccountDirectoryController extends
     React.Component<Properties, State> {
   public static readonly defaultProps = {
     urlPrefix: ''
@@ -51,7 +47,7 @@ export class AccountDirectoryController extends
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       createGroupStatus: '',
-      redirect: null
+      redirect: '/account_directory'
     };
   }
 
@@ -60,18 +56,14 @@ export class AccountDirectoryController extends
       return <Router.Redirect push to={this.state.redirect}/>;
     }
     if(!this.state.isLoaded) {
-      return <div/>;
-    }
-    if(!window.location.href.endsWith('/create_new_account') &&
-        !window.location.href.endsWith('/accounts')) {
-      return <Router.Redirect to={`${this.props.urlPrefix}/accounts`}/>;
+      return <LoadingPage/>;
     }
     return (
       <Router.Switch>
-        <Router.Route path={`${this.props.urlPrefix}/accounts`}
-          render={this.renderAccountPage}/>
-        <Router.Route path={`${this.props.urlPrefix}/create_new_account`}
+        <Router.Route path='/create_account'
           render={this.renderCreateAccountPage}/>
+        <Router.Route path='/account_directory'
+          render={this.renderAccountPage}/>
       </Router.Switch>);
   }
 
@@ -124,16 +116,16 @@ export class AccountDirectoryController extends
   }
 
   private onCreateGroup = async (name: string) => {
-    try{
+    try {
       await this.props.model.createGroup(name);
-    } catch (e) {
+    } catch(e) {
       this.setState({createGroupStatus: e.toString()});
     }
   }
 
   private onNewAccountClick = () => {
     this.setState({
-      redirect: '/create_new_account'
+      redirect: '/create_account'
     });
   }
 
