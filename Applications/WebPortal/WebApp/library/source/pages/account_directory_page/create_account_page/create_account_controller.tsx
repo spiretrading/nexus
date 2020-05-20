@@ -39,7 +39,7 @@ export class CreateAccountController extends
 
   public render(): JSX.Element {
     if(this.state.isDone) {
-      //return <Router.Redirect to='/'/>;
+      return <Router.Redirect to='/'/>;
     }
     return <CreateAccountPage
       displaySize={this.props.displaySize}

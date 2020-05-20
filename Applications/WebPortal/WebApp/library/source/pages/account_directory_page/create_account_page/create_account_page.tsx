@@ -476,7 +476,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, this.state.selectedGroups[1],
+      this.props.onSubmit(this.state.username, this.state.selectedGroups[0],
         this.state.identity, this.state.roles);
     }
   }
