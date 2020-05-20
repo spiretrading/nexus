@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
-import { CreateAccountModel, GroupSuggestionModel } from '..';
+import { CreateAccountModel, LocalCreateAccountModel, LocalGroupSuggestionModel,
+  GroupSuggestionModel } from '..';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
@@ -73,6 +74,12 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
   }
 
   public load(): Promise<void> {
+    this._createAccountModel = new LocalCreateAccountModel();
+    const groups = [];
+    for(const group of this.groups) {
+      groups.push(group);
+    }
+    this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
     return this._model.load();
   }
 
