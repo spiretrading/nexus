@@ -324,8 +324,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   public componentDidMount(): void {
+    for(const country of this.props.countryDatabase) {
+      this.state.identity.country = country.code;
+      break;
+    }
+
     this.props.groupSuggestionModel.load().then(() => {
-      this.setState({isModelLoaded: true});
+      this.setState({isModelLoaded: true, identity: this.state.identity});
     });
   }
 

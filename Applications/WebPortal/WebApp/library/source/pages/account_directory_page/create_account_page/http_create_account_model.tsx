@@ -15,6 +15,7 @@ export class HttpCreateAccountModel extends CreateAccountModel {
 
   public async createAccount(username: string, groups: Beam.DirectoryEntry,
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles): Promise<void> {
+    console.log(username, groups, identity.toJson(), roles);
     await this.serviceClients.administrationClient.createAccount(
       username, groups, identity, roles);
   }
