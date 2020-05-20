@@ -74,12 +74,6 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
   }
 
   public load(): Promise<void> {
-    this._createAccountModel = new LocalCreateAccountModel();
-    const groups = [];
-    for(const group of this.groups) {
-      groups.push(group);
-    }
-    this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
     return this._model.load();
   }
 
@@ -87,6 +81,4 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
   private _prevFiltered: Map<string,
     Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>;
   private _accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
-  private _createAccountModel: CreateAccountModel;
-  private _groupSuggestionModel: GroupSuggestionModel;
 }
