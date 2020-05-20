@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import { CreateAccountModel, GroupSuggestionModel } from '..';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
@@ -20,12 +21,12 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     return this._model.groups;
   }
 
-  public get createAccountModel(): import("..").CreateAccountModel {
-    throw new Error("Method not implemented.");
+  public get createAccountModel(): CreateAccountModel {
+    return this._model.createAccountModel;
   }
 
-  public get groupSuggestionModel(): import("..").GroupSuggestionModel {
-    throw new Error("Method not implemented.");
+  public get groupSuggestionModel(): GroupSuggestionModel {
+    return this._model.groupSuggestionModel;
   }
 
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
@@ -79,4 +80,6 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
   private _prevFiltered: Map<string,
     Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>;
   private _accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
+  private _createAccountModel: CreateAccountModel;
+  private _groupSuggestionModel: GroupSuggestionModel;
 }

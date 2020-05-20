@@ -1,9 +1,10 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { CreateAccountModel, GroupSuggestionModel, HttpCreateAccountModel,
+  LocalGroupSuggestionModel } from '../create_account_page';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
-import { CreateAccountModel, HttpCreateAccountModel, GroupSuggestionModel, 
-  LocalGroupSuggestionModel } from '../create_account_page';
+
 
 /** Implements an AccountDirectoryModel using HTTP requests. */
 export class HttpAccountDirectoryModel extends AccountDirectoryModel {
