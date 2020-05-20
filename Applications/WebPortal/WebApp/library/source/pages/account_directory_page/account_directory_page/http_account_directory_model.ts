@@ -17,7 +17,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     super();
     this.account = account;
     this.serviceClients = serviceClients;
-    this._createAccountModel = new HttpCreateAccountModel(this.serviceClients);
+    this._createAccountModel = null;
     this._groupSuggestionModel = new LocalGroupSuggestionModel([]);
   }
 
@@ -29,7 +29,8 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     for(const group of groups) {
       this._groups.add(group);
     }
-    this._groupSuggestionModel = new LocalGroupSuggestionModel(groups); 
+    this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
+    this._createAccountModel = new HttpCreateAccountModel(this.serviceClients);
   }
 
   public get groups(): Beam.Set<Beam.DirectoryEntry> {
@@ -86,6 +87,6 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private _groups: Beam.Set<Beam.DirectoryEntry>;
-  private _createAccountModel: CreateAccountModel;
+  private _createAccountModel: HttpCreateAccountModel;
   private _groupSuggestionModel: LocalGroupSuggestionModel;
 }
