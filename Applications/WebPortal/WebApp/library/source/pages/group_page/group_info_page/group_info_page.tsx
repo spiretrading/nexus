@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize, PageWrapper, AccountEntry } from '../../..';
+import { GroupMemberEntry } from './group_member_entry';
 
 interface Properties {
 
@@ -46,9 +47,10 @@ export class GroupInfoPage extends React.Component<Properties> {
         return <div>{GroupInfoPage.GROUP_EMPTY_MESSAGE}</div>;
       } else {
         const entries = [];
-        for(const account in members) {
-          entries.push(<div>account</div>);
+        for(const account of members) {
+          entries.push(<GroupMemberEntry account={account}/>);
         }
+        return entries;
       } 
     })();
     return(
