@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { Button, DisplaySize, TextField} from '../..';
+import { Button, DisplaySize, TextField} from '../../..';
 
 interface Properties {
 

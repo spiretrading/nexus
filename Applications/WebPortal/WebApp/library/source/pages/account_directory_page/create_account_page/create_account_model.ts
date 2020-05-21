@@ -3,9 +3,6 @@ import * as Nexus from 'nexus';
 
 export abstract class CreateAccountModel {
 
-  /** Loads this model. */
-  public abstract async load(): Promise<void>;
-
   /** Submits information to create an account.
     @param username - The username of the new account.
     @param groups - The groups associated with the new account.
@@ -13,6 +10,6 @@ export abstract class CreateAccountModel {
     @param roles - The roles associated with the new account.
    */
   public abstract async createAccount(username: string, 
-    groups: Beam.DirectoryEntry[], identity: Nexus.AccountIdentity,
+    groups: Beam.DirectoryEntry, identity: Nexus.AccountIdentity,
     roles: Nexus.AccountRoles): Promise<void>;
 }

@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine } from '../..';
+import { DisplaySize, DropDownButton, HLine } from '../../..';
 import { AccountEntry } from './account_entry';
 import { AccountEntryRow } from './account_entry_row';
 
