@@ -72,10 +72,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return new Promise<AccountEntry[]>((resolve) => {
-      setTimeout(() => {
-        resolve(this._accounts.get(group).slice());}, 100);
-      });
+    return this._accounts.get(group).slice();
   }
 
   public async loadFilteredAccounts(
@@ -83,23 +80,19 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return new Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>(
-      (resolve) => {
-        setTimeout(() => {
-          const map = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
-          if(filter) {
-            for(const group of this._groups) {
-              const accounts: AccountEntry[] = [];
-              for(const account of this._accounts.get(group)) {
-                if(account.account.name.indexOf(filter) === 0) {
-                  accounts.push(account);
-                }
-              }
-              map.set(group, accounts);
-            }
+    const matches = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
+    if(filter) {
+      for(const group of this._groups) {
+        const accounts: AccountEntry[] = [];
+        for(const account of this._accounts.get(group)) {
+          if(account.account.name.indexOf(filter) === 0) {
+            accounts.push(account);
           }
-          resolve(map);}, 100);
-      });
+        }
+        matches.set(group, accounts);
+      }
+    }
+    return matches;
   }
 
   private _isLoaded: boolean;
