@@ -13,10 +13,6 @@ interface Properties {
   lastUpdate?: Beam.DateTime;
 }
 
-interface State {
-  dateTimeToDisplay: string;
-}
-
 export class GroupInfoPage extends React.Component<Properties> {
   public static readonly defaultProps = {
   }
