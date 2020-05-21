@@ -115,6 +115,7 @@ export class AccountDirectoryController extends
   private onCreateGroup = async (name: string) => {
     try {
       await this.props.model.createGroup(name);
+      this.forceUpdate();
     } catch(e) {
       this.setState({createGroupStatus: e.toString()});
     }

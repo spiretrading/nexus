@@ -45,7 +45,10 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
   } 
 
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
-    return await this.serviceClients.administrationClient.createGroup(name);
+    const group = await this.serviceClients.administrationClient.createGroup(
+      name);
+    this._groups.add(group);
+    return group;
   }
 
   public async loadAccounts(group: Beam.DirectoryEntry):
