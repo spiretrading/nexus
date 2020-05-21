@@ -22,7 +22,7 @@ export class HttpGroupSuggestionModel extends GroupSuggestionModel {
         this.serviceClients.administrationClient.loadManagedTradingGroups(
         this.account);
       this._model = new LocalGroupSuggestionModel(groups);
-      this._model.load();
+      await this._model.load();
     }
   }
 
