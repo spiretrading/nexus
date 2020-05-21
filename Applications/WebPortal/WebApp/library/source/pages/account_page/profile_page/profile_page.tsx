@@ -290,7 +290,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Dali.VBoxLayout width='100%'>
               <Dali.Padding size='18px'/>
               <div style={ProfilePage.STYLE.lastLoginBox}>
-                {this.props.identity.lastLoginTime.toString()}
+                {'Last login: ' + this.props.identity.lastLoginTime.toString()}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={ProfilePage.STYLE.headerStyler}>

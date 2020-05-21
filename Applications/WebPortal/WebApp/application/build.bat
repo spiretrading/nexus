@@ -90,7 +90,7 @@ IF NOT EXIST mod_time.txt (
 )
 IF "%UPDATE_BUILD%" == "1" (
   IF EXIST application (
-    DEL /s /q /f application\*
+    DEL /s /q /f application\* > NUL
   )
   node node_modules\webpack\bin\webpack.js
   ECHO "timestamp" > mod_time.txt
