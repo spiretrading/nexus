@@ -6,7 +6,7 @@ import { AccountEntry } from './account_entry';
 
 /** Implements an AccountDirectoryModel that caches. */
 export class CachedAccountDirectoryModel extends AccountDirectoryModel {
-  
+
   /** Constructs an cached model from a existing model
    * @param model - The model to be used.
    */

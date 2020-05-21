@@ -5,7 +5,6 @@ import { CreateAccountModel, GroupSuggestionModel, HttpCreateAccountModel,
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
-
 /** Implements an AccountDirectoryModel using HTTP requests. */
 export class HttpAccountDirectoryModel extends AccountDirectoryModel {
 
