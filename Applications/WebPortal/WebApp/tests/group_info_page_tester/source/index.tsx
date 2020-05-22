@@ -3,7 +3,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
-import { DirectoryEntry } from 'beam';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -37,11 +36,6 @@ class TestApp extends React.Component<Properties, State> {
     </div>);
   }
 
-  public componentDidMount() {
-    this.addManyAccounts();
-  }
-
-
   private clearAccounts = () => {
     this.setState({members: []});
   }
@@ -49,13 +43,13 @@ class TestApp extends React.Component<Properties, State> {
   private addSomeAccounts = () => {
     let someGroup = [];
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Bob'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Bob'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Sue'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Sue'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Carl'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Carl'),
       new Nexus.AccountRoles(2)));
     this.setState({members: someGroup});
   }
@@ -63,37 +57,37 @@ class TestApp extends React.Component<Properties, State> {
   private addManyAccounts = () => {
     let someGroup = this.state.members.slice();
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(127, 'Bob'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(127, 'Bob'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(118, 'Sue'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(118, 'Sue'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(913, 'Carl'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(913, 'Carl'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(912, 'Max'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(912, 'Max'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(138, 'Dean'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(138, 'Dean'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(3, 'Froddo'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(3, 'Froddo'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Sam'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Sam'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Merry'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Merry'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Pippin'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Pippin'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(312, 'Spire'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(312, 'Spire'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
-      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(218, 'Nexus'), 
+      new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(218, 'Nexus'),
       new Nexus.AccountRoles(2)));
     someGroup.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(113, 'Doug'), 
