@@ -1,8 +1,9 @@
+import * as Beam from 'beam';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
+import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage } from '../..';
-import { AccountController, AccountDirectoryController, AccountModel }
-  from '..';
+import { AccountController, AccountDirectoryController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -15,6 +16,9 @@ interface Properties {
   /** The device's display size. */
   displaySize: DisplaySize;
 
+  /** The URL prefix that navigates to this page. */
+  urlPrefix?: string;
+
   /** Indicates the user has logged out. */
   onLogout?: () => void;
 }
@@ -26,6 +30,10 @@ interface State {
 
 /** Implements the controller for the DashboardPage. */
 export class DashboardController extends React.Component<Properties, State> {
+  private static readonly defaultProps = {
+    urlPrefix: ''
+  };
+
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -46,22 +54,17 @@ export class DashboardController extends React.Component<Properties, State> {
       <DashboardPage roles={this.props.model.roles}
           onSideMenuClick={this.onSideMenuClick}>
         <Router.Switch>
-          <Router.Route path='*/account' render={() =>
-            <AccountController
-              entitlements={this.props.model.entitlementDatabase}
-              countryDatabase={this.props.model.countryDatabase}
-              currencyDatabase={this.props.model.currencyDatabase}
-              marketDatabase={this.props.model.marketDatabase}
-              model={this.accountModel}
-              displaySize={this.props.displaySize}/>}/>
-          <Router.Route path='*/account_directory' render={() =>
-            <AccountDirectoryController
-              displaySize={this.props.displaySize}
-              roles={this.props.model.roles}
-              countryDatabase={this.props.model.countryDatabase}
-              model={this.props.model.accountDirectoryModel}/>}/>
+          <Router.Route path={`${this.props.urlPrefix}/account`}
+            render={this.renderAccountPage}/>
+          <Router.Route path={`${this.props.urlPrefix}/account_directory`}
+            render={() =>
+              <AccountDirectoryController
+                displaySize={this.props.displaySize}
+                roles={this.props.model.roles}
+                countryDatabase={this.props.model.countryDatabase}
+                model={this.props.model.accountDirectoryModel}/>}/>
           <Router.Route>
-            <Router.Redirect to='/account'/>
+            <Router.Redirect to={`${this.props.urlPrefix}/account`}/>
           </Router.Route>
         </Router.Switch>
       </DashboardPage>);
@@ -70,8 +73,6 @@ export class DashboardController extends React.Component<Properties, State> {
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
-        this.accountModel = this.props.model.makeAccountModel(
-          this.props.model.account);
         this.setState({isLoaded: true});
       });
   }
@@ -82,15 +83,36 @@ export class DashboardController extends React.Component<Properties, State> {
     }
   }
 
+  private renderAccountPage = () => {
+    const model = (() => {
+      const pattern = Path.pathToRegexp(
+        `${this.props.urlPrefix}/account/:id(\\d+)?`, [], { end: false });
+      const match = pattern.exec(window.location.pathname);
+      const account = (() => {
+        if(match[1]) {
+          return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
+        }
+        return this.props.model.account;
+      })();
+      return this.props.model.makeAccountModel(account);
+    })();
+    return (
+      <AccountController
+        entitlements={this.props.model.entitlementDatabase}
+        countryDatabase={this.props.model.countryDatabase}
+        currencyDatabase={this.props.model.currencyDatabase}
+        marketDatabase={this.props.model.marketDatabase}
+        model={model}
+        displaySize={this.props.displaySize}/>);
+  }
+
   private onSideMenuClick(item: SideMenu.Item) {
     if(item === SideMenu.Item.PROFILE) {
-      this.setState({redirect: '/account'});
+      this.setState({redirect: `${this.props.urlPrefix}/account`});
     } else if(item === SideMenu.Item.ACCOUNTS) {
-      this.setState({redirect: '/account_directory'});
+      this.setState({redirect: `${this.props.urlPrefix}/account_directory`});
     } else if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
   }
-
-  private accountModel: AccountModel;
 }

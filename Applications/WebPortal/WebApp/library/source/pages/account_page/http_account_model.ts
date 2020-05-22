@@ -53,10 +53,17 @@ export class HttpAccountModel extends AccountModel {
       return;
     }
     await this.model.load();
+    const account = await (async () => {
+      if(this.account.name) {
+        return this.account;
+      }
+      return await
+        this.serviceClients.serviceLocatorClient.loadDirectoryEntryFromId(
+        this.account.id);
+    })();
     const roles =
-      await this.serviceClients.administrationClient.loadAccountRoles(
-      this.account);
-    this.model = new LocalAccountModel(this.account, roles);
+      await this.serviceClients.administrationClient.loadAccountRoles(account);
+    this.model = new LocalAccountModel(account, roles);
     return this.model.load();
   }
 
