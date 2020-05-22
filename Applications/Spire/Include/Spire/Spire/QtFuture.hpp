@@ -18,10 +18,6 @@ namespace Spire {
       //! The type of value to resolve to.
       using Type = T;
 
-      BaseQtFuture(BaseQtFuture&&) = default;
-
-      BaseQtFuture& operator =(BaseQtFuture&&) = default;
-
       //! Resolves the QtPromise waiting on this future to an exception.
       void resolve(std::exception_ptr e);
 
@@ -31,9 +27,16 @@ namespace Spire {
       BaseQtFuture(Beam::Routines::Eval<Type> eval);
   };
 
+  /*! \brief Encapsulates a QtPromise resolving to a future value.
+      \tparam T The type of value to resolve to.
+  */
   template<typename T>
   class QtFuture : public BaseQtFuture<T> {
     public:
+
+      QtFuture(QtFuture&&);
+
+      QtFuture& operator =(QtFuture&&);
 
       using BaseQtFuture<T>::resolve;
 
@@ -46,9 +49,14 @@ namespace Spire {
       QtFuture(Beam::Routines::Eval<Type> eval);
   };
 
+  //! Specializes QtFuture for void promises.
   template<>
   class QtFuture<void> : public BaseQtFuture<void> {
     public:
+
+      QtFuture(QtFuture&&);
+
+      QtFuture& operator =(QtFuture&&);
 
       using BaseQtFuture<void>::resolve;
 
@@ -87,6 +95,14 @@ namespace Spire {
   BaseQtFuture<T>::BaseQtFuture(Beam::Routines::Eval<Type> eval)
     : m_eval(std::move(eval)) {}
 
+  template<typename T>
+  QtFuture<T>::QtFuture(QtFuture&& other)
+    : BaseQtFuture(std::move(other.m_eval)) {}
+
+  template<typename T>
+  QtFuture<T>& QtFuture<T>::operator =(QtFuture&& other) {
+    m_eval = std::move(other.m_eval);
+  }
 
   template<typename T>
   void QtFuture<T>::resolve(Type value) {
@@ -96,6 +112,13 @@ namespace Spire {
   template<typename T>
   QtFuture<T>::QtFuture(Beam::Routines::Eval<Type> eval)
     : BaseQtFuture(std::move(eval)) {}
+
+  inline QtFuture<void>::QtFuture(QtFuture&& other)
+    : BaseQtFuture(std::move(other.m_eval)) {}
+
+  inline QtFuture<void>& QtFuture<void>::operator =(QtFuture&& other) {
+    m_eval = std::move(other.m_eval);
+  }
 
   inline void QtFuture<void>::resolve() {
     m_eval.SetResult();
