@@ -1,7 +1,6 @@
 import * as Beam from 'beam';
-import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, PageWrapper, AccountEntry } from '../../..';
+import { AccountEntry, DisplaySize, PageWrapper,  } from '../../..';
 import { GroupMemberEntry } from './group_member_entry';
 
 interface Properties {
@@ -29,18 +28,21 @@ export class GroupInfoPage extends React.Component<Properties> {
         return null;
       }
     })();
-    const containerDimension = (() => {
+    const pageWidth = (() => {
       if(displaySize === DisplaySize.SMALL) {
-        return GroupInfoPage.STYLE.smallContainer;
+        return GroupInfoPage.STYLE.smallPageWidth;
       } else if(displaySize === DisplaySize.MEDIUM) {
-        return GroupInfoPage.STYLE.mediumContainer;
+        return GroupInfoPage.STYLE.mediumPageWidth;
       } else {
-        return GroupInfoPage.STYLE.largeContainer; 
+        return GroupInfoPage.STYLE.largePageWidth; 
       }
     })();
     const content = (() => {
       if(group.length === 0) {
-        return <div style={GroupInfoPage.STYLE.noEntries}>{GroupInfoPage.GROUP_EMPTY_MESSAGE}</div>;
+        return (
+          <div style={GroupInfoPage.STYLE.noEntries}>
+            {GroupInfoPage.GROUP_EMPTY_MESSAGE}
+          </div>);
       } else {
         const entries = [];
         for(const account of group) {
@@ -51,13 +53,12 @@ export class GroupInfoPage extends React.Component<Properties> {
     })();
     return(
       <PageWrapper>
-        <div style={GroupInfoPage.STYLE.pageMargins}>
+        <div style={{...GroupInfoPage.STYLE.pageMargins, ...pageWidth}}>
           <div style={GroupInfoPage.STYLE.header}>
-            <span>Last Login:</span>
+            <span>Last Update:</span>
             {membersCount}
           </div> 
-          <div style={{...containerDimension, 
-              ... GroupInfoPage.STYLE.border}}>
+          <div style={GroupInfoPage.STYLE.listContainer}>
             {content}
           </div>
         </div>
@@ -70,27 +71,30 @@ export class GroupInfoPage extends React.Component<Properties> {
       marginBottom: '60px',
       marginLeft: '18px',
       marginRight: '18px',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
     } as React.CSSProperties,
-    smallContainer: {
+    smallPageWidth: {
       boxSizing: 'border-box',
       minWidth: '284px',
       maxWidth: '424px',
-      height: '342px',
-      overflowY: 'auto'
+      width: '100%',
     } as React.CSSProperties,
-    mediumContainer: {
+    mediumPageWidth: {
       boxSizing: 'border-box',
-      width: '372px',
-      height: '342px',
-      overflowY: 'auto'
+      width: '732px',
     } as React.CSSProperties,
-    largeContainer: {
+    largePageWidth: {
       boxSizing: 'border-box',
       width: '1000px',
-      height: '342px',
-      overflowY: 'auto'
     } as React.CSSProperties,
-    border: {
+    listContainer: {
+      boxSizing: 'border-box',
+      height: '342px',
+      width: '100%',
+      overflowY: 'auto',
       borderColor: '#C8C8C8',
       borderStyle: 'solid',
       borderWidth: '1px',
