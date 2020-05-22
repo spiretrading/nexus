@@ -35,7 +35,7 @@ export class LoadingPage extends React.Component<Properties, State> {
           <Transition in={this.state.showAnimation} timeout={this.props.delay}>
             {(state) => (
               <div style={{ ...(LoadingPage.DELAY as any)[state] }}>
-                <img src='resources/loading/pre-loader.gif'
+                <img src='/resources/loading/pre-loader.gif'
                   style={LoadingPage.STYLE.containerStyle}/>
               </div>)}
           </Transition>

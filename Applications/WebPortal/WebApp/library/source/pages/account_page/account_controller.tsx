@@ -23,9 +23,6 @@ interface Properties {
   /** The set of markets. */
   marketDatabase: Nexus.MarketDatabase;
 
-  /** The URL prefix to match. */
-  urlPrefix?: string;
-
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
 
@@ -40,10 +37,6 @@ interface State {
 
 /** Implements a controller for the AccountPage. */
 export class AccountController extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    urlPrefix: ''
-  }
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -64,29 +57,24 @@ export class AccountController extends React.Component<Properties, State> {
       return <LoadingPage/>;
     }
     const subPage = (() => {
-      if(window.location.href.endsWith('/profile')) {
+      if(window.location.pathname.endsWith('/profile')) {
         return SubPage.PROFILE;
-      } else if(window.location.href.endsWith('/entitlements')) {
+      } else if(window.location.pathname.endsWith('/entitlements')) {
         return SubPage.ENTITLEMENTS;
-      } else if(window.location.href.endsWith('/risk')) {
+      } else if(window.location.pathname.endsWith('/risk')) {
         return SubPage.RISK_CONTROLS;
       }
       return SubPage.NONE;
     })();
-    if(subPage === SubPage.NONE) {
-      return <Router.Redirect to={`${this.props.urlPrefix}/profile`}/>;
-    }
     return (
       <Router.Switch>
         <AccountPage displaySize={this.props.displaySize}
             subPage={subPage} account={this.props.model.account}
             roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
-          <Router.Route path={`${this.props.urlPrefix}/profile`}
-            render={this.renderProfilePage}/>
-          <Router.Route path={`${this.props.urlPrefix}/entitlements`}
+          <Router.Route path='.*/profile' render={this.renderProfilePage}/>
+          <Router.Route path='.*/entitlements'
             render={this.renderEntitlementsPage}/>
-          <Router.Route path={`${this.props.urlPrefix}/risk`}
-            render={this.renderRiskPage}/>
+          <Router.Route path='.*/risk' render={this.renderRiskPage}/>
         </AccountPage>
       </Router.Switch>);
   }
@@ -130,18 +118,18 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private onMenuClick(subPage: SubPage) {
+    const urlPrefix = (() => {
+      const url = window.location.pathname;
+      const start = url.indexOf('/');
+      const end = url.lastIndexOf('/');
+      return url.substr(start, end - start);
+    })();
     if(subPage === SubPage.PROFILE) {
-      this.setState({
-        redirect: `${this.props.urlPrefix}/profile`,
-      });
+      this.setState({redirect: `${urlPrefix}/profile`});
     } else if(subPage === SubPage.ENTITLEMENTS) {
-      this.setState({
-        redirect: `${this.props.urlPrefix}/entitlements`,
-      });
+      this.setState({redirect: `${urlPrefix}/entitlements`});
     } else if(subPage === SubPage.RISK_CONTROLS) {
-      this.setState({
-        redirect: `${this.props.urlPrefix}/risk`,
-      });
+      this.setState({redirect: `${urlPrefix}/risk`});
     }
   }
 }

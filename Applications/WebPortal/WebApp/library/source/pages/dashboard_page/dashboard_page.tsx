@@ -62,7 +62,7 @@ export class DashboardPage extends React.Component<Properties, State> {
                   <Padding size='20px'/>
                   <VBoxLayout height='60px'>
                     <Padding size='15px'/>
-                    <img src='resources/dashboard/logo/logo-inverted.png'
+                    <img src='/resources/dashboard/logo/logo-inverted.png'
                       width='78px' height='30px'/>
                     <Padding size='15px'/>
                   </VBoxLayout>
@@ -81,7 +81,7 @@ export class DashboardPage extends React.Component<Properties, State> {
             <Padding size='20px'/>
             <VBoxLayout height='60px'>
               <Padding size='15px'/>
-              <img src='resources/dashboard/logo/logo.png' width='78px'
+              <img src='/resources/dashboard/logo/logo.png' width='78px'
                 height='30px'/>
               <Padding size='15px'/>
             </VBoxLayout>

@@ -24,20 +24,20 @@ export class SideMenu extends React.Component<Properties> {
     return (
       <VBoxLayout style={SideMenu.STYLE}>
         <Padding size='15px'/>
-        <SideMenuButton icon='resources/dashboard/menu-icons/my-profile.svg'
+        <SideMenuButton icon='/resources/dashboard/menu-icons/my-profile.svg'
           label='My Profile'
           onClick={() => this.props.onClick(SideMenu.Item.PROFILE)}/>
-        <SideMenuButton icon='resources/dashboard/menu-icons/accounts.svg'
+        <SideMenuButton icon='/resources/dashboard/menu-icons/accounts.svg'
           label='Accounts'
           onClick={() => this.props.onClick(SideMenu.Item.ACCOUNTS)}/>
-        <SideMenuButton icon='resources/dashboard/menu-icons/portfolio.svg'
+        <SideMenuButton icon='/resources/dashboard/menu-icons/portfolio.svg'
           label='Portfolio'
           onClick={() => this.props.onClick(SideMenu.Item.PORTFOLIO)}/>
         <SideMenuButton
-          icon='resources/dashboard/menu-icons/request-history.svg'
+          icon='/resources/dashboard/menu-icons/request-history.svg'
           label='Request History'
           onClick={() => this.props.onClick(SideMenu.Item.REQUEST_HISTORY)}/>
-        <SideMenuButton icon='resources/dashboard/menu-icons/sign-out.svg'
+        <SideMenuButton icon='/resources/dashboard/menu-icons/sign-out.svg'
           label='Sign Out'
           onClick={() => this.props.onClick(SideMenu.Item.SIGN_OUT)}/>
       </VBoxLayout>);
