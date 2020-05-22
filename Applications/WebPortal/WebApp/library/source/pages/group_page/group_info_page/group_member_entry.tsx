@@ -14,12 +14,12 @@ export class GroupMemberEntry extends React.Component<Properties> {
   public render(): JSX.Element {
     const {account} = this.props;
     return (
-      <span className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
+      <button className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
         <span style={GroupMemberEntry.STYLE.name}>{account.account.name}</span>
         <span style={GroupMemberEntry.STYLE.roleWrapper}>
           <RolePanel roles={account.roles}/>
         </span>
-      </span>
+      </button>
     ); 
   }
 
@@ -42,13 +42,14 @@ export class GroupMemberEntry extends React.Component<Properties> {
       paddingLeft: '10px',
       paddingRight: '10px',
       alignItems: 'center',
-      backgroundColor: '#FFFFFF'
-      },
+      backgroundColor: '#FFFFFF',
+      border: 'none',
       ':hover': {
         backgroundColor: '#F8F8F8'
       },
       ':active': {
         backgroundColor: '#F8F8F8'
       }
+    }
   });
 }
