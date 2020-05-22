@@ -21,7 +21,9 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return(
-      <div/>);
+      <WebPortal.GroupInfoPage
+        members={[]}
+        displaySize={this.props.displaySize}/>);
   }
 }
 
