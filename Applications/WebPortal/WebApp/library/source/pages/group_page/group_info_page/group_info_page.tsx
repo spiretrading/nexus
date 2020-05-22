@@ -8,7 +8,7 @@ interface Properties {
 
   displaySize: DisplaySize;
 
-  members: AccountEntry[];
+  group: AccountEntry[];
 
   lastUpdate?: Beam.DateTime;
 }
@@ -18,12 +18,12 @@ export class GroupInfoPage extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const {displaySize, members} = this.props;
+    const {displaySize, group} = this.props;
     const membersCount = (() => {
       if(displaySize !== DisplaySize.SMALL) {
         return (
           <span style={GroupInfoPage.STYLE.membersInfo}>
-            Total members: {members.length}
+            Total members: {group.length}
           </span>);
       } else {
         return null;
@@ -39,11 +39,11 @@ export class GroupInfoPage extends React.Component<Properties> {
       }
     })();
     const content = (() => {
-      if(members.length === 0) {
-        return <div>{GroupInfoPage.GROUP_EMPTY_MESSAGE}</div>;
+      if(group.length === 0) {
+        return <div style={GroupInfoPage.STYLE.noEntries}>{GroupInfoPage.GROUP_EMPTY_MESSAGE}</div>;
       } else {
         const entries = [];
-        for(const account of members) {
+        for(const account of group) {
           entries.push(<GroupMemberEntry account={account}/>);
         }
         return entries;
@@ -52,7 +52,10 @@ export class GroupInfoPage extends React.Component<Properties> {
     return(
       <PageWrapper>
         <div style={GroupInfoPage.STYLE.pageMargins}>
-          {membersCount}
+          <div style={GroupInfoPage.STYLE.header}>
+            <span>Last Login:</span>
+            {membersCount}
+          </div> 
           <div style={{...containerDimension, 
               ... GroupInfoPage.STYLE.border}}>
             {content}
@@ -69,28 +72,42 @@ export class GroupInfoPage extends React.Component<Properties> {
       marginRight: '18px',
     } as React.CSSProperties,
     smallContainer: {
+      boxSizing: 'border-box',
       minWidth: '284px',
       maxWidth: '424px',
+      height: '342px',
       overflowY: 'auto'
     } as React.CSSProperties,
     mediumContainer: {
+      boxSizing: 'border-box',
       width: '372px',
       height: '342px',
       overflowY: 'auto'
     } as React.CSSProperties,
     largeContainer: {
-      width: '1000x',
+      boxSizing: 'border-box',
+      width: '1000px',
       height: '342px',
       overflowY: 'auto'
     } as React.CSSProperties,
     border: {
       borderColor: '#C8C8C8',
+      borderStyle: 'solid',
       borderWidth: '1px',
       borderRadius: '1px'
     } as React.CSSProperties,
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '100%',
+      height: '16px',
+      font: '400 14px Roboto',
+      flexDirection: 'row',
+      marginBottom: '30px',
+    } as React.CSSProperties,
     membersInfo: {
       textAlign: 'right',
-      width: '100%',
+      height: '100$',
       color: '#333333',
       font: '400 14px Roboto',
     }as React.CSSProperties,

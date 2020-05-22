@@ -14,6 +14,6 @@ export class GroupInfoController extends React.Component<Properties> {
     return(
       <GroupInfoPage
         displaySize={this.props.displaySize}
-        members={this.props.model.groupMembers}/>);
+        group={this.props.model.groupMembers}/>);
   }
 }
