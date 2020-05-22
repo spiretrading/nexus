@@ -259,7 +259,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly HEADER_TEXT = 'Create Group';
   private static readonly IMAGE_SIZE = '20px';
   private static readonly IMAGE_SOURCE =
-    'resources/account_directory_page/create_group_modal/close.svg';
+    '/resources/account_directory_page/create_group_modal/close.svg';
   private static readonly PLACEHOLDER = 'Type here';
   private static readonly MODAL_SMALL_DIMENSIONS =
     {width: '282px', height: '184px'};

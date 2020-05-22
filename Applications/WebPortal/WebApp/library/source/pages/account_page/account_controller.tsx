@@ -67,10 +67,10 @@ export class AccountController extends React.Component<Properties, State> {
       return SubPage.NONE;
     })();
     return (
-      <Router.Switch>
-        <AccountPage displaySize={this.props.displaySize}
-            subPage={subPage} account={this.props.model.account}
-            roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
+      <AccountPage displaySize={this.props.displaySize}
+          subPage={subPage} account={this.props.model.account}
+          roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
+        <Router.Switch>
           <Router.Route path='*/profile' render={this.renderProfilePage}/>
           <Router.Route path='*/entitlements'
             render={this.renderEntitlementsPage}/>
@@ -78,8 +78,8 @@ export class AccountController extends React.Component<Properties, State> {
           <Router.Route>
             <Router.Redirect to={this.parseUrlPrefix() + '/profile'}/>
           </Router.Route>
-        </AccountPage>
-      </Router.Switch>);
+        </Router.Switch>
+      </AccountPage>);
   }
 
   public componentDidMount(): void {

@@ -88,10 +88,7 @@ export class DashboardController extends React.Component<Properties, State> {
     } else if(item === SideMenu.Item.ACCOUNTS) {
       this.setState({redirect: '/account_directory'});
     } else if(item === SideMenu.Item.SIGN_OUT) {
-      this.props.model.logout().then(
-        () => {
-          this.props.onLogout();
-        });
+      this.props.model.logout().then(this.props.onLogout);
     }
   }
 
