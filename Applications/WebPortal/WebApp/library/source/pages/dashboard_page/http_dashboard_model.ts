@@ -15,6 +15,7 @@ export class HttpDashboardModel extends DashboardModel {
   constructor(serviceClients: Nexus.ServiceClients) {
     super();
     this.serviceClients = serviceClients;
+    this.accountModels = new Beam.Map<Beam.DirectoryEntry, HttpAccountModel>();
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
@@ -52,7 +53,12 @@ export class HttpDashboardModel extends DashboardModel {
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
-    return new HttpAccountModel(account, this.serviceClients);
+    let model = this.accountModels.get(account);
+    if(model === undefined) {
+      model = new HttpAccountModel(account, this.serviceClients);
+      this.accountModels.set(account, model);
+    }
+    return model;
   }
 
   public async load(): Promise<void> {
@@ -78,5 +84,6 @@ export class HttpDashboardModel extends DashboardModel {
   }
 
   private serviceClients: Nexus.ServiceClients;
+  private accountModels: Beam.Map<Beam.DirectoryEntry, HttpAccountModel>;
   private model: LocalDashboardModel;
 }

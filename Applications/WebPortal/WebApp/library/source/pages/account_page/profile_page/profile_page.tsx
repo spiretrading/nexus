@@ -42,7 +42,8 @@ interface Properties {
   hasError?: boolean;
 
   /** Indicates the profile is being submitted. */
-  onSubmit?: (roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => void;
+  onSubmit?: (roles: Nexus.AccountRoles, identity:
+    Nexus.AccountIdentity) => void;
 
   /** The status of the password submission. */
   submitPasswordStatus?: string;
