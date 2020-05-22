@@ -1,20 +1,18 @@
-import * as Beam from 'beam';
 import * as React from 'react';
-import { AccountEntry, DisplaySize, PageWrapper,  } from '../../..';
+import { AccountEntry, DisplaySize, PageWrapper } from '../../..';
 import { GroupMemberEntry } from './group_member_entry';
 
 interface Properties {
 
+  /** The size of the viewport. */
   displaySize: DisplaySize;
 
+  /** The accounts that belong to the group. */
   group: AccountEntry[];
-
-  lastUpdate?: Beam.DateTime;
 }
 
+/** A page that displays information about a group and its members. */
 export class GroupInfoPage extends React.Component<Properties> {
-  public static readonly defaultProps = {
-  }
 
   public render(): JSX.Element {
     const {displaySize, group} = this.props;
