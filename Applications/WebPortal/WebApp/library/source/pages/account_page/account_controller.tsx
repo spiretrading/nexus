@@ -71,10 +71,13 @@ export class AccountController extends React.Component<Properties, State> {
         <AccountPage displaySize={this.props.displaySize}
             subPage={subPage} account={this.props.model.account}
             roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
-          <Router.Route path='.*/profile' render={this.renderProfilePage}/>
-          <Router.Route path='.*/entitlements'
+          <Router.Route path='*/profile' render={this.renderProfilePage}/>
+          <Router.Route path='*/entitlements'
             render={this.renderEntitlementsPage}/>
-          <Router.Route path='.*/risk' render={this.renderRiskPage}/>
+          <Router.Route path='*/risk' render={this.renderRiskPage}/>
+          <Router.Route>
+            <Router.Redirect to={this.parseUrlPrefix() + '/profile'}/>
+          </Router.Route>
         </AccountPage>
       </Router.Switch>);
   }
@@ -90,6 +93,15 @@ export class AccountController extends React.Component<Properties, State> {
     if(this.state.redirect) {
       this.setState({redirect: null});
     }
+  }
+
+  private parseUrlPrefix(): string {
+    const url = window.location.pathname;
+    const prefix = url.substr(0, url.lastIndexOf('/'));
+    if(prefix === '') {
+      return url;
+    }
+    return prefix;
   }
 
   private renderProfilePage() {
@@ -118,12 +130,7 @@ export class AccountController extends React.Component<Properties, State> {
   }
 
   private onMenuClick(subPage: SubPage) {
-    const urlPrefix = (() => {
-      const url = window.location.pathname;
-      const start = url.indexOf('/');
-      const end = url.lastIndexOf('/');
-      return url.substr(start, end - start);
-    })();
+    const urlPrefix = this.parseUrlPrefix();
     if(subPage === SubPage.PROFILE) {
       this.setState({redirect: `${urlPrefix}/profile`});
     } else if(subPage === SubPage.ENTITLEMENTS) {

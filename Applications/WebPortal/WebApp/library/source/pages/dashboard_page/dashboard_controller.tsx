@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage } from '../..';
 import { AccountController, AccountDirectoryController, AccountModel }
   from '..';
@@ -20,7 +21,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  page: DashboardController.Page;
+  redirect: string;
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -29,34 +30,41 @@ export class DashboardController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      page: DashboardController.Page.ACCOUNT
+      redirect: null
     };
     this.onSideMenuClick = this.onSideMenuClick.bind(this);
   }
 
   public render(): JSX.Element {
+    if(this.state.redirect) {
+      return <Router.Redirect push to={this.state.redirect}/>;
+    }
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    const page = (() => {
-      switch(this.state.page) {
-        case DashboardController.Page.ACCOUNT:
-          return <AccountController
-            entitlements={this.props.model.entitlementDatabase}
-            countryDatabase={this.props.model.countryDatabase}
-            currencyDatabase={this.props.model.currencyDatabase}
-            marketDatabase={this.props.model.marketDatabase}
-            model={this.accountModel} displaySize={this.props.displaySize}/>;
-        case DashboardController.Page.DIRECTORY:
-          return <AccountDirectoryController
-            displaySize={this.props.displaySize}
-            roles={this.props.model.roles}
-            countryDatabase={this.props.model.countryDatabase}
-            model={this.props.model.accountDirectoryModel}/>;
-      }
-    })();
-    return <DashboardPage roles={this.props.model.roles}
-      onSideMenuClick={this.onSideMenuClick}>{page}</DashboardPage>;
+    return (
+      <DashboardPage roles={this.props.model.roles}
+          onSideMenuClick={this.onSideMenuClick}>
+        <Router.Switch>
+          <Router.Route path='*/account' render={() =>
+            <AccountController
+              entitlements={this.props.model.entitlementDatabase}
+              countryDatabase={this.props.model.countryDatabase}
+              currencyDatabase={this.props.model.currencyDatabase}
+              marketDatabase={this.props.model.marketDatabase}
+              model={this.accountModel}
+              displaySize={this.props.displaySize}/>}/>
+          <Router.Route path='*/account_directory' render={() =>
+            <AccountDirectoryController
+              displaySize={this.props.displaySize}
+              roles={this.props.model.roles}
+              countryDatabase={this.props.model.countryDatabase}
+              model={this.props.model.accountDirectoryModel}/>}/>
+          <Router.Route>
+            <Router.Redirect to='/account'/>
+          </Router.Route>
+        </Router.Switch>
+      </DashboardPage>);
   }
 
   public componentDidMount(): void {
@@ -68,29 +76,24 @@ export class DashboardController extends React.Component<Properties, State> {
       });
   }
 
+  public componentDidUpdate(): void {
+    if(this.state.redirect) {
+      this.setState({redirect: null});
+    }
+  }
+
   private onSideMenuClick(item: SideMenu.Item) {
-    if(item === SideMenu.Item.SIGN_OUT) {
+    if(item === SideMenu.Item.PROFILE) {
+      this.setState({redirect: '/account'});
+    } else if(item === SideMenu.Item.ACCOUNTS) {
+      this.setState({redirect: '/account_directory'});
+    } else if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(
         () => {
           this.props.onLogout();
         });
-    } else if(item === SideMenu.Item.ACCOUNTS) {
-      this.setState({page: DashboardController.Page.DIRECTORY});
     }
   }
 
   private accountModel: AccountModel;
-}
-
-export namespace DashboardController {
-
-  /** Lists the different pages this controller can display. */
-  export enum Page {
-
-    /** The directory page. */
-    DIRECTORY,
-
-    /** The profile page. */
-    ACCOUNT
-  }
 }
