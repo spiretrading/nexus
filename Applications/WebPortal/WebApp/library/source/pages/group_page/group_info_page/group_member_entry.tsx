@@ -15,8 +15,10 @@ export class GroupMemberEntry extends React.Component<Properties> {
     const {account} = this.props;
     return (
       <span className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
-        <div style={GroupMemberEntry.STYLE.name}>{account.account.name}</div>
-        <RolePanel roles={account.roles}/>
+        <span style={GroupMemberEntry.STYLE.name}>{account.account.name}</span>
+        <span style={GroupMemberEntry.STYLE.roleWrapper}>
+          <RolePanel roles={account.roles}/>
+        </span>
       </span>
     ); 
   }
@@ -25,6 +27,9 @@ export class GroupMemberEntry extends React.Component<Properties> {
     name: {
       color: '#333333',
       font: '400 14px Roboto',
+    },
+    roleWrapper: {
+      width: '80px'
     }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
@@ -37,13 +42,13 @@ export class GroupMemberEntry extends React.Component<Properties> {
       paddingLeft: '10px',
       paddingRight: '10px',
       alignItems: 'center',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#FFFFFF'
+      },
       ':hover': {
         backgroundColor: '#F8F8F8'
       },
       ':active': {
         backgroundColor: '#F8F8F8'
       }
-    }
   });
 }
