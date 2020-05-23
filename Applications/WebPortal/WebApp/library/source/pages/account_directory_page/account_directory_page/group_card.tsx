@@ -25,11 +25,6 @@ interface Properties {
 
   /** Called when the dropdown button is clicked. */
   onDropDownClick?: () => void;
-
-  /** Called when a directory is clicked on.
-   * @param entry - The account or directory entry.
-   */
-  onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
 interface State {
@@ -42,7 +37,6 @@ interface State {
 export class GroupCard extends React.Component<Properties, State> {
   public static readonly defaultProps = {
     onDropDownClick: () => {},
-    onDirectoryEntryClick: () => {}
   }
 
   constructor(properties: Properties) {
@@ -110,29 +104,32 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0 &&
             this.props.filter) {
           accounts.push(
-            <AccountEntryRow 
+            <AccountEntryRow
+              key={account.account.id}
               displaySize={this.props.displaySize}
               account={account}
               filter={this.props.filter}
-              isOpen={this.state.isOpen}
-              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);
+              isOpen={this.state.isOpen}/>);
           if(!this.state.isOpen && this.state.localAccounts.indexOf(account) ===
               this.state.localAccounts.length - 1) {
-            accounts.push(<div style={{height: topAccountPadding}}/>);
+            accounts.push(
+              <div key={account.account.id.toString() + '-div'}
+                style={{height: topAccountPadding}}/>);
             accounts.push(<HLine key={this.props.group.id} color='#E6E6E6'/>);
           }
         } else {
           accounts.push(
-            <AccountEntryRow 
+            <AccountEntryRow
+              key={account.account.id}
               displaySize={this.props.displaySize}
               account={account}
-              isOpen={this.state.isOpen}
-              onDirectoryEntryClick={this.props.onDirectoryEntryClick}/>);
+              isOpen={this.state.isOpen}/>);
         }
       }
     } else {
       accounts.push(
-        <AccountEntryRow 
+        <AccountEntryRow
+          key={0}
           displaySize={this.props.displaySize}
           isOpen={this.state.isOpen}/>);
     }
@@ -141,7 +138,6 @@ export class GroupCard extends React.Component<Properties, State> {
         <div style={{...GroupCard.STYLE.header, ...headerMouseOverStyle}}>
           {dropDownButton}
           <div style={headerTextStyle}
-              onClick={() => this.props.onDirectoryEntryClick(this.props.group)}
               onMouseEnter={this.onGroupMouseEnter}
               onMouseLeave={this.onGroupMouseLeave}>
             {this.props.group.name}

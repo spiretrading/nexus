@@ -71,13 +71,22 @@ export class AccountController extends React.Component<Properties, State> {
           subPage={subPage} account={this.props.model.account}
           roles={this.props.model.roles} onMenuClick={this.onMenuClick}>
         <Router.Switch>
-          <Router.Route path='*/profile' render={this.renderProfilePage}/>
-          <Router.Route path='*/entitlements'
+          <Router.Route path='/account/:id(\d+)?/profile'
+            render={this.renderProfilePage}/>
+          <Router.Route path='/account/:id(\d+)?/entitlements'
             render={this.renderEntitlementsPage}/>
-          <Router.Route path='*/risk' render={this.renderRiskPage}/>
-          <Router.Route>
-            <Router.Redirect to={this.parseUrlPrefix() + '/profile'}/>
-          </Router.Route>
+          <Router.Route path='/account/:id(\d+)?/risk'
+            render={this.renderRiskPage}/>
+          <Router.Route path='/account/:id(\d+)?'
+            render={({match}) => {
+              const url = (() => {
+                if(match.params.id) {
+                  return `/account/${match.params.id}/profile`;
+                }
+                return '/account/profile';
+              })();
+              return <Router.Redirect to={url}/>;
+            }}/>
         </Router.Switch>
       </AccountPage>);
   }
