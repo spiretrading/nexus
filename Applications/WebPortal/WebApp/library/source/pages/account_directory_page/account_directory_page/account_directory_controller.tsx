@@ -3,7 +3,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage } from '../../..';
-import { CreateAccountController } from '../create_account_page';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountDirectoryPage } from './account_directory_page';
 import { AccountEntry } from './account_entry';
@@ -35,7 +34,6 @@ interface State {
 /** Implements the controller for the AccountDirectoryPage. */
 export class AccountDirectoryController extends
     React.Component<Properties, State> {
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -44,7 +42,7 @@ export class AccountDirectoryController extends
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       createGroupStatus: '',
-      redirect: '/account_directory'
+      redirect: null
     };
   }
 
@@ -55,13 +53,18 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    return (
-      <Router.Switch>
-        <Router.Route path='/create_account'
-          render={this.renderCreateAccountPage}/>
-        <Router.Route path='/account_directory'
-          render={this.renderAccountPage}/>
-      </Router.Switch>);
+    return <AccountDirectoryPage
+      displaySize={this.props.displaySize}
+      roles={this.props.roles}
+      groups={this.props.model.groups}
+      openedGroups={this.state.openedGroups}
+      filter={this.state.filter}
+      filteredGroups={this.state.filteredGroups}
+      onFilterChange={this.onFilterChange} 
+      onCardClick={this.onCardClick}
+      createGroupStatus={this.state.createGroupStatus}
+      onCreateGroup={this.onCreateGroup}
+      onNewAccountClick={this.onNewAccountClick}/>;
   }
 
   public componentDidMount(): void {
@@ -77,29 +80,6 @@ export class AccountDirectoryController extends
     if(this.state.redirect) {
       this.setState({redirect: null});
     }
-  }
-
-  private renderAccountPage = () => {
-    return <AccountDirectoryPage
-      displaySize={this.props.displaySize}
-      roles={this.props.roles}
-      groups={this.props.model.groups}
-      openedGroups={this.state.openedGroups}
-      filter={this.state.filter}
-      filteredGroups={this.state.filteredGroups}
-      onFilterChange={this.onFilterChange} 
-      onCardClick={this.onCardClick}
-      createGroupStatus={this.state.createGroupStatus}
-      onCreateGroup={this.onCreateGroup}
-      onNewAccountClick={this.onNewAccountClick}/>;
-  }
-
-  private renderCreateAccountPage = () => {
-    return <CreateAccountController 
-      displaySize={this.props.displaySize}
-      countryDatabase={this.props.countryDatabase}
-      createAccountModel={this.props.model.createAccountModel}
-      groupSuggestionModel={this.props.model.groupSuggestionModel}/>;
   }
 
   private onCardClick = async (group: Beam.DirectoryEntry) => {

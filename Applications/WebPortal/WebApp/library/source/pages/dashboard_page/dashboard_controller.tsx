@@ -3,7 +3,8 @@ import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage } from '../..';
-import { AccountController, AccountDirectoryController } from '..';
+import { AccountController, AccountDirectoryController,
+  CreateAccountController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -16,9 +17,6 @@ interface Properties {
   /** The device's display size. */
   displaySize: DisplaySize;
 
-  /** The URL prefix that navigates to this page. */
-  urlPrefix?: string;
-
   /** Indicates the user has logged out. */
   onLogout?: () => void;
 }
@@ -30,10 +28,6 @@ interface State {
 
 /** Implements the controller for the DashboardPage. */
 export class DashboardController extends React.Component<Properties, State> {
-  private static readonly defaultProps = {
-    urlPrefix: ''
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -54,17 +48,26 @@ export class DashboardController extends React.Component<Properties, State> {
       <DashboardPage roles={this.props.model.roles}
           onSideMenuClick={this.onSideMenuClick}>
         <Router.Switch>
-          <Router.Route path={`${this.props.urlPrefix}/account`}
-            render={this.renderAccountPage}/>
-          <Router.Route path={`${this.props.urlPrefix}/account_directory`}
+          <Router.Route path='/account' render={this.renderAccountPage}/>
+          <Router.Route path='/account_directory'
             render={() =>
               <AccountDirectoryController
                 displaySize={this.props.displaySize}
                 roles={this.props.model.roles}
                 countryDatabase={this.props.model.countryDatabase}
                 model={this.props.model.accountDirectoryModel}/>}/>
+          <Router.Route path='/create_account'
+            render={() =>
+              <CreateAccountController 
+                displaySize={this.props.displaySize}
+                countryDatabase={this.props.model.countryDatabase}
+                createAccountModel={
+                  this.props.model.accountDirectoryModel.createAccountModel}
+                groupSuggestionModel={
+                  this.props.model.accountDirectoryModel.groupSuggestionModel}
+                />}/>
           <Router.Route>
-            <Router.Redirect to={`${this.props.urlPrefix}/account`}/>
+            <Router.Redirect to='/account'/>
           </Router.Route>
         </Router.Switch>
       </DashboardPage>);
@@ -86,7 +89,7 @@ export class DashboardController extends React.Component<Properties, State> {
   private renderAccountPage = () => {
     const model = (() => {
       const pattern = Path.pathToRegexp(
-        `${this.props.urlPrefix}/account/:id(\\d+)?`, [], { end: false });
+        '/account/:id(\\d+)?', [], { end: false });
       const match = pattern.exec(window.location.pathname);
       const account = (() => {
         if(match[1]) {
@@ -108,9 +111,9 @@ export class DashboardController extends React.Component<Properties, State> {
 
   private onSideMenuClick(item: SideMenu.Item) {
     if(item === SideMenu.Item.PROFILE) {
-      this.setState({redirect: `${this.props.urlPrefix}/account`});
+      this.setState({redirect: '/account'});
     } else if(item === SideMenu.Item.ACCOUNTS) {
-      this.setState({redirect: `${this.props.urlPrefix}/account_directory`});
+      this.setState({redirect: '/account_directory'});
     } else if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
