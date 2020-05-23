@@ -8,11 +8,11 @@ export class LocalGroupInfoModel extends GroupInfoModel {
   constructor(group: AccountEntry[]) {
     super();
     this._isLoaded = false;
-    this._groupMembers = group.slice();
+    this._group = group.slice();
   }
 
-  public get groupMembers(): AccountEntry[] {
-    return this._groupMembers;
+  public get group(): AccountEntry[] {
+    return this._group;
   }
 
   public async load(): Promise<void> {
@@ -20,5 +20,5 @@ export class LocalGroupInfoModel extends GroupInfoModel {
   }
 
   private _isLoaded: boolean;
-  private _groupMembers: AccountEntry[];
+  private _group: AccountEntry[];
 }
