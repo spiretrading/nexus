@@ -9,7 +9,7 @@ interface Properties {
 }
 
 interface State {
-  members: WebPortal.AccountEntry[];
+  model: WebPortal.GroupInfoModel;
 }
 
 /** Displays a sample GroupInfoPage for testing. */
@@ -17,16 +17,16 @@ class TestApp extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      members: []
+      model: new WebPortal.LocalGroupInfoModel([])
     };
   }
 
   public render(): JSX.Element {
-    console.log(this.state.members);
+
     return(
     <div>
-      <WebPortal.GroupInfoPage
-        group={this.state.members}
+      <WebPortal.GroupInfoController
+        model={this.state.model}
         displaySize={this.props.displaySize}/>
       <div style={TestApp.STYLE.testingComponents}>
         <button onClick={this.clearAccounts}>No Members</button>
@@ -37,62 +37,62 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private clearAccounts = () => {
-    this.setState({members: []});
+    this.setState({model: new WebPortal.LocalGroupInfoModel([])});
   }
 
   private addSomeAccounts = () => {
-    let someGroup = [];
-    someGroup.push(
+    let group = [];
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Bob'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Sue'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Carl'),
       new Nexus.AccountRoles(2)));
-    this.setState({members: someGroup});
+    this.setState({model: new WebPortal.LocalGroupInfoModel(group)});
   }
 
   private addManyAccounts = () => {
-    let someGroup = this.state.members.slice();
-    someGroup.push(
+    let group = this.state.model.groupMembers;
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(127, 'Bob'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(118, 'Sue'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(913, 'Carl'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(912, 'Max'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(138, 'Dean'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(3, 'Froddo'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(12, 'Sam'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(18, 'Merry'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(13, 'Pippin'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(312, 'Spire'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(218, 'Nexus'),
       new Nexus.AccountRoles(2)));
-    someGroup.push(
+    group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(113, 'Doug'), 
       new Nexus.AccountRoles(2)));
-    this.setState({members: someGroup});
+    this.setState({model: new WebPortal.LocalGroupInfoModel(group)});
   }
 
   private static STYLE = {
