@@ -1,5 +1,5 @@
 @ECHO OFF
-SETLOCAL
+SETLOCAL EnableDelayedExpansion
 SET ROOT=%cd%
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
@@ -25,18 +25,18 @@ IF "%1" == "reset" (
   IF EXIST package-lock.json (
     DEL package-lock.json
   )
-  IF NOT "%~dp0" == "%ROOT%\" (
+  IF NOT "%~dp0" == "!ROOT!\" (
     DEL package.json >NUL 2>&1
     DEL tsconfig.json >NUL 2>&1
   )
   EXIT /B
 )
-IF NOT "%~dp0" == "%ROOT%\" (
+IF NOT "%~dp0" == "!ROOT!\" (
   COPY /Y "%~dp0package.json" . >NUL
   COPY /Y "%~dp0tsconfig.json" . >NUL
 )
 SET BEAM_PATH=Dependencies\Beam\WebApi
-PUSHD %BEAM_PATH%
+PUSHD !BEAM_PATH!
 CALL build.bat %*
 POPD
 IF NOT EXIST node_modules (
@@ -56,7 +56,7 @@ IF NOT EXIST node_modules (
     )
   )
 )
-IF "%UPDATE_NODE%" == "1" (
+IF "!UPDATE_NODE!" == "1" (
   SET UPDATE_BUILD=1
   CALL npm install
 )
@@ -92,7 +92,7 @@ IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%BEAM_PATH%\mod_time.txt" ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "!BEAM_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
       'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
@@ -101,7 +101,7 @@ IF NOT EXIST mod_time.txt (
     )
   )
 )
-IF "%UPDATE_BUILD%" == "1" (
+IF "!UPDATE_BUILD!" == "1" (
   IF EXIST library (
     RMDIR /q /s library
   )

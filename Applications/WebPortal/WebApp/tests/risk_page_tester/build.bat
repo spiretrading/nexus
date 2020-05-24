@@ -48,9 +48,9 @@ IF NOT EXIST node_modules (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
-        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
+          'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
           SET UPDATE_NODE=1
         )
@@ -94,9 +94,9 @@ IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%~dp0webpack.config.js" "!WEB_PORTAL_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
+      'ls -l --time-style=full-iso "%~dp0tsconfig.json" "%~dp0webpack.config.js" "!WEB_PORTAL_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
-      'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (
         SET UPDATE_BUILD=1
       )
