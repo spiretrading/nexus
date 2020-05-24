@@ -63,14 +63,29 @@ IF "%UPDATE_NODE%" == "1" (
 IF NOT EXIST library (
   SET UPDATE_BUILD=1
 ) ELSE (
-  FOR /F %%i IN (
-    'DIR source /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+  SET MAX_SOURCE_TIMESTAMP=
+  SET MAX_TARGET_TIMESTAMP=
+  SET CHUNK=100
+  FOR /F %%i IN ('DIR source /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
+  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
     FOR /F %%j IN (
-      'DIR library /s/b/a-d ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
-      IF "%%i" GEQ "%%j" (
-        SET UPDATE_BUILD=1
+        'DIR source /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      IF %%j GTR !MAX_SOURCE_TIMESTAMP! (
+        SET MAX_SOURCE_TIMESTAMP=%%j
       )
     )
+  )
+  FOR /F %%i IN ('DIR library /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
+  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
+    FOR /F %%j IN (
+        'DIR library /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
+      IF %%j GTR !MAX_TARGET_TIMESTAMP! (
+        SET MAX_TARGET_TIMESTAMP=%%j
+      )
+    )
+  )
+  IF !MAX_SOURCE_TIMESTAMP! GEQ !MAX_TARGET_TIMESTAMP! (
+    SET UPDATE_BUILD=1
   )
 )
 IF NOT EXIST mod_time.txt (
