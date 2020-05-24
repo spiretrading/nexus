@@ -23,7 +23,6 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  redirect: string;
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -32,15 +31,11 @@ export class DashboardController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      redirect: null
     };
     this.onSideMenuClick = this.onSideMenuClick.bind(this);
   }
 
   public render(): JSX.Element {
-    if(this.state.redirect) {
-      return <Router.Redirect push to={this.state.redirect}/>;
-    }
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
@@ -80,12 +75,6 @@ export class DashboardController extends React.Component<Properties, State> {
       });
   }
 
-  public componentDidUpdate(): void {
-    if(this.state.redirect) {
-      this.setState({redirect: null});
-    }
-  }
-
   private renderAccountPage = () => {
     const model = (() => {
       const pattern = Path.pathToRegexp(
@@ -110,11 +99,7 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private onSideMenuClick(item: SideMenu.Item) {
-    if(item === SideMenu.Item.PROFILE) {
-      this.setState({redirect: '/account'});
-    } else if(item === SideMenu.Item.ACCOUNTS) {
-      this.setState({redirect: '/account_directory'});
-    } else if(item === SideMenu.Item.SIGN_OUT) {
+    if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
   }

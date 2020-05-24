@@ -109,13 +109,10 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) =>
           <Router.Link key={id} to={`/account/${id}`}
-              style={{textDecoration: 'none'}}>
-            <div
-                style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}
-                className={css(dynamic_style)}>
-              {text}
-              {roles}
-            </div>
+              className={css(dynamic_style)}
+              style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}>
+            {text}
+            {roles}
           </Router.Link>}
       </Transition>);
   }
@@ -180,6 +177,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       paddingLeft: '10px',
       paddingRight: '10px',
+      textDecoration: 'none',
       cursor: 'pointer' as 'pointer',
       ':hover' : {
         backgroundColor: '#F8F8F8'
