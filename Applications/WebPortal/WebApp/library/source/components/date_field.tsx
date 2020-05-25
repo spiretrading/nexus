@@ -66,11 +66,11 @@ export class DateField extends React.Component<Properties, State> {
       }
     })();
     const maxDate = (() => {
-      const month = this.props.value.month;
+      const month = this.props.value.month();
       if(month === 4 || month === 6 || month === 9 || month === 11) {
         return 30;
       } else if(month === 2) {
-        const year = this.props.value.year;
+        const year = this.props.value.year();
         if(year % 4 !== 0) {
           return 28;
         } else if(year % 100 !== 0) {
@@ -105,7 +105,7 @@ export class DateField extends React.Component<Properties, State> {
         <div style={DateField.STYLE.inner}>
           <IntegerField
             min={1} max={maxDate}
-            value={this.props.value.day}
+            value={this.props.value.day()}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.DAY)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -114,7 +114,7 @@ export class DateField extends React.Component<Properties, State> {
           <div style={DateField.STYLE.slash}>/</div>
           <IntegerField
             min={1} max={12}
-            value={this.props.value.month}
+            value={this.props.value.month()}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.MONTH)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -123,7 +123,7 @@ export class DateField extends React.Component<Properties, State> {
           <div style={DateField.STYLE.slash}>/</div>
           <IntegerField
             min={2000} max={3000}
-            value={this.props.value.year}
+            value={this.props.value.year()}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.YEAR)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -169,11 +169,11 @@ export class DateField extends React.Component<Properties, State> {
     const newValue = (() => {
       switch(dateUnit) {
         case DateUnit.DAY:
-          return new Beam.Date(oldValue.year, oldValue.month, value);
+          return new Beam.Date(oldValue.year(), oldValue.month(), value);
         case DateUnit.MONTH:
-          return new Beam.Date(oldValue.year, value, oldValue.day);
+          return new Beam.Date(oldValue.year(), value, oldValue.day());
         case DateUnit.YEAR:
-          return new Beam.Date(value, oldValue.month, oldValue.day);
+          return new Beam.Date(value, oldValue.month(), oldValue.day());
       }
     })();
     this.props.onChange(newValue);

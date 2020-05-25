@@ -43,7 +43,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     super(props);
     this.state = {
       period: Periods.AM,
-      displayedTime: this.props.value.timeOfDay
+      displayedTime: this.props.value.timeOfDay()
     };
     this.onPeriodChange = this.onPeriodChange.bind(this);
     this.onTimeChange = this.onTimeChange.bind(this);
@@ -62,7 +62,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       <div style={DateTimeField.STYLE.outerWrapper}>
         <DateField
           displaySize={this.props.displaySize}
-          value={this.props.value.date}
+          value={this.props.value.date()}
           readonly={this.props.readonly}
           onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>
@@ -94,7 +94,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   private getPeriod() {
-    const sourceTime = this.props.value.timeOfDay.split();
+    const sourceTime = this.props.value.timeOfDay().split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Periods.AM;
     } else if(sourceTime.hours >= 12) {
@@ -105,7 +105,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   private getTimeIn12HourFormat() {
-    const sourceTime = this.props.value.timeOfDay.split();
+    const sourceTime = this.props.value.timeOfDay().split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Beam.Duration.HOUR.multiply(12).add(
         Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
@@ -119,7 +119,7 @@ export class DateTimeField extends React.Component<Properties, State> {
         Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
         Beam.Duration.SECOND.multiply(sourceTime.seconds));
     } else {
-      return this.props.value.timeOfDay;
+      return this.props.value.timeOfDay();
     }
   }
 
@@ -154,17 +154,17 @@ export class DateTimeField extends React.Component<Properties, State> {
       period: period,
       displayedTime: this.getTimeIn12HourFormat()
     });
-    this.props.onChange(new Beam.DateTime(this.props.value.date,
+    this.props.onChange(new Beam.DateTime(this.props.value.date(),
       this.getTimeIn24HourFormat()));
   }
 
   private onDateChange(date: Beam.Date) {
-    this.props.onChange(new Beam.DateTime(date, this.props.value.timeOfDay));
+    this.props.onChange(new Beam.DateTime(date, this.props.value.timeOfDay()));
   }
 
   private onTimeChange(time: Beam.Duration) {
     this.setState({displayedTime: time});
-    this.props.onChange(new Beam.DateTime(this.props.value.date,
+    this.props.onChange(new Beam.DateTime(this.props.value.date(),
       this.getTimeIn24HourFormat()));
   }
 
