@@ -25,23 +25,15 @@ export class GroupInfoPage extends React.Component<Properties> {
         return null;
       }
     })();
-    const pageWidth = (() => {
-      if(displaySize === DisplaySize.SMALL) {
-        return GroupInfoPage.STYLE.smallPageWidth;
-      } else if(displaySize === DisplaySize.MEDIUM) {
-        return GroupInfoPage.STYLE.mediumPageWidth;
-      } else {
-        return GroupInfoPage.STYLE.largePageWidth; 
-      }
-    })();
+    const pageWidth = GroupInfoPage.STYLE[this.props.displaySize];
     const content = (() => {
-      if(group.length === 0) {
+      if(this.props.group.length === 0) {
         return (
           <div style={GroupInfoPage.STYLE.noEntries}>
             {GroupInfoPage.GROUP_EMPTY_MESSAGE}
           </div>);
       } else {
-        return this.props.group.map(account => 
+        return this.props.group.map((account: AccountEntry) => 
           <GroupMemberEntry account={account}/>);
       } 
     })();
@@ -70,17 +62,17 @@ export class GroupInfoPage extends React.Component<Properties> {
       flexDirection: 'column',
       alignItems: 'center'
     } as React.CSSProperties,
-    smallPageWidth: {
+    [DisplaySize.SMALL]: {
       boxSizing: 'border-box',
       minWidth: '284px',
       maxWidth: '424px',
       width: '100%'
     } as React.CSSProperties,
-    mediumPageWidth: {
+    [DisplaySize.MEDIUM]: {
       boxSizing: 'border-box',
       width: '732px'
     } as React.CSSProperties,
-    largePageWidth: {
+    [DisplaySize.LARGE]: {
       boxSizing: 'border-box',
       width: '1000px'
     } as React.CSSProperties,

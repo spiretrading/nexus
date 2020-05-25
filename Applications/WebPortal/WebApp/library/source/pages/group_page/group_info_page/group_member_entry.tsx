@@ -15,7 +15,7 @@ export class GroupMemberEntry extends React.Component<Properties> {
     return (
       <button className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
         <span style={GroupMemberEntry.STYLE.name}>
-          {this.props.account.name}
+          {this.props.account.account.name}
         </span>
         <span style={GroupMemberEntry.STYLE.roleWrapper}>
           <RolePanel roles={this.props.account.roles}/>
