@@ -15,12 +15,11 @@ interface Properties {
 export class GroupInfoPage extends React.Component<Properties> {
 
   public render(): JSX.Element {
-    const {displaySize, group} = this.props;
     const membersCount = (() => {
-      if(displaySize !== DisplaySize.SMALL) {
+      if(this.props.displaySize !== DisplaySize.SMALL) {
         return (
           <span style={GroupInfoPage.STYLE.membersInfo}>
-            Total members: {group.length}
+            Total members: {this.props.group.length}
           </span>);
       } else {
         return null;
@@ -42,11 +41,8 @@ export class GroupInfoPage extends React.Component<Properties> {
             {GroupInfoPage.GROUP_EMPTY_MESSAGE}
           </div>);
       } else {
-        const entries = [];
-        for(const account of group) {
-          entries.push(<GroupMemberEntry account={account}/>);
-        }
-        return entries;
+        return this.props.group.map(account => 
+          <GroupMemberEntry account={account}/>);
       } 
     })();
     return(
@@ -112,7 +108,7 @@ export class GroupInfoPage extends React.Component<Properties> {
       height: '100$',
       color: '#333333',
       font: '400 14px Roboto'
-    }as React.CSSProperties,
+    } as React.CSSProperties,
     noEntries: {
       width: '100%',
       height: '100%',

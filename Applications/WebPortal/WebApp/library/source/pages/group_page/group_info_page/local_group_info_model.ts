@@ -4,7 +4,9 @@ import { GroupInfoModel } from './group_info_model';
 /** Implements an in-memory GroupInfoModel. */
 export class LocalGroupInfoModel extends GroupInfoModel {
 
-  /** Constructs a LocalGroupInfoModel. */
+  /** Constructs a LocalGroupInfoModel. 
+    @param group: The list of account entries that form the group. 
+   */
   constructor(group: AccountEntry[]) {
     super();
     this._isLoaded = false;
@@ -12,7 +14,7 @@ export class LocalGroupInfoModel extends GroupInfoModel {
   }
 
   public get group(): AccountEntry[] {
-    return this._group;
+    return this._group.slice();
   }
 
   public async load(): Promise<void> {

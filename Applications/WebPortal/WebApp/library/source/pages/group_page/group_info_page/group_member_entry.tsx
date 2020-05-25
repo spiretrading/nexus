@@ -12,12 +12,13 @@ interface Properties {
 export class GroupMemberEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
-    const {account} = this.props;
     return (
       <button className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
-        <span style={GroupMemberEntry.STYLE.name}>{account.account.name}</span>
+        <span style={GroupMemberEntry.STYLE.name}>
+          {this.props.account.name}
+        </span>
         <span style={GroupMemberEntry.STYLE.roleWrapper}>
-          <RolePanel roles={account.roles}/>
+          <RolePanel roles={this.props.account.roles}/>
         </span>
       </button>
     ); 
