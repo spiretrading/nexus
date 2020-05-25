@@ -22,18 +22,17 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-
     return(
-    <div>
-      <WebPortal.GroupInfoController
-        model={this.state.model}
-        displaySize={this.props.displaySize}/>
-      <div style={TestApp.STYLE.testingComponents}>
-        <button onClick={this.clearAccounts}>No Members</button>
-        <button onClick={this.addSomeAccounts}>Some Members</button>
-        <button onClick={this.addManyAccounts}>Lots of Members</button>
-      </div>
-    </div>);
+      <div>
+        <WebPortal.GroupInfoController
+          model={this.state.model}
+          displaySize={this.props.displaySize}/>
+        <div style={TestApp.STYLE.testingComponents}>
+          <button onClick={this.clearAccounts}>No Members</button>
+          <button onClick={this.addSomeAccounts}>Some Members</button>
+          <button onClick={this.addManyAccounts}>Lots of Members</button>
+        </div>
+      </div>);
   }
 
   private clearAccounts = () => {
@@ -55,7 +54,7 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private addManyAccounts = () => {
-    let group = this.state.model.groupMembers;
+    let group = [];
     group.push(
       new WebPortal.AccountEntry(Beam.DirectoryEntry.makeAccount(127, 'Bob'),
       new Nexus.AccountRoles(2)));

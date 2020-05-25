@@ -8,7 +8,7 @@ interface Properties {
   account: AccountEntry;
 }
 
-/** Displays the details of the members of a group. */
+/** Displays the details of a member of a group. */
 export class GroupMemberEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
@@ -26,7 +26,7 @@ export class GroupMemberEntry extends React.Component<Properties> {
   private static readonly STYLE = {
     name: {
       color: '#333333',
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     },
     roleWrapper: {
       width: '80px'

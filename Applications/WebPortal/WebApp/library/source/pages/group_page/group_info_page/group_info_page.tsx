@@ -78,15 +78,15 @@ export class GroupInfoPage extends React.Component<Properties> {
       boxSizing: 'border-box',
       minWidth: '284px',
       maxWidth: '424px',
-      width: '100%',
+      width: '100%'
     } as React.CSSProperties,
     mediumPageWidth: {
       boxSizing: 'border-box',
-      width: '732px',
+      width: '732px'
     } as React.CSSProperties,
     largePageWidth: {
       boxSizing: 'border-box',
-      width: '1000px',
+      width: '1000px'
     } as React.CSSProperties,
     listContainer: {
       boxSizing: 'border-box',
@@ -105,13 +105,13 @@ export class GroupInfoPage extends React.Component<Properties> {
       height: '16px',
       font: '400 14px Roboto',
       flexDirection: 'row',
-      marginBottom: '30px',
+      marginBottom: '30px'
     } as React.CSSProperties,
     membersInfo: {
       textAlign: 'right',
       height: '100$',
       color: '#333333',
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     }as React.CSSProperties,
     noEntries: {
       width: '100%',
@@ -120,7 +120,7 @@ export class GroupInfoPage extends React.Component<Properties> {
       alignItems: 'center',
       justifyContent: 'center',
       color: '#333333',
-      font: '400 14px Roboto',
+      font: '400 14px Roboto'
     } as React.CSSProperties
   }
   private static readonly GROUP_EMPTY_MESSAGE = 'Group is empty.';

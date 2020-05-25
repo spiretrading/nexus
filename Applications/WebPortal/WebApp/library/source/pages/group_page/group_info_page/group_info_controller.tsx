@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DisplaySize, LoadingPage } from '../../..'
+import { DisplaySize, LoadingPage } from '../../..';
 import { GroupInfoModel } from './group_info_model';
 import { GroupInfoPage } from './group_info_page';
 
