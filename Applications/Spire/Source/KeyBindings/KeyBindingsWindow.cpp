@@ -1,11 +1,12 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include <QKeyEvent>
-#include <QTabBar>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/CancelKeyBindingsTableView.hpp"
+#include "Spire/SecurityInput/SecurityInputModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
+using namespace Beam;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -31,11 +32,12 @@ namespace {
   }
 }
 
-KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
+KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings,
+    Ref<SecurityInputModel> input_model, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
       m_last_focus_was_key(false) {
-  set_fixed_body_size(scale(853, 442));
+  set_fixed_body_size(scale(871, 442));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setWindowIcon(QIcon(":/Icons/key-bindings-icon-256x256.png"));
   setWindowTitle(tr("Key Bindings"));
@@ -47,41 +49,7 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
   layout->setContentsMargins(0, scale_height(8), 0, scale_width(8));
   layout->setSpacing(0);
   Window::layout()->addWidget(body);
-  m_tab_widget = new QTabWidget(this);
-  m_tab_widget->tabBar()->setFixedHeight(scale_height(40));
-  m_tab_widget->setStyleSheet(QString(R"(
-    QWidget {
-      outline: none;
-    }
-
-    QTabWidget::pane {
-      border: none;
-    }
-
-    QTabBar::tab {
-      background-color: #EBEBEB;
-      font-family: Roboto;
-      font-size: %1px;
-      height: %2px;
-      margin: %3px %4px %3px %7px;
-      width: %5px;
-    }
-
-    QTabBar::tab:focus {
-      border: %6px solid #4B23A0;
-      padding: -%6px 0px 0px -%6px;
-    }
-
-    QTabBar::tab:hover {
-      color: #4B23A0;
-    }
-
-    QTabBar::tab:selected {
-      background-color: #F5F5F5;
-      color: #4B23A0;
-    })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
-        .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1))
-        .arg(scale_width(8)));
+  m_tab_widget = new CustomTabWidget(this);
   layout->addWidget(m_tab_widget);
   connect(m_tab_widget, &QTabWidget::currentChanged, this,
     &KeyBindingsWindow::on_tab_changed);
@@ -90,18 +58,30 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
     &KeyBindingsWindow::on_tab_bar_clicked);
   auto task_keys_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(task_keys_widget, tr("Task Keys"));
+  auto task_keys_layout = new QVBoxLayout(task_keys_widget);
+  task_keys_layout->setContentsMargins({});
+  task_keys_layout->setSpacing(0);
+  auto task_text = tr("Use <b>F1-F12</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a key binding.");
+  auto task_keys_label = new QLabel(task_text, this);
+  task_keys_label->setFixedHeight(scale_height(30));
+  auto tab_label_style = QString(R"(
+    font-family: Roboto;
+    font-size: %1px;
+    margin-left: %2px;
+  )").arg(scale_height(10)).arg(scale_width(8));
+  task_keys_label->setStyleSheet(tab_label_style);
+  task_keys_layout->addWidget(task_keys_label);
+  m_task_keys_table = new TaskKeyBindingsTableView(
+    m_key_bindings.build_order_bindings(), input_model, this);
+  task_keys_layout->addWidget(m_task_keys_table);
   auto cancel_keys_widget = new QWidget(m_tab_widget);
   auto cancel_keys_layout = new QVBoxLayout(cancel_keys_widget);
   cancel_keys_layout->setContentsMargins({});
   cancel_keys_layout->setSpacing(0);
-  auto cancel_text = tr(R"(Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.)");
+  auto cancel_text = tr("Use <b>ESC</b> with any combination of <b>ALT</b>, <b>CTRL</b> and <b>SHIFT</b> to set a cancel key binding.");
   auto cancel_keys_label = new QLabel(cancel_text, this);
   cancel_keys_label->setFixedHeight(scale_height(30));
-  cancel_keys_label->setStyleSheet(QString(R"(
-    font-family: Roboto;
-    font-size: %1px;
-    margin-left: %2px;
-  )").arg(scale_height(10)).arg(scale_width(8)));
+  cancel_keys_label->setStyleSheet(tab_label_style);
   cancel_keys_layout->addWidget(cancel_keys_label);
   m_cancel_keys_table = new CancelKeyBindingsTableView(
     m_key_bindings.build_cancel_bindings(), this);
@@ -109,6 +89,9 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
   m_tab_widget->addTab(cancel_keys_widget, tr("Cancel Keys"));
   auto interactions_widget = new QWidget(m_tab_widget);
   m_tab_widget->addTab(interactions_widget, tr("Interactions"));
+  auto padding_widget = new QWidget(this);
+  padding_widget->setFixedHeight(scale_height(12));
+  layout->addWidget(padding_widget);
   auto button_layout = new QHBoxLayout();
   button_layout->setContentsMargins(scale_width(8), scale_height(18), 0, 0);
   button_layout->setSpacing(0);
@@ -137,8 +120,8 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindings key_bindings, QWidget* parent)
   ok_button->setFixedSize(scale(100, 26));
   button_layout->addWidget(ok_button);
   button_layout->addSpacing(scale_width(8));
-  m_tab_widget->setCurrentIndex(1);
-  on_tab_bar_clicked(1);
+  m_tab_widget->setCurrentIndex(0);
+  on_tab_bar_clicked(0);
 }
 
 const KeyBindings& KeyBindingsWindow::get_key_bindings() const {
@@ -172,13 +155,16 @@ void KeyBindingsWindow::on_ok_button_clicked() {
 
 void KeyBindingsWindow::on_restore_button_clicked() {
   auto default_bindings = KeyBindings::get_default_key_bindings();
+  m_task_keys_table->set_key_bindings(default_bindings.build_order_bindings());
   m_cancel_keys_table->set_key_bindings(
     default_bindings.build_cancel_bindings());
 }
 
 void KeyBindingsWindow::on_tab_bar_clicked(int index) {
-  if(index > -1) {
-    m_tab_widget->widget(index)->setFocus();
+  if(index == 0) {
+    m_task_keys_table->setFocus();
+  } else if(index == 1) {
+    m_cancel_keys_table->setFocus();
   }
 }
 

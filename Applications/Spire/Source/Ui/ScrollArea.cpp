@@ -19,6 +19,7 @@ ScrollArea::ScrollArea(QWidget* parent)
 ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
     : QScrollArea(parent),
       m_is_dynamic(is_dynamic),
+      m_is_wheel_disabled(false),
       m_horizontal_scrolling_error(0.0),
       m_vertical_scrolling_error(0.0),
       m_border_color(Qt::transparent),
@@ -27,19 +28,6 @@ ScrollArea::ScrollArea(bool is_dynamic, QWidget* parent)
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   horizontalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
   verticalScrollBar()->setContextMenuPolicy(Qt::NoContextMenu);
-  if(m_is_dynamic) {
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_horizontal_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
-    connect(&m_horizontal_scroll_bar_timer, &QTimer::timeout, this,
-      &ScrollArea::hide_horizontal_scroll_bar);
-    m_vertical_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
-    connect(&m_vertical_scroll_bar_timer, &QTimer::timeout, this,
-      &ScrollArea::hide_vertical_scroll_bar);
-    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
-  } else {
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
-  }
 }
 
 void ScrollArea::set_border_style(int width, const QColor& color) {
@@ -116,7 +104,26 @@ void ScrollArea::leaveEvent(QEvent* event) {
   }
 }
 
+void ScrollArea::showEvent(QShowEvent* event) {
+  if(m_is_dynamic) {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_horizontal_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
+    connect(&m_horizontal_scroll_bar_timer, &QTimer::timeout, this,
+      &ScrollArea::hide_horizontal_scroll_bar);
+    m_vertical_scroll_bar_timer.setInterval(SCROLL_BAR_HIDE_TIME_MS);
+    connect(&m_vertical_scroll_bar_timer, &QTimer::timeout, this,
+      &ScrollArea::hide_vertical_scroll_bar);
+    set_scroll_bar_style(SCROLL_BAR_MIN_SIZE);
+  } else {
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    set_scroll_bar_style(SCROLL_BAR_MAX_SIZE);
+  }
+}
+
 void ScrollArea::wheelEvent(QWheelEvent* event) {
+  if(m_is_wheel_disabled) {
+    return;
+  }
   if(event->modifiers().testFlag(Qt::ShiftModifier)) {
     if(m_is_dynamic) {
       setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

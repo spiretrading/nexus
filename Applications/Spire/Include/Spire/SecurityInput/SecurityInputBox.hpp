@@ -1,12 +1,10 @@
 #ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
 #define SPIRE_SECURITY_INPUT_WIDGET_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <QLabel>
-#include <QLineEdit>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
 
 namespace Spire {
 
@@ -43,22 +41,11 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
-      void showEvent(QShowEvent* event) override;
 
     private:
       mutable CommitSignal m_commit_signal;
-      SecurityInputModel* m_model;
-      QLineEdit* m_security_line_edit;
-      QLabel* m_icon_label;
-      SecurityInfoListView* m_securities;
-      QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
+      SecurityInputLineEdit* m_security_line_edit;
 
-      void on_text_edited();
-      void move_line_edit();
-      void enter_pressed();
-      void on_activated(const Nexus::Security& security);
       void on_commit(const Nexus::Security& security);
   };
 }

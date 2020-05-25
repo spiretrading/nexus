@@ -1,12 +1,13 @@
 #ifndef SPIRE_CANCEL_KEY_BINDINGS_TABLE_MODEL_HPP
 #define SPIRE_CANCEL_KEY_BINDINGS_TABLE_MODEL_HPP
-#include <QAbstractTableModel>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsTableModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
   //! Represents a model for displaying cancel action key bindings.
-  class CancelKeyBindingsTableModel : public QAbstractTableModel {
+  class CancelKeyBindingsTableModel : public KeyBindingsTableModel {
     public:
 
       //! Specifies the action type used by the model.

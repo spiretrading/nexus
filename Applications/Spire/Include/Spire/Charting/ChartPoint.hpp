@@ -33,8 +33,14 @@ namespace Spire {
     /** Returns the sum of two ChartPoints. */
     ChartPoint operator +(const ChartPoint& rhs) const;
 
+    /** Adds a point from <i>this</i>. */
+    ChartPoint& operator +=(const ChartPoint& rhs);
+
     /** Returns the difference of two ChartPoints. */
     ChartPoint operator -(const ChartPoint& rhs) const;
+
+    /** Subtracts a point from <i>this</i>. */
+    ChartPoint& operator -=(const ChartPoint& rhs);
   };
 }
 

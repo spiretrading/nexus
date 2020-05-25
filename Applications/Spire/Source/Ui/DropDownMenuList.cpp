@@ -2,12 +2,17 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/DropdownMenuItem.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  const auto MAX_VISIBLE_ITEMS = 5;
+}
 
 DropDownMenuList::DropDownMenuList(
     const std::vector<QString>& items, QWidget* parent)
@@ -19,19 +24,16 @@ DropDownMenuList::DropDownMenuList(
   setFixedHeight(1 + scale_height(20) * items.size());
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
-  m_scroll_area = new ScrollArea(this);
+  m_scroll_area = new ScrollArea(false, this);
   m_scroll_area->setWidgetResizable(true);
+  m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
   list_layout->setContentsMargins({});
   list_layout->setSpacing(0);
-  for(auto& item : items) {
-    auto menu_item = new DropDownMenuItem(item, m_list_widget);
-    menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
-    list_layout->addWidget(menu_item);
-  }
+  set_items(items);
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
   parent->installEventFilter(this);
@@ -42,6 +44,8 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     delete item->widget();
     delete item;
   }
+  setFixedHeight(scale_height(20) *
+    std::min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
   for(auto& item : items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
@@ -75,21 +79,21 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
   if(object == parent()) {
     if(event->type() == QEvent::KeyPress && isVisible()) {
       auto key_event = static_cast<QKeyEvent*>(event);
-      if(key_event->key() == Qt::Key_Tab || key_event->key() == Qt::Key_Down) {
+      if(key_event->key() == Qt::Key_Down) {
         focus_next();
         return true;
-      } else if((key_event->key() & Qt::Key_Tab &&
-          key_event->modifiers() & Qt::ShiftModifier) ||
-          key_event->key() == Qt::Key_Up) {
+      } else if(key_event->key() == Qt::Key_Up) {
         focus_previous();
         return true;
       } else if(key_event->key() == Qt::Key_Enter ||
           key_event->key() == Qt::Key_Return) {
         if(m_highlight_index >= 0) {
-          on_select(static_cast<DropDownMenuItem*>(m_list_widget->layout()->
-            itemAt(m_highlight_index)->widget())->text());
+          if(auto widget = m_list_widget->layout()->itemAt(m_highlight_index)) {
+            on_select(static_cast<DropDownMenuItem*>(
+              widget->widget())->text());
+          }
+          return true;
         }
-        return true;
       } else if(key_event->key() == Qt::Key_Escape) {
         close();
       }
@@ -135,7 +139,8 @@ void DropDownMenuList::focus_next() {
 }
 
 void DropDownMenuList::focus_previous() {
-  if(m_highlight_index < 0) {
+  if(m_highlight_index < 0 &&
+      m_highlight_index > m_list_widget->layout()->count() - 1) {
     m_highlight_index = 0;
   }
   auto index = m_highlight_index - 1;
@@ -147,10 +152,14 @@ void DropDownMenuList::focus_previous() {
 }
 
 void DropDownMenuList::update_highlights(int old_index, int new_index) {
-  auto previous_widget = m_list_widget->layout()->itemAt(old_index)->widget();
-  static_cast<DropDownMenuItem*>(previous_widget)->remove_highlight();
-  previous_widget->update();
-  auto current_widget = m_list_widget->layout()->itemAt(new_index)->widget();
-  static_cast<DropDownMenuItem*>(current_widget)->set_highlight();
-  current_widget->update();
+  if(auto previous_widget = m_list_widget->layout()->itemAt(old_index)) {
+    static_cast<DropDownMenuItem*>(
+      previous_widget->widget())->remove_highlight();
+    previous_widget->widget()->update();
+  }
+  if(auto current_widget = m_list_widget->layout()->itemAt(new_index)) {
+    static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
+    current_widget->widget()->update();
+    m_scroll_area->ensureWidgetVisible(current_widget->widget());
+  }
 }

@@ -5,7 +5,6 @@
 #include <variant>
 #include <vector>
 #include <boost/optional.hpp>
-#include <QHash>
 #include <QKeySequence>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
@@ -220,7 +219,12 @@ namespace Details {
 
     private:
       using Actions = Nexus::RegionMap<boost::optional<Action>>;
-      QHash<QKeySequence, Actions> m_bindings;
+      struct KeyBindingMapping {
+        QKeySequence m_key_sequence;
+        Actions m_actions;
+      };
+
+      std::vector<KeyBindingMapping> m_bindings;
   };
 
   std::ostream& operator <<(std::ostream& out,

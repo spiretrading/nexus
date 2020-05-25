@@ -40,10 +40,12 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void leaveEvent(QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
     private:
       bool m_is_dynamic;
+      bool m_is_wheel_disabled;
       QTimer m_horizontal_scroll_bar_timer;
       QTimer m_vertical_scroll_bar_timer;
       double m_horizontal_scrolling_error;
