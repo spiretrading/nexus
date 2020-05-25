@@ -3,38 +3,80 @@
 #include <exception>
 #include <utility>
 #include <Beam/Routines/Async.hpp>
-#include <boost/noncopyable.hpp>
 #include "Spire/Spire/QtPromise.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
   /*! \brief Encapsulates a QtPromise resolving to a future value.
       \tparam T The type of value to resolve to.
   */
+  template<typename>
+  class QtFuture;
+
+  /*! \brief Encapsulates a QtPromise resolving to a future value.
+      \tparam T The type of value to resolve to.
+  */
   template<typename T>
-  class QtFuture : private boost::noncopyable {
+  class BaseQtFuture {
     public:
 
       //! The type of value to resolve to.
       using Type = T;
 
+      //! Resolves the QtPromise waiting on this future to an exception.
+      void resolve(std::exception_ptr e);
+
+    protected:
+      Beam::Routines::Eval<Type> m_eval;
+
+      BaseQtFuture(Beam::Routines::Eval<Type> eval);
+      BaseQtFuture(BaseQtFuture&&) = default;
+      BaseQtFuture& operator =(BaseQtFuture&&) = default;
+
+    private:
+      friend struct std::pair<QtFuture<Type>, QtPromise<Type>>;
+  };
+
+  /*! \brief Encapsulates a QtPromise resolving to a future value.
+      \tparam T The type of value to resolve to.
+  */
+  template<typename T>
+  class QtFuture : public BaseQtFuture<T> {
+    public:
+
       QtFuture(QtFuture&&) = default;
 
       QtFuture& operator =(QtFuture&&) = default;
 
+      using BaseQtFuture<T>::resolve;
+
       //! Resolves the QtPromise waiting on this future.
       void resolve(Type value);
 
-      //! Resolves the QtPromise waiting on this future to an exception.
-      void resolve(std::exception_ptr e);
+    private:
+      friend struct std::pair<QtFuture, QtPromise<Type>>;
+
+      using BaseQtFuture<T>::BaseQtFuture;
+  };
+
+  //! Specializes QtFuture for void promises.
+  template<>
+  class QtFuture<void> : public BaseQtFuture<void> {
+    public:
+
+      QtFuture(QtFuture&&) = default;
+
+      QtFuture& operator =(QtFuture&&) = default;
+
+      using BaseQtFuture<void>::resolve;
+
+      //! Resolves the QtPromise waiting on this future.
+      void resolve();
 
     private:
-      template<typename T1, typename T2>
-      friend struct std::pair;
-      Beam::Routines::Eval<Type> m_eval;
+      friend struct std::pair<QtFuture, QtPromise<Type>>;
 
-      QtFuture(Beam::Routines::Eval<Type> eval);
+      using BaseQtFuture<void>::BaseQtFuture;
   };
 
   //! Returns a pair consisting of a QtFuture<T> and its corresponding
@@ -46,23 +88,31 @@ namespace Spire {
     return std::pair<QtFuture<T>, QtPromise<T>>(std::piecewise_construct,
       std::forward_as_tuple(std::move(eval)),
       std::forward_as_tuple([async = std::move(async)] {
-        return async->Get();
+        if constexpr(std::is_same_v<T, void>) {
+          async->Get();
+        } else {
+          return async->Get();
+        }
       }, LaunchPolicy::ASYNC));
   }
+
+  template<typename T>
+  void BaseQtFuture<T>::resolve(std::exception_ptr e) {
+    m_eval.SetException(std::move(e));
+  }
+
+  template<typename T>
+  BaseQtFuture<T>::BaseQtFuture(Beam::Routines::Eval<Type> eval)
+    : m_eval(std::move(eval)) {}
 
   template<typename T>
   void QtFuture<T>::resolve(Type value) {
     m_eval.SetResult(std::move(value));
   }
 
-  template<typename T>
-  void QtFuture<T>::resolve(std::exception_ptr e) {
-    m_eval.SetException(std::move(e));
+  inline void QtFuture<void>::resolve() {
+    m_eval.SetResult();
   }
-
-  template<typename T>
-  QtFuture<T>::QtFuture(Beam::Routines::Eval<Type> eval)
-    : m_eval(std::move(eval)) {}
 }
 
 #endif

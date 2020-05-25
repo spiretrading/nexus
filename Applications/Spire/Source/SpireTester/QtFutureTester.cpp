@@ -21,4 +21,21 @@ TEST_SUITE("QtFuture") {
         std::runtime_error);
     });
   }
+
+  TEST_CASE("void_future_immediate_resolution") {
+    run_test([] {
+      auto [f, p] = make_future<void>();
+      f.resolve();
+      wait(std::move(p));
+    });
+  }
+
+  TEST_CASE("void_future_immediate_exception") {
+    run_test([] {
+      auto [f, p] = make_future<void>();
+      f.resolve(std::make_exception_ptr(std::runtime_error("Failed future.")));
+      REQUIRE_THROWS_WITH_AS(wait(std::move(p)), "Failed future.",
+        std::runtime_error);
+    });
+  }
 }
