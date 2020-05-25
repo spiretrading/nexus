@@ -16,7 +16,6 @@ export class PageWrapper extends React.Component {
       width: '100%',
       height: '100%',
       display: 'flex' as 'flex',
-      flex: 'column' as 'column',
       overflowX: 'hidden' as 'hidden',
       overflowY: 'auto' as 'auto',
       justifyContent: 'center' as 'center',
