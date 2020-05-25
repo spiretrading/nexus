@@ -8,7 +8,7 @@ interface Properties {
   account: AccountEntry;
 }
 
-/** Displays the details of a member of a group. */
+/** Displays the details of a member of the group. */
 export class GroupMemberEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
