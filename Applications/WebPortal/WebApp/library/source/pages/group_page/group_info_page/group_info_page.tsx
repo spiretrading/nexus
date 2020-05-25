@@ -33,7 +33,7 @@ export class GroupInfoPage extends React.Component<Properties> {
             {GroupInfoPage.GROUP_EMPTY_MESSAGE}
           </div>);
       } else {
-        return this.props.group.map((account: AccountEntry) => 
+        return this.props.group.map(account =>
           <GroupMemberEntry account={account}/>);
       } 
     })();
