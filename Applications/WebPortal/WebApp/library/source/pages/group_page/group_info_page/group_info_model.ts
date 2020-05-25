@@ -4,7 +4,7 @@ import { AccountEntry } from '../..';
 export abstract class GroupInfoModel {
 
   /** Returns the accounts belonging to the group. */
-  public abstract get group (): AccountEntry[];
+  public abstract get group(): AccountEntry[];
 
   /** Loads the model. */
   public abstract async load(): Promise<void>;
