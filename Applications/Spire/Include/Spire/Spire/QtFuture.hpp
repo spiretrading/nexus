@@ -10,6 +10,12 @@ namespace Spire {
   /*! \brief Encapsulates a QtPromise resolving to a future value.
       \tparam T The type of value to resolve to.
   */
+  template<typename>
+  class QtFuture;
+
+  /*! \brief Encapsulates a QtPromise resolving to a future value.
+      \tparam T The type of value to resolve to.
+  */
   template<typename T>
   class BaseQtFuture {
     public:
@@ -26,6 +32,9 @@ namespace Spire {
       BaseQtFuture(Beam::Routines::Eval<Type> eval);
       BaseQtFuture(BaseQtFuture&&) = default;
       BaseQtFuture& operator =(BaseQtFuture&&) = default;
+
+    private:
+      friend struct std::pair<QtFuture<Type>, QtPromise<Type>>;
   };
 
   /*! \brief Encapsulates a QtPromise resolving to a future value.
@@ -47,7 +56,7 @@ namespace Spire {
     private:
       friend struct std::pair<QtFuture, QtPromise<Type>>;
 
-      QtFuture(Beam::Routines::Eval<Type> eval);
+      using BaseQtFuture<T>::BaseQtFuture;
   };
 
   //! Specializes QtFuture for void promises.
@@ -67,7 +76,7 @@ namespace Spire {
     private:
       friend struct std::pair<QtFuture, QtPromise<Type>>;
 
-      QtFuture(Beam::Routines::Eval<Type> eval);
+      using BaseQtFuture<void>::BaseQtFuture;
   };
 
   //! Returns a pair consisting of a QtFuture<T> and its corresponding
@@ -101,16 +110,9 @@ namespace Spire {
     m_eval.SetResult(std::move(value));
   }
 
-  template<typename T>
-  QtFuture<T>::QtFuture(Beam::Routines::Eval<Type> eval)
-    : BaseQtFuture(std::move(eval)) {}
-
   inline void QtFuture<void>::resolve() {
     m_eval.SetResult();
   }
-
-  inline QtFuture<void>::QtFuture(Beam::Routines::Eval<Type> eval)
-    : BaseQtFuture(std::move(eval)) {}
 }
 
 #endif
