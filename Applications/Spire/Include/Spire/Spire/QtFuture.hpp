@@ -3,7 +3,6 @@
 #include <exception>
 #include <utility>
 #include <Beam/Routines/Async.hpp>
-#include <boost/noncopyable.hpp>
 #include "Spire/Spire/QtPromise.hpp"
 
 namespace Spire {
@@ -12,7 +11,7 @@ namespace Spire {
       \tparam T The type of value to resolve to.
   */
   template<typename T>
-  class BaseQtFuture : private boost::noncopyable {
+  class BaseQtFuture {
     public:
 
       //! The type of value to resolve to.
@@ -25,6 +24,8 @@ namespace Spire {
       Beam::Routines::Eval<Type> m_eval;
 
       BaseQtFuture(Beam::Routines::Eval<Type> eval);
+      BaseQtFuture(BaseQtFuture&&) = default;
+      BaseQtFuture& operator =(BaseQtFuture&&) = default;
   };
 
   /*! \brief Encapsulates a QtPromise resolving to a future value.
@@ -34,9 +35,9 @@ namespace Spire {
   class QtFuture : public BaseQtFuture<T> {
     public:
 
-      QtFuture(QtFuture&&);
+      QtFuture(QtFuture&&) = default;
 
-      QtFuture& operator =(QtFuture&&);
+      QtFuture& operator =(QtFuture&&) = default;
 
       using BaseQtFuture<T>::resolve;
 
@@ -54,9 +55,9 @@ namespace Spire {
   class QtFuture<void> : public BaseQtFuture<void> {
     public:
 
-      QtFuture(QtFuture&&);
+      QtFuture(QtFuture&&) = default;
 
-      QtFuture& operator =(QtFuture&&);
+      QtFuture& operator =(QtFuture&&) = default;
 
       using BaseQtFuture<void>::resolve;
 
@@ -96,15 +97,6 @@ namespace Spire {
     : m_eval(std::move(eval)) {}
 
   template<typename T>
-  QtFuture<T>::QtFuture(QtFuture&& other)
-    : BaseQtFuture(std::move(other.m_eval)) {}
-
-  template<typename T>
-  QtFuture<T>& QtFuture<T>::operator =(QtFuture&& other) {
-    m_eval = std::move(other.m_eval);
-  }
-
-  template<typename T>
   void QtFuture<T>::resolve(Type value) {
     m_eval.SetResult(std::move(value));
   }
@@ -112,13 +104,6 @@ namespace Spire {
   template<typename T>
   QtFuture<T>::QtFuture(Beam::Routines::Eval<Type> eval)
     : BaseQtFuture(std::move(eval)) {}
-
-  inline QtFuture<void>::QtFuture(QtFuture&& other)
-    : BaseQtFuture(std::move(other.m_eval)) {}
-
-  inline QtFuture<void>& QtFuture<void>::operator =(QtFuture&& other) {
-    m_eval = std::move(other.m_eval);
-  }
 
   inline void QtFuture<void>::resolve() {
     m_eval.SetResult();
