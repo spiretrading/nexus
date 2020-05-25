@@ -5,7 +5,7 @@ import { GroupInfoModel } from './group_info_model';
 export class LocalGroupInfoModel extends GroupInfoModel {
 
   /** Constructs a LocalGroupInfoModel. 
-   *@param group: The list of account entries that form the group. 
+   * @param group: The list of account entries that form the group.
    */
   constructor(group: AccountEntry[]) {
     super();
