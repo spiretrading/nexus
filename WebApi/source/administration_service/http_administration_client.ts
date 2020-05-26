@@ -84,7 +84,7 @@ export class HttpAdministrationClient extends AdministrationClient {
     await Beam.post('/api/administration_service/store_account_identity',
       {
         account: account.toJson(),
-        roles: identity.toJson()
+        identity: identity.toJson()
       });
   }
 

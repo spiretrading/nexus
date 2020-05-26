@@ -57,10 +57,10 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
           let imageSrc;
           if(app[1].test(type)) {
             imageSrc =
-              'resources/account_page/entitlements_page/icons/dot-green.svg';
+              '/resources/account_page/entitlements_page/icons/dot-green.svg';
           } else {
             imageSrc =
-              'resources/account_page/entitlements_page/icons/dot-grey.svg';
+              '/resources/account_page/entitlements_page/icons/dot-grey.svg';
           }
           dots.push(
             <td key={type.toString()}>

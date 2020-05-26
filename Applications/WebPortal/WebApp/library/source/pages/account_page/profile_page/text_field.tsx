@@ -85,10 +85,10 @@ export class TextField extends React.Component<Properties, State> {
     })();
     const image = (() => {
       if(this.state.effects === Effects.HOVER && !this.props.readonly) {
-        return <img src='resources/account_page/edit.svg'
+        return <img src='/resources/account_page/edit.svg'
           className={css(TextField.STYLE.image)}/>;
       } else {
-        return <img src='resources/account_page/edit.svg'
+        return <img src='/resources/account_page/edit.svg'
           className={css(TextField.STYLE.hidden)}/>;
       }
     })();

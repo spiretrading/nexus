@@ -33,9 +33,9 @@ export class Checkmark extends React.Component<Properties> {
   public render(): JSX.Element {
     const imgSrc = (() => {
       if(this.props.isChecked) {
-        return 'resources/components/check-green.svg';
+        return '/resources/components/check-green.svg';
       } else {
-        return 'resources/components/check-grey.svg';
+        return '/resources/components/check-grey.svg';
       }
     })();
     const size = (() => {

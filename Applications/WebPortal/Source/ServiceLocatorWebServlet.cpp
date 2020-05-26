@@ -41,6 +41,10 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
     MatchesPath(HttpMethod::POST, "/api/service_locator/load_current_account"),
     std::bind(&ServiceLocatorWebServlet::OnLoadCurrentAccount, this,
     std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/service_locator/load_directory_entry_from_id"),
+    std::bind(&ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId, this,
+    std::placeholders::_1));
   slots.emplace_back(
     MatchesPath(HttpMethod::POST, "/api/service_locator/store_password"),
     std::bind(&ServiceLocatorWebServlet::OnStorePassword, this,
@@ -138,6 +142,29 @@ HttpResponse ServiceLocatorWebServlet::OnLoadCurrentAccount(
     auto sender = JsonSender<SharedBuffer>();
     response.SetBody(Encode<SharedBuffer>(sender, account));
   }
+  return response;
+}
+
+HttpResponse ServiceLocatorWebServlet::OnLoadDirectoryEntryFromId(
+    const HttpRequest& request) {
+  struct Parameters {
+    unsigned int m_id;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto& serviceClients = session->GetServiceClients();
+  auto result = serviceClients.GetServiceLocatorClient().LoadDirectoryEntry(
+    parameters.m_id);
+  session->ShuttleResponse(result, Store(response));
   return response;
 }
 

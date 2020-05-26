@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 
 interface Properties {
 
@@ -10,28 +11,40 @@ interface Properties {
   /** The icon to display. */
   icon: string;
 
-  /** Indicates the buttom was clicked. */
+  /** The URL that the hyperlink points to. */
+  href?: string;
+
+  /** Signals the button was clicked. */
   onClick?: () => void;
 }
 
 /** Renders a single SideMenu button. */
 export class SideMenuButton extends React.Component<Properties> {
   public render(): JSX.Element {
+    const inner = (
+      <HBoxLayout style={SideMenuButton.STYLES.buttonContents}>
+        <Padding size='18px'/>
+        <Center width='20px' height='40px'>
+          <img width='20px' height='20px' src={this.props.icon}/>
+        </Center>
+        <Padding size='20px'/>
+        <VBoxLayout height='40px' style={SideMenuButton.STYLES.buttonText}>
+          <Padding/>
+          {this.props.label}
+          <Padding/>
+        </VBoxLayout>
+      </HBoxLayout>);
+    if(this.props.href) {
+      return (
+        <Router.Link to={this.props.href} onClick={this.props.onClick}
+            className={css(SideMenuButton.DYNAMIC_STYLES.button)}>
+          {inner}
+        </Router.Link>);
+    }
     return (
       <button onClick={this.props.onClick}
           className={css(SideMenuButton.DYNAMIC_STYLES.button)}>
-        <HBoxLayout style={SideMenuButton.STYLES.buttonContents}>
-          <Padding size='18px'/>
-          <Center width='20px' height='40px'>
-            <img width='20px' height='20px' src={this.props.icon}/>
-          </Center>
-          <Padding size='20px'/>
-          <VBoxLayout height='40px' style={SideMenuButton.STYLES.buttonText}>
-            <Padding/>
-            {this.props.label}
-            <Padding/>
-          </VBoxLayout>
-        </HBoxLayout>
+        {inner}
       </button>);
   }
 
@@ -47,7 +60,6 @@ export class SideMenuButton extends React.Component<Properties> {
       lineHeight: '20px'
     }
   }
-
   private static readonly DYNAMIC_STYLES = StyleSheet.create({
     button: {
       width: '200px',
@@ -56,6 +68,7 @@ export class SideMenuButton extends React.Component<Properties> {
       outline: 0,
       border: 'none',
       padding: 0,
+      textDecoration: 'none',
       font: '200 14px Roboto',
       '-webkit-tap-highlight-color': 'transparent',
       ':hover': {

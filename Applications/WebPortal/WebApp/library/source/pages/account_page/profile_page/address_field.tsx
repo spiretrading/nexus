@@ -16,6 +16,9 @@ interface Properties {
   /** The third address line. */
   addressLineThree?: string;
 
+  /** Indicates if the component is readonly. */
+  readonly?: boolean;
+  
   /** Called when the value has changed.
    * @param addressLineOne - The first address line.
    * @param addressLineTwo - The second address line.
@@ -49,20 +52,45 @@ export class AddressField extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const containerStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return AddressField.STYLE.containerSmall;
-      } else if(this.props.displaySize === DisplaySize.MEDIUM) {
-        return AddressField.STYLE.containerMedium;
+      if(this.props.readonly) {
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return AddressField.STYLE.readonlySmall;
+        } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+          return AddressField.STYLE.readonlyMedium;
+        } else {
+          return AddressField.STYLE.readonlyLarge;
+        }
       } else {
-        return AddressField.STYLE.containerLarge;
+        if(this.props.displaySize === DisplaySize.SMALL) {
+          return AddressField.STYLE.containerSmall;
+        } else if(this.props.displaySize === DisplaySize.MEDIUM) {
+          return AddressField.STYLE.containerMedium;
+        } else {
+          return AddressField.STYLE.containerLarge;
+        }
+      }
+    })();
+    const heightOverride = (() => {
+      if(this.props.readonly) {
+        if(this.props.addressLineTwo === '' &&
+            this.props.addressLineThree === '') {
+          return AddressField.STYLE.singleLineHeight;
+        } else if(this.props.addressLineThree === ''){
+          return AddressField.STYLE.doubleLineHeight;
+        } else {
+          return AddressField.STYLE.tripleLineHeight;
+        }
+      } else {
+        return null;
       }
     })();
     return (
       <textarea
         rows={3}
+        disabled={this.props.readonly}
         className={css(AddressField.EXTRA_STYLE.effects)}
         value={this.state.displayValue}
-        style={containerStyle}
+        style={{...containerStyle, ...heightOverride}}
         onBlur={this.onBlur}
         onFocus={this.onFocus}
         onChange={this.onChange}/>);
@@ -165,7 +193,63 @@ export class AddressField extends React.Component<Properties, State> {
       paddingTop: '7px',
       paddingBottom: '7px',
       backgroundColor: '#FFFFFF'
-    } as React.CSSProperties
+    } as React.CSSProperties,
+    readonlySmall: {
+      boxSizing: 'border-box' as 'border-box',
+      resize: 'none',
+      height: '75px',
+      font: '400 14px Roboto',
+      color: '#333333',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px',
+      lineHeight: '16px',
+      paddingLeft: '10px',
+      paddingTop: '7px',
+      paddingBottom: '7px',
+      backgroundColor: '#FFFFFF',
+      flexGrow: 1,
+      minWidth: '284px',
+      width: '100%'
+    } as React.CSSProperties,
+    readonlyMedium: {
+      boxSizing: 'border-box' as 'border-box',
+      resize: 'none',
+      height: '75px',
+      minWidth: '284px',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      color: '#333333',
+      lineHeight: '16px',
+      paddingLeft: '10px',
+      paddingTop: '7px',
+      paddingBottom: '7px',
+      backgroundColor: '#FFFFFF'
+    } as React.CSSProperties,
+    readonlyLarge: {
+      boxSizing: 'border-box' as 'border-box',
+      resize: 'none',
+      height: '75px',
+      minWidth: '350px',
+      border: '1px solid #FFFFFF',
+      borderRadius: '1px',
+      font: '400 14px Roboto',
+      color: '#333333',
+      lineHeight: '16px',
+      paddingLeft: '10px',
+      paddingTop: '7px',
+      paddingBottom: '7px',
+      backgroundColor: '#FFFFFF'
+    } as React.CSSProperties,
+    singleLineHeight: {
+      height: '34px'
+    } as React.CSSProperties,
+    doubleLineHeight: {
+      height: '54px'
+    } as React.CSSProperties,
+    tripleLineHeight: {
+      height: '75px'
+    } as React.CSSProperties,
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

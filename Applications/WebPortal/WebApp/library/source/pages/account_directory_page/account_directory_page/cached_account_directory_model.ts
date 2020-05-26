@@ -1,4 +1,6 @@
 import * as Beam from 'beam';
+import { CreateAccountModel, LocalCreateAccountModel, LocalGroupSuggestionModel,
+  GroupSuggestionModel } from '..';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
 
@@ -20,10 +22,16 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
     return this._model.groups;
   }
 
+  public get createAccountModel(): CreateAccountModel {
+    return this._model.createAccountModel;
+  }
+
+  public get groupSuggestionModel(): GroupSuggestionModel {
+    return this._model.groupSuggestionModel;
+  }
+
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
-    const group = await this._model.createGroup(name);
-    this._model.groups.add(group);
-    return group;
+    return await this._model.createGroup(name);
   }
 
   public async loadAccounts(

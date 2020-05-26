@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, PageWrapper } from '../..';
+import { DisplaySize, PageWrapper } from '../../..';
 import { AccountEntry } from './account_entry';
 import { CreateGroupModal } from './create_group_modal';
 import { FilterBar } from './filter_bar';

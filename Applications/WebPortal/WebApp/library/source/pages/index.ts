@@ -4,6 +4,7 @@ export * from './application_controller';
 export * from './application_model';
 export * from './dashboard_page';
 export * from './http_application_model';
+export * from './group_page';
 export * from './loading_page';
 export * from './login_page';
 export * from './page_wrapper';

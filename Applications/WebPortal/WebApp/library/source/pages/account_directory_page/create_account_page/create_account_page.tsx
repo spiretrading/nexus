@@ -7,8 +7,8 @@ import { DisplaySize, HLine } from '../../..';
 import { CountrySelectionField, TextField } from '../../..';
 import { AddressField, FormEntry, PhotoField, PhotoFieldDisplayMode } 
   from '../..';
-import { GroupSelectionBox } from '../group_selection_box';
-import { GroupSuggestionModel } from '../group_suggestion_model';
+import { GroupSelectionBox } from './group_selection_box';
+import { GroupSuggestionModel } from './group_suggestion_model';
 import { RolesInput } from './roles_input';
 
 interface Properties {
@@ -31,7 +31,7 @@ interface Properties {
    * @param identity - Contains extra details about the account.
    * @param roles - The roles associated with the account.
    */
-  onSubmit?: (username: string, groups: Beam.DirectoryEntry[],
+  onSubmit?: (username: string, groups: Beam.DirectoryEntry,
     identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
 }
 
@@ -247,7 +247,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                       onClick={this.onRoleClick}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Groups(s)'
+                <FormEntry name='Group'
                     displaySize={this.props.displaySize}>
                   <GroupSelectionBox
                     value={this.state.groupsValue}
@@ -325,7 +325,11 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   public componentDidMount(): void {
     this.props.groupSuggestionModel.load().then(() => {
-      this.setState({isModelLoaded: true});
+      for(const country of this.props.countryDatabase) {
+        this.state.identity.country = country.code;
+        break;
+      }
+      this.setState({isModelLoaded: true, identity: this.state.identity});
     });
   }
 
@@ -401,7 +405,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private async onAddGroup(group: Beam.DirectoryEntry) {
-    if(this.state.selectedGroups.indexOf(group) < 0) {
+    const length = this.state.selectedGroups.length;
+    if(this.state.selectedGroups.indexOf(group) < 0 && 
+        length < CreateAccountPage.MAX_NUMBER_OF_GROUPS) {
       this.state.selectedGroups.push(group);
       this.setState({
         selectedGroups: this.state.selectedGroups,
@@ -469,7 +475,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private onSubmit() {
     if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, this.state.selectedGroups,
+      this.props.onSubmit(this.state.username, this.state.selectedGroups[0],
         this.state.identity, this.state.roles);
     }
   }
@@ -635,6 +641,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     }
   });
+  private static readonly MAX_NUMBER_OF_GROUPS = 1;
   private static readonly SMALL_PADDING = '20px';
   private static readonly STANDARD_PADDING = '30px';
   private static readonly BOTTOM_PADDING = '60px';

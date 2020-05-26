@@ -1,7 +1,10 @@
+import * as Beam from 'beam';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
+import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage } from '../..';
-import { AccountController, AccountDirectoryController, AccountModel }
-  from '..';
+import { AccountController, AccountDirectoryController,
+  CreateAccountController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -20,7 +23,6 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  page: DashboardController.Page;
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -29,7 +31,6 @@ export class DashboardController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      page: DashboardController.Page.ACCOUNT
     };
     this.onSideMenuClick = this.onSideMenuClick.bind(this);
   }
@@ -38,58 +39,68 @@ export class DashboardController extends React.Component<Properties, State> {
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
-    const page = (() => {
-      switch(this.state.page) {
-        case DashboardController.Page.ACCOUNT:
-          return <AccountController
-            entitlements={this.props.model.entitlementDatabase}
-            countryDatabase={this.props.model.countryDatabase}
-            currencyDatabase={this.props.model.currencyDatabase}
-            marketDatabase={this.props.model.marketDatabase}
-            model={this.accountModel} displaySize={this.props.displaySize}/>;
-        case DashboardController.Page.DIRECTORY:
-          return <AccountDirectoryController
-            displaySize={this.props.displaySize}
-            roles={this.props.model.roles}
-            model={this.props.model.accountDirectoryModel}/>;
-      }
-    })();
-    return <DashboardPage roles={this.props.model.roles}
-      onSideMenuClick={this.onSideMenuClick}>{page}</DashboardPage>;
+    return (
+      <DashboardPage roles={this.props.model.roles}
+          onSideMenuClick={this.onSideMenuClick}>
+        <Router.Switch>
+          <Router.Route path='/account' render={this.renderAccountPage}/>
+          <Router.Route path='/account_directory'
+            render={() =>
+              <AccountDirectoryController
+                displaySize={this.props.displaySize}
+                roles={this.props.model.roles}
+                countryDatabase={this.props.model.countryDatabase}
+                model={this.props.model.accountDirectoryModel}/>}/>
+          <Router.Route path='/create_account'
+            render={() =>
+              <CreateAccountController 
+                displaySize={this.props.displaySize}
+                countryDatabase={this.props.model.countryDatabase}
+                createAccountModel={
+                  this.props.model.accountDirectoryModel.createAccountModel}
+                groupSuggestionModel={
+                  this.props.model.accountDirectoryModel.groupSuggestionModel}
+                />}/>
+          <Router.Route>
+            <Router.Redirect to='/account'/>
+          </Router.Route>
+        </Router.Switch>
+      </DashboardPage>);
   }
 
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
-        this.accountModel = this.props.model.makeAccountModel(
-          this.props.model.account);
         this.setState({isLoaded: true});
       });
   }
 
-  private onSideMenuClick(item: SideMenu.Item) {
-    if(item === SideMenu.Item.SIGN_OUT) {
-      this.props.model.logout().then(
-        () => {
-          this.props.onLogout();
-        });
-    } else if(item === SideMenu.Item.ACCOUNTS) {
-      this.setState({page: DashboardController.Page.DIRECTORY});
-    }
+  private renderAccountPage = () => {
+    const model = (() => {
+      const pattern = Path.pathToRegexp(
+        '/account/:id(\\d+)?', [], { end: false });
+      const match = pattern.exec(window.location.pathname);
+      const account = (() => {
+        if(match[1]) {
+          return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
+        }
+        return this.props.model.account;
+      })();
+      return this.props.model.makeAccountModel(account);
+    })();
+    return (
+      <AccountController
+        entitlements={this.props.model.entitlementDatabase}
+        countryDatabase={this.props.model.countryDatabase}
+        currencyDatabase={this.props.model.currencyDatabase}
+        marketDatabase={this.props.model.marketDatabase}
+        model={model}
+        displaySize={this.props.displaySize}/>);
   }
 
-  private accountModel: AccountModel;
-}
-
-export namespace DashboardController {
-
-  /** Lists the different pages this controller can display. */
-  export enum Page {
-
-    /** The directory page. */
-    DIRECTORY,
-
-    /** The profile page. */
-    ACCOUNT
+  private onSideMenuClick(item: SideMenu.Item) {
+    if(item === SideMenu.Item.SIGN_OUT) {
+      this.props.model.logout().then(this.props.onLogout);
+    }
   }
 }
