@@ -304,4 +304,26 @@ TEST_SUITE("CachedChartModel") {
       cache_load2->set_result({});
     });
   }
+
+  TEST_CASE("candlesticks_between_loaded_open_intervals") {
+    run_test([] {
+      auto model = std::make_shared<LocalChartModel>(Scalar::Type::MONEY,
+        Scalar::Type::MONEY,
+        std::vector<Candlestick>({make(20, 30), make(40, 41), make(40, 42),
+          make(40, 43), make(50, 60)}));
+      auto cache = CachedChartModel(*model);
+      auto model_sticks = load(model.get(), 20, 40, SnapshotLimit::FromHead(2));
+      auto cache_sticks = load(&cache, 20, 40, SnapshotLimit::FromHead(2));
+      REQUIRE(cache_sticks == model_sticks);
+      model_sticks = load(model.get(), 40, 60, SnapshotLimit::FromTail(2));
+      cache_sticks = load(&cache, 40, 60, SnapshotLimit::FromTail(2));
+      REQUIRE(cache_sticks == model_sticks);
+      model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
+      cache_sticks = load(&cache, 40, 40, SnapshotLimit::Unlimited());
+      REQUIRE(cache_sticks == model_sticks);
+      model_sticks = load(model.get(), 20, 60, SnapshotLimit::Unlimited());
+      cache_sticks = load(&cache, 20, 60, SnapshotLimit::Unlimited());
+      REQUIRE(cache_sticks == model_sticks);
+    });
+  }
 }
