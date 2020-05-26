@@ -45,7 +45,9 @@ export class AddressField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      displayValue: '',
+      displayValue: this.props.addressLineOne + 
+                    '\n' + this.props.addressLineTwo + 
+                    '\n' + this.props.addressLineThree,
       isEditing: false
     }
   }
@@ -86,6 +88,7 @@ export class AddressField extends React.Component<Properties, State> {
     })();
     return (
       <textarea
+        spellCheck={!this.props.readonly}
         rows={3}
         disabled={this.props.readonly}
         className={css(AddressField.EXTRA_STYLE.effects)}
@@ -271,4 +274,5 @@ export class AddressField extends React.Component<Properties, State> {
       flexGrow: 1
     }
   });
+
 }
