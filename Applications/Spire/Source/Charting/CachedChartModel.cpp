@@ -250,12 +250,12 @@ boost::optional<CachedChartModel::Interval>
     auto prev = it;
     --prev;
     if(prev->second.m_end > interval.lower()) {
-      return Interval::open(prev->first, prev->second.m_end);
+      return Interval::closed(prev->first, prev->second.m_end);
     }
   }
   if(it != m_queried_intervals.end()) {
     if(it->first < interval.upper()) {
-      return Interval::open(it->first, it->second.m_end);
+      return Interval::closed(it->first, it->second.m_end);
     }
   }
   return boost::none;
@@ -269,7 +269,7 @@ boost::optional<CachedChartModel::Interval>
     if(it != m_queried_intervals.begin()) {
       --it;
       if(it->second.m_end > interval.lower()) {
-        return Interval::open(it->first, it->second.m_end);
+        return Interval::closed(it->first, it->second.m_end);
       }
     }
   }
