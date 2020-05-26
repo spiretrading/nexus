@@ -51,9 +51,7 @@ Scalar::Type CachedChartModel::get_y_axis_type() const {
 QtPromise<std::vector<Candlestick>> CachedChartModel::load(Scalar first,
     Scalar last, const SnapshotLimit& limit) {
   if(limit.GetSize() == 0) {
-    return QtPromise([] {
-      return std::vector<Candlestick>();
-    });
+    return QtPromise(std::vector<Candlestick>());
   }
   auto interval = [&] {
     if(first == last) {
@@ -64,54 +62,54 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load(Scalar first,
   }();
   auto [bound, cached_interval, queried_interval] = [&] {
     if(limit.GetType() == SnapshotLimit::Type::HEAD) {
-      return std::make_tuple(first, find_leftmost_cached_overlap(interval),
+      return std::tuple(first, find_leftmost_cached_overlap(interval),
         find_leftmost_queried_overlap(interval));
     } else {
-      return std::make_tuple(last, find_rightmost_cached_overlap(interval),
+      return std::tuple(last, find_rightmost_cached_overlap(interval),
         find_rightmost_queried_overlap(interval));
     }
   }();
   if(cached_interval && contains(*cached_interval, bound)) {
-    return on_cached_interval(interval, *cached_interval, limit);
+    return load_cached_interval(interval, *cached_interval, limit);
   } else if(queried_interval && contains(*queried_interval, bound)) {
-    return on_queried_interval(interval, *queried_interval, limit);
+    return load_queried_interval(interval, *queried_interval, limit);
   } else {
-    return on_new_interval(interval, cached_interval, queried_interval,
+    return load_new_interval(interval, cached_interval, queried_interval,
       limit);
   }
 }
 
 connection CachedChartModel::connect_candlestick_slot(
     const CandlestickSignal::slot_type& slot) const {
-  return connection();
+  return m_model->connect_candlestick_slot(slot);
 }
 
-QtPromise<std::vector<Candlestick>> CachedChartModel::on_cached_interval(
+QtPromise<std::vector<Candlestick>> CachedChartModel::load_cached_interval(
     const Interval& interval, const Interval& cached_interval,
     const SnapshotLimit& limit) {
   auto is_head = limit.GetType() == SnapshotLimit::Type::HEAD;
   auto [start, end] = [&] {
     if(is_head) {
-      return std::make_pair(interval.lower(),
-        std::min(interval.upper(), cached_interval.upper()));
+      return std::tuple(interval.lower(), std::min(interval.upper(),
+        cached_interval.upper()));
     } else {
-      return std::make_pair(std::max(interval.lower(),
-        cached_interval.lower()), interval.upper());
+      return std::tuple(std::max(interval.lower(), cached_interval.lower()),
+        interval.upper());
     }
   }();
   return m_cache.load(start, end, limit).then(
-    [=, start = start, end = end] (auto result) {
-      auto candlesticks = result.Get();
+    [=] (auto result) {
+      auto candlesticks = std::move(result.Get());
       if((is_head && end == interval.upper()) || (
           !is_head && start == interval.lower()) ||
           candlesticks.size() == limit.GetSize()) {
-        return QtPromise(candlesticks);
+        return QtPromise(std::move(candlesticks));
       } else {
         auto [new_start, new_end] = [&] {
           if(is_head) {
-            return std::make_pair(end, interval.upper());
+            return std::tuple(end, interval.upper());
           } else {
-            return std::make_pair(interval.lower(), start);
+            return std::tuple(interval.lower(), start);
           }
         }();
         auto boundary_candlesticks_count = [&] {
@@ -131,14 +129,14 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::on_cached_interval(
         }();
         return load(new_start, new_end, new_limit).then(
           [=, candlesticks = std::move(candlesticks)] (auto result) mutable {
-            auto new_candlesticks = result.Get();
+            auto new_candlesticks = std::move(result.Get());
             auto [head, tail, offset] = [&] {
               if(is_head) {
-                return std::make_tuple(&candlesticks, &new_candlesticks,
+                return std::tuple(&candlesticks, &new_candlesticks,
                   std::min(boundary_candlesticks_count,
                     new_candlesticks.size()));
               } else {
-                return std::make_tuple(&new_candlesticks, &candlesticks,
+                return std::tuple(&new_candlesticks, &candlesticks,
                   std::min(boundary_candlesticks_count,
                     candlesticks.size()));
               }
@@ -151,7 +149,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::on_cached_interval(
     });
 }
 
-QtPromise<std::vector<Candlestick>> CachedChartModel::on_queried_interval(
+QtPromise<std::vector<Candlestick>> CachedChartModel::load_queried_interval(
     const Interval& interval, const Interval& queried_interval,
     const SnapshotLimit& limit) {
   auto [future, promise] = make_future<void>();
@@ -163,7 +161,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::on_queried_interval(
   });
 }
 
-QtPromise<std::vector<Candlestick>> CachedChartModel::on_new_interval(
+QtPromise<std::vector<Candlestick>> CachedChartModel::load_new_interval(
     const Interval& interval,
     const boost::optional<Interval>& cached_interval,
     const boost::optional<Interval>& queried_interval,
@@ -202,15 +200,13 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::on_new_interval(
           candlesticks.front().GetEnd(), end));
       }
     }
-    auto futures = std::move(m_queried_intervals[start].m_futures);
+    auto futures = std::move(m_queried_intervals.at(start).m_futures);
     m_queried_intervals.erase(start);
     for(auto& future : futures) {
       future.resolve();
     }
     if(candlesticks.size() == limit_size) {
-      return QtPromise([candlesticks = std::move(candlesticks)] {
-        return candlesticks;
-      });
+      return QtPromise(std::move(candlesticks));
     } else {
       return load(interval.lower(), interval.upper(), limit);
     }
@@ -227,6 +223,7 @@ boost::optional<CachedChartModel::Interval>
     return *it;
   }
 }
+
 boost::optional<CachedChartModel::Interval>
     CachedChartModel::find_rightmost_cached_overlap(
     const Interval& interval) const {
@@ -247,8 +244,7 @@ boost::optional<CachedChartModel::Interval>
     const Interval& interval) const {
   auto it = m_queried_intervals.lower_bound(interval.lower());
   if(it != m_queried_intervals.begin()) {
-    auto prev = it;
-    --prev;
+    auto prev = std::prev(it);
     if(prev->second.m_end > interval.lower()) {
       return Interval::closed(prev->first, prev->second.m_end);
     }

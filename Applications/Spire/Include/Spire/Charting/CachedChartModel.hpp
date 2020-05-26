@@ -51,13 +51,13 @@ namespace Spire {
       boost::icl::interval_set<Scalar> m_cached_intervals;
       std::map<Scalar, QueryInfo> m_queried_intervals;
 
-      QtPromise<std::vector<Candlestick>> on_cached_interval(
+      QtPromise<std::vector<Candlestick>> load_cached_interval(
         const Interval& interval, const Interval& cached_interval,
         const Beam::Queries::SnapshotLimit& limit);
-      QtPromise<std::vector<Candlestick>> on_queried_interval(
+      QtPromise<std::vector<Candlestick>> load_queried_interval(
         const Interval& interval, const Interval& queried_interval,
         const Beam::Queries::SnapshotLimit& limit);
-      QtPromise<std::vector<Candlestick>> on_new_interval(
+      QtPromise<std::vector<Candlestick>> load_new_interval(
         const Interval& interval,
         const boost::optional<Interval>& cached_interval,
         const boost::optional<Interval>& queried_interval,
