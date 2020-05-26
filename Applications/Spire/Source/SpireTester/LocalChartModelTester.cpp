@@ -177,9 +177,7 @@ TEST_SUITE("LocalChartModel") {
     run_test([] {
       auto model = create_coincident_model();
       auto model_sticks = load(model.get(), 40, 40, SnapshotLimit::Unlimited());
-      auto result = std::vector<Candlestick>({make(39, 40), make(39, 40),
-        make(39, 40), make(39, 40), make(39, 40), make(40, 41), make(40, 41),
-        make(40, 41), make(40, 41), make(40, 41)});
+      auto result = std::vector<Candlestick>({make(39, 40), make(40, 41)});
       REQUIRE(model_sticks == result);
     });
   }
