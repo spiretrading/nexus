@@ -25,14 +25,16 @@ class TestApp extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return(
       <Router.BrowserRouter>
-        <WebPortal.GroupInfoController
-          model={this.state.model}
-          displaySize={this.props.displaySize}/>
-        <div style={TestApp.STYLE.testingComponents}>
-          <button onClick={this.clearAccounts}>No Members</button>
-          <button onClick={this.addSomeAccounts}>Some Members</button>
-          <button onClick={this.addManyAccounts}>Lots of Members</button>
-        </div>
+        <Router.Route path="/">
+          <WebPortal.GroupInfoController
+            model={this.state.model}
+            displaySize={this.props.displaySize}/>
+        </Router.Route>
+      <div style={TestApp.STYLE.testingComponents}>
+        <button onClick={this.clearAccounts}>No Members</button>
+        <button onClick={this.addSomeAccounts}>Some Members</button>
+        <button onClick={this.addManyAccounts}>Lots of Members</button>
+      </div>
       </Router.BrowserRouter>);
   }
 
