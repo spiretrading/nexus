@@ -144,13 +144,13 @@ export class RoleIcon extends React.Component<Properties, State> {
   private getSource(role: Nexus.AccountRoles.Role) {
     switch (role) {
       case Nexus.AccountRoles.Role.TRADER:
-        return '/resources/account/trader-';
+        return 'resources/account/trader-';
       case Nexus.AccountRoles.Role.MANAGER:
-        return '/resources/account/manager-';
+        return 'resources/account/manager-';
       case Nexus.AccountRoles.Role.ADMINISTRATOR:
-        return '/resources/account/admin-';
+        return 'resources/account/admin-';
       case Nexus.AccountRoles.Role.SERVICE:
-        return '/resources/account/service-';
+        return 'resources/account/service-';
     }
   }
 

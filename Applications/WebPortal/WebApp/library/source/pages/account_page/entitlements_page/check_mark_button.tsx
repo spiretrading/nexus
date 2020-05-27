@@ -27,10 +27,10 @@ export class CheckMarkButton extends React.Component<Properties, {}> {
     const source = (() => {
       if(this.props.isChecked) {
         return (
-          '/resources/account_page/entitlements_page/icons/check-green.svg');
+          'resources/account_page/entitlements_page/icons/check-green.svg');
       } else {
         return (
-          '/resources/account_page/entitlements_page/icons/check-grey.svg');
+          'resources/account_page/entitlements_page/icons/check-grey.svg');
       }
     })();
     return (
