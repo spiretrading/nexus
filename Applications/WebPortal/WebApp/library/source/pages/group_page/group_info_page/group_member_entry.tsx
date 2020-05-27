@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 import { AccountEntry, RolePanel } from '../../..';
 
 interface Properties {
@@ -13,14 +14,17 @@ export class GroupMemberEntry extends React.Component<Properties> {
 
   public render(): JSX.Element {
     return (
-      <button className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
+      <Router.Link
+          key={this.props.account.account.id} 
+          to={`/account/${this.props.account.account.id}`}
+          className={css(GroupMemberEntry.EXTRA_STYLE.wrapper)}>
         <span style={GroupMemberEntry.STYLE.name}>
           {this.props.account.account.name}
         </span>
         <span style={GroupMemberEntry.STYLE.roleWrapper}>
           <RolePanel roles={this.props.account.roles}/>
         </span>
-      </button>
+      </Router.Link>
     ); 
   }
 
@@ -45,11 +49,23 @@ export class GroupMemberEntry extends React.Component<Properties> {
       alignItems: 'center',
       backgroundColor: '#FFFFFF',
       border: 'none',
+      
       ':hover': {
         backgroundColor: '#F8F8F8'
       },
       ':active': {
+        boxShadow: 'none',
+        webkitBoxShadow: 'none',
+        outlineColor: 'transparent',
+        outlineStyle: 'none',
         backgroundColor: '#F8F8F8'
+      },
+      '::-moz-focus-inner': {
+        border: 0,
+        outline: 0
+      },
+      ':-moz-focusring': {
+        outline: 0
       }
     }
   });
