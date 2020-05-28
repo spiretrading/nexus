@@ -143,7 +143,7 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_cached_interval(
             }();
             std::move(tail->begin() + offset, tail->end(),
               std::back_inserter(*head));
-            return *head;
+            return std::move(*head);
           });
       }
     });
