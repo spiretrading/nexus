@@ -30,11 +30,11 @@ class TestApp extends React.Component<Properties, State> {
             model={this.state.model}
             displaySize={this.props.displaySize}/>
         </Router.Route>
-      <div style={TestApp.STYLE.testingComponents}>
-        <button onClick={this.clearAccounts}>No Members</button>
-        <button onClick={this.addSomeAccounts}>Some Members</button>
-        <button onClick={this.addManyAccounts}>Lots of Members</button>
-      </div>
+        <div style={TestApp.STYLE.testingComponents}>
+          <button onClick={this.clearAccounts}>No Members</button>
+          <button onClick={this.addSomeAccounts}>Some Members</button>
+          <button onClick={this.addManyAccounts}>Lots of Members</button>
+        </div>
       </Router.BrowserRouter>);
   }
 
