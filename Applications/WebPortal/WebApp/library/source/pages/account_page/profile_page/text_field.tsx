@@ -235,7 +235,7 @@ export class TextField extends React.Component<Properties, State> {
     },
     text: {
       font: '400 14px Roboto',
-      color: '#000000',
+      color: '#333333',
       whiteSpace: 'nowrap',
       paddingLeft: '10px',
       border: '1px solid #FFFFFF',

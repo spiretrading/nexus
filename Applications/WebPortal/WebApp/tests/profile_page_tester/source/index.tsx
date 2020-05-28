@@ -114,7 +114,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state.identity.province = 'Westfarthing';
     this.state.identity.country = Nexus.DefaultCountries.AU;
     this.state.identity.city = 'Hobbiton';
-    this.state.identity.addressLineOne = '56 Bag End';
+    this.state.identity.addressLineOne = '56 Bag Ennd';
+    this.state.identity.addressLineTwo = '';
+    this.state.identity.addressLineThree = '3rd door on the left';
     this.state.identity.userNotes = '';
     this.state.identity.emailAddress = 'frodo@bagend.nz';
     this.state.identity.registrationTime = new Beam.DateTime(
