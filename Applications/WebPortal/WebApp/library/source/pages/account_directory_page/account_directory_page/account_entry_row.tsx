@@ -102,7 +102,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const link = (() => {
+    const content = (() => {
       if(this.props.account) {
         return( 
           <Router.Link key={id} to={`/account/${id}`}
@@ -125,7 +125,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) =>
           <div style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}>
-            {link}
+            {content}
           </div>}
       </Transition>);
   }
