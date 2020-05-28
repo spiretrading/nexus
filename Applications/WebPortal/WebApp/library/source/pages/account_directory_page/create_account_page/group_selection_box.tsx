@@ -108,7 +108,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         <div style={GroupSelectionBox.STYLE.imageWrapper}>
           <img style={GroupSelectionBox.STYLE.image}
             onClick={ () => this.props.onRemoveGroup(group) }
-            src='/resources/remove.svg'/>
+            src='resources/remove.svg'/>
         </div>
       </div>);
     });

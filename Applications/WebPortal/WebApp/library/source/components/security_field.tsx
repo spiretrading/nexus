@@ -403,7 +403,7 @@ export class SecurityField extends React.Component<Properties, State> {
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly MODAL_HEIGHT = '363px';
   private static readonly PATH =
-    '/resources/account_page/compliance_page/security_input/';
+    'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
 }

@@ -25,7 +25,7 @@ export class FilterBar extends React.Component<Properties> {
         <input value={this.props.value} placeholder='Filter'
           onChange={this.onChange}
           className={css(FilterBar.DYNAMIC_STYLE.input)}/>
-        <img src={'/resources/account_directory_page/magnifying-glass.svg'}
+        <img src='resources/account_directory_page/magnifying-glass.svg'
           style={FilterBar.STYLE.image}/>
       </div>);
   }

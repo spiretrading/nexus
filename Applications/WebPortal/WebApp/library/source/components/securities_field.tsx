@@ -460,7 +460,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
   private static readonly MODAL_HEIGHT = '559px';
   private static readonly MODAL_HEIGHT_READONLY = '492px';
   private static readonly PATH =
-    '/resources/account_page/compliance_page/security_input/';
+    'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly UPLOAD_TEXT = 'Upload';
