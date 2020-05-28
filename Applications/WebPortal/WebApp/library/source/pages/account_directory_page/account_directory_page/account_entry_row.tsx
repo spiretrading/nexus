@@ -102,18 +102,31 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const link = (() => {
+      if(this.props.account) {
+          return( 
+            <Router.Link key={id} to={`/account/${id}`}
+              className={css(dynamic_style)}>
+            {text}
+            {roles}
+          </Router.Link>);
+      } else {
+        return (
+          <div className={css(dynamic_style)}>
+            {text}
+            {roles}
+          </div>);
+      }
+    })();
     return (
       <Transition in={this.state.isOpen}
           appear={true}
           key={id}
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) =>
-          <Router.Link key={id} to={`/account/${id}`}
-              className={css(dynamic_style)}
-              style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}>
-            {text}
-            {roles}
-          </Router.Link>}
+          <div style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}>
+            {link}
+          </div>}
       </Transition>);
   }
 
@@ -146,6 +159,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       font: '400 14px Roboto',
       color: '#8C8C8C',
       paddingLeft: '10px',
+      textDecoration: 'none',
       cursor: 'default' as 'default'
     },
     entryListWrapper: {

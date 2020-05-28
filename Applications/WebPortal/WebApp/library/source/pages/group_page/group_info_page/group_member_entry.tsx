@@ -49,7 +49,7 @@ export class GroupMemberEntry extends React.Component<Properties> {
       alignItems: 'center',
       backgroundColor: '#FFFFFF',
       border: 'none',
-      
+      textDecoration: 'none',
       ':hover': {
         backgroundColor: '#F8F8F8'
       },
