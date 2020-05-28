@@ -104,12 +104,12 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     const link = (() => {
       if(this.props.account) {
-          return( 
-            <Router.Link key={id} to={`/account/${id}`}
-              className={css(dynamic_style)}>
-            {text}
-            {roles}
-          </Router.Link>);
+        return( 
+          <Router.Link key={id} to={`/account/${id}`}
+            className={css(dynamic_style)}>
+          {text}
+          {roles}
+        </Router.Link>);
       } else {
         return (
           <div className={css(dynamic_style)}>
