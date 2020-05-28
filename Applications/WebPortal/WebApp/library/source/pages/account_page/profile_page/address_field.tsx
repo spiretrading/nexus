@@ -138,7 +138,7 @@ export class AddressField extends React.Component<Properties, State> {
 
   private onChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value.toString();
-    if((text.split('\n').length <= 3)) {
+    if(text.split('\n').length <= 3) {
       this.setState({displayValue: text});
       this.onSubmitChange(text);
     }
