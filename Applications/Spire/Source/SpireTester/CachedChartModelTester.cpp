@@ -479,4 +479,30 @@ TEST_SUITE("CachedChartModel") {
         SnapshotLimit::Unlimited()));
     });
   }
+
+  TEST_CASE("load_tail_before_waiting") {
+    run_test([] {
+      auto model = create_reference_model();
+      auto test_model = TestChartModel(model.get_x_axis_type(),
+        model.get_y_axis_type());
+      auto cache = CachedChartModel(test_model);
+      auto subset = cache.load(Scalar(40 * Money::ONE),
+        Scalar(50 * Money::ONE), SnapshotLimit::FromTail(100));
+      auto load1 = wait(test_model.pop_load());
+      auto result = cache.load(Scalar(30 * Money::ONE),
+        Scalar(60 * Money::ONE), SnapshotLimit::FromTail(100));
+      auto load2 = wait(test_model.pop_load());
+      REQUIRE(load2->get_first() == Scalar(50 * Money::ONE));
+      REQUIRE(load2->get_last() == Scalar(60 * Money::ONE));
+      load2->set_result(load(&model, 50, 60, SnapshotLimit::FromTail(100)));
+      load1->set_result(load(&model, 40, 50, SnapshotLimit::FromTail(100)));
+      auto load3 = wait(test_model.pop_load());
+      REQUIRE(load3->get_first() == Scalar(30 * Money::ONE));
+      REQUIRE(load3->get_last() == Scalar(40 * Money::ONE));
+      load3->set_result(load(&model, 30, 40, SnapshotLimit::FromTail(100)));
+      auto candlesticks = wait(std::move(result));
+      REQUIRE(candlesticks == load(&model, 30, 60,
+        SnapshotLimit::FromTail(100)));
+    });
+  }
 }
