@@ -46,8 +46,7 @@ export class AddressField extends React.Component<Properties, State> {
     super(props);
     this.state = {
       displayValue: this.props.addressLineOne + 
-                    '\n' + this.props.addressLineTwo + 
-                    '\n' + this.props.addressLineThree,
+        '\n' + this.props.addressLineTwo + '\n' + this.props.addressLineThree,
       isEditing: false
     }
   }
