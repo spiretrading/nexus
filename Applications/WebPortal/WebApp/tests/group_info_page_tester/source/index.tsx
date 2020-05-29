@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import * as Router from 'react-router-dom';
 import * as WebPortal from 'web_portal';
 
 interface Properties {
@@ -23,16 +24,18 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return(
-      <div>
-        <WebPortal.GroupInfoController
-          model={this.state.model}
-          displaySize={this.props.displaySize}/>
+      <Router.BrowserRouter>
+        <Router.Route path="/">
+          <WebPortal.GroupInfoController
+            model={this.state.model}
+            displaySize={this.props.displaySize}/>
+        </Router.Route>
         <div style={TestApp.STYLE.testingComponents}>
           <button onClick={this.clearAccounts}>No Members</button>
           <button onClick={this.addSomeAccounts}>Some Members</button>
           <button onClick={this.addManyAccounts}>Lots of Members</button>
         </div>
-      </div>);
+      </Router.BrowserRouter>);
   }
 
   private clearAccounts = () => {

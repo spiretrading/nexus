@@ -48,7 +48,7 @@ export class RolePanel extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       flexGrow: 0,
       flexShrink: 0,
-      cursor: 'default' as 'default'
+      cursor: 'inherit' as 'inherit'
     }
   };
 }
