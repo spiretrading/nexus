@@ -63,7 +63,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return 0;
       }
     })();
-    const dynamic_style = (() => {
+    const dynamicStyle = (() => {
       if(this.props.account) {
         return AccountEntryRow.DYNAMIC_STYLE.entry;
       } else {
@@ -104,15 +104,15 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     const content = (() => {
       if(this.props.account) {
-        return( 
+        return (
           <Router.Link key={id} to={`/account/${id}`}
-            className={css(dynamic_style)}>
-          {text}
-          {roles}
-        </Router.Link>);
+              className={css(dynamicStyle)}>
+            {text}
+            {roles}
+          </Router.Link>);
       } else {
         return (
-          <div className={css(dynamic_style)}>
+          <div className={css(dynamicStyle)}>
             {text}
             {roles}
           </div>);
