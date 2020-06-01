@@ -52,6 +52,11 @@ IF NOT "!DIRECTORY!" == "!ROOT!\" (
   COPY /Y "!DIRECTORY!package.json" . >NUL
   COPY /Y "!DIRECTORY!tsconfig.json" . >NUL
 )
+IF NOT "!DEPENDENCIES!" == "" (
+  CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
+) ELSE (
+  CALL "!DIRECTORY!configure.bat"
+)
 SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD !BEAM_PATH!
 CALL build.bat
@@ -75,11 +80,6 @@ IF NOT EXIST node_modules (
 )
 IF "!UPDATE_NODE!" == "1" (
   SET UPDATE_BUILD=1
-  IF NOT "!DEPENDENCIES!" == "" (
-    CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
-  ) ELSE (
-    CALL "!DIRECTORY!configure.bat"
-  )
   CALL npm install
 )
 IF NOT EXIST library (
@@ -124,11 +124,6 @@ IF NOT EXIST mod_time.txt (
   )
 )
 IF "!UPDATE_BUILD!" == "1" (
-  IF NOT "!DEPENDENCIES!" == "" (
-    CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
-  ) ELSE (
-    CALL "!DIRECTORY!configure.bat"
-  )
   IF EXIST library (
     RMDIR /q /s library
   )

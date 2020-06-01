@@ -52,6 +52,11 @@ IF NOT "!DIRECTORY!" == "!ROOT!\" (
   COPY /Y "!DIRECTORY!package.json" . >NUL
   COPY /Y "!DIRECTORY!tsconfig.json" . >NUL
 )
+IF NOT "!DEPENDENCIES!" == "" (
+  CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
+) ELSE (
+  CALL "!DIRECTORY!configure.bat"
+)
 SET DALI_PATH=Dependencies\dali
 SET NEXUS_PATH=Dependencies\WebApi
 PUSHD !DALI_PATH!
@@ -79,11 +84,6 @@ IF NOT EXIST node_modules (
 )
 IF "!UPDATE_NODE!" == "1" (
   SET UPDATE_BUILD=1
-  IF NOT "!DEPENDENCIES!" == "" (
-    CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
-  ) ELSE (
-    CALL "!DIRECTORY!configure.bat"
-  )
   CALL npm install
 )
 IF NOT EXIST library (
@@ -128,11 +128,6 @@ IF NOT EXIST mod_time.txt (
   )
 )
 IF "!UPDATE_BUILD!" == "1" (
-  IF NOT "!DEPENDENCIES!" == "" (
-    CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
-  ) ELSE (
-    CALL "!DIRECTORY!configure.bat"
-  )
   IF EXIST library (
     RMDIR /q /s library
   )

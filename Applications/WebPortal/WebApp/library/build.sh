@@ -36,6 +36,11 @@ if [ "$config" = "reset" ]; then
   rm -f package-lock.json
   exit 0
 fi
+if [ "$dependencies" != "" ]; then
+  "$directory/configure.sh" -DD="$dependencies"
+else
+  "$directory/configure.sh"
+fi
 DALI_PATH=Dependencies/dali
 NEXUS_PATH=Dependencies/WebApi
 pushd $DALI_PATH
@@ -59,11 +64,6 @@ else
 fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
-  if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" -DD="$dependencies"
-  else
-    "$directory/configure.sh"
-  fi
   npm install
 fi
 if [ ! -d "library" ]; then
@@ -93,11 +93,6 @@ else
   fi
 fi
 if [ "$UPDATE_BUILD" = "1" ]; then
-  if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" -DD="$dependencies"
-  else
-    "$directory/configure.sh"
-  fi
   if [ -d library ]; then
     rm -rf library
   fi

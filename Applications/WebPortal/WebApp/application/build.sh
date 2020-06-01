@@ -42,6 +42,11 @@ if [ "$config" = "reset" ]; then
   rm -f package-lock.json
   exit 0
 fi
+if [ "$dependencies" != "" ]; then
+  "$directory/configure.sh" -DD="$dependencies"
+else
+  "$directory/configure.sh"
+fi
 WEB_PORTAL_PATH=Dependencies/library
 pushd $WEB_PORTAL_PATH
 ./build.sh "$@"
@@ -61,11 +66,6 @@ else
 fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
-  if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" -DD="$dependencies"
-  else
-    "$directory/configure.sh"
-  fi
   npm install
 fi
 if [ ! -d "application" ]; then
@@ -91,11 +91,6 @@ else
   fi
 fi
 if [ "$UPDATE_BUILD" = "1" ]; then
-  if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" -DD="$dependencies"
-  else
-    "$directory/configure.sh"
-  fi
   if [ -d application ]; then
     rm -rf application/*
   fi
