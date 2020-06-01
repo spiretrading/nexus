@@ -1,7 +1,9 @@
 #include "Spire/KeyBindings/DestinationItemDelegate.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
 
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 
 DestinationItemDelegate::DestinationItemDelegate(QWidget* parent)
@@ -19,5 +21,7 @@ QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
 void DestinationItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-  model->setData(index, item, Qt::DisplayRole);
+  auto region = Region::Global();
+  region.SetName(item.toStdString());
+  model->setData(index, QVariant::fromValue<Region>(region), Qt::DisplayRole);
 }
