@@ -7,17 +7,29 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
+for i in "$@"; do
+  case $i in
+    -DD=*)
+      dependencies="${i#*=}"
+      shift
+      ;;
+    *)
+      config="$i"
+      shift
+      ;;
+  esac
+done
 if [ "$(uname -s)" = "Darwin" ]; then
   STAT='stat -x -t "%Y%m%d%H%M%S"'
 else
   STAT='stat'
 fi
-if [ "$1" = "clean" ]; then
+if [ "$config" = "clean" ]; then
   rm -rf library
   rm -f mod_time.txt
   exit 0
 fi
-if [ "$1" = "reset" ]; then
+if [ "$config" = "reset" ]; then
   rm -rf library
   rm -f mod_time.txt
   rm -rf node_modules
@@ -43,6 +55,11 @@ else
 fi
 if [ "$UPDATE_NODE" = "1" ]; then
   UPDATE_BUILD=1
+  if [ "$dependencies" != "" ]; then
+    "$directory/configure.sh" -DD="$dependencies"
+  else
+    "$directory/configure.sh"
+  fi
   npm install
 fi
 if [ ! -d "library" ]; then
@@ -68,6 +85,11 @@ else
   fi
 fi
 if [ "$UPDATE_BUILD" = "1" ]; then
+  if [ "$dependencies" != "" ]; then
+    "$directory/configure.sh" -DD="$dependencies"
+  else
+    "$directory/configure.sh"
+  fi
   if [ -d library ]; then
     rm -rf library
   fi

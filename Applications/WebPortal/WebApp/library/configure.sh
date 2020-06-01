@@ -13,14 +13,13 @@ fi
 if [ ! -f "configure.sh" ]; then
   ln -s "$directory/configure.sh" configure.sh
 fi
-for i in "$@"
-do
-case $i in
-  -DD=*)
-  dependencies="${i#*=}"
-  shift
-  ;;
-esac
+for i in "$@"; do
+  case $i in
+    -DD=*)
+      dependencies="${i#*=}"
+      shift
+      ;;
+  esac
 done
 if [ "$dependencies" == "" ]; then
   dependencies="$root/Dependencies"

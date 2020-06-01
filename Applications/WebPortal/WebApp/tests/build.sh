@@ -9,6 +9,12 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
+if [ ! -f "build.sh" ]; then
+  ln -s "$directory/build.sh" build.sh
+fi
+if [ ! -f "configure.sh" ]; then
+  ln -s "$directory/configure.sh" configure.sh
+fi
 projects=""
 projects+=" account_directory_page_tester"
 projects+=" account_page_tester"
@@ -26,6 +32,6 @@ for i in $projects; do
     mkdir "$i"
   fi
   pushd "$i"
-  "$directory/$i/build.sh" "$@"
+  "$directory/$i/build.sh" -DD="$root/Beam/Dependencies" "$@"
   popd
 done
