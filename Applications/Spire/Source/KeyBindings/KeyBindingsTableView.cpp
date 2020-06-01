@@ -89,7 +89,6 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
     table->viewport()->setMouseTracking(true);
-    table->setTabKeyNavigation(false);
     table->installEventFilter(this);
     table->viewport()->installEventFilter(this);
     return table;
