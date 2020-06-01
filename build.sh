@@ -7,6 +7,12 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
+if [ ! -f "configure.sh" ]; then
+  ln -s "$directory/configure.sh" configure.sh
+fi
+if [ ! -f "build.sh" ]; then
+  ln -s "$directory/build.sh" build.sh
+fi
 build_function() {
   location="${@: -1}"
   if [ ! -d "$location" ]; then

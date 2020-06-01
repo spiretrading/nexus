@@ -76,5 +76,5 @@ if [ -d "$directory/Source" ]; then
   fi
 fi
 if [ "$run_cmake" = "1" ]; then
-  cmake -S "$directory" -DCMAKE_BUILD_TYPE=$config -DD=$dependencies
+  cmake -S "$directory" -DCMAKE_BUILD_TYPE=$config -DD="$dependencies"
 fi

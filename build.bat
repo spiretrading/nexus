@@ -1,6 +1,14 @@
 @ECHO OFF
 SETLOCAL
 SET ROOT=%cd%
+IF NOT EXIST configure.bat (
+  ECHO @ECHO OFF > configure.bat
+  ECHO CALL "%~dp0configure.bat" %%* >> configure.bat
+)
+IF NOT EXIST build.bat (
+  ECHO @ECHO OFF > build.bat
+  ECHO CALL "%~dp0build.bat" %%* >> build.bat
+)
 CALL:build Nexus %*
 CALL:build WebApi %*
 CALL:build Applications\AdministrationServer %*

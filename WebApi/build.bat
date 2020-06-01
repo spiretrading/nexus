@@ -1,9 +1,25 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 SET ROOT=%cd%
+:begin_args
+SET ARG=%~1
+IF "!IS_DEPENDENCY!" == "1" (
+  SET DEPENDENCIES=!ARG!
+  SET IS_DEPENDENCY=
+  SHIFT
+  GOTO begin_args
+) ELSE IF NOT "!ARG!" == "" (
+  IF "!ARG:~0,3!" == "-DD" (
+    SET IS_DEPENDENCY=1
+  ) ELSE (
+    SET CONFIG=!ARG!
+  )
+  SHIFT
+  GOTO begin_args
+)
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-IF "%1" == "clean" (
+IF "!CONFIG!" == "clean" (
   IF EXIST library (
     RMDIR /q /s library
   )
@@ -12,7 +28,7 @@ IF "%1" == "clean" (
   )
   EXIT /B
 )
-IF "%1" == "reset" (
+IF "!CONFIG!" == "reset" (
   IF EXIST library (
     RMDIR /q /s library
   )
@@ -37,7 +53,7 @@ IF NOT "%~dp0" == "!ROOT!\" (
 )
 SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD !BEAM_PATH!
-CALL build.bat %*
+CALL build.bat
 POPD
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
@@ -46,9 +62,9 @@ IF NOT EXIST node_modules (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
-        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
+          'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
           SET UPDATE_NODE=1
         )
@@ -102,6 +118,11 @@ IF NOT EXIST mod_time.txt (
   )
 )
 IF "!UPDATE_BUILD!" == "1" (
+  IF NOT "!DEPENDENCIES!" == "" (
+    CALL %~dp0configure.bat -DD=!DEPENDENCIES!
+  ) ELSE
+    CALL %~dp0configure.bat
+  )
   IF EXIST library (
     RMDIR /q /s library
   )
