@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 project(Spire)
+set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
+  "Path to dependencies folder.")
+file(TO_NATIVE_PATH "${D}" D)
+if(WIN32)
+  execute_process(COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endif()
 include(../../Nexus/Config/dependencies.cmake)
 set(SPIRE_INCLUDE_PATH "${CMAKE_CURRENT_LIST_DIR}/Include")
 set(SPIRE_RESOURCES_PATH "${CMAKE_CURRENT_LIST_DIR}/Resources")

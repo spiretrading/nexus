@@ -2,6 +2,17 @@
 SETLOCAL EnableDelayedExpansion
 SET EXIT_STATUS=0
 SET ROOT=%cd%
+IF EXIST cache_files\nexus.txt (
+  FOR /F %%i IN (
+      'ls -l --time-style=full-iso "%~dp0\setup.bat" ^| awk "{print $6 $7}"') DO (
+    FOR /F %%j IN (
+        'ls -l --time-style=full-iso cache_files\nexus.txt ^| awk "{print $6 $7}"') DO (
+      IF "%%i" LSS "%%j" (
+        EXIT /B 0
+      )
+    )
+  )
+)
 SET VSWHERE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property installationPath`) DO (
   IF EXIST "%%i\Common7\Tools\vsdevcmd.bat" (
@@ -9,7 +20,7 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="5efbcfb0c9abfbc88fe192066a8dc90cbc20b34e"
+SET BEAM_COMMIT="779deb9753e88231c1f89f0dde121c21079c6ec5"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -32,9 +43,8 @@ IF EXIST Beam (
     SET BUILD_BEAM=1
   )
   IF !BUILD_BEAM! EQU 1 (
-    CALL configure.bat -DD="!ROOT!"
-    CALL build.bat Debug
-    CALL build.bat Release
+    CALL build.bat Debug -DD="!ROOT!"
+    CALL build.bat Release -DD="!ROOT!"
   ) ELSE (
     PUSHD !ROOT!
     CALL Beam\Beam\setup.bat
@@ -98,5 +108,6 @@ IF NOT EXIST quickfix-v.1.15.1 (
   )
   DEL /F /Q quickfix-v.1.15.1.zip
 )
+ECHO timestamp > cache_files\nexus.txt
 ENDLOCAL
 EXIT /B !EXIT_STATUS!
