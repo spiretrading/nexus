@@ -84,6 +84,10 @@ namespace {
     }
     return Scalar(std::numeric_limits<Quantity>::max());
   }
+
+  Scalar calculate_density(const ChartView::Region& region, const QSize& size) {
+    return (region.m_bottom_right.m_x - region.m_top_left.m_x) / size.width();
+  }
 }
 
 bool ChartView::Region::operator ==(const Region& rhs) const {
@@ -107,7 +111,8 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
       m_draw_state(DrawState::OFF),
       m_mouse_buttons(Qt::NoButton),
       m_line_hover_distance_squared(scale_width(6) * scale_width(6)),
-      m_is_multi_select_enabled(false) {
+      m_is_multi_select_enabled(false),
+      m_sequence(0) {
   setFocusPolicy(Qt::NoFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -117,19 +122,19 @@ ChartView::ChartView(ChartModel& model, QWidget* parent)
     static_cast<double>(scale_width(3))});
 }
 
-ChartPoint ChartView::to_chart_point(const QPoint& point) const {
+ChartPoint ChartView::to_chart_point(const QPointF& point) const {
   return to_chart_point(m_region, m_extended_region,
     QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), m_gaps, point);
 }
 
-QPoint ChartView::to_pixel(const ChartPoint& point) const {
+QPointF ChartView::to_pixel(const ChartPoint& point) const {
   return to_pixel(m_region,
     QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), m_gaps, point);
 }
 
 void ChartView::set_crosshair(const ChartPoint& position,
     Qt::MouseButtons buttons) {
-  set_crosshair(to_pixel(position), buttons);
+  set_crosshair(to_pixel(position).toPoint(), buttons);
 }
 
 void ChartView::set_crosshair(const QPoint& position,
@@ -167,8 +172,8 @@ void ChartView::set_crosshair(const QPoint& position,
       auto line = m_trend_line_model.get(m_current_trend_line_id);
       if(!m_line_mouse_offset) {
         m_line_mouse_offset = LineMouseOffset{
-          to_pixel(std::get<0>(line.m_points)) - *m_crosshair_pos,
-          to_pixel(std::get<1>(line.m_points)) - *m_crosshair_pos};
+          to_pixel(std::get<0>(line.m_points)).toPoint() - *m_crosshair_pos,
+          to_pixel(std::get<1>(line.m_points)).toPoint() - *m_crosshair_pos};
       } else {
         line.m_points = {
           to_chart_point(*m_crosshair_pos + m_line_mouse_offset->m_first),
@@ -204,14 +209,15 @@ void ChartView::set_region(const Region& region) {
   if(region == m_region) {
     return;
   }
-  commit_region(region);
+  auto sequence = ++m_sequence;
+  update_region(region);
   m_region_updates = m_region_updates.then([=] (auto&& result) {
     m_model->load(get_lowest(m_model->get_x_axis_type()), region.m_top_left.m_x,
       SnapshotLimit::FromTail(1)).then([=] (
           std::vector<Candlestick> left_candlestick) {
-        auto density = (region.m_bottom_right.m_x - region.m_top_left.m_x) /
-          m_bottom_right_pixel.x();
-        return load_region(region, density, std::move(left_candlestick), {});
+        return load_region(region, calculate_density(region,
+          QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y())),
+          std::move(left_candlestick), {}, sequence);
       });
   });
 }
@@ -310,8 +316,10 @@ void ChartView::paintEvent(QPaintEvent* event) {
   }
   painter.setPen(Qt::white);
   for(auto& candlestick : m_candlesticks) {
-    auto open = to_pixel({candlestick.GetStart(), candlestick.GetOpen()});
-    auto close = to_pixel({candlestick.GetEnd(), candlestick.GetClose()});
+    auto open = to_pixel(
+      {candlestick.GetStart(), candlestick.GetOpen()}).toPoint();
+    auto close = to_pixel(
+      {candlestick.GetEnd(), candlestick.GetClose()}).toPoint();
     const auto GAP_DIVISOR = 2.95;
     auto start_x = static_cast<int>((open.x() - (close.x() - open.x()) /
       GAP_DIVISOR) + 1);
@@ -351,9 +359,9 @@ void ChartView::paintEvent(QPaintEvent* event) {
     }
   }
   for(auto& gap : m_gaps) {
-    auto start = to_pixel({gap.m_start, Scalar()}).x();
+    auto start = to_pixel({gap.m_start, Scalar()}).toPoint().x();
     if(start < m_bottom_right_pixel.x()) {
-      draw_gap(painter, start, to_pixel({gap.m_end, Scalar()}).x());
+      draw_gap(painter, start, to_pixel({gap.m_end, Scalar()}).toPoint().x());
     }
   }
   if(m_crosshair_pos && m_crosshair_pos.value().x() <=
@@ -414,8 +422,8 @@ void ChartView::paintEvent(QPaintEvent* event) {
   painter.setClipRegion({0, 0, m_bottom_right_pixel.x(),
     m_bottom_right_pixel.y()});
   for(auto& line : m_trend_line_model.get_lines()) {
-    auto first = to_pixel(std::get<0>(line.m_points));
-    auto second = to_pixel(std::get<1>(line.m_points));
+    auto first = to_pixel(std::get<0>(line.m_points)).toPoint();
+    auto second = to_pixel(std::get<1>(line.m_points)).toPoint();
     draw_trend_line(painter, line.m_style, line.m_color, first.x(), first.y(),
       second.x(), second.y());
   }
@@ -449,7 +457,7 @@ void ChartView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
-QPoint ChartView::to_pixel(const Region& region, const QSize& size,
+QPointF ChartView::to_pixel(const Region& region, const QSize& size,
     const std::vector<Gap>& gaps, const ChartPoint& point) {
   if(point.m_x < region.m_top_left.m_x) {
     auto adjusted_region = Region{{point.m_x, point.m_y},
@@ -460,25 +468,24 @@ QPoint ChartView::to_pixel(const Region& region, const QSize& size,
     return {-adjusted_point.x(), -adjusted_point.y()};
   }
   auto x = map_to(point.m_x, region.m_top_left.m_x, region.m_bottom_right.m_x,
-    0, size.width() - 1);
+    0.0, size.width() - 1.0);
   auto y = map_to(point.m_y, region.m_bottom_right.m_y, region.m_top_left.m_y,
-    size.height() - 1, 0);
+    size.height() - 1.0, 0.0);
   for(auto& gap : gaps) {
     if(gap.m_start < point.m_x && gap.m_end > point.m_x) {
       x = to_pixel(region, size, gaps, {gap.m_start, point.m_y}).x() +
-        static_cast<int>(std::round((GAP_WIDTH() * (point.m_x - gap.m_start)) /
-        (gap.m_end - gap.m_start)));
+        (GAP_WIDTH() * (point.m_x - gap.m_start)) / (gap.m_end - gap.m_start);
       return {x, y};
     }
     if(gap.m_end >= region.m_top_left.m_x) {
       if(point.m_x > gap.m_start) {
         auto visible_start = std::max(gap.m_start, region.m_top_left.m_x);
         auto gap_start = map_to(visible_start, region.m_top_left.m_x,
-          region.m_bottom_right.m_x, 0, size.width() - 1);
+          region.m_bottom_right.m_x, 0.0, size.width() - 1.0);
         auto gap_end = map_to(gap.m_end, region.m_top_left.m_x,
-          region.m_bottom_right.m_x, 0, size.width() - 1);
-        x -= gap_end - gap_start - static_cast<int>(std::round(GAP_WIDTH() *
-          ((gap.m_end - visible_start) / (gap.m_end - gap.m_start))));
+          region.m_bottom_right.m_x, 0.0, size.width() - 1.0);
+        x -= gap_end - gap_start - (GAP_WIDTH() * (gap.m_end - visible_start)) /
+          (gap.m_end - gap.m_start);
       } else {
         break;
       }
@@ -489,15 +496,28 @@ QPoint ChartView::to_pixel(const Region& region, const QSize& size,
 
 ChartPoint ChartView::to_chart_point(const Region& region,
     const Region& extended_region, const QSize& size,
-    const std::vector<Gap>& gaps, const QPoint& point) {
-  auto y = map_to(point.y(), size.height() - 1, 0, region.m_bottom_right.m_y,
-    region.m_top_left.m_y);
-  auto left_x_pixel = 0;
-  auto left_x_chart_value = region.m_top_left.m_x;
+    const std::vector<Gap>& gaps, const QPointF& point) {
+  auto y = map_to(point.y(), size.height() - 1.0, 0.0,
+    region.m_bottom_right.m_y, region.m_top_left.m_y);
+  auto [left_x_pixel, left_x_chart_value] = [&] {
+    if(gaps.empty()) {
+      return std::tuple{0.0, region.m_top_left.m_x};
+    }
+    auto gap_value = gaps.front().m_start;
+    auto gap_pixel = to_pixel(region, size, gaps, {gap_value, y}).x();
+    if(gap_pixel <= 0) {
+      return std::tuple{gap_pixel, gap_value};
+    }
+    return std::tuple{0.0, region.m_top_left.m_x};
+  }();
   auto x = [&] {
     for(auto& gap : gaps) {
       auto gap_start_pixel = to_pixel(region, size, gaps, {gap.m_start, y}).x();
       if(point.x() <= gap_start_pixel) {
+        if(left_x_pixel == gap_start_pixel) {
+          auto density = calculate_density(region, size);
+          return gap.m_start - (gap_start_pixel - point.x()) * density;
+        }
         return map_to(point.x(), left_x_pixel, gap_start_pixel,
           left_x_chart_value, gap.m_start);
       }
@@ -509,23 +529,52 @@ ChartPoint ChartView::to_chart_point(const Region& region,
       left_x_pixel = gap_end_pixel;
       left_x_chart_value = gap.m_end;
     }
-    return map_to(point.x(), left_x_pixel, size.width() - 1, left_x_chart_value,
-      extended_region.m_bottom_right.m_x);
+    return map_to(point.x(), left_x_pixel, size.width() - 1.0,
+      left_x_chart_value, extended_region.m_bottom_right.m_x);
   }();
   return {x, y};
 }
 
-void ChartView::commit_region(const Region& region) {
+void ChartView::update_region(const Region& region) {
   m_region = region;
   if(m_is_auto_scaled) {
     update_auto_scale();
   }
+  update_extended_region(m_region);
   update_origins();
   update();
 }
 
+void ChartView::update_extended_region(const Region& region) {
+  m_extended_region.m_top_left = region.m_top_left;
+  auto density = calculate_density(region,
+    QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()));
+  auto base_region = Region{region.m_top_left, {
+    region.m_top_left.m_x + m_bottom_right_pixel.x() * density,
+    region.m_bottom_right.m_y}};
+  auto has_visible_gap = false;
+  for(auto i = m_gaps.rbegin(); i != m_gaps.rend(); ++i) {
+    auto end_pixel = to_pixel(base_region,
+      QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), m_gaps,
+      {i->m_end, base_region.m_top_left.m_y}).x();
+    if(end_pixel >= 0 && end_pixel < m_bottom_right_pixel.x()) {
+      has_visible_gap = true;
+      m_extended_region.m_bottom_right.m_x = i->m_end +
+        (m_bottom_right_pixel.x() - end_pixel) * density;
+    } else if(end_pixel < 0) {
+      break;
+    }
+  }
+  if(!has_visible_gap) {
+    m_extended_region.m_bottom_right.m_x =
+      m_extended_region.m_top_left.m_x + m_bottom_right_pixel.x() *
+      density;
+  }
+}
+
 QtPromise<void> ChartView::load_region(Region region, Scalar density,
-    std::vector<Candlestick> candlesticks, std::vector<Gap> gaps) {
+    std::vector<Candlestick> candlesticks, std::vector<Gap> gaps,
+    std::uint32_t sequence) {
   auto start = [&] {
     if(candlesticks.empty()) {
       return region.m_top_left.m_x;
@@ -563,7 +612,7 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
       }
       auto position = [&] {
         if(next_candlesticks.empty()) {
-          return m_bottom_right_pixel.x();
+          return static_cast<qreal>(m_bottom_right_pixel.x());
         }
         auto base_region = Region{region.m_top_left, {
           region.m_top_left.m_x + m_bottom_right_pixel.x() * density,
@@ -579,37 +628,26 @@ QtPromise<void> ChartView::load_region(Region region, Scalar density,
             remaining_position * density;
         }
         return load_region(region, density, std::move(candlesticks),
-          std::move(gaps));
+          std::move(gaps), sequence);
       } else {
         m_candlesticks = std::move(candlesticks);
-        m_gaps = std::move(gaps);
-        m_extended_region.m_top_left = region.m_top_left;
-        auto base_region = Region{region.m_top_left, {
-          region.m_top_left.m_x + m_bottom_right_pixel.x() * density,
-          region.m_bottom_right.m_y}};
-        auto has_visible_gap = false;
-        for(auto i = m_gaps.rbegin(); i != m_gaps.rend(); ++i) {
-          auto end_pixel = to_pixel(base_region,
-            QSize(m_bottom_right_pixel.x(), m_bottom_right_pixel.y()), m_gaps,
-            {i->m_end, base_region.m_top_left.m_y}).x();
-          if(end_pixel >= 0 && end_pixel < m_bottom_right_pixel.x()) {
-            has_visible_gap = true;
-            m_extended_region.m_bottom_right.m_x = i->m_end +
-              (m_bottom_right_pixel.x() - end_pixel) * density;
-          } else if(end_pixel < 0) {
-            break;
+        for(auto& gap : gaps) {
+          auto i = std::lower_bound(m_gaps.begin(), m_gaps.end(), gap,
+            [] (auto& left, auto& right) {
+              return left.m_start < right.m_start;
+            });
+          if(i == m_gaps.end() || i->m_start != gap.m_start) {
+            m_gaps.insert(i, gap);
           }
         }
-        if(!has_visible_gap) {
-          m_extended_region.m_bottom_right.m_x =
-            m_extended_region.m_top_left.m_x + m_bottom_right_pixel.x() *
-            density;
+        if(sequence == m_sequence) {
+          if(m_is_auto_scaled) {
+            update_auto_scale();
+          }
+          update_extended_region(region);
+          update_origins();
+          update();
         }
-        if(m_is_auto_scaled) {
-          update_auto_scale();
-        }
-        update_origins();
-        update();
         return QtPromise();
       }
     });
@@ -651,8 +689,8 @@ void ChartView::draw_point(QPainter& painter, const QColor& border_color,
 
 void ChartView::draw_points(int id, QPainter& painter) {
   auto line = m_trend_line_model.get(id);
-  auto first = to_pixel(std::get<0>(line.m_points));
-  auto second = to_pixel(std::get<1>(line.m_points));
+  auto first = to_pixel(std::get<0>(line.m_points)).toPoint();
+  auto second = to_pixel(std::get<1>(line.m_points)).toPoint();
   auto current_point = to_pixel(m_current_trend_line_point);
   auto first_color = QColor("#25212E");
   auto second_color = QColor("#25212E");
@@ -669,7 +707,7 @@ bool ChartView::intersects_gap(int x) const {
   if(m_gaps.empty()) {
     return false;
   }
-  auto chart_x = to_chart_point({x, 0}).m_x;
+  auto chart_x = to_chart_point(QPoint{x, 0}).m_x;
   return m_gaps.end() != std::find_if(m_gaps.begin(), m_gaps.end(),
     [&] (const auto& gap) {
       return gap.m_start < chart_x && gap.m_end > chart_x;
@@ -847,20 +885,26 @@ void ChartView::on_right_mouse_button_press() {
 }
 
 void Spire::translate(ChartView& view, const QPoint& offset) {
-  if(offset.x() == 0) {
+  if(offset == QPoint(0, 0)) {
     return;
   }
   auto region = view.get_region();
-  auto delta = view.to_chart_point({std::abs(offset.x()), 0}).m_x -
-    region.m_top_left.m_x;
-  if(offset.x() >= 0) {
-    region.m_top_left.m_x -= delta;
-    region.m_bottom_right.m_x -= delta;
-  } else {
-    region.m_top_left.m_x += delta;
-    region.m_bottom_right.m_x += delta;
-  }
+  auto delta = region.m_top_left - view.to_chart_point(-offset);
+  region.m_top_left -= delta;
+  region.m_bottom_right -= delta;
   view.set_region(region);
 }
 
-void Spire::zoom(ChartView& view, double factor) {}
+void Spire::zoom(ChartView& view, double factor) {
+  auto region = view.get_region();
+  auto width = region.m_top_left.m_x - region.m_bottom_right.m_x;
+  auto height = region.m_top_left.m_y - region.m_bottom_right.m_y;
+  auto new_width = factor * width;
+  auto new_height = factor * height;
+  auto width_change = (new_width - width) / 2;
+  auto height_change = (new_height - height) / 2;
+  view.set_region({{region.m_top_left.m_x + width_change,
+    region.m_top_left.m_y + height_change},
+    {region.m_bottom_right.m_x - width_change,
+    region.m_bottom_right.m_y - height_change}});
+}
