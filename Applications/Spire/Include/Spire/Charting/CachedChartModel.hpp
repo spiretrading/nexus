@@ -1,9 +1,17 @@
 #ifndef SPIRE_CACHED_CHART_MODEL_HPP
 #define SPIRE_CACHED_CHART_MODEL_HPP
-#include <boost/icl/continuous_interval.hpp>
+#include <map>
+#include <vector>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <boost/icl/interval_set.hpp>
-#include "Beam/Queries/SnapshotLimit.hpp"
+#include <boost/optional/optional.hpp>
+#include "Spire/Charting/Charting.hpp"
+#include "Spire/Charting/ChartModel.hpp"
 #include "Spire/Charting/LocalChartModel.hpp"
+#include "Spire/Spire/QtFuture.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Scalar.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -18,7 +26,7 @@ namespace Spire {
       /*!
         \param model The model that supplies the data.
       */
-      CachedChartModel(ChartModel& model);
+      explicit CachedChartModel(ChartModel& model);
 
       Scalar::Type get_x_axis_type() const override;
 
@@ -31,26 +39,37 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
-      struct LoadInfo {
-        Scalar m_first;
-        Scalar m_last;
-        Scalar m_requested_first;
-        Scalar m_requested_last;
-        Beam::Queries::SnapshotLimit m_limit;
+      using Interval = boost::icl::continuous_interval<Scalar>;
+
+      struct QueryInfo {
+        Scalar m_end;
+        std::vector<QtFuture<void>> m_futures;
       };
-      mutable CandlestickSignal m_candlestick_signal;
-      ChartModel* m_chart_model;
+
+      ChartModel* m_model;
       LocalChartModel m_cache;
-      boost::icl::interval_set<Scalar> m_ranges;
-      
-      QtPromise<std::vector<Candlestick>> load_from_cache(
-        const LoadInfo& info);
-      QtPromise<std::vector<Candlestick>> load_from_model(
-        const LoadInfo& info);
-      void on_data_loaded(const std::vector<Candlestick>& data,
-        const boost::icl::continuous_interval<Scalar>& loaded_range);
-      void on_data_loaded(const std::vector<Candlestick>& data,
-        const LoadInfo& info);
+      boost::icl::interval_set<Scalar> m_cached_intervals;
+      std::map<Scalar, QueryInfo> m_queried_intervals;
+
+      QtPromise<std::vector<Candlestick>> load_cached_interval(
+        const Interval& interval, const Interval& cached_interval,
+        const Beam::Queries::SnapshotLimit& limit);
+      QtPromise<std::vector<Candlestick>> load_queried_interval(
+        const Interval& interval, const Interval& queried_interval,
+        const Beam::Queries::SnapshotLimit& limit);
+      QtPromise<std::vector<Candlestick>> load_new_interval(
+        const Interval& interval,
+        const boost::optional<Interval>& cached_interval,
+        const boost::optional<Interval>& queried_interval,
+        const Beam::Queries::SnapshotLimit& limit);
+      boost::optional<Interval> find_leftmost_cached_overlap(
+        const Interval& interval) const;
+      boost::optional<Interval> find_rightmost_cached_overlap(
+        const Interval& interval) const;
+      boost::optional<Interval> find_leftmost_queried_overlap(
+        const Interval& interval) const;
+      boost::optional<Interval> find_rightmost_queried_overlap(
+        const Interval& interval) const;
   };
 }
 

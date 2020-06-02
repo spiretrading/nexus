@@ -1,5 +1,6 @@
 #ifndef SPIRE_LOCAL_CHART_MODEL_HPP
 #define SPIRE_LOCAL_CHART_MODEL_HPP
+#include <map>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartModel.hpp"
 
@@ -37,10 +38,17 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
+      struct CandlestickDomain {
+        Scalar m_start;
+        Scalar m_end;
+
+        bool operator <(const CandlestickDomain& other) const;
+      };
+
       mutable CandlestickSignal m_candlestick_signal;
       Scalar::Type m_x_axis_type;
       Scalar::Type m_y_axis_type;
-      std::vector<Candlestick> m_candlesticks;
+      std::map<CandlestickDomain, Candlestick> m_candlesticks;
   };
 }
 
