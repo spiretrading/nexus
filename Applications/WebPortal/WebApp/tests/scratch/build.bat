@@ -132,7 +132,13 @@ IF "!UPDATE_BUILD!" == "1" (
   IF EXIST application (
     RMDIR /s /q application
   )
+  IF "!CONFIG!" == "Release" (
+    SET PROD_ENV=1
+  )
   node node_modules\webpack\bin\webpack.js
+  IF "!CONFIG!" == "Release" (
+    SET PROD_ENV=
+  )
   ECHO "timestamp" > mod_time.txt
   IF EXIST application (
     robocopy "!DIRECTORY!..\..\resources" application\resources /E > NUL

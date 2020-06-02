@@ -94,7 +94,13 @@ if [ "$UPDATE_BUILD" = "1" ]; then
   if [ -d application ]; then
     rm -rf application
   fi
+  if [ "$config" = "Release" ]; then
+    export PROD_ENV=1
+  fi
   node node_modules/webpack/bin/webpack.js
+  if [ "$config" = "Release" ]; then
+    unset PROD_ENV
+  fi
   echo "timestamp" > mod_time.txt
   if [ -d application ]; then
     cp -r "$directory/../../resources" application
