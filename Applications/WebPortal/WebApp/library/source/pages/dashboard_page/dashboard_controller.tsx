@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
-import { DisplaySize, LoadingPage } from '../..';
+import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController,
   CreateAccountController } from '..';
 import { DashboardModel } from './dashboard_model';
@@ -62,7 +62,7 @@ export class DashboardController extends React.Component<Properties, State> {
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
           <Router.Route>
-            <Router.Redirect to='/account'/>
+            <PageNotFoundPage displaySize={this.props.displaySize}/>
           </Router.Route>
         </Router.Switch>
       </DashboardPage>);
