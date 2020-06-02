@@ -145,10 +145,6 @@ void KeyBindingsTableView::set_model(KeyBindingsTableModel* model) {
       [=] (auto index, auto first, auto last) {
         on_row_removed(first);
       });
-    connect(model, &QAbstractItemModel::rowsInserted,
-      [=] (auto top_left, auto bottom_right) {
-        on_row_inserted();
-      });
     connect(model, &QAbstractItemModel::dataChanged,
       [=] (auto top_left, auto top_right, auto roles) {
         if(!roles.contains(Qt::BackgroundRole)) {
@@ -440,15 +436,6 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
     m_is_editing_cell = true;
     m_table->edit(index);
   }
-}
-
-void KeyBindingsTableView::on_row_inserted() {
-  auto current = m_table->currentIndex();
-  auto previous_index = m_table->model()->index(current.row() - 1,
-    current.column());
-  m_table->setCurrentIndex(previous_index);
-  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-  table_model->set_focus_highlight(previous_index);
 }
 
 void KeyBindingsTableView::on_row_removed(int row) {
