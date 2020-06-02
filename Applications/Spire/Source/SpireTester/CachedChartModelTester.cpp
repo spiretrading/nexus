@@ -536,6 +536,7 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(3)));
       REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
       REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(2));
+      test_load2->set_result({});
     });
   }
 
@@ -566,6 +567,7 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(2)));
       REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
       REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(3));
+      test_load2->set_result({});
     });
   }
 }

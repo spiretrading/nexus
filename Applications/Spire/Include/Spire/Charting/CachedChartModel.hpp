@@ -40,12 +40,10 @@ namespace Spire {
 
     private:
       using Interval = boost::icl::continuous_interval<Scalar>;
-
       struct QueryInfo {
         Scalar m_end;
         std::vector<QtFuture<void>> m_futures;
       };
-
       ChartModel* m_model;
       LocalChartModel m_cache;
       boost::icl::interval_set<Scalar> m_cached_intervals;
