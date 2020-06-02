@@ -18,27 +18,26 @@ export class RolePanel extends React.Component<Properties> {
     };
     return (
       <div style={RolePanel.STYLE.containerStyle}>
-          <img src={
-            `resources/account/trader-${
-              getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
-            width='14px'
-            height='14px'/>
-          <img src={`resources/account/manager-${
-              getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
-            width='14px'
-            height='14px'/>
-          <img src={`resources/account/admin-${
-              getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
-            width='14px'
-            height='14px'/>
-          <img src={`resources/account/service-${
-              getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
-            width='14px'
-            height='14px'/>
-        </div>);
+        <img src={`/resources/account/trader-${
+          getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
+          width='14px'
+          height='14px'/>
+        <img src={`/resources/account/manager-${
+          getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
+          width='14px'
+          height='14px'/>
+        <img src={`/resources/account/admin-${
+          getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
+          width='14px'
+          height='14px'/>
+        <img src={`/resources/account/service-${
+          getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
+          width='14px'
+          height='14px'/>
+      </div>);
   }
 
-  public static readonly STYLE = {
+  private static readonly STYLE = {
     containerStyle: {
       width: '100%',
       height: '100%',
@@ -49,7 +48,7 @@ export class RolePanel extends React.Component<Properties> {
       alignItems: 'center' as 'center',
       flexGrow: 0,
       flexShrink: 0,
-      cursor: 'default' as 'default'
+      cursor: 'inherit' as 'inherit'
     }
   };
 }

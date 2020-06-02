@@ -12,7 +12,8 @@ interface Properties {
   /** The account's roles. */
   roles: Nexus.AccountRoles;
 
-  /** Indicates a side menu item was clicked.
+  /**
+   * Indicates a side menu item was clicked.
    * @param item - The item that was clicked.
    */
   onSideMenuClick?: (item: SideMenu.Item) => void;
@@ -24,10 +25,6 @@ interface State {
 
 /** Displays the main dashboard. */
 export class DashboardPage extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    onSideMenuClick: () => {}
-  }
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -133,6 +130,9 @@ export class DashboardPage extends React.Component<Properties, State> {
     this.setState({isSideMenuOpen: !this.state.isSideMenuOpen});
   }
 
+  private static readonly defaultProps = {
+    onSideMenuClick: () => {}
+  }
   private static readonly MENU_TRANSITION_LENGTH_MS = 200;
   private static readonly STYLE = StyleSheet.create({
     separator: {

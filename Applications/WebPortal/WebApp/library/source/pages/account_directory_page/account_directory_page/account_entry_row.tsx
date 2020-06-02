@@ -1,8 +1,8 @@
 import { css, StyleSheet } from 'aphrodite';
-import * as Beam from 'beam';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 import { Transition } from 'react-transition-group';
-import { AccountEntry, DisplaySize, RolePanel } from '../..';
+import { AccountEntry, DisplaySize, RolePanel } from '../../..';
 
 interface Properties {
 
@@ -17,11 +17,6 @@ interface Properties {
 
   /** The filter. Used to determine highlighting. */
   filter?: string;
-
-  /** Called when the account is clicked on.
-   * @param entry - The updated entry of the account that was clicked on.
-   */
-  onDirectoryEntryClick?: (entry: Beam.DirectoryEntry) => void;
 }
 
 interface State {
@@ -31,10 +26,15 @@ interface State {
 
 /** Displays a account entry or a empty entry. */
 export class AccountEntryRow extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    account: null as AccountEntry,
-    filter: '',
-    onDirectoryEntryClick: () => {}
+  public static getDerivedStateFromProps(props: Properties, state: State) {
+    if(state.afterFirstRender) {
+      if(props.isOpen && !state.isOpen) {
+        return {isOpen: true};
+      } else if(!props.isOpen && state.isOpen) {
+        return {isOpen: false};
+      }
+    }
+    return null;
   }
 
   constructor(props: Properties) {
@@ -42,17 +42,17 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     this.state = {
       afterFirstRender: false,
       isOpen: false
-    }
+    };
   }
 
   public render(): JSX.Element {
     const rowStyle = (() => {
       switch(this.props.displaySize) {
-        case(DisplaySize.SMALL):
+        case DisplaySize.SMALL:
           return null;
-        case(DisplaySize.MEDIUM):
+        case DisplaySize.MEDIUM:
           return AccountEntryRow.STYLE.contentMedium;
-        case(DisplaySize.LARGE):
+        case DisplaySize.LARGE:
           return AccountEntryRow.STYLE.contentLarge;
       }
     })();
@@ -63,18 +63,11 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return 0;
       }
     })();
-    const dynamic_style = (() => {
+    const dynamicStyle = (() => {
       if(this.props.account) {
         return AccountEntryRow.DYNAMIC_STYLE.entry;
       } else {
         return null;
-      }
-    })();
-    const animation_style = (() => {
-      if(!this.props.filter) {
-        return AccountEntryRow.animationStyle;
-      } else {
-        return AccountEntryRow.noAnimationStyle;
       }
     })();
     const text = (() => {
@@ -99,7 +92,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
           </div>);
       }
     })();
-    const roles = (() =>{
+    const roles = (() => {
       if(this.props.account) {
         return (
           <div style={AccountEntryRow.STYLE.rolesWrapper}>
@@ -109,18 +102,31 @@ export class AccountEntryRow extends React.Component<Properties, State> {
         return null;
       }
     })();
+    const content = (() => {
+      if(this.props.account) {
+        return (
+          <Router.Link key={id} to={`/account/${id}`}
+              className={css(dynamicStyle)}>
+            {text}
+            {roles}
+          </Router.Link>);
+      } else {
+        return (
+          <div className={css(dynamicStyle)}>
+            {text}
+            {roles}
+          </div>);
+      }
+    })();
     return (
       <Transition in={this.state.isOpen}
           appear={true}
           key={id}
           timeout={AccountEntryRow.TIMEOUTS}>
-        {(state) => (
-          <div key={id}
-              className={css(dynamic_style, (animation_style as any)[state])}>
-            {text}
-            {roles}
-          </div>
-        )}
+        {(state) =>
+          <div style={(AccountEntryRow.ANIMATION_STYLE as any)[state]}>
+            {content}
+          </div>}
       </Transition>);
   }
 
@@ -128,18 +134,10 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     this.setState({afterFirstRender: true});
   }
 
-  static getDerivedStateFromProps(props: Properties, state: State) {
-    if(state.afterFirstRender) {
-      if(props.isOpen && !state.isOpen) {
-        return {isOpen: true};
-      } else if(!props.isOpen && state.isOpen) {
-        return {isOpen: false};
-      } else {
-        return null;
-      }
-    }
-  }
-
+  private static readonly defaultProps = {
+    account: null as AccountEntry,
+    filter: ''
+  };
   private static readonly STYLE = {
     contentMedium: {
       marginLeft: '38px'
@@ -161,6 +159,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       font: '400 14px Roboto',
       color: '#8C8C8C',
       paddingLeft: '10px',
+      textDecoration: 'none',
       cursor: 'default' as 'default'
     },
     entryListWrapper: {
@@ -192,6 +191,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       paddingLeft: '10px',
       paddingRight: '10px',
+      textDecoration: 'none',
       cursor: 'pointer' as 'pointer',
       ':hover' : {
         backgroundColor: '#F8F8F8'
@@ -201,7 +201,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly animationStyle = StyleSheet.create({
+  private static readonly ANIMATION_STYLE = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(0)'
@@ -228,17 +228,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       transformOrigin: 'top' as 'top',
       overflow: 'hidden' as 'hidden'
     }
-  });
-  private static readonly noAnimationStyle = StyleSheet.create({
-    entering: {
-    },
-    entered: {
-    },
-    exiting: {
-    },
-    exited: {
-    }
-  });
+  };
   private static readonly TIMEOUTS = {
     enter: 5,
     entered: 200,

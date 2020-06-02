@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CountrySelectionField, DisplaySize, HLine, PageWrapper, PhotoField } 
-  from '../../..';
+import { AddressField, CountrySelectionField, DisplaySize, HLine, PageWrapper,
+  PhotoField } from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
 import { FormEntry } from './form_entry';
@@ -42,7 +42,8 @@ interface Properties {
   hasError?: boolean;
 
   /** Indicates the profile is being submitted. */
-  onSubmit?: (roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => void;
+  onSubmit?: (roles: Nexus.AccountRoles, identity:
+    Nexus.AccountIdentity) => void;
 
   /** The status of the password submission. */
   submitPasswordStatus?: string;
@@ -290,7 +291,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             <Dali.VBoxLayout width='100%'>
               <Dali.Padding size='18px'/>
               <div style={ProfilePage.STYLE.lastLoginBox}>
-                {this.props.identity.lastLoginTime.toString()}
+                {'Last login: ' + this.props.identity.lastLoginTime.toString()}
               </div>
               <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
               <div style={ProfilePage.STYLE.headerStyler}>
@@ -336,11 +337,10 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                   <FormEntry name='Role(s)'
                       displaySize={this.props.displaySize}>
-                    <div style={ProfilePage.STYLE.rolesWrapper}>
-                      <RolesField roles={this.state.newRoles}
-                        readonly={this.props.readonly}
-                        onClick={this.onRolesChange}/>
-                    </div>
+                    <RolesField roles={this.state.newRoles}
+                      displaySize={this.props.displaySize}
+                      readonly={this.props.readonly}
+                      onClick={this.onRolesChange}/>
                   </FormEntry>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                   <HLine color={ProfilePage.LINE_COLOR}/>
@@ -385,10 +385,12 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                   <FormEntry name='Address'
                       displaySize={this.props.displaySize}>
-                    <TextField
-                      value={this.state.newIdentity.addressLineOne}
+                    <AddressField
+                      addressLineOne={this.state.newIdentity.addressLineOne}
+                      addressLineTwo={this.state.newIdentity.addressLineTwo}
+                      addressLineThree={this.state.newIdentity.addressLineThree}
                       displaySize={this.props.displaySize}
-                      onInput={this.onAddressChange}
+                      onChange={this.onAddressChange}
                       readonly={this.props.readonly}/>
                   </FormEntry>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
@@ -483,8 +485,11 @@ export class ProfilePage extends React.Component<Properties, State> {
     });
   }
 
-  private onAddressChange(value: string) {
-    this.state.newIdentity.addressLineOne = value;
+  private onAddressChange(addressLineOne: string, addressLineTwo: string,
+      addressLineThree: string) {
+    this.state.newIdentity.addressLineOne = addressLineOne;
+    this.state.newIdentity.addressLineTwo = addressLineTwo;
+    this.state.newIdentity.addressLineThree = addressLineThree;
     this.setState({
       newIdentity: this.state.newIdentity,
       isProfileChanged: true

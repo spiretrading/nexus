@@ -61,7 +61,6 @@ source_group("StampProtocol" FILES ${stamp_protocol_header_files})
 file(GLOB technical_analysis_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/TechnicalAnalysis/*.hpp)
 source_group("TechnicalAnalysis" FILES ${technical_analysis_header_files})
-
 file(GLOB header_files ${accounting_header_files}
   ${administration_service_header_files} ${backtester_header_files}
   ${binary_sequence_protocol_header_files} ${charting_service_header_files}
@@ -74,12 +73,19 @@ file(GLOB header_files ${accounting_header_files}
   ${service_clients_header_files} ${simulation_matcher_header_files}
   ${soup_bin_tcp_header_files} ${stamp_protocol_header_files}
   ${technical_analysis_header_files} )
-
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
-
 add_library(Nexus ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Nexus PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" LINKER_LANGUAGE CXX OUTPUT_NAME nexus)
+if(WIN32)
+  add_custom_command(TARGET Nexus PRE_BUILD COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  add_custom_command(TARGET Nexus PRE_BUILD COMMAND
+    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endif()

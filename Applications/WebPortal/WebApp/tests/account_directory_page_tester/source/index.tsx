@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import * as Router from 'react-router-dom';
 import * as WebPortal from 'web_portal';
-import { GroupSelectionBox } from 'web_portal';
 
 interface Properties {
   displaySize: WebPortal.DisplaySize;
@@ -48,7 +48,7 @@ class TestApp extends React.Component<Properties, State> {
       }
     })();
     return (
-      <div>
+      <Router.BrowserRouter>
         <WebPortal.AccountDirectoryPage
           displaySize={this.props.displaySize}
           roles={this.state.roles}
@@ -78,7 +78,7 @@ class TestApp extends React.Component<Properties, State> {
             {errorButtonText}
           </button>
         </div>
-      </div>
+      </Router.BrowserRouter>
     );
   }
 

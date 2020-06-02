@@ -7,22 +7,39 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
+for i in "$@"; do
+  case $i in
+    -DD=*)
+      dependencies="${i#*=}"
+      shift
+      ;;
+    *)
+      config="$i"
+      shift
+      ;;
+  esac
+done
 if [ "$(uname -s)" = "Darwin" ]; then
   STAT='stat -x -t "%Y%m%d%H%M%S"'
 else
   STAT='stat'
 fi
-if [ "$1" = "clean" ]; then
+if [ "$config" = "clean" ]; then
   rm -rf library
   rm -f  mod_time.txt
   exit 0
 fi
-if [ "$1" = "reset" ]; then
+if [ "$config" = "reset" ]; then
   rm -rf library
   rm -f mod_time.txt
   rm -rf node_modules
   rm -f package-lock.json
   exit 0
+fi
+if [ "$dependencies" != "" ]; then
+  "$directory/configure.sh" -DD="$dependencies"
+else
+  "$directory/configure.sh"
 fi
 DALI_PATH=Dependencies/dali
 NEXUS_PATH=Dependencies/WebApi

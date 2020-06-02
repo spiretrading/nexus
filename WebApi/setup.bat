@@ -1,6 +1,6 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET BEAM_COMMIT="12981532b70d3ca9c77c919873ec1d50adceade7"
+SET BEAM_COMMIT="03b7086770050c230f1c4cc542547846f0839ff9"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (

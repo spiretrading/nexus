@@ -1,4 +1,6 @@
 import * as Beam from 'beam';
+import { CreateAccountModel, GroupSuggestionModel } from
+  '../create_account_page';
 import { AccountEntry } from './account_entry';
 
 /** Interface for a model representing a directory of accounts. */
@@ -6,6 +8,12 @@ export abstract class AccountDirectoryModel {
 
   /** Returns a list of all groups. */
   public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;
+
+  /** Returns a CreateAccountModel. */
+  public abstract get createAccountModel(): CreateAccountModel;
+
+  /** Return a GroupSuggestionModel. */
+  public abstract get groupSuggestionModel(): GroupSuggestionModel;
 
   /**
    * Creates a new group.

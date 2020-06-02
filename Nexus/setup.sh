@@ -1,8 +1,27 @@
 #!/bin/bash
 exit_status=0
-let cores="`grep -c "processor" < /proc/cpuinfo`"
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ]; do
+  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+  source="$(readlink "$source")"
+  [[ $source != /* ]] && source="$dir/$source"
+done
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root="$(pwd)"
-beam_commit="12981532b70d3ca9c77c919873ec1d50adceade7"
+if [ "$(uname -s)" = "Darwin" ]; then
+  STAT='stat -x -t "%Y%m%d%H%M%S"'
+else
+  STAT='stat'
+fi
+if [ -f "cache_files/nexus.txt" ]; then
+  pt="$($STAT $directory/setup.sh | grep Modify | awk '{print $2 $3}')"
+  mt="$($STAT cache_files/nexus.txt | grep Modify | awk '{print $2 $3}')"
+  if [[ ! "$pt" > "$mt" ]]; then
+    exit 0
+  fi
+fi
+cores="`grep -c "processor" < /proc/cpuinfo`"
+beam_commit="03b7086770050c230f1c4cc542547846f0839ff9"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -25,10 +44,8 @@ if [ -d "Beam" ]; then
     build_beam=1
   fi
   if [ "$build_beam" == "1" ]; then
-    ./configure.sh "-DD=$root" Debug
-    ./build.sh
-    ./configure.sh "-DD=$root" Release
-    ./build.sh
+    ./build.sh Debug -DD="$root"
+    ./build.sh Release -DD="$root"
   else
     pushd "$root"
     ./Beam/Beam/setup.sh
@@ -72,4 +89,5 @@ python3 -c "import git"
 if [ "$?" != "0" ]; then
   pip3 install GitPython
 fi
+echo timestamp > cache_files/nexus.txt
 exit $exit_status

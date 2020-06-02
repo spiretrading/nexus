@@ -5,9 +5,7 @@ import { SideMenuButton } from './side_menu_button';
 
 interface Properties {
 
-  /** Used to determine what actions are available based on the account's
-   *  roles.
-   */
+  /** Determines what actions are available based on the account's roles. */
   roles: Nexus.AccountRoles;
 
   /** Indicates a menu item was clicked. */
@@ -16,26 +14,22 @@ interface Properties {
 
 /** Display's the dashboard's side menu. */
 export class SideMenu extends React.Component<Properties> {
-  public static defaultProps = {
-    onClick: () => {}
-  };
-
   public render(): JSX.Element {
     return (
       <VBoxLayout style={SideMenu.STYLE}>
         <Padding size='15px'/>
         <SideMenuButton icon='resources/dashboard/menu-icons/my-profile.svg'
-          label='My Profile'
+          label='My Profile' href='/account/profile'
           onClick={() => this.props.onClick(SideMenu.Item.PROFILE)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/accounts.svg'
-          label='Accounts'
+          label='Accounts' href='/account_directory'
           onClick={() => this.props.onClick(SideMenu.Item.ACCOUNTS)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/portfolio.svg'
-          label='Portfolio'
+          label='Portfolio' href='/portfolio'
           onClick={() => this.props.onClick(SideMenu.Item.PORTFOLIO)}/>
         <SideMenuButton
           icon='resources/dashboard/menu-icons/request-history.svg'
-          label='Request History'
+          label='Request History' href='/request_history'
           onClick={() => this.props.onClick(SideMenu.Item.REQUEST_HISTORY)}/>
         <SideMenuButton icon='resources/dashboard/menu-icons/sign-out.svg'
           label='Sign Out'
@@ -43,6 +37,9 @@ export class SideMenu extends React.Component<Properties> {
       </VBoxLayout>);
   }
 
+  private static defaultProps = {
+    onClick: () => {}
+  };
   private static readonly STYLE = {
     width: '200px',
     padding: 0,
