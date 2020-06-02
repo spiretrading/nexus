@@ -7,6 +7,9 @@
 #include "Spire/SpireTester/TestChartModel.hpp"
 
 using namespace Beam::Queries;
+using namespace boost;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
@@ -503,6 +506,66 @@ TEST_SUITE("CachedChartModel") {
       auto candlesticks = wait(std::move(result));
       REQUIRE(candlesticks == load(&model, 30, 60,
         SnapshotLimit::FromTail(100)));
+    });
+  }
+
+  TEST_CASE("load_unsaturated_limit") {
+    run_test([] {
+      auto test_model = TestChartModel(Scalar::Type::TIMESTAMP,
+        Scalar::Type::MONEY);
+      auto cache = CachedChartModel(test_model);
+      auto t1 = ptime(date(2020, 5, 1), time_duration(1, 0, 0));
+      auto cache_load1 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
+        SnapshotLimit::FromHead(3));
+      auto test_load1 = wait(test_model.pop_load());
+      REQUIRE(test_load1->get_first() == Scalar(t1));
+      REQUIRE(test_load1->get_last() == Scalar(t1 + seconds(5)));
+      REQUIRE(test_load1->get_limit() == SnapshotLimit::FromHead(3));
+      auto test_result1 = std::vector<Candlestick>();
+      test_result1.emplace_back(Scalar(t1), Scalar(t1 + seconds(1)));
+      test_result1.emplace_back(Scalar(t1 + seconds(1)),
+        Scalar(t1 + seconds(2)));
+      test_result1.emplace_back(Scalar(t1 + seconds(2)),
+        Scalar(t1 + seconds(3)));
+      test_load1->set_result(test_result1);
+      auto cache_result1 = wait(std::move(cache_load1));
+      REQUIRE(cache_result1.size() == 3);
+      auto cache_load2 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
+        SnapshotLimit::FromHead(4));
+      auto test_load2 = wait(test_model.pop_load());
+      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(2)));
+      REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
+      REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(2));
+    });
+  }
+
+  TEST_CASE("load_saturated_limit") {
+    run_test([] {
+      auto test_model = TestChartModel(Scalar::Type::TIMESTAMP,
+        Scalar::Type::MONEY);
+      auto cache = CachedChartModel(test_model);
+      auto t1 = ptime(date(2020, 5, 1), time_duration(1, 0, 0));
+      auto cache_load1 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
+        SnapshotLimit::FromHead(3));
+      auto test_load1 = wait(test_model.pop_load());
+      REQUIRE(test_load1->get_first() == Scalar(t1));
+      REQUIRE(test_load1->get_last() == Scalar(t1 + seconds(5)));
+      REQUIRE(test_load1->get_limit() == SnapshotLimit::FromHead(3));
+      auto test_result1 = std::vector<Candlestick>();
+      test_result1.emplace_back(Scalar(t1), Scalar(t1 + seconds(1)));
+      test_result1.emplace_back(Scalar(t1 + seconds(1)),
+        Scalar(t1 + seconds(2)));
+      test_result1.emplace_back(Scalar(t1 + seconds(1)),
+        Scalar(t1 + seconds(3)));
+      test_load1->set_result(test_result1);
+      auto cache_result1 = wait(std::move(cache_load1));
+      REQUIRE(cache_result1.size() == 3);
+      auto cache_load2 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
+        SnapshotLimit::FromHead(4));
+      auto test_load2 = wait(test_model.pop_load());
+      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(1)));
+      REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
+      REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(3));
     });
   }
 }
