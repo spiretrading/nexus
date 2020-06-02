@@ -177,15 +177,6 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
   target_link_libraries(CanvasTests rt socket nsl)
 endif()
-if(WIN32)
-  add_custom_command(TARGET CanvasTests PRE_BUILD COMMAND cmd /c
-    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-elseif(UNIX)
-  add_custom_command(TARGET CanvasTests PRE_BUILD COMMAND
-    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-endif()
 add_custom_command(TARGET CanvasTests POST_BUILD COMMAND CanvasTests)
 install(TARGETS CanvasTests CONFIGURATIONS Debug
   DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
