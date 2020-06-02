@@ -9,7 +9,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  std::size_t count_end_overlapping_candlesticks(
+  auto count_end_overlapping_candlesticks(
       const std::vector<Candlestick>& candlesticks, Scalar end) {
     auto result = std::size_t(0);
     for(auto& candlestick : reverse(candlesticks)) {
@@ -22,7 +22,7 @@ namespace {
     return result;
   }
 
-  std::size_t count_start_overlapping_candlesticks(Scalar start,
+  auto count_start_overlapping_candlesticks(Scalar start,
       const std::vector<Candlestick>& candlesticks) {
     auto result = std::size_t(0);
     for(auto& candlestick : candlesticks) {
@@ -123,8 +123,8 @@ QtPromise<std::vector<Candlestick>> CachedChartModel::load_cached_interval(
           if(limit == SnapshotLimit::Unlimited()) {
             return limit;
           } else {
-            return SnapshotLimit(limit.GetType(), limit.GetSize() +
-              boundary_candlesticks_count);
+            return SnapshotLimit(limit.GetType(), limit.GetSize() -
+              candlesticks.size() + boundary_candlesticks_count);
           }
         }();
         return load(new_start, new_end, new_limit).then(

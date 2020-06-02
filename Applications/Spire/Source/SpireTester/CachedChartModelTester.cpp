@@ -525,15 +525,15 @@ TEST_SUITE("CachedChartModel") {
       test_result1.emplace_back(Scalar(t1), Scalar(t1 + seconds(1)));
       test_result1.emplace_back(Scalar(t1 + seconds(1)),
         Scalar(t1 + seconds(2)));
-      test_result1.emplace_back(Scalar(t1 + seconds(2)),
-        Scalar(t1 + seconds(3)));
+      test_result1.emplace_back(Scalar(t1 + seconds(3)),
+        Scalar(t1 + seconds(4)));
       test_load1->set_result(test_result1);
       auto cache_result1 = wait(std::move(cache_load1));
       REQUIRE(cache_result1.size() == 3);
       auto cache_load2 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
         SnapshotLimit::FromHead(4));
       auto test_load2 = wait(test_model.pop_load());
-      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(2)));
+      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(3)));
       REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
       REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(2));
     });
@@ -553,17 +553,17 @@ TEST_SUITE("CachedChartModel") {
       REQUIRE(test_load1->get_limit() == SnapshotLimit::FromHead(3));
       auto test_result1 = std::vector<Candlestick>();
       test_result1.emplace_back(Scalar(t1), Scalar(t1 + seconds(1)));
-      test_result1.emplace_back(Scalar(t1 + seconds(1)),
-        Scalar(t1 + seconds(2)));
-      test_result1.emplace_back(Scalar(t1 + seconds(1)),
+      test_result1.emplace_back(Scalar(t1 + seconds(2)),
         Scalar(t1 + seconds(3)));
+      test_result1.emplace_back(Scalar(t1 + seconds(2)),
+        Scalar(t1 + seconds(4)));
       test_load1->set_result(test_result1);
       auto cache_result1 = wait(std::move(cache_load1));
       REQUIRE(cache_result1.size() == 3);
       auto cache_load2 = cache.load(Scalar(t1), Scalar(t1 + seconds(5)),
         SnapshotLimit::FromHead(4));
       auto test_load2 = wait(test_model.pop_load());
-      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(1)));
+      REQUIRE(test_load2->get_first() == Scalar(t1 + seconds(2)));
       REQUIRE(test_load2->get_last() == Scalar(t1 + seconds(5)));
       REQUIRE(test_load2->get_limit() == SnapshotLimit::FromHead(3));
     });
