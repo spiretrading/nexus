@@ -47,7 +47,7 @@ export class PageNotFoundPage extends React.Component<Properties> {
   }
   private static readonly SMALL_PADDING = '30px';
   private static readonly MEDIUM_PADDING = '60px';
-  private static readonly LARGE_PADDING = '120px';
+  private static readonly LARGE_PADDING = '150px';
   private static readonly PAGE_WIDTHS = {
     [DisplaySize.SMALL]: '218px',
     [DisplaySize.MEDIUM]: '218px',
@@ -58,13 +58,15 @@ export class PageNotFoundPage extends React.Component<Properties> {
       fontWeight: 700,
       fontFamily: 'Roboto',
       fontSize: '30px',
-      color: '#684BC7'
+      color: '#684BC7',
+      textAlign: 'center'
     } as React.CSSProperties,
     headerTextLarge: {
       fontWeight: 700,
       fontFamily: 'Roboto',
       fontSize: '40px',
-      color: '#684BC7'
+      color: '#684BC7',
+      textAlign: 'center'
     } as React.CSSProperties,
     bodyText : {
       font: '400 16px Roboto',
