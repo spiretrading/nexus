@@ -1,7 +1,7 @@
 import { HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as React from 'react';
-import { DisplaySize } from '../display_size';
 import { HLine } from '../components';
+import { DisplaySize } from '../display_size';
 import { PageWrapper } from './page_wrapper';
 
 interface Properties {
