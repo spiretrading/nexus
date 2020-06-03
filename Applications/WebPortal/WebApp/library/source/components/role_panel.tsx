@@ -18,19 +18,19 @@ export class RolePanel extends React.Component<Properties> {
     };
     return (
       <div style={RolePanel.STYLE.containerStyle}>
-        <img src={`/resources/account/trader-${
+        <img src={`resources/account/trader-${
           getIconColour(Nexus.AccountRoles.Role.TRADER)}.svg`}
           width='14px'
           height='14px'/>
-        <img src={`/resources/account/manager-${
+        <img src={`resources/account/manager-${
           getIconColour(Nexus.AccountRoles.Role.MANAGER)}.svg`}
           width='14px'
           height='14px'/>
-        <img src={`/resources/account/admin-${
+        <img src={`resources/account/admin-${
           getIconColour(Nexus.AccountRoles.Role.ADMINISTRATOR)}.svg`}
           width='14px'
           height='14px'/>
-        <img src={`/resources/account/service-${
+        <img src={`resources/account/service-${
           getIconColour(Nexus.AccountRoles.Role.SERVICE)}.svg`}
           width='14px'
           height='14px'/>

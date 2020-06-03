@@ -30,7 +30,6 @@ class TestApp extends React.Component<Properties, State> {
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
-        new Beam.Set<Beam.DirectoryEntry>(),
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       statusCreateGroup: ''
     };
@@ -149,8 +148,7 @@ class TestApp extends React.Component<Properties, State> {
         accounts.set(group, []);
       }
     }
-    const testModel = new WebPortal.LocalAccountDirectoryModel(
-      this.state.groups, accounts);
+    const testModel = new WebPortal.LocalAccountDirectoryModel(accounts);
     testModel.load();
     const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
     this.setState({model: newModel});

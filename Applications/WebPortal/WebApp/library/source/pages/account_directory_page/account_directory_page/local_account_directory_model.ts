@@ -8,16 +8,17 @@ import { AccountEntry } from './account_entry';
 export class LocalAccountDirectoryModel extends AccountDirectoryModel {
 
   /** Constructs a new model.
-   * @param groups - A set of groups.
    * @param accounts - A map of all the accounts associated with
    *        each group.
    */
-  constructor(groups: Beam.Set<Beam.DirectoryEntry>,
-      accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>) {
+  constructor(accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>) {
     super();
     this._isLoaded = false;
     this.nextId = 1;
-    this._groups = groups.clone();
+    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    for(const account of accounts) {
+      this._groups.add(account[0]);
+    }
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     for(const group of this._groups) {
       this.nextId = Math.max(this.nextId, group.id + 1);
@@ -89,7 +90,9 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
             accounts.push(account);
           }
         }
-        matches.set(group, accounts);
+        if(accounts) {
+          matches.set(group, accounts);
+        }
       }
     }
     return matches;
