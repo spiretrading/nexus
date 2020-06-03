@@ -15,12 +15,25 @@ namespace Spire {
       */
       explicit CustomGridTableView(QWidget* parent = nullptr);
 
+      //! Returns the selected index.
+      const QModelIndex& get_selected_index() const;
+
+      //! Sets the selected index.
+      /*
+        \param index The selected index.
+      */
+      void set_selected_index(const QModelIndex& index);
+
+      //! Sets the selected index to invalid.
+      void reset_selected_index();
+
     protected:
       void leaveEvent(QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      QModelIndex m_selected_index;
       boost::optional<QPoint> m_last_mouse_pos;
 
       void draw_border(const QModelIndex& index, QPainter* painter) const;
