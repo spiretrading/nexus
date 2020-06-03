@@ -5,13 +5,16 @@ import { HLine } from '../components';
 import { PageWrapper } from './page_wrapper';
 
 interface Properties {
+  
+  /* The size of the viewport. */
   displaySize: DisplaySize;
 }
 
+/* Displays a page that indicates the desired page cannot be found. */
 export class PageNotFoundPage extends React.Component<Properties> {
 
   public render(): JSX.Element {
-    const headerText = (() => {
+    const headerTextStyle = (() => {
       if(this.props.displaySize === DisplaySize.LARGE) {
         return PageNotFoundPage.STYLE.headerTextLarge;
       } else {
@@ -28,7 +31,7 @@ export class PageNotFoundPage extends React.Component<Properties> {
               height='46px' width='38px'/>
           </div>
           <Padding size={PageNotFoundPage.SMALL_PADDING}/>
-          <span style={headerText}>Page Not Found</span>
+          <span style={headerTextStyle}>Page Not Found</span>
           <Padding size={PageNotFoundPage.SMALL_PADDING}/>
             <HBoxLayout>
               <Padding/>
@@ -81,6 +84,6 @@ export class PageNotFoundPage extends React.Component<Properties> {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
-    } as React.CSSProperties,
+    } as React.CSSProperties
   };
 }
