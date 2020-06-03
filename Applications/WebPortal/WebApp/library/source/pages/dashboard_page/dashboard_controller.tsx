@@ -61,9 +61,8 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
-          <Router.Route>
-            <PageNotFoundPage displaySize={this.props.displaySize}/>
-          </Router.Route>
+          <Router.Route render={() => 
+            <PageNotFoundPage displaySize={this.props.displaySize}/>}/>
         </Router.Switch>
       </DashboardPage>);
   }
