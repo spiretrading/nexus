@@ -95,7 +95,8 @@ export class PhotoField extends React.Component<Properties, {}> {
       if(this.props.imageSource) {
         return this.props.imageSource;
       } else {
-        return 'resources/account_page/profile_page/image-placeholder.svg';
+        return 'resources/account_page/profile_page/photo_field/' +
+          'image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
@@ -129,7 +130,8 @@ export class PhotoField extends React.Component<Properties, {}> {
             style={{...imageStyle, ...imageScaling}}/>
           <div style={cameraIconWrapper}
               onClick={this.props.onToggleUploader}>
-            <img src='resources/account_page/profile_page/camera.svg'
+            <img src={'resources/account_page/profile_page/photo_field/' +
+              'camera.svg'}
               style={cameraIconStyle}/>
           </div>
         </div>
@@ -335,7 +337,8 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       if(this.props.imageSource) {
         return this.props.imageSource;
       } else {
-        return 'resources/account_page/profile_page/image-placeholder.svg';
+        return 'resources/account_page/profile_page/photo_field/' +
+          'image-placeholder.svg';
       }
     })();
     const imageStyle = (() => {
@@ -375,7 +378,9 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <Padding size={ChangePictureModal.PADDING}/>
             <div style={ChangePictureModal.STYLE.header}>
               {ChangePictureModal.HEADER_TEXT}
-              <img src='resources/close.svg' tabIndex={0}
+              <img src={'resources/account_page/profile_page/photo_field/' +
+                  'close.svg'} 
+                tabIndex={0}
                 className={css(ChangePictureModal.DYNAMIC_STYLE.closeIcon)}
                 onClick={this.onClose}/>
             </div>
