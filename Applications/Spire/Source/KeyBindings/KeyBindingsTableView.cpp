@@ -211,6 +211,19 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       m_table->model()->setData(m_table->get_selected_index(), QVariant(),
         Qt::DisplayRole);
       return true;
+    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Enter) {
+      if(!m_table->get_selected_index().isValid()) {
+        auto first_index = get_first_editable_index();
+        if(first_index.flags().testFlag(Qt::ItemIsEditable)) {
+          m_is_editing_cell = true;
+          m_table->set_selected_index(first_index);
+          auto table_model = static_cast<KeyBindingsTableModel*>(
+            m_table->model());
+          table_model->set_focus_highlight(first_index);
+          m_table->edit(first_index);
+        }
+        return true;
+      }
     }
   } else if(auto button = dynamic_cast<IconButton*>(watched)) {
     if(event->type() == QEvent::MouseMove) {
