@@ -444,11 +444,9 @@ void KeyBindingsTableView::on_row_removed(int row) {
   if(row == m_table->model()->rowCount() - 1) {
     --row;
   }
-  if(row <= m_table->get_selected_index().row()) {
-    m_table->reset_selected_index();
-    m_table->clearSelection();
-    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-    table_model->reset_focus_highlight();
-  }
+  m_table->reset_selected_index();
+  m_table->clearSelection();
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->reset_focus_highlight();
   m_table->setFocus();
 }
