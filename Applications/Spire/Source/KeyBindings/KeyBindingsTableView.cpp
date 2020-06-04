@@ -211,7 +211,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       m_table->model()->setData(m_table->get_selected_index(), QVariant(),
         Qt::DisplayRole);
       return true;
-    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Enter) {
+    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
       if(!m_table->get_selected_index().isValid()) {
         auto first_index = get_first_editable_index();
         if(first_index.flags().testFlag(Qt::ItemIsEditable)) {
