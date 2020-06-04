@@ -38,6 +38,10 @@ class TestApp extends React.Component<Properties, State> {
       </Router.BrowserRouter>);
   }
 
+  public componentDidMount() {
+    this.addManyAccounts();
+  }
+
   private clearAccounts = () => {
     this.setState({model: new WebPortal.LocalGroupInfoModel([])});
   }
