@@ -143,7 +143,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
 Qt::ItemFlags TaskKeyBindingsTableModel::flags(
     const QModelIndex& index) const {
   if(static_cast<Columns>(index.column()) == Columns::CUSTOM_TAGS) {
-    return QAbstractItemModel::flags(index);
+    return QAbstractItemModel::flags(index).setFlag(Qt::ItemIsEnabled, false);
   }
   return QAbstractItemModel::flags(index) |= Qt::ItemIsEditable;
 }

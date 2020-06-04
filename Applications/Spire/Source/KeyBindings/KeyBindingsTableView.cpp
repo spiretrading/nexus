@@ -51,6 +51,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
     : ScrollArea(true, parent),
       m_header(header),
       m_can_delete_rows(can_delete_rows),
+      m_is_default_cell_selected(true),
       m_is_editing_cell(false) {
   m_header->setParent(this);
   m_header->setStretchLastSection(false);
@@ -85,7 +86,7 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
       m_header->stretchLastSection());
     table->verticalHeader()->setDefaultSectionSize(scale_height(26));
     table->verticalHeader()->hide();
-    table->setSelectionMode(QAbstractItemView::NoSelection);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::EditTrigger::NoEditTriggers);
     table->viewport()->setMouseTracking(true);
     table->installEventFilter(this);
@@ -144,6 +145,10 @@ void KeyBindingsTableView::set_model(KeyBindingsTableModel* model) {
       [=] (auto index, auto first, auto last) {
         on_row_removed(first);
       });
+    connect(model, &QAbstractItemModel::rowsInserted,
+      [=] (auto top_left, auto bottom_right) {
+        on_row_inserted();
+      });
     connect(model, &QAbstractItemModel::dataChanged,
       [=] (auto top_left, auto top_right, auto roles) {
         if(!roles.contains(Qt::BackgroundRole)) {
@@ -155,6 +160,9 @@ void KeyBindingsTableView::set_model(KeyBindingsTableModel* model) {
   connect(m_table->selectionModel(),
     &QItemSelectionModel::currentColumnChanged, this,
     &KeyBindingsTableView::on_column_selection_changed);
+  connect(m_table->selectionModel(),
+    &QItemSelectionModel::currentChanged, this,
+    &KeyBindingsTableView::on_selection_changed);
 }
 
 void KeyBindingsTableView::set_height(int height) {
@@ -175,10 +183,10 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(m_navigation_keys.contains(static_cast<Qt::Key>(e->key()))) {
       auto current_index = [&] {
-        if(!m_table->get_selected_index().isValid()) {
+        if(m_is_default_cell_selected) {
           return get_first_editable_index();
         } else {
-          auto index = m_table->get_selected_index();
+          auto index = m_table->currentIndex();
           if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Right) {
             return get_next_editable_index(index);
           } else if(e->key() == Qt::Key_Backtab || e->key() == Qt::Key_Left) {
@@ -193,37 +201,28 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
         }
         return QModelIndex();
       }();
+      m_is_default_cell_selected = false;
       m_is_editing_cell = false;
+      auto editor_open = m_table->isPersistentEditorOpen(
+        m_table->currentIndex());
       m_table->setCurrentIndex(current_index);
-      m_table->set_selected_index(current_index);
       scroll_to_index(current_index);
       auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
       table_model->set_focus_highlight(current_index);
-      if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
-        if(current_index.flags().testFlag(Qt::ItemIsEditable)) {
-          m_is_editing_cell = true;
-          m_table->edit(current_index);
+      if(!editor_open) {
+        if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
+          if(current_index.flags().testFlag(Qt::ItemIsEditable)) {
+            m_is_editing_cell = true;
+            m_table->edit(current_index);
+          }
         }
       }
       update();
       return true;
     } else if(e->key() == Qt::Key_Delete) {
-      m_table->model()->setData(m_table->get_selected_index(), QVariant(),
+      m_table->model()->setData(m_table->currentIndex(), QVariant(),
         Qt::DisplayRole);
       return true;
-    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-      if(!m_table->get_selected_index().isValid()) {
-        auto first_index = get_first_editable_index();
-        if(first_index.flags().testFlag(Qt::ItemIsEditable)) {
-          m_is_editing_cell = true;
-          m_table->set_selected_index(first_index);
-          auto table_model = static_cast<KeyBindingsTableModel*>(
-            m_table->model());
-          table_model->set_focus_highlight(first_index);
-          m_table->edit(first_index);
-        }
-        return true;
-      }
     }
   } else if(auto button = dynamic_cast<IconButton*>(watched)) {
     if(event->type() == QEvent::MouseMove) {
@@ -257,7 +256,7 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void KeyBindingsTableView::hideEvent(QHideEvent* event) {
-  m_table->closePersistentEditor(m_table->get_selected_index());
+  m_table->closePersistentEditor(m_table->currentIndex());
 }
 
 void KeyBindingsTableView::add_delete_button(int index) {
@@ -344,14 +343,13 @@ void KeyBindingsTableView::update_delete_buttons(int selected_index) {
 
 void KeyBindingsTableView::on_column_selection_changed(
     const QModelIndex &current, const QModelIndex &previous) {
-  if(m_is_editing_cell) {
-    m_is_editing_cell = false;
-    m_table->setCurrentIndex(previous);
-    m_table->set_selected_index(previous);
-    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-    table_model->set_focus_highlight(previous);
-    update();
-  }
+  //if(!m_is_editing_cell) {
+  //  m_is_editing_cell = false;
+  //  m_table->setCurrentIndex(previous);
+  //  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  //  table_model->set_focus_highlight(previous);
+  //  update();
+  //}
 }
 
 void KeyBindingsTableView::on_data_changed(const QModelIndex& index) {
@@ -367,30 +365,29 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 }
 
 void KeyBindingsTableView::on_editor_key(Qt::Key key) {
-  if(key == Qt::Key_Tab || key == Qt::Key_Backtab) {
-    auto new_index = [&] {
-      if(key == Qt::Key_Tab) {
-        return get_next_editable_index(m_table->get_selected_index());
-      }
-      return get_previous_editable_index(m_table->get_selected_index());
-    }();
-    m_is_editing_cell = false;
-    m_table->setCurrentIndex(new_index);
-    m_table->set_selected_index(new_index);
-    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-    table_model->set_focus_highlight(new_index);
-    if(new_index.flags().testFlag(Qt::ItemIsEditable)) {
-      m_is_editing_cell = true;
-      m_table->edit(new_index);
-    }
-    update();
-  }
+  //if(key == Qt::Key_Tab || key == Qt::Key_Backtab) {
+  //  auto new_index = [&] {
+  //    if(key == Qt::Key_Tab) {
+  //      return get_next_editable_index(m_table->currentIndex());
+  //    }
+  //    return get_previous_editable_index(m_table->currentIndex());
+  //  }();
+  //  m_is_editing_cell = false;
+  //  m_table->setCurrentIndex(new_index);
+  //  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  //  table_model->set_focus_highlight(new_index);
+  //  if(new_index.flags().testFlag(Qt::ItemIsEditable)) {
+  //    m_is_editing_cell = true;
+  //    m_table->edit(new_index);
+  //  }
+  //  update();
+  //}
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,
     int new_size) {
-  if(m_table->isPersistentEditorOpen(m_table->get_selected_index())) {
-    m_table->closePersistentEditor(m_table->get_selected_index());
+  if(m_table->isPersistentEditorOpen(m_table->currentIndex())) {
+    m_table->closePersistentEditor(m_table->currentIndex());
     m_table->update();
   }
   if(m_minimum_column_widths.find(index) != m_minimum_column_widths.end()) {
@@ -444,12 +441,21 @@ void KeyBindingsTableView::on_cell_activated(const QModelIndex& index) {
   scroll_to_index(index);
   if(index.flags().testFlag(Qt::ItemIsEditable)) {
     m_table->setCurrentIndex(index);
-    m_table->set_selected_index(index);
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->set_focus_highlight(index);
+    m_is_default_cell_selected = false;
     m_is_editing_cell = true;
     m_table->edit(index);
   }
+}
+
+void KeyBindingsTableView::on_row_inserted() {
+  auto current = m_table->currentIndex();
+  auto previous_index = m_table->model()->index(current.row() - 1,
+    current.column());
+  m_table->setCurrentIndex(previous_index);
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->set_focus_highlight(previous_index);
 }
 
 void KeyBindingsTableView::on_row_removed(int row) {
@@ -457,9 +463,21 @@ void KeyBindingsTableView::on_row_removed(int row) {
   if(row == m_table->model()->rowCount() - 1) {
     --row;
   }
-  m_table->reset_selected_index();
-  m_table->clearSelection();
-  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-  table_model->reset_focus_highlight();
-  m_table->setFocus();
+  if(row == m_table->selectionModel()->currentIndex().row()) {
+    m_is_default_cell_selected = true;
+    m_table->clearSelection();
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->reset_focus_highlight();
+    m_table->setFocus();
+  }
+}
+
+void KeyBindingsTableView::on_selection_changed(const QModelIndex& current,
+    const QModelIndex& previous) {
+  qDebug() << "previous: " << previous;
+  qDebug() << "current: " << current;
+  if(!m_is_default_cell_selected) {
+    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+    table_model->set_focus_highlight(current);
+  }
 }

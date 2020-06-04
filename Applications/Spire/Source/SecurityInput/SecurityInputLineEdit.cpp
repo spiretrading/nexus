@@ -103,7 +103,12 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
     m_securities->activate_previous();
     return;
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    on_commit(ParseSecurity(text().toUpper().toStdString()));
+    auto current_security = ParseSecurity(text().toUpper().toStdString());
+    if(!current_security.GetSymbol().empty()) {
+      on_commit(current_security);
+    } else {
+      on_commit(m_security);
+    }
     return;
   } else if(event->key() == Qt::Key_Delete) {
     on_commit({});

@@ -15,18 +15,6 @@ CustomGridTableView::CustomGridTableView(QWidget* parent)
   setMouseTracking(true);
 }
 
-const QModelIndex& CustomGridTableView::get_selected_index() const {
-  return m_selected_index;
-}
-
-void CustomGridTableView::set_selected_index(const QModelIndex& index) {
-  m_selected_index = index;
-}
-
-void CustomGridTableView::reset_selected_index() {
-  m_selected_index = QModelIndex();
-}
-
 void CustomGridTableView::leaveEvent(QEvent* event) {
   m_last_mouse_pos.reset();
 }
@@ -66,8 +54,8 @@ void CustomGridTableView::paintEvent(QPaintEvent* event) {
       row_y += row_height;
     }
   }
-  if(m_selected_index.isValid()) {
-    draw_border(m_selected_index, &painter);
+  if(selectionModel()->hasSelection()) {
+    draw_border(selectionModel()->currentIndex(), &painter);
   }
   if(m_last_mouse_pos) {
     auto index = indexAt(*m_last_mouse_pos);

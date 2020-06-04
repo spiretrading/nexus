@@ -75,6 +75,7 @@ namespace Spire {
       QVBoxLayout* m_delete_buttons_layout;
       QWidget* m_delete_buttons_widget;
       std::unordered_map<int, int> m_minimum_column_widths;
+      bool m_is_default_cell_selected;
       QSet<Qt::Key> m_navigation_keys;
       bool m_is_editing_cell;
 
@@ -95,7 +96,10 @@ namespace Spire {
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
+      void on_row_inserted();
       void on_row_removed(int row);
+      void on_selection_changed(const QModelIndex& current,
+        const QModelIndex& previous);
   };
 }
 
