@@ -14,13 +14,6 @@ interface Properties {
 export class PageNotFoundPage extends React.Component<Properties> {
 
   public render(): JSX.Element {
-    const headerTextStyle = (() => {
-      if(this.props.displaySize === DisplaySize.LARGE) {
-        return PageNotFoundPage.STYLE.headerTextLarge;
-      } else {
-        return PageNotFoundPage.STYLE.headerTextSmallMedium;
-      }
-    })();
     return (
       <PageWrapper>
         <VBoxLayout
@@ -31,7 +24,9 @@ export class PageNotFoundPage extends React.Component<Properties> {
               height='46px' width='38px'/>
           </div>
           <Padding size={PageNotFoundPage.SMALL_PADDING}/>
-          <span style={headerTextStyle}>Page Not Found</span>
+          <span style={PageNotFoundPage.HEADER_STYLE[this.props.displaySize]}>
+            Page Not Found
+          </span>
           <Padding size={PageNotFoundPage.SMALL_PADDING}/>
             <HBoxLayout>
               <Padding/>
@@ -56,21 +51,30 @@ export class PageNotFoundPage extends React.Component<Properties> {
     [DisplaySize.MEDIUM]: '218px',
     [DisplaySize.LARGE]: '316px'
   };
-  private static readonly STYLE = {
-    headerTextSmallMedium: {
+  private static readonly HEADER_STYLE = {
+    [DisplaySize.SMALL]: {
       fontWeight: 700,
       fontFamily: 'Roboto',
       fontSize: '30px',
       color: '#684BC7',
       textAlign: 'center'
     } as React.CSSProperties,
-    headerTextLarge: {
+    [DisplaySize.MEDIUM]: {
+      fontWeight: 700,
+      fontFamily: 'Roboto',
+      fontSize: '30px',
+      color: '#684BC7',
+      textAlign: 'center'
+    } as React.CSSProperties,
+    [DisplaySize.LARGE]: {
       fontWeight: 700,
       fontFamily: 'Roboto',
       fontSize: '40px',
       color: '#684BC7',
       textAlign: 'center'
-    } as React.CSSProperties,
+    } as React.CSSProperties
+  };
+  private static readonly STYLE = {
     bodyText : {
       font: '400 16px Roboto',
       color: '#333333',
