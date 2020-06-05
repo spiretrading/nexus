@@ -241,7 +241,8 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       auto index = m_table->indexAt(pos);
       auto table_model = static_cast<KeyBindingsTableModel*>(
         m_table->model());
-      if(index.isValid() && index.flags().testFlag(Qt::ItemIsEditable)) {
+      if(index.isValid() && index.flags().testFlag(Qt::ItemIsEditable) &&
+          !m_table->isPersistentEditorOpen(index)) {
         table_model->set_hover_highlight(index);
       } else {
         table_model->reset_hover_highlight();
