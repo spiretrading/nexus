@@ -80,12 +80,13 @@ namespace Spire {
       bool m_is_editing_cell;
 
       void add_delete_button(int index);
-      void scroll_to_index(const QModelIndex& index);
+      void edit_cell(const QModelIndex& index);
       QModelIndex KeyBindingsTableView::get_editable_index(int row,
         int column_visual_index) const;
       QModelIndex get_first_editable_index() const;
       QModelIndex get_next_editable_index(const QModelIndex& index) const;
       QModelIndex get_previous_editable_index(const QModelIndex& index) const;
+      void scroll_to_index(const QModelIndex& index);
       void update_delete_buttons(int selected_index);
       void on_cell_activated(const QModelIndex& index);
       void on_column_selection_changed(const QModelIndex &current,
