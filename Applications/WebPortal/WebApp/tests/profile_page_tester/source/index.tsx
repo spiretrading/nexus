@@ -102,7 +102,7 @@ class TestApp extends React.Component<Properties, State> {
       </Dali.VBoxLayout>);
   }
 
-  public componentDidMount() {
+  public componentDidMount(): void {
     this.initIdentity();
   }
 
