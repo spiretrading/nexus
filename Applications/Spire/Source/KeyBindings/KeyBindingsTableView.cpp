@@ -474,8 +474,6 @@ void KeyBindingsTableView::on_row_removed(int row) {
 
 void KeyBindingsTableView::on_selection_changed(const QModelIndex& current,
     const QModelIndex& previous) {
-  qDebug() << "previous: " << previous;
-  qDebug() << "current: " << current;
   if(!m_is_default_cell_selected) {
     auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
     table_model->set_focus_highlight(current);
