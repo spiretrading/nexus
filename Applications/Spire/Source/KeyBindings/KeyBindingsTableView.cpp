@@ -439,13 +439,11 @@ void KeyBindingsTableView::on_row_removed(int row) {
   if(row == m_table->model()->rowCount() - 1) {
     --row;
   }
-  if(row == m_table->selectionModel()->currentIndex().row()) {
-    m_is_default_cell_selected = true;
-    m_table->clearSelection();
-    auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
-    table_model->reset_focus_highlight();
-    m_table->setFocus();
-  }
+  m_table->setFocus();
+  m_is_default_cell_selected = true;
+  m_table->clearSelection();
+  auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
+  table_model->reset_focus_highlight();
 }
 
 void KeyBindingsTableView::on_selection_changed(const QModelIndex& current,
