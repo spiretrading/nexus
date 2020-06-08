@@ -1,6 +1,7 @@
 #ifndef SPIRE_LOCAL_CHART_MODEL_HPP
 #define SPIRE_LOCAL_CHART_MODEL_HPP
 #include <map>
+#include <vector>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartModel.hpp"
 
@@ -38,17 +39,18 @@ namespace Spire {
         const CandlestickSignal::slot_type& slot) const override;
 
     private:
-      struct CandlestickDomain {
-        Scalar m_start;
-        Scalar m_end;
-
-        bool operator <(const CandlestickDomain& other) const;
-      };
+      using Layer = std::map<Scalar, Candlestick>;
 
       mutable CandlestickSignal m_candlestick_signal;
       Scalar::Type m_x_axis_type;
       Scalar::Type m_y_axis_type;
-      std::map<CandlestickDomain, Candlestick> m_candlesticks;
+      std::vector<Layer> m_layers;
+
+      static bool test_insert(Layer& layer, const Candlestick& candlestick);
+      static Layer::const_iterator find_lower_bound(const Layer& layer,
+        Scalar first, Scalar last);
+      static Layer::const_iterator find_upper_bound(const Layer& layer,
+        Scalar last);
   };
 }
 

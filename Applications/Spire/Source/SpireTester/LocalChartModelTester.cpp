@@ -181,4 +181,82 @@ TEST_SUITE("LocalChartModel") {
       REQUIRE(model_sticks == result);
     });
   }
+
+  TEST_CASE("sliding_window") {
+    run_test([] {
+      auto model = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
+        {make(0, 5), make(1, 6), make(2, 7), make(3, 8), make(4, 9),
+        make(5, 10), make(6, 11)});
+      {
+        auto sticks = load(&model, 2, 5, SnapshotLimit::Unlimited());
+        auto result = std::vector<Candlestick>({make(0, 5), make(1, 6),
+          make(2, 7), make(3, 8), make(4, 9), make(5, 10)});
+        REQUIRE(sticks == result);
+      }
+      {
+        auto sticks = load(&model, 2, 5, SnapshotLimit::FromTail(3));
+        auto result = std::vector<Candlestick>({make(3, 8), make(4, 9),
+          make(5, 10)});
+        REQUIRE(sticks == result);
+      }
+    });
+  }
+
+  TEST_CASE("layered_candlesticks") {
+    run_test([] {
+      auto model = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
+        {make(0, 5), make(5, 10), make(10, 15), make(15, 20), make(0, 10),
+        make(10, 20), make(0, 20)});
+      {
+        auto sticks = load(&model, 2, 18, SnapshotLimit::FromHead(6));
+        auto result = std::vector<Candlestick>({make(0, 5), make(0, 10),
+          make(0, 20), make(5, 10), make(10, 15), make(10, 20)});
+        REQUIRE(sticks == result);
+      }
+      {
+        auto sticks = load(&model, 2, 18, SnapshotLimit::FromTail(6));
+        auto result = std::vector<Candlestick>({make(0, 10), make(0, 20),
+          make(5, 10), make(10, 15), make(10, 20), make(15, 20)});
+        REQUIRE(sticks == result);
+      }
+    });
+  }
+
+  TEST_CASE("hierarchical_candlesticks") {
+    run_test([] {
+      auto model = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
+        {make(0, 10), make(1, 9), make(2, 8), make(3, 7), make(4, 6)});
+      {
+        auto sticks = load(&model, 5, 5, SnapshotLimit::FromHead(3));
+        auto result = std::vector<Candlestick>({make(0, 10), make(1, 9),
+          make(2, 8)});
+        REQUIRE(sticks == result);
+      }
+      {
+        auto sticks = load(&model, 5, 5, SnapshotLimit::FromTail(3));
+        auto result = std::vector<Candlestick>({make(2, 8), make(3, 7),
+          make(4, 6)});
+        REQUIRE(sticks == result);
+      }
+    });
+  }
+
+  TEST_CASE("same_start_candlesticks") {
+    run_test([] {
+      auto model = LocalChartModel(Scalar::Type::MONEY, Scalar::Type::MONEY,
+        {make(0, 5), make(0, 6), make(0, 7), make(0, 8), make(0, 9)});
+      {
+        auto sticks = load(&model, 5, 5, SnapshotLimit::FromHead(3));
+        auto result = std::vector<Candlestick>({make(0, 5), make(0, 6),
+          make(0, 7)});
+        REQUIRE(sticks == result);
+      }
+      {
+        auto sticks = load(&model, 5, 5, SnapshotLimit::FromTail(3));
+        auto result = std::vector<Candlestick>({make(0, 7), make(0, 8),
+          make(0, 9)});
+        REQUIRE(sticks == result);
+      }
+    });
+  }
 }
