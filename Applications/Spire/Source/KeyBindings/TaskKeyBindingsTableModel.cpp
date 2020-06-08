@@ -197,7 +197,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     if(is_same_value(value, index)) {
       return false;
     }
-    Q_EMIT dataChanged(index, index, {role});
     insert_row_if_empty(index);
     auto& binding = m_key_bindings[index.row()];
     switch(static_cast<Columns>(index.column())) {
