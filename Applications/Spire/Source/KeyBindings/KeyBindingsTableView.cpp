@@ -121,16 +121,8 @@ KeyBindingsTableView::KeyBindingsTableView(QHeaderView* header,
 void KeyBindingsTableView::set_column_delegate(int column,
     KeyBindingItemDelegate* delegate) {
   delegate->setParent(m_table);
-  connect(delegate, &QAbstractItemDelegate::closeEditor,
-    [=] (auto editor, auto hint) {
-      if(hint == QAbstractItemDelegate::EditNextItem) {
-        auto next = get_next_editable_index(m_table->currentIndex());
-        edit_cell(next);
-      } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
-        auto previous = get_previous_editable_index(m_table->currentIndex());
-        edit_cell(previous);
-      }
-    });
+  connect(delegate, &QAbstractItemDelegate::closeEditor, this,
+    &KeyBindingsTableView::on_editor_closed);
   m_table->setItemDelegateForColumn(column, delegate);
 }
 
@@ -369,6 +361,17 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
   auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
   table_model->reset_row_highlight();
   m_table->model()->removeRow(index);
+}
+
+void KeyBindingsTableView::on_editor_closed(const QWidget* editor,
+    QAbstractItemDelegate::EndEditHint hint) {
+  if(hint == QAbstractItemDelegate::EditNextItem) {
+    auto next = get_next_editable_index(m_table->currentIndex());
+    edit_cell(next);
+  } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
+    auto previous = get_previous_editable_index(m_table->currentIndex());
+    edit_cell(previous);
+  }
 }
 
 void KeyBindingsTableView::on_header_resize(int index, int old_size,

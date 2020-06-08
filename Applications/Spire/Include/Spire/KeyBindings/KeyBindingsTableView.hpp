@@ -91,6 +91,8 @@ namespace Spire {
       void on_column_selection_changed(const QModelIndex &current,
         const QModelIndex &previous);
       void on_delete_button_clicked(int index);
+      void on_editor_closed(const QWidget* editor,
+        QAbstractItemDelegate::EndEditHint hint);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
