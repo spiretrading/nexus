@@ -95,7 +95,7 @@ QtPromise<std::vector<Candlestick>> LocalChartModel::load(Scalar first,
 
 void LocalChartModel::store(const std::vector<Candlestick>& candlesticks) {
   for(auto& candlestick : candlesticks) {
-    bool inserted = false;
+    auto inserted = false;
     for(auto& layer : m_layers) {
       if(test_insert(layer, candlestick)) {
         inserted = true;
