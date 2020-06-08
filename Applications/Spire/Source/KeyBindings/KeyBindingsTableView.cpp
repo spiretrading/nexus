@@ -125,10 +125,10 @@ void KeyBindingsTableView::set_column_delegate(int column,
     [=] (auto editor, auto hint) {
       if(hint == QAbstractItemDelegate::EditNextItem) {
         auto next = get_next_editable_index(m_table->currentIndex());
-          edit_cell(next);
+        edit_cell(next);
       } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
         auto previous = get_previous_editable_index(m_table->currentIndex());
-          edit_cell(previous);
+        edit_cell(previous);
       }
     });
   m_table->setItemDelegateForColumn(column, delegate);

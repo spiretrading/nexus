@@ -22,7 +22,12 @@ QWidget* DestinationItemDelegate::createEditor(QWidget* parent,
 void DestinationItemDelegate::setModelData(QWidget* editor,
     QAbstractItemModel* model, const QModelIndex& index) const {
   auto item = static_cast<InputFieldEditor*>(editor)->get_item();
-  auto region = Region::Global();
+  auto region = [&] {
+    if(item.isEmpty()) {
+      return Region();
+    }
+    return Region::Global();
+  }();
   region.SetName(item.toStdString());
   model->setData(index, QVariant::fromValue<Region>(region), Qt::DisplayRole);
 }
