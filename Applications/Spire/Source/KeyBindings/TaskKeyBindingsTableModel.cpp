@@ -39,7 +39,8 @@ namespace {
       case Columns::SECURITY:
         return value.value<Security>() == data.value<Security>();
       case Columns::DESTINATION:
-        return value.value<Region>() == data.value<Region>();
+        return value.value<Region>() == data.value<Region>() &&
+          value.value<Region>().GetName() == data.value<Region>().GetName();
       case Columns::ORDER_TYPE:
         return value.value<OrderType>() == data.value<OrderType>();
       case Columns::SIDE:
