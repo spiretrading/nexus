@@ -198,13 +198,13 @@ bool KeyBindingsTableView::eventFilter(QObject* watched, QEvent* event) {
       }();
       m_is_default_cell_selected = false;
       m_is_editing_cell = false;
-      auto editor_open = m_table->isPersistentEditorOpen(
+      auto is_editor_open = m_table->isPersistentEditorOpen(
         m_table->currentIndex());
       m_table->setCurrentIndex(current_index);
       scroll_to_index(current_index);
       auto table_model = static_cast<KeyBindingsTableModel*>(m_table->model());
       table_model->set_focus_highlight(current_index);
-      if(!editor_open) {
+      if(!is_editor_open) {
         if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
           edit_cell(current_index);
         }
