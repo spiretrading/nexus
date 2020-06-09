@@ -19,7 +19,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     for(const account of accounts) {
       this._groups.push(account[0]);
     }
-    this._groups.sort(this.entryComparator);
+    this._groups.sort(this.groupComparator);
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     for(const group of this._groups) {
       this.nextId = Math.max(this.nextId, group.id + 1);
@@ -65,6 +65,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     }
     const group = Beam.DirectoryEntry.makeAccount(this.nextId, name);
     this._groups.push(group);
+    this._groups.sort(this.groupComparator);
     ++this.nextId;
     return group;
   }

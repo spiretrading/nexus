@@ -30,7 +30,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     for(const group of groups) {
       this._groups.push(group);
     }
-    this._groups = this._groups.sort(this.entryComparator);
+    this._groups.sort(this.groupComparator);
     this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
   }
 
@@ -50,7 +50,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     const group = await this.serviceClients.administrationClient.createGroup(
       name);
     this._groups.push(group);
-    this._groups.sort(this.entryComparator);
+    this._groups.sort(this.groupComparator);
     return group;
   }
 
