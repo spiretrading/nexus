@@ -7,7 +7,7 @@ import { AccountEntry } from './account_entry';
 export abstract class AccountDirectoryModel {
 
   /** Returns a list of all groups. */
-  public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;
+  public abstract get groups(): Beam.DirectoryEntry[];
 
   /** Returns a CreateAccountModel. */
   public abstract get createAccountModel(): CreateAccountModel;
@@ -35,4 +35,8 @@ export abstract class AccountDirectoryModel {
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;
+
+  public entryComparator(a:Beam.DirectoryEntry, b:Beam.DirectoryEntry): number {
+    return a.name.localeCompare(b.name);
+  }
 }

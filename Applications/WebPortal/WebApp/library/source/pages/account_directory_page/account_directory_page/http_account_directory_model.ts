@@ -4,6 +4,7 @@ import { CreateAccountModel, GroupSuggestionModel, HttpCreateAccountModel,
   LocalGroupSuggestionModel } from '../create_account_page';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
+import { runInThisContext } from 'vm';
 
 /** Implements an AccountDirectoryModel using HTTP requests. */
 export class HttpAccountDirectoryModel extends AccountDirectoryModel {
@@ -25,15 +26,16 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     const groups =
       await this.serviceClients.administrationClient.loadManagedTradingGroups(
       this.account);
-    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    this._groups = [];
     for(const group of groups) {
-      this._groups.add(group);
+      this._groups.push(group);
     }
+    this._groups = this._groups.sort(this.entryComparator);
     this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
   }
 
-  public get groups(): Beam.Set<Beam.DirectoryEntry> {
-    return this._groups.clone();
+  public get groups(): Beam.DirectoryEntry[] {
+    return this._groups.slice();
   }
 
   public get createAccountModel(): CreateAccountModel {
@@ -47,7 +49,8 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
     const group = await this.serviceClients.administrationClient.createGroup(
       name);
-    this._groups.add(group);
+    this._groups.push(group);
+    this._groups.sort(this.entryComparator);
     return group;
   }
 
@@ -88,7 +91,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
 
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
-  private _groups: Beam.Set<Beam.DirectoryEntry>;
+  private _groups: Beam.DirectoryEntry[];
   private _createAccountModel: HttpCreateAccountModel;
   private _groupSuggestionModel: LocalGroupSuggestionModel;
 }
