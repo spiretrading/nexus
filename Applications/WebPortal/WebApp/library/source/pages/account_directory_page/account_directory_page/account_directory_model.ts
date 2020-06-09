@@ -36,7 +36,9 @@ export abstract class AccountDirectoryModel {
   /** Loads this model. */
   public abstract async load(): Promise<void>;
 
-  public entryComparator(a:Beam.DirectoryEntry, b:Beam.DirectoryEntry): number {
-    return a.name.localeCompare(b.name);
+  /** Used to compare group entries. */
+  public groupComparator(groupA: Beam.DirectoryEntry,
+      groupB: Beam.DirectoryEntry): number {
+    return groupA.name.localeCompare(groupB.name);
   }
 }
