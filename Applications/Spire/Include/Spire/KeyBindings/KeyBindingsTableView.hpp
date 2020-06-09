@@ -80,24 +80,26 @@ namespace Spire {
       bool m_is_editing_cell;
 
       void add_delete_button(int index);
-      void scroll_to_index(const QModelIndex& index);
+      void edit_cell(const QModelIndex& index);
       QModelIndex KeyBindingsTableView::get_editable_index(int row,
         int column_visual_index) const;
       QModelIndex get_first_editable_index() const;
       QModelIndex get_next_editable_index(const QModelIndex& index) const;
       QModelIndex get_previous_editable_index(const QModelIndex& index) const;
+      void scroll_to_index(const QModelIndex& index);
       void update_delete_buttons(int selected_index);
-      void on_cell_activated(const QModelIndex& index);
       void on_column_selection_changed(const QModelIndex &current,
         const QModelIndex &previous);
-      void on_data_changed(const QModelIndex& index);
       void on_delete_button_clicked(int index);
-      void on_editor_key(Qt::Key key);
+      void on_editor_closed(const QWidget* editor,
+        QAbstractItemDelegate::EndEditHint hint);
       void on_header_resize(int index, int old_size, int new_size);
       void on_header_move(int logical_index, int old_index, int new_index);
       void on_horizontal_slider_value_changed(int new_value);
       void on_row_inserted();
       void on_row_removed(int row);
+      void on_selection_changed(const QModelIndex& current,
+        const QModelIndex& previous);
   };
 }
 

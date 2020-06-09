@@ -1,4 +1,5 @@
 #include "Spire/Ui/DropdownMenuList.hpp"
+#include <algorithm>
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"

@@ -39,7 +39,8 @@ namespace {
       case Columns::SECURITY:
         return value.value<Security>() == data.value<Security>();
       case Columns::DESTINATION:
-        return value.value<Region>() == data.value<Region>();
+        return value.value<Region>() == data.value<Region>() &&
+          value.value<Region>().GetName() == data.value<Region>().GetName();
       case Columns::ORDER_TYPE:
         return value.value<OrderType>() == data.value<OrderType>();
       case Columns::SIDE:
@@ -143,7 +144,7 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
 Qt::ItemFlags TaskKeyBindingsTableModel::flags(
     const QModelIndex& index) const {
   if(static_cast<Columns>(index.column()) == Columns::CUSTOM_TAGS) {
-    return QAbstractItemModel::flags(index);
+    return QAbstractItemModel::flags(index).setFlag(Qt::ItemIsEnabled, false);
   }
   return QAbstractItemModel::flags(index) |= Qt::ItemIsEditable;
 }
@@ -197,7 +198,6 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     if(is_same_value(value, index)) {
       return false;
     }
-    Q_EMIT dataChanged(index, index, {role});
     insert_row_if_empty(index);
     auto& binding = m_key_bindings[index.row()];
     switch(static_cast<Columns>(index.column())) {
