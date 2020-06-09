@@ -54,15 +54,14 @@ void KeyBindingItemDelegate::on_editing_finished() {
 bool KeyBindingItemDelegate::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Tab) {
+    if(e->key() == Qt::Key_Tab || e->key() == Qt::Key_Backtab) {
       auto editor = static_cast<QWidget*>(watched);
       Q_EMIT commitData(editor);
-      Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
-      return true;
-    } else if(e->key() == Qt::Key_Backtab) {
-      auto editor = static_cast<QWidget*>(watched);
-      Q_EMIT commitData(editor);
-      Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditPreviousItem);
+      if(e->key() == Qt::Key_Tab) {
+        Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditNextItem);
+      } else {
+        Q_EMIT closeEditor(editor, QAbstractItemDelegate::EditPreviousItem);
+      }
       return true;
     }
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {

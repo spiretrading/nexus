@@ -365,12 +365,16 @@ void KeyBindingsTableView::on_delete_button_clicked(int index) {
 
 void KeyBindingsTableView::on_editor_closed(const QWidget* editor,
     QAbstractItemDelegate::EndEditHint hint) {
-  if(hint == QAbstractItemDelegate::EditNextItem) {
-    auto next = get_next_editable_index(m_table->currentIndex());
-    edit_cell(next);
-  } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
-    auto previous = get_previous_editable_index(m_table->currentIndex());
-    edit_cell(previous);
+  auto edit_index = [&] {
+    if(hint == QAbstractItemDelegate::EditNextItem) {
+      return get_next_editable_index(m_table->currentIndex());
+    } else if(hint == QAbstractItemDelegate::EditPreviousItem) {
+      return get_previous_editable_index(m_table->currentIndex());
+    }
+    return QModelIndex();
+  }();
+  if(edit_index.isValid()) {
+    edit_cell(edit_index);
   }
 }
 
