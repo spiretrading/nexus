@@ -58,7 +58,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
       Promise<AccountEntry[]> {
     const tradingGroup =
       await this.serviceClients.administrationClient.loadTradingGroup(group);
-    const accounts = [];
+    const accounts = [] as AccountEntry[];
     for(const manager of tradingGroup.managers) {
       const roles =
         await this.serviceClients.administrationClient.loadAccountRoles(
@@ -70,7 +70,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         await this.serviceClients.administrationClient.loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
-    return accounts;
+    return accounts.filter((value,index,array)=> {return array.findIndex(target=>(target.account.id === value.account.id))===index});
   }
 
   public async loadFilteredAccounts(
