@@ -41,4 +41,10 @@ export abstract class AccountDirectoryModel {
       groupB: Beam.DirectoryEntry): number {
     return groupA.name.localeCompare(groupB.name);
   }
+
+  /** Used to compare group entries. */
+  public accountComparator(accountA: AccountEntry,
+      accountB: AccountEntry): number {
+    return accountA.account.name.localeCompare(accountB.account.name);
+  }
 }
