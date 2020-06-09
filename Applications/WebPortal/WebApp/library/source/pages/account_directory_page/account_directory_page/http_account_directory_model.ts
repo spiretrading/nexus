@@ -67,7 +67,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         await this.serviceClients.administrationClient.loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
-    return accounts;
+    return accounts.filter((value,index,array) => {return array.findIndex(target=>(target.account.id === value.account.id)) === index});
   }
 
   public async loadFilteredAccounts(
