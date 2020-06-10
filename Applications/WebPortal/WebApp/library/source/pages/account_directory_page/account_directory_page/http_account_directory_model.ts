@@ -69,8 +69,8 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     }
     return accounts.filter(
       (value: AccountEntry, index: number, array: AccountEntry[]) => {
-      return array.findIndex((target: AccountEntry) =>
-      (target.account.id === value.account.id)) === index});
+        return array.findIndex((target: AccountEntry) =>
+          (target.account.id === value.account.id)) === index});
   }
 
   public async loadFilteredAccounts(
