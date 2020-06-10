@@ -50,7 +50,6 @@ class TestApp extends React.Component<Properties, State> {
       testProfileError: false,
       testPasswordError: false
     };
-    this.initIdentity();
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
@@ -101,6 +100,10 @@ class TestApp extends React.Component<Properties, State> {
           </button>
         </div>
       </Dali.VBoxLayout>);
+  }
+
+  public componentDidMount(): void {
+    this.initIdentity();
   }
 
   private initIdentity() {
