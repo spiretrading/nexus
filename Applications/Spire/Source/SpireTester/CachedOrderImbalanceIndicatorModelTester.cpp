@@ -42,15 +42,16 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
       auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
       auto slot_data = OrderImbalance();
-      cached_model.subscribe([&] (const auto& imbalance) {
-        slot_data = imbalance; });
+      auto subscription_result = cached_model.subscribe(
+        [&] (const auto& imbalance) { slot_data = imbalance; });
+      wait(std::move(subscription_result.m_snapshot));
       local_model->publish(A);
       REQUIRE(slot_data == A);
       local_model->publish(B);
       REQUIRE(slot_data == B);
-      auto promise = cached_model.load(TimeInterval::closed(from_time_t(100),
+      auto promise2 = cached_model.load(TimeInterval::closed(from_time_t(100),
         from_time_t(200)));
-      auto data = wait(std::move(promise));
+      auto data = wait(std::move(promise2));
       REQUIRE(data == std::vector<OrderImbalance>({A, B}));
     });
   }
@@ -146,8 +147,9 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
       auto slot_data1 = OrderImbalance();
       auto slot_data2 = OrderImbalance();
-      cached_model.subscribe([&] (const auto& imbalance) {
-        slot_data1 = imbalance; });
+      auto subscription_result = cached_model.subscribe(
+        [&] (const auto& imbalance) { slot_data1 = imbalance; });
+      wait(std::move(subscription_result.m_snapshot));
       auto result = cached_model.subscribe([&] (const auto& imbalance) {
         slot_data2 = imbalance; });
       result.m_connection.disconnect();
@@ -228,6 +230,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(400)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
