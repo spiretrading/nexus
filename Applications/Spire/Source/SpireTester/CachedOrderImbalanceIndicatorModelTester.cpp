@@ -245,6 +245,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(200)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -262,6 +263,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(500)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -279,6 +281,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(300)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -300,6 +303,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(400),
         from_time_t(500)));
       request2->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -329,6 +333,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request3->get_interval() == TimeInterval::closed(from_time_t(450),
         from_time_t(500)));
       request3->set_result({});
+      wait(std::move(promise3));
     });
   }
 
@@ -395,6 +400,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(400)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -412,6 +418,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(200)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -429,6 +436,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(300),
         from_time_t(500)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -446,6 +454,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request->get_interval() == TimeInterval::closed(from_time_t(100),
         from_time_t(300)));
       request->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -467,6 +476,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request2->get_interval() == TimeInterval::closed(from_time_t(400),
         from_time_t(500)));
       request2->set_result({});
+      wait(std::move(promise2));
     });
   }
 
@@ -496,6 +506,7 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       REQUIRE(request3->get_interval() == TimeInterval::closed(from_time_t(450),
         from_time_t(500)));
       request3->set_result({});
+      wait(std::move(promise3));
     });
   }
 }
