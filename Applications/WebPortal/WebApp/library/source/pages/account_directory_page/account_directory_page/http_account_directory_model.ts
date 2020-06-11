@@ -70,6 +70,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         await this.serviceClients.administrationClient.loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
+    accounts.sort(this.accountComparator);
     return accounts.filter(
       (value: AccountEntry, index: number, array: AccountEntry[]) => {
         return array.findIndex((target: AccountEntry) =>
@@ -84,9 +85,10 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     for(const match of matches) {
       let entries = result.get(match[0]);
       if(entries === undefined) {
-        entries = []
+        entries = [];
         result.set(match[0], entries);
       }
+      entries.sort(this.accountComparator);
       entries.push(new AccountEntry(match[1], match[2]));
     }
     return result;
