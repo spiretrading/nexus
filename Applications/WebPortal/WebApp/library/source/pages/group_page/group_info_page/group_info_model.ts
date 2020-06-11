@@ -8,10 +8,4 @@ export abstract class GroupInfoModel {
 
   /** Loads the model. */
   public abstract async load(): Promise<void>;
-
-  /** Used to compare accounts. */
-  public accountComparator(accountA: AccountEntry,
-      accountB: AccountEntry): number {
-    return accountA.account.name.localeCompare(accountB.account.name);
-  }
 }
