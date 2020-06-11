@@ -56,7 +56,7 @@ export class AccountDirectoryController extends
     return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
-      groups={this.props.model.groups}
+      groups={this.props.model.groups.sort(this.groupComparator)}
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
@@ -87,6 +87,7 @@ export class AccountDirectoryController extends
       this.state.openedGroups.remove(group);
     } else {
       const accounts = await this.props.model.loadAccounts(group);
+      accounts.sort(this.accountComparator);
       this.state.openedGroups.set(group, accounts);
     }
     this.setState({openedGroups: this.state.openedGroups});
@@ -110,9 +111,22 @@ export class AccountDirectoryController extends
   private onFilterChange = async (newFilter: string) => {
     if(newFilter !== '') {
       const accounts = await this.props.model.loadFilteredAccounts(newFilter);
+      for(const pair of accounts) {
+        accounts.get(pair[0]).sort(this.accountComparator);
+      }
       this.setState({filter: newFilter, filteredGroups: accounts});
     } else {
       this.setState({filter: newFilter});
     }
+  }
+
+  private groupComparator(groupA: Beam.DirectoryEntry,
+      groupB: Beam.DirectoryEntry): number {
+    return groupA.name.localeCompare(groupB.name);
+  }
+
+  private accountComparator(accountA: AccountEntry,
+      accountB: AccountEntry): number {
+    return accountA.account.name.localeCompare(accountB.account.name);
   }
 }
