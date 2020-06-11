@@ -10,7 +10,7 @@ export class LocalGroupInfoModel extends GroupInfoModel {
   constructor(group: AccountEntry[]) {
     super();
     this._isLoaded = false;
-    this._group = group.slice();
+    this._group = group.slice().sort(this.accountComparator);
   }
 
   public get group(): AccountEntry[] {
