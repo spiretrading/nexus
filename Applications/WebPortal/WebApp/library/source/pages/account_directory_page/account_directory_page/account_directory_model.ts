@@ -42,7 +42,7 @@ export abstract class AccountDirectoryModel {
     return groupA.name.localeCompare(groupB.name);
   }
 
-  /** Used to compare group entries. */
+  /** Used to compare account entries. */
   public accountComparator(accountA: AccountEntry,
       accountB: AccountEntry): number {
     return accountA.account.name.localeCompare(accountB.account.name);
