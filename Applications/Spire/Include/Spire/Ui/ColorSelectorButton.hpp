@@ -14,6 +14,8 @@ namespace Spire {
     private:
       FlatButton* m_button;
       ColorSelectorButtonDropDown* m_dropdown;
+
+      void set_button_color(const QColor& color);
   };
 }
 
