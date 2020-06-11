@@ -29,7 +29,6 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     for(const group of groups) {
       this._groups.push(group);
     }
-    this._groups.sort(this.groupComparator);
     this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
   }
 
@@ -49,7 +48,6 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     const group = await this.serviceClients.administrationClient.createGroup(
       name);
     this._groups.push(group);
-    this._groups.sort(this.groupComparator);
     return group;
   }
 
@@ -69,7 +67,6 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         await this.serviceClients.administrationClient.loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
-    accounts.sort(this.accountComparator);
     return accounts.filter(
       (value: AccountEntry, index: number, array: AccountEntry[]) => {
         return array.findIndex((target: AccountEntry) =>
@@ -88,7 +85,6 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         result.set(match[0], entries);
       }
       entries.push(new AccountEntry(match[1], match[2]));
-      entries.sort(this.accountComparator);
     }
     return result;
   }
