@@ -4,7 +4,6 @@ import { CreateAccountModel, GroupSuggestionModel, HttpCreateAccountModel,
   LocalGroupSuggestionModel } from '../create_account_page';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountEntry } from './account_entry';
-import { runInThisContext } from 'vm';
 
 /** Implements an AccountDirectoryModel using HTTP requests. */
 export class HttpAccountDirectoryModel extends AccountDirectoryModel {
@@ -88,8 +87,8 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         entries = [];
         result.set(match[0], entries);
       }
-      entries.sort(this.accountComparator);
       entries.push(new AccountEntry(match[1], match[2]));
+      entries.sort(this.accountComparator);
     }
     return result;
   }
