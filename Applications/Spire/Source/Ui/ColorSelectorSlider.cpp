@@ -58,7 +58,8 @@ void ColorSelectorSlider::paintEvent(QPaintEvent* event) {
 }
 
 void ColorSelectorSlider::resizeEvent(QResizeEvent* event) {
-  m_gradient = create_gradient_image(width() - 2, height() - 2, m_gradient_stops);
+  m_gradient = create_gradient_image(width() - 2, height() - 2,
+    m_gradient_stops);
 }
 
 void ColorSelectorSlider::set_mouse_x(int x) {

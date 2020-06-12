@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorSlider.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
@@ -74,6 +75,7 @@ namespace {
   void add_recent_color_button(QHBoxLayout* layout, const QColor& color,
       QWidget* parent) {
     auto button = create_color_button(color, parent);
+    // TODO: connect clicked signal
     layout->addWidget(button);
   }
 }
@@ -143,6 +145,9 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     color_hue_stops, this);
   color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
   color_picker_layout->addWidget(color_hue_slider);
+  auto hex_input = new ColorSelectorHexInputWidget(current_color, this);
+  hex_input->setFixedSize(scale(120, 26));
+  color_picker_layout->addWidget(hex_input);
   color_picker_layout->addStretch(1);
   layout->addSpacing(scale_height(12));
   auto recent_colors_label = new QLabel(tr("Recent Colors"), this);
