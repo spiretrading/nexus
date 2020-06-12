@@ -113,8 +113,7 @@ void CanvasObserver::Translate() {
       auto observer = Spire::Translate(context,
         m_observer->GetChildren().back());
       auto reactor = Instantiate<ObserverTranslator>(observer.GetTypeInfo())(
-        observer, m_callbacks.GetCallback(
-        [=] (const any& value) {
+        observer, m_callbacks.MakeSlot([=] (const any& value) {
           OnReactorUpdate(value);
         }));
       m_task->GetExecutor().Add(std::move(reactor));
