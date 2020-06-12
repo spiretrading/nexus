@@ -11,7 +11,7 @@ ColorSelectorButton::ColorSelectorButton(const QColor& color, QWidget* parent)
   m_button = new FlatButton(this);
   set_button_color(color);
   layout->addWidget(m_button);
-  m_dropdown = new ColorSelectorButtonDropDown(this);
+  m_dropdown = new ColorSelectorDropDown(this);
 }
 
 void ColorSelectorButton::set_button_color(const QColor& color) {
