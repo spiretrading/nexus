@@ -7,8 +7,7 @@ namespace Spire {
   class ColorSelectorButtonDropDown : public QWidget {
     public:
 
-      ColorSelectorButtonDropDown(const QColor& color,
-        QWidget* parent = nullptr);
+      ColorSelectorButtonDropDown(QWidget* parent = nullptr);
   };
 }
 
