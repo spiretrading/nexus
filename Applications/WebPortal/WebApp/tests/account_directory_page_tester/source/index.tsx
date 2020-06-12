@@ -11,7 +11,7 @@ interface Properties {
 
 interface State {
   roles: Nexus.AccountRoles;
-  groups: Beam.Set<Beam.DirectoryEntry>;
+  groups: Beam.DirectoryEntry[];
   openedGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
@@ -25,12 +25,11 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     this.state = {
       roles: this.testAdmin,
-      groups: new Beam.Set<Beam.DirectoryEntry>(),
+      groups: [] as Beam.DirectoryEntry[] ,
       openedGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
-        new Beam.Set<Beam.DirectoryEntry>(),
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       statusCreateGroup: ''
     };
@@ -52,7 +51,7 @@ class TestApp extends React.Component<Properties, State> {
         <WebPortal.AccountDirectoryPage
           displaySize={this.props.displaySize}
           roles={this.state.roles}
-          groups={this.state.groups}
+          groups={this.state.model.groups}
           openedGroups={this.state.openedGroups}
           filter={this.state.filter}
           filteredGroups={this.state.filteredGroups}
@@ -100,12 +99,12 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 33, 'Mordor');
     const group6 =
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.DIRECTORY, 37, 'Bree');
-    this.state.groups.add(group1);
-    this.state.groups.add(group2);
-    this.state.groups.add(group3);
-    this.state.groups.add(group4);
-    this.state.groups.add(group5);
-    this.state.groups.add(group6);
+    this.state.groups.push(group1);
+    this.state.groups.push(group2);
+    this.state.groups.push(group3);
+    this.state.groups.push(group4);
+    this.state.groups.push(group5);
+    this.state.groups.push(group6);
     const accountEntry1 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'administration_service'),
@@ -113,7 +112,7 @@ class TestApp extends React.Component<Properties, State> {
     const accountEntry2 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 23, 'daily_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(2));
     const accountEntry3 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 223, 'market_data_relay_service'),
@@ -121,7 +120,7 @@ class TestApp extends React.Component<Properties, State> {
     const accountEntry4 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 45, 'data_relay_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(3));
     const accountEntry5 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 788, 'execution_service'),
@@ -129,11 +128,11 @@ class TestApp extends React.Component<Properties, State> {
     const accountEntry6 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 1, 'data_news_service'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(2));
     const accountEntry7 = new WebPortal.AccountEntry(
       new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 5, 'data_relay_news'),
-      new Nexus.AccountRoles());
+      new Nexus.AccountRoles(1));
     const testArray = [];
     testArray.push(accountEntry1);
     testArray.push(accountEntry2);
@@ -149,8 +148,7 @@ class TestApp extends React.Component<Properties, State> {
         accounts.set(group, []);
       }
     }
-    const testModel = new WebPortal.LocalAccountDirectoryModel(
-      this.state.groups, accounts);
+    const testModel = new WebPortal.LocalAccountDirectoryModel(accounts);
     testModel.load();
     const newModel = new WebPortal.CachedAccountDirectoryModel(testModel);
     this.setState({model: newModel});
@@ -197,7 +195,7 @@ class TestApp extends React.Component<Properties, State> {
       this.timerId = setTimeout(
         async () => {
           const newGroup = await this.state.model.createGroup(groupName);
-          this.state.groups.add(newGroup);
+          this.state.groups.push(newGroup);
           this.setState({groups: this.state.groups});
         }, 100);
     }

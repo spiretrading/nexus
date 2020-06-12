@@ -20,7 +20,6 @@ export class HttpDashboardModel extends DashboardModel {
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
       new Nexus.MarketDatabase(), new LocalAccountDirectoryModel(
-      new Beam.Set<Beam.DirectoryEntry>(),
       new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()));
   }
 

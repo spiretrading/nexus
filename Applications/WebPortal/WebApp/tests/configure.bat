@@ -18,6 +18,7 @@ CALL:configure entitlements_page_tester %*
 CALL:configure group_info_page_tester %*
 CALL:configure loading_page_tester %*
 CALL:configure login_page_tester %*
+CALL:configure page_not_found_page_tester %*
 CALL:configure profile_page_tester %*
 CALL:configure risk_page_tester %*
 CALL:configure scratch %*
