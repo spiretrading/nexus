@@ -9,7 +9,8 @@ namespace Spire {
   class ColorSelectorButton : public QWidget {
     public:
 
-      ColorSelectorButton(const QColor& color, QWidget* parent = nullptr);
+      ColorSelectorButton(const QColor& current_color,
+        QWidget* parent = nullptr);
   
     private:
       FlatButton* m_button;

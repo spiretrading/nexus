@@ -3,15 +3,16 @@
 
 using namespace Spire;
 
-ColorSelectorButton::ColorSelectorButton(const QColor& color, QWidget* parent)
+ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
+    QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_button = new FlatButton(this);
-  set_button_color(color);
+  set_button_color(current_color);
   layout->addWidget(m_button);
-  m_dropdown = new ColorSelectorDropDown(this);
+  m_dropdown = new ColorSelectorDropDown(current_color, this);
 }
 
 void ColorSelectorButton::set_button_color(const QColor& color) {
