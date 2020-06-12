@@ -24,7 +24,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  sortedGroups: Beam.DirectoryEntry[];
+  groups: Beam.DirectoryEntry[];
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
@@ -39,7 +39,7 @@ export class AccountDirectoryController extends
     super(props);
     this.state = {
       isLoaded: false, 
-      sortedGroups: [],
+      groups: [],
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
@@ -58,7 +58,7 @@ export class AccountDirectoryController extends
     return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
-      groups={this.state.sortedGroups}
+      groups={this.state.groups}
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
@@ -74,22 +74,15 @@ export class AccountDirectoryController extends
       () => {
         this.setState({
           isLoaded: true,
-          sortedGroups: this.props.model.groups.sort(
+          groups: this.props.model.groups.sort(
             AccountDirectoryController.groupComparator)
         });
       });
   }
 
-  public componentDidUpdate(prevProps: Properties): void {
+  public componentDidUpdate(): void {
     if(this.state.redirect) {
       this.setState({redirect: null});
-    }
-    if(prevProps.model.groups.toString() !== 
-        this.props.model.groups.toString()) {
-      this.setState({
-        sortedGroups: this.props.model.groups.sort(
-          AccountDirectoryController.groupComparator)
-      });
     }
   }
 
@@ -107,7 +100,10 @@ export class AccountDirectoryController extends
   private onCreateGroup = async (name: string) => {
     try {
       await this.props.model.createGroup(name);
-      this.forceUpdate();
+      this.setState({
+        groups: this.props.model.groups.sort(
+          AccountDirectoryController.groupComparator)
+      });
     } catch(e) {
       this.setState({createGroupStatus: e.toString()});
     }
