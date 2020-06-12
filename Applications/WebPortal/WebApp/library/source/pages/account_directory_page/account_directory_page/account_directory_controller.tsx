@@ -24,6 +24,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  sortedGroups: Beam.DirectoryEntry[];
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
@@ -38,6 +39,7 @@ export class AccountDirectoryController extends
     super(props);
     this.state = {
       isLoaded: false, 
+      sortedGroups: [],
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
@@ -56,8 +58,7 @@ export class AccountDirectoryController extends
     return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
-      groups={this.props.model.groups.sort(
-        AccountDirectoryController.groupComparator)}
+      groups={this.state.sortedGroups}
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
@@ -72,14 +73,23 @@ export class AccountDirectoryController extends
     this.props.model.load().then(
       () => {
         this.setState({
-          isLoaded: true
+          isLoaded: true,
+          sortedGroups: this.props.model.groups.sort(
+            AccountDirectoryController.groupComparator)
         });
       });
   }
 
-  public componentDidUpdate(): void {
+  public componentDidUpdate(prevProps: Properties): void {
     if(this.state.redirect) {
       this.setState({redirect: null});
+    }
+    if(prevProps.model.groups.toString() !== 
+        this.props.model.groups.toString()) {
+      this.setState({
+        sortedGroups: this.props.model.groups.sort(
+          AccountDirectoryController.groupComparator)
+      });
     }
   }
 

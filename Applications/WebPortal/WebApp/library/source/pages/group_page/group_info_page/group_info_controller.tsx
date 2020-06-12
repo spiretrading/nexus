@@ -14,6 +14,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  sortedAccounts: AccountEntry[];
 }
 
 /** Controller for the GroupInfoPage */
@@ -21,7 +22,8 @@ export class GroupInfoController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false
+      isLoaded: false,
+      sortedAccounts: []
     }
   }
 
@@ -32,15 +34,25 @@ export class GroupInfoController extends React.Component<Properties, State> {
     return(
       <GroupInfoPage
         displaySize={this.props.displaySize}
-        group={this.props.model.group.sort(
-          GroupInfoController.accountComparator)}/>);
+        group={this.state.sortedAccounts}/>);
   }
 
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
-        this.setState({isLoaded: true});
+        this.setState({
+          isLoaded: true,
+          sortedAccounts: this.props.model.group.sort(
+            GroupInfoController.accountComparator)
+        });
       });
+  }
+
+  public componentDidUpdate(prevProps: Properties): void {
+    if(prevProps.model.group.toString() !== this.props.model.group.toString()) {
+      this.setState({sortedAccounts: this.props.model.group.sort(
+        GroupInfoController.accountComparator)});
+    }
   }
 
   private static accountComparator(accountA: AccountEntry,
