@@ -15,9 +15,9 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     super();
     this._isLoaded = false;
     this.nextId = 1;
-    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    this._groups = [] as Beam.DirectoryEntry[];
     for(const account of accounts) {
-      this._groups.add(account[0]);
+      this._groups.push(account[0]);
     }
     this._accounts = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     for(const group of this._groups) {
@@ -41,11 +41,11 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     this._isLoaded = true;
   }
 
-  public get groups(): Beam.Set<Beam.DirectoryEntry> {
+  public get groups(): Beam.DirectoryEntry[] {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return this._groups.clone();
+    return this._groups.slice();
   }
 
   public get createAccountModel(): CreateAccountModel{
@@ -63,7 +63,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
       }
     }
     const group = Beam.DirectoryEntry.makeAccount(this.nextId, name);
-    this._groups.add(group);
+    this._groups.push(group);
     ++this.nextId;
     return group;
   }
@@ -100,7 +100,7 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
 
   private _isLoaded: boolean;
   private nextId: number;
-  private _groups: Beam.Set<Beam.DirectoryEntry>;
+  private _groups: Beam.DirectoryEntry[];
   private _accounts: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   private _createAccountModel: CreateAccountModel;
   private _groupAccountModel: GroupSuggestionModel;

@@ -17,7 +17,7 @@ interface Properties {
   roles: Nexus.AccountRoles;
 
   /** The groups to display. */
-  groups: Beam.Set<Beam.DirectoryEntry>;
+  groups: Beam.DirectoryEntry[];
 
   /** The groups that are open and the accounts that belong to those groups. */
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>

@@ -162,11 +162,6 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       textDecoration: 'none',
       cursor: 'default' as 'default'
     },
-    entryListWrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'column-reverse' as 'column-reverse'
-    },
     highlightedText: {
       font: '400 14px Roboto',
       color: '#000000',
