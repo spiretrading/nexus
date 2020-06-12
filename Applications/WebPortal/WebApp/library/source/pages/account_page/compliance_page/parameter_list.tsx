@@ -42,17 +42,18 @@ export class ParametersList extends React.Component<Properties> {
     })();
     const parameterEntries = [] as JSX.Element[];
     for(let i = 0; i < this.props.schema.parameters.length; ++i) {
-      const rule = this.props.schema.parameters[i];
-      if(this.props.schema.parameters.indexOf(rule) !== 0) {
+      const parameter = this.props.schema.parameters[i];
+      if(this.props.schema.parameters.indexOf(parameter) !== 0) {
         parameterEntries.push(
           <div style={ParametersList.STYLE.fillerBetweenRows}/>);
       }
       parameterEntries.push(<ParameterEntry 
+        key={i}
         currencyDatabase={this.props.currencyDatabase}
         displaySize={this.props.displaySize}
         readonly={this.props.readonly}
         onChange={this.onChange.bind(this, i)}
-        parameter={rule}/>);
+        parameter={parameter}/>);
     }
     return (
       <div style={leftPadding}>

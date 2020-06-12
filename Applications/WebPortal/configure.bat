@@ -43,42 +43,54 @@ IF NOT "!DEPENDENCIES!" == "!ROOT!\Dependencies" (
 )
 SET RUN_CMAKE=
 IF EXIST "!DIRECTORY!Include" (
-  FOR /F %%i IN ('DIR /a-d /b /s "!DIRECTORY!Include\*.hpp" ^| wc -l') DO (
-    IF EXIST CMakeFiles\hpp_count.txt (
-      FOR /F %%j IN ('TYPE CMakeFiles\hpp_count.txt') DO (
-        IF NOT "%%i" == "%%j" (
-          SET RUN_CMAKE=1
+  DIR /a-d /b /s "!DIRECTORY!Include\*.hpp" > hpp_hash.txt
+  SET C=0
+  FOR /F %%i IN ('certutil -hashfile hpp_hash.txt') DO (
+    IF !C!==1 (
+      IF EXIST CMakeFiles\hpp_hash.txt (
+        FOR /F %%j IN ('TYPE CMakeFiles\hpp_hash.txt') DO (
+          IF NOT "%%i" == "%%j" (
+            SET RUN_CMAKE=1
+          )
         )
+      ) ELSE (
+        SET RUN_CMAKE=1
       )
-    ) ELSE (
-      SET RUN_CMAKE=1
-    )
-    IF "!RUN_CMAKE!" == "1" (
-      IF NOT EXIST CMakeFiles (
-        MD CMakeFiles
+      IF "!RUN_CMAKE!" == "1" (
+        IF NOT EXIST CMakeFiles (
+          MD CMakeFiles
+        )
+        ECHO %%i > CMakeFiles\hpp_hash.txt
       )
-      ECHO %%i > CMakeFiles\hpp_count.txt
     )
+    SET /A C=C+1
   )
+  DEL hpp_hash.txt
 )
 IF EXIST "!DIRECTORY!Source" (
-  FOR /F %%i IN ('DIR /a-d /b /s "!DIRECTORY!Source\*.cpp" ^| wc -l') DO (
-    IF EXIST CMakeFiles\cpp_count.txt (
-      FOR /F %%j IN ('TYPE CMakeFiles\cpp_count.txt') DO (
-        IF NOT "%%i" == "%%j" (
-          SET RUN_CMAKE=1
+  DIR /a-d /b /s "!DIRECTORY!Source\*.cpp" > cpp_hash.txt
+  SET C=0
+  FOR /F %%i IN ('certutil -hashfile cpp_hash.txt') DO (
+    IF !C!==1 (
+      IF EXIST CMakeFiles\cpp_hash.txt (
+        FOR /F %%j IN ('TYPE CMakeFiles\cpp_hash.txt') DO (
+          IF NOT "%%i" == "%%j" (
+            SET RUN_CMAKE=1
+          )
         )
+      ) ELSE (
+        SET RUN_CMAKE=1
       )
-    ) ELSE (
-      SET RUN_CMAKE=1
-    )
-    IF "!RUN_CMAKE!" == "1" (
-      IF NOT EXIST CMakeFiles (
-        MD CMakeFiles
+      IF "!RUN_CMAKE!" == "1" (
+        IF NOT EXIST CMakeFiles (
+          MD CMakeFiles
+        )
+        ECHO %%i > CMakeFiles\cpp_hash.txt
       )
-      ECHO %%i > CMakeFiles\cpp_count.txt
     )
+    SET /A C=C+1
   )
+  DEL cpp_hash.txt
 )
 IF "!RUN_CMAKE!" == "1" (
   cmake -S !DIRECTORY! -DD=!DEPENDENCIES!

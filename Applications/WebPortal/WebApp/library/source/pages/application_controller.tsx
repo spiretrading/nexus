@@ -5,6 +5,7 @@ import { DisplaySize } from '..';
 import { ApplicationModel } from './application_model';
 import { DashboardController } from './dashboard_page';
 import { LoginController } from './login_page';
+import { PageNotFoundPage } from './page_not_found_page';
 
 interface Properties {
 
@@ -44,6 +45,7 @@ export class ApplicationController extends React.Component<Properties, State> {
           <Router.Route exact path='/login' render={this.renderLoginPage}/>
           <AuthenticatedRoute path='/' account={this.state.account}
             render={this.renderDashboardPage}/>
+          <Router.Route component={this.renderPageNotFound}/>
         </Router.Switch>
       </Router.BrowserRouter>);
   }
@@ -94,6 +96,10 @@ export class ApplicationController extends React.Component<Properties, State> {
   private renderDashboardPage() {
     return <DashboardController model={this.props.model.dashboardModel}
       displaySize={this.state.displaySize} onLogout={this.onLogout}/>;
+  }
+
+  private renderPageNotFound() {
+    return <PageNotFoundPage displaySize={this.state.displaySize}/>;
   }
 }
 

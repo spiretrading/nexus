@@ -42,10 +42,10 @@ if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
   ln -s "$dependencies" Dependencies
 fi
 if [ -d "$directory/Include" ]; then
-  include_count=$(find $directory/Include -name "*.hpp" | wc -l)
-  if [ -f "CMakeFiles/hpp_count.txt" ]; then
-    hpp_count=$(cat "CMakeFiles/hpp_count.txt")
-    if [ "$include_count" != "$hpp_count" ]; then
+  include_hash=$(find $(pwd) $directory/Include -name "*.hpp" | grep "^/" | md5sum | cut -d" " -f1)
+  if [ -f "CMakeFiles/hpp_hash.txt" ]; then
+    hpp_hash=$(cat "CMakeFiles/hpp_hash.txt")
+    if [ "$include_hash" != "$hpp_hash" ]; then
       run_cmake=1
     fi
   else
@@ -55,14 +55,14 @@ if [ -d "$directory/Include" ]; then
     if [ ! -d "CMakeFiles" ]; then
       mkdir CMakeFiles
     fi
-    echo $include_count > "CMakeFiles/hpp_count.txt"
+    echo $include_hash > "CMakeFiles/hpp_hash.txt"
   fi
 fi
 if [ -d "$directory/Source" ]; then
-  source_count=$(find $directory/Source -name "*.cpp" | wc -l)
-  if [ -f "CMakeFiles/cpp_count.txt" ]; then
-    cpp_count=$(cat "CMakeFiles/cpp_count.txt")
-    if [ "$source_count" != "$cpp_count" ]; then
+  source_hash=$(find $(pwd) $directory/Source -name "*.cpp" | grep "^/" | md5sum | cut -d" " -f1)
+  if [ -f "CMakeFiles/cpp_hash.txt" ]; then
+    cpp_hash=$(cat "CMakeFiles/cpp_hash.txt")
+    if [ "$source_hash" != "$cpp_hash" ]; then
       run_cmake=1
     fi
   else
@@ -72,7 +72,7 @@ if [ -d "$directory/Source" ]; then
     if [ ! -d "CMakeFiles" ]; then
       mkdir CMakeFiles
     fi
-    echo $source_count > "CMakeFiles/cpp_count.txt"
+    echo $source_hash > "CMakeFiles/cpp_hash.txt"
   fi
 fi
 if [ "$run_cmake" = "1" ]; then
