@@ -4,8 +4,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
-#include "Spire/Ui/ColorSelectorSlider.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
 using namespace Spire;
@@ -131,23 +129,25 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
-  auto color_value_stops = QGradientStops({{0.0, QColor("#000000")},
-    {0.5, current_color}, {1.0, QColor("#FFFFFF")}});
-  auto color_value_slider = new ColorSelectorSlider(current_color,
-    color_value_stops, this);
-  color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
-  color_picker_layout->addWidget(color_value_slider);
-  auto color_hue_stops = QGradientStops({{0.0, QColor("#FF00FF")},
-    {0.16, QColor("#0000FF")}, {0.32, QColor("#00FFFF")},
-    {0.48, QColor("#00FF00")}, {0.64, QColor("#FFFF00")},
-    {0.8, QColor("#FF0000")}, {1.0, QColor("#FF00FF")}});
-  auto color_hue_slider = new ColorSelectorSlider(current_color,
-    color_hue_stops, this);
-  color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
-  color_picker_layout->addWidget(color_hue_slider);
-  auto hex_input = new ColorSelectorHexInputWidget(current_color, this);
-  hex_input->setFixedSize(scale(120, 26));
-  color_picker_layout->addWidget(hex_input);
+  m_color_value_slider = new ColorSelectorSlider(
+    ColorSelectorSlider::SliderMode::VALUE, current_color, this);
+  m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
+  m_color_value_slider->connect_color_signal([=] (const auto& color) {
+    on_color_selected(color);
+  });
+  color_picker_layout->addWidget(m_color_value_slider);
+  m_color_hue_slider = new ColorSelectorSlider(
+    ColorSelectorSlider::SliderMode::HUE, current_color, this);
+  m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
+  m_color_hue_slider->connect_color_signal([=] (const auto& color) {
+    on_color_selected(color);
+  });
+  color_picker_layout->addWidget(m_color_hue_slider);
+  m_hex_input = new ColorSelectorHexInputWidget(current_color, this);
+  m_hex_input->setFixedSize(scale(122, 26));
+  m_hex_input->connect_color_signal([=] (const auto& color) {
+    on_color_selected(color); });
+  color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
   layout->addSpacing(scale_height(12));
   auto recent_colors_label = new QLabel(tr("Recent Colors"), this);
@@ -166,4 +166,10 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
+}
+
+void ColorSelectorDropDown::on_color_selected(const QColor& color) {
+  m_color_value_slider->set_color(color);
+  m_color_hue_slider->set_color(color);
+  m_hex_input->set_color(color);
 }
