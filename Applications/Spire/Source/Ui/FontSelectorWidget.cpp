@@ -25,12 +25,12 @@ namespace {
 
 FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_current_font(current_font) {
   auto layout = new QGridLayout(this);
   layout->setHorizontalSpacing(HORIZONTAL_SPACING());
   layout->setVerticalSpacing(VERTICAL_SPACING());
-  auto font_database = QFontDatabase();
-  auto fonts = font_database.families();
+  auto fonts = QFontDatabase().families();
   auto font_list = [&] {
     auto list = std::vector<QString>();
     for(auto& font : fonts) {
@@ -39,18 +39,16 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     return list;
   }();
   m_font_list = new DropDownMenu(font_list, this);
-  m_font_list->set_current_text(current_font.family());
+  m_font_list->set_current_text(m_current_font.family());
   m_font_list->setFixedSize(scale(162, 26));
+  m_font_list->connect_selected_signal([=] (const auto& font) {
+    on_font_selected(font);
+  });
   layout->addWidget(m_font_list, 0, 0, 1, 6);
-  auto styles = font_database.styles(current_font.family());
-  auto style_list = [&] {
-    auto list = std::vector<QString>();
-    for(auto& style : styles) {
-      list.push_back(style);
-    }
-    return list;
-  }();
-  m_style_list = new DropDownMenu(style_list, this);
+  m_style_list = new DropDownMenu({}, this);
+  update_style_list();
+  m_style_list->set_current_text(m_current_font.styleName());
+  qDebug() << m_current_font.styleName();
   m_style_list->setFixedSize(scale(104, 26));
   layout->addWidget(m_style_list, 1, 0, 1, 4);
   m_size_list = new DropDownMenu({"6", "7", "8", "9", "10", "11", "12", "14",
@@ -69,4 +67,29 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_strikethrough_button = new FlatButton(this);
   m_strikethrough_button->setFixedSize(BUTTON_SIZE());
   layout->addWidget(m_strikethrough_button, 2, 3);
+}
+
+void FontSelectorWidget::update_style_list() {
+  auto styles = QFontDatabase().styles(m_current_font.family());
+  auto style_list = [&] {
+    auto list = std::vector<QString>();
+    for(auto& style : styles) {
+      list.push_back(style);
+    }
+    return list;
+  }();
+  m_style_list->set_items(style_list);
+}
+
+void FontSelectorWidget::on_font_selected(const QString& family) {
+  m_current_font.setFamily(family);
+  update_style_list();
+}
+
+void FontSelectorWidget::on_size_selected(const QString& size) {
+
+}
+
+void FontSelectorWidget::on_style_selected(const QString& style) {
+
 }
