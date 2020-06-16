@@ -81,7 +81,7 @@ namespace {
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     QWidget* parent)
     : QWidget(parent) {
-  setFixedSize(scale(232, 182));
+  setFixedSize(scale(232, 198));
   setStyleSheet("background-color: #FFFFFF;");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(HORIZONTAL_PADDING(), VERTICAL_PADDING(),
@@ -111,7 +111,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   layout->addLayout(horizontal_color_layout);
   auto basic_colors_layout = new QGridLayout();
   basic_colors_layout->setContentsMargins(0, scale_height(10), 0,
-    scale_height(9));
+    scale_height(36));
   basic_colors_layout->setHorizontalSpacing(HORIZONTAL_PADDING());
   basic_colors_layout->setVerticalSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(basic_colors_layout);
@@ -129,19 +129,18 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
-  m_color_value_slider = new ColorSelectorSlider(
-    ColorSelectorSlider::SliderMode::VALUE, current_color, this);
-  m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
+  m_color_value_slider = new ColorSelectorHueSlider(current_color, this);
+  m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
-  m_color_hue_slider = new ColorSelectorSlider(
-    ColorSelectorSlider::SliderMode::HUE, current_color, this);
+  m_color_hue_slider = new ColorSelectorHueSlider(current_color, this);
   m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
   });
+  //color_picker_layout->addSpacing(VERTICAL_PADDING());
   color_picker_layout->addWidget(m_color_hue_slider);
   m_hex_input = new ColorSelectorHexInputWidget(current_color, this);
   m_hex_input->setFixedSize(scale(122, 26));
@@ -149,7 +148,6 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     on_color_selected(color); });
   color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
-  layout->addSpacing(scale_height(12));
   auto recent_colors_label = new QLabel(tr("Recent Colors"), this);
   recent_colors_label->setFixedHeight(scale_height(LABEL_HEIGHT()));
   recent_colors_label->setStyleSheet(label_style);

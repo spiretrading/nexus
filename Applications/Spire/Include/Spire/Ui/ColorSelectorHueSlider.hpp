@@ -1,5 +1,5 @@
-#ifndef SPIRE_COLOR_SELECTOR_SLIDER_HPP
-#define SPIRE_COLOR_SELECTOR_SLIDER_HPP
+#ifndef SPIRE_COLOR_SELECTOR_HUE_SLIDER_HPP
+#define SPIRE_COLOR_SELECTOR_HUE_SLIDER_HPP
 #include <boost/optional/optional.hpp>
 #include <QGradientStops>
 #include <QImage>
@@ -8,18 +8,12 @@
 
 namespace Spire {
 
-  class ColorSelectorSlider : public QWidget {
+  class ColorSelectorHueSlider : public QWidget {
     public:
 
       using ColorSignal = Signal<void (const QColor& color)>;
 
-      enum class SliderMode {
-        VALUE,
-        HUE
-      };
-
-      ColorSelectorSlider(SliderMode mode, const QColor& color,
-        QWidget* parent = nullptr);
+      ColorSelectorHueSlider(const QColor& color, QWidget* parent = nullptr);
 
       void set_color(const QColor& color);
 
@@ -34,7 +28,6 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      SliderMode m_mode;
       QGradientStops m_gradient_stops;
       QImage m_gradient;
       QImage m_handle;
