@@ -17,8 +17,6 @@ namespace Spire {
       ColorSelectorValueSlider* m_color_value_slider;
       ColorSelectorHueSlider* m_color_hue_slider;
       ColorSelectorHexInputWidget* m_hex_input;
-
-      void on_color_selected(const QColor& color);
   };
 }
 

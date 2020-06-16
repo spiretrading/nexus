@@ -38,10 +38,15 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
   m_last_mouse_pos = get_mouse_pos(m_current_color);
 }
 
+void ColorSelectorValueSlider::set_hue(int hue) {
+  m_current_color.setHsv(hue, m_current_color.saturation(),
+    m_current_color.value());
+  m_gradient = create_gradient_image(width(), height(), m_current_color);
+  update();
+}
+
 void ColorSelectorValueSlider::set_color(const QColor& color) {
-  if(color.hue() == m_current_color.hue()) {
-    return;
-  }
+  // TODO: if greyscale, only update cursor position, not gradient.
   m_current_color = color;
   m_gradient = create_gradient_image(width(), height(), m_current_color);
   m_last_mouse_pos = get_mouse_pos(color);
@@ -87,12 +92,13 @@ void ColorSelectorValueSlider::resizeEvent(QResizeEvent* event) {
 QPoint ColorSelectorValueSlider::get_mouse_pos(const QColor& color) {
   for(auto x = 0; x < m_gradient.width(); ++x) {
     for(auto y = 0; y < m_gradient.height(); ++y) {
-      if(m_gradient.pixelColor(x, y).value() == color.value()) {
+      if(m_gradient.pixelColor(x, y).saturation() == color.saturation() &&
+          m_gradient.pixelColor(x, y).value() == color.value()) {
         return {x, y};
       }
     }
   }
-  return m_last_mouse_pos;
+  return {-10, -10};//m_last_mouse_pos;
 }
 
 void ColorSelectorValueSlider::set_mouse_pos(const QPoint& pos) {

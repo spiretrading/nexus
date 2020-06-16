@@ -132,19 +132,22 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_value_slider = new ColorSelectorValueSlider(current_color, this);
   m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
-    on_color_selected(color);
+    m_hex_input->set_color(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(current_color, this);
   m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
-    on_color_selected(color);
+    m_color_value_slider->set_hue(color.hue());
+    m_hex_input->set_color(color);
   });
   color_picker_layout->addWidget(m_color_hue_slider);
   m_hex_input = new ColorSelectorHexInputWidget(current_color, this);
   m_hex_input->setFixedSize(scale(122, 26));
   m_hex_input->connect_color_signal([=] (const auto& color) {
-    on_color_selected(color); });
+    m_color_value_slider->set_color(color);
+    m_color_hue_slider->set_color(color);
+  });
   color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
   auto recent_colors_label = new QLabel(tr("Recent Colors"), this);
@@ -163,10 +166,4 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
   add_recent_color_button(recent_colors_layout, QColor("#4b23a0"), this);
-}
-
-void ColorSelectorDropDown::on_color_selected(const QColor& color) {
-  m_color_value_slider->set_color(color);
-  m_color_hue_slider->set_color(color);
-  m_hex_input->set_color(color);
 }

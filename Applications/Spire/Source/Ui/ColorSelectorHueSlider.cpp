@@ -41,9 +41,7 @@ ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
 }
 
 void ColorSelectorHueSlider::set_color(const QColor& color) {
-  if(color.value() == m_current_color.value()) {
-    return;
-  }
+  // TODO: if greyscale, only update cursor position
   m_current_color = color;
   m_last_mouse_x = get_mouse_x(color);
   update();
