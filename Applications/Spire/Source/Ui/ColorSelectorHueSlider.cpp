@@ -26,7 +26,8 @@ namespace {
   }
 }
 
-ColorSelectorHueSlider::ColorSelectorHueSlider( const QColor& color, QWidget* parent)
+ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
+    QWidget* parent)
     : QWidget(parent),
       m_handle(
         imageFromSvg(":/Icons/color-picker-cursor.svg", scale(14, 14))) {

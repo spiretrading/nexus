@@ -129,7 +129,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
-  m_color_value_slider = new ColorSelectorHueSlider(current_color, this);
+  m_color_value_slider = new ColorSelectorValueSlider(current_color, this);
   m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
@@ -140,7 +140,6 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
   });
-  //color_picker_layout->addSpacing(VERTICAL_PADDING());
   color_picker_layout->addWidget(m_color_hue_slider);
   m_hex_input = new ColorSelectorHexInputWidget(current_color, this);
   m_hex_input->setFixedSize(scale(122, 26));
