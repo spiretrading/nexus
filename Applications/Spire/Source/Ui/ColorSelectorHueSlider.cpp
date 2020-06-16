@@ -31,7 +31,6 @@ ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
     : QWidget(parent),
       m_handle(
         imageFromSvg(":/Icons/color-picker-cursor.svg", scale(14, 14))) {
-  setStyleSheet(QString("border: %1px solid #C8C8C8").arg(scale_width(1)));
   m_gradient_stops = QGradientStops({{0.0, QColor("#FF00FF")},
       {0.16, QColor("#0000FF")}, {0.32, QColor("#00FFFF")},
       {0.48, QColor("#00FF00")}, {0.64, QColor("#FFFF00")},
@@ -70,6 +69,8 @@ void ColorSelectorHueSlider::paintEvent(QPaintEvent* event) {
   painter.drawImage(1, 1, m_gradient);
   painter.drawImage(m_last_mouse_x - (m_handle.width() / 2), HANDLE_Y(),
     m_handle);
+  painter.setPen({QColor("#C8C8C8"), 1});
+  painter.drawRect(0, 0, width() - 1, height() - 1);
 }
 
 void ColorSelectorHueSlider::resizeEvent(QResizeEvent* event) {
@@ -87,6 +88,6 @@ int ColorSelectorHueSlider::get_mouse_x(const QColor& color) {
 }
 
 void ColorSelectorHueSlider::set_mouse_x(int x) {
-  m_last_mouse_x = std::max(0, std::min(x, width()));
+  m_last_mouse_x = std::max(1, std::min(x, width() - 1));
   update();
 }

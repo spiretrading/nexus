@@ -34,7 +34,6 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
       m_current_color(current_color),
       m_handle(
         imageFromSvg(":/Icons/color-picker-cursor.svg", scale(14, 14))) {
-  setStyleSheet(QString("border: %1px solid #C8C8C8").arg(scale_width(1)));
   m_gradient = create_gradient_image(width(), height(), m_current_color);
   m_last_mouse_pos = get_mouse_pos(m_current_color);
 }
@@ -69,6 +68,8 @@ void ColorSelectorValueSlider::paintEvent(QPaintEvent* event) {
   painter.drawImage(1, 1, m_gradient);
   painter.drawImage(m_last_mouse_pos.x() - (m_handle.width() / 2),
     m_last_mouse_pos.y() - (m_handle.height() / 2), m_handle);
+  painter.setPen({QColor("#C8C8C8"), 1});
+  painter.drawRect(0, 0, width() - 1, height() - 1);
 }
 
 void ColorSelectorValueSlider::resizeEvent(QResizeEvent* event) {
@@ -86,7 +87,7 @@ QPoint ColorSelectorValueSlider::get_mouse_pos(const QColor& color) {
 }
 
 void ColorSelectorValueSlider::set_mouse_pos(const QPoint& pos) {
-  m_last_mouse_pos.setX(std::max(0, std::min(pos.x(), width())));
-  m_last_mouse_pos.setY(std::max(0, std::min(pos.y(), height())));
+  m_last_mouse_pos.setX(std::max(1, std::min(pos.x(), width() - 1)));
+  m_last_mouse_pos.setY(std::max(1, std::min(pos.y(), height() - 1)));
   update();
 }
