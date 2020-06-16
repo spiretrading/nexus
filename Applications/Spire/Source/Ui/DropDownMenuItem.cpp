@@ -42,7 +42,7 @@ void DropDownMenuItem::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void DropDownMenuItem::mouseReleaseEvent(QMouseEvent* event) {
+void DropDownMenuItem::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_selected_signal(text());
   }

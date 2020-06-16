@@ -58,6 +58,7 @@ namespace Spire {
       void focus_next();
       void focus_previous();
       void update_highlights(int old_index, int new_index);
+      void on_horizontal_slider_changed(int value);
   };
 }
 

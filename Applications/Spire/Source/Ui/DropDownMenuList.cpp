@@ -1,6 +1,7 @@
 #include "Spire/Ui/DropdownMenuList.hpp"
 #include <algorithm>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -29,6 +30,9 @@ DropDownMenuList::DropDownMenuList(
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
+  connect(m_scroll_area->horizontalScrollBar(),
+    qOverload<int>(&QScrollBar::valueChanged), this,
+    &DropDownMenuList::on_horizontal_slider_changed);
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
@@ -104,6 +108,7 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
 }
 
 void DropDownMenuList::showEvent(QShowEvent* event) {
+  m_scroll_area->verticalScrollBar()->setValue(0);
   m_highlight_index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
     auto widget = static_cast<DropDownMenuItem*>(
@@ -162,5 +167,11 @@ void DropDownMenuList::update_highlights(int old_index, int new_index) {
     static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
     current_widget->widget()->update();
     m_scroll_area->ensureWidgetVisible(current_widget->widget());
+  }
+}
+
+void DropDownMenuList::on_horizontal_slider_changed(int value) {
+  if(value != 0) {
+    m_scroll_area->horizontalScrollBar()->setValue(0);
   }
 }
