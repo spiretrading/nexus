@@ -39,7 +39,12 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
 }
 
 void ColorSelectorValueSlider::set_color(const QColor& color) {
-  //m_last_mouse_x = get_mouse_x(color);
+  if(color.hue() == m_current_color.hue()) {
+    return;
+  }
+  m_current_color = color;
+  m_gradient = create_gradient_image(width(), height(), m_current_color);
+  m_last_mouse_pos = get_mouse_pos(color);
   update();
 }
 
@@ -51,14 +56,16 @@ connection ColorSelectorValueSlider::connect_color_signal(
 void ColorSelectorValueSlider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     set_mouse_pos(event->pos());
-    m_color_signal(m_gradient.pixelColor(m_last_mouse_pos));
+    m_current_color = m_gradient.pixelColor(m_last_mouse_pos);
+    m_color_signal(m_current_color);
   }
 }
 
 void ColorSelectorValueSlider::mouseMoveEvent(QMouseEvent* event) {
   if(event->buttons() == Qt::LeftButton) {
     set_mouse_pos(event->pos());
-    m_color_signal(m_gradient.pixelColor(m_last_mouse_pos));
+    m_current_color = m_gradient.pixelColor(m_last_mouse_pos);
+    m_color_signal(m_current_color);
   }
 }
 
@@ -78,9 +85,11 @@ void ColorSelectorValueSlider::resizeEvent(QResizeEvent* event) {
 }
 
 QPoint ColorSelectorValueSlider::get_mouse_pos(const QColor& color) {
-  for(auto i = 0; i < m_gradient.width(); ++i) {
-    if(m_gradient.pixelColor(i, 0).value() == color.value()) {
-      return {};
+  for(auto x = 0; x < m_gradient.width(); ++x) {
+    for(auto y = 0; y < m_gradient.height(); ++y) {
+      if(m_gradient.pixelColor(x, y).value() == color.value()) {
+        return {x, y};
+      }
     }
   }
   return m_last_mouse_pos;

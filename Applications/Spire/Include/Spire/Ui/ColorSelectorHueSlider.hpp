@@ -28,6 +28,7 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
+      QColor m_current_color;
       QGradientStops m_gradient_stops;
       QImage m_gradient;
       QImage m_handle;
