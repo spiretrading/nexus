@@ -42,7 +42,7 @@ ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
 }
 
 void ColorSelectorHueSlider::set_color(const QColor& color) {
-  if(color.red() == color.green() && color.green() == color.blue()) {
+  if(color.hue() == -1) {
     return;
   }
   m_current_color = color;

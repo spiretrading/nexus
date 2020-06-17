@@ -35,7 +35,12 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
 }
 
 void ColorSelectorValueSlider::set_color(const QColor& color) {
-  m_current_color = color;
+  if(color.hue() == -1) {
+    m_current_color = QColor::fromHsv(m_current_color.hue(),
+      color.saturation(), color.value());
+  } else {
+    m_current_color = color;
+  }
   update_gradient();
   m_last_mouse_pos = get_mouse_pos(color);
   update();
