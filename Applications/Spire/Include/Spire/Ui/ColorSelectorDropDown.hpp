@@ -24,7 +24,6 @@ namespace Spire {
         const QColor& color);
       void add_recent_color_button(QHBoxLayout* layout, const QColor& color);
       void on_color_button_clicked(const QColor& color);
-      void on_recent_color_button_clicked(const QColor& color);
   };
 }
 
