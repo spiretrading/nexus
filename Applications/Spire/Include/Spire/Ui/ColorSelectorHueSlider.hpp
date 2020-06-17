@@ -17,6 +17,8 @@ namespace Spire {
 
       void set_color(const QColor& color);
 
+      void set_hue(int hue);
+
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 
@@ -34,7 +36,7 @@ namespace Spire {
       QImage m_handle;
       int m_last_mouse_x;
 
-      int get_mouse_x(const QColor& color);
+      int get_mouse_x(int hue);
       void set_mouse_x(int x);
   };
 }

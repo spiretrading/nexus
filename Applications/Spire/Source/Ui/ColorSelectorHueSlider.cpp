@@ -3,6 +3,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
@@ -14,14 +15,14 @@ namespace {
     return y;
   }
 
-  auto create_gradient_image(int width, int height,
-      const QGradientStops& stops) {
+  auto create_gradient_image(int width, int height) {
     auto image = QImage(width, height, QImage::Format_RGB32);
-    auto painter = QPainter(&image);
-    auto gradient = QLinearGradient(0, height / 2, width, height);
-    gradient.setStops(stops);
-    painter.fillRect(0, 0, width, height, gradient);
-    painter.end();
+    for(auto x = 0; x < image.width(); ++x) {
+      auto hue = static_cast<int>(map_to(x, 0, image.width() - 1, 0.0, 359.0));
+      for(auto y = 0; y < image.height(); ++y) {
+        image.setPixelColor(x, y, QColor::fromHsv(hue, 255, 255));
+      }
+    }
     return image;
   }
 }
@@ -36,8 +37,8 @@ ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
       {0.16, QColor("#0000FF")}, {0.32, QColor("#00FFFF")},
       {0.48, QColor("#00FF00")}, {0.64, QColor("#FFFF00")},
       {0.8, QColor("#FF0000")}, {1.0, QColor("#FF00FF")}});
-  m_gradient = create_gradient_image(width(), height(), m_gradient_stops);
-  m_last_mouse_x = get_mouse_x(color);
+  m_gradient = create_gradient_image(width(), height());
+  m_last_mouse_x = get_mouse_x(color.hue());
 }
 
 void ColorSelectorHueSlider::set_color(const QColor& color) {
@@ -45,8 +46,12 @@ void ColorSelectorHueSlider::set_color(const QColor& color) {
     return;
   }
   m_current_color = color;
-  m_last_mouse_x = get_mouse_x(color);
+  m_last_mouse_x = get_mouse_x(color.hue());
   update();
+}
+
+void ColorSelectorHueSlider::set_hue(int hue) {
+
 }
 
 connection ColorSelectorHueSlider::connect_color_signal(
@@ -81,17 +86,12 @@ void ColorSelectorHueSlider::paintEvent(QPaintEvent* event) {
 }
 
 void ColorSelectorHueSlider::resizeEvent(QResizeEvent* event) {
-  m_gradient = create_gradient_image(width() - 2, height() - 2,
-    m_gradient_stops);
+  m_gradient = create_gradient_image(width() - 2, height() - 2);
 }
 
-int ColorSelectorHueSlider::get_mouse_x(const QColor& color) {
-  for(auto i = 0; i < m_gradient.width(); ++i) {
-    if(m_gradient.pixelColor(i, 0).hue() == color.hue()) {
-      return i;
-    }
-  }
-  return m_last_mouse_x;
+int ColorSelectorHueSlider::get_mouse_x(int hue) {
+  return static_cast<int>(map_to(hue, 0, 255, static_cast<double>(1),
+    static_cast<double>(m_gradient.width() - 1)));
 }
 
 void ColorSelectorHueSlider::set_mouse_x(int x) {

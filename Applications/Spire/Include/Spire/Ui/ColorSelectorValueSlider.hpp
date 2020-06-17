@@ -17,9 +17,9 @@ namespace Spire {
       ColorSelectorValueSlider(const QColor& current_color,
         QWidget* parent = nullptr);
 
-      void set_hue(int hue);
-
       void set_color(const QColor& color);
+
+      void set_hue(int hue);
 
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;

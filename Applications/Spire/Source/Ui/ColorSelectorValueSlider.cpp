@@ -34,17 +34,17 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
   m_last_mouse_pos = get_mouse_pos(m_current_color);
 }
 
-void ColorSelectorValueSlider::set_hue(int hue) {
-  m_current_color.setHsv(hue, m_current_color.saturation(),
-    m_current_color.value());
-  update_gradient();
-  update();
-}
-
 void ColorSelectorValueSlider::set_color(const QColor& color) {
   m_current_color = color;
   update_gradient();
   m_last_mouse_pos = get_mouse_pos(color);
+  update();
+}
+
+void ColorSelectorValueSlider::set_hue(int hue) {
+  m_current_color.setHsv(hue, m_current_color.saturation(),
+    m_current_color.value());
+  update_gradient();
   update();
 }
 
