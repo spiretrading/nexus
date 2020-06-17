@@ -86,7 +86,7 @@ void ColorSelectorHueSlider::resizeEvent(QResizeEvent* event) {
 }
 
 int ColorSelectorHueSlider::get_mouse_x(int hue) {
-  return static_cast<int>(map_to(hue, 0, 255, static_cast<double>(1),
+  return static_cast<int>(map_to(hue, 0, 359, static_cast<double>(1),
     static_cast<double>(m_gradient.width() - 1)));
 }
 
