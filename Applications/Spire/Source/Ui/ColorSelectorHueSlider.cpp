@@ -50,10 +50,6 @@ void ColorSelectorHueSlider::set_color(const QColor& color) {
   update();
 }
 
-void ColorSelectorHueSlider::set_hue(int hue) {
-
-}
-
 connection ColorSelectorHueSlider::connect_color_signal(
     const ColorSignal::slot_type& slot) const {
   return m_color_signal.connect(slot);
