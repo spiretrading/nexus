@@ -39,6 +39,8 @@ namespace Spire {
 
       QPoint get_mouse_pos(const QColor& color);
       void set_mouse_pos(const QPoint& pos);
+      void update_gradient();
+      void on_color_changed();
   };
 }
 

@@ -4,26 +4,22 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  auto create_gradient_image(int width, int height, const QColor& color) {
-    auto scene = QGraphicsScene(0, 0, width, height);
-    auto color_gradient = QLinearGradient(0, 0, width, 0);
-    color_gradient.setColorAt(0, QColor(255,255,255));
-    color_gradient.setColorAt(1, color);
-    scene.setBackgroundBrush(color_gradient);
-    auto black_gradient = QLinearGradient(0, 0, 0, height);
-    black_gradient.setColorAt(0, QColor(0,0,0,0));
-    black_gradient.setColorAt(1, QColor(0,0,0,255));
-    scene.setForegroundBrush(black_gradient);
-    auto image = QImage(scene.sceneRect().size().toSize(),
-      QImage::Format_RGB32);
-    auto painter = QPainter(&image);
-    scene.render(&painter);
+  auto create_gradient_image(int width, int height, int hue) {
+    auto image = QImage(width, height, QImage::Format_RGB32);
+    for(auto x = 0; x < image.width(); ++x) {
+      for(auto y = 0; y < image.height(); ++y) {
+        image.setPixelColor(x, height - 1 - y, QColor::fromHsv(hue,
+          static_cast<int>(map_to(x, 0, width - 1, 0.0, 255.0)),
+          static_cast<int>(map_to(y, 0, height - 1, 0.0, 255.0))));
+      }
+    }
     return image;
   }
 }
@@ -34,21 +30,20 @@ ColorSelectorValueSlider::ColorSelectorValueSlider(const QColor& current_color,
       m_current_color(current_color),
       m_handle(
         imageFromSvg(":/Icons/color-picker-cursor.svg", scale(14, 14))) {
-  m_gradient = create_gradient_image(width(), height(), m_current_color);
+  update_gradient();
   m_last_mouse_pos = get_mouse_pos(m_current_color);
 }
 
 void ColorSelectorValueSlider::set_hue(int hue) {
   m_current_color.setHsv(hue, m_current_color.saturation(),
     m_current_color.value());
-  m_gradient = create_gradient_image(width(), height(), m_current_color);
+  update_gradient();
   update();
 }
 
 void ColorSelectorValueSlider::set_color(const QColor& color) {
-  // TODO: if greyscale, only update cursor position, not gradient.
   m_current_color = color;
-  m_gradient = create_gradient_image(width(), height(), m_current_color);
+  update_gradient();
   m_last_mouse_pos = get_mouse_pos(color);
   update();
 }
@@ -61,16 +56,14 @@ connection ColorSelectorValueSlider::connect_color_signal(
 void ColorSelectorValueSlider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     set_mouse_pos(event->pos());
-    m_current_color = m_gradient.pixelColor(m_last_mouse_pos);
-    m_color_signal(m_current_color);
+    on_color_changed();
   }
 }
 
 void ColorSelectorValueSlider::mouseMoveEvent(QMouseEvent* event) {
   if(event->buttons() == Qt::LeftButton) {
     set_mouse_pos(event->pos());
-    m_current_color = m_gradient.pixelColor(m_last_mouse_pos);
-    m_color_signal(m_current_color);
+    on_color_changed();
   }
 }
 
@@ -85,24 +78,34 @@ void ColorSelectorValueSlider::paintEvent(QPaintEvent* event) {
 }
 
 void ColorSelectorValueSlider::resizeEvent(QResizeEvent* event) {
-  m_gradient = create_gradient_image(width() - 2, height() - 2,
-    m_current_color);
+  update_gradient();
 }
 
 QPoint ColorSelectorValueSlider::get_mouse_pos(const QColor& color) {
-  for(auto x = 0; x < m_gradient.width(); ++x) {
-    for(auto y = 0; y < m_gradient.height(); ++y) {
-      if(m_gradient.pixelColor(x, y).saturation() == color.saturation() &&
-          m_gradient.pixelColor(x, y).value() == color.value()) {
-        return {x, y};
-      }
-    }
-  }
-  return {-10, -10};//m_last_mouse_pos;
+  return { static_cast<int>(map_to(color.saturation(), 0, 255, 1.0,
+    static_cast<double>(m_gradient.width() - 1))),
+    m_gradient.height() - static_cast<int>(map_to(color.value(), 0, 255, 1.0,
+    static_cast<double>(m_gradient.height() - 1)))};
 }
 
 void ColorSelectorValueSlider::set_mouse_pos(const QPoint& pos) {
-  m_last_mouse_pos.setX(std::max(1, std::min(pos.x(), width() - 1)));
-  m_last_mouse_pos.setY(std::max(1, std::min(pos.y(), height() - 1)));
+  m_last_mouse_pos.setX(std::max(1, std::min(pos.x(),
+    m_gradient.width() - 1)));
+  m_last_mouse_pos.setY(std::max(1, std::min(pos.y(),
+    m_gradient.height() - 1)));
   update();
+}
+
+void ColorSelectorValueSlider::update_gradient() {
+  m_gradient = create_gradient_image(width() - 2, height() - 2,
+    m_current_color.hue());
+}
+
+void ColorSelectorValueSlider::on_color_changed() {
+  m_current_color = QColor::fromHsv(m_current_color.hue(),
+    static_cast<int>(map_to(m_last_mouse_pos.x(), 1, m_gradient.width() - 1,
+      0.0, 255.0)),
+    255 - static_cast<int>(map_to(m_last_mouse_pos.y(), 1,
+      m_gradient.height() - 1, 0.0, 255.0)));
+  m_color_signal(m_current_color);
 }
