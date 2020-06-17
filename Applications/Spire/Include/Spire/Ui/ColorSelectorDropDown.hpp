@@ -6,6 +6,7 @@
 #include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorHueSlider.hpp"
 #include "Spire/Ui/ColorSelectorValueSlider.hpp"
+#include "Spire/Ui/DropShadow.hpp"
 
 namespace Spire {
 
@@ -19,6 +20,7 @@ namespace Spire {
       ColorSelectorValueSlider* m_color_value_slider;
       ColorSelectorHueSlider* m_color_hue_slider;
       ColorSelectorHexInputWidget* m_hex_input;
+      DropShadow* m_drop_shadow;
 
       void add_basic_color_button(QGridLayout* layout, int x, int y,
         const QColor& color);

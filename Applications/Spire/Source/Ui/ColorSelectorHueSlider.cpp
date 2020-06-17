@@ -33,11 +33,7 @@ ColorSelectorHueSlider::ColorSelectorHueSlider(const QColor& color,
       m_current_color(color),
       m_handle(
         imageFromSvg(":/Icons/color-picker-cursor.svg", scale(14, 14))) {
-  m_gradient_stops = QGradientStops({{0.0, QColor("#FF00FF")},
-      {0.16, QColor("#0000FF")}, {0.32, QColor("#00FFFF")},
-      {0.48, QColor("#00FF00")}, {0.64, QColor("#FFFF00")},
-      {0.8, QColor("#FF0000")}, {1.0, QColor("#FF00FF")}});
-  m_gradient = create_gradient_image(width(), height());
+  update_gradient();
   m_last_mouse_x = get_mouse_x(color.hue());
 }
 
@@ -58,16 +54,14 @@ connection ColorSelectorHueSlider::connect_color_signal(
 void ColorSelectorHueSlider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     set_mouse_x(event->x());
-    m_current_color = m_gradient.pixelColor(m_last_mouse_x, 0);
-    m_color_signal(m_current_color);
+    on_color_changed();
   }
 }
 
 void ColorSelectorHueSlider::mouseMoveEvent(QMouseEvent* event) {
   if(event->buttons() == Qt::LeftButton) {
     set_mouse_x(event->x());
-    m_current_color = m_gradient.pixelColor(m_last_mouse_x, 0);
-    m_color_signal(m_current_color);
+    on_color_changed();
   }
 }
 
@@ -82,7 +76,7 @@ void ColorSelectorHueSlider::paintEvent(QPaintEvent* event) {
 }
 
 void ColorSelectorHueSlider::resizeEvent(QResizeEvent* event) {
-  m_gradient = create_gradient_image(width() - 2, height() - 2);
+  update_gradient();
 }
 
 int ColorSelectorHueSlider::get_mouse_x(int hue) {
@@ -93,4 +87,13 @@ int ColorSelectorHueSlider::get_mouse_x(int hue) {
 void ColorSelectorHueSlider::set_mouse_x(int x) {
   m_last_mouse_x = std::max(1, std::min(x, m_gradient.width() - 1));
   update();
+}
+
+void ColorSelectorHueSlider::update_gradient() {
+  m_gradient = create_gradient_image(width() - 2, height() - 2);
+}
+
+void ColorSelectorHueSlider::on_color_changed() {
+  m_current_color = m_gradient.pixelColor(m_last_mouse_x, 0);
+  m_color_signal(m_current_color);
 }

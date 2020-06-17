@@ -11,12 +11,18 @@ namespace Spire {
 
       ColorSelectorButton(const QColor& current_color,
         QWidget* parent = nullptr);
-  
+
+      void set_color(const QColor& color);
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       FlatButton* m_button;
       ColorSelectorDropDown* m_dropdown;
 
-      void set_button_color(const QColor& color);
+      void move_color_dropdown();
+      void on_button_clicked();
   };
 }
 

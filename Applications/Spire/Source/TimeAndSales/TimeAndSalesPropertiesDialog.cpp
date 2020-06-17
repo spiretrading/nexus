@@ -9,7 +9,6 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -95,12 +94,12 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(text_color_label);
   color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_text_color_button = new FlatButton(this);
-  m_text_color_button->connect_clicked_signal(
-    [=] { set_text_color(); });
-  set_color_button_stylesheet(m_text_color_button,
-    properties.get_text_color(
-    PriceRange::UNKNOWN));
+  m_text_color_button = new ColorSelectorButton(properties.get_text_color(
+    PriceRange::UNKNOWN), this);
+  //m_text_color_button->connect_clicked_signal(
+  //  [=] { set_text_color(); });
+  //set_color_button_stylesheet(m_text_color_button,
+  //  );
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
@@ -109,11 +108,11 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(band_color_label);
   color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_band_color_button = new FlatButton(this);
-  m_band_color_button->connect_clicked_signal(
-    [=] { set_band_color(); });
-  set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
-    PriceRange::UNKNOWN));
+  m_band_color_button = new ColorSelectorButton(properties.get_band_color(
+    PriceRange::UNKNOWN), this);
+  //m_band_color_button->connect_clicked_signal(
+  //  [=] { set_band_color(); });
+  //set_color_button_stylesheet(m_band_color_button, );
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 26);
   color_settings_layout->addStretch(42);
@@ -305,10 +304,12 @@ void TimeAndSalesPropertiesDialog::set_color_button_stylesheet(
 void TimeAndSalesPropertiesDialog::set_color_settings_stylesheet(
     int band_index) {
   auto i = static_cast<PriceRange>(band_index);
-  set_color_button_stylesheet(m_band_color_button,
-    m_properties.get_band_color(i));
-  set_color_button_stylesheet(m_text_color_button,
-    m_properties.get_text_color(i));
+  //set_color_button_stylesheet(m_band_color_button,
+  //  m_properties.get_band_color(i));
+  //set_color_button_stylesheet(m_text_color_button,
+  //  m_properties.get_text_color(i));
+  m_band_color_button->set_color(m_properties.get_band_color(i));
+  m_text_color_button->set_color(m_properties.get_text_color(i));
 }
 
 void TimeAndSalesPropertiesDialog::set_properties(

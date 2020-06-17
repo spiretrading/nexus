@@ -64,9 +64,10 @@ namespace {
 
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint) {
+  setAttribute(Qt::WA_ShowWithoutActivating);
+  m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
-  setStyleSheet("background-color: #FFFFFF;");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(HORIZONTAL_PADDING(), VERTICAL_PADDING(),
     HORIZONTAL_PADDING(), VERTICAL_PADDING());
@@ -114,12 +115,14 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
   m_color_value_slider = new ColorSelectorValueSlider(current_color, this);
+  m_color_value_slider->setFocusPolicy(Qt::NoFocus);
   m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(current_color, this);
+  m_color_hue_slider->setFocusPolicy(Qt::NoFocus);
   m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
