@@ -75,6 +75,10 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
         color.setNamedColor(QString("#%1").arg(m_line_edit->text()));
         m_color_name = color_name(color);
         m_color_signal(color);
+        if(text.length() == 3) {
+          m_line_edit->setText(m_color_name);
+        }
+        m_line_edit->clearFocus();
       } else {
         m_line_edit->setText(m_color_name);
       }
