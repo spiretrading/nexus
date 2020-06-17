@@ -68,6 +68,12 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
+  setObjectName("color_selector_drop_down");
+  setStyleSheet(R"(
+    #color_selector_drop_down {
+      background-color: #FFFFFF;
+      border: 1px solid #C8C8C8;
+    })");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(HORIZONTAL_PADDING(), VERTICAL_PADDING(),
     HORIZONTAL_PADDING(), VERTICAL_PADDING());
