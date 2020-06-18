@@ -30,6 +30,7 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
   auto hex_label = new QLabel(tr("HEX"), this);
   auto label_style = QString(R"(
       QLabel {
+        background-color: #FFFFFF;
         font-family: Roboto;
         font-size: %1px;
       }
