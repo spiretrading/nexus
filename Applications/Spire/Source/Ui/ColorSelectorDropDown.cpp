@@ -89,6 +89,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   layout->addLayout(horizontal_label_layout);
   auto label_style = QString(R"(
       QLabel {
+        background-color: #FFFFFF;
         font-family: Roboto;
         font-size: %1px;
       }
