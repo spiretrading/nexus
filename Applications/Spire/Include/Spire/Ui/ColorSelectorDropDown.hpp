@@ -3,6 +3,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorHueSlider.hpp"
 #include "Spire/Ui/ColorSelectorValueSlider.hpp"
@@ -13,10 +14,22 @@ namespace Spire {
   class ColorSelectorDropDown : public QWidget {
     public:
 
+      using ColorSignal = Signal<void (const QColor& color)>;
+
       ColorSelectorDropDown(const QColor& current_color,
         QWidget* parent = nullptr);
 
+      boost::signals2::connection connect_color_signal(
+        const ColorSignal::slot_type& slot) const;
+
+    protected:
+      void childEvent(QChildEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
+      mutable ColorSignal m_color_signal;
+      QColor m_original_color;
+      QColor m_current_color;
       ColorSelectorValueSlider* m_color_value_slider;
       ColorSelectorHueSlider* m_color_hue_slider;
       ColorSelectorHexInputWidget* m_hex_input;
@@ -26,6 +39,7 @@ namespace Spire {
         const QColor& color);
       void add_recent_color_button(QHBoxLayout* layout, const QColor& color);
       void on_color_button_clicked(const QColor& color);
+      void on_color_selected(const QColor& color);
   };
 }
 

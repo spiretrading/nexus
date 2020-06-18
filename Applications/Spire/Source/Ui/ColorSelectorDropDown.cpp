@@ -1,9 +1,12 @@
 #include "Spire/Ui/ColorSelectorDropDown.hpp"
+#include <QChildEvent>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/FlatButton.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -64,7 +67,9 @@ namespace {
 
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint) {
+    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
+      m_original_color(current_color),
+      m_current_color(current_color) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
@@ -120,26 +125,29 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
-  m_color_value_slider = new ColorSelectorValueSlider(current_color, this);
+  m_color_value_slider = new ColorSelectorValueSlider(m_current_color, this);
   m_color_value_slider->setFocusPolicy(Qt::NoFocus);
   m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
+    on_color_selected(color);
   });
   color_picker_layout->addWidget(m_color_value_slider);
-  m_color_hue_slider = new ColorSelectorHueSlider(current_color, this);
+  m_color_hue_slider = new ColorSelectorHueSlider(m_current_color, this);
   m_color_hue_slider->setFocusPolicy(Qt::NoFocus);
   m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
     m_hex_input->set_color(color);
+    on_color_selected(color);
   });
   color_picker_layout->addWidget(m_color_hue_slider);
-  m_hex_input = new ColorSelectorHexInputWidget(current_color, this);
+  m_hex_input = new ColorSelectorHexInputWidget(m_current_color, this);
   m_hex_input->setFixedSize(scale(122, 26));
   m_hex_input->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_color(color);
     m_color_hue_slider->set_color(color);
+    on_color_selected(color);
   });
   color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
@@ -151,14 +159,34 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   recent_colors_layout->setContentsMargins(0, scale_height(10), 0, 0);
   recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
   layout->addLayout(recent_colors_layout);
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4b23a0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+}
+
+connection ColorSelectorDropDown::connect_color_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_color_signal.connect(slot);
+}
+
+void ColorSelectorDropDown::childEvent(QChildEvent* event) {
+  if(event->added()) {
+    event->child()->installEventFilter(this);
+  }
+}
+bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto e = static_cast<QKeyEvent*>(event);
+    if(e->key() == Qt::Key_Escape) {
+      hide();
+    }
+  }
+  return false;
 }
 
 void ColorSelectorDropDown::add_basic_color_button(QGridLayout* layout, int x,
@@ -183,4 +211,10 @@ void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
   m_color_hue_slider->set_color(color);
   m_color_value_slider->set_color(color);
   m_hex_input->set_color(color);
+  on_color_selected(color);
+}
+
+void ColorSelectorDropDown::on_color_selected(const QColor& color) {
+  m_current_color = color;
+  m_color_signal(m_current_color);
 }

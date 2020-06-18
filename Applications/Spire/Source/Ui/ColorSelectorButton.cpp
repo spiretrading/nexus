@@ -1,6 +1,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include <QEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 
 using namespace Spire;
 
@@ -13,8 +14,12 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   m_button = new FlatButton(this);
   set_color(current_color);
   m_button->connect_clicked_signal([=] { on_button_clicked(); });
+  m_button->installEventFilter(this);
   layout->addWidget(m_button);
   m_dropdown = new ColorSelectorDropDown(current_color, this);
+  m_dropdown->connect_color_signal([=] (const auto& color) {
+    on_color_selected(color);
+  });
   m_dropdown->hide();
   window()->installEventFilter(this);
 }
@@ -41,6 +46,15 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::MouseButtonPress) {
       m_dropdown->hide();
     }
+  } else if(watched == m_button) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape) {
+        if(m_dropdown->isVisible()) {
+          m_dropdown->hide();
+        }
+      }
+    }
   }
   return false;
 }
@@ -62,4 +76,8 @@ void ColorSelectorButton::on_button_clicked() {
     move_color_dropdown();
     m_dropdown->show();
   }
+}
+
+void ColorSelectorButton::on_color_selected(const QColor& color) {
+  set_color(color);
 }
