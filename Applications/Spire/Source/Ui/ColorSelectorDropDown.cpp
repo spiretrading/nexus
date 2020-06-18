@@ -68,9 +68,7 @@ namespace {
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
-      m_original_color(current_color),
       m_current_color(current_color) {
-  setAttribute(Qt::WA_ShowWithoutActivating);
   m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
   setObjectName("color_selector_drop_down");
@@ -106,21 +104,21 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   horizontal_color_layout->setContentsMargins({});
   horizontal_color_layout->setSpacing(0);
   layout->addLayout(horizontal_color_layout);
-  auto basic_colors_layout = new QGridLayout();
-  basic_colors_layout->setContentsMargins(0, scale_height(10), 0,
+  m_basic_colors_layout = new QGridLayout();
+  m_basic_colors_layout->setContentsMargins(0, scale_height(10), 0,
     scale_height(36));
-  basic_colors_layout->setHorizontalSpacing(HORIZONTAL_PADDING());
-  basic_colors_layout->setVerticalSpacing(VERTICAL_PADDING());
-  horizontal_color_layout->addLayout(basic_colors_layout);
-  add_basic_color_button(basic_colors_layout, 0, 0, QColor("#F50000"));
-  add_basic_color_button(basic_colors_layout, 0, 1, QColor("#FF8900"));
-  add_basic_color_button(basic_colors_layout, 0, 2, QColor("#FFE200"));
-  add_basic_color_button(basic_colors_layout, 1, 0, QColor("#2BE757"));
-  add_basic_color_button(basic_colors_layout, 1, 1, QColor("#0065FD"));
-  add_basic_color_button(basic_colors_layout, 1, 2, QColor("#BA19E9"));
-  add_basic_color_button(basic_colors_layout, 2, 0, QColor("#FF00CC"));
-  add_basic_color_button(basic_colors_layout, 2, 1, QColor("#FFFFFF"));
-  add_basic_color_button(basic_colors_layout, 2, 2, QColor("#000000"));
+  m_basic_colors_layout->setHorizontalSpacing(HORIZONTAL_PADDING());
+  m_basic_colors_layout->setVerticalSpacing(VERTICAL_PADDING());
+  horizontal_color_layout->addLayout(m_basic_colors_layout);
+  add_basic_color_button(0, 0, QColor("#F50000"));
+  add_basic_color_button(0, 1, QColor("#FF8900"));
+  add_basic_color_button(0, 2, QColor("#FFE200"));
+  add_basic_color_button(1, 0, QColor("#2BE757"));
+  add_basic_color_button(1, 1, QColor("#0065FD"));
+  add_basic_color_button(1, 2, QColor("#BA19E9"));
+  add_basic_color_button(2, 0, QColor("#FF00CC"));
+  add_basic_color_button(2, 1, QColor("#FFFFFF"));
+  add_basic_color_button(2, 2, QColor("#000000"));
   horizontal_color_layout->addStretch(1);
   auto color_picker_layout = new QVBoxLayout();
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
@@ -156,18 +154,18 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   recent_colors_label->setFixedHeight(scale_height(LABEL_HEIGHT()));
   recent_colors_label->setStyleSheet(label_style);
   layout->addWidget(recent_colors_label);
-  auto recent_colors_layout = new QHBoxLayout();
-  recent_colors_layout->setContentsMargins(0, scale_height(10), 0, 0);
-  recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
-  layout->addLayout(recent_colors_layout);
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
-  add_recent_color_button(recent_colors_layout, QColor("#4B23A0"));
+  m_recent_colors_layout = new QHBoxLayout();
+  m_recent_colors_layout->setContentsMargins(0, scale_height(10), 0, 0);
+  m_recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
+  layout->addLayout(m_recent_colors_layout);
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
+  add_recent_color_button(QColor("#4B23A0"));
 }
 
 connection ColorSelectorDropDown::connect_color_signal(
@@ -187,25 +185,24 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
       hide();
     }
   }
-  return false;
+  return QWidget::eventFilter(watched, event);
 }
 
-void ColorSelectorDropDown::add_basic_color_button(QGridLayout* layout, int x,
-    int y, const QColor& color) {
-  auto button = create_color_button(color, this);
-  button->connect_clicked_signal([=, color = std::move(color)] {
-    on_color_button_clicked(color);
-  });
-  layout->addWidget(button, x, y);
-}
-
-void ColorSelectorDropDown::add_recent_color_button(QHBoxLayout* layout,
+void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
   button->connect_clicked_signal([=, color = std::move(color)] {
     on_color_button_clicked(color);
   });
-  layout->addWidget(button);
+  m_basic_colors_layout->addWidget(button, x, y);
+}
+
+void ColorSelectorDropDown::add_recent_color_button(const QColor& color) {
+  auto button = create_color_button(color, this);
+  button->connect_clicked_signal([=, color = std::move(color)] {
+    on_color_button_clicked(color);
+  });
+  m_recent_colors_layout->addWidget(button);
 }
 
 void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {

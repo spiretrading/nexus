@@ -3,11 +3,13 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 
+using namespace boost::signals2;
 using namespace Spire;
 
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_original_color(current_color) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -34,6 +36,11 @@ void ColorSelectorButton::set_color(const QColor& color) {
   m_button->set_focus_style(style);
 }
 
+connection ColorSelectorButton::connect_color_signal(
+    const ColorSignal::slot_type& slot) const {
+  return m_color_signal.connect(slot);
+}
+
 bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
   if(watched == window()) {
     if(event->type() == QEvent::Move) {
@@ -42,21 +49,33 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::WindowDeactivate &&
         !m_dropdown->isActiveWindow()) {
-      m_dropdown->hide();
+      hide_dropdown();
     } else if(event->type() == QEvent::MouseButtonPress) {
-      m_dropdown->hide();
+      hide_dropdown();
     }
   } else if(watched == m_button) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Escape) {
         if(m_dropdown->isVisible()) {
-          m_dropdown->hide();
+          hide_dropdown();
         }
       }
+    } else if(event->type() == QEvent::FocusOut &&
+        !m_dropdown->isActiveWindow()) {
+      hide_dropdown();
+    }
+  } else if(watched == m_dropdown) {
+    if(event->type() == QEvent::Hide) {
+      hide_dropdown();
     }
   }
-  return false;
+  return QWidget::eventFilter(watched, event);
+}
+
+void ColorSelectorButton::hide_dropdown() {
+  m_dropdown->hide();
+  // TODO: update recent colors if selected_color is different
 }
 
 void ColorSelectorButton::move_color_dropdown() {
@@ -70,8 +89,7 @@ void ColorSelectorButton::move_color_dropdown() {
 
 void ColorSelectorButton::on_button_clicked() {
   if(m_dropdown->isVisible()) {
-    // TODO: update recent colors
-    m_dropdown->hide();
+    hide_dropdown();
   } else {
     move_color_dropdown();
     m_dropdown->show();
@@ -80,4 +98,5 @@ void ColorSelectorButton::on_button_clicked() {
 
 void ColorSelectorButton::on_color_selected(const QColor& color) {
   set_color(color);
+  m_color_signal(color);
 }

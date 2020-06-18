@@ -28,16 +28,16 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      QColor m_original_color;
       QColor m_current_color;
+      QGridLayout* m_basic_colors_layout;
+      QHBoxLayout* m_recent_colors_layout;
       ColorSelectorValueSlider* m_color_value_slider;
       ColorSelectorHueSlider* m_color_hue_slider;
       ColorSelectorHexInputWidget* m_hex_input;
       DropShadow* m_drop_shadow;
 
-      void add_basic_color_button(QGridLayout* layout, int x, int y,
-        const QColor& color);
-      void add_recent_color_button(QHBoxLayout* layout, const QColor& color);
+      void add_basic_color_button(int x, int y, const QColor& color);
+      void add_recent_color_button(const QColor& color);
       void on_color_button_clicked(const QColor& color);
       void on_color_selected(const QColor& color);
   };
