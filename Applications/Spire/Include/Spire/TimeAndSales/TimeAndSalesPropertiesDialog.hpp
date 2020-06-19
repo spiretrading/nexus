@@ -21,6 +21,9 @@ namespace Spire {
       //! Signals that properties should be applied to all windows.
       using ApplyAllSignal = Signal<void ()>;
 
+      //! Signals that the recent colors have changed.
+      using RecentColorsSignal = Signal<void (const RecentColors& colors)>;
+
       //! Signals that properties should be saved as the default.
       using SaveDefaultSignal = Signal<void ()>;
 
@@ -46,6 +49,10 @@ namespace Spire {
       boost::signals2::connection connect_apply_all_signal(
         const ApplyAllSignal::slot_type& slot) const;
 
+      //! Connects a slot to the recent colors signal.
+      boost::signals2::connection connect_recent_colors_signal(
+        const RecentColorsSignal::slot_type& slot) const;
+
       //! Connects a slot to the save default signal.
       boost::signals2::connection connect_save_default_signal(
         const SaveDefaultSignal::slot_type& slot) const;
@@ -57,6 +64,7 @@ namespace Spire {
     private:
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
+      mutable RecentColorsSignal m_recent_colors_signal;
       mutable SaveDefaultSignal m_save_default_signal;
       TimeAndSalesProperties m_properties;
       RecentColors m_recent_colors;
@@ -66,13 +74,12 @@ namespace Spire {
       CheckBox* m_show_grid_check_box;
 
       void set_band_color(const QColor& color);
-      void set_color_button_stylesheet(FlatButton* button,
-        const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();
       void set_properties(const TimeAndSalesProperties& properties);
       void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
+      void on_recent_colors_changed(const RecentColors& recent_colors);
   };
 }
 

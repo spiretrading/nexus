@@ -69,6 +69,7 @@ namespace {
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     const RecentColors& recent_colors, QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
+      m_recent_colors(recent_colors),
       m_current_color(current_color),
       m_original_color(current_color) {
   m_drop_shadow = new DropShadow(true, false, this);
@@ -160,16 +161,23 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_recent_colors_layout->setContentsMargins(0, scale_height(10), 0, 0);
   m_recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
   layout->addLayout(m_recent_colors_layout);
-  auto colors = recent_colors.get_colors();
-  for(auto i = std::size_t(0); i < colors.size(); ++i) {
-    add_recent_color_button(i, colors[i]);
-  }
+  update_recent_colors_layout();
 }
 
 void ColorSelectorDropDown::set_color(const QColor& color) {
   m_color_hue_slider->set_color(color);
   m_color_value_slider->set_color(color);
   m_hex_input->set_color(color);
+}
+
+const RecentColors& ColorSelectorDropDown::get_recent_colors() const {
+  return m_recent_colors;
+}
+
+void ColorSelectorDropDown::set_recent_colors(
+    const RecentColors& recent_colors) {
+  m_recent_colors = recent_colors;
+  update_recent_colors_layout();
 }
 
 connection ColorSelectorDropDown::connect_color_signal(
@@ -194,16 +202,9 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
 
 void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
   if(m_current_color != m_original_color) {
-    auto first_button = static_cast<FlatButton*>(
-      m_recent_colors_layout->itemAt(0)->widget());
-    if(first_button->get_style().m_background_color != m_current_color) {
-      auto last_button = m_recent_colors_layout->takeAt(
-        m_recent_colors_layout->count() - 1);
-      delete last_button->widget();
-      delete last_button;
-      add_recent_color_button(0, m_current_color);
-      m_original_color = m_current_color;
-    }
+    m_recent_colors.add_color(m_current_color);
+    m_original_color = m_current_color;
+    update_recent_colors_layout();
   }
 }
 
@@ -223,6 +224,17 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
     on_color_button_clicked(color);
   });
   m_recent_colors_layout->insertWidget(index, button);
+}
+
+void ColorSelectorDropDown::update_recent_colors_layout() {
+  while(auto item = m_recent_colors_layout->takeAt(0)) {
+    delete item->widget();
+    delete item;
+  }
+  auto colors = m_recent_colors.get_colors();
+  for(auto i = std::size_t(0); i < colors.size(); ++i) {
+    add_recent_color_button(i, colors[i]);
+  }
 }
 
 void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {

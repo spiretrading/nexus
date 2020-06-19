@@ -100,6 +100,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     PriceRange::UNKNOWN), m_recent_colors, this);
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
+  m_text_color_button->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
@@ -112,6 +114,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     PriceRange::UNKNOWN), m_recent_colors, this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
+  m_band_color_button->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 26);
   color_settings_layout->addStretch(42);
@@ -244,6 +248,11 @@ connection TimeAndSalesPropertiesDialog::connect_apply_all_signal(
   return m_apply_all_signal.connect(slot);
 }
 
+connection TimeAndSalesPropertiesDialog::connect_recent_colors_signal(
+    const RecentColorsSignal::slot_type& slot) const {
+  return m_recent_colors_signal.connect(slot);
+}
+
 connection TimeAndSalesPropertiesDialog::connect_save_default_signal(
     const SaveDefaultSignal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
@@ -354,4 +363,11 @@ void TimeAndSalesPropertiesDialog::update_band_list_stylesheet(
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_properties.get_band_color(i).name())
         .arg(m_properties.get_text_color(i).name()));
+}
+
+void TimeAndSalesPropertiesDialog::on_recent_colors_changed(
+    const RecentColors& recent_colors) {
+  m_band_color_button->set_recent_colors(recent_colors);
+  m_text_color_button->set_recent_colors(recent_colors);
+  m_recent_colors_signal(recent_colors);
 }

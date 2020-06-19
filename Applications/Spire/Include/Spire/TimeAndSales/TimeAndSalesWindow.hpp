@@ -27,6 +27,13 @@ namespace Spire {
       */
       using ChangeSecuritySignal = Signal<void (const Nexus::Security& s)>;
 
+      //! Signals that the recent colors have changed.
+      /*!
+        \param recent_colors The updated recent colors.
+      */
+      using RecentColorsSignal =
+        Signal<void (const RecentColors& recent_colors)>;
+
       //! Constructs a time and sales window.
       /*!
         \param properties The display properties.
@@ -46,11 +53,13 @@ namespace Spire {
       //! Sets the display properties.
       void set_properties(const TimeAndSalesProperties& properties);
 
-      void set_recent_colors(const RecentColors& recent_colors);
-
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
+
+      //! Connects a slot to the recent colors signal.
+      boost::signals2::connection connect_recent_colors_signal(
+        const RecentColorsSignal::slot_type& slot) const;
 
     protected:
       void contextMenuEvent(QContextMenuEvent* event) override;
@@ -58,6 +67,7 @@ namespace Spire {
 
     private:
       TimeAndSalesProperties m_properties;
+      mutable RecentColorsSignal m_recent_colors_signal;
       RecentColors m_recent_colors;
       boost::optional<TimeAndSalesWindowModel> m_model;
       boost::signals2::scoped_connection m_volume_connection;
@@ -69,6 +79,7 @@ namespace Spire {
 
       void export_table();
       void show_properties_dialog();
+      void on_recent_colors_changed(const RecentColors& recent_colors);
       void on_volume(const Nexus::Quantity& volume);
   };
 }

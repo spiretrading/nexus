@@ -19,6 +19,10 @@ namespace Spire {
 
       std::array<QColor, RECENT_COLOR_COUNT> get_colors() const;
 
+      bool operator ==(const RecentColors& rhs) const;
+
+      bool operator !=(const RecentColors& rhs) const;
+
     private:
       std::deque<QColor> m_recent_colors;
   };

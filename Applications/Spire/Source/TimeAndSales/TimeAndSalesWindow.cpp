@@ -99,6 +99,11 @@ connection TimeAndSalesWindow::connect_change_security_signal(
   return m_security_widget->connect_change_security_signal(slot);
 }
 
+connection TimeAndSalesWindow::connect_recent_colors_signal(
+    const RecentColorsSignal::slot_type& slot) const {
+  return m_recent_colors_signal.connect(slot);
+}
+
 void TimeAndSalesWindow::contextMenuEvent(QContextMenuEvent* event) {
   auto contents = m_body->layout()->itemAt(1)->widget();
   QRect widget_geometry(contents->mapToGlobal(contents->geometry().topLeft()),
@@ -167,11 +172,20 @@ void TimeAndSalesWindow::export_table() {
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, m_recent_colors, this);
   dialog.connect_apply_signal([&] {set_properties(dialog.get_properties()); });
+  dialog.connect_recent_colors_signal([=] (auto recent_colors) {
+    on_recent_colors_changed(recent_colors);
+  });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());
   }
   m_security_widget->hide_overlay_widget();
+}
+
+void TimeAndSalesWindow::on_recent_colors_changed(
+    const RecentColors& recent_colors) {
+  m_recent_colors = recent_colors;
+  m_recent_colors_signal(m_recent_colors);
 }
 
 void TimeAndSalesWindow::on_volume(const Quantity& volume) {

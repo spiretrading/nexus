@@ -22,6 +22,10 @@ namespace Spire {
 
       void set_color(const QColor& color);
 
+      const RecentColors& get_recent_colors() const;
+
+      void set_recent_colors(const RecentColors& recent_colors);
+
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 
@@ -32,6 +36,7 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
+      RecentColors m_recent_colors;
       QColor m_current_color;
       QColor m_original_color;
       QGridLayout* m_basic_colors_layout;
@@ -43,6 +48,7 @@ namespace Spire {
 
       void add_basic_color_button(int x, int y, const QColor& color);
       void add_recent_color_button(int index, const QColor& color);
+      void update_recent_colors_layout();
       void on_color_button_clicked(const QColor& color);
       void on_color_selected(const QColor& color);
   };
