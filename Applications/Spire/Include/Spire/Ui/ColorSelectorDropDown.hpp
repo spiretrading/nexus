@@ -19,6 +19,8 @@ namespace Spire {
       ColorSelectorDropDown(const QColor& current_color,
         QWidget* parent = nullptr);
 
+      void set_color(const QColor& color);
+
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 

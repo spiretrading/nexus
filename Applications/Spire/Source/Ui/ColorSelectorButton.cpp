@@ -14,7 +14,6 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   m_button = new FlatButton(this);
-  set_color(current_color);
   m_button->connect_clicked_signal([=] { on_button_clicked(); });
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
@@ -24,6 +23,7 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   });
   m_dropdown->hide();
   window()->installEventFilter(this);
+  set_color(current_color);
 }
 
 void ColorSelectorButton::set_color(const QColor& color) {
@@ -34,6 +34,7 @@ void ColorSelectorButton::set_color(const QColor& color) {
   style.m_border_color = QColor("#4B23A0");
   m_button->set_hover_style(style);
   m_button->set_focus_style(style);
+  m_dropdown->set_color(color);
 }
 
 connection ColorSelectorButton::connect_color_signal(

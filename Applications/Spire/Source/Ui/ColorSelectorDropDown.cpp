@@ -168,6 +168,12 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   add_recent_color_button(QColor("#4B23A0"));
 }
 
+void ColorSelectorDropDown::set_color(const QColor& color) {
+  m_color_hue_slider->set_color(color);
+  m_color_value_slider->set_color(color);
+  m_hex_input->set_color(color);
+}
+
 connection ColorSelectorDropDown::connect_color_signal(
     const ColorSignal::slot_type& slot) const {
   return m_color_signal.connect(slot);
@@ -206,9 +212,7 @@ void ColorSelectorDropDown::add_recent_color_button(const QColor& color) {
 }
 
 void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
-  m_color_hue_slider->set_color(color);
-  m_color_value_slider->set_color(color);
-  m_hex_input->set_color(color);
+  set_color(color);
   on_color_selected(color);
 }
 

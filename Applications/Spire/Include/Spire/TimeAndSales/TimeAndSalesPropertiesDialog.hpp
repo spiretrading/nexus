@@ -60,13 +60,13 @@ namespace Spire {
       ColorSelectorButton* m_text_color_button;
       CheckBox* m_show_grid_check_box;
 
-      void set_band_color();
+      void set_band_color(const QColor& color);
       void set_color_button_stylesheet(FlatButton* button,
         const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();
       void set_properties(const TimeAndSalesProperties& properties);
-      void set_text_color();
+      void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
   };
 }
