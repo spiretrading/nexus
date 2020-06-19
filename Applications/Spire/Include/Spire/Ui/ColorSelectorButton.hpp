@@ -25,7 +25,6 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      QColor m_original_color;
       FlatButton* m_button;
       ColorSelectorDropDown* m_dropdown;
 

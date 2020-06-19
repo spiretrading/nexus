@@ -28,10 +28,12 @@ namespace Spire {
     protected:
       void childEvent(QChildEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
 
     private:
       mutable ColorSignal m_color_signal;
       QColor m_current_color;
+      QColor m_original_color;
       QGridLayout* m_basic_colors_layout;
       QHBoxLayout* m_recent_colors_layout;
       ColorSelectorValueSlider* m_color_value_slider;
@@ -40,7 +42,7 @@ namespace Spire {
       DropShadow* m_drop_shadow;
 
       void add_basic_color_button(int x, int y, const QColor& color);
-      void add_recent_color_button(const QColor& color);
+      void add_recent_color_button(int index, const QColor& color);
       void on_color_button_clicked(const QColor& color);
       void on_color_selected(const QColor& color);
   };

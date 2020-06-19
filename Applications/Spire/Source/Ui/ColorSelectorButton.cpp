@@ -8,8 +8,7 @@ using namespace Spire;
 
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
     const RecentColors& recent_colors, QWidget* parent)
-    : QWidget(parent),
-      m_original_color(current_color) {
+    : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
@@ -76,7 +75,6 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
 
 void ColorSelectorButton::hide_dropdown() {
   m_dropdown->hide();
-  // TODO: update recent colors if selected_color is different
 }
 
 void ColorSelectorButton::move_color_dropdown() {
