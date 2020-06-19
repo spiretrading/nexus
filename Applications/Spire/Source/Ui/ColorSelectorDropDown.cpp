@@ -194,12 +194,16 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
 
 void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
   if(m_current_color != m_original_color) {
-    auto item = m_recent_colors_layout->takeAt(
-      m_recent_colors_layout->count() - 1);
-    delete item->widget();
-    delete item;
-    add_recent_color_button(0, m_current_color);
-    m_original_color = m_current_color;
+    auto first_button = static_cast<FlatButton*>(
+      m_recent_colors_layout->itemAt(0)->widget());
+    if(first_button->get_style().m_background_color != m_current_color) {
+      auto last_button = m_recent_colors_layout->takeAt(
+        m_recent_colors_layout->count() - 1);
+      delete last_button->widget();
+      delete last_button;
+      add_recent_color_button(0, m_current_color);
+      m_original_color = m_current_color;
+    }
   }
 }
 

@@ -92,6 +92,7 @@ void ColorSelectorButton::on_button_clicked() {
   } else {
     move_color_dropdown();
     m_dropdown->show();
+    m_dropdown->activateWindow();
   }
 }
 
