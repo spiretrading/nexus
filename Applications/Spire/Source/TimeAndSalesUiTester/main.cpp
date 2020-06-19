@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance", 100));
   auto test_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
-    Ref(model));
+    RecentColors::get_default_colors(), Ref(model));
   auto tester = new TimeAndSalesTestControllerWindow(test_window,
     timer_thread_pool);
   test_window->show();

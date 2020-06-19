@@ -19,8 +19,10 @@ using PriceRange = TimeAndSalesProperties::PriceRange;
 using Columns = TimeAndSalesProperties::Columns;
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
-    const TimeAndSalesProperties& properties, QWidget* parent)
-    : Dialog(parent) {
+    const TimeAndSalesProperties& properties,
+    const RecentColors& recent_colors, QWidget* parent)
+    : Dialog(parent),
+      m_recent_colors(recent_colors) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
@@ -95,7 +97,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
   m_text_color_button = new ColorSelectorButton(properties.get_text_color(
-    PriceRange::UNKNOWN), this);
+    PriceRange::UNKNOWN), m_recent_colors, this);
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
   color_settings_layout->addWidget(m_text_color_button);
@@ -107,7 +109,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
   m_band_color_button = new ColorSelectorButton(properties.get_band_color(
-    PriceRange::UNKNOWN), this);
+    PriceRange::UNKNOWN), m_recent_colors, this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
@@ -226,6 +228,10 @@ TimeAndSalesProperties
   properties.m_show_grid = m_show_grid_check_box->isChecked();
   properties.m_font = m_band_list->font();
   return properties;
+}
+
+RecentColors TimeAndSalesPropertiesDialog::get_recent_colors() const {
+  return m_recent_colors;
 }
 
 connection TimeAndSalesPropertiesDialog::connect_apply_signal(

@@ -24,8 +24,10 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
-    Ref<SecurityInputModel> input_model, QWidget* parent)
+    const RecentColors& recent_colors, Ref<SecurityInputModel> input_model,
+    QWidget* parent)
     : Window(parent),
+      m_recent_colors(recent_colors),
       m_table(nullptr) {
   setMinimumSize(scale(180, 200));
   resize_body(scale(180, 450));
@@ -163,7 +165,7 @@ void TimeAndSalesWindow::export_table() {
 }
 
 void TimeAndSalesWindow::show_properties_dialog() {
-  TimeAndSalesPropertiesDialog dialog(m_properties, this);
+  TimeAndSalesPropertiesDialog dialog(m_properties, m_recent_colors, this);
   dialog.connect_apply_signal([&] {set_properties(dialog.get_properties()); });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {

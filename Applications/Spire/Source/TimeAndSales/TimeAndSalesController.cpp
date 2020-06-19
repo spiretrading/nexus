@@ -2,6 +2,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -26,7 +27,7 @@ void TimeAndSalesController::open() {
     return;
   }
   m_window = new TimeAndSalesWindow(TimeAndSalesProperties(),
-    Ref(*m_security_input_model));
+    RecentColors::get_default_colors(), Ref(*m_security_input_model));
   m_window->connect_change_security_signal(
     [=] (const auto& security) { on_change_security(security); });
   // TODO

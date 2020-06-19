@@ -66,7 +66,7 @@ namespace {
 }
 
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
-    QWidget* parent)
+    const RecentColors& recent_colors, QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
       m_current_color(current_color) {
   m_drop_shadow = new DropShadow(true, false, this);
@@ -158,14 +158,9 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_recent_colors_layout->setContentsMargins(0, scale_height(10), 0, 0);
   m_recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
   layout->addLayout(m_recent_colors_layout);
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
-  add_recent_color_button(QColor("#4B23A0"));
+  for(const auto& recent_color : recent_colors.get_colors()) {
+    add_recent_color_button(recent_color);
+  }
 }
 
 void ColorSelectorDropDown::set_color(const QColor& color) {

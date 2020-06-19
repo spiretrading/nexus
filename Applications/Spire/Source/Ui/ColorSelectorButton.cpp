@@ -7,7 +7,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
-    QWidget* parent)
+    const RecentColors& recent_colors, QWidget* parent)
     : QWidget(parent),
       m_original_color(current_color) {
   auto layout = new QHBoxLayout(this);
@@ -17,7 +17,7 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   m_button->connect_clicked_signal([=] { on_button_clicked(); });
   m_button->installEventFilter(this);
   layout->addWidget(m_button);
-  m_dropdown = new ColorSelectorDropDown(current_color, this);
+  m_dropdown = new ColorSelectorDropDown(current_color, recent_colors, this);
   m_dropdown->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
   });

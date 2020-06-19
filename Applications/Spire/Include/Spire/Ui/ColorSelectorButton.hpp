@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Ui/ColorSelectorDropDown.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
 
@@ -12,7 +13,7 @@ namespace Spire {
       using ColorSignal = Signal<void (const QColor& color)>;
 
       ColorSelectorButton(const QColor& current_color,
-        QWidget* parent = nullptr);
+        const RecentColors& recent_colors, QWidget* parent = nullptr);
 
       void set_color(const QColor& color);
 

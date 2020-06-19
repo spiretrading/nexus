@@ -11,6 +11,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -33,6 +34,7 @@ namespace Spire {
         \param parent The parent widget.
       */
       TimeAndSalesWindow(const TimeAndSalesProperties& properties,
+        const RecentColors& recent_colors,
         Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
@@ -44,6 +46,8 @@ namespace Spire {
       //! Sets the display properties.
       void set_properties(const TimeAndSalesProperties& properties);
 
+      void set_recent_colors(const RecentColors& recent_colors);
+
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_change_security_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
@@ -54,6 +58,7 @@ namespace Spire {
 
     private:
       TimeAndSalesProperties m_properties;
+      RecentColors m_recent_colors;
       boost::optional<TimeAndSalesWindowModel> m_model;
       boost::signals2::scoped_connection m_volume_connection;
       SecurityWidget* m_security_widget;

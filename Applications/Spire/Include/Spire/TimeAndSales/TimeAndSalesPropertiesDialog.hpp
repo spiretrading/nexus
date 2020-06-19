@@ -6,6 +6,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/Dialog.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -29,10 +30,13 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit TimeAndSalesPropertiesDialog(
-        const TimeAndSalesProperties& properties, QWidget* parent = nullptr);
+        const TimeAndSalesProperties& properties,
+        const RecentColors& recent_colors, QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       TimeAndSalesProperties get_properties() const;
+
+      RecentColors get_recent_colors() const;
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -55,6 +59,7 @@ namespace Spire {
       mutable ApplyAllSignal m_apply_all_signal;
       mutable SaveDefaultSignal m_save_default_signal;
       TimeAndSalesProperties m_properties;
+      RecentColors m_recent_colors;
       QListWidget* m_band_list;
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_text_color_button;
