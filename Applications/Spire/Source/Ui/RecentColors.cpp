@@ -5,22 +5,15 @@ using namespace Spire;
 const RecentColors& RecentColors::get_default_colors() {
   static auto default_colors = [] {
     auto colors = RecentColors();
-
-
-
-
-
-
-
     colors.add_color(Qt::white);
-        colors.add_color(Qt::black);
-            colors.add_color(Qt::darkGray);
-                colors.add_color(Qt::magenta);
-                    colors.add_color(Qt::yellow);
-                        colors.add_color(Qt::cyan);
-                            colors.add_color(Qt::blue);
-                                colors.add_color(Qt::green);
-                                colors.add_color(Qt::red);
+    colors.add_color(Qt::black);
+    colors.add_color(Qt::darkGray);
+    colors.add_color(Qt::magenta);
+    colors.add_color(Qt::yellow);
+    colors.add_color(Qt::cyan);
+    colors.add_color(Qt::blue);
+    colors.add_color(Qt::green);
+    colors.add_color(Qt::red);
     return colors;
   }();
   return default_colors;
