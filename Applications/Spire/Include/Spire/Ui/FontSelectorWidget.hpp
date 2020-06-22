@@ -15,14 +15,11 @@ namespace Spire {
     private:
       QFont m_current_font;
       DropDownMenu* m_font_list;
-      DropDownMenu* m_style_list;
       DropDownMenu* m_size_list;
       FlatButton* m_bold_button;
       FlatButton* m_italics_button;
       FlatButton* m_underline_button;
-      FlatButton* m_strikethrough_button;
 
-      void update_style_list();
       void on_font_selected(const QString& family);
       void on_size_selected(const QString& size);
       void on_style_selected(const QString& style);
