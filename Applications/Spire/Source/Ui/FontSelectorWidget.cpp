@@ -61,21 +61,23 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   });
   grid_layout->addWidget(m_font_list, 0, 0, 1, 5);
   m_bold_button = new FontSelectorButton(
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()), this);
+    imageFromSvg(":/Icons/text_effects/bold-inactive.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/bold-active.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/bold-hover.svg", BUTTON_SIZE()), this);
   m_bold_button->setFixedSize(BUTTON_SIZE());
   grid_layout->addWidget(m_bold_button, 1, 0);
   m_italics_button = new FontSelectorButton(
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()), this);
+    imageFromSvg(":/Icons/text_effects/italic-inactive.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/italic-active.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/italic-hover.svg", BUTTON_SIZE()),
+    this);
   m_italics_button->setFixedSize(BUTTON_SIZE());
   grid_layout->addWidget(m_italics_button, 1, 1);
   m_underline_button = new FontSelectorButton(
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()),
-    imageFromSvg(":/Icons/.svg", BUTTON_SIZE()), this);
+    imageFromSvg(":/Icons/text_effects/underline-inactive.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/underline-active.svg", BUTTON_SIZE()),
+    imageFromSvg(":/Icons/text_effects/underline-hover.svg", BUTTON_SIZE()),
+    this);
   m_underline_button->setFixedSize(BUTTON_SIZE());
   grid_layout->addWidget(m_underline_button, 1, 2);
   m_size_list = new DropDownMenu({"6", "7", "8", "9", "10", "11", "12", "14",

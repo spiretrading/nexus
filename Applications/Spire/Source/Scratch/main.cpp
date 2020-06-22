@@ -12,6 +12,5 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto w = new FontSelectorWidget(QFont("Roboto"));
   w->show();
-  w->resize(178, 104);
   application->exec();
 }

@@ -14,6 +14,7 @@ FontSelectorButton::FontSelectorButton(QImage icon, QImage toggle_icon,
       m_is_toggled(false) {
   setFocusPolicy(Qt::StrongFocus);
   setMouseTracking(true);
+  setAttribute(Qt::WA_Hover);
 }
 
 connection FontSelectorButton::connect_clicked_signal(
@@ -25,6 +26,7 @@ void FontSelectorButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     swap_toggle();
     m_clicked_signal();
+    update();
   }
 }
 
@@ -32,6 +34,7 @@ void FontSelectorButton::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     swap_toggle();
     m_clicked_signal();
+    update();
   }
 }
 
