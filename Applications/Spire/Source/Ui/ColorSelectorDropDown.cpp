@@ -129,7 +129,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   horizontal_color_layout->addLayout(color_picker_layout);
   m_color_value_slider = new ColorSelectorValueSlider(m_current_color, this);
   m_color_value_slider->setFocusPolicy(Qt::NoFocus);
-  m_color_value_slider->setFixedSize(scale(SLIDER_WIDTH(), scale_height(48)));
+  m_color_value_slider->setFixedSize(SLIDER_WIDTH(), scale_height(48));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
     on_color_selected(color);
@@ -137,7 +137,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(m_current_color, this);
   m_color_hue_slider->setFocusPolicy(Qt::NoFocus);
-  m_color_hue_slider->setFixedSize(scale(SLIDER_WIDTH(), SLIDER_HEIGHT()));
+  m_color_hue_slider->setFixedSize(SLIDER_WIDTH(), SLIDER_HEIGHT());
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
     m_hex_input->set_color(color);

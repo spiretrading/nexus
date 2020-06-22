@@ -24,6 +24,7 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
     const QColor& current_color, QWidget* parent)
     : QWidget(parent),
       m_color_name(color_name(current_color)) {
+  setStyleSheet("background-color: white;");
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
