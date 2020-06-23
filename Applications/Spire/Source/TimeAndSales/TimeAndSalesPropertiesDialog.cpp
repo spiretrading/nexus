@@ -9,6 +9,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 

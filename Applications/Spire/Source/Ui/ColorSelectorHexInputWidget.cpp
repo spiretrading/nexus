@@ -40,7 +40,7 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
   hex_label->setFixedSize(scale(29, 26));
   layout->addWidget(hex_label);
   auto hash_label = new QLabel("#", this);
-  hash_label->setFixedSize(scale(10, 26));
+  hash_label->setFixedSize(scale(14, 26));
   hash_label->setStyleSheet(label_style);
   layout->addWidget(hash_label);
   m_line_edit = new QLineEdit(m_color_name, this);

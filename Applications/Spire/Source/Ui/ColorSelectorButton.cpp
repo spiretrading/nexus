@@ -1,7 +1,7 @@
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QPainter>
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -10,13 +10,8 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
     const RecentColors& recent_colors, QWidget* parent)
     : QWidget(parent),
       m_recent_colors(recent_colors) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  m_button = new FlatButton(this);
-  m_button->connect_clicked_signal([=] { on_button_clicked(); });
-  m_button->installEventFilter(this);
-  layout->addWidget(m_button);
+  setFocusPolicy(Qt::StrongFocus);
+  setAttribute(Qt::WA_Hover);
   m_dropdown = new ColorSelectorDropDown(current_color, recent_colors, this);
   m_dropdown->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
@@ -27,14 +22,9 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
 }
 
 void ColorSelectorButton::set_color(const QColor& color) {
-  auto style = m_button->get_style();
-  style.m_background_color = color;
-  style.m_border_color = QColor("#C8C8C8");
-  m_button->set_style(style);
-  style.m_border_color = QColor("#4B23A0");
-  m_button->set_hover_style(style);
-  m_button->set_focus_style(style);
+  m_current_color = color;
   m_dropdown->set_color(color);
+  update();
 }
 
 void ColorSelectorButton::set_recent_colors(
@@ -64,24 +54,51 @@ bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::MouseButtonPress) {
       hide_dropdown();
     }
-  } else if(watched == m_button) {
-    if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Escape) {
-        if(m_dropdown->isVisible()) {
-          hide_dropdown();
-        }
-      }
-    } else if(event->type() == QEvent::FocusOut &&
-        !m_dropdown->isActiveWindow()) {
-      hide_dropdown();
-    }
   } else if(watched == m_dropdown) {
     if(event->type() == QEvent::Hide) {
       hide_dropdown();
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void ColorSelectorButton::focusOutEvent(QFocusEvent* event) {
+  if(!m_dropdown->isActiveWindow()) {
+    hide_dropdown();
+  }
+  update();
+}
+
+void ColorSelectorButton::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    if(m_dropdown->isVisible()) {
+      m_dropdown->hide();
+    }
+  }
+}
+
+void ColorSelectorButton::mousePressEvent(QMouseEvent* event) {
+  if(m_dropdown->isVisible()) {
+    hide_dropdown();
+  } else {
+    move_color_dropdown();
+    m_dropdown->show();
+    m_dropdown->activateWindow();
+  }
+}
+
+void ColorSelectorButton::paintEvent(QPaintEvent* event) {
+  QWidget::paintEvent(event);
+  auto painter = QPainter(this);
+  painter.fillRect(0, 0, 1000, 1000, Qt::red);
+  if(hasFocus() || m_dropdown->isActiveWindow() || underMouse()) {
+    painter.fillRect(event->rect(), QColor("#4B23A0"));
+  } else {
+    painter.fillRect(event->rect(), QColor("#C8C8C8"));
+  }
+  painter.setPen(Qt::white);
+  painter.drawRect(1, 1, width() - 3, height() - 3);
+  painter.fillRect(2, 2, width() - 4, height() - 4, m_current_color);
 }
 
 void ColorSelectorButton::hide_dropdown() {
@@ -101,17 +118,7 @@ void ColorSelectorButton::move_color_dropdown() {
   m_dropdown->raise();
 }
 
-void ColorSelectorButton::on_button_clicked() {
-  if(m_dropdown->isVisible()) {
-    hide_dropdown();
-  } else {
-    move_color_dropdown();
-    m_dropdown->show();
-    m_dropdown->activateWindow();
-  }
-}
-
 void ColorSelectorButton::on_color_selected(const QColor& color) {
-  set_color(color);
-  m_color_signal(color);
+  m_current_color = color;
+  m_color_signal(m_current_color);
 }

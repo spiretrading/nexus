@@ -2,7 +2,6 @@
 #define SPIRE_COLOR_SELECTOR_BUTTON_HPP
 #include <QWidget>
 #include "Spire/Ui/ColorSelectorDropDown.hpp"
-#include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
@@ -55,12 +54,16 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable ColorSignal m_color_signal;
       mutable RecentColorsSignal m_recent_colors_signal;
+      QColor m_current_color;
       RecentColors m_recent_colors;
-      FlatButton* m_button;
       ColorSelectorDropDown* m_dropdown;
 
       void hide_dropdown();
