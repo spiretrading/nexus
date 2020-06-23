@@ -6,18 +6,27 @@
 
 namespace Spire {
 
+  //! Represents a widget for inputting color hex codes.
   class ColorSelectorHexInputWidget : public QWidget {
     public:
 
-      //! Signals that a color was selected.
-      /*
+      //! Signals that a color was input.
+      /*!
         \param color The selected color.
       */
       using ColorSignal = Signal<void (const QColor& color)>;
 
+      //! Constructs a ColorSelectorHexInputWidget.
+      /*!
+        \param current_color The color's hex code to display.
+      */
       ColorSelectorHexInputWidget(const QColor& current_color,
         QWidget* parent = nullptr);
 
+      //! Sets the current color.
+      /*!
+        \param color The current color.
+      */
       void set_color(const QColor& color);
 
       //! Connects a slot to the color signal.

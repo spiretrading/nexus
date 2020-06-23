@@ -9,18 +9,38 @@
 
 namespace Spire {
 
+  //! Represents a widget for selecting a color with a specific value and
+  //! saturation.
   class ColorSelectorValueSlider : public QWidget {
     public:
 
+      //! Signal type for color selection.
+      /*!
+        \param color The selected color.
+      */
       using ColorSignal = Signal<void (const QColor& color)>;
 
+      //! Constructs a ColorSelectorValueSlider.
+      /*!
+        \param current_color The initial selection color.
+        \param parent The parent widget.
+      */
       ColorSelectorValueSlider(const QColor& current_color,
         QWidget* parent = nullptr);
 
+      //! Sets the current color.
+      /*!
+        \param color The current color.
+      */
       void set_color(const QColor& color);
 
+      //! Updates the slider's hue without changing the value and saturation.
+      /*!
+        \param hue The current hue.
+      */
       void set_hue(int hue);
 
+      //! Connects a slot to the color selection signal.
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 

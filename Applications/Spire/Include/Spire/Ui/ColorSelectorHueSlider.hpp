@@ -8,15 +8,30 @@
 
 namespace Spire {
 
+  //! Represents a widget for selecting a color with a specific hue.
   class ColorSelectorHueSlider : public QWidget {
     public:
 
+      //! Signal type for color selection.
+      /*!
+        \param color The selected color.
+      */
       using ColorSignal = Signal<void (const QColor& color)>;
 
+      //! Constructs a ColorSelectorHueSlider.
+      /*!
+        \param color The initial selection color.
+        \param parent The parent widget.
+      */
       ColorSelectorHueSlider(const QColor& color, QWidget* parent = nullptr);
 
+      //! Sets the current color.
+      /*!
+        \param color The current color.
+      */
       void set_color(const QColor& color);
 
+      //! Connects a slot to the color selection signal.
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 

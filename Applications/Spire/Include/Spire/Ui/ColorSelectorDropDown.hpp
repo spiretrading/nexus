@@ -12,20 +12,41 @@
 
 namespace Spire {
 
+  //! Represents a drop down widget for selecting colors.
   class ColorSelectorDropDown : public QWidget {
     public:
 
+      //! Signal type for color selection.
+      /*!
+        \param color The selected color.
+      */
       using ColorSignal = Signal<void (const QColor& color)>;
 
+      //! Constructs a ColorSelectorDropDown.
+      /*!
+        \param current_color The current color to display.
+        \param recent_colors The recent colors to display.
+        \param parent The parent widget.
+      */
       ColorSelectorDropDown(const QColor& current_color,
         const RecentColors& recent_colors, QWidget* parent = nullptr);
 
+      //! Sets the current color.
+      /*!
+        \param color The current color.
+      */
       void set_color(const QColor& color);
 
+      //! Returns the recent colors.
       const RecentColors& get_recent_colors() const;
 
+      //! Sets the recent colors.
+      /*!
+        \param recent_colors The current recent colors.
+      */
       void set_recent_colors(const RecentColors& recent_colors);
 
+      //! Connects a slot to the color selection signal.
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
 
