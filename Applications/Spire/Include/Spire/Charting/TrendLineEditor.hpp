@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
 
@@ -13,15 +14,25 @@ namespace Spire {
       //! Signals that a color has been selected.
       using ColorSignal = Signal<void ()>;
 
+      //! Signals that the recent colors have changed.
+      /*!
+        \param recent_colors The updated recent colors.
+      */
+      using RecentColorsSignal =
+        Signal<void (const RecentColors& recent_colors)>;
+
       //! Signals that a line style has been selected.
       using StyleSignal = Signal<void ()>;
 
       //! Constructs a TrendLineEditor.
       /*!
+        \param recent_colors The recent colors to display in the color drop
+                             down.
         \param parent The parent to the TrendLineEditor, and reference for
                       determining the editor's position.
       */
-      explicit TrendLineEditor(QWidget* parent = nullptr);
+      TrendLineEditor(const RecentColors& recent_colors,
+        QWidget* parent = nullptr);
 
       //! Returns the selected color.
       const QColor& get_color() const;
@@ -42,16 +53,14 @@ namespace Spire {
       void set_style(TrendLineStyle style);
 
       //! Calls the provided slot when the color signal is triggered.
-      /*!
-        \param slot The slot to call.
-      */
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
+
+      //! Calls the provided slot when the recent color signal is triggered.
+      boost::signals2::connection connect_recent_colors_signal(
+        const RecentColorsSignal::slot_type& slot) const;
     
       //! Calls the provided slot when the style signal is triggered.
-      /*!
-        \param slot The slot to call.
-      */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 
@@ -61,11 +70,13 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
+      mutable RecentColorsSignal m_recent_colors_signal;
       mutable StyleSignal m_style_signal;
       QColor m_color;
       TrendLineStyle m_line_style;
 
       void on_color_change(const QColor& color);
+      void on_recent_colors_changed(const RecentColors& recent_colors);
       void on_style_change(TrendLineStyle style);
       void move_to_parent();
   };

@@ -11,6 +11,7 @@
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -44,7 +45,8 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance", 100));
-  auto window = new ChartingWindow(Ref(model));
+  auto window = new ChartingWindow(Ref(model),
+    RecentColors::get_default_colors());
   auto test_timer = QTimer();
   window->connect_security_change_signal(
     [=, &test_timer] (const auto& security) {

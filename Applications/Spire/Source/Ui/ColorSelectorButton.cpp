@@ -121,4 +121,5 @@ void ColorSelectorButton::move_color_dropdown() {
 void ColorSelectorButton::on_color_selected(const QColor& color) {
   m_current_color = color;
   m_color_signal(m_current_color);
+  update();
 }
