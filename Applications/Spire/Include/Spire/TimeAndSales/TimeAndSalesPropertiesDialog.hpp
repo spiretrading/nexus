@@ -30,6 +30,7 @@ namespace Spire {
       //! Constructs a time and sales properties dialog.
       /*!
         \param properties The properties to modify.
+        \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
       explicit TimeAndSalesPropertiesDialog(
@@ -39,6 +40,7 @@ namespace Spire {
       //! Returns the properties represented by this dialog.
       TimeAndSalesProperties get_properties() const;
 
+      //! Returns the recent colors represented by this dialog.
       RecentColors get_recent_colors() const;
 
       //! Connects a slot to the apply signal.

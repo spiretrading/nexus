@@ -37,6 +37,7 @@ namespace Spire {
       //! Constructs a time and sales window.
       /*!
         \param properties The display properties.
+        \param recent_colors The recent colors for the properties dialog.
         \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
