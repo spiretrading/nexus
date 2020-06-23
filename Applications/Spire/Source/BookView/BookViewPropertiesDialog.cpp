@@ -68,9 +68,13 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
   m_levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
     recent_colors, m_tab_widget);
+  m_levels_tab_widget->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   m_tab_widget->addTab(m_levels_tab_widget, tr("Price Levels"));
   m_highlights_tab_widget = new BookViewHighlightPropertiesWidget(
     properties, recent_colors, m_tab_widget);
+  m_highlights_tab_widget->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   m_tab_widget->addTab(m_highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
     auto interactions_tab_widget = new InteractionsPropertiesWidget(
@@ -112,6 +116,11 @@ connection BookViewPropertiesDialog::connect_apply_all_signal(
   return m_apply_all_signal.connect(slot);
 }
 
+connection BookViewPropertiesDialog::connect_recent_colors_signal(
+    const RecentColorsSignal::slot_type& slot) const {
+  return m_recent_colors_signal.connect(slot);
+}
+
 connection BookViewPropertiesDialog::connect_save_default_signal(
     const SaveDefaultSignal::slot_type& slot) const {
   return m_save_default_signal.connect(slot);
@@ -130,6 +139,11 @@ bool BookViewPropertiesDialog::eventFilter(QObject* watched,
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void BookViewPropertiesDialog::on_recent_colors_changed(
+    const RecentColors& recent_colors) {
+  m_recent_colors_signal(recent_colors);
 }
 
 void BookViewPropertiesDialog::on_tab_bar_clicked(int index) {

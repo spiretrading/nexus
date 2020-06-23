@@ -71,7 +71,6 @@ namespace Spire {
 
       void hide_dropdown();
       void move_color_dropdown();
-      void on_button_clicked();
       void on_color_selected(const QColor& color);
   };
 }

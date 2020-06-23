@@ -87,6 +87,11 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
   }
 }
 
+connection BookViewWindow::connect_recent_colors_signal(
+    const RecentColorsSignal::slot_type& slot) const {
+  return m_recent_colors_signal.connect(slot);
+}
+
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
@@ -138,6 +143,8 @@ void BookViewWindow::show_properties_dialog() {
     m_recent_colors, this);
   m_dialog_apply_connection = dialog.connect_apply_signal(
     [&] { set_properties(dialog.get_properties()); });
+  m_dialog_recent_colors_connection = dialog.connect_recent_colors_signal(
+    [&] (auto recent_colors) { m_recent_colors_signal(recent_colors); });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());

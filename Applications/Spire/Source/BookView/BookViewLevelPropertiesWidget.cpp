@@ -12,6 +12,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
@@ -132,6 +133,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { on_band_color_selected(color); });
+  m_band_color_button->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   m_band_color_button->setFixedHeight(scale_height(26));
   band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
@@ -143,11 +146,15 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_gradient_start_button = new ColorSelectorButton(bg_colors[0],
     recent_colors, this);
   m_gradient_start_button->setFixedHeight(scale_height(26));
+  m_gradient_start_button->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
   m_gradient_end_button = new ColorSelectorButton(
     bg_colors[bg_colors.size() - 1], recent_colors, this);
   m_gradient_end_button->setFixedHeight(scale_height(26));
+  m_gradient_end_button->connect_recent_colors_signal(
+    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
@@ -230,6 +237,11 @@ void BookViewLevelPropertiesWidget::apply(
   for(auto i = 0; i < m_band_list_widget->count(); ++i) {
     colors.push_back(m_band_list_widget->item(i)->background().color());
   }
+}
+
+connection BookViewLevelPropertiesWidget::connect_recent_colors_signal(
+    const RecentColorsSignal::slot_type& slot) const {
+  return m_recent_colors_signal.connect(slot);
 }
 
 void BookViewLevelPropertiesWidget::showEvent(QShowEvent* event) {
@@ -339,4 +351,9 @@ void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(
   }
   m_band_list_widget->setFixedHeight(m_band_list_widget->sizeHintForRow(0) *
     (m_band_list_widget->count() + 1));
+}
+
+void BookViewLevelPropertiesWidget::on_recent_colors_changed(
+    const RecentColors& recent_colors) {
+  m_recent_colors_signal(recent_colors);
 }
