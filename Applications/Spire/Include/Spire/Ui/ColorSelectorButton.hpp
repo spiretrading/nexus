@@ -32,6 +32,9 @@ namespace Spire {
       ColorSelectorButton(const QColor& current_color,
         const RecentColors& recent_colors, QWidget* parent = nullptr);
 
+      //! Returns the current color.
+      const QColor& get_color() const;
+
       //! Sets the button's color.
       /*!
         \param color The color to set.

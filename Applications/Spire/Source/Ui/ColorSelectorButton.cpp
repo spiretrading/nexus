@@ -21,6 +21,10 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   set_color(current_color);
 }
 
+const QColor& ColorSelectorButton::get_color() const {
+  return m_current_color;
+}
+
 void ColorSelectorButton::set_color(const QColor& color) {
   m_current_color = color;
   m_dropdown->set_color(color);

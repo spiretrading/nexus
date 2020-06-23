@@ -5,6 +5,7 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Ui/Dialog.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
 
@@ -25,10 +26,13 @@ namespace Spire {
       /*!
         \param properties The properties to modify.
         \param security The security used for modifying interactions.
+        \param recent_colors The recent colors to display in the color
+                             color selector drop downs.
         \param parent The parent widget.
       */
       BookViewPropertiesDialog(const BookViewProperties& properties,
-        const Nexus::Security& security, QWidget* parent = nullptr);
+        const Nexus::Security& security, const RecentColors& recent_colors,
+        QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       BookViewProperties get_properties() const;

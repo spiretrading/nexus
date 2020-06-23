@@ -15,7 +15,8 @@
 using namespace Spire;
 
 BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
-    const BookViewProperties& properties, QWidget* parent)
+    const BookViewProperties& properties, const RecentColors& recent_colors,
+    QWidget* parent)
     : QWidget(parent) {
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
@@ -127,11 +128,11 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_color_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(band_color_label);
   band_properties_layout->addStretch(4);
-  m_band_color_button = new FlatButton(this);
+  m_band_color_button = new ColorSelectorButton(bg_colors[0], recent_colors,
+    this);
+  m_band_color_button->connect_color_signal(
+    [=] (auto color) { on_band_color_selected(color); });
   m_band_color_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(m_band_color_button, bg_colors[0]);
-  m_band_color_button->connect_clicked_signal(
-    [=] { on_band_color_button_clicked(); });
   band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
   auto color_gradient_label = new QLabel(tr("Color Gradient"), this);
@@ -139,19 +140,14 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   color_gradient_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(color_gradient_label);
   band_properties_layout->addStretch(4);
-  m_gradient_start_button = new FlatButton(this);
+  m_gradient_start_button = new ColorSelectorButton(bg_colors[0],
+    recent_colors, this);
   m_gradient_start_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(m_gradient_start_button, bg_colors[0]);
-  m_gradient_start_button->connect_clicked_signal(
-    [=] { on_gradient_start_button_clicked(); });
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
-  m_gradient_end_button = new FlatButton(this);
+  m_gradient_end_button = new ColorSelectorButton(
+    bg_colors[bg_colors.size() - 1], recent_colors, this);
   m_gradient_end_button->setFixedHeight(scale_height(26));
-  set_color_button_stylesheet(m_gradient_end_button,
-    bg_colors[bg_colors.size() - 1]);
-  m_gradient_end_button->connect_clicked_signal(
-    [=] { on_gradient_end_button_clicked(); });
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
@@ -240,17 +236,6 @@ void BookViewLevelPropertiesWidget::showEvent(QShowEvent* event) {
   m_band_list_widget->setFocus();
 }
 
-void BookViewLevelPropertiesWidget::set_color_button_stylesheet(
-    FlatButton* button, const QColor& color) {
-  auto s = button->get_style();
-  s.m_background_color = color;
-  s.m_border_color = QColor("#C8C8C8");
-  button->set_style(s);
-  s.m_border_color = QColor("#4B23A0");
-  button->set_hover_style(s);
-  button->set_focus_style(s);
-}
-
 void BookViewLevelPropertiesWidget::update_band_list_font(
     const QFont& font) {
   for(auto i = 0; i < m_band_list_widget->count(); ++i) {
@@ -267,10 +252,9 @@ void BookViewLevelPropertiesWidget::update_band_list_gradient() {
     auto end_red = 0;
     auto end_green = 0;
     auto end_blue = 0;
-    m_gradient_start_button->get_style().m_background_color.getRgb(&start_red,
-      &start_green, &start_blue);
-    m_gradient_end_button->get_style().m_background_color.getRgb(&end_red,
-      &end_green, &end_blue);
+    m_gradient_start_button->get_color().getRgb(&start_red, &start_green,
+      &start_blue);
+    m_gradient_end_button->get_color().getRgb(&end_red, &end_green, &end_blue);
     auto red_delta = static_cast<double>((end_red - start_red)) /
       (band_count - 1);
     auto green_delta = static_cast<double>((end_green - start_green)) /
@@ -289,7 +273,7 @@ void BookViewLevelPropertiesWidget::update_band_list_gradient() {
     }
   } else {
     m_band_list_widget->item(0)->setBackground(
-      m_gradient_start_button->get_style().m_background_color);
+      m_gradient_start_button->get_color());
   }
   update_band_list_stylesheet(m_band_list_widget->currentRow());
 }
@@ -297,7 +281,7 @@ void BookViewLevelPropertiesWidget::update_band_list_gradient() {
 void BookViewLevelPropertiesWidget::update_band_list_stylesheet(
     int index) {
   if(m_band_list_widget->item(index) != nullptr) {
-    set_color_button_stylesheet(m_band_color_button,
+    m_band_color_button->set_color(
       m_band_list_widget->item(index)->background().color());
     auto selected_stylesheet = QString(R"(
       QListWidget::item:selected {
@@ -311,14 +295,10 @@ void BookViewLevelPropertiesWidget::update_band_list_stylesheet(
   }
 }
 
-void BookViewLevelPropertiesWidget::on_band_color_button_clicked() {
-  auto color = QColorDialog::getColor(
-    m_band_color_button->get_style().m_background_color);
-  if(color.isValid()) {
-    set_color_button_stylesheet(m_band_color_button, color);
-    m_band_list_widget->currentItem()->setBackground(color);
-    update_band_list_stylesheet(m_band_list_widget->currentRow());
-  }
+void BookViewLevelPropertiesWidget::on_band_color_selected(
+    const QColor& color) {
+  m_band_list_widget->currentItem()->setBackground(color);
+  update_band_list_stylesheet(m_band_list_widget->currentRow());
 }
 
 void BookViewLevelPropertiesWidget::on_change_font_button_clicked() {
@@ -331,22 +311,6 @@ void BookViewLevelPropertiesWidget::on_change_font_button_clicked() {
 
 void BookViewLevelPropertiesWidget::on_gradient_apply_button_clicked() {
   update_band_list_gradient();
-}
-
-void BookViewLevelPropertiesWidget::on_gradient_end_button_clicked() {
-  auto color = QColorDialog::getColor(
-    m_gradient_end_button->get_style().m_background_color);
-  if(color.isValid()) {
-    set_color_button_stylesheet(m_gradient_end_button, color);
-  }
-}
-
-void BookViewLevelPropertiesWidget::on_gradient_start_button_clicked() {
-  auto color = QColorDialog::getColor(
-    m_gradient_start_button->get_style().m_background_color);
-  if(color.isValid()) {
-    set_color_button_stylesheet(m_gradient_start_button, color);
-  }
 }
 
 void BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed(

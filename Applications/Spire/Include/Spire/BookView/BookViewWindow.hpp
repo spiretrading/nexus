@@ -11,6 +11,7 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/SecurityStack.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -31,10 +32,12 @@ namespace Spire {
       //! Constructs a book view window.
       /*!
         \param properties The display properties.
+        \param recent_colors The recent colors for the properties dialog.
         \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
       BookViewWindow(const BookViewProperties& properties,
+        const RecentColors& recent_colors,
         Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
@@ -56,6 +59,7 @@ namespace Spire {
 
     private:
       BookViewProperties m_properties;
+      RecentColors m_recent_colors;
       SecurityInputModel* m_input_model;
       std::shared_ptr<BookViewModel> m_model;
       SecurityWidget* m_security_widget;

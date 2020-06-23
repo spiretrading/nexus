@@ -17,7 +17,7 @@ using namespace Spire;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
     const BookViewProperties& properties, const Security& security,
-    QWidget* parent)
+    const RecentColors& recent_colors, QWidget* parent)
     : Dialog(parent),
       m_last_focus_was_key(false) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
@@ -67,10 +67,10 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     })").arg(scale_height(12)).arg(scale_height(20)).arg(scale_height(10))
         .arg(scale_width(2)).arg(scale_width(80)).arg(scale_width(1)));
   m_levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
-    m_tab_widget);
+    recent_colors, m_tab_widget);
   m_tab_widget->addTab(m_levels_tab_widget, tr("Price Levels"));
   m_highlights_tab_widget = new BookViewHighlightPropertiesWidget(
-    properties, m_tab_widget);
+    properties, recent_colors, m_tab_widget);
   m_tab_widget->addTab(m_highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
     auto interactions_tab_widget = new InteractionsPropertiesWidget(

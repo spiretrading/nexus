@@ -26,7 +26,7 @@ void BookViewController::open() {
     return;
   }
   m_window = new BookViewWindow(BookViewProperties(),
-    Ref(*m_security_input_model));
+    RecentColors::get_default_colors(), Ref(*m_security_input_model));
   m_security_change_connection = m_window->connect_security_change_signal(
     [=] (const auto& security) { on_change_security(security); });
   // TODO

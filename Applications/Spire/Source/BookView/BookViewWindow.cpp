@@ -23,8 +23,10 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    Ref<SecurityInputModel> input_model, QWidget* parent)
+    const RecentColors& recent_colors, Ref<SecurityInputModel> input_model,
+    QWidget* parent)
     : Window(parent),
+      m_recent_colors(recent_colors),
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
       m_technicals_panel(nullptr),
@@ -132,7 +134,8 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
 }
 
 void BookViewWindow::show_properties_dialog() {
-  BookViewPropertiesDialog dialog(get_properties(), Security(), this);
+  BookViewPropertiesDialog dialog(get_properties(), Security(),
+    m_recent_colors, this);
   m_dialog_apply_connection = dialog.connect_apply_signal(
     [&] { set_properties(dialog.get_properties()); });
   m_security_widget->show_overlay_widget();

@@ -3,6 +3,8 @@
 #include <QListWidget>
 #include <QWidget>
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/Ui/ColorSelectorButton.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -15,10 +17,12 @@ namespace Spire {
       //! Constructs a BookViewLevelPropertiesWidget.
       /*!
         \param properties The properties to display.
+        \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
       explicit BookViewLevelPropertiesWidget(
-        const BookViewProperties& properties, QWidget* parent = nullptr);
+        const BookViewProperties& properties,
+        const RecentColors& recent_colors, QWidget* parent = nullptr);
 
       //! Applies the properties represented by this widget to an instance.
       /*!
@@ -32,21 +36,17 @@ namespace Spire {
     private:
       QListWidget* m_band_list_widget;
       QString m_band_list_stylesheet;
-      FlatButton* m_band_color_button;
-      FlatButton* m_gradient_start_button;
-      FlatButton* m_gradient_end_button;
+      ColorSelectorButton* m_band_color_button;
+      ColorSelectorButton* m_gradient_start_button;
+      ColorSelectorButton* m_gradient_end_button;
       CheckBox* m_show_grid_lines_check_box;
 
-      void set_color_button_stylesheet(FlatButton* button,
-        const QColor& color);
       void update_band_list_font(const QFont& font);
       void update_band_list_gradient();
       void update_band_list_stylesheet(int index);
-      void on_band_color_button_clicked();
+      void on_band_color_selected(const QColor& color);
       void on_change_font_button_clicked();
       void on_gradient_apply_button_clicked();
-      void on_gradient_end_button_clicked();
-      void on_gradient_start_button_clicked();
       void on_number_of_bands_spin_box_changed(int value);
   };
 }
