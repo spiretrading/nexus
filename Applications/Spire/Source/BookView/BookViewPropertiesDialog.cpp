@@ -143,6 +143,8 @@ bool BookViewPropertiesDialog::eventFilter(QObject* watched,
 
 void BookViewPropertiesDialog::on_recent_colors_changed(
     const RecentColors& recent_colors) {
+  m_highlights_tab_widget->set_recent_colors(recent_colors);
+  m_levels_tab_widget->set_recent_colors(recent_colors);
   m_recent_colors_signal(recent_colors);
 }
 

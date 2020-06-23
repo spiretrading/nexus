@@ -239,6 +239,13 @@ void BookViewLevelPropertiesWidget::apply(
   }
 }
 
+void BookViewLevelPropertiesWidget::set_recent_colors(
+    const RecentColors& recent_colors) {
+  m_band_color_button->set_recent_colors(recent_colors);
+  m_gradient_start_button->set_recent_colors(recent_colors);
+  m_gradient_end_button->set_recent_colors(recent_colors);
+}
+
 connection BookViewLevelPropertiesWidget::connect_recent_colors_signal(
     const RecentColorsSignal::slot_type& slot) const {
   return m_recent_colors_signal.connect(slot);

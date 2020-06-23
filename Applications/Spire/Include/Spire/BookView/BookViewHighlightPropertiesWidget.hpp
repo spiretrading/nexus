@@ -36,6 +36,12 @@ namespace Spire {
       */
       void apply(BookViewProperties& properties) const;
 
+      //! Sets the current recent colors.
+      /*!
+        \param recent_colors The current recent colors.
+      */
+      void set_recent_colors(const RecentColors& recent_colors);
+
       //! Connects a slot to the recent colors signal.
       boost::signals2::connection connect_recent_colors_signal(
         const RecentColorsSignal::slot_type& slot) const;

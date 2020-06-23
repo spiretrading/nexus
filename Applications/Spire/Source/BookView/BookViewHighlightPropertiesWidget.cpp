@@ -219,6 +219,12 @@ void BookViewHighlightPropertiesWidget::apply(
     m_order_highlight_color_button->get_color());
 }
 
+void BookViewHighlightPropertiesWidget::set_recent_colors(
+    const RecentColors& recent_colors) {
+  m_market_highlight_color_button->set_recent_colors(recent_colors);
+  m_order_highlight_color_button->set_recent_colors(recent_colors);
+}
+
 connection BookViewHighlightPropertiesWidget::connect_recent_colors_signal(
     const RecentColorsSignal::slot_type& slot) const {
   return m_recent_colors_signal.connect(slot);
