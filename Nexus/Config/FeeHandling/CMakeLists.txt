@@ -19,15 +19,6 @@ if(UNIX)
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-if(WIN32)
-  add_custom_command(TARGET FeeHandlingTests PRE_BUILD COMMAND cmd /c
-    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-elseif(UNIX)
-  add_custom_command(TARGET FeeHandlingTests PRE_BUILD COMMAND
-    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-endif()
 add_custom_command(TARGET FeeHandlingTests POST_BUILD COMMAND FeeHandlingTests)
 install(TARGETS FeeHandlingTests CONFIGURATIONS Debug
   DESTINATION ${TEST_INSTALL_DIRECTORY}/Debug)
