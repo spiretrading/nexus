@@ -31,11 +31,17 @@ void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
     .value("TIER_ONE", AsxtFeeTable::PriceClass::TIER_ONE)
     .value("TIER_TWO", AsxtFeeTable::PriceClass::TIER_TWO)
     .value("TIER_THREE", AsxtFeeTable::PriceClass::TIER_THREE);
+  enum_<AsxtFeeTable::OrderTypeClass>(outer, "OrderTypeClass")
+    .value("NONE", AsxtFeeTable::OrderTypeClass::NONE)
+    .value("REGULAR", AsxtFeeTable::OrderTypeClass::REGULAR)
+    .value("PEGGED", AsxtFeeTable::OrderTypeClass::PEGGED);
   module.def("parse_asx_fee_table", &ParseAsxFeeTable);
   module.def("lookup_clearing_fee", &LookupClearingFee);
   module.def("lookup_price_class", &LookupPriceClass);
+  module.def("lookup_order_type_class", &LookupOrderTypeClass);
   module.def("calculate_fee", static_cast<ExecutionReport (*)(
-    const AsxtFeeTable&, const ExecutionReport&)>(&CalculateFee));
+    const AsxtFeeTable&, const OrderFields&, const ExecutionReport&)>(
+    &CalculateFee));
 }
 
 void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {

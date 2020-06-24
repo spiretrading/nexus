@@ -1,5 +1,5 @@
-#ifndef NEXUS_FEETABLETESTUTILITIES_HPP
-#define NEXUS_FEETABLETESTUTILITIES_HPP
+#ifndef NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
+#define NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
 #include <array>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -16,10 +16,10 @@
 
 namespace Nexus::Tests {
 
-  //! Populates a fee table with incremental CENT values.
-  /*!
-    \param feeTable The fee table to populate.
-  */
+  /**
+   * Populates a fee table with incremental CENT values.
+   * @param feeTable The fee table to populate.
+   */
   template<std::size_t COLUMNS>
   void PopulateFeeTable(Beam::Out<std::array<Money, COLUMNS>> feeTable) {
     auto fee = Money::CENT;
@@ -29,10 +29,10 @@ namespace Nexus::Tests {
     }
   }
 
-  //! Populates a fee table with incremental CENT values.
-  /*!
-    \param feeTable The fee table to populate.
-  */
+  /**
+   * Populates a fee table with incremental CENT values.
+   * @param feeTable The fee table to populate.
+   */
   template<std::size_t ROWS, std::size_t COLUMNS>
   void PopulateFeeTable(
       Beam::Out<std::array<std::array<Money, COLUMNS>, ROWS>> feeTable) {
@@ -45,15 +45,15 @@ namespace Nexus::Tests {
     }
   }
 
-  //! Tests indexing into a fee table.
-  /*!
-    \param parentTable The parent table containing all the fees.
-    \param feeTable The specific fee table within the <i>parentTable</i> to
-           test.
-    \param indexFunction The function used to index the <i>parentTable</i>.
-    \param expectedRows The expected number of rows.
-    \param expectedColumns The expected number of columns.
-  */
+  /**
+   * Tests indexing into a fee table.
+   * @param parentTable The parent table containing all the fees.
+   * @param feeTable The specific fee table within the <i>parentTable</i> to
+   *        test.
+   * @param indexFunction The function used to index the <i>parentTable</i>.
+   * @param expectedRows The expected number of rows.
+   * @param expectedColumns The expected number of columns.
+   */
   template<typename FeeTable, std::size_t ROWS, std::size_t COLUMNS,
     typename IndexFunction>
   void TestFeeTableIndex(const FeeTable& parentTable,
@@ -76,15 +76,15 @@ namespace Nexus::Tests {
     }
   }
 
-  //! Tests a fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param price The price of the trade to test.
-    \param quantity The trade's quantity.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedFee The expected fee.
-  */
+  /**
+   * Tests a fee calculation.
+   * @param feeTable The fee table to test.
+   * @param price The price of the trade to test.
+   * @param quantity The trade's quantity.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestFeeCalculation(const FeeTable& feeTable, Money price,
       Quantity quantity, LiquidityFlag liquidityFlag,
@@ -98,17 +98,39 @@ namespace Nexus::Tests {
     REQUIRE(calculatedTotal == expectedFee);
   }
 
-  //! Tests a notional value fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param orderFields The OrderFields used to produce an ExecutionReport.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedRate The expected rate to use in the calculation.
-  */
+  /**
+   * Tests a fee calculation.
+   * @param feeTable The fee table to test.
+   * @param fields The OrderFields that were submitted.
+   * @param liquidityFlag The trade's liquidity flag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee.
+   */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestFeeCalculation(const FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& fields,
+      std::string liquidityFlag, CalculateFeeType&& calculateFee,
+      Money expectedFee) {
+    auto executionReport = OrderExecutionService::ExecutionReport::
+      BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
+    executionReport.m_lastPrice = fields.m_price;
+    executionReport.m_lastQuantity = fields.m_quantity;
+    executionReport.m_liquidityFlag = std::move(liquidityFlag);
+    auto calculatedTotal = calculateFee(feeTable, executionReport);
+    REQUIRE(calculatedTotal == expectedFee);
+  }
+
+  /**
+   * Tests a notional value fee calculation.
+   * @param feeTable The fee table to test.
+   * @param orderFields The OrderFields used to produce an ExecutionReport.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedRate The expected rate to use in the calculation.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestNotionalValueFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& orderFields,
-      CalculateFeeType&& calculateFee, Quantity expectedRate) {
+      CalculateFeeType&& calculateFee, boost::rational<int> expectedRate) {
     auto executionReport = OrderExecutionService::ExecutionReport::
       BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = orderFields.m_price;
@@ -119,14 +141,14 @@ namespace Nexus::Tests {
     REQUIRE(calculatedTotal == expectedTotal);
   }
 
-  //! Tests a per share fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param orderFields The OrderFields used to produce an ExecutionReport.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedFee The expected fee to use in the calculation.
-  */
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param orderFields The OrderFields used to produce an ExecutionReport.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestPerShareFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& orderFields,
@@ -142,14 +164,14 @@ namespace Nexus::Tests {
     REQUIRE(calculatedTotal == expectedTotal);
   }
 
-  //! Tests a per share fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param orderFields The OrderFields used to produce an ExecutionReport.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedFee The expected fee to use in the calculation.
-  */
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param orderFields The OrderFields used to produce an ExecutionReport.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestPerShareFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& orderFields,
@@ -159,15 +181,15 @@ namespace Nexus::Tests {
       std::forward<CalculateFeeType>(calculateFee), expectedFee);
   }
 
-  //! Tests a per share fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param price The price of the trade to test.
-    \param quantity The trade's quantity.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedFee The expected fee to use in the calculation.
-  */
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param price The price of the trade to test.
+   * @param quantity The trade's quantity.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestPerShareFeeCalculation(const FeeTable& feeTable, Money price,
       Quantity quantity, const std::string& liquidityFlag,
@@ -182,15 +204,15 @@ namespace Nexus::Tests {
     REQUIRE(calculatedTotal == expectedTotal);
   }
 
-  //! Tests a per share fee calculation.
-  /*!
-    \param feeTable The fee table to test.
-    \param price The price of the trade to test.
-    \param quantity The trade's quantity.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param calculateFee The function used to calculate the fee.
-    \param expectedFee The expected fee to use in the calculation.
-  */
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param price The price of the trade to test.
+   * @param quantity The trade's quantity.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
   template<typename FeeTable, typename CalculateFeeType>
   void TestPerShareFeeCalculation(const FeeTable& feeTable, Money price,
       Quantity quantity, LiquidityFlag liquidityFlag,
