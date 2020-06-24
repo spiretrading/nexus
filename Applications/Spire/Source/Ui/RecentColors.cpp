@@ -1,4 +1,5 @@
 #include "Spire/Ui/RecentColors.hpp"
+#include <algorithm>
 
 using namespace Spire;
 
@@ -34,10 +35,8 @@ void RecentColors::add_color(const QColor& color) {
 std::array<QColor, RecentColors::RECENT_COLOR_COUNT>
     RecentColors::get_colors() const {
   auto colors = std::array<QColor, RECENT_COLOR_COUNT>();
-  for(auto iter = m_recent_colors.begin(); iter != m_recent_colors.end();
-      ++iter) {
-    colors[std::distance(m_recent_colors.begin(), iter)] = *iter;
-  }
+  std::transform(m_recent_colors.begin(), m_recent_colors.end(),
+    colors.begin(), [] (const auto& color) { return color; });
   return colors;
 }
 
