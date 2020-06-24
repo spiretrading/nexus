@@ -2,7 +2,7 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
 #include <QDialog>
 #include <QListWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"

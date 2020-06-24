@@ -3,6 +3,7 @@
 #ifdef _DEBUG
   #include <QDebug>
 #endif
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
   class Definitions;
