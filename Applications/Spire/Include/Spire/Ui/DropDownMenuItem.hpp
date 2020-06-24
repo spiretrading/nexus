@@ -1,6 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_MENU_ITEM_HPP
 #define SPIRE_DROP_DOWN_MENU_ITEM_HPP
 #include <QLabel>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

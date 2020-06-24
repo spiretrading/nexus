@@ -11,7 +11,6 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-
   auto BUTTON_HEIGHT() {
     static auto height = scale_height(20);
     return height;
@@ -227,7 +226,8 @@ void ColorSelectorDropDown::add_recent_color_button(int index,
 }
 
 void ColorSelectorDropDown::update_recent_colors_layout() {
-  while(auto item = m_recent_colors_layout->takeAt(0)) {
+  while(m_recent_colors_layout->itemAt(0) != nullptr) {
+    auto item = m_recent_colors_layout->takeAt(0);
     delete item->widget();
     delete item;
   }

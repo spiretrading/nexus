@@ -3,6 +3,7 @@
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 

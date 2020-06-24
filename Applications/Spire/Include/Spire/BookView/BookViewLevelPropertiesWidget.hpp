@@ -3,6 +3,7 @@
 #include <QListWidget>
 #include <QWidget>
 #include "Spire/BookView/BookView.hpp"
+#include "spire/Spire/Spire.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -27,7 +28,7 @@ namespace Spire {
         \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
-      explicit BookViewLevelPropertiesWidget(
+      BookViewLevelPropertiesWidget(
         const BookViewProperties& properties,
         const RecentColors& recent_colors, QWidget* parent = nullptr);
 

@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/SecurityInput/SecurityInputLineEdit.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

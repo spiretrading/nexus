@@ -6,6 +6,7 @@
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 
 namespace Spire {

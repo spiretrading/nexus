@@ -69,12 +69,16 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   m_levels_tab_widget = new BookViewLevelPropertiesWidget(properties,
     recent_colors, m_tab_widget);
   m_levels_tab_widget->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   m_tab_widget->addTab(m_levels_tab_widget, tr("Price Levels"));
   m_highlights_tab_widget = new BookViewHighlightPropertiesWidget(
     properties, recent_colors, m_tab_widget);
   m_highlights_tab_widget->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   m_tab_widget->addTab(m_highlights_tab_widget, tr("Highlights"));
   if(security != Security()) {
     auto interactions_tab_widget = new InteractionsPropertiesWidget(

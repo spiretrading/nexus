@@ -140,7 +140,9 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   m_market_highlight_color_button->connect_color_signal(
     [=] (auto color) { on_market_highlight_color_selected(color); });
   m_market_highlight_color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   market_highlight_layout->addWidget(m_market_highlight_color_button, 26);
   market_highlight_layout->addStretch(92);
   layout->addLayout(market_highlight_layout, 130);
@@ -188,7 +190,9 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     properties.get_order_highlight_color(), recent_colors, this);
   m_order_highlight_color_button->setFixedWidth(scale_width(100));
   m_order_highlight_color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   orders_layout->addWidget(m_order_highlight_color_button, 26);
   orders_layout->addStretch(92);
   layout->addLayout(orders_layout, 151);

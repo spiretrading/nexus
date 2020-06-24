@@ -172,7 +172,7 @@ void TimeAndSalesWindow::export_table() {
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, m_recent_colors, this);
   dialog.connect_apply_signal([&] {set_properties(dialog.get_properties()); });
-  dialog.connect_recent_colors_signal([=] (auto recent_colors) {
+  dialog.connect_recent_colors_signal([=] (const auto& recent_colors) {
     on_recent_colors_changed(recent_colors);
   });
   m_security_widget->show_overlay_widget();

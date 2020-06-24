@@ -4,7 +4,7 @@
 #include <QGradientStops>
 #include <QImage>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 
@@ -23,7 +23,8 @@ namespace Spire {
         \param color The initial selection color.
         \param parent The parent widget.
       */
-      ColorSelectorHueSlider(const QColor& color, QWidget* parent = nullptr);
+      explicit ColorSelectorHueSlider(const QColor& color,
+        QWidget* parent = nullptr);
 
       //! Sets the current color.
       /*!

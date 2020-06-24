@@ -4,6 +4,7 @@
 #include <QHeaderView>
 #include <QTimer>
 #include <QVBoxLayout>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 #include "Spire/Ui/Ui.hpp"

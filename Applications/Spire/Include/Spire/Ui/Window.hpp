@@ -1,6 +1,7 @@
 #ifndef SPIRE_WINDOW_HPP
 #define SPIRE_WINDOW_HPP
 #include <QWidget>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

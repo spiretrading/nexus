@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_DIALOG_HPP
 #include <QDialog>
 #include <QListWidget>
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
@@ -33,7 +34,7 @@ namespace Spire {
         \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
-      explicit TimeAndSalesPropertiesDialog(
+      TimeAndSalesPropertiesDialog(
         const TimeAndSalesProperties& properties,
         const RecentColors& recent_colors, QWidget* parent = nullptr);
 

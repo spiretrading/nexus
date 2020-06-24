@@ -3,7 +3,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorHueSlider.hpp"
 #include "Spire/Ui/ColorSelectorValueSlider.hpp"

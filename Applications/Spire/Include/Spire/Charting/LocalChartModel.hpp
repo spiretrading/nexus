@@ -4,6 +4,7 @@
 #include <vector>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartModel.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

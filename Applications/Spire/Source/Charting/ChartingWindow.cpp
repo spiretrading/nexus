@@ -174,7 +174,9 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_trend_line_editor_widget->connect_color_signal(
     [=] { on_trend_line_color_selected(); });
   m_trend_line_editor_widget->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
   m_trend_line_editor_widget->connect_style_signal(
     [=] { on_trend_line_style_selected(); });

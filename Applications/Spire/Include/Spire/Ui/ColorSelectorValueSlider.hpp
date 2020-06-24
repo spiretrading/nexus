@@ -5,7 +5,7 @@
 #include <QImage>
 #include <QPoint>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 
@@ -25,7 +25,7 @@ namespace Spire {
         \param current_color The initial selection color.
         \param parent The parent widget.
       */
-      ColorSelectorValueSlider(const QColor& current_color,
+      explicit ColorSelectorValueSlider(const QColor& current_color,
         QWidget* parent = nullptr);
 
       //! Sets the current color.
@@ -57,7 +57,7 @@ namespace Spire {
       QImage m_handle;
       QPoint m_last_mouse_pos;
 
-      QPoint get_mouse_pos(const QColor& color);
+      QPoint get_mouse_pos(const QColor& color) const;
       void set_mouse_pos(const QPoint& pos);
       void update_gradient();
       void on_color_changed();

@@ -2,7 +2,7 @@
 #define SPIRE_COLOR_SELECTOR_HEX_INPUT_WIDGET_HPP
 #include <QLineEdit>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 
@@ -20,7 +20,7 @@ namespace Spire {
       /*!
         \param current_color The color's hex code to display.
       */
-      ColorSelectorHexInputWidget(const QColor& current_color,
+      explicit ColorSelectorHexInputWidget(const QColor& current_color,
         QWidget* parent = nullptr);
 
       //! Sets the current color.

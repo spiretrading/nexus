@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Dialog.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 

@@ -1,6 +1,7 @@
 #ifndef PROPERTIES_WINDOW_BUTTONS_WIDGET_HPP
 #define PROPERTIES_WINDOW_BUTTONS_WIDGET_HPP
 #include <QWidget>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

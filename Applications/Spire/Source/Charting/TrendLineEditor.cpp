@@ -33,7 +33,9 @@ TrendLineEditor::TrendLineEditor(const RecentColors& recent_colors,
   color_button->connect_color_signal(
     [=] (auto color) { on_color_change(color); });
   color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   color_button->setFixedSize(scale(70, 18));
   layout->addWidget(color_button);
   layout->addStretch(8);

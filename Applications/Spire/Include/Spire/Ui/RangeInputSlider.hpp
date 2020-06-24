@@ -2,6 +2,7 @@
 #define SPIRE_RANGE_INPUT_SLIDER_HPP
 #include <QWidget>
 #include "Spire/Spire/RangeInputModel.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

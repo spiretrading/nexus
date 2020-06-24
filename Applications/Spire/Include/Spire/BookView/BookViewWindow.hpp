@@ -11,6 +11,7 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/SecurityStack.hpp"
 #include "Spire/Ui/Ui.hpp"

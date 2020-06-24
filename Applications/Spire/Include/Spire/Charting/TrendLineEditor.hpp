@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
@@ -31,7 +32,7 @@ namespace Spire {
         \param parent The parent to the TrendLineEditor, and reference for
                       determining the editor's position.
       */
-      TrendLineEditor(const RecentColors& recent_colors,
+      explicit TrendLineEditor(const RecentColors& recent_colors,
         QWidget* parent = nullptr);
 
       //! Returns the selected color.

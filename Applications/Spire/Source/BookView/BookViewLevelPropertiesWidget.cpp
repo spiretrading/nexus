@@ -134,7 +134,9 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   m_band_color_button->connect_color_signal(
     [=] (auto color) { on_band_color_selected(color); });
   m_band_color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   m_band_color_button->setFixedHeight(scale_height(26));
   band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
@@ -147,14 +149,18 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     recent_colors, this);
   m_gradient_start_button->setFixedHeight(scale_height(26));
   m_gradient_start_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
   m_gradient_end_button = new ColorSelectorButton(
     bg_colors[bg_colors.size() - 1], recent_colors, this);
   m_gradient_end_button->setFixedHeight(scale_height(26));
   m_gradient_end_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);

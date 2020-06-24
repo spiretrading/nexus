@@ -102,7 +102,9 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
   m_text_color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
@@ -116,7 +118,9 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
   m_band_color_button->connect_recent_colors_signal(
-    [=] (auto recent_colors) { on_recent_colors_changed(recent_colors); });
+    [=] (const auto& recent_colors) {
+      on_recent_colors_changed(recent_colors);
+    });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 26);
   color_settings_layout->addStretch(42);

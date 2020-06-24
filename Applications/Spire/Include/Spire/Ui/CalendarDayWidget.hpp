@@ -2,6 +2,7 @@
 #define SPIRE_CALENDAR_DAY_WIDGET_HPP
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <QLabel>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
