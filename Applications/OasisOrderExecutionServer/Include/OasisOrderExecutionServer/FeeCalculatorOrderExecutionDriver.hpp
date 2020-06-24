@@ -210,7 +210,8 @@ namespace Nexus::OasisOrderExecutionService {
   void FeesCalculatorOrderExecutionDriver<O>::HandleAustralianMarketFees(
       OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    auto feesReport = CalculateFee(m_asxtFeeTable, executionReport);
+    auto feesReport = CalculateFee(m_asxtFeeTable, order.GetInfo().m_fields,
+      executionReport);
     order.With(
       [&] (OrderStatus status,
           const std::vector<OrderExecutionService::ExecutionReport>& reports) {
