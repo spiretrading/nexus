@@ -4,10 +4,12 @@
 au_equities:
   spire_fee: 0.18
 
-  #  Price < 0.25    0.25 <= Price < 1.00   Price >= 1.00
-  #       X                   X                  X
+  #              Price < 0.25    0.25 <= Price < 1.00   Price >= 1.00
+  # Regular          X                   X                  X
+  # Pegged           X                   X                  X
   clearing_rate_table:
-    [0.000195, 0.000160, 0.000125]
+   [[0.000195, 0.000160, 0.000125],
+    [0.000245, 0.000210, 0.000175]]
   trade_rate: 0.000015
   trade_fee_cap: 75.00
   gst_rate: 0
