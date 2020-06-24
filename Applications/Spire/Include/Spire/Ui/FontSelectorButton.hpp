@@ -13,6 +13,8 @@ namespace Spire {
       FontSelectorButton(QImage icon, QImage toggle_icon, QImage hover_icon,
         QWidget* parent = nullptr);
 
+      bool is_toggled() const;
+
       boost::signals2::connection connect_clicked_signal(
         const ClickedSignal::slot_type& slot) const;
 

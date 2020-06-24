@@ -17,6 +17,10 @@ FontSelectorButton::FontSelectorButton(QImage icon, QImage toggle_icon,
   setAttribute(Qt::WA_Hover);
 }
 
+bool FontSelectorButton::is_toggled() const {
+  return m_is_toggled;
+}
+
 connection FontSelectorButton::connect_clicked_signal(
     const ClickedSignal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
