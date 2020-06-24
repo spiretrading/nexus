@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/LabeledDataWidget.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
