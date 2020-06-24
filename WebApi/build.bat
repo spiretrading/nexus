@@ -1,9 +1,26 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
+SET DIRECTORY=%~dp0
 SET ROOT=%cd%
+:begin_args
+SET ARG=%~1
+IF "!IS_DEPENDENCY!" == "1" (
+  SET DEPENDENCIES=!ARG!
+  SET IS_DEPENDENCY=
+  SHIFT
+  GOTO begin_args
+) ELSE IF NOT "!ARG!" == "" (
+  IF "!ARG:~0,3!" == "-DD" (
+    SET IS_DEPENDENCY=1
+  ) ELSE (
+    SET CONFIG=!ARG!
+  )
+  SHIFT
+  GOTO begin_args
+)
 SET UPDATE_NODE=
 SET UPDATE_BUILD=
-IF "%1" == "clean" (
+IF "!CONFIG!" == "clean" (
   IF EXIST library (
     RMDIR /q /s library
   )
@@ -12,7 +29,7 @@ IF "%1" == "clean" (
   )
   EXIT /B
 )
-IF "%1" == "reset" (
+IF "!CONFIG!" == "reset" (
   IF EXIST library (
     RMDIR /q /s library
   )
@@ -25,19 +42,24 @@ IF "%1" == "reset" (
   IF EXIST package-lock.json (
     DEL package-lock.json
   )
-  IF NOT "%~dp0" == "!ROOT!\" (
+  IF NOT "!DIRECTORY!" == "!ROOT!\" (
     DEL package.json >NUL 2>&1
     DEL tsconfig.json >NUL 2>&1
   )
   EXIT /B
 )
-IF NOT "%~dp0" == "!ROOT!\" (
-  COPY /Y "%~dp0package.json" . >NUL
-  COPY /Y "%~dp0tsconfig.json" . >NUL
+IF NOT "!DIRECTORY!" == "!ROOT!\" (
+  COPY /Y "!DIRECTORY!package.json" . >NUL
+  COPY /Y "!DIRECTORY!tsconfig.json" . >NUL
+)
+IF NOT "!DEPENDENCIES!" == "" (
+  CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
+) ELSE (
+  CALL "!DIRECTORY!configure.bat"
 )
 SET BEAM_PATH=Dependencies\Beam\WebApi
 PUSHD !BEAM_PATH!
-CALL build.bat %*
+CALL build.bat
 POPD
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
@@ -46,9 +68,9 @@ IF NOT EXIST node_modules (
     SET UPDATE_NODE=1
   ) ELSE (
     FOR /F %%i IN (
-      'ls -l --time-style=full-iso "%~dp0package.json" ^| awk "{print $6 $7}"') DO (
+        'ls -l --time-style=full-iso "!DIRECTORY!package.json" ^| awk "{print $6 $7}"') DO (
       FOR /F %%j IN (
-        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
+          'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
         IF "%%i" GEQ "%%j" (
           SET UPDATE_NODE=1
         )
@@ -92,7 +114,7 @@ IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
   FOR /F %%i IN (
-    'ls -l --time-style=full-iso "%~dp0tsconfig.json" "!BEAM_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
+    'ls -l --time-style=full-iso "!DIRECTORY!tsconfig.json" "!BEAM_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
     FOR /F %%j IN (
       'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
       IF "%%i" GEQ "%%j" (

@@ -210,7 +210,7 @@ export class GroupCard extends React.Component<Properties, State> {
     entryListWrapper: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
-      flexDirection: 'column-reverse' as 'column-reverse'
+      flexDirection: 'column' as 'column'
     },
     dropDownButtonWrapper: {
       width: '20px',

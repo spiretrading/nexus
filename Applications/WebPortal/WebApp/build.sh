@@ -7,6 +7,12 @@ while [ -h "$source" ]; do
 done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 root=$(pwd)
+if [ ! -f "configure.sh" ]; then
+  ln -s "$directory/configure.sh" configure.sh
+fi
+if [ ! -f "build.sh" ]; then
+  ln -s "$directory/build.sh" build.sh
+fi
 projects=""
 projects+=" library"
 projects+=" tests"
@@ -16,6 +22,6 @@ for i in $projects; do
     mkdir "$i"
   fi
   pushd "$i"
-  "$directory/$i/build.sh" "$@"
+  "$directory/$i/build.sh" -DD="$root/Nexus/Dependencies" "$@"
   popd
 done

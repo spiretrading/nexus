@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 project(SimulationOrderExecutionServer)
+set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
+  "Path to dependencies folder.")
+file(TO_NATIVE_PATH "${D}" D)
+if(WIN32)
+  execute_process(COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endif()
 include(../../Nexus/Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
@@ -82,6 +93,15 @@ if(UNIX)
 endif()
 if(WIN32)
   target_link_libraries(SimulationOrderExecutionServer shlwapi)
+endif()
+if(WIN32)
+  add_custom_command(TARGET SimulationOrderExecutionServer PRE_BUILD COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  add_custom_command(TARGET SimulationOrderExecutionServer PRE_BUILD COMMAND
+    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()
 install(TARGETS SimulationOrderExecutionServer DESTINATION
   ${PROJECT_BINARY_DIR}/Application)

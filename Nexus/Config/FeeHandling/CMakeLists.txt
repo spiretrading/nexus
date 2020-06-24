@@ -1,13 +1,10 @@
 file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/FeeHandlingTests/*.hpp)
 file(GLOB source_files ${NEXUS_SOURCE_PATH}/FeeHandlingTests/*.cpp)
-
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
-
 add_executable(FeeHandlingTests ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-
 if(UNIX)
   target_link_libraries(FeeHandlingTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -22,7 +19,15 @@ if(UNIX)
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
-
+if(WIN32)
+  add_custom_command(TARGET FeeHandlingTests PRE_BUILD COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  add_custom_command(TARGET FeeHandlingTests PRE_BUILD COMMAND
+    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+endif()
 add_custom_command(TARGET FeeHandlingTests POST_BUILD COMMAND FeeHandlingTests)
 install(TARGETS FeeHandlingTests CONFIGURATIONS Debug
   DESTINATION ${TEST_INSTALL_DIRECTORY}/Debug)

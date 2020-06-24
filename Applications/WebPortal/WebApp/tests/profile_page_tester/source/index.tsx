@@ -50,7 +50,6 @@ class TestApp extends React.Component<Properties, State> {
       testProfileError: false,
       testPasswordError: false
     };
-    this.initIdentity();
     this.setStatusToError = this.setStatusToError.bind(this);
     this.setStatusToNull = this.setStatusToNull.bind(this);
     this.setStatusToSuccessful = this.setStatusToSuccessful.bind(this);
@@ -103,6 +102,10 @@ class TestApp extends React.Component<Properties, State> {
       </Dali.VBoxLayout>);
   }
 
+  public componentDidMount(): void {
+    this.initIdentity();
+  }
+
   private initIdentity() {
     this.state.identity.photoId = TestApp.SOME_IMAGE;
     this.state.identity.firstName = 'Frodo';
@@ -114,7 +117,9 @@ class TestApp extends React.Component<Properties, State> {
     this.state.identity.province = 'Westfarthing';
     this.state.identity.country = Nexus.DefaultCountries.AU;
     this.state.identity.city = 'Hobbiton';
-    this.state.identity.addressLineOne = '56 Bag End';
+    this.state.identity.addressLineOne = '56 Bag Ennd';
+    this.state.identity.addressLineTwo = '';
+    this.state.identity.addressLineThree = '3rd door on the left';
     this.state.identity.userNotes = '';
     this.state.identity.emailAddress = 'frodo@bagend.nz';
     this.state.identity.registrationTime = new Beam.DateTime(

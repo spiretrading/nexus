@@ -51,9 +51,9 @@ export class LoginPage extends React.Component<Properties> {
             <Padding size='60px'/>
             <HBoxLayout width='100%' height='50px'>
               <Padding/>
-              <object data='/resources/login_page/logo-static.svg'
+              <object data='resources/login_page/logo-static.svg'
                 type='image/svg+xml' style={staticStyle} tabIndex={-1}/>
-              <object data='/resources/login_page/logo-animated.svg'
+              <object data='resources/login_page/logo-animated.svg'
                 type='image/svg+xml' style={animatedStyle} tabIndex={-1}/>
               <Padding/>
             </HBoxLayout>

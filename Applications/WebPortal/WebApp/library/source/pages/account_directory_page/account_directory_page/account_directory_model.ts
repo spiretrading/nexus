@@ -7,7 +7,7 @@ import { AccountEntry } from './account_entry';
 export abstract class AccountDirectoryModel {
 
   /** Returns a list of all groups. */
-  public abstract get groups(): Beam.Set<Beam.DirectoryEntry>;
+  public abstract get groups(): Beam.DirectoryEntry[];
 
   /** Returns a CreateAccountModel. */
   public abstract get createAccountModel(): CreateAccountModel;

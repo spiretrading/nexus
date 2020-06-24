@@ -34,7 +34,7 @@ export class GroupInfoPage extends React.Component<Properties> {
           </div>);
       } else {
         return this.props.group.map(account =>
-          <GroupMemberEntry account={account}/>);
+          <GroupMemberEntry account={account} key={account.account.id}/>);
       } 
     })();
     return(

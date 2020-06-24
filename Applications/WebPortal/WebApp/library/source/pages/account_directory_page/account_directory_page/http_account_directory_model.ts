@@ -25,15 +25,15 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     const groups =
       await this.serviceClients.administrationClient.loadManagedTradingGroups(
       this.account);
-    this._groups = new Beam.Set<Beam.DirectoryEntry>();
+    this._groups = [];
     for(const group of groups) {
-      this._groups.add(group);
+      this._groups.push(group);
     }
     this._groupSuggestionModel = new LocalGroupSuggestionModel(groups);
   }
 
-  public get groups(): Beam.Set<Beam.DirectoryEntry> {
-    return this._groups.clone();
+  public get groups(): Beam.DirectoryEntry[] {
+    return this._groups.slice();
   }
 
   public get createAccountModel(): CreateAccountModel {
@@ -47,7 +47,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
     const group = await this.serviceClients.administrationClient.createGroup(
       name);
-    this._groups.add(group);
+    this._groups.push(group);
     return group;
   }
 
@@ -55,7 +55,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
       Promise<AccountEntry[]> {
     const tradingGroup =
       await this.serviceClients.administrationClient.loadTradingGroup(group);
-    const accounts = [];
+    const accounts = [] as AccountEntry[];
     for(const manager of tradingGroup.managers) {
       const roles =
         await this.serviceClients.administrationClient.loadAccountRoles(
@@ -67,7 +67,10 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         await this.serviceClients.administrationClient.loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
-    return accounts;
+    return accounts.filter(
+      (value: AccountEntry, index: number, array: AccountEntry[]) => {
+        return array.findIndex((target: AccountEntry) =>
+          (target.account.id === value.account.id)) === index});
   }
 
   public async loadFilteredAccounts(
@@ -78,7 +81,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
     for(const match of matches) {
       let entries = result.get(match[0]);
       if(entries === undefined) {
-        entries = []
+        entries = [];
         result.set(match[0], entries);
       }
       entries.push(new AccountEntry(match[1], match[2]));
@@ -88,7 +91,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
 
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
-  private _groups: Beam.Set<Beam.DirectoryEntry>;
+  private _groups: Beam.DirectoryEntry[];
   private _createAccountModel: HttpCreateAccountModel;
   private _groupSuggestionModel: LocalGroupSuggestionModel;
 }

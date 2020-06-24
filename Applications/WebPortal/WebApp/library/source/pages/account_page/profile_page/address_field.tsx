@@ -45,7 +45,8 @@ export class AddressField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      displayValue: '',
+      displayValue: this.props.addressLineOne + 
+        '\n' + this.props.addressLineTwo + '\n' + this.props.addressLineThree,
       isEditing: false
     }
   }
@@ -86,6 +87,7 @@ export class AddressField extends React.Component<Properties, State> {
     })();
     return (
       <textarea
+        spellCheck={!this.props.readonly}
         rows={3}
         disabled={this.props.readonly}
         className={css(AddressField.EXTRA_STYLE.effects)}
@@ -101,9 +103,10 @@ export class AddressField extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties) {
-    if(prevProps.addressLineOne !== this.props.addressLineOne ||
+    if(!this.state.isEditing && (
+        prevProps.addressLineOne !== this.props.addressLineOne ||
         prevProps.addressLineTwo !== this.props.addressLineTwo ||
-        prevProps.addressLineThree !== this.props.addressLineThree) {
+        prevProps.addressLineThree !== this.props.addressLineThree)) {
       this.updateDisplayValue();
     }
   }
@@ -126,7 +129,7 @@ export class AddressField extends React.Component<Properties, State> {
 
   private onBlur = () => {
     this.setState({isEditing: false});
-    this.onSubmitChange();
+    this.updateDisplayValue();
   }
 
   private onFocus = () => {
@@ -135,11 +138,14 @@ export class AddressField extends React.Component<Properties, State> {
 
   private onChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = event.target.value.toString();
-    this.setState({displayValue: text});
+    if(text.split('\n').length <= 3) {
+      this.setState({displayValue: text});
+      this.onSubmitChange(text);
+    }
   }
 
-  private onSubmitChange = () => {
-    const addressLines = this.state.displayValue.split('\n');
+  private onSubmitChange = (newValue: string) => {
+    const addressLines = newValue.split('\n');
     const addressLineOne = addressLines[0] || '';
     const addressLineTwo = addressLines[1] || '';
     const addressLineThree = addressLines[2] || '';

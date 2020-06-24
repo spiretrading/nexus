@@ -18,7 +18,7 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
       Map<string,Beam.Map<Beam.DirectoryEntry, AccountEntry[]>>();
   }
 
-  public get groups(): Beam.Set<Beam.DirectoryEntry> {
+  public get groups(): Beam.DirectoryEntry[] {
     return this._model.groups;
   }
 

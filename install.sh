@@ -71,7 +71,6 @@ if [ "$global_interface" == "" ]; then
   global_interface="$local_interface"
 fi
 install_dependencies
-sudo -u $username ./configure.sh
 sudo -u $username ./build.sh
 
 mysql_input="

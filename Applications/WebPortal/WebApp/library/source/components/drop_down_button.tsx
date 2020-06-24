@@ -33,16 +33,16 @@ export class DropDownButton extends React.Component<Properties, State> {
   public render(): JSX.Element {
     const endSource = (() => {
       if(this.props.isExpanded) {
-        return '/resources/arrow-collapse.svg';
+        return 'resources/arrow-collapse.svg';
       } else {
-        return '/resources/arrow-expand.svg';
+        return 'resources/arrow-expand.svg';
       }
     })();
     const startSource = (() => {
       if(this.props.isExpanded) {
-        return '/resources/arrow-expand.svg';
+        return 'resources/arrow-expand.svg';
       } else {
-        return '/resources/arrow-collapse.svg';
+        return 'resources/arrow-collapse.svg';
       }
     })();
     const endStyle = (() => {

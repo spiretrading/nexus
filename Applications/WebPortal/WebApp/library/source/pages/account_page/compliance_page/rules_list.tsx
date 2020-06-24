@@ -33,6 +33,7 @@ export class RulesList extends React.Component<Properties> {
       const rule = this.props.complianceList[i];
       rules.push(
         <RuleRow
+          key={rule.id}
           displaySize={this.props.displaySize}
           complianceRule={rule}
           currencyDatabase={this.props.currencyDatabase}

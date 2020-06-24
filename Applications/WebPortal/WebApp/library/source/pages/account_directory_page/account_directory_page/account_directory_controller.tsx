@@ -24,6 +24,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  groups: Beam.DirectoryEntry[];
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
@@ -38,6 +39,7 @@ export class AccountDirectoryController extends
     super(props);
     this.state = {
       isLoaded: false, 
+      groups: [],
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
@@ -56,7 +58,7 @@ export class AccountDirectoryController extends
     return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
-      groups={this.props.model.groups}
+      groups={this.state.groups}
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
@@ -71,7 +73,9 @@ export class AccountDirectoryController extends
     this.props.model.load().then(
       () => {
         this.setState({
-          isLoaded: true
+          isLoaded: true,
+          groups: this.props.model.groups.sort(
+            AccountDirectoryController.groupComparator)
         });
       });
   }
@@ -87,6 +91,7 @@ export class AccountDirectoryController extends
       this.state.openedGroups.remove(group);
     } else {
       const accounts = await this.props.model.loadAccounts(group);
+      accounts.sort(AccountDirectoryController.accountComparator);
       this.state.openedGroups.set(group, accounts);
     }
     this.setState({openedGroups: this.state.openedGroups});
@@ -95,7 +100,10 @@ export class AccountDirectoryController extends
   private onCreateGroup = async (name: string) => {
     try {
       await this.props.model.createGroup(name);
-      this.forceUpdate();
+      this.setState({
+        groups: this.props.model.groups.sort(
+          AccountDirectoryController.groupComparator)
+      });
     } catch(e) {
       this.setState({createGroupStatus: e.toString()});
     }
@@ -110,9 +118,23 @@ export class AccountDirectoryController extends
   private onFilterChange = async (newFilter: string) => {
     if(newFilter !== '') {
       const accounts = await this.props.model.loadFilteredAccounts(newFilter);
+      for(const pair of accounts) {
+        accounts.get(pair[0]).sort(
+          AccountDirectoryController.accountComparator);
+      }
       this.setState({filter: newFilter, filteredGroups: accounts});
     } else {
       this.setState({filter: newFilter});
     }
+  }
+
+  private static groupComparator(groupA: Beam.DirectoryEntry,
+      groupB: Beam.DirectoryEntry): number {
+    return groupA.name.localeCompare(groupB.name);
+  }
+
+  private static accountComparator(accountA: AccountEntry,
+      accountB: AccountEntry): number {
+    return accountA.account.name.localeCompare(accountB.account.name);
   }
 }

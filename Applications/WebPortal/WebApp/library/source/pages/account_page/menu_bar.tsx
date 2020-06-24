@@ -60,7 +60,7 @@ export class MenuBar extends React.Component<Properties, State> {
       <HBoxLayout id='menu-bar' width={menuBarWidth}
           style={menuIconContainerClassName}>
         <VBoxLayout id='item-vbox'  height='40px'>
-          <Item iconSrc={'/resources/account/account' +
+          <Item iconSrc={'resources/account/account' +
               `-${this.getIconColor(SubPage.PROFILE)}.svg`} name='Account'
             isSelected={this.props.selected === SubPage.PROFILE}
             displaySize={this.props.displaySize}
@@ -71,7 +71,7 @@ export class MenuBar extends React.Component<Properties, State> {
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
-          <Item iconSrc={'/resources/account/risk-controls' +
+          <Item iconSrc={'resources/account/risk-controls' +
               `-${this.getIconColor(SubPage.RISK_CONTROLS)}.svg`}
             name='Risk Controls'
             isSelected={this.props.selected === SubPage.RISK_CONTROLS}
@@ -83,7 +83,7 @@ export class MenuBar extends React.Component<Properties, State> {
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
-          <Item iconSrc={'/resources/account/entitlements' +
+          <Item iconSrc={'resources/account/entitlements' +
               `-${this.getIconColor(SubPage.ENTITLEMENTS)}.svg`}
             name='Entitlements'
             isSelected={this.props.selected === SubPage.ENTITLEMENTS}
@@ -95,7 +95,7 @@ export class MenuBar extends React.Component<Properties, State> {
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
-          <Item iconSrc={'/resources/account/compliance' +
+          <Item iconSrc={'resources/account/compliance' +
               `-${this.getIconColor(SubPage.COMPLIANCE)}.svg`}
             name='Compliance'
             isSelected={this.props.selected === SubPage.COMPLIANCE}
@@ -107,7 +107,7 @@ export class MenuBar extends React.Component<Properties, State> {
         </VBoxLayout>
         {menuBarPadding}
         <VBoxLayout height='40px'>
-          <Item iconSrc={'/resources/account/profit-loss' +
+          <Item iconSrc={'resources/account/profit-loss' +
               `-${this.getIconColor(SubPage.PROFIT_LOSS)}.svg`}
             name='Profit/Loss' displaySize={this.props.displaySize}
             isSelected={this.props.selected === SubPage.PROFIT_LOSS}
