@@ -2,6 +2,7 @@
 #define SPIRE_TREND_LINE_MODEL_HPP
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

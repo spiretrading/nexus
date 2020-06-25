@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Spire/RangeInputModel.hpp"
 #include "Spire/Spire/Scalar.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
 

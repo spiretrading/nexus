@@ -7,6 +7,7 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/Definitions.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

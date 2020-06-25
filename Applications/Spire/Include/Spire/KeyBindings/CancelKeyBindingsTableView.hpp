@@ -4,7 +4,7 @@
 #include "Spire/KeyBindings/CancelKeyBindingsTableModel.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsTableView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

@@ -9,7 +9,6 @@
 #include "Beam/Pointers/Ref.hpp"
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

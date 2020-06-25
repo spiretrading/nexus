@@ -9,6 +9,7 @@
 #include "Spire/Login/Login.hpp"
 #include "Spire/Spire/Definitions.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

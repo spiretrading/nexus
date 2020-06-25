@@ -37,8 +37,7 @@ ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
       m_security_widget_container(nullptr),
       m_technicals_panel(nullptr),
       m_chart(nullptr),
-      m_is_chart_auto_scaled(true),
-      m_trend_line_editor_widget(nullptr) {
+      m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
   set_svg_icon(":/Icons/chart-black.svg",

@@ -2,6 +2,7 @@
 #define SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {

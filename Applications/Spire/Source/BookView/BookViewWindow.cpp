@@ -23,7 +23,8 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    Ref<SecurityInputModel> input_model, QWidget* parent)
+    Ref<SecurityInputModel> input_model,
+    QWidget* parent)
     : Window(parent),
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),

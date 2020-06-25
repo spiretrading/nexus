@@ -11,6 +11,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 

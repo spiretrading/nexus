@@ -1,5 +1,6 @@
 #include "Spire/Charting/Charting.hpp"
 #include <algorithm>
+#include <cmath>
 
 using namespace Spire;
 

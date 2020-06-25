@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {

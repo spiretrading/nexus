@@ -3,7 +3,7 @@
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Spire/QtPromise.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {

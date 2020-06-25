@@ -3,6 +3,8 @@
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
+#include "Spire/Spire/Signal.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 namespace Spire {
 
@@ -42,16 +44,10 @@ namespace Spire {
       void set_style(TrendLineStyle style);
 
       //! Calls the provided slot when the color signal is triggered.
-      /*!
-        \param slot The slot to call.
-      */
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
     
       //! Calls the provided slot when the style signal is triggered.
-      /*!
-        \param slot The slot to call.
-      */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
 

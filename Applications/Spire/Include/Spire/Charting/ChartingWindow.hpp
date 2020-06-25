@@ -9,6 +9,7 @@
 #include "Spire/Charting/TrendLine.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -30,7 +31,7 @@ namespace Spire {
         \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
-      ChartingWindow(Beam::Ref<SecurityInputModel> input_model,
+      explicit ChartingWindow(Beam::Ref<SecurityInputModel> input_model,
         QWidget* parent = nullptr);
 
       //! Sets the chart and technicals models to display.

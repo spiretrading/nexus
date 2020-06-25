@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/Intervals.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Spire/SubscriptionResult.hpp"
 
 namespace Spire {

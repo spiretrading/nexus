@@ -2,6 +2,7 @@
 #define SPIRE_TASK_KEY_BINDINGS_TABLE_MODEL_HPP
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsTableModel.hpp"
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {

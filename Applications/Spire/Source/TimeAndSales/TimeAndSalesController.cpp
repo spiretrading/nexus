@@ -2,6 +2,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/TimeAndSales/ServicesTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 
 using namespace Beam;
 using namespace boost;

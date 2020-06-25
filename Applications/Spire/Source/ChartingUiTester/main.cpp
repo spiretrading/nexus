@@ -11,6 +11,7 @@
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Version.hpp"
 
 using namespace Beam;

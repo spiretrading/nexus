@@ -3,6 +3,7 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <QLabel>
 #include <QWidget>
+#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
