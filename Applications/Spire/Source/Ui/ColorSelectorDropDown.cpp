@@ -180,6 +180,7 @@ void ColorSelectorDropDown::childEvent(QChildEvent* event) {
     event->child()->installEventFilter(this);
   }
 }
+
 bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
@@ -201,7 +202,7 @@ void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
 void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
-  button->connect_clicked_signal([=, color = std::move(color)] {
+  button->connect_clicked_signal([=] {
     on_color_button_clicked(color);
   });
   m_basic_colors_layout->addWidget(button, x, y);
@@ -210,7 +211,7 @@ void ColorSelectorDropDown::add_basic_color_button(int x, int y,
 void ColorSelectorDropDown::add_recent_color_button(int index,
     const QColor& color) {
   auto button = create_color_button(color, this);
-  button->connect_clicked_signal([=, color = std::move(color)] {
+  button->connect_clicked_signal([=] {
     on_color_button_clicked(color);
   });
   m_recent_colors_layout->insertWidget(index, button);
@@ -234,8 +235,8 @@ void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
 }
 
 void ColorSelectorDropDown::on_color_selected(const QColor& color) {
-  m_color_signal(color);
   m_current_color = color;
+  m_color_signal(color);
 }
 
 void ColorSelectorDropDown::on_recent_colors_changed() {

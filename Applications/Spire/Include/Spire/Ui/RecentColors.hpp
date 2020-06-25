@@ -34,15 +34,13 @@ namespace Spire {
       boost::signals2::connection connect_change_signal(
         const ChangeSignal::slot_type& slot) const;
 
-      RecentColors(const RecentColors&) = delete;
-
-      RecentColors& operator =(const RecentColors&) = delete;
-
     private:
-      RecentColors();
-
       mutable ChangeSignal m_change_signal;
       std::deque<QColor> m_recent_colors;
+
+      RecentColors();
+      RecentColors(const RecentColors&) = delete;
+      RecentColors& operator =(const RecentColors&) = delete;
   };
 }
 

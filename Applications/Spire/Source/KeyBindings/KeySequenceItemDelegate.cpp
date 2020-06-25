@@ -3,7 +3,6 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
