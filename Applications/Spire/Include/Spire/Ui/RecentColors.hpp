@@ -3,6 +3,7 @@
 #include <array>
 #include <deque>
 #include <QColor>
+#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 
@@ -11,13 +12,14 @@ namespace Spire {
   class RecentColors {
     public:
 
+      //! Signals that the recent colors have changed.
+      using ChangeSignal = Signal<void ()>;
+
       //! The maximum number of recent colors to store.
-      static const int RECENT_COLOR_COUNT = 9;
+      static constexpr auto RECENT_COLOR_COUNT = 9;
 
-      //! Returns the default recent colors.
-      static const RecentColors& get_default_colors();
-
-      RecentColors() = default;
+      //! Returns the current recent colors.
+      static RecentColors& get_instance();
 
       //! Inserts a color into the recently selected colors.
       /*!
@@ -28,15 +30,18 @@ namespace Spire {
       //! Returns the collection of recently selected colors.
       std::array<QColor, RECENT_COLOR_COUNT> get_colors() const;
 
-      //! Returns true if two RecentColors share the same recently selected
-      //! colors in the same order.
-      bool operator ==(const RecentColors& rhs) const;
+      //! Connects a slot to the change signal.
+      boost::signals2::connection connect_change_signal(
+        const ChangeSignal::slot_type& slot) const;
 
-      //! Returns false if two RecentColors do not share the same recently
-      //! selected colors in the same order.
-      bool operator !=(const RecentColors& rhs) const;
+      RecentColors(const RecentColors&) = delete;
+
+      RecentColors& operator =(const RecentColors&) = delete;
 
     private:
+      RecentColors();
+
+      mutable ChangeSignal m_change_signal;
       std::deque<QColor> m_recent_colors;
   };
 }

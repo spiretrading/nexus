@@ -20,10 +20,8 @@ using PriceRange = TimeAndSalesProperties::PriceRange;
 using Columns = TimeAndSalesProperties::Columns;
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
-    const TimeAndSalesProperties& properties,
-    const RecentColors& recent_colors, QWidget* parent)
-    : Dialog(parent),
-      m_recent_colors(recent_colors) {
+    const TimeAndSalesProperties& properties, QWidget* parent)
+    : Dialog(parent) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
@@ -98,13 +96,9 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
   m_text_color_button = new ColorSelectorButton(properties.get_text_color(
-    PriceRange::UNKNOWN), m_recent_colors, this);
+    PriceRange::UNKNOWN), this);
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
-  m_text_color_button->connect_recent_colors_signal(
-    [=] (const auto& recent_colors) {
-      on_recent_colors_changed(recent_colors);
-    });
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
@@ -114,13 +108,9 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
   m_band_color_button = new ColorSelectorButton(properties.get_band_color(
-    PriceRange::UNKNOWN), m_recent_colors, this);
+    PriceRange::UNKNOWN), this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
-  m_band_color_button->connect_recent_colors_signal(
-    [=] (const auto& recent_colors) {
-      on_recent_colors_changed(recent_colors);
-    });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 26);
   color_settings_layout->addStretch(42);
@@ -239,10 +229,6 @@ TimeAndSalesProperties
   return properties;
 }
 
-RecentColors TimeAndSalesPropertiesDialog::get_recent_colors() const {
-  return m_recent_colors;
-}
-
 connection TimeAndSalesPropertiesDialog::connect_apply_signal(
     const ApplySignal::slot_type& slot) const {
   return m_apply_signal.connect(slot);
@@ -251,11 +237,6 @@ connection TimeAndSalesPropertiesDialog::connect_apply_signal(
 connection TimeAndSalesPropertiesDialog::connect_apply_all_signal(
     const ApplyAllSignal::slot_type& slot) const {
   return m_apply_all_signal.connect(slot);
-}
-
-connection TimeAndSalesPropertiesDialog::connect_recent_colors_signal(
-    const RecentColorsSignal::slot_type& slot) const {
-  return m_recent_colors_signal.connect(slot);
 }
 
 connection TimeAndSalesPropertiesDialog::connect_save_default_signal(
@@ -368,11 +349,4 @@ void TimeAndSalesPropertiesDialog::update_band_list_stylesheet(
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_properties.get_band_color(i).name())
         .arg(m_properties.get_text_color(i).name()));
-}
-
-void TimeAndSalesPropertiesDialog::on_recent_colors_changed(
-    const RecentColors& recent_colors) {
-  m_band_color_button->set_recent_colors(recent_colors);
-  m_text_color_button->set_recent_colors(recent_colors);
-  m_recent_colors_signal(recent_colors);
 }

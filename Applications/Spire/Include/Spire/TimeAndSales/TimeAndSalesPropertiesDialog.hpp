@@ -22,27 +22,19 @@ namespace Spire {
       //! Signals that properties should be applied to all windows.
       using ApplyAllSignal = Signal<void ()>;
 
-      //! Signals that the recent colors have changed.
-      using RecentColorsSignal = Signal<void (const RecentColors& colors)>;
-
       //! Signals that properties should be saved as the default.
       using SaveDefaultSignal = Signal<void ()>;
 
       //! Constructs a time and sales properties dialog.
       /*!
         \param properties The properties to modify.
-        \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
-      TimeAndSalesPropertiesDialog(
-        const TimeAndSalesProperties& properties,
-        const RecentColors& recent_colors, QWidget* parent = nullptr);
+      explicit TimeAndSalesPropertiesDialog(
+        const TimeAndSalesProperties& properties, QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       TimeAndSalesProperties get_properties() const;
-
-      //! Returns the recent colors represented by this dialog.
-      RecentColors get_recent_colors() const;
 
       //! Connects a slot to the apply signal.
       boost::signals2::connection connect_apply_signal(
@@ -51,10 +43,6 @@ namespace Spire {
       //! Connects a slot to the apply all signal.
       boost::signals2::connection connect_apply_all_signal(
         const ApplyAllSignal::slot_type& slot) const;
-
-      //! Connects a slot to the recent colors signal.
-      boost::signals2::connection connect_recent_colors_signal(
-        const RecentColorsSignal::slot_type& slot) const;
 
       //! Connects a slot to the save default signal.
       boost::signals2::connection connect_save_default_signal(
@@ -67,10 +55,8 @@ namespace Spire {
     private:
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
-      mutable RecentColorsSignal m_recent_colors_signal;
       mutable SaveDefaultSignal m_save_default_signal;
       TimeAndSalesProperties m_properties;
-      RecentColors m_recent_colors;
       QListWidget* m_band_list;
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_text_color_button;
@@ -82,7 +68,6 @@ namespace Spire {
       void set_properties(const TimeAndSalesProperties& properties);
       void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
-      void on_recent_colors_changed(const RecentColors& recent_colors);
   };
 }
 

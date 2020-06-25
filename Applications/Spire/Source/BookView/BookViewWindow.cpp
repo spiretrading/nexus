@@ -23,10 +23,9 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindow::BookViewWindow(const BookViewProperties& properties,
-    const RecentColors& recent_colors, Ref<SecurityInputModel> input_model,
+    Ref<SecurityInputModel> input_model,
     QWidget* parent)
     : Window(parent),
-      m_recent_colors(recent_colors),
       m_input_model(input_model.Get()),
       m_is_data_loaded(false),
       m_technicals_panel(nullptr),
@@ -87,11 +86,6 @@ void BookViewWindow::set_properties(const BookViewProperties& properties) {
   }
 }
 
-connection BookViewWindow::connect_recent_colors_signal(
-    const RecentColorsSignal::slot_type& slot) const {
-  return m_recent_colors_signal.connect(slot);
-}
-
 connection BookViewWindow::connect_security_change_signal(
     const ChangeSecuritySignal::slot_type& slot) const {
   return m_security_widget->connect_change_security_signal(slot);
@@ -139,14 +133,9 @@ void BookViewWindow::show_context_menu(const QPoint& pos) {
 }
 
 void BookViewWindow::show_properties_dialog() {
-  BookViewPropertiesDialog dialog(get_properties(), Security(),
-    m_recent_colors, this);
+  BookViewPropertiesDialog dialog(get_properties(), Security(), this);
   m_dialog_apply_connection = dialog.connect_apply_signal(
     [&] { set_properties(dialog.get_properties()); });
-  m_dialog_recent_colors_connection = dialog.connect_recent_colors_signal(
-    [&] (const auto& recent_colors) {
-      m_recent_colors_signal(recent_colors);
-    });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());

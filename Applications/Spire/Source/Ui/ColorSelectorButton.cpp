@@ -7,12 +7,11 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
-    const RecentColors& recent_colors, QWidget* parent)
-    : QWidget(parent),
-      m_recent_colors(recent_colors) {
+    QWidget* parent)
+    : QWidget(parent) {
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_Hover);
-  m_dropdown = new ColorSelectorDropDown(current_color, recent_colors, this);
+  m_dropdown = new ColorSelectorDropDown(current_color, this);
   m_dropdown->connect_color_signal([=] (const auto& color) {
     on_color_selected(color);
   });
@@ -31,19 +30,9 @@ void ColorSelectorButton::set_color(const QColor& color) {
   update();
 }
 
-void ColorSelectorButton::set_recent_colors(
-    const RecentColors& recent_colors) {
-  m_dropdown->set_recent_colors(recent_colors);
-}
-
 connection ColorSelectorButton::connect_color_signal(
     const ColorSignal::slot_type& slot) const {
   return m_color_signal.connect(slot);
-}
-
-connection ColorSelectorButton::connect_recent_colors_signal(
-    const RecentColorsSignal::slot_type& slot) const {
-  return m_recent_colors_signal.connect(slot);
 }
 
 bool ColorSelectorButton::eventFilter(QObject* watched, QEvent* event) {
@@ -107,10 +96,6 @@ void ColorSelectorButton::paintEvent(QPaintEvent* event) {
 
 void ColorSelectorButton::hide_dropdown() {
   m_dropdown->hide();
-  if(m_dropdown->get_recent_colors() != m_recent_colors) {
-    m_recent_colors = m_dropdown->get_recent_colors();
-    m_recent_colors_signal(m_recent_colors);
-  }
 }
 
 void ColorSelectorButton::move_color_dropdown() {

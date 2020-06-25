@@ -18,8 +18,7 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
-    const BookViewProperties& properties, const RecentColors& recent_colors,
-    QWidget* parent)
+    const BookViewProperties& properties, QWidget* parent)
     : QWidget(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, scale_height(8), 0, scale_height(20));
@@ -134,15 +133,10 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   market_highlight_color_label->setStyleSheet(generic_label_text_style);
   market_highlight_layout->addWidget(market_highlight_color_label, 14);
   market_highlight_layout->addStretch(4);
-  m_market_highlight_color_button = new ColorSelectorButton(Qt::yellow,
-    recent_colors, this);
+  m_market_highlight_color_button = new ColorSelectorButton(Qt::yellow, this);
   m_market_highlight_color_button->setFixedWidth(scale_width(100));
   m_market_highlight_color_button->connect_color_signal(
     [=] (auto color) { on_market_highlight_color_selected(color); });
-  m_market_highlight_color_button->connect_recent_colors_signal(
-    [=] (const auto& recent_colors) {
-      on_recent_colors_changed(recent_colors);
-    });
   market_highlight_layout->addWidget(m_market_highlight_color_button, 26);
   market_highlight_layout->addStretch(92);
   layout->addLayout(market_highlight_layout, 130);
@@ -187,12 +181,8 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
   orders_layout->addWidget(order_highlight_color_label, 14);
   orders_layout->addStretch(4);
   m_order_highlight_color_button = new ColorSelectorButton(
-    properties.get_order_highlight_color(), recent_colors, this);
+    properties.get_order_highlight_color(), this);
   m_order_highlight_color_button->setFixedWidth(scale_width(100));
-  m_order_highlight_color_button->connect_recent_colors_signal(
-    [=] (const auto& recent_colors) {
-      on_recent_colors_changed(recent_colors);
-    });
   orders_layout->addWidget(m_order_highlight_color_button, 26);
   orders_layout->addStretch(92);
   layout->addLayout(orders_layout, 151);
@@ -221,17 +211,6 @@ void BookViewHighlightPropertiesWidget::apply(
   }
   properties.set_order_highlight_color(
     m_order_highlight_color_button->get_color());
-}
-
-void BookViewHighlightPropertiesWidget::set_recent_colors(
-    const RecentColors& recent_colors) {
-  m_market_highlight_color_button->set_recent_colors(recent_colors);
-  m_order_highlight_color_button->set_recent_colors(recent_colors);
-}
-
-connection BookViewHighlightPropertiesWidget::connect_recent_colors_signal(
-    const RecentColorsSignal::slot_type& slot) const {
-  return m_recent_colors_signal.connect(slot);
 }
 
 void BookViewHighlightPropertiesWidget::showEvent(QShowEvent* event) {
@@ -320,9 +299,4 @@ void BookViewHighlightPropertiesWidget::
     static_cast<MarketListItem*>(m_markets_list_widget->currentItem())->
       set_highlight_all_levels();
   }
-}
-
-void BookViewHighlightPropertiesWidget::on_recent_colors_changed(
-    const RecentColors& recent_colors) {
-  m_recent_colors_signal(recent_colors);
 }

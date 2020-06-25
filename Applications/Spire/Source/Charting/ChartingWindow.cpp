@@ -31,14 +31,13 @@ namespace {
 }
 
 ChartingWindow::ChartingWindow(Ref<SecurityInputModel> input_model,
-    const RecentColors& recent_colors, QWidget* parent)
+    QWidget* parent)
     : Window(parent),
       m_is_mouse_dragging(false),
       m_security_widget_container(nullptr),
       m_technicals_panel(nullptr),
       m_chart(nullptr),
-      m_is_chart_auto_scaled(true),
-      m_recent_colors(recent_colors) {
+      m_is_chart_auto_scaled(true) {
   setMinimumSize(scale(400, 320));
   resize_body(scale(400, 320));
   set_svg_icon(":/Icons/chart-black.svg",
@@ -168,26 +167,16 @@ void ChartingWindow::set_models(std::shared_ptr<ChartModel> chart_model,
   m_auto_scale_button->setEnabled(true);
   m_draw_line_button->setEnabled(true);
   m_draw_line_button->set_toggled(false);
-  m_trend_line_editor_widget = new TrendLineEditor(m_recent_colors,
-    m_technicals_panel);
+  m_trend_line_editor_widget = new TrendLineEditor(m_technicals_panel);
   m_trend_line_editor_widget->hide();
   m_trend_line_editor_widget->connect_color_signal(
     [=] { on_trend_line_color_selected(); });
-  m_trend_line_editor_widget->connect_recent_colors_signal(
-    [=] (const auto& recent_colors) {
-      on_recent_colors_changed(recent_colors);
-    });
   m_chart->set_trend_line_color(m_trend_line_editor_widget->get_color());
   m_trend_line_editor_widget->connect_style_signal(
     [=] { on_trend_line_style_selected(); });
   m_chart->set_trend_line_style(m_trend_line_editor_widget->get_style());
   m_security_widget->set_widget(m_security_widget_container);
   m_chart->installEventFilter(this);
-}
-
-connection ChartingWindow::connect_recent_colors_signal(
-    const RecentColorsSignal::slot_type& slot) const {
-  return m_recent_colors_signal.connect(slot);
 }
 
 connection ChartingWindow::connect_security_change_signal(
@@ -273,11 +262,6 @@ void ChartingWindow::on_period_line_edit_changed() {
   } else {
     m_period_dropdown->set_items({tr("seconds"), tr("minutes"), tr("hours")});
   }
-}
-
-void ChartingWindow::on_recent_colors_changed(
-    const RecentColors& recent_colors) {
-  m_recent_colors_signal(recent_colors);
 }
 
 void ChartingWindow::on_security_change(const Security& security) {

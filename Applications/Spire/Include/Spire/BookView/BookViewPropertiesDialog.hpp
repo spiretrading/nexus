@@ -20,13 +20,6 @@ namespace Spire {
       //! Signals that properties should be applied to all windows.
       using ApplyAllSignal = Signal<void ()>;
 
-      //! Signals that the recent colors have changed.
-      /*!
-        \param recent_colors The updated recent colors.
-      */
-      using RecentColorsSignal =
-        Signal<void (const RecentColors& recent_colors)>;
-
       //! Signals that properties should be saved as the default.
       using SaveDefaultSignal = Signal<void ()>;
 
@@ -34,13 +27,10 @@ namespace Spire {
       /*!
         \param properties The properties to modify.
         \param security The security used for modifying interactions.
-        \param recent_colors The recent colors to display in the color
-                             color selector drop downs.
         \param parent The parent widget.
       */
       BookViewPropertiesDialog(const BookViewProperties& properties,
-        const Nexus::Security& security, const RecentColors& recent_colors,
-        QWidget* parent = nullptr);
+        const Nexus::Security& security, QWidget* parent = nullptr);
 
       //! Returns the properties represented by this dialog.
       BookViewProperties get_properties() const;
@@ -53,10 +43,6 @@ namespace Spire {
       boost::signals2::connection connect_apply_all_signal(
         const ApplyAllSignal::slot_type& slot) const;
 
-      //! Connects a slot to the recent colors signal.
-      boost::signals2::connection connect_recent_colors_signal(
-        const RecentColorsSignal::slot_type& slot) const;
-
       //! Connects a slot to the save default signal.
       boost::signals2::connection connect_save_default_signal(
         const SaveDefaultSignal::slot_type& slot) const;
@@ -67,14 +53,12 @@ namespace Spire {
     private:
       mutable ApplySignal m_apply_signal;
       mutable ApplyAllSignal m_apply_all_signal;
-      mutable RecentColorsSignal m_recent_colors_signal;
       mutable SaveDefaultSignal m_save_default_signal;
       QTabWidget* m_tab_widget;
       BookViewLevelPropertiesWidget* m_levels_tab_widget;
       BookViewHighlightPropertiesWidget* m_highlights_tab_widget;
       bool m_last_focus_was_key;
 
-      void on_recent_colors_changed(const RecentColors& recent_colors);
       void on_tab_bar_clicked(int index);
       void on_tab_changed();
   };

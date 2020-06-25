@@ -14,22 +14,13 @@ namespace Spire {
   class BookViewHighlightPropertiesWidget : public QWidget {
     public:
 
-      //! Signals that the recent colors have changed.
-      /*!
-        \param recent_colors The updated recent colors.
-      */
-      using RecentColorsSignal =
-        Signal<void (const RecentColors& recent_colors)>;
-
       //! Constructs a BookViewHighlightPropertiesWidget.
       /*!
         \param properties The properties to display.
-        \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
-      BookViewHighlightPropertiesWidget(
-        const BookViewProperties& properties,
-        const RecentColors& recent_colors, QWidget* parent = nullptr);
+      explicit BookViewHighlightPropertiesWidget(
+        const BookViewProperties& properties, QWidget* parent = nullptr);
 
       //! Applies the properties represented by this widget to an instance.
       /*!
@@ -37,21 +28,10 @@ namespace Spire {
       */
       void apply(BookViewProperties& properties) const;
 
-      //! Sets the current recent colors.
-      /*!
-        \param recent_colors The current recent colors.
-      */
-      void set_recent_colors(const RecentColors& recent_colors);
-
-      //! Connects a slot to the recent colors signal.
-      boost::signals2::connection connect_recent_colors_signal(
-        const RecentColorsSignal::slot_type& slot) const;
-
     protected:
       void showEvent(QShowEvent* event) override;
 
     private:
-      mutable RecentColorsSignal m_recent_colors_signal;
       QListWidget* m_markets_list_widget;
       CheckBox* m_highlight_none_check_box;
       CheckBox* m_highlight_top_level_check_box;
@@ -68,7 +48,6 @@ namespace Spire {
       void on_highlight_none_check_box_checked(int state);
       void on_highlight_top_level_check_box_checked(int state);
       void on_highlight_all_levels_check_box_checked(int state);
-      void on_recent_colors_changed(const RecentColors& recent_colors);
   };
 }
 

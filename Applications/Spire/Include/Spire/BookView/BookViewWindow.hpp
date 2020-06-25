@@ -30,22 +30,13 @@ namespace Spire {
       using ChangeSecuritySignal =
         Signal<void (const Nexus::Security& security)>;
 
-      //! Signals that the recent colors have changed.
-      /*!
-        \param recent_colors The updated recent colors.
-      */
-      using RecentColorsSignal =
-        Signal<void (const RecentColors& recent_colors)>;
-
       //! Constructs a book view window.
       /*!
         \param properties The display properties.
-        \param recent_colors The recent colors for the properties dialog.
         \param input_model The SecurityInputModel to use for autocomplete.
         \param parent The parent widget.
       */
       BookViewWindow(const BookViewProperties& properties,
-        const RecentColors& recent_colors,
         Beam::Ref<SecurityInputModel> input_model, QWidget* parent = nullptr);
 
       //! Sets the model to display.
@@ -57,10 +48,6 @@ namespace Spire {
       //! Sets the display properties.
       void set_properties(const BookViewProperties& properties);
 
-      //! Connects a slot to the recent colors signal.
-      boost::signals2::connection connect_recent_colors_signal(
-        const RecentColorsSignal::slot_type& slot) const;
-
       //! Connects a slot to the change security signal.
       boost::signals2::connection connect_security_change_signal(
         const ChangeSecuritySignal::slot_type& slot) const;
@@ -70,9 +57,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable RecentColorsSignal m_recent_colors_signal;
       BookViewProperties m_properties;
-      RecentColors m_recent_colors;
       SecurityInputModel* m_input_model;
       std::shared_ptr<BookViewModel> m_model;
       SecurityWidget* m_security_widget;
@@ -86,7 +71,6 @@ namespace Spire {
       QtPromise<void> m_data_loaded_promise;
       bool m_is_data_loaded;
       boost::signals2::scoped_connection m_dialog_apply_connection;
-      boost::signals2::scoped_connection m_dialog_recent_colors_connection;
 
       void show_context_menu(const QPoint& pos);
       void show_properties_dialog();

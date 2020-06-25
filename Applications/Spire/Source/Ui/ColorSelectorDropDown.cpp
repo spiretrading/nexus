@@ -66,11 +66,10 @@ namespace {
 }
 
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
-    const RecentColors& recent_colors, QWidget* parent)
+    QWidget* parent)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
-      m_recent_colors(recent_colors),
-      m_current_color(current_color),
-      m_original_color(current_color) {
+      m_recent_colors(RecentColors::get_instance()),
+      m_current_color(current_color) {
   m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
   setObjectName("color_selector_drop_down");
@@ -161,22 +160,13 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
   layout->addLayout(m_recent_colors_layout);
   update_recent_colors_layout();
+  m_recent_colors.connect_change_signal([=] { on_recent_colors_changed(); });
 }
 
 void ColorSelectorDropDown::set_color(const QColor& color) {
   m_color_hue_slider->set_color(color);
   m_color_value_slider->set_color(color);
   m_hex_input->set_color(color);
-}
-
-const RecentColors& ColorSelectorDropDown::get_recent_colors() const {
-  return m_recent_colors;
-}
-
-void ColorSelectorDropDown::set_recent_colors(
-    const RecentColors& recent_colors) {
-  m_recent_colors = recent_colors;
-  update_recent_colors_layout();
 }
 
 connection ColorSelectorDropDown::connect_color_signal(
@@ -200,11 +190,8 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
-  if(m_current_color != m_original_color) {
-    m_recent_colors.add_color(m_current_color);
-    m_original_color = m_current_color;
-    update_recent_colors_layout();
-  }
+  m_recent_colors.add_color(m_current_color);
+  update_recent_colors_layout();
 }
 
 void ColorSelectorDropDown::add_basic_color_button(int x, int y,
@@ -245,4 +232,8 @@ void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
 void ColorSelectorDropDown::on_color_selected(const QColor& color) {
   m_color_signal(color);
   m_current_color = color;
+}
+
+void ColorSelectorDropDown::on_recent_colors_changed() {
+  update_recent_colors_layout();
 }

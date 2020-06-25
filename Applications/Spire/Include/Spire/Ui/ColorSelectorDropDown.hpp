@@ -25,26 +25,16 @@ namespace Spire {
       //! Constructs a ColorSelectorDropDown.
       /*!
         \param current_color The current color to display.
-        \param recent_colors The recent colors to display.
         \param parent The parent widget.
       */
-      ColorSelectorDropDown(const QColor& current_color,
-        const RecentColors& recent_colors, QWidget* parent = nullptr);
+      explicit ColorSelectorDropDown(const QColor& current_color,
+        QWidget* parent = nullptr);
 
       //! Sets the current color.
       /*!
         \param color The current color.
       */
       void set_color(const QColor& color);
-
-      //! Returns the recent colors.
-      const RecentColors& get_recent_colors() const;
-
-      //! Sets the recent colors.
-      /*!
-        \param recent_colors The current recent colors.
-      */
-      void set_recent_colors(const RecentColors& recent_colors);
 
       //! Connects a slot to the color selection signal.
       boost::signals2::connection connect_color_signal(
@@ -57,9 +47,8 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      RecentColors m_recent_colors;
+      RecentColors& m_recent_colors;
       QColor m_current_color;
-      QColor m_original_color;
       QGridLayout* m_basic_colors_layout;
       QHBoxLayout* m_recent_colors_layout;
       ColorSelectorValueSlider* m_color_value_slider;
@@ -72,6 +61,7 @@ namespace Spire {
       void update_recent_colors_layout();
       void on_color_button_clicked(const QColor& color);
       void on_color_selected(const QColor& color);
+      void on_recent_colors_changed();
   };
 }
 

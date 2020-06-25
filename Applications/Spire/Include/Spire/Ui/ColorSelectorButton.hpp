@@ -16,21 +16,13 @@ namespace Spire {
       */
       using ColorSignal = Signal<void (const QColor& color)>;
 
-      //! Signal type for recent color updates.
-      /*!
-        \param recent_colors The updated recent colors.
-      */
-      using RecentColorsSignal =
-        Signal<void (const RecentColors& recent_colors)>;
-
       //! Constructs a ColorSelectorButton.
       /*!
         \param current_color The current color to display in the button.
-        \param recent_colors The recent colors to display in the drop down.
         \param parent The parent widget.
       */
       ColorSelectorButton(const QColor& current_color,
-        const RecentColors& recent_colors, QWidget* parent = nullptr);
+        QWidget* parent = nullptr);
 
       //! Returns the current color.
       const QColor& get_color() const;
@@ -41,19 +33,9 @@ namespace Spire {
       */
       void set_color(const QColor& color);
 
-      //! Sets the recent colors for the button's drop down.
-      /*!
-        \param recent_colors The recent colors to set.
-      */
-      void set_recent_colors(const RecentColors& recent_colors);
-
       //! Connects a slot to the color selection signal.
       boost::signals2::connection connect_color_signal(
         const ColorSignal::slot_type& slot) const;
-
-      //! Connects a slot to the recent colors signal.
-      boost::signals2::connection connect_recent_colors_signal(
-        const RecentColorsSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -64,9 +46,7 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      mutable RecentColorsSignal m_recent_colors_signal;
       QColor m_current_color;
-      RecentColors m_recent_colors;
       ColorSelectorDropDown* m_dropdown;
 
       void hide_dropdown();

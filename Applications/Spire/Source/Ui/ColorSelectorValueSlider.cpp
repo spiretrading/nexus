@@ -87,7 +87,7 @@ void ColorSelectorValueSlider::resizeEvent(QResizeEvent* event) {
 }
 
 QPoint ColorSelectorValueSlider::get_mouse_pos(const QColor& color) const {
-  return { static_cast<int>(map_to(color.saturation(), 0, 255, 1.0,
+  return {static_cast<int>(map_to(color.saturation(), 0, 255, 1.0,
     static_cast<double>(m_gradient.width() - 1))),
     m_gradient.height() - static_cast<int>(map_to(color.value(), 0, 255, 1.0,
     static_cast<double>(m_gradient.height() - 1)))};
