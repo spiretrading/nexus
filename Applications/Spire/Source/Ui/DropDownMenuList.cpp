@@ -42,6 +42,7 @@ DropDownMenuList::DropDownMenuList(
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
   parent->installEventFilter(this);
+  m_list_widget->installEventFilter(this);
 }
 
 void DropDownMenuList::set_items(const std::vector<QString>& items) {
@@ -53,6 +54,7 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     std::min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
   for(auto& item : items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
+    menu_item->setFixedWidth(m_list_widget->width());
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
     m_list_widget->layout()->addWidget(menu_item);
   }
@@ -102,6 +104,10 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
       } else if(key_event->key() == Qt::Key_Escape) {
         close();
       }
+    }
+  } else if(object == m_list_widget) {
+    if(event->type() == QEvent::Resize) {
+      update_item_width();
     }
   }
   return false;
@@ -167,6 +173,13 @@ void DropDownMenuList::update_highlights(int old_index, int new_index) {
     static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
     current_widget->widget()->update();
     m_scroll_area->ensureWidgetVisible(current_widget->widget());
+  }
+}
+
+void DropDownMenuList::update_item_width() {
+  for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
+    m_list_widget->layout()->itemAt(i)->widget()->setFixedWidth(
+      m_list_widget->width());
   }
 }
 

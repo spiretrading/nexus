@@ -1,4 +1,5 @@
 #include "Spire/Ui/FontSelectorButton.hpp"
+#include <QFocusEvent>
 #include <QKeyEvent>
 #include <QPainter>
 
@@ -11,7 +12,8 @@ FontSelectorButton::FontSelectorButton(QImage icon, QImage toggle_icon,
       m_icon(std::move(icon)),
       m_toggle_icon(std::move(toggle_icon)),
       m_hover_icon(std::move(hover_icon)),
-      m_is_toggled(false) {
+      m_is_toggled(false),
+      m_last_focus_reason(Qt::FocusReason::NoFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
   setMouseTracking(true);
   setAttribute(Qt::WA_Hover);
@@ -24,6 +26,16 @@ bool FontSelectorButton::is_toggled() const {
 connection FontSelectorButton::connect_clicked_signal(
     const ClickedSignal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
+}
+
+void FontSelectorButton::focusInEvent(QFocusEvent* event) {
+  m_last_focus_reason = event->reason();
+  update();
+}
+
+void FontSelectorButton::focusOutEvent(QFocusEvent* event) {
+  m_last_focus_reason = event->reason();
+  update();
 }
 
 void FontSelectorButton::keyPressEvent(QKeyEvent* event) {
@@ -44,16 +56,16 @@ void FontSelectorButton::mousePressEvent(QMouseEvent* event) {
 
 void FontSelectorButton::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(m_is_toggled) {
+  if(m_is_toggled && !underMouse()) {
     painter.drawImage(0, 0, m_toggle_icon);
-    if(underMouse() || hasFocus()) {
-      painter.setPen(QColor("#4B23A0"));
-      painter.drawRect(0, 0, width() - 1, height() - 1);
-    }
-  } else if(underMouse() || hasFocus()) {
+  } else if(underMouse()) {
     painter.drawImage(0, 0, m_hover_icon);
   } else {
     painter.drawImage(0, 0, m_icon);
+  }
+  if(hasFocus() && m_last_focus_reason != Qt::FocusReason::MouseFocusReason) {
+    painter.setPen(QColor("#4B23A0"));
+    painter.drawRect(0, 0, width() - 1, height() - 1);
   }
 }
 

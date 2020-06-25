@@ -19,6 +19,8 @@ namespace Spire {
         const ClickedSignal::slot_type& slot) const;
 
     protected:
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
@@ -29,6 +31,7 @@ namespace Spire {
       QImage m_toggle_icon;
       QImage m_hover_icon;
       bool m_is_toggled;
+      Qt::FocusReason m_last_focus_reason;
 
       void swap_toggle();
   };
