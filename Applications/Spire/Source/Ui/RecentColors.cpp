@@ -27,7 +27,7 @@ void RecentColors::add_color(const QColor& color) {
   }
   auto iter = std::find(m_recent_colors.begin(), m_recent_colors.end(), color);
   if(iter != m_recent_colors.end()) {
-    m_recent_colors.erase(iter, iter + 1);
+    m_recent_colors.erase(iter);
   }
   m_recent_colors.push_front(color);
   if(m_recent_colors.size() > RECENT_COLOR_COUNT) {
