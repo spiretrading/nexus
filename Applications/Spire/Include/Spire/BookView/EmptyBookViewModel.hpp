@@ -2,7 +2,6 @@
 #define SPIRE_EMPTY_BOOK_VIEW_MODEL_HPP
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

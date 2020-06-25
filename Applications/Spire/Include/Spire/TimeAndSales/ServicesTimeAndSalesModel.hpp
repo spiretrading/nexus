@@ -5,7 +5,6 @@
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Spire/EventHandler.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

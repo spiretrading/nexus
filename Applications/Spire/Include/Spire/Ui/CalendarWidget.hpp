@@ -8,7 +8,6 @@
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Scalar.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CalendarModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"

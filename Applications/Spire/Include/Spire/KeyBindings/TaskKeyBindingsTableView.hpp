@@ -4,7 +4,6 @@
 #include "Spire/KeyBindings/KeyBindingsTableView.hpp"
 #include "Spire/KeyBindings/TaskKeyBindingsTableModel.hpp"
 #include "Spire/SecurityInput/SecurityInputModel.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

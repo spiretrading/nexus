@@ -5,7 +5,6 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/Definitions.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

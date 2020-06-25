@@ -3,12 +3,12 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QWidget>
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/ColorSelectorHexInputWidget.hpp"
 #include "Spire/Ui/ColorSelectorHueSlider.hpp"
 #include "Spire/Ui/ColorSelectorValueSlider.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/RecentColors.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

@@ -4,7 +4,6 @@
 #include <QPainter>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

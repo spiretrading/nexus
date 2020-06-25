@@ -7,7 +7,6 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QWidgetAction>
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Ui/Ui.hpp"
 

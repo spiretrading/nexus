@@ -1,7 +1,7 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_CONTEXT_MENU_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_CONTEXT_MENU_HPP
 #include <QMenu>
-#include "Spire/Spire/Signal.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

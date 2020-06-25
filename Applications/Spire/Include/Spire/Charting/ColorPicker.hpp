@@ -3,7 +3,6 @@
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

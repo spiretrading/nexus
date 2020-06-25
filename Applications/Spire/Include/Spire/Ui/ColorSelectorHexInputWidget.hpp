@@ -2,7 +2,7 @@
 #define SPIRE_COLOR_SELECTOR_HEX_INPUT_WIDGET_HPP
 #include <QLineEdit>
 #include <QWidget>
-#include "Spire/Spire/Signal.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

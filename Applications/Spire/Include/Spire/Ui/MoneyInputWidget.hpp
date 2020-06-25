@@ -2,8 +2,8 @@
 #define SPIRE_MONEY_INPUT_WIDGET_HPP
 #include <QLineEdit>
 #include "Nexus/Definitions/Money.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

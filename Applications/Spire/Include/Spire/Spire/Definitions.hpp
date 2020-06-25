@@ -3,7 +3,7 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Market.hpp"
-#include "Spire/Spire/Signal.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

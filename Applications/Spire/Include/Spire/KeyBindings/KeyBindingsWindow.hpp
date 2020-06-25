@@ -4,7 +4,6 @@
 #include "Spire/KeyBindings/CustomTabWidget.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/TaskKeyBindingsTableView.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {

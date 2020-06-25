@@ -5,7 +5,7 @@
 #include <QImage>
 #include <QPoint>
 #include <QWidget>
-#include "Spire/Spire/Signal.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

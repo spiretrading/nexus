@@ -9,7 +9,6 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/QtPromise.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

@@ -4,7 +4,6 @@
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

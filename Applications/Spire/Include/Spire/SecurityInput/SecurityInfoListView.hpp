@@ -3,7 +3,6 @@
 #include <vector>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

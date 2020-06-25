@@ -1,7 +1,6 @@
 #ifndef SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
-#include "Spire/Spire/Signal.hpp"
 
 namespace Spire {
 

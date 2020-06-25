@@ -6,7 +6,6 @@
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/SecurityStack.hpp"
 #include "Spire/Ui/Ui.hpp"
 

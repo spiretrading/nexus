@@ -2,7 +2,6 @@
 #define SPIRE_DROP_DOWN_COLOR_PICKER_HPP
 #include <QWidget>
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Spire/Signal.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 
 namespace Spire {

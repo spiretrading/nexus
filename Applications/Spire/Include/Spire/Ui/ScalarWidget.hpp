@@ -2,7 +2,7 @@
 #define SPIRE_SCALAR_WIDGET_HPP
 #include <QWidget>
 #include "Spire/Spire/Scalar.hpp"
-#include "Spire/Spire/Signal.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
