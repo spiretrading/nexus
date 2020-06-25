@@ -45,8 +45,7 @@ int main(int argc, char** argv) {
   model.add(SecurityInfo(
     Security("MS", DefaultMarkets::NYSE(), DefaultCountries::US()),
     "Morgan Stanley", "Finance", 100));
-  auto window = new ChartingWindow(Ref(model),
-    RecentColors::get_default_colors());
+  auto window = new ChartingWindow(Ref(model));
   auto test_timer = QTimer();
   window->connect_security_change_signal(
     [=, &test_timer] (const auto& security) {

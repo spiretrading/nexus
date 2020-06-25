@@ -49,6 +49,7 @@ namespace Spire {
       mutable ColorSignal m_color_signal;
       RecentColors& m_recent_colors;
       QColor m_current_color;
+      QColor m_original_color;
       QGridLayout* m_basic_colors_layout;
       QHBoxLayout* m_recent_colors_layout;
       ColorSelectorValueSlider* m_color_value_slider;
