@@ -3,6 +3,7 @@
 #include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

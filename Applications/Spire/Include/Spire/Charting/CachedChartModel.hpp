@@ -11,7 +11,6 @@
 #include "Spire/Spire/QtFuture.hpp"
 #include "Spire/Spire/QtPromise.hpp"
 #include "Spire/Spire/Scalar.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

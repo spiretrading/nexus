@@ -24,7 +24,8 @@ using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
-    Ref<SecurityInputModel> input_model, QWidget* parent)
+    Ref<SecurityInputModel> input_model,
+    QWidget* parent)
     : Window(parent),
       m_table(nullptr) {
   setMinimumSize(scale(180, 200));

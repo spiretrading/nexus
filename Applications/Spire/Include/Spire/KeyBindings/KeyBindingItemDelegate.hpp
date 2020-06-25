@@ -1,7 +1,6 @@
 #ifndef SPIRE_KEY_BINDING_ITEM_DELEGATE_HPP
 #define SPIRE_KEY_BINDING_ITEM_DELEGATE_HPP
 #include <QStyledItemDelegate>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {

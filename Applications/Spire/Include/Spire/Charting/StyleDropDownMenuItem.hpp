@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLE_DROP_DOWN_MENU_ITEM_HPP
 #define SPIRE_STYLE_DROP_DOWN_MENU_ITEM_HPP
 #include <QWidget>
+#include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/TrendLine.hpp"
 #include "Spire/Ui/Ui.hpp"
 

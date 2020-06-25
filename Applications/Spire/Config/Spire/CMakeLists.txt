@@ -111,13 +111,4 @@ if(UNIX)
     dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-if(WIN32)
-  add_custom_command(TARGET Spire PRE_BUILD COMMAND cmd /c
-    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-elseif(UNIX)
-  add_custom_command(TARGET Spire PRE_BUILD COMMAND
-    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-endif()
 install(TARGETS Spire DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})

@@ -3,6 +3,7 @@
 #include <QLineEdit>
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

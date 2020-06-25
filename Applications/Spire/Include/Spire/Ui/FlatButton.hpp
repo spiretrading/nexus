@@ -2,7 +2,7 @@
 #define SPIRE_FLAT_BUTTON_HPP
 #include <QLabel>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

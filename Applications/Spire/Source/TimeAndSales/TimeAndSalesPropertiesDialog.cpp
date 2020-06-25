@@ -57,7 +57,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_band_list->setSelectionBehavior(
     QAbstractItemView::SelectionBehavior::SelectRows);
   connect(m_band_list, &QListWidget::currentRowChanged,
-    [=] (auto index) {update_band_list_stylesheet(index);});
+    [=] (auto index) { update_band_list_stylesheet(index); });
   auto band_unknown_item = new QListWidgetItem(tr("Bid/Ask Unknown"),
     m_band_list);
   band_unknown_item->setTextAlignment(Qt::AlignCenter);
@@ -95,12 +95,10 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(text_color_label);
   color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_text_color_button = new FlatButton(this);
-  m_text_color_button->connect_clicked_signal(
-    [=] { set_text_color(); });
-  set_color_button_stylesheet(m_text_color_button,
-    properties.get_text_color(
-    PriceRange::UNKNOWN));
+  m_text_color_button = new ColorSelectorButton(properties.get_text_color(
+    PriceRange::UNKNOWN), this);
+  m_text_color_button->connect_color_signal(
+    [=] (auto color) { set_text_color(color); });
   color_settings_layout->addWidget(m_text_color_button);
   color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
@@ -109,11 +107,10 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(band_color_label);
   color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
-  m_band_color_button = new FlatButton(this);
-  m_band_color_button->connect_clicked_signal(
-    [=] { set_band_color(); });
-  set_color_button_stylesheet(m_band_color_button, properties.get_band_color(
-    PriceRange::UNKNOWN));
+  m_band_color_button = new ColorSelectorButton(properties.get_band_color(
+    PriceRange::UNKNOWN), this);
+  m_band_color_button->connect_color_signal(
+    [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
   color_settings_layout->setStretchFactor(m_band_color_button, 26);
   color_settings_layout->addStretch(42);
@@ -258,16 +255,12 @@ void TimeAndSalesPropertiesDialog::showEvent(QShowEvent* event) {
     parent_geometry.center().y() - (height() / 2));
 }
 
-void TimeAndSalesPropertiesDialog::set_band_color() {
+void TimeAndSalesPropertiesDialog::set_band_color(const QColor& color) {
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<PriceRange>(index);
-  auto current_color = m_properties.get_band_color(band);
-  auto color = QColorDialog::getColor(current_color);
-  if(color.isValid()) {
-    m_properties.set_band_color(band, color);
-    m_band_list->item(index)->setBackground(color);
-    update_band_list_stylesheet(index);
-  }
+  m_properties.set_band_color(band, color);
+  m_band_list->item(index)->setBackground(color);
+  update_band_list_stylesheet(index);
 }
 
 void TimeAndSalesPropertiesDialog::set_font() {
@@ -279,36 +272,19 @@ void TimeAndSalesPropertiesDialog::set_font() {
   }
 }
 
-void TimeAndSalesPropertiesDialog::set_text_color() {
+void TimeAndSalesPropertiesDialog::set_text_color(const QColor& color) {
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<PriceRange>(index);
-  auto current_color = m_properties.get_text_color(band);
-  auto color = QColorDialog::getColor(current_color);
-  if(color.isValid()) {
-    m_properties.set_text_color(band, color);
-    m_band_list->item(index)->setForeground(color);
-    update_band_list_stylesheet(index);
-  }
-}
-
-void TimeAndSalesPropertiesDialog::set_color_button_stylesheet(
-    FlatButton* button, const QColor& color) {
-  auto s = button->get_style();
-  s.m_background_color = color;
-  s.m_border_color = QColor("#C8C8C8");
-  button->set_style(s);
-  s.m_border_color = QColor("#4B23A0");
-  button->set_hover_style(s);
-  button->set_focus_style(s);
+  m_properties.set_text_color(band, color);
+  m_band_list->item(index)->setForeground(color);
+  update_band_list_stylesheet(index);
 }
 
 void TimeAndSalesPropertiesDialog::set_color_settings_stylesheet(
     int band_index) {
   auto i = static_cast<PriceRange>(band_index);
-  set_color_button_stylesheet(m_band_color_button,
-    m_properties.get_band_color(i));
-  set_color_button_stylesheet(m_text_color_button,
-    m_properties.get_text_color(i));
+  m_band_color_button->set_color(m_properties.get_band_color(i));
+  m_text_color_button->set_color(m_properties.get_text_color(i));
 }
 
 void TimeAndSalesPropertiesDialog::set_properties(

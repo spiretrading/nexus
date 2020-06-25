@@ -2,17 +2,17 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QLabel>
-#include "Spire/Charting/DropDownColorPicker.hpp"
 #include "Spire/Charting/TrendLineStyleDropDownMenu.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/ColorSelectorButton.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 
 TrendLineEditor::TrendLineEditor(QWidget* parent)
-  : QWidget(parent),
-    m_color(QColor("#FFCA19")),
-    m_line_style(TrendLineStyle::SOLID) {
+    : QWidget(parent),
+      m_color(QColor("#FFCA19")),
+      m_line_style(TrendLineStyle::SOLID) {
   parent->installEventFilter(this);
   setFixedSize(scale(216, 34));
   setStyleSheet("background-color: #F5F5F5");
@@ -27,11 +27,11 @@ TrendLineEditor::TrendLineEditor(QWidget* parent)
   )").arg(scale_height(10)));
   layout->addWidget(draw_tool_label);
   layout->addStretch(8);
-  auto color_picker = new DropDownColorPicker(this);
-  color_picker->connect_color_signal(
-    [=] (auto& color) { on_color_change(color); });
-  color_picker->setFixedSize(scale(70, 18));
-  layout->addWidget(color_picker);
+  auto color_button = new ColorSelectorButton(QColor("#FFCA19"), this);
+  color_button->connect_color_signal(
+    [=] (auto color) { on_color_change(color); });
+  color_button->setFixedSize(scale(70, 18));
+  layout->addWidget(color_button);
   layout->addStretch(8);
   auto style_dropdown = new TrendLineStyleDropDownMenu(this);
   style_dropdown->setFixedSize(scale(70, 18));
@@ -60,7 +60,7 @@ connection TrendLineEditor::connect_color_signal(
     const ColorSignal::slot_type& slot) const {
   return m_color_signal.connect(slot);
 }
-    
+
 connection TrendLineEditor::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
   return m_style_signal.connect(slot);

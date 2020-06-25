@@ -4,7 +4,9 @@
 #include <QListWidget>
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/Dialog.hpp"
+#include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -55,17 +57,15 @@ namespace Spire {
       mutable SaveDefaultSignal m_save_default_signal;
       TimeAndSalesProperties m_properties;
       QListWidget* m_band_list;
-      FlatButton* m_band_color_button;
-      FlatButton* m_text_color_button;
+      ColorSelectorButton* m_band_color_button;
+      ColorSelectorButton* m_text_color_button;
       CheckBox* m_show_grid_check_box;
 
-      void set_band_color();
-      void set_color_button_stylesheet(FlatButton* button,
-        const QColor& color);
+      void set_band_color(const QColor& color);
       void set_color_settings_stylesheet(int band_index);
       void set_font();
       void set_properties(const TimeAndSalesProperties& properties);
-      void set_text_color();
+      void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
   };
 }

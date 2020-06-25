@@ -1,7 +1,6 @@
 #ifndef SPIRE_NAME_ITEM_DELEGATE_HPP
 #define SPIRE_NAME_ITEM_DELEGATE_HPP
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

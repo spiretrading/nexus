@@ -88,14 +88,5 @@ endif()
 if(WIN32)
   target_link_libraries(DefinitionsServer Crypt32.lib)
 endif()
-if(WIN32)
-  add_custom_command(TARGET DefinitionsServer PRE_BUILD COMMAND cmd /c
-    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-elseif(UNIX)
-  add_custom_command(TARGET DefinitionsServer PRE_BUILD COMMAND
-    "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-endif()
 install(TARGETS DefinitionsServer DESTINATION
   ${PROJECT_BINARY_DIR}/Application)
