@@ -119,6 +119,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
+  number_of_bands_spin_box->setContextMenuPolicy(Qt::NoContextMenu);
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);
