@@ -41,6 +41,7 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
       font-family: Roboto;
       font-size: %1px;
     })").arg(scale_height(12)));
+  typeface_label->setFixedHeight(scale_height(14));
   layout->addWidget(typeface_label);
   auto grid_layout = new QGridLayout();
   grid_layout->setHorizontalSpacing(HORIZONTAL_SPACING());
@@ -88,7 +89,7 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   grid_layout->addWidget(m_underline_button, 1, 2);
   m_size_list = new DropDownMenu({"6", "7", "8", "9", "10", "11", "12", "14",
     "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"}, this);
-  m_size_list->setFixedSize(scale(60, 26));
+  m_size_list->setFixedHeight(scale_height(26));
   m_size_list->connect_selected_signal([=] (const auto& size) {
     on_size_selected(size);
   });
@@ -125,6 +126,6 @@ void FontSelectorWidget::on_font_selected(const QString& family) {
 }
 
 void FontSelectorWidget::on_size_selected(const QString& size) {
-  m_current_font.setPixelSize(size.toInt());
+  m_current_font.setPointSize(size.toInt());
   m_font_signal(m_current_font);
 }

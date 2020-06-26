@@ -32,7 +32,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
+  layout->setContentsMargins(scale_width(8), 0, scale_width(16), 0);
   layout->setSpacing(0);
   layout->addStretch(10);
   auto section_label_style = QString(R"(
@@ -47,7 +47,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   layout->addStretch(10);
   auto style_layout = new QHBoxLayout();
   style_layout->setContentsMargins({});
-  style_layout->setSpacing(0);
+  style_layout->setSpacing(scale_width(18));
   auto band_list_layout = new QVBoxLayout();
   band_list_layout->setContentsMargins({});
   band_list_layout->setSpacing(0);
@@ -81,8 +81,6 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   band_unknown_item->setSelected(true);
   band_list_layout->addWidget(m_band_list);
   style_layout->addLayout(band_list_layout);
-  style_layout->setStretchFactor(band_list_layout, 190);
-  style_layout->addStretch(18);
   auto color_settings_layout = new QVBoxLayout();
   color_settings_layout->setContentsMargins({});
   color_settings_layout->setSpacing(0);
@@ -94,26 +92,26 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   text_color_label->setStyleSheet(generic_text_style);
   text_color_label->setFixedHeight(scale_height(14));
   color_settings_layout->addWidget(text_color_label);
-  color_settings_layout->addStretch(4);
+  color_settings_layout->addSpacing(scale_height(4));
   m_text_color_button = new ColorSelectorButton(properties.get_text_color(
     PriceRange::UNKNOWN), this);
-  m_text_color_button->setFixedHeight(scale_height(26));
+  m_text_color_button->setFixedSize(scale(100, 26));
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
   color_settings_layout->addWidget(m_text_color_button);
-  color_settings_layout->addStretch(10);
+  color_settings_layout->addSpacing(scale_height(10));
   auto band_color_label = new QLabel(tr("Band Color"), this);
   band_color_label->setStyleSheet(generic_text_style);
   band_color_label->setFixedHeight(scale_height(14));
   color_settings_layout->addWidget(band_color_label);
-  color_settings_layout->addStretch(4);
+  color_settings_layout->addSpacing(scale_height(4));
   m_band_color_button = new ColorSelectorButton(properties.get_band_color(
     PriceRange::UNKNOWN), this);
-  m_band_color_button->setFixedHeight(scale_height(26));
+  m_band_color_button->setFixedSize(scale(100, 26));
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
-  color_settings_layout->addStretch(26);
+  color_settings_layout->addSpacing(scale_height(26));
   m_show_grid_check_box = new CheckBox(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
@@ -140,8 +138,6 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_show_grid_check_box->setFixedHeight(scale_height(16));
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
-  style_layout->setStretchFactor(color_settings_layout, 164);
-  style_layout->addStretch(20);
   auto font_layout = new QVBoxLayout();
   font_layout->setContentsMargins({});
   font_layout->setSpacing(0);
@@ -152,10 +148,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   font_layout->addWidget(edit_font_widget);
   font_layout->addStretch(1);
   style_layout->addLayout(font_layout);
-  style_layout->setStretchFactor(font_layout, 100);
-  style_layout->addStretch(20);
   layout->addLayout(style_layout);
-  layout->setStretchFactor(style_layout, 140);
   layout->addStretch(20);
   auto buttons_layout = new QHBoxLayout();
   buttons_layout->setContentsMargins({});
