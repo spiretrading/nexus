@@ -63,10 +63,10 @@ namespace Spire {
 
       void set_band_color(const QColor& color);
       void set_color_settings_stylesheet(int band_index);
-      void set_font();
       void set_properties(const TimeAndSalesProperties& properties);
       void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
+      void on_font_modified(const QFont& font);
   };
 }
 

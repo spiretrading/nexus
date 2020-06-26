@@ -30,11 +30,11 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     QWidget* parent)
     : QWidget(parent),
       m_current_font(current_font) {
-  setFixedSize(scale(162, 76));
-  setStyleSheet("background-color: white;");
+  setFixedSize(scale(162, 78));
+  setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
-  layout->setSpacing(0);
+  layout->setSpacing(scale_height(4));
   auto typeface_label = new QLabel(tr("Typeface"), this);
   typeface_label->setStyleSheet(QString(R"(
     QLabel {

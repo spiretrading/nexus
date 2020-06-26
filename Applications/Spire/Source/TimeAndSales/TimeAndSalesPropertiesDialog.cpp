@@ -9,7 +9,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -25,7 +25,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  set_fixed_body_size(scale(462, 272));
+  set_fixed_body_size(scale(482, 272));
   set_svg_icon(":/Icons/time-sale-black.svg",
     ":/Icons/time-sale-grey.svg");
   setWindowTitle(tr("Properties"));
@@ -42,8 +42,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     font-weight: 550;)").arg(scale_height(12));
   auto band_appearance_label = new QLabel(tr("Band Appearance"), this);
   band_appearance_label->setStyleSheet(section_label_style);
+  band_appearance_label->setFixedHeight(scale_height(14));
   layout->addWidget(band_appearance_label);
-  layout->setStretchFactor(band_appearance_label, 14);
   layout->addStretch(10);
   auto style_layout = new QHBoxLayout();
   style_layout->setContentsMargins({});
@@ -52,6 +52,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   band_list_layout->setContentsMargins({});
   band_list_layout->setSpacing(0);
   m_band_list = new QListWidget(this);
+  m_band_list->setFixedSize(scale(160, 140));
   m_band_list->setSelectionMode(
     QAbstractItemView::SelectionMode::SingleSelection);
   m_band_list->setSelectionBehavior(
@@ -79,7 +80,6 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_band_list->setFont(properties.m_font);
   band_unknown_item->setSelected(true);
   band_list_layout->addWidget(m_band_list);
-  band_list_layout->setStretchFactor(m_band_list, 140);
   style_layout->addLayout(band_list_layout);
   style_layout->setStretchFactor(band_list_layout, 190);
   style_layout->addStretch(18);
@@ -92,56 +92,28 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     font-family: Roboto;
     font-size: %1px;)").arg(scale_height(12));
   text_color_label->setStyleSheet(generic_text_style);
+  text_color_label->setFixedHeight(scale_height(14));
   color_settings_layout->addWidget(text_color_label);
-  color_settings_layout->setStretchFactor(text_color_label, 14);
   color_settings_layout->addStretch(4);
   m_text_color_button = new ColorSelectorButton(properties.get_text_color(
     PriceRange::UNKNOWN), this);
+  m_text_color_button->setFixedHeight(scale_height(26));
   m_text_color_button->connect_color_signal(
     [=] (auto color) { set_text_color(color); });
   color_settings_layout->addWidget(m_text_color_button);
-  color_settings_layout->setStretchFactor(m_text_color_button, 26);
   color_settings_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
   band_color_label->setStyleSheet(generic_text_style);
+  band_color_label->setFixedHeight(scale_height(14));
   color_settings_layout->addWidget(band_color_label);
-  color_settings_layout->setStretchFactor(band_color_label, 14);
   color_settings_layout->addStretch(4);
   m_band_color_button = new ColorSelectorButton(properties.get_band_color(
     PriceRange::UNKNOWN), this);
+  m_band_color_button->setFixedHeight(scale_height(26));
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
-  color_settings_layout->setStretchFactor(m_band_color_button, 26);
-  color_settings_layout->addStretch(42);
-  style_layout->addLayout(color_settings_layout);
-  style_layout->setStretchFactor(color_settings_layout, 100);
-  style_layout->addStretch(18);
-  auto font_layout = new QVBoxLayout();
-  font_layout->setContentsMargins({});
-  font_layout->setSpacing(0);
-  font_layout->addStretch(18);
-  auto edit_font_button = new FlatButton(tr("Change Font"), this);
-  edit_font_button->connect_clicked_signal([=] { set_font(); });
-  QFont generic_button_font;
-  generic_button_font.setFamily("Roboto");
-  generic_button_font.setPixelSize(scale_height(12));
-  edit_font_button->setFont(generic_button_font);
-  auto  generic_button_default_style = edit_font_button->get_style();
-  generic_button_default_style.m_background_color = QColor("#EBEBEB");
-  generic_button_default_style.m_text_color = Qt::black;
-  auto generic_button_hover_style = edit_font_button->get_hover_style();
-  generic_button_hover_style.m_background_color = QColor("#4B23A0");
-  generic_button_hover_style.m_text_color = Qt::white;
-  auto generic_button_focused_style = edit_font_button->get_focus_style();
-  generic_button_focused_style.m_background_color = QColor("#EBEBEB");
-  generic_button_focused_style.m_border_color = QColor("#4B23A0");
-  edit_font_button->set_style(generic_button_default_style);
-  edit_font_button->set_hover_style(generic_button_hover_style);
-  edit_font_button->set_focus_style(generic_button_focused_style);
-  font_layout->addWidget(edit_font_button);
-  font_layout->setStretchFactor(edit_font_button, 26);
-  font_layout->addStretch(33);
+  color_settings_layout->addStretch(26);
   m_show_grid_check_box = new CheckBox(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
@@ -155,7 +127,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     border: %1px solid #C8C8C8 %2px solid #C8C8C8;
     height: %3px;
     width: %4px;)").arg(scale_height(1))
-    .arg(scale_width(1)).arg(scale_height(15)).arg(scale_width(15));
+    .arg(scale_width(1)).arg(scale_height(14)).arg(scale_width(14));
   auto check_box_checked_style = QString(R"(
     image: url(:/Icons/check-with-box.svg);)");
   auto check_box_hover_style = QString(R"(
@@ -165,9 +137,20 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_show_grid_check_box->set_stylesheet(check_box_text_style,
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
-  font_layout->addWidget(m_show_grid_check_box);
-  font_layout->setStretchFactor(m_show_grid_check_box, 16);
-  font_layout->addStretch(47);
+  m_show_grid_check_box->setFixedHeight(scale_height(16));
+  color_settings_layout->addWidget(m_show_grid_check_box);
+  style_layout->addLayout(color_settings_layout);
+  style_layout->setStretchFactor(color_settings_layout, 164);
+  style_layout->addStretch(20);
+  auto font_layout = new QVBoxLayout();
+  font_layout->setContentsMargins({});
+  font_layout->setSpacing(0);
+  auto edit_font_widget = new FontSelectorWidget(m_properties.m_font, this);
+  edit_font_widget->connect_font_signal([=] (const auto& font) {
+    on_font_modified(font);
+  });
+  font_layout->addWidget(edit_font_widget);
+  font_layout->addStretch(1);
   style_layout->addLayout(font_layout);
   style_layout->setStretchFactor(font_layout, 100);
   style_layout->addStretch(20);
@@ -263,15 +246,6 @@ void TimeAndSalesPropertiesDialog::set_band_color(const QColor& color) {
   update_band_list_stylesheet(index);
 }
 
-void TimeAndSalesPropertiesDialog::set_font() {
-  auto ok = false;
-  auto font = QFontDialog::getFont(&ok, m_band_list->font());
-  if(ok) {
-    m_properties.m_font = font;
-    m_band_list->setFont(font);
-  }
-}
-
 void TimeAndSalesPropertiesDialog::set_text_color(const QColor& color) {
   auto index = m_band_list->currentIndex().row();
   auto band = static_cast<PriceRange>(index);
@@ -349,4 +323,9 @@ void TimeAndSalesPropertiesDialog::update_band_list_stylesheet(
         .arg(scale_height(1)).arg(scale_width(1))
         .arg(m_properties.get_band_color(i).name())
         .arg(m_properties.get_text_color(i).name()));
+}
+
+void TimeAndSalesPropertiesDialog::on_font_modified(const QFont& font) {
+  m_properties.m_font = font;
+  m_band_list->setFont(font);
 }
