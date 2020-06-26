@@ -61,6 +61,10 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_font_list->connect_selected_signal([=] (const auto& font) {
     on_font_selected(font);
   });
+  m_font_list->connect_highlighted_signal([=] (const auto& font) {
+    on_font_preview(font);
+  });
+  m_font_list->connect_menu_closed_signal([=] { on_font_list_closed(); });
   grid_layout->addWidget(m_font_list, 0, 0, 1, 5);
   m_bold_button = new FontSelectorButton(
     imageFromSvg(":/Icons/text_effects/bold-inactive.svg", BUTTON_SIZE()),
@@ -101,32 +105,47 @@ const QFont& FontSelectorWidget::get_font() const {
   return m_current_font;
 }
 
-connection FontSelectorWidget::connect_font_signal(
-    const FontSignal::slot_type& slot) const {
-  return m_font_signal.connect(slot);
+connection FontSelectorWidget::connect_font_preview_signal(
+    const FontPreviewSignal::slot_type& slot) const {
+  return m_font_preview_signal.connect(slot);
+}
+
+connection FontSelectorWidget::connect_font_selected_signal(
+    const FontSelectedSignal::slot_type& slot) const {
+  return m_font_selected_signal.connect(slot);
 }
 
 void FontSelectorWidget::on_bold_button_clicked() {
   m_current_font.setBold(m_bold_button->is_toggled());
-  m_font_signal(m_current_font);
+  m_font_selected_signal(m_current_font);
 }
 
 void FontSelectorWidget::on_italics_button_clicked() {
   m_current_font.setItalic(m_italics_button->is_toggled());
-  m_font_signal(m_current_font);
+  m_font_selected_signal(m_current_font);
 }
 
 void FontSelectorWidget::on_underline_button_clicked() {
   m_current_font.setUnderline(m_underline_button->is_toggled());
-  m_font_signal(m_current_font);
+  m_font_selected_signal(m_current_font);
+}
+
+void FontSelectorWidget::on_font_list_closed() {
+  m_font_selected_signal(m_current_font);
+}
+
+void FontSelectorWidget::on_font_preview(const QString& family) {
+  auto preview_font = m_current_font;
+  preview_font.setFamily(family);
+  m_font_preview_signal(preview_font);
 }
 
 void FontSelectorWidget::on_font_selected(const QString& family) {
   m_current_font.setFamily(family);
-  m_font_signal(m_current_font);
+  m_font_selected_signal(m_current_font);
 }
 
 void FontSelectorWidget::on_size_selected(const QString& size) {
   m_current_font.setPointSize(size.toInt());
-  m_font_signal(m_current_font);
+  m_font_selected_signal(m_current_font);
 }

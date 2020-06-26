@@ -1,4 +1,5 @@
 #include "Spire/Ui/DropdownMenu.hpp"
+#include <QKeyEvent>
 #include <QLayout>
 #include <QPainter>
 #include <QPaintEvent>
@@ -28,6 +29,7 @@ DropDownMenu::DropDownMenu(const std::vector<QString>& items,
   setFocusPolicy(Qt::StrongFocus);
   m_menu_list = new DropDownMenuList(items, this);
   m_menu_list->connect_selected_signal([=] (auto& t) { on_item_selected(t); });
+  m_menu_list->installEventFilter(this);
   m_menu_list->hide();
   window()->installEventFilter(this);
 }
@@ -59,6 +61,16 @@ const QString& DropDownMenu::get_text() const {
   return m_current_text;
 }
 
+connection DropDownMenu::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
+  return m_menu_list->connect_highlighted_signal(slot);
+}
+
+connection DropDownMenu::connect_menu_closed_signal(
+    const MenuClosedSignal::slot_type& slot) const {
+  return m_menu_closed_signal.connect(slot);
+}
+
 connection DropDownMenu::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
@@ -72,16 +84,23 @@ bool DropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::WindowDeactivate &&
         !m_menu_list->isActiveWindow()) {
-      m_menu_list->hide();
+      hide_menu_list();
     } else if(event->type() == QEvent::MouseButtonPress) {
-      m_menu_list->hide();
+      hide_menu_list();
+    }
+  } else if(watched == m_menu_list) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape) {
+        hide_menu_list();
+      }
     }
   }
   return false;
 }
 
 void DropDownMenu::focusOutEvent(QFocusEvent* event) {
-  m_menu_list->hide();
+  hide_menu_list();
   update();
 }
 
@@ -89,6 +108,8 @@ void DropDownMenu::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Space) {
     on_clicked();
+  } else if(event->key() == Qt::Key_Escape) {
+    hide_menu_list();
   }
   event->ignore();
 }
@@ -96,7 +117,7 @@ void DropDownMenu::keyPressEvent(QKeyEvent* event) {
 void DropDownMenu::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     if(m_menu_list->isVisible()) {
-      m_menu_list->hide();
+      hide_menu_list();
     } else {
       on_clicked();
     }
@@ -124,6 +145,11 @@ void DropDownMenu::paintEvent(QPaintEvent* event) {
     scale_height(11)), m_dropdown_image);
 }
 
+void DropDownMenu::hide_menu_list() {
+  m_menu_list->hide();
+  m_menu_closed_signal();
+}
+
 void DropDownMenu::move_menu_list() {
   auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
     geometry().bottomLeft()).x();
@@ -141,7 +167,7 @@ void DropDownMenu::on_clicked() {
 }
 
 void DropDownMenu::on_item_selected(const QString& text) {
-  m_menu_list->hide();
+  hide_menu_list();
   m_current_text = text;
   m_selected_signal(m_current_text);
   update();

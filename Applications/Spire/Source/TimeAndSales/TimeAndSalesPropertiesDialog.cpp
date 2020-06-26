@@ -142,7 +142,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   font_layout->setContentsMargins(0, 0, scale_width(8), 0);
   font_layout->setSpacing(0);
   auto edit_font_widget = new FontSelectorWidget(m_properties.m_font, this);
-  edit_font_widget->connect_font_signal([=] (const auto& font) {
+  edit_font_widget->connect_font_selected_signal([=] (const auto& font) {
     on_font_modified(font);
   });
   font_layout->addWidget(edit_font_widget);

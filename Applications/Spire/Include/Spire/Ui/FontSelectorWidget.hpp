@@ -11,11 +11,13 @@ namespace Spire {
   class FontSelectorWidget : public QWidget {
     public:
 
+      using FontPreviewSignal = Signal<void (const QFont& font)>;
+
       //! Signal type for font selection.
       /*!
         \param font The selected font.
       */
-      using FontSignal = Signal<void (const QFont& font)>;
+      using FontSelectedSignal = Signal<void (const QFont& font)>;
 
       //! Constructs a FontSelectorWidget.
       /*!
@@ -28,12 +30,16 @@ namespace Spire {
       //! Returns the font represented by this widget.
       const QFont& get_font() const;
 
+      boost::signals2::connection connect_font_preview_signal(
+        const FontSelectedSignal::slot_type& slot) const;
+
       //! Connects a slot to the font selection signal.
-      boost::signals2::connection connect_font_signal(
-        const FontSignal::slot_type& slot) const;
+      boost::signals2::connection connect_font_selected_signal(
+        const FontSelectedSignal::slot_type& slot) const;
 
     private:
-      mutable FontSignal m_font_signal;
+      mutable FontPreviewSignal m_font_preview_signal;
+      mutable FontSelectedSignal m_font_selected_signal;
       QFont m_current_font;
       DropDownMenu* m_font_list;
       DropDownMenu* m_size_list;
@@ -44,6 +50,8 @@ namespace Spire {
       void on_bold_button_clicked();
       void on_italics_button_clicked();
       void on_underline_button_clicked();
+      void on_font_list_closed();
+      void on_font_preview(const QString& family);
       void on_font_selected(const QString& family);
       void on_size_selected(const QString& size);
   };

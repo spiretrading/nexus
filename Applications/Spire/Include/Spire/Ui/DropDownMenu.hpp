@@ -9,8 +9,20 @@ namespace Spire {
   class DropDownMenu : public QWidget {
     public:
 
+      //! Signals that an item was highlighted.
+      /*!
+        \param item The highlighted item.
+      */
+      using HighlightedSignal = Signal<void (const QString& item)>;
+
+      //! Signals that the drop down menu was closed.
+      using MenuClosedSignal = Signal<void ()>;
+
       //! Signals that an item was selected.
-      using SelectedSignal = Signal<void (const QString&)>;
+      /*!
+        \param item The selected item.
+      */
+      using SelectedSignal = Signal<void (const QString& item)>;
 
       //! Constructs a DropDownMenu with the specified items. The first item
       //! in the vector is the initially selected item.
@@ -38,6 +50,14 @@ namespace Spire {
       //! Returns the selected item.
       const QString& get_text() const;
 
+      //! Connects a slot to the item highlight signal.
+      boost::signals2::connection connect_highlighted_signal(
+        const HighlightedSignal::slot_type& slot) const;
+
+      //! Connects a slot to the menu closed signal.
+      boost::signals2::connection connect_menu_closed_signal(
+        const MenuClosedSignal::slot_type& slot) const;
+
       //! Connects a slot to the item selection signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
@@ -50,11 +70,13 @@ namespace Spire {
       void paintEvent(QPaintEvent* event) override;
 
     private:
+      mutable MenuClosedSignal m_menu_closed_signal;
       mutable SelectedSignal m_selected_signal;
       QString m_current_text;
       QImage m_dropdown_image;
       DropDownMenuList* m_menu_list;
 
+      void hide_menu_list();
       void move_menu_list();
       void on_clicked();
       void on_item_selected(const QString& text);

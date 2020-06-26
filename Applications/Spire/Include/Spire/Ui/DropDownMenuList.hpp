@@ -9,7 +9,16 @@ namespace Spire {
   class DropDownMenuList : public QWidget {
     public:
 
+      //! Signals that an item was highlighted.
+      /*!
+        \param item The highlighted item.
+      */
+      using HighlightedSignal = Signal<void (const QString& item)>;
+
       //! Signals that an item was selected from the list.
+      /*!
+        \param item The selected item
+      */
       using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropDownMenuList with the specified items.
@@ -39,6 +48,11 @@ namespace Spire {
       */
       QString get_previous(const QString& text);
 
+      //! Connects a slot to the item highlight signal.
+      boost::signals2::connection connect_highlighted_signal(
+        const HighlightedSignal::slot_type& slot) const;
+
+      //! Connects a slot to the item selected signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
@@ -47,6 +61,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
+      mutable HighlightedSignal m_highlighted_signal;
       mutable SelectedSignal m_selected_signal;
       DropShadow* m_shadow;
       ScrollArea* m_scroll_area;

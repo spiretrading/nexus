@@ -56,6 +56,7 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
     menu_item->setFixedWidth(m_list_widget->width());
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
+    menu_item->installEventFilter(this);
     m_list_widget->layout()->addWidget(menu_item);
   }
 }
@@ -75,6 +76,11 @@ QString DropDownMenuList::get_previous(const QString& text) {
   }
   return static_cast<DropDownMenuItem*>(
     m_list_widget->layout()->itemAt(index)->widget())->text();
+}
+
+connection DropDownMenuList::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
+  return m_highlighted_signal.connect(slot);
 }
 
 connection DropDownMenuList::connect_selected_signal(
@@ -101,13 +107,15 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
           }
           return true;
         }
-      } else if(key_event->key() == Qt::Key_Escape) {
-        close();
       }
     }
   } else if(object == m_list_widget) {
     if(event->type() == QEvent::Resize) {
       update_item_width();
+    }
+  } else if(m_list_widget->isAncestorOf(static_cast<QWidget*>(object))) {
+    if(event->type() == QEvent::HoverEnter) {
+      m_highlighted_signal(static_cast<DropDownMenuItem*>(object)->text());
     }
   }
   return false;
@@ -170,9 +178,11 @@ void DropDownMenuList::update_highlights(int old_index, int new_index) {
     previous_widget->widget()->update();
   }
   if(auto current_widget = m_list_widget->layout()->itemAt(new_index)) {
-    static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
+    auto item = static_cast<DropDownMenuItem*>(current_widget->widget());
+    item->set_highlight();
     current_widget->widget()->update();
     m_scroll_area->ensureWidgetVisible(current_widget->widget());
+    m_highlighted_signal(item->text());
   }
 }
 
