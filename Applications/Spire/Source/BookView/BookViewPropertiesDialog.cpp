@@ -23,7 +23,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
     & ~Qt::WindowMaximizeButtonHint);
   setWindowModality(Qt::WindowModal);
-  set_fixed_body_size(scale(472, 394));
+  set_fixed_body_size(scale(482, 394));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
