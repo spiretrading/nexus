@@ -111,7 +111,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   m_band_color_button->connect_color_signal(
     [=] (auto color) { set_band_color(color); });
   color_settings_layout->addWidget(m_band_color_button);
-  color_settings_layout->addSpacing(scale_height(26));
+  color_settings_layout->addStretch(1);
   m_show_grid_check_box = new CheckBox(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
