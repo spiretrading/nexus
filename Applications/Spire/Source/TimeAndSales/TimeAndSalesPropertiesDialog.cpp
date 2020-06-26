@@ -32,7 +32,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   auto body = new QWidget(this);
   body->setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(body);
-  layout->setContentsMargins(scale_width(8), 0, scale_width(16), 0);
+  layout->setContentsMargins(scale_width(8), 0, scale_width(8), 0);
   layout->setSpacing(0);
   layout->addStretch(10);
   auto section_label_style = QString(R"(
@@ -139,7 +139,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   color_settings_layout->addWidget(m_show_grid_check_box);
   style_layout->addLayout(color_settings_layout);
   auto font_layout = new QVBoxLayout();
-  font_layout->setContentsMargins({});
+  font_layout->setContentsMargins(0, 0, scale_width(8), 0);
   font_layout->setSpacing(0);
   auto edit_font_widget = new FontSelectorWidget(m_properties.m_font, this);
   edit_font_widget->connect_font_signal([=] (const auto& font) {
