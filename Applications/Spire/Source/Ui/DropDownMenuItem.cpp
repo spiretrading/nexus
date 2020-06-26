@@ -9,12 +9,12 @@ using namespace Spire;
 
 namespace {
   auto LEFT_PADDING() {
-    static auto padding = scale_width(5);
+    static auto padding = scale_width(8);
     return padding;
   }
 
   auto RIGHT_PADDING() {
-    static auto padding = scale_width(8);
+    static auto padding = scale_width(12);
     return padding;
   }
 }

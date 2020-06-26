@@ -89,6 +89,7 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   grid_layout->addWidget(m_underline_button, 1, 2);
   m_size_list = new DropDownMenu({"6", "7", "8", "9", "10", "11", "12", "14",
     "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"}, this);
+  m_size_list->set_current_text(QString::number(current_font.pointSize()));
   m_size_list->setFixedHeight(scale_height(26));
   m_size_list->connect_selected_signal([=] (const auto& size) {
     on_size_selected(size);

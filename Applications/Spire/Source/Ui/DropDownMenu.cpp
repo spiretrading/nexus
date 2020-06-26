@@ -11,6 +11,13 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+}
+
 DropDownMenu::DropDownMenu(const std::vector<QString>& items,
     QWidget* parent)
     : QWidget(parent),
@@ -108,10 +115,12 @@ void DropDownMenu::paintEvent(QPaintEvent* event) {
   font.setPixelSize(scale_height(12));
   painter.setFont(font);
   auto metrics = QFontMetrics(font);
-  painter.drawText(QPoint(scale_width(8),
-    (height() / 2) + (metrics.ascent() / 2) - 1), m_current_text);
+  painter.drawText(QPoint(PADDING(),
+    (height() / 2) + (metrics.ascent() / 2) - 1),
+    metrics.elidedText(m_current_text, Qt::ElideRight,
+    width() - (PADDING() * 3)));
   painter.drawImage(
-    QPoint(width() - (m_dropdown_image.width() + scale_width(8)),
+    QPoint(width() - (m_dropdown_image.width() + PADDING()),
     scale_height(11)), m_dropdown_image);
 }
 

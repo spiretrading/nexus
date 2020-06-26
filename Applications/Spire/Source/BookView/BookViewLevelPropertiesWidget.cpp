@@ -174,7 +174,8 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto font_layout = new QVBoxLayout();
   font_layout->setContentsMargins({});
   font_layout->setSpacing(0);
-  auto change_font_widget = new FontSelectorWidget(QFont(), this);
+  auto change_font_widget = new FontSelectorWidget(
+    properties.get_book_quote_font(), this);
   change_font_widget->connect_font_signal(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
