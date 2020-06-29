@@ -7,7 +7,8 @@
   "types": "library/index.d.ts",
   "scripts": {
     "compile": "node node_modules/typescript/bin/tsc -p .",
-    "build": "npm run compile"
+    "build": "npm run compile",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@types/node": "13.1.6",
