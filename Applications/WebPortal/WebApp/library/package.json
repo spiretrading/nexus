@@ -8,7 +8,7 @@
   "scripts": {
     "compile": "node node_modules/typescript/bin/tsc -p .",
     "build": "npm run compile",
-    "lint": "eslint ."
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "devDependencies": {
     "@types/node": "13.1.6",
