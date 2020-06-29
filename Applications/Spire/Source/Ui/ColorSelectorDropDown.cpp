@@ -128,7 +128,6 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   color_picker_layout->setSpacing(VERTICAL_PADDING());
   horizontal_color_layout->addLayout(color_picker_layout);
   m_color_value_slider = new ColorSelectorValueSlider(m_current_color, this);
-  m_color_value_slider->setFocusPolicy(Qt::NoFocus);
   m_color_value_slider->setFixedSize(SLIDER_WIDTH(), scale_height(48));
   m_color_value_slider->connect_color_signal([=] (const auto& color) {
     m_hex_input->set_color(color);
@@ -136,7 +135,6 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   });
   color_picker_layout->addWidget(m_color_value_slider);
   m_color_hue_slider = new ColorSelectorHueSlider(m_current_color, this);
-  m_color_hue_slider->setFocusPolicy(Qt::NoFocus);
   m_color_hue_slider->setFixedSize(SLIDER_WIDTH(), SLIDER_HEIGHT());
   m_color_hue_slider->connect_color_signal([=] (const auto& color) {
     m_color_value_slider->set_hue(color.hue());
@@ -150,7 +148,9 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     m_color_value_slider->set_color(color);
     m_color_hue_slider->set_color(color);
     on_color_selected(color);
+    hide();
   });
+  m_hex_input->setFocusPolicy(Qt::StrongFocus);
   color_picker_layout->addWidget(m_hex_input);
   color_picker_layout->addStretch(1);
   auto recent_colors_label = new QLabel(tr("Recent Colors"), this);
@@ -187,6 +187,9 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Escape) {
+      hide();
+    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+      on_color_selected(m_current_color);
       hide();
     }
   } else if(event->type() == QEvent::MouseButtonDblClick) {
@@ -244,6 +247,7 @@ void ColorSelectorDropDown::on_color_button_clicked(const QColor& color) {
 
 void ColorSelectorDropDown::on_color_selected(const QColor& color) {
   m_current_color = color;
+  m_hex_input->setFocus();
   m_color_signal(color);
 }
 

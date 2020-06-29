@@ -52,6 +52,7 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
   m_line_edit->installEventFilter(this);
   apply_line_edit_style(m_line_edit);
   layout->addWidget(m_line_edit);
+  setFocusProxy(m_line_edit);
 }
 
 void ColorSelectorHexInputWidget::set_color(const QColor& color) {
