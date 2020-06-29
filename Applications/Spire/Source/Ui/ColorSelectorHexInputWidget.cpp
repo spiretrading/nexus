@@ -59,6 +59,7 @@ void ColorSelectorHexInputWidget::set_color(const QColor& color) {
   if(color_name(color) != m_color_name) {
     m_color_name = color_name(color);
     m_line_edit->setText(m_color_name);
+    m_line_edit->selectAll();
   }
 }
 
