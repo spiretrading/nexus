@@ -2,6 +2,7 @@
 #include <QChildEvent>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -161,7 +162,8 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   m_recent_colors_layout->setSpacing(HORIZONTAL_PADDING());
   layout->addLayout(m_recent_colors_layout);
   update_recent_colors_layout();
-  m_recent_colors.connect_change_signal([=] { on_recent_colors_changed(); });
+  m_recent_colors_connection = m_recent_colors.connect_change_signal(
+    [=] { on_recent_colors_changed(); });
 }
 
 void ColorSelectorDropDown::set_color(const QColor& color) {
@@ -185,6 +187,12 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Escape) {
+      hide();
+    }
+  } else if(event->type() == QEvent::MouseButtonDblClick) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton) {
+      on_color_selected(m_current_color);
       hide();
     }
   }
