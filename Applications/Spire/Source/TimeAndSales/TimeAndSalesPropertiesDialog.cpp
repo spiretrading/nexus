@@ -1,6 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include <QColorDialog>
-#include <QFontDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>

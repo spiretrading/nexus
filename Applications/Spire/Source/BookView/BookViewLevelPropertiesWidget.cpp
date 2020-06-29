@@ -1,6 +1,5 @@
 #include "Spire/BookView/BookViewLevelPropertiesWidget.hpp"
 #include <QColorDialog>
-#include <QFontDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
