@@ -91,16 +91,13 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_underline_button->connect_clicked_signal(
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
-  m_size_spin_box = new QSpinBox(this);
-  m_size_spin_box->setValue(current_font.pointSize());
-  m_size_spin_box->setMinimum(6);
-  m_size_spin_box->setMaximum(72);
-  m_size_spin_box->setFixedHeight(scale_height(26));
-  apply_spin_box_style(m_size_spin_box);
-  connect(m_size_spin_box,
+  m_size_input = new ValueInputWidget(6, 72, this);
+  m_size_input->setValue(current_font.pointSize());
+  m_size_input->setFixedHeight(scale_height(26));
+  connect(m_size_input,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &FontSelectorWidget::on_size_selected);
-  grid_layout->addWidget(m_size_spin_box, 1, 3, 1, 2);
+  grid_layout->addWidget(m_size_input, 1, 3, 1, 2);
 }
 
 const QFont& FontSelectorWidget::get_font() const {

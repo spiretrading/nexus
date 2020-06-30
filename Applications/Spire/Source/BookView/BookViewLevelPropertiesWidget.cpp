@@ -3,7 +3,6 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
-#include <QSpinBox>
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
+#include "Spire/Ui/ValueInputWidget.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -77,13 +77,10 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
-  auto number_of_bands_spin_box = new QSpinBox(this);
+  auto number_of_bands_spin_box = new ValueInputWidget(1, INT_MAX, this);
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
-  number_of_bands_spin_box->setMinimum(1);
-  number_of_bands_spin_box->setMaximum(INT_MAX);
   number_of_bands_spin_box->setKeyboardTracking(false);
   number_of_bands_spin_box->setFixedSize(scale(100, 26));
-  apply_spin_box_style(number_of_bands_spin_box);
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);
