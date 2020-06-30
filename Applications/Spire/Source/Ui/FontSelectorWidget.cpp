@@ -91,14 +91,16 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_underline_button->connect_clicked_signal(
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
-  m_size_list = new DropDownMenu({"6", "7", "8", "9", "10", "11", "12", "14",
-    "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"}, this);
-  m_size_list->set_current_text(QString::number(current_font.pointSize()));
-  m_size_list->setFixedHeight(scale_height(26));
-  m_size_list->connect_selected_signal([=] (const auto& size) {
-    on_size_selected(size);
-  });
-  grid_layout->addWidget(m_size_list, 1, 3, 1, 2);
+  m_size_spin_box = new QSpinBox(this);
+  m_size_spin_box->setValue(current_font.pointSize());
+  m_size_spin_box->setMinimum(6);
+  m_size_spin_box->setMaximum(72);
+  m_size_spin_box->setFixedHeight(scale_height(26));
+  apply_spin_box_style(m_size_spin_box);
+  connect(m_size_spin_box,
+    static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+    &FontSelectorWidget::on_size_selected);
+  grid_layout->addWidget(m_size_spin_box, 1, 3, 1, 2);
 }
 
 const QFont& FontSelectorWidget::get_font() const {
@@ -145,7 +147,7 @@ void FontSelectorWidget::on_font_selected(const QString& family) {
   m_font_selected_signal(m_current_font);
 }
 
-void FontSelectorWidget::on_size_selected(const QString& size) {
-  m_current_font.setPointSize(size.toInt());
+void FontSelectorWidget::on_size_selected(int size) {
+  m_current_font.setPointSize(size);
   m_font_selected_signal(m_current_font);
 }
