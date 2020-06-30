@@ -21,7 +21,6 @@
         "sourceType": "module"
     },
     "plugins": [
-        "react",
         "@typescript-eslint/eslint-plugin"
     ],
     "rules": {
