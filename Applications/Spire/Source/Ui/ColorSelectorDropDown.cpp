@@ -213,6 +213,7 @@ void ColorSelectorDropDown::hideEvent(QHideEvent* event) {
 void ColorSelectorDropDown::add_basic_color_button(int x, int y,
     const QColor& color) {
   auto button = create_color_button(color, this);
+  button->setFocusPolicy(Qt::TabFocus);
   button->connect_clicked_signal([=] {
     on_color_button_clicked(color);
   });
@@ -222,6 +223,7 @@ void ColorSelectorDropDown::add_basic_color_button(int x, int y,
 void ColorSelectorDropDown::add_recent_color_button(int index,
     const QColor& color) {
   auto button = create_color_button(color, this);
+  button->setFocusPolicy(Qt::TabFocus);
   button->connect_clicked_signal([=] {
     on_color_button_clicked(color);
   });
