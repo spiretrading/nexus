@@ -15,6 +15,18 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(100, 26);
+    return size;
+  }
+
+  auto LABEL_HEIGHT() {
+    static auto height = scale_height(14);
+    return height;
+  }
+}
+
 BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)
     : QWidget(parent) {
@@ -69,7 +81,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   band_properties_layout->setContentsMargins({});
   band_properties_layout->setSpacing(0);
   auto number_of_bands_label = new QLabel(tr("Number of Bands"), this);
-  number_of_bands_label->setFixedHeight(scale_height(14));
+  number_of_bands_label->setFixedHeight(LABEL_HEIGHT());
   auto generic_label_style = QString(R"(
     color: #000000;
     font-family: Roboto;
@@ -80,39 +92,39 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   auto number_of_bands_spin_box = new ValueInputWidget(1, INT_MAX, this);
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setKeyboardTracking(false);
-  number_of_bands_spin_box->setFixedSize(scale(100, 26));
+  number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);
   band_properties_layout->addWidget(number_of_bands_spin_box);
   band_properties_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
-  band_color_label->setFixedHeight(scale_height(14));
+  band_color_label->setFixedHeight(LABEL_HEIGHT());
   band_color_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(band_color_label);
   band_properties_layout->addStretch(4);
   m_band_color_button = new ColorSelectorButton(bg_colors[0], this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { on_band_color_selected(color); });
-  m_band_color_button->setFixedSize(scale(100, 26));
+  m_band_color_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
   auto color_gradient_label = new QLabel(tr("Color Gradient"), this);
-  color_gradient_label->setFixedHeight(scale_height(14));
+  color_gradient_label->setFixedHeight(LABEL_HEIGHT());
   color_gradient_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(color_gradient_label);
   band_properties_layout->addStretch(4);
   m_gradient_start_button = new ColorSelectorButton(bg_colors[0], this);
-  m_gradient_start_button->setFixedSize(scale(100, 26));
+  m_gradient_start_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
   m_gradient_end_button = new ColorSelectorButton(
     bg_colors[bg_colors.size() - 1], this);
-  m_gradient_end_button->setFixedSize(scale(100, 26));
+  m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
-  apply_gradient_button->setFixedSize(scale(100, 26));
+  apply_gradient_button->setFixedSize(BUTTON_SIZE());
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
   generic_button_font.setPixelSize(scale_height(12));
