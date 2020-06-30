@@ -83,42 +83,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_spin_box->setMaximum(INT_MAX);
   number_of_bands_spin_box->setKeyboardTracking(false);
   number_of_bands_spin_box->setFixedSize(scale(100, 26));
-  number_of_bands_spin_box->setStyleSheet(QString(R"(
-    QSpinBox {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %5px;
-      padding-left: %4px;
-    }
-
-    QSpinBox:focus {
-      border: %1px solid #4B23A0;
-    }
-
-    QSpinBox::up-button {
-      border: none;
-    }
-
-    QSpinBox::down-button {
-      border: none;
-    }
-
-    QSpinBox::up-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-up.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QSpinBox::down-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-down.svg);
-      width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
-  number_of_bands_spin_box->setContextMenuPolicy(Qt::NoContextMenu);
+  apply_spin_box_style(number_of_bands_spin_box);
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);

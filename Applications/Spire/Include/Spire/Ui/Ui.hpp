@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QRect>
 #include <QSize>
+#include <QSpinBox>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -61,6 +62,13 @@ namespace Spire {
     \param widget The line edit to apply the style to.
   */
   void apply_line_edit_style(QLineEdit* widget);
+
+  //! Applies the Spire spin box style to a spin box, overwriting any
+  //! previously set style.
+  /*
+    \param widget The spin box to apply the style to.
+  */
+  void apply_spin_box_style(QSpinBox* widget);
 
   //! Constructs a horizontal Spire-styled table header with fixed size,
   //! immovable, column headers.
