@@ -67,6 +67,7 @@ namespace Spire {
       void set_text_color(const QColor& color);
       void update_band_list_stylesheet(int highlighted_band_index);
       void on_font_modified(const QFont& font);
+      void on_font_preview(const QFont& font);
   };
 }
 

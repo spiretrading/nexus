@@ -144,6 +144,9 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   edit_font_widget->connect_font_selected_signal([=] (const auto& font) {
     on_font_modified(font);
   });
+  edit_font_widget->connect_font_preview_signal([=] (const auto& font) {
+    on_font_preview(font);
+  });
   font_layout->addWidget(edit_font_widget);
   font_layout->addStretch(1);
   style_layout->addLayout(font_layout);
@@ -319,5 +322,9 @@ void TimeAndSalesPropertiesDialog::update_band_list_stylesheet(
 
 void TimeAndSalesPropertiesDialog::on_font_modified(const QFont& font) {
   m_properties.m_font = font;
+  m_band_list->setFont(font);
+}
+
+void TimeAndSalesPropertiesDialog::on_font_preview(const QFont& font) {
   m_band_list->setFont(font);
 }
