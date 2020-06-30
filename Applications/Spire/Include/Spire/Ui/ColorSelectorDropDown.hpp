@@ -48,6 +48,7 @@ namespace Spire {
     private:
       mutable ColorSignal m_color_signal;
       RecentColors& m_recent_colors;
+      boost::signals2::scoped_connection m_recent_colors_connection;
       QColor m_current_color;
       QColor m_original_color;
       QGridLayout* m_basic_colors_layout;
