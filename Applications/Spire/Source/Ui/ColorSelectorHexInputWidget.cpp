@@ -52,12 +52,14 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
   m_line_edit->installEventFilter(this);
   apply_line_edit_style(m_line_edit);
   layout->addWidget(m_line_edit);
+  setFocusProxy(m_line_edit);
 }
 
 void ColorSelectorHexInputWidget::set_color(const QColor& color) {
   if(color_name(color) != m_color_name) {
     m_color_name = color_name(color);
     m_line_edit->setText(m_color_name);
+    m_line_edit->selectAll();
   }
 }
 
