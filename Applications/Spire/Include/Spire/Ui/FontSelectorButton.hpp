@@ -5,16 +5,27 @@
 
 namespace Spire {
 
+  //! Represents a toggle button for font style options.
   class FontSelectorButton : public QWidget {
     public:
 
+      //! Signal type for click events.
       using ClickedSignal = Signal<void ()>;
 
+      //! Constructs a FontSelectorButton.
+      /*!
+        \param icon The default icon.
+        \param toggle_icon The icon to display when the button is toggled.
+        \param hover_icon The icon to display when the button is hovered.
+        \param parent The parent widget.
+      */
       FontSelectorButton(QImage icon, QImage toggle_icon, QImage hover_icon,
         QWidget* parent = nullptr);
 
+      //! Returns true if the button is toggled.
       bool is_toggled() const;
 
+      //! Connects a slot to the button click signal.
       boost::signals2::connection connect_clicked_signal(
         const ClickedSignal::slot_type& slot) const;
 

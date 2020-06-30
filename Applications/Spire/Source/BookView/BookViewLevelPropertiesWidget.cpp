@@ -138,8 +138,6 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   font_layout->setSpacing(0);
   auto change_font_widget = new FontSelectorWidget(
     properties.get_book_quote_font(), this);
-  change_font_widget->connect_font_selected_signal(
-    [=] (const auto& font) { update_band_list_font(font); });
   change_font_widget->connect_font_preview_signal(
     [=] (const auto& font) { update_band_list_font(font); });
   font_layout->addWidget(change_font_widget);
