@@ -10,7 +10,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
-#include "Spire/Ui/ValueInputWidget.hpp"
+#include "Spire/Ui/IntegerInputWidget.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -89,7 +89,7 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
-  auto number_of_bands_spin_box = new ValueInputWidget(1, INT_MAX, this);
+  auto number_of_bands_spin_box = new IntegerInputWidget(1, INT_MAX, this);
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setKeyboardTracking(false);
   number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());

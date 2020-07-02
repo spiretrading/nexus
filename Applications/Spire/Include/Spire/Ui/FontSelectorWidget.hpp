@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Spire/Ui/DropDownMenu.hpp"
 #include "Spire/Ui/FontSelectorButton.hpp"
-#include "Spire/Ui/ValueInputWidget.hpp"
+#include "Spire/Ui/IntegerInputWidget.hpp"
 
 namespace Spire {
 
@@ -12,6 +12,10 @@ namespace Spire {
   class FontSelectorWidget : public QWidget {
     public:
 
+      //! Signal type for font previews.
+      /*!
+        \param font The previewed font.
+      */
       using FontPreviewSignal = Signal<void (const QFont& font)>;
 
       //! Signal type for font selection.
@@ -31,6 +35,7 @@ namespace Spire {
       //! Returns the font represented by this widget.
       const QFont& get_font() const;
 
+      //! Connects a slot to teh font preview signal.
       boost::signals2::connection connect_font_preview_signal(
         const FontSelectedSignal::slot_type& slot) const;
 
@@ -43,7 +48,7 @@ namespace Spire {
       mutable FontSelectedSignal m_font_selected_signal;
       QFont m_current_font;
       DropDownMenu* m_font_list;
-      ValueInputWidget* m_size_input;
+      IntegerInputWidget* m_size_input;
       FontSelectorButton* m_bold_button;
       FontSelectorButton* m_italics_button;
       FontSelectorButton* m_underline_button;

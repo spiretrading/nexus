@@ -86,7 +86,7 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_underline_button->connect_clicked_signal(
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
-  m_size_input = new ValueInputWidget(6, 72, this);
+  m_size_input = new IntegerInputWidget(6, 72, this);
   m_size_input->setValue(current_font.pointSize());
   m_size_input->setFixedHeight(scale_height(26));
   connect(m_size_input,

@@ -1,4 +1,4 @@
-#include "Spire/Ui/ValueInputWidget.hpp"
+#include "Spire/Ui/IntegerInputWidget.hpp"
 #include <algorithm>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -15,7 +15,7 @@ namespace {
   }
 }
 
-ValueInputWidget::ValueInputWidget(int min_value, int max_value,
+IntegerInputWidget::IntegerInputWidget(int min_value, int max_value,
     QWidget* parent)
     : QSpinBox(parent),
       m_min_value(min_value),
@@ -62,7 +62,7 @@ ValueInputWidget::ValueInputWidget(int min_value, int max_value,
   findChild<QLineEdit*>()->installEventFilter(this);
 }
 
-bool ValueInputWidget::eventFilter(QObject* watched, QEvent* event) {
+bool IntegerInputWidget::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::MouseButtonPress) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton && e->pos().x() < width() - BUTTON_X()) {
@@ -73,7 +73,7 @@ bool ValueInputWidget::eventFilter(QObject* watched, QEvent* event) {
   return QSpinBox::eventFilter(watched, event);
 }
 
-void ValueInputWidget::keyPressEvent(QKeyEvent* event) {
+void IntegerInputWidget::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     setValue(text().toInt());
     if(value() < m_min_value) {

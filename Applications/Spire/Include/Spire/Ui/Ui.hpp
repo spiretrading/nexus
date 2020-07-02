@@ -5,7 +5,6 @@
 #include <QLineEdit>
 #include <QRect>
 #include <QSize>
-#include <QSpinBox>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {

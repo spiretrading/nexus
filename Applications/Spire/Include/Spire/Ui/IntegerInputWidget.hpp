@@ -1,11 +1,11 @@
-#ifndef SPIRE_VALUE_INPUT_WIDGET_HPP
-#define SPIRE_VALUE_INPUT_WIDGET_HPP
+#ifndef SPIRE_INTEGER_INPUT_WIDGET_HPP
+#define SPIRE_INTEGER_INPUT_WIDGET_HPP
 #include <QSpinBox>
 
 namespace Spire {
 
   //! Represents a widget for inputting whole numbers.
-  class ValueInputWidget : public QSpinBox {
+  class IntegerInputWidget : public QSpinBox {
     public:
 
       //! Constructs a ValueInputWidget.
@@ -14,7 +14,7 @@ namespace Spire {
         \param max_value The highest value that can be entered.
         \param parent The parent widget.
       */
-      ValueInputWidget(int min_value, int max_value,
+      IntegerInputWidget(int min_value, int max_value,
         QWidget* parent = nullptr);
 
     protected:
