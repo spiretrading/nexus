@@ -110,7 +110,7 @@ void InputFieldEditor::on_item_highlighted(const QString& item) {
 void InputFieldEditor::on_text_edited(const QString& text) {
   m_highlighted_item.clear();
   auto iter = std::find_if(m_items.begin(), m_items.end(),
-    [&] (auto value) { return value.toLower() == text.toLower(); });
+    [&] (const auto& value) { return value.toLower() == text.toLower(); });
   if(iter != m_items.end()) {
     m_selected_item = *iter;
   }
