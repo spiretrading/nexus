@@ -37,6 +37,9 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
 }
 
 const QString& InputFieldEditor::get_item() const {
+  if(!m_highlighted_item.isEmpty()) {
+    return m_highlighted_item;
+  }
   return m_selected_item;
 }
 
@@ -101,9 +104,11 @@ void InputFieldEditor::on_item_committed(const QString& text) {
 
 void InputFieldEditor::on_item_highlighted(const QString& item) {
   setText(item);
+  m_highlighted_item = item;
 }
 
 void InputFieldEditor::on_text_edited(const QString& text) {
+  m_highlighted_item.clear();
   auto iter = std::find_if(m_items.begin(), m_items.end(),
     [&] (auto value) { return value.toLower() == text.toLower(); });
   if(iter != m_items.end()) {

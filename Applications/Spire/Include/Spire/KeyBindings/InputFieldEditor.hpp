@@ -31,6 +31,7 @@ namespace Spire {
 
     private:
       QString m_selected_item;
+      QString m_highlighted_item;
       std::vector<QString> m_items;
       DropDownMenuList* m_menu_list;
 
