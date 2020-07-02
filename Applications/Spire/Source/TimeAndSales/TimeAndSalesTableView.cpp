@@ -23,6 +23,7 @@ namespace {
 
 TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     : ScrollArea(true, parent),
+      m_was_shown(false),
       m_model(nullptr),
       m_loading_widget(nullptr),
       m_transition_widget(nullptr) {
@@ -31,7 +32,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_vertical_slider_value_changed);
   m_header = new QHeaderView(Qt::Horizontal, this);
-  m_header->setMinimumSectionSize(scale_width(35));
   m_header->setStretchLastSection(true);
   m_header->setSectionsClickable(false);
   m_header->setSectionsMovable(true);
@@ -139,6 +139,17 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
 void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
   widget()->resize(width(), widget()->height());
   m_header->setFixedWidth(widget()->width());
+}
+
+void TimeAndSalesTableView::showEvent(QShowEvent* event) {
+  if(!m_was_shown) {
+    m_was_shown = false;
+    m_header->resizeSection(0, scale_width(74));
+    m_header->resizeSection(1, scale_width(60));
+    m_header->resizeSection(2, scale_width(46));
+    m_header->resizeSection(3, scale_width(50));
+    m_header->resizeSection(4, scale_width(50));
+  }
 }
 
 void TimeAndSalesTableView::show_loading_widget() {

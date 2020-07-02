@@ -35,8 +35,10 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
+      bool m_was_shown;
       QVBoxLayout* m_layout;
       QHeaderView* m_header;
       QWidget* m_header_padding;
