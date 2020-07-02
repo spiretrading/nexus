@@ -56,10 +56,10 @@ void FontSelectorButton::mousePressEvent(QMouseEvent* event) {
 
 void FontSelectorButton::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(m_is_toggled && !underMouse()) {
-    painter.drawImage(0, 0, m_toggle_icon);
-  } else if(underMouse()) {
+  if(underMouse()) {
     painter.drawImage(0, 0, m_hover_icon);
+  } else if(m_is_toggled) {
+    painter.drawImage(0, 0, m_toggle_icon);
   } else {
     painter.drawImage(0, 0, m_icon);
   }
