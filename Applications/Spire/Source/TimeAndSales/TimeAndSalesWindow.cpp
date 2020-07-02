@@ -29,7 +29,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     : Window(parent),
       m_table(nullptr) {
   setMinimumSize(scale(180, 200));
-  resize_body(scale(180, 450));
+  resize_body(scale(180, 410));
   setStyleSheet("background-color: #FFFFFF;");
   setWindowTitle(tr("Time and Sales"));
   set_svg_icon(":/Icons/time-sale-black.svg",
