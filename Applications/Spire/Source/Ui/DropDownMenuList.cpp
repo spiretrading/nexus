@@ -71,6 +71,11 @@ QString DropDownMenuList::get_previous(const QString& text) {
     m_list_widget->layout()->itemAt(index)->widget())->text();
 }
 
+connection DropDownMenuList::connect_highlighted_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_highlighted_signal.connect(slot);
+}
+
 connection DropDownMenuList::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
@@ -137,6 +142,9 @@ void DropDownMenuList::focus_next() {
   }
   update_highlights(m_highlight_index, index);
   m_highlight_index = index;
+  auto& item_text = static_cast<DropDownMenuItem*>(
+    m_list_widget->layout()->itemAt(m_highlight_index)->widget())->text();
+  m_highlighted_signal(item_text);
 }
 
 void DropDownMenuList::focus_previous() {
@@ -150,6 +158,9 @@ void DropDownMenuList::focus_previous() {
   }
   update_highlights(m_highlight_index, index);
   m_highlight_index = index;
+  auto& item_text = static_cast<DropDownMenuItem*>(
+    m_list_widget->layout()->itemAt(m_highlight_index)->widget())->text();
+  m_highlighted_signal(item_text);
 }
 
 void DropDownMenuList::update_highlights(int old_index, int new_index) {

@@ -37,7 +37,8 @@ namespace Spire {
       void move_menu_list();
       void on_item_clicked(const QString& item);
       void on_item_committed(const QString& text);
-      void on_text_changed(const QString& text);
+      void on_item_highlighted(const QString& item);
+      void on_text_edited(const QString& text);
   };
 }
 

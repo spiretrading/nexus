@@ -22,11 +22,14 @@ InputFieldEditor::InputFieldEditor(QString initial_value,
       font-size: %1px;
       padding-left: %2px;
     })").arg(scale_height(12)).arg(scale_width(6)));
-  connect(this, &QLineEdit::textChanged, this,
-    &InputFieldEditor::on_text_changed);
+  connect(this, &QLineEdit::textEdited, this,
+    &InputFieldEditor::on_text_edited);
   m_menu_list = new DropDownMenuList(m_items, this);
   m_menu_list->hide();
-  m_menu_list->connect_selected_signal([=] (auto item) {
+  m_menu_list->connect_highlighted_signal([=] (const auto& item) {
+    on_item_highlighted(item);
+  });
+  m_menu_list->connect_selected_signal([=] (const auto& item) {
     on_item_clicked(item);
   });
   window()->installEventFilter(this);
@@ -96,7 +99,11 @@ void InputFieldEditor::on_item_committed(const QString& text) {
   Q_EMIT editingFinished();
 }
 
-void InputFieldEditor::on_text_changed(const QString& text) {
+void InputFieldEditor::on_item_highlighted(const QString& item) {
+  setText(item);
+}
+
+void InputFieldEditor::on_text_edited(const QString& text) {
   auto iter = std::find_if(m_items.begin(), m_items.end(),
     [&] (auto value) { return value.toLower() == text.toLower(); });
   if(iter != m_items.end()) {
