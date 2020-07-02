@@ -49,10 +49,8 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   grid_layout->setVerticalSpacing(VERTICAL_SPACING());
   layout->addLayout(grid_layout);
   auto fonts = QFontDatabase().families();
-  auto font_list = std::vector<QString>();
-  font_list.reserve(fonts.size());
-  std::copy(fonts.begin(), fonts.end(), std::back_inserter(font_list));
-  m_font_list = new DropDownMenu(font_list, this);
+  m_font_list = new DropDownMenu(
+    std::vector<QString>(fonts.begin(), fonts.end()), this);
   m_font_list->set_current_text(m_current_font.family());
   m_font_list->setFixedSize(scale(162, 26));
   m_font_list->connect_selected_signal([=] (const auto& font) {
