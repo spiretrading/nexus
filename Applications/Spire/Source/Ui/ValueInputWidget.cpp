@@ -1,16 +1,26 @@
 #include "Spire/Ui/ValueInputWidget.hpp"
 #include <algorithm>
 #include <QKeyEvent>
+#include <QLineEdit>
+#include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  auto BUTTON_X() {
+    static auto x = scale_width(12);
+    return x;
+  }
+}
 
 ValueInputWidget::ValueInputWidget(int min_value, int max_value,
     QWidget* parent)
     : QSpinBox(parent),
       m_min_value(min_value),
       m_max_value(max_value) {
+  installEventFilter(this);
   setMinimum(m_min_value);
   setMaximum(m_max_value);
   setStyleSheet(QString(R"(
@@ -49,6 +59,18 @@ ValueInputWidget::ValueInputWidget(int min_value, int max_value,
     })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
   setContextMenuPolicy(Qt::NoContextMenu);
+  findChild<QLineEdit*>()->installEventFilter(this);
+}
+
+bool ValueInputWidget::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::MouseButtonPress) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton && e->pos().x() < width() - BUTTON_X()) {
+      selectAll();
+      return true;
+    }
+  }
+  return QSpinBox::eventFilter(watched, event);
 }
 
 void ValueInputWidget::keyPressEvent(QKeyEvent* event) {
