@@ -1,5 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include <algorithm>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
@@ -12,6 +13,21 @@ using PriceRange = TimeAndSalesProperties::PriceRange;
 namespace {
   const auto LOADING_THRESHOLD = std::size_t{25};
   const auto SNAPSHOT_COUNT = 4 * LOADING_THRESHOLD;
+
+  auto QUANTITY_COLUMN_BREAKPOINT() {
+    static auto breakpoint = scale_width(58);
+    return breakpoint;
+  }
+
+  auto MARKET_COLUMN_BREAKPOINT() {
+    static auto breakpoint = scale_width(51);
+    return breakpoint;
+  }
+
+  auto CONDITION_COLUMN_BREAKPOINT() {
+    static auto breakpoint = scale_width(63);
+    return breakpoint;
+  }
 }
 
 TimeAndSalesWindowModel::TimeAndSalesWindowModel(
@@ -37,6 +53,10 @@ bool TimeAndSalesWindowModel::is_loading() const {
 void TimeAndSalesWindowModel::set_properties(
     const TimeAndSalesProperties& properties) {
   m_properties = properties;
+}
+
+void TimeAndSalesWindowModel::set_column_size_reference(int column, int size) {
+  m_column_size_reference[column] = size;
 }
 
 void TimeAndSalesWindowModel::set_row_visible(int row) {
@@ -106,16 +126,33 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
       case Columns::PRICE_COLUMN:
         return tr("Price");
       case Columns::SIZE_COLUMN:
-        return tr("Qty");
+        if(is_short_text(section, QUANTITY_COLUMN_BREAKPOINT())) {
+          return tr("Qty");
+        }
+        return tr("Quantity");
       case Columns::MARKET_COLUMN:
-        return tr("Mkt");
+        if(is_short_text(section, MARKET_COLUMN_BREAKPOINT())) {
+          return tr("Mkt");
+        }
+        return tr("Market");
       case Columns::CONDITION_COLUMN:
-        return tr("Cond");
+        if(is_short_text(section, CONDITION_COLUMN_BREAKPOINT())) {
+          return tr("Cond");
+        }
+        return tr("Condition");
       default:
         return QVariant();
     }
   }
   return QVariant();
+}
+
+bool TimeAndSalesWindowModel::is_short_text(int column, int breakpoint) const {
+  if(m_column_size_reference.find(column) !=
+      m_column_size_reference.end()) {
+    return m_column_size_reference.at(column) < breakpoint;
+  }
+  return false;
 }
 
 void TimeAndSalesWindowModel::update_data(const TimeAndSalesModel::Entry& e) {

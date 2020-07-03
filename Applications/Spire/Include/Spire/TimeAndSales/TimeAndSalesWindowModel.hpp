@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_MODEL_HPP
+#include <unordered_map>
 #include <QAbstractItemModel>
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -34,6 +35,13 @@ namespace Spire {
       //! Sets the display properties.
       void set_properties(const TimeAndSalesProperties& properties);
 
+      //! Informs the model that a particular column has been resized.
+      /*!
+        \param column The column index.
+        \param size The new column size.
+      */
+      void set_column_size_reference(int column, int size);
+
       //! Informs the model that a particular row is being displayed.
       /*!
         \param row The index of the row that is visible.
@@ -67,7 +75,9 @@ namespace Spire {
       bool m_is_loading;
       bool m_is_fully_loaded;
       QtPromise<std::vector<TimeAndSalesModel::Entry>> m_snapshot_promise;
+      std::unordered_map<int, int> m_column_size_reference;
 
+      bool is_short_text(int column, int breakpoint) const;
       void update_data(const TimeAndSalesModel::Entry& e);
       void load_snapshot(Beam::Queries::Sequence last);
   };

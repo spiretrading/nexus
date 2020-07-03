@@ -184,6 +184,7 @@ void TimeAndSalesTableView::on_header_resize(int index, int old_size,
     new_size = min_width;
   }
   m_table->horizontalHeader()->resizeSection(index, new_size);
+  m_model->set_column_size_reference(index, new_size);
 }
 
 void TimeAndSalesTableView::on_header_move(int logical_index,
