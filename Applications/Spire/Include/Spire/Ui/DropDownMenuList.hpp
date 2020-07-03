@@ -9,11 +9,17 @@ namespace Spire {
   class DropDownMenuList : public QWidget {
     public:
 
-      //! Signals that an item was highlighted using the navigation keys.
+      //! Signals that an item was highlighted.
+      /*!
+        \param item The highlighted item.
+      */
       using HighlightedSignal = Signal<void (const QString& item)>;
 
       //! Signals that an item was selected from the list.
-      using SelectedSignal = Signal<void (const QString& item)>;
+      /*!
+        \param item The selected item
+      */
+      using SelectedSignal = Signal<void (const QString& text)>;
 
       //! Constructs a DropDownMenuList with the specified items.
       /*!
@@ -42,11 +48,11 @@ namespace Spire {
       */
       QString get_previous(const QString& text);
 
-      //! Connects a slot to the item highlighted signal.
+      //! Connects a slot to the item highlight signal.
       boost::signals2::connection connect_highlighted_signal(
-        const SelectedSignal::slot_type& slot) const;
+        const HighlightedSignal::slot_type& slot) const;
 
-      //! Connects a slot to the item selection signal.
+      //! Connects a slot to the item selected signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
@@ -67,6 +73,8 @@ namespace Spire {
       void focus_next();
       void focus_previous();
       void update_highlights(int old_index, int new_index);
+      void update_item_width();
+      void on_horizontal_slider_changed(int value);
   };
 }
 

@@ -1,4 +1,5 @@
 #include "Spire/Ui/DropdownMenuItem.hpp"
+#include <QFontMetrics>
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
@@ -6,21 +7,27 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto LEFT_PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+
+  auto RIGHT_PADDING() {
+    static auto padding = scale_width(12);
+    return padding;
+  }
+}
+
 DropDownMenuItem::DropDownMenuItem(const QString& text, QWidget* parent)
     : QLabel(text, parent),
       m_is_highlighted(false) {
+  setMouseTracking(true);
+  setAttribute(Qt::WA_Hover);
   setFixedHeight(scale_height(20));
-  setStyleSheet(QString(R"(
-    QLabel {
-      background-color: #FFFFFF;
-      font-family: Roboto;
-      font-size: %1px;
-      padding-left: %2px;
-    }
-
-    QLabel:hover {
-      background-color: #F2F2FF;
-    })").arg(scale_height(12)).arg(scale_width(5)));
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  setFont(font);
 }
 
 void DropDownMenuItem::set_highlight() {
@@ -42,16 +49,21 @@ void DropDownMenuItem::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void DropDownMenuItem::mouseReleaseEvent(QMouseEvent* event) {
+void DropDownMenuItem::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_selected_signal(text());
   }
 }
 
 void DropDownMenuItem::paintEvent(QPaintEvent* event) {
-  if(m_is_highlighted) {
-    auto painter = QPainter(this);
+  auto painter = QPainter(this);
+  if(m_is_highlighted || underMouse()) {
     painter.fillRect(event->rect(), QColor("#F2F2FF"));
+  } else {
+    painter.fillRect(event->rect(), Qt::white);
   }
-  QLabel::paintEvent(event);
+  auto metrics = QFontMetrics(font());
+  auto shortened_text = metrics.elidedText(text(), Qt::ElideRight,
+    width() - RIGHT_PADDING());
+  painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
 }
