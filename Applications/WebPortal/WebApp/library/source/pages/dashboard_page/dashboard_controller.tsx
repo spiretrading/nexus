@@ -23,6 +23,8 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  cannotLoad: boolean;
+  redirect: string;
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -31,11 +33,19 @@ export class DashboardController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
+      cannotLoad: false,
+      redirect: null
     };
     this.onSideMenuClick = this.onSideMenuClick.bind(this);
   }
 
   public render(): JSX.Element {
+    if(this.state.redirect) {
+      return <Router.Redirect push to={this.state.redirect}/>;
+    }
+    if(this.state.cannotLoad) {
+      return <PageNotFoundPage displaySize={this.props.displaySize}/>;
+    }
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
@@ -61,8 +71,7 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
-          <Router.Route render={() => 
-            <PageNotFoundPage displaySize={this.props.displaySize}/>}/>
+          <Router.Route render={this.renderPageNotFound}/>
         </Router.Switch>
       </DashboardPage>);
   }
@@ -70,8 +79,18 @@ export class DashboardController extends React.Component<Properties, State> {
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
-        this.setState({isLoaded: true});
-      });
+        if(window.location.pathname === '/') {
+          this.setState({isLoaded: true, redirect: '/account'});
+        } else {
+          this.setState({isLoaded: true});
+        }
+      }).catch(() => this.setState({cannotLoad: true}));
+  }
+
+  public componentDidUpdate(): void {
+    if(this.state.redirect) {
+      this.setState({redirect: null});
+    }
   }
 
   private renderAccountPage = () => {
@@ -95,6 +114,10 @@ export class DashboardController extends React.Component<Properties, State> {
         marketDatabase={this.props.model.marketDatabase}
         model={model}
         displaySize={this.props.displaySize}/>);
+  }
+
+  private renderPageNotFound = () => {
+    return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
 
   private onSideMenuClick(item: SideMenu.Item) {
