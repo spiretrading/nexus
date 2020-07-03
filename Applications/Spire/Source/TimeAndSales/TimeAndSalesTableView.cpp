@@ -85,6 +85,8 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     new CustomVariantItemDelegate(), this));
   m_layout->addWidget(m_table);
   setWidget(main_widget);
+  m_minimum_column_widths = {{0, scale_width(64)}, {1, scale_width(60)},
+    {2, scale_width(38)}, {3, scale_width(40)}, {4, scale_width(42)}};
 }
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
@@ -143,7 +145,7 @@ void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
 
 void TimeAndSalesTableView::showEvent(QShowEvent* event) {
   if(!m_was_shown) {
-    m_was_shown = false;
+    m_was_shown = true;
     m_header->resizeSection(0, scale_width(74));
     m_header->resizeSection(1, scale_width(60));
     m_header->resizeSection(2, scale_width(46));
@@ -174,8 +176,14 @@ void TimeAndSalesTableView::on_end_loading_signal() {
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,
     int new_size) {
-  m_table->horizontalHeader()->resizeSection(index,
-    m_header->sectionSize(index));
+  auto min_width = m_minimum_column_widths[index];
+  if(new_size <= min_width) {
+    m_header->blockSignals(true);
+    m_header->resizeSection(index, min_width);
+    m_header->blockSignals(false);
+    new_size = min_width;
+  }
+  m_table->horizontalHeader()->resizeSection(index, new_size);
 }
 
 void TimeAndSalesTableView::on_header_move(int logical_index,
