@@ -1,6 +1,7 @@
 #include "Spire/Ui/DropdownMenuList.hpp"
 #include <algorithm>
 #include <QKeyEvent>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -29,6 +30,9 @@ DropDownMenuList::DropDownMenuList(
   m_scroll_area->setWidgetResizable(true);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setObjectName("dropdown_menu_list_scroll_area");
+  connect(m_scroll_area->horizontalScrollBar(),
+    qOverload<int>(&QScrollBar::valueChanged), this,
+    &DropDownMenuList::on_horizontal_slider_changed);
   layout->addWidget(m_scroll_area);
   m_list_widget = new QWidget(m_scroll_area);
   auto list_layout = new QVBoxLayout(m_list_widget);
@@ -38,6 +42,7 @@ DropDownMenuList::DropDownMenuList(
   m_list_widget->setStyleSheet("background-color: #FFFFFF;");
   m_scroll_area->setWidget(m_list_widget);
   parent->installEventFilter(this);
+  m_list_widget->installEventFilter(this);
 }
 
 void DropDownMenuList::set_items(const std::vector<QString>& items) {
@@ -49,7 +54,9 @@ void DropDownMenuList::set_items(const std::vector<QString>& items) {
     std::min(static_cast<int>(items.size()), MAX_VISIBLE_ITEMS));
   for(auto& item : items) {
     auto menu_item = new DropDownMenuItem(item, m_list_widget);
+    menu_item->setFixedWidth(m_list_widget->width());
     menu_item->connect_selected_signal([=] (auto& t) { on_select(t); });
+    menu_item->installEventFilter(this);
     m_list_widget->layout()->addWidget(menu_item);
   }
 }
@@ -72,7 +79,7 @@ QString DropDownMenuList::get_previous(const QString& text) {
 }
 
 connection DropDownMenuList::connect_highlighted_signal(
-    const SelectedSignal::slot_type& slot) const {
+    const HighlightedSignal::slot_type& slot) const {
   return m_highlighted_signal.connect(slot);
 }
 
@@ -100,15 +107,22 @@ bool DropDownMenuList::eventFilter(QObject* object, QEvent* event) {
           }
           return true;
         }
-      } else if(key_event->key() == Qt::Key_Escape) {
-        close();
       }
+    }
+  } else if(object == m_list_widget) {
+    if(event->type() == QEvent::Resize) {
+      update_item_width();
+    }
+  } else if(m_list_widget->isAncestorOf(static_cast<QWidget*>(object))) {
+    if(event->type() == QEvent::HoverEnter) {
+      m_highlighted_signal(static_cast<DropDownMenuItem*>(object)->text());
     }
   }
   return false;
 }
 
 void DropDownMenuList::showEvent(QShowEvent* event) {
+  m_scroll_area->verticalScrollBar()->setValue(0);
   m_highlight_index = -1;
   for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
     auto widget = static_cast<DropDownMenuItem*>(
@@ -170,8 +184,23 @@ void DropDownMenuList::update_highlights(int old_index, int new_index) {
     previous_widget->widget()->update();
   }
   if(auto current_widget = m_list_widget->layout()->itemAt(new_index)) {
-    static_cast<DropDownMenuItem*>(current_widget->widget())->set_highlight();
+    auto item = static_cast<DropDownMenuItem*>(current_widget->widget());
+    item->set_highlight();
     current_widget->widget()->update();
     m_scroll_area->ensureWidgetVisible(current_widget->widget());
+    m_highlighted_signal(item->text());
+  }
+}
+
+void DropDownMenuList::update_item_width() {
+  for(auto i = 0; i < m_list_widget->layout()->count(); ++i) {
+    m_list_widget->layout()->itemAt(i)->widget()->setFixedWidth(
+      m_list_widget->width());
+  }
+}
+
+void DropDownMenuList::on_horizontal_slider_changed(int value) {
+  if(value != 0) {
+    m_scroll_area->horizontalScrollBar()->setValue(0);
   }
 }

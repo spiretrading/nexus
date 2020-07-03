@@ -100,5 +100,14 @@
         <file>Icons/arrow-left.svg</file>
         <file>Icons/arrow-right.svg</file>
         <file>Icons/key-bindings-grey.svg</file>
+        <file>Icons/text_effects/bold-active.svg</file>
+        <file>Icons/text_effects/bold-hover.svg</file>
+        <file>Icons/text_effects/bold-inactive.svg</file>
+        <file>Icons/text_effects/italic-active.svg</file>
+        <file>Icons/text_effects/italic-hover.svg</file>
+        <file>Icons/text_effects/italic-inactive.svg</file>
+        <file>Icons/text_effects/underline-active.svg</file>
+        <file>Icons/text_effects/underline-hover.svg</file>
+        <file>Icons/text_effects/underline-inactive.svg</file>
     </qresource>
 </RCC>

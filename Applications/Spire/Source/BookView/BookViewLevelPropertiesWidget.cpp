@@ -1,19 +1,31 @@
 #include "Spire/BookView/BookViewLevelPropertiesWidget.hpp"
 #include <QColorDialog>
-#include <QFontDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidgetItem>
-#include <QSpinBox>
 #include <QVBoxLayout>
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FlatButton.hpp"
+#include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
+#include "Spire/Ui/IntegerInputWidget.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+
+namespace {
+  auto BUTTON_SIZE() {
+    static auto size = scale(100, 26);
+    return size;
+  }
+
+  auto LABEL_HEIGHT() {
+    static auto height = scale_height(14);
+    return height;
+  }
+}
 
 BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     const BookViewProperties& properties, QWidget* parent)
@@ -64,12 +76,12 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     QAbstractItemView::SelectionMode::SingleSelection);
   connect(m_band_list_widget, &QListWidget::currentRowChanged,
     this, &BookViewLevelPropertiesWidget::update_band_list_stylesheet);
-  horizontal_layout->addStretch(18);
+  horizontal_layout->addSpacing(scale_width(18));
   auto band_properties_layout = new QVBoxLayout();
   band_properties_layout->setContentsMargins({});
   band_properties_layout->setSpacing(0);
   auto number_of_bands_label = new QLabel(tr("Number of Bands"), this);
-  number_of_bands_label->setFixedHeight(scale_height(14));
+  number_of_bands_label->setFixedHeight(LABEL_HEIGHT());
   auto generic_label_style = QString(R"(
     color: #000000;
     font-family: Roboto;
@@ -77,79 +89,42 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
-  auto number_of_bands_spin_box = new QSpinBox(this);
+  auto number_of_bands_spin_box = new IntegerInputWidget(1, INT_MAX, this);
   number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
-  number_of_bands_spin_box->setMinimum(1);
-  number_of_bands_spin_box->setMaximum(INT_MAX);
   number_of_bands_spin_box->setKeyboardTracking(false);
-  number_of_bands_spin_box->setFixedHeight(scale_height(26));
-  number_of_bands_spin_box->setStyleSheet(QString(R"(
-    QSpinBox {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %5px;
-      padding-left: %4px;
-    }
-
-    QSpinBox:focus {
-      border: %1px solid #4B23A0;
-    }
-
-    QSpinBox::up-button {
-      border: none;
-    }
-
-    QSpinBox::down-button {
-      border: none;
-    }
-
-    QSpinBox::up-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-up.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QSpinBox::down-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-down.svg);
-      width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
+  number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
   connect(number_of_bands_spin_box,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);
   band_properties_layout->addWidget(number_of_bands_spin_box);
   band_properties_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
-  band_color_label->setFixedHeight(scale_height(14));
+  band_color_label->setFixedHeight(LABEL_HEIGHT());
   band_color_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(band_color_label);
   band_properties_layout->addStretch(4);
   m_band_color_button = new ColorSelectorButton(bg_colors[0], this);
   m_band_color_button->connect_color_signal(
     [=] (auto color) { on_band_color_selected(color); });
-  m_band_color_button->setFixedHeight(scale_height(26));
+  m_band_color_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_band_color_button);
   band_properties_layout->addStretch(10);
   auto color_gradient_label = new QLabel(tr("Color Gradient"), this);
-  color_gradient_label->setFixedHeight(scale_height(14));
+  color_gradient_label->setFixedHeight(LABEL_HEIGHT());
   color_gradient_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(color_gradient_label);
   band_properties_layout->addStretch(4);
   m_gradient_start_button = new ColorSelectorButton(bg_colors[0], this);
-  m_gradient_start_button->setFixedHeight(scale_height(26));
+  m_gradient_start_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_start_button);
   band_properties_layout->addStretch(8);
   m_gradient_end_button = new ColorSelectorButton(
     bg_colors[bg_colors.size() - 1], this);
-  m_gradient_end_button->setFixedHeight(scale_height(26));
+  m_gradient_end_button->setFixedSize(BUTTON_SIZE());
   band_properties_layout->addWidget(m_gradient_end_button);
   band_properties_layout->addStretch(10);
   auto apply_gradient_button = new FlatButton(tr("Apply Gradient"), this);
-  apply_gradient_button->setFixedHeight(scale_height(26));
+  apply_gradient_button->setFixedSize(BUTTON_SIZE());
   QFont generic_button_font;
   generic_button_font.setFamily("Roboto");
   generic_button_font.setPixelSize(scale_height(12));
@@ -169,22 +144,19 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     [=] { on_gradient_apply_button_clicked(); });
   band_properties_layout->addWidget(apply_gradient_button);
   horizontal_layout->addLayout(band_properties_layout);
-  horizontal_layout->addStretch(18);
-  auto font_button_layout = new QVBoxLayout();
-  font_button_layout->setContentsMargins({});
-  font_button_layout->setSpacing(0);
-  font_button_layout->addStretch(18);
-  auto change_font_button = new FlatButton(tr("Change Font"), this);
-  change_font_button->setFixedSize(scale(100, 26));
-  change_font_button->setFont(generic_button_font);
-  change_font_button->set_style(generic_button_default_style);
-  change_font_button->set_hover_style(generic_button_hover_style);
-  change_font_button->set_focus_style(generic_button_focus_style);
-  change_font_button->connect_clicked_signal(
-    [=] { on_change_font_button_clicked(); });
-  font_button_layout->addWidget(change_font_button);
-  font_button_layout->addStretch(33);
-  m_show_grid_lines_check_box = new CheckBox(tr("Show Grid Lines"), this);
+  horizontal_layout->addSpacing(scale_width(18));
+  auto font_layout = new QVBoxLayout();
+  font_layout->setContentsMargins({});
+  font_layout->setSpacing(0);
+  auto change_font_widget = new FontSelectorWidget(
+    properties.get_book_quote_font(), this);
+  change_font_widget->connect_font_selected_signal(
+    [=] (const auto& font) { update_band_list_font(font); });
+  change_font_widget->connect_font_preview_signal(
+    [=] (const auto& font) { update_band_list_font(font); });
+  font_layout->addWidget(change_font_widget);
+  font_layout->addSpacing(scale_height(48));
+  m_show_grid_lines_check_box = new CheckBox(tr("Show Grid"), this);
   auto check_box_text_style = QString(R"(
     color: black;
     font-family: Roboto;
@@ -208,10 +180,10 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
     check_box_indicator_style, check_box_checked_style,
     check_box_hover_style, check_box_focused_style);
   m_show_grid_lines_check_box->setChecked(properties.get_show_grid());
-  font_button_layout->addWidget(m_show_grid_lines_check_box);
-  font_button_layout->addStretch(129);
-  horizontal_layout->addLayout(font_button_layout);
-  horizontal_layout->addStretch(60);
+  font_layout->addWidget(m_show_grid_lines_check_box);
+  font_layout->addStretch(1);
+  horizontal_layout->addLayout(font_layout);
+  horizontal_layout->addStretch(1);
   layout->addLayout(horizontal_layout);
   layout->addStretch(20);
   m_band_list_widget->setCurrentRow(0);
@@ -297,14 +269,6 @@ void BookViewLevelPropertiesWidget::on_band_color_selected(
     const QColor& color) {
   m_band_list_widget->currentItem()->setBackground(color);
   update_band_list_stylesheet(m_band_list_widget->currentRow());
-}
-
-void BookViewLevelPropertiesWidget::on_change_font_button_clicked() {
-  auto ok = false;
-  auto font = QFontDialog::getFont(&ok, m_band_list_widget->item(0)->font());
-  if(ok) {
-    update_band_list_font(font);
-  }
 }
 
 void BookViewLevelPropertiesWidget::on_gradient_apply_button_clicked() {

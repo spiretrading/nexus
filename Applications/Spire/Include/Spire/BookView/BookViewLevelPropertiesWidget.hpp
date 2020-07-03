@@ -43,7 +43,6 @@ namespace Spire {
       void update_band_list_gradient();
       void update_band_list_stylesheet(int index);
       void on_band_color_selected(const QColor& color);
-      void on_change_font_button_clicked();
       void on_gradient_apply_button_clicked();
       void on_number_of_bands_spin_box_changed(int value);
   };
