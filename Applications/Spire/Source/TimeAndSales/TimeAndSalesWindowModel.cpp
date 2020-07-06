@@ -15,17 +15,17 @@ namespace {
   const auto SNAPSHOT_COUNT = 4 * LOADING_THRESHOLD;
 
   auto QUANTITY_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(58);
+    static auto breakpoint = scale_width(63);
     return breakpoint;
   }
 
   auto MARKET_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(51);
+    static auto breakpoint = scale_width(56);
     return breakpoint;
   }
 
   auto CONDITION_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(63);
+    static auto breakpoint = scale_width(68);
     return breakpoint;
   }
 }
@@ -57,6 +57,7 @@ void TimeAndSalesWindowModel::set_properties(
 
 void TimeAndSalesWindowModel::set_column_size_reference(int column, int size) {
   m_column_size_reference[column] = size;
+  Q_EMIT headerDataChanged(Qt::Horizontal, column, column);
 }
 
 void TimeAndSalesWindowModel::set_row_visible(int row) {
