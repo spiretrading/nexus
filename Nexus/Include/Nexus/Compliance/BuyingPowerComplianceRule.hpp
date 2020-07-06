@@ -231,7 +231,7 @@ namespace Nexus::Compliance {
     auto bbo = LoadBboQuote(orderFields.m_security);
     if(orderFields.m_type == OrderType::LIMIT) {
       if(orderFields.m_price <= Money::ZERO) {
-        BOOST_THROW_EXCEPTION(ComplianceCheckException{"Invalid price."});
+        BOOST_THROW_EXCEPTION(ComplianceCheckException("Invalid price."));
       }
       if(orderFields.m_side == Side::ASK) {
         return std::max(bbo.m_bid.m_price, orderFields.m_price);

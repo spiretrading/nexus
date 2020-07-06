@@ -120,12 +120,12 @@ namespace Nexus::Compliance {
     if(m_startPeriod > m_endPeriod) {
       if(time.time_of_day() >= m_startPeriod ||
           time.time_of_day() <= m_endPeriod) {
-        throw ComplianceCheckException{"Cancels not permitted at this time."};
+        throw ComplianceCheckException("Cancels not permitted at this time.");
       }
     } else {
       if(time.time_of_day() >= m_startPeriod &&
           time.time_of_day() <= m_endPeriod) {
-        throw ComplianceCheckException{"Cancels not permitted at this time."};
+        throw ComplianceCheckException("Cancels not permitted at this time.");
       }
     }
   }
