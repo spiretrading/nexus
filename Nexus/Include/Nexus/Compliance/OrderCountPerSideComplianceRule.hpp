@@ -88,7 +88,7 @@ namespace Nexus::Compliance {
     auto currentOrderCount = ++orderCount;
     if(currentOrderCount > m_count) {
       --orderCount;
-      throw ComplianceCheckException{"Order limit per side reached."};
+      throw ComplianceCheckException("Order limit per side reached.");
     } else {
       order.GetPublisher().Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(

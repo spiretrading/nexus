@@ -154,8 +154,8 @@ namespace Nexus::Compliance {
       m_lastBidFillTime, m_lastAskFillTime);
     if(lastFillTime != boost::posix_time::not_a_date_time &&
         lastFillTime >= (time - m_timeout)) {
-      BOOST_THROW_EXCEPTION(ComplianceCheckException{
-        "Opposing order can not be canceled yet."});
+      BOOST_THROW_EXCEPTION(ComplianceCheckException(
+        "Opposing order can not be canceled yet."));
     }
   }
 }

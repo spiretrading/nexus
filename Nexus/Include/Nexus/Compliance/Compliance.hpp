@@ -26,22 +26,20 @@ namespace Nexus::Compliance {
     class ComplianceServlet;
   class ComplianceSession;
   class LocalComplianceRuleDataStore;
-  template<typename KeyType> class MapComplianceRule;
-  template<typename TimeClientType>
-    class OpposingOrderCancellationComplianceRule;
-  template<typename TimeClientType> class OpposingOrderSubmissionComplianceRule;
+  template<typename K> class MapComplianceRule;
+  template<typename C> class OpposingOrderCancellationComplianceRule;
+  template<typename C> class OpposingOrderSubmissionComplianceRule;
   class OrderCountPerSideComplianceRule;
   class PerAccountComplianceRule;
   class RejectCancelsComplianceRule;
   class RejectSubmissionsComplianceRule;
   class SecurityFilterComplianceRule;
   template<typename C> class SqlComplianceRuleDataStore;
-  template<typename TimeClientType>
-    class SubmissionRestrictionPeriodComplianceRule;
-  template<typename TimeClientType> class TimeFilterComplianceRule;
+  template<typename C> class SubmissionRestrictionPeriodComplianceRule;
+  template<typename C> class TimeFilterComplianceRule;
   class VirtualComplianceClient;
 
-  // Standard name for the compliance service.
+  /** Standard name for the compliance service. */
   inline const std::string SERVICE_NAME = "compliance_service";
 }
 
