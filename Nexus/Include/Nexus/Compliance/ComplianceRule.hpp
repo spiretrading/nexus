@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCERULE_HPP
-#define NEXUS_COMPLIANCERULE_HPP
+#ifndef NEXUS_COMPLIANCE_RULE_HPP
+#define NEXUS_COMPLIANCE_RULE_HPP
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
@@ -7,37 +7,34 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class ComplianceRule
-      \brief Base class for a single compliance check.
-   */
+  /** Base class for a single compliance check. */
   class ComplianceRule : private boost::noncopyable {
     public:
       virtual ~ComplianceRule() = default;
 
-      //! Performs a compliance check on an Order submission.
-      /*!
-        \param order The Order being submitted.
-      */
+      /**
+       * Performs a compliance check on an Order submission.
+       * @param order The Order being submitted.
+       */
       virtual void Submit(const OrderExecutionService::Order& order);
 
-      //! Cancels a previously submitted Order.
-      /*!
-        \param order The Order to cancel.
-      */
+      /**
+       * Cancels a previously submitted Order.
+       * @param order The Order to cancel.
+       */
       virtual void Cancel(const OrderExecutionService::Order& order);
 
-      //! Adds an Order that successfully passed all compliance checks.
-      /*!
-        \param order The Order that was successfully submitted.
-      */
+      /**
+       * Adds an Order that successfully passed all compliance checks.
+       * @param order The Order that was successfully submitted.
+       */
       virtual void Add(const OrderExecutionService::Order& order);
 
     protected:
 
-      //! Constructs a ComplianceRule.
+      /** Constructs a ComplianceRule. */
       ComplianceRule() = default;
   };
 
@@ -47,10 +44,9 @@ namespace Compliance {
   }
 
   inline void ComplianceRule::Cancel(
-      const OrderExecutionService::Order& order) {}
+    const OrderExecutionService::Order& order) {}
 
   inline void ComplianceRule::Add(const OrderExecutionService::Order& order) {}
-}
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef NEXUS_SYMBOLRESTRICTIONCOMPLIANCERULE_HPP
-#define NEXUS_SYMBOLRESTRICTIONCOMPLIANCERULE_HPP
+#ifndef NEXUS_SYMBOL_RESTRICTION_COMPLIANCE_RULE_HPP
+#define NEXUS_SYMBOL_RESTRICTION_COMPLIANCE_RULE_HPP
 #include <vector>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -9,43 +9,44 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class SymbolRestrictionComplianceRule
-      \brief Restricts orders that are submitted on any symbol found within a
-             list of symbols.
+  /**
+   * Restricts orders that are submitted on any symbol found within a list of
+   * symbols.
    */
   class SymbolRestrictionComplianceRule : public ComplianceRule {
     public:
 
-      //! Constructs a SymbolRestrictionComplianceRule.
-      /*!
-        \param parameters The list of parameters used by this rule.
-      */
+      /**
+       * Constructs a SymbolRestrictionComplianceRule.
+       * @param parameters The list of parameters used by this rule.
+       */
       explicit SymbolRestrictionComplianceRule(
         const std::vector<ComplianceParameter>& parameters);
 
-      //! Constructs a SymbolRestrictionComplianceRule.
-      /*!
-        \param restrictions The set of Securities to restrict.
-      */
+      /**
+       * Constructs a SymbolRestrictionComplianceRule.
+       * @param restrictions The set of Securities to restrict.
+       */
       explicit SymbolRestrictionComplianceRule(SecuritySet restrictions);
 
-      virtual void Submit(const OrderExecutionService::Order& order);
+      void Submit(const OrderExecutionService::Order& order) override;
 
     private:
       SecuritySet m_restrictions;
   };
 
-  //! Builds a ComplianceRuleSchema representing a
-  //! SymbolRestrictionComplianceRule.
+  /**
+   * Builds a ComplianceRuleSchema representing a
+   * SymbolRestrictionComplianceRule.
+   */
   inline ComplianceRuleSchema BuildSymbolRestrictionComplianceRuleSchema() {
-    std::vector<ComplianceValue> symbols;
-    symbols.push_back(Security{});
-    std::vector<ComplianceParameter> parameters;
+    auto symbols = std::vector<ComplianceValue>();
+    symbols.push_back(Security());
+    auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("symbols", symbols);
-    ComplianceRuleSchema schema{"symbol_restriction", parameters};
+    auto schema = ComplianceRuleSchema("symbol_restriction", parameters);
     return schema;
   }
 
@@ -62,16 +63,15 @@ namespace Compliance {
   }
 
   inline SymbolRestrictionComplianceRule::SymbolRestrictionComplianceRule(
-      SecuritySet restrictions)
-      : m_restrictions{std::move(restrictions)} {}
+    SecuritySet restrictions)
+    : m_restrictions(std::move(restrictions)) {}
 
   inline void SymbolRestrictionComplianceRule::Submit(
       const OrderExecutionService::Order& order) {
     if(m_restrictions.Contains(order.GetInfo().m_fields.m_security)) {
-      throw ComplianceCheckException{"Submission restricted on symbol."};
+      throw ComplianceCheckException("Submission restricted on symbol.");
     }
   }
-}
 }
 
 #endif

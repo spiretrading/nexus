@@ -5,13 +5,13 @@
 
 namespace Nexus::Compliance {
   class ApplicationComplianceClient;
-  template<typename MarketDataClientType> class BuyingPowerComplianceRule;
-  template<typename DataStoreType> class CachedComplianceRuleDataStore;
-  template<typename TimeClientType> class CancelRestrictionPeriodComplianceRule;
+  template<typename C> class BuyingPowerComplianceRule;
+  template<typename D> class CachedComplianceRuleDataStore;
+  template<typename C> class CancelRestrictionPeriodComplianceRule;
   class ComplianceCheckException;
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType> class ComplianceCheckOrderExecutionDriver;
-  template<typename ServiceProtocolClientBuilderType> class ComplianceClient;
+  template<typename D, typename C, typename S>
+    class ComplianceCheckOrderExecutionDriver;
+  template<typename B> class ComplianceClient;
   struct ComplianceParameter;
   class ComplianceRule;
   struct ComplianceRuleDataStore;
@@ -20,11 +20,10 @@ namespace Nexus::Compliance {
   using ComplianceRuleId = std::uint64_t;
   class ComplianceRuleSchema;
   struct ComplianceRuleViolationRecord;
-  template<typename ComplianceRuleDataStoreType,
-    typename ServiceLocatorClientType> class ComplianceRuleSet;
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType> class ComplianceServlet;
+  template<typename C, typename S> class ComplianceRuleSet;
+  struct ComplianceRuleViolationRecord;
+  template<typename C, typename S, typename A, typename D, typename T>
+    class ComplianceServlet;
   class ComplianceSession;
   class LocalComplianceRuleDataStore;
   template<typename KeyType> class MapComplianceRule;
