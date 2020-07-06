@@ -44,8 +44,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       background-repeat: repeat;
       border: none;
       color: #4B23A0;
-      font-family: Roboto;
-      font-weight: 550;
       padding-left: %1px;
       padding-right: %1px;
     }
@@ -105,6 +103,9 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
     &TimeAndSalesTableView::on_rows_about_to_be_inserted);
   m_header->setModel(filter);
   m_table->setModel(filter);
+  for(auto i = 0; i < m_table->model()->columnCount(); ++i) {
+    m_model->set_column_size_reference(i, m_table->columnWidth(i));
+  }
 }
 
 void TimeAndSalesTableView::set_properties(
@@ -113,14 +114,8 @@ void TimeAndSalesTableView::set_properties(
   auto metrics = QFontMetrics(properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
-  auto header_font = m_table->verticalHeader()->font();
-  if(properties.m_font.pointSize() >= 11) {
-    header_font.setPointSizeF(0.8 * properties.m_font.pointSize());
-  } else {
-    header_font.setPointSize(9);
-  }
-  m_header->setFont(header_font);
-  auto header_metrics = QFontMetrics(header_font);
+  auto header_metrics = QFontMetrics(m_header->model()->headerData(0,
+    Qt::Horizontal, Qt::FontRole).value<QFont>());
   m_header->setFixedHeight(static_cast<int>(1.8 * header_metrics.height()));
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {

@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_MODEL_HPP
 #include <unordered_map>
 #include <QAbstractItemModel>
+#include <QFont>
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -71,6 +72,7 @@ namespace Spire {
       std::shared_ptr<TimeAndSalesModel> m_model;
       boost::signals2::scoped_connection m_time_and_sale_connection;
       TimeAndSalesProperties m_properties;
+      QFont m_header_font;
       std::vector<TimeAndSalesModel::Entry> m_entries;
       bool m_is_loading;
       bool m_is_fully_loaded;

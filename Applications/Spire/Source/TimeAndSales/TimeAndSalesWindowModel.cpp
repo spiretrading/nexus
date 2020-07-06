@@ -1,5 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowModel.hpp"
 #include <algorithm>
+#include <QFontMetrics>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -14,19 +15,14 @@ namespace {
   const auto LOADING_THRESHOLD = std::size_t{25};
   const auto SNAPSHOT_COUNT = 4 * LOADING_THRESHOLD;
 
-  auto QUANTITY_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(63);
-    return breakpoint;
+  auto BREAKPOINT_PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
   }
 
-  auto MARKET_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(56);
-    return breakpoint;
-  }
-
-  auto CONDITION_COLUMN_BREAKPOINT() {
-    static auto breakpoint = scale_width(68);
-    return breakpoint;
+  auto BREAKPOINT(const QFont& font, const QString& text) {
+    auto width = QFontMetrics(font).horizontalAdvance(text);
+    return width + BREAKPOINT_PADDING() * 2;
   }
 }
 
@@ -34,9 +30,11 @@ TimeAndSalesWindowModel::TimeAndSalesWindowModel(
     std::shared_ptr<TimeAndSalesModel> model,
     const TimeAndSalesProperties& properties)
     : m_model(std::move(model)),
+      m_header_font("Roboto"),
       m_is_loading(false),
       m_is_fully_loaded(false) {
   set_properties(properties);
+  m_header_font.setWeight(75);
   m_time_and_sale_connection = m_model.get()->connect_time_and_sale_signal(
     [=] (auto e) { update_data(e); });
   load_snapshot(Beam::Queries::Sequence::Present());
@@ -53,6 +51,11 @@ bool TimeAndSalesWindowModel::is_loading() const {
 void TimeAndSalesWindowModel::set_properties(
     const TimeAndSalesProperties& properties) {
   m_properties = properties;
+  if(properties.m_font.pointSize() >= 11) {
+    m_header_font.setPointSizeF(0.8 * properties.m_font.pointSize());
+  } else {
+    m_header_font.setPointSize(9);
+  }
 }
 
 void TimeAndSalesWindowModel::set_column_size_reference(int column, int size) {
@@ -127,23 +130,26 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
       case Columns::PRICE_COLUMN:
         return tr("Price");
       case Columns::SIZE_COLUMN:
-        if(is_short_text(section, QUANTITY_COLUMN_BREAKPOINT())) {
+        if(is_short_text(section, BREAKPOINT(m_header_font, tr("Quantity")))) {
           return tr("Qty");
         }
         return tr("Quantity");
       case Columns::MARKET_COLUMN:
-        if(is_short_text(section, MARKET_COLUMN_BREAKPOINT())) {
+        if(is_short_text(section, BREAKPOINT(m_header_font, tr("Market")))) {
           return tr("Mkt");
         }
         return tr("Market");
       case Columns::CONDITION_COLUMN:
-        if(is_short_text(section, CONDITION_COLUMN_BREAKPOINT())) {
+        if(is_short_text(section, BREAKPOINT(m_header_font,
+            tr("Condition")))) {
           return tr("Cond");
         }
         return tr("Condition");
       default:
         return QVariant();
     }
+  } else if(role == Qt::FontRole) {
+    return m_header_font;
   }
   return QVariant();
 }
