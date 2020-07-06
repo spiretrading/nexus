@@ -107,7 +107,7 @@ namespace Nexus::Compliance {
     : m_symbols(std::move(symbols)),
       m_startPeriod(startPeriod),
       m_endPeriod(endPeriod),
-      m_timeClient(std::forward<TimeClientForward>(timeClient)) {}
+      m_timeClient(std::forward<CF>(timeClient)) {}
 
   template<typename C>
   void CancelRestrictionPeriodComplianceRule<C>::Cancel(
@@ -120,12 +120,12 @@ namespace Nexus::Compliance {
     if(m_startPeriod > m_endPeriod) {
       if(time.time_of_day() >= m_startPeriod ||
           time.time_of_day() <= m_endPeriod) {
-        throw ComplianceCheckException{"Cancels not permitted at this time."};
+        throw ComplianceCheckException("Cancels not permitted at this time.");
       }
     } else {
       if(time.time_of_day() >= m_startPeriod &&
           time.time_of_day() <= m_endPeriod) {
-        throw ComplianceCheckException{"Cancels not permitted at this time."};
+        throw ComplianceCheckException("Cancels not permitted at this time.");
       }
     }
   }
