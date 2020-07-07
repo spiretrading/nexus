@@ -18,7 +18,7 @@ namespace Spire {
       /*!
         \param region The region a region tag should be a sub-region of.
       */
-      explicit RegionTerm(const Nexus::Region& region);
+      explicit RegionTerm(Nexus::Region region);
 
       virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
         tags) const override;

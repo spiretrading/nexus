@@ -31,7 +31,7 @@ namespace Spire {
 		/*!
 		  \param schemas A list of Schemas of the tags to store.
 		*/
-		explicit TagModel(const std::vector<Schema>& schemas);
+		explicit TagModel(std::vector<Schema> schemas);
 
 		//! Returns the display name of the tag with a given key.
 		/*!
