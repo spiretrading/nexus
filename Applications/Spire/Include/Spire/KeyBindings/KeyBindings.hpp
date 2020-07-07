@@ -24,8 +24,13 @@ namespace Details {
     using Type = std::variant<boost::optional<T>...>;
   };
 
-  using CustomTagType =
-    typename ToVariantOfOptionals<Nexus::Tag::Type>::Type;
+  template<typename...>
+  struct AddOptionalToVariant;
+
+  template<template<typename...> class C, typename T, typename... T0>
+  struct AddOptionalToVariant<C<T0...>, T> {
+    using Type = std::variant<T0..., boost::optional<T>>;
+  };
 }
 
   /*! \class KeyBindings
@@ -34,43 +39,50 @@ namespace Details {
   class KeyBindings {
     public:
 
+      /*! \class Tag
+          \brief Represents a tag with an optional value that can be passed to
+                 an order action.
+      */
+      class Tag {
+        public:
+
+          //! The type of a variant used to store all possible tag values.
+          using Type = typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
+            typename Details::ToVariantOfOptionals<Nexus::Tag::Type>::Type,
+            Nexus::Side>::Type, Nexus::OrderType>::Type, Nexus::Region>::Type;
+
+          //! Constructs a Tag.
+          /*!
+            \param key The key of the tag.
+            \param value The value of the tag.
+          */
+          Tag(int key, Type value);
+
+          //! Returns the key of the tag.
+          int get_key() const;
+
+          //! Returns the value of the tag.
+          Type get_value() const;
+
+          //! Checks whether two tags are equal.
+          bool operator ==(const Tag& other) const;
+
+          //! Checks whether two tags are not equal.
+          bool operator !=(const Tag& other) const;
+      };
+
       /*! \struct OrderAction
           \brief Stores a description of an order submission action.
       */
       struct OrderAction {
 
-        /*! \struct CustomTag
-            \brief Represents a tag other than the standard order fields.
-        */
-        struct CustomTag {
-
-          //! Specifies the types of values that can be stored by a CustomTag.
-          using Type = Details::CustomTagType;
-
-          //! The name of the tag.
-          std::string m_name;
-
-          //! The optional value of the tag.
-          Type m_value;
-        };
-
         //! The name of the action.
         std::string m_name;
 
-        //! The type of the order.
-        boost::optional<Nexus::OrderType> m_type;
-
-        //! The side of the order.
-        boost::optional<Nexus::Side> m_side;
-
-        //! The expiry of the order.
-        boost::optional<Nexus::TimeInForce> m_time_in_force;
-
-        //! The quantity of the order.
-        boost::optional<Nexus::Quantity> m_quantity;
-
-        //! The list of custom tags.
-        std::vector<CustomTag> m_tags;
+        //! The list of tags except for the region tag.
+        std::vector<Tag> m_tags;
       };
 
       /*! \enum CancelAction
