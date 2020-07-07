@@ -6,12 +6,8 @@
 namespace Nexus::Compliance {
 
   /** Stores session info for a ComplianceServlet client. */
-  class ComplianceSession : public Beam::ServiceLocator::AuthenticatedSession {
-    public:
-
-      /** Constructs a ComplianceSession. */
-      ComplianceSession() = default;
-  };
+  class ComplianceSession :
+    public Beam::ServiceLocator::AuthenticatedSession {};
 }
 
 #endif

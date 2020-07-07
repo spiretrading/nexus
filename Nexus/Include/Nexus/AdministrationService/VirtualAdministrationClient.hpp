@@ -28,8 +28,6 @@ namespace Nexus::AdministrationService {
     public:
       virtual ~VirtualAdministrationClient() = default;
 
-      virtual std::string LoadOrganizationName() = 0;
-
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) = 0;
 
@@ -180,8 +178,6 @@ namespace Nexus::AdministrationService {
 
       virtual ~WrapperAdministrationClient();
 
-      virtual std::string LoadOrganizationName() override;
-
       virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
 
@@ -331,11 +327,6 @@ namespace Nexus::AdministrationService {
   template<typename ClientType>
   WrapperAdministrationClient<ClientType>::~WrapperAdministrationClient() {
     Close();
-  }
-
-  template<typename ClientType>
-  std::string WrapperAdministrationClient<ClientType>::LoadOrganizationName() {
-    return m_client->LoadOrganizationName();
   }
 
   template<typename ClientType>

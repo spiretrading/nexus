@@ -51,12 +51,6 @@ namespace AdministrationService {
 
       ~AdministrationClient();
 
-      //! Returns the name of the organization.
-      /*!
-        \return The name of the organization.
-      */
-      std::string LoadOrganizationName();
-
       //! Loads the list of accounts that match a set of roles.
       /*!
         \param roles The roles to match.
@@ -389,13 +383,6 @@ namespace AdministrationService {
   AdministrationClient<ServiceProtocolClientBuilderType>::
       ~AdministrationClient() {
     Close();
-  }
-
-  template<typename ServiceProtocolClientBuilderType>
-  std::string AdministrationClient<ServiceProtocolClientBuilderType>::
-      LoadOrganizationName() {
-    auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadOrganizationNameService>(0);
   }
 
   template<typename ServiceProtocolClientBuilderType>

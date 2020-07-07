@@ -143,6 +143,8 @@ int main(int argc, const char** argv) {
   try {
     auto minimumSpireClientVersion = Extract<string>(config,
       "minimum_spire_version");
+    auto organizationName = Extract<string>(config, "organization",
+      "Spire Trading Inc.");
     ifstream timeZoneDatabaseFile{Extract<string>(config, "time_zones")};
     if(!timeZoneDatabaseFile.good()) {
       cerr << "Error parsing time zones." << endl;
@@ -171,10 +173,11 @@ int main(int argc, const char** argv) {
       destinationsConfig, marketDatabase);
     auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));
     definitionsServer.emplace(Initialize(serviceLocatorClient.Get(),
-      Initialize(minimumSpireClientVersion, timeZoneDatabaseBuffer.str(),
-        std::move(countryDatabase), std::move(currencyDatabase),
-        std::move(marketDatabase), std::move(destinationDatabase),
-        std::move(exchangeRates), std::move(complianceRuleSchemas))),
+      Initialize(minimumSpireClientVersion, organizationName,
+        timeZoneDatabaseBuffer.str(), std::move(countryDatabase),
+        std::move(currencyDatabase), std::move(marketDatabase),
+        std::move(destinationDatabase), std::move(exchangeRates),
+        std::move(complianceRuleSchemas))),
       Initialize(definitionsServerConnectionInitializer.m_interface,
       Ref(socketThreadPool)),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),

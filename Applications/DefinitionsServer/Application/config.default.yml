@@ -9,6 +9,7 @@ service_locator:
   password: $admin_password
 
 minimum_spire_version: "1"
+organization: "Spire Trading Inc."
 ntp_pool: ["0.pool.ntp.org:123",
            "1.pool.ntp.org:123",
            "2.pool.ntp.org:123",
