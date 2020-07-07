@@ -243,7 +243,7 @@ namespace Details {
     const KeyBindings::OrderAction& action);
 
   std::ostream& operator <<(std::ostream& out,
-    const KeyBindings::OrderAction::CustomTag& tag);
+    const KeyBindings::Tag& tag);
 
   std::ostream& operator <<(std::ostream& out,
     KeyBindings::CancelAction action);
