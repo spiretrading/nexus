@@ -7,9 +7,7 @@
 
 namespace Spire {
 
-  /*! \class NegationTerm
-      \brief Evaluates to true iff the given term evaluates to false.
-  */
+  //! Evaluates to true iff the given term evaluates to false.
   class NegationTerm : public Term {
     public:
 

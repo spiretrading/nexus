@@ -7,17 +7,13 @@
 
 namespace Spire {
 
-  /*! \class DisjunctionTerm
-      \brief Evaluates to true iff at least one of the given terms evaluates to
-             true.
-  */
+  //! Evaluates to true iff at least one of the given terms evaluates to true.
   class DisjunctionTerm : public Term {
     public:
 
       //! Constructs a DisjunctionTerm.
       /*!
-        \param terms The terms to evaluate for tags. Should contain at least
-                     1 term.
+        \param terms The terms to evaluate for tags.
       */
       explicit DisjunctionTerm(std::vector<std::shared_ptr<Term>> terms);
 

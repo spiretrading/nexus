@@ -8,14 +8,10 @@
 
 namespace Spire {
 
-	/*! \class TagModel
-	    \brief Stores key binding tags with their requirements. 
-	*/
+	//! Stores key binding tags with their requirements.
 	class TagModel {
 
-		/*! \struct Schema
-		    \brief Encapsulates a tag along with its display name and requirements.
-		*/
+		//! Encapsulates a tag along with its display name and requirements.
 		struct Schema {
 
 			//! The display name of the tag.

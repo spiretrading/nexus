@@ -7,16 +7,13 @@
 
 namespace Spire {
 
-  /*! \class ConjunctionTerm
-      \brief Evaluates to true iff all given terms evaluate to true.
-  */
+  //! Evaluates to true iff there is no term in a list that evaluates to false.
   class ConjunctionTerm : public Term {
     public:
 
       //! Constructs a ConjunctionTerm.
       /*!
-        \param terms The terms to evaluate for tags. Should contain at least
-                     1 term.
+        \param terms The terms to evaluate for tags.
       */
       explicit ConjunctionTerm(std::vector<std::shared_ptr<Term>> terms);
 

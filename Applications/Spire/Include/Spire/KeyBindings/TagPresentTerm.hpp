@@ -6,9 +6,7 @@
 
 namespace Spire {
 
-  /*! \class TagPresentTerm
-      \brief Checks whether a list of tags contains a tag with a selected key.
-  */
+  //! Checks whether a list of tags contains a tag with a selected key.
   class TagPresentTerm : public Term {
     public:
 

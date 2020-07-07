@@ -7,10 +7,8 @@
 
 namespace Spire {
 
-  /*! \class RegionTerm
-      \brief Checks whether a list of tags contains a region tags which value
-             is a sub-region of the region provided.
-  */
+  //! Checks whether a list of tags contains a region tags which value is a
+  //! sub-region of the region provided.
   class RegionTerm : public Term {
     public:
 

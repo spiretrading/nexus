@@ -6,10 +6,8 @@
 
 namespace Spire {
 
-  /*! \class TagEqualTerm
-      \brief Checks whether the value of a tag in a list is equal to the value
-             provided.
-  */
+  //! Checks whether the value of a tag in a list is equal to the value
+  //! provided.
   class TagEqualTerm : public Term {
     public:
 

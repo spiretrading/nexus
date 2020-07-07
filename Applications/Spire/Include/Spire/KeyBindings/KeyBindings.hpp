@@ -33,16 +33,12 @@ namespace Details {
   };
 }
 
-  /*! \class KeyBindings
-      \brief Stores the user's key bindings.
-  */
+  //! Stores the user's key bindings.
   class KeyBindings {
     public:
 
-      /*! \class Tag
-          \brief Represents a tag with an optional value that can be passed to
-                 an order action.
-      */
+      //! Represents a tag with an optional value that can be passed to an
+      //! order action.
       class Tag {
         public:
 
@@ -73,9 +69,7 @@ namespace Details {
           bool operator !=(const Tag& other) const;
       };
 
-      /*! \struct OrderAction
-          \brief Stores a description of an order submission action.
-      */
+      //! Stores a description of an order submission action.
       struct OrderAction {
 
         //! The name of the action.
@@ -85,9 +79,7 @@ namespace Details {
         std::vector<Tag> m_tags;
       };
 
-      /*! \enum CancelAction
-          \brief Represents an order cancellation action.
-      */
+      //! Represents an order cancellation action.
       enum class CancelAction {
 
         //! Cancels the most recent OrderAction.
@@ -133,9 +125,7 @@ namespace Details {
       //! The type of any action supported by bindings.
       using Action = std::variant<OrderAction, CancelAction>;
 
-      /*! \struct OrderActionBinding
-          \brief Stores a key binding to an OrderAction.
-      */
+      //! Stores a key binding to an OrderAction.
       struct OrderActionBinding {
 
         //! The key sequence the binding is mapped to.
@@ -148,9 +138,7 @@ namespace Details {
         OrderAction m_action;
       };
 
-      /*! \struct CancelActionBinding
-          \brief Stores a key binding to a CancelAction.
-      */
+      //! Stores a key binding to a CancelAction.
       struct CancelActionBinding {
 
         //! The key sequence the binding is mapped to.
@@ -167,9 +155,7 @@ namespace Details {
         bool operator !=(const CancelActionBinding& rhs) const;
       };
 
-      /*! \struct ActionBinding
-          \brief Stores a key binding to an Action.
-      */
+      //! Stores a key binding to an Action.
       struct ActionBinding {
 
         //! The key sequence the binding is mapped to.

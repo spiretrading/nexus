@@ -5,9 +5,7 @@
 
 namespace Spire {
 
-  /*! \class Term
-      \brief Evaluates a condition on a list of KeyBindings tags.
-  */
+  //! Evaluates a condition on a list of KeyBindings tags.
   class Term {
     public:
       virtual ~Term() = default;
