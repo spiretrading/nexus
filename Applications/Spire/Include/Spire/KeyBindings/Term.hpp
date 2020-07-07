@@ -10,6 +10,7 @@ namespace Spire {
   */
   class Term {
     public:
+      virtual ~Term() = default;
 
       //! Tells whether the term's condition is satisfied for a list of tags.
       /*!
@@ -18,8 +19,6 @@ namespace Spire {
       */
       virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
         tags) const = 0;
-
-      virtual ~Term() = default;
   };
 }
 
