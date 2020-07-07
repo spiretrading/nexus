@@ -5,6 +5,10 @@ import { DefinitionsClient } from './definitions_client';
 
 /** Implements the DefinitionsClient using HTTP requests. */
 export class HttpDefinitionsClient extends DefinitionsClient {
+  public get organizationName(): string {
+    return this._organizationName;
+  }
+
   public get entitlementDatabase(): EntitlementDatabase {
     return this._entitlementDatabase;
   }
@@ -22,6 +26,9 @@ export class HttpDefinitionsClient extends DefinitionsClient {
   }
 
   public async open(): Promise<void> {
+    const organizationNameResponse = await Beam.post(
+      '/api/definitions_service/load_organization_name', {});
+    this._organizationName = organizationNameResponse;
     const entitlementResponse = await Beam.post(
       '/api/administration_service/load_entitlements_database', {});
     this._entitlementDatabase = EntitlementDatabase.fromJson(
@@ -41,6 +48,7 @@ export class HttpDefinitionsClient extends DefinitionsClient {
     return;
   }
 
+  private _organizationName: string;
   private _entitlementDatabase: EntitlementDatabase;
   private _countryDatabase: CountryDatabase;
   private _currencyDatabase: CurrencyDatabase;
