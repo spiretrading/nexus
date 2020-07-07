@@ -25,6 +25,12 @@ namespace Spire {
       //! Returns true if the button is toggled.
       bool is_toggled() const;
 
+      //! Sets the toggled status.
+      /*!
+        \param is_toggled True if the button is toggled, false otherwise.
+      */
+      void set_toggled(bool is_toggled);
+
       //! Connects a slot to the button click signal.
       boost::signals2::connection connect_clicked_signal(
         const ClickedSignal::slot_type& slot) const;

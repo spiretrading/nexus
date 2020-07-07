@@ -35,6 +35,12 @@ namespace Spire {
       //! Returns the font represented by this widget.
       const QFont& get_font() const;
 
+      //! Sets the current font.
+      /*!
+        \param font The current font.
+      */
+      void set_font(const QFont& font);
+
       //! Connects a slot to teh font preview signal.
       boost::signals2::connection connect_font_preview_signal(
         const FontSelectedSignal::slot_type& slot) const;
