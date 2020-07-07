@@ -139,7 +139,7 @@ void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
 }
 
 void TimeAndSalesTableView::showEvent(QShowEvent* event) {
-  if(!m_was_shown) {
+  if(!m_was_shown && m_model != nullptr) {
     m_was_shown = true;
     m_header->resizeSection(0, scale_width(74));
     m_header->resizeSection(1, scale_width(60));
