@@ -13,22 +13,22 @@ namespace Nexus::Accounting {
   class ShortingTracker {
     public:
 
-      //! Tracks a submission and returns whether it should be marked as a
-      //! short sale.
-      /*!
-        \param id The id to pull from the ExecutionReport when updating.
-        \param orderFields The OrderFields storing the details of the
-               submission.
-        \return <code>true</code> iff the submission should be marked as a
-                short sale.
-      */
+      /**
+       * Tracks a submission and returns whether it should be marked as a
+       * short sale.
+       * @param id The id to pull from the ExecutionReport when updating.
+       * @param orderFields The OrderFields storing the details of the
+       *        submission.
+       * @return <code>true</code> iff the submission should be marked as a
+       *         short sale.
+       */
       bool Submit(OrderExecutionService::OrderId id,
         const OrderExecutionService::OrderFields& orderFields);
 
-      //! Updates this tracker with the contents of an ExecutionReport.
-      /*!
-        \param executionReport The ExecutionReport to update this tracker with.
-      */
+      /**
+       * Updates this tracker with the contents of an ExecutionReport.
+       * @param executionReport The ExecutionReport to update this tracker with.
+       */
       void Update(const OrderExecutionService::ExecutionReport&
         executionReport);
 
@@ -53,9 +53,9 @@ namespace Nexus::Accounting {
   };
 
   inline ShortingTracker::OrderEntry::OrderEntry()
-      : m_side(Side::BID),
-        m_quantity(0),
-        m_remainingQuantity(0) {}
+    : m_side(Side::BID),
+      m_quantity(0),
+      m_remainingQuantity(0) {}
 
   inline bool ShortingTracker::Submit(OrderExecutionService::OrderId id,
       const OrderExecutionService::OrderFields& orderFields) {
@@ -63,21 +63,18 @@ namespace Nexus::Accounting {
     if(orderIterator != m_orderIdToOrderEntry.end()) {
       m_orderIdToOrderEntry.erase(orderIterator);
     }
-    OrderEntry orderEntry;
+    auto orderEntry = OrderEntry();
     orderEntry.m_security = orderFields.m_security;
     orderEntry.m_side = orderFields.m_side;
     orderEntry.m_quantity = orderFields.m_quantity;
     orderEntry.m_remainingQuantity = orderFields.m_quantity;
-    m_orderIdToOrderEntry.insert(std::make_pair(id, orderEntry));
+    m_orderIdToOrderEntry.insert(std::pair(id, orderEntry));
     auto& position = GetPosition(orderFields.m_security);
-    bool shortingFlag;
     if(orderFields.m_side == Side::ASK) {
       position.m_askQuantityPending += orderFields.m_quantity;
-      shortingFlag = position.m_askQuantityPending > position.m_position;
-    } else {
-      shortingFlag = false;
+      return position.m_askQuantityPending > position.m_position;
     }
-    return shortingFlag;
+    return false;
   }
 
   inline void ShortingTracker::Update(
@@ -106,7 +103,7 @@ namespace Nexus::Accounting {
     auto positionIterator = m_securityToPositionEntry.find(security);
     if(positionIterator == m_securityToPositionEntry.end()) {
       positionIterator = m_securityToPositionEntry.insert(
-        std::make_pair(security, PositionEntry())).first;
+        std::pair(security, PositionEntry())).first;
     }
     return positionIterator->second;
   }

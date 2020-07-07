@@ -20,47 +20,46 @@
 
 namespace Nexus::Accounting {
 
-  /** Uses the BboQuote published by a MarketDataClient and the Orders
-      published by an OrderExecutionPublisher to update a Portfolio.
-      \tparam PortfolioType The type of Portfolio to update.
-      \tparam MarketDataClientType The type of MarketDataClient to use.
+  /**
+   * Uses the BboQuote published by a MarketDataClient and the Orders
+   * published by an OrderExecutionPublisher to update a Portfolio.
+   * @param <P> The type of Portfolio to update.
+   * @param <C> The type of MarketDataClient to use.
    */
-  template<typename PortfolioType, typename MarketDataClientType>
+  template<typename P, typename C>
   class PortfolioMonitor : private boost::noncopyable {
     public:
 
-      //! The type of Portfolio to update.
-      using Portfolio = Beam::GetTryDereferenceType<PortfolioType>;
+      /** The type of Portfolio to update. */
+      using Portfolio = Beam::GetTryDereferenceType<P>;
 
-      //! The type of MarketDataClient to use.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /** The type of MarketDataClient to use. */
+      using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
-      //! The type of Inventory stored by the Portfolio.
+      /** The type of Inventory stored by the Portfolio. */
       using Inventory = typename Portfolio::PortfolioBookkeeper::Inventory;
 
-      //! The type of updates published.
+      /** The type of updates published. */
       using UpdateEntry = typename Portfolio::UpdateEntry;
 
-      //! Constructs a PortfolioMonitor.
-      /*!
-        \param portfolio Initializes the Portfolio.
-        \param marketDataClient Initializes the MarketDataClient.
-        \param orderExecutionPublisher Publishes Order executions.
-      */
-      template<typename PortfolioForward, typename MarketDataClientForward>
-      PortfolioMonitor(PortfolioForward&& portfolio,
-        MarketDataClientForward&& marketDataClient,
+      /**
+       * Constructs a PortfolioMonitor.
+       * @param portfolio Initializes the Portfolio.
+       * @param marketDataClient Initializes the MarketDataClient.
+       * @param orderExecutionPublisher Publishes Order executions.
+       */
+      template<typename PF, typename CF>
+      PortfolioMonitor(PF&& portfolio, CF&& marketDataClient,
         const OrderExecutionService::OrderExecutionPublisher&
         orderExecutionPublisher);
 
-      //! Returns the object publishing updates to the monitored Portfolio.
+      /** Returns the object publishing updates to the monitored Portfolio. */
       const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
         GetPublisher() const;
 
     private:
-      Beam::GetOptionalLocalPtr<PortfolioType> m_portfolio;
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<P> m_portfolio;
+      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
       OrderExecutionService::ExecutionReportPublisher
         m_executionReportPublisher;
       Beam::ValueSnapshotPublisher<UpdateEntry, Portfolio*> m_publisher;
@@ -74,15 +73,14 @@ namespace Nexus::Accounting {
         const OrderExecutionService::ExecutionReportEntry& executionReport);
   };
 
-  template<typename PortfolioType, typename MarketDataClientType>
-  template<typename PortfolioForward, typename MarketDataClientForward>
-  PortfolioMonitor<PortfolioType, MarketDataClientType>::PortfolioMonitor(
-      PortfolioForward&& portfolio, MarketDataClientForward&& marketDataClient,
+  template<typename P, typename C>
+  template<typename PF, typename CF>
+  PortfolioMonitor<P, C>::PortfolioMonitor(PF&& portfolio,
+      CF&& marketDataClient,
       const OrderExecutionService::OrderExecutionPublisher&
       orderExecutionPublisher)
-      : m_portfolio(std::forward<PortfolioForward>(portfolio)),
-        m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)),
+      : m_portfolio(std::forward<PF>(portfolio)),
+        m_marketDataClient(std::forward<CF>(marketDataClient)),
         m_executionReportPublisher(orderExecutionPublisher),
         m_publisher(
           [] (auto snapshot, auto& monitor) {
@@ -97,28 +95,26 @@ namespace Nexus::Accounting {
       std::placeholders::_1)));
   }
 
-  template<typename PortfolioType, typename MarketDataClientType>
-  const Beam::SnapshotPublisher<typename PortfolioMonitor<PortfolioType,
-      MarketDataClientType>::UpdateEntry, typename PortfolioMonitor<
-      PortfolioType, MarketDataClientType>::Portfolio*>& PortfolioMonitor<
-      PortfolioType, MarketDataClientType>::GetPublisher() const {
+  template<typename P, typename C>
+  const Beam::SnapshotPublisher<typename PortfolioMonitor<P, C>::UpdateEntry,
+      typename PortfolioMonitor<P, C>::Portfolio*>& PortfolioMonitor<P, C>::
+      GetPublisher() const {
     return m_publisher;
   }
 
-  template<typename PortfolioType, typename MarketDataClientType>
-  void PortfolioMonitor<PortfolioType, MarketDataClientType>::PushUpdate(
-      const Security& security) {
+  template<typename P, typename C>
+  void PortfolioMonitor<P, C>::PushUpdate(const Security& security) {
     auto securityEntryIterator = m_portfolio->GetSecurityEntries().find(
       security);
     if(securityEntryIterator == m_portfolio->GetSecurityEntries().end()) {
       return;
     }
-    const auto& securityEntry = securityEntryIterator->second;
+    auto& securityEntry = securityEntryIterator->second;
     if(!securityEntry.m_valuation.m_askValue.is_initialized() ||
         !securityEntry.m_valuation.m_bidValue.is_initialized()) {
       return;
     }
-    UpdateEntry update;
+    auto update = UpdateEntry();
     update.m_securityInventory = m_portfolio->GetBookkeeper().GetInventory(
       security, securityEntry.m_valuation.m_currency);
     if(update.m_securityInventory.m_transactionCount == 0) {
@@ -139,9 +135,9 @@ namespace Nexus::Accounting {
     m_publisher.Push(update);
   }
 
-  template<typename PortfolioType, typename MarketDataClientType>
-  void PortfolioMonitor<PortfolioType, MarketDataClientType>::OnBbo(
-      const Security& security, const BboQuote& bbo) {
+  template<typename P, typename C>
+  void PortfolioMonitor<P, C>::OnBbo(const Security& security,
+      const BboQuote& bbo) {
     m_publisher.With(
       [&] {
         auto& lastBbo = m_bboQuotes[security];
@@ -164,8 +160,8 @@ namespace Nexus::Accounting {
       });
   }
 
-  template<typename PortfolioType, typename MarketDataClientType>
-  void PortfolioMonitor<PortfolioType, MarketDataClientType>::OnExecutionReport(
+  template<typename P, typename C>
+  void PortfolioMonitor<P, C>::OnExecutionReport(
       const OrderExecutionService::ExecutionReportEntry& executionReport) {
     if(executionReport.m_executionReport.m_status == OrderStatus::PENDING_NEW) {
       auto& security = executionReport.m_order->GetInfo().m_fields.m_security;

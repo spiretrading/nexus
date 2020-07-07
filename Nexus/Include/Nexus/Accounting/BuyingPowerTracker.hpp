@@ -16,38 +16,38 @@ namespace Nexus::Accounting {
   class BuyingPowerTracker {
     public:
 
-      //! Returns <code>true</code> iff an Order has been accounted for.
-      /*!
-        \param id The Order id to check.
-        \return <code>true</code> iff the Order with the specified <i>id</i> has
-                previously been accounted for.
-      */
+      /**
+       * Returns <code>true</code> iff an Order has been accounted for.
+       * @param id The Order id to check.
+       * @return <code>true</code> iff the Order with the specified <i>id</i>
+       *         has previously been accounted for.
+       */
       bool HasOrder(OrderExecutionService::OrderId id) const;
 
-      //! Returns the buying power used in a particular Currency.
-      /*!
-        \param currency The Currency to lookup.
-        \return The buying power used in the <i>currency</i>.
-      */
+      /**
+       * Returns the buying power used in a particular Currency.
+       * @param currency The Currency to lookup.
+       * @return The buying power used in the <i>currency</i>.
+       */
       Money GetBuyingPower(CurrencyId currency) const;
 
-      //! Tracks a submission and returns the updated buying power.
-      /*!
-        \param id The id used to track this submission.
-        \param orderFields The OrderFields storing the details of the
-               submission.
-        \param expectedPrice The expected price of the Order, this may differ
-               from the price that the Order is submitted for.
-        \return The updated buying power for the submission's Currency.
-      */
+      /**
+       * Tracks a submission and returns the updated buying power.
+       * @param id The id used to track this submission.
+       * @param orderFields The OrderFields storing the details of the
+       *        submission.
+       * @param expectedPrice The expected price of the Order, this may differ
+       *        from the price that the Order is submitted for.
+       * @return The updated buying power for the submission's Currency.
+       */
       Money Submit(OrderExecutionService::OrderId id,
         const OrderExecutionService::OrderFields& orderFields,
         Money expectedPrice);
 
-      //! Updates this tracker with the contents of an ExecutionReport.
-      /*!
-        \param executionReport The ExecutionReport to update this tracker with.
-      */
+      /**
+       * Updates this tracker with the contents of an ExecutionReport.
+       * @param executionReport The ExecutionReport to update this tracker with.
+       */
       void Update(
         const OrderExecutionService::ExecutionReport& executionReport);
 
@@ -81,15 +81,15 @@ namespace Nexus::Accounting {
   };
 
   inline BuyingPowerTracker::OrderEntry::OrderEntry(
-      OrderExecutionService::OrderId id,
-      const OrderExecutionService::OrderFields& fields, Money expectedPrice)
-      : m_id(id),
-        m_fields(fields),
-        m_expectedPrice(expectedPrice),
-        m_remainingQuantity(fields.m_quantity) {}
+    OrderExecutionService::OrderId id,
+    const OrderExecutionService::OrderFields& fields, Money expectedPrice)
+    : m_id(id),
+      m_fields(fields),
+      m_expectedPrice(expectedPrice),
+      m_remainingQuantity(fields.m_quantity) {}
 
   inline BuyingPowerTracker::BuyingPowerEntry::BuyingPowerEntry()
-      : m_quantity(0) {}
+    : m_quantity(0) {}
 
   inline bool BuyingPowerTracker::HasOrder(
       OrderExecutionService::OrderId id) const {
@@ -111,10 +111,10 @@ namespace Nexus::Accounting {
     auto& buyingPower = m_currencyToBuyingPower[orderFields.m_currency];
     buyingPower -= ComputeBuyingPower(entry);
     auto& orderEntries = Pick(orderFields.m_side, entry.m_asks, entry.m_bids);
-    OrderEntry orderEntry(id, orderFields, expectedPrice);
+    auto orderEntry = OrderEntry(id, orderFields, expectedPrice);
     auto insertIterator = std::lower_bound(orderEntries.begin(),
       orderEntries.end(), orderEntry,
-      [](const OrderEntry& lhs, const OrderEntry& rhs) {
+      [](const auto& lhs, const auto& rhs) {
         return (lhs.m_fields.m_side == Side::ASK &&
           lhs.m_expectedPrice < rhs.m_expectedPrice) ||
           (lhs.m_fields.m_side == Side::BID &&
@@ -127,7 +127,7 @@ namespace Nexus::Accounting {
       orderEntries.insert(insertIterator, orderEntry);
     }
     buyingPower += ComputeBuyingPower(entry);
-    m_idToOrderFields.insert(std::make_pair(id, orderFields));
+    m_idToOrderFields.insert(std::pair(id, orderFields));
     return buyingPower;
   }
 
@@ -176,8 +176,8 @@ namespace Nexus::Accounting {
 
   inline Money BuyingPowerTracker::ComputeBuyingPower(
       const std::vector<OrderEntry>& orderEntries, Quantity quantityOffset) {
-    Money buyingPower;
-    for(const auto& orderEntry : orderEntries) {
+    auto buyingPower = Money();
+    for(auto& orderEntry : orderEntries) {
       if(quantityOffset == 0) {
         buyingPower += orderEntry.m_remainingQuantity *
           orderEntry.m_expectedPrice;
@@ -194,8 +194,8 @@ namespace Nexus::Accounting {
 
   inline Money BuyingPowerTracker::ComputeBuyingPower(
       const BuyingPowerEntry& entry) {
-    Money askBuyingPower;
-    Money bidBuyingPower;
+    auto askBuyingPower = Money();
+    auto bidBuyingPower = Money();
     if(entry.m_quantity >= 0) {
       askBuyingPower = ComputeBuyingPower(entry.m_asks, entry.m_quantity);
       bidBuyingPower = ComputeBuyingPower(entry.m_bids, 0) +

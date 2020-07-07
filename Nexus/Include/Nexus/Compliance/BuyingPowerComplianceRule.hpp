@@ -160,7 +160,7 @@ namespace Nexus::Compliance {
           BOOST_THROW_EXCEPTION(ComplianceCheckException(
             "Currency not recognized."));
         }
-        m_currencies.insert(std::make_pair(order.GetInfo().m_orderId,
+        m_currencies.insert(std::pair(order.GetInfo().m_orderId,
           fields.m_currency));
         auto updatedBuyingPower = buyingPowerTracker.Submit(
           order.GetInfo().m_orderId, convertedFields, convertedPrice);
@@ -188,7 +188,7 @@ namespace Nexus::Compliance {
     Beam::Threading::With(m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
         auto convertedFields = fields;
-        m_currencies.insert(std::make_pair(order.GetInfo().m_orderId,
+        m_currencies.insert(std::pair(order.GetInfo().m_orderId,
           fields.m_currency));
         convertedFields.m_currency = m_currency;
         auto convertedPrice = Money();

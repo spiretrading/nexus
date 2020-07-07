@@ -12,41 +12,47 @@
 namespace Nexus::Accounting {
 namespace Details {
 
-  /** Identifies an inventory managed in a specific Currency. */
-  template<typename IndexType>
+  /**
+   * Identifies an inventory managed in a specific Currency.
+   * @param I The type of index used.
+   */
+  template<typename I>
   struct Key {
 
-    //! The inventory's index.
-    IndexType m_index;
+    /** The type of index used. */
+    using Index = I;
 
-    //! The Currency used to value the inventory.
+    /** The inventory's index. */
+    Index m_index;
+
+    /** The Currency used to value the inventory. */
     CurrencyId m_currency;
 
-    //! Constructs an empty Key.
+    /** Constructs an empty Key. */
     Key() = default;
 
-    //! Constructs a Key.
-    /*!
-      \param index The inventory's index.
-      \param currency The Currency used to value the inventory.
-    */
-    Key(const IndexType& index, CurrencyId currency);
+    /**
+     * Constructs a Key.
+     * @param index The inventory's index.
+     * @param currency The Currency used to value the inventory.
+     */
+    Key(const Index& index, CurrencyId currency);
 
-    //! Tests two Keys for equality.
-    /*!
-      \param key The Key to test for equality.
-      \return <code>true</code> iff <i>key</i> has the same Index and Currency.
-    */
+    /**
+     * Tests two Keys for equality.
+     * @param key The Key to test for equality.
+     * @return <code>true</code> iff <i>key</i> has the same Index and Currency.
+     */
     bool operator ==(const Key& key) const;
   };
 
-  template<typename IndexType>
-  Key<IndexType>::Key(const IndexType& index, CurrencyId currency)
-      : m_index(index),
-        m_currency{currency} {}
+  template<typename I>
+  Key<I>::Key(const Index& index, CurrencyId currency)
+    : m_index(index),
+      m_currency{currency} {}
 
-  template<typename IndexType>
-  bool Key<IndexType>::operator ==(const Key& key) const {
+  template<typename I>
+  bool Key<I>::operator ==(const Key& key) const {
     return m_index == key.m_index && m_currency == key.m_currency;
   }
 
@@ -56,32 +62,33 @@ namespace Details {
   }
 }
 
-  /** Stores information about a single Inventory position.
-      \tparam IndexType Used to identify the Position.
+  /**
+   * Stores information about a single Inventory position.
+   * @param I Used to identify the Position.
    */
-  template<typename IndexType>
+  template<typename I>
   struct Position {
 
-    //! Used to identify the Position.
-    using Index = IndexType;
+    /** Used to identify the Position. */
+    using Index = I;
 
-    //! The type used to uniquely identifier this Position.
+    /** The type used to uniquely identifier this Position. */
     using Key = Details::Key<Index>;
 
-    //! Uniquely identifies this Position.
+    /** Uniquely identifies this Position. */
     Key m_key;
 
-    //! The quantity of inventory held.
+    /** The quantity of inventory held. */
     Quantity m_quantity;
 
-    //! The total cost of the currently held inventory.
+    /** The total cost of the currently held inventory. */
     Money m_costBasis;
 
-    //! Constructs a default Position.
+    /** Constructs a default Position. */
     Position();
 
-    //! Constructs a Position.
-    Position(const Key& key);
+    /** Constructs a Position. */
+    explicit Position(const Key& key);
   };
 
   template<typename Index>
@@ -91,26 +98,26 @@ namespace Details {
       position.m_costBasis << ')';
   }
 
-  //! Returns the average price of a Position.
-  /*!
-    \param position The Position to measure.
-    \return The average price of the <i>position</i>.
-  */
-  template<typename IndexType>
-  Money GetAveragePrice(const Position<IndexType>& position) {
+  /**
+   * Returns the average price of a Position.
+   * @param position The Position to measure.
+   * @return The average price of the <i>position</i>.
+   */
+  template<typename I>
+  Money GetAveragePrice(const Position<I>& position) {
     if(position.m_quantity == 0) {
       return Money::ZERO;
     }
     return position.m_costBasis / position.m_quantity;
   }
 
-  //! Returns the Position's Side.
-  /*!
-    \param position The Position to measure.
-    \return The Side corresponding to the <i>position</i>.
-  */
-  template<typename IndexType>
-  Side GetSide(const Position<IndexType>& position) {
+  /**
+   * Returns the Position's Side.
+   * @param position The Position to measure.
+   * @return The Side corresponding to the <i>position</i>.
+   */
+  template<typename I>
+  Side GetSide(const Position<I>& position) {
     if(position.m_quantity == 0) {
       return Side::NONE;
     } else if(position.m_quantity > 0) {
@@ -119,33 +126,32 @@ namespace Details {
     return Side::ASK;
   }
 
-  template<typename IndexType>
-  Position<IndexType>::Position()
-      : m_quantity(0) {}
+  template<typename I>
+  Position<I>::Position()
+    : m_quantity(0) {}
 
-  template<typename IndexType>
-  Position<IndexType>::Position(const Key& key)
-      : m_quantity(0),
-        m_key(key) {}
+  template<typename I>
+  Position<I>::Position(const Key& key)
+    : m_quantity(0),
+      m_key(key) {}
 }
 
 namespace Beam::Serialization {
-  template<typename IndexType>
-  struct Shuttle<Nexus::Accounting::Details::Key<IndexType>> {
+  template<typename I>
+  struct Shuttle<Nexus::Accounting::Details::Key<I>> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Details::Key<IndexType>& value,
-        unsigned int version) {
+        Nexus::Accounting::Details::Key<I>& value, unsigned int version) {
       shuttle.Shuttle("index", value.m_index);
       shuttle.Shuttle("currency", value.m_currency);
     }
   };
 
-  template<typename IndexType>
-  struct Shuttle<Nexus::Accounting::Position<IndexType>> {
+  template<typename I>
+  struct Shuttle<Nexus::Accounting::Position<I>> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Position<IndexType>& value, unsigned int version) {
+        Nexus::Accounting::Position<I>& value, unsigned int version) {
       shuttle.Shuttle("key", value.m_key);
       shuttle.Shuttle("quantity", value.m_quantity);
       shuttle.Shuttle("cost_basis", value.m_costBasis);
@@ -154,10 +160,9 @@ namespace Beam::Serialization {
 }
 
 namespace std {
-  template <typename IndexType>
-  struct hash<Nexus::Accounting::Details::Key<IndexType>> {
-    size_t operator()(const Nexus::Accounting::Details::Key<
-        IndexType>& value) const {
+  template <typename I>
+  struct hash<Nexus::Accounting::Details::Key<I>> {
+    size_t operator()(const Nexus::Accounting::Details::Key<I>& value) const {
       std::size_t seed = 0;
       boost::hash_combine(seed, value.m_index);
       boost::hash_combine(seed, value.m_currency);
