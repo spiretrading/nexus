@@ -1,5 +1,6 @@
 #ifndef SPIRE_TAG_MODEL_HPP
 #define SPIRE_TAG_MODEL_HPP
+#include <memory>
 #include <string>
 #include <vector>
 #include "Spire/KeyBindings/KeyBindings.hpp"
@@ -24,7 +25,7 @@ namespace Spire {
 			KeyBindings::Tag m_tag;
 
 			//! A term evaluating the requirements for the tag to be enabled.
-			Term m_requirement;
+			std::shared_ptr<Term> m_requirement;
 		};
 
 		//! Constructs a TagModel.
