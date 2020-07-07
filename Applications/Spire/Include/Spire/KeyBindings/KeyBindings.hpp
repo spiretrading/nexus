@@ -81,7 +81,7 @@ namespace Details {
         //! The name of the action.
         std::string m_name;
 
-        //! The list of tags except for the region tag.
+        //! The list of tags.
         std::vector<Tag> m_tags;
       };
 
