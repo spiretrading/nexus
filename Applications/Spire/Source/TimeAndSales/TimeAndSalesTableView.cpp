@@ -83,7 +83,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     new CustomVariantItemDelegate(), this));
   m_layout->addWidget(m_table);
   setWidget(main_widget);
-  m_minimum_column_widths = {{0, scale_width(64)}, {1, scale_width(60)},
+  m_minimum_column_widths = {{0, scale_width(64)}, {1, scale_width(42)},
     {2, scale_width(38)}, {3, scale_width(40)}, {4, scale_width(42)}};
 }
 
