@@ -60,8 +60,9 @@ void TimeAndSalesWindowModel::set_properties(
 
 void TimeAndSalesWindowModel::set_column_size_reference(Columns column,
     int size) {
-  m_column_size_reference[static_cast<Columns>(column)] = size;
-  Q_EMIT headerDataChanged(Qt::Horizontal, column, column);
+  m_column_size_reference[column] = size;
+  Q_EMIT headerDataChanged(Qt::Horizontal, static_cast<int>(column),
+    static_cast<int>(column));
 }
 
 void TimeAndSalesWindowModel::set_row_visible(int row) {

@@ -108,7 +108,8 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
   m_header->setModel(filter);
   m_table->setModel(filter);
   for(auto i = 0; i < m_table->model()->columnCount(); ++i) {
-    m_model->set_column_size_reference(i, m_table->columnWidth(i));
+    m_model->set_column_size_reference(static_cast<Columns>(i),
+      m_table->columnWidth(i));
   }
 }
 
