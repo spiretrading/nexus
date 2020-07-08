@@ -58,7 +58,8 @@ void TimeAndSalesWindowModel::set_properties(
   }
 }
 
-void TimeAndSalesWindowModel::set_column_size_reference(int column, int size) {
+void TimeAndSalesWindowModel::set_column_size_reference(Columns column,
+    int size) {
   m_column_size_reference[static_cast<Columns>(column)] = size;
   Q_EMIT headerDataChanged(Qt::Horizontal, column, column);
 }
@@ -130,20 +131,20 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
       case Columns::PRICE_COLUMN:
         return tr("Price");
       case Columns::SIZE_COLUMN:
-        if(is_short_text(section, get_breakpoint(m_header_font,
-            tr("Quantity")))) {
+        if(is_short_text(Columns::MARKET_COLUMN,
+            get_breakpoint(m_header_font, tr("Quantity")))) {
           return tr("Qty");
         }
         return tr("Quantity");
       case Columns::MARKET_COLUMN:
-        if(is_short_text(section, get_breakpoint(m_header_font,
-            tr("Market")))) {
+        if(is_short_text(Columns::MARKET_COLUMN,
+            get_breakpoint(m_header_font, tr("Market")))) {
           return tr("Mkt");
         }
         return tr("Market");
       case Columns::CONDITION_COLUMN:
-        if(is_short_text(section, get_breakpoint(m_header_font,
-            tr("Condition")))) {
+        if(is_short_text(Columns::CONDITION_COLUMN,
+            get_breakpoint(m_header_font, tr("Condition")))) {
           return tr("Cond");
         }
         return tr("Condition");
@@ -156,7 +157,8 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
   return QVariant();
 }
 
-bool TimeAndSalesWindowModel::is_short_text(int column, int breakpoint) const {
+bool TimeAndSalesWindowModel::is_short_text(Columns column,
+    int breakpoint) const {
   auto iter = m_column_size_reference.find(static_cast<Columns>(column));
   if(iter != m_column_size_reference.end()) {
     return iter->second < breakpoint;

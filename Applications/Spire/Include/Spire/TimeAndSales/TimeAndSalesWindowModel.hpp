@@ -41,7 +41,8 @@ namespace Spire {
         \param column The column index.
         \param size The new column size.
       */
-      void set_column_size_reference(int column, int size);
+      void set_column_size_reference(TimeAndSalesProperties::Columns column,
+        int size);
 
       //! Informs the model that a particular row is being displayed.
       /*!
@@ -80,7 +81,8 @@ namespace Spire {
       std::unordered_map<TimeAndSalesProperties::Columns, int>
         m_column_size_reference;
 
-      bool is_short_text(int column, int breakpoint) const;
+      bool is_short_text(TimeAndSalesProperties::Columns column,
+        int breakpoint) const;
       void update_data(const TimeAndSalesModel::Entry& e);
       void load_snapshot(Beam::Queries::Sequence last);
   };
