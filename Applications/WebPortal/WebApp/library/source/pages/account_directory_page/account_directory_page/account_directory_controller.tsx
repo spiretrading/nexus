@@ -133,10 +133,17 @@ export class AccountDirectoryController extends
         keys.push(pair[0]);
       }
       keys.sort(AccountDirectoryController.groupComparator);
-      this.setState({filter: newFilter, filteredGroups: accounts,
-        filteredKeys: keys});
+      this.setState({
+        filter: newFilter,
+        filteredGroups: accounts,
+        filteredKeys: keys
+      });
     } else {
-      this.setState({filter: newFilter, filteredKeys: []});
+      this.setState({
+        filter: newFilter,
+        filteredKeys: [],
+        openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()
+      });
     }
   }
 
