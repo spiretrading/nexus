@@ -24,7 +24,8 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
-  groups: Beam.DirectoryEntry[];
+  sortedKeys: Beam.DirectoryEntry[];
+  filteredKeys: Beam.DirectoryEntry[];
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
@@ -39,7 +40,8 @@ export class AccountDirectoryController extends
     super(props);
     this.state = {
       isLoaded: false, 
-      groups: [],
+      sortedKeys: [],
+      filteredKeys: [],
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
@@ -55,10 +57,17 @@ export class AccountDirectoryController extends
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
+    const groups = (() => {
+      if(this.state.filter !== ''){
+        return this.state.filteredKeys;
+      } else {
+        return this.state.sortedKeys;
+      }
+    })();
     return <AccountDirectoryPage
       displaySize={this.props.displaySize}
       roles={this.props.roles}
-      groups={this.state.groups}
+      groups={groups}
       openedGroups={this.state.openedGroups}
       filter={this.state.filter}
       filteredGroups={this.state.filteredGroups}
@@ -74,7 +83,7 @@ export class AccountDirectoryController extends
       () => {
         this.setState({
           isLoaded: true,
-          groups: this.props.model.groups.sort(
+          sortedKeys: this.props.model.groups.sort(
             AccountDirectoryController.groupComparator)
         });
       });
@@ -101,7 +110,7 @@ export class AccountDirectoryController extends
     try {
       await this.props.model.createGroup(name);
       this.setState({
-        groups: this.props.model.groups.sort(
+        sortedKeys: this.props.model.groups.sort(
           AccountDirectoryController.groupComparator)
       });
     } catch(e) {
@@ -118,13 +127,16 @@ export class AccountDirectoryController extends
   private onFilterChange = async (newFilter: string) => {
     if(newFilter !== '') {
       const accounts = await this.props.model.loadFilteredAccounts(newFilter);
+      let keys = [] as Beam.DirectoryEntry[];
       for(const pair of accounts) {
-        accounts.get(pair[0]).sort(
-          AccountDirectoryController.accountComparator);
+        pair[1].sort(AccountDirectoryController.accountComparator);
+        keys.push(pair[0]);
       }
-      this.setState({filter: newFilter, filteredGroups: accounts});
+      keys.sort(AccountDirectoryController.groupComparator);
+      this.setState({filter: newFilter, filteredGroups: accounts,
+        filteredKeys: keys});
     } else {
-      this.setState({filter: newFilter});
+      this.setState({filter: newFilter, filteredKeys: []});
     }
   }
 
