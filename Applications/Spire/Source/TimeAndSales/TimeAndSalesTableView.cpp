@@ -26,7 +26,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       m_was_shown(false),
       m_model(nullptr),
       m_loading_widget(nullptr),
-      m_transition_widget(nullptr) {
+      m_transition_widget(nullptr),
+      m_minimum_column_widths({{0, scale_width(54)}, {1, scale_width(46)},
+    {2, scale_width(38)}, {3, scale_width(40)}, {4, scale_width(42)}}) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
@@ -83,8 +85,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     new CustomVariantItemDelegate(), this));
   m_layout->addWidget(m_table);
   setWidget(main_widget);
-  m_minimum_column_widths = {{0, scale_width(54)}, {1, scale_width(46)},
-    {2, scale_width(38)}, {3, scale_width(40)}, {4, scale_width(42)}};
 }
 
 void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
