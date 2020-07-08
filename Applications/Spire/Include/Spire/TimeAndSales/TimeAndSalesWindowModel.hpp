@@ -77,7 +77,8 @@ namespace Spire {
       bool m_is_loading;
       bool m_is_fully_loaded;
       QtPromise<std::vector<TimeAndSalesModel::Entry>> m_snapshot_promise;
-      std::unordered_map<int, int> m_column_size_reference;
+      std::unordered_map<TimeAndSalesProperties::Columns, int>
+        m_column_size_reference;
 
       bool is_short_text(int column, int breakpoint) const;
       void update_data(const TimeAndSalesModel::Entry& e);

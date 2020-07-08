@@ -49,7 +49,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_model_end_loading_connection;
       SnapshotLoadingWidget* m_loading_widget;
       TransitionWidget* m_transition_widget;
-      std::unordered_map<int, int> m_minimum_column_widths;
+      std::unordered_map<TimeAndSalesProperties::Columns, int>
+        m_minimum_column_widths;
 
       void show_loading_widget();
       void update_table_height(int num_rows);

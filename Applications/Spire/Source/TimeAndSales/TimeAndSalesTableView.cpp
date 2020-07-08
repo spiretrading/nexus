@@ -13,6 +13,7 @@
 #include "Spire/Ui/TransitionWidget.hpp"
 
 using namespace Spire;
+using Columns = TimeAndSalesProperties::Columns;
 
 namespace {
   const auto MINIMUM_TABLE_WIDTH = 750;
@@ -27,8 +28,11 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       m_model(nullptr),
       m_loading_widget(nullptr),
       m_transition_widget(nullptr),
-      m_minimum_column_widths({{0, scale_width(54)}, {1, scale_width(46)},
-    {2, scale_width(38)}, {3, scale_width(40)}, {4, scale_width(42)}}) {
+      m_minimum_column_widths({{Columns::TIME_COLUMN, scale_width(54)},
+        {Columns::PRICE_COLUMN, scale_width(46)},
+        {Columns::SIZE_COLUMN, scale_width(38)},
+        {Columns::MARKET_COLUMN, scale_width(40)},
+        {Columns::CONDITION_COLUMN, scale_width(42)}}) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
@@ -141,11 +145,16 @@ void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
 void TimeAndSalesTableView::showEvent(QShowEvent* event) {
   if(!m_was_shown && m_model != nullptr) {
     m_was_shown = true;
-    m_header->resizeSection(0, scale_width(74));
-    m_header->resizeSection(1, scale_width(60));
-    m_header->resizeSection(2, scale_width(46));
-    m_header->resizeSection(3, scale_width(50));
-    m_header->resizeSection(4, scale_width(50));
+    m_header->resizeSection(static_cast<int>(Columns::TIME_COLUMN),
+      scale_width(74));
+    m_header->resizeSection(static_cast<int>(Columns::PRICE_COLUMN),
+      scale_width(60));
+    m_header->resizeSection(static_cast<int>(Columns::SIZE_COLUMN),
+      scale_width(46));
+    m_header->resizeSection(static_cast<int>(Columns::MARKET_COLUMN),
+      scale_width(50));
+    m_header->resizeSection(static_cast<int>(Columns::CONDITION_COLUMN),
+      scale_width(50));
   }
 }
 
@@ -171,7 +180,7 @@ void TimeAndSalesTableView::on_end_loading_signal() {
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,
     int new_size) {
-  auto min_width = m_minimum_column_widths[index];
+  auto min_width = m_minimum_column_widths[static_cast<Columns>(index)];
   if(new_size <= min_width) {
     m_header->blockSignals(true);
     m_header->resizeSection(index, min_width);
