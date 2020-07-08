@@ -58,7 +58,7 @@ export class AccountDirectoryController extends
       return <LoadingPage/>;
     }
     const groups = (() => {
-      if(this.state.filter !== ''){
+      if(this.state.filter !== '') {
         return this.state.filteredKeys;
       } else {
         return this.state.sortedKeys;

@@ -86,7 +86,7 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
       }
       if(match[1].type === Beam.DirectoryEntry.Type.ACCOUNT &&
           entries.findIndex((entry: AccountEntry) =>
-          (entry.account.id === match[1].id)) < 0 ) {
+            (entry.account.id === match[1].id)) < 0) {
         entries.push(new AccountEntry(match[1], match[2]));
       }
     }

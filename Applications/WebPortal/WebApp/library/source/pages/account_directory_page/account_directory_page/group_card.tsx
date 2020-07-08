@@ -105,7 +105,7 @@ export class GroupCard extends React.Component<Properties, State> {
         if(account.account.name.indexOf(this.props.filter) === 0 &&
             this.props.filter) {
           accounts.push(
-            <AccountEntryRow 
+            <AccountEntryRow
               key={account.account.id}
               displaySize={this.props.displaySize}
               account={account}
