@@ -9,6 +9,7 @@ using namespace Spire;
 #include <QPainter>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -98,47 +99,129 @@ class DropDownWindow : public QWidget {
 class DropDownItem : public QWidget {
   public:
 
-    DropDownItem(const QString& text,
-      QWidget* parent = nullptr)
-      : QWidget(parent),
-        m_text(text) {}
+    DropDownItem(const QVariant& value,
+        QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_value(value),
+          m_is_highlighted(false) {
+      setAttribute(Qt::WA_Hover);
+    }
 
-    const QVariant& get_text() const {
-      return m_text;
+    const QVariant& get_value() const {
+      return m_value;
+    }
+
+    void set_highlight() {
+      m_is_highlighted = true;
+      update();
+    }
+
+    void reset_highlight() {
+      m_is_highlighted = false;
+      update();
     }
 
   protected:
     void paintEvent(QPaintEvent* event) override {
       auto painter = QPainter(this);
-      painter.fillRect(rect(), Qt::red);
+      if(underMouse() || m_is_highlighted) {
+        painter.fillRect(rect(), QColor("#F2F2FF"));
+      } else {
+        painter.fillRect(rect(), Qt::white);
+      }
       painter.setPen(Qt::black);
-      painter.drawText(rect().topLeft(), m_text);
+      painter.drawText(10, 10, m_item_delegate.displayText(m_value));
     }
 
   private:
-    QString m_text;
+    QVariant m_value;
+    bool m_is_highlighted;
+    CustomVariantItemDelegate m_item_delegate;
 };
 
 class DropDownList : public DropDownWindow {
   public:
 
     DropDownList(std::vector<DropDownItem*> items,
-        QWidget* parent = nullptr) : DropDownWindow(parent) {
+        QWidget* parent = nullptr)
+        : DropDownWindow(parent) {
       auto scroll_area = new ScrollArea(this);
       scroll_area->setWidgetResizable(true);
       auto main_widget = new QWidget(this);
-      auto layout = new QVBoxLayout(main_widget);
+      m_layout = new QVBoxLayout(main_widget);
+      m_layout->setContentsMargins({});
+      m_layout->setSpacing(0);
       for(auto item : items) {
-        layout->addWidget(item);
+        m_layout->addWidget(item);
       }
       scroll_area->setWidget(main_widget);
       set_widget(scroll_area);
+      parent->installEventFilter(this);
       //setFixedHeight(scale_height(20) *
       //  std::min(static_cast<int>(items.size()), 5));
       // TODO: make this dynamic based on some criteria
       //setFixedWidth(scale_width(100));
-      scroll_area->setFixedHeight(500);
-      scroll_area->setFixedWidth(500);
+    }
+
+  protected:
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(watched == parent()) {
+        if(event->type() == QEvent::KeyPress) {
+          auto e = static_cast<QKeyEvent*>(event);
+          if(e->key() == Qt::Key_Up) {
+            focus_previous();
+          } else if(e->key() == Qt::Key_Down) {
+            focus_next();
+          }
+        }
+      }
+      return DropDownWindow::eventFilter(watched, event);
+    }
+    void keyPressEvent(QKeyEvent* event) override {
+      if(event->key() == Qt::Key_Up) {
+        focus_previous();
+      } else if(event->key() == Qt::Key_Down) {
+        qDebug() << "event";
+        focus_next();
+      }
+    }
+
+  private:
+    QVBoxLayout* m_layout;
+    boost::optional<int> m_highlight_index;
+
+    DropDownItem* get_widget(int index) {
+      return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
+    }
+    void focus_next() {
+      if(m_layout->count() == 0) {
+        return;
+      }
+      if(!m_highlight_index) {
+        m_highlight_index = 0;
+        get_widget(*m_highlight_index)->set_highlight();
+        return;
+      }
+      get_widget(*m_highlight_index)->reset_highlight();
+      m_highlight_index = (++(*m_highlight_index)) % m_layout->count();
+      qDebug() << *m_highlight_index;
+      get_widget(*m_highlight_index)->set_highlight();
+    }
+    void focus_previous() {
+      if(m_layout->count() == 0) {
+        return;
+      }
+      if(!m_highlight_index) {
+        m_highlight_index = m_layout->count() - 1;
+        get_widget(*m_highlight_index)->set_highlight();
+        return;
+      }
+      get_widget(*m_highlight_index)->reset_highlight();
+      --(*m_highlight_index);
+      if(*m_highlight_index < 0) {
+        m_highlight_index = m_layout->count() - 1;
+      }
+      get_widget(*m_highlight_index)->set_highlight();
     }
 };
 
@@ -159,6 +242,7 @@ class DropDownMenu : public QWidget {
         widget_items.push_back(new DropDownItem(item, this));
       }
       m_menu_list = new DropDownList(widget_items, this);
+      m_menu_list->setFixedSize(200, 200);
     }
 
     void set_current_text(const QString& text);
