@@ -41,7 +41,8 @@ class DropDownWindow : public QWidget {
 
   protected:
     bool event(QEvent* event) override {
-      if(event->type() == QEvent::WindowDeactivate) {
+      if(event->type() == QEvent::WindowDeactivate &&
+          !isAncestorOf(focusWidget())) {
         hide();
       }
       return QWidget::event(event);
@@ -54,7 +55,8 @@ class DropDownWindow : public QWidget {
       } else if(watched == parent()) {
         if(event->type() == QEvent::Move) {
           move_to_parent();
-        } else if(event->type() == QEvent::FocusOut) {
+        } else if(event->type() == QEvent::FocusOut &&
+            !isAncestorOf(focusWidget())) {
           hide();
         } else if(event->type() == QEvent::Wheel) {
           hide();
@@ -144,23 +146,34 @@ class DropDownList : public DropDownWindow {
 
     DropDownList(std::vector<DropDownItem*> items,
         QWidget* parent = nullptr)
-        : DropDownWindow(parent) {
+        : DropDownWindow(parent),
+          m_max_displayed_items(5) {
       auto scroll_area = new ScrollArea(this);
       scroll_area->setWidgetResizable(true);
       auto main_widget = new QWidget(this);
       m_layout = new QVBoxLayout(main_widget);
       m_layout->setContentsMargins({});
       m_layout->setSpacing(0);
+      scroll_area->setWidget(main_widget);
+      set_widget(scroll_area);
+      set_items(items);
+      parent->installEventFilter(this);
+    }
+
+    void set_items(std::vector<DropDownItem*> items) {
+      while(auto item = m_layout->takeAt(0)) {
+        delete item->widget();
+        delete item;
+      }
       for(auto item : items) {
         m_layout->addWidget(item);
       }
-      scroll_area->setWidget(main_widget);
-      set_widget(scroll_area);
-      parent->installEventFilter(this);
-      //setFixedHeight(scale_height(20) *
-      //  std::min(static_cast<int>(items.size()), 5));
-      // TODO: make this dynamic based on some criteria
-      //setFixedWidth(scale_width(100));
+      if(m_layout->count() > 0) {
+        setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
+          m_layout->itemAt(0)->widget()->height());
+      } else {
+        hide();
+      }
     }
 
   protected:
@@ -181,12 +194,12 @@ class DropDownList : public DropDownWindow {
       if(event->key() == Qt::Key_Up) {
         focus_previous();
       } else if(event->key() == Qt::Key_Down) {
-        qDebug() << "event";
         focus_next();
       }
     }
 
   private:
+    int m_max_displayed_items;
     QVBoxLayout* m_layout;
     boost::optional<int> m_highlight_index;
 
@@ -204,7 +217,6 @@ class DropDownList : public DropDownWindow {
       }
       get_widget(*m_highlight_index)->reset_highlight();
       m_highlight_index = (++(*m_highlight_index)) % m_layout->count();
-      qDebug() << *m_highlight_index;
       get_widget(*m_highlight_index)->set_highlight();
     }
     void focus_previous() {
@@ -236,18 +248,25 @@ class DropDownMenu : public QWidget {
       if(!items.empty()) {
         m_current_text = items.front();
       }
-      auto widget_items = std::vector<DropDownItem*>();
-      widget_items.reserve(items.size());
-      for(auto& item : items) {
-        widget_items.push_back(new DropDownItem(item, this));
-      }
-      m_menu_list = new DropDownList(widget_items, this);
-      m_menu_list->setFixedSize(200, 200);
+      set_items(items);
+    }
+
+    void set_list_width(int width) {
+      m_menu_list->setFixedWidth(width);
     }
 
     void set_current_text(const QString& text);
 
-    void set_items(const std::vector<QString>& items);
+    void set_items(const std::vector<QString>& items) {
+      auto widget_items = std::vector<DropDownItem*>();
+      widget_items.reserve(items.size());
+      for(auto& item : items) {
+        auto item_widget = new DropDownItem(item, this);
+        item_widget->setFixedHeight(scale_height(20));
+        widget_items.push_back(item_widget);
+      }
+      m_menu_list = new DropDownList(widget_items, this);
+    }
 
     const QString& get_text() const;
 
@@ -297,7 +316,8 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto test_window = new QWidget();
   auto layout = new QHBoxLayout(test_window);
-  auto dropdown1 = new ::DropDownMenu({"One", "Two", "Three"}, test_window);
+  auto dropdown1 = new ::DropDownMenu({"One", "Two", "Three", "Four", "Five",
+    "Six", "Seven"}, test_window);
   dropdown1->setFixedSize(scale(100, 28));
   layout->addWidget(dropdown1);
   test_window->resize(800, 600);
