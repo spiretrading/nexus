@@ -3,6 +3,7 @@
 
 using namespace Spire;
 
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QKeyEvent>
@@ -20,13 +21,16 @@ class DropDownWindow : public QWidget {
     DropDownWindow(QWidget* parent = nullptr)
         : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
           m_widget(nullptr) {
+      qDebug() << parent;
       setAttribute(Qt::WA_ShowWithoutActivating);
       setAttribute(Qt::WA_TranslucentBackground);
       m_shadow = new DropShadow(true, false, this);
       auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
+      layout->setContentsMargins(scale_width(1), scale_height(1),
+        scale_width(1), scale_height(1));
       parent->installEventFilter(this);
       parent->window()->installEventFilter(this);
+      qApp->installEventFilter(this);
     }
 
     void set_widget(QWidget* widget) {
@@ -34,8 +38,8 @@ class DropDownWindow : public QWidget {
         return;
       }
       m_widget = widget;
-      m_widget->setParent(this);
       m_widget->installEventFilter(this);
+      m_widget->setFocusProxy(this);
       layout()->addWidget(m_widget);
     }
 
@@ -48,6 +52,11 @@ class DropDownWindow : public QWidget {
       return QWidget::event(event);
     }
     bool eventFilter(QObject* watched, QEvent* event) override {
+      //qDebug() << "f: " << focusWidget();
+      //qDebug() << ""
+      if(event->type() == QEvent::KeyPress) {
+        //qDebug() << "k fo: " << focusWidget();
+      }
       if(watched == m_widget) {
         if(event->type() == QEvent::Resize) {
           resize(m_widget->width() + 2, m_widget->height() + 2);
@@ -60,6 +69,20 @@ class DropDownWindow : public QWidget {
           hide();
         } else if(event->type() == QEvent::Wheel) {
           hide();
+        } else if(event->type() == QEvent::KeyPress) {
+          auto e = static_cast<QKeyEvent*>(event);
+          if(e->key() == Qt::Key_Escape) {
+            hide();
+          } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+            qDebug() << e;
+            if(isVisible()) {
+              hide();
+            } else {
+              move_to_parent();
+              show();
+            }
+            return true;
+          }
         }
       } else if(watched == static_cast<QWidget*>(parent())->window()) {
         if(event->type() == QEvent::WindowDeactivate && !isActiveWindow()) {
@@ -78,6 +101,8 @@ class DropDownWindow : public QWidget {
     void paintEvent(QPaintEvent* event) override {
       QWidget::paintEvent(event);
       auto painter = QPainter(this);
+      painter.setPen(QColor("#C8C8C8"));
+      painter.drawRect(0, 0, width() - 1, height() - 1);
       painter.setPen("#4B23A0");
       painter.drawLine(0, 0, static_cast<QWidget*>(parent())->width(), 0);
     }
@@ -87,13 +112,9 @@ class DropDownWindow : public QWidget {
     DropShadow* m_shadow;
 
     void move_to_parent() {
-      auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-        geometry().bottomLeft()).x();
-      auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-        frameGeometry().bottomLeft()).y();
-      move(x_pos, y_pos + 1);
+      auto parent_widget = static_cast<QWidget*>(parent());
+      auto pos = parent_widget->mapToGlobal(parent_widget->pos());
       move(100, 100);
-      qDebug() << pos();
       raise();
     }
 };
@@ -148,6 +169,7 @@ class DropDownList : public DropDownWindow {
         QWidget* parent = nullptr)
         : DropDownWindow(parent),
           m_max_displayed_items(5) {
+      //setFocusProxy(parent);
       auto scroll_area = new ScrollArea(this);
       scroll_area->setWidgetResizable(true);
       auto main_widget = new QWidget(this);
@@ -190,12 +212,18 @@ class DropDownList : public DropDownWindow {
       }
       return DropDownWindow::eventFilter(watched, event);
     }
+    void focusInEvent(QFocusEvent* event) override {
+      auto a = 0;
+    }
     void keyPressEvent(QKeyEvent* event) override {
       if(event->key() == Qt::Key_Up) {
         focus_previous();
       } else if(event->key() == Qt::Key_Down) {
         focus_next();
+      } else if(event->key() == Qt::Key_Escape) {
+        hide();
       }
+      DropDownWindow::keyPressEvent(event);
     }
 
   private:
@@ -271,9 +299,14 @@ class DropDownMenu : public QWidget {
     const QString& get_text() const;
 
   protected:
+    void focusInEvent(QFocusEvent* event) override {
+      qDebug() << "dd in";
+    }
     void mousePressEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton) {
         if(!m_menu_list->isVisible()) {
+          qDebug() << focusWidget();
+          auto a = focusWidget();
           m_menu_list->show();
         } else {
           m_menu_list->hide();
@@ -284,7 +317,7 @@ class DropDownMenu : public QWidget {
       // TODO: move to anon namespace
       auto PADDING = [] { return scale_width(8); };
       auto painter = QPainter(this);
-      if(hasFocus() || m_menu_list->hasFocus()) {
+      if(hasFocus() || isAncestorOf(focusWidget())) {
         painter.fillRect(event->rect(), QColor("#4B23A0"));
       } else {
         painter.fillRect(event->rect(), QColor("#C8C8C8"));
@@ -322,5 +355,6 @@ int main(int argc, char** argv) {
   layout->addWidget(dropdown1);
   test_window->resize(800, 600);
   test_window->show();
+  dropdown1->setFocus();
   application->exec();
 }
