@@ -354,7 +354,9 @@ class DropDownMenu : public QWidget {
       m_menu_list->setFixedWidth(width);
     }
 
-    void set_current_text(const QString& text);
+    void set_current_text(const QString& text) {
+      m_current_text = text;
+    }
 
     void set_items(const std::vector<QString>& items) {
       auto widget_items = std::vector<DropDownItem*>();
@@ -367,7 +369,9 @@ class DropDownMenu : public QWidget {
       m_menu_list = new DropDownList(widget_items, this);
     }
 
-    const QString& get_text() const;
+    const QString& get_text() const {
+      return m_current_text;
+    }
 
   protected:
     void mousePressEvent(QMouseEvent* event) override {
@@ -409,7 +413,9 @@ class DropDownMenu : public QWidget {
     DropDownList* m_menu_list;
 
     void on_item_selected(const QVariant& value) {
+      m_current_text = value.value<QString>();
       m_selected_signal(value);
+      update();
     }
 };
 
