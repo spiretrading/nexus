@@ -9,7 +9,7 @@ namespace Spire {
   //! Is satisfied for any list of tags.
   class SatisfiedTerm : public Term {
   public:
-    virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&) const
+    bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
       override;
   };
 }

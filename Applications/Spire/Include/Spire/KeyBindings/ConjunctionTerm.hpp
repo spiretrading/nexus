@@ -17,8 +17,8 @@ namespace Spire {
       */
       explicit ConjunctionTerm(std::vector<std::shared_ptr<Term>> terms);
 
-      virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
-        tags) const override;
+      bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
+        override;
 
     private:
       std::vector<std::shared_ptr<Term>> m_terms;

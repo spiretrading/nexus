@@ -16,8 +16,8 @@ namespace Spire {
       */
       explicit TagPresentTerm(int tag_key);
 
-      virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
-        tags) const override;
+      bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
+        override;
 
     private:
       int m_tag_key;

@@ -17,8 +17,8 @@ namespace Spire {
       */
       explicit TagEqualTerm(const KeyBindings::Tag& tag);
 
-      virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
-        tags) const override;
+      bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
+        override;
 
     private:
       KeyBindings::Tag m_tag;

@@ -17,8 +17,8 @@ namespace Spire {
       */
       explicit NegationTerm(std::shared_ptr<Term> term);
 
-      virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
-        tags) const override;
+      bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
+        override;
 
     private:
       std::shared_ptr<Term> m_term;

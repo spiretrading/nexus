@@ -18,8 +18,8 @@ namespace Spire {
       */
       explicit RegionTerm(Nexus::Region region);
 
-      virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
-        tags) const override;
+      bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
+        override;
 
     private:
       Nexus::Region m_region;
