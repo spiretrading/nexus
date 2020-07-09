@@ -8,7 +8,7 @@
 
 namespace Spire {
 
-	//! Stores key binding tags with their requirements.
+  //! Stores key binding tags with their requirements.
   class TagModel {
 
     //! Encapsulates a tag along with its display name and requirements.
@@ -47,7 +47,7 @@ namespace Spire {
 
     private:
       std::vector<Schema> m_schemas;
-	};
+  };
 }
 
 #endif
