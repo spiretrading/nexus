@@ -7,6 +7,7 @@ using namespace Spire;
 #include <QHBoxLayout>
 #include <QImage>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QPainter>
 #include <QScrollBar>
 #include <QWidget>
@@ -22,7 +23,7 @@ class DropDownWindow : public QWidget {
     DropDownWindow(QWidget* parent = nullptr)
         : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
           m_widget(nullptr) {
-      qDebug() << parent;
+      //qDebug() << parent;
       setAttribute(Qt::WA_ShowWithoutActivating);
       setAttribute(Qt::WA_TranslucentBackground);
       m_shadow = new DropShadow(true, false, this);
@@ -47,7 +48,9 @@ class DropDownWindow : public QWidget {
   protected:
     bool event(QEvent* event) override {
       if(event->type() == QEvent::WindowDeactivate &&
+          focusWidget() != nullptr &&
           !isAncestorOf(focusWidget())) {
+        qDebug() << focusWidget();
         hide();
       }
       return QWidget::event(event);
@@ -77,7 +80,7 @@ class DropDownWindow : public QWidget {
           if(e->key() == Qt::Key_Escape) {
             hide();
           } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            qDebug() << e;
+            //qDebug() << e;
             if(isVisible()) {
               hide();
             } else {
@@ -125,6 +128,13 @@ class DropDownWindow : public QWidget {
 class DropDownItem : public QWidget {
   public:
 
+    using SelectedSignal = Signal<void (const QVariant& value)>;
+
+    boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const {
+      return m_selected_signal.connect(slot);
+    }
+
     DropDownItem(const QVariant& value,
         QWidget* parent = nullptr)
         : QWidget(parent),
@@ -151,6 +161,11 @@ class DropDownItem : public QWidget {
     }
 
   protected:
+    void mousePressEvent(QMouseEvent* event) override {
+      if(event->button() == Qt::LeftButton) {
+        m_selected_signal(m_value);
+      }
+    }
     void paintEvent(QPaintEvent* event) override {
       auto painter = QPainter(this);
       if(underMouse() || m_is_highlighted) {
@@ -170,12 +185,20 @@ class DropDownItem : public QWidget {
 
   private:
     QVariant m_value;
+    mutable SelectedSignal m_selected_signal;
     bool m_is_highlighted;
     CustomVariantItemDelegate m_item_delegate;
 };
 
 class DropDownList : public DropDownWindow {
   public:
+
+    using SelectedSignal = Signal<void (const QVariant& value)>;
+
+    boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const {
+      return m_selected_signal.connect(slot);
+    }
 
     DropDownList(std::vector<DropDownItem*> items,
         QWidget* parent = nullptr)
@@ -201,6 +224,9 @@ class DropDownList : public DropDownWindow {
       }
       for(auto item : items) {
         m_layout->addWidget(item);
+        item->connect_selected_signal([=] (const auto& value) {
+          on_item_selected(value);
+        });
       }
       if(m_layout->count() > 0) {
         setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
@@ -219,14 +245,14 @@ class DropDownList : public DropDownWindow {
             focus_previous();
             return true;
           } else if(e->key() == Qt::Key_Down) {
-            qDebug() << watched;
-            qDebug() << "down";
+            //qDebug() << watched;
+            //qDebug() << "down";
             focus_next();
             return true;
           } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            qDebug() << "input enter key";
+            //qDebug() << "input enter key";
             if(isVisible() && m_highlight_index) {
-              qDebug() << "valid input submitted";
+              m_selected_signal(get_widget(*m_highlight_index)->get_value());
             }
           }
         }
@@ -251,12 +277,16 @@ class DropDownList : public DropDownWindow {
       } else if(event->key() == Qt::Key_Escape) {
         hide();
       } else if(event->key() == Qt::Key_Enter) {
-        qDebug() << "list enter key";
+        if(m_highlight_index) {
+          m_selected_signal(get_widget(*m_highlight_index)->get_value());
+          hide();
+        }
       }
       DropDownWindow::keyPressEvent(event);
     }
 
   private:
+    mutable SelectedSignal m_selected_signal;
     int m_max_displayed_items;
     QVBoxLayout* m_layout;
     ScrollArea* m_scroll_area;
@@ -302,10 +332,22 @@ class DropDownList : public DropDownWindow {
       highlighted_widget->set_highlight();
       m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
     }
+    void on_item_selected(const QVariant& value) {
+      m_selected_signal(value);
+      //qDebug() << value;
+      hide();
+    }
 };
 
 class DropDownMenu : public QWidget {
   public:
+
+    using SelectedSignal = Signal<void (const QVariant& value)>;
+
+    boost::signals2::connection connect_selected_signal(
+        const SelectedSignal::slot_type& slot) const {
+      return m_selected_signal.connect(slot);
+    }
 
     explicit DropDownMenu(const std::vector<QString>& items,
         QWidget* parent)
@@ -316,6 +358,9 @@ class DropDownMenu : public QWidget {
         m_current_text = items.front();
       }
       set_items(items);
+      m_menu_list->connect_selected_signal([=] (const auto& value) {
+        on_item_selected(value);
+      });
     }
 
     void set_list_width(int width) {
@@ -339,12 +384,12 @@ class DropDownMenu : public QWidget {
 
   protected:
     void focusInEvent(QFocusEvent* event) override {
-      qDebug() << "dd in";
+      //qDebug() << "dd in";
     }
     void mousePressEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton) {
         if(!m_menu_list->isVisible()) {
-          qDebug() << focusWidget();
+          //qDebug() << focusWidget();
           auto a = focusWidget();
           m_menu_list->show();
         } else {
@@ -376,9 +421,14 @@ class DropDownMenu : public QWidget {
     }
 
   private:
+    mutable SelectedSignal m_selected_signal;
     QString m_current_text;
     QImage m_dropdown_image;
     DropDownList* m_menu_list;
+
+    void on_item_selected(const QVariant& value) {
+      m_selected_signal(value);
+    }
 };
 
 int main(int argc, char** argv) {
@@ -388,9 +438,14 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto test_window = new QWidget();
   auto layout = new QHBoxLayout(test_window);
+  auto label = new QLabel("Null", test_window);
+  label->move(scale_width(10), scale_height(10));
   auto dropdown1 = new ::DropDownMenu({"One", "Two", "Three", "Four", "Five",
     "Six", "Seven"}, test_window);
   dropdown1->setFixedSize(scale(100, 28));
+  dropdown1->connect_selected_signal([&] (const auto& value) {
+    label->setText(value.value<QString>());
+  });
   layout->addWidget(dropdown1);
   test_window->resize(800, 600);
   test_window->show();
