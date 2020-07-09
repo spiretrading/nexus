@@ -22,7 +22,11 @@ for i in "$@"; do
   esac
 done
 if [ "$config" = "" ]; then
-  config="Release"
+  if [ -f "CMakeFiles/config.txt" ]; then
+    config=$(cat CMakeFiles/config.txt)
+  else
+    config="Release"
+  fi
 fi
 if [ "$config" = "clean" ]; then
   git clean -ffxd -e *Dependencies*

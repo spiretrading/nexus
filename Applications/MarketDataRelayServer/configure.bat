@@ -42,6 +42,29 @@ IF NOT "!DEPENDENCIES!" == "!ROOT!\Dependencies" (
   mklink /j Dependencies "!DEPENDENCIES!" > NUL
 )
 SET RUN_CMAKE=
+IF NOT EXIST CMakeFiles (
+  SET RUN_CMAKE=1
+) ELSE (
+  IF NOT EXIST CMakeFiles\timestamp.txt (
+    SET RUN_CMAKE=1
+  ) ELSE (
+    FOR /F %%i IN (
+        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt ^| grep CMakeLists.txt ^| awk "{print $6 $7}"') DO (
+      FOR /F %%j IN (
+          'ls -l --time-style=full-iso CMakeFiles\timestamp.txt ^| awk "{print $6 $7}"') DO (
+        IF "%%i" GEQ "%%j" (
+          SET RUN_CMAKE=1
+        )
+      )
+    )
+  )
+)
+IF "!RUN_CMAKE!" == "1" (
+  IF NOT EXIST CMakeFiles (
+    MD CMakeFiles
+  )
+  ECHO timestamp > CMakeFiles\timestamp.txt
+)
 IF EXIST "!DIRECTORY!Include" (
   DIR /a-d /b /s "!DIRECTORY!Include\*.hpp" > hpp_hash.txt
   SET C=0

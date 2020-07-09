@@ -22,7 +22,11 @@ for i in "$@"; do
   esac
 done
 if [ "$config" = "" ]; then
-  config="Release"
+  if [ -f "CMakeFiles/config.txt" ]; then
+    config=$(cat CMakeFiles/config.txt)
+  else
+    config="Release"
+  fi
 fi
 if [ "$config" = "clean" ]; then
   git clean -ffxd -e *Dependencies*
@@ -39,7 +43,7 @@ else
   mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
   jobs="$(($cores<$mem?$cores:$mem))"
   if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" $config -DD=$dependencies
+    "$directory/configure.sh" $config -DD="$dependencies"
   else
     "$directory/configure.sh" $config
   fi

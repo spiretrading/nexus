@@ -1,4 +1,9 @@
 #!/bin/bash
+if [ "$(uname -s)" = "Darwin" ]; then
+  STAT='stat -x -t "%Y%m%d%H%M%S"'
+else
+  STAT='stat'
+fi
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ]; do
   dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
@@ -37,6 +42,39 @@ fi
 pushd "$dependencies"
 "$directory"/../../Nexus/setup.sh
 popd
+if [ ! -d "CMakeFiles" ]; then
+  run_cmake=1
+else
+  if [ ! -f "CMakeFiles/timestamp.txt" ]; then
+    run_cmake=1
+  else
+    ct="$(find $directory -type f -name CMakeLists.txt | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
+    mt="$($STAT CMakeFiles/timestamp.txt | grep Modify | awk '{print $2 $3}')"
+    if [ "$ct" \> "$mt" ]; then
+      run_cmake=1
+    fi
+  fi
+fi
+if [ "$run_cmake" = "1" ]; then
+  if [ ! -d "CMakeFiles" ]; then
+    mkdir CMakeFiles
+  fi
+  echo "timestamp" > "CMakeFiles/timestamp.txt"
+fi
+if [ -f "CMakeFiles/config.txt" ]; then
+  config_hash=$(cat "CMakeFiles/config.txt")
+  if [ "$config_hash" != "$config" ]; then
+    run_cmake=1
+  fi
+else
+  run_cmake=1
+fi
+if [ "$run_cmake" = "1" ]; then
+  if [ ! -d "CMakeFiles" ]; then
+    mkdir CMakeFiles
+  fi
+  echo $config > "CMakeFiles/config.txt"
+fi
 if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
   rm -rf Dependencies
   ln -s "$dependencies" Dependencies
