@@ -42,24 +42,48 @@ namespace Details {
       class Tag {
         public:
 
-          //! The type of a variant used to store all possible tag values.
+          //! The variant of all possible types of tag values.
           using Type = typename Details::AddOptionalToVariant<
             typename Details::AddOptionalToVariant<
             typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
             typename Details::ToVariantOfOptionals<Nexus::Tag::Type>::Type,
-            Nexus::Side>::Type, Nexus::OrderType>::Type, Nexus::Region>::Type;
+            Nexus::Side>::Type, Nexus::OrderType>::Type,
+            Nexus::Region>::Type, Nexus::TimeInForce>::Type;
 
           //! Constructs a Tag.
           /*!
             \param key The key of the tag.
             \param value The value of the tag.
           */
-          Tag(int key, Type value);
+          template<typename T>
+          Tag(int key, T value);
+
+          //! Constructs a Tag.
+          /*!
+            \param key The key of the tag.
+            \param value The value of the tag.
+          */
+          template<typename T>
+          Tag(int key, boost::optional<T> value);
 
           //! Returns the key of the tag.
           int get_key() const;
 
           //! Returns the value of the tag.
+          /*!
+            \tparam T The type of tag's value.
+            \return The value of the tag, boost::none if the type of the value
+                    is not T.
+          */
+          template<typename T>
+          boost::optional<T> get_value() const;
+
+          //! Returns the value of the tag.
+          /*!
+            \return The value of the tag contained in a variant of all possible
+                    types.
+          */
           Type get_value() const;
 
           //! Checks whether two tags are equal.
@@ -67,16 +91,57 @@ namespace Details {
 
           //! Checks whether two tags are not equal.
           bool operator !=(const Tag& other) const;
+
+        private:
+          friend std::ostream& operator <<(std::ostream& out,
+            const KeyBindings::Tag& tag);
+
+          int m_key;
+          Type m_value;
       };
 
       //! Stores a description of an order submission action.
-      struct OrderAction {
+      class OrderAction {
+        public:
 
-        //! The name of the action.
-        std::string m_name;
+          //! Constructs an unnamed OrderAction with no tags.
+          OrderAction() = default;
 
-        //! The list of tags.
-        std::vector<Tag> m_tags;
+          //! Constructs an OrderAction.
+          /*!
+            \param name The name of the action.
+            \param tags The list of the tags.
+          */
+          OrderAction(std::string name, std::vector<Tag> tags);
+
+          //! Returns the name of the action.
+          std::string get_name() const;
+
+          //! Renames the action.
+          /*!
+            \param name The new name of the action.
+          */
+          void set_name(std::string name);
+
+          //! Returns the tag with the key provided.
+          /*!
+            \return The tag if present, boost::none otherwise.
+          */
+          boost::optional<Tag> get_tag(int tag_key) const;
+
+          //! Adds a new tag to the list, or updates a value of the existing
+          //! tag if one with the same key is already stored.
+          /*!
+            \param tag The tag to set.
+          */
+          void set_tag(Tag tag);
+
+          //! Returns a list of all tags.
+          std::vector<Tag> get_tags() const;
+
+        private:
+          std::string m_name;
+          std::vector<Tag> m_tags;
       };
 
       //! Represents an order cancellation action.
@@ -224,6 +289,34 @@ namespace Details {
 
       std::vector<KeyBindingMapping> m_bindings;
   };
+
+  template<typename T>
+  KeyBindings::Tag::Tag(int key, T value)
+    : Tag(key, boost::optional<T>(std::move(value))) {}
+
+  template<typename T>
+  KeyBindings::Tag::Tag(int key, boost::optional<T> value)
+    : m_key(key),
+      m_value(std::move(value)) {}
+
+  template<typename T>
+  boost::optional<T> KeyBindings::Tag::get_value() const {
+    return std::visit(
+      [] (auto& value) {
+        if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
+            boost::optional<T>>) {
+          return value;
+        } else {
+          return boost::optional<T>();
+        }
+      }, m_value);
+  }
+
+  std::ostream& operator <<(std::ostream& out,
+    const boost::optional<Nexus::Region>& region);
+
+  std::ostream& operator <<(std::ostream& out,
+    const KeyBindings::Action& action);
 
   std::ostream& operator <<(std::ostream& out,
     const KeyBindings::OrderAction& action);

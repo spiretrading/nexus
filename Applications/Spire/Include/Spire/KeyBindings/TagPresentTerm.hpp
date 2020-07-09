@@ -18,6 +18,9 @@ namespace Spire {
 
       virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
         tags) const override;
+
+    private:
+      int m_tag_key;
   };
 }
 

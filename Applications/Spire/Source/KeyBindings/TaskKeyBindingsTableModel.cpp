@@ -12,6 +12,10 @@ using Columns = TaskKeyBindingsTableModel::Columns;
 
 namespace {
   const auto COLUMN_COUNT = 9;
+  const auto ORDER_TYPE_TAG_KEY = 40;
+  const auto SIDE_TAG_KEY = 54;
+  const auto TIME_IN_FORCE_TAG_KEY = 59;
+  const auto QUANTITY_TAG_KEY = 38;
 
   QVariant to_variant(const any& value) {
     auto& type = value.type();
@@ -57,6 +61,17 @@ namespace {
         return false;
     }
   }
+
+  template<typename T>
+  auto get_value_from_action(const KeyBindings::OrderAction& action,
+      int tag_key) {
+    auto tag = action.get_tag(tag_key);
+    if(tag) {
+      return tag->get_value<T>();
+    } else {
+      return boost::optional<T>();
+    }
+  }
 }
 
 TaskKeyBindingsTableModel::TaskKeyBindingsTableModel(
@@ -93,9 +108,10 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
   if(role == Qt::DisplayRole &&
       static_cast<std::size_t>(index.row()) < m_key_bindings.size()) {
     auto binding = m_key_bindings[index.row()];
+    auto& action = binding.m_action;
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
-        return QString::fromStdString(binding.m_action.m_name);
+        return QString::fromStdString(binding.m_action.get_name());
       case Columns::SECURITY:
         {
           const auto& securities = binding.m_region.GetSecurities();
@@ -107,29 +123,32 @@ QVariant TaskKeyBindingsTableModel::data(const QModelIndex& index,
       case Columns::DESTINATION:
         return to_variant(binding.m_region);
       case Columns::ORDER_TYPE:
-        if(auto type = binding.m_action.m_type) {
-          return to_variant(*type);
+        if(auto order_type = get_value_from_action<OrderType>(action,
+            ORDER_TYPE_TAG_KEY)) {
+          return to_variant(*order_type);
         }
         break;
       case Columns::SIDE:
-        if(auto side = binding.m_action.m_side) {
+        if(auto side = get_value_from_action<Side>(action, SIDE_TAG_KEY)) {
           return to_variant(*side);
         }
         break;
       case Columns::QUANTITY:
-        if(auto quantity = binding.m_action.m_quantity) {
-          return to_variant(*quantity);
+        if(auto side = get_value_from_action<Quantity>(action,
+            QUANTITY_TAG_KEY)) {
+          return to_variant(*side);
         }
         break;
       case Columns::TIME_IN_FORCE:
         {
-          auto time_in_force = binding.m_action.m_time_in_force;
+          auto time_in_force = get_value_from_action<TimeInForce>(action,
+            TIME_IN_FORCE_TAG_KEY);
           if(time_in_force &&
               time_in_force->GetType() != TimeInForce::Type::NONE) {
             return to_variant(*time_in_force);
           }
+          break;
         }
-        break;
       case Columns::CUSTOM_TAGS:
         return "";
       case Columns::KEY_BINDING:
@@ -200,9 +219,10 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
     }
     insert_row_if_empty(index);
     auto& binding = m_key_bindings[index.row()];
+    auto& action = binding.m_action;
     switch(static_cast<Columns>(index.column())) {
       case Columns::NAME:
-        binding.m_action.m_name = value.value<QString>().toStdString();
+        binding.m_action.set_name(value.value<QString>().toStdString());
         m_modified_signal(index);
         break;
       case Columns::SECURITY:
@@ -239,47 +259,47 @@ bool TaskKeyBindingsTableModel::setData(const QModelIndex& index,
         m_modified_signal(index);
         break;
       case Columns::ORDER_TYPE:
-        binding.m_action.m_type =
+        action.set_tag(KeyBindings::Tag(ORDER_TYPE_TAG_KEY,
           [&] () -> boost::optional<OrderType> {
             auto type = value.value<OrderType>();
             if(type != OrderType::NONE) {
               return type;
             }
             return boost::none;
-          }();
+          }()));
         m_modified_signal(index);
         break;
       case Columns::SIDE:
-        binding.m_action.m_side =
+        action.set_tag(KeyBindings::Tag(SIDE_TAG_KEY,
           [&] () -> boost::optional<Side> {
             auto side = value.value<Side>();
             if(side != Side::NONE) {
               return side;
             }
             return boost::none;
-          }();
+          }()));
         m_modified_signal(index);
         break;
       case Columns::QUANTITY:
-        binding.m_action.m_quantity =
+        action.set_tag(KeyBindings::Tag(QUANTITY_TAG_KEY,
           [&] () -> boost::optional<Quantity> {
             auto quantity = value.value<Quantity>();
             if(quantity > 0) {
               return quantity;
             }
             return boost::none;
-          }();
+          }()));
         m_modified_signal(index);
         break;
       case Columns::TIME_IN_FORCE:
-        binding.m_action.m_time_in_force =
+        action.set_tag(KeyBindings::Tag(TIME_IN_FORCE_TAG_KEY,
           [&] () -> boost::optional<TimeInForce> {
             auto time = value.value<TimeInForce>();
             if(time.GetType() != TimeInForce::Type::NONE) {
               return time;
             }
             return boost::none;
-          }();
+          }()));
         m_modified_signal(index);
         break;
       case Columns::CUSTOM_TAGS:
@@ -331,12 +351,8 @@ void TaskKeyBindingsTableModel::insert_row_if_empty(const QModelIndex& index) {
 bool TaskKeyBindingsTableModel::is_row_empty(int row) const {
   auto& binding = m_key_bindings[row];
   auto& action = binding.m_action;
-  return action.m_name.empty() &&
-    !action.m_quantity.is_initialized() &&
-    !action.m_side.is_initialized() &&
-    action.m_tags.empty() &&
-    !action.m_time_in_force.is_initialized() &&
-    !action.m_type.is_initialized() &&
+  return action.get_name().empty() &&
+    !action.get_tags().empty() &&
     binding.m_region == Region() &&
     binding.m_sequence.isEmpty();
 }

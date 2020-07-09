@@ -24,24 +24,29 @@ namespace Spire {
 			std::shared_ptr<Term> m_requirement;
 		};
 
-		//! Constructs a TagModel.
-		/*!
-		  \param schemas A list of Schemas of the tags to store.
-		*/
-		explicit TagModel(std::vector<Schema> schemas);
+		public:
 
-		//! Returns the display name of the tag with a given key.
-		/*!
-		  \param tag_key The key of the tag.
-		*/
-		std::string get_tag_name(int tag_key) const;
+			//! Constructs a TagModel.
+			/*!
+			  \param schemas A list of Schemas of the tags to store.
+			*/
+			explicit TagModel(std::vector<Schema> schemas);
 
-		//! Returns a list of tags enabled for a set of prior tags.
-		/*!
-		  \param prior_tags A list of already set tags.
-		*/
-		std::vector<KeyBindings::Tag> load_enabled_tags(
-			const std::vector<KeyBindings::Tag>& prior_tags) const;
+			//! Returns the display name of the tag with a given key.
+			/*!
+			  \param tag_key The key of the tag.
+			*/
+			std::string get_tag_name(int tag_key) const;
+
+			//! Returns a list of tags enabled for a set of prior tags.
+			/*!
+			  \param prior_tags A list of already set tags.
+			*/
+			std::vector<KeyBindings::Tag> load_enabled_tags(
+				const std::vector<KeyBindings::Tag>& prior_tags) const;
+
+		private:
+			std::vector<Schema> m_schemas;
 	};
 }
 

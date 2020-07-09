@@ -20,6 +20,9 @@ namespace Spire {
 
       virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&
         tags) const override;
+
+    private:
+      Nexus::Region m_region;
   };
 }
 
