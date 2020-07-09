@@ -53,8 +53,8 @@ TEST_SUITE("Term") {
     REQUIRE(term.is_satisfied({KeyBindings::Tag(5, 10),
       KeyBindings::Tag(55, Region(Security("MSFT", CountryCode(4))))}));
     auto global_region_term = RegionTerm(Region::Global());
-    REQUIRE(global_region_term.is_satisfied({KeyBindings::Tag(5, 10)}));
-    REQUIRE(global_region_term.is_satisfied({KeyBindings::Tag(5, 10),
+    REQUIRE(!global_region_term.is_satisfied({KeyBindings::Tag(5, 10)}));
+    REQUIRE(!global_region_term.is_satisfied({KeyBindings::Tag(5, 10),
       KeyBindings::Tag(55, boost::optional<Region>())}));
     REQUIRE(global_region_term.is_satisfied({KeyBindings::Tag(5, 10),
       KeyBindings::Tag(55, Region(CountryCode(4)))}));

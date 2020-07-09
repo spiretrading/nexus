@@ -18,5 +18,5 @@ bool RegionTerm::is_satisfied(const std::vector<KeyBindings::Tag>&
       return *value <= m_region;
     }
   }
-  return m_region.IsGlobal();
+  return false;
 }
