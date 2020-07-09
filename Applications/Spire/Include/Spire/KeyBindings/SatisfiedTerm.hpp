@@ -6,7 +6,7 @@
 
 namespace Spire {
 
-  //! Satisfied for any list of tags.
+  //! Is satisfied for any list of tags.
   class SatisfiedTerm : public Term {
   public:
     virtual bool is_satisfied(const std::vector<KeyBindings::Tag>&) const

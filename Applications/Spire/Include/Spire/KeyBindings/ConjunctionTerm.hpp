@@ -7,7 +7,7 @@
 
 namespace Spire {
 
-  //! Evaluates to true iff there is no term in a list that evaluates to false.
+  //! Is satisfied iff there is no term in a list that evaluates to false.
   class ConjunctionTerm : public Term {
     public:
 

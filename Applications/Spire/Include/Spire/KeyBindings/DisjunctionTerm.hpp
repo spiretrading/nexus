@@ -7,7 +7,7 @@
 
 namespace Spire {
 
-  //! Evaluates to true iff at least one of the given terms evaluates to true.
+  //! Is satisfied iff at least one of the given terms evaluates to true.
   class DisjunctionTerm : public Term {
     public:
 

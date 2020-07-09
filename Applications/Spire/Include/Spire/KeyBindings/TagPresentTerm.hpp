@@ -6,7 +6,7 @@
 
 namespace Spire {
 
-  //! Checks whether a list of tags contains a tag with a selected key.
+  //! Is satisfied iff a list of tags contains a tag with a selected key.
   class TagPresentTerm : public Term {
     public:
 
