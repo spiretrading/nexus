@@ -110,7 +110,7 @@ class DropDownWindow : public QWidget {
       painter.setPen(QColor("#C8C8C8"));
       painter.drawRect(0, 0, width() - 1, height() - 1);
       painter.setPen("#4B23A0");
-      painter.drawLine(0, 0, static_cast<QWidget*>(parent())->width(), 0);
+      painter.drawLine(0, 0, static_cast<QWidget*>(parent())->width() - 1, 0);
     }
 
   private:
@@ -119,8 +119,9 @@ class DropDownWindow : public QWidget {
 
     void move_to_parent() {
       auto parent_widget = static_cast<QWidget*>(parent());
-      auto pos = parent_widget->mapToGlobal(parent_widget->pos());
-      move(100, 100);
+      auto pos = parent_widget->window()->mapToGlobal(
+        parent_widget->frameGeometry().bottomLeft());
+      move(pos);
       raise();
     }
 };
