@@ -82,19 +82,19 @@ KeyBindings KeyBindings::get_default_key_bindings() {
   auto region = Region::Global();
   auto action1 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
     OrderType::LIMIT)), Tag(54, Side(Side::BID)), Tag(59,
-    boost::optional<TimeInForce>()), Tag(38, 100)}};
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F5, region, action1);
   auto action2 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
     OrderType::LIMIT)), Tag(54, Side(Side::ASK)), Tag(59,
-    boost::optional<TimeInForce>()), Tag(38, 100)}};
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F6, region, action2);
   auto action3 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
     OrderType::MARKET)), Tag(54, Side(Side::BID)), Tag(59,
-    boost::optional<TimeInForce>()), Tag(38, 100)}};
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F7, region, action3);
   auto action4 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
     OrderType::MARKET)), Tag(54, Side(Side::ASK)), Tag(59,
-    boost::optional<TimeInForce>()), Tag(38, 100)}};
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F8, region, action4);
   return bindings;
 }
