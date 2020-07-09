@@ -160,7 +160,7 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
 
 bool TimeAndSalesWindowModel::is_short_text(Column column,
     int breakpoint) const {
-  auto iter = m_column_size_reference.find(static_cast<Column>(column));
+  auto iter = m_column_size_reference.find(column);
   if(iter != m_column_size_reference.end()) {
     return iter->second < breakpoint;
   }
