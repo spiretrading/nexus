@@ -12,15 +12,15 @@ namespace Spire {
 
       //! Constructs a TagPresentTerm.
       /*!
-        \param tag_key The key of the tag that should be present.
+        \param key The key of the tag that should be present.
       */
-      explicit TagPresentTerm(int tag_key);
+      explicit TagPresentTerm(int key);
 
       bool is_satisfied(const std::vector<KeyBindings::Tag>& tags) const
         override;
 
     private:
-      int m_tag_key;
+      int m_key;
   };
 }
 
