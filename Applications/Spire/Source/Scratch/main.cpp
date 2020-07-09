@@ -131,6 +131,9 @@ class DropDownItem : public QWidget {
           m_value(value),
           m_is_highlighted(false) {
       setAttribute(Qt::WA_Hover);
+      auto font = QFont("Roboto");
+      font.setPixelSize(scale_height(12));
+      setFont(font);
     }
 
     const QVariant& get_value() const {
@@ -155,8 +158,14 @@ class DropDownItem : public QWidget {
       } else {
         painter.fillRect(rect(), Qt::white);
       }
-      painter.setPen(Qt::black);
-      painter.drawText(10, 10, m_item_delegate.displayText(m_value));
+      // TODO: move to anon namespace
+      auto LEFT_PADDING = []{ return scale_width(8); };
+      auto RIGHT_PADDING = []{ return scale_width(12); };
+      auto metrics = QFontMetrics(font());
+      auto shortened_text = metrics.elidedText(
+        m_item_delegate.displayText(m_value), Qt::ElideRight,
+        width() - RIGHT_PADDING());
+      painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
     }
 
   private:
