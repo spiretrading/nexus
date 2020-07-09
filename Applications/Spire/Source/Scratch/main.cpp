@@ -3,7 +3,6 @@
 
 using namespace Spire;
 
-#include <QApplication>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QKeyEvent>
@@ -23,7 +22,6 @@ class DropDownWindow : public QWidget {
     DropDownWindow(QWidget* parent = nullptr)
         : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
           m_widget(nullptr) {
-      //qDebug() << parent;
       setAttribute(Qt::WA_ShowWithoutActivating);
       setAttribute(Qt::WA_TranslucentBackground);
       m_shadow = new DropShadow(true, false, this);
@@ -32,7 +30,6 @@ class DropDownWindow : public QWidget {
         scale_width(1), scale_height(1));
       parent->installEventFilter(this);
       parent->window()->installEventFilter(this);
-      qApp->installEventFilter(this);
     }
 
     void set_widget(QWidget* widget) {
@@ -50,17 +47,11 @@ class DropDownWindow : public QWidget {
       if(event->type() == QEvent::WindowDeactivate &&
           focusWidget() != nullptr &&
           !isAncestorOf(focusWidget())) {
-        qDebug() << focusWidget();
         hide();
       }
       return QWidget::event(event);
     }
     bool eventFilter(QObject* watched, QEvent* event) override {
-      //qDebug() << "f: " << focusWidget();
-      //qDebug() << ""
-      if(event->type() == QEvent::KeyPress) {
-        //qDebug() << "k fo: " << focusWidget();
-      }
       if(watched == m_widget) {
         if(event->type() == QEvent::Resize) {
           resize(m_widget->width() + 2, m_widget->height() + 2);
@@ -80,7 +71,6 @@ class DropDownWindow : public QWidget {
           if(e->key() == Qt::Key_Escape) {
             hide();
           } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            //qDebug() << e;
             if(isVisible()) {
               hide();
             } else {
@@ -246,12 +236,9 @@ class DropDownList : public DropDownWindow {
             focus_previous();
             return true;
           } else if(e->key() == Qt::Key_Down) {
-            //qDebug() << watched;
-            //qDebug() << "down";
             focus_next();
             return true;
           } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            //qDebug() << "input enter key";
             if(isVisible() && m_highlight_index) {
               m_selected_signal(get_widget(*m_highlight_index)->get_value());
             }
@@ -335,7 +322,6 @@ class DropDownList : public DropDownWindow {
     }
     void on_item_selected(const QVariant& value) {
       m_selected_signal(value);
-      //qDebug() << value;
       hide();
     }
 };
@@ -384,14 +370,9 @@ class DropDownMenu : public QWidget {
     const QString& get_text() const;
 
   protected:
-    void focusInEvent(QFocusEvent* event) override {
-      //qDebug() << "dd in";
-    }
     void mousePressEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton) {
         if(!m_menu_list->isVisible()) {
-          //qDebug() << focusWidget();
-          auto a = focusWidget();
           m_menu_list->show();
         } else {
           m_menu_list->hide();
