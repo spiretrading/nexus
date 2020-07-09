@@ -288,48 +288,38 @@ class DropDownList : public DropDownWindow {
         return;
       }
       if(!m_highlight_index) {
-        m_highlight_index = 0;
-        auto highlighted_widget = get_widget(*m_highlight_index);
-        highlighted_widget->set_highlight();
-        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+        set_highlight(0);
         return;
       }
-      get_widget(*m_highlight_index)->reset_highlight();
-      m_highlight_index = (++(*m_highlight_index)) % m_layout->count();
-      auto highlighted_widget = get_widget(*m_highlight_index);
-      highlighted_widget->set_highlight();
-      if(m_highlight_index != m_layout->count() - 1) {
-        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
-      } else {
-        m_scroll_area->verticalScrollBar()->setValue(
-          m_scroll_area->verticalScrollBar()->maximum());
-      }
+      set_highlight((*m_highlight_index) + 1);
     }
     void focus_previous() {
       if(m_layout->count() == 0) {
         return;
       }
       if(!m_highlight_index) {
-        m_highlight_index = m_layout->count() - 1;
-        auto highlighted_widget = get_widget(*m_highlight_index);
-        highlighted_widget->set_highlight();
-        if(m_highlight_index != m_layout->count() - 1) {
-          m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
-        } else {
-          m_scroll_area->verticalScrollBar()->setValue(
-            m_scroll_area->verticalScrollBar()->maximum());
-        }
+        set_highlight(m_layout->count() - 1);
         return;
       }
-      get_widget(*m_highlight_index)->reset_highlight();
-      --(*m_highlight_index);
-      if(*m_highlight_index < 0) {
-        m_highlight_index = m_layout->count() - 1;
+      set_highlight((*m_highlight_index) - 1);
+    }
+    void set_highlight(int index) {
+      if(m_highlight_index) {
+        get_widget(*m_highlight_index)->reset_highlight();
       }
-      auto highlighted_widget = get_widget(*m_highlight_index);
-      highlighted_widget->set_highlight();
+      if(index < 0) {
+        index = m_layout->count() - 1;
+      } else if(index > m_layout->count() - 1) {
+        index = 0;
+      }
+      m_highlight_index = index;
+      get_widget(*m_highlight_index)->set_highlight();
+      scroll_to_highlight();
+    }
+    void scroll_to_highlight() {
       if(m_highlight_index != m_layout->count() - 1) {
-        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+        m_scroll_area->ensureWidgetVisible(get_widget(*m_highlight_index), 0,
+          0);
       } else {
         m_scroll_area->verticalScrollBar()->setValue(
           m_scroll_area->verticalScrollBar()->maximum());
@@ -382,6 +372,7 @@ class DropDownMenu : public QWidget {
         widget_items.push_back(item_widget);
       }
       m_menu_list = new DropDownList(widget_items, this);
+      m_menu_list->setFixedWidth(width());
     }
 
     const QString& get_text() const {
@@ -420,6 +411,9 @@ class DropDownMenu : public QWidget {
         QPoint(width() - (m_dropdown_image.width() + PADDING()),
         scale_height(11)), m_dropdown_image);
     }
+    void resizeEvent(QResizeEvent* event) override {
+      m_menu_list->setFixedWidth(width());
+    }
 
   private:
     mutable SelectedSignal m_selected_signal;
@@ -442,6 +436,7 @@ int main(int argc, char** argv) {
   auto test_window = new QWidget();
   auto layout = new QHBoxLayout(test_window);
   auto label = new QLabel("Null", test_window);
+  label->setFont(QFont("Roboto", 14));
   label->move(scale_width(10), scale_height(10));
   auto dropdown1 = new ::DropDownMenu({"One", "Two", "Three", "Four", "Five",
     "Six", "Seven"}, test_window);
@@ -450,7 +445,7 @@ int main(int argc, char** argv) {
     label->setText(value.value<QString>());
   });
   layout->addWidget(dropdown1);
-  test_window->resize(800, 600);
+  test_window->resize(scale(800, 150));
   test_window->show();
   dropdown1->setFocus();
   application->exec();
