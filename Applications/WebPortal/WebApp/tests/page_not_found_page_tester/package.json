@@ -19,6 +19,7 @@
     "nexus": "file:Dependencies/WebApi",
     "react": "16.12.0",
     "react-dom": "16.12.0",
+    "react-router-dom": "5.1.2",
     "web_portal": "file:Dependencies/library"
   }
 }
