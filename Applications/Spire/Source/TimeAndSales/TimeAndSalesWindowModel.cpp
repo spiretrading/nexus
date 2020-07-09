@@ -8,7 +8,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using Columns = TimeAndSalesProperties::Columns;
+using Column = TimeAndSalesProperties::Column;
 using PriceRange = TimeAndSalesProperties::PriceRange;
 
 namespace {
@@ -58,7 +58,7 @@ void TimeAndSalesWindowModel::set_properties(
   }
 }
 
-void TimeAndSalesWindowModel::set_column_size_reference(Columns column,
+void TimeAndSalesWindowModel::set_column_size_reference(Column column,
     int size) {
   m_column_size_reference[column] = size;
   Q_EMIT headerDataChanged(Qt::Horizontal, static_cast<int>(column),
@@ -99,16 +99,16 @@ QVariant TimeAndSalesWindowModel::data(const QModelIndex& index,
   auto& entry = m_entries[(m_entries.size() - index.row()) - 1];
   if(role == Qt::DisplayRole) {
     auto& time_and_sale = entry.m_time_and_sale.GetValue();
-    switch(static_cast<Columns>(index.column())) {
-      case Columns::TIME_COLUMN:
+    switch(static_cast<Column>(index.column())) {
+      case Column::TIME_COLUMN:
         return QVariant::fromValue(time_and_sale.m_timestamp);
-      case Columns::PRICE_COLUMN:
+      case Column::PRICE_COLUMN:
         return QVariant::fromValue(time_and_sale.m_price);
-      case Columns::SIZE_COLUMN:
+      case Column::SIZE_COLUMN:
         return QVariant::fromValue(time_and_sale.m_size);
-      case Columns::MARKET_COLUMN:
+      case Column::MARKET_COLUMN:
         return QString::fromStdString(time_and_sale.m_marketCenter);
-      case Columns::CONDITION_COLUMN:
+      case Column::CONDITION_COLUMN:
         return QString::fromStdString(time_and_sale.m_condition.m_code);
       default:
         return QVariant();
@@ -126,25 +126,25 @@ QVariant TimeAndSalesWindowModel::data(const QModelIndex& index,
 QVariant TimeAndSalesWindowModel::headerData(int section,
     Qt::Orientation orientation, int role) const {
   if(role == Qt::DisplayRole) {
-    switch(static_cast<Columns>(section)) {
-      case Columns::TIME_COLUMN:
+    switch(static_cast<Column>(section)) {
+      case Column::TIME_COLUMN:
         return tr("Time");
-      case Columns::PRICE_COLUMN:
+      case Column::PRICE_COLUMN:
         return tr("Price");
-      case Columns::SIZE_COLUMN:
-        if(is_short_text(Columns::MARKET_COLUMN,
+      case Column::SIZE_COLUMN:
+        if(is_short_text(Column::SIZE_COLUMN,
             get_breakpoint(m_header_font, tr("Quantity")))) {
           return tr("Qty");
         }
         return tr("Quantity");
-      case Columns::MARKET_COLUMN:
-        if(is_short_text(Columns::MARKET_COLUMN,
+      case Column::MARKET_COLUMN:
+        if(is_short_text(Column::MARKET_COLUMN,
             get_breakpoint(m_header_font, tr("Market")))) {
           return tr("Mkt");
         }
         return tr("Market");
-      case Columns::CONDITION_COLUMN:
-        if(is_short_text(Columns::CONDITION_COLUMN,
+      case Column::CONDITION_COLUMN:
+        if(is_short_text(Column::CONDITION_COLUMN,
             get_breakpoint(m_header_font, tr("Condition")))) {
           return tr("Cond");
         }
@@ -158,9 +158,9 @@ QVariant TimeAndSalesWindowModel::headerData(int section,
   return QVariant();
 }
 
-bool TimeAndSalesWindowModel::is_short_text(Columns column,
+bool TimeAndSalesWindowModel::is_short_text(Column column,
     int breakpoint) const {
-  auto iter = m_column_size_reference.find(static_cast<Columns>(column));
+  auto iter = m_column_size_reference.find(static_cast<Column>(column));
   if(iter != m_column_size_reference.end()) {
     return iter->second < breakpoint;
   }

@@ -15,7 +15,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using PriceRange = TimeAndSalesProperties::PriceRange;
-using Columns = TimeAndSalesProperties::Columns;
+using Column = TimeAndSalesProperties::Column;
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     const TimeAndSalesProperties& properties, QWidget* parent)

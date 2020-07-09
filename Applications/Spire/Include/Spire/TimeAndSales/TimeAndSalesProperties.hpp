@@ -36,7 +36,7 @@ namespace Spire {
     static const auto PRICE_RANGE_COUNT = 6;
 
     //! The available columns to display.
-    enum class Columns {
+    enum class Column {
 
       //! The time column.
       TIME_COLUMN,

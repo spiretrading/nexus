@@ -41,7 +41,7 @@ namespace Spire {
         \param column The column index.
         \param size The new column size.
       */
-      void set_column_size_reference(TimeAndSalesProperties::Columns column,
+      void set_column_size_reference(TimeAndSalesProperties::Column column,
         int size);
 
       //! Informs the model that a particular row is being displayed.
@@ -78,10 +78,10 @@ namespace Spire {
       bool m_is_loading;
       bool m_is_fully_loaded;
       QtPromise<std::vector<TimeAndSalesModel::Entry>> m_snapshot_promise;
-      std::unordered_map<TimeAndSalesProperties::Columns, int>
+      std::unordered_map<TimeAndSalesProperties::Column, int>
         m_column_size_reference;
 
-      bool is_short_text(TimeAndSalesProperties::Columns column,
+      bool is_short_text(TimeAndSalesProperties::Column column,
         int breakpoint) const;
       void update_data(const TimeAndSalesModel::Entry& e);
       void load_snapshot(Beam::Queries::Sequence last);

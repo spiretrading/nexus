@@ -5,7 +5,7 @@
 
 using namespace Nexus;
 using namespace Spire;
-using Columns = BookViewProperties::Columns;
+using Column = BookViewProperties::Column;
 
 BookQuoteTableModel::BookQuoteTableModel(const BookViewModel& model,
     Side side, const BookViewProperties& properties)
@@ -39,12 +39,12 @@ QVariant BookQuoteTableModel::data(const QModelIndex& index, int role) const {
   auto& book = Pick(m_side, m_model->get_asks(), m_model->get_bids());
   auto& quote = *book[m_size - 1 - index.row()];
   if(role == Qt::DisplayRole) {
-    switch(static_cast<Columns>(index.column())) {
-      case Columns::MARKET_COLUMN:
+    switch(static_cast<Column>(index.column())) {
+      case Column::MARKET_COLUMN:
         return QString::fromStdString(quote.m_quote.m_mpid);
-      case Columns::PRICE_COLUMN:
+      case Column::PRICE_COLUMN:
         return QVariant::fromValue(quote.m_quote.m_quote.m_price);
-      case Columns::SIZE_COLUMN:
+      case Column::SIZE_COLUMN:
         return QVariant::fromValue(quote.m_quote.m_quote.m_size);
       default:
         return QVariant();
