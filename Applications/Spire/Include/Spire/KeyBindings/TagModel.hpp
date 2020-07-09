@@ -36,14 +36,14 @@ namespace Spire {
       /*!
         \param tag_key The key of the tag.
       */
-      std::string get_tag_name(int tag_key) const;
+      const std::string& get_tag_name(int key) const;
       
       //! Returns a list of tags enabled for a set of prior tags.
       /*!
         \param prior_tags A list of already set tags.
       */
-      std::vector<KeyBindings::Tag> load_enabled_tags(
-        const std::vector<KeyBindings::Tag>& prior_tags) const;
+      std::vector<KeyBindings::Tag> load_satisfied_tags(
+        const std::vector<KeyBindings::Tag>& tags) const;
 
     private:
       std::vector<Schema> m_schemas;
