@@ -29,8 +29,7 @@ namespace {
 
 FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     QWidget* parent)
-    : QWidget(parent),
-      m_current_font(current_font) {
+    : QWidget(parent) {
   setFixedSize(scale(162, 78));
   setStyleSheet("background-color: #F5F5F5;");
   auto layout = new QVBoxLayout(this);
@@ -51,7 +50,6 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   auto fonts = QFontDatabase().families();
   m_font_list = new DropDownMenu(
     std::vector<QString>(fonts.begin(), fonts.end()), this);
-  m_font_list->set_current_text(m_current_font.family());
   m_font_list->setFixedSize(scale(162, 26));
   m_font_list->connect_selected_signal([=] (const auto& font) {
     on_font_selected(font);
@@ -87,16 +85,25 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
   m_size_input = new IntegerInputWidget(6, 72, this);
-  m_size_input->setValue(current_font.pointSize());
   m_size_input->setFixedHeight(scale_height(26));
   connect(m_size_input,
     static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
     &FontSelectorWidget::on_size_selected);
   grid_layout->addWidget(m_size_input, 1, 3, 1, 2);
+  set_font(current_font);
 }
 
 const QFont& FontSelectorWidget::get_font() const {
   return m_current_font;
+}
+
+void FontSelectorWidget::set_font(const QFont& font) {
+  m_current_font = font;
+  m_font_list->set_current_text(m_current_font.family());
+  m_size_input->setValue(m_current_font.pointSize());
+  m_bold_button->set_toggled(m_current_font.bold());
+  m_italics_button->set_toggled(m_current_font.italic());
+  m_underline_button->set_toggled(m_current_font.underline());
 }
 
 connection FontSelectorWidget::connect_font_preview_signal(

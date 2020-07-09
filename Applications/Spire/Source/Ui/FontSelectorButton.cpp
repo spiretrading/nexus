@@ -23,6 +23,11 @@ bool FontSelectorButton::is_toggled() const {
   return m_is_toggled;
 }
 
+void FontSelectorButton::set_toggled(bool is_toggled) {
+  m_is_toggled = is_toggled;
+  update();
+}
+
 connection FontSelectorButton::connect_clicked_signal(
     const ClickedSignal::slot_type& slot) const {
   return m_clicked_signal.connect(slot);
