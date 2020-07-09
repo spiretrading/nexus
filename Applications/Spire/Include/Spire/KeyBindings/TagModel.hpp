@@ -40,7 +40,7 @@ namespace Spire {
       
       //! Returns a list of tags enabled for a set of prior tags.
       /*!
-        \param prior_tags A list of already set tags.
+        \param tags A list of already set tags.
       */
       std::vector<KeyBindings::Tag> load_satisfied_tags(
         const std::vector<KeyBindings::Tag>& tags) const;
