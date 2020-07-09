@@ -298,7 +298,12 @@ class DropDownList : public DropDownWindow {
       m_highlight_index = (++(*m_highlight_index)) % m_layout->count();
       auto highlighted_widget = get_widget(*m_highlight_index);
       highlighted_widget->set_highlight();
-      m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+      if(m_highlight_index != m_layout->count() - 1) {
+        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+      } else {
+        m_scroll_area->verticalScrollBar()->setValue(
+          m_scroll_area->verticalScrollBar()->maximum());
+      }
     }
     void focus_previous() {
       if(m_layout->count() == 0) {
@@ -308,7 +313,12 @@ class DropDownList : public DropDownWindow {
         m_highlight_index = m_layout->count() - 1;
         auto highlighted_widget = get_widget(*m_highlight_index);
         highlighted_widget->set_highlight();
-        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+        if(m_highlight_index != m_layout->count() - 1) {
+          m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+        } else {
+          m_scroll_area->verticalScrollBar()->setValue(
+            m_scroll_area->verticalScrollBar()->maximum());
+        }
         return;
       }
       get_widget(*m_highlight_index)->reset_highlight();
@@ -318,7 +328,12 @@ class DropDownList : public DropDownWindow {
       }
       auto highlighted_widget = get_widget(*m_highlight_index);
       highlighted_widget->set_highlight();
-      m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+      if(m_highlight_index != m_layout->count() - 1) {
+        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
+      } else {
+        m_scroll_area->verticalScrollBar()->setValue(
+          m_scroll_area->verticalScrollBar()->maximum());
+      }
     }
     void on_item_selected(const QVariant& value) {
       m_selected_signal(value);
