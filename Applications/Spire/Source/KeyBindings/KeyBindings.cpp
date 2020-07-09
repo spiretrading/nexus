@@ -200,7 +200,7 @@ std::ostream& Spire::operator <<(std::ostream& out,
     out << ", " << country_code;
   }
   out << ") (";
-  for(auto security : region->GetSecurities()) {
+  for(auto& security : region->GetSecurities()) {
     out << ", " << security;
   }
   return out;
