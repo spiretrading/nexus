@@ -22,6 +22,6 @@ for i in $projects; do
     mkdir "$i"
   fi
   pushd "$i"
-  "$directory/$i/configure.sh" -DD="$root/Dependencies" "$@"
+  "$directory/$i/configure.sh" -DD="$root/library/Dependencies" "$@"
   popd
 done
