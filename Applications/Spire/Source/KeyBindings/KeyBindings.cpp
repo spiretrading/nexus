@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include <algorithm>
 #include <type_traits>
+#include <variant>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
@@ -8,6 +9,62 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+
+int KeyBindings::Tag::get_key() const {
+  return m_key;
+}
+
+KeyBindings::Tag::Type KeyBindings::Tag::get_value() const {
+  return m_value;
+}
+
+bool KeyBindings::Tag::operator ==(const Tag& other) const {
+  return m_key == other.m_key && m_value == other.m_value;
+}
+
+bool KeyBindings::Tag::operator !=(const Tag& other) const {
+  return !(*this == other);
+}
+
+KeyBindings::OrderAction::OrderAction(std::string name, std::vector<Tag> tags)
+  : m_name(std::move(name)),
+    m_tags(std::move(tags)) {}
+
+const std::string& KeyBindings::OrderAction::get_name() const {
+  return m_name;
+}
+
+void KeyBindings::OrderAction::set_name(std::string name) {
+  m_name = std::move(name);
+}
+
+boost::optional<const KeyBindings::Tag&> KeyBindings::OrderAction::get_tag(
+    int tag_key) const {
+  auto it = std::find_if(m_tags.begin(), m_tags.end(), [&] (auto& stored_tag) {
+    return stored_tag.get_key() == stored_tag.get_key();
+  });
+  if(it != m_tags.end()) {
+    return *it;
+  } else {
+    return boost::none;
+  }
+}
+
+void KeyBindings::OrderAction::set_tag(Tag tag) {
+  auto it = std::find_if(m_tags.begin(), m_tags.end(), [&] (auto& stored_tag) {
+    return stored_tag.get_key() == stored_tag.get_key();
+  });
+  if(it != m_tags.end()) {
+    *it = std::move(tag);
+  } else {
+    m_tags.push_back(std::move(tag));
+  }
+}
+
+const std::vector<KeyBindings::Tag>& KeyBindings::OrderAction::get_tags()
+    const {
+  return m_tags;
+}
 
 bool KeyBindings::CancelActionBinding::operator ==(
     const CancelActionBinding& rhs) const {
@@ -23,17 +80,21 @@ bool KeyBindings::CancelActionBinding::operator !=(
 KeyBindings KeyBindings::get_default_key_bindings() {
   auto bindings = KeyBindings();
   auto region = Region::Global();
-  auto action1 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::BID, {},
-    100, {}};
+  auto action1 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
+    OrderType::LIMIT)), Tag(54, Side(Side::BID)), Tag(59,
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F5, region, action1);
-  auto action2 = KeyBindings::OrderAction{"", OrderType::LIMIT, Side::ASK, {},
-    100, {}};
+  auto action2 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
+    OrderType::LIMIT)), Tag(54, Side(Side::ASK)), Tag(59,
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F6, region, action2);
-  auto action3 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::BID, {},
-    100, {}};
+  auto action3 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
+    OrderType::MARKET)), Tag(54, Side(Side::BID)), Tag(59,
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F7, region, action3);
-  auto action4 = KeyBindings::OrderAction{"", OrderType::MARKET, Side::ASK, {},
-    100, {}};
+  auto action4 = KeyBindings::OrderAction{"", {Tag(40, OrderType(
+    OrderType::MARKET)), Tag(54, Side(Side::ASK)), Tag(59,
+    boost::optional<TimeInForce>()), Tag(38, Quantity(100))}};
   bindings.set(Qt::Key_F8, region, action4);
   return bindings;
 }
@@ -130,17 +191,50 @@ std::vector<KeyBindings::ActionBinding>
 }
 
 std::ostream& Spire::operator <<(std::ostream& out,
-    const KeyBindings::OrderAction& action) {
-  return out << '(' << action.m_name << ", " << action.m_type << ", " <<
-    action.m_side << ", " << action.m_time_in_force << ", " <<
-    action.m_quantity << ", " << Stream(action.m_tags) << ')';
+    const boost::optional<Region>& region) {
+  if(!region) {
+    return out << "(None)";
+  }
+  out << '(' << region->GetName() << " (";
+  for(auto country_code : region->GetCountries()) {
+    out << ", " << country_code;
+  }
+  out << ") (";
+  for(auto& security : region->GetSecurities()) {
+    out << ", " << security;
+  }
+  return out;
 }
 
 std::ostream& Spire::operator <<(std::ostream& out,
-    const KeyBindings::OrderAction::CustomTag& tag) {
-  out << '(' << tag.m_name << ' ';
+    const KeyBindings::Action& action) {
+  out << '(';
   std::visit(
-    [&](auto& value) -> decltype(auto) {
+    [&] (auto& value) -> decltype(auto) {
+      if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
+          KeyBindings::OrderAction>) {
+        out << "ORDER ";
+      } else {
+        out << "CANCEL ";
+      }
+    }, action);
+  return out << ')';
+}
+
+std::ostream& Spire::operator <<(std::ostream& out,
+    const KeyBindings::OrderAction& action) {
+  out << '(' << action.get_name();
+  for(auto& tag : action.get_tags()) {
+    out << ", " << tag;
+  }
+  return out << ')';
+}
+
+std::ostream& Spire::operator <<(std::ostream& out,
+    const KeyBindings::Tag& tag) {
+  out << '(' << tag.m_key << ' ';
+  std::visit(
+    [&] (auto& value) -> decltype(auto) {
       return out << value;
     }, tag.m_value);
   return out << ')';
