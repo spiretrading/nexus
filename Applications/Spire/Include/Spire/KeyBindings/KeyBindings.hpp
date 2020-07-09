@@ -2,6 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 #include <ostream>
 #include <string>
+#include <typeinfo>
 #include <variant>
 #include <vector>
 #include <boost/optional.hpp>
@@ -73,8 +74,8 @@ namespace Details {
           //! Returns the value of the tag.
           /*!
             \tparam T The type of tag's value.
-            \return The value of the tag, boost::none if the type of the value
-                    is not T.
+            \return The value of the tag.
+            \throw std::bad_cast If the type of the tag value is not T.
           */
           template<typename T>
           boost::optional<T> get_value() const;
@@ -302,12 +303,12 @@ namespace Details {
   template<typename T>
   boost::optional<T> KeyBindings::Tag::get_value() const {
     return std::visit(
-      [] (auto& value) {
+      [] (auto& value) -> boost::optional<T> {
         if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
             boost::optional<T>>) {
           return value;
         } else {
-          return boost::optional<T>();
+          throw std::bad_cast();
         }
       }, m_value);
   }
