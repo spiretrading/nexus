@@ -8,6 +8,7 @@ using namespace Spire;
 #include <QImage>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QScrollBar>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -65,7 +66,9 @@ class DropDownWindow : public QWidget {
         if(event->type() == QEvent::Move) {
           move_to_parent();
         } else if(event->type() == QEvent::FocusOut &&
+            focusWidget() != nullptr &&
             !isAncestorOf(focusWidget())) {
+          auto a = focusWidget();
           hide();
         } else if(event->type() == QEvent::Wheel) {
           hide();
@@ -170,14 +173,14 @@ class DropDownList : public DropDownWindow {
         : DropDownWindow(parent),
           m_max_displayed_items(5) {
       //setFocusProxy(parent);
-      auto scroll_area = new ScrollArea(this);
-      scroll_area->setWidgetResizable(true);
+      m_scroll_area = new ScrollArea(this);
+      m_scroll_area->setWidgetResizable(true);
       auto main_widget = new QWidget(this);
       m_layout = new QVBoxLayout(main_widget);
       m_layout->setContentsMargins({});
       m_layout->setSpacing(0);
-      scroll_area->setWidget(main_widget);
-      set_widget(scroll_area);
+      m_scroll_area->setWidget(main_widget);
+      set_widget(m_scroll_area);
       set_items(items);
       parent->installEventFilter(this);
     }
@@ -205,8 +208,17 @@ class DropDownList : public DropDownWindow {
           auto e = static_cast<QKeyEvent*>(event);
           if(e->key() == Qt::Key_Up) {
             focus_previous();
+            return true;
           } else if(e->key() == Qt::Key_Down) {
+            qDebug() << watched;
+            qDebug() << "down";
             focus_next();
+            return true;
+          } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+            qDebug() << "input enter key";
+            if(isVisible() && m_highlight_index) {
+              qDebug() << "valid input submitted";
+            }
           }
         }
       }
@@ -215,6 +227,13 @@ class DropDownList : public DropDownWindow {
     void focusInEvent(QFocusEvent* event) override {
       auto a = 0;
     }
+    void hideEvent(QHideEvent* event) override {
+      m_scroll_area->verticalScrollBar()->setValue(0);
+      if(m_highlight_index) {
+        get_widget(*m_highlight_index)->reset_highlight();
+        m_highlight_index = boost::none;
+      }
+    }
     void keyPressEvent(QKeyEvent* event) override {
       if(event->key() == Qt::Key_Up) {
         focus_previous();
@@ -222,6 +241,8 @@ class DropDownList : public DropDownWindow {
         focus_next();
       } else if(event->key() == Qt::Key_Escape) {
         hide();
+      } else if(event->key() == Qt::Key_Enter) {
+        qDebug() << "list enter key";
       }
       DropDownWindow::keyPressEvent(event);
     }
@@ -229,6 +250,7 @@ class DropDownList : public DropDownWindow {
   private:
     int m_max_displayed_items;
     QVBoxLayout* m_layout;
+    ScrollArea* m_scroll_area;
     boost::optional<int> m_highlight_index;
 
     DropDownItem* get_widget(int index) {
@@ -240,12 +262,16 @@ class DropDownList : public DropDownWindow {
       }
       if(!m_highlight_index) {
         m_highlight_index = 0;
-        get_widget(*m_highlight_index)->set_highlight();
+        auto highlighted_widget = get_widget(*m_highlight_index);
+        highlighted_widget->set_highlight();
+        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
         return;
       }
       get_widget(*m_highlight_index)->reset_highlight();
       m_highlight_index = (++(*m_highlight_index)) % m_layout->count();
-      get_widget(*m_highlight_index)->set_highlight();
+      auto highlighted_widget = get_widget(*m_highlight_index);
+      highlighted_widget->set_highlight();
+      m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
     }
     void focus_previous() {
       if(m_layout->count() == 0) {
@@ -253,7 +279,9 @@ class DropDownList : public DropDownWindow {
       }
       if(!m_highlight_index) {
         m_highlight_index = m_layout->count() - 1;
-        get_widget(*m_highlight_index)->set_highlight();
+        auto highlighted_widget = get_widget(*m_highlight_index);
+        highlighted_widget->set_highlight();
+        m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
         return;
       }
       get_widget(*m_highlight_index)->reset_highlight();
@@ -261,7 +289,9 @@ class DropDownList : public DropDownWindow {
       if(*m_highlight_index < 0) {
         m_highlight_index = m_layout->count() - 1;
       }
-      get_widget(*m_highlight_index)->set_highlight();
+      auto highlighted_widget = get_widget(*m_highlight_index);
+      highlighted_widget->set_highlight();
+      m_scroll_area->ensureWidgetVisible(highlighted_widget, 0, 0);
     }
 };
 
