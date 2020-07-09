@@ -9,6 +9,6 @@ TagPresentTerm::TagPresentTerm(int key)
 bool TagPresentTerm::is_satisfied(const std::vector<KeyBindings::Tag>&
     tags) const {
   return std::find_if(tags.begin(), tags.end(), [&] (auto& tag) {
-    return tag.get_key() == m_tag_key;
+    return tag.get_key() == m_key;
   }) != tags.end();
 }
