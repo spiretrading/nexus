@@ -115,7 +115,7 @@ namespace Details {
           OrderAction(std::string name, std::vector<Tag> tags);
 
           //! Returns the name of the action.
-          std::string get_name() const;
+          const std::string& get_name() const;
 
           //! Renames the action.
           /*!
@@ -127,7 +127,7 @@ namespace Details {
           /*!
             \return The tag if present, boost::none otherwise.
           */
-          boost::optional<Tag> get_tag(int tag_key) const;
+          boost::optional<const Tag&> get_tag(int tag_key) const;
 
           //! Adds a new tag to the list, or updates a value of the existing
           //! tag if one with the same key is already stored.
@@ -137,7 +137,7 @@ namespace Details {
           void set_tag(Tag tag);
 
           //! Returns a list of all tags.
-          std::vector<Tag> get_tags() const;
+          const std::vector<Tag>& get_tags() const;
 
         private:
           std::string m_name;

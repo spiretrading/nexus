@@ -30,7 +30,7 @@ KeyBindings::OrderAction::OrderAction(std::string name, std::vector<Tag> tags)
   : m_name(std::move(name)),
     m_tags(std::move(tags)) {}
 
-std::string KeyBindings::OrderAction::get_name() const {
+const std::string& KeyBindings::OrderAction::get_name() const {
   return m_name;
 }
 
@@ -38,7 +38,7 @@ void KeyBindings::OrderAction::set_name(std::string name) {
   m_name = std::move(name);
 }
 
-boost::optional<KeyBindings::Tag> KeyBindings::OrderAction::get_tag(
+boost::optional<const KeyBindings::Tag&> KeyBindings::OrderAction::get_tag(
     int tag_key) const {
   auto it = std::find_if(m_tags.begin(), m_tags.end(), [&] (auto& stored_tag) {
     return stored_tag.get_key() == stored_tag.get_key();
@@ -61,7 +61,8 @@ void KeyBindings::OrderAction::set_tag(Tag tag) {
   }
 }
 
-std::vector<KeyBindings::Tag> KeyBindings::OrderAction::get_tags() const {
+const std::vector<KeyBindings::Tag>& KeyBindings::OrderAction::get_tags()
+    const {
   return m_tags;
 }
 

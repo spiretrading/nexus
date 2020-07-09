@@ -117,7 +117,7 @@ void TaskKeyBindingsTableView::on_item_modified(
   auto binding = KeyBindings::OrderActionBinding{};
   auto name = m_model->index(row, 0).data().value<QString>();
   if(!name.isEmpty()) {
-    binding.m_action.get_name() = name.toStdString();
+    binding.m_action.set_name(name.toStdString());
   }
   if(is_valid(row, 1)) {
     binding.m_region = Region(m_model->index(row, 1).data().value<Security>());
