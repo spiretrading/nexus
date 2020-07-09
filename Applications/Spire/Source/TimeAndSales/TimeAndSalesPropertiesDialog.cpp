@@ -8,7 +8,6 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/PropertiesWindowButtonsWidget.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -16,7 +15,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using PriceRange = TimeAndSalesProperties::PriceRange;
-using Columns = TimeAndSalesProperties::Columns;
+using Column = TimeAndSalesProperties::Column;
 
 TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     const TimeAndSalesProperties& properties, QWidget* parent)
@@ -140,14 +139,14 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
   auto font_layout = new QVBoxLayout();
   font_layout->setContentsMargins(0, 0, scale_width(8), 0);
   font_layout->setSpacing(0);
-  auto edit_font_widget = new FontSelectorWidget(m_properties.m_font, this);
-  edit_font_widget->connect_font_selected_signal([=] (const auto& font) {
+  m_edit_font_widget = new FontSelectorWidget(m_properties.m_font, this);
+  m_edit_font_widget->connect_font_selected_signal([=] (const auto& font) {
     on_font_modified(font);
   });
-  edit_font_widget->connect_font_preview_signal([=] (const auto& font) {
+  m_edit_font_widget->connect_font_preview_signal([=] (const auto& font) {
     on_font_preview(font);
   });
-  font_layout->addWidget(edit_font_widget);
+  font_layout->addWidget(m_edit_font_widget);
   font_layout->addStretch(1);
   style_layout->addLayout(font_layout);
   layout->addLayout(style_layout);
@@ -294,6 +293,7 @@ void TimeAndSalesPropertiesDialog::set_properties(
   } else {
     set_color_settings_stylesheet(0);
   }
+  m_edit_font_widget->set_font(m_properties.m_font);
   m_show_grid_check_box->setChecked(m_properties.m_show_grid);
 }
 

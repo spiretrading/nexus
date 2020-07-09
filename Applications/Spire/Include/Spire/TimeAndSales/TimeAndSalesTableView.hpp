@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
 #define SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
+#include <unordered_map>
 #include <QAbstractItemModel>
 #include <QHeaderView>
 #include <QTimer>
@@ -35,8 +36,10 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
+      bool m_was_shown;
       QVBoxLayout* m_layout;
       QHeaderView* m_header;
       QWidget* m_header_padding;
@@ -46,6 +49,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_model_end_loading_connection;
       SnapshotLoadingWidget* m_loading_widget;
       TransitionWidget* m_transition_widget;
+      std::unordered_map<TimeAndSalesProperties::Column, int>
+        m_minimum_column_widths;
 
       void show_loading_widget();
       void update_table_height(int num_rows);

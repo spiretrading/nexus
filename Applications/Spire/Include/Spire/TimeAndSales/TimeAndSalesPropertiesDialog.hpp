@@ -6,6 +6,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/Dialog.hpp"
+#include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/RecentColors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -59,6 +60,7 @@ namespace Spire {
       QListWidget* m_band_list;
       ColorSelectorButton* m_band_color_button;
       ColorSelectorButton* m_text_color_button;
+      FontSelectorWidget* m_edit_font_widget;
       CheckBox* m_show_grid_check_box;
 
       void set_band_color(const QColor& color);

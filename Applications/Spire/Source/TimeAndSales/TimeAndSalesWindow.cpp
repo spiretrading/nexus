@@ -29,7 +29,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(const TimeAndSalesProperties& properties,
     : Window(parent),
       m_table(nullptr) {
   setMinimumSize(scale(180, 200));
-  resize_body(scale(180, 450));
+  resize_body(scale(180, 410));
   setStyleSheet("background-color: #FFFFFF;");
   setWindowTitle(tr("Time and Sales"));
   set_svg_icon(":/Icons/time-sale-black.svg",
@@ -165,7 +165,8 @@ void TimeAndSalesWindow::export_table() {
 
 void TimeAndSalesWindow::show_properties_dialog() {
   TimeAndSalesPropertiesDialog dialog(m_properties, this);
-  dialog.connect_apply_signal([&] {set_properties(dialog.get_properties()); });
+  dialog.connect_apply_signal([&] {
+    set_properties(dialog.get_properties()); });
   m_security_widget->show_overlay_widget();
   if(dialog.exec() == QDialog::Accepted) {
     set_properties(dialog.get_properties());

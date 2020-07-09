@@ -38,7 +38,7 @@ namespace Spire {
       };
 
       //! The available columns to display.
-      enum class Columns {
+      enum class Column {
 
         //! The market column.
         MARKET_COLUMN,

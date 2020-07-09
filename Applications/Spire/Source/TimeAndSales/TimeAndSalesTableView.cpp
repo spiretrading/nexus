@@ -13,6 +13,7 @@
 #include "Spire/Ui/TransitionWidget.hpp"
 
 using namespace Spire;
+using Column = TimeAndSalesProperties::Column;
 
 namespace {
   const auto MINIMUM_TABLE_WIDTH = 750;
@@ -23,15 +24,20 @@ namespace {
 
 TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
     : ScrollArea(true, parent),
+      m_was_shown(false),
       m_model(nullptr),
       m_loading_widget(nullptr),
-      m_transition_widget(nullptr) {
+      m_transition_widget(nullptr),
+      m_minimum_column_widths({{Column::TIME_COLUMN, scale_width(54)},
+        {Column::PRICE_COLUMN, scale_width(46)},
+        {Column::SIZE_COLUMN, scale_width(38)},
+        {Column::MARKET_COLUMN, scale_width(40)},
+        {Column::CONDITION_COLUMN, scale_width(42)}}) {
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_horizontal_slider_value_changed);
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
     &TimeAndSalesTableView::on_vertical_slider_value_changed);
   m_header = new QHeaderView(Qt::Horizontal, this);
-  m_header->setMinimumSectionSize(scale_width(35));
   m_header->setStretchLastSection(true);
   m_header->setSectionsClickable(false);
   m_header->setSectionsMovable(true);
@@ -44,8 +50,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(QWidget* parent)
       background-repeat: repeat;
       border: none;
       color: #4B23A0;
-      font-family: Roboto;
-      font-weight: 550;
       padding-left: %1px;
       padding-right: %1px;
     }
@@ -103,6 +107,10 @@ void TimeAndSalesTableView::set_model(TimeAndSalesWindowModel* model) {
     &TimeAndSalesTableView::on_rows_about_to_be_inserted);
   m_header->setModel(filter);
   m_table->setModel(filter);
+  for(auto i = 0; i < m_table->model()->columnCount(); ++i) {
+    m_model->set_column_size_reference(static_cast<Column>(i),
+      m_table->columnWidth(i));
+  }
 }
 
 void TimeAndSalesTableView::set_properties(
@@ -111,14 +119,8 @@ void TimeAndSalesTableView::set_properties(
   auto metrics = QFontMetrics(properties.m_font);
   auto row_height = metrics.height() + scale_height(2);
   m_table->verticalHeader()->setDefaultSectionSize(row_height);
-  auto header_font = m_table->verticalHeader()->font();
-  if(properties.m_font.pointSize() >= 11) {
-    header_font.setPointSizeF(0.8 * properties.m_font.pointSize());
-  } else {
-    header_font.setPointSize(9);
-  }
-  m_header->setFont(header_font);
-  auto header_metrics = QFontMetrics(header_font);
+  auto header_metrics = QFontMetrics(m_header->model()->headerData(0,
+    Qt::Horizontal, Qt::FontRole).value<QFont>());
   m_header->setFixedHeight(static_cast<int>(1.8 * header_metrics.height()));
   m_header_padding->setFixedHeight(m_header->height());
   if(m_table->model()->rowCount() > 0) {
@@ -139,6 +141,22 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
 void TimeAndSalesTableView::resizeEvent(QResizeEvent* event) {
   widget()->resize(width(), widget()->height());
   m_header->setFixedWidth(widget()->width());
+}
+
+void TimeAndSalesTableView::showEvent(QShowEvent* event) {
+  if(!m_was_shown && m_model != nullptr) {
+    m_was_shown = true;
+    m_header->resizeSection(static_cast<int>(Column::TIME_COLUMN),
+      scale_width(74));
+    m_header->resizeSection(static_cast<int>(Column::PRICE_COLUMN),
+      scale_width(60));
+    m_header->resizeSection(static_cast<int>(Column::SIZE_COLUMN),
+      scale_width(46));
+    m_header->resizeSection(static_cast<int>(Column::MARKET_COLUMN),
+      scale_width(50));
+    m_header->resizeSection(static_cast<int>(Column::CONDITION_COLUMN),
+      scale_width(50));
+  }
 }
 
 void TimeAndSalesTableView::show_loading_widget() {
@@ -163,8 +181,15 @@ void TimeAndSalesTableView::on_end_loading_signal() {
 
 void TimeAndSalesTableView::on_header_resize(int index, int old_size,
     int new_size) {
-  m_table->horizontalHeader()->resizeSection(index,
-    m_header->sectionSize(index));
+  auto min_width = m_minimum_column_widths[static_cast<Column>(index)];
+  if(new_size <= min_width) {
+    m_header->blockSignals(true);
+    m_header->resizeSection(index, min_width);
+    m_header->blockSignals(false);
+    new_size = min_width;
+  }
+  m_table->horizontalHeader()->resizeSection(index, new_size);
+  m_model->set_column_size_reference(static_cast<Column>(index), new_size);
 }
 
 void TimeAndSalesTableView::on_header_move(int logical_index,
