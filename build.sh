@@ -43,6 +43,6 @@ targets+=" Applications/WebPortal"
 targets+=" Applications/WebPortal/WebApp"
 
 cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
-mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 4194304"
+mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
 jobs="$(($cores<$mem?$cores:$mem))"
 parallel -j$jobs --no-notice build_function "$@" ::: $targets
