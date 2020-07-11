@@ -5,6 +5,7 @@ namespace Nexus {
   struct BboQuote;
   struct BookQuote;
   struct BookQuotePair;
+  class CountryCode;
   class CountryDatabase;
   class CurrencyDatabase;
   struct CurrencyId;

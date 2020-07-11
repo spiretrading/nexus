@@ -184,7 +184,7 @@ namespace Nexus {
     entry.m_code = Beam::Extract<std::string>(node, "code");
     entry.m_countryCode = ParseCountryCode(
       Beam::Extract<std::string>(node, "country_code"), countryDatabase);
-    if(entry.m_countryCode == CountryDatabase::NONE) {
+    if(entry.m_countryCode == CountryCode::NONE) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
         "Invalid country code.", node.Mark()));
     }
@@ -318,7 +318,7 @@ namespace Nexus {
   inline MarketDatabase::Entry MarketDatabase::MakeNoneEntry() {
     auto entry = Entry();
     entry.m_code = MarketCode();
-    entry.m_countryCode = CountryDatabase::NONE;
+    entry.m_countryCode = CountryCode::NONE;
     entry.m_timeZone = "UTC";
     entry.m_description = "None";
     return entry;

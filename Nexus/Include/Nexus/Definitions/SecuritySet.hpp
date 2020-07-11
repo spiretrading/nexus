@@ -87,7 +87,7 @@ namespace Nexus {
     if(prefixSecurity.is_initialized()) {
       if(trailer.size() == 2) {
         auto code = countryDatabase.FromTwoLetterCode(trailer);
-        if(code.m_code != CountryDatabase::NONE) {
+        if(code.m_code != CountryCode::NONE) {
           return Security{prefixSecurity->GetSymbol(),
             prefixSecurity->GetMarket(), code.m_code};
         } else {
@@ -159,7 +159,7 @@ namespace Nexus {
   }
 
   inline CountryCode SecuritySet::GetCountryCodeWildCard() {
-    return CountryDatabase::NONE;
+    return CountryCode::NONE;
   }
 
   inline Security SecuritySet::GetSecurityWildCard() {

@@ -146,7 +146,7 @@ namespace Nexus {
   }
 
   inline Security::Security()
-      : m_country(CountryDatabase::NONE) {}
+      : m_country(CountryCode::NONE) {}
 
   inline Security::Security(std::string symbol, MarketCode market,
       CountryCode country)

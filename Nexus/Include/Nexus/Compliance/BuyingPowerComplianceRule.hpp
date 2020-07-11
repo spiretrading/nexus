@@ -91,7 +91,7 @@ namespace Nexus::Compliance {
     parameters.emplace_back("currency", DefaultCurrencies::USD());
     parameters.emplace_back("buying_power", Money::ZERO);
     auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security("*", MarketCode(), CountryDatabase::NONE));
+    symbols.push_back(Security("*", MarketCode(), CountryCode::NONE));
     parameters.emplace_back("symbols", symbols);
     auto schema = ComplianceRuleSchema("buying_power", std::move(parameters));
     return schema;

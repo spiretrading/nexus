@@ -75,7 +75,8 @@ namespace {
     auto countries = std::vector<JsonValue>();
     for(auto item : config) {
       auto country = ParseCountryCode(item.as<std::string>(), countryDatabase);
-      countries.push_back(static_cast<double>(country));
+      countries.push_back(static_cast<double>(
+        static_cast<std::uint16_t>(country)));
     }
     if(countries.empty()) {
       return JsonNull();
