@@ -1,30 +1,26 @@
-#ifndef NEXUS_ACCOUNTROLES_HPP
-#define NEXUS_ACCOUNTROLES_HPP
+#ifndef NEXUS_ACCOUNT_ROLES_HPP
+#define NEXUS_ACCOUNT_ROLES_HPP
 #include <Beam/Collections/Enum.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \enum AccountRole
-      \brief Enumerates the roles of a Nexus account has.
-   */
+  /** Enumerates the roles of a Nexus account has. */
   BEAM_ENUM(AccountRole,
 
-    //! The account has permission to trade.
+    /** The account has permission to trade. */
     TRADER,
 
-    //! The account is a manager.
+    /** The account is a manager. */
     MANAGER,
 
-    //! The account provides an API service.
+    /** The account provides an API service. */
     SERVICE,
 
-    //! The account is an administrator.
+    /** The account is an administrator. */
     ADMINISTRATOR);
 
   using AccountRoles = Beam::EnumSet<AccountRole>;
-}
 }
 
 #endif

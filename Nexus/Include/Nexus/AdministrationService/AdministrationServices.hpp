@@ -15,499 +15,367 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
   BEAM_DEFINE_SERVICES(AdministrationServices,
-    /*! \interface Nexus::AdministrationServices::LoadAccountsByRolesService
-        \brief Loads the list of accounts that match a set of roles.
-        \param roles <code>Nexus::AdministrationService::AccountRoles</code>
-               The roles to match.
-        \return <code>std::vector\<Beam::ServiceLocator::DirectoryEntry\></code>
-                The list of directory entries of accounts that match the
-                specified roles.
-    */
-    //! \cond
+
+    /**
+     * Loads the list of accounts that match a set of roles.
+     * @param roles The roles to match.
+     * @return The list of directory entries of accounts that match the
+     *         specified roles.
+     */
     (LoadAccountsByRolesService,
       "Nexus.AdministrationServices.LoadAccountsByRolesService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>, AccountRoles, roles),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAdministratorsRootEntryService
-        \brief Loads the DirectoryEntry containing all administrators.
-        \param dummy <code>int</code> Unused.
-        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
-                DirectoryEntry containing all administrators.
-    */
-    //! \cond
+    /**
+     * Loads the DirectoryEntry containing all administrators.
+     * @param dummy Unused.
+     * @return The DirectoryEntry containing all administrators.
+     */
     (LoadAdministratorsRootEntryService,
       "Nexus.AdministrationServices.LoadAdministratorsRootEntryService",
       Beam::ServiceLocator::DirectoryEntry, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadServicesRootEntryService
-        \brief Loads the DirectoryEntry containing all service accounts.
-        \param dummy <code>int</code> Unused.
-        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
-                DirectoryEntry containing all service accounts.
-    */
-    //! \cond
+    /**
+     * Loads the DirectoryEntry containing all service accounts.
+     * @param dummy Unused.
+     * @return DirectoryEntry containing all service accounts.
+     */
     (LoadServicesRootEntryService,
       "Nexus.AdministrationServices.LoadServicesRootEntryService",
       Beam::ServiceLocator::DirectoryEntry, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadTradingGroupsRootEntryService
-        \brief Loads the DirectoryEntry containing all trading groups.
-        \param dummy <code>int</code> Unused.
-        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The
-                DirectoryEntry containing all trading groups.
-    */
-    //! \cond
+    /**
+     * Loads the DirectoryEntry containing all trading groups.
+     * @param dummy Unused.
+     * @return The DirectoryEntry containing all trading groups.
+     */
     (LoadTradingGroupsRootEntryService,
       "Nexus.AdministrationServices.LoadTradingGroupsRootEntryService",
       Beam::ServiceLocator::DirectoryEntry, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::CheckAdministratorService
-        \brief Tests if an account is an administrator.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to test.
-        \return <code>bool</code><code>true</code> iff the <i>account</i> is an
-                administrator.
-    */
-    //! \cond
+    /**
+     * Tests if an account is an administrator.
+     * @param account The account to test.
+     * @return <code>true</code> iff the <i>account</i> is an administrator.
+     */
     (CheckAdministratorService,
       "Nexus.AdministrationServices.CheckAdministratorService", bool,
       Beam::ServiceLocator::DirectoryEntry, account),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountRolesService
-        \brief Returns an accounts roles.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to lookup.
-        \return <code>AccountRoles</code>The roles associated with the
-                <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Returns an accounts roles.
+     * @param account The account to lookup.
+     * @return The roles associated with the <i>account</i>.
+     */
     (LoadAccountRolesService,
       "Nexus.AdministrationServices.LoadAccountRolesService", AccountRoles,
       Beam::ServiceLocator::DirectoryEntry, account),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadSupervisedAccountRolesService
-        \brief Returns the roles one account has over another.
-        \param parent <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account whose roles are to be loaded.
-        \param child <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account being supervised.
-        \return <code>AccountRoles</code> The roles that the <i>parent</i>
-                account has over the <i>child</i> account.
-    */
-    //! \cond
+    /**
+     * Returns the roles one account has over another.
+     * @param parent The account whose roles are to be loaded.
+     * @param child The account being supervised.
+     * @return The roles that the <i>parent</i> account has over the
+     *         <i>child</i> account.
+     */
     (LoadSupervisedAccountRolesService,
       "Nexus.AdministrationServices.LoadSupervisedAccountRolesService",
       AccountRoles, Beam::ServiceLocator::DirectoryEntry, parent,
       Beam::ServiceLocator::DirectoryEntry, child),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountTradingGroupEntryService
-        \brief Loads an account's trading group Directory.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account whose trading group is to be loaded.
-        \return <code>Beam::ServiceLocator::DirectoryEntry</code> The directory
-                of the trading <i>account</i>'s group.
-    */
-    //! \cond
+    /**
+     * Loads an account's trading group Directory.
+     * @param account The account whose trading group is to be loaded.
+     * @return The directory of the trading <i>account</i>'s group.
+     */
     (LoadAccountTradingGroupEntryService,
       "Nexus.AdministrationServices.LoadAccountTradingGroupEntryService",
       Beam::ServiceLocator::DirectoryEntry,
       Beam::ServiceLocator::DirectoryEntry, account),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountIdentityService
-        \brief Loads an account's identity.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account of the identity to load.
-        \return <code>AccountIdentity</code> The identity of the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Loads an account's identity.
+     * @param account The account of the identity to load.
+     * @return The identity of the <i>account</i>.
+     */
     (LoadAccountIdentityService,
       "Nexus.AdministrationServices.LoadAccountIdentityService",
       AccountIdentity, Beam::ServiceLocator::DirectoryEntry, account),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::StoreAccountIdentityService
-        \brief Sets an account's identity.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account of the identity to set.
-        \param identity <code>AccountIdentity</code> The identity to set.
-    */
-    //! \cond
+    /**
+     * Sets an account's identity.
+     * @param account The account of the identity to set.
+     * @param identity The identity to set.
+     */
     (StoreAccountIdentityService,
       "Nexus.AdministrationServices.StoreAccountIdentityService", void,
       Beam::ServiceLocator::DirectoryEntry, account, AccountIdentity,
       identity),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadTradingGroupService
-        \brief Loads a TradingGroup from its DirectoryEntry.
-        \param directory <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               DirectoryEntry of the TradingGroup to load.
-        \return <code>TradingGroup</code> The TradingGroup represented by the
-                specified <i>directory</i>.
-    */
-    //! \cond
+    /**
+     * Loads a TradingGroup from its DirectoryEntry.
+     * @param directory The DirectoryEntry of the TradingGroup to load.
+     * @return The TradingGroup represented by the specified <i>directory</i>.
+     */
     (LoadTradingGroupService,
       "Nexus.AdministrationServices.LoadTradingGroupService", TradingGroup,
       Beam::ServiceLocator::DirectoryEntry, directory),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAdministratorsService
-        \brief Loads the list of system administrators.
-        \param dummy <code>int</code> Unused.
-        \return <code>std::vector\<Beam::ServiceLocator::DirectoryEntry\>
-                </code> The list of system administrators.
-    */
-    //! \cond
+    /**
+     * Loads the list of system administrators.
+     * @param dummy Unused.
+     * @return The list of system administrators.
+     */
     (LoadAdministratorsService,
       "Nexus.AdministrationServices.LoadAdministratorsService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadServicesService
-        \brief Loads the list of accounts providing system services.
-        \param dummy <code>int</code> Unused.
-        \return <code>std::vector\<Beam::ServiceLocator::DirectoryEntry\>
-                </code> The list of system service providers.
-    */
-    //! \cond
-    (LoadServicesService,
-      "Nexus.AdministrationServices.LoadServicesService",
+    /**
+     * Loads the list of accounts providing system services.
+     * @param dummy Unused.
+     * @return The list of system service providers.
+     */
+    (LoadServicesService, "Nexus.AdministrationServices.LoadServicesService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadEntitlementsService
-        \brief Loads the database of available entitlements.
-        \param dummy <code>int</code> Unused.
-        \return <code>Nexus::MarketDataService::EntitlementDatabase</code> The
-                database of available entitlements.
-    */
-    //! \cond
+    /**
+     * Loads the database of available entitlements.
+     * @param dummy Unused.
+     * @return The database of available entitlements.
+     */
     (LoadEntitlementsService,
       "Nexus.AdministrationServices.LoadEntitlementsService",
       MarketDataService::EntitlementDatabase, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountEntitlementsService
-        \brief Loads the entitlements granted to an account.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to load the entitlements for.
-        \return <code>std::vector\<Beam::ServiceLocator::DirectoryEntry\>
-                </code> The list of entitlements granted to the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Loads the entitlements granted to an account.
+     * @param account The account to load the entitlements for.
+     * @return The list of entitlements granted to the <i>account</i>.
+     */
     (LoadAccountEntitlementsService,
       "Nexus.AdministrationServices.LoadAccountEntitlementsService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>,
       Beam::ServiceLocator::DirectoryEntry, account),
 
-    /*! \interface Nexus::AdministrationServices::StoreEntitlementsService
-        \brief Sets the entitlements granted to an account.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to set the entitlements for.
-        \param entitlements <code>
-               std::vector\<Beam::ServiceLocator::DirectoryEntry\></code>
-               The entitlements to grant to the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Sets the entitlements granted to an account.
+     * @param account The account to set the entitlements for.
+     * @param entitlements The entitlements to grant to the <i>account</i>.
+     */
     (StoreEntitlementsService,
       "Nexus.AdministrationServices.StoreEntitlementsService", void,
       Beam::ServiceLocator::DirectoryEntry, account,
       std::vector<Beam::ServiceLocator::DirectoryEntry>, entitlements),
 
-    /*! \interface Nexus::AdministrationServices::MonitorRiskParametersService
-        \brief Monitors an account's RiskParameters.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to monitor.
-        \return <code>RiskService::RiskParameters</code> The <i>account</i>'s
-                RiskParameters.
-    */
-    //! \cond
+    /**
+     * Monitors an account's RiskParameters.
+     * @param account The account to monitor.
+     * @return The <i>account</i>'s RiskParameters.
+     */
     (MonitorRiskParametersService,
       "Nexus.AdministrationServices.MonitorRiskParametersService",
       RiskService::RiskParameters, Beam::ServiceLocator::DirectoryEntry,
       account),
 
-    /*! \interface Nexus::AdministrationServices::StoreRiskParametersService
-        \brief Sets an account's RiskParameters.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to set the RiskParameters for.
-        \param riskParameters <code>RiskService::RiskParameters</code> The
-               RiskParameters to assign to the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Sets an account's RiskParameters.
+     * @param account The account to set the RiskParameters for.
+     * @param riskParameters The RiskParameters to assign to the <i>account</i>.
+     */
     (StoreRiskParametersService,
       "Nexus.AdministrationServices.StoreRiskParametersService", void,
       Beam::ServiceLocator::DirectoryEntry, account,
       RiskService::RiskParameters, risk_parameters),
 
-    /*! \interface Nexus::AdministrationServices::MonitorRiskStateService
-        \brief Monitors an account's RiskState.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to monitor.
-        \return <code>RiskService::RiskState</code> The <i>account</i>'s current
-                RiskState.
-    */
-    //! \cond
+    /**
+     * Monitors an account's RiskState.
+     * @param account The account to monitor.
+     * @return The <i>account</i>'s current RiskState.
+     */
     (MonitorRiskStateService,
       "Nexus.AdministrationServices.MonitorRiskStateService",
       RiskService::RiskState, Beam::ServiceLocator::DirectoryEntry, account),
 
-    /*! \interface Nexus::AdministrationServices::StoreRiskStateService
-        \brief Sets an account's RiskState.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to set the RiskState for.
-        \param riskState <code>RiskService::RiskState</code> The RiskState to
-               assign to the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Sets an account's RiskState.
+     * @param account The account to set the RiskState for.
+     * @param riskState The RiskState to assign to the <i>account</i>.
+     */
     (StoreRiskStateService,
       "Nexus.AdministrationServices.StoreRiskStateService", void,
       Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
       risk_state),
 
-    /*! \interface Nexus::AdministrationServices::LoadManagedTradingGroupsService
-        \brief Loads the DirectoryEntries of TradingGroups managed by an
-               account.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code>
-               The account whose managed TradingGroups are to be loaded.
-        \return <code>std::vector\<Beam::ServiceLocator::DirectoryEntry\>
-                </code> The list of TradingGroups managed by the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Loads the DirectoryEntries of TradingGroups managed by an account.
+     * @param account The account whose managed TradingGroups are to be loaded.
+     * @return The list of TradingGroups managed by the <i>account</i>.
+     */
     (LoadManagedTradingGroupsService,
       "Nexus.AdministrationServices.LoadManagedTradingGroupsService",
       std::vector<Beam::ServiceLocator::DirectoryEntry>,
       Beam::ServiceLocator::DirectoryEntry, account),
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestService
-        \brief Loads an account modification request.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request to load.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
-                The request with the specified <i>id</i>.
-    */
-    //! \cond
+    /**
+     * Loads an account modification request.
+     * @param id The id of the request to load.
+     * @return The request with the specified <i>id</i>.
+     */
     (LoadAccountModificationRequestService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestService",
       AccountModificationRequest, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestIdsService
-        \brief Given an account, loads the ids of requests to modify that
-               account.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account whose requests are to be loaded.
-        \param start_id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the first request to load (exclusive) or -1 to start
-               with the most recent request.
-        \param max_count <code>int</code> The maximum number of ids to load.
-        \return <code>std::vector\<Nexus::AdministrationService::AccountModificationRequest::Id\></code>
-                The list of account modification requests.
-    */
-    //! \cond
+    /**
+     * Given an account, loads the ids of requests to modify that account.
+     * @param account The account whose requests are to be loaded.
+     * @param start_id The id of the first request to load (exclusive) or -1 to
+     *        start with the most recent request.
+     * @param max_count The maximum number of ids to load.
+     * @return The list of account modification requests.
+     */
     (LoadAccountModificationRequestIdsService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestIdsService",
       std::vector<AccountModificationRequest::Id>,
       Beam::ServiceLocator::DirectoryEntry, account,
       AccountModificationRequest::Id, start_id, int, max_count),
 
-    /*! \interface Nexus::AdministrationServices::LoadManagedAccountModificationRequestIdsService
-        \brief Given an account, loads the ids of requests that the account is
-               authorized to manage.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account managing the modification requests.
-        \param start_id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the first request to load (exclusive) or -1 to start
-               with the most recent request.
-        \param max_count <code>int</code> The maximum number of ids to load.
-        \return <code>std::vector\<Nexus::AdministrationService::AccountModificationRequest::Id\></code>
-                The list of account modification requests.
-    */
-    //! \cond
+    /**
+     * Given an account, loads the ids of requests that the account is
+     * authorized to manage.
+     * @param account The account managing the modification requests.
+     * @param start_id The id of the first request to load (exclusive) or -1 to
+     *        start with the most recent request.
+     * @param max_count The maximum number of ids to load.
+     * @return The list of account modification requests.
+     */
     (LoadManagedAccountModificationRequestIdsService,
       "Nexus.AdministrationServices.LoadManagedAccountModificationRequestIdsService",
       std::vector<AccountModificationRequest::Id>,
       Beam::ServiceLocator::DirectoryEntry, account,
       AccountModificationRequest::Id, start_id, int, max_count),
 
-    /*! \interface Nexus::AdministrationServices::LoadEntitlementModificationService
-        \brief Loads an entitlement modification.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the modification to load.
-        \return <code>Nexus::AdministrationService::EntitlementModification</code>
-                The entitlement modification with the specified <i>id</i>.
-    */
-    //! \cond
+    /**
+     * Loads an entitlement modification.
+     * @param id The id of the modification to load.
+     * @return The entitlement modification with the specified <i>id</i>.
+     */
     (LoadEntitlementModificationService,
       "Nexus.AdministrationServices.LoadEntitlementModificationService",
       EntitlementModification, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::SubmitEntitlementModificationRequestService
-        \brief Submits a request to modify an account's entitlements.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to modify.
-        \param submission_account <code>Beam::ServiceLocator::DirectoryEntry</code>
-               The account submitting the request.
-        \param modification <code>Nexus::AdministrationService::EntitlementModification</code>
-               The modification to apply.
-        \param comment <code>Nexus::AdministrationService::Message</code> The
-               comment to associate with the request.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
-                An object representing the request.
-    */
-    //! \cond
+    /**
+     * Submits a request to modify an account's entitlements.
+     * @param account The account to modify.
+     * @param submission_account The account submitting the request.
+     * @param modification The modification to apply.
+     * @param comment The comment to associate with the request.
+     * @return An object representing the request.
+     */
     (SubmitEntitlementModificationRequestService,
       "Nexus.AdministrationServices.SubmitEntitlementModificationRequestService",
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
       EntitlementModification, modification, Message, comment),
 
-    /*! \interface Nexus::AdministrationServices::LoadRiskModificationService
-        \brief Loads a risk modification.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the modification to load.
-        \return <code>Nexus::AdministrationService::RiskModification</code>
-                The risk modification with the specified <i>id</i>.
-    */
-    //! \cond
+    /**
+     * Loads a risk modification.
+     * @param id The id of the modification to load.
+     * @return The risk modification with the specified <i>id</i>.
+     */
     (LoadRiskModificationService,
       "Nexus.AdministrationServices.LoadRiskModificationService",
       RiskModification, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::SubmitRiskModificationRequestService
-        \brief Submits a request to modify an account's risk parameters.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account to modify.
-        \param modification <code>Nexus::AdministrationService::RiskModification</code>
-               The modification to apply.
-        \param comment <code>Nexus::AdministrationService::Message</code> The
-               comment to associate with the request.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest</code>
-                An object representing the request.
-    */
-    //! \cond
+    /**
+     * Submits a request to modify an account's risk parameters.
+     * @param account The account to modify.
+     * @param modification The modification to apply.
+     * @param comment The comment to associate with the request.
+     * @return An object representing the request.
+     */
     (SubmitRiskModificationRequestService,
       "Nexus.AdministrationServices.SubmitRiskModificationRequestService",
       AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
       RiskModification, modification, Message, comment),
 
-    /*! \interface Nexus::AdministrationServices::LoadAccountModificationRequestStatusService
-        \brief Loads the status of an account modification request.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
-                The update representing the current status of the request.
-    */
-    //! \cond
+    /**
+     * Loads the status of an account modification request.
+     * @param id The id of the request.
+     * @return The update representing the current status of the request.
+     */
     (LoadAccountModificationRequestStatusService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestStatusService",
       AccountModificationRequest::Update, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::ApproveAccountModificationRequestService
-        \brief Approves an account modification request.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request.
-        \param comment <code>Nexus::AdministrationService::Message</code> The
-               comment to associate with the approval.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
-                An object representing the update.
-    */
-    //! \cond
+    /**
+     * Approves an account modification request.
+     * @param id The id of the request.
+     * @param comment The comment to associate with the approval.
+     * @return An object representing the update.
+     */
     (ApproveAccountModificationRequestService,
       "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
       AccountModificationRequest::Update, AccountModificationRequest::Id, id,
       Message, comment),
 
-    /*! \interface Nexus::AdministrationServices::RejectAccountModificationRequestService
-        \brief Rejects an account modification request.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request.
-        \param comment <code>Nexus::AdministrationService::Message</code> The
-               comment to associate with the rejection.
-        \return <code>Nexus::AdministrationService::AccountModificationRequest::Update</code>
-                An object representing the update.
-    */
-    //! \cond
+    /**
+     * Rejects an account modification request.
+     * @param id The id of the request.
+     * @param comment The comment to associate with the rejection.
+     * @return An object representing the update.
+     */
     (RejectAccountModificationRequestService,
       "Nexus.AdministrationServices.RejectAccountModificationRequestService",
       AccountModificationRequest::Update, AccountModificationRequest::Id, id,
       Message, comment),
 
-    /*! \interface Nexus::AdministrationServices::LoadMessageService
-        \brief Loads a message.
-        \param id <code>Nexus::AdministrationService::Message::Id</code>
-               The id of the message to load.
-        \return <code>Nexus::AdministrationService::Message</code>
-                The message with the specified <i>id</i>.
-    */
-    //! \cond
+    /**
+     * Loads a message.
+     * @param id The id of the message to load.
+     * @return The message with the specified <i>id</i>.
+     */
     (LoadMessageService, "Nexus.AdministrationServices.LoadMessageService",
       Message, Message::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::LoadMessageIdsService
-        \brief Loads the list of messages associated with an account
-               modification.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request.
-        \return <code>std::vector\<Nexus::AdministrationServices::Message::Id\></code>
-                The list of message ids associated with the request.
-    */
-    //! \cond
+    /**
+     * Loads the list of messages associated with an account modification.
+     * @param id The id of the request.
+     * @return The list of message ids associated with the request.
+     */
     (LoadMessageIdsService,
       "Nexus.AdministrationServices.LoadMessageIdsService",
       std::vector<Message::Id>, AccountModificationRequest::Id, id),
 
-    /*! \interface Nexus::AdministrationServices::SendAccountModificationRequestMessageService
-        \brief Appends a message to an account modification request.
-        \param id <code>Nexus::AdministrationService::AccountModificationRequest::Id</code>
-               The id of the request to send the message to.
-        \param message <code>Nexus::AdministrationService::Message</code> The
-               message to append.
-        \return <code>Nexus::AdministrationServices::Message</code>
-                The appended message.
-    */
-    //! \cond
+    /**
+     * Appends a message to an account modification request.
+     * @param id The id of the request to send the message to.
+     * @param message The message to append.
+     * @return The appended message.
+     */
     (SendAccountModificationRequestMessageService,
       "Nexus.AdministrationServices.SendAccountModificationRequestMessageService",
       Message, AccountModificationRequest::Id, id, Message, message));
-    //! \endcond
 
   BEAM_DEFINE_MESSAGES(AdministrationMessages,
 
-    /*! \interface Nexus::AdministrationService::RiskParametersMessage
-        \brief Indicates a change in an account's RiskParameters.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account affected.
-        \param risk_parameters <code>RiskService::RiskParameters</code> The
-               updated parameters for the <i>account</i>.
-    */
-    //! \cond
+    /**
+     * Indicates a change in an account's RiskParameters.
+     * @param account The account affected.
+     * @param risk_parameters The updated parameters for the <i>account</i>.
+     */
     (RiskParametersMessage, "Nexus.AdministrationService.RiskParametersMessage",
       Beam::ServiceLocator::DirectoryEntry, account,
       RiskService::RiskParameters, risk_parameters),
 
-    /*! \interface Nexus::AdministrationService::RiskStateMessage
-        \brief Indicates a change in an account's RiskState.
-        \param account <code>Beam::ServiceLocator::DirectoryEntry</code> The
-               account affected.
-        \param risk_state <code>RiskService::RiskState</code> The
-               <i>account</i>'s current RiskState.
-    */
-    //! \cond
+    /**
+     * Indicates a change in an account's RiskState.
+     * @param account The account affected.
+     * @param risk_state The <i>account</i>'s current RiskState.
+     */
     (RiskStateMessage, "Nexus.AdministrationService.RiskStateMessage",
       Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
       risk_state));
-    //! \endcond
-}
 }
 
 #endif

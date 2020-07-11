@@ -21,9 +21,7 @@
 
 namespace Nexus::AdministrationService {
 
-  /*! \class VirtualAdministrationClient
-      \brief Provides a pure virtual interface to an AdministrationClient.
-   */
+  /** Provides a pure virtual interface to an AdministrationClient. */
   class VirtualAdministrationClient : private boost::noncopyable {
     public:
       virtual ~VirtualAdministrationClient() = default;
@@ -153,164 +151,153 @@ namespace Nexus::AdministrationService {
 
     protected:
 
-      //! Constructs a VirtualAdministrationClient.
+      /** Constructs a VirtualAdministrationClient. */
       VirtualAdministrationClient() = default;
   };
 
-  /*! \class WrapperAdministrationClient
-      \brief Wraps an AdministrationClient providing it with a virtual
-             interface.
-      \tparam ClientType The type of AdministrationClient to wrap.
+  /**
+   * Wraps an AdministrationClient providing it with a virtual interface.
+   * @param <C> The type of AdministrationClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperAdministrationClient : public VirtualAdministrationClient {
     public:
 
-      //! The AdministrationClient to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
+      /** The AdministrationClient to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperAdministrationClient.
-      /*!
-        \param client The AdministrationClient to wrap.
-      */
-      template<typename AdministrationClientForward>
-      WrapperAdministrationClient(AdministrationClientForward&& client);
+      /**
+       * Constructs a WrapperAdministrationClient.
+       * @param client The AdministrationClient to wrap.
+       */
+      template<typename CF>
+      WrapperAdministrationClient(CF&& client);
 
-      virtual ~WrapperAdministrationClient();
+      ~WrapperAdministrationClient() override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+      std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
 
-      virtual Beam::ServiceLocator::DirectoryEntry
+      Beam::ServiceLocator::DirectoryEntry
         LoadAdministratorsRootEntry() override;
 
-      virtual Beam::ServiceLocator::DirectoryEntry
-        LoadServicesRootEntry() override;
+      Beam::ServiceLocator::DirectoryEntry LoadServicesRootEntry() override;
 
-      virtual Beam::ServiceLocator::DirectoryEntry
+      Beam::ServiceLocator::DirectoryEntry
         LoadTradingGroupsRootEntry() override;
 
-      virtual bool CheckAdministrator(
+      bool CheckAdministrator(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual AccountRoles LoadAccountRoles(
+      AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual AccountRoles LoadAccountRoles(
+      AccountRoles LoadAccountRoles(
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) override;
 
-      virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual AccountIdentity LoadIdentity(
+      AccountIdentity LoadIdentity(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void StoreIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+      void StoreIdentity(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity) override;
 
-      virtual TradingGroup LoadTradingGroup(
+      TradingGroup LoadTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& directory) override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+      std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadManagedTradingGroups(const Beam::ServiceLocator::DirectoryEntry&
         account) override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
+      std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAdministrators() override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
-        LoadServices() override;
+      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadServices() override;
 
-      virtual MarketDataService::EntitlementDatabase
-        LoadEntitlements() override;
+      MarketDataService::EntitlementDatabase LoadEntitlements() override;
 
-      virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
-        LoadEntitlements(
+      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void StoreEntitlements(
+      void StoreEntitlements(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>&
         entitlements) override;
 
-      virtual const Beam::Publisher<RiskService::RiskParameters>&
+      const Beam::Publisher<RiskService::RiskParameters>&
         GetRiskParametersPublisher(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void StoreRiskParameters(
+      void StoreRiskParameters(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& riskParameters) override;
 
-      virtual const Beam::Publisher<RiskService::RiskState>&
-        GetRiskStatePublisher(
+      const Beam::Publisher<RiskService::RiskState>& GetRiskStatePublisher(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void StoreRiskState(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+      void StoreRiskState(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) override;
 
-      virtual AccountModificationRequest LoadAccountModificationRequest(
+      AccountModificationRequest LoadAccountModificationRequest(
         AccountModificationRequest::Id id) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadAccountModificationRequestIds(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadManagedAccountModificationRequestIds(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual EntitlementModification LoadEntitlementModification(
+      EntitlementModification LoadEntitlementModification(
         AccountModificationRequest::Id id) override;
 
-      virtual AccountModificationRequest SubmitAccountModificationRequest(
+      AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification,
         const Message& comment) override;
 
-      virtual RiskModification LoadRiskModification(
+      RiskModification LoadRiskModification(
         AccountModificationRequest::Id id) override;
 
-      virtual AccountModificationRequest SubmitAccountModificationRequest(
+      AccountModificationRequest SubmitAccountModificationRequest(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment) override;
 
-      virtual AccountModificationRequest::Update
-        LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
-      virtual AccountModificationRequest::Update
-        ApproveAccountModificationRequest(AccountModificationRequest::Id id,
-        const Message& comment) override;
+      AccountModificationRequest::Update ApproveAccountModificationRequest(
+        AccountModificationRequest::Id id, const Message& comment) override;
 
-      virtual AccountModificationRequest::Update
-        RejectAccountModificationRequest(AccountModificationRequest::Id id,
-        const Message& comment) override;
+      AccountModificationRequest::Update RejectAccountModificationRequest(
+        AccountModificationRequest::Id id, const Message& comment) override;
 
-      virtual Message LoadMessage(Message::Id id) override;
+      Message LoadMessage(Message::Id id) override;
 
-      virtual std::vector<Message::Id> LoadMessageIds(
+      std::vector<Message::Id> LoadMessageIds(
         AccountModificationRequest::Id id) override;
 
-      virtual Message SendAccountModificationRequestMessage(
+      Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) override;
 
-      virtual void Open() override;
+      void Open() override;
 
-      virtual void Close() override;
+      void Close() override;
 
     private:
-      Beam::GetOptionalLocalPtr<ClientType> m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps an AdministrationClient into a VirtualAdministrationClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps an AdministrationClient into a VirtualAdministrationClient.
+   * @param client The client to wrap.
+   */
   template<typename AdministrationClient>
   std::unique_ptr<VirtualAdministrationClient> MakeVirtualAdministrationClient(
       AdministrationClient&& client) {
@@ -318,186 +305,184 @@ namespace Nexus::AdministrationService {
       AdministrationClient>>(std::forward<AdministrationClient>(client));
   }
 
-  template<typename ClientType>
-  template<typename AdministrationClientForward>
-  WrapperAdministrationClient<ClientType>::WrapperAdministrationClient(
-      AdministrationClientForward&& client)
-      : m_client{std::forward<AdministrationClientForward>(client)} {}
+  template<typename C>
+  template<typename CF>
+  WrapperAdministrationClient<C>::WrapperAdministrationClient(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
-  template<typename ClientType>
-  WrapperAdministrationClient<ClientType>::~WrapperAdministrationClient() {
+  template<typename C>
+  WrapperAdministrationClient<C>::~WrapperAdministrationClient() {
     Close();
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      WrapperAdministrationClient<ClientType>::LoadAccountsByRoles(
-      AccountRoles roles) {
+      WrapperAdministrationClient<C>::LoadAccountsByRoles(AccountRoles roles) {
     return m_client->LoadAccountsByRoles(roles);
   }
 
-  template<typename ClientType>
-  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
       LoadAdministratorsRootEntry() {
     return m_client->LoadAdministratorsRootEntry();
   }
 
-  template<typename ClientType>
-  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
       LoadServicesRootEntry() {
     return m_client->LoadServicesRootEntry();
   }
 
-  template<typename ClientType>
-  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
       LoadTradingGroupsRootEntry() {
     return m_client->LoadTradingGroupsRootEntry();
   }
 
-  template<typename ClientType>
-  bool WrapperAdministrationClient<ClientType>::CheckAdministrator(
+  template<typename C>
+  bool WrapperAdministrationClient<C>::CheckAdministrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->CheckAdministrator(account);
   }
 
-  template<typename ClientType>
-  AccountRoles WrapperAdministrationClient<ClientType>::LoadAccountRoles(
+  template<typename C>
+  AccountRoles WrapperAdministrationClient<C>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadAccountRoles(account);
   }
 
-  template<typename ClientType>
-  AccountRoles WrapperAdministrationClient<ClientType>::LoadAccountRoles(
+  template<typename C>
+  AccountRoles WrapperAdministrationClient<C>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     return m_client->LoadAccountRoles(parent, child);
   }
 
-  template<typename ClientType>
-  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
       LoadTradingGroupEntry(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadTradingGroupEntry(account);
   }
 
-  template<typename ClientType>
-  AccountIdentity WrapperAdministrationClient<ClientType>::LoadIdentity(
+  template<typename C>
+  AccountIdentity WrapperAdministrationClient<C>::LoadIdentity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadIdentity(account);
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::StoreIdentity(
+  template<typename C>
+  void WrapperAdministrationClient<C>::StoreIdentity(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
     m_client->StoreIdentity(account, identity);
   }
 
-  template<typename ClientType>
-  TradingGroup WrapperAdministrationClient<ClientType>::LoadTradingGroup(
+  template<typename C>
+  TradingGroup WrapperAdministrationClient<C>::LoadTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     return m_client->LoadTradingGroup(directory);
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      WrapperAdministrationClient<ClientType>::LoadManagedTradingGroups(
+      WrapperAdministrationClient<C>::LoadManagedTradingGroups(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadManagedTradingGroups(account);
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      WrapperAdministrationClient<ClientType>::LoadAdministrators() {
+      WrapperAdministrationClient<C>::LoadAdministrators() {
     return m_client->LoadAdministrators();
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      WrapperAdministrationClient<ClientType>::LoadServices() {
+      WrapperAdministrationClient<C>::LoadServices() {
     return m_client->LoadServices();
   }
 
-  template<typename ClientType>
+  template<typename C>
   MarketDataService::EntitlementDatabase
-      WrapperAdministrationClient<ClientType>::LoadEntitlements() {
+      WrapperAdministrationClient<C>::LoadEntitlements() {
     return m_client->LoadEntitlements();
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      WrapperAdministrationClient<ClientType>::LoadEntitlements(
+      WrapperAdministrationClient<C>::LoadEntitlements(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->LoadEntitlements(account);
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::StoreEntitlements(
+  template<typename C>
+  void WrapperAdministrationClient<C>::StoreEntitlements(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
     m_client->StoreEntitlements(account, entitlements);
   }
 
-  template<typename ClientType>
+  template<typename C>
   const Beam::Publisher<RiskService::RiskParameters>&
-      WrapperAdministrationClient<ClientType>::GetRiskParametersPublisher(
+      WrapperAdministrationClient<C>::GetRiskParametersPublisher(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->GetRiskParametersPublisher(account);
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::StoreRiskParameters(
+  template<typename C>
+  void WrapperAdministrationClient<C>::StoreRiskParameters(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
     m_client->StoreRiskParameters(account, riskParameters);
   }
 
-  template<typename ClientType>
+  template<typename C>
   const Beam::Publisher<RiskService::RiskState>&
-      WrapperAdministrationClient<ClientType>::GetRiskStatePublisher(
+      WrapperAdministrationClient<C>::GetRiskStatePublisher(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->GetRiskStatePublisher(account);
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::StoreRiskState(
+  template<typename C>
+  void WrapperAdministrationClient<C>::StoreRiskState(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
     m_client->StoreRiskState(account, riskState);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest WrapperAdministrationClient<C>::
       LoadAccountModificationRequest(AccountModificationRequest::Id id) {
     return m_client->LoadAccountModificationRequest(id);
   }
 
-  template<typename ClientType>
-  std::vector<AccountModificationRequest::Id> WrapperAdministrationClient<
-      ClientType>::LoadAccountModificationRequestIds(
+  template<typename C>
+  std::vector<AccountModificationRequest::Id>
+      WrapperAdministrationClient<C>::LoadAccountModificationRequestIds(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
     return m_client->LoadAccountModificationRequestIds(account, startId,
       maxCount);
   }
 
-  template<typename ClientType>
-  std::vector<AccountModificationRequest::Id> WrapperAdministrationClient<
-      ClientType>::LoadManagedAccountModificationRequestIds(
+  template<typename C>
+  std::vector<AccountModificationRequest::Id>
+      WrapperAdministrationClient<C>::LoadManagedAccountModificationRequestIds(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
     return m_client->LoadManagedAccountModificationRequestIds(account, startId,
       maxCount);
   }
 
-  template<typename ClientType>
-  EntitlementModification WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  EntitlementModification WrapperAdministrationClient<C>::
       LoadEntitlementModification(AccountModificationRequest::Id id) {
     return m_client->LoadEntitlementModification(id);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest WrapperAdministrationClient<C>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const EntitlementModification& modification, const Message& comment) {
@@ -505,14 +490,14 @@ namespace Nexus::AdministrationService {
       comment);
   }
 
-  template<typename ClientType>
-  RiskModification WrapperAdministrationClient<ClientType>::
-      LoadRiskModification(AccountModificationRequest::Id id) {
+  template<typename C>
+  RiskModification WrapperAdministrationClient<C>::LoadRiskModification(
+      AccountModificationRequest::Id id) {
     return m_client->LoadRiskModification(id);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest WrapperAdministrationClient<C>::
       SubmitAccountModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
@@ -520,51 +505,51 @@ namespace Nexus::AdministrationService {
       comment);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest::Update WrapperAdministrationClient<C>::
       LoadAccountModificationRequestStatus(AccountModificationRequest::Id id) {
     return m_client->LoadAccountModificationRequestStatus(id);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest::Update WrapperAdministrationClient<C>::
       ApproveAccountModificationRequest(AccountModificationRequest::Id id,
       const Message& comment) {
     return m_client->ApproveAccountModificationRequest(id, comment);
   }
 
-  template<typename ClientType>
-  AccountModificationRequest::Update WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  AccountModificationRequest::Update WrapperAdministrationClient<C>::
       RejectAccountModificationRequest(AccountModificationRequest::Id id,
       const Message& comment) {
     return m_client->RejectAccountModificationRequest(id, comment);
   }
 
-  template<typename ClientType>
-  Message WrapperAdministrationClient<ClientType>::LoadMessage(Message::Id id) {
+  template<typename C>
+  Message WrapperAdministrationClient<C>::LoadMessage(Message::Id id) {
     return m_client->LoadMessage(id);
   }
 
-  template<typename ClientType>
-  std::vector<Message::Id> WrapperAdministrationClient<ClientType>::
-      LoadMessageIds(AccountModificationRequest::Id id) {
+  template<typename C>
+  std::vector<Message::Id> WrapperAdministrationClient<C>::LoadMessageIds(
+      AccountModificationRequest::Id id) {
     return m_client->LoadMessageIds(id);
   }
 
-  template<typename ClientType>
-  Message WrapperAdministrationClient<ClientType>::
+  template<typename C>
+  Message WrapperAdministrationClient<C>::
       SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
       const Message& message) {
     return m_client->SendAccountModificationRequestMessage(id, message);
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::Open() {
+  template<typename C>
+  void WrapperAdministrationClient<C>::Open() {
     m_client->Open();
   }
 
-  template<typename ClientType>
-  void WrapperAdministrationClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperAdministrationClient<C>::Close() {
     m_client->Close();
   }
 }
