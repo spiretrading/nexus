@@ -21,9 +21,6 @@ namespace Details {
     /** Stores an invalid country code. */
     static const T NONE;
   };
-
-  template<typename T>
-  constexpr const T CountryCodeDefinitions<T>::NONE(~0);
 }
 
   /** Identifies a country by a unique code. */
@@ -315,6 +312,11 @@ namespace Details {
   template<typename T>
   CountryDatabase::Entry CountryDatabase::NoneEntry<T>::NONE_ENTRY =
     CountryDatabase::MakeNoneEntry();
+
+namespace Details {
+  template<typename T>
+  constexpr const T CountryCodeDefinitions<T>::NONE(~0);
+}
 }
 
 namespace Beam::Serialization {
