@@ -148,9 +148,8 @@ namespace RiskService {
           currencyProfitAndLoss, currency, m_riskParameters.m_currency);
         profitAndLoss += convertedProfitAndLoss;
       } catch(const std::exception&) {
-        std::cerr << "Currency pair not found: " <<
-          static_cast<int>(currency.m_value) << " " <<
-          static_cast<int>(m_riskParameters.m_currency.m_value) << std::endl;
+        std::cerr << "Currency pair not found: " << currency << " " <<
+          m_riskParameters.m_currency << std::endl;
         if(m_riskState.m_type == RiskState::Type::ACTIVE) {
           m_riskState.m_type = RiskState::Type::CLOSE_ORDERS;
           m_riskState.m_expiry = m_timeClient->GetTime() +
