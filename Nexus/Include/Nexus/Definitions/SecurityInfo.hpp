@@ -9,50 +9,48 @@
 
 namespace Nexus {
 
-  /*! \struct SecurityInfo
-      \brief Stores info about the company/entity represented by a Security.
-   */
+  /** Stores info about the company/entity represented by a Security. */
   struct SecurityInfo {
 
-    //! The Security represented.
+    /** The Security represented. */
     Security m_security;
 
-    //! The full name of the entity.
+    /** The full name of the entity. */
     std::string m_name;
 
-    //! The sector the Security belongs to.
+    /** The sector the Security belongs to. */
     std::string m_sector;
 
-    //! The board lot.
+    /** The board lot. */
     Quantity m_boardLot;
 
-    //! Constructs an empty SecurityInfo.
+    /** Constructs an empty SecurityInfo. */
     SecurityInfo() = default;
 
-    //! Constructs a SecurityInfo.
-    /*!
-      \param security The Security represented.
-      \param name The full name of the entity.
-      \param sector The sector the Security belongs to.
-      \param boardLot The board lot.
-    */
+    /**
+     * Constructs a SecurityInfo.
+     * @param security The Security represented.
+     * @param name The full name of the entity.
+     * @param sector The sector the Security belongs to.
+     * @param boardLot The board lot.
+     */
     SecurityInfo(Security security, std::string name, std::string sector,
       Quantity boardLot);
 
-    //! Tests whether this SecurityInfo is structurally equal to another.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is structurally equal to
-              <i>rhs</i>.
-    */
+    /**
+     * Tests whether this SecurityInfo is structurally equal to another.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is structurally equal to
+     *         <i>rhs</i>.
+     */
     bool operator ==(const SecurityInfo& rhs) const;
 
-    //! Tests whether this SecurityInfo is not structurally equal to another.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is not structurally equal to
-              <i>rhs</i>.
-    */
+    /**
+     * Tests whether this SecurityInfo is not structurally equal to another.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is not structurally equal to
+     *         <i>rhs</i>.
+     */
     bool operator !=(const SecurityInfo& rhs) const;
   };
 

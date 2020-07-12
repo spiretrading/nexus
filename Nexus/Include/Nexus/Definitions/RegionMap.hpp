@@ -15,21 +15,23 @@ namespace Details {
     std::tuple<const Region, T> m_element;
     std::vector<std::unique_ptr<Node>> m_subRegions;
 
-    Node(const Region& region, const T& value);
+    Node(Region region, T value);
     Node(const Node& node);
     Node& operator =(const Node& node);
   };
 
   template<typename T>
-  Node<T>::Node(const Region& region, const T& value)
-      : m_element(region, value) {}
+  Node<T>::Node(Region region, T value)
+    : m_element(std::move(region), std::move(value)) {}
 
   template<typename T>
   Node<T>::Node(const Node& node)
       : m_element(node.m_element) {
-    for(auto i = node.m_subRegions.begin(); i != node.m_subRegions.end(); ++i) {
-      m_subRegions.push_back(std::make_unique<Node>(**i));
-    }
+    std::transform(node.m_subRegions.begin(), node.m_subRegions.end(),
+      std::back_inserter(m_subRegions),
+      [] (auto& region) {
+        return std::make_unique<Node>(*region);
+      });
   }
 
   template<typename T>
@@ -40,46 +42,44 @@ namespace Details {
     const_cast<Region&>(std::get<0>(m_element)) = std::get<0>(node.m_element);
     std::get<1>(m_element) = std::get<1>(node.m_element);
     m_subRegions.clear();
-    for(auto i = node.m_subRegions.begin(); i != node.m_subRegions.end(); ++i) {
-      m_subRegions.push_back(std::make_unique<Node>(**i));
-    }
+    std::transform(node.m_subRegions.begin(), node.m_subRegions.end(),
+      std::back_inserter(m_subRegions),
+      [] (auto& region) {
+        return std::make_unique<Node>(*region);
+      });
     return *this;
   }
 }
 
-  /*! \class RegionMap
-      \brief Associates a value with a given Region.
-   */
+  /** Associates a value with a given Region. */
   template<typename T>
   class RegionMap {
     public:
 
-      //! The type of value to associate with a Region.
+      /** The type of value to associate with a Region. */
       using Element = T;
 
-      /*! \class Iterator
-          \brief Allows iterating over a RegionMap.
-       */
+      /** Allows iterating over a RegionMap. */
       class Iterator : public std::iterator<std::forward_iterator_tag,
           std::tuple<const Region, T>> {
         public:
 
-          //! Constructs an empty Iterator.
-          Iterator();
+          /** Constructs an empty Iterator. */
+          Iterator() = default;
 
-          //! Increments the Iterator.
+          /** Increments the Iterator. */
           Iterator& operator ++();
 
-          //! Increments the Iterator.
+          /** Increments the Iterator. */
           Iterator operator ++(int);
 
-          //! Tests if two Iterators refer to the same element.
+          /** Tests if two Iterators refer to the same element. */
           bool operator ==(const Iterator& rhs);
 
-          //! Tests if two Iterators refer to different elements.
+          /** Tests if two Iterators refer to different elements. */
           bool operator !=(const Iterator& rhs);
 
-          //! Dereferences this Iterator.
+          /** Dereferences this Iterator. */
           std::tuple<const Region, T>& operator *();
 
         private:
@@ -89,29 +89,27 @@ namespace Details {
           Iterator(Details::Node<T>& root);
       };
 
-      /*! \class ConstIterator
-          \brief Allows iterating over a RegionMap.
-       */
+      /** Allows iterating over a RegionMap. */
       class ConstIterator : public std::iterator<std::forward_iterator_tag,
           const std::tuple<const Region, T>> {
         public:
 
-          //! Constructs an empty ConstIterator.
-          ConstIterator();
+          /** Constructs an empty ConstIterator. */
+          ConstIterator() = default;
 
-          //! Increments the ConstIterator.
+          /** Increments the ConstIterator. */
           ConstIterator& operator ++();
 
-          //! Increments the ConstIterator.
+          /** Increments the ConstIterator. */
           ConstIterator operator ++(int);
 
-          //! Tests if two ConstIterators refer to the same element.
+          /** Tests if two ConstIterators refer to the same element. */
           bool operator ==(const ConstIterator& rhs);
 
-          //! Tests if two ConstIterators refer to different elements.
+          /** Tests if two ConstIterators refer to different elements. */
           bool operator !=(const ConstIterator& rhs);
 
-          //! Dereferences this ConstIterator.
+          /** Dereferences this ConstIterator. */
           const std::tuple<const Region, T>& operator *();
 
         private:
@@ -121,77 +119,77 @@ namespace Details {
           ConstIterator(const Details::Node<T>& root);
       };
 
-      //! Constructs a RegionMap.
-      /*!
-        \param globalValue The value associated with the 'global' Region.
-      */
-      explicit RegionMap(const T& globalValue);
+      /**
+       * Constructs a RegionMap.
+       * @param globalValue The value associated with the 'global' Region.
+       */
+      explicit RegionMap(T globalValue);
 
-      //! Constructs a RegionMap.
-      /*!
-        \param name The name of the 'global' Region.
-        \param globalValue The value associated with the 'global' Region.
-      */
-      RegionMap(const std::string& name, const T& globalValue);
+      /**
+       * Constructs a RegionMap.
+       * @param name The name of the 'global' Region.
+       * @param globalValue The value associated with the 'global' Region.
+       */
+      RegionMap(std::string name, T globalValue);
 
-      //! Returns the number of Regions represented.
+      /** Returns the number of Regions represented. */
       std::size_t GetSize() const;
 
-      //! Returns the value associated with a Region.
-      /*!
-        \param region The Region to retrieve the associated value of.
-        \return The value associated with the <i>region</i>.
-      */
+      /**
+       * Returns the value associated with a Region.
+       * @param region The Region to retrieve the associated value of.
+       * @return The value associated with the <i>region</i>.
+       */
       const T& Get(const Region& region) const;
 
-      //! Returns the value associated with a Region.
-      /*!
-        \param region The Region to retrieve the associated value of.
-        \return The value associated with the <i>region</i>.
-      */
+      /**
+       * Returns the value associated with a Region.
+       * @param region The Region to retrieve the associated value of.
+       * @return The value associated with the <i>region</i>.
+       */
       T& Get(const Region& region);
 
-      //! Sets a value to be associated with a Region.
-      /*!
-        \param region The Region to associate.
-        \param value The value to associate with the <i>region</i>.
-      */
+      /**
+       * Sets a value to be associated with a Region.
+       * @param region The Region to associate.
+       * @param value The value to associate with the <i>region</i>.
+       */
       void Set(const Region& region, const T& value);
 
-      //! Erases a Region.
-      /*!
-        \param region The Region to delete.
-      */
+      /**
+       * Erases a Region.
+       * @param region The Region to delete.
+       */
       void Erase(const Region& region);
 
-      //! Returns an iterator to the Region that most closely encapsulates a
-      //! specified Region.
-      /*!
-        \param region The Region to find.
-        \return A ConstIterator to the Region that most closely encapsulates the
-                specified <i>region</i>.
-      */
+      /**
+       * Returns an iterator to the Region that most closely encapsulates a
+       * specified Region.
+       * @param region The Region to find.
+       * @return A ConstIterator to the Region that most closely encapsulates
+       *         the specified <i>region</i>.
+       */
       Iterator Find(const Region& region);
 
-      //! Returns an iterator to the Region that most closely encapsulates a
-      //! specified Region.
-      /*!
-        \param region The Region to find.
-        \return A ConstIterator to the Region that most closely encapsulates the
-                specified <i>region</i>.
-      */
+      /**
+       * Returns an iterator to the Region that most closely encapsulates a
+       * specified Region.
+       * @param region The Region to find.
+       * @return A ConstIterator to the Region that most closely encapsulates
+       *         the specified <i>region</i>.
+       */
       ConstIterator Find(const Region& region) const;
 
-      //! Returns an Iterator to the global Region.
+      /** Returns an Iterator to the global Region. */
       Iterator Begin();
 
-      //! Returns a ConstIterator to the global Region.
+      /** Returns a ConstIterator to the global Region. */
       ConstIterator Begin() const;
 
-      //! Returns an Iterator to the end of this container.
+      /** Returns an Iterator to the end of this container. */
       Iterator End();
 
-      //! Returns a ConstIterator to the end of this container.
+      /** Returns a ConstIterator to the end of this container. */
       ConstIterator End() const;
 
     private:
@@ -201,7 +199,7 @@ namespace Details {
       std::size_t m_size;
 
       RegionMap(Beam::Serialization::ReceiveBuilder);
-      void Insert(Details::Node<T>& root, const Region& region, const T& value);
+      void Insert(Details::Node<T>& root, Region region, T value);
       static Details::Node<T>& Find(Details::Node<T>& root,
         const Region& region);
       static const Details::Node<T>& Find(const Details::Node<T>& root,
@@ -211,23 +209,21 @@ namespace Details {
   };
 
   template<typename T>
-  RegionMap<T>::Iterator::Iterator() {}
-
-  template<typename T>
   typename RegionMap<T>::Iterator& RegionMap<T>::Iterator::operator ++() {
-    Details::Node<T>* node = m_nodes.front();
+    auto node = m_nodes.front();
     m_nodes.pop_front();
-    for(auto i = node->m_subRegions.begin();
-        i != node->m_subRegions.end(); ++i) {
-      m_nodes.push_back(i->get());
-    }
+    std::transform(node->m_subRegions.begin(), node->m_subRegions.end(),
+      std::back_inserter(m_nodes),
+      [] (auto& region) {
+        return region.get();
+      });
     return *this;
   }
 
   template<typename T>
   typename RegionMap<T>::Iterator RegionMap<T>::Iterator::operator ++(int) {
-    Iterator tmp(*this);
-    operator ++();
+    auto tmp = *this;
+    ++*this;
     return tmp;
   }
 
@@ -255,25 +251,23 @@ namespace Details {
   }
 
   template<typename T>
-  RegionMap<T>::ConstIterator::ConstIterator() {}
-
-  template<typename T>
   typename RegionMap<T>::ConstIterator& RegionMap<T>::ConstIterator::
       operator ++() {
-    const Details::Node<T>* node = m_nodes.front();
+    auto node = m_nodes.front();
     m_nodes.pop_front();
-    for(auto i = node->m_subRegions.begin();
-        i != node->m_subRegions.end(); ++i) {
-      m_nodes.push_back(i->get());
-    }
+    std::transform(node->m_subRegions.begin(), node->m_subRegions.end(),
+      std::back_inserter(m_nodes),
+      [] (auto& region) {
+        return region.get();
+      });
     return *this;
   }
 
   template<typename T>
   typename RegionMap<T>::ConstIterator RegionMap<T>::ConstIterator::
       operator ++(int) {
-    ConstIterator tmp(*this);
-    operator ++();
+    auto tmp = *this;
+    ++*this;
     return tmp;
   }
 
@@ -300,13 +294,13 @@ namespace Details {
   }
 
   template<typename T>
-  RegionMap<T>::RegionMap(const T& globalValue)
-    : m_root(Region::Global(), globalValue),
+  RegionMap<T>::RegionMap(T globalValue)
+    : m_root(Region::Global(), std::move(globalValue)),
       m_size(1) {}
 
   template<typename T>
-  RegionMap<T>::RegionMap(const std::string& name, const T& globalValue)
-    : m_root(Region::Global(name), globalValue),
+  RegionMap<T>::RegionMap(std::string name, T globalValue)
+    : m_root(Region::Global(std::move(name)), std::move(globalValue)),
       m_size(1) {}
 
   template<typename T>
@@ -335,18 +329,16 @@ namespace Details {
 
   template<typename T>
   void RegionMap<T>::Erase(const Region& region) {
-    std::pair<Details::Node<T>*, Details::Node<T>*> node =
-      FindPair(nullptr, &m_root, region);
+    auto node = FindPair(nullptr, &m_root, region);
     if(std::get<0>(node.second->m_element) != region) {
       return;
     }
     if(node.first == nullptr) {
       return;
     }
-    for(auto i = node.second->m_subRegions.begin();
-        i != node.second->m_subRegions.end(); ++i) {
-      node.first->m_subRegions.push_back(std::move(*i));
-    }
+    std::move(node.second->m_subRegions.begin(),
+      node.second->m_subRegions.end(),
+      std::back_inserter(node.first->m_subRegions));
     for(auto i = node.first->m_subRegions.begin();
         i != node.first->m_subRegions.end(); ++i) {
       if(i->get() == node.second) {
@@ -359,14 +351,14 @@ namespace Details {
 
   template<typename T>
   typename RegionMap<T>::Iterator RegionMap<T>::Find(const Region& region) {
-    Details::Node<T>& node = Find(m_root, region);
+    auto& node = Find(m_root, region);
     return Iterator(node);
   }
 
   template<typename T>
   typename RegionMap<T>::ConstIterator RegionMap<T>::Find(
       const Region& region) const {
-    const Details::Node<T>& node = Find(m_root, region);
+    auto& node = Find(m_root, region);
     return ConstIterator(node);
   }
 
@@ -392,20 +384,20 @@ namespace Details {
 
   template<typename T>
   RegionMap<T>::RegionMap(Beam::Serialization::ReceiveBuilder)
-    : m_root(Region::Global(), T()),
+    : m_root(Region::Global(), {}),
       m_size(1) {}
 
   template<typename T>
-  void RegionMap<T>::Insert(Details::Node<T>& root, const Region& region,
-      const T& value) {
-    std::vector<std::unique_ptr<Details::Node<T>>> subRegions;
+  void RegionMap<T>::Insert(Details::Node<T>& root, Region region,
+      T value) {
+    auto subRegions = std::vector<std::unique_ptr<Details::Node<T>>>();
     auto i = root.m_subRegions.begin();
     while(i != root.m_subRegions.end()) {
       if(region < std::get<0>((*i)->m_element)) {
-        Insert(**i, region, value);
+        Insert(**i, std::move(region), std::move(value));
         return;
       } else if(region == std::get<0>((*i)->m_element)) {
-        std::get<1>((*i)->m_element) = value;
+        std::get<1>((*i)->m_element) = std::move(value);
         return;
       } else if(region > std::get<0>((*i)->m_element)) {
         subRegions.push_back(std::move(*i));
@@ -414,7 +406,8 @@ namespace Details {
         ++i;
       }
     }
-    auto subRegion = std::make_unique<Details::Node<T>>(region, value);
+    auto subRegion = std::make_unique<Details::Node<T>>(std::move(region),
+      std::move(value));
     subRegion->m_subRegions.swap(subRegions);
     root.m_subRegions.push_back(std::move(subRegion));
     ++m_size;
@@ -423,9 +416,9 @@ namespace Details {
   template<typename T>
   Details::Node<T>& RegionMap<T>::Find(Details::Node<T>& root,
       const Region& region) {
-    for(auto i = root.m_subRegions.begin(); i != root.m_subRegions.end(); ++i) {
-      if(region <= std::get<0>((*i)->m_element)) {
-        return Find(**i, region);
+    for(auto& subRegion : root.m_subRegions) {
+      if(region <= std::get<0>(subRegion->m_element)) {
+        return Find(*subRegion, region);
       }
     }
     return root;
@@ -440,18 +433,16 @@ namespace Details {
   template<typename T>
   std::pair<Details::Node<T>*, Details::Node<T>*> RegionMap<T>::FindPair(
       Details::Node<T>* parent, Details::Node<T>* root, const Region& region) {
-    for(auto i = root->m_subRegions.begin();
-        i != root->m_subRegions.end(); ++i) {
-      if(region <= std::get<0>((*i)->m_element)) {
-        return FindPair(root, i->get(), region);
+    for(auto& subRegion : root->m_subRegions) {
+      if(region <= std::get<0>(subRegion->m_element)) {
+        return FindPair(root, subRegion.get(), region);
       }
     }
-    return std::make_pair(parent, root);
+    return {parent, root};
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<typename T>
   struct IsStructure<Nexus::RegionMap<T>> : std::false_type {};
 
@@ -476,17 +467,17 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::RegionMap<T>& value) const {
-      int size;
+      auto size = 0;
       shuttle.StartSequence(name, size);
-      for(int i = 0; i < size; ++i) {
-        std::tuple<Nexus::Region, T> entry;
+      for(auto i = 0; i < size; ++i) {
+        auto entry = std::tuple<Nexus::Region, T>();
         shuttle.Shuttle(entry);
-        value.Set(std::get<0>(entry), std::get<1>(entry));
+        value.Set(std::move(std::get<0>(entry)),
+          std::move(std::get<1>(entry)));
       }
       shuttle.EndSequence();
     }
   };
-}
 }
 
 #endif

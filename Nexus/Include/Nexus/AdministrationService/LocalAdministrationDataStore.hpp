@@ -140,7 +140,7 @@ namespace Nexus::AdministrationService {
     std::transform(m_identities.begin(), m_identities.end(),
       std::back_inserter(identities),
       [] (auto& identity) {
-        return std::make_tuple(identity.first, identity.second);
+        return std::tuple(identity.first, identity.second);
       });
     return identities;
   }
@@ -170,7 +170,7 @@ namespace Nexus::AdministrationService {
     std::transform(m_riskParameters.begin(), m_riskParameters.end(),
       std::back_inserter(riskParameters),
       [] (auto& riskParameters) {
-        return std::make_tuple(riskParameters.first, riskParameters.second);
+        return std::tuple(riskParameters.first, riskParameters.second);
       });
     return riskParameters;
   }
@@ -199,7 +199,7 @@ namespace Nexus::AdministrationService {
     std::transform(m_riskStates.begin(), m_riskStates.end(),
       std::back_inserter(riskStates),
       [] (auto& riskState) {
-        return std::make_tuple(riskState.first, riskState.second);
+        return std::tuple(riskState.first, riskState.second);
       });
     return riskStates;
   }
@@ -261,7 +261,7 @@ namespace Nexus::AdministrationService {
       const EntitlementModification& modification) {
     Store(request);
     m_idToEntitlementModification.insert(
-      std::make_pair(request.GetId(), modification));
+      std::pair(request.GetId(), modification));
   }
 
   inline RiskModification LocalAdministrationDataStore::LoadRiskModification(
@@ -277,13 +277,12 @@ namespace Nexus::AdministrationService {
       const AccountModificationRequest& request,
       const RiskModification& modification) {
     Store(request);
-    m_idToRiskModification.insert(std::make_pair(request.GetId(),
-      modification));
+    m_idToRiskModification.insert(std::pair(request.GetId(), modification));
   }
 
   inline void LocalAdministrationDataStore::Store(
       AccountModificationRequest::Id id, const Message& message) {
-    m_idToMessage.insert(std::make_pair(message.GetId(), message));
+    m_idToMessage.insert(std::pair(message.GetId(), message));
     m_requestToMessages[id].push_back(message.GetId());
     m_lastMessageId = message.GetId();
   }
@@ -379,7 +378,7 @@ namespace Nexus::AdministrationService {
 
   inline void LocalAdministrationDataStore::Store(
       const AccountModificationRequest& request) {
-    m_idToModificationRequests.insert(std::make_pair(request.GetId(), request));
+    m_idToModificationRequests.insert(std::pair(request.GetId(), request));
     if(m_modificationRequests.empty() ||
         request.GetId() > m_modificationRequests.back()) {
       m_modificationRequests.push_back(request.GetId());

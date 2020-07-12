@@ -14,10 +14,8 @@ namespace Nexus {
   class DestinationDatabase;
   struct ExchangeRate;
   class ExchangeRateTable;
-  enum class LiquidityFlag;
   class MarketDatabase;
   struct MarketQuote;
-  template<typename MarketDataType> struct MarketWideData;
   class Money;
   struct OrderImbalance;
   struct Quote;
@@ -25,7 +23,6 @@ namespace Nexus {
   template<typename T> class RegionMap;
   class Security;
   struct SecurityInfo;
-  template<typename MarketDataType> struct SecurityMarketData;
   class SecuritySet;
   struct SecurityTechnicals;
   class Tag;
