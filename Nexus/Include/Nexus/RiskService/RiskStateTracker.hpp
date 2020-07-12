@@ -135,7 +135,7 @@ namespace RiskService {
 
   template<typename PortfolioType, typename TimeClientType>
   void RiskStateTracker<PortfolioType, TimeClientType>::Update() {
-    if(m_riskParameters.m_currency == CurrencyId::NONE()) {
+    if(m_riskParameters.m_currency == CurrencyId::NONE) {
       return;
     }
     Money profitAndLoss = Money::ZERO;

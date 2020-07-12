@@ -146,7 +146,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   for(size_t i = 0; i != currencies.size(); ++i) {
     auto& entry = currencies[i];
     editor->addItem(QString::fromStdString(entry.m_code.GetData()));
-    if(node.GetValue() != CurrencyId::NONE() && entry.m_id == node.GetValue()) {
+    if(node.GetValue() != CurrencyId::NONE && entry.m_id == node.GetValue()) {
       editor->setCurrentIndex(i);
     }
   }

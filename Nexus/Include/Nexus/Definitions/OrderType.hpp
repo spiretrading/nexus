@@ -9,24 +9,22 @@
 
 namespace Nexus {
 
-  /*! \enum OrderType
-      \brief Represents the types of Orders.
-   */
+  /** Represents the types of Orders. */
   BEAM_ENUM(OrderType,
 
-    //! Market order.
+    /** Market order. */
     MARKET,
 
-    //! Limit order.
+    /** Limit order. */
     LIMIT,
 
-    //! Pegged order.
+    /** Pegged order. */
     PEGGED,
 
-    //! Stop order.
+    /** Stop order. */
     STOP);
 
-  //! Returns the single character FIX representation of an OrderType.
+  /** Returns the single character FIX representation of an OrderType. */
   inline char ToChar(OrderType value) {
     if(value == OrderType::MARKET) {
       return '1';

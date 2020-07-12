@@ -91,7 +91,7 @@ void ProfitAndLossModel::OnPortfolioUpdate(
     m_currencyToPortfolio.insert(std::make_pair(key.m_currency, update));
   } else {
     auto& previous = m_currencyToPortfolio[key.m_currency];
-    if(m_currency != CurrencyId::NONE()) {
+    if(m_currency != CurrencyId::NONE) {
       m_update.m_currencyInventory.m_position.m_quantity -=
         previous.m_currencyInventory.m_position.m_quantity;
       m_update.m_currencyInventory.m_position.m_costBasis -=
@@ -114,7 +114,7 @@ void ProfitAndLossModel::OnPortfolioUpdate(
     previous = update;
   }
   model->OnPortfolioUpdate(update);
-  if(m_currency != CurrencyId::NONE()) {
+  if(m_currency != CurrencyId::NONE) {
     m_update.m_currencyInventory.m_position.m_quantity +=
       update.m_currencyInventory.m_position.m_quantity;
     m_update.m_currencyInventory.m_position.m_costBasis +=

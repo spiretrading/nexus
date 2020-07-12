@@ -1,5 +1,5 @@
-#ifndef NEXUS_BBOQUOTE_HPP
-#define NEXUS_BBOQUOTE_HPP
+#ifndef NEXUS_BBO_QUOTE_HPP
+#define NEXUS_BBO_QUOTE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -8,44 +8,41 @@
 
 namespace Nexus {
 
-  /*! \struct BboQuote
-      \brief Stores the best bid and ask Quotes across all markets.
-   */
+  /** Stores the best bid and ask Quotes across all markets. */
   struct BboQuote {
 
-    //! The best bid.
+    /** The best bid. */
     Quote m_bid;
 
-    //! The best ask.
+    /** The best ask. */
     Quote m_ask;
 
-    //! The time of the transaction.
+    /** The time of the transaction. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs an uninitialized BboQuote.
+    /** Constructs an uninitialized BboQuote. */
     BboQuote();
 
-    //! Constructs a BboQuote.
-    /*!
-      \param bid The best bid.
-      \param ask The best ask.
-      \param timestamp The time of the transaction.
-    */
-    BboQuote(const Quote& bid, const Quote& ask,
-      const boost::posix_time::ptime& timestamp);
+    /**
+     * Constructs a BboQuote.
+     * @param bid The best bid.
+     * @param ask The best ask.
+     * @param timestamp The time of the transaction.
+     */
+    BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp);
 
-    //! Tests if two BboQuotes are equal.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
-    */
+    /**
+     * Tests if two BboQuotes are equal.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
+     */
     bool operator ==(const BboQuote& rhs) const;
 
-    //! Tests if two BboQuotes are not equal.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
-    */
+    /**
+     * Tests if two BboQuotes are not equal.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
+     */
     bool operator !=(const BboQuote& rhs) const;
   };
 
@@ -59,10 +56,10 @@ namespace Nexus {
     m_ask.m_side = Side::ASK;
   }
 
-  inline BboQuote::BboQuote(const Quote& bid, const Quote& ask,
-      const boost::posix_time::ptime& timestamp)
-      : m_bid(bid),
-        m_ask(ask),
+  inline BboQuote::BboQuote(Quote bid, Quote ask,
+      boost::posix_time::ptime timestamp)
+      : m_bid(std::move(bid)),
+        m_ask(std::move(ask)),
         m_timestamp(timestamp) {
     assert(m_bid.m_side == Side::BID);
     assert(m_ask.m_side == Side::ASK);
@@ -78,8 +75,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::BboQuote> {
     template<typename Shuttler>
@@ -90,7 +86,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

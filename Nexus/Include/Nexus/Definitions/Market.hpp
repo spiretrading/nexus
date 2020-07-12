@@ -17,75 +17,75 @@
 
 namespace Nexus {
 
-  //! Represents a market.
+  /** Represents a market. */
   using MarketCode = Beam::FixedString<4>;
 
-  /* Stores the database of all markets. */
+  /** Stores the database of all markets. **/
   class MarketDatabase {
     public:
 
-      /* Stores a single entry in a MarketDatabase. */
+      /** Stores a single entry in a MarketDatabase. **/
       struct Entry {
 
-        //! The market identifier code.
+        /** The market identifier code. */
         MarketCode m_code;
 
-        //! The market's country code.
+        /** The market's country code. */
         CountryCode m_countryCode;
 
-        //! The market's time zone.
+        /** The market's time zone. */
         std::string m_timeZone;
 
-        //! The default currency used.
+        /** The default currency used. */
         CurrencyId m_currency;
 
-        //! The institution's description.
+        /** The institution's description. */
         std::string m_description;
 
-        //! The common display name.
+        /** The common display name. */
         std::string m_displayName;
       };
 
-      //! Returns an Entry representing no market.
+      /** Returns an Entry representing no market. */
       static const Entry& GetNoneEntry();
 
-      //! Constructs an empty MarketDatabase.
+      /** Constructs an empty MarketDatabase. */
       MarketDatabase() = default;
 
-      //! Returns all Entries.
+      /** Returns all Entries. */
       const std::vector<Entry>& GetEntries() const;
 
-      //! Returns an Entry from its MarketCode.
-      /*!
-        \param code The MarketCode to lookup.
-        \return The Entry with the specified <i>code</i>.
-      */
+      /**
+       * Returns an Entry from its MarketCode.
+       * @param code The MarketCode to lookup.
+       * @return The Entry with the specified <i>code</i>.
+       */
       const Entry& FromCode(MarketCode code) const;
 
-      //! Returns an Entry from its display name.
-      /*!
-        \param displayName The market's display name.
-        \return The Entry with the specified <i>displayName</i>.
-      */
+      /**
+       * Returns an Entry from its display name.
+       * @param displayName The market's display name.
+       * @return The Entry with the specified <i>displayName</i>.
+       */
       const Entry& FromDisplayName(const std::string& displayName) const;
 
-      //! Returns all Entries participating in a specified country.
-      /*!
-        \param country The CountryCode to lookup.
-        \return The list of all Entries with the specified <i>country</i>.
-      */
+      /**
+       * Returns all Entries participating in a specified country.
+       * @param country The CountryCode to lookup.
+       * @return The list of all Entries with the specified <i>country</i>.
+       */
       std::vector<Entry> FromCountry(CountryCode country) const;
 
-      //! Adds an Entry.
-      /*!
-        \param entry The Entry to add.
-      */
+      /**
+       * Adds an Entry.
+       * @param entry The Entry to add.
+       */
       void Add(const Entry& entry);
 
-      //! Deletes an Entry.
-      /*!
-        \param code The MarketCode of the Entry to delete.
-      */
+      /**
+       * Deletes an Entry.
+       * @param code The MarketCode of the Entry to delete.
+       */
       void Delete(const MarketCode& code);
 
     private:
@@ -94,20 +94,20 @@ namespace Nexus {
       std::vector<Entry> m_entries;
   };
 
-  //! Returns the time of the start of day relative to a specified market in
-  //! UTC.
-  /*!
-    \param marketCode The market whose start of day in UTC is to be returned.
-    \param dateTime The date/time, in UTC, to convert into the market's start
-           of day, in UTC.
-    \param marketDatabase The MarketDatabase to use for time zone info.
-    \param timeZoneDatabase The time zone database to use for time zone
-           conversions.
-    \return Takes the date represented by <i>dateTime</i>, converts it into the
-            market's local time, truncates the time of day so that the time of
-            day is the beginning of the day in that market's local time, then
-            converts that value back to UTC.
-  */
+  /**
+   * Returns the time of the start of day relative to a specified market in
+   * UTC.
+   * @param marketCode The market whose start of day in UTC is to be returned.
+   * @param dateTime The date/time, in UTC, to convert into the market's start
+   *        of day, in UTC.
+   * @param marketDatabase The MarketDatabase to use for time zone info.
+   * @param timeZoneDatabase The time zone database to use for time zone
+   *        conversions.
+   * @return Takes the date represented by <i>dateTime</i>, converts it into the
+   *         market's local time, truncates the time of day so that the time of
+   *         day is the beginning of the day in that market's local time, then
+   *         converts that value back to UTC.
+   */
   inline boost::posix_time::ptime MarketDateToUtc(MarketCode marketCode,
       const boost::posix_time::ptime& dateTime,
       const MarketDatabase& marketDatabase,
@@ -134,51 +134,43 @@ namespace Nexus {
     return utcMarketDate;
   }
 
-  //! Parses a MarketCode from a string.
-  /*!
-    \param source The string to parse.
-    \param marketDatabase The MarketDatabase containing the available
-           MarketCodes.
-    \return The MarketCode represented by the <i>source</i>.
-  */
+  /**
+   * Parses a MarketCode from a string.
+   * @param source The string to parse.
+   * @param database The MarketDatabase containing the available MarketCodes.
+   * @return The MarketCode represented by the <i>source</i>.
+   */
   inline MarketCode ParseMarketCode(const std::string& source,
-      const MarketDatabase& marketDatabase) {
-    auto marketEntry = &marketDatabase.FromDisplayName(source);
-    if(marketEntry->m_code == MarketCode{}) {
-      marketEntry = &marketDatabase.FromCode(source);
-      if(marketEntry->m_code == MarketCode{}) {
-        return MarketCode{};
-      }
+      const MarketDatabase& database) {
+    auto& entry = database.FromDisplayName(source);
+    if(entry.m_code == MarketCode()) {
+      return database.FromCode(source).m_code;
     }
-    return marketEntry->m_code;
+    return entry.m_code;
   }
 
-  //! Parses a MarketEntry from a string.
-  /*!
-    \param source The string to parse.
-    \param marketDatabase The MarketDatabase containing the available
-           MarketEntry.
-    \return The MarketCode represented by the <i>source</i>.
-  */
+  /**
+   * Parses a MarketEntry from a string.
+   * @param source The string to parse.
+   * @param database The MarketDatabase containing the available MarketEntry.
+   * @return The MarketCode represented by the <i>source</i>.
+   */
   inline const MarketDatabase::Entry& ParseMarketEntry(
-      const std::string& source, const MarketDatabase& marketDatabase) {
-    auto marketEntry = &marketDatabase.FromDisplayName(source);
-    if(marketEntry->m_code == MarketCode{}) {
-      marketEntry = &marketDatabase.FromCode(source);
-      if(marketEntry->m_code == MarketCode{}) {
-        return MarketDatabase::GetNoneEntry();
-      }
+      const std::string& source, const MarketDatabase& database) {
+    auto& entry = database.FromDisplayName(source);
+    if(entry.m_code == MarketCode()) {
+      return database.FromCode(source);
     }
-    return *marketEntry;
+    return entry;
   }
 
-  //! Parses a MarketDatabase Entry from a YAML node.
-  /*!
-    \param node The node to parse the MarketDatabase Entry from.
-    \return The MarketDatabase Entry represented by the <i>node</i>.
-  */
-  inline MarketDatabase::Entry ParseMarketDatabaseEntry(
-      const YAML::Node& node, const CountryDatabase& countryDatabase,
+  /**
+   * Parses a MarketDatabase Entry from a YAML node.
+   * @param node The node to parse the MarketDatabase Entry from.
+   * @return The MarketDatabase Entry represented by the <i>node</i>.
+   */
+  inline MarketDatabase::Entry ParseMarketDatabaseEntry(const YAML::Node& node,
+      const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
     auto entry = MarketDatabase::Entry();
     entry.m_code = Beam::Extract<std::string>(node, "code");
@@ -191,7 +183,7 @@ namespace Nexus {
     entry.m_timeZone = Beam::Extract<std::string>(node, "time_zone");
     entry.m_currency = ParseCurrency(
       Beam::Extract<std::string>(node, "currency"), currencyDatabase);
-    if(entry.m_currency == CurrencyId::NONE()) {
+    if(entry.m_currency == CurrencyId::NONE) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid currency.",
         node.Mark()));
     }
@@ -200,31 +192,30 @@ namespace Nexus {
     return entry;
   }
 
-  //! Parses a MarketDatabase from a YAML node.
-  /*!
-    \param node The node to parse the MarketDatabase from.
-    \param countryDatabase The CountryDatabase used to parse country codes.
-    \param currencyDatabase The CurrencyDatabase used to parse currencies.
-    \return The MarketDatabase represented by the <i>node</i>.
-  */
+  /**
+   * Parses a MarketDatabase from a YAML node.
+   * @param node The node to parse the MarketDatabase from.
+   * @param countryDatabase The CountryDatabase used to parse country codes.
+   * @param currencyDatabase The CurrencyDatabase used to parse currencies.
+   * @return The MarketDatabase represented by the <i>node</i>.
+   */
   inline MarketDatabase ParseMarketDatabase(const YAML::Node& node,
       const CountryDatabase& countryDatabase,
       const CurrencyDatabase& currencyDatabase) {
     auto marketDatabase = MarketDatabase();
-    for(auto& entryNode : node) {
-      auto entry = ParseMarketDatabaseEntry(entryNode, countryDatabase,
-        currencyDatabase);
-      marketDatabase.Add(entry);
+    for(auto& node : node) {
+      marketDatabase.Add(ParseMarketDatabaseEntry(node, countryDatabase,
+        currencyDatabase));
     }
     return marketDatabase;
   }
 
-  //! Tests two MarketDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two MarketDatabase Entries are equal.
-  */
+  /**
+   * Tests two MarketDatabase Entries for equality.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff the two MarketDatabase Entries are equal.
+   */
   inline bool operator ==(const MarketDatabase::Entry& lhs,
       const MarketDatabase::Entry& rhs) {
     return lhs.m_code == rhs.m_code && lhs.m_countryCode == rhs.m_countryCode &&
@@ -233,12 +224,12 @@ namespace Nexus {
       lhs.m_displayName == rhs.m_displayName;
   }
 
-  //! Tests two MarketDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two MarketDatabase Entries are equal.
-  */
+  /**
+   * Tests two MarketDatabase Entries for equality.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff the two MarketDatabase Entries are equal.
+   */
   inline bool operator !=(const MarketDatabase::Entry& lhs,
       const MarketDatabase::Entry& rhs) {
     return !(lhs == rhs);
@@ -258,61 +249,60 @@ namespace Nexus {
       MarketCode code) const {
     auto comparator = Entry();
     comparator.m_code = code;
-    auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
       comparator,
-      [] (const Entry& lhs, const Entry& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return lhs.m_code < rhs.m_code;
       });
-    if(entryIterator != m_entries.end() && entryIterator->m_code == code) {
-      return *entryIterator;
+    if(i != m_entries.end() && i->m_code == code) {
+      return *i;
     }
     return GetNoneEntry();
   }
 
   inline const MarketDatabase::Entry& MarketDatabase::FromDisplayName(
       const std::string& displayName) const {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const Entry& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_displayName == displayName;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return GetNoneEntry();
     }
-    return *entryIterator;
+    return *i;
   }
 
   inline std::vector<MarketDatabase::Entry> MarketDatabase::FromCountry(
       CountryCode country) const {
     auto entries = std::vector<MarketDatabase::Entry>();
-    for(auto& entry : m_entries) {
-      if(entry.m_countryCode == country) {
-        entries.push_back(entry);
-      }
-    }
+    std::copy_if(m_entries.begin(), m_entries.end(),
+      std::back_inserter(entries),
+      [&] (auto& entry) {
+        return entry.m_countryCode == country;
+      });
     return entries;
   }
 
   inline void MarketDatabase::Add(const Entry& entry) {
-    auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
       entry,
-      [] (const Entry& lhs, const Entry& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return lhs.m_code < rhs.m_code;
       });
-    if(entryIterator == m_entries.end() ||
-        entryIterator->m_code != entry.m_code) {
-      m_entries.insert(entryIterator, entry);
+    if(i == m_entries.end() || i->m_code != entry.m_code) {
+      m_entries.insert(i, entry);
     }
   }
 
   inline void MarketDatabase::Delete(const MarketCode& code) {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (const Entry& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_code == code;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return;
     }
-    m_entries.erase(entryIterator);
+    m_entries.erase(i);
   }
 
   inline MarketDatabase::Entry MarketDatabase::MakeNoneEntry() {

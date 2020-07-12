@@ -1,5 +1,5 @@
-#ifndef NEXUS_REGIONMAP_HPP
-#define NEXUS_REGIONMAP_HPP
+#ifndef NEXUS_REGION_MAP_HPP
+#define NEXUS_REGION_MAP_HPP
 #include <deque>
 #include <iterator>
 #include <tuple>

@@ -38,7 +38,7 @@ namespace Viper {
   template<>
   struct ToSql<Nexus::CurrencyId> {
     void operator ()(Nexus::CurrencyId value, std::string& column) const {
-      to_sql(value.m_value, column);
+      to_sql(static_cast<std::uint16_t>(value), column);
     }
   };
 

@@ -8,7 +8,7 @@ namespace Nexus {
   class CountryCode;
   class CountryDatabase;
   class CurrencyDatabase;
-  struct CurrencyId;
+  class CurrencyId;
   struct CurrencyPair;
   class CurrencyPairNotFoundException;
   class DestinationDatabase;

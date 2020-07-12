@@ -1,5 +1,5 @@
-#ifndef NEXUS_BOOKQUOTE_HPP
-#define NEXUS_BOOKQUOTE_HPP
+#ifndef NEXUS_BOOK_QUOTE_HPP
+#define NEXUS_BOOK_QUOTE_HPP
 #include <string>
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -10,63 +10,61 @@
 
 namespace Nexus {
 
-  /*! \struct BookQuote
-      \brief Stores a Quote booked by an MPID for a particular market.
-   */
+  /** Stores a Quote booked by an MPID for a particular market. */
   struct BookQuote {
 
-    //! The quote's MPID.
+    /** The quote's MPID. */
     std::string m_mpid;
 
-    //! Whether the MPID is the Market's primary participant.
+    /** Whether the MPID is the Market's primary participant. */
     bool m_isPrimaryMpid;
 
-    //! The market this quote comes from.
+    /** The market this quote comes from. */
     MarketCode m_market;
 
-    //! The quote.
+    /** The quote. */
     Quote m_quote;
 
-    //! The timestamp.
+    /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs an uninitialized BookQuote.
+    /** Constructs an uninitialized BookQuote. */
     BookQuote() = default;
 
-    //! Constructs a BookQuote.
-    /*!
-      \param mpid The market's MPID.
-      \param isPrimaryMpid Whether the MPID is the Market's primary
-             participant.
-      \param market The Market this Quote comes from.
-      \param quote The Quote.
-      \param timestamp The timestamp.
-    */
+    /**
+     * Constructs a BookQuote.
+     * @param mpid The market's MPID.
+     * @param isPrimaryMpid Whether the MPID is the Market's primary
+     *        participant.
+     * @param market The Market this Quote comes from.
+     * @param quote The Quote.
+     * @param timestamp The timestamp.
+     */
     BookQuote(std::string mpid, bool isPrimaryMpid, MarketCode market,
-      const Quote& quote, const boost::posix_time::ptime& timestamp);
+      Quote quote, boost::posix_time::ptime timestamp);
 
-    //! Tests if two BookQuotes represent the same quote.
-    /*!
-      \param quote The BookQuote to test.
-      \return <code>true</code> iff all but the time stamps are equal.
-    */
+    /**
+     * Tests if two BookQuotes represent the same quote.
+     * @param quote The BookQuote to test.
+     * @return <code>true</code> iff all but the time stamps are equal.
+     */
     bool operator ==(const BookQuote& quote) const;
 
-    //! Tests if two BookQuotes represent different quotes.
-    /*!
-      \param quote The BookQuote to test.
-      \return <code>!(*this == quote)</code>.
-    */
+    /**
+     * Tests if two BookQuotes represent different quotes.
+     * @param quote The BookQuote to test.
+     * @return <code>!(*this == quote)</code>.
+     */
     bool operator !=(const BookQuote& quote) const;
   };
 
-  //! Tests if one BookQuote should be listed before another.
-  /*!
-    \param lhs The left hand side of the comparator.
-    \param rhs The right hand side of the comparator.
-    \return <code>true</code> iff <i>lhs</i> should be listed before <i>rhs</i>
-            according to its Side and price.
-  */
+  /**
+   * Tests if one BookQuote should be listed before another.
+   * @param lhs The left hand side of the comparator.
+   * @param rhs The right hand side of the comparator.
+   * @return <code>true</code> iff <i>lhs</i> should be listed before <i>rhs</i>
+   *         according to its Side and price.
+   */
   inline bool BookQuoteListingComparator(const BookQuote& lhs,
       const BookQuote& rhs) {
     if(lhs.m_quote.m_price != rhs.m_quote.m_price) {
@@ -76,13 +74,12 @@ namespace Nexus {
   }
 
   inline BookQuote::BookQuote(std::string mpid, bool isPrimaryMpid,
-      MarketCode market, const Quote& quote,
-      const boost::posix_time::ptime& timestamp)
-      : m_mpid(std::move(mpid)),
-        m_isPrimaryMpid(isPrimaryMpid),
-        m_market(market),
-        m_quote(quote),
-        m_timestamp(timestamp) {}
+    MarketCode market, Quote quote, boost::posix_time::ptime timestamp)
+    : m_mpid(std::move(mpid)),
+      m_isPrimaryMpid(isPrimaryMpid),
+      m_market(market),
+      m_quote(std::move(quote)),
+      m_timestamp(timestamp) {}
 
   inline bool BookQuote::operator ==(const BookQuote& quote) const {
     return m_mpid == quote.m_mpid && m_isPrimaryMpid == quote.m_isPrimaryMpid &&
@@ -100,8 +97,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::BookQuote> {
     template<typename Shuttler>
@@ -114,7 +110,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

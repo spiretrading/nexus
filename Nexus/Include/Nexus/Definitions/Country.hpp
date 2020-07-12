@@ -179,12 +179,11 @@ namespace Details {
    * @return The CountryDatabase represented by the <i>node</i>.
    */
   inline CountryDatabase ParseCountryDatabase(const YAML::Node& node) {
-    auto countryDatabase = CountryDatabase();
+    auto database = CountryDatabase();
     for(auto& entryNode : node) {
-      auto entry = ParseCountryDatabaseEntry(entryNode);
-      countryDatabase.Add(entry);
+      database.Add(ParseCountryDatabaseEntry(entryNode));
     }
-    return countryDatabase;
+    return database;
   }
 
   inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
@@ -231,73 +230,72 @@ namespace Details {
 
   inline const CountryDatabase::Entry& CountryDatabase::FromCode(
       CountryCode code) const {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (auto& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_code == code;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return NoneEntry<void>::NONE_ENTRY;
     }
-    return *entryIterator;
+    return *i;
   }
 
   inline const CountryDatabase::Entry& CountryDatabase::FromName(
       const std::string& name) const {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (auto& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_name == name;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return NoneEntry<void>::NONE_ENTRY;
     }
-    return *entryIterator;
+    return *i;
   }
 
   inline const CountryDatabase::Entry& CountryDatabase::FromTwoLetterCode(
       const Beam::FixedString<2>& code) const {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (auto& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_twoLetterCode == code;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return NoneEntry<void>::NONE_ENTRY;
     }
-    return *entryIterator;
+    return *i;
   }
 
   inline const CountryDatabase::Entry& CountryDatabase::FromThreeLetterCode(
       const Beam::FixedString<3>& code) const {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (auto& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_threeLetterCode == code;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return NoneEntry<void>::NONE_ENTRY;
     }
-    return *entryIterator;
+    return *i;
   }
 
   inline void CountryDatabase::Add(const Entry& entry) {
-    auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
       entry,
       [] (auto& lhs, auto& rhs) {
         return lhs.m_code < rhs.m_code;
       });
-    if(entryIterator == m_entries.end() ||
-        entryIterator->m_code != entry.m_code) {
-      m_entries.insert(entryIterator, entry);
+    if(i == m_entries.end() || i->m_code != entry.m_code) {
+      m_entries.insert(i, entry);
     }
   }
 
   inline void CountryDatabase::Delete(CountryCode code) {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (auto& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
         return entry.m_code == code;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return;
     }
-    m_entries.erase(entryIterator);
+    m_entries.erase(i);
   }
 
   inline CountryDatabase::Entry CountryDatabase::MakeNoneEntry() {

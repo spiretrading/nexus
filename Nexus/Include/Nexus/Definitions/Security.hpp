@@ -11,61 +11,59 @@
 
 namespace Nexus {
 
-  /*! \class Security
-      \brief Identifies a tradeable instrument.
-   */
+  /** Identifies a tradeable instrument. */
   class Security {
     public:
 
-      //! Constructs an uninitialized Security.
+      /** Constructs an uninitialized Security. */
       Security();
 
-      //! Constructs a Security.
-      /*!
-        \param symbol The ticker symbol.
-        \param market The primary market the symbol is listed on.
-        \param country The country the symbol is listed on.
-      */
+      /**
+       * Constructs a Security.
+       * @param symbol The ticker symbol.
+       * @param market The primary market the symbol is listed on.
+       * @param country The country the symbol is listed on.
+       */
       Security(std::string symbol, MarketCode market, CountryCode country);
 
-      //! Constructs a Security.
-      /*!
-        \param symbol The ticker symbol.
-        \param country The country the symbol is listed on.
-      */
+      /**
+       * Constructs a Security.
+       * @param symbol The ticker symbol.
+       * @param country The country the symbol is listed on.
+       */
       Security(std::string symbol, CountryCode country);
 
-      //! Tests whether this Security is less than another.
-      /*!
-        \param rhs The right hand side of the comparison.
-        \return <code>true</code> iff <i>this</i> has lesser ordering than
-                <i>rhs</i>.
-      */
+      /**
+       * Tests whether this Security is less than another.
+       * @param rhs The right hand side of the comparison.
+       * @return <code>true</code> iff <i>this</i> has lesser ordering than
+       *         <i>rhs</i>.
+       */
       bool operator <(const Security& rhs) const;
 
-      //! Tests whether this Security is equal to another.
-      /*!
-        \param rhs The right hand side of the equality.
-        \return <code>true</code> iff <i>this</i> has the same key as
-                <i>rhs</i>.
-      */
+      /**
+       * Tests whether this Security is equal to another.
+       * @param rhs The right hand side of the equality.
+       * @return <code>true</code> iff <i>this</i> has the same key as
+       *         <i>rhs</i>.
+       */
       bool operator ==(const Security& rhs) const;
 
-      //! Tests whether this Security is not equal to another.
-      /*!
-        \param rhs The right hand side of the equality.
-        \return <code>true</code> iff <i>this</i> has a different key as
-                <i>rhs</i>.
-      */
+      /**
+       * Tests whether this Security is not equal to another.
+       * @param rhs The right hand side of the equality.
+       * @return <code>true</code> iff <i>this</i> has a different key as
+       *         <i>rhs</i>.
+       */
       bool operator !=(const Security& rhs) const;
 
-      //! Returns the symbol.
+      /** Returns the symbol. */
       const std::string& GetSymbol() const;
 
-      //! Returns the Market.
+      /** Returns the Market. */
       MarketCode GetMarket() const;
 
-      //! Returns the Country that issued the security.
+      /** Returns the Country that issued the security. */
       CountryCode GetCountry() const;
 
     private:
@@ -76,22 +74,21 @@ namespace Nexus {
       CountryCode m_country;
   };
 
-  //! Parses a Security.
-  /*!
-    \param source The string to parse.
-    \param marketDatabase The database containing all MarketCodes.
-    \return The Security represented by the <i>source</i>.
-  */
+  /**
+   * Parses a Security.
+   * @param source The string to parse.
+   * @param marketDatabase The database containing all MarketCodes.
+   * @return The Security represented by the <i>source</i>.
+   */
   inline Security ParseSecurity(const std::string& source,
       const MarketDatabase& marketDatabase) {
-    std::string::size_type seperator = source.find_last_of('.');
+    auto seperator = source.find_last_of('.');
     if(seperator == std::string::npos) {
       return Security();
     }
-    std::string symbol = source.substr(0, seperator);
-    std::string marketSource = source.substr(seperator + 1);
-    const MarketDatabase::Entry* market = &marketDatabase.FromDisplayName(
-      marketSource);
+    auto symbol = source.substr(0, seperator);
+    auto marketSource = source.substr(seperator + 1);
+    auto market = &marketDatabase.FromDisplayName(marketSource);
     if(market->m_code == MarketCode()) {
       market = &marketDatabase.FromCode(marketSource);
       if(market->m_code == MarketCode()) {
@@ -101,11 +98,11 @@ namespace Nexus {
     return Security(std::move(symbol), market->m_code, market->m_countryCode);
   }
 
-  //! Parses a Security using the default MarketDatabase.
-  /*!
-    \param source The string to parse.
-    \return The Security represented by the <i>source</i>.
-  */
+  /**
+   * Parses a Security using the default MarketDatabase.
+   * @param source The string to parse.
+   * @return The Security represented by the <i>source</i>.
+   */
   inline Security ParseSecurity(const std::string& source) {
     return ParseSecurity(source, GetDefaultMarketDatabase());
   }
@@ -132,31 +129,31 @@ namespace Nexus {
   }
 
   inline std::istream& operator >>(std::istream& in, Security& value) {
-    std::string s;
+    auto s = std::string();
     in >> s;
     value = ParseSecurity(s);
     return in;
   }
 
   inline std::size_t hash_value(const Security& security) {
-    std::size_t seed = 0;
+    auto seed = std::size_t(0);
     boost::hash_combine(seed, security.GetSymbol());
     boost::hash_combine(seed, security.GetCountry());
     return seed;
   }
 
   inline Security::Security()
-      : m_country(CountryCode::NONE) {}
+    : m_country(CountryCode::NONE) {}
 
   inline Security::Security(std::string symbol, MarketCode market,
-      CountryCode country)
-      : m_symbol(std::move(symbol)),
-        m_market(market),
-        m_country(country) {}
+    CountryCode country)
+    : m_symbol(std::move(symbol)),
+      m_market(market),
+      m_country(country) {}
 
   inline Security::Security(std::string symbol, CountryCode country)
-      : m_symbol(std::move(symbol)),
-        m_country(country) {}
+    : m_symbol(std::move(symbol)),
+      m_country(country) {}
 
   inline bool Security::operator <(const Security& rhs) const {
     return std::tie(m_symbol, m_country) <
@@ -184,8 +181,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Security> {
     template<typename Shuttler>
@@ -196,7 +192,6 @@ namespace Serialization {
       shuttle.Shuttle("country", value.m_country);
     }
   };
-}
 }
 
 namespace std {
