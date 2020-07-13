@@ -1,5 +1,5 @@
-#ifndef NEXUS_BINARYSEQUENCEPROTOCOLCLIENT_HPP
-#define NEXUS_BINARYSEQUENCEPROTOCOLCLIENT_HPP
+#ifndef NEXUS_BINARY_SEQUENCE_PROTOCOL_CLIENT_HPP
+#define NEXUS_BINARY_SEQUENCE_PROTOCOL_CLIENT_HPP
 #include <cstdint>
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -12,40 +12,39 @@
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolMessage.hpp"
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolPacket.hpp"
 
-namespace Nexus {
-namespace BinarySequenceProtocol {
+namespace Nexus::BinarySequenceProtocol {
 
-  /*! \class BinarySequenceProtocolClient
-      \brief Implements a client using the BinarySequenceProtocol.
-      \tparam ChannelType The type of Channel connected to the server.
-      \tparam SequenceType The type used to represent sequence numbers.
+  /**
+   * Implements a client using the BinarySequenceProtocol.
+   * @param <C> The type of Channel connected to the server.
+   * @param <S> The type used to represent sequence numbers.
    */
-  template<typename ChannelType, typename SequenceType>
+  template<typename C, typename S>
   class BinarySequenceProtocolClient : private boost::noncopyable {
     public:
 
-      //! The type of Channel connected to the server.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The type of Channel connected to the server. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! The type used to represent sequence numbers.
-      using Sequence = SequenceType;
+      /** The type used to represent sequence numbers. */
+      using Sequence = S;
 
-      //! Constructs a BinarySequenceProtocolClient.
-      /*!
-        \param channel The Channel to connect to the server
-      */
-      template<typename ChannelForward>
-      BinarySequenceProtocolClient(ChannelForward&& channel);
+      /**
+       * Constructs a BinarySequenceProtocolClient.
+       * @param channel The Channel to connect to the server
+       */
+      template<typename CF>
+      BinarySequenceProtocolClient(CF&& channel);
 
       ~BinarySequenceProtocolClient();
 
-      //! Reads the next message from the feed.
+      /** Reads the next message from the feed. */
       BinarySequenceProtocolMessage Read();
 
-      //! Reads the next message from the feed.
-      /*!
-        \param sequenceNumber The message's sequence number.
-      */
+      /**
+       * Reads the next message from the feed.
+       * @param sequenceNumber The message's sequence number.
+       */
       BinarySequenceProtocolMessage Read(Beam::Out<Sequence> sequenceNumber);
 
       void Open();
@@ -54,7 +53,7 @@ namespace BinarySequenceProtocol {
 
     private:
       using Buffer = typename Channel::Reader::Buffer;
-      Beam::GetOptionalLocalPtr<ChannelType> m_channel;
+      Beam::GetOptionalLocalPtr<C> m_channel;
       Buffer m_buffer;
       BinarySequenceProtocolPacket<Sequence> m_packet;
       const char* m_source;
@@ -65,29 +64,25 @@ namespace BinarySequenceProtocol {
       void Shutdown();
   };
 
-  template<typename ChannelType, typename SequenceType>
-  template<typename ChannelForward>
-  BinarySequenceProtocolClient<ChannelType, SequenceType>::
-      BinarySequenceProtocolClient(ChannelForward&& channel)
-      : m_channel(std::forward<ChannelType>(channel)) {}
+  template<typename C, typename S>
+  template<typename CF>
+  BinarySequenceProtocolClient<C, S>::BinarySequenceProtocolClient(CF&& channel)
+    : m_channel(std::forward<CF>(channel)) {}
 
-  template<typename ChannelType, typename SequenceType>
-  BinarySequenceProtocolClient<ChannelType, SequenceType>::
-      ~BinarySequenceProtocolClient() {
+  template<typename C, typename S>
+  BinarySequenceProtocolClient<C, S>::~BinarySequenceProtocolClient() {
     Close();
   }
 
-  template<typename ChannelType, typename SequenceType>
-  BinarySequenceProtocolMessage
-      BinarySequenceProtocolClient<ChannelType, SequenceType>::Read() {
+  template<typename C, typename S>
+  BinarySequenceProtocolMessage BinarySequenceProtocolClient<C, S>::Read() {
     Sequence sequenceNumber;
     return Read(Beam::Store(sequenceNumber));
   }
 
-  template<typename ChannelType, typename SequenceType>
-  BinarySequenceProtocolMessage
-      BinarySequenceProtocolClient<ChannelType, SequenceType>::Read(
-      Beam::Out<Sequence> sequenceNumber) {
+  template<typename C, typename S>
+  BinarySequenceProtocolMessage BinarySequenceProtocolClient<C, S>::
+      Read(Beam::Out<Sequence> sequenceNumber) {
     if(!m_openState.IsOpen()) {
       BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
     }
@@ -117,35 +112,34 @@ namespace BinarySequenceProtocol {
     return message;
   }
 
-  template<typename ChannelType, typename SequenceType>
-  void BinarySequenceProtocolClient<ChannelType, SequenceType>::Open() {
+  template<typename C, typename S>
+  void BinarySequenceProtocolClient<C, S>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
     try {
       m_channel->GetConnection().Open();
       m_sequenceNumber = -1;
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
     }
     m_openState.SetOpen();
   }
 
-  template<typename ChannelType, typename SequenceType>
-  void BinarySequenceProtocolClient<ChannelType, SequenceType>::Close() {
+  template<typename C, typename S>
+  void BinarySequenceProtocolClient<C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ChannelType, typename SequenceType>
-  void BinarySequenceProtocolClient<ChannelType, SequenceType>::Shutdown() {
+  template<typename C, typename S>
+  void BinarySequenceProtocolClient<C, S>::Shutdown() {
     m_channel->GetConnection().Close();
     m_openState.SetClosed();
   }
-}
 }
 
 #endif

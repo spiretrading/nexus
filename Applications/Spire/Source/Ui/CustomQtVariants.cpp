@@ -209,7 +209,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       value.value<MarketToken>().m_code);
     return QString::fromStdString(entry.m_displayName);
   } else if(value.canConvert<Money>()) {
-    return QString::fromStdString(value.value<Money>().ToString());
+    return QString::fromStdString(lexical_cast<std::string>(
+      value.value<Money>()));
   } else if(value.canConvert<Quantity>()) {
     return locale.toString(static_cast<double>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
@@ -231,7 +232,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
-      ToString(value.value<TimeInForce>().GetType()));
+      lexical_cast<std::string>(value.value<TimeInForce>().GetType()));
   } else if(value.canConvert<any>()) {
     auto translated_value = to_variant(value.value<any>());
     return displayText(translated_value, locale);
@@ -284,8 +285,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return compare(displayText(left_variant.value<Side>()),
       displayText(right_variant.value<Side>()), left, right);
   } else if(left_variant.canConvert<TimeInForce>()) {
-    return compare(ToString(left_variant.value<TimeInForce>().GetType()),
-      ToString(right_variant.value<TimeInForce>().GetType()), left, right);
+    return compare(
+      lexical_cast<std::string>(left_variant.value<TimeInForce>().GetType()),
+      lexical_cast<std::string>(right_variant.value<TimeInForce>().GetType()),
+      left, right);
   } else if(left_variant.canConvert<CurrencyId>()) {
     auto& leftEntry = GetDefaultCurrencyDatabase().FromId(
       left_variant.value<CurrencyId>());

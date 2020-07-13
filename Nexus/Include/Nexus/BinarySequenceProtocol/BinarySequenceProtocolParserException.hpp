@@ -1,42 +1,38 @@
-#ifndef NEXUS_BINARYSEQUENCEPROTOCOLPARSEREXCEPTION_HPP
-#define NEXUS_BINARYSEQUENCEPROTOCOLPARSEREXCEPTION_HPP
+#ifndef NEXUS_BINARY_SEQUENCE_PROTOCOL_PARSER_EXCEPTION_HPP
+#define NEXUS_BINARY_SEQUENCE_PROTOCOL_PARSER_EXCEPTION_HPP
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocol.hpp"
 
-namespace Nexus {
-namespace BinarySequenceProtocol {
+namespace Nexus::BinarySequenceProtocol {
 
-  /*! \class BinarySequenceProtocolParserException
-      \brief Indicates that parsing a message failed.
-   */
+  /** Indicates that parsing a message failed. */
   class BinarySequenceProtocolParserException : public std::runtime_error,
       public boost::exception {
     public:
 
-      //! Constructs a BinarySequenceProtocolParserException.
+      /** Constructs a BinarySequenceProtocolParserException. */
       BinarySequenceProtocolParserException();
 
-      //! Constructs a BinarySequenceProtocolParserException.
-      /*!
-        \param message A message describing the error.
-      */
+      /**
+       * Constructs a BinarySequenceProtocolParserException.
+       * @param message A message describing the error.
+       */
       BinarySequenceProtocolParserException(const std::string& message);
 
       virtual ~BinarySequenceProtocolParserException() throw();
   };
 
   inline BinarySequenceProtocolParserException::
-      BinarySequenceProtocolParserException()
-      : std::runtime_error("Operation failed") {}
+    BinarySequenceProtocolParserException()
+    : std::runtime_error("Operation failed") {}
 
   inline BinarySequenceProtocolParserException::
-      BinarySequenceProtocolParserException(const std::string& message)
-      : std::runtime_error(message) {}
+    BinarySequenceProtocolParserException(const std::string& message)
+    : std::runtime_error(message) {}
 
   inline BinarySequenceProtocolParserException::
-      ~BinarySequenceProtocolParserException() throw() {}
-}
+    ~BinarySequenceProtocolParserException() throw() {}
 }
 
 #endif

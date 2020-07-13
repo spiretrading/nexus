@@ -224,7 +224,8 @@ namespace Nexus::MarketDataService {
           &*countriesProperty)) {
         for(auto countryEntry : *countriesList) {
           if(auto value = boost::get<double>(&countryEntry)) {
-            if(static_cast<CountryCode>(*value) == country) {
+            if(static_cast<CountryCode>(static_cast<std::uint16_t>(*value)) ==
+                country) {
               return entry;
             }
           }
@@ -303,7 +304,8 @@ namespace Nexus::MarketDataService {
       HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
     auto id = bookQuote.GetIndex().GetSymbol() + '-' +
       boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
-      bookQuote->m_mpid + '-' + bookQuote->m_quote.m_price.ToString() +
+      bookQuote->m_mpid + '-' +
+      boost::lexical_cast<std::string>(bookQuote->m_quote.m_price) +
       ToChar(bookQuote->m_quote.m_side);
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);

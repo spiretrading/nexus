@@ -66,9 +66,6 @@ namespace Details {
       /** Converts this Money to a Quantity. */
       explicit constexpr operator Quantity() const;
 
-      /** Returns the string representation of this value. */
-      std::string ToString() const;
-
       /**
        * Less than test.
        * @param rhs The right hand side of the operation.
@@ -183,6 +180,7 @@ namespace Details {
     private:
       template<typename T> friend constexpr Money operator *(T lhs, Money rhs);
       template<typename T> friend constexpr Money operator /(Money lhs, T rhs);
+      friend std::ostream& operator <<(std::ostream& out, Money value);
       friend Money Abs(Money value);
       friend Money Floor(Money value, int decimalPlaces);
       friend Money Ceil(Money value, int decimalPlaces);
@@ -270,7 +268,25 @@ namespace Details {
   }
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
-    return out << value.ToString();
+    auto fraction = value.m_value - Floor(value.m_value, 0);
+    auto s = boost::lexical_cast<std::string>(value.m_value);
+    if(fraction == 0) {
+      return out << s << ".00";
+    }
+    if(s.size() > 1 && *(s.end() - 1) == '.') {
+      return out << s << "00";
+    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
+      return out << s << "0";
+    } else {
+      while(s.size() > 3) {
+        if(s.back() == '0' && *(s.end() - 3) != '.') {
+          s.pop_back();
+        } else {
+          break;
+        }
+      }
+      return out << s;
+    }
   }
 
   inline std::istream& operator >>(std::istream& in, Money& value) {
@@ -302,28 +318,6 @@ namespace Details {
 
   inline constexpr Money::operator Quantity() const {
     return m_value;
-  }
-
-  inline std::string Money::ToString() const {
-    auto fraction = m_value - Floor(m_value, 0);
-    auto s = Beam::ToString(m_value);
-    if(fraction == 0) {
-      return s + ".00";
-    }
-    if(s.size() > 1 && *(s.end() - 1) == '.') {
-      return s + "00";
-    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
-      return s + "0";
-    } else {
-      while(s.size() > 3) {
-        if(s.back() == '0' && *(s.end() - 3) != '.') {
-          s.pop_back();
-        } else {
-          break;
-        }
-      }
-      return s;
-    }
   }
 
   inline constexpr bool Money::operator <(Money rhs) const {
@@ -394,12 +388,7 @@ namespace Details {
   }
 }
 
-namespace Beam {
-  inline std::string ToString(Nexus::Money value) {
-    return value.ToString();
-  }
-
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<Nexus::Money> : std::false_type {};
 
@@ -422,7 +411,6 @@ namespace Serialization {
       value = Nexus::Money{representation};
     }
   };
-}
 }
 
 namespace std {
