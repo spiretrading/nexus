@@ -1,5 +1,5 @@
-#ifndef NEXUS_OPPOSINGORDERCANCELLATIONCOMPLIANCERULE_HPP
-#define NEXUS_OPPOSINGORDERCANCELLATIONCOMPLIANCERULE_HPP
+#ifndef NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
+#define NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueue.hpp>
@@ -13,40 +13,40 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class OpposingOrderCancellationComplianceRule
-      \brief Prevents Orders on the opposite side of a fill from being canceled
-             for a certain period of time.
-      \tparam TimeClientType The type of TimeClient used to determine how much
-              time has elapsed since the last fill.
+  /**
+   * Prevents Orders on the opposite side of a fill from being canceled for a
+   * certain period of time.
+   * @param C The type of TimeClient used to determine how much time has elapsed
+   *        since the last fill.
    */
-  template<typename TimeClientType>
+  template<typename C>
   class OpposingOrderCancellationComplianceRule : public ComplianceRule {
     public:
 
-      //! The type of TimeClient used to determine how much time has elapsed
-      //! since the last fill.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /**
+       * The type of TimeClient used to determine how much time has elapsed
+       * since the last fill.
+       */
+      using TimeClient = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs an OpposingOrderCancellationComplianceRule.
-      /*!
-        \param timeout The amount of time to restrict cancels after a fill.
-        \param timeClient Initializes the TimeClient.
-      */
-      template<typename TimeClientForward>
+      /**
+       * Constructs an OpposingOrderCancellationComplianceRule.
+       * @param timeout The amount of time to restrict cancels after a fill.
+       * @param timeClient Initializes the TimeClient.
+       */
+      template<typename CF>
       OpposingOrderCancellationComplianceRule(
-        boost::posix_time::time_duration timeout,
-        TimeClientForward&& timeClient);
+        boost::posix_time::time_duration timeout, CF&& timeClient);
 
-      virtual void Add(const OrderExecutionService::Order& order);
+      void Add(const OrderExecutionService::Order& order) override;
 
-      virtual void Cancel(const OrderExecutionService::Order& order);
+      void Cancel(const OrderExecutionService::Order& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<C> m_timeClient;
       Beam::TaggedQueue<const OrderExecutionService::Order*,
         OrderExecutionService::ExecutionReport> m_executionReportQueue;
       boost::posix_time::ptime m_lastAskFillTime;
@@ -58,35 +58,38 @@ namespace Compliance {
     TimeClient&& timeClient) -> OpposingOrderCancellationComplianceRule<
     std::decay_t<TimeClient>>;
 
-  //! Builds a ComplianceRuleSchema representing an
-  //! OpposingOrderCancellationComplianceRule.
+  /**
+   * Builds a ComplianceRuleSchema representing an
+   * OpposingOrderCancellationComplianceRule.
+   */
   inline ComplianceRuleSchema
       BuildOpposingOrderCancellationComplianceRuleSchema() {
-    std::vector<ComplianceParameter> parameters;
-    std::vector<ComplianceValue> symbols;
-    symbols.push_back(Security{});
+    auto parameters = std::vector<ComplianceParameter>();
+    auto symbols = std::vector<ComplianceValue>();
+    symbols.push_back(Security());
     parameters.emplace_back("symbols", symbols);
-    parameters.emplace_back("start_period", boost::posix_time::time_duration{});
-    parameters.emplace_back("end_period", boost::posix_time::time_duration{});
-    parameters.emplace_back("timeout", Quantity{0});
-    ComplianceRuleSchema schema{"opposing_order_cancellation", parameters};
+    parameters.emplace_back("start_period", boost::posix_time::time_duration());
+    parameters.emplace_back("end_period", boost::posix_time::time_duration());
+    parameters.emplace_back("timeout", Quantity(0));
+    auto schema = ComplianceRuleSchema("opposing_order_cancellation",
+      parameters);
     return schema;
   }
 
-  //! Builds an OpposingOrderCancellationComplianceRule from a list of
-  //! ComplianceParameters.
-  /*!
-    \param parameters The list of ComplianceParameters used to build the rule.
-    \param timeClient Initializes the TimeClient.
-  */
+  /**
+   * Builds an OpposingOrderCancellationComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The list of ComplianceParameters used to build the rule.
+   * @param timeClient Initializes the TimeClient.
+   */
   template<typename TimeClient>
   std::unique_ptr<ComplianceRule> MakeOpposingOrderCancellationComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
       const TimeClient& timeClient) {
-    SecuritySet symbols;
-    boost::posix_time::time_duration startPeriod;
-    boost::posix_time::time_duration endPeriod;
-    boost::posix_time::time_duration timeout;
+    auto symbols = SecuritySet();
+    auto startPeriod = boost::posix_time::time_duration();
+    auto endPeriod = boost::posix_time::time_duration();
+    auto timeout = boost::posix_time::time_duration();
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
         for(auto& security : boost::get<std::vector<ComplianceValue>>(
@@ -105,7 +108,7 @@ namespace Compliance {
       }
     }
     auto mapRule = MakeMapSecurityComplianceRule({},
-      [=] (const ComplianceRuleSchema&) {
+      [=] (const auto&) {
         return std::make_unique<OpposingOrderCancellationComplianceRule<
           std::decay_t<TimeClient>>>(timeout, timeClient);
       });
@@ -117,24 +120,24 @@ namespace Compliance {
     return std::move(symbolFilter);
   }
 
-  template<typename TimeClientType>
-  template<typename TimeClientForward>
-  OpposingOrderCancellationComplianceRule<TimeClientType>::
-      OpposingOrderCancellationComplianceRule(
-      boost::posix_time::time_duration timeout, TimeClientForward&& timeClient)
-      : m_timeout{timeout},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
-        m_lastAskFillTime{boost::posix_time::not_a_date_time},
-        m_lastBidFillTime{boost::posix_time::not_a_date_time} {}
+  template<typename C>
+  template<typename CF>
+  OpposingOrderCancellationComplianceRule<C>::
+    OpposingOrderCancellationComplianceRule(
+    boost::posix_time::time_duration timeout, CF&& timeClient)
+    : m_timeout(timeout),
+      m_timeClient(std::forward<CF>(timeClient)),
+      m_lastAskFillTime(boost::posix_time::not_a_date_time),
+      m_lastBidFillTime(boost::posix_time::not_a_date_time) {}
 
-  template<typename TimeClientType>
-  void OpposingOrderCancellationComplianceRule<TimeClientType>::Add(
+  template<typename C>
+  void OpposingOrderCancellationComplianceRule<C>::Add(
       const OrderExecutionService::Order& order) {
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
-  template<typename TimeClientType>
-  void OpposingOrderCancellationComplianceRule<TimeClientType>::Cancel(
+  template<typename C>
+  void OpposingOrderCancellationComplianceRule<C>::Cancel(
       const OrderExecutionService::Order& order) {
     while(!m_executionReportQueue.IsEmpty()) {
       auto executionReport = m_executionReportQueue.Top();
@@ -151,11 +154,10 @@ namespace Compliance {
       m_lastBidFillTime, m_lastAskFillTime);
     if(lastFillTime != boost::posix_time::not_a_date_time &&
         lastFillTime >= (time - m_timeout)) {
-      BOOST_THROW_EXCEPTION(ComplianceCheckException{
-        "Opposing order can not be canceled yet."});
+      BOOST_THROW_EXCEPTION(ComplianceCheckException(
+        "Opposing order can not be canceled yet."));
     }
   }
-}
 }
 
 #endif

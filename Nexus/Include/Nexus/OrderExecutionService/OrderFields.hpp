@@ -345,7 +345,7 @@ namespace OrderExecutionService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity, Money price) {
-    return BuildLimitOrder(account, security, CurrencyId::NONE(), side,
+    return BuildLimitOrder(account, security, CurrencyId::NONE, side,
       destination, quantity, price);
   }
 
@@ -353,7 +353,7 @@ namespace OrderExecutionService {
       Side side, const Destination& destination, Quantity quantity,
       Money price) {
     return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
-      CurrencyId::NONE(), side, destination, quantity, price);
+      CurrencyId::NONE, side, destination, quantity, price);
   }
 
   inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
@@ -365,14 +365,14 @@ namespace OrderExecutionService {
   inline OrderFields OrderFields::BuildLimitOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity, Money price) {
-    return BuildLimitOrder(account, security, CurrencyId::NONE(), side, {},
+    return BuildLimitOrder(account, security, CurrencyId::NONE, side, {},
       quantity, price);
   }
 
   inline OrderFields OrderFields::BuildLimitOrder(const Security& security,
       Side side, Quantity quantity, Money price) {
     return BuildLimitOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
-      CurrencyId::NONE(), side, {}, quantity, price);
+      CurrencyId::NONE, side, {}, quantity, price);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(
@@ -402,14 +402,14 @@ namespace OrderExecutionService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, const Destination& destination,
       Quantity quantity) {
-    return BuildMarketOrder(account, security, CurrencyId::NONE(), side,
+    return BuildMarketOrder(account, security, CurrencyId::NONE, side,
       destination, quantity);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
       Side side, const Destination& destination, Quantity quantity) {
     return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
-      CurrencyId::NONE(), side, destination, quantity);
+      CurrencyId::NONE, side, destination, quantity);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
@@ -421,14 +421,14 @@ namespace OrderExecutionService {
   inline OrderFields OrderFields::BuildMarketOrder(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Security& security, Side side, Quantity quantity) {
-    return BuildMarketOrder(account, security, CurrencyId::NONE(), side, {},
+    return BuildMarketOrder(account, security, CurrencyId::NONE, side, {},
       quantity);
   }
 
   inline OrderFields OrderFields::BuildMarketOrder(const Security& security,
       Side side, Quantity quantity) {
     return BuildMarketOrder(Beam::ServiceLocator::DirectoryEntry{}, security,
-      CurrencyId::NONE(), side, {}, quantity);
+      CurrencyId::NONE, side, {}, quantity);
   }
 
   inline OrderFields::OrderFields()

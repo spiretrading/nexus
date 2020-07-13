@@ -2,12 +2,12 @@
 exit_status=0
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ]; do
-  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
   source="$(readlink "$source")"
   [[ $source != /* ]] && source="$dir/$source"
 done
-directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
-root="$(pwd)"
+directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
+root="$(pwd -P)"
 if [ "$(uname -s)" = "Darwin" ]; then
   STAT='stat -x -t "%Y%m%d%H%M%S"'
 else
@@ -21,7 +21,7 @@ if [ -f "cache_files/nexus.txt" ]; then
   fi
 fi
 cores="`grep -c "processor" < /proc/cpuinfo`"
-beam_commit="d7bb727158d066183690ce19d41039c84d507011"
+beam_commit="d4d028bbf8e16ca4f2df4ce6e6d43992a56d82ca"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam

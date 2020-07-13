@@ -1,5 +1,5 @@
-#ifndef NEXUS_VIRTUALCOMPLIANCECLIENT_HPP
-#define NEXUS_VIRTUALCOMPLIANCECLIENT_HPP
+#ifndef NEXUS_VIRTUAL_COMPLIANCE_CLIENT_HPP
+#define NEXUS_VIRTUAL_COMPLIANCE_CLIENT_HPP
 #include <memory>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -12,12 +12,9 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class VirtualComplianceClient
-      \brief Provides a pure virtual interface to a ComplianceClient.
-   */
+  /** Provides a pure virtual interface to a ComplianceClient. */
   class VirtualComplianceClient : private boost::noncopyable {
     public:
       virtual ~VirtualComplianceClient() = default;
@@ -48,58 +45,60 @@ namespace Compliance {
 
     protected:
 
-      //! Constructs a VirtualComplianceClient.
+      /** Constructs a VirtualComplianceClient. */
       VirtualComplianceClient() = default;
   };
 
-  /*! \class WrapperComplianceClient
-      \brief Wraps a ComplianceClient providing it with a virtual interface.
-      \tparam ClientType The type of ComplianceClient to wrap.
+  /**
+   * Wraps a ComplianceClient providing it with a virtual interface.
+   * @param <C> The type of ComplianceClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperComplianceClient : public VirtualComplianceClient {
     public:
 
-      //! The ComplianceClient to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
+      /** The ComplianceClient to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperComplianceClient.
-      /*!
-        \param client The ComplianceClient to wrap.
-      */
-      template<typename ComplianceClientForward>
-      WrapperComplianceClient(ComplianceClientForward&& client);
+      /**
+       * Constructs a WrapperComplianceClient.
+       * @param client The ComplianceClient to wrap.
+       */
+      template<typename CF>
+      explicit WrapperComplianceClient(CF&& client);
 
-      virtual std::vector<ComplianceRuleEntry> Load(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry);
+      std::vector<ComplianceRuleEntry> Load(
+        const Beam::ServiceLocator::DirectoryEntry& directoryEntry) override;
 
-      virtual ComplianceRuleId Add(
+      ComplianceRuleId Add(
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
-        ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
+        ComplianceRuleEntry::State state,
+        const ComplianceRuleSchema& schema) override;
 
-      virtual void Update(const ComplianceRuleEntry& entry);
+      void Update(const ComplianceRuleEntry& entry) override;
 
-      virtual void Delete(ComplianceRuleId id);
+      void Delete(ComplianceRuleId id) override;
 
-      virtual void Report(const ComplianceRuleViolationRecord& violationRecord);
+      void Report(
+        const ComplianceRuleViolationRecord& violationRecord) override;
 
-      virtual void MonitorComplianceRuleEntries(
+      void MonitorComplianceRuleEntries(
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
         const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
-        Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
+        Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) override;
 
-      virtual void Open();
+      void Open() override;
 
-      virtual void Close();
+      void Close() override;
 
     private:
-      typename Beam::OptionalLocalPtr<ClientType>::type m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps a ComplianceClient into a VirtualComplianceClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps a ComplianceClient into a VirtualComplianceClient.
+   * @param client The client to wrap.
+   */
   template<typename ComplianceClient>
   std::unique_ptr<VirtualComplianceClient> MakeVirtualComplianceClient(
       ComplianceClient&& client) {
@@ -107,44 +106,42 @@ namespace Compliance {
       std::forward<ComplianceClient>(client));
   }
 
-  template<typename ClientType>
-  template<typename ComplianceClientForward>
-  WrapperComplianceClient<ClientType>::WrapperComplianceClient(
-      ComplianceClientForward&& client)
-      : m_client{std::forward<ComplianceClientForward>(client)} {}
+  template<typename C>
+  template<typename CF>
+  WrapperComplianceClient<C>::WrapperComplianceClient(CF&& client)
+    : m_client(std::forward<CF>(client)) {}
 
-  template<typename ClientType>
-  std::vector<ComplianceRuleEntry> WrapperComplianceClient<ClientType>::Load(
+  template<typename C>
+  std::vector<ComplianceRuleEntry> WrapperComplianceClient<C>::Load(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     return m_client->Load(directoryEntry);
   }
 
-  template<typename ClientType>
-  ComplianceRuleId WrapperComplianceClient<ClientType>::Add(
+  template<typename C>
+  ComplianceRuleId WrapperComplianceClient<C>::Add(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
     return m_client->Add(directoryEntry, state, schema);
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::Update(
-      const ComplianceRuleEntry& entry) {
+  template<typename C>
+  void WrapperComplianceClient<C>::Update(const ComplianceRuleEntry& entry) {
     return m_client->Update(entry);
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::Delete(ComplianceRuleId id) {
+  template<typename C>
+  void WrapperComplianceClient<C>::Delete(ComplianceRuleId id) {
     return m_client->Delete(id);
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::Report(
+  template<typename C>
+  void WrapperComplianceClient<C>::Report(
       const ComplianceRuleViolationRecord& violationRecord) {
     return m_client->Report(violationRecord);
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::MonitorComplianceRuleEntries(
+  template<typename C>
+  void WrapperComplianceClient<C>::MonitorComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
       const std::shared_ptr<Beam::QueueWriter<ComplianceRuleEntry>>& queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
@@ -152,16 +149,15 @@ namespace Compliance {
       Beam::Store(snapshot));
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::Open() {
+  template<typename C>
+  void WrapperComplianceClient<C>::Open() {
     return m_client->Open();
   }
 
-  template<typename ClientType>
-  void WrapperComplianceClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperComplianceClient<C>::Close() {
     return m_client->Close();
   }
-}
 }
 
 #endif

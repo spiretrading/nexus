@@ -152,7 +152,7 @@ namespace Nexus::OrderExecutionService {
       Q quantity, M price) {
     return MakeLimitOrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE()), std::move(side),
+      std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price));
   }
 
@@ -162,7 +162,7 @@ namespace Nexus::OrderExecutionService {
       Q quantity, M price, F timeInForce) {
     return MakeLimitOrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE()), std::move(side),
+      std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price),
       std::move(timeInForce));
   }
@@ -172,7 +172,7 @@ namespace Nexus::OrderExecutionService {
       Q quantity) {
     return OrderReactor(Beam::Ref(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE()),
+      std::move(security), Aspen::constant(CurrencyId::NONE),
       Aspen::constant(OrderType::MARKET), std::move(side),
       Aspen::constant(std::string()), std::move(quantity),
       Aspen::constant(Money::ZERO),

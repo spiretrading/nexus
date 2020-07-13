@@ -1,75 +1,74 @@
-#ifndef NEXUS_COMPLIANCERULEENTRY_HPP
-#define NEXUS_COMPLIANCERULEENTRY_HPP
+#ifndef NEXUS_COMPLIANCE_RULE_ENTRY_HPP
+#define NEXUS_COMPLIANCE_RULE_ENTRY_HPP
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 namespace Details {
   BEAM_ENUM(ComplianceRuleEntryStateDefinition,
 
-    //! The rule will reject operations that fail the compliance check.
+    /** The rule will reject operations that fail the compliance check. */
     ACTIVE,
 
-    //! The rule will log operations that fail the compliance check.
+    /** The rule will log operations that fail the compliance check. */
     PASSIVE,
 
-    //! The rule performs no validation.
+    /** The rule performs no validation. */
     DISABLED,
 
-    //! The rule has been deleted.
+    /** The rule has been deleted. */
     DELETED);
 }
 
-  /*! \class ComplianceRuleEntry
-      \brief Represents a single instance of a compliance rule.
-   */
+  /** Represents a single instance of a compliance rule. */
   class ComplianceRuleEntry {
     public:
 
-      //! Specifies how this rule handles operations that fail to pass this
-      //! check.
+      /**
+       * Specifies how this rule handles operations that fail to pass this
+       * check.
+       */
       using State = Details::ComplianceRuleEntryStateDefinition;
 
-      //! Constructs an empty ComplianceRuleEntry.
+      /** Constructs an empty ComplianceRuleEntry. */
       ComplianceRuleEntry();
 
-      //! Constructs a ComplianceRuleEntry.
-      /*!
-        \param id The entry's id.
-        \param directoryEntry The DirectoryEntry this rule is assigned to.
-        \param state The rule's State.
-        \param schema The entry's schema.
-      */
+      /**
+       * Constructs a ComplianceRuleEntry.
+       * @param id The entry's id.
+       * @param directoryEntry The DirectoryEntry this rule is assigned to.
+       * @param state The rule's State.
+       * @param schema The entry's schema.
+       */
       ComplianceRuleEntry(ComplianceRuleId id,
         Beam::ServiceLocator::DirectoryEntry directoryEntry, State state,
         ComplianceRuleSchema schema);
 
-      //! Returns the id.
+      /** Returns the id. */
       ComplianceRuleId GetId() const;
 
-      //! Sets the id.
-      /*!
-        \param id This entry's new id.
-      */
+      /**
+       * Sets the id.
+       * @param id This entry's new id.
+       */
       void SetId(const ComplianceRuleId& id);
 
-      //! Returns the DirectoryEntry this rule is assigned to.
+      /** Returns the DirectoryEntry this rule is assigned to. */
       const Beam::ServiceLocator::DirectoryEntry& GetDirectoryEntry() const;
 
-      //! Returns the State.
+      /** Returns the State. */
       State GetState() const;
 
-      //! Sets the State.
-      /*!
-        \param state This entry's new State.
-      */
+      /**
+       * Sets the State.
+       * @param state This entry's new State.
+       */
       void SetState(State state);
 
-      //! Returns the schema.
+      /** Returns the schema. */
       const ComplianceRuleSchema& GetSchema() const;
 
     private:
@@ -80,12 +79,12 @@ namespace Details {
       ComplianceRuleSchema m_schema;
   };
 
-  //! Tests if two ComplianceRuleEntry's are equal.
-  /*!
-    \param lhs The left hand side of the comparison.
-    \param rhs The right hand side of the comparison.
-    \return <code>true</code> iff the two ComplianceRuleEntry's are equal.
-  */
+  /**
+   * Tests if two ComplianceRuleEntry's are equal.
+   * @param lhs The left hand side of the comparison.
+   * @param rhs The right hand side of the comparison.
+   * @return <code>true</code> iff the two ComplianceRuleEntry's are equal.
+   */
   inline bool operator ==(const ComplianceRuleEntry& lhs,
       const ComplianceRuleEntry& rhs) {
     return lhs.GetId() == rhs.GetId() && lhs.GetDirectoryEntry() ==
@@ -93,28 +92,28 @@ namespace Details {
       lhs.GetSchema() == rhs.GetSchema();
   }
 
-  //! Tests if two ComplianceRuleEntry's are not equal.
-  /*!
-    \param lhs The left hand side of the comparison.
-    \param rhs The right hand side of the comparison.
-    \return <code>true</code> iff the two ComplianceRuleEntry's are not equal.
-  */
+  /**
+   * Tests if two ComplianceRuleEntry's are not equal.
+   * @param lhs The left hand side of the comparison.
+   * @param rhs The right hand side of the comparison.
+   * @return <code>true</code> iff the two ComplianceRuleEntry's are not equal.
+   */
   inline bool operator !=(const ComplianceRuleEntry& lhs,
       const ComplianceRuleEntry& rhs) {
     return !(lhs == rhs);
   }
 
   inline ComplianceRuleEntry::ComplianceRuleEntry()
-      : m_id(0),
-        m_state{State::ACTIVE} {}
+    : m_id(0),
+      m_state(State::ACTIVE) {}
 
   inline ComplianceRuleEntry::ComplianceRuleEntry(ComplianceRuleId id,
-      Beam::ServiceLocator::DirectoryEntry directoryEntry, State state,
-      ComplianceRuleSchema schema)
-      : m_id{std::move(id)},
-        m_directoryEntry{std::move(directoryEntry)},
-        m_state{state},
-        m_schema{std::move(schema)} {}
+    Beam::ServiceLocator::DirectoryEntry directoryEntry, State state,
+    ComplianceRuleSchema schema)
+    : m_id(std::move(id)),
+      m_directoryEntry(std::move(directoryEntry)),
+      m_state(state),
+      m_schema(std::move(schema)) {}
 
   inline ComplianceRuleId ComplianceRuleEntry::GetId() const {
     return m_id;
@@ -141,10 +140,8 @@ namespace Details {
     return m_schema;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Compliance::ComplianceRuleEntry> {
     template<typename Shuttler>
@@ -156,7 +153,6 @@ namespace Serialization {
       shuttle.Shuttle("schema", value.m_schema);
     }
   };
-}
 }
 
 #endif

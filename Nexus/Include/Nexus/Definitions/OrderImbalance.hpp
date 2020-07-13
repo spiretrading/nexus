@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDERIMBALANCE_HPP
-#define NEXUS_ORDERIMBALANCE_HPP
+#ifndef NEXUS_ORDER_IMBALANCE_HPP
+#define NEXUS_ORDER_IMBALANCE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -9,52 +9,50 @@
 
 namespace Nexus {
 
-  /*! \struct OrderImbalance
-      \brief Represents an order imbalance.
-   */
+  /** Represents an order imbalance. */
   struct OrderImbalance {
 
-    //! The Security with the order imbalance.
+    /** The Security with the order imbalance. */
     Security m_security;
 
-    //! The Side of the imbalance.
+    /** The Side of the imbalance. */
     Side m_side;
 
-    //! The size of the imbalance.
+    /** The size of the imbalance. */
     Quantity m_size;
 
-    //! The reference price of the imbalance.
+    /** The reference price of the imbalance. */
     Money m_referencePrice;
 
-    //! The timestamp.
+    /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs an uninitialized OrderImbalance.
+    /** Constructs an uninitialized OrderImbalance. */
     OrderImbalance() = default;
 
-    //! Constructs an OrderImbalance.
-    /*!
-      \param security The Security with the order imbalance.
-      \param side The Side of the imbalance.
-      \param size The size of the imbalance.
-      \param referencePrice The price of the imbalance.
-      \param timestamp The imbalance's time stamp.
-    */
+    /**
+     * Constructs an OrderImbalance.
+     * @param security The Security with the order imbalance.
+     * @param side The Side of the imbalance.
+     * @param size The size of the imbalance.
+     * @param referencePrice The price of the imbalance.
+     * @param timestamp The imbalance's time stamp.
+     */
     OrderImbalance(Security security, Side side, Quantity size,
-      Money referencePrice, const boost::posix_time::ptime& timestamp);
+      Money referencePrice, boost::posix_time::ptime timestamp);
 
-    //! Returns <code>true</code> iff two OrderImbalances are equal.
-    /*!
-      \param orderImbalance The OrderImbalance to compare for equality.
-      \return <code>true</code> iff the two OrderImbalances are equal.
-    */
+    /**
+     * Returns <code>true</code> iff two OrderImbalances are equal.
+     * @param orderImbalance The OrderImbalance to compare for equality.
+     * @return <code>true</code> iff the two OrderImbalances are equal.
+     */
     bool operator ==(const OrderImbalance& orderImbalance) const;
 
-    //! Returns <code>true</code> iff two OrderImbalances are not equal.
-    /*!
-      \param orderImbalance The OrderImbalance to compare for inequality.
-      \return <code>true</code> iff the two OrderImbalances are not equal.
-    */
+    /**
+     * Returns <code>true</code> iff two OrderImbalances are not equal.
+     * @param orderImbalance The OrderImbalance to compare for inequality.
+     * @return <code>true</code> iff the two OrderImbalances are not equal.
+     */
     bool operator !=(const OrderImbalance& orderImbalance) const;
   };
 
@@ -66,13 +64,12 @@ namespace Nexus {
   }
 
   inline OrderImbalance::OrderImbalance(Security security, Side side,
-      Quantity size, Money referencePrice,
-      const boost::posix_time::ptime& timestamp)
-      : m_security(std::move(security)),
-        m_side(side),
-        m_size(size),
-        m_referencePrice(referencePrice),
-        m_timestamp(timestamp) {}
+    Quantity size, Money referencePrice, boost::posix_time::ptime timestamp)
+    : m_security(std::move(security)),
+      m_side(side),
+      m_size(size),
+      m_referencePrice(referencePrice),
+      m_timestamp(timestamp) {}
 
   inline bool OrderImbalance::operator ==(
       const OrderImbalance& orderImbalance) const {
@@ -89,8 +86,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::OrderImbalance> {
     template<typename Shuttler>
@@ -103,7 +99,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

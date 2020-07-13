@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCERULEBUILDER_HPP
-#define NEXUS_COMPLIANCERULEBUILDER_HPP
+#ifndef NEXUS_COMPLIANCE_RULE_BUILDER_HPP
+#define NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #include <boost/variant/get.hpp>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
@@ -11,17 +11,16 @@
 #include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  //! Builds a ComplianceRule from a ComplianceRuleSchema.
-  /*!
-    \param schema The ComplianceRuleSchema to build the ComplianceRule from.
-    \return The ComplianceRule represented by the <i>schema</i>.
-  */
+  /**
+   * Builds a ComplianceRule from a ComplianceRuleSchema.
+   * @param schema The ComplianceRuleSchema to build the ComplianceRule from.
+   * @return The ComplianceRule represented by the <i>schema</i>.
+   */
   template<typename MarketDataClient, typename DefinitionsClient,
     typename TimeClient>
-  inline std::unique_ptr<ComplianceRule> BuildComplianceRule(
+  std::unique_ptr<ComplianceRule> BuildComplianceRule(
       const ComplianceRuleSchema& schema, MarketDataClient& marketDataClient,
       DefinitionsClient& definitionsClient, TimeClient& timeClient) {
     if(schema.GetName() == "buying_power") {
@@ -49,8 +48,8 @@ namespace Compliance {
       return std::make_unique<SymbolRestrictionComplianceRule>(
         schema.GetParameters());
     } else if(schema.GetName() == PerAccountComplianceRule::GetName()) {
-      std::string name;
-      std::vector<ComplianceParameter> parameters;
+      auto name = std::string();
+      auto parameters = std::vector<ComplianceParameter>();
       for(auto& parameter : schema.GetParameters()) {
         if(parameter.m_name == "name") {
           name = boost::get<std::string>(parameter.m_value);
@@ -60,8 +59,8 @@ namespace Compliance {
             parameter.m_value);
         }
       }
-      ComplianceRuleSchema perAccountSchema{std::move(name),
-        std::move(parameters)};
+      auto perAccountSchema = ComplianceRuleSchema(std::move(name),
+        std::move(parameters));
       return std::make_unique<PerAccountComplianceRule>(perAccountSchema,
         std::bind(&BuildComplianceRule<MarketDataClient, DefinitionsClient,
         TimeClient>, std::placeholders::_1, std::ref(marketDataClient),
@@ -69,7 +68,6 @@ namespace Compliance {
     }
     return nullptr;
   }
-}
 }
 
 #endif

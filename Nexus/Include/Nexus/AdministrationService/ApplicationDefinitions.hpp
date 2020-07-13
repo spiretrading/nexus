@@ -18,8 +18,7 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 namespace Details {
   using AdministrationClientSessionBuilder =
     Beam::Services::AuthenticatedServiceProtocolClientBuilder<
@@ -30,49 +29,46 @@ namespace Details {
     Beam::Codecs::NullEncoder>, Beam::Threading::LiveTimer>;
 }
 
-  /*! \class ApplicationAdministrationClient
-      \brief Encapsulates a standard AdministrationClient used in an
-             application.
-   */
+  /** Encapsulates a standard AdministrationClient used in an application. */
   class ApplicationAdministrationClient : private boost::noncopyable {
     public:
 
-      //! Defines the standard AdministrationClient used for applications.
+      /** Defines the standard AdministrationClient used for applications. */
       using Client =
         AdministrationClient<Details::AdministrationClientSessionBuilder>;
 
-      //! Constructs an ApplicationAdministrationClient.
+      /** Constructs an ApplicationAdministrationClient. */
       ApplicationAdministrationClient() = default;
 
-      //! Builds the session.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate sessions.
-        \param socketThreadPool The SocketThreadPool used for the socket
-               connection.
-        \param timerThreadPool The TimerThreadPool used for heartbeats.
-      */
+      /**
+       * Builds the session.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate sessions.
+       * @param socketThreadPool The SocketThreadPool used for the socket
+       *        connection.
+       * @param timerThreadPool The TimerThreadPool used for heartbeats.
+       */
       void BuildSession(Beam::Ref<Beam::ServiceLocator::
         ApplicationServiceLocatorClient::Client> serviceLocatorClient,
         Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       Client& operator *();
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       const Client& operator *() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* operator ->();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* operator ->() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* Get();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* Get() const;
 
     private:
@@ -143,7 +139,6 @@ namespace Details {
       ApplicationAdministrationClient::Get() const {
     return &*m_client;
   }
-}
 }
 
 #endif

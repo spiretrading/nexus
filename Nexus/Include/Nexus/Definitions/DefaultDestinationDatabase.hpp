@@ -233,7 +233,7 @@ namespace Details {
   }
 }
 
-  //! Returns the default DestinationDatabase.
+  /** Returns the default DestinationDatabase. */
   inline const DestinationDatabase& GetDefaultDestinationDatabase() {
     static auto database = Details::BuildDefaultDestinationDatabase();
     return database;

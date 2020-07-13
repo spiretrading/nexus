@@ -1,5 +1,5 @@
-#ifndef NEXUS_TIMEANDSALE_HPP
-#define NEXUS_TIMEANDSALE_HPP
+#ifndef NEXUS_TIME_AND_SALE_HPP
+#define NEXUS_TIME_AND_SALE_HPP
 #include <ostream>
 #include <string>
 #include <Beam/Collections/Enum.hpp>
@@ -12,85 +12,81 @@ namespace Nexus {
 namespace Details {
   BEAM_ENUM(ConditionTypeDefinition,
 
-    //! A regular trade.
+    /** A regular trade. */
     REGULAR,
 
-    //! An opening print.
+    /** An opening print. */
     OPEN,
 
-    //! A closing print.
+    /** A closing print. */
     CLOSE);
 }
 
-  /*! \struct TimeAndSale
-      \brief Stores a record of a transaction on a Security.
-   */
+  /** Stores a record of a transaction on a Security. */
   struct TimeAndSale {
 
-    /*! \struct Condition
-        \brief The sale's condition.
-     */
+    /** The sale's condition. */
     struct Condition {
 
-      //! Lists types of conditions shared amongst multiple markets.
+      /** Lists types of conditions shared amongst multiple markets. */
       using Type = Details::ConditionTypeDefinition;
 
-      //! The type of condition.
+      /** The type of condition. */
       Type m_type;
 
-      //! The condition's code.
+      /** The condition's code. */
       std::string m_code;
 
-      //! Constructs a default Condition.
+      /** Constructs a default Condition. */
       Condition() = default;
 
-      //! Constructs a Condition.
-      /*!
-        \param type The type of condition.
-        \param code The condition's code.
-      */
+      /**
+       * Constructs a Condition.
+       * @param type The type of condition.
+       * @param code The condition's code.
+       */
       Condition(Type type, std::string code);
 
-      //! Tests a Condition for equality.
+      /** Tests a Condition for equality. */
       bool operator ==(const Condition& condition) const;
 
-      //! Tests a Condition for inequality.
+      /** Tests a Condition for inequality. */
       bool operator !=(const Condition& condition) const;
     };
 
-    //! The time of the transaction.
+    /** The time of the transaction. */
     boost::posix_time::ptime m_timestamp;
 
-    //! The transaction's price.
+    /** The transaction's price. */
     Money m_price;
 
-    //! The size of the transaction.
+    /** The size of the transaction. */
     Quantity m_size;
 
-    //! The sale condition.
+    /** The sale condition. */
     Condition m_condition;
 
-    //! The market center.
+    /** The market center. */
     std::string m_marketCenter;
 
-    //! Constructs an uninitialized TimeAndSale.
+    /** Constructs an uninitialized TimeAndSale. */
     TimeAndSale() = default;
 
-    //! Constructs a TimeAndSale.
-    /*!
-      \param timestamp The time of the transaction.
-      \param price The transaction's price.
-      \param size The size of the transaction.
-      \param condition The sale condition.
-      \param marketCenter The market center.
-    */
-    TimeAndSale(const boost::posix_time::ptime& timestamp, Money price,
+    /**
+     * Constructs a TimeAndSale.
+     * @param timestamp The time of the transaction.
+     * @param price The transaction's price.
+     * @param size The size of the transaction.
+     * @param condition The sale condition.
+     * @param marketCenter The market center.
+     */
+    TimeAndSale(boost::posix_time::ptime timestamp, Money price,
       Quantity size, Condition condition, std::string marketCenter);
 
-    //! Tests a TimeAndSale for equality.
+    /** Tests a TimeAndSale for equality. */
     bool operator ==(const TimeAndSale& timeAndSale) const;
 
-    //! Tests a TimeAndSale for inequality.
+    /** Tests a TimeAndSale for inequality. */
     bool operator !=(const TimeAndSale& timeAndSale) const;
   };
 
@@ -102,9 +98,8 @@ namespace Details {
       return out << "OPEN";
     } else if(value == TimeAndSale::Condition::Type::CLOSE) {
       return out << "CLOSE";
-    } else {
-      return out << "NONE";
     }
+    return out << "NONE";
   }
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -120,16 +115,16 @@ namespace Details {
   }
 
   inline TimeAndSale::Condition::Condition(Type type, std::string code)
-      : m_type(type),
-        m_code(std::move(code)) {}
+    : m_type(type),
+      m_code(std::move(code)) {}
 
-  inline TimeAndSale::TimeAndSale(const boost::posix_time::ptime& timestamp,
-      Money price, Quantity size, Condition condition, std::string marketCenter)
-      : m_timestamp(timestamp),
-        m_price(price),
-        m_size(size),
-        m_condition(std::move(condition)),
-        m_marketCenter(std::move(marketCenter)) {}
+  inline TimeAndSale::TimeAndSale(boost::posix_time::ptime timestamp,
+    Money price, Quantity size, Condition condition, std::string marketCenter)
+    : m_timestamp(timestamp),
+      m_price(price),
+      m_size(size),
+      m_condition(std::move(condition)),
+      m_marketCenter(std::move(marketCenter)) {}
 
   inline bool TimeAndSale::operator ==(const TimeAndSale& timeAndSale) const {
     return m_timestamp == timeAndSale.m_timestamp &&
@@ -153,8 +148,7 @@ namespace Details {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::TimeAndSale::Condition> {
     template<typename Shuttler>
@@ -177,7 +171,6 @@ namespace Serialization {
       shuttle.Shuttle("market_center", value.m_marketCenter);
     }
   };
-}
 }
 
 #endif

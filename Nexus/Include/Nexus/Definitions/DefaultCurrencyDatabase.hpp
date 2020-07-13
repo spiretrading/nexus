@@ -1,50 +1,50 @@
-#ifndef NEXUS_DEFAULTCURRENCYDATABASE_HPP
-#define NEXUS_DEFAULTCURRENCYDATABASE_HPP
+#ifndef NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
+#define NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
 #include <memory>
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
 namespace Details {
   inline CurrencyDatabase BuildDefaultCurrencyDatabase() {
-    CurrencyDatabase database;
+    auto database = CurrencyDatabase();
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{36};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(36);
       entry.m_code = "AUD";
       entry.m_sign = "$";
       database.Add(entry);
     }
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{124};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(124);
       entry.m_code = "CAD";
       entry.m_sign = "$";
       database.Add(entry);
     }
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{344};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(344);
       entry.m_code = "HKD";
       entry.m_sign = "$";
       database.Add(entry);
     }
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{392};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(392);
       entry.m_code = "JPY";
       entry.m_sign = "¥";
       database.Add(entry);
     }
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{840};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(840);
       entry.m_code = "USD";
       entry.m_sign = "$";
       database.Add(entry);
     }
     {
-      CurrencyDatabase::Entry entry;
-      entry.m_id = CurrencyId{1001};
+      auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(1001);
       entry.m_code = "XBT";
       entry.m_sign = "B";
       database.Add(entry);
@@ -53,11 +53,12 @@ namespace Details {
   }
 }
 
-  //! Returns the default CurrencyDatabase, typically used for testing purposes.
+  /**
+   * Returns the default CurrencyDatabase, typically used for testing purposes.
+   */
   inline const CurrencyDatabase& GetDefaultCurrencyDatabase() {
-    static auto database = std::make_unique<CurrencyDatabase>(
-      Details::BuildDefaultCurrencyDatabase());
-    return *database;
+    static auto database = Details::BuildDefaultCurrencyDatabase();
+    return database;
   }
 
   namespace DefaultCurrencies {

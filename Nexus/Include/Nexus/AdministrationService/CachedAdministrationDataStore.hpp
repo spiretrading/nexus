@@ -1,5 +1,5 @@
-#ifndef NEXUS_CACHEDADMINISTRATIONDATASTORE_HPP
-#define NEXUS_CACHEDADMINISTRATIONDATASTORE_HPP
+#ifndef NEXUS_CACHED_ADMINISTRATION_DATA_STORE_HPP
+#define NEXUS_CACHED_ADMINISTRATION_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -7,274 +7,268 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class CachedAdministrationDataStore
-      \brief Caches an AdministratorDataStore in memory.
-      \tparam DataStoreType The type of AdministrationDataStore to cache.
+  /**
+   * Caches an AdministratorDataStore in memory.
+   * @param <D> The type of AdministrationDataStore to cache.
    */
-  template<typename DataStoreType>
+  template<typename D>
   class CachedAdministrationDataStore : public AdministrationDataStore {
     public:
 
-      //! The type of ComplianceRuleDataStore to cache.
-      using DataStore = Beam::GetTryDereferenceType<DataStoreType>;
+      /** The type of ComplianceRuleDataStore to cache. */
+      using DataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs a CachedAdministrationDataStore.
-      /*!
-        \param dataStore The AdministrationDataStore to cache.
-      */
-      template<typename DataStoreForward>
-      CachedAdministrationDataStore(DataStoreForward&& dataStore);
+      /**
+       * Constructs a CachedAdministrationDataStore.
+       * @param dataStore The AdministrationDataStore to cache.
+       */
+      template<typename DF>
+      CachedAdministrationDataStore(DF&& dataStore);
 
-      virtual ~CachedAdministrationDataStore() override;
+      ~CachedAdministrationDataStore() override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         AccountIdentity>> LoadAllAccountIdentities() override;
 
-      virtual AccountIdentity LoadIdentity(
+      AccountIdentity LoadIdentity(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity) override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         RiskService::RiskParameters>> LoadAllRiskParameters() override;
 
-      virtual RiskService::RiskParameters LoadRiskParameters(
+      RiskService::RiskParameters LoadRiskParameters(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& riskParameters) override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         RiskService::RiskState>> LoadAllRiskStates() override;
 
-      virtual RiskService::RiskState LoadRiskState(
+      RiskService::RiskState LoadRiskState(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) override;
 
-      virtual AccountModificationRequest LoadAccountModificationRequest(
+      AccountModificationRequest LoadAccountModificationRequest(
         AccountModificationRequest::Id id) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadAccountModificationRequestIds(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadAccountModificationRequestIds(
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual EntitlementModification LoadEntitlementModification(
+      EntitlementModification LoadEntitlementModification(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(const AccountModificationRequest& request,
+      void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) override;
 
-      virtual RiskModification LoadRiskModification(
+      RiskModification LoadRiskModification(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(const AccountModificationRequest& request,
+      void Store(const AccountModificationRequest& request,
         const RiskModification& modification) override;
 
-      virtual void Store(AccountModificationRequest::Id id,
+      void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
-      virtual AccountModificationRequest::Update
-        LoadAccountModificationRequestStatus(
+      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(AccountModificationRequest::Id id,
+      void Store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status) override;
 
-      virtual Message::Id LoadLastMessageId() override;
+      Message::Id LoadLastMessageId() override;
 
-      virtual Message LoadMessage(Message::Id id) override;
+      Message LoadMessage(Message::Id id) override;
 
-      virtual std::vector<Message::Id> LoadMessageIds(
+      std::vector<Message::Id> LoadMessageIds(
         AccountModificationRequest::Id id) override;
 
-      virtual void WithTransaction(
-        const std::function<void ()>& transaction) override;
+      void WithTransaction(const std::function<void ()>& transaction) override;
 
-      virtual void Open() override;
+      void Open() override;
 
-      virtual void Close() override;
+      void Close() override;
 
     private:
-      Beam::GetOptionalLocalPtr<DataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       LocalAdministrationDataStore m_cache;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
   };
 
-  template<typename DataStoreType>
-  template<typename DataStoreForward>
-  CachedAdministrationDataStore<DataStoreType>::CachedAdministrationDataStore(
-      DataStoreForward&& dataStore)
-      : m_dataStore{std::forward<DataStoreForward>(dataStore)} {}
+  template<typename D>
+  template<typename DF>
+  CachedAdministrationDataStore<D>::CachedAdministrationDataStore(
+    DF&& dataStore)
+    : m_dataStore(std::forward<DF>(dataStore)) {}
 
-  template<typename DataStoreType>
-  CachedAdministrationDataStore<DataStoreType>::
-      ~CachedAdministrationDataStore() {
+  template<typename D>
+  CachedAdministrationDataStore<D>::~CachedAdministrationDataStore() {
     Close();
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>
-      CachedAdministrationDataStore<DataStoreType>::LoadAllAccountIdentities() {
+      CachedAdministrationDataStore<D>::LoadAllAccountIdentities() {
     return m_cache.LoadAllAccountIdentities();
   }
 
-  template<typename DataStoreType>
-  AccountIdentity CachedAdministrationDataStore<DataStoreType>::LoadIdentity(
+  template<typename D>
+  AccountIdentity CachedAdministrationDataStore<D>::LoadIdentity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.LoadIdentity(account);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
     m_dataStore->Store(account, identity);
     m_cache.Store(account, identity);
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       RiskService::RiskParameters>>
-      CachedAdministrationDataStore<DataStoreType>::LoadAllRiskParameters() {
+      CachedAdministrationDataStore<D>::LoadAllRiskParameters() {
     return m_cache.LoadAllRiskParameters();
   }
 
-  template<typename DataStoreType>
-  RiskService::RiskParameters CachedAdministrationDataStore<DataStoreType>::
+  template<typename D>
+  RiskService::RiskParameters CachedAdministrationDataStore<D>::
       LoadRiskParameters(const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.LoadRiskParameters(account);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
     m_dataStore->Store(account, riskParameters);
     m_cache.Store(account, riskParameters);
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskState>> CachedAdministrationDataStore<DataStoreType>::
+      RiskService::RiskState>> CachedAdministrationDataStore<D>::
       LoadAllRiskStates() {
     return m_cache.LoadAllRiskStates();
   }
 
-  template<typename DataStoreType>
-  RiskService::RiskState CachedAdministrationDataStore<DataStoreType>::
+  template<typename D>
+  RiskService::RiskState CachedAdministrationDataStore<D>::
       LoadRiskState(const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.LoadRiskState(account);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
     m_dataStore->Store(account, riskState);
     m_cache.Store(account, riskState);
   }
 
-  template<typename DataStoreType>
-  AccountModificationRequest CachedAdministrationDataStore<DataStoreType>::
+  template<typename D>
+  AccountModificationRequest CachedAdministrationDataStore<D>::
       LoadAccountModificationRequest(AccountModificationRequest::Id id) {
     return m_dataStore->LoadAccountModificationRequest(id);
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<AccountModificationRequest::Id> CachedAdministrationDataStore<
-      DataStoreType>::LoadAccountModificationRequestIds(
+      D>::LoadAccountModificationRequestIds(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
     return m_dataStore->LoadAccountModificationRequestIds(account, startId,
       maxCount);
   }
 
-  template<typename DataStoreType>
-  std::vector<AccountModificationRequest::Id> CachedAdministrationDataStore<
-      DataStoreType>::LoadAccountModificationRequestIds(
+  template<typename D>
+  std::vector<AccountModificationRequest::Id>
+      CachedAdministrationDataStore<D>::LoadAccountModificationRequestIds(
       AccountModificationRequest::Id startId, int maxCount) {
     return m_dataStore->LoadAccountModificationRequestIds(startId, maxCount);
   }
 
-  template<typename DataStoreType>
-  EntitlementModification CachedAdministrationDataStore<DataStoreType>::
+  template<typename D>
+  EntitlementModification CachedAdministrationDataStore<D>::
       LoadEntitlementModification(AccountModificationRequest::Id id) {
     return m_dataStore->LoadEntitlementModification(id);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
     m_dataStore->Store(request, modification);
   }
 
-  template<typename DataStoreType>
-  RiskModification CachedAdministrationDataStore<DataStoreType>::
-      LoadRiskModification(AccountModificationRequest::Id id) {
+  template<typename D>
+  RiskModification CachedAdministrationDataStore<D>::LoadRiskModification(
+      AccountModificationRequest::Id id) {
     return m_dataStore->LoadRiskModification(id);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
     m_dataStore->Store(request, modification);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       AccountModificationRequest::Id id, const Message& message) {
     m_dataStore->Store(id, message);
   }
 
-  template<typename DataStoreType>
-  AccountModificationRequest::Update CachedAdministrationDataStore<
-      DataStoreType>::LoadAccountModificationRequestStatus(
+  template<typename D>
+  AccountModificationRequest::Update
+      CachedAdministrationDataStore<D>::LoadAccountModificationRequestStatus(
       AccountModificationRequest::Id id) {
     return m_dataStore->LoadAccountModificationRequestStatus(id);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Store(
       AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
     m_dataStore->Store(id, status);
   }
 
-  template<typename DataStoreType>
-  Message::Id CachedAdministrationDataStore<DataStoreType>::
-      LoadLastMessageId() {
+  template<typename D>
+  Message::Id CachedAdministrationDataStore<D>::LoadLastMessageId() {
     return m_dataStore->LoadLastMessageId();
   }
 
-  template<typename DataStoreType>
-  Message CachedAdministrationDataStore<DataStoreType>::LoadMessage(
-      Message::Id id) {
+  template<typename D>
+  Message CachedAdministrationDataStore<D>::LoadMessage(Message::Id id) {
     return m_dataStore->LoadMessage(id);
   }
 
-  template<typename DataStoreType>
-  std::vector<Message::Id> CachedAdministrationDataStore<DataStoreType>::
-      LoadMessageIds(AccountModificationRequest::Id id) {
+  template<typename D>
+  std::vector<Message::Id> CachedAdministrationDataStore<D>::LoadMessageIds(
+      AccountModificationRequest::Id id) {
     return m_dataStore->LoadMessageIds(id);
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::WithTransaction(
+  template<typename D>
+  void CachedAdministrationDataStore<D>::WithTransaction(
       const std::function<void ()>& transaction) {
     m_dataStore->WithTransaction(
       [&] {
@@ -282,8 +276,8 @@ namespace AdministrationService {
       });
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Open() {
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -309,21 +303,20 @@ namespace AdministrationService {
     m_openState.SetOpen();
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Close() {
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename DataStoreType>
-  void CachedAdministrationDataStore<DataStoreType>::Shutdown() {
+  template<typename D>
+  void CachedAdministrationDataStore<D>::Shutdown() {
     m_dataStore->Close();
     m_cache.Close();
     m_openState.SetClosed();
   }
-}
 }
 
 #endif

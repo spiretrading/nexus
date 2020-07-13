@@ -21,6 +21,10 @@ DefinitionsWebServlet::~DefinitionsWebServlet() {
 std::vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/definitions_service/load_organization_name"),
+    std::bind(&DefinitionsWebServlet::OnLoadOrganizationName, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/definitions_service/load_compliance_rule_schemas"),
     std::bind(&DefinitionsWebServlet::OnLoadComplianceRuleSchemas, this,
     std::placeholders::_1));
@@ -63,6 +67,21 @@ void DefinitionsWebServlet::Close() {
 
 void DefinitionsWebServlet::Shutdown() {
   m_openState.SetClosed();
+}
+
+HttpResponse DefinitionsWebServlet::OnLoadOrganizationName(
+    const HttpRequest& request) {
+  auto response = HttpResponse();
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto& serviceClients = session->GetServiceClients();
+  auto organizationName =
+    serviceClients.GetDefinitionsClient().LoadOrganizationName();
+  session->ShuttleResponse(organizationName, Store(response));
+  return response;
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadComplianceRuleSchemas(

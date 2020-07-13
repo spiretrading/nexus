@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDERCOUNTPERSIDECOMPLIANCERULE_HPP
-#define NEXUS_ORDERCOUNTPERSIDECOMPLIANCERULE_HPP
+#ifndef NEXUS_ORDER_COUNT_PER_SIDE_COMPLIANCE_RULE_HPP
+#define NEXUS_ORDER_COUNT_PER_SIDE_COMPLIANCE_RULE_HPP
 #include <vector>
 #include <boost/atomic/atomic.hpp>
 #include <boost/functional/factory.hpp>
@@ -16,25 +16,22 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class OrderCountPerSideComplianceRule
-      \brief Restricts the number of Orders per Side per Security.
-   */
+  /** Restricts the number of Orders per Side per Security. */
   class OrderCountPerSideComplianceRule : public ComplianceRule {
     public:
 
-      //! Constructs a OrderCountPerSideComplianceRule.
-      /*!
-        \param parameters The list of parameters used by this rule.
-      */
-      OrderCountPerSideComplianceRule(
+      /**
+       * Constructs a OrderCountPerSideComplianceRule.
+       * @param parameters The list of parameters used by this rule.
+       */
+      explicit OrderCountPerSideComplianceRule(
         const std::vector<ComplianceParameter>& parameters);
 
-      virtual void Submit(const OrderExecutionService::Order& order);
+      void Submit(const OrderExecutionService::Order& order) override;
 
-      virtual void Add(const OrderExecutionService::Order& order);
+      void Add(const OrderExecutionService::Order& order) override;
 
     private:
       SecuritySet m_securities;
@@ -47,21 +44,23 @@ namespace Compliance {
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
-  //! Builds a ComplianceRuleSchema representing an
-  //! OrderCountPerSideComplianceRule.
+  /**
+   * Builds a ComplianceRuleSchema representing an
+   * OrderCountPerSideComplianceRule.
+   */
   inline ComplianceRuleSchema BuildOrderCountPerSideComplianceRuleSchema() {
-    std::vector<ComplianceValue> symbols;
-    symbols.push_back(Security{});
-    std::vector<ComplianceParameter> parameters;
+    auto symbols = std::vector<ComplianceValue>();
+    symbols.push_back(Security());
+    auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("symbols", symbols);
     parameters.emplace_back("count", Quantity{0});
-    ComplianceRuleSchema schema{"orders_per_side_limit", parameters};
+    auto schema = ComplianceRuleSchema("orders_per_side_limit", parameters);
     return schema;
   }
 
   inline OrderCountPerSideComplianceRule::OrderCountPerSideComplianceRule(
-      const std::vector<ComplianceParameter>& parameters)
-      : m_count{0} {
+    const std::vector<ComplianceParameter>& parameters)
+    : m_count(0) {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
         for(auto& security : boost::get<std::vector<ComplianceValue>>(
@@ -89,7 +88,7 @@ namespace Compliance {
     auto currentOrderCount = ++orderCount;
     if(currentOrderCount > m_count) {
       --orderCount;
-      throw ComplianceCheckException{"Order limit per side reached."};
+      throw ComplianceCheckException("Order limit per side reached.");
     } else {
       order.GetPublisher().Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
@@ -132,7 +131,6 @@ namespace Compliance {
       });
     --orderCount;
   }
-}
 }
 
 #endif

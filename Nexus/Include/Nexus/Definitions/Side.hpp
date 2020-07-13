@@ -8,23 +8,21 @@
 
 namespace Nexus {
 
-  /*! \enum Side
-      \brief Represents a bid or an ask.
-   */
+  /** Represents a bid or an ask. */
   BEAM_ENUM(Side,
 
-    //! Ask side.
+    /** Ask side. */
     ASK,
 
-    //! Bid side.
+    /** Bid side. */
     BID);
 
-  //! Returns a value based on a Side.
-  /*!
-    \param side The Side to pick the value from.
-    \param askValue The value to return if <i>side</i> is an ASK.
-    \param bidValue The value to return if <i>side</i> is a BID.
-  */
+  /**
+   * Returns a value based on a Side.
+   * @param side The Side to pick the value from.
+   * @param askValue The value to return if <i>side</i> is an ASK.
+   * @param bidValue The value to return if <i>side</i> is a BID.
+   */
   template<typename T>
   T& Pick(Side side, T& askValue, T& bidValue) {
     if(side == Side::ASK) {
@@ -33,12 +31,12 @@ namespace Nexus {
     return bidValue;
   }
 
-  //! Returns a value based on a Side.
-  /*!
-    \param side The Side to pick the value from.
-    \param askValue The value to return if <i>side</i> is an ASK.
-    \param bidValue The value to return if <i>side</i> is a BID.
-  */
+  /**
+   * Returns a value based on a Side.
+   * @param side The Side to pick the value from.
+   * @param askValue The value to return if <i>side</i> is an ASK.
+   * @param bidValue The value to return if <i>side</i> is a BID.
+   */
   template<typename T>
   const T& Pick(Side side, const T& askValue, const T& bidValue) {
     if(side == Side::ASK) {
@@ -47,7 +45,7 @@ namespace Nexus {
     return bidValue;
   }
 
-  //! Returns the direction of the Side as a magnitude.
+  /** Returns the direction of the Side as a magnitude. */
   inline int GetDirection(Side value) {
     if(value == Side::ASK) {
       return -1;
@@ -57,7 +55,7 @@ namespace Nexus {
     return 0;
   }
 
-  //! Returns the Side of a position.
+  /** Returns the Side of a position. */
   inline Side GetSide(Quantity quantity) {
     if(quantity > 0) {
       return Side::BID;
@@ -67,7 +65,7 @@ namespace Nexus {
     return Side::NONE;
   }
 
-  //! Returns the opposite of a Side.
+  /** Returns the opposite of a Side. */
   inline Side GetOpposite(Side value) {
     if(value == Side::BID) {
       return Side::ASK;
@@ -77,7 +75,7 @@ namespace Nexus {
     return Side::NONE;
   }
 
-  //! Returns the single character representation of a Side.
+  /** Returns the single character representation of a Side. */
   inline char ToChar(Side value) {
     if(value == Side::ASK) {
       return 'A';

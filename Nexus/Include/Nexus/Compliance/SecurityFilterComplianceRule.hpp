@@ -1,5 +1,5 @@
-#ifndef NEXUS_SECURITYFILTERCOMPLIANCERULE_HPP
-#define NEXUS_SECURITYFILTERCOMPLIANCERULE_HPP
+#ifndef NEXUS_SECURITY_FILTER_COMPLIANCE_RULE_HPP
+#define NEXUS_SECURITY_FILTER_COMPLIANCE_RULE_HPP
 #include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/SecuritySet.hpp"
@@ -8,28 +8,25 @@
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class SecurityFilterComplianceRule
-      \brief Applies a ComplianceRule only to a specified set of Securities.
-   */
+  /** Applies a ComplianceRule only to a specified set of Securities. */
   class SecurityFilterComplianceRule : public ComplianceRule {
     public:
 
-      //! Constructs a SecurityFilterComplianceRule.
-      /*!
-        \param securities The set of Securities the rule applies to.
-        \param rule The ComplianceRule to apply.
-      */
+      /**
+       * Constructs a SecurityFilterComplianceRule.
+       * @param securities The set of Securities the rule applies to.
+       * @param rule The ComplianceRule to apply.
+       */
       SecurityFilterComplianceRule(SecuritySet securities,
         std::unique_ptr<ComplianceRule> rule);
 
-      virtual void Submit(const OrderExecutionService::Order& order) override;
+      void Submit(const OrderExecutionService::Order& order) override;
 
-      virtual void Cancel(const OrderExecutionService::Order& order) override;
+      void Cancel(const OrderExecutionService::Order& order) override;
 
-      virtual void Add(const OrderExecutionService::Order& order) override;
+      void Add(const OrderExecutionService::Order& order) override;
 
     private:
       SecuritySet m_securities;
@@ -37,9 +34,9 @@ namespace Compliance {
   };
 
   inline SecurityFilterComplianceRule::SecurityFilterComplianceRule(
-      SecuritySet securities, std::unique_ptr<ComplianceRule> rule)
-      : m_securities{std::move(securities)},
-        m_rule{std::move(rule)} {}
+    SecuritySet securities, std::unique_ptr<ComplianceRule> rule)
+    : m_securities(std::move(securities)),
+      m_rule(std::move(rule)) {}
 
   inline void SecurityFilterComplianceRule::Submit(
       const OrderExecutionService::Order& order) {
@@ -61,7 +58,6 @@ namespace Compliance {
       const OrderExecutionService::Order& order) {
     m_rule->Add(order);
   }
-}
 }
 
 #endif
