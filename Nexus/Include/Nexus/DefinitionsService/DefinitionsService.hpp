@@ -4,13 +4,13 @@
 
 namespace Nexus::DefinitionsService {
   class ApplicationDefinitionsClient;
-  template<typename ServiceProtocolClientBuilderType> class DefinitionsClient;
-  template<typename ContainerType> class DefinitionsServlet;
+  template<typename B> class DefinitionsClient;
+  template<typename C> class DefinitionsServlet;
   class DefinitionsSession;
   class VirtualDefinitionsClient;
-  template<typename ClientType> class WrapperDefinitionsClient;
+  template<typename C> class WrapperDefinitionsClient;
 
-  // Standard name for the definitions service.
+  /** Standard name for the definitions service. */
   inline const std::string SERVICE_NAME = "definitions_service";
 }
 

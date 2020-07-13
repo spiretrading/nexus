@@ -178,8 +178,8 @@ namespace Nexus::AdministrationService::Tests {
       m_entitlements->Add(globalEntitlement);
     }
     m_container.emplace(Beam::Initialize(m_serviceLocatorClient,
-      Beam::Initialize(m_serviceLocatorClient, "Spire Trading Inc.",
-      *m_entitlements, &m_dataStore)), &m_serverConnection,
+      Beam::Initialize(m_serviceLocatorClient, *m_entitlements, &m_dataStore)),
+      &m_serverConnection,
       boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
     m_container->Open();
   }

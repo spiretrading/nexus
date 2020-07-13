@@ -1,5 +1,5 @@
-#ifndef NEXUS_MAPCOMPLIANCERULE_HPP
-#define NEXUS_MAPCOMPLIANCERULE_HPP
+#ifndef NEXUS_MAP_COMPLIANCE_RULE_HPP
+#define NEXUS_MAP_COMPLIANCE_RULE_HPP
 #include <functional>
 #include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
@@ -8,47 +8,45 @@
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class MapComplianceRule
-      \brief Maps a key to an independent set of ComplianceRules.
-      \tparam KeyType The type of key used as an index to the ComplianceRule to
-              apply.
+  /**
+   * Maps a key to an independent set of ComplianceRules.
+   * @param <K> The type of key used as an index to the ComplianceRule to apply.
    */
-  template<typename KeyType>
+  template<typename K>
   class MapComplianceRule : public ComplianceRule {
     public:
 
-      //! The type of key used as an index to the ComplianceRule to apply.
-      using Key = KeyType;
+      /** The type of key used as an index to the ComplianceRule to apply. */
+      using Key = K;
 
-      //! Type of function used to build ComplianceRules.
-      /*!
-        \param schema The ComplianceRuleSchema representing the rule to build.
-        \return The ComplianceRule represented by the <i>schema</i>.
-      */
+      /**
+       * Type of function used to build ComplianceRules.
+       * @param schema The ComplianceRuleSchema representing the rule to build.
+       * @return The ComplianceRule represented by the <i>schema</i>.
+       */
       using ComplianceRuleBuilder = std::function<
         std::unique_ptr<ComplianceRule> (const ComplianceRuleSchema& schema)>;
 
-      //! The type of function used to compute the key.
+      /** The type of function used to compute the key. */
       using KeyBuilder = std::function<
         Key (const OrderExecutionService::Order& order)>;
 
-      //! Constructs a MapComplianceRule.
-      /*!
-        \param schema The ComplianceRuleSchema to apply.
-        \param complianceRuleBuilder Builds the compliance rule.
-        \param keyBuilder Builds the key.
-      */
+      /**
+       * Constructs a MapComplianceRule.
+       * @param schema The ComplianceRuleSchema to apply.
+       * @param complianceRuleBuilder Builds the compliance rule.
+       * @param keyBuilder Builds the key.
+       */
       MapComplianceRule(ComplianceRuleSchema schema,
         ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder);
 
-      virtual void Submit(const OrderExecutionService::Order& order) override;
+      void Submit(const OrderExecutionService::Order& order) override;
 
-      virtual void Cancel(const OrderExecutionService::Order& order) override;
+      void Cancel(const OrderExecutionService::Order& order) override;
 
-      virtual void Add(const OrderExecutionService::Order& order) override;
+      void Add(const OrderExecutionService::Order& order) override;
 
     private:
       ComplianceRuleSchema m_schema;
@@ -58,32 +56,31 @@ namespace Compliance {
         m_rules;
   };
 
-  //! Builds a MapComplianceRule that applies per Security.
-  /*!
-    \param schema The ComplianceRuleSchema to apply.
-    \param complianceRuleBuilder Builds the compliance rule.
-  */
+  /**
+   * Builds a MapComplianceRule that applies per Security.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param complianceRuleBuilder Builds the compliance rule.
+   */
   inline std::unique_ptr<MapComplianceRule<Security>>
       MakeMapSecurityComplianceRule(ComplianceRuleSchema schema,
       MapComplianceRule<Security>::ComplianceRuleBuilder
       complianceRuleBuilder) {
     return std::make_unique<MapComplianceRule<Security>>(
       std::move(schema), std::move(complianceRuleBuilder),
-      [] (const OrderExecutionService::Order& order) {
+      [] (const auto& order) {
         return order.GetInfo().m_fields.m_security;
       });
   }
 
-  template<typename KeyType>
-  MapComplianceRule<KeyType>::MapComplianceRule(ComplianceRuleSchema schema,
-      ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder)
-      : m_schema{std::move(schema)},
-        m_complianceRuleBuilder{std::move(complianceRuleBuilder)},
-        m_keyBuilder{std::move(keyBuilder)} {}
+  template<typename K>
+  MapComplianceRule<K>::MapComplianceRule(ComplianceRuleSchema schema,
+    ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder)
+    : m_schema(std::move(schema)),
+      m_complianceRuleBuilder(std::move(complianceRuleBuilder)),
+      m_keyBuilder(std::move(keyBuilder)) {}
 
-  template<typename KeyType>
-  void MapComplianceRule<KeyType>::Submit(
-      const OrderExecutionService::Order& order) {
+  template<typename K>
+  void MapComplianceRule<K>::Submit(const OrderExecutionService::Order& order) {
     auto& rule = *m_rules.GetOrInsert(m_keyBuilder(order),
       [&] {
         return m_complianceRuleBuilder(m_schema);
@@ -91,9 +88,8 @@ namespace Compliance {
     rule.Submit(order);
   }
 
-  template<typename KeyType>
-  void MapComplianceRule<KeyType>::Cancel(
-      const OrderExecutionService::Order& order) {
+  template<typename K>
+  void MapComplianceRule<K>::Cancel(const OrderExecutionService::Order& order) {
     auto rule = m_rules.Find(m_keyBuilder(order));
     if(!rule.is_initialized()) {
       return;
@@ -101,16 +97,14 @@ namespace Compliance {
     (*rule)->Cancel(order);
   }
 
-  template<typename KeyType>
-  void MapComplianceRule<KeyType>::Add(
-      const OrderExecutionService::Order& order) {
+  template<typename K>
+  void MapComplianceRule<K>::Add(const OrderExecutionService::Order& order) {
     auto& rule = *m_rules.GetOrInsert(m_keyBuilder(order),
       [&] {
         return m_complianceRuleBuilder(m_schema);
       });
     rule.Add(order);
   }
-}
 }
 
 #endif

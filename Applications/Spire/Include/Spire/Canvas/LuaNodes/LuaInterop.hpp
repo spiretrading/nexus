@@ -15,14 +15,15 @@ namespace Spire {
   template<>
   struct PopLuaValue<Nexus::CurrencyId> {
     Nexus::CurrencyId operator ()(lua_State& state) const {
-      return Nexus::CurrencyId{static_cast<int>(lua_tonumber(&state, -1))};
+      return Nexus::CurrencyId(static_cast<std::uint16_t>(
+        lua_tonumber(&state, -1)));
     }
   };
 
   template<>
   struct PushLuaValue<Nexus::CurrencyId> {
     void operator ()(lua_State& state, Nexus::CurrencyId value) const {
-      lua_pushnumber(&state, static_cast<int>(value.m_value));
+      lua_pushnumber(&state, static_cast<std::uint16_t>(value));
     }
   };
 

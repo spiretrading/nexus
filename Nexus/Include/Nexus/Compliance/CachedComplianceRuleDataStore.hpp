@@ -1,5 +1,5 @@
-#ifndef NEXUS_CACHEDCOMPLIANCERULEDATASTORE_HPP
-#define NEXUS_CACHEDCOMPLIANCERULEDATASTORE_HPP
+#ifndef NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
+#define NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -9,26 +9,25 @@
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class CachedComplianceRuleDataStore
-      \brief Caches a ComplianceRuleDataStore.
-      \tparam DataStoreType The type of ComplianceRuleDataStore to cache.
+  /**
+   * Caches a ComplianceRuleDataStore.
+   * @param <D> The type of ComplianceRuleDataStore to cache.
    */
-  template<typename DataStoreType>
+  template<typename D>
   class CachedComplianceRuleDataStore : private boost::noncopyable {
     public:
 
-      //! The type of ComplianceRuleDataStore to cache.
-      using DataStore = Beam::GetTryDereferenceType<DataStoreType>;
+      /** The type of ComplianceRuleDataStore to cache. */
+      using DataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs a CachedComplianceRuleDataStore.
-      /*!
-        \param dataStore The ComplianceRuleDataStore to cache.
-      */
-      template<typename DataStoreForward>
-      CachedComplianceRuleDataStore(DataStoreForward&& dataStore);
+      /**
+       * Constructs a CachedComplianceRuleDataStore.
+       * @param dataStore The ComplianceRuleDataStore to cache.
+       */
+      template<typename DF>
+      explicit CachedComplianceRuleDataStore(DF&& dataStore);
 
       ~CachedComplianceRuleDataStore();
 
@@ -54,82 +53,79 @@ namespace Compliance {
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
-      Beam::GetOptionalLocalPtr<DataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       LocalComplianceRuleDataStore m_cache;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
   };
 
-  template<typename DataStoreType>
-  template<typename DataStoreForward>
-  CachedComplianceRuleDataStore<DataStoreType>::CachedComplianceRuleDataStore(
-      DataStoreForward&& dataStore)
-      : m_dataStore{std::forward<DataStoreForward>(dataStore)} {}
+  template<typename D>
+  template<typename DF>
+  CachedComplianceRuleDataStore<D>::CachedComplianceRuleDataStore(
+    DF&& dataStore)
+    : m_dataStore(std::forward<DF>(dataStore)) {}
 
-  template<typename DataStoreType>
-  CachedComplianceRuleDataStore<DataStoreType>::
-      ~CachedComplianceRuleDataStore() {
+  template<typename D>
+  CachedComplianceRuleDataStore<D>::~CachedComplianceRuleDataStore() {
     Close();
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<ComplianceRuleEntry>
-      CachedComplianceRuleDataStore<DataStoreType>::
-      LoadAllComplianceRuleEntries() {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+      CachedComplianceRuleDataStore<D>::LoadAllComplianceRuleEntries() {
+    auto lock = boost::lock_guard(m_mutex);
     return m_cache.LoadAllComplianceRuleEntries();
   }
 
-  template<typename DataStoreType>
-  ComplianceRuleId CachedComplianceRuleDataStore<DataStoreType>::
+  template<typename D>
+  ComplianceRuleId CachedComplianceRuleDataStore<D>::
       LoadNextComplianceRuleEntryId() {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     return m_dataStore->LoadNextComplianceRuleEntryId();
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   boost::optional<ComplianceRuleEntry>
-      CachedComplianceRuleDataStore<DataStoreType>::LoadComplianceRuleEntry(
+      CachedComplianceRuleDataStore<D>::LoadComplianceRuleEntry(
       ComplianceRuleId id) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     return m_cache.LoadComplianceRuleEntry(id);
   }
 
-  template<typename DataStoreType>
+  template<typename D>
   std::vector<ComplianceRuleEntry>
-      CachedComplianceRuleDataStore<DataStoreType>::LoadComplianceRuleEntries(
+      CachedComplianceRuleDataStore<D>::LoadComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     return m_cache.LoadComplianceRuleEntries(directoryEntry);
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Store(
       const ComplianceRuleEntry& entry) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     m_dataStore->Store(entry);
     m_cache.Store(entry);
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Delete(
-      ComplianceRuleId id) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Delete(ComplianceRuleId id) {
+    auto lock = boost::lock_guard(m_mutex);
     m_dataStore->Delete(id);
     m_cache.Delete(id);
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Store(
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Store(
       const ComplianceRuleViolationRecord& violationRecord) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     m_dataStore->Store(violationRecord);
     m_cache.Store(violationRecord);
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Open() {
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -147,21 +143,20 @@ namespace Compliance {
     m_openState.SetOpen();
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Close() {
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename DataStoreType>
-  void CachedComplianceRuleDataStore<DataStoreType>::Shutdown() {
+  template<typename D>
+  void CachedComplianceRuleDataStore<D>::Shutdown() {
     m_dataStore->Close();
     m_cache.Close();
     m_openState.SetClosed();
   }
-}
 }
 
 #endif

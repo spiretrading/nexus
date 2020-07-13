@@ -4,25 +4,22 @@
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class RiskModification
-      \brief Stores a request to update an account's risk parameters.
-  */
+  /** Stores a request to update an account's risk parameters. */
   class RiskModification {
     public:
 
-      //! Constructs an empty RiskModification.
+      /** Constructs an empty RiskModification. */
       RiskModification() = default;
 
-      //! Constructs a RiskModification.
-      /*!
-        \param parameters The risk parameters being requested.
-      */
+      /**
+       * Constructs a RiskModification.
+       * @param parameters The risk parameters being requested.
+       */
       RiskModification(RiskService::RiskParameters parameters);
 
-      //! Returns the requested risk parameters.
+      /** Returns the requested risk parameters. */
       const RiskService::RiskParameters& GetParameters() const;
 
     private:
@@ -31,18 +28,16 @@ namespace AdministrationService {
   };
 
   inline RiskModification::RiskModification(
-      RiskService::RiskParameters parameters)
-      : m_parameters(std::move(parameters)) {}
+    RiskService::RiskParameters parameters)
+    : m_parameters(std::move(parameters)) {}
 
   inline const RiskService::RiskParameters&
       RiskModification::GetParameters() const {
     return m_parameters;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::AdministrationService::RiskModification> {
     template<typename Shuttler>
@@ -52,7 +47,6 @@ namespace Serialization {
       shuttle.Shuttle("parameters", value.m_parameters);
     }
   };
-}
 }
 
 #endif

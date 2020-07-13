@@ -35,6 +35,11 @@ namespace {
         "load_minimum_spire_client_version", LoadMinimumSpireClientVersion);
     }
 
+    std::string LoadOrganizationName() override {
+      PYBIND11_OVERLOAD_PURE_NAME(std::string, VirtualDefinitionsClient,
+        "load_organization_name", LoadOrganizationName);
+    }
+
     CountryDatabase LoadCountryDatabase() override {
       PYBIND11_OVERLOAD_PURE_NAME(CountryDatabase, VirtualDefinitionsClient,
         "load_country_database", LoadCountryDatabase);
@@ -124,6 +129,8 @@ void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {
       "DefinitionsClient")
     .def("load_minimum_spire_client_version",
       &VirtualDefinitionsClient::LoadMinimumSpireClientVersion)
+    .def("load_organization_name",
+      &VirtualDefinitionsClient::LoadOrganizationName)
     .def("load_country_database",
       &VirtualDefinitionsClient::LoadCountryDatabase)
     .def("load_time_zone_database",

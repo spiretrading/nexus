@@ -1,5 +1,5 @@
-#ifndef NEXUS_DEFINITIONSSERVICES_HPP
-#define NEXUS_DEFINITIONSSERVICES_HPP
+#ifndef NEXUS_DEFINITIONS_SERVICES_HPP
+#define NEXUS_DEFINITIONS_SERVICES_HPP
 #include <vector>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
@@ -12,101 +12,89 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
-namespace Nexus {
-namespace DefinitionsService {
+namespace Nexus::DefinitionsService {
   BEAM_DEFINE_SERVICES(DefinitionsServices,
 
-    /*! \interface Nexus::DefinitionsServices::LoadMinimumSpireClientVersionService
-        \brief Loads the minimum version of the Spire client needed to login.
-        \param dummy <code>int</code> Unused
-        \return <code>std::string</code> The minimum version of the Spire client
-                needed to login.
-    */
-    //! \cond
+    /**
+     * Loads the minimum version of the Spire client needed to login.
+     * @param dummy Unused.
+     * @return The minimum version of the Spire client needed to login.
+     */
     (LoadMinimumSpireClientVersionService,
       "Nexus.DefinitionsServices.LoadMinimumSpireClientVersionService",
       std::string, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadCountryDatabaseService
-        \brief Loads the CountryDatabase.
-        \param dummy <code>int</code> Unused
-        \return <code>CountryDatabase</code> The CountryDatabase.
-    */
-    //! \cond
+    /**
+     * Loads the name of the organization.
+     * @param dummy Unused.
+     * @return The name of the organization using this instance.
+     */
+    (LoadOrganizationNameService,
+      "Nexus.DefinitionsServices.LoadOrganizationNameService", std::string,
+      int, dummy),
+
+    /**
+     * Loads the CountryDatabase.
+     * @param dummy Unused.
+     * @return The CountryDatabase.
+     */
     (LoadCountryDatabaseService,
       "Nexus.DefinitionsServices.LoadCountryDatabaseService", CountryDatabase,
       int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadTimeZoneDatabaseService
-        \brief Loads the time zone database.
-        \param dummy <code>int</code> Unused
-        \return <code>std::string</code> The string representation of available
-                time zones.
-    */
-    //! \cond
+    /**
+     * Loads the time zone database.
+     * @param dummy Unused.
+     * @return The string representation of available time zones.
+     */
     (LoadTimeZoneDatabaseService,
       "Nexus.DefinitionsServices.LoadTimeZoneDatabaseService", std::string,
       int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadCurrencyDatabaseService
-        \brief Loads the CurrencyDatabase.
-        \param dummy <code>int</code> Unused
-        \return <code>CurrencyDatabase</code> The CurrencyDatabase.
-    */
-    //! \cond
+    /**
+     * Loads the CurrencyDatabase.
+     * @param dummy Unused.
+     * @return The CurrencyDatabase.
+     */
     (LoadCurrencyDatabaseService,
       "Nexus.DefinitionsServices.LoadCurrencyDatabaseService", CurrencyDatabase,
       int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadDestinationDatabase
-        \brief Loads the DestinationDatabase.
-        \param dummy <code>int</code> Unused
-        \return <code>DestinationDatabase</code> The DestinationDatabase.
-    */
-    //! \cond
+    /**
+     * Loads the DestinationDatabase.
+     * @param dummy Unused.
+     * @return The DestinationDatabase.
+     */
     (LoadDestinationDatabaseService,
       "Nexus.DefinitionsServices.LoadDestinationDatabaseService",
       DestinationDatabase, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadMarketDatabaseService
-        \brief Loads the MarketDatabase.
-        \param dummy <code>int</code> Unused
-        \return <code>MarketDatabase</code> The MarketDatabase.
-    */
-    //! \cond
+    /**
+     * Loads the MarketDatabase.
+     * @param dummy Unused.
+     * @return The MarketDatabase.
+     */
     (LoadMarketDatabaseService,
       "Nexus.DefinitionsServices.LoadMarketDatabaseService", MarketDatabase,
       int, dummy),
 
-    /*! \interface Nexus::DefinitionsServices::LoadExchangeRatesService
-        \brief Loads the list of ExchangeRates.
-        \param dummy <code>int</code> Unused
-        \return <code>std::vector\<ExchangeRate\></code> The list of
-                ExchangeRates.
-    */
-    //! \cond
+    /**
+     * Loads the list of ExchangeRates.
+     * @param dummy Unused.
+     * @return The list of ExchangeRates.
+     */
     (LoadExchangeRatesService,
       "Nexus.DefinitionsServices.LoadExchangeRatesService",
       std::vector<ExchangeRate>, int, dummy),
-    //! \endcond
 
-    /*! \interface Nexus::DefinitionsServices::LoadComplianceRuleSchemasService
-        \brief Loads the list of ComplianceRuleSchemas.
-        \param dummy <code>int</code> Unused
-        \return <code>std::vector\<ComplianceRuleSchema\></code> The list of
-                ComplianceRuleSchemas.
-    */
-    //! \cond
+    /**
+     * Loads the list of ComplianceRuleSchemas.
+     * @param dummy Unused.
+     * @return The list of ComplianceRuleSchemas.
+     */
     (LoadComplianceRuleSchemasService,
       "Nexus.DefinitionsServices.LoadComplianceRuleSchemasService",
       std::vector<Compliance::ComplianceRuleSchema>, int, dummy));
-    //! \endcond
-}
 }
 
 #endif

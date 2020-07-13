@@ -9,90 +9,85 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class Message
-      \brief Stores the details of a single message.
-   */
+  /** Stores the details of a single message. */
   class Message {
     public:
 
-      //! The type used to uniquely identify a message.
+      /** The type used to uniquely identify a message. */
       using Id = int;
 
-      /*! \struct Body
-          \brief Stores the body of a message.
-       */
+      /** Stores the body of a message. */
       struct Body {
 
-        //! The MIME-type of the message.
+        /** The MIME-type of the message. */
         std::string m_contentType;
 
-        //! The contents of the message.
+        /** The contents of the message. */
         std::string m_message;
 
-        //! Returns an empty body.
+        /** Returns an empty body. */
         static const Body& EMPTY();
 
-        //! Makes a plain text body.
-        /*!
-          \param message The plaint text message.
-        */
+        /**
+         * Makes a plain text body.
+         * @param message The plaint text message.
+         */
         static Body MakePlainText(std::string message);
 
-        //! Constructs a Body.
+        /** Constructs a Body. */
         Body() = default;
 
-        //! Constructs a Body.
-        /*!
-          \param contentType The MIME type of the message.
-          \param message The contents of the message.
-        */
+        /**
+         * Constructs a Body.
+         * @param contentType The MIME type of the message.
+         * @param message The contents of the message.
+         */
         Body(std::string contentType, std::string message);
 
-        //! Returns <code>true</code> iff two Message Bodies are equal.
-        /*!
-          \param rhs The right hand side of the comparison.
-          \return <code>true</code> iff the content type and message are equal.
-        */
+        /**
+         * Returns <code>true</code> iff two Message Bodies are equal.
+         * @param rhs The right hand side of the comparison.
+         * @return <code>true</code> iff the content type and message are equal.
+         */
         bool operator ==(const Body& rhs) const;
 
-        //! Returns <code>true</code> iff two Message Bodies are not equal.
-        /*!
-          \param rhs The right hand side of the comparison.
-          \return <code>true</code> iff either the content type and message are
-                  not equal.
-        */
+        /**
+         * Returns <code>true</code> iff two Message Bodies are not equal.
+         * @param rhs The right hand side of the comparison.
+         * @return <code>true</code> iff either the content type and message are
+         *         not equal.
+         */
         bool operator !=(const Body& rhs) const;
       };
 
-      //! Constructs an empty Message.
+      /** Constructs an empty Message. */
       Message();
 
-      //! Constructs a Message.
-      /*!
-        \param id The message's unique id.
-        \param account The account that sent the message.
-        \param timestamp The timestamp when the message was received.
-        \param bodies The list of message bodies.
-      */
+      /**
+       * Constructs a Message.
+       * @param id The message's unique id.
+       * @param account The account that sent the message.
+       * @param timestamp The timestamp when the message was received.
+       * @param bodies The list of message bodies.
+       */
       Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
         boost::posix_time::ptime timestamp, std::vector<Body> bodies);
 
-      //! Returns this message's unique id.
+      /** Returns this message's unique id. */
       Id GetId() const;
 
-      //! Returns the account that sent the message.
+      /** Returns the account that sent the message. */
       const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
 
-      //! Returns the timestamp when the message was received.
+      /** Returns the timestamp when the message was received. */
       boost::posix_time::ptime GetTimestamp() const;
 
-      //! Returns the first body.
+      /** Returns the first body. */
       const Body& GetBody() const;
 
-      //! Returns the list of message bodies.
+      /** Returns the list of message bodies. */
       const std::vector<Body>& GetBodies() const;
 
     private:
@@ -113,8 +108,8 @@ namespace AdministrationService {
   }
 
   inline Message::Body::Body(std::string contentType, std::string message)
-      : m_contentType{std::move(contentType)},
-        m_message{std::move(message)} {}
+    : m_contentType(std::move(contentType)),
+      m_message(std::move(message)) {}
 
   inline bool Message::Body::operator ==(const Body& rhs) const {
     return m_contentType == rhs.m_contentType && m_message == rhs.m_message;
@@ -125,15 +120,15 @@ namespace AdministrationService {
   }
 
   inline Message::Message()
-      : m_id{-1} {
+      : m_id(-1) {
     m_bodies.push_back(Body::EMPTY());
   }
 
   inline Message::Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
       boost::posix_time::ptime timestamp, std::vector<Body> bodies)
-      : m_id{id},
-        m_account{std::move(account)},
-        m_timestamp{timestamp} {
+      : m_id(id),
+        m_account(std::move(account)),
+        m_timestamp(timestamp) {
     if(bodies.empty()) {
       m_bodies.push_back(Body::EMPTY());
     } else {
@@ -162,10 +157,8 @@ namespace AdministrationService {
     return m_bodies;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::AdministrationService::Message::Body> {
     template<typename Shuttler>
@@ -194,7 +187,6 @@ namespace Serialization {
       }
     }
   };
-}
 }
 
 #endif

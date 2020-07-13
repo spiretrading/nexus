@@ -14,8 +14,6 @@ service_locator:
   username: administration_service
   password: $admin_password
 
-organization: "Spire Trading Inc."
-
 entitlements:
 entitlements:
   - name: CTA Network A

@@ -27,27 +27,25 @@
 
 namespace Nexus::DefinitionsService::Tests {
 
-  /*! \class DefinitionsServiceTestEnvironment
-      \brief Provides DefinitionsService related classes for testing purposes.
-   */
+  /** Provides DefinitionsService related classes for testing purposes. */
   class DefinitionsServiceTestEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs a DefinitionsServiceTestEnvironment.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-      */
+      /**
+       * Constructs a DefinitionsServiceTestEnvironment.
+       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       */
       DefinitionsServiceTestEnvironment(const std::shared_ptr<
         Beam::ServiceLocator::VirtualServiceLocatorClient>&
         serviceLocatorClient);
 
       ~DefinitionsServiceTestEnvironment();
 
-      //! Builds a new DefinitionsClient.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate the DefinitionsClient.
-      */
+      /**
+       * Builds a new DefinitionsClient.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate the DefinitionsClient.
+       */
       std::unique_ptr<VirtualDefinitionsClient> BuildClient(
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
@@ -82,16 +80,16 @@ namespace Nexus::DefinitionsService::Tests {
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-      const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
-      serviceLocatorClient)
-      : m_container(Beam::Initialize(serviceLocatorClient,
-          Beam::Initialize("1", GetDefaultTimeZoneTable(),
-          GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
-          GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          std::vector<ExchangeRate>(),
-          std::vector<Compliance::ComplianceRuleSchema>())),
-          &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+    const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
+    serviceLocatorClient)
+    : m_container(Beam::Initialize(serviceLocatorClient,
+        Beam::Initialize("1", "Spire Trading Inc.", GetDefaultTimeZoneTable(),
+        GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
+        GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
+        std::vector<ExchangeRate>(),
+        std::vector<Compliance::ComplianceRuleSchema>())),
+        &m_serverConnection,
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline DefinitionsServiceTestEnvironment::
       ~DefinitionsServiceTestEnvironment() {

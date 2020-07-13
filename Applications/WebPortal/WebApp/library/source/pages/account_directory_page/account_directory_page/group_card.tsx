@@ -88,7 +88,8 @@ export class GroupCard extends React.Component<Properties, State> {
       }
     })();
     const lineWhenOpen = (() => {
-      if(this.state.isOpen) {
+      if(this.state.isOpen || 
+          (this.props.filter && this.state.localAccounts.length > 0)) {
         return (
           <div>
             <HLine color='#E6E6E6'/>
@@ -109,14 +110,7 @@ export class GroupCard extends React.Component<Properties, State> {
               displaySize={this.props.displaySize}
               account={account}
               filter={this.props.filter}
-              isOpen={this.state.isOpen}/>);
-          if(!this.state.isOpen && this.state.localAccounts.indexOf(account) ===
-              this.state.localAccounts.length - 1) {
-            accounts.push(
-              <div key={account.account.id.toString() + '-div'}
-                style={{height: topAccountPadding}}/>);
-            accounts.push(<HLine key={this.props.group.id} color='#E6E6E6'/>);
-          }
+              isOpen={true}/>);
         } else {
           accounts.push(
             <AccountEntryRow

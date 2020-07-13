@@ -1,5 +1,5 @@
-#ifndef NEXUS_OPPOSINGORDERSUBMISSIONCOMPLIANCERULE_HPP
-#define NEXUS_OPPOSINGORDERSUBMISSIONCOMPLIANCERULE_HPP
+#ifndef NEXUS_OPPOSING_ORDER_SUBMISSION_COMPLIANCE_RULE_HPP
+#define NEXUS_OPPOSING_ORDER_SUBMISSION_COMPLIANCE_RULE_HPP
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -16,43 +16,44 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class OpposingOrderSubmissionComplianceRule
-      \brief Prevents opposing orders from being submitted after a cancellation.
-      \tparam TimeClientType The type of TimeClient used to determine how much
-              time has elapsed since the last cancellation.
+  /**
+   * Prevents opposing orders from being submitted after a cancellation.
+   * @param <C> The type of TimeClient used to determine how much time has
+   *        elapsed since the last cancellation.
    */
-  template<typename TimeClientType>
+  template<typename C>
   class OpposingOrderSubmissionComplianceRule : public ComplianceRule {
     public:
 
-      //! The type of TimeClient used to determine how much time has elapsed
-      //! since the last cancellation.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /**
+       * The type of TimeClient used to determine how much time has elapsed
+       * since the last cancellation.
+       */
+      using TimeClient = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs an OpposingOrderSubmissionComplianceRule.
-      /*!
-        \param timeout The amount of time to restrict submissions after a
-               cancel.
-        \param offset The offset from the submission price to restrict
-               submissions.
-        \param timeClient Initializes the TimeClient.
-      */
-      template<typename TimeClientForward>
+      /**
+       * Constructs an OpposingOrderSubmissionComplianceRule.
+       * @param timeout The amount of time to restrict submissions after a
+       *        cancel.
+       * @param offset The offset from the submission price to restrict
+       *        submissions.
+       * @param timeClient Initializes the TimeClient.
+       */
+      template<typename CF>
       OpposingOrderSubmissionComplianceRule(
         boost::posix_time::time_duration timeout, Money offset,
-        TimeClientForward&& timeClient);
+        CF&& timeClient);
 
-      virtual void Add(const OrderExecutionService::Order& order);
+      void Add(const OrderExecutionService::Order& order) override;
 
-      virtual void Submit(const OrderExecutionService::Order& order);
+      void Submit(const OrderExecutionService::Order& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
       Money m_offset;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<C> m_timeClient;
       Beam::TaggedQueue<const OrderExecutionService::Order*,
         OrderExecutionService::ExecutionReport> m_executionReportQueue;
       boost::posix_time::ptime m_lastAskCancelTime;
@@ -70,37 +71,39 @@ namespace Compliance {
     TimeClient&& timeClient) -> OpposingOrderSubmissionComplianceRule<
     std::decay_t<TimeClient>>;
 
-  //! Builds a ComplianceRuleSchema representing an
-  //! OpposingOrderSubmissionComplianceRule.
+  /**
+   * Builds a ComplianceRuleSchema representing an
+   * OpposingOrderSubmissionComplianceRule.
+   */
   inline ComplianceRuleSchema
       BuildOpposingOrderSubmissionComplianceRuleSchema() {
-    std::vector<ComplianceParameter> parameters;
-    std::vector<ComplianceValue> symbols;
-    symbols.push_back(Security{});
+    auto parameters = std::vector<ComplianceParameter>();
+    auto symbols = std::vector<ComplianceValue>();
+    symbols.push_back(Security());
     parameters.emplace_back("symbols", symbols);
-    parameters.emplace_back("start_period", boost::posix_time::time_duration{});
-    parameters.emplace_back("end_period", boost::posix_time::time_duration{});
-    parameters.emplace_back("timeout", Quantity{0});
+    parameters.emplace_back("start_period", boost::posix_time::time_duration());
+    parameters.emplace_back("end_period", boost::posix_time::time_duration());
+    parameters.emplace_back("timeout", Quantity(0));
     parameters.emplace_back("offset", Money::ZERO);
-    ComplianceRuleSchema schema{"opposing_order_submission", parameters};
+    auto schema = ComplianceRuleSchema("opposing_order_submission", parameters);
     return schema;
   }
 
-  //! Builds an OpposingOrderSubmissionComplianceRule from a list of
-  //! ComplianceParameters.
-  /*!
-    \param parameters The list of ComplianceParameters used to build the rule.
-    \param timeClient Initializes the TimeClient.
-  */
+  /**
+   * Builds an OpposingOrderSubmissionComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The list of ComplianceParameters used to build the rule.
+   * @param timeClient Initializes the TimeClient.
+   */
   template<typename TimeClient>
   std::unique_ptr<ComplianceRule> MakeOpposingOrderSubmissionComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
       const TimeClient& timeClient) {
-    SecuritySet symbols;
-    boost::posix_time::time_duration startPeriod;
-    boost::posix_time::time_duration endPeriod;
-    boost::posix_time::time_duration timeout;
-    Money offset;
+    auto symbols = SecuritySet();
+    auto startPeriod = boost::posix_time::time_duration();
+    auto endPeriod = boost::posix_time::time_duration();
+    auto timeout = boost::posix_time::time_duration();
+    auto offset = Money();
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
         for(auto& security : boost::get<std::vector<ComplianceValue>>(
@@ -121,7 +124,7 @@ namespace Compliance {
       }
     }
     auto mapRule = MakeMapSecurityComplianceRule({},
-      [=] (const ComplianceRuleSchema&) {
+      [=] (const auto&) {
         return std::make_unique<OpposingOrderSubmissionComplianceRule<
           TimeClient>>(timeout, offset, timeClient);
       });
@@ -132,22 +135,21 @@ namespace Compliance {
     return std::move(symbolFilter);
   }
 
-  template<typename TimeClientType>
-  template<typename TimeClientForward>
-  OpposingOrderSubmissionComplianceRule<TimeClientType>::
-      OpposingOrderSubmissionComplianceRule(
-      boost::posix_time::time_duration timeout, Money offset,
-      TimeClientForward&& timeClient)
-      : m_timeout{timeout},
-        m_offset{offset},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
-        m_lastAskCancelTime{boost::posix_time::min_date_time},
-        m_askPrice{std::numeric_limits<Money>::max()},
-        m_lastBidCancelTime{boost::posix_time::min_date_time},
-        m_bidPrice{Money::ZERO} {}
+  template<typename C>
+  template<typename CF>
+  OpposingOrderSubmissionComplianceRule<C>::
+    OpposingOrderSubmissionComplianceRule(
+    boost::posix_time::time_duration timeout, Money offset, CF&& timeClient)
+    : m_timeout(timeout),
+      m_offset(offset),
+      m_timeClient(std::forward<CF>(timeClient)),
+      m_lastAskCancelTime(boost::posix_time::min_date_time),
+      m_askPrice(std::numeric_limits<Money>::max()),
+      m_lastBidCancelTime(boost::posix_time::min_date_time),
+      m_bidPrice(Money::ZERO) {}
 
-  template<typename TimeClientType>
-  void OpposingOrderSubmissionComplianceRule<TimeClientType>::Add(
+  template<typename C>
+  void OpposingOrderSubmissionComplianceRule<C>::Add(
       const OrderExecutionService::Order& order) {
     if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
         order.GetInfo().m_fields.m_type != OrderType::MARKET) {
@@ -156,8 +158,8 @@ namespace Compliance {
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
-  template<typename TimeClientType>
-  void OpposingOrderSubmissionComplianceRule<TimeClientType>::Submit(
+  template<typename C>
+  void OpposingOrderSubmissionComplianceRule<C>::Submit(
       const OrderExecutionService::Order& order) {
     if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
         order.GetInfo().m_fields.m_type != OrderType::MARKET) {
@@ -197,15 +199,15 @@ namespace Compliance {
       m_lastBidCancelTime, m_lastAskCancelTime);
     if(TestSubmissionPriceInRange(order) &&
         lastCancelTime >= (time - m_timeout)) {
-      BOOST_THROW_EXCEPTION(ComplianceCheckException{
-        "Opposing order can not be submitted yet."});
+      BOOST_THROW_EXCEPTION(ComplianceCheckException(
+        "Opposing order can not be submitted yet."));
     }
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }
 
-  template<typename TimeClientType>
-  Money OpposingOrderSubmissionComplianceRule<TimeClientType>::
-      GetSubmissionPrice(const OrderExecutionService::Order& order) {
+  template<typename C>
+  Money OpposingOrderSubmissionComplianceRule<C>::GetSubmissionPrice(
+      const OrderExecutionService::Order& order) {
     if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
       return order.GetInfo().m_fields.m_price;
     } else if(order.GetInfo().m_fields.m_side == Side::ASK) {
@@ -215,9 +217,9 @@ namespace Compliance {
     }
   }
 
-  template<typename TimeClientType>
-  bool OpposingOrderSubmissionComplianceRule<TimeClientType>::
-      TestSubmissionPriceInRange(const OrderExecutionService::Order& order) {
+  template<typename C>
+  bool OpposingOrderSubmissionComplianceRule<C>::TestSubmissionPriceInRange(
+      const OrderExecutionService::Order& order) {
     auto price = GetSubmissionPrice(order);
     if(order.GetInfo().m_fields.m_side == Side::ASK) {
       return price <= m_bidPrice + m_offset;
@@ -225,7 +227,6 @@ namespace Compliance {
       return price >= m_askPrice - m_offset;
     }
   }
-}
 }
 
 #endif

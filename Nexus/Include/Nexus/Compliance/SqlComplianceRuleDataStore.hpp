@@ -13,21 +13,23 @@
 
 namespace Nexus::Compliance {
 
-  /** Implements a ComplianceRuleDataStore backed using MySQL.
-      \tparam C The SQL connection to use.
+  /**
+   * Implements a ComplianceRuleDataStore backed by an SQL database.
+   * @param <C> The SQL connection to use.
    */
   template<typename C>
   class SqlComplianceRuleDataStore : private boost::noncopyable {
     public:
 
-      //! The SQL connection to use.
+      /** The SQL connection to use. */
       using Connection = C;
 
-      //! Constructs a MySqlComplianceRuleDataStore.
-      /*!
-        \param connection The SQL connection to use.
-      */
-      SqlComplianceRuleDataStore(std::unique_ptr<Connection> connection);
+      /**
+       * Constructs a MySqlComplianceRuleDataStore.
+       * @param connection The SQL connection to use.
+       */
+      explicit SqlComplianceRuleDataStore(
+        std::unique_ptr<Connection> connection);
 
       ~SqlComplianceRuleDataStore();
 
@@ -61,8 +63,8 @@ namespace Nexus::Compliance {
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::SqlComplianceRuleDataStore(
-      std::unique_ptr<Connection> connection)
-      : m_connection(std::move(connection)) {}
+    std::unique_ptr<Connection> connection)
+    : m_connection(std::move(connection)) {}
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::~SqlComplianceRuleDataStore() {
@@ -151,8 +153,8 @@ namespace Nexus::Compliance {
     try {
       sender.Shuttle(entry.GetSchema().GetParameters());
     } catch(const Beam::Serialization::SerializationException&) {
-      BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException{
-        "Unable to store schema parameters."});
+      BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException(
+        "Unable to store schema parameters."));
     }
     auto row = ComplianceRuleEntriesRow{entry.GetId(),
       entry.GetDirectoryEntry(), entry.GetState(), entry.GetSchema().GetName(),

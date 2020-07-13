@@ -3,20 +3,20 @@ project(Nexus)
 set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
   "Path to dependencies folder.")
 file(TO_NATIVE_PATH "${D}" D)
-if(WIN32)
-  execute_process(COMMAND cmd /c
-    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-elseif(UNIX)
-  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-endif()
 set(DEFAULT_BUILD_TYPE "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE
     STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+if(WIN32)
+  execute_process(COMMAND cmd /c
+    "CALL ${CMAKE_SOURCE_DIR}\\configure.bat -DD=${D}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+elseif(UNIX)
+  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
+    "${CMAKE_BUILD_TYPE}" WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()
 include(Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
@@ -71,6 +71,7 @@ add_subdirectory(Config/Backtester)
 add_subdirectory(Config/ChartingService)
 add_subdirectory(Config/Compliance)
 add_subdirectory(Config/Definitions)
+add_subdirectory(Config/DefinitionsService)
 add_subdirectory(Config/FeeHandling)
 add_subdirectory(Config/InternalMatcher)
 add_subdirectory(Config/MarketDataService)

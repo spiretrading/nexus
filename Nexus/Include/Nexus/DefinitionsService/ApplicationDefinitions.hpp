@@ -18,8 +18,7 @@
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
-namespace Nexus {
-namespace DefinitionsService {
+namespace Nexus::DefinitionsService {
 namespace Details {
   using DefinitionsClientSessionBuilder =
     Beam::Services::AuthenticatedServiceProtocolClientBuilder<
@@ -30,49 +29,46 @@ namespace Details {
     Beam::Threading::LiveTimer>;
 }
 
-  /*! \class ApplicationDefinitionsClient
-      \brief Encapsulates a standard DefinitionsClient used in an
-             application.
-   */
+  /** Encapsulates a standard DefinitionsClient used in an application. */
   class ApplicationDefinitionsClient : private boost::noncopyable {
     public:
 
-      //! Defines the standard DefinitionsClient used for applications.
+      /** Defines the standard DefinitionsClient used for applications. */
       using Client =
         DefinitionsClient<Details::DefinitionsClientSessionBuilder>;
 
-      //! Constructs an ApplicationDefinitionsClient.
+      /** Constructs an ApplicationDefinitionsClient. */
       ApplicationDefinitionsClient() = default;
 
-      //! Builds the session.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient used to
-               authenticate sessions.
-        \param socketThreadPool The SocketThreadPool used for the socket
-               connection.
-        \param timerThreadPool The TimerThreadPool used for heartbeats.
-      */
+      /**
+       * Builds the session.
+       * @param serviceLocatorClient The ServiceLocatorClient used to
+       *        authenticate sessions.
+       * @param socketThreadPool The SocketThreadPool used for the socket
+       *        connection.
+       * @param timerThreadPool The TimerThreadPool used for heartbeats.
+       */
       void BuildSession(Beam::Ref<Beam::ServiceLocator::
         ApplicationServiceLocatorClient::Client> serviceLocatorClient,
         Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
         Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       Client& operator *();
 
-      //! Returns a reference to the Client.
+      /** Returns a reference to the Client. */
       const Client& operator *() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* operator ->();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* operator ->() const;
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       Client* Get();
 
-      //! Returns a pointer to the Client.
+      /** Returns a pointer to the Client. */
       const Client* Get() const;
 
     private:
@@ -80,10 +76,10 @@ namespace Details {
   };
 
   inline void ApplicationDefinitionsClient::BuildSession(
-      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::
-      Client> serviceLocatorClient, Beam::Ref<Beam::Network::
-      SocketThreadPool> socketThreadPool, Beam::Ref<
-      Beam::Threading::TimerThreadPool> timerThreadPool) {
+      Beam::Ref<Beam::ServiceLocator::ApplicationServiceLocatorClient::Client>
+      serviceLocatorClient, Beam::Ref<Beam::Network::SocketThreadPool>
+      socketThreadPool, Beam::Ref<Beam::Threading::TimerThreadPool>
+      timerThreadPool) {
     if(m_client.has_value()) {
       m_client->Close();
       m_client = std::nullopt;
@@ -143,7 +139,6 @@ namespace Details {
       ApplicationDefinitionsClient::Get() const {
     return &*m_client;
   }
-}
 }
 
 #endif

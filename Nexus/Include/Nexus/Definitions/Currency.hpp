@@ -1,6 +1,7 @@
 #ifndef NEXUS_CURRENCY_HPP
 #define NEXUS_CURRENCY_HPP
 #include <algorithm>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -12,85 +13,93 @@
 #include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
+namespace Details {
+  template<typename T>
+  struct CurrencyIdDefinitions {
 
-  /*! \struct CurrencyId
-      \brief Stores a currency id, typically the ISO 4217 NUM.
-   */
-  struct CurrencyId {
+    /** Stores an invalid id. */
+    static const T NONE;
+  };
+}
 
-    //! Returns an empty CurrencyId.
-    static CurrencyId NONE();
+  /** Stores a currency id, typically the ISO 4217 NUM. */
+  class CurrencyId : private Details::CurrencyIdDefinitions<CurrencyId> {
+    public:
 
-    //! The currency's id.
-    std::uint16_t m_value;
+      /** Constructs an invalid id. */
+      constexpr CurrencyId();
 
-    //! Constructs a NONE CurrencyId.
-    CurrencyId();
+      /**
+       * Constructs a CurrencyId from its id.
+       * @param value The currency id.
+       */
+      constexpr explicit CurrencyId(std::uint16_t value);
 
-    //! Constructs a CurrencyId.
-    /*!
-      \param value The currency's NUM value.
-    */
-    explicit CurrencyId(std::uint16_t value);
+      /** Returns the integral representation of this id. */
+      constexpr explicit operator std::uint16_t() const;
 
-    //! Constructs a CurrencyId.
-    /*!
-      \param value The currency's NUM value.
-    */
-    explicit CurrencyId(int value);
+      /** Tests if this id is less than another id. */
+      constexpr bool operator <(CurrencyId other) const;
+
+      /** Tests if two ids are equal. */
+      constexpr bool operator ==(CurrencyId other) const;
+
+      /** Tests if two ids are not equal. */
+      constexpr bool operator !=(CurrencyId other) const;
+
+      using Details::CurrencyIdDefinitions<CurrencyId>::NONE;
+
+    private:
+      std::uint16_t m_value;
   };
 
-  /*! \class CurrencyDatabase
-      \brief Stores the database of all Currency.
-   */
+  /** Stores the database of all Currency. */
   class CurrencyDatabase {
     public:
 
-      /*! \struct Entry
-          \brief Stores a single entry in a CurrencyDatabase.
-       */
+      /** Stores a single entry in a CurrencyDatabase. */
       struct Entry {
 
-        //! The currency's numeric code.
+        /** The currency's id. */
         CurrencyId m_id;
 
-        //! The currency's three letter code.
+        /** The currency's three letter code. */
         Beam::FixedString<3> m_code;
 
-        //! The currency's sign.
+        /** The currency's sign. */
         std::string m_sign;
       };
 
-      //! Constructs an empty CurrencyDatabase.
+      /** Constructs an empty CurrencyDatabase. */
       CurrencyDatabase() = default;
 
-      //! Returns the list of currencies represented.
+      /** Returns the list of currencies represented. */
       const std::vector<Entry>& GetEntries() const;
 
-      //! Returns an Entry from its CurrencyId.
-      /*!
-        \param id The CurrencyId to lookup.
-        \return The currency Entry with the specified <i>id</i>.
-      */
+      /**
+       * Returns an Entry from its CurrencyId.
+       * @param id The CurrencyId to lookup.
+       * @return The currency Entry with the specified <i>id</i>.
+       */
       const Entry& FromId(CurrencyId id) const;
 
-      //! Returns an Entry from its three letter code.
-      /*!
-        \param code The three letter code to lookup.
-        \return The currency Entry with the specified <i>code</i>.
-      */
+      /**
+       * Returns an Entry from its three letter code.
+       * @param code The three letter code to lookup.
+       * @return The currency Entry with the specified <i>code</i>.
+       */
       const Entry& FromCode(Beam::FixedString<3> code) const;
 
-      //! Adds an Entry.
-      /*!
-        \param entry The Entry to add.
-      */
+      /**
+       * Adds an Entry.
+       * @param entry The Entry to add.
+       */
       void Add(const Entry& entry);
 
-      //! Deletes an Entry.
-      /*!
-        \param id The CurrencyId of the Entry to delete.
-      */
+      /**
+       * Deletes an Entry.
+       * @param id The CurrencyId of the Entry to delete.
+       */
       void Delete(CurrencyId id);
 
     private:
@@ -103,115 +112,103 @@ namespace Nexus {
       std::vector<Entry> m_entries;
   };
 
-  //! Tests if two CurrencyIds are equal.
-  /*!
-    \param lhs The left hand side of the comparison.
-    \param rhs The right hand side of the comparison.
-    \return <code>true</code> iff the two CurrencyId's are equal.
-  */
-  inline bool operator ==(CurrencyId lhs, CurrencyId rhs) {
-    return lhs.m_value == rhs.m_value;
-  }
-
-  //! Tests if two CurrencyIds are not equal.
-  /*!
-    \param lhs The left hand side of the comparison.
-    \param rhs The right hand side of the comparison.
-    \return <code>true</code> iff the two CurrencyId's are not equal.
-  */
-  inline bool operator !=(CurrencyId lhs, CurrencyId rhs) {
-    return !(lhs.m_value == rhs.m_value);
-  }
-
-  //! Tests if a CurrencyId's value is than another.
-  /*!
-    \param lhs The left hand side of the comparison.
-    \param rhs The right hand side of the comparison.
-    \return <code>true</code> iff <i>lhs</i>'s value is less than
-            <i>rhs</i>'s value.
-  */
-  inline bool operator <(CurrencyId lhs, CurrencyId rhs) {
-    return lhs.m_value < rhs.m_value;
-  }
-
-  //! Tests two CurrencyDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two CurrencyDatabase Entries are equal.
-  */
+  /**
+   * Tests two CurrencyDatabase Entries for equality.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff the two CurrencyDatabase Entries are equal.
+   */
   inline bool operator ==(const CurrencyDatabase::Entry& lhs,
       const CurrencyDatabase::Entry& rhs) {
     return lhs.m_id == rhs.m_id && lhs.m_code == rhs.m_code &&
       lhs.m_sign == rhs.m_sign;
   }
 
-  //! Tests two CurrencyDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two CurrencyDatabase Entries are equal.
-  */
+  /**
+   * Tests two CurrencyDatabase Entries for equality.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff the two CurrencyDatabase Entries are equal.
+   */
   inline bool operator !=(const CurrencyDatabase::Entry& lhs,
       const CurrencyDatabase::Entry& rhs) {
     return !(lhs == rhs);
   }
 
-  //! Parses a CurrencyId from a string.
-  /*!
-    \param source The string to parse.
-    \param currencyDatabase The CurrencyDatabase used to find the CurrencyId.
-    \return The CurrencyId represented by the <i>source</i>.
-  */
+  /**
+   * Parses a CurrencyId from a string.
+   * @param source The string to parse.
+   * @param currencyDatabase The CurrencyDatabase used to find the CurrencyId.
+   * @return The CurrencyId represented by the <i>source</i>.
+   */
   inline CurrencyId ParseCurrency(const std::string& source,
       const CurrencyDatabase& currencyDatabase) {
     return currencyDatabase.FromCode(source).m_id;
   }
 
-  //! Parses a CurrencyDatabase Entry from a YAML node.
-  /*!
-    \param node The node to parse the CurrencyDatabase Entry from.
-    \return The CurrencyDatabase Entry represented by the <i>node</i>.
-  */
+  /**
+   * Parses a CurrencyDatabase Entry from a YAML node.
+   * @param node The node to parse the CurrencyDatabase Entry from.
+   * @return The CurrencyDatabase Entry represented by the <i>node</i>.
+   */
   inline CurrencyDatabase::Entry ParseCurrencyDatabaseEntry(
       const YAML::Node& node) {
-    CurrencyDatabase::Entry entry;
-    entry.m_id = CurrencyId{Beam::Extract<int>(node, "id")};
+    auto entry = CurrencyDatabase::Entry();
+    entry.m_id = CurrencyId(Beam::Extract<int>(node, "id"));
     entry.m_code = Beam::Extract<std::string>(node, "code");
     entry.m_sign = Beam::Extract<std::string>(node, "sign");
     return entry;
   }
 
-  //! Parses a CurrencyDatabase from a YAML node.
-  /*!
-    \param node The node to parse the CurrencyDatabase from.
-    \return The CurrencyDatabase represented by the <i>node</i>.
-  */
+  /**
+   * Parses a CurrencyDatabase from a YAML node.
+   * @param node The node to parse the CurrencyDatabase from.
+   * @return The CurrencyDatabase represented by the <i>node</i>.
+   */
   inline CurrencyDatabase ParseCurrencyDatabase(const YAML::Node& node) {
-    CurrencyDatabase currencyDatabase;
+    auto database = CurrencyDatabase();
     for(auto& entryNode : node) {
-      auto entry = ParseCurrencyDatabaseEntry(entryNode);
-      currencyDatabase.Add(entry);
+      database.Add(ParseCurrencyDatabaseEntry(entryNode));
     }
-    return currencyDatabase;
+    return database;
   }
 
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
-    return out << value.m_value;
+    return out << static_cast<std::uint16_t>(value);
   }
 
-  inline CurrencyId CurrencyId::NONE() {
-    return CurrencyId{};
+  inline std::istream& operator >>(std::istream& in, CurrencyId& id) {
+    auto value = std::uint16_t();
+    in >> value;
+    id = CurrencyId(value);
+    return in;
   }
 
-  inline CurrencyId::CurrencyId()
-      : m_value{0} {}
+  inline std::size_t hash_value(CurrencyId code) {
+    return static_cast<std::uint16_t>(code);
+  }
 
-  inline CurrencyId::CurrencyId(std::uint16_t value)
-      : m_value{value} {}
+  constexpr CurrencyId::CurrencyId()
+    : CurrencyId(~0) {}
 
-  inline CurrencyId::CurrencyId(int value)
-      : m_value{static_cast<std::uint16_t>(value)} {}
+  constexpr CurrencyId::CurrencyId(std::uint16_t value)
+    : m_value(value) {}
+
+  constexpr CurrencyId::operator std::uint16_t() const {
+    return m_value;
+  }
+
+  constexpr bool CurrencyId::operator <(CurrencyId other) const {
+    return m_value < other.m_value;
+  }
+
+  constexpr bool CurrencyId::operator ==(CurrencyId other) const {
+    return m_value == other.m_value;
+  }
+
+  constexpr bool CurrencyId::operator !=(CurrencyId other) const {
+    return !(*this == other);
+  }
 
   inline const std::vector<CurrencyDatabase::Entry>&
       CurrencyDatabase::GetEntries() const {
@@ -220,11 +217,11 @@ namespace Nexus {
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::FromId(
       CurrencyId id) const {
-    Entry comparator;
+    auto comparator = Entry();
     comparator.m_id = id;
     auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
       comparator,
-      [] (const Entry& lhs, const Entry& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return lhs.m_id < rhs.m_id;
       });
     if(entryIterator != m_entries.end() && entryIterator->m_id == id) {
@@ -235,38 +232,40 @@ namespace Nexus {
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::FromCode(
       Beam::FixedString<3> code) const {
-    for(auto i = m_entries.begin(); i!= m_entries.end(); ++i) {
-      if(i->m_code == code) {
-        return *i;
-      }
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
+        return entry.m_code == code;
+      });
+    if(i == m_entries.end()) {
+      return NoneEntry<void>::NONE_ENTRY;
     }
-    return NoneEntry<void>::NONE_ENTRY;
+    return *i;
   }
 
   inline void CurrencyDatabase::Add(const Entry& entry) {
-    auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
       entry,
-      [] (const Entry& lhs, const Entry& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return lhs.m_code < rhs.m_code;
       });
-    if(entryIterator == m_entries.end() || entryIterator->m_id != entry.m_id) {
-      m_entries.insert(entryIterator, entry);
+    if(i == m_entries.end() || i->m_id != entry.m_id) {
+      m_entries.insert(i, entry);
     }
   }
 
   inline void CurrencyDatabase::Delete(CurrencyId id) {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (const Entry& entry) {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      [=] (auto& entry) {
         return entry.m_id == id;
       });
-    if(entryIterator == m_entries.end()) {
+    if(i == m_entries.end()) {
       return;
     }
-    m_entries.erase(entryIterator);
+    m_entries.erase(i);
   }
 
   inline CurrencyDatabase::Entry CurrencyDatabase::MakeNoneEntry() {
-    Entry noneEntry;
+    auto noneEntry = Entry();
     noneEntry.m_code = "????";
     noneEntry.m_sign = "?";
     return noneEntry;
@@ -276,13 +275,13 @@ namespace Nexus {
   CurrencyDatabase::Entry CurrencyDatabase::NoneEntry<T>::NONE_ENTRY =
     CurrencyDatabase::MakeNoneEntry();
 
-  inline std::size_t hash_value(CurrencyId id) {
-    return id.m_value;
-  }
+namespace Details {
+  template<typename T>
+  constexpr const T CurrencyIdDefinitions<T>::NONE(0);
+}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<Nexus::CurrencyId> : std::false_type {};
 
@@ -291,7 +290,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::CurrencyId value) const {
-      shuttle.Send(name, value.m_value);
+      shuttle.Send(name, static_cast<std::uint16_t>(value));
     }
   };
 
@@ -300,7 +299,9 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::CurrencyId& value) const {
-      shuttle.Shuttle(name, value.m_value);
+      auto representation = std::uint16_t();
+      shuttle.Shuttle(name, representation);
+      value = Nexus::CurrencyId(representation);
     }
   };
 
@@ -323,7 +324,6 @@ namespace Serialization {
       shuttle.Shuttle("entries", value.m_entries);
     }
   };
-}
 }
 
 namespace std {

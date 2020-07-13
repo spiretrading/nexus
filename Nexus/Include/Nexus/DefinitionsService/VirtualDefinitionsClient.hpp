@@ -1,5 +1,5 @@
-#ifndef NEXUS_VIRTUALDEFINITIONSCLIENT_HPP
-#define NEXUS_VIRTUALDEFINITIONSCLIENT_HPP
+#ifndef NEXUS_VIRTUAL_DEFINITIONS_CLIENT_HPP
+#define NEXUS_VIRTUAL_DEFINITIONS_CLIENT_HPP
 #include <memory>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -15,17 +15,16 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
-namespace Nexus {
-namespace DefinitionsService {
+namespace Nexus::DefinitionsService {
 
-  /*! \class VirtualDefinitionsClient
-      \brief Provides a pure virtual interface to a DefinitionsClient.
-   */
+  /** Provides a pure virtual interface to a DefinitionsClient. */
   class VirtualDefinitionsClient : private boost::noncopyable {
     public:
       virtual ~VirtualDefinitionsClient() = default;
 
       virtual std::string LoadMinimumSpireClientVersion() = 0;
+
+      virtual std::string LoadOrganizationName() = 0;
 
       virtual CountryDatabase LoadCountryDatabase() = 0;
 
@@ -48,57 +47,59 @@ namespace DefinitionsService {
 
     protected:
 
-      //! Constructs a VirtualDefinitionsClient.
+      /** Constructs a VirtualDefinitionsClient. */
       VirtualDefinitionsClient() = default;
   };
 
-  /*! \class WrapperDefinitionsClient
-      \brief Wraps a DefinitionsClient providing it with a virtual interface.
-      \tparam ClientType The type of DefinitionsClient to wrap.
+  /**
+   * Wraps a DefinitionsClient providing it with a virtual interface.
+   * @param <C> The type of DefinitionsClient to wrap.
    */
-  template<typename ClientType>
+  template<typename C>
   class WrapperDefinitionsClient : public VirtualDefinitionsClient {
     public:
 
-      //! The DefinitionsClient to wrap.
-      using Client = Beam::GetTryDereferenceType<ClientType>;
+      /** The DefinitionsClient to wrap. */
+      using Client = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a WrapperDefinitionsClient.
-      /*!
-        \param client The DefinitionsClient to wrap.
-      */
-      template<typename DefinitionsClientForward>
-      WrapperDefinitionsClient(DefinitionsClientForward&& client);
+      /**
+       * Constructs a WrapperDefinitionsClient.
+       * @param client The DefinitionsClient to wrap.
+       */
+      template<typename DF>
+      explicit WrapperDefinitionsClient(DF&& client);
 
-      virtual std::string LoadMinimumSpireClientVersion();
+      std::string LoadMinimumSpireClientVersion() override;
 
-      virtual CountryDatabase LoadCountryDatabase();
+      std::string LoadOrganizationName() override;
 
-      virtual boost::local_time::tz_database LoadTimeZoneDatabase();
+      CountryDatabase LoadCountryDatabase() override;
 
-      virtual CurrencyDatabase LoadCurrencyDatabase();
+      boost::local_time::tz_database LoadTimeZoneDatabase() override;
 
-      virtual DestinationDatabase LoadDestinationDatabase();
+      CurrencyDatabase LoadCurrencyDatabase() override;
 
-      virtual MarketDatabase LoadMarketDatabase();
+      DestinationDatabase LoadDestinationDatabase() override;
 
-      virtual std::vector<ExchangeRate> LoadExchangeRates();
+      MarketDatabase LoadMarketDatabase() override;
 
-      virtual std::vector<Compliance::ComplianceRuleSchema>
-        LoadComplianceRuleSchemas();
+      std::vector<ExchangeRate> LoadExchangeRates() override;
 
-      virtual void Open();
+      std::vector<Compliance::ComplianceRuleSchema>
+        LoadComplianceRuleSchemas() override;
 
-      virtual void Close();
+      void Open() override;
+
+      void Close() override;
 
     private:
-      Beam::GetOptionalLocalPtr<ClientType> m_client;
+      Beam::GetOptionalLocalPtr<C> m_client;
   };
 
-  //! Wraps a DefinitionsClient into a VirtualDefinitionsClient.
-  /*!
-    \param client The client to wrap.
-  */
+  /**
+   * Wraps a DefinitionsClient into a VirtualDefinitionsClient.
+   * @param client The client to wrap.
+   */
   template<typename DefinitionsClient>
   std::unique_ptr<VirtualDefinitionsClient> MakeVirtualDefinitionsClient(
       DefinitionsClient&& client) {
@@ -106,68 +107,67 @@ namespace DefinitionsService {
       std::forward<DefinitionsClient>(client));
   }
 
-  template<typename ClientType>
-  template<typename DefinitionsClientForward>
-  WrapperDefinitionsClient<ClientType>::WrapperDefinitionsClient(
-      DefinitionsClientForward&& client)
-      : m_client{std::forward<DefinitionsClientForward>(client)} {}
+  template<typename C>
+  template<typename DF>
+  WrapperDefinitionsClient<C>::WrapperDefinitionsClient(DF&& client)
+    : m_client(std::forward<DF>(client)) {}
 
-  template<typename ClientType>
-  std::string WrapperDefinitionsClient<ClientType>::
-      LoadMinimumSpireClientVersion() {
+  template<typename C>
+  std::string WrapperDefinitionsClient<C>::LoadMinimumSpireClientVersion() {
     return m_client->LoadMinimumSpireClientVersion();
   }
 
-  template<typename ClientType>
-  CountryDatabase WrapperDefinitionsClient<ClientType>::LoadCountryDatabase() {
+  template<typename C>
+  std::string WrapperDefinitionsClient<C>::LoadOrganizationName() {
+    return m_client->LoadOrganizationName();
+  }
+
+  template<typename C>
+  CountryDatabase WrapperDefinitionsClient<C>::LoadCountryDatabase() {
     return m_client->LoadCountryDatabase();
   }
 
-  template<typename ClientType>
-  boost::local_time::tz_database WrapperDefinitionsClient<ClientType>::
+  template<typename C>
+  boost::local_time::tz_database WrapperDefinitionsClient<C>::
       LoadTimeZoneDatabase() {
     return m_client->LoadTimeZoneDatabase();
   }
 
-  template<typename ClientType>
-  CurrencyDatabase WrapperDefinitionsClient<ClientType>::
-      LoadCurrencyDatabase() {
+  template<typename C>
+  CurrencyDatabase WrapperDefinitionsClient<C>::LoadCurrencyDatabase() {
     return m_client->LoadCurrencyDatabase();
   }
 
-  template<typename ClientType>
-  DestinationDatabase WrapperDefinitionsClient<ClientType>::
-      LoadDestinationDatabase() {
+  template<typename C>
+  DestinationDatabase WrapperDefinitionsClient<C>::LoadDestinationDatabase() {
     return m_client->LoadDestinationDatabase();
   }
 
-  template<typename ClientType>
-  MarketDatabase WrapperDefinitionsClient<ClientType>::LoadMarketDatabase() {
+  template<typename C>
+  MarketDatabase WrapperDefinitionsClient<C>::LoadMarketDatabase() {
     return m_client->LoadMarketDatabase();
   }
 
-  template<typename ClientType>
-  std::vector<ExchangeRate> WrapperDefinitionsClient<ClientType>::
-      LoadExchangeRates() {
+  template<typename C>
+  std::vector<ExchangeRate> WrapperDefinitionsClient<C>::LoadExchangeRates() {
     return m_client->LoadExchangeRates();
   }
 
-  template<typename ClientType>
+  template<typename C>
   std::vector<Compliance::ComplianceRuleSchema>
-      WrapperDefinitionsClient<ClientType>::LoadComplianceRuleSchemas() {
+      WrapperDefinitionsClient<C>::LoadComplianceRuleSchemas() {
     return m_client->LoadComplianceRuleSchemas();
   }
 
-  template<typename ClientType>
-  void WrapperDefinitionsClient<ClientType>::Open() {
+  template<typename C>
+  void WrapperDefinitionsClient<C>::Open() {
     m_client->Open();
   }
 
-  template<typename ClientType>
-  void WrapperDefinitionsClient<ClientType>::Close() {
+  template<typename C>
+  void WrapperDefinitionsClient<C>::Close() {
     m_client->Close();
   }
-}
 }
 
 #endif

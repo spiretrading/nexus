@@ -15,129 +15,129 @@
 namespace Nexus::Accounting {
 
   /** Stores an update to a Portfolio's snapshot. */
-  template<typename InventoryType>
+  template<typename I>
   struct PortfolioUpdateEntry {
 
-    //! The type of Inventory used.
-    using Inventory = InventoryType;
+    /** The type of Inventory used. */
+    using Inventory = I;
 
-    //! The updated Security Inventory.
+    /** The updated Security Inventory. */
     Inventory m_securityInventory;
 
-    //! The updated unrealized gross earnings for the Security.
+    /** The updated unrealized gross earnings for the Security. */
     Money m_unrealizedSecurity;
 
-    //! The updated Currency Inventory.
+    /** The updated Currency Inventory. */
     Inventory m_currencyInventory;
 
-    //! The updated unrealized gross earnings for the Currency.
+    /** The updated unrealized gross earnings for the Currency. */
     Money m_unrealizedCurrency;
   };
 
   /** Stores the valuation used for a Security. */
   struct SecurityValuation {
 
-    //! The currency used to value the Security.
+    /** The currency used to value the Security. */
     CurrencyId m_currency;
 
-    //! The ask side value.
+    /** The ask side value. */
     boost::optional<Money> m_askValue;
 
-    //! The bid side value.
+    /** The bid side value. */
     boost::optional<Money> m_bidValue;
 
-    //! Constructs a SecurityValuation.
+    /** Constructs a SecurityValuation. */
     SecurityValuation() = default;
 
-    //! Constructs a SecurityValuation.
-    /*!
-      \param currency The currency used to value the Security.
-    */
-    SecurityValuation(CurrencyId currency);
+    /**
+     * Constructs a SecurityValuation.
+     * @param currency The currency used to value the Security.
+     */
+    explicit SecurityValuation(CurrencyId currency);
   };
 
-  /*! \class Portfolio
-      \brief Monitors transactions as part of a portfolio and reports the P/L.
-      \tparam BookkeeperType The type of Bookkeeper to use.
+  /**
+   * Monitors transactions as part of a portfolio and reports the P/L.
+   * @param <B> The type of Bookkeeper to use.
    */
-  template<typename BookkeeperType>
+  template<typename B>
   class Portfolio {
     public:
 
-      //! The type of Bookkeeper to use.
-      using PortfolioBookkeeper = BookkeeperType;
+      /** The type of Bookkeeper to use. */
+      using PortfolioBookkeeper = B;
 
-      //! The type of Inventory stored by the Portfolio.
+      /** The type of Inventory stored by the Portfolio. */
       using Inventory = typename PortfolioBookkeeper::Inventory;
 
-      //! The type of update published.
+      /** The type of update published. */
       using UpdateEntry = PortfolioUpdateEntry<Inventory>;
 
       /** Stores portfolio related info about a single Security. */
       struct SecurityEntry {
 
-        //! The current value of the Security.
+        /** The current value of the Security. */
         SecurityValuation m_valuation;
 
-        //! The unrealized profit and loss.
+        /** The unrealized profit and loss. */
         Money m_unrealized;
 
-        //! Constructs a SecurityEntry.
-        /*!
-          \param currency The currency used to value the Security.
-        */
-        SecurityEntry(CurrencyId currency);
+        /**
+         * Constructs a SecurityEntry.
+         * @param currency The currency used to value the Security.
+         */
+        explicit SecurityEntry(CurrencyId currency);
       };
 
-      //! The type used to map Securities to SecurityEntries.
+      /** The type used to map Securities to SecurityEntries. */
       using SecurityEntryMap = std::unordered_map<Security, SecurityEntry>;
 
-      //! The type used to map currencies to unrealized profit and losses.
+      /** The type used to map currencies to unrealized profit and losses. */
       using UnrealizedProfitAndLossMap = std::unordered_map<CurrencyId, Money>;
 
-      //! Constructs a Portfolio.
-      /*!
-        \param markets The database of markets used.
-      */
-      Portfolio(const MarketDatabase& markets);
+      /**
+       * Constructs a Portfolio.
+       * @param markets The database of markets used.
+       */
+      explicit Portfolio(const MarketDatabase& markets);
 
-      //! Returns the Bookkeeper.
+      /** Returns the Bookkeeper. */
       const PortfolioBookkeeper& GetBookkeeper() const;
 
-      //! Returns the Portfolio's SecurityEntries.
+      /** Returns the Portfolio's SecurityEntries. */
       const SecurityEntryMap& GetSecurityEntries() const;
 
-      //! Returns the Portfolio's unrealized profit and losses.
+      /** Returns the Portfolio's unrealized profit and losses. */
       const UnrealizedProfitAndLossMap& GetUnrealizedProfitAndLosses() const;
 
-      //! Updates a position held by this Portfolio.
-      /*!
-        \param orderFields Specifies the Order's details.
-        \param executionReport The ExecutionReport specifying the update.
-      */
+      /**
+       * Updates a position held by this Portfolio.
+       * @param orderFields Specifies the Order's details.
+       * @param executionReport The ExecutionReport specifying the update.
+       */
       void Update(const OrderExecutionService::OrderFields& orderFields,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      //! Updates the ask value of a Security.
-      /*!
-        \param security The Security whose value is being updated.
-        \param value The <i>security</i>'s ask side value.
-      */
+      /**
+       * Updates the ask value of a Security.
+       * @param security The Security whose value is being updated.
+       * @param value The <i>security</i>'s ask side value.
+       */
       void UpdateAsk(const Security& security, Money value);
 
-      //! Updates the bid value of a Security.
-      /*!
-        \param security The Security whose value is being updated.
-        \param value The <i>security</i>'s bid side value.
-      */
+      /**
+       * Updates the bid value of a Security.
+       * @param security The Security whose value is being updated.
+       * @param value The <i>security</i>'s bid side value.
+       */
       void UpdateBid(const Security& security, Money value);
 
-      //! Updates the market value of a Security.
-      /*!
-        \param security The Security whose value is being updated.
-        \param askValue The <i>security</i>'s ask side value.
-        \param bidValue The <i>security</i>'s bid side value.
-      */
+      /**
+       * Updates the market value of a Security.
+       * @param security The Security whose value is being updated.
+       * @param askValue The <i>security</i>'s ask side value.
+       * @param bidValue The <i>security</i>'s bid side value.
+       */
       void Update(const Security& security, Money askValue, Money bidValue);
 
     private:
@@ -152,23 +152,24 @@ namespace Nexus::Accounting {
       SecurityEntry& GetSecurityEntry(const Security& security);
   };
 
-  //! Returns the realized profit and loss of a single Inventory.
-  /*!
-    \param inventory The Inventory to calculate the realized profit and loss of.
-    \return The <i>inventory</i>'s profit and loss.
-  */
+  /**
+   * Returns the realized profit and loss of a single Inventory.
+   * @param inventory The Inventory to calculate the realized profit and loss
+   *        of.
+   * @return The <i>inventory</i>'s profit and loss.
+   */
   template<typename PositionType>
   Money GetRealizedProfitAndLoss(const Inventory<PositionType>& inventory) {
     return inventory.m_grossProfitAndLoss - inventory.m_fees;
   }
 
-  //! Returns the unrealized profit and loss of a single Inventory.
-  /*!
-    \param inventory The Inventory to calculate the unrealized profit and loss
-           of.
-    \param valuation The valuation to use on the <i>inventory</i>.
-    \return The <i>inventory</i>'s unrealized profit and loss.
-  */
+  /**
+   * Returns the unrealized profit and loss of a single Inventory.
+   * @param inventory The Inventory to calculate the unrealized profit and loss
+   *        of.
+   * @param valuation The valuation to use on the <i>inventory</i>.
+   * @return The <i>inventory</i>'s unrealized profit and loss.
+   */
   template<typename PositionType>
   boost::optional<Money> GetUnrealizedProfitAndLoss(
       const Inventory<PositionType>& inventory,
@@ -176,7 +177,7 @@ namespace Nexus::Accounting {
     if(inventory.m_position.m_quantity == 0) {
       return Money::ZERO;
     }
-    Money price;
+    auto price = Money();
     if(inventory.m_position.m_quantity > 0) {
       if(valuation.m_bidValue.is_initialized()) {
         price = *valuation.m_bidValue;
@@ -194,16 +195,16 @@ namespace Nexus::Accounting {
       inventory.m_position.m_costBasis;
   }
 
-  //! Returns the total (realized and unrealized) profit and loss of a single
-  //! Inventory.
-  /*!
-    \param inventory The Inventory to calculate the total profit and loss of.
-    \param valuation The valuation to use on the <i>inventory</i>.
-    \return The <i>inventory</i>'s total profit and loss.
-  */
-  template<typename PositionType>
+  /**
+   * Returns the total (realized and unrealized) profit and loss of a single
+   * Inventory.
+   * @param inventory The Inventory to calculate the total profit and loss of.
+   * @param valuation The valuation to use on the <i>inventory</i>.
+   * @return The <i>inventory</i>'s total profit and loss.
+   */
+  template<typename Position>
   boost::optional<Money> GetTotalProfitAndLoss(
-      const Inventory<PositionType>& inventory,
+      const Inventory<Position>& inventory,
       const SecurityValuation& valuation) {
     auto unrealizedProfitAndLoss =
       GetUnrealizedProfitAndLoss(inventory, valuation);
@@ -213,18 +214,17 @@ namespace Nexus::Accounting {
     return GetRealizedProfitAndLoss(inventory) + *unrealizedProfitAndLoss;
   }
 
-  //! Returns the total (realized and unrealized) profit and loss of all
-  //! Inventory in a given currency within a Portfolio.
-  /*!
-    \param portfolio The Portfolio to calculate the total profit and loss for.
-    \param currency The currency to calculate the total profit and loss for.
-    \return The total profit and loss of  all Inventory in the <i>portfolio</i>
-            for the specified <i>currency</i>.
-  */
-  template<typename PortfolioType>
-  Money GetTotalProfitAndLoss(const PortfolioType& portfolio,
-      CurrencyId currency) {
-    Money unrealizedProfitAndLoss;
+  /**
+   * Returns the total (realized and unrealized) profit and loss of all
+   * Inventory in a given currency within a Portfolio.
+   * @param portfolio The Portfolio to calculate the total profit and loss for.
+   * @param currency The currency to calculate the total profit and loss for.
+   * @return The total profit and loss of  all Inventory in the <i>portfolio</i>
+   *         for the specified <i>currency</i>.
+   */
+  template<typename Portfolio>
+  Money GetTotalProfitAndLoss(const Portfolio& portfolio, CurrencyId currency) {
+    auto unrealizedProfitAndLoss = Money();
     auto profitAndLossIterator = portfolio.GetUnrealizedProfitAndLosses().find(
       currency);
     if(profitAndLossIterator ==
@@ -237,18 +237,18 @@ namespace Nexus::Accounting {
     return unrealizedProfitAndLoss + GetRealizedProfitAndLoss(inventory);
   }
 
-  //! Calls a function for each entry in a Portfolio.
-  /*!
-    \param portfolio The Portfolio to get entries from.
-    \param f The function to call with a Portfolio's entry.
-  */
-  template<typename PortfolioType, typename F>
-  void ForEachPortfolioEntry(const PortfolioType& portfolio, F f) {
-    const auto& securityEntries = portfolio.GetSecurityEntries();
-    for(const auto& securityEntryPair : securityEntries) {
-      const auto& security = securityEntryPair.first;
-      const auto& securityEntry = securityEntryPair.second;
-      typename PortfolioType::UpdateEntry update;
+  /**
+   * Calls a function for each entry in a Portfolio.
+   * @param portfolio The Portfolio to get entries from.
+   * @param f The function to call with a Portfolio's entry.
+   */
+  template<typename Portfolio, typename F>
+  void ForEachPortfolioEntry(const Portfolio& portfolio, F f) {
+    auto& securityEntries = portfolio.GetSecurityEntries();
+    for(auto& securityEntryPair : securityEntries) {
+      auto& security = securityEntryPair.first;
+      auto& securityEntry = securityEntryPair.second;
+      auto update = typename Portfolio::UpdateEntry();
       update.m_securityInventory = portfolio.GetBookkeeper().GetInventory(
         security, securityEntry.m_valuation.m_currency);
       update.m_unrealizedSecurity = securityEntry.m_unrealized;
@@ -268,42 +268,42 @@ namespace Nexus::Accounting {
   }
 
   inline SecurityValuation::SecurityValuation(CurrencyId currency)
-      : m_currency(currency) {}
+    : m_currency(currency) {}
 
-  template<typename BookkeeperType>
-  Portfolio<BookkeeperType>::SecurityEntry::SecurityEntry(CurrencyId currency)
-      : m_valuation(currency) {}
+  template<typename B>
+  Portfolio<B>::SecurityEntry::SecurityEntry(CurrencyId currency)
+    : m_valuation(currency) {}
 
-  template<typename BookkeeperType>
-  Portfolio<BookkeeperType>::Portfolio(const MarketDatabase& marketDatabase)
-      : m_marketDatabase(marketDatabase) {}
+  template<typename B>
+  Portfolio<B>::Portfolio(const MarketDatabase& marketDatabase)
+    : m_marketDatabase(marketDatabase) {}
 
-  template<typename BookkeeperType>
-  const typename Portfolio<BookkeeperType>::PortfolioBookkeeper&
-      Portfolio<BookkeeperType>::GetBookkeeper() const {
+  template<typename B>
+  const typename Portfolio<B>::PortfolioBookkeeper&
+      Portfolio<B>::GetBookkeeper() const {
     return m_bookkeeper;
   }
 
-  template<typename BookkeeperType>
-  const typename Portfolio<BookkeeperType>::SecurityEntryMap&
-      Portfolio<BookkeeperType>::GetSecurityEntries() const {
+  template<typename B>
+  const typename Portfolio<B>::SecurityEntryMap&
+      Portfolio<B>::GetSecurityEntries() const {
     return m_securityEntries;
   }
 
-  template<typename BookkeeperType>
-  const typename Portfolio<BookkeeperType>::UnrealizedProfitAndLossMap&
-      Portfolio<BookkeeperType>::GetUnrealizedProfitAndLosses() const {
+  template<typename B>
+  const typename Portfolio<B>::UnrealizedProfitAndLossMap&
+      Portfolio<B>::GetUnrealizedProfitAndLosses() const {
     return m_unrealizedCurrencies;
   }
 
-  template<typename BookkeeperType>
-  void Portfolio<BookkeeperType>::Update(
+  template<typename B>
+  void Portfolio<B>::Update(
       const OrderExecutionService::OrderFields& orderFields,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
       return;
     }
-    const auto& security = orderFields.m_security;
+    auto& security = orderFields.m_security;
     auto currency = orderFields.m_currency;
     auto& securityEntry = GetSecurityEntry(security);
     auto quantity = GetDirection(orderFields.m_side) *
@@ -323,9 +323,8 @@ namespace Nexus::Accounting {
     }
   }
 
-  template<typename BookkeeperType>
-  void Portfolio<BookkeeperType>::UpdateAsk(const Security& security,
-      Money value) {
+  template<typename B>
+  void Portfolio<B>::UpdateAsk(const Security& security, Money value) {
     auto& securityEntry = GetSecurityEntry(security);
     securityEntry.m_valuation.m_askValue = value;
     auto securityInventory = m_bookkeeper.GetInventory(security,
@@ -342,9 +341,8 @@ namespace Nexus::Accounting {
     unrealizedCurrency += securityEntry.m_unrealized;
   }
 
-  template<typename BookkeeperType>
-  void Portfolio<BookkeeperType>::UpdateBid(const Security& security,
-      Money value) {
+  template<typename B>
+  void Portfolio<B>::UpdateBid(const Security& security, Money value) {
     auto& securityEntry = GetSecurityEntry(security);
     securityEntry.m_valuation.m_bidValue = value;
     auto securityInventory = m_bookkeeper.GetInventory(security,
@@ -361,9 +359,9 @@ namespace Nexus::Accounting {
     unrealizedCurrency += securityEntry.m_unrealized;
   }
 
-  template<typename BookkeeperType>
-  void Portfolio<BookkeeperType>::Update(const Security& security,
-      Money askValue, Money bidValue) {
+  template<typename B>
+  void Portfolio<B>::Update(const Security& security, Money askValue,
+      Money bidValue) {
     auto& securityEntry = GetSecurityEntry(security);
     securityEntry.m_valuation.m_askValue = askValue;
     securityEntry.m_valuation.m_bidValue = bidValue;
@@ -381,48 +379,46 @@ namespace Nexus::Accounting {
     unrealizedCurrency += securityEntry.m_unrealized;
   }
 
-  template<typename BookkeeperType>
-  Money Portfolio<BookkeeperType>::CalculateUnrealized(
+  template<typename B>
+  Money Portfolio<B>::CalculateUnrealized(
       const typename PortfolioBookkeeper::Inventory& inventory,
       const SecurityEntry& securityEntry) {
-    Money valuation;
-    if(inventory.m_position.m_quantity >= 0) {
-      if(securityEntry.m_valuation.m_bidValue.is_initialized()) {
-        valuation = *securityEntry.m_valuation.m_bidValue;
+    auto valuation = [&] {
+      if(inventory.m_position.m_quantity >= 0) {
+        if(securityEntry.m_valuation.m_bidValue.is_initialized()) {
+          return *securityEntry.m_valuation.m_bidValue;
+        }
       } else {
-        valuation = Money::ZERO;
+        if(securityEntry.m_valuation.m_askValue.is_initialized()) {
+          return *securityEntry.m_valuation.m_askValue;
+        }
       }
-    } else {
-      if(securityEntry.m_valuation.m_askValue.is_initialized()) {
-        valuation = *securityEntry.m_valuation.m_askValue;
-      } else {
-        valuation = Money::ZERO;
-      }
-    }
+      return Money::ZERO;
+    }();
     return inventory.m_position.m_quantity * valuation -
       inventory.m_position.m_costBasis;
   }
 
-  template<typename BookkeeperType>
-  typename Portfolio<BookkeeperType>::SecurityEntry&
-      Portfolio<BookkeeperType>::GetSecurityEntry(const Security& security) {
+  template<typename B>
+  typename Portfolio<B>::SecurityEntry& Portfolio<B>::GetSecurityEntry(
+      const Security& security) {
     auto securityIterator = m_securityEntries.find(security);
     if(securityIterator == m_securityEntries.end()) {
       auto currency = m_marketDatabase.FromCode(
         security.GetMarket()).m_currency;
       securityIterator = m_securityEntries.insert(
-        std::make_pair(security, SecurityEntry(currency))).first;
+        std::pair(security, SecurityEntry(currency))).first;
     }
     return securityIterator->second;
   }
 }
 
 namespace Beam::Serialization {
-  template<typename InventoryType>
-  struct Shuttle<Nexus::Accounting::PortfolioUpdateEntry<InventoryType>> {
+  template<typename I>
+  struct Shuttle<Nexus::Accounting::PortfolioUpdateEntry<I>> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::PortfolioUpdateEntry<InventoryType>& value,
+        Nexus::Accounting::PortfolioUpdateEntry<I>& value,
         unsigned int version) {
       shuttle.Shuttle("security_inventory", value.m_securityInventory);
       shuttle.Shuttle("unrealized_security", value.m_unrealizedSecurity);

@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCESERVLET_HPP
-#define NEXUS_COMPLIANCESERVLET_HPP
+#ifndef NEXUS_COMPLIANCE_SERVLET_HPP
+#define NEXUS_COMPLIANCE_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -17,56 +17,44 @@
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceSession.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class ComplianceServlet
-      \brief Updates compliance rules and monitors violations.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient used to
-              verify permissions.
-      \tparam AdministrationClientType The type of AdministrationClient to use.
-      \tparam ComplianceRuleDataStoreType The type of ComplianceRuleDataStore to
-              use.
-      \tparam TimeClientType The type of TimeClient used for timestamps.
+  /**
+   * Updates compliance rules and monitors violations.
+   * @param C The container instantiating this servlet.
+   * @param S The type of ServiceLocatorClient used to verify permissions.
+   * @param A The type of AdministrationClient to use.
+   * @param D The type of ComplianceRuleDataStore to use.
+   * @param T The type of TimeClient used for timestamps.
    */
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
+  template<typename C, typename S, typename A, typename D, typename T>
   class ComplianceServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of ServiceLocatorClient used to verify permissions.
-      using ServiceLocatorClient =
-        Beam::GetTryDereferenceType<ServiceLocatorClientType>;
+      /** The type of ServiceLocatorClient used to verify permissions. */
+      using ServiceLocatorClient = Beam::GetTryDereferenceType<S>;
 
-      //! The type of AdministrationClient used to access account info.
-      using AdministrationClient =
-        Beam::GetTryDereferenceType<AdministrationClientType>;
+      /** The type of AdministrationClient used to access account info. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of ComplianceRuleDataStore to use.
-      using ComplianceRuleDataStore = Beam::GetTryDereferenceType<
-        ComplianceRuleDataStoreType>;
+      /** The type of ComplianceRuleDataStore to use. */
+      using ComplianceRuleDataStore = Beam::GetTryDereferenceType<D>;
 
-      //! The type of TimeClient to use.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient to use. */
+      using TimeClient = Beam::GetTryDereferenceType<T>;
 
-      //! Constructs a ComplianceServlet.
-      /*!
-        \param serviceLocatorClient Initializes the ServiceLocatorClient.
-        \param administrationClient Initializes the AdministrationClient.
-        \param dataStore Initializes the ComplianceRuleDataStore.
-        \param timeClient Initializes the TimeClient.
-      */
-      template<typename ServiceLocatorClientForward,
-        typename AdministrationClientForward,
-        typename ComplianceRuleDataStoreForward, typename TimeClientForward>
-      ComplianceServlet(ServiceLocatorClientForward&& serviceLocatorClient,
-        AdministrationClientForward&& administrationClient,
-        ComplianceRuleDataStoreForward&& dataStore,
-        TimeClientForward&& timeClient);
+      /**
+       * Constructs a ComplianceServlet.
+       * @param serviceLocatorClient Initializes the ServiceLocatorClient.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param dataStore Initializes the ComplianceRuleDataStore.
+       * @param timeClient Initializes the TimeClient.
+       */
+      template<typename SF, typename AF, typename DF, typename TF>
+      ComplianceServlet(SF&& serviceLocatorClient, AF&& administrationClient,
+        DF&& dataStore, TF&& timeClient);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -78,12 +66,10 @@ namespace Compliance {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
-        m_serviceLocatorClient;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<ComplianceRuleDataStoreType> m_dataStore;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<S> m_serviceLocatorClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
+      Beam::GetOptionalLocalPtr<T> m_timeClient;
       boost::atomic<ComplianceRuleId> m_nextEntryId;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         Beam::SynchronizedVector<ServiceProtocolClient*>>
@@ -108,42 +94,26 @@ namespace Compliance {
         ComplianceRuleViolationRecord violationRecord);
   };
 
-  template<typename ServiceLocatorClientType, typename AdministrationClientType,
-    typename ComplianceRuleDataStoreType, typename TimeClientType>
+  template<typename S, typename A, typename D, typename T>
   struct MetaComplianceServlet {
     using Session = ComplianceSession;
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = ComplianceServlet<ContainerType, ServiceLocatorClientType,
-        AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>;
+      using type = ComplianceServlet<C, S, A, D, T>;
     };
   };
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  template<typename ServiceLocatorClientForward,
-    typename AdministrationClientForward,
-    typename ComplianceRuleDataStoreForward, typename TimeClientForward>
-  ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      ComplianceServlet(ServiceLocatorClientForward&& serviceLocatorClient,
-      AdministrationClientForward&& administrationClient,
-      ComplianceRuleDataStoreForward&& dataStore,
-      TimeClientForward&& timeClient)
-      : m_serviceLocatorClient{std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)},
-        m_administrationClient{std::forward<AdministrationClientForward>(
-          administrationClient)},
-        m_dataStore{std::forward<ComplianceRuleDataStoreForward>(dataStore)},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)} {}
+  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename SF, typename AF, typename DF, typename TF>
+  ComplianceServlet<C, S, A, D, T>::ComplianceServlet(SF&& serviceLocatorClient,
+    AF&& administrationClient, DF&& dataStore, TF&& timeClient)
+    : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
+      m_administrationClient(std::forward<AF>(administrationClient)),
+      m_dataStore(std::forward<DF>(dataStore)),
+      m_timeClient(std::forward<TF>(timeClient)) {}
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      RegisterServices(
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterComplianceServices(Store(slots));
     RegisterComplianceMessages(Store(slots));
@@ -168,27 +138,19 @@ namespace Compliance {
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::
       HandleClientClosed(ServiceProtocolClient& client) {
     m_complianceEntrySubscriptions.With(
-      [&] (std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-          Beam::SynchronizedVector<ServiceProtocolClient*>>& subscriptions) {
+      [&] (auto& subscriptions) {
         for(auto& subscription : subscriptions | boost::adaptors::map_values) {
           subscription.Remove(&client);
         }
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      Open() {
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -204,34 +166,22 @@ namespace Compliance {
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      Close() {
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      Shutdown() {
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::Shutdown() {
     m_tasks.Break();
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  std::vector<ComplianceRuleEntry> ComplianceServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationClientType,
-      ComplianceRuleDataStoreType, TimeClientType>::
+  template<typename C, typename S, typename A, typename D, typename T>
+  std::vector<ComplianceRuleEntry> ComplianceServlet<C, S, A, D, T>::
       OnLoadDirectoryEntryComplianceRuleEntry(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     auto& session = client.GetSession();
@@ -239,95 +189,80 @@ namespace Compliance {
       session.GetAccount(), directoryEntry,
       Beam::ServiceLocator::Permission::READ);
     if(!hasPermission) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    auto entry = m_dataStore->LoadComplianceRuleEntries(directoryEntry);
-    return entry;
+    return m_dataStore->LoadComplianceRuleEntries(directoryEntry);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      OnMonitorComplianceRuleEntry(ServiceProtocolClient& client,
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::OnMonitorComplianceRuleEntry(
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     auto& session = client.GetSession();
     auto hasPermission = m_serviceLocatorClient->HasPermissions(
       session.GetAccount(), directoryEntry,
       Beam::ServiceLocator::Permission::READ);
     if(!hasPermission) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     m_complianceEntrySubscriptions.Get(directoryEntry).PushBack(&client);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  ComplianceRuleId ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      OnAddComplianceRuleEntry(ServiceProtocolClient& client,
+  template<typename C, typename S, typename A, typename D, typename T>
+  ComplianceRuleId ComplianceServlet<C, S, A, D, T>::OnAddComplianceRuleEntry(
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
     auto& session = client.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());
     if(!isAdministrator) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto id = ++m_nextEntryId;
-    ComplianceRuleEntry entry{id, directoryEntry, state, schema};
+    auto entry = ComplianceRuleEntry(id, directoryEntry, state, schema);
     m_dataStore->Store(entry);
     auto& subscribers = m_complianceEntrySubscriptions.Get(directoryEntry);
     subscribers.ForEach(
-      [&] (ServiceProtocolClient* client) {
+      [&] (auto client) {
         Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
           entry);
       });
     return entry.GetId();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      OnUpdateComplianceRuleEntry(ServiceProtocolClient& client,
-      const ComplianceRuleEntry& entry) {
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::OnUpdateComplianceRuleEntry(
+      ServiceProtocolClient& client, const ComplianceRuleEntry& entry) {
     auto& session = client.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());
     if(!isAdministrator) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     m_dataStore->Store(entry);
     auto& subscribers = m_complianceEntrySubscriptions.Get(
       entry.GetDirectoryEntry());
     subscribers.ForEach(
-      [&] (ServiceProtocolClient* client) {
+      [&] (auto client) {
         Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
           entry);
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      OnDeleteComplianceRuleEntry(ServiceProtocolClient& client,
-      ComplianceRuleId id) {
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::OnDeleteComplianceRuleEntry(
+      ServiceProtocolClient& client, ComplianceRuleId id) {
     auto& session = client.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());
     if(!isAdministrator) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto entry = m_dataStore->LoadComplianceRuleEntry(id);
     m_dataStore->Delete(id);
@@ -338,30 +273,26 @@ namespace Compliance {
     auto& subscribers = m_complianceEntrySubscriptions.Get(
       entry->GetDirectoryEntry());
     subscribers.ForEach(
-      [&] (ServiceProtocolClient* client) {
+      [&] (auto client) {
         Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
           *entry);
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationClientType, typename ComplianceRuleDataStoreType,
-    typename TimeClientType>
-  void ComplianceServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationClientType, ComplianceRuleDataStoreType, TimeClientType>::
-      OnReportComplianceRuleViolation(ServiceProtocolClient& client,
+  template<typename C, typename S, typename A, typename D, typename T>
+  void ComplianceServlet<C, S, A, D, T>::OnReportComplianceRuleViolation(
+      ServiceProtocolClient& client,
       ComplianceRuleViolationRecord violationRecord) {
     auto& session = client.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());
     if(!isAdministrator) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     violationRecord.m_timestamp = m_timeClient->GetTime();
     m_dataStore->Store(violationRecord);
   }
-}
 }
 
 #endif

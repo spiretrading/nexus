@@ -7,50 +7,51 @@
 
 namespace Nexus::Accounting {
 
-  /** Stores bookkeeping info for a single inventory.
-      \tparam PositionType The type used to manage inventory Positions.
+  /**
+   * Stores bookkeeping info for a single inventory.
+   * @param <P> The type used to manage inventory Positions.
    */
-  template<typename PositionType>
+  template<typename P>
   struct Inventory {
 
-    //! The type used to manage inventory Positions.
-    using Position = PositionType;
+    /** The type used to manage inventory Positions. */
+    using Position = P;
 
-    //! The currently held Position.
+    /** The currently held Position. */
     Position m_position;
 
-    //! The Inventory's gross profit and loss.
+    /** The Inventory's gross profit and loss. */
     Money m_grossProfitAndLoss;
 
-    //! The transaction fees.
+    /** The transaction fees. */
     Money m_fees;
 
-    //! The total quantity that was transacted.
+    /** The total quantity that was transacted. */
     Quantity m_volume;
 
-    //! The number of transactions made.
+    /** The number of transactions made. */
     int m_transactionCount;
 
-    //! Constructs an empty Inventory.
+    /** Constructs an empty Inventory. */
     Inventory();
 
-    //! Constructs an Inventory.
-    /*!
-      \param key The Key uniquely identifying this Inventory.
-    */
-    Inventory(const typename Position::Key& key);
+    /**
+     * Constructs an Inventory.
+     * @param key The Key uniquely identifying this Inventory.
+     */
+    explicit Inventory(const typename Position::Key& key);
   };
 
-  template<typename PositionType>
-  Inventory<PositionType>::Inventory()
-      : m_volume(0),
-        m_transactionCount(0) {}
+  template<typename P>
+  Inventory<P>::Inventory()
+    : m_volume(0),
+      m_transactionCount(0) {}
 
-  template<typename PositionType>
-  Inventory<PositionType>::Inventory(const typename PositionType::Key& key)
-      : m_position(key),
-        m_volume(0),
-        m_transactionCount(0) {}
+  template<typename P>
+  Inventory<P>::Inventory(const typename P::Key& key)
+    : m_position(key),
+      m_volume(0),
+      m_transactionCount(0) {}
 
   template<typename Position>
   std::ostream& operator <<(std::ostream& out,
@@ -62,11 +63,10 @@ namespace Nexus::Accounting {
 }
 
 namespace Beam::Serialization {
-  template<typename PositionType>
-  struct Shuttle<Nexus::Accounting::Inventory<PositionType>> {
+  template<typename P>
+  struct Shuttle<Nexus::Accounting::Inventory<P>> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Inventory<PositionType>& value,
+    void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory<P>& value,
         unsigned int version) {
       shuttle.Shuttle("position", value.m_position);
       shuttle.Shuttle("gross_profit_and_loss", value.m_grossProfitAndLoss);

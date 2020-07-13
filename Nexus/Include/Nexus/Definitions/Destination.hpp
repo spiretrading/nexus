@@ -12,100 +12,95 @@
 
 namespace Nexus {
 
-  //! Represents a destination.
+  /** Represents a destination. */
   using Destination = std::string;
 
-  /*! \class DestinationDatabase
-      \brief Stores the database of all destinations.
-   */
+  /** Stores the database of all destinations. */
   class DestinationDatabase {
     public:
 
-      /*! \struct Entry
-          \brief Stores a single entry in a DestinationDatabase.
-       */
+      /** Stores a single entry in a DestinationDatabase. */
       struct Entry {
 
-        //! The id.
+        /** The id. */
         Destination m_id;
 
-        //! The markets this destination is available on.
+        /** The markets this destination is available on. */
         std::vector<MarketCode> m_markets;
 
-        //! The destination's description.
+        /** The destination's description. */
         std::string m_description;
       };
 
-      //! Constructs an empty DestinationDatabase.
+      /** Constructs an empty DestinationDatabase. */
       DestinationDatabase() = default;
 
-      //! Returns an Entry from its id.
-      /*!
-        \param id The id of the Entry to lookup.
-        \return The Entry with the specified <i>id</i>.
-      */
+      /**
+       * Returns an Entry from its id.
+       * @param id The id of the Entry to lookup.
+       * @return The Entry with the specified <i>id</i>.
+       */
       const Entry& FromId(const std::string& id) const;
 
-      //! Returns the preferred destination for a specified market.
-      /*!
-        \param market The market to lookup the preferred destination of.
-        \return The preferred destination of the specified <i>market</i>.
-      */
+      /**
+       * Returns the preferred destination for a specified market.
+       * @param market The market to lookup the preferred destination of.
+       * @return The preferred destination of the specified <i>market</i>.
+       */
       const Entry& GetPreferredDestination(MarketCode market) const;
 
-      //! Returns the first Entry matching a predicate.
-      /*!
-        \param predicate The predicate to match against.
-      */
+      /**
+       * Returns the first Entry matching a predicate.
+       * @param predicate The predicate to match against.
+       */
       template<typename P>
-      const Entry& SelectEntry(P predicate) const;
+      const Entry& SelectEntry(P&& predicate) const;
 
-      //! Returns all Entries matching a predicate.
-      /*!
-        \param predicate The predicate to match against.
-      */
+      /**
+       * Returns all Entries matching a predicate.
+       * @param predicate The predicate to match against.
+       */
       template<typename P>
-      std::vector<Entry> SelectEntries(P predicate) const;
+      std::vector<Entry> SelectEntries(P&& predicate) const;
 
-      //! Returns the manual order entry destination.
+      /** Returns the manual order entry destination. */
       const boost::optional<Entry>& GetManualOrderEntryDestination() const;
 
-      //! Adds an Entry.
-      /*!
-        \param entry The Entry to add.
-      */
+      /**
+       * Adds an Entry.
+       * @param entry The Entry to add.
+       */
       void Add(const Entry& entry);
 
-      //! Sets the manual order entry destination.
-      /*!
-        \param entry The Entry to set as the manual order entry destination.
-      */
+      /**
+       * Sets the manual order entry destination.
+       * @param entry The Entry to set as the manual order entry destination.
+       */
       void SetManualOrderEntryDestination(const Entry& entry);
 
-      //! Sets a market's preferred destination.
-      /*!
-        \param market The market to set.
-        \param destination The preferred destination to associate with the
-               <i>market</i>.
-      */
+      /**
+       * Sets a market's preferred destination.
+       * @param market The market to set.
+       * @param destination The preferred destination to associate with the
+       *        <i>market</i>.
+       */
       void SetPreferredDesintation(MarketCode market,
         const Destination& destination);
 
-      //! Deletes an Entry.
-      /*!
-        \param destination The id of the Entry to delete.
-      */
+      /**
+       * Deletes an Entry.
+       * @param destination The id of the Entry to delete.
+       */
       void Delete(const Destination& destination);
 
-      //! Deletes a market's preferred destination.
-      /*!
-        \param market The market whose preferred destination is to be deleted.
-      */
+      /**
+       * Deletes a market's preferred destination.
+       * @param market The market whose preferred destination is to be deleted.
+       */
       void DeletePreferredDestination(MarketCode market);
 
     private:
       friend struct Beam::Serialization::Shuttle<DestinationDatabase>;
-      static Entry MakeNoneEntry();
       template<typename T>
       struct NoneEntry {
         static Entry NONE_ENTRY;
@@ -115,82 +110,84 @@ namespace Nexus {
       boost::optional<Entry> m_manualOrderEntryDestination;
   };
 
-  //! Parses a DestinationDatabase Entry from a YAML node.
-  /*!
-    \param node The node to parse the DestinationDatabase Entry from.
-    \param marketDatabase The MarketDatabase used to parse MarketCodes.
-    \return The DestinationDatabase Entry represented by the <i>node</i>.
-  */
+  /**
+   * Parses a DestinationDatabase Entry from a YAML node.
+   * @param node The node to parse the DestinationDatabase Entry from.
+   * @param database The MarketDatabase used to parse MarketCodes.
+   * @return The DestinationDatabase Entry represented by the <i>node</i>.
+   */
   inline DestinationDatabase::Entry ParseDestinationDatabaseEntry(
-      const YAML::Node& node, const MarketDatabase& marketDatabase) {
-    DestinationDatabase::Entry entry;
+      const YAML::Node& node, const MarketDatabase& database) {
+    auto entry = DestinationDatabase::Entry();
     entry.m_id = Beam::Extract<std::string>(node, "id");
-    auto marketNames = Beam::Extract<std::vector<std::string>>(node, "markets");
-    std::vector<MarketCode> marketCodes;
-    for(auto& marketName : marketNames) {
-      auto marketCode = ParseMarketCode(marketName, marketDatabase);
-      if(marketCode == MarketCode{}) {
+    auto names = Beam::Extract<std::vector<std::string>>(node, "markets");
+    auto codes = std::vector<MarketCode>();
+    for(auto& name : names) {
+      auto code = ParseMarketCode(name, database);
+      if(code == MarketCode()) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
           node.Mark()));
       }
-      marketCodes.push_back(marketCode);
+      codes.push_back(code);
     }
-    entry.m_markets = marketCodes;
+    entry.m_markets = codes;
     entry.m_description = Beam::Extract<std::string>(node, "description");
     return entry;
   }
 
-  //! Parses a DestinationDatabase from a YAML node.
-  /*!
-    \param node The node to parse the DestinationDatabase from.
-    \param marketDatabase The MarketDatabase used to parse MarketCodes.
-    \return The DestinationDatabase represented by the <i>node</i>.
-  */
+  /**
+   * Parses a DestinationDatabase from a YAML node.
+   * @param node The node to parse the DestinationDatabase from.
+   * @param database The MarketDatabase used to parse MarketCodes.
+   * @return The DestinationDatabase represented by the <i>node</i>.
+   */
   inline DestinationDatabase ParseDestinationDatabase(const YAML::Node& node,
-      const MarketDatabase& marketDatabase) {
-    DestinationDatabase destinationDatabase;
-    for(auto entryNode : Beam::GetNode(node, "destinations")) {
-      auto entry = ParseDestinationDatabaseEntry(entryNode, marketDatabase);
+      const MarketDatabase& database) {
+    auto destinationDatabase = DestinationDatabase();
+    for(auto node : Beam::GetNode(node, "destinations")) {
+      auto entry = ParseDestinationDatabaseEntry(node, database);
       destinationDatabase.Add(entry);
     }
-    for(auto entryNode : Beam::GetNode(node, "preferred_destinations")) {
-      auto market = ParseMarketCode(
-        Beam::Extract<std::string>(entryNode, "market"), marketDatabase);
-      if(market == MarketCode{}) {
+    for(auto node : Beam::GetNode(node, "preferred_destinations")) {
+      auto market = ParseMarketCode(Beam::Extract<std::string>(node, "market"),
+        database);
+      if(market == MarketCode()) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException("Invalid market.",
-          entryNode.Mark()));
+          node.Mark()));
       }
-      auto destination = Beam::Extract<std::string>(entryNode, "destination");
+      auto destination = Beam::Extract<std::string>(node, "destination");
       if(destinationDatabase.FromId(destination).m_id.empty()) {
         BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
-          "Invalid destination.", entryNode.Mark()));
+          "Invalid destination.", node.Mark()));
       }
       destinationDatabase.SetPreferredDesintation(market, destination);
     }
     auto manualOrderEntry = ParseDestinationDatabaseEntry(
-      Beam::GetNode(node, "manual_order_entry"), marketDatabase);
+      Beam::GetNode(node, "manual_order_entry"), database);
     destinationDatabase.SetManualOrderEntryDestination(manualOrderEntry);
     return destinationDatabase;
   }
 
-  //! Tests two DestinationDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two DestinationDatabase Entries are equal.
-  */
+  /**
+   * Tests two DestinationDatabase Entries for equality.
+   * @param lhs The left hand side of the equality.
+   * @param rhs The right hand side of the equality.
+   * @return <code>true</code> iff the two DestinationDatabase Entries are
+   *         equal.
+   */
   inline bool operator ==(const DestinationDatabase::Entry& lhs,
       const DestinationDatabase::Entry& rhs) {
     return lhs.m_id == rhs.m_id && lhs.m_markets == rhs.m_markets &&
       lhs.m_description == rhs.m_description;
   }
 
-  //! Tests two DestinationDatabase Entries for equality.
-  /*!
-    \param lhs The left hand side of the equality.
-    \param rhs The right hand side of the equality.
-    \return <code>true</code> iff the two DestinationDatabase Entries are equal.
-  */
+  /**
+   * Tests two DestinationDatabase Entries for inequality.
+   * @param lhs The left hand side of the inequality.
+   * @param rhs The right hand side of the inequality.
+   * @return <code>true</code> iff the two DestinationDatabase Entries are not
+   *         equal.
+   */
   inline bool operator !=(const DestinationDatabase::Entry& lhs,
       const DestinationDatabase::Entry& rhs) {
     return !(lhs == rhs);
@@ -199,45 +196,44 @@ namespace Nexus {
   inline const DestinationDatabase::Entry& DestinationDatabase::FromId(
       const std::string& id) const {
     return SelectEntry(
-      [&] (const Entry& entry) {
+      [&] (auto& entry) {
         return entry.m_id == id;
       });
   }
 
   inline const DestinationDatabase::Entry&
       DestinationDatabase::GetPreferredDestination(MarketCode market) const {
-    auto destinationIterator = m_preferredDestinations.find(market);
-    if(destinationIterator == m_preferredDestinations.end()) {
+    auto i = m_preferredDestinations.find(market);
+    if(i == m_preferredDestinations.end()) {
       return NoneEntry<void>::NONE_ENTRY;
     }
-    for(auto i = m_entries.begin(); i != m_entries.end(); ++i) {
-      if(i->m_id == destinationIterator->second) {
-        return *i;
-      }
+    auto j = std::find_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
+        return entry.m_id == i->second;
+      });
+    if(j == m_entries.end()) {
+      return NoneEntry<void>::NONE_ENTRY;
     }
-    return NoneEntry<void>::NONE_ENTRY;
+    return *j;
   }
 
   template<typename P>
   const DestinationDatabase::Entry& DestinationDatabase::SelectEntry(
-      P predicate) const {
-    for(auto i = m_entries.begin(); i != m_entries.end(); ++i) {
-      if(predicate(*i)) {
-        return *i;
-      }
+      P&& predicate) const {
+    auto i = std::find_if(m_entries.begin(), m_entries.end(),
+      std::forward<P>(predicate));
+    if(i == m_entries.end()) {
+      return NoneEntry<void>::NONE_ENTRY;
     }
-    return NoneEntry<void>::NONE_ENTRY;
+    return *i;
   }
 
   template<typename P>
   std::vector<DestinationDatabase::Entry> DestinationDatabase::SelectEntries(
-      P predicate) const {
-    std::vector<DestinationDatabase::Entry> result;
-    for(auto i = m_entries.begin(); i != m_entries.end(); ++i) {
-      if(predicate(*i)) {
-        result.push_back(*i);
-      }
-    }
+      P&& predicate) const {
+    auto result = std::vector<DestinationDatabase::Entry>();
+    std::copy_if(m_entries.begin(), m_entries.end(), std::back_inserter(result),
+      std::forward<P>(predicate));
     return result;
   }
 
@@ -247,13 +243,13 @@ namespace Nexus {
   }
 
   inline void DestinationDatabase::Add(const Entry& entry) {
-    auto entryIterator = std::lower_bound(m_entries.begin(), m_entries.end(),
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
       entry,
-      [] (const Entry& lhs, const Entry& rhs) {
+      [] (auto& lhs, auto& rhs) {
         return lhs.m_id < rhs.m_id;
       });
-    if(entryIterator == m_entries.end() || entryIterator->m_id != entry.m_id) {
-      m_entries.insert(entryIterator, entry);
+    if(i == m_entries.end() || i->m_id != entry.m_id) {
+      m_entries.insert(i, entry);
     }
   }
 
@@ -269,7 +265,7 @@ namespace Nexus {
 
   inline void DestinationDatabase::Delete(const Destination& destination) {
     auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [=] (const Entry& entry) {
+      [=] (auto& entry) {
         return entry.m_id == destination;
       });
     if(entryIterator == m_entries.end()) {
@@ -283,18 +279,11 @@ namespace Nexus {
     m_preferredDestinations.erase(market);
   }
 
-  inline DestinationDatabase::Entry DestinationDatabase::MakeNoneEntry() {
-    Entry noneEntry;
-    return noneEntry;
-  }
-
   template<typename T>
-  DestinationDatabase::Entry DestinationDatabase::NoneEntry<T>::NONE_ENTRY =
-    DestinationDatabase::MakeNoneEntry();
+  DestinationDatabase::Entry DestinationDatabase::NoneEntry<T>::NONE_ENTRY;
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::DestinationDatabase::Entry> {
     template<typename Shuttler>
@@ -317,7 +306,6 @@ namespace Serialization {
         value.m_manualOrderEntryDestination);
     }
   };
-}
 }
 
 #endif

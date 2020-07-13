@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
-import { DisplaySize, LoadingPage } from '../..';
+import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountModel } from './account_model';
 import { AccountPage } from './account_page';
 import { EntitlementsController } from './entitlements_page';
@@ -32,6 +32,7 @@ interface Properties {
 
 interface State {
   isLoaded: boolean;
+  cannotLoad: boolean;
   redirect: string;
 }
 
@@ -41,7 +42,8 @@ export class AccountController extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isLoaded: false,
-      redirect: null,
+      cannotLoad: false,
+      redirect: null
     };
     this.renderProfilePage = this.renderProfilePage.bind(this);
     this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
@@ -52,6 +54,9 @@ export class AccountController extends React.Component<Properties, State> {
   public render(): JSX.Element {
     if(this.state.redirect) {
       return <Router.Redirect push to={this.state.redirect}/>;
+    }
+    if(this.state.cannotLoad) {
+      return <PageNotFoundPage displaySize={this.props.displaySize}/>;
     }
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
@@ -95,7 +100,7 @@ export class AccountController extends React.Component<Properties, State> {
     this.props.model.load().then(
       () => {
         this.setState({isLoaded: true});
-      });
+      }).catch(() => this.setState({cannotLoad: true}));
   }
 
   public componentDidUpdate(): void {

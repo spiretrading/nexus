@@ -27,6 +27,8 @@ namespace Nexus::DefinitionsService {
 
       std::string LoadMinimumSpireClientVersion() override;
 
+      std::string LoadOrganizationName() override;
+
       CountryDatabase LoadCountryDatabase() override;
 
       boost::local_time::tz_database LoadTimeZoneDatabase() override;
@@ -76,6 +78,12 @@ namespace Nexus::DefinitionsService {
   std::string ToPythonDefinitionsClient<C>::LoadMinimumSpireClientVersion() {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadMinimumSpireClientVersion();
+  }
+
+  template<typename C>
+  std::string ToPythonDefinitionsClient<C>::LoadOrganizationName() {
+    auto release = Beam::Python::GilRelease();
+    return m_client->LoadOrganizationName();
   }
 
   template<typename C>

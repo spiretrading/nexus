@@ -6,15 +6,16 @@
 
 namespace Nexus::Accounting {
 
-  /** Implements a Bookkeeper using true average bookkeeping.
-      \tparam InventoryType The type of Inventory to manage.
+  /**
+   * Implements a Bookkeeper using true average bookkeeping.
+   * @param <I> The type of Inventory to manage.
    */
-  template<typename InventoryType>
+  template<typename I>
   class TrueAverageBookkeeper {
     public:
-      using Inventory = typename Bookkeeper<InventoryType>::Inventory;
-      using Index = typename Bookkeeper<InventoryType>::Index;
-      using Key = typename Bookkeeper<InventoryType>::Key;
+      using Inventory = typename Bookkeeper<I>::Inventory;
+      using Index = typename Bookkeeper<I>::Index;
+      using Key = typename Bookkeeper<I>::Key;
 
       void RecordTransaction(const Index& index, CurrencyId currency,
         Quantity quantity, Money costBasis, Money fees);
@@ -35,15 +36,14 @@ namespace Nexus::Accounting {
       Inventory& InternalGetTotal(CurrencyId currency);
   };
 
-  template<typename InventoryType>
-  void TrueAverageBookkeeper<InventoryType>::RecordTransaction(
-      const Index& index, CurrencyId currency, Quantity quantity,
-      Money costBasis, Money fees) {
-    Key key(index, currency);
+  template<typename I>
+  void TrueAverageBookkeeper<I>::RecordTransaction(const Index& index,
+      CurrencyId currency, Quantity quantity, Money costBasis, Money fees) {
+    auto key = Key(index, currency);
     auto entryIterator = m_inventories.find(key);
     if(entryIterator == m_inventories.end()) {
       entryIterator = m_inventories.insert(
-        std::make_pair(key, Inventory(key))).first;
+        std::pair(key, Inventory(key))).first;
     }
     auto& entry = entryIterator->second;
     auto& total = InternalGetTotal(currency);
@@ -58,12 +58,13 @@ namespace Nexus::Accounting {
     }
     auto price = Abs(costBasis / quantity);
     auto remainingQuantity = Abs(quantity);
-    Quantity direction;
-    if(quantity < 0) {
-      direction = -1;
-    } else {
-      direction = 1;
-    }
+    auto direction = [&] {
+      if(quantity < 0) {
+        return Quantity(-1);
+      } else {
+        return Quantity(1);
+      }
+    }();
     total.m_grossProfitAndLoss -= entry.m_grossProfitAndLoss;
     total.m_position.m_quantity -= Abs(entry.m_position.m_quantity);
     total.m_position.m_costBasis -= Abs(entry.m_position.m_costBasis);
@@ -96,55 +97,51 @@ namespace Nexus::Accounting {
     total.m_position.m_costBasis += Abs(entry.m_position.m_costBasis);
   }
 
-  template<typename InventoryType>
-  const typename TrueAverageBookkeeper<InventoryType>::Inventory&
-      TrueAverageBookkeeper<InventoryType>::GetInventory(const Index& index,
+  template<typename I>
+  const typename TrueAverageBookkeeper<I>::Inventory&
+      TrueAverageBookkeeper<I>::GetInventory(const Index& index,
       CurrencyId currency) const {
-    Key key(index, currency);
+    auto key = Key(index, currency);
     auto inventoryIterator = m_inventories.find(key);
     if(inventoryIterator == m_inventories.end()) {
       inventoryIterator = m_inventories.insert(
-        std::make_pair(key, Inventory(key))).first;
+        std::pair(key, Inventory(key))).first;
     }
     return inventoryIterator->second;
   }
 
-  template<typename InventoryType>
-  const typename TrueAverageBookkeeper<InventoryType>::Inventory&
-      TrueAverageBookkeeper<InventoryType>::GetTotal(
-      CurrencyId currency) const {
+  template<typename I>
+  const typename TrueAverageBookkeeper<I>::Inventory&
+      TrueAverageBookkeeper<I>::GetTotal(CurrencyId currency) const {
     auto totalsIterator = m_totals.find(currency);
     if(totalsIterator == m_totals.end()) {
-      totalsIterator = m_totals.insert(
-        std::make_pair(currency, Inventory())).first;
+      totalsIterator = m_totals.insert(std::pair(currency, Inventory())).first;
       totalsIterator->second.m_position.m_key.m_currency = currency;
     }
     return totalsIterator->second;
   }
 
-  template<typename InventoryType>
+  template<typename I>
   Beam::View<std::pair<
-      const typename TrueAverageBookkeeper<InventoryType>::Key,
-      typename TrueAverageBookkeeper<InventoryType>::Inventory>>
-      TrueAverageBookkeeper<InventoryType>::GetInventoryRange() const {
+      const typename TrueAverageBookkeeper<I>::Key,
+      typename TrueAverageBookkeeper<I>::Inventory>>
+      TrueAverageBookkeeper<I>::GetInventoryRange() const {
     return Beam::MakeView(m_inventories.begin(), m_inventories.end());
   }
 
-  template<typename InventoryType>
+  template<typename I>
   Beam::View<std::pair<const CurrencyId,
-      typename TrueAverageBookkeeper<InventoryType>::Inventory>>
-      TrueAverageBookkeeper<InventoryType>::GetTotalsRange() const {
+      typename TrueAverageBookkeeper<I>::Inventory>>
+      TrueAverageBookkeeper<I>::GetTotalsRange() const {
     return Beam::MakeView(m_totals.begin(), m_totals.end());
   }
 
-  template<typename InventoryType>
-  typename TrueAverageBookkeeper<InventoryType>::Inventory&
-      TrueAverageBookkeeper<InventoryType>::InternalGetTotal(
-      CurrencyId currency) {
+  template<typename I>
+  typename TrueAverageBookkeeper<I>::Inventory&
+      TrueAverageBookkeeper<I>::InternalGetTotal(CurrencyId currency) {
     auto totalsIterator = m_totals.find(currency);
     if(totalsIterator == m_totals.end()) {
-      totalsIterator = m_totals.insert(
-        std::make_pair(currency, Inventory())).first;
+      totalsIterator = m_totals.insert(std::pair(currency, Inventory())).first;
       totalsIterator->second.m_position.m_key.m_currency = currency;
     }
     return totalsIterator->second;

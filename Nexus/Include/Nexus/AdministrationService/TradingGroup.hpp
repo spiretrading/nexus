@@ -1,50 +1,47 @@
-#ifndef NEXUS_TRADINGGROUP_HPP
-#define NEXUS_TRADINGGROUP_HPP
+#ifndef NEXUS_TRADING_GROUP_HPP
+#define NEXUS_TRADING_GROUP_HPP
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class TradingGroup
-      \brief Represents a group of traders and their managers.
-   */
+  /** Represents a group of traders and their managers. */
   class TradingGroup {
     public:
 
-      //! Constructs an uninitialized TradingGroup.
+      /** Constructs an uninitialized TradingGroup. */
       TradingGroup() = default;
 
-      //! Constructs a TradingGroup.
-      /*!
-        \param entry The DirectoryEntry containing the TradingGroup.
-        \param managersDirectory The DirectoryEntry containing the managers.
-        \param managers The list of managers in the group.
-        \param tradersDirectory The DirectoryEntry containing the traders.
-        \param traders The list of traders in the group.
-      */
+      /**
+       * Constructs a TradingGroup.
+       * @param entry The DirectoryEntry containing the TradingGroup.
+       * @param managersDirectory The DirectoryEntry containing the managers.
+       * @param managers The list of managers in the group.
+       * @param tradersDirectory The DirectoryEntry containing the traders.
+       * @param traders The list of traders in the group.
+       */
       TradingGroup(const Beam::ServiceLocator::DirectoryEntry& entry,
         const Beam::ServiceLocator::DirectoryEntry& managersDirectory,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& managers,
         const Beam::ServiceLocator::DirectoryEntry& tradersDirectory,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& traders);
 
-      //! Returns the DirectoryEntry representing this TradingGroup.
+      /** Returns the DirectoryEntry representing this TradingGroup. */
       const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
 
-      //! Returns the DirectoryEntry for the managers directory.
+      /** Returns the DirectoryEntry for the managers directory. */
       const Beam::ServiceLocator::DirectoryEntry& GetManagersDirectory() const;
 
-      //! Returns the list of managers in the group.
+      /** Returns the list of managers in the group. */
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
         GetManagers() const;
 
-      //! Returns the DirectoryEntry for the traders directory.
+      /** Returns the DirectoryEntry for the traders directory. */
       const Beam::ServiceLocator::DirectoryEntry& GetTradersDirectory() const;
 
-      //! Returns the list of traders in the group.
+      /** Returns the list of traders in the group. */
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
         GetTraders() const;
 
@@ -61,16 +58,16 @@ namespace AdministrationService {
   };
 
   inline TradingGroup::TradingGroup(
-      const Beam::ServiceLocator::DirectoryEntry& entry,
-        const Beam::ServiceLocator::DirectoryEntry& managersDirectory,
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>& managers,
-        const Beam::ServiceLocator::DirectoryEntry& tradersDirectory,
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>& traders)
-      : m_entry(entry),
-        m_managersDirectory(managersDirectory),
-        m_managers(managers),
-        m_tradersDirectory(tradersDirectory),
-        m_traders(traders) {}
+    const Beam::ServiceLocator::DirectoryEntry& entry,
+    const Beam::ServiceLocator::DirectoryEntry& managersDirectory,
+    const std::vector<Beam::ServiceLocator::DirectoryEntry>& managers,
+    const Beam::ServiceLocator::DirectoryEntry& tradersDirectory,
+    const std::vector<Beam::ServiceLocator::DirectoryEntry>& traders)
+    : m_entry(entry),
+      m_managersDirectory(managersDirectory),
+      m_managers(managers),
+      m_tradersDirectory(tradersDirectory),
+      m_traders(traders) {}
 
   inline const Beam::ServiceLocator::DirectoryEntry&
       TradingGroup::GetEntry() const {
@@ -105,7 +102,6 @@ namespace AdministrationService {
     shuttle.Shuttle("traders_directory", m_tradersDirectory);
     shuttle.Shuttle("traders", m_traders);
   }
-}
 }
 
 #endif

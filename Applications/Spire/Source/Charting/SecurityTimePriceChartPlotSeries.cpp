@@ -130,13 +130,12 @@ void SecurityTimePriceChartPlotSeries::OnCandlestickLoaded(
     const Candlestick<ChartValue, ChartValue>& candlestick) {
   CandlestickEntry& entry = LoadCandlestick(
     candlestick.GetStart().ToDateTime());
-  bool isFirstUpdate =
-    entry.m_lastTimestamp.GetTimePoint().is_not_a_date_time();
-  if(!isFirstUpdate && entry.m_lastTimestamp.GetTimePoint() >=
+  bool isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();
+  if(!isFirstUpdate && entry.m_lastTimestamp >=
       candlestick.GetEnd().ToDateTime()) {
     return;
   }
-  entry.m_lastTimestamp = MakeTimestamp(candlestick.GetStart().ToDateTime());
+  entry.m_lastTimestamp = candlestick.GetStart().ToDateTime();
   entry.m_plot->Update(candlestick.GetOpen());
   entry.m_plot->Update(candlestick.GetHigh());
   entry.m_plot->Update(candlestick.GetLow());
@@ -150,7 +149,7 @@ void SecurityTimePriceChartPlotSeries::OnTimeAndSale(
     const TimeAndSale& timeAndSale) {
   CandlestickEntry& entry = LoadCandlestick(timeAndSale.m_timestamp);
   bool isFirstUpdate =
-    entry.m_lastTimestamp.GetTimePoint().is_not_a_date_time();
+    entry.m_lastTimestamp.is_not_a_date_time();
   if(!isFirstUpdate && entry.m_lastTimestamp >= timeAndSale.m_timestamp) {
     return;
   }

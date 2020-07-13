@@ -352,7 +352,9 @@ namespace Details {
   }
 }
 
-  //! Returns the default MarketDatabase, typically used for testing purposes.
+  /**
+   * Returns the default MarketDatabase, typically used for testing purposes.
+   */
   inline const MarketDatabase& GetDefaultMarketDatabase() {
     static auto database = Details::BuildDefaultMarketDatabase();
     return database;

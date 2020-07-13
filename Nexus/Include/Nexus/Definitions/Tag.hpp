@@ -11,65 +11,63 @@
 
 namespace Nexus {
 
-  /*! \class Tag
-      \brief Stores a key/value pair used to send generic parameters.
-   */
+  /** Stores a key/value pair used to send generic parameters. */
   class Tag {
     public:
 
-      //! Specifies the types of values that can be stored by a Tag.
+      /** Specifies the types of values that can be stored by a Tag. */
       using Type = boost::variant<int, double, Quantity, Money, char,
         std::string, boost::gregorian::date, boost::posix_time::time_duration,
         boost::posix_time::ptime>;
 
-      //! The index of the int type.
-      static const int INT_INDEX = 0;
+      /** The index of the int type. */
+      static constexpr auto INT_INDEX = 0;
 
-      //! The index of the double type.
-      static const int DOUBLE_INDEX = 1;
+      /** The index of the double type. */
+      static constexpr auto DOUBLE_INDEX = 1;
 
-      //! The index of the Quantity type.
-      static const int QUANTITY_INDEX = 2;
+      /** The index of the Quantity type. */
+      static constexpr auto QUANTITY_INDEX = 2;
 
-      //! The index of the Money type.
-      static const int MONEY_INDEX = 3;
+      /** The index of the Money type. */
+      static constexpr auto MONEY_INDEX = 3;
 
-      //! The index of the char type.
-      static const int CHAR_INDEX = 4;
+      /** The index of the char type. */
+      static constexpr auto CHAR_INDEX = 4;
 
-      //! The index of the string type.
-      static const int STRING_INDEX = 5;
+      /** The index of the string type. */
+      static constexpr auto STRING_INDEX = 5;
 
-      //! The index of the date type.
-      static const int DATE_INDEX = 6;
+      /** The index of the date type. */
+      static constexpr auto DATE_INDEX = 6;
 
-      //! The index of the time type.
-      static const int TIME_INDEX = 7;
+      /** The index of the time type. */
+      static constexpr auto TIME_INDEX = 7;
 
-      //! The index of the date-time type.
-      static const int DATE_TIME_INDEX = 8;
+      /** The index of the date-time type. */
+      static constexpr auto DATE_TIME_INDEX = 8;
 
-      //! Constructs an uninitialized Tag.
+      /** Constructs an uninitialized Tag. */
       Tag() = default;
 
-      //! Constructs a Tag.
-      /*!
-        \param key The Tag's key.
-        \param value The tag's value.
-      */
-      Tag(int key, const Type& value);
+      /**
+       * Constructs a Tag.
+       * @param key The Tag's key.
+       * @param value The tag's value.
+       */
+      Tag(int key, Type value);
 
-      //! Returns <code>true</code> iff this Tag is equal to another.
-      /*!
-        \param tag The tag to test for equality.
-        \return <code>true</code> iff this Tag is equal to <code>rhs</code>.
-      */
+      /**
+       * Returns <code>true</code> iff this Tag is equal to another.
+       * @param tag The tag to test for equality.
+       * @return <code>true</code> iff this Tag is equal to <code>rhs</code>.
+       */
       bool operator ==(const Tag& tag) const;
 
-      //! Returns the key.
+      /** Returns the key. */
       int GetKey() const;
 
-      //! Returns the value.
+      /** Returns the value. */
       const Type& GetValue() const;
 
     private:
@@ -82,9 +80,9 @@ namespace Nexus {
     return out << '(' << value.GetKey() << ' ' << value.GetValue() << ')';
   }
 
-  inline Tag::Tag(int key, const Type& value)
-      : m_key{key},
-        m_value{value} {}
+  inline Tag::Tag(int key, Type value)
+    : m_key(key),
+      m_value(std::move(value)) {}
 
   inline bool Tag::operator ==(const Tag& tag) const {
     return std::tie(m_key, m_value) == std::tie(tag.m_key, tag.m_value);
@@ -99,8 +97,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Tag> {
     template<typename Shuttler>
@@ -110,7 +107,6 @@ namespace Serialization {
       shuttle.Shuttle("value", value.m_value);
     }
   };
-}
 }
 
 #endif

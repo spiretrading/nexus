@@ -42,7 +42,7 @@ void CurrencyInputWidget::Initialize(Ref<UserProfile> userProfile) {
 
 CurrencyId CurrencyInputWidget::GetCurrency() const {
   if(m_currencyComboBox->count() == 0) {
-    return CurrencyId::NONE();
+    return CurrencyId::NONE;
   }
   return m_userProfile->GetCurrencyDatabase().GetEntries()[
     m_currencyComboBox->currentIndex()].m_id;

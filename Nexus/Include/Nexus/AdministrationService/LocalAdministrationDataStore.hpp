@@ -1,5 +1,5 @@
-#ifndef NEXUS_LOCALADMINISTRATIONDATASTORE_HPP
-#define NEXUS_LOCALADMINISTRATIONDATASTORE_HPP
+#ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
+#define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -8,94 +8,90 @@
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class LocalAdministrationDataStore
-      \brief Stores Nexus account info locally.
-   */
+  /** Stores Nexus account info locally. */
   class LocalAdministrationDataStore : public AdministrationDataStore {
     public:
 
-      //! Constructs an empty LocalAdministrationDataStore.
+      /** Constructs an empty LocalAdministrationDataStore. */
       LocalAdministrationDataStore() = default;
 
-      virtual ~LocalAdministrationDataStore() override;
+      ~LocalAdministrationDataStore() override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         AccountIdentity>> LoadAllAccountIdentities() override;
 
-      virtual AccountIdentity LoadIdentity(
+      AccountIdentity LoadIdentity(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity) override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         RiskService::RiskParameters>> LoadAllRiskParameters() override;
 
-      virtual RiskService::RiskParameters LoadRiskParameters(
+      RiskService::RiskParameters LoadRiskParameters(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& riskParameters) override;
 
-      virtual std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
         RiskService::RiskState>> LoadAllRiskStates() override;
 
-      virtual RiskService::RiskState LoadRiskState(
+      RiskService::RiskState LoadRiskState(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
-      virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& riskState) override;
 
-      virtual AccountModificationRequest LoadAccountModificationRequest(
+      AccountModificationRequest LoadAccountModificationRequest(
         AccountModificationRequest::Id id) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadAccountModificationRequestIds(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual std::vector<AccountModificationRequest::Id>
+      std::vector<AccountModificationRequest::Id>
         LoadAccountModificationRequestIds(
         AccountModificationRequest::Id startId, int maxCount) override;
 
-      virtual EntitlementModification LoadEntitlementModification(
+      EntitlementModification LoadEntitlementModification(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(const AccountModificationRequest& request,
+      void Store(const AccountModificationRequest& request,
         const EntitlementModification& modification) override;
 
-      virtual RiskModification LoadRiskModification(
+      RiskModification LoadRiskModification(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(const AccountModificationRequest& request,
+      void Store(const AccountModificationRequest& request,
         const RiskModification& modification) override;
 
-      virtual void Store(AccountModificationRequest::Id id,
+      void Store(AccountModificationRequest::Id id,
         const Message& message) override;
 
-      virtual AccountModificationRequest::Update
+      AccountModificationRequest::Update
         LoadAccountModificationRequestStatus(
         AccountModificationRequest::Id id) override;
 
-      virtual void Store(AccountModificationRequest::Id id,
+      void Store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status) override;
 
-      virtual Message::Id LoadLastMessageId() override;
+      Message::Id LoadLastMessageId() override;
 
-      virtual Message LoadMessage(Message::Id id) override;
+      Message LoadMessage(Message::Id id) override;
 
-      virtual std::vector<Message::Id> LoadMessageIds(
+      std::vector<Message::Id> LoadMessageIds(
         AccountModificationRequest::Id id) override;
 
-      virtual void WithTransaction(
-        const std::function<void ()>& transaction) override;
+      void WithTransaction(const std::function<void ()>& transaction) override;
 
-      virtual void Open() override;
+      void Open() override;
 
-      virtual void Close() override;
+      void Close() override;
 
       using AdministrationDataStore::WithTransaction;
 
@@ -138,13 +134,13 @@ namespace AdministrationService {
   inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       AccountIdentity>> LocalAdministrationDataStore::
       LoadAllAccountIdentities() {
-    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      AccountIdentity>> identities;
+    auto identities = std::vector<
+      std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>();
     identities.reserve(m_identities.size());
     std::transform(m_identities.begin(), m_identities.end(),
       std::back_inserter(identities),
       [] (auto& identity) {
-        return std::make_tuple(identity.first, identity.second);
+        return std::tuple(identity.first, identity.second);
       });
     return identities;
   }
@@ -167,20 +163,20 @@ namespace AdministrationService {
   inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       RiskService::RiskParameters>> LocalAdministrationDataStore::
       LoadAllRiskParameters() {
-    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskParameters>> riskParameters;
+    auto riskParameters = std::vector<
+      std::tuple<Beam::ServiceLocator::DirectoryEntry,
+      RiskService::RiskParameters>>();
     riskParameters.reserve(m_riskParameters.size());
     std::transform(m_riskParameters.begin(), m_riskParameters.end(),
       std::back_inserter(riskParameters),
       [] (auto& riskParameters) {
-        return std::make_tuple(riskParameters.first, riskParameters.second);
+        return std::tuple(riskParameters.first, riskParameters.second);
       });
     return riskParameters;
   }
 
   inline RiskService::RiskParameters LocalAdministrationDataStore::
-      LoadRiskParameters(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      LoadRiskParameters(const Beam::ServiceLocator::DirectoryEntry& account) {
     auto riskParameters = m_riskParameters.find(account);
     if(riskParameters == m_riskParameters.end()) {
       return {};
@@ -197,13 +193,13 @@ namespace AdministrationService {
   inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       RiskService::RiskState>> LocalAdministrationDataStore::
       LoadAllRiskStates() {
-    std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskState>> riskStates;
+    auto riskStates = std::vector<std::tuple<
+      Beam::ServiceLocator::DirectoryEntry, RiskService::RiskState>>();
     riskStates.reserve(m_riskStates.size());
     std::transform(m_riskStates.begin(), m_riskStates.end(),
       std::back_inserter(riskStates),
       [] (auto& riskState) {
-        return std::make_tuple(riskState.first, riskState.second);
+        return std::tuple(riskState.first, riskState.second);
       });
     return riskStates;
   }
@@ -265,7 +261,7 @@ namespace AdministrationService {
       const EntitlementModification& modification) {
     Store(request);
     m_idToEntitlementModification.insert(
-      std::make_pair(request.GetId(), modification));
+      std::pair(request.GetId(), modification));
   }
 
   inline RiskModification LocalAdministrationDataStore::LoadRiskModification(
@@ -281,13 +277,12 @@ namespace AdministrationService {
       const AccountModificationRequest& request,
       const RiskModification& modification) {
     Store(request);
-    m_idToRiskModification.insert(std::make_pair(request.GetId(),
-      modification));
+    m_idToRiskModification.insert(std::pair(request.GetId(), modification));
   }
 
   inline void LocalAdministrationDataStore::Store(
       AccountModificationRequest::Id id, const Message& message) {
-    m_idToMessage.insert(std::make_pair(message.GetId(), message));
+    m_idToMessage.insert(std::pair(message.GetId(), message));
     m_requestToMessages[id].push_back(message.GetId());
     m_lastMessageId = message.GetId();
   }
@@ -331,7 +326,7 @@ namespace AdministrationService {
 
   inline void LocalAdministrationDataStore::WithTransaction(
       const std::function<void ()>& transaction) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     transaction();
   }
 
@@ -368,7 +363,7 @@ namespace AdministrationService {
       }
       --lastRequest;
     }
-    std::vector<AccountModificationRequest::Id> ids;
+    auto ids = std::vector<AccountModificationRequest::Id>();
     while(static_cast<int>(ids.size()) < maxCount &&
         lastRequest != requests.begin()) {
       ids.push_back(*lastRequest);
@@ -383,7 +378,7 @@ namespace AdministrationService {
 
   inline void LocalAdministrationDataStore::Store(
       const AccountModificationRequest& request) {
-    m_idToModificationRequests.insert(std::make_pair(request.GetId(), request));
+    m_idToModificationRequests.insert(std::pair(request.GetId(), request));
     if(m_modificationRequests.empty() ||
         request.GetId() > m_modificationRequests.back()) {
       m_modificationRequests.push_back(request.GetId());
@@ -401,7 +396,6 @@ namespace AdministrationService {
       accountRequests.insert(accountInsertion, request.GetId());
     }
   }
-}
 }
 
 #endif

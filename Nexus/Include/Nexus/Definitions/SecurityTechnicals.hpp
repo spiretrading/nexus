@@ -1,40 +1,31 @@
-#ifndef NEXUS_SECURITYTECHNICALS_HPP
-#define NEXUS_SECURITYTECHNICALS_HPP
+#ifndef NEXUS_SECURITY_TECHNICALS_HPP
+#define NEXUS_SECURITY_TECHNICALS_HPP
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
 
 namespace Nexus {
 
-  /*! \struct SecurityTechnicals
-      \brief Stores various technical details about a Security.
-   */
+  /** Stores various technical details about a Security. */
   struct SecurityTechnicals {
 
-    //! The day's volume.
+    /** The day's volume. */
     Quantity m_volume;
 
-    //! The day's highest TimeAndSale price.
+    /** The day's highest TimeAndSale price. */
     Money m_high;
 
-    //! The day's lowest TimeAndSale price.
+    /** The day's lowest TimeAndSale price. */
     Money m_low;
 
-    //! The day's opening price.
+    /** The day's opening price. */
     Money m_open;
 
-    //! The previous day's closing price.
+    /** The previous day's closing price. */
     Money m_close;
-
-    //! Constructs a default initialized instance.
-    SecurityTechnicals();
   };
-
-  inline SecurityTechnicals::SecurityTechnicals()
-      : m_volume(0) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::SecurityTechnicals> {
     template<typename Shuttler>
@@ -47,7 +38,6 @@ namespace Serialization {
       shuttle.Shuttle("close", value.m_close);
     }
   };
-}
 }
 
 #endif

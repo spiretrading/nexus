@@ -7,7 +7,6 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <QTimer>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/Timestamp.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartPlotSeries.hpp"
@@ -46,7 +45,7 @@ namespace Spire {
       };
       struct CandlestickEntry {
         std::shared_ptr<CandlestickChartPlot> m_plot;
-        Nexus::Timestamp<int> m_lastTimestamp;
+        boost::posix_time::ptime m_lastTimestamp;
       };
       UserProfile* m_userProfile;
       Nexus::Security m_security;

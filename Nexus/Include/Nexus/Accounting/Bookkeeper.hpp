@@ -5,20 +5,21 @@
 
 namespace Nexus::Accounting {
 
-  /** Performs bookkeeping and cost management of inventories.
-      \tparam InventoryType The type of Inventory to manage.
+  /**
+   * Performs bookkeeping and cost management of inventories.
+   * @param <I> The type of Inventory to manage.
    */
-  template<typename InventoryType>
+  template<typename I>
   class Bookkeeper {
     public:
 
-      //! The type of Inventory to manage.
-      using Inventory = InventoryType;
+      /** The type of Inventory to manage. */
+      using Inventory = I;
 
-      //! The index used to look up inventories.
+      /** The index used to look up inventories. */
       using Index = typename Inventory::Position::Index;
 
-      //! The key used to lookup Inventories.
+      /** The key used to lookup Inventories. */
       using Key = typename Inventory::Position::Key;
   };
 }

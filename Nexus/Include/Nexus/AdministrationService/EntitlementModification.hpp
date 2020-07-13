@@ -6,48 +6,42 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class EntitlementModification
-      \brief Stores a request to update an account's market data entitlements.
-  */
+  /** Stores a request to update an account's market data entitlements. */
   class EntitlementModification {
     public:
 
-      //! Constructs an empty EntitlementModification.
+      /** Constructs an empty EntitlementModification. */
       EntitlementModification() = default;
 
-      //! Constructs an EntitlementModification.
-      /*!
-        \param entitlements The list of entitlements to grant to the account.
-      */
+      /**
+       * Constructs an EntitlementModification.
+       * @param entitlements The list of entitlements to grant to the account.
+       */
       EntitlementModification(
         std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements);
 
-      //! Returns the list of entitlements to grant.
+      /** Returns the list of entitlements to grant. */
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
         GetEntitlements() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<
-        EntitlementModification>;
+      friend struct Beam::Serialization::Shuttle<EntitlementModification>;
       std::vector<Beam::ServiceLocator::DirectoryEntry> m_entitlements;
   };
 
   inline EntitlementModification::EntitlementModification(
-      std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements)
-      : m_entitlements(std::move(entitlements)) {}
+    std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements)
+    : m_entitlements(std::move(entitlements)) {}
 
   inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
       EntitlementModification::GetEntitlements() const {
     return m_entitlements;
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::AdministrationService::EntitlementModification> {
     template<typename Shuttler>
@@ -57,7 +51,6 @@ namespace Serialization {
       shuttle.Shuttle("entitlements", value.m_entitlements);
     }
   };
-}
 }
 
 #endif

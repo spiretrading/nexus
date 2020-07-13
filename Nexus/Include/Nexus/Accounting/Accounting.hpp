@@ -2,18 +2,17 @@
 #define NEXUS_ACCOUNTING_HPP
 
 namespace Nexus::Accounting {
-  template<typename InventoryType> class Bookkeeper;
+  template<typename I> class Bookkeeper;
   class BuyingPowerTracker;
-  template<typename PositionType> struct Inventory;
-  template<typename BookkeeperType> class Portfolio;
-  template<typename PortfolioType, typename MarketDataClientType>
-    class PortfolioMonitor;
-  template<typename InventoryType> struct PortfolioUpdateEntry;
-  template<typename IndexType> struct Position;
+  template<typename P> struct Inventory;
+  template<typename B> class Portfolio;
+  template<typename P, typename C> class PortfolioMonitor;
+  template<typename I> struct PortfolioUpdateEntry;
+  template<typename I> struct Position;
   class PositionOrderBook;
   struct SecurityValuation;
   class ShortingTracker;
-  template<typename InventoryType> class TrueAverageBookkeeper;
+  template<typename I> class TrueAverageBookkeeper;
 }
 
 #endif

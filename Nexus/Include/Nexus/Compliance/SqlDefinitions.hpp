@@ -13,26 +13,26 @@
 
 namespace Nexus::Compliance {
 
-  //! Row used to store ComplianceRuleEntries.
+  /** Row used to store ComplianceRuleEntries. */
   struct ComplianceRuleEntriesRow {
 
-    //! The entry's id.
+    /** The entry's id. */
     ComplianceRuleId m_entryId;
 
-    //! The DirectoryEntry the rule applies to.
+    /** The DirectoryEntry the rule applies to. */
     Beam::ServiceLocator::DirectoryEntry m_directoryEntry;
 
-    //! The entry's state.
+    /** The entry's state. */
     ComplianceRuleEntry::State m_state;
 
-    //! The name of the entry's schema.
+    /** The name of the entry's schema. */
     std::string m_schemaName;
 
-    //! The raw representation of the entry's parameters.
+    /** The raw representation of the entry's parameters. */
     Beam::IO::SharedBuffer m_schemaParameters;
   };
 
-  //! Returns a row representing a ComplianceRuleEntry.
+  /** Returns a row representing a ComplianceRuleEntry. */
   inline const auto& GetComplianceRuleEntriesRow() {
     static auto ROW = Viper::Row<ComplianceRuleEntriesRow>().
       add_column("entry_id", &ComplianceRuleEntriesRow::m_entryId).
@@ -51,7 +51,7 @@ namespace Nexus::Compliance {
     return ROW;
   }
 
-  //! Returns a row representing a ComplianceRuleViolationRecord.
+  /** Returns a row representing a ComplianceRuleViolationRecord. */
   inline const auto& GetComplianceRuleViolationRecordsRow() {
     static auto ROW = Viper::Row<ComplianceRuleViolationRecord>().
       add_column("account",

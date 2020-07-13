@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCERULEVIOLATIONRECORD_HPP
-#define NEXUS_COMPLIANCERULEVIOLATIONRECORD_HPP
+#ifndef NEXUS_COMPLIANCE_RULE_VIOLATION_RECORD_HPP
+#define NEXUS_COMPLIANCE_RULE_VIOLATION_RECORD_HPP
 #include <string>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -7,55 +7,52 @@
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \struct ComplianceRuleViolationRecord
-      \brief Stores a single compliance rule violation.
-   */
+  /** Stores a single compliance rule violation. */
   struct ComplianceRuleViolationRecord {
 
-    //! The account that produced the violation.
+    /** The account that produced the violation. */
     Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The OrderId the violation is attributed to.
+    /** The OrderId the violation is attributed to. */
     OrderExecutionService::OrderId m_orderId;
 
-    //! The ComplianceRuleId that was violated.
+    /** The ComplianceRuleId that was violated. */
     ComplianceRuleId m_ruleId;
 
-    //! The name of the schema that was violated.
+    /** The name of the schema that was violated. */
     std::string m_schemaName;
 
-    //! The reason for the violation.
+    /** The reason for the violation. */
     std::string m_reason;
 
-    //! The time of the violation.
+    /** The time of the violation. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs a ComplianceRuleViolationRecord.
+    /** Constructs a ComplianceRuleViolationRecord. */
     ComplianceRuleViolationRecord();
 
-    //! Constructs a ComplianceRuleViolationRecord used to submit a report.
-    /*!
-      \param account The account that produced the violation.
-      \param orderId The OrderId the violation is attributed to.
-      \param ruleId The ComplianceRuleId that was violated.
-      \param schemaName The name of the rule that was violated.
-      \param reason The reason for the violation.
-    */
+    /**
+     * Constructs a ComplianceRuleViolationRecord used to submit a report.
+     * @param account The account that produced the violation.
+     * @param orderId The OrderId the violation is attributed to.
+     * @param ruleId The ComplianceRuleId that was violated.
+     * @param schemaName The name of the rule that was violated.
+     * @param reason The reason for the violation.
+     */
     ComplianceRuleViolationRecord(Beam::ServiceLocator::DirectoryEntry account,
       OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
       std::string schemaName, std::string reason);
 
-    //! Constructs a fully specified ComplianceRuleViolationRecord.
-    /*!
-      \param account The account that produced the violation.
-      \param orderId The OrderId the violation is attributed to.
-      \param ruleId The ComplianceRuleId that was violated.
-      \param schemaName The name of the rule that was violated.
-      \param reason The reason for the violation.
-    */
+    /**
+     * Constructs a fully specified ComplianceRuleViolationRecord.
+     * @param account The account that produced the violation.
+     * @param orderId The OrderId the violation is attributed to.
+     * @param ruleId The ComplianceRuleId that was violated.
+     * @param schemaName The name of the rule that was violated.
+     * @param reason The reason for the violation.
+     */
     ComplianceRuleViolationRecord(Beam::ServiceLocator::DirectoryEntry account,
       OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
       std::string schemaName, std::string reason,
@@ -63,35 +60,33 @@ namespace Compliance {
   };
 
   inline ComplianceRuleViolationRecord::ComplianceRuleViolationRecord()
-      : m_orderId{0},
-        m_ruleId{0} {}
+    : m_orderId(0),
+      m_ruleId(0) {}
 
   inline ComplianceRuleViolationRecord::ComplianceRuleViolationRecord(
-      Beam::ServiceLocator::DirectoryEntry account,
-      OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
-      std::string schemaName, std::string reason)
-      : m_account{std::move(account)},
-        m_orderId{std::move(orderId)},
-        m_ruleId{std::move(ruleId)},
-        m_schemaName(std::move(schemaName)),
-        m_reason(std::move(reason)) {}
+    Beam::ServiceLocator::DirectoryEntry account,
+    OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
+    std::string schemaName, std::string reason)
+    : m_account(std::move(account)),
+      m_orderId(std::move(orderId)),
+      m_ruleId(std::move(ruleId)),
+      m_schemaName(std::move(schemaName)),
+      m_reason(std::move(reason)) {}
 
   inline ComplianceRuleViolationRecord::ComplianceRuleViolationRecord(
-      Beam::ServiceLocator::DirectoryEntry account,
-      OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
-      std::string schemaName, std::string reason,
-      boost::posix_time::ptime timestamp)
-      : m_account{std::move(account)},
-        m_orderId{std::move(orderId)},
-        m_ruleId{std::move(ruleId)},
-        m_schemaName(std::move(schemaName)),
-        m_reason(std::move(reason)),
-        m_timestamp{std::move(timestamp)} {}
-}
+    Beam::ServiceLocator::DirectoryEntry account,
+    OrderExecutionService::OrderId orderId, ComplianceRuleId ruleId,
+    std::string schemaName, std::string reason,
+    boost::posix_time::ptime timestamp)
+    : m_account(std::move(account)),
+      m_orderId(std::move(orderId)),
+      m_ruleId(std::move(ruleId)),
+      m_schemaName(std::move(schemaName)),
+      m_reason(std::move(reason)),
+      m_timestamp(std::move(timestamp)) {}
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Compliance::ComplianceRuleViolationRecord> {
     template<typename Shuttler>
@@ -106,7 +101,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

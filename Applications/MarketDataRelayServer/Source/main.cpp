@@ -139,7 +139,7 @@ int main(int argc, const char** argv) {
   auto marketDatabase = definitionsClient->LoadMarketDatabase();
   auto marketDataClientBuilder =
     [&] {
-      const auto SENTINEL = CountryDatabase::NONE;
+      const auto SENTINEL = CountryCode::NONE;
       std::unordered_set<CountryCode> availableCountries;
       std::vector<CountryCode> lastCountries;
       auto servicePredicate =
@@ -161,7 +161,7 @@ int main(int argc, const char** argv) {
               if(country == nullptr) {
                 return false;
               } else {
-                countries.push_back(static_cast<CountryCode>(*country));
+                countries.emplace_back(static_cast<std::uint16_t>(*country));
               }
             }
             for(auto& country : countries) {

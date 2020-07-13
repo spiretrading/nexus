@@ -1,24 +1,13 @@
-#ifndef NEXUS_ADMINISTRATIONSESSION_HPP
-#define NEXUS_ADMINISTRATIONSESSION_HPP
+#ifndef NEXUS_ADMINISTRATION_SESSION_HPP
+#define NEXUS_ADMINISTRATION_SESSION_HPP
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class AdministrationSession
-      \brief Stores session info for an AdministrationServlet client.
-   */
+  /** Stores session info for an AdministrationServlet client. */
   class AdministrationSession
-      : public Beam::ServiceLocator::AuthenticatedSession {
-    public:
-
-      //! Constructs an AdministrationSession.
-      AdministrationSession();
-  };
-
-  inline AdministrationSession::AdministrationSession() {}
-}
+    : public Beam::ServiceLocator::AuthenticatedSession {};
 }
 
 #endif

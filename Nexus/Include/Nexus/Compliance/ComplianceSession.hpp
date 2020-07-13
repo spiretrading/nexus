@@ -1,21 +1,13 @@
-#ifndef NEXUS_COMPLIANCESESSION_HPP
-#define NEXUS_COMPLIANCESESSION_HPP
+#ifndef NEXUS_COMPLIANCE_SESSION_HPP
+#define NEXUS_COMPLIANCE_SESSION_HPP
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class ComplianceSession
-      \brief Stores session info for a ComplianceServlet client.
-   */
-  class ComplianceSession : public Beam::ServiceLocator::AuthenticatedSession {
-    public:
-
-      //! Constructs a ComplianceSession.
-      ComplianceSession() = default;
-  };
-}
+  /** Stores session info for a ComplianceServlet client. */
+  class ComplianceSession :
+    public Beam::ServiceLocator::AuthenticatedSession {};
 }
 
 #endif

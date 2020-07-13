@@ -4,6 +4,9 @@ import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
 /** Client used to access definitions services. */
 export abstract class DefinitionsClient {
 
+  /** Returns the organization's name. */
+  public abstract get organizationName(): string;
+
   /** Returns the entitlement database. */
   public abstract get entitlementDatabase(): EntitlementDatabase;
 

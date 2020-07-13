@@ -9,6 +9,7 @@
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
@@ -301,8 +302,8 @@ namespace Nexus::MarketDataService {
   void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
       HeartbeatTimerType>::SetBookQuote(const SecurityBookQuote& bookQuote) {
     auto id = bookQuote.GetIndex().GetSymbol() + '-' +
-      std::to_string(bookQuote.GetIndex().GetCountry()) + bookQuote->m_mpid +
-      '-' + bookQuote->m_quote.m_price.ToString() +
+      boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
+      bookQuote->m_mpid + '-' + bookQuote->m_quote.m_price.ToString() +
       ToChar(bookQuote->m_quote.m_side);
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);

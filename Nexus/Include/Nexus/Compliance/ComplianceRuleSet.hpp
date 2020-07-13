@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCERULESET_HPP
-#define NEXUS_COMPLIANCERULESET_HPP
+#ifndef NEXUS_COMPLIANCE_RULE_SET_HPP
+#define NEXUS_COMPLIANCE_RULE_SET_HPP
 #include <deque>
 #include <unordered_set>
 #include <vector>
@@ -24,70 +24,65 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class ComplianceRuleSet
-      \brief Validates an Order operation against a set of
-             ComplianceRuleEntries.
-      \tparam ComplianceClientType The type of ComplianceClient to
-              use.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient used to
-              lookup DirectoryEntries for accounts and their parents.
+  /**
+   * Validates an Order operation against a set of ComplianceRuleEntries.
+   * @param <C> The type of ComplianceClient to use.
+   * @param <S> The type of ServiceLocatorClient used to lookup DirectoryEntries
+   *        for accounts and their parents.
    */
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
+  template<typename C, typename S>
   class ComplianceRuleSet : private boost::noncopyable {
     public:
 
-      //! The type of ComplianceClient to use.
-      using ComplianceClient =
-        Beam::GetTryDereferenceType<ComplianceClientType>;
+      /** The type of ComplianceClient to use. */
+      using ComplianceClient = Beam::GetTryDereferenceType<C>;
 
-      //! The type of ServiceLocatorClient used to lookup DirectoryEntries for
-      //! accounts and their parents.
-      using ServiceLocatorClient =
-        Beam::GetTryDereferenceType<ServiceLocatorClientType>;
+      /**
+       * The type of ServiceLocatorClient used to lookup DirectoryEntries for
+       * accounts and their parents.
+       */
+      using ServiceLocatorClient = Beam::GetTryDereferenceType<S>;
 
-      //! Builds a ComplianceRule from a ComplianceRuleEntry.
-      /*!
-        \param entry The ComplianceRuleEntry to build the rule from.
-        \return The ComplianceRule represented by the <i>entry</i>.
-      */
+      /**
+       * Builds a ComplianceRule from a ComplianceRuleEntry.
+       * @param entry The ComplianceRuleEntry to build the rule from.
+       * @return The ComplianceRule represented by the <i>entry</i>.
+       */
       using ComplianceRuleBuilder =
         std::function<std::unique_ptr<ComplianceRule>
         (const ComplianceRuleEntry& entry)>;
 
-      //! Constructs a ComplianceRuleSet.
-      /*!
-        \param complianceClient Initializes the ComplianceClient.
-        \param serviceLocatorClient Initializes The ServiceLocatorClient.
-        \param complianceRuleBuilder Builds compliance rules from a
-               ComplianceRuleEntry.
-      */
-      template<typename ComplianceClientForward,
-        typename ServiceLocatorClientForward>
-      ComplianceRuleSet(ComplianceClientForward&& complianceClient,
-        ServiceLocatorClientForward&& serviceLocatorClient,
+      /**
+       * Constructs a ComplianceRuleSet.
+       * @param complianceClient Initializes the ComplianceClient.
+       * @param serviceLocatorClient Initializes The ServiceLocatorClient.
+       * @param complianceRuleBuilder Builds compliance rules from a
+       *        ComplianceRuleEntry.
+       */
+      template<typename CF, typename SF>
+      ComplianceRuleSet(CF&& complianceClient, SF&& serviceLocatorClient,
         ComplianceRuleBuilder complianceRuleBuilder);
 
-      //! Performs a compliance check on an Order submission.
-      /*!
-        \param order The Order being submitted.
-      */
+      /**
+       * Performs a compliance check on an Order submission.
+       * @param order The Order being submitted.
+       */
       void Submit(const OrderExecutionService::Order& order);
 
-      //! Cancels a previously submitted Order.
-      /*!
-        \param cancelAccount The account submitting the cancel request.
-        \param order The Order being canceled.
-      */
+      /**
+       * Cancels a previously submitted Order.
+       * @param cancelAccount The account submitting the cancel request.
+       * @param order The Order being canceled.
+       */
       void Cancel(const Beam::ServiceLocator::DirectoryEntry& cancelAccount,
         const OrderExecutionService::Order& order);
 
-      //! Adds an Order that successfully passed all compliance checks.
-      /*!
-        \param order The Order that was successfully submitted.
-      */
+      /**
+       * Adds an Order that successfully passed all compliance checks.
+       * @param order The Order that was successfully submitted.
+       */
       void Add(const OrderExecutionService::Order& order);
 
     private:
@@ -102,9 +97,8 @@ namespace Compliance {
         std::vector<const OrderExecutionService::Order*> m_orders;
         Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
       };
-      Beam::GetOptionalLocalPtr<ComplianceClientType> m_complianceClient;
-      Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
-        m_serviceLocatorClient;
+      Beam::GetOptionalLocalPtr<C> m_complianceClient;
+      Beam::GetOptionalLocalPtr<S> m_serviceLocatorClient;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<Entry>> m_entries;
       ComplianceRuleBuilder m_complianceRuleBuilder;
@@ -117,26 +111,21 @@ namespace Compliance {
       void OnComplianceUpdate(const ComplianceRuleEntry& updatedEntry);
   };
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  template<typename ComplianceClientForward,
-    typename ServiceLocatorClientForward>
-  ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::
-      ComplianceRuleSet(ComplianceClientForward&& complianceClient,
-      ServiceLocatorClientForward&& serviceLocatorClient,
-      ComplianceRuleBuilder complianceRuleBuilder)
-      : m_complianceClient{std::forward<ComplianceClientForward>(
-          complianceClient)},
-        m_serviceLocatorClient{std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)},
-        m_complianceRuleBuilder{std::move(complianceRuleBuilder)} {}
+  template<typename C, typename S>
+  template<typename CF, typename SF>
+  ComplianceRuleSet<C, S>::ComplianceRuleSet(CF&& complianceClient,
+    SF&& serviceLocatorClient, ComplianceRuleBuilder complianceRuleBuilder)
+    : m_complianceClient(std::forward<CF>(complianceClient)),
+      m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
+      m_complianceRuleBuilder(std::move(complianceRuleBuilder)) {}
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  void ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::
-      Submit(const OrderExecutionService::Order& order) {
-    std::exception_ptr exception = nullptr;
+  template<typename C, typename S>
+  void ComplianceRuleSet<C, S>::Submit(
+      const OrderExecutionService::Order& order) {
+    auto exception = std::exception_ptr();
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      boost::lock_guard<Beam::Threading::Mutex> lock{entry->m_mutex};
+      auto lock = boost::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(&order);
       for(auto& rule : entry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
@@ -158,7 +147,7 @@ namespace Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      boost::lock_guard<Beam::Threading::Mutex> lock{parentEntry->m_mutex};
+      auto lock = boost::lock_guard(parentEntry->m_mutex);
       parentEntry->m_orders.push_back(&order);
       if(exception != nullptr) {
         continue;
@@ -184,13 +173,13 @@ namespace Compliance {
     Beam::Rethrow(exception);
   }
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  void ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::
-      Cancel(const Beam::ServiceLocator::DirectoryEntry& cancelAccount,
+  template<typename C, typename S>
+  void ComplianceRuleSet<C, S>::Cancel(
+      const Beam::ServiceLocator::DirectoryEntry& cancelAccount,
       const OrderExecutionService::Order& order) {
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      boost::lock_guard<Beam::Threading::Mutex> lock{entry->m_mutex};
+      auto lock = boost::lock_guard(entry->m_mutex);
       for(auto& rule : entry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
         if(ruleEntry->GetState() == ComplianceRuleEntry::State::DISABLED) {
@@ -209,7 +198,7 @@ namespace Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      boost::lock_guard<Beam::Threading::Mutex> lock{parentEntry->m_mutex};
+      auto lock = boost::lock_guard(parentEntry->m_mutex);
       for(auto& rule : parentEntry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
         if(ruleEntry->GetState() == ComplianceRuleEntry::State::DISABLED) {
@@ -228,12 +217,12 @@ namespace Compliance {
     }
   }
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  void ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::Add(
+  template<typename C, typename S>
+  void ComplianceRuleSet<C, S>::Add(
       const OrderExecutionService::Order& order) {
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      boost::lock_guard<Beam::Threading::Mutex> lock{entry->m_mutex};
+      auto lock = boost::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(&order);
       for(auto& rule : entry->m_rules) {
         rule->m_rule->Add(order);
@@ -241,7 +230,7 @@ namespace Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      boost::lock_guard<Beam::Threading::Mutex> lock{parentEntry->m_mutex};
+      auto lock = boost::lock_guard(parentEntry->m_mutex);
       parentEntry->m_orders.push_back(&order);
       for(auto& rule : parentEntry->m_rules) {
         rule->m_rule->Add(order);
@@ -249,18 +238,17 @@ namespace Compliance {
     }
   }
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  std::shared_ptr<typename ComplianceRuleSet<ComplianceClientType,
-      ServiceLocatorClientType>::Entry> ComplianceRuleSet<ComplianceClientType,
-      ServiceLocatorClientType>::LoadEntry(
+  template<typename C, typename S>
+  std::shared_ptr<typename ComplianceRuleSet<C, S>::Entry>
+      ComplianceRuleSet<C, S>::LoadEntry(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
     auto entry = m_entries.GetOrInsert(directoryEntry,
       boost::factory<std::shared_ptr<Entry>>());
     entry->m_initializer.Call(
       [&] {
-        std::unordered_set<Beam::ServiceLocator::DirectoryEntry>
-          previousParents;
-        std::deque<Beam::ServiceLocator::DirectoryEntry> searchQueue;
+        auto previousParents = std::unordered_set<
+          Beam::ServiceLocator::DirectoryEntry>();
+        auto searchQueue = std::deque<Beam::ServiceLocator::DirectoryEntry>();
         searchQueue.push_back(directoryEntry);
         while(!searchQueue.empty()) {
           auto frontEntry = std::move(searchQueue.front());
@@ -279,7 +267,7 @@ namespace Compliance {
             }
           }
         }
-        std::vector<ComplianceRuleEntry> rules;
+        auto rules = std::vector<ComplianceRuleEntry>();
         m_complianceClient->MonitorComplianceRuleEntries(directoryEntry,
           m_tasks.GetSlot<ComplianceRuleEntry>(std::bind(
           &ComplianceRuleSet::OnComplianceUpdate, this,
@@ -291,14 +279,13 @@ namespace Compliance {
     return entry;
   }
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  void ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::
-      UpdateComplianceEntry(const ComplianceRuleEntry& updatedEntry,
-      Entry& entry) {
-    boost::lock_guard<Beam::Threading::Mutex> lock{entry.m_mutex};
+  template<typename C, typename S>
+  void ComplianceRuleSet<C, S>::UpdateComplianceEntry(
+      const ComplianceRuleEntry& updatedEntry, Entry& entry) {
+    auto lock = boost::lock_guard(entry.m_mutex);
     entry.m_rules.erase(std::remove_if(entry.m_rules.begin(),
       entry.m_rules.end(),
-      [&] (const std::shared_ptr<Rule>& rule) {
+      [&] (const auto& rule) {
         return rule->m_entry.Load()->GetId() == updatedEntry.GetId();
       }), entry.m_rules.end());
     if(updatedEntry.GetState() == ComplianceRuleEntry::State::DELETED) {
@@ -319,13 +306,12 @@ namespace Compliance {
     }
   }
 
-  template<typename ComplianceClientType, typename ServiceLocatorClientType>
-  void ComplianceRuleSet<ComplianceClientType, ServiceLocatorClientType>::
-      OnComplianceUpdate(const ComplianceRuleEntry& updatedEntry) {
+  template<typename C, typename S>
+  void ComplianceRuleSet<C, S>::OnComplianceUpdate(
+      const ComplianceRuleEntry& updatedEntry) {
     auto entry = LoadEntry(updatedEntry.GetDirectoryEntry());
     UpdateComplianceEntry(updatedEntry, *entry);
   }
-}
 }
 
 #endif
