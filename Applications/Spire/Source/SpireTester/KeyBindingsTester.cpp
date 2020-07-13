@@ -125,8 +125,8 @@ TEST_SUITE("KeyBindings") {
       QKeySequence(Qt::CTRL + Qt::Key_F1)) == boost::none);
     REQUIRE(bindings.find(Region(CountryCode(8)),
       QKeySequence(Qt::SHIFT + Qt::Key_F2)) == boost::none);
-    REQUIRE(bindings.find(Region(Security("MSFT", 8)),
-      QKeySequence(Qt::Key_F8)) == boost::none);
+    REQUIRE(bindings.find(Region(Security("MSFT", DefaultMarkets::NYSE(),
+      DefaultCountries::US())), QKeySequence(Qt::Key_F8)) == boost::none);
   }
 
   TEST_CASE("global_set_and_get") {

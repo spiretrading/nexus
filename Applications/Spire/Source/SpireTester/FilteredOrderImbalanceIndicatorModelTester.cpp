@@ -13,8 +13,9 @@ using namespace Spire;
 
 namespace {
   auto make_imbalance(const std::string& symbol, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, 0), Side::BID, 100, Money::ONE,
-      timestamp);
+    return OrderImbalance(
+      Security(symbol, DefaultMarkets::NYSE(), DefaultCountries::US()),
+      Side::BID, 100, Money::ONE, timestamp);
   }
 
   auto make_imbalance(const Security& security, const ptime& timestamp) {
@@ -28,8 +29,8 @@ namespace {
 
   auto make_imbalance(const std::string& symbol, const MarketCode& market,
       Side side, Quantity size, Money ref_price, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, market, 0), side, size, ref_price,
-      timestamp);
+    return OrderImbalance(Security(symbol, market, DefaultCountries::US()),
+      side, size, ref_price, timestamp);
   }
 
   auto market_db = GetDefaultMarketDatabase();
@@ -86,7 +87,8 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
       auto data1 = wait(std::move(promise1));
       REQUIRE(data1 == std::vector<OrderImbalance>({A}));
       auto model2 = FilteredOrderImbalanceIndicatorModel(make_local_model(),
-        {make_security_list_filter({A.m_security, C.m_security, E.m_security})});
+        {make_security_list_filter({A.m_security, C.m_security,
+        E.m_security})});
       auto promise2 = model2.load(TimeInterval::closed(from_time_t(0),
         from_time_t(500)));
       auto data2 = wait(std::move(promise2));
@@ -322,8 +324,9 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
   TEST_CASE("filtered_loads_don't_crash_on_model_destruction") {
     run_test([] {
       auto test_model = std::make_shared<TestOrderImbalanceIndicatorModel>();
-      auto filtered_model = std::make_unique<FilteredOrderImbalanceIndicatorModel>(
-        test_model, std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
+      auto filtered_model =
+        std::make_unique<FilteredOrderImbalanceIndicatorModel>(test_model,
+        std::vector<FilteredOrderImbalanceIndicatorModel::Filter>());
       auto promise = filtered_model->load(TimeInterval::closed(from_time_t(0),
         from_time_t(1000)));
       filtered_model.reset();
@@ -351,7 +354,8 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
   TEST_CASE("unfiltered_single_security_loading") {
     run_test([] {
       auto local_model = make_local_model();
-      const auto S = Security("TEST", 0);
+      const auto S = Security("TEST", DefaultMarkets::NYSE(),
+        DefaultCountries::US());
       const auto F = make_imbalance(S, from_time_t(100));
       const auto G = make_imbalance(S, from_time_t(200));
       const auto H = make_imbalance(S, from_time_t(300));
@@ -370,7 +374,8 @@ TEST_SUITE("FilteredOrderImbalanceIndicatorModel") {
   TEST_CASE("filtered_single_security_loading") {
     run_test([] {
       auto local_model = make_local_model();
-      const auto S = Security("TEST", 0);
+      const auto S = Security("TEST", DefaultMarkets::NYSE(),
+        DefaultCountries::US());
       const auto F = make_imbalance(S, "", Side::ASK, 100, 10 * Money::ONE,
         from_time_t(100));
       const auto G = make_imbalance(S, "", Side::ASK, 200, 10 * Money::ONE,

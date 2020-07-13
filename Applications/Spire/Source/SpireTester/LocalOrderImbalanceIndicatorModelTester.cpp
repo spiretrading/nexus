@@ -11,8 +11,9 @@ using namespace Spire;
 
 namespace {
   auto make_imbalance(const std::string& symbol, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, 0), Side::BID, 100,
-      Money(Money::ONE), timestamp);
+    return OrderImbalance(
+      Security(symbol, DefaultMarkets::NYSE(), DefaultCountries::US()),
+      Side::BID, 100, Money::ONE, timestamp);
   }
 
   const auto A = make_imbalance("A", from_time_t(100));
@@ -55,8 +56,9 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       model.insert(A2);
       model.insert(A3);
       model.insert(A4);
-      auto promise = model.load(Security("A", 0), TimeInterval::closed(
-        from_time_t(0), from_time_t(1000)));
+      auto promise = model.load(Security("A", DefaultMarkets::NYSE(),
+        DefaultCountries::US()),
+        TimeInterval::closed(from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
     });
