@@ -97,10 +97,9 @@ namespace Nexus {
 
       void Shutdown();
       template<typename Query, typename F>
-      decltype(std::declval<F>()(std::declval<Query>())) Load(
-        const Query& query,
+      std::invoke_result_t<F, const Query&> Load(const Query& query,
         std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
-        cutoffSequences,  const F& loader);
+        cutoffSequences, F&& loader);
   };
 
   template<typename H>
@@ -270,10 +269,10 @@ namespace Nexus {
 
   template<typename H>
   template<typename Query, typename F>
-  decltype(std::declval<F>()(std::declval<Query>()))
-      CutoffHistoricalDataStore<H>::Load(const Query& query,
+  std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<H>::Load(
+      const Query& query,
       std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
-      cutoffSequences,  const F& loader) {
+      cutoffSequences, F&& loader) {
     if(auto startTimestamp = boost::get<boost::posix_time::ptime>(
         &query.GetRange().GetStart())) {
       if(*startTimestamp >= m_cutoff) {
