@@ -109,7 +109,8 @@ void AsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
       if(update->m_lastQuantity != 0) {
-        update->m_liquidityFlag = ToString(LiquidityFlag::ACTIVE);
+        update->m_liquidityFlag = lexical_cast<std::string>(
+          LiquidityFlag::ACTIVE);
         auto lastMkt = FIX::LastMkt();
         if(message.isSet(lastMkt)) {
           message.get(lastMkt);

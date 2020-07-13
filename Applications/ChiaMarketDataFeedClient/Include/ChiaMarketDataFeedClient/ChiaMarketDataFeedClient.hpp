@@ -180,9 +180,9 @@ namespace MarketDataService {
       m_orderEntries[orderReference] = OrderEntry(security, price);
     }
     if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << "," << message.m_type << "," <<
-        orderReference << "," << side << "," << shares << "," <<
-        symbol << "," << price.ToString() << "\n";
+      std::cout << timestamp << ',' << message.m_type << ',' <<
+        orderReference << ',' << side << ',' << shares << ',' <<
+        symbol << ',' << price << '\n';
       std::cout << std::flush;
     }
   }
