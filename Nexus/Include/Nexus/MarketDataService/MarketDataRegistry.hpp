@@ -26,7 +26,7 @@ namespace Details {
     auto marketCenters =
       [&] () -> std::vector<std::string> {
         if(security.GetCountry() == DefaultCountries::CA()) {
-          return {"TSE", "CDX"};
+          return {"TSE", "CDX", "CNQ"};
         } else if(security.GetCountry() == DefaultCountries::AU()) {
           return {"ASX"};
         } else if(!security.GetMarket().IsEmpty()) {

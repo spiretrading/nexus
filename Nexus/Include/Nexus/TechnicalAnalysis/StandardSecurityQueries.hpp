@@ -160,12 +160,16 @@ namespace TechnicalAnalysis {
       const boost::local_time::tz_database& timeZoneDatabase,
       std::string marketCenter) {
     if(marketCenter.empty()) {
-      if(security.GetMarket() == DefaultMarkets::ASX()) {
-        marketCenter = "ASX";
-      } else if(security.GetMarket() == DefaultMarkets::TSX()) {
+      if(security.GetMarket() == DefaultMarkets::TSX()) {
         marketCenter = "TSE";
       } else if(security.GetMarket() == DefaultMarkets::TSXV()) {
         marketCenter = "CDX";
+      } else if(security.GetMarket() == DefaultMarkets::CSE()) {
+        marketCenter = "CNQ";
+      } else if(security.GetMarket() == DefaultMarkets::HKEX()) {
+        marketCenter = "HKEX";
+      } else if(security.GetMarket() == DefaultMarkets::ASX()) {
+        marketCenter = "ASX";
       } else if(!security.GetMarket().IsEmpty()) {
         marketCenter = security.GetMarket().GetData();
       }
