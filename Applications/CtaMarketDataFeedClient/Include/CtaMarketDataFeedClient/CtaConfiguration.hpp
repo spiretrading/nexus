@@ -42,7 +42,7 @@ namespace MarketDataService {
       "enable_logging", false);
     auto country = Beam::Extract<std::string>(config, "country", "US");
     auto countryCode = ParseCountryCode(country, countryDatabase);
-    if(countryCode == CountryDatabase::NONE) {
+    if(countryCode == CountryCode::NONE) {
       BOOST_THROW_EXCEPTION(Beam::MakeYamlParserException(
         "Country not found.", config["country"].Mark()));
     }

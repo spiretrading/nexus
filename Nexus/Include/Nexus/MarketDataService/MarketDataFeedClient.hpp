@@ -224,7 +224,8 @@ namespace Nexus::MarketDataService {
           &*countriesProperty)) {
         for(auto countryEntry : *countriesList) {
           if(auto value = boost::get<double>(&countryEntry)) {
-            if(static_cast<CountryCode>(*value) == country) {
+            if(static_cast<CountryCode>(static_cast<std::uint16_t>(*value)) ==
+                country) {
               return entry;
             }
           }

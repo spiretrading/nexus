@@ -18,9 +18,6 @@ IF "!IS_DEPENDENCY!" == "1" (
   SHIFT
   GOTO begin_args
 )
-IF "!CONFIG!" == "" (
-  SET CONFIG=Release
-)
 IF "!CONFIG!" == "clean" (
   git clean -ffxd -e *Dependencies*
   IF EXIST Dependencies\cache_files\nexus.txt (
@@ -32,11 +29,21 @@ IF "!CONFIG!" == "clean" (
     DEL Dependencies\cache_files\nexus.txt
   )
 ) ELSE (
+  IF "!CONFIG!" == "" (
+    IF EXIST CMakeFiles\config.txt (
+      FOR /F %%i IN ('TYPE CMakeFiles\config.txt') DO (
+        SET CONFIG=%%i
+      )
+    ) ELSE (
+      SET CONFIG=Release
+    )
+  )
   IF NOT "!DEPENDENCIES!" == "" (
     CALL "!DIRECTORY!configure.bat" -DD="!DEPENDENCIES!"
   ) ELSE (
     CALL "!DIRECTORY!configure.bat"
   )
   cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!"
+  echo !CONFIG! > CMakeFiles\config.txt
 )
 ENDLOCAL
