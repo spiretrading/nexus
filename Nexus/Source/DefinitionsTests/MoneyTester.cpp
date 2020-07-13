@@ -83,8 +83,8 @@ TEST_SUITE("Money") {
   }
 
   TEST_CASE("floor") {
-    Money value = 2.055 * Money::CENT;
-    Money flooredValue = Floor(value, 2);
+    auto value = 2.055 * Money::CENT;
+    auto flooredValue = Floor(value, 2);
     REQUIRE(flooredValue == 2 * Money::CENT);
   }
 
