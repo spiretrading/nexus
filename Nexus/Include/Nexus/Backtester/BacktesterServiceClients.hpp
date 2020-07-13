@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERSERVICECLIENTS_HPP
-#define NEXUS_BACKTESTERSERVICECLIENTS_HPP
+#ifndef NEXUS_BACKTESTER_SERVICE_CLIENTS_HPP
+#define NEXUS_BACKTESTER_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
@@ -22,10 +22,7 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterServiceClients
-      \brief Implements the ServiceClients interface for the purpose of
-             backtesting.
-   */
+  /** Implements the ServiceClients interface for the purpose of backtesting. */
   class BacktesterServiceClients : private boost::noncopyable {
     public:
       using ServiceLocatorClient =
@@ -53,10 +50,10 @@ namespace Nexus {
 
       using Timer = Beam::Threading::VirtualTimer;
 
-      //! Constructs a BacktesterServiceClients.
-      /*!
-        \param environment The BacktesterEnvironment to use.
-      */
+      /**
+       * Constructs a BacktesterServiceClients.
+       * @param environment The BacktesterEnvironment to use.
+       */
       BacktesterServiceClients(Beam::Ref<BacktesterEnvironment> environment);
 
       ~BacktesterServiceClients();
@@ -106,27 +103,27 @@ namespace Nexus {
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
-      Beam::Ref<BacktesterEnvironment> environment)
-      : m_environment{environment.Get()},
-        m_serviceLocatorClient{
-          m_environment->GetServiceLocatorEnvironment().BuildClient()},
-        m_definitionsClient{
-          m_environment->GetDefinitionsEnvironment().BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))},
-        m_administrationClient{
-          m_environment->GetAdministrationEnvironment().BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))},
-        m_marketDataClient{MarketDataService::MakeVirtualMarketDataClient(
-          std::make_unique<BacktesterMarketDataClient>(
-          Beam::Ref(m_environment->GetMarketDataService()),
-          m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
-          *m_serviceLocatorClient))))},
-        m_orderExecutionClient{
-          m_environment->GetOrderExecutionEnvironment().BuildClient(
-          Beam::Ref(*m_serviceLocatorClient))},
-        m_timeClient{Beam::TimeService::MakeVirtualTimeClient<
-          BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
-          m_environment->GetEventHandler())))} {}
+    Beam::Ref<BacktesterEnvironment> environment)
+    : m_environment(environment.Get()),
+      m_serviceLocatorClient(
+        m_environment->GetServiceLocatorEnvironment().BuildClient()),
+      m_definitionsClient(
+        m_environment->GetDefinitionsEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_administrationClient(
+        m_environment->GetAdministrationEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
+        std::make_unique<BacktesterMarketDataClient>(
+        Beam::Ref(m_environment->GetMarketDataService()),
+        m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
+        *m_serviceLocatorClient))))),
+      m_orderExecutionClient(
+        m_environment->GetOrderExecutionEnvironment().BuildClient(
+        Beam::Ref(*m_serviceLocatorClient))),
+      m_timeClient(Beam::TimeService::MakeVirtualTimeClient<
+        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
+        m_environment->GetEventHandler())))) {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();

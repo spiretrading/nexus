@@ -3,6 +3,7 @@
 #include <array>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/lexical_cast.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -93,7 +94,8 @@ namespace Nexus::Tests {
       BuildInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = price;
     executionReport.m_lastQuantity = quantity;
-    executionReport.m_liquidityFlag = ToString(liquidityFlag);
+    executionReport.m_liquidityFlag = boost::lexical_cast<std::string>(
+      liquidityFlag);
     auto calculatedTotal = calculateFee(feeTable, executionReport);
     REQUIRE(calculatedTotal == expectedFee);
   }
@@ -177,7 +179,8 @@ namespace Nexus::Tests {
       const OrderExecutionService::OrderFields& orderFields,
       LiquidityFlag liquidityFlag, CalculateFeeType&& calculateFee,
       Money expectedFee) {
-    TestPerShareFeeCalculation(feeTable, orderFields, ToString(liquidityFlag),
+    TestPerShareFeeCalculation(feeTable, orderFields,
+      boost::lexical_cast<std::string>(liquidityFlag),
       std::forward<CalculateFeeType>(calculateFee), expectedFee);
   }
 
@@ -218,8 +221,8 @@ namespace Nexus::Tests {
       Quantity quantity, LiquidityFlag liquidityFlag,
       CalculateFeeType&& calculateFee, Money expectedFee) {
     TestPerShareFeeCalculation(feeTable, price, quantity,
-      ToString(liquidityFlag), std::forward<CalculateFeeType>(calculateFee),
-      expectedFee);
+      boost::lexical_cast<std::string>(liquidityFlag),
+      std::forward<CalculateFeeType>(calculateFee), expectedFee);
   }
 }
 
