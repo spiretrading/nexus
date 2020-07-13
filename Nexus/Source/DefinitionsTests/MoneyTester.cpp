@@ -1,21 +1,25 @@
+#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Money.hpp"
 
+using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("Money") {
   TEST_CASE("to_string") {
-    REQUIRE(Money::ZERO.ToString() == "0.00");
-    REQUIRE(Money::ONE.ToString() == "1.00");
-    REQUIRE((Money::ONE / 10).ToString() == "0.10");
-    REQUIRE((Money::ONE / 100).ToString() == "0.01");
-    REQUIRE((Money::ONE / 1000).ToString() == "0.001");
-    REQUIRE((Money::ONE / 10000).ToString() == "0.0001");
-    REQUIRE((Money::ONE / 100000).ToString() == "0.00001");
-    REQUIRE((Money::ONE / 1000000).ToString() == "0.000001");
-    REQUIRE((13 * Money::CENT + Money::CENT / 2).ToString() == "0.135");
-    REQUIRE((3 * Money::CENT + Money::CENT / 2).ToString() == "0.035");
+    REQUIRE(lexical_cast<std::string>(Money::ZERO) == "0.00");
+    REQUIRE(lexical_cast<std::string>(Money::ONE) == "1.00");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 10) == "0.10");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 100) == "0.01");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 1000) == "0.001");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 10000) == "0.0001");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 100000) == "0.00001");
+    REQUIRE(lexical_cast<std::string>(Money::ONE / 1000000) == "0.000001");
+    REQUIRE(lexical_cast<std::string>(13 * Money::CENT + Money::CENT / 2) ==
+      "0.135");
+    REQUIRE(lexical_cast<std::string>(3 * Money::CENT + Money::CENT / 2) ==
+      "0.035");
   }
 
   TEST_CASE("from_string") {
@@ -79,8 +83,8 @@ TEST_SUITE("Money") {
   }
 
   TEST_CASE("floor") {
-    Money value = 2.055 * Money::CENT;
-    Money flooredValue = Floor(value, 2);
+    auto value = 2.055 * Money::CENT;
+    auto flooredValue = Floor(value, 2);
     REQUIRE(flooredValue == 2 * Money::CENT);
   }
 

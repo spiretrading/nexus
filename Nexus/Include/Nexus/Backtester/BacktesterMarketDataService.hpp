@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERMARKETDATASERVICE_HPP
-#define NEXUS_BACKTESTERMARKETDATASERVICE_HPP
+#ifndef NEXUS_BACKTESTER_MARKET_DATA_SERVICE_HPP
+#define NEXUS_BACKTESTER_MARKET_DATA_SERVICE_HPP
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -20,59 +20,57 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterMarketDataService
-      \brief Provides historical market data to the backtester.
-   */
+  /** Provides historical market data to the backtester. */
   class BacktesterMarketDataService : private boost::noncopyable {
     public:
 
-      //! Constructs a BacktesterMarketDataService.
-      /*!
-        \param eventHandler The BacktesterEventHandler to push historical
-               market data events to.
-        \param marketDataEnvironment The object to publish market data updates
-               to.
-        \param marketDataClient The MarketDataClient used to retrieve
-               historicalMarketData.
-      */
+      /**
+       * Constructs a BacktesterMarketDataService.
+       * @param eventHandler The BacktesterEventHandler to push historical
+       *        market data events to.
+       * @param marketDataEnvironment The object to publish market data updates
+       *        to.
+       * @param marketDataClient The MarketDataClient used to retrieve
+       *        historicalMarketData.
+       */
       BacktesterMarketDataService(
         Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
         MarketDataService::Tests::MarketDataServiceTestEnvironment>
         marketDataEnvironment,
         Beam::Ref<MarketDataService::VirtualMarketDataClient> marketDataClient);
 
-      //! Submits a query for OrderImbalances.
-      /*!
-        \param query The query to submit.
-      */
+      /**
+       * Submits a query for OrderImbalances.
+       * @param query The query to submit.
+       */
       void QueryOrderImbalances(
         const MarketDataService::MarketWideDataQuery& query);
 
-      //! Submits a query for BboQuotes.
-      /*!
-        \param query The query to submit.
-      */
+      /**
+       * Submits a query for BboQuotes.
+       * @param query The query to submit.
+       */
       void QueryBboQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
 
-      //! Submits a query for BookQuotes.
-      /*!
-        \param query The query to submit.
-      */
+      /**
+       * Submits a query for BookQuotes.
+       * @param query The query to submit.
+       */
       void QueryBookQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
 
-      //! Submits a query for MarketQuotes.
-      /*!
-        \param query The query to submit.
-      */
+      /**
+       * Submits a query for MarketQuotes.
+       * @param query The query to submit.
+       */
       void QueryMarketQuotes(
         const MarketDataService::SecurityMarketDataQuery& query);
 
-      //! Submits a query for TimeAndSales.
-      /*!
-        \param query The query to submit.
-      */
+      /**
+       * Submits a query for TimeAndSales.
+       * @param query The query to submit.
+       */
       void QueryTimeAndSales(
         const MarketDataService::SecurityMarketDataQuery& query);
 
@@ -99,7 +97,7 @@ namespace Nexus {
       MarketDataQueryEvent(Query query,
         Beam::Ref<BacktesterMarketDataService> service);
 
-      virtual void Execute() override;
+      void Execute() override;
 
     private:
       Query m_query;
@@ -119,7 +117,7 @@ namespace Nexus {
         boost::posix_time::ptime timestamp,
         Beam::Ref<BacktesterMarketDataService> service);
 
-      virtual void Execute() override;
+      void Execute() override;
 
     private:
       typename Query::Index m_index;
@@ -138,7 +136,7 @@ namespace Nexus {
         boost::posix_time::ptime timestamp,
         Beam::Ref<BacktesterMarketDataService> service);
 
-      virtual void Execute() override;
+      void Execute() override;
 
     private:
       Index m_index;
@@ -147,13 +145,13 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
-      Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
-      MarketDataService::Tests::MarketDataServiceTestEnvironment>
-      marketDataEnvironment, Beam::Ref<
-      MarketDataService::VirtualMarketDataClient> marketDataClient)
-      : m_eventHandler{eventHandler.Get()},
-        m_marketDataEnvironment{marketDataEnvironment.Get()},
-        m_marketDataClient{marketDataClient.Get()} {}
+    Beam::Ref<BacktesterEventHandler> eventHandler, Beam::Ref<
+    MarketDataService::Tests::MarketDataServiceTestEnvironment>
+    marketDataEnvironment, Beam::Ref<MarketDataService::VirtualMarketDataClient>
+    marketDataClient)
+    : m_eventHandler(eventHandler.Get()),
+      m_marketDataEnvironment(marketDataEnvironment.Get()),
+      m_marketDataClient(marketDataClient.Get()) {}
 
   inline void BacktesterMarketDataService::QueryOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query) {
@@ -192,10 +190,10 @@ namespace Nexus {
 
   template<typename MarketDataTypeType>
   MarketDataQueryEvent<MarketDataTypeType>::MarketDataQueryEvent(Query query,
-      Beam::Ref<BacktesterMarketDataService> service)
-      : BacktesterEvent{boost::posix_time::neg_infin},
-        m_query{std::move(query)},
-        m_service{service.Get()} {}
+    Beam::Ref<BacktesterMarketDataService> service)
+    : BacktesterEvent(boost::posix_time::neg_infin),
+      m_query(std::move(query)),
+      m_service(service.Get()) {}
 
   template<typename MarketDataTypeType>
   void MarketDataQueryEvent<MarketDataTypeType>::Execute() {
@@ -215,17 +213,17 @@ namespace Nexus {
 
   template<typename MarketDataTypeType>
   MarketDataLoadEvent<MarketDataTypeType>::MarketDataLoadEvent(
-      typename Query::Index index, Beam::Queries::Range::Point startPoint,
-      boost::posix_time::ptime timestamp,
-      Beam::Ref<BacktesterMarketDataService> service)
-      : BacktesterEvent{timestamp},
-        m_index{std::move(index)},
-        m_startPoint{startPoint},
-        m_service{service.Get()} {}
+    typename Query::Index index, Beam::Queries::Range::Point startPoint,
+    boost::posix_time::ptime timestamp,
+    Beam::Ref<BacktesterMarketDataService> service)
+    : BacktesterEvent(timestamp),
+      m_index(std::move(index)),
+      m_startPoint(startPoint),
+      m_service(service.Get()) {}
 
   template<typename MarketDataTypeType>
   void MarketDataLoadEvent<MarketDataTypeType>::Execute() {
-    auto QUERY_SIZE = 1000;
+    const auto QUERY_SIZE = 1000;
     auto endPoint =
       [&] () -> Beam::Queries::Range::Point {
         if(m_service->m_eventHandler->GetEndTime() ==
@@ -234,7 +232,7 @@ namespace Nexus {
         }
         return m_service->m_eventHandler->GetEndTime();
       }();
-    Query query;
+    auto query = Query();
     query.SetIndex(m_index);
     query.SetRange(m_startPoint, endPoint);
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD,
@@ -243,12 +241,12 @@ namespace Nexus {
       Beam::Queries::SequencedValue<MarketDataType>>>();
     MarketDataService::QueryMarketDataClient(*m_service->m_marketDataClient,
       query, queue);
-    std::vector<Beam::Queries::SequencedValue<MarketDataType>> data;
+    auto data = std::vector<Beam::Queries::SequencedValue<MarketDataType>>();
     Beam::FlushQueue(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
     }
-    std::vector<std::shared_ptr<BacktesterEvent>> events;
+    auto events = std::vector<std::shared_ptr<BacktesterEvent>>();
     auto timestamp = m_service->m_eventHandler->GetTime();
     for(auto& value : data) {
       timestamp = std::max(timestamp,
@@ -266,12 +264,12 @@ namespace Nexus {
 
   template<typename IndexType, typename MarketDataTypeType>
   MarketDataEvent<IndexType, MarketDataTypeType>::MarketDataEvent(Index index,
-      MarketDataType value, boost::posix_time::ptime timestamp,
-      Beam::Ref<BacktesterMarketDataService> service)
-      : BacktesterEvent{timestamp},
-        m_index{std::move(index)},
-        m_value{std::move(value)},
-        m_service{service.Get()} {}
+    MarketDataType value, boost::posix_time::ptime timestamp,
+    Beam::Ref<BacktesterMarketDataService> service)
+    : BacktesterEvent(timestamp),
+      m_index(std::move(index)),
+      m_value(std::move(value)),
+      m_service(service.Get()) {}
 
   template<typename IndexType, typename MarketDataTypeType>
   void MarketDataEvent<IndexType, MarketDataTypeType>::Execute() {

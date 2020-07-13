@@ -1,14 +1,11 @@
-#ifndef NEXUS_BINARYSEQUENCEPROTOCOL_HPP
-#define NEXUS_BINARYSEQUENCEPROTOCOL_HPP
+#ifndef NEXUS_BINARY_SEQUENCE_PROTOCOL_HPP
+#define NEXUS_BINARY_SEQUENCE_PROTOCOL_HPP
 
-namespace Nexus {
-namespace BinarySequenceProtocol {
-  template<typename ChannelType, typename SequenceType>
-    class BinarySequenceProtocolClient;
+namespace Nexus::BinarySequenceProtocol {
+  template<typename C, typename S> class BinarySequenceProtocolClient;
   struct BinarySequenceProtocolMessage;
-  template<typename SequenceType> struct BinarySequenceProtocolPacket;
+  template<typename S> struct BinarySequenceProtocolPacket;
   class BinarySequenceProtocolParserException;
-}
 }
 
 #endif

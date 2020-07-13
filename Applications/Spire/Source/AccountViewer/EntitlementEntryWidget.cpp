@@ -7,6 +7,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
@@ -62,8 +63,8 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
   } else {
     const CurrencyDatabase::Entry& currency =
       m_userProfile->GetCurrencyDatabase().FromId(m_entitlement.m_currency);
-    string price = currency.m_sign + entitlement.m_price.ToString() + " " +
-      currency.m_code.GetData();
+    string price = currency.m_sign + lexical_cast<string>(entitlement.m_price) +
+      " " + currency.m_code.GetData();
     m_ui->m_priceLabel->setText(QString::fromStdString(price));
   }
   m_ui->m_entitlementLabel->setChecked(

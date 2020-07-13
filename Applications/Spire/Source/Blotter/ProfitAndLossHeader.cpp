@@ -5,9 +5,11 @@
 #include "ui_ProfitAndLossHeader.h"
 
 using namespace Beam;
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
+using namespace std;
 
 ProfitAndLossHeader::ProfitAndLossHeader(Ref<ProfitAndLossEntryModel> model,
     QWidget* parent)
@@ -33,7 +35,7 @@ ProfitAndLossHeader::~ProfitAndLossHeader() {}
 
 void ProfitAndLossHeader::OnProfitAndLossChanged(Money profitAndLoss) {
   m_ui->m_profitLossValue->setText(QString::fromStdString(
-    profitAndLoss.ToString()));
+    lexical_cast<string>(profitAndLoss)));
   if(profitAndLoss > Money::ZERO) {
     m_ui->m_profitLossValue->setStyleSheet("\
       QLabel {\

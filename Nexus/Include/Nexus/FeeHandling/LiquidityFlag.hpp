@@ -2,6 +2,7 @@
 #define NEXUS_LIQUIDITYFLAG_HPP
 #include <array>
 #include <exception>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <Beam/Pointers/Out.hpp>
@@ -29,27 +30,6 @@ namespace Nexus {
 
   //! The number of liquidity flags enumerated.
   static const std::size_t LIQUIDITY_FLAG_COUNT = 2;
-
-  //! Returns a string representing a LiquidityFlag.
-  /*!
-    \param flag The LiquidityFlag to represent.
-    \return The string representation of the <i>flag</i>.
-  */
-  inline const std::string& ToString(LiquidityFlag flag) {
-    if(flag == LiquidityFlag::NONE) {
-      static auto flag = std::string{""};
-      return flag;
-    } else if(flag == LiquidityFlag::ACTIVE) {
-      static auto flag = std::string{"A"};
-      return flag;
-    } else if(flag == LiquidityFlag::PASSIVE) {
-      static auto flag = std::string{"P"};
-      return flag;
-    } else {
-      static auto flag = std::string{"?"};
-      return flag;
-    }
-  }
 
   //! Parses a table of fees from a YAML Node.
   /*!
@@ -157,6 +137,18 @@ namespace Nexus {
         std::runtime_error{"Fee table \"" + name + "\" not found."});
     }
     ParseFeeTable(node, Beam::Store(table));
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, LiquidityFlag flag) {
+    if(flag == LiquidityFlag::NONE) {
+      return out;
+    } else if(flag == LiquidityFlag::ACTIVE) {
+      return out << 'A';
+    } else if(flag == LiquidityFlag::PASSIVE) {
+      return out << 'P';
+    } else {
+      return out << '?';
+    }
   }
 }
 

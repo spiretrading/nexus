@@ -97,10 +97,9 @@ namespace Nexus {
 
       void Shutdown();
       template<typename Query, typename F>
-      decltype(std::declval<F>()(std::declval<Query>())) Load(
-        const Query& query,
+      std::invoke_result_t<F, const Query&> Load(const Query& query,
         std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
-        cutoffSequences,  const F& loader);
+        cutoffSequences, F&& loader);
   };
 
   template<typename H>
@@ -132,7 +131,7 @@ namespace Nexus {
       CutoffHistoricalDataStore<H>::LoadOrderImbalances(
       const MarketDataService::MarketWideDataQuery& query) {
     return Load(query, m_orderImbalanceCutoffSequences,
-      [&] (const auto& query) {
+      [&] (auto& query) {
         return m_dataStore->LoadOrderImbalances(query);
       });
   }
@@ -141,7 +140,7 @@ namespace Nexus {
   std::vector<SequencedBboQuote> CutoffHistoricalDataStore<H>::LoadBboQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_bboQuoteCutoffSequences,
-      [&] (const auto& query) {
+      [&] (auto& query) {
         return m_dataStore->LoadBboQuotes(query);
       });
   }
@@ -150,7 +149,7 @@ namespace Nexus {
   std::vector<SequencedBookQuote> CutoffHistoricalDataStore<H>::LoadBookQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_bookQuoteCutoffSequences,
-      [&] (const auto& query) {
+      [&] (auto& query) {
         return m_dataStore->LoadBookQuotes(query);
       });
   }
@@ -160,7 +159,7 @@ namespace Nexus {
       CutoffHistoricalDataStore<H>::LoadMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_marketQuoteCutoffSequences,
-      [&] (const auto& query) {
+      [&] (auto& query) {
         return m_dataStore->LoadMarketQuotes(query);
       });
   }
@@ -170,7 +169,7 @@ namespace Nexus {
       CutoffHistoricalDataStore<H>::LoadTimeAndSales(
       const MarketDataService::SecurityMarketDataQuery& query) {
     return Load(query, m_timeAndSalesCutoffSequences,
-      [&] (const auto& query) {
+      [&] (auto& query) {
         return m_dataStore->LoadTimeAndSales(query);
       });
   }
@@ -270,10 +269,10 @@ namespace Nexus {
 
   template<typename H>
   template<typename Query, typename F>
-  decltype(std::declval<F>()(std::declval<Query>()))
-      CutoffHistoricalDataStore<H>::Load(const Query& query,
+  std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<H>::Load(
+      const Query& query,
       std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
-      cutoffSequences,  const F& loader) {
+      cutoffSequences, F&& loader) {
     if(auto startTimestamp = boost::get<boost::posix_time::ptime>(
         &query.GetRange().GetStart())) {
       if(*startTimestamp >= m_cutoff) {

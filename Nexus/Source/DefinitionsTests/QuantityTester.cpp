@@ -1,15 +1,17 @@
+#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Quantity.hpp"
 
 using namespace Beam;
+using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("Quantity") {
   TEST_CASE("to_string") {
-    REQUIRE(ToString(Quantity(0)) == "0");
-    REQUIRE(ToString(Quantity(1)) == "1");
-    REQUIRE(ToString(Quantity(1.1)) == "1.100000");
+    REQUIRE(lexical_cast<std::string>(Quantity(0)) == "0");
+    REQUIRE(lexical_cast<std::string>(Quantity(1)) == "1");
+    REQUIRE(lexical_cast<std::string>(Quantity(1.1)) == "1.100000");
   }
 
   TEST_CASE("from_string") {

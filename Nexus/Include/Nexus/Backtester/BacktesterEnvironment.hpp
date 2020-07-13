@@ -19,67 +19,65 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterEnvironment
-      \brief Maintains the state needed to run the historical backtester.
-   */
+  /** Maintains the state needed to run the historical backtester. */
   class BacktesterEnvironment : private boost::noncopyable {
     public:
 
-      //! Constructs a BacktesterEnvironment.
-      /*!
-        \param startTime The backtester's starting time.
-        \param serviceClients The ServiceClients connected to the historical
-               data source.
-      */
+      /**
+       * Constructs a BacktesterEnvironment.
+       * @param startTime The backtester's starting time.
+       * @param serviceClients The ServiceClients connected to the historical
+       *        data source.
+       */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
         Beam::Ref<VirtualServiceClients> serviceClients);
 
-      //! Constructs a BacktesterEnvironment.
-      /*!
-        \param startTime The backtester's starting time.
-        \param endTime The backtester's ending time.
-        \param serviceClients The ServiceClients connected to the historical
-               data source.
-      */
+      /**
+       * Constructs a BacktesterEnvironment.
+       * @param startTime The backtester's starting time.
+       * @param endTime The backtester's ending time.
+       * @param serviceClients The ServiceClients connected to the historical
+       *        data source.
+       */
       BacktesterEnvironment(boost::posix_time::ptime startTime,
         boost::posix_time::ptime endTime,
         Beam::Ref<VirtualServiceClients> serviceClients);
 
       ~BacktesterEnvironment();
 
-      //! Returns the BacktesterEventHandler.
+      /** Returns the BacktesterEventHandler. */
       const BacktesterEventHandler& GetEventHandler() const;
 
-      //! Returns the BacktesterEventHandler.
+      /** Returns the BacktesterEventHandler. */
       BacktesterEventHandler& GetEventHandler();
 
-      //! Returns the ServiceLocatorTestEnvironment.
+      /** Returns the ServiceLocatorTestEnvironment. */
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         GetServiceLocatorEnvironment();
 
-      //! Returns the UidServiceTestEnvironment.
+      /** Returns the UidServiceTestEnvironment. */
       Beam::UidService::Tests::UidServiceTestEnvironment& GetUidEnvironment();
 
-      //! Returns the DefinitionsServiceTestEnvironment.
+      /** Returns the DefinitionsServiceTestEnvironment. */
       DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
         GetDefinitionsEnvironment();
 
-      //! Returns the AdministrationServiceTestEnvironment.
+      /** Returns the AdministrationServiceTestEnvironment. */
       AdministrationService::Tests::AdministrationServiceTestEnvironment&
         GetAdministrationEnvironment();
 
-      //! Returns the MarketDataServiceTestEnvironment.
+      /** Returns the MarketDataServiceTestEnvironment. */
       MarketDataService::Tests::MarketDataServiceTestEnvironment&
         GetMarketDataEnvironment();
 
-      //! Returns the OrderExecutionServiceTestEnvironment.
+      /** Returns the OrderExecutionServiceTestEnvironment. */
       OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
         GetOrderExecutionEnvironment();
 
-      //! Returns the BacktesterMarketDataService.
+      /** Returns the BacktesterMarketDataService. */
       BacktesterMarketDataService& GetMarketDataService();
 
-      //! Returns the BacktesterMarketDataService.
+      /** Returns the BacktesterMarketDataService. */
       const BacktesterMarketDataService& GetMarketDataService() const;
 
       void Open();
@@ -113,16 +111,16 @@ namespace Nexus {
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-      boost::posix_time::ptime startTime,
-      Beam::Ref<VirtualServiceClients> serviceClients)
-      : BacktesterEnvironment{startTime, boost::posix_time::pos_infin,
-          Beam::Ref(serviceClients)} {}
+    boost::posix_time::ptime startTime,
+    Beam::Ref<VirtualServiceClients> serviceClients)
+    : BacktesterEnvironment(startTime, boost::posix_time::pos_infin,
+        Beam::Ref(serviceClients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      Beam::Ref<VirtualServiceClients> serviceClients)
-      : m_serviceClients{serviceClients.Get()},
-        m_eventHandler{startTime, endTime} {}
+    boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+    Beam::Ref<VirtualServiceClients> serviceClients)
+    : m_serviceClients(serviceClients.Get()),
+      m_eventHandler(startTime, endTime) {}
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();

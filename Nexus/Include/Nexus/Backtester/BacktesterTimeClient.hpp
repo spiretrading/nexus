@@ -1,5 +1,5 @@
-#ifndef NEXUS_BACKTESTERTIMECLIENT_HPP
-#define NEXUS_BACKTESTERTIMECLIENT_HPP
+#ifndef NEXUS_BACKTESTER_TIME_CLIENT_HPP
+#define NEXUS_BACKTESTER_TIME_CLIENT_HPP
 #include <boost/noncopyable.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
@@ -8,16 +8,14 @@
 
 namespace Nexus {
 
-  /*! \class BacktesterTimeClient
-      \brief A TimeClient used by the backtester.
-   */
+  /** A TimeClient used by the backtester. */
   class BacktesterTimeClient : private boost::noncopyable {
     public:
 
-      //! Constructs a BacktesterTimeClient.
-      /*!
-        \param environment The event handler this client belongs to.
-      */
+      /**
+       * Constructs a BacktesterTimeClient.
+       * @param environment The event handler this client belongs to.
+       */
       BacktesterTimeClient(Beam::Ref<BacktesterEventHandler> eventHandler);
 
       ~BacktesterTimeClient();
@@ -36,8 +34,8 @@ namespace Nexus {
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-      Beam::Ref<BacktesterEventHandler> eventHandler)
-      : m_eventHandler{eventHandler.Get()} {}
+    Beam::Ref<BacktesterEventHandler> eventHandler)
+    : m_eventHandler(eventHandler.Get()) {}
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {
     Close();

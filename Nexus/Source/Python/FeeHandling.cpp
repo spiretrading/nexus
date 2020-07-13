@@ -1,5 +1,6 @@
 #include "Nexus/Python/FeeHandling.hpp"
 #include <Beam/Python/Beam.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
@@ -150,7 +151,8 @@ void Nexus::Python::ExportLiquidityFlag(pybind11::module& module) {
   enum_<LiquidityFlag>(module, "LiquidityFlag")
     .value("NONE", LiquidityFlag::NONE)
     .value("ACTIVE", LiquidityFlag::ACTIVE)
-    .value("PASSIVE", LiquidityFlag::PASSIVE);
+    .value("PASSIVE", LiquidityFlag::PASSIVE)
+    .def("__str__", &lexical_cast<std::string, LiquidityFlag>);
 }
 
 void Nexus::Python::ExportPureFeeTable(pybind11::module& module) {

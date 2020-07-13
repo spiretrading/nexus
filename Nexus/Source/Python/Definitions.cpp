@@ -372,7 +372,7 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
     .def_static("from_value",
       static_cast<boost::optional<Money> (*)(const std::string&)>(
       &Money::FromValue))
-    .def("__str__", &Money::ToString)
+    .def("__str__", &lexical_cast<std::string, Money>)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
     .def("__floor__", bind_integer_precision(
       static_cast<Money (*)(Money, int)>(&Floor)))

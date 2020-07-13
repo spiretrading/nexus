@@ -19,7 +19,7 @@ OptionalPriceNode::OptionalPriceNode(Money value)
   if(value == Money::ZERO) {
     SetText("N/A");
   } else {
-    SetText(GetValue().ToString());
+    SetText(lexical_cast<string>(GetValue()));
   }
 }
 
@@ -40,7 +40,7 @@ unique_ptr<OptionalPriceNode> OptionalPriceNode::SetValue(Money value) const {
   if(value == Money::ZERO) {
     clone->SetText("N/A");
   } else {
-    clone->SetText(clone->GetValue().ToString());
+    clone->SetText(lexical_cast<string>(clone->GetValue()));
   }
   return clone;
 }

@@ -143,8 +143,7 @@ namespace Details {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::TimeInForce> {
     template<typename Shuttler>
@@ -154,30 +153,6 @@ namespace Serialization {
       shuttle.Shuttle("expiry", value.m_expiry);
     }
   };
-}
-
-  //! Returns the string representation of a TimeInForce::Type.
-  inline std::string ToString(Nexus::TimeInForce::Type value) {
-    if(value == Nexus::TimeInForce::Type::DAY) {
-      return "DAY";
-    } else if(value == Nexus::TimeInForce::Type::GTC) {
-      return "GTC";
-    } else if(value == Nexus::TimeInForce::Type::OPG) {
-      return "OPG";
-    } else if(value == Nexus::TimeInForce::Type::MOC) {
-      return "MOC";
-    } else if(value == Nexus::TimeInForce::Type::IOC) {
-      return "IOC";
-    } else if(value == Nexus::TimeInForce::Type::FOK) {
-      return "FOK";
-    } else if(value == Nexus::TimeInForce::Type::GTX) {
-      return "GTX";
-    } else if(value == Nexus::TimeInForce::Type::GTD) {
-      return "GTD";
-    }
-    BOOST_THROW_EXCEPTION(std::runtime_error("TimeInForce::Type not found: " +
-      boost::lexical_cast<std::string>(static_cast<int>(value))));
-  }
 }
 
 #endif
