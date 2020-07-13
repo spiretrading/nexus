@@ -4,6 +4,7 @@
 #include "Spire/UI/CustomQtVariants.hpp"
 
 using namespace Beam;
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
@@ -11,18 +12,18 @@ using namespace std;
 
 MoneyNode::MoneyNode()
     : ValueNode(Money::ZERO) {
-  SetText(GetValue().ToString());
+  SetText(lexical_cast<string>(GetValue()));
 }
 
 MoneyNode::MoneyNode(Money value)
     : ValueNode(value) {
-  SetText(GetValue().ToString());
+  SetText(lexical_cast<string>(GetValue()));
 }
 
 unique_ptr<MoneyNode> MoneyNode::SetValue(Money value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(clone->GetValue().ToString());
+  clone->SetText(lexical_cast<string>(clone->GetValue()));
   return clone;
 }
 

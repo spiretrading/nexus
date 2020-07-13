@@ -580,12 +580,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-  inline std::string ToString(Nexus::Quantity value) {
-    return boost::lexical_cast<std::string>(value);
-  }
-
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<Nexus::Quantity> : std::false_type {};
 
@@ -608,7 +603,6 @@ namespace Serialization {
       value = Nexus::Quantity::FromRepresentation(representation);
     }
   };
-}
 }
 
 namespace std {

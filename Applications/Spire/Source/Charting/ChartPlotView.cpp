@@ -494,7 +494,7 @@ QString ChartPlotView::LoadLabel(ChartValue value,
     } else {
       v = Floor(v, 4);
     }
-    return QString::fromStdString(v.ToString());
+    return QString::fromStdString(lexical_cast<string>(v));
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     auto v = ToLocalTime(value.ToDateTime());

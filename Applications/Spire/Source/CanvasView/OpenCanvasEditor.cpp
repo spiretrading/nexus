@@ -538,7 +538,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeInForceNode& node) {
   auto editor = new QComboBox();
   for(int i = 0; i < TimeInForce::Type::COUNT; ++i) {
     auto timeInForce = static_cast<TimeInForce::Type>(i);
-    editor->addItem(QString::fromStdString(ToString(timeInForce)));
+    editor->addItem(QString::fromStdString(lexical_cast<string>(timeInForce)));
   }
   if(m_event != nullptr) {
     QApplication::sendEvent(editor, m_event);
