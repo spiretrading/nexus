@@ -7,6 +7,7 @@ using namespace Spire;
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
+#include "Spire/Ui/FilteredDropDownMenu.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 
 int main(int argc, char** argv) {
@@ -32,6 +33,13 @@ int main(int argc, char** argv) {
     label->setText(color.name());
   });
   layout->addWidget(c);
+  auto f = new FilteredDropDownMenu({"ABC", "ACD", "BCD", "BDE", "CDE", "CEF",
+    "DEF", "DFG"}, test_window);
+  f->setFixedSize(scale(100, 28));
+  f->connect_selected_signal([=] (const auto& item) {
+    label->setText(item.toString());
+  });
+  layout->addWidget(f);
   test_window->resize(scale(800, 150));
   test_window->show();
   dropdown1->setFocus();

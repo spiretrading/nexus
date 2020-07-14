@@ -1,6 +1,8 @@
 #ifndef SPIRE_FILTERED_DROP_DOWN_MENU_HPP
 #define SPIRE_FILTERED_DROP_DOWN_MENU_HPP
 #include <QLineEdit>
+#include <QVariant>
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 
 namespace Spire {
@@ -18,13 +20,19 @@ namespace Spire {
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
-    protected:
-      void paintEvent(QPaintEvent* event) override;
-
     private:
       mutable SelectedSignal m_selected_signal;
       DropDownList* m_menu_list;
+      std::vector<QVariant> m_items;
       QVariant m_current_item;
+      CustomVariantItemDelegate m_item_delegate;
+
+      const std::vector<DropDownItem*> create_widget_items(
+        const std::vector<QVariant>& items);
+      const std::vector<DropDownItem*> create_widget_items(
+        const std::vector<QVariant>& items, const QString& filter_text);
+      void on_item_selected(const QVariant& item);
+      void on_text_edited(const QString& text);
   };
 }
 
