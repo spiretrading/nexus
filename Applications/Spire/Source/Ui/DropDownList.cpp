@@ -8,6 +8,10 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  const auto BORDER_PADDING = 2;
+}
+
 DropDownList::DropDownList(std::vector<DropDownItem*> items,
     bool is_click_activated, QWidget* parent)
     : DropDownWindow(is_click_activated, parent),
@@ -86,7 +90,7 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
   if(m_layout->count() > 0) {
     setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
-      m_layout->itemAt(0)->widget()->height());
+      m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
   } else {
     hide();
   }
