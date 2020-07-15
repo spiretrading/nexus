@@ -40,6 +40,13 @@ int main(int argc, char** argv) {
     label->setText(item.toString());
   });
   layout->addWidget(f);
+  auto dropdown2 = new StaticDropDownMenu({"One", "Two", "Three", "Four",
+    "Five", "Six", "Seven"}, "Numbers", test_window);
+  dropdown2->setFixedSize(scale(100, 28));
+  dropdown2->connect_selected_signal([&] (const auto& value) {
+    label->setText(value.value<QString>());
+  });
+  layout->addWidget(dropdown2);
   test_window->resize(scale(800, 150));
   test_window->show();
   dropdown1->setFocus();

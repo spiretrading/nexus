@@ -7,13 +7,25 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-StaticDropDownMenu::StaticDropDownMenu(const std::vector<QString>& items,
-    QWidget* parent)
+namespace {
+  auto PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+}
+
+StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
+  QWidget* parent)
+  : StaticDropDownMenu(items, "", parent) {}
+
+StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
+    const QString& display_text, QWidget* parent)
     : QWidget(parent),
+      m_display_text(display_text),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))) {
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
-    m_current_text = items.front();
+    m_current_item = items.front();
   }
   m_menu_list = new DropDownList({}, true, this);
   m_menu_list->connect_selected_signal([=] (const auto& value) {
@@ -26,11 +38,11 @@ void StaticDropDownMenu::set_list_width(int width) {
   m_menu_list->setFixedWidth(width);
 }
 
-void StaticDropDownMenu::set_current_text(const QString& text) {
-  m_current_text = text;
+void StaticDropDownMenu::set_current_item(const QVariant& item) {
+  m_current_item = item;
 }
 
-void StaticDropDownMenu::set_items(const std::vector<QString>& items) {
+void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
   auto widget_items = std::vector<DropDownItem*>();
   widget_items.reserve(items.size());
   for(auto& item : items) {
@@ -42,13 +54,11 @@ void StaticDropDownMenu::set_items(const std::vector<QString>& items) {
   m_menu_list->setFixedWidth(width());
 }
 
-const QString& StaticDropDownMenu::get_text() const {
-  return m_current_text;
+const QVariant& StaticDropDownMenu::get_current_item() const {
+  return m_current_item;
 }
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
-  // TODO: move to anon namespace
-  auto PADDING = [] { return scale_width(8); };
   auto painter = QPainter(this);
   if(hasFocus() || m_menu_list->isActiveWindow()) {
     painter.fillRect(event->rect(), QColor("#4B23A0"));
@@ -56,14 +66,11 @@ void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
     painter.fillRect(event->rect(), QColor("#C8C8C8"));
   }
   painter.fillRect(1, 1, width() - 2, height() - 2, Qt::white);
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_height(12));
-  painter.setFont(font);
-  auto metrics = QFontMetrics(font);
-  painter.drawText(QPoint(PADDING(),
-    (height() / 2) + (metrics.ascent() / 2) - 1),
-    metrics.elidedText(m_current_text, Qt::ElideRight,
-    width() - (PADDING() * 3)));
+  if(m_display_text.isEmpty()) {
+    draw_item_text(m_item_delegate.displayText(m_current_item), painter);
+  } else {
+    draw_item_text(m_display_text, painter);
+  }
   painter.drawImage(
     QPoint(width() - (m_dropdown_image.width() + PADDING()),
     scale_height(11)), m_dropdown_image);
@@ -78,8 +85,19 @@ connection StaticDropDownMenu::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
+void StaticDropDownMenu::draw_item_text(const QString& text,
+    QPainter& painter) {
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  painter.setFont(font);
+  auto metrics = QFontMetrics(font);
+  painter.drawText(QPoint(PADDING(),
+    (height() / 2) + (metrics.ascent() / 2) - 1),
+    metrics.elidedText(text, Qt::ElideRight, width() - (PADDING() * 3)));
+}
+
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
-  m_current_text = value.value<QString>();
-  m_selected_signal(value);
+  m_current_item = value;
+  m_selected_signal(m_current_item);
   update();
 }
