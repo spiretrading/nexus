@@ -20,6 +20,11 @@ namespace Spire {
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
+    protected:
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       mutable SelectedSignal m_selected_signal;
       DropDownList* m_menu_list;

@@ -1,4 +1,5 @@
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
@@ -14,7 +15,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
   if(!items.empty()) {
     m_current_item = items.front();
   }
-  m_menu_list = new DropDownList({}, true, this);
+  m_menu_list = new DropDownList({}, false, this);
   m_menu_list->connect_activated_signal([=] (const auto& value) {
     on_item_activated(value);
   });
@@ -22,6 +23,23 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     on_item_selected(value);
   });
   set_items(items);
+}
+
+void FilteredDropDownMenu::focusInEvent(QFocusEvent* event) {
+  m_menu_list->show();
+  update();
+}
+
+void FilteredDropDownMenu::focusOutEvent(QFocusEvent* event) {
+  m_menu_list->hide();
+  update();
+}
+
+void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    qDebug() << "enter";
+  }
+  QLineEdit::keyPressEvent(event);
 }
 
 connection FilteredDropDownMenu::connect_selected_signal(
