@@ -57,6 +57,10 @@ bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
         m_was_last_key_activation = false;
       }
     }
+  } else if(watched == m_menu_list) {
+    if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+      update();
+    }
   }
   return QLineEdit::eventFilter(watched, event);
 }
