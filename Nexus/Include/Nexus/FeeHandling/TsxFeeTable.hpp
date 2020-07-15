@@ -1,5 +1,5 @@
-#ifndef NEXUS_TSXFEETABLE_HPP
-#define NEXUS_TSXFEETABLE_HPP
+#ifndef NEXUS_TSX_FEE_TABLE_HPP
+#define NEXUS_TSX_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -10,138 +10,126 @@
 
 namespace Nexus {
 
-  /*! \struct TsxFeeTable
-      \brief Stores the table of fees used by TSX.
-   */
+  /** Stores the table of fees used by TSX. */
   struct TsxFeeTable {
 
-    /*! \enum PriceClass
-        \brief Enumerates the types of price classes.
-     */
-    enum class PriceClass : int {
+    /** Enumerates the types of price classes. */
+    enum class PriceClass {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Price < $0.10.
-      SUB_DIME = 0,
+      /** Price < $0.10. */
+      SUBDIME = 0,
 
-      //! Price >= $0.10 & < $1.00.
-      SUB_DOLLAR,
+      /** Price >= $0.10 & < $1.00. */
+      SUBDOLLAR,
 
-      //! Price >= $1.00 and non-interlisted.
+      /** Price >= $1.00 and non-interlisted. */
       DEFAULT,
 
-      //! Price >= $1.00 and interlisted.
+      /** Price >= $1.00 and interlisted. */
       DEFAULT_INTERLISTED,
 
-      //! Price >= $1.00 and ETF.
+      /** Price >= $1.00 and ETF. */
       DEFAULT_ETF
     };
 
-    //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 5;
+    /** The number of price classes enumerated. */
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(5);
 
-    /*! \enum Type
-        \brief Enumerates the types of trades.
-     */
-    enum class Type : int {
+    /** Enumerates the types of trades. */
+    enum class Type {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Active.
+      /** Active. */
       ACTIVE = 0,
 
-      //! Passive.
+      /** Passive. */
       PASSIVE,
 
-      //! Hidden active.
+      /** Hidden active. */
       HIDDEN_ACTIVE,
 
-      //! Hidden passive.
+      /** Hidden passive. */
       HIDDEN_PASSIVE
     };
 
-    //! The number of Type enumerated.
-    static const std::size_t TYPE_COUNT = 4;
+    /** The number of Type enumerated. */
+    static constexpr auto TYPE_COUNT = std::size_t(4);
 
-    /*! \enum AuctionIndex
-        \brief Enumerates the indices into an auction fee table.
-     */
-    enum class AuctionIndex : int {
+    /** Enumerates the indices into an auction fee table. */
+    enum class AuctionIndex {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! The fee.
+      /** The fee. */
       FEE = 0,
 
-      //! The fee cap.
+      /** The fee cap. */
       MAX_CHARGE,
     };
 
-    //! The number of AuctionIndices enumerated.
-    static const std::size_t AUCTION_INDEX_COUNT = 2;
+    /** The number of AuctionIndices enumerated. */
+    static constexpr auto AUCTION_INDEX_COUNT = std::size_t(2);
 
-    /*! \enum AuctionType
-        \brief Enumerates the types of auctions.
-     */
-    enum class AuctionType : int {
+    /** Enumerates the types of auctions. */
+    enum class AuctionType {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Opening auction.
+      /** Opening auction. */
       OPEN = 0,
 
-      //! Closing auction.
+      /** Closing auction. */
       CLOSE,
     };
 
-    //! The number of AuctionTypes enumerated.
-    static const std::size_t AUCTION_TYPE_COUNT = 2;
+    /** The number of AuctionTypes enumerated. */
+    static constexpr auto AUCTION_TYPE_COUNT = std::size_t(2);
 
-    /*! \enum Classification
-        \brief Enumerates various classifications for a Security.
-     */
+    /** Enumerates various classifications for a Security. */
     enum class Classification {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! The default classification.
+      /** The default classification. */
       DEFAULT = 0,
 
-      //! An ETF.
+      /** An ETF. */
       ETF,
 
-      //! An interlisted symbol.
+      /** An interlisted symbol. */
       INTERLISTED
     };
 
-    //! The number of Classifications enumerated.
-    static const std::size_t CLASSIFICATION_COUNT = 3;
+    /** The number of Classifications enumerated. */
+    static constexpr auto CLASSIFICATION_COUNT = std::size_t(3);
 
-    //! The continuous fee table.
+    /** The continuous fee table. */
     std::array<std::array<Money, PRICE_CLASS_COUNT>, TYPE_COUNT>
       m_continuousFeeTable;
 
-    //! The auction fee table.
+    /** The auction fee table. */
     std::array<std::array<Money, AUCTION_INDEX_COUNT>, AUCTION_TYPE_COUNT>
       m_auctionFeeTable;
 
-    //! The odd-lot list.
+    /** The odd-lot list. */
     std::array<Money, 3>  m_oddLotFeeList;
   };
 
-  //! Parses a TsxFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the TsxFeeTable from.
-    \return The TsxFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a TsxFeeTable from a YAML configuration.
+   * @param config The configuration to parse the TsxFeeTable from.
+   * @return The TsxFeeTable represented by the <i>config</i>.
+   */
   inline TsxFeeTable ParseTsxFeeTable(const YAML::Node& config) {
-    TsxFeeTable feeTable;
+    auto feeTable = TsxFeeTable();
     ParseFeeTable(config, "continuous_fee_table",
       Beam::Store(feeTable.m_continuousFeeTable));
     ParseFeeTable(config, "auction_fee_table",
@@ -151,28 +139,28 @@ namespace Nexus {
     return feeTable;
   }
 
-  //! Looks up a fee in the continuous fee table.
-  /*!
-    \param feeTable The TsxFeeTable used to lookup the fee.
-    \param priceClass The trade's PriceClass.
-    \param type The Type of trade.
-    \return The fee corresponding to the specified <i>priceClass</i> and
-            <i>type</i>.
-  */
+  /**
+   * Looks up a fee in the continuous fee table.
+   * @param feeTable The TsxFeeTable used to lookup the fee.
+   * @param priceClass The trade's PriceClass.
+   * @param type The Type of trade.
+   * @return The fee corresponding to the specified <i>priceClass</i> and
+   *         <i>type</i>.
+   */
   inline Money LookupContinuousFee(const TsxFeeTable& feeTable,
       TsxFeeTable::PriceClass priceClass, TsxFeeTable::Type type) {
     return feeTable.m_continuousFeeTable[static_cast<int>(type)][
       static_cast<int>(priceClass)];
   }
 
-  //! Looks up a fee in the auction fee table.
-  /*!
-    \param feeTable The TsxFeeTable used to lookup the fee.
-    \param auctionIndex The AuctionIndex to lookup.
-    \param auctionType The AuctionType to lookup.
-    \return The fee corresponding to the specified <i>auctionIndex</i> and
-            <i>auctionType</i>.
-  */
+  /**
+   * Looks up a fee in the auction fee table.
+   * @param feeTable The TsxFeeTable used to lookup the fee.
+   * @param auctionIndex The AuctionIndex to lookup.
+   * @param auctionType The AuctionType to lookup.
+   * @return The fee corresponding to the specified <i>auctionIndex</i> and
+   *         <i>auctionType</i>.
+   */
   inline Money LookupAuctionFee(const TsxFeeTable& feeTable,
       TsxFeeTable::AuctionIndex auctionIndex,
       TsxFeeTable::AuctionType auctionType) {
@@ -180,37 +168,37 @@ namespace Nexus {
       static_cast<int>(auctionIndex)];
   }
 
-  //! Looks up a fee in the odd lot list.
-  /*!
-    \param feeTable The TsxFeeTable used to lookup the fee.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>priceClass</i>.
-  */
+  /**
+   * Looks up a fee in the odd lot list.
+   * @param feeTable The TsxFeeTable used to lookup the fee.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>priceClass</i>.
+   */
   inline Money LookupOddLotFee(const TsxFeeTable& feeTable,
       TsxFeeTable::PriceClass priceClass) {
     return feeTable.m_oddLotFeeList[static_cast<int>(priceClass)];
   }
 
-  //! Returns <code>true</code> iff an OrderFields represents a hidden TSX
-  //! Order.
-  /*!
-    \param order The Order to test.
-    \return <code>true</code> iff the <i>order</i> is classified as a hidden
-            TSX Order.
-  */
+  /**
+   * Returns <code>true</code> iff an OrderFields represents a hidden TSX
+   * Order.
+   * @param order The Order to test.
+   * @return <code>true</code> iff the <i>order</i> is classified as a hidden
+   *         TSX Order.
+   */
   inline bool IsTsxHiddenOrder(
       const OrderExecutionService::OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED;
   }
 
-  //! Calculates the fee on a trade executed on TSX.
-  /*!
-    \param feeTable The TsxFeeTable used to calculate the fee.
-    \param classification The Security's classification.
-    \param order The Order that executed the trade.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on TSX.
+   * @param feeTable The TsxFeeTable used to calculate the fee.
+   * @param classification The Security's classification.
+   * @param order The Order that executed the trade.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const TsxFeeTable& feeTable,
       TsxFeeTable::Classification classification,
       const OrderExecutionService::OrderFields& fields,
@@ -221,9 +209,9 @@ namespace Nexus {
     if(executionReport.m_lastQuantity < 100) {
       auto priceClass = [&] {
         if(executionReport.m_lastPrice < 10 * Money::CENT) {
-          return TsxFeeTable::PriceClass::SUB_DIME;
+          return TsxFeeTable::PriceClass::SUBDIME;
         } else if(executionReport.m_lastPrice < Money::ONE) {
-          return TsxFeeTable::PriceClass::SUB_DOLLAR;
+          return TsxFeeTable::PriceClass::SUBDOLLAR;
         } else {
           return TsxFeeTable::PriceClass::DEFAULT;
         }
@@ -233,9 +221,9 @@ namespace Nexus {
     } else if(executionReport.m_liquidityFlag.size() == 1) {
       auto priceClass = [&] {
         if(executionReport.m_lastPrice < 10 * Money::CENT) {
-          return TsxFeeTable::PriceClass::SUB_DIME;
+          return TsxFeeTable::PriceClass::SUBDIME;
         } else if(executionReport.m_lastPrice < Money::ONE) {
-          return TsxFeeTable::PriceClass::SUB_DOLLAR;
+          return TsxFeeTable::PriceClass::SUBDOLLAR;
         } else if(classification == TsxFeeTable::Classification::DEFAULT) {
           return TsxFeeTable::PriceClass::DEFAULT;
         } else if(classification == TsxFeeTable::Classification::ETF) {

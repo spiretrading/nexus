@@ -1,6 +1,8 @@
 #include "Nexus/Python/FeeHandling.hpp"
 #include <Beam/Python/Beam.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Nexus/FeeHandling/AmexFeeTable.hpp"
+#include "Nexus/FeeHandling/ArcaFeeTable.hpp"
 #include "Nexus/FeeHandling/AsxtFeeTable.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
@@ -17,6 +19,66 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
+
+void Nexus::Python::ExportAmexFeeTable(pybind11::module& module) {
+  auto outer = class_<AmexFeeTable>(module, "AmexFeeTable")
+    .def_readwrite("fee_table", &AmexFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &AmexFeeTable::m_subdollarTable);
+  enum_<AmexFeeTable::Type>(outer, "Type")
+    .value("ACTIVE", AmexFeeTable::Type::ACTIVE)
+    .value("PASSIVE", AmexFeeTable::Type::PASSIVE)
+    .value("HIDDEN_ACTIVE", AmexFeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", AmexFeeTable::Type::HIDDEN_PASSIVE)
+    .value("AT_THE_OPEN", AmexFeeTable::Type::AT_THE_OPEN)
+    .value("AT_THE_CLOSE", AmexFeeTable::Type::AT_THE_CLOSE)
+    .value("ROUTED", AmexFeeTable::Type::ROUTED);
+  module.def("parse_amex_fee_table", &ParseAmexFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(
+    const AmexFeeTable&, AmexFeeTable::Type)>(&LookupFee));
+  module.def("lookup_subdollar_fee", static_cast<rational<int> (*)(
+    const AmexFeeTable&, AmexFeeTable::Type)>(&LookupSubdollarFee));
+  module.def("is_amex_hidden_liquidity_provider",
+    &IsAmexHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const AmexFeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportArcaFeeTable(pybind11::module& module) {
+  auto outer = class_<ArcaFeeTable>(module, "ArcaFeeTable")
+    .def_readwrite("fee_table", &ArcaFeeTable::m_feeTable)
+    .def_readwrite("subdollar_table", &ArcaFeeTable::m_subdollarTable)
+    .def_readwrite("routed_fee", &ArcaFeeTable::m_routedFee)
+    .def_readwrite("auction_fee", &ArcaFeeTable::m_auctionFee);
+  enum_<ArcaFeeTable::Category>(outer, "Category")
+    .value("DEFAULT", ArcaFeeTable::Category::DEFAULT)
+    .value("ROUTED", ArcaFeeTable::Category::ROUTED)
+    .value("AUCTION", ArcaFeeTable::Category::AUCTION);
+  enum_<ArcaFeeTable::Tape>(outer, "Tape")
+    .value("A", ArcaFeeTable::Tape::A)
+    .value("B", ArcaFeeTable::Tape::B)
+    .value("C", ArcaFeeTable::Tape::C);
+  enum_<ArcaFeeTable::Type>(outer, "Type")
+    .value("ACTIVE", ArcaFeeTable::Type::ACTIVE)
+    .value("PASSIVE", ArcaFeeTable::Type::PASSIVE)
+    .value("HIDDEN_ACTIVE", ArcaFeeTable::Type::HIDDEN_ACTIVE)
+    .value("HIDDEN_PASSIVE", ArcaFeeTable::Type::HIDDEN_PASSIVE)
+    .value("AT_THE_OPEN", ArcaFeeTable::Type::AT_THE_OPEN)
+    .value("AT_THE_CLOSE", ArcaFeeTable::Type::AT_THE_CLOSE);
+  enum_<ArcaFeeTable::SubdollarType>(outer, "SubdollarType")
+    .value("ROUTED", ArcaFeeTable::SubdollarType::ROUTED)
+    .value("AUCTION", ArcaFeeTable::SubdollarType::AUCTION)
+    .value("ACTIVE", ArcaFeeTable::SubdollarType::ACTIVE)
+    .value("PASSIVE", ArcaFeeTable::SubdollarType::PASSIVE);
+  module.def("parse_arca_fee_table", &ParseArcaFeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const ArcaFeeTable&,
+    ArcaFeeTable::Tape, ArcaFeeTable::Type)>(&LookupFee));
+  module.def("lookup_fee", static_cast<rational<int> (*)(const ArcaFeeTable&,
+    ArcaFeeTable::SubdollarType)>(&LookupFee));
+  module.def("is_arca_hidden_liquidity_provider",
+    &IsArcaHiddenLiquidityProvider);
+  module.def("calculate_fee", static_cast<Money (*)(const ArcaFeeTable&,
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+}
 
 void Nexus::Python::ExportAsxtFeeTable(pybind11::module& module) {
   auto outer = class_<AsxtFeeTable>(module, "AsxtFeeTable")
@@ -55,8 +117,8 @@ void Nexus::Python::ExportChicFeeTable(pybind11::module& module) {
     .value("INTERLISTED", ChicFeeTable::Classification::INTERLISTED)
     .value("NON_INTERLISTED", ChicFeeTable::Classification::NON_INTERLISTED)
     .value("ETF", ChicFeeTable::Classification::ETF)
-    .value("SUB_DOLLAR", ChicFeeTable::Classification::SUB_DOLLAR)
-    .value("SUB_DIME", ChicFeeTable::Classification::SUB_DIME);
+    .value("SUBDOLLAR", ChicFeeTable::Classification::SUBDOLLAR)
+    .value("SUBDIME", ChicFeeTable::Classification::SUBDIME);
   enum_<ChicFeeTable::Index>(outer, "Index")
     .value("NONE", ChicFeeTable::Index::NONE)
     .value("ACTIVE", ChicFeeTable::Index::ACTIVE)
@@ -107,6 +169,8 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportFeeHandling(pybind11::module& module) {
+  ExportAmexFeeTable(module);
+  ExportArcaFeeTable(module);
   ExportAsxtFeeTable(module);
   ExportChicFeeTable(module);
   ExportConsolidatedTmxFeeTable(module);

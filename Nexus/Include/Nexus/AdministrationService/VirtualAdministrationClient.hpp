@@ -171,9 +171,7 @@ namespace Nexus::AdministrationService {
        * @param client The AdministrationClient to wrap.
        */
       template<typename CF>
-      WrapperAdministrationClient(CF&& client);
-
-      ~WrapperAdministrationClient() override;
+      explicit WrapperAdministrationClient(CF&& client);
 
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
@@ -309,11 +307,6 @@ namespace Nexus::AdministrationService {
   template<typename CF>
   WrapperAdministrationClient<C>::WrapperAdministrationClient(CF&& client)
     : m_client(std::forward<CF>(client)) {}
-
-  template<typename C>
-  WrapperAdministrationClient<C>::~WrapperAdministrationClient() {
-    Close();
-  }
 
   template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>

@@ -12,74 +12,74 @@
 
 namespace Nexus {
 
-  /* Stores the table of fees used by CHI-X Canada. */
+  /** Stores the table of fees used by CHI-X Canada. */
   struct ChicFeeTable {
 
-    /* Lists the available trade classifications. */
-    enum class Classification : int {
+    /** Lists the available trade classifications. */
+    enum class Classification {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Interlisted securities.
+      /** Interlisted securities. */
       INTERLISTED,
 
-      //! Non-interlisted securities.
+      /** Non-interlisted securities. */
       NON_INTERLISTED,
 
-      //! ETFs ($1.00 or over).
+      /** ETFs ($1.00 or over). */
       ETF,
 
-      //! Securities >= $0.10 and < $1.00 (including interlisted).
-      SUB_DOLLAR,
+      /** Securities >= $0.10 and < $1.00 (including interlisted). */
+      SUBDOLLAR,
 
-      //! Securities < $0.10 (including interlisted).
-      SUB_DIME
+      /** Securities < $0.10 (including interlisted). */
+      SUBDIME
     };
 
-    //! The number of classifications enumerated.
-    static constexpr std::size_t CLASSIFICATION_COUNT = 5;
+    /** The number of classifications enumerated. */
+    static constexpr auto CLASSIFICATION_COUNT = std::size_t(5);
 
-    /* Lists the index into a security fee table. */
+    /** Lists the index into a security fee table. */
     enum class Index {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Liquidity removing.
+      /** Liquidity removing. */
       ACTIVE,
 
-      //! Liquidity providing.
+      /** Liquidity providing. */
       PASSIVE,
 
-      //! Hidden liquidity active.
+      /** Hidden liquidity active. */
       HIDDEN_ACTIVE,
 
-      //! Hidden liquidity providing.
+      /** Hidden liquidity providing. */
       HIDDEN_PASSIVE
     };
 
-    //! The number of indexes enumerated.
-    static constexpr std::size_t INDEX_COUNT = 4;
+    /** The number of indexes enumerated. */
+    static constexpr auto INDEX_COUNT = std::size_t(4);
 
-    //! The fee table used for securities.
+    /** The fee table used for securities. */
     std::array<std::array<Money, INDEX_COUNT>, CLASSIFICATION_COUNT>
       m_securityTable;
 
-    //! The set of interlisted securities.
+    /** The set of interlisted securities. */
     std::unordered_set<Security> m_interlisted;
 
-    //! The set of ETFs.
+    /** The set of ETFs. */
     std::unordered_set<Security> m_etfs;
   };
 
-  //! Parses a ChicFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the ChicFeeTable from.
-    \param etfs The set of ETF Securities.
-    \param interlisted The set of interlisted Securities.
-    \return The ChicFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a ChicFeeTable from a YAML configuration.
+   * @param config The configuration to parse the ChicFeeTable from.
+   * @param etfs The set of ETF Securities.
+   * @param interlisted The set of interlisted Securities.
+   * @return The ChicFeeTable represented by the <i>config</i>.
+   */
   inline ChicFeeTable ParseChicFeeTable(const YAML::Node& config,
       std::unordered_set<Security> etfs,
       std::unordered_set<Security> interlisted) {
@@ -91,27 +91,27 @@ namespace Nexus {
     return feeTable;
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The ChicFeeTable used to lookup the fee.
-    \param classification The trade's classification.
-    \param index The index into the fee table.
-    \return The fee corresponding to the specified <i>classification</i> and
-            <i>index</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The ChicFeeTable used to lookup the fee.
+   * @param classification The trade's classification.
+   * @param index The index into the fee table.
+   * @return The fee corresponding to the specified <i>classification</i> and
+   *         <i>index</i>.
+   */
   inline Money LookupFee(const ChicFeeTable& feeTable,
       ChicFeeTable::Index index, ChicFeeTable::Classification classification) {
     return feeTable.m_securityTable[static_cast<int>(classification)][
       static_cast<int>(index)];
   }
 
-  //! Calculates the fee on a trade executed on CHIC.
-  /*!
-    \param feeTable The ChicFeeTable used to calculate the fee.
-    \param fields The OrderFields used to place the Order.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on CHIC.
+   * @param feeTable The ChicFeeTable used to calculate the fee.
+   * @param fields The OrderFields used to place the Order.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const ChicFeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -120,9 +120,9 @@ namespace Nexus {
     }
     auto classification = [&] {
       if(executionReport.m_lastPrice < 10 * Money::CENT) {
-        return ChicFeeTable::Classification::SUB_DIME;
+        return ChicFeeTable::Classification::SUBDIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
-        return ChicFeeTable::Classification::SUB_DOLLAR;
+        return ChicFeeTable::Classification::SUBDOLLAR;
       } else if(feeTable.m_interlisted.count(fields.m_security) == 1) {
         return ChicFeeTable::Classification::INTERLISTED;
       } else if(feeTable.m_etfs.count(fields.m_security) == 1) {

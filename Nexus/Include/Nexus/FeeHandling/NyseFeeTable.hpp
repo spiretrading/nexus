@@ -1,5 +1,5 @@
-#ifndef NEXUS_NYSEFEETABLE_HPP
-#define NEXUS_NYSEFEETABLE_HPP
+#ifndef NEXUS_NYSE_FEE_TABLE_HPP
+#define NEXUS_NYSE_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/rational.hpp>
@@ -11,112 +11,106 @@
 
 namespace Nexus {
 
-  /*! \struct NyseFeeTable
-      \brief Stores the table of fees used by NYSE.
-   */
+  /** Stores the table of fees used by NYSE. */
   struct NyseFeeTable {
 
-    /*! \enum Type
-        \brief Enumerates the types of trades.
-     */
-    enum class Type : int {
+    /** Enumerates the types of trades. */
+    enum class Type {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Active.
+      /** Active. */
       ACTIVE = 0,
 
-      //! Passive.
+      /** Passive. */
       PASSIVE
     };
 
-    //! The number of trade types enumerated.
-    static const std::size_t TYPE_COUNT = 2;
+    /** The number of trade types enumerated. */
+    static constexpr auto TYPE_COUNT = std::size_t(2);
 
-    /*! \enum Category
-        \brief Enumerates the category of trades.
-     */
-    enum class Category : int {
+    /** Enumerates the category of trades. */
+    enum class Category {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Default category.
+      /** Default category. */
       DEFAULT = 0,
 
-      //! Hidden order.
+      /** Hidden order. */
       HIDDEN,
 
-      //! Cross order.
+      /** Cross order. */
       CROSS,
 
-      //! On open.
+      /** On open. */
       ON_OPEN,
 
-      //! On close.
+      /** On close. */
       ON_CLOSE,
 
-      //! Retail order.
+      /** Retail order. */
       RETAIL
     };
 
-    //! The number of trade categories enumerated.
-    static const std::size_t CATEGORY_COUNT = 6;
+    /** The number of trade categories enumerated. */
+    static constexpr auto CATEGORY_COUNT = std::size_t(6);
 
-    //! The fee table.
+    /** The fee table. */
     std::array<std::array<Money, TYPE_COUNT>, CATEGORY_COUNT> m_feeTable;
 
-    //! The sub-dollar rates.
-    std::array<boost::rational<int>, TYPE_COUNT> m_subDollarTable;
+    /** The subdollar rates. */
+    std::array<boost::rational<int>, TYPE_COUNT> m_subdollarTable;
   };
 
-  //! Parses a NyseFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the NyseFeeTable from.
-    \return The NyseFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a NyseFeeTable from a YAML configuration.
+   * @param config The configuration to parse the NyseFeeTable from.
+   * @return The NyseFeeTable represented by the <i>config</i>.
+   */
   inline NyseFeeTable ParseNyseFeeTable(const YAML::Node& config) {
-    NyseFeeTable feeTable;
+    auto feeTable = NyseFeeTable();
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
-    ParseFeeTable(config, "sub_dollar_table",
-      Beam::Store(feeTable.m_subDollarTable));
+    ParseFeeTable(config, "subdollar_table",
+      Beam::Store(feeTable.m_subdollarTable));
     return feeTable;
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The NyseFeeTable used to lookup the fee.
-    \param type The trade's type.
-    \param category The trade's Category.
-    \return The fee corresponding to the specified <i>type</i> and
-            <i>category</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The NyseFeeTable used to lookup the fee.
+   * @param type The trade's type.
+   * @param category The trade's Category.
+   * @return The fee corresponding to the specified <i>type</i> and
+   *         <i>category</i>.
+   */
   inline Money LookupFee(const NyseFeeTable& feeTable, NyseFeeTable::Type type,
       NyseFeeTable::Category category) {
     return feeTable.m_feeTable[static_cast<int>(category)][
       static_cast<int>(type)];
   }
 
-  //! Tests if an OrderFields represents a hidden liquidity provider.
-  /*!
-    \param fields The OrderFields to test.
-    \return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
-            provider.
-  */
+  /**
+   * Tests if an OrderFields represents a hidden liquidity provider.
+   * @param fields The OrderFields to test.
+   * @return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
+   *         provider.
+   */
   inline bool IsNyseHiddenLiquidityProvider(
       const OrderExecutionService::OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED &&
       OrderExecutionService::HasField(fields, Tag{18, "M"});
   }
 
-  //! Calculates the fee on a trade executed on NYSE.
-  /*!
-    \param feeTable The NyseFeeTable used to calculate the fee.
-    \param fields The OrderFields used to place the Order.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on NYSE.
+   * @param feeTable The NyseFeeTable used to calculate the fee.
+   * @param fields The OrderFields used to place the Order.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const NyseFeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -163,7 +157,7 @@ namespace Nexus {
         executionReport.m_liquidityFlag << "\"\n";
     }
     if(executionReport.m_lastPrice < Money::ONE) {
-      auto rate = feeTable.m_subDollarTable[static_cast<int>(type)];
+      auto rate = feeTable.m_subdollarTable[static_cast<int>(type)];
       return rate *
         (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     }

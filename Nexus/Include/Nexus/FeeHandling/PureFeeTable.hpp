@@ -1,5 +1,5 @@
-#ifndef NEXUS_PUREFEETABLE_HPP
-#define NEXUS_PUREFEETABLE_HPP
+#ifndef NEXUS_PURE_FEE_TABLE_HPP
+#define NEXUS_PURE_FEE_TABLE_HPP
 #include <array>
 #include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -13,77 +13,73 @@
 
 namespace Nexus {
 
-  /*! \struct PureFeeTable
-      \brief Stores the table of fees used by Pure on TSX.
-   */
+  /** Stores the table of fees used by Pure on TSX. */
   struct PureFeeTable {
 
-    /*! \enum PriceClass
-        \brief Enumerates the types of price classes.
-     */
-    enum class PriceClass : int {
+    /** Enumerates the types of price classes. */
+    enum class PriceClass {
 
-      //! Unknown.
+      /** Unknown. */
       NONE = -1,
 
-      //! Price >= $1.00.
+      /** Price >= $1.00. */
       DEFAULT,
 
-      //! Price >= $1.00 and designated.
+      /** Price >= $1.00 and designated. */
       DESIGNATED,
 
-      //! Price >= $0.10 & < $1.00.
-      SUB_DOLLAR,
+      /** Price >= $0.10 & < $1.00. */
+      SUBDOLLAR,
 
-      //! Price < $0.10.
-      SUB_DIME
+      /** Price < $0.10. */
+      SUBDIME
     };
 
-    //! The number of price classes enumerated.
-    static const std::size_t PRICE_CLASS_COUNT = 4;
+    /** The number of price classes enumerated. */
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(4);
 
-    //! The TSX Venture listed fee table.
+    /** The TSX Venture listed fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_tsxVentureListedFeeTable;
 
-    //! The TSX listed fee table.
+    /** The TSX listed fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_tsxListedFeeTable;
 
-    //! The fee used for odd-lots.
+    /** The fee used for odd-lots. */
     Money m_oddLot;
 
-    //! The cap on TSX Venture listed sub-dime trades.
-    Money m_tsxVentureListedSubDimeCap;
+    /** The cap on TSX Venture listed subdime trades. */
+    Money m_tsxVentureListedSubdimeCap;
 
-    //! The set of Securities part of Pure's designated program.
+    /** The set of Securities part of Pure's designated program. */
     std::unordered_set<Security> m_designatedSecurities;
   };
 
-  //! Parses a PureFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the PureFeeTable from.
-    \return The PureFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a PureFeeTable from a YAML configuration.
+   * @param config The configuration to parse the PureFeeTable from.
+   * @return The PureFeeTable represented by the <i>config</i>.
+   */
   inline PureFeeTable ParsePureFeeTable(const YAML::Node& config,
       const MarketDatabase& marketDatabase) {
-    PureFeeTable feeTable;
+    auto feeTable = PureFeeTable();
     ParseFeeTable(config, "tsx_venture_listed_fee_table",
       Beam::Store(feeTable.m_tsxVentureListedFeeTable));
     ParseFeeTable(config, "tsx_listed_fee_table",
       Beam::Store(feeTable.m_tsxListedFeeTable));
     feeTable.m_oddLot = Beam::Extract<Money>(config, "odd_lot");
-    feeTable.m_tsxVentureListedSubDimeCap = Beam::Extract<Money>(config,
-      "tsx_venture_sub_dime_cap");
+    feeTable.m_tsxVentureListedSubdimeCap = Beam::Extract<Money>(config,
+      "tsx_venture_subdime_cap");
     auto designatedSecuritiesPath = Beam::Extract<std::string>(config,
       "designated_securities_path");
     auto designatedSecuritiesConfig = Beam::LoadFile(designatedSecuritiesPath);
     auto symbols = designatedSecuritiesConfig["symbols"];
     if(!symbols) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{
-        "PURE designated symbols not found."});
+      BOOST_THROW_EXCEPTION(std::runtime_error(
+        "PURE designated symbols not found."));
     }
-    for(auto symbol : symbols) {
+    for(auto& symbol : symbols) {
       auto security = ParseSecurity(Beam::Extract<std::string>(symbol),
         marketDatabase);
       feeTable.m_designatedSecurities.insert(security);
@@ -91,41 +87,41 @@ namespace Nexus {
     return feeTable;
   }
 
-  //! Looks up a fee on a TSX listed Security.
-  /*!
-    \param feeTable The PureFeeTable used to lookup the fee.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up a fee on a TSX listed Security.
+   * @param feeTable The PureFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupTsxListedFee(const PureFeeTable& feeTable,
       LiquidityFlag liquidityFlag, PureFeeTable::PriceClass priceClass) {
     return feeTable.m_tsxListedFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Looks up a fee on a TSX Venture listed Security.
-  /*!
-    \param feeTable The PureFeeTable used to lookup the fee.
-    \param liquidityFlag The trade's LiquidityFlag.
-    \param priceClass The trade's PriceClass.
-    \return The fee corresponding to the specified <i>liquidityFlag</i> and
-            <i>priceClass</i>.
-  */
+  /**
+   * Looks up a fee on a TSX Venture listed Security.
+   * @param feeTable The PureFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
   inline Money LookupTsxVentureListedFee(const PureFeeTable& feeTable,
       LiquidityFlag liquidityFlag, PureFeeTable::PriceClass priceClass) {
     return feeTable.m_tsxVentureListedFeeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];
   }
 
-  //! Calculates the fee on a trade executed on PURE.
-  /*!
-    \param feeTable The PureFeeTable used to calculate the fee.
-    \param security The Security that was traded.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on PURE.
+   * @param feeTable The PureFeeTable used to calculate the fee.
+   * @param security The Security that was traded.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const PureFeeTable& feeTable,
       const Security& security,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -139,9 +135,9 @@ namespace Nexus {
           feeTable.m_designatedSecurities.end()) {
         return PureFeeTable::PriceClass::DESIGNATED;
       } else if(executionReport.m_lastPrice < 10 * Money::CENT) {
-        return PureFeeTable::PriceClass::SUB_DIME;
+        return PureFeeTable::PriceClass::SUBDIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
-        return PureFeeTable::PriceClass::SUB_DOLLAR;
+        return PureFeeTable::PriceClass::SUBDOLLAR;
       } else {
         return PureFeeTable::PriceClass::DEFAULT;
       }
@@ -174,14 +170,14 @@ namespace Nexus {
         return LookupTsxVentureListedFee(feeTable, liquidityFlag, priceClass);
       }
     }();
-    if(priceClass == PureFeeTable::PriceClass::SUB_DIME &&
+    if(priceClass == PureFeeTable::PriceClass::SUBDIME &&
         security.GetMarket() == DefaultMarkets::TSXV()) {
       if(fee >= Money::ZERO) {
         return std::min(executionReport.m_lastQuantity * fee,
-          feeTable.m_tsxVentureListedSubDimeCap);
+          feeTable.m_tsxVentureListedSubdimeCap);
       } else {
         return std::max(executionReport.m_lastQuantity * fee,
-          -feeTable.m_tsxVentureListedSubDimeCap);
+          -feeTable.m_tsxVentureListedSubdimeCap);
       }
     }
     return executionReport.m_lastQuantity * fee;

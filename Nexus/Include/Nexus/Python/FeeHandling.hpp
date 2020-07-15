@@ -5,6 +5,18 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the AmexFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportAmexFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the ArcaFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportArcaFeeTable(pybind11::module& module);
+
+  /**
    * Exports the AsxtFeeTable class.
    * @param module The module to export to.
    */
