@@ -21,9 +21,8 @@ namespace Spire {
         const SelectedSignal::slot_type& slot) const;
 
     protected:
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
       mutable SelectedSignal m_selected_signal;
@@ -31,11 +30,14 @@ namespace Spire {
       std::vector<QVariant> m_items;
       QVariant m_current_item;
       CustomVariantItemDelegate m_item_delegate;
+      bool m_was_last_key_activation;
+      boost::signals2::scoped_connection m_list_selection_connection;
 
       const std::vector<DropDownItem*> create_widget_items(
         const std::vector<QVariant>& items);
       const std::vector<DropDownItem*> create_widget_items(
         const std::vector<QVariant>& items, const QString& filter_text);
+      void draw_border(const QColor& color, QPainter& painter);
       void on_item_activated(const QVariant& item);
       void on_item_selected(const QVariant& item);
       void on_text_edited(const QString& text);

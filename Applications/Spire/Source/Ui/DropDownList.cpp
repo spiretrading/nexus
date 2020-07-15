@@ -17,6 +17,7 @@ DropDownList::DropDownList(std::vector<DropDownItem*> items,
     : DropDownWindow(is_click_activated, parent),
       m_max_displayed_items(5) {
   m_scroll_area = new ScrollArea(this);
+  m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);
   auto main_widget = new QWidget(this);
   m_layout = new QVBoxLayout(main_widget);
@@ -85,6 +86,13 @@ connection DropDownList::connect_highlighted_signal(
 connection DropDownList::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
+}
+
+QVariant DropDownList::get_value(int index) {
+  if(m_layout->count() - 1 < index) {
+    return QVariant();
+  }
+  return get_widget(index)->get_value();
 }
 
 void DropDownList::set_items(std::vector<DropDownItem*> items) {

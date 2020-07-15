@@ -19,6 +19,8 @@ namespace Spire {
       explicit DropDownList(std::vector<DropDownItem*> items,
         bool is_click_activated, QWidget* parent = nullptr);
 
+      QVariant get_value(int index);
+
       void set_items(std::vector<DropDownItem*> items);
 
       boost::signals2::connection connect_activated_signal(

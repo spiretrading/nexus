@@ -50,6 +50,7 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
       } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
         if(m_is_click_activated) {
           if(isVisible()) {
+            // TODO: this hide just hides the dropdown window, not the drop shadow
             hide();
           } else {
             move_to_parent();
