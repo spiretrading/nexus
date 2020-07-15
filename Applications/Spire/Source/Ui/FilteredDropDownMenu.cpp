@@ -19,6 +19,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
       m_was_last_key_activation(false) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
+  setContextMenuPolicy(Qt::NoContextMenu);
   apply_line_edit_style(this);
   connect(this, &QLineEdit::textEdited, this,
     &FilteredDropDownMenu::on_text_edited);
@@ -153,6 +154,7 @@ void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
 void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
   m_current_item = item;
   m_selected_signal(m_current_item);
+  clear();
   m_list_selection_connection = m_menu_list->connect_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   set_items(m_items);
