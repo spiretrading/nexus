@@ -36,7 +36,6 @@ export class NumberField extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -59,7 +58,7 @@ export class NumberField extends React.Component<Properties> {
           this.props.className}/>);
   }
 
-  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.props.onChange(event.target.valueAsNumber);
   }
 
@@ -83,7 +82,7 @@ export class NumberField extends React.Component<Properties> {
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
       appearance: 'none' as 'none'
-    },
+    } as React.CSSProperties,
     boxReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -104,7 +103,7 @@ export class NumberField extends React.Component<Properties> {
       WebkitAppearance: 'textfield',
       appearance: 'none' as 'none',
       backgroundColor: '#FFFFFF'
-    }
+    } as React.CSSProperties
   };
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {

@@ -32,7 +32,7 @@ export class Button extends React.Component<Properties> {
       } else {
         return Button.STYLE.default;
       }
-    })();
+    })() as React.CSSProperties;
     return (
       <button style={{...style, ...this.props.style}}
           disabled={this.props.readonly}
@@ -56,7 +56,7 @@ export class Button extends React.Component<Properties> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     readonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -69,7 +69,7 @@ export class Button extends React.Component<Properties> {
       outline: 'none',
       MozAppearance: 'none' as 'none',
       cursor: 'default' as 'default'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     button: {

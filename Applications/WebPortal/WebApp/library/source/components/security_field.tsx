@@ -44,13 +44,6 @@ export class SecurityField extends React.Component<Properties, State> {
       localValue: this.props.value,
       isSelected: false
     }
-    this.addEntry = this.addEntry.bind(this);
-    this.onInputChange = this.onInputChange.bind(this);
-    this.onSubmitChange = this.onSubmitChange.bind(this);
-    this.removeEntry = this.removeEntry.bind(this);
-    this.selectEntry = this.selectEntry.bind(this);
-    this.onClose = this.onClose.bind(this);
-    this.onOpen = this.onOpen.bind(this);
   }
 
   public render() {
@@ -159,25 +152,25 @@ export class SecurityField extends React.Component<Properties, State> {
       </div>);
   }
 
-  private addEntry(security: Nexus.Security) {
+  private addEntry = (security: Nexus.Security) => {
     this.setState({
       inputString: '',
       localValue: security
     });
   }
 
-  private onInputChange(value: string) {
+  private onInputChange = (value: string) => {
     this.setState({ inputString: value });
   }
 
-  private onSubmitChange() {
+  private onSubmitChange = () => {
     if(this.props.value !== this.state.localValue) {
       this.props.onChange(this.state.localValue);
     }
     this.onClose();
   }
 
-  private removeEntry() {
+  private removeEntry = () => {
     if(this.state.isSelected) {
       this.setState({
         isSelected: false,
@@ -186,11 +179,11 @@ export class SecurityField extends React.Component<Properties, State> {
     }
   }
 
-  private selectEntry(isSelected: boolean) {
+  private selectEntry = (isSelected: boolean) => {
     this.setState({ isSelected: isSelected});
   }
 
-  private onOpen() {
+  private onOpen = () => {
     this.setState({
       inputString: '',
       isEditing: true,
@@ -199,7 +192,7 @@ export class SecurityField extends React.Component<Properties, State> {
     });
   }
 
-  private onClose() {
+  private onClose = () => {
     this.setState({
       isEditing: false
     });
@@ -222,17 +215,17 @@ export class SecurityField extends React.Component<Properties, State> {
       width: '100%',
       paddingLeft: '10px',
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     hidden: {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
-    },
+    } as React.CSSProperties,
     modalPadding: {
       padding: '18px'
-    },
+    } as React.CSSProperties,
     clickable: {
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     header: {
       boxSizing: 'border-box' as 'border-box',
       width: '100%',
@@ -241,12 +234,12 @@ export class SecurityField extends React.Component<Properties, State> {
       justifyContent: 'space-between' as 'space-between',
       height: '20px',
       marginBottom: '30px'
-    },
+    } as React.CSSProperties,
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1,
       cursor: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     symbolHeader: {
       boxSizing: 'border-box' as 'border-box',
       backgroundColor: '#FFFFFF',
@@ -262,18 +255,18 @@ export class SecurityField extends React.Component<Properties, State> {
       position: 'sticky' as 'sticky',
       top: 0,
       cursor: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     symbolBoxWrapper: {
       height: '76px',
       border: '1px solid #C8C8C8',
-    },
+    } as React.CSSProperties,
     symbol: {
       height: '34px',
       paddingLeft: '10px',
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       alignItems: 'center' as 'center', 
-    },
+    } as React.CSSProperties,
     iconWrapperSmall: {
       height: '24px',
       width: '24px',
@@ -282,7 +275,7 @@ export class SecurityField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       pointer: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     iconWrapperSmallReadonly: {
       height: '24px',
       width: '24px',
@@ -291,7 +284,7 @@ export class SecurityField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       pointer: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     iconWrapperLarge: {
       height: '16px',
       display: 'flex' as 'flex',
@@ -299,7 +292,7 @@ export class SecurityField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       pointer: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     iconWrapperLargeReadonly: {
       height: '16px',
       display: 'flex' as 'flex',
@@ -307,19 +300,19 @@ export class SecurityField extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       justifyContent: 'center' as 'center',
       pointer: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
       paddingLeft: '8px',
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
       paddingLeft: '8px',
       cursor: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     iconRowSmall: {
       height: '24px',
       width: '100%',
@@ -328,7 +321,7 @@ export class SecurityField extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       justifyContent: 'space-evenly' as 'space-evenly'
-    },
+    } as React.CSSProperties,
     iconRowLarge: {
       height: '16px',
       width: '100%',
@@ -337,7 +330,7 @@ export class SecurityField extends React.Component<Properties, State> {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
       justifyContent: 'space-evenly' as 'space-evenly'
-    },
+    } as React.CSSProperties,
     buttonWrapper: {
       marginTop: '30px',
       display: 'flex' as 'flex',
@@ -345,7 +338,7 @@ export class SecurityField extends React.Component<Properties, State> {
       flexWrap: 'wrap' as 'wrap',
       justifyContent: 'center' as 'center',
       alignItems: 'center' as 'center'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

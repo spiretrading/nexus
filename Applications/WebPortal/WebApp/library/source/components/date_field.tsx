@@ -45,9 +45,6 @@ export class DateField extends React.Component<Properties, State> {
       componentWidth: 0
     };
     this.containerRef = React.createRef<HTMLDivElement>();
-    this.handleResize = this.handleResize.bind(this);
-    this.onBlur = this.onBlur.bind(this);
-    this.onFocus = this.onFocus.bind(this);
   } 
 
   public render(): JSX.Element {
@@ -145,26 +142,26 @@ export class DateField extends React.Component<Properties, State> {
     window.removeEventListener('resize', this.handleResize);
   }
 
-  private handleResize() {
+  private handleResize = () => {
     if(this.props.displaySize === DisplaySize.SMALL && 
         this.state.componentWidth !== this.containerRef.current.clientWidth) {
       this.setState({componentWidth: this.containerRef.current.clientWidth});
     }
   }
 
-  private onFocus() {
+  private onFocus = () => {
     if(!this.props.readonly) {
       this.setState({isFocused: true});
     }
   }
 
-  private onBlur() {
+  private onBlur = () => {
     if(!this.props.readonly) {
       this.setState({isFocused: false});
     }
   }
 
-  private onChange(dateUnit: DateUnit, value: number) {
+  private onChange = (dateUnit: DateUnit, value: number) => {
     const oldValue = this.props.value;
     const newValue = (() => {
       switch(dateUnit) {
@@ -193,7 +190,7 @@ export class DateField extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
-    },
+    } as React.CSSProperties,
     containerLarge: {
       boxSizing: 'border-box' as 'border-box',
       display: 'flex' as 'flex',
@@ -206,7 +203,7 @@ export class DateField extends React.Component<Properties, State> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
-    },
+    } as React.CSSProperties,
     inner: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -214,7 +211,7 @@ export class DateField extends React.Component<Properties, State> {
       justifyContent: 'flex-start' as 'flex-start',
       alignItems: 'center',
       marginLeft: '9px'
-    },
+    } as React.CSSProperties,
     defaultIntegerBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
@@ -223,7 +220,7 @@ export class DateField extends React.Component<Properties, State> {
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0
-    },
+    } as React.CSSProperties,
     yearBox: {
       boxSizing: 'border-box' as 'border-box',
       font: '400 14px Roboto',
@@ -231,7 +228,7 @@ export class DateField extends React.Component<Properties, State> {
       height: '17px',
       border: '0px solid #ffffff',
       padding: 0
-    },
+    } as React.CSSProperties,
     slash: {
       width: '10px',
       height: '16px',
@@ -241,7 +238,7 @@ export class DateField extends React.Component<Properties, State> {
       justifyContent: 'center',
       alignItems: 'center',
       cursor: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     hintText: {
       font: '500 11px Roboto',
       color: '#8C8C8C',
@@ -250,14 +247,14 @@ export class DateField extends React.Component<Properties, State> {
       alignItems: 'center',
       marginRight: '10px', 
       cursor: 'default' as 'default'
-    },
+    } as React.CSSProperties,
     focused: {
       outline: 0,
       outlineColor: 'transparent',
       outlineStyle: 'none',
       border: '1px solid #684BC7',
       borderRadius: '1px'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

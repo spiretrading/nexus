@@ -165,10 +165,10 @@ export class DropDownButton extends React.Component<Properties, State> {
       width: '20px',
       height: '20px',
       cursor: 'pointer'
-    },
+    } as React.CSSProperties,
     componentWrapper: {
       width: '20px',
       height: '20px'
-    }
+    } as React.CSSProperties
   };
 }

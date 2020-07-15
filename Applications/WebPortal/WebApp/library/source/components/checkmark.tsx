@@ -27,7 +27,6 @@ export class Checkmark extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onClick = this.onClick.bind(this);
   }
   
   public render(): JSX.Element {
@@ -60,7 +59,7 @@ export class Checkmark extends React.Component<Properties> {
       </div>);
   }
 
-  private onClick() {
+  private onClick = () => {
     if(!this.props.readonly) {
       this.props.onClick();
     }
@@ -76,7 +75,7 @@ export class Checkmark extends React.Component<Properties> {
       alignContent: 'center' as 'center',
       justifyContent: 'center' as 'center',
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     containerReadonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '20px',
@@ -86,7 +85,7 @@ export class Checkmark extends React.Component<Properties> {
       alignContent: 'center' as 'center',
       justifyContent: 'center' as 'center',
       cursor: 'default' as 'default'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     noDefaults: {

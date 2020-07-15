@@ -49,6 +49,6 @@ export class RolePanel extends React.Component<Properties> {
       flexGrow: 0,
       flexShrink: 0,
       cursor: 'inherit' as 'inherit'
-    }
+    } as React.CSSProperties
   };
 }

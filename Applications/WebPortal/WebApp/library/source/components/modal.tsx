@@ -24,7 +24,6 @@ export class Modal extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.outOfBoundsClick = this.outOfBoundsClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -63,7 +62,7 @@ export class Modal extends React.Component<Properties> {
       </div>);
   }
 
-  private outOfBoundsClick(event: React.MouseEvent<HTMLDivElement>) {
+  private outOfBoundsClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if(event.target === event.currentTarget) {
       this.props.onClose();
     }
@@ -75,12 +74,12 @@ export class Modal extends React.Component<Properties> {
       width: '100%',
       position: 'fixed' as 'fixed',
       zIndex: 9998000
-    },
+    } as React.CSSProperties,
     filler: {
       flexBasis: '20px',
       flexGrow: 1,
       flexShrink: 0
-    },
+    } as React.CSSProperties,
     overlay: {
       height: '100%',
       width: '100%',
@@ -94,7 +93,7 @@ export class Modal extends React.Component<Properties> {
       left: 0,
       right: 0,
       zIndex: 9998000
-    },
+    } as React.CSSProperties,
     modalWrapperSmall: {
       overflowY: 'auto' as 'auto',
       overflowX: 'hidden' as 'hidden',
@@ -112,7 +111,7 @@ export class Modal extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       flexDirection: 'row' as 'row',
       zIndex: 100000000
-    },
+    } as React.CSSProperties,
     modalSmall: {
       boxSizing: 'border-box' as 'border-box',
       paddingBottom: '40px',
@@ -125,7 +124,7 @@ export class Modal extends React.Component<Properties> {
       justifyContent: 'flex-start' as 'flex-start',
       flexGrow: 0,
       flexShrink: 0
-    },
+    } as React.CSSProperties,
     modalWrapperLarge: {
       overflowY: 'auto' as 'auto',
       overflowX: 'hidden' as 'hidden',
@@ -143,7 +142,7 @@ export class Modal extends React.Component<Properties> {
       flexWrap: 'nowrap' as 'nowrap',
       flexDirection: 'column' as 'column',
       zIndex: 100000000
-    },
+    } as React.CSSProperties,
     modalLarge: {
       boxSizing: 'border-box' as 'border-box',
       backgroundColor: '#FFFFFF',
@@ -151,6 +150,6 @@ export class Modal extends React.Component<Properties> {
       alignSelf: 'center' as 'center',
       flexGrow: 0,
       flexShrink: 0
-    }
+    }  as React.CSSProperties
   };
 }

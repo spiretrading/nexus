@@ -101,7 +101,7 @@ export class TextField extends React.Component<Properties> {
       width: '100%',
       paddingLeft: '10px',
       backgroundColor: '#FFFFFF'
-    },
+    } as React.CSSProperties,
     boxMedium: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -117,7 +117,7 @@ export class TextField extends React.Component<Properties> {
       minWidth: '284px',
       paddingLeft: '10px',
       backgroundColor: '#FFFFFF'
-    },
+    } as React.CSSProperties,
     boxLarge: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -133,7 +133,7 @@ export class TextField extends React.Component<Properties> {
       minWidth: '350px',
       paddingLeft: '10px',
       backgroundColor: '#FFFFFF'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

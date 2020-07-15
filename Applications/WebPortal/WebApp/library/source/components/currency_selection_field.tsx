@@ -31,7 +31,6 @@ export class CurrencySelectionField extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -41,7 +40,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
       } else {
         return CurrencySelectionField.STYLE.selectionBox;
       }
-    })();
+    })() as React.CSSProperties;
     const defaultValue = (() => {
       if(this.props.value) {
         return this.props.currencyDatabase.fromCurrency(this.props.value).code;
@@ -65,7 +64,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
       </select>);
   }
 
-  private onChange(event: React.ChangeEvent<any>): void {
+  private onChange = (event: React.ChangeEvent<any>): void => {
     if(!this.props.readonly) {
       this.props.onChange(this.props.currencyDatabase.fromCode(
         event.target.value).currency);
@@ -94,7 +93,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
       flexGrow: 1,
       flexShrink: 1,
       cursor: 'pointer' as 'pointer'
-    },
+    } as React.CSSProperties,
     readonly: {
       boxSizing: 'border-box' as 'border-box',
       height: '34px',
@@ -115,7 +114,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
       width: '100%',
       flexGrow: 1,
       flexShrink: 1
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

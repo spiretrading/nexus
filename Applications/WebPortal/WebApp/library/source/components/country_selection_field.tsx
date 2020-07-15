@@ -30,7 +30,6 @@ export class CountrySelectionField extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -71,7 +70,7 @@ export class CountrySelectionField extends React.Component<Properties> {
     return (<div>{content}</div>);
   }
 
-  private onChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+  private onChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
     this.props.onChange(code);
   }
@@ -81,12 +80,12 @@ export class CountrySelectionField extends React.Component<Properties> {
       height: '34px',
       font: '400 16px Roboto',
       width: '100%'
-    },
+    } as React.CSSProperties,
     boxLarge: {
       width: '200px',
       height: '34px',
       font: '400 14px Roboto'
-    },
+    } as React.CSSProperties,
     selectionBoxStyle: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '7px',
@@ -101,7 +100,7 @@ export class CountrySelectionField extends React.Component<Properties> {
       MozAppearance: 'none' as 'none',
       WebkitAppearance: 'none' as 'none',
       appearance: 'none' as 'none'
-    }
+    } as React.CSSProperties
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({
     noHighting: {

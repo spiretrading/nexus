@@ -45,10 +45,6 @@ export class IntegerField extends React.Component<Properties, State> {
     this.state = {
       value: props.value || this.props.min
     };
-    this.onKeyDown = this.onKeyDown.bind(this);
-    this.onWheel = this.onWheel.bind(this);
-    this.onChange = this.onChange.bind(this);
-    this.onBlur = this.onBlur.bind(this);
   }
 
   public render(): JSX.Element {
@@ -67,7 +63,7 @@ export class IntegerField extends React.Component<Properties, State> {
         type={'text'}/>);
   }
 
-  private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.keyCode === 38) {
       this.increment();
     } else if(event.keyCode === 40) {
@@ -75,7 +71,7 @@ export class IntegerField extends React.Component<Properties, State> {
     }
   }
 
-  private onWheel(event: React.WheelEvent<HTMLInputElement>) {
+  private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
     if(document.activeElement !== event.target) {
       return;
     }
@@ -86,7 +82,7 @@ export class IntegerField extends React.Component<Properties, State> {
     }
   }
 
-  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = (() => {
       if(event.target.value.length === 0) {
         return 0;
@@ -101,7 +97,7 @@ export class IntegerField extends React.Component<Properties, State> {
     this.setState({value: value});
   }
 
-  private onBlur() {
+  private onBlur = () => {
     const value = (() => {
       if(this.state.value < this.props.min) {
         return this.props.min;
@@ -114,7 +110,7 @@ export class IntegerField extends React.Component<Properties, State> {
     this.update(value);
   }
 
-  private increment() {
+  private increment = () => {
     const increment = this.state.value + 1;
     if(this.props.max != null && increment > this.props.max) {
       return;
@@ -122,7 +118,7 @@ export class IntegerField extends React.Component<Properties, State> {
     this.update(increment);
   }
 
-  private decrement() {
+  private decrement = () => {
     const decrement = this.state.value - 1;
     if(this.props.min != null && decrement < this.props.min) {
       return;
@@ -130,7 +126,7 @@ export class IntegerField extends React.Component<Properties, State> {
     this.update(decrement);
   }
 
-  private update(value: number) {
+  private update = (value: number) => {
     if(this.props.onChange) {
       const commit = this.props.onChange(value);
       if(commit != null && commit === false) {
@@ -152,7 +148,7 @@ export class IntegerField extends React.Component<Properties, State> {
       color: '#333333',
       textAlign: 'center' as 'center',
       backgroundColor: '#FFFFFF'
-    }
+    } as React.CSSProperties
   };
   private static EXTRA_STYLE = StyleSheet.create({
     effects: {
