@@ -8,12 +8,16 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     QWidget* parent)
     : QLineEdit(parent) {
   setFocusPolicy(Qt::StrongFocus);
+  apply_line_edit_style(this);
   connect(this, &QLineEdit::textEdited, this,
     &FilteredDropDownMenu::on_text_edited);
   if(!items.empty()) {
     m_current_item = items.front();
   }
   m_menu_list = new DropDownList({}, true, this);
+  m_menu_list->connect_activated_signal([=] (const auto& value) {
+    on_item_activated(value);
+  });
   m_menu_list->connect_selected_signal([=] (const auto& value) {
     on_item_selected(value);
   });
@@ -52,6 +56,10 @@ const std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
     }
   }
   return widget_items;
+}
+
+void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
+  setText(m_item_delegate.displayText(item));
 }
 
 void FilteredDropDownMenu::on_item_selected(const QVariant& item) {

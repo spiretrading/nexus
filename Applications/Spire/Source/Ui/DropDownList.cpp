@@ -72,6 +72,16 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
   DropDownWindow::keyPressEvent(event);
 }
 
+connection DropDownList::connect_activated_signal(
+    const ActivatedSignal::slot_type& slot) const {
+  return m_activated_signal.connect(slot);
+}
+
+connection DropDownList::connect_highlighted_signal(
+    const HighlightedSignal::slot_type& slot) const {
+  return m_highlighted_signal.connect(slot);
+}
+
 connection DropDownList::connect_selected_signal(
     const SelectedSignal::slot_type& slot) const {
   return m_selected_signal.connect(slot);
@@ -132,8 +142,10 @@ void DropDownList::set_highlight(int index) {
     index = 0;
   }
   m_highlight_index = index;
-  get_widget(*m_highlight_index)->set_highlight();
+  auto highlighted_widget = get_widget(*m_highlight_index);
+  highlighted_widget->set_highlight();
   scroll_to_highlight();
+  m_activated_signal(highlighted_widget->get_value());
 }
 
 void DropDownList::scroll_to_highlight() {

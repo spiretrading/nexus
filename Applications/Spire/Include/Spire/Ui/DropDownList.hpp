@@ -10,6 +10,10 @@ namespace Spire {
   class DropDownList : public DropDownWindow {
     public:
 
+      using ActivatedSignal = Signal<void (const QVariant& value)>;
+
+      using HighlightedSignal = Signal<void (const QVariant& value)>;
+
       using SelectedSignal = Signal<void (const QVariant& value)>;
 
       explicit DropDownList(std::vector<DropDownItem*> items,
@@ -17,6 +21,12 @@ namespace Spire {
 
       void set_items(std::vector<DropDownItem*> items);
 
+      boost::signals2::connection connect_activated_signal(
+        const ActivatedSignal::slot_type& slot) const;
+      
+      boost::signals2::connection connect_highlighted_signal(
+        const HighlightedSignal::slot_type& slot) const;
+      
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
@@ -26,6 +36,8 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event);
 
     private:
+      mutable ActivatedSignal m_activated_signal;
+      mutable HighlightedSignal m_highlighted_signal;
       mutable SelectedSignal m_selected_signal;
       int m_max_displayed_items;
       QVBoxLayout* m_layout;

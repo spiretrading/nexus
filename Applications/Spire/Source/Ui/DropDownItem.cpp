@@ -17,6 +17,10 @@ DropDownItem::DropDownItem(const QVariant& value,
   setFont(font);
 }
 
+void DropDownItem::enterEvent(QEvent* event) {
+  m_highlighted_signal(m_value);
+}
+
 void DropDownItem::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_selected_signal(m_value);
@@ -38,6 +42,11 @@ void DropDownItem::paintEvent(QPaintEvent* event) {
     m_item_delegate.displayText(m_value), Qt::ElideRight,
     width() - RIGHT_PADDING());
   painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
+}
+
+connection DropDownItem::connect_highlighted_signal(
+    const SelectedSignal::slot_type& slot) const {
+  return m_selected_signal.connect(slot);
 }
 
 connection DropDownItem::connect_selected_signal(
