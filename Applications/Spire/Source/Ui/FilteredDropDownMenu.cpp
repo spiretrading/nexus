@@ -98,7 +98,12 @@ void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
           font.setPixelSize(scale_height(12));
           painter.setFont(font);
           auto metrics = QFontMetrics(font);
-          painter.setPen(QColor("#8C8C8C"));
+          painter.fillRect(cursorRect().right() - scale_width(2),
+            (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
+            metrics.horizontalAdvance(item_text),
+            metrics.ascent() + scale_height(4), QColor("#0078D7"));
+            //metrics.ascent() + scale_height(4), QColor("#4B23A0"));
+          painter.setPen(Qt::white);
           painter.drawText(QPoint(cursorRect().right() - scale_width(2),
             (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
         }
