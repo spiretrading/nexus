@@ -34,7 +34,6 @@ export class RiskController extends React.Component<Properties, State> {
       isLoaded: false,
       status: ''
     }
-    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
@@ -56,12 +55,13 @@ export class RiskController extends React.Component<Properties, State> {
       () => {
         this.setState({
           isLoaded: true
+        });
       });
-    })
   }
   
 
-  private async onSubmit(comment: string, parameters: Nexus.RiskParameters) {
+  private onSubmit = async (comment: string,
+      parameters: Nexus.RiskParameters) => {
     try {
       this.setState({
         isError: false,

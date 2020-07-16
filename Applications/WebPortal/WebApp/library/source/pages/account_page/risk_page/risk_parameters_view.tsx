@@ -37,10 +37,6 @@ export class RiskParametersView extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onCurrencyChange = this.onCurrencyChange.bind(this);
-    this.onBuyingPowerChange = this.onBuyingPowerChange.bind(this);
-    this.onNetLossChange = this.onNetLossChange.bind(this);
-    this.onTransitionTimeChange = this.onTransitionTimeChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -132,25 +128,25 @@ export class RiskParametersView extends React.Component<Properties> {
       </HBoxLayout>);
   }
 
-  private onCurrencyChange(value: Nexus.Currency) {
+  private onCurrencyChange = (value: Nexus.Currency) => {
     const newParameters = this.props.parameters.clone();
     newParameters.currency = value;
     this.props.onChange(newParameters);
   }
 
-  private onBuyingPowerChange(value: Nexus.Money) {
+  private onBuyingPowerChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.buyingPower = value;
     this.props.onChange(newParameters);
   }
 
-  private onNetLossChange(value: Nexus.Money) {
+  private onNetLossChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.netLoss = value;
     this.props.onChange(newParameters);
   }
 
-  private onTransitionTimeChange(value: number, timeUnit: TimeUnit) {
+  private onTransitionTimeChange = (value: number, timeUnit: TimeUnit) => {
     const timeJSON = this.props.parameters.transitionTime.split();
     const newTimeJSON = (() => {
       switch (timeUnit) {
