@@ -422,7 +422,6 @@ interface SymbolFieldProperties {
 class SymbolField extends React.Component<SymbolFieldProperties> {
   constructor(props: SymbolFieldProperties) {
     super(props);
-    this.onClick = this.onClick.bind(this);
   }
   
   public render() {
@@ -456,7 +455,7 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
       </div>);
   }
 
-  private onClick() {
+  private onClick = () => {
     if(this.props.value.symbol !== ''){
       this.props.onClick(!this.props.isSelected);
     }
@@ -464,29 +463,29 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
 
   private static readonly STYLE = {
     scrollBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '76px',
       width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
+      overflowY: 'auto'
+    } as React.CSSProperties,
     scrollBoxHeader: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
       height: '40px',
       maxWidth: '264px',
       color: '#4B23A0',
       font: '500 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       borderBottom: '1px solid #C8C8C8',
-      position: 'sticky' as 'sticky',
+      position: 'sticky',
       top: 0,
-      cursor: 'default' as 'default'
-    }
+      cursor: 'default'
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     scrollBoxEntry: {
