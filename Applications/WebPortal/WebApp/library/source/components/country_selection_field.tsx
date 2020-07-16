@@ -70,7 +70,7 @@ export class CountrySelectionField extends React.Component<Properties> {
     return (<div>{content}</div>);
   }
 
-  private onChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+  private onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
     this.props.onChange(code);
   }

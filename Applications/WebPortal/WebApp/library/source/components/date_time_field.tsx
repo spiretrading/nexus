@@ -145,7 +145,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private onPeriodChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+  private onPeriodChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const period = parseInt(event.target.value);
     this.setState({
       period: period,
