@@ -121,7 +121,7 @@ export class LoginPage extends React.Component<Properties> {
   private static readonly STATIC_STYLES = {
     page: {
       backgroundColor: '#4B23A0',
-      boxSizing: 'border-box' as 'border-box'
+      boxSizing: 'border-box'
     } as React.CSSProperties,
     logoVisible: {
       width: '130px',
@@ -133,7 +133,7 @@ export class LoginPage extends React.Component<Properties> {
     } as React.CSSProperties,
     errorMessage: {
       width: '100%',
-      textAlign: 'center' as 'center',
+      textAlign: 'center',
       font: '300 14px Roboto',
       height: '20px',
       color: '#FAEB96'
