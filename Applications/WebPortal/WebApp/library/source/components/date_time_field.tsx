@@ -167,17 +167,17 @@ export class DateTimeField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     outerWrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
       height: '78px'
     } as React.CSSProperties,
     durationWrapper: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
+      display: 'flex',
+      flexDirection: 'row'
     } as React.CSSProperties,
     select: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       marginLeft: '10px',
       paddingLeft: '7px',
@@ -193,12 +193,12 @@ export class DateTimeField extends React.Component<Properties, State> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none'
     } as React.CSSProperties,
     selectReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       marginLeft: '10px',
       paddingLeft: '7px',
@@ -214,9 +214,9 @@ export class DateTimeField extends React.Component<Properties, State> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none'
     } as React.CSSProperties,
     filler: {
       height: '10px',

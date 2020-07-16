@@ -156,12 +156,12 @@ export class MoneyField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     input: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',

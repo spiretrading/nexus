@@ -45,7 +45,7 @@ export class Button extends React.Component<Properties> {
 
   private static readonly STYLE = {
     default: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '246px',
       backgroundColor: '#684BC7',
@@ -54,11 +54,11 @@ export class Button extends React.Component<Properties> {
       borderRadius: '1px',
       font: '400 16px Roboto',
       outline: 'none',
-      MozAppearance: 'none' as 'none',
-      cursor: 'pointer' as 'pointer'
+      MozAppearance: 'none',
+      cursor: 'pointer'
     } as React.CSSProperties,
     readonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '246px',
       backgroundColor: '#F8F8F8',
@@ -67,8 +67,8 @@ export class Button extends React.Component<Properties> {
       borderRadius: '1px',
       font: '400 16px Roboto',
       outline: 'none',
-      MozAppearance: 'none' as 'none',
-      cursor: 'default' as 'default'
+      MozAppearance: 'none',
+      cursor: 'default'
     } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({

@@ -85,12 +85,12 @@ export class TextField extends React.Component<Properties> {
 
   private static readonly STYLE = {
     boxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
@@ -103,12 +103,12 @@ export class TextField extends React.Component<Properties> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     boxMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
@@ -119,12 +119,12 @@ export class TextField extends React.Component<Properties> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     boxLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',

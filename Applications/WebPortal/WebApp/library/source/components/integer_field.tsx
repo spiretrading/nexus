@@ -140,13 +140,13 @@ export class IntegerField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     editBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '16px Roboto',
       width: '66px',
       height: '34px',
       border: '1px solid #C8C8C8',
       color: '#333333',
-      textAlign: 'center' as 'center',
+      textAlign: 'center',
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties
   };

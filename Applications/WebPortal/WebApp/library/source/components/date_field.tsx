@@ -178,42 +178,42 @@ export class DateField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     containerSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
       minWidth: '184px',
       width: '100%',
       flexShrink: 1,
       flexGrow: 1,
       backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
+      justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
     } as React.CSSProperties,
     containerLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
       flexGrow: 1,
       flexShrink: 1,
       maxWidth: '246px',
       backgroundColor: '#ffffff',
-      justifyContent: 'space-between' as 'space-between',
+      justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       height: '34px'
     } as React.CSSProperties,
     inner: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       flexGrow: 1,
-      justifyContent: 'flex-start' as 'flex-start',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       marginLeft: '9px'
     } as React.CSSProperties,
     defaultIntegerBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       minWidth: '16px',
       maxWidth: '16px',
@@ -222,7 +222,7 @@ export class DateField extends React.Component<Properties, State> {
       padding: 0
     } as React.CSSProperties,
     yearBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       width: '34px',
       height: '17px',
@@ -234,19 +234,19 @@ export class DateField extends React.Component<Properties, State> {
       height: '16px',
       flexGrow: 0,
       flexShrink: 0,
-      display: 'flex' as 'flex',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     } as React.CSSProperties,
     hintText: {
       font: '500 11px Roboto',
       color: '#8C8C8C',
-      display: 'flex' as 'flex',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: '10px', 
-      cursor: 'default' as 'default'
+      cursor: 'default'
     } as React.CSSProperties,
     focused: {
       outline: 0,

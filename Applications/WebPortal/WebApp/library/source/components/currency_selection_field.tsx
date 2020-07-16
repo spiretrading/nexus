@@ -73,7 +73,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
 
   private static readonly STYLE = {
     selectionBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       font: '400 14px Roboto',
       paddingLeft: '7px',
@@ -85,17 +85,17 @@ export class CurrencySelectionField extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
       minWidth: '246px',
       width: '100%',
       flexGrow: 1,
       flexShrink: 1,
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     } as React.CSSProperties,
     readonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       font: '400 14px Roboto',
       paddingLeft: '7px',
@@ -107,9 +107,9 @@ export class CurrencySelectionField extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
       minWidth: '246px',
       width: '100%',
       flexGrow: 1,

@@ -41,14 +41,14 @@ export class RolePanel extends React.Component<Properties> {
     containerStyle: {
       width: '100%',
       height: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       flexGrow: 0,
       flexShrink: 0,
-      cursor: 'inherit' as 'inherit'
+      cursor: 'inherit'
     } as React.CSSProperties
   };
 }

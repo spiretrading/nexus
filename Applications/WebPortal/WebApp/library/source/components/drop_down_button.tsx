@@ -158,10 +158,10 @@ export class DropDownButton extends React.Component<Properties, State> {
   });
   public static readonly STYLE = {
     imageWrapper: {
-      position: 'relative' as 'relative',
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       width: '20px',
       height: '20px',
       cursor: 'pointer'

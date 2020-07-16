@@ -87,7 +87,7 @@ export class CountrySelectionField extends React.Component<Properties> {
       font: '400 14px Roboto'
     } as React.CSSProperties,
     selectionBoxStyle: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '7px',
       color: '#333333',
       border: '1px solid #C8C8C8',
@@ -97,9 +97,9 @@ export class CountrySelectionField extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none'
     } as React.CSSProperties
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({

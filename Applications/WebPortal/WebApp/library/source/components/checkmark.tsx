@@ -67,24 +67,24 @@ export class Checkmark extends React.Component<Properties> {
 
   private static readonly STYLE = {
     container: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '20px',
       width: '20px',
-      display: 'flex' as 'flex',
-      alignItems: 'center' as 'center',
-      alignContent: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      display: 'flex',
+      alignItems: 'center',
+      alignContent: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer'
     } as React.CSSProperties,
     containerReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '20px',
       width: '20px',
-      display: 'flex' as 'flex',
-      alignItems: 'center' as 'center',
-      alignContent: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      cursor: 'default' as 'default'
+      display: 'flex',
+      alignItems: 'center',
+      alignContent: 'center',
+      justifyContent: 'center',
+      cursor: 'default'
     } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({

@@ -52,7 +52,7 @@ export class SecurityInput extends React.Component<Properties> {
   private static readonly STYLE = {
     input: {
       width: '100%',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       height: '34px',
       paddingLeft: '10px',

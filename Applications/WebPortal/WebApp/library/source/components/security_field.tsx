@@ -200,13 +200,13 @@ export class SecurityField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     textBox: {
-      textOverflow: 'ellipsis' as 'ellipsis',
-      boxSizing: 'border-box' as 'border-box',
+      textOverflow: 'ellipsis',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -214,47 +214,47 @@ export class SecurityField extends React.Component<Properties, State> {
       flexGrow: 1,
       width: '100%',
       paddingLeft: '10px',
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     } as React.CSSProperties,
     hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+      visibility: 'hidden',
+      display: 'none'
     } as React.CSSProperties,
     modalPadding: {
       padding: '18px'
     } as React.CSSProperties,
     clickable: {
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     } as React.CSSProperties,
     header: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       height: '20px',
       marginBottom: '30px'
     } as React.CSSProperties,
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1,
-      cursor: 'default' as 'default'
+      cursor: 'default'
     } as React.CSSProperties,
     symbolHeader: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
       height: '40px',
       maxWidth: '264px',
       color: '#4B23A0',
       font: '500 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       borderBottom: '1px solid #C8C8C8',
-      position: 'sticky' as 'sticky',
+      position: 'sticky',
       top: 0,
-      cursor: 'default' as 'default'
+      cursor: 'default'
     } as React.CSSProperties,
     symbolBoxWrapper: {
       height: '76px',
@@ -263,81 +263,81 @@ export class SecurityField extends React.Component<Properties, State> {
     symbol: {
       height: '34px',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center', 
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center'
     } as React.CSSProperties,
     iconWrapperSmall: {
       height: '24px',
       width: '24px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'pointer' as 'pointer'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'pointer'
     } as React.CSSProperties,
     iconWrapperSmallReadonly: {
       height: '24px',
       width: '24px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'default' as 'default'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'default'
     } as React.CSSProperties,
     iconWrapperLarge: {
       height: '16px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'pointer' as 'pointer'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'pointer'
     } as React.CSSProperties,
     iconWrapperLargeReadonly: {
       height: '16px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'default' as 'default'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'default'
     } as React.CSSProperties,
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
       paddingLeft: '8px',
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     } as React.CSSProperties,
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
       paddingLeft: '8px',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     } as React.CSSProperties,
     iconRowSmall: {
       height: '24px',
       width: '100%',
       marginBottom: '30px',
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-evenly' as 'space-evenly'
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly'
     } as React.CSSProperties,
     iconRowLarge: {
       height: '16px',
       width: '100%',
       marginBottom: '30px',
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-evenly' as 'space-evenly'
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly'
     } as React.CSSProperties,
     buttonWrapper: {
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center'
     } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
