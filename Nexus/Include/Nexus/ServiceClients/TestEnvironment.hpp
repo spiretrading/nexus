@@ -468,6 +468,15 @@ namespace Nexus {
       m_administrationEnvironment.Open();
       m_marketDataEnvironment.Open();
       m_orderExecutionEnvironment.Open();
+      m_serviceLocatorClient->Open();
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      auto administrationClient = m_administrationEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      administrationClient->Open();
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadServicesRootEntry());
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

@@ -186,6 +186,7 @@ namespace Nexus {
       m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
       m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
       m_uidEnvironment.Open();
       auto definitionsServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
@@ -232,6 +233,10 @@ namespace Nexus {
       auto administrationClient = m_administrationEnvironment->BuildClient(
         Beam::Ref(*m_serviceLocatorClient));
       administrationClient->Open();
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadServicesRootEntry());
       auto driverMarketDataClient =
         MarketDataService::MakeVirtualMarketDataClient(
         std::make_unique<BacktesterMarketDataClient>(
