@@ -6,6 +6,7 @@ using namespace Spire;
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
@@ -48,6 +49,9 @@ int main(int argc, char** argv) {
     label->setText(value.value<QString>());
   });
   layout->addWidget(dropdown2);
+  auto toolbar = new ToolbarMenu("Toolbar", test_window);
+  toolbar->setFixedSize(scale(100, 28));
+  layout->addWidget(toolbar);
   auto t = new TextInputWidget(test_window);
   t->setFixedSize(scale(100, 28));
   t->connect(t, &QLineEdit::editingFinished, [=] {
@@ -55,16 +59,18 @@ int main(int argc, char** argv) {
   });
   layout->addWidget(t);
   auto l1 = new QLabel("Static Menu", test_window);
-  l1->move(scale_width(50), scale_height(30));
+  l1->move(scale_width(75), scale_height(30));
   auto l2 = new QLabel("Color Selector", test_window);
-  l2->move(scale_width(200), scale_height(30));
+  l2->move(scale_width(225), scale_height(30));
   auto l3 = new QLabel("Filtered Menu", test_window);
-  l3->move(scale_width(350), scale_height(30));
+  l3->move(scale_width(375), scale_height(30));
   auto l4 = new QLabel("Static w Fixed Label", test_window);
-  l4->move(scale_width(500), scale_height(30));
+  l4->move(scale_width(525), scale_height(30));
+  auto l5 = new QLabel("Toolbar Menu", test_window);
+  l5->move(scale_width(675), scale_height(30));
   auto l6 = new QLabel("Text Input Widget", test_window);
-  l6->move(scale_width(650), scale_height(30));
-  test_window->setFixedSize(scale(800, 150));
+  l6->move(scale_width(825), scale_height(30));
+  test_window->setFixedSize(scale(1000, 150));
   test_window->show();
   dropdown1->setFocus();
   application->exec();
