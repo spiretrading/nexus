@@ -158,7 +158,9 @@ void FilteredDropDownMenu::on_editing_finished() {
   }
   if(m_last_activated_item.isValid()) {
     on_item_selected(m_last_activated_item);
+    setText(m_item_delegate.displayText(m_last_activated_item));
     m_last_activated_item = QVariant();
+    return;
   }
   auto item = m_menu_list->get_value(0);
   if(item.isValid() && !text().isEmpty()) {
@@ -186,11 +188,11 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
 void FilteredDropDownMenu::on_text_edited(const QString& text) {
   m_last_activated_item = QVariant();
   if(text.isEmpty()) {
-    m_menu_list->set_items(std::move(create_widget_items(m_items)));
+    m_menu_list->set_items(create_widget_items(m_items));
     m_menu_list->show();
     return;
   }
-  auto items = std::move(create_widget_items(m_items, text));
+  auto items = create_widget_items(m_items, text);
   if(items.empty()) {
     m_menu_list->hide();
     return;
