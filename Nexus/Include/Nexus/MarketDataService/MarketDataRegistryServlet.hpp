@@ -100,8 +100,6 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      bool HasEntitlement(const MarketDataRegistrySession& session,
-        const EntitlementKey& key, MarketDataType type) const;
       void OnQueryOrderImbalances(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const MarketWideDataQuery& query);
@@ -358,15 +356,6 @@ namespace Nexus::MarketDataService {
   void MarketDataRegistryServlet<C, R, D, A>::Shutdown() {
     m_dataStore->Close();
     m_openState.SetClosed();
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  bool MarketDataRegistryServlet<C, R, D, A>::HasEntitlement(
-      const MarketDataRegistrySession& session,
-      const EntitlementKey& key, MarketDataType type) const {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      session.m_entitlements.HasEntitlement(key, type);
   }
 
   template<typename C, typename R, typename D, typename A>
