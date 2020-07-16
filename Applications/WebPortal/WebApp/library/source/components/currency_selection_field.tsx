@@ -40,7 +40,7 @@ export class CurrencySelectionField extends React.Component<Properties> {
       } else {
         return CurrencySelectionField.STYLE.selectionBox;
       }
-    })() as React.CSSProperties;
+    })();
     const defaultValue = (() => {
       if(this.props.value) {
         return this.props.currencyDatabase.fromCurrency(this.props.value).code;

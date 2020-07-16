@@ -32,7 +32,7 @@ export class Button extends React.Component<Properties> {
       } else {
         return Button.STYLE.default;
       }
-    })() as React.CSSProperties;
+    })();
     return (
       <button style={{...style, ...this.props.style}}
           disabled={this.props.readonly}
