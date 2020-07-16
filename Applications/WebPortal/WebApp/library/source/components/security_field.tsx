@@ -43,7 +43,7 @@ export class SecurityField extends React.Component<Properties, State> {
       isEditing: false,
       localValue: this.props.value,
       isSelected: false
-    }
+    };
   }
 
   public render() {

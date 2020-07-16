@@ -42,7 +42,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
       isEditing: false,
       localValue: this.props.value.slice(),
       selection: -1
-    }
+    };
   }
 
   public render() {
@@ -242,7 +242,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     this.setState({inputString: value});
   }
 
-  private onSubmitChange = ()=> {
+  private onSubmitChange = () => {
     this.props.onChange(this.state.localValue);
     this.onClose();
   }
@@ -270,7 +270,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     });
   }
 
-  private onClose = ()=> {
+  private onClose = () => {
     this.setState({
       isEditing: false
     });
