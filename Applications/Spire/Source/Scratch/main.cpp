@@ -54,7 +54,17 @@ int main(int argc, char** argv) {
     label->setText(t->text());
   });
   layout->addWidget(t);
-  test_window->resize(scale(800, 150));
+  auto l1 = new QLabel("Static Menu", test_window);
+  l1->move(scale_width(50), scale_height(30));
+  auto l2 = new QLabel("Color Selector", test_window);
+  l2->move(scale_width(200), scale_height(30));
+  auto l3 = new QLabel("Filtered Menu", test_window);
+  l3->move(scale_width(350), scale_height(30));
+  auto l4 = new QLabel("Static w Fixed Label", test_window);
+  l4->move(scale_width(500), scale_height(30));
+  auto l6 = new QLabel("Text Input Widget", test_window);
+  l6->move(scale_width(650), scale_height(30));
+  test_window->setFixedSize(scale(800, 150));
   test_window->show();
   dropdown1->setFocus();
   application->exec();
