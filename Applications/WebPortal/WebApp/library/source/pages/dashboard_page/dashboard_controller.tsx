@@ -36,7 +36,6 @@ export class DashboardController extends React.Component<Properties, State> {
       cannotLoad: false,
       redirect: null
     };
-    this.onSideMenuClick = this.onSideMenuClick.bind(this);
   }
 
   public render(): JSX.Element {
@@ -120,7 +119,7 @@ export class DashboardController extends React.Component<Properties, State> {
     return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
 
-  private onSideMenuClick(item: SideMenu.Item) {
+  private onSideMenuClick = (item: SideMenu.Item) => {
     if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
