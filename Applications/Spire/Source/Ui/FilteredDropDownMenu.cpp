@@ -160,7 +160,7 @@ void FilteredDropDownMenu::on_editing_finished() {
     return;
   }
   auto item = m_menu_list->get_value(0);
-  if(item.isValid() && m_item_delegate.displayText(item) == text()) {
+  if(item.isValid() && !text().isEmpty()) {
     on_item_selected(item);
   } else {
     setText(m_item_delegate.displayText(m_current_item));
