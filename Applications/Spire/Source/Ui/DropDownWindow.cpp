@@ -69,6 +69,7 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
           move_to_parent();
           show();
         }
+        return true;
       }
     }
   } else if(watched == static_cast<QWidget*>(parent())->window()) {
@@ -76,6 +77,11 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
       hide();
     } else if(event->type() == QEvent::Move) {
       move_to_parent();
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      auto e = static_cast<QMouseEvent*>(event);
+      if(e->button() == Qt::LeftButton) {
+        hide();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
