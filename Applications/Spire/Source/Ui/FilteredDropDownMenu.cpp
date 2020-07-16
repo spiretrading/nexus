@@ -19,6 +19,8 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
       m_was_last_key_activation(false) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
+  connect(this, &QLineEdit::editingFinished, this,
+    &FilteredDropDownMenu::on_editing_finished);
   connect(this, &QLineEdit::textEdited, this,
     &FilteredDropDownMenu::on_text_edited);
   if(!items.empty()) {
@@ -64,11 +66,11 @@ bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
-  if(!m_menu_list->isVisible() && text().isEmpty()) {
+  if(!hasFocus()) {
     auto painter = QPainter(this);
     painter.fillRect(event->rect(), Qt::white);
     painter.save();
-    if(underMouse() || hasFocus()) {
+    if(underMouse()) {
       draw_border(QColor("#4B23A0"), painter);
     } else {
       draw_border(QColor("#C8C8C8"), painter);
@@ -120,8 +122,8 @@ connection FilteredDropDownMenu::connect_selected_signal(
 }
 
 void FilteredDropDownMenu::set_items(const std::vector<QVariant>& items) {
-  m_items = std::move(items);
-  m_menu_list->set_items(std::move(create_widget_items(m_items)));
+  m_items = items;
+  m_menu_list->set_items(create_widget_items(m_items));
   m_menu_list->setFixedWidth(width());
 }
 
@@ -151,6 +153,16 @@ void FilteredDropDownMenu::draw_border(const QColor& color,
   painter.setPen(color);
   painter.drawRect(0, 0, width() - 1, height() - 1);
   painter.restore();
+}
+
+void FilteredDropDownMenu::on_editing_finished() {
+  if(text().isEmpty()) {
+    return;
+  }
+  auto item = m_menu_list->get_value(0);
+  if(item.isValid() && m_item_delegate.displayText(item) == text()) {
+    on_item_selected(item);
+  }
 }
 
 void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
