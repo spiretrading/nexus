@@ -29,8 +29,8 @@ namespace Spire {
       DropDownList* m_menu_list;
       std::vector<QVariant> m_items;
       QVariant m_current_item;
+      QVariant m_last_activated_item;
       CustomVariantItemDelegate m_item_delegate;
-      bool m_was_last_key_activation;
       boost::signals2::scoped_connection m_list_selection_connection;
 
       const std::vector<DropDownItem*> create_widget_items(

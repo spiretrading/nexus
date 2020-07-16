@@ -15,8 +15,7 @@ namespace {
 
 FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     QWidget* parent)
-    : TextInputWidget(parent),
-      m_was_last_key_activation(false) {
+    : TextInputWidget(parent) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   connect(this, &QLineEdit::editingFinished, this,
@@ -46,15 +45,13 @@ bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
         clear();
       } else if(m_menu_list->isVisible()) {
         if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return &&
-            !m_was_last_key_activation) {
+            !m_last_activated_item.isValid()) {
           auto item = std::move(m_menu_list->get_value(0));
           if(item.isValid()) {
             m_list_selection_connection.disconnect();
             on_item_selected(item);
           }
         }
-      } else if(e->key() != Qt::Key_Down && e->key() != Qt::Key_Up) {
-        m_was_last_key_activation = false;
       }
     }
   } else if(watched == m_menu_list) {
@@ -159,6 +156,10 @@ void FilteredDropDownMenu::on_editing_finished() {
   if(text().isEmpty()) {
     return;
   }
+  if(m_last_activated_item.isValid()) {
+    on_item_selected(m_last_activated_item);
+    m_last_activated_item = QVariant();
+  }
   auto item = m_menu_list->get_value(0);
   if(item.isValid() && !text().isEmpty()) {
     on_item_selected(item);
@@ -168,7 +169,7 @@ void FilteredDropDownMenu::on_editing_finished() {
 }
 
 void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
-  m_was_last_key_activation = true;
+  m_last_activated_item = item;
   setText(m_item_delegate.displayText(item));
 }
 
@@ -183,7 +184,7 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
 }
 
 void FilteredDropDownMenu::on_text_edited(const QString& text) {
-  m_was_last_key_activation = false;
+  m_last_activated_item = QVariant();
   if(text.isEmpty()) {
     m_menu_list->set_items(std::move(create_widget_items(m_items)));
     m_menu_list->show();
