@@ -36,7 +36,6 @@ export class NumberField extends React.Component<Properties> {
 
   constructor(props: Properties) {
     super(props);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -59,18 +58,18 @@ export class NumberField extends React.Component<Properties> {
           this.props.className}/>);
   }
 
-  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.props.onChange(event.target.valueAsNumber);
   }
 
   private static STYLE = {
     box: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
@@ -82,15 +81,15 @@ export class NumberField extends React.Component<Properties> {
       width: '100%',
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
-      appearance: 'none' as 'none'
-    },
+      appearance: 'none'
+    } as React.CSSProperties,
     boxReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
@@ -102,9 +101,9 @@ export class NumberField extends React.Component<Properties> {
       width: '100%',
       paddingLeft: '10px',
       WebkitAppearance: 'textfield',
-      appearance: 'none' as 'none',
+      appearance: 'none',
       backgroundColor: '#FFFFFF'
-    }
+    } as React.CSSProperties
   };
   private static EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
