@@ -1,14 +1,14 @@
 #ifndef SPIRE_MONEY_INPUT_WIDGET_HPP
 #define SPIRE_MONEY_INPUT_WIDGET_HPP
-#include <QLineEdit>
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/TextInputWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Displays an input box that accepts Money values.
-  class MoneyInputWidget : public QLineEdit {
+  class MoneyInputWidget : public TextInputWidget {
     public:
 
       //! Signals that the user has modified the input box or submitted a

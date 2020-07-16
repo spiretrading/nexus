@@ -9,6 +9,7 @@ using namespace Spire;
 #include "Spire/Ui/ColorSelectorButton.hpp"
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
+#include "Spire/Ui/TextInputWidget.hpp"
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
@@ -47,6 +48,12 @@ int main(int argc, char** argv) {
     label->setText(value.value<QString>());
   });
   layout->addWidget(dropdown2);
+  auto t = new TextInputWidget(test_window);
+  t->setFixedSize(scale(100, 28));
+  t->connect(t, &QLineEdit::editingFinished, [=] {
+    label->setText(t->text());
+  });
+  layout->addWidget(t);
   test_window->resize(scale(800, 150));
   test_window->show();
   dropdown1->setFocus();

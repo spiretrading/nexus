@@ -1,13 +1,13 @@
 #ifndef SPIRE_FILTERED_DROP_DOWN_MENU_HPP
 #define SPIRE_FILTERED_DROP_DOWN_MENU_HPP
-#include <QLineEdit>
 #include <QVariant>
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/TextInputWidget.hpp"
 
 namespace Spire {
 
-  class FilteredDropDownMenu : public QLineEdit {
+  class FilteredDropDownMenu : public TextInputWidget {
     public:
 
       using SelectedSignal = Signal<void (const QVariant& value)>;

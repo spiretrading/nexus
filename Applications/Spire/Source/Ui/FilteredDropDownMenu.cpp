@@ -15,12 +15,10 @@ namespace {
 
 FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     QWidget* parent)
-    : QLineEdit(parent),
+    : TextInputWidget(parent),
       m_was_last_key_activation(false) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
-  setContextMenuPolicy(Qt::NoContextMenu);
-  apply_line_edit_style(this);
   connect(this, &QLineEdit::textEdited, this,
     &FilteredDropDownMenu::on_text_edited);
   if(!items.empty()) {

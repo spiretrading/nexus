@@ -1,7 +1,7 @@
 #ifndef SPIRE_COLOR_SELECTOR_HEX_INPUT_WIDGET_HPP
 #define SPIRE_COLOR_SELECTOR_HEX_INPUT_WIDGET_HPP
-#include <QLineEdit>
 #include <QWidget>
+#include "Spire/Ui/TextInputWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -38,7 +38,7 @@ namespace Spire {
 
     private:
       mutable ColorSignal m_color_signal;
-      QLineEdit* m_line_edit;
+      TextInputWidget* m_text_input;
       QString m_color_name;
 
       void on_text_changed(const QString& text);

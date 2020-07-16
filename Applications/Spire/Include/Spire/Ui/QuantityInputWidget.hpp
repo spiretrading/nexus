@@ -1,14 +1,14 @@
 #ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #define SPIRE_QUANTITY_INPUT_WIDGET_HPP
-#include <QLineEdit>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/TextInputWidget.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   //! Displays an input box that accepts Quantities.
-  class QuantityInputWidget : public QLineEdit {
+  class QuantityInputWidget : public TextInputWidget {
     public:
 
       //! Signals that the user has modified the input box or submitted a
