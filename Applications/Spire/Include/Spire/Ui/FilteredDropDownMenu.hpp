@@ -41,7 +41,8 @@ namespace Spire {
         const std::vector<QVariant>& items);
       const std::vector<DropDownItem*> create_widget_items(
         const std::vector<QVariant>& items, const QString& filter_text);
-      void draw_border(const QColor& color, QPainter& painter);
+      void draw_border(const QColor& color);
+      void draw_highlight(const QString& highlight_text);
       void on_editing_finished();
       void on_item_activated(const QVariant& item);
       void on_item_selected(const QVariant& item);

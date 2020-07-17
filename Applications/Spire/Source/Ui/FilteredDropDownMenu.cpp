@@ -90,24 +90,12 @@ void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
       if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
           item_text.length() != text().length()) {
         item_text = item_text.remove(0, text().length());
-        auto painter = QPainter(this);
-        auto font = QFont("Roboto");
-        font.setPixelSize(scale_height(12));
-        painter.setFont(font);
-        auto metrics = QFontMetrics(font);
-        painter.fillRect(cursorRect().right() - scale_width(2),
-          (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
-          metrics.horizontalAdvance(item_text),
-          metrics.ascent() + scale_height(4), QColor("#0078D7"));
-        painter.setPen(Qt::white);
-        painter.drawText(QPoint(cursorRect().right() - scale_width(2),
-          (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
+        draw_highlight(item_text);
       }
     }
   }
   if(m_menu_list->isActiveWindow()) {
-    auto painter = QPainter(this);
-    draw_border(QColor("#4B23A0"), painter);
+    draw_border(QColor("#4B23A0"));
   }
 }
 
@@ -142,12 +130,27 @@ const std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
   return widget_items;
 }
 
-void FilteredDropDownMenu::draw_border(const QColor& color,
-    QPainter& painter) {
-  painter.save();
+void FilteredDropDownMenu::draw_border(const QColor& color) {
+  auto painter = QPainter(this);
   painter.setPen(color);
   painter.drawRect(0, 0, width() - 1, height() - 1);
-  painter.restore();
+}
+
+void FilteredDropDownMenu::draw_highlight(const QString& highlight_text) {
+  auto painter = QPainter(this);
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  painter.setFont(font);
+  auto metrics = QFontMetrics(font);
+  auto highlight_x_pos = metrics.horizontalAdvance(text()) + PADDING() +
+    scale_width(3);
+  painter.fillRect(highlight_x_pos,
+    (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
+    metrics.horizontalAdvance(highlight_text),
+    metrics.ascent() + scale_height(4), QColor("#0078D7"));
+  painter.setPen(Qt::white);
+  painter.drawText(QPoint(highlight_x_pos,
+    (height() / 2) + (metrics.ascent() / 2) - 1), highlight_text);
 }
 
 void FilteredDropDownMenu::on_editing_finished() {
@@ -161,7 +164,7 @@ void FilteredDropDownMenu::on_editing_finished() {
     m_last_activated_item = QVariant();
     return;
   }
-  auto item = m_menu_list->get_value(0);
+  auto item = std::move(m_menu_list->get_value(0));
   if(item.isValid() &&
       m_item_delegate.displayText(item).startsWith(text(), Qt::CaseInsensitive)) {
     on_item_selected(item);
