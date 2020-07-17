@@ -79,30 +79,30 @@ export class FormEntry extends React.Component<Properties> {
 
   private static STYLE = {
     box: {
-      boxSizing: 'border-box' as 'border-box'
-    },
+      boxSizing: 'border-box',
+    } as React.CSSProperties,
     childBox: {
       width: '100%',
       flex: '1 1 auto'
-    },
+    } as React.CSSProperties,
     horizontalHeader: {
       height: '34px',
       width: '130px',
       font: '400 14px Roboto',
       color: '#333333',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       flex: '0 0 130px'
-    },
+    } as React.CSSProperties,
     verticalHeader : {
       height: '16px',
       font: '400 14px Roboto',
       color: '#333333',
       paddingLeft: '10px',
       flexGrow: 1
-    }
+    } as React.CSSProperties
   };
   private static readonly VERTICAL_PADDING = '12px';
   private static readonly HORIZONTAL_PADDING = '8px';
