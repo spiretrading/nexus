@@ -33,7 +33,7 @@ export class RiskController extends React.Component<Properties, State> {
       isError: false,
       isLoaded: false,
       status: ''
-    }
+    };
   }
 
   public render(): JSX.Element {
@@ -58,7 +58,6 @@ export class RiskController extends React.Component<Properties, State> {
         });
       });
   }
-  
 
   private onSubmit = async (comment: string,
       parameters: Nexus.RiskParameters) => {
