@@ -35,10 +35,6 @@ export class RiskParametersView extends React.Component<Properties> {
     onChange: () => {}
   }
 
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render(): JSX.Element {
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
