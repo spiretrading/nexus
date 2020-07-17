@@ -22,6 +22,8 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -30,6 +32,7 @@ namespace Spire {
       std::vector<QVariant> m_items;
       QVariant m_current_item;
       QVariant m_last_activated_item;
+      bool m_was_click_focused;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_list_selection_connection;
 

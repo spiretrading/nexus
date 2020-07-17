@@ -15,7 +15,8 @@ namespace {
 
 FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     QWidget* parent)
-    : TextInputWidget(parent) {
+    : TextInputWidget(parent),
+      m_was_click_focused(false) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   connect(this, &QLineEdit::editingFinished, this,
@@ -24,8 +25,9 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
     &FilteredDropDownMenu::on_text_edited);
   if(!items.empty()) {
     m_current_item = items.front();
+    setText(m_item_delegate.displayText(m_current_item));
   }
-  m_menu_list = new DropDownList({}, true, this);
+  m_menu_list = new DropDownList({}, false, this);
   m_menu_list->connect_activated_signal([=] (const auto& value) {
     on_item_activated(value);
   });
@@ -59,51 +61,45 @@ bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       update();
     }
   }
-  return QLineEdit::eventFilter(watched, event);
+  return TextInputWidget::eventFilter(watched, event);
+}
+
+void FilteredDropDownMenu::focusInEvent(QFocusEvent* event) {
+  TextInputWidget::focusInEvent(event);
+  if(event->reason() == Qt::FocusReason::MouseFocusReason) {
+    m_was_click_focused = true;
+  }
+}
+
+void FilteredDropDownMenu::mousePressEvent(QMouseEvent* event) {
+  TextInputWidget::mousePressEvent(event);
+  if(m_was_click_focused) {
+    selectAll();
+    m_was_click_focused = false;
+  }
 }
 
 void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
-  if(!hasFocus()) {
-    auto painter = QPainter(this);
-    painter.fillRect(event->rect(), Qt::white);
-    painter.save();
-    if(underMouse()) {
-      draw_border(QColor("#4B23A0"), painter);
-    } else {
-      draw_border(QColor("#C8C8C8"), painter);
-    }
-    painter.restore();
-    auto font = QFont("Roboto");
-    font.setPixelSize(scale_height(12));
-    painter.setFont(font);
-    auto metrics = QFontMetrics(font);
-    painter.drawText(QPoint(PADDING() + 1,
-      (height() / 2) + (metrics.ascent() / 2) - 1),
-      metrics.elidedText(m_item_delegate.displayText(m_current_item),
-      Qt::ElideRight, width() - (PADDING() * 3)));
-  } else {
-    QLineEdit::paintEvent(event);
-    if(!text().isEmpty()) {
-      auto item = std::move(m_menu_list->get_value(0));
-      if(item.isValid()) {
-        auto item_text = m_item_delegate.displayText(item);
-        if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
-            item_text.length() != text().length()) {
-          item_text = item_text.remove(0, text().length());
-          auto painter = QPainter(this);
-          auto font = QFont("Roboto");
-          font.setPixelSize(scale_height(12));
-          painter.setFont(font);
-          auto metrics = QFontMetrics(font);
-          painter.fillRect(cursorRect().right() - scale_width(2),
-            (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
-            metrics.horizontalAdvance(item_text),
-            metrics.ascent() + scale_height(4), QColor("#0078D7"));
-            //metrics.ascent() + scale_height(4), QColor("#4B23A0"));
-          painter.setPen(Qt::white);
-          painter.drawText(QPoint(cursorRect().right() - scale_width(2),
-            (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
-        }
+  TextInputWidget::paintEvent(event);
+  if(!text().isEmpty()) {
+    auto item = std::move(m_menu_list->get_value(0));
+    if(item.isValid()) {
+      auto item_text = m_item_delegate.displayText(item);
+      if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
+          item_text.length() != text().length()) {
+        item_text = item_text.remove(0, text().length());
+        auto painter = QPainter(this);
+        auto font = QFont("Roboto");
+        font.setPixelSize(scale_height(12));
+        painter.setFont(font);
+        auto metrics = QFontMetrics(font);
+        painter.fillRect(cursorRect().right() - scale_width(2),
+          (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
+          metrics.horizontalAdvance(item_text),
+          metrics.ascent() + scale_height(4), QColor("#0078D7"));
+        painter.setPen(Qt::white);
+        painter.drawText(QPoint(cursorRect().right() - scale_width(2),
+          (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
       }
     }
   }
@@ -153,7 +149,11 @@ void FilteredDropDownMenu::draw_border(const QColor& color,
 }
 
 void FilteredDropDownMenu::on_editing_finished() {
+  if(text() == m_item_delegate.displayText(m_current_item)) {
+    return;
+  }
   if(text().isEmpty()) {
+    setText(m_item_delegate.displayText(m_current_item));
     return;
   }
   if(m_last_activated_item.isValid()) {
@@ -177,6 +177,7 @@ void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
 
 void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
   m_current_item = item;
+  setText(m_item_delegate.displayText(m_current_item));
   m_selected_signal(m_current_item);
   clear();
   m_list_selection_connection = m_menu_list->connect_selected_signal(
