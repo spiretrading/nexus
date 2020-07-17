@@ -156,13 +156,13 @@ export class PhotoField extends React.Component<Properties, {}> {
   private static ANIMATION_STYLE = {
     entering: {
       opacity: 0
-    },
+    } as React.CSSProperties,
     entered: {
       opacity: 1
-    },
+    } as React.CSSProperties,
     exited: {
-      display: 'none' as 'none'
-    }
+      display: 'none'
+    } as React.CSSProperties
   };
   private static readonly STYLE = {
     wrapper: {
