@@ -34,29 +34,11 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
   m_list_selection_connection = m_menu_list->connect_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   set_items(items);
-  installEventFilter(this);
   m_menu_list->installEventFilter(this);
 }
 
 bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this) {
-    if(event->type() == QEvent::KeyPress &&
-        m_menu_list->isVisible()) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Escape) {
-        clear();
-      } else if(m_menu_list->isVisible()) {
-        if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return &&
-            !m_last_activated_item.isValid()) {
-          auto item = std::move(m_menu_list->get_value(0));
-          if(item.isValid()) {
-            m_list_selection_connection.disconnect();
-            on_item_selected(item);
-          }
-        }
-      }
-    }
-  } else if(watched == m_menu_list) {
+  if(watched == m_menu_list) {
     if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
       update();
     }
@@ -69,6 +51,26 @@ void FilteredDropDownMenu::focusInEvent(QFocusEvent* event) {
   if(event->reason() == Qt::FocusReason::MouseFocusReason) {
     m_was_click_focused = true;
   }
+}
+
+void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    setText(m_item_delegate.displayText(m_current_item));
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    if(m_last_activated_item.isValid()) {
+      on_item_selected(m_last_activated_item);
+      return;
+    }
+    if(!text().isEmpty() && m_menu_list->isVisible()) {
+      auto item = std::move(m_menu_list->get_value(0));
+      if(item.isValid()) {
+        m_list_selection_connection.disconnect();
+        on_item_selected(item);
+      }
+    }
+    return;
+  }
+  TextInputWidget::keyPressEvent(event);
 }
 
 void FilteredDropDownMenu::mousePressEvent(QMouseEvent* event) {
@@ -149,9 +151,6 @@ void FilteredDropDownMenu::draw_border(const QColor& color,
 }
 
 void FilteredDropDownMenu::on_editing_finished() {
-  if(text() == m_item_delegate.displayText(m_current_item)) {
-    return;
-  }
   if(text().isEmpty()) {
     setText(m_item_delegate.displayText(m_current_item));
     return;
@@ -163,11 +162,12 @@ void FilteredDropDownMenu::on_editing_finished() {
     return;
   }
   auto item = m_menu_list->get_value(0);
-  if(item.isValid() && !text().isEmpty()) {
+  if(item.isValid() &&
+      m_item_delegate.displayText(item).startsWith(text(), Qt::CaseInsensitive)) {
     on_item_selected(item);
-  } else {
-    setText(m_item_delegate.displayText(m_current_item));
+    return;
   }
+  setText(m_item_delegate.displayText(m_current_item));
 }
 
 void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
@@ -179,7 +179,6 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
   m_current_item = item;
   setText(m_item_delegate.displayText(m_current_item));
   m_selected_signal(m_current_item);
-  clear();
   m_list_selection_connection = m_menu_list->connect_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   set_items(m_items);
