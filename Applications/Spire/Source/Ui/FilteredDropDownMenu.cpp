@@ -166,7 +166,8 @@ void FilteredDropDownMenu::on_editing_finished() {
   }
   auto item = std::move(m_menu_list->get_value(0));
   if(item.isValid() &&
-      m_item_delegate.displayText(item).startsWith(text(), Qt::CaseInsensitive)) {
+      m_item_delegate.displayText(item).startsWith(text(),
+      Qt::CaseInsensitive)) {
     on_item_selected(item);
     return;
   }
