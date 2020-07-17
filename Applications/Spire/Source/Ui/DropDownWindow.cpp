@@ -41,8 +41,6 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::FocusOut && !isActiveWindow()) {
       static_cast<QWidget*>(parent())->update();
       hide();
-    } else if(event->type() == QEvent::Wheel) {
-      hide();
     } else if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Escape) {
