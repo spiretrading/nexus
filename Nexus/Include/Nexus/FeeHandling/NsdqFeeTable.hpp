@@ -14,22 +14,6 @@ namespace Nexus {
   /** Stores the table of fees used by NSDQ. */
   struct NsdqFeeTable {
 
-    /** Enumerates the types of trades. */
-    enum class Type {
-
-      /** Unknown. */
-      NONE = -1,
-
-      /** Active. */
-      ACTIVE = 0,
-
-      /** Passive. */
-      PASSIVE,
-    };
-
-    /** The number of trade types enumerated. */
-    static constexpr auto TYPE_COUNT = std::size_t(2);
-
     /** Enumerates the category of trades. */
     enum class Category {
 
@@ -59,10 +43,11 @@ namespace Nexus {
     static constexpr auto CATEGORY_COUNT = std::size_t(6);
 
     /** The fee table. */
-    std::array<std::array<Money, TYPE_COUNT>, CATEGORY_COUNT> m_feeTable;
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, CATEGORY_COUNT>
+      m_feeTable;
 
     /** The subdollar rates. */
-    std::array<boost::rational<int>, TYPE_COUNT> m_subdollarTable;
+    std::array<boost::rational<int>, LIQUIDITY_FLAG_COUNT> m_subdollarTable;
   };
 
   /**
@@ -81,15 +66,15 @@ namespace Nexus {
   /**
    * Looks up a fee.
    * @param feeTable The NyseFeeTable used to lookup the fee.
-   * @param type The trade's type.
+   * @param flag The liquidity flag.
    * @param category The trade's Category.
-   * @return The fee corresponding to the specified <i>type</i> and
+   * @return The fee corresponding to the specified <i>flag</i> and
    *         <i>category</i>.
    */
-  inline Money LookupFee(const NsdqFeeTable& feeTable, NsdqFeeTable::Type type,
+  inline Money LookupFee(const NsdqFeeTable& feeTable, LiquidityFlag flag,
       NsdqFeeTable::Category category) {
     return feeTable.m_feeTable[static_cast<int>(category)][
-      static_cast<int>(type)];
+      static_cast<int>(flag)];
   }
 
   /**
@@ -103,7 +88,7 @@ namespace Nexus {
     if(executionReport.m_lastQuantity == 0) {
       return Money::ZERO;
     }
-    auto type = NsdqFeeTable::Type::ACTIVE;
+    auto flag = LiquidityFlag::ACTIVE;
     auto category = NsdqFeeTable::Category::DEFAULT;
     if(executionReport.m_liquidityFlag.size() == 1) {
       if(executionReport.m_liquidityFlag[0] == 'A' ||
@@ -113,31 +98,31 @@ namespace Nexus {
           executionReport.m_liquidityFlag[0] == 'x' ||
           executionReport.m_liquidityFlag[0] == 'y' ||
           executionReport.m_liquidityFlag[0] == '0') {
-        type = NsdqFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         category = NsdqFeeTable::Category::DEFAULT;
       } else if(executionReport.m_liquidityFlag[0] == 'X') {
-        type = NsdqFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NsdqFeeTable::Category::DEFAULT;
       } else if(executionReport.m_liquidityFlag[0] == 'e') {
-        type = NsdqFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         category = NsdqFeeTable::Category::RETAIL;
       } else if(executionReport.m_liquidityFlag[0] == 'k' ||
           executionReport.m_liquidityFlag[0] == 'J') {
-        type = NsdqFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         category = NsdqFeeTable::Category::HIDDEN;
       } else if(executionReport.m_liquidityFlag[0] == 'R') {
-        type = NsdqFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NsdqFeeTable::Category::DEFAULT;
       } else if(executionReport.m_liquidityFlag[0] == 'm') {
-        type = NsdqFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NsdqFeeTable::Category::HIDDEN;
       } else if(executionReport.m_liquidityFlag[0] == 'O' ||
           executionReport.m_liquidityFlag[0] == 'M') {
-        type = NsdqFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NsdqFeeTable::Category::ON_OPEN;
       } else if(executionReport.m_liquidityFlag[0] == 'C' ||
           executionReport.m_liquidityFlag[0] == 'L') {
-        type = NsdqFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NsdqFeeTable::Category::ON_CLOSE;
       } else {
         std::cout << "Unknown liquidity flag [NSDQ]: \"" <<
@@ -148,11 +133,11 @@ namespace Nexus {
         executionReport.m_liquidityFlag << "\"\n";
     }
     if(executionReport.m_lastPrice < Money::ONE) {
-      auto rate = feeTable.m_subdollarTable[static_cast<int>(type)];
+      auto rate = feeTable.m_subdollarTable[static_cast<int>(flag)];
       return rate *
         (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     }
-    auto fee = LookupFee(feeTable, type, category);
+    auto fee = LookupFee(feeTable, flag, category);
     return executionReport.m_lastQuantity * fee;
   }
 }

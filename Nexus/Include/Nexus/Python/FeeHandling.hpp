@@ -23,6 +23,18 @@ namespace Nexus::Python {
   void ExportAsxtFeeTable(pybind11::module& module);
 
   /**
+   * Exports the BatsFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportBatsFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the BatyFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportBatyFeeTable(pybind11::module& module);
+
+  /**
    * Exports the ChicFeeTable class.
    * @param module The module to export to.
    */
@@ -33,6 +45,30 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportConsolidatedTmxFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the ConsolidatedUsFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportConsolidatedUsFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the CseFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportCseFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the EdgaFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportEdgaFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the EdgxFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportEdgxFeeTable(pybind11::module& module);
 
   /**
    * Exports the FeeHandling classes.
@@ -59,10 +95,70 @@ namespace Nexus::Python {
   void ExportLiquidityFlag(pybind11::module& module);
 
   /**
+   * Exports the LynxFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportLynxFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the MatnFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportMatnFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the NeoeFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportNeoeFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the NsxFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportNexFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the NsdqFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportNsdqFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the NyseFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportNyseFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the OmgaFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportOmgaFeeTable(pybind11::module& module);
+
+  /**
    * Exports the PureFeeTable class.
    * @param module The module to export to.
    */
   void ExportPureFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the TsxFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportTsxFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the XatsFeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportXatsFeeTable(pybind11::module& module);
+
+  /**
+   * Exports the Xcx2FeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportXcx2FeeTable(pybind11::module& module);
 }
 
 #endif

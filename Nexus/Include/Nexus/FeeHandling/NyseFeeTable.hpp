@@ -14,22 +14,6 @@ namespace Nexus {
   /** Stores the table of fees used by NYSE. */
   struct NyseFeeTable {
 
-    /** Enumerates the types of trades. */
-    enum class Type {
-
-      /** Unknown. */
-      NONE = -1,
-
-      /** Active. */
-      ACTIVE = 0,
-
-      /** Passive. */
-      PASSIVE
-    };
-
-    /** The number of trade types enumerated. */
-    static constexpr auto TYPE_COUNT = std::size_t(2);
-
     /** Enumerates the category of trades. */
     enum class Category {
 
@@ -59,10 +43,11 @@ namespace Nexus {
     static constexpr auto CATEGORY_COUNT = std::size_t(6);
 
     /** The fee table. */
-    std::array<std::array<Money, TYPE_COUNT>, CATEGORY_COUNT> m_feeTable;
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, CATEGORY_COUNT>
+      m_feeTable;
 
     /** The subdollar rates. */
-    std::array<boost::rational<int>, TYPE_COUNT> m_subdollarTable;
+    std::array<boost::rational<int>, LIQUIDITY_FLAG_COUNT> m_subdollarTable;
   };
 
   /**
@@ -81,15 +66,15 @@ namespace Nexus {
   /**
    * Looks up a fee.
    * @param feeTable The NyseFeeTable used to lookup the fee.
-   * @param type The trade's type.
+   * @param flag The trade's liquidity flag.
    * @param category The trade's Category.
-   * @return The fee corresponding to the specified <i>type</i> and
+   * @return The fee corresponding to the specified <i>flag</i> and
    *         <i>category</i>.
    */
-  inline Money LookupFee(const NyseFeeTable& feeTable, NyseFeeTable::Type type,
+  inline Money LookupFee(const NyseFeeTable& feeTable, LiquidityFlag flag,
       NyseFeeTable::Category category) {
     return feeTable.m_feeTable[static_cast<int>(category)][
-      static_cast<int>(type)];
+      static_cast<int>(flag)];
   }
 
   /**
@@ -118,35 +103,35 @@ namespace Nexus {
       return Money::ZERO;
     }
     auto isHidden = IsNyseHiddenLiquidityProvider(fields);
-    NyseFeeTable::Type type = NyseFeeTable::Type::ACTIVE;
-    NyseFeeTable::Category category = NyseFeeTable::Category::DEFAULT;
+    auto flag = LiquidityFlag::ACTIVE;
+    auto category = NyseFeeTable::Category::DEFAULT;
     if(executionReport.m_liquidityFlag.size() == 1) {
       if(executionReport.m_liquidityFlag[0] == '1') {
-        type = NyseFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         if(isHidden) {
           category = NyseFeeTable::Category::HIDDEN;
         }
       } else if(executionReport.m_liquidityFlag[0] == '2') {
-        type = NyseFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         if(isHidden) {
           category = NyseFeeTable::Category::HIDDEN;
         }
       } else if(executionReport.m_liquidityFlag[0] == '3') {
-        type = NyseFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
       } else if(executionReport.m_liquidityFlag[0] == '5') {
-        type = NyseFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         category = NyseFeeTable::Category::ON_OPEN;
       } else if(executionReport.m_liquidityFlag[0] == '6') {
-        type = NyseFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NyseFeeTable::Category::ON_CLOSE;
       } else if(executionReport.m_liquidityFlag[0] == '7') {
-        type = NyseFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NyseFeeTable::Category::ON_CLOSE;
       } else if(executionReport.m_liquidityFlag[0] == '8') {
-        type = NyseFeeTable::Type::PASSIVE;
+        flag = LiquidityFlag::PASSIVE;
         category = NyseFeeTable::Category::RETAIL;
       } else if(executionReport.m_liquidityFlag[0] == '9') {
-        type = NyseFeeTable::Type::ACTIVE;
+        flag = LiquidityFlag::ACTIVE;
         category = NyseFeeTable::Category::RETAIL;
       } else {
         std::cout << "Unknown liquidity flag [NYSE]: \"" <<
@@ -157,11 +142,11 @@ namespace Nexus {
         executionReport.m_liquidityFlag << "\"\n";
     }
     if(executionReport.m_lastPrice < Money::ONE) {
-      auto rate = feeTable.m_subdollarTable[static_cast<int>(type)];
+      auto rate = feeTable.m_subdollarTable[static_cast<int>(flag)];
       return rate *
         (executionReport.m_lastQuantity * executionReport.m_lastPrice);
     }
-    auto fee = LookupFee(feeTable, type, category);
+    auto fee = LookupFee(feeTable, flag, category);
     return executionReport.m_lastQuantity * fee;
   }
 }
