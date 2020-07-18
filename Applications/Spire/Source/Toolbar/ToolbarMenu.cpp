@@ -1,7 +1,5 @@
 #include "Spire/Toolbar/ToolbarMenu.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-// TODO: delete this class/file entirely?
-#include "Spire/Toolbar/MenuIconSizeProxyStyle.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
