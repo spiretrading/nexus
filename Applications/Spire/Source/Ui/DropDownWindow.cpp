@@ -47,13 +47,7 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
         hide();
       } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
         if(m_is_click_activated) {
-          if(isVisible()) {
-            // TODO: this hide just hides the dropdown window, not the drop shadow
-            hide();
-          } else {
-            move_to_parent();
-            show();
-          }
+          swap_visibility();
           return true;
         }
       }
@@ -61,12 +55,7 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
         m_is_click_activated) {
       auto e = static_cast<QMouseEvent*>(event);
       if(e->button() == Qt::LeftButton) {
-        if(isVisible()) {
-          hide();
-        } else {
-          move_to_parent();
-          show();
-        }
+        swap_visibility();
         return true;
       }
     }
@@ -112,8 +101,17 @@ void DropDownWindow::set_widget(QWidget* widget) {
 
 void DropDownWindow::move_to_parent() {
   auto parent_widget = static_cast<QWidget*>(parent());
-  auto pos = parent_widget->window()->mapToGlobal(
-    parent_widget->frameGeometry().bottomLeft());
+  auto pos = parent_widget->mapToGlobal(
+    QPoint(0, parent_widget->height() - 1));
   move(pos);
   raise();
+}
+
+void DropDownWindow::swap_visibility() {
+  if(isVisible() || !static_cast<QWidget*>(parent())->isEnabled()) {
+    hide();
+  } else {
+    move_to_parent();
+    show();
+  }
 }

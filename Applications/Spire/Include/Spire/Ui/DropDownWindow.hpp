@@ -25,6 +25,7 @@ namespace Spire {
       bool m_is_click_activated;
 
       void move_to_parent();
+      void swap_visibility();
   };
 }
 
