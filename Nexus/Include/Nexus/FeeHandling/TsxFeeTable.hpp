@@ -120,7 +120,7 @@ namespace Nexus {
       m_auctionFeeTable;
 
     /** The odd-lot list. */
-    std::array<Money, 3>  m_oddLotFeeList;
+    std::array<Money, 3> m_oddLotFeeList;
   };
 
   /**
