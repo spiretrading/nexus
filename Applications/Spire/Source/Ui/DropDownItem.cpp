@@ -54,8 +54,8 @@ void DropDownItem::paintEvent(QPaintEvent* event) {
   auto shortened_text = metrics.elidedText(
     m_item_delegate.displayText(m_value), Qt::ElideRight,
     width() - RIGHT_PADDING());
-  if(m_icon.isNull()) {
-    painter.drawImage(LEFT_PADDING(), (height() / 2) - m_icon.height(),
+  if(!m_icon.isNull()) {
+    painter.drawImage(LEFT_PADDING(), (height() / 2) - (m_icon.height() / 2),
       m_icon);
     painter.drawText(2 * LEFT_PADDING() + m_icon.width(), metrics.height(),
       shortened_text);

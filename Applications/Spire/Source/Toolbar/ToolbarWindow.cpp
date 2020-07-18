@@ -12,6 +12,18 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto ICON_SIZE() {
+    static auto icon_size = scale(10, 10);
+    return icon_size;
+  }
+
+  auto ICON_RECT() {
+    static auto icon_rect = QRect(QPoint(0, 0), scale(10, 10));
+    return icon_rect;
+  }
+}
+
 ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
@@ -127,20 +139,18 @@ connection ToolbarWindow::connect_reopen_signal(
 }
 
 void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
-  auto icon_size = scale(18, 10);
-  auto icon_rect = QRect(translate(8, 0), scale(10, 10));
   m_entries.push_back(e);
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/bookview-black.svg"), icon_size,
-          icon_rect));
+        imageFromSvg(QString(":/Icons/bookview-black.svg"), ICON_SIZE(),
+          ICON_RECT()));
       break;
     }
     case RecentlyClosedModel::Type::TIME_AND_SALE: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/time-sale-black.svg"), icon_size,
-          icon_rect));
+        imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+          ICON_RECT()));
       break;
     }
   }
