@@ -6,10 +6,26 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-DropDownItem::DropDownItem(const QVariant& value,
+namespace {
+  auto LEFT_PADDING() {
+    static auto padding = scale_width(8);
+    return padding;
+  }
+  
+  auto RIGHT_PADDING() {
+    static auto padding = scale_width(12);
+    return padding;
+  }
+}
+
+DropDownItem::DropDownItem(const QVariant& value, QWidget* parent)
+  : DropDownItem(value, {}, parent) {}
+
+DropDownItem::DropDownItem(const QVariant& value, const QImage& icon,
     QWidget* parent)
     : QWidget(parent),
       m_value(value),
+      m_icon(icon),
       m_is_highlighted(false) {
   setAttribute(Qt::WA_Hover);
   auto font = QFont("Roboto");
@@ -34,14 +50,18 @@ void DropDownItem::paintEvent(QPaintEvent* event) {
   } else {
     painter.fillRect(rect(), Qt::white);
   }
-  // TODO: move to anon namespace
-  auto LEFT_PADDING = []{ return scale_width(8); };
-  auto RIGHT_PADDING = []{ return scale_width(12); };
   auto metrics = QFontMetrics(font());
   auto shortened_text = metrics.elidedText(
     m_item_delegate.displayText(m_value), Qt::ElideRight,
     width() - RIGHT_PADDING());
-  painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
+  if(m_icon.isNull()) {
+    painter.drawImage(LEFT_PADDING(), (height() / 2) - m_icon.height(),
+      m_icon);
+    painter.drawText(2 * LEFT_PADDING() + m_icon.width(), metrics.height(),
+      shortened_text);
+  } else {
+    painter.drawText(LEFT_PADDING(), metrics.height(), shortened_text);
+  }
 }
 
 connection DropDownItem::connect_highlighted_signal(

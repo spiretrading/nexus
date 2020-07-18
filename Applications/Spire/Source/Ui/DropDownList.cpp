@@ -95,6 +95,24 @@ QVariant DropDownList::get_value(int index) {
   return get_widget(index)->get_value();
 }
 
+void DropDownList::insert_item(DropDownItem* item) {
+  m_layout->insertWidget(std::max(0, m_layout->count() - 1), item);
+  // TODO: store these connections
+  item->connect_selected_signal([=] (const auto& value) {
+    on_item_selected(value);
+  });
+  update_height();
+}
+
+void DropDownList::remove_item(int index) {
+  if(index > m_layout->count() - 1 || index < 0) {
+    return;
+  }
+  auto layout_item = m_layout->takeAt(index);
+  delete layout_item->widget();
+  delete layout_item;
+}
+
 void DropDownList::set_items(std::vector<DropDownItem*> items) {
   while(auto item = m_layout->takeAt(0)) {
     delete item->widget();
@@ -102,13 +120,13 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
   for(auto item : items) {
     m_layout->addWidget(item);
+    // TODO: store these connections
     item->connect_selected_signal([=] (const auto& value) {
       on_item_selected(value);
     });
   }
   if(m_layout->count() > 0) {
-    setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
-      m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
+    update_height();
   } else {
     hide();
   }
@@ -164,6 +182,11 @@ void DropDownList::scroll_to_highlight() {
     m_scroll_area->verticalScrollBar()->setValue(
       m_scroll_area->verticalScrollBar()->maximum());
   }
+}
+
+void DropDownList::update_height() {
+  setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *
+    m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
 }
 
 void DropDownList::on_item_selected(const QVariant& value) {

@@ -1,5 +1,6 @@
 #ifndef SPIRE_DROP_DOWN_ITEM_HPP
 #define SPIRE_DROP_DOWN_ITEM_HPP
+#include <QImage>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -13,7 +14,10 @@ namespace Spire {
 
       using SelectedSignal = Signal<void (const QVariant& value)>;
 
-      DropDownItem(const QVariant& value, QWidget* parent = nullptr);
+      explicit DropDownItem(const QVariant& value, QWidget* parent = nullptr);
+
+      DropDownItem(const QVariant& value, const QImage& icon,
+        QWidget* parent = nullptr);
 
       const QVariant& get_value() const;
 
@@ -34,6 +38,7 @@ namespace Spire {
 
     private:
       QVariant m_value;
+      QImage m_icon;
       mutable HighlightedSignal m_highlighted_signal;
       mutable SelectedSignal m_selected_signal;
       bool m_is_highlighted;

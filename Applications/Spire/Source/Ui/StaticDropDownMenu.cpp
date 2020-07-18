@@ -38,8 +38,12 @@ void StaticDropDownMenu::set_list_width(int width) {
   m_menu_list->setFixedWidth(width);
 }
 
-void StaticDropDownMenu::set_current_item(const QVariant& item) {
-  m_current_item = item;
+void StaticDropDownMenu::insert_item(DropDownItem* item) {
+  m_menu_list->insert_item(item);
+}
+
+void StaticDropDownMenu::remove_item(int index) {
+  m_menu_list->remove_item(index);
 }
 
 void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {

@@ -1,19 +1,15 @@
 #ifndef SPIRE_TOOLBAR_MENU_HPP
 #define SPIRE_TOOLBAR_MENU_HPP
-#include <string>
-#include <unordered_map>
 #include <QEvent>
-#include <QMenu>
-#include <QPushButton>
-#include <QResizeEvent>
-#include <QWidgetAction>
+#include <QHash>
 #include "Spire/Toolbar/Toolbar.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/StaticDropDownMenu.hpp"
 
 namespace Spire {
 
   //! Provides a drop-down menu with a title.
-  class ToolbarMenu : public QPushButton {
+  class ToolbarMenu : public StaticDropDownMenu {
     public:
 
       //! Signals that a menu item was selected.
@@ -28,12 +24,6 @@ namespace Spire {
         \param parent The parent to the ToolbarMenu.
       */
       explicit ToolbarMenu(const QString& title, QWidget* parent = nullptr);
-
-      //! Adds a text item to the menu.
-      /*!
-        \param text The text string for the item.
-      */
-      void add(const QString& text);
 
       //! Adds an item to the menu with an icon.
       /*!
@@ -52,22 +42,11 @@ namespace Spire {
       boost::signals2::connection connect_item_selected_signal(
         const ItemSelectedSignal::slot_type& slot) const;
 
-    protected:
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
       mutable ItemSelectedSignal m_item_selected_signal;
-      QMenu* m_items;
-      std::unique_ptr<MenuIconSizeProxyStyle> m_menu_icon_style;
-      QWidgetAction* m_empty_item;
-      std::unordered_map<QAction*, int> m_action_to_index;
-      bool m_empty_style;
-      DropShadow* m_drop_shadow;
+      QHash<QString, int> m_item_to_index;
 
-      void remove_empty_item();
-      void set_empty_menu_stylesheet();
-      void set_default_menu_stylesheet();
-      void on_triggered(QAction* action);
+      void on_item_selected(const QVariant& item);
   };
 }
 

@@ -23,7 +23,10 @@ namespace Spire {
       //       dropdown windows vs. windows that resize to parent width.
       void set_list_width(int width);
 
-      void set_current_item(const QVariant& item);
+      
+      void insert_item(DropDownItem* item);
+
+      void remove_item(int index);
 
       void set_items(const std::vector<QVariant>& items);
 

@@ -3,7 +3,6 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class MenuIconSizeProxyStyle;
   class RecentlyClosedModel;
   class ToolbarController;
   class ToolbarMenu;

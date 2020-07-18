@@ -35,12 +35,10 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->setStretchFactor(combo_box_layout, 26);
   layout->addStretch(10);
   combo_box_layout->addStretch(8);
-  m_window_manager_button = new ToolbarMenu(tr("Window Manager"), body);
-  m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
-  m_window_manager_button->add(tr("Minimize All"));
-  m_window_manager_button->add(tr("Restore All"));
-  m_window_manager_button->add(tr("Import/Export Settings"));
+  m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
+    tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
+    body);
+  m_window_manager_button->setFixedSize(scale(100, 28));
   combo_box_layout->addWidget(m_window_manager_button);
   combo_box_layout->setStretchFactor(m_window_manager_button, 138);
   combo_box_layout->addStretch(16);
@@ -48,7 +46,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_recently_closed_button->connect_item_selected_signal(
-    [=] (auto index) {on_item_selected(index);});
+    [=] (auto index) { on_item_selected(index); });
   combo_box_layout->addWidget(m_recently_closed_button);
   combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
   combo_box_layout->addStretch(8);
@@ -125,20 +123,6 @@ connection ToolbarWindow::connect_open_signal(
 connection ToolbarWindow::connect_reopen_signal(
     const ReopenSignal::slot_type& slot) const {
   return m_reopen_signal.connect(slot);
-}
-
-void ToolbarWindow::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_window_manager_button->hasFocus()) {
-      m_window_manager_button->showMenu();
-    } else if(m_recently_closed_button->hasFocus()) {
-      m_recently_closed_button->showMenu();
-      m_recently_closed_button->menu()->setFocus();
-    }
-    event->accept();
-  } else {
-    QWidget::keyPressEvent(event);
-  }
 }
 
 void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {

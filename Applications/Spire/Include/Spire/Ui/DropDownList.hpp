@@ -21,6 +21,10 @@ namespace Spire {
 
       QVariant get_value(int index);
 
+      void insert_item(DropDownItem* item);
+
+      void remove_item(int index);
+
       void set_items(std::vector<DropDownItem*> items);
 
       boost::signals2::connection connect_activated_signal(
@@ -51,6 +55,7 @@ namespace Spire {
       void focus_previous();
       void set_highlight(int index);
       void scroll_to_highlight();
+      void update_height();
       void on_item_selected(const QVariant& value);
   };
 }

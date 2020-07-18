@@ -1,6 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_MENU_HPP
 #define SPIRE_DROP_DOWN_MENU_HPP
 #include <QComboBox>
+#include "Spire/Ui/DropDownItem.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
