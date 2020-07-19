@@ -1,5 +1,5 @@
-#ifndef NEXUS_FIXORDEREXECUTIONDRIVER_HPP
-#define NEXUS_FIXORDEREXECUTIONDRIVER_HPP
+#ifndef NEXUS_FIX_ORDER_EXECUTION_DRIVER_HPP
+#define NEXUS_FIX_ORDER_EXECUTION_DRIVER_HPP
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -21,36 +21,33 @@
 #include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace FixUtilities {
+namespace Nexus::FixUtilities {
 
-  /*! \struct FixApplicationEntry
-      \brief Stores the details of a single FIX Application used by a
-             FixOrderExecutionDriver.
+  /**
+   * Stores the details of a single FIX Application used by a
+   * FixOrderExecutionDriver.
    */
   struct FixApplicationEntry {
 
-    //! The path to the configuration file.
+    /** The path to the configuration file. */
     std::string m_configPath;
 
-    //! The list of destinations the FIX Application services.
+    /** The list of destinations the FIX Application services. */
     std::vector<std::string> m_destinations;
 
-    //! The FIX Application used to service Order entries.
+    /** The FIX Application used to service Order entries. */
     std::shared_ptr<FixApplication> m_application;
   };
 
-  /*! \class FixOrderExecutionDriver
-      \brief Implements the OrderExecutionDriver using the FIX protocol.
-   */
+  /** Implements the OrderExecutionDriver using the FIX protocol. */
   class FixOrderExecutionDriver : private boost::noncopyable {
     public:
 
-      //! Constructs a FixOrderExecutionDriver.
-      /*!
-        \param fixApplicationEntries The list of FIX Application entries
-               servicing Order submissions.
-      */
+      /**
+       * Constructs a FixOrderExecutionDriver.
+       * @param fixApplicationEntries The list of FIX Application entries
+       *        servicing Order submissions.
+       */
       FixOrderExecutionDriver(
         const std::vector<FixApplicationEntry>& fixApplicationEntries);
 
@@ -83,8 +80,8 @@ namespace FixUtilities {
         std::optional<FIX::FileLogFactory> m_logFactory;
         std::optional<FIX::SocketInitiator> m_initiator;
 
-        Application(const std::shared_ptr<FixApplication>& application,
-          const std::string& configPath);
+        Application(std::shared_ptr<FixApplication> application,
+          std::string configPath);
       };
       std::unordered_map<std::string, std::shared_ptr<Application>>
         m_fixApplications;
@@ -98,15 +95,15 @@ namespace FixUtilities {
   };
 
   inline FixOrderExecutionDriver::Application::Application(
-      const std::shared_ptr<FixApplication>& application,
-      const std::string& configPath)
-      : m_application(application),
-        m_configPath(configPath),
-        m_isConnected(false) {}
+    std::shared_ptr<FixApplication> application,
+    std::string configPath)
+    : m_application(std::move(application)),
+      m_configPath(std::move(configPath)),
+      m_isConnected(false) {}
 
   inline FixOrderExecutionDriver::FixOrderExecutionDriver(
       const std::vector<FixApplicationEntry>& fixApplicationEntries) {
-    for(const auto& entry : fixApplicationEntries) {
+    for(auto& entry : fixApplicationEntries) {
       auto application = std::make_shared<Application>(entry.m_application,
         entry.m_configPath);
       for(const auto& destination : entry.m_destinations) {
@@ -128,11 +125,9 @@ namespace FixUtilities {
         OrderExecutionService::OrderUnrecoverableException());
     }
     auto fixApplicationEntry = fixApplicationEntryIterator->second;
-    const auto& order = fixApplicationEntry->m_application->Recover(
-      orderRecord);
+    auto& order = fixApplicationEntry->m_application->Recover(orderRecord);
     Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<Application>>& orderIdToFixApplication) {
+      [&] (auto& orderIdToFixApplication) {
         orderIdToFixApplication.insert(
           std::make_pair((*orderRecord)->m_info.m_orderId,
           fixApplicationEntry));
@@ -147,10 +142,9 @@ namespace FixUtilities {
     if(fixApplicationEntryIterator == m_fixApplications.end()) {
       auto order = OrderExecutionService::BuildRejectedOrder(info,
         "Destination [" + info.m_fields.m_destination + "] not available");
-      const auto& submittedOrder = *order;
+      auto& submittedOrder = *order;
       Beam::Threading::With(m_orders,
-        [&] (std::vector<std::unique_ptr<
-            OrderExecutionService::PrimitiveOrder>>& orders) {
+        [&] (auto& orders) {
           orders.push_back(std::move(order));
         });
       return submittedOrder;
@@ -158,8 +152,7 @@ namespace FixUtilities {
     auto fixApplicationEntry = fixApplicationEntryIterator->second;
     const auto& order = fixApplicationEntry->m_application->Submit(info);
     Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<Application>>& orderIdToFixApplication) {
+      [&] (auto& orderIdToFixApplication) {
         orderIdToFixApplication.insert(
           std::make_pair(info.m_orderId, fixApplicationEntry));
       });
@@ -169,20 +162,17 @@ namespace FixUtilities {
   inline void FixOrderExecutionDriver::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
-    std::shared_ptr<Application> fixApplicationEntry;
-    Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (const std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<Application>>& orderIdToFixApplication) {
+    auto fixApplicationEntry = Beam::Threading::With(m_orderIdToFixApplication,
+      [&] (auto& orderIdToFixApplication) {
         auto entryIterator = orderIdToFixApplication.find(orderId);
         if(entryIterator == orderIdToFixApplication.end()) {
-          return;
+          return std::shared_ptr<Application>();
         }
-        fixApplicationEntry = entryIterator->second;
+        return entryIterator->second;
       });
-    if(fixApplicationEntry == nullptr) {
-      return;
+    if(fixApplicationEntry) {
+      fixApplicationEntry->m_application->Cancel(session, orderId);
     }
-    fixApplicationEntry->m_application->Cancel(session, orderId);
   }
 
   inline void FixOrderExecutionDriver::Update(
@@ -197,11 +187,10 @@ namespace FixUtilities {
         }
         return entryIterator->second;
       });
-    if(fixApplicationEntry == nullptr) {
-      return;
+    if(fixApplicationEntry) {
+      fixApplicationEntry->m_application->Update(session, orderId,
+        executionReport);
     }
-    fixApplicationEntry->m_application->Update(session, orderId,
-      executionReport);
   }
 
   inline void FixOrderExecutionDriver::Open() {
@@ -209,8 +198,9 @@ namespace FixUtilities {
       return;
     }
     try {
-      std::unordered_set<std::shared_ptr<Application>> initializedApplications;
-      for(const auto& fixApplication : m_fixApplications) {
+      auto initializedApplications =
+        std::unordered_set<std::shared_ptr<Application>>();
+      for(auto& fixApplication : m_fixApplications) {
         if(!initializedApplications.insert(fixApplication.second).second) {
           continue;
         }
@@ -227,7 +217,7 @@ namespace FixUtilities {
           entry.m_initiator.emplace(*entry.m_application,
             *entry.m_storeFactory, *entry.m_settings, *entry.m_logFactory);
           entry.m_application->SetSessionSettings(sessionId, *entry.m_settings);
-          for(const auto& sessionId : entry.m_settings->getSessions()) {
+          for(auto& sessionId : entry.m_settings->getSessions()) {
             auto session = FIX::Session::lookupSession(sessionId);
             if(session != nullptr) {
               auto dataDictionaryProvider =
@@ -274,13 +264,12 @@ namespace FixUtilities {
 
   inline void FixOrderExecutionDriver::Shutdown() {
     m_openState.SetClosed();
-    for(const auto& fixApplication : m_fixApplications) {
+    for(auto& fixApplication : m_fixApplications) {
       auto& entry = *(fixApplication.second);
       entry.m_initiator->stop();
       entry.m_isConnected = false;
     }
   }
-}
 }
 
 #endif

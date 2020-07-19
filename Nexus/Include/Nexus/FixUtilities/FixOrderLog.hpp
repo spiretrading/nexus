@@ -260,12 +260,10 @@ namespace Details {
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
       FixOrderLog::FindOrder(OrderExecutionService::OrderId id) const {
     return Beam::Threading::With(m_orders,
-      [&] (const std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<OrderExecutionService::PrimitiveOrder>>& orders) ->
-          std::shared_ptr<OrderExecutionService::PrimitiveOrder> {
+      [&] (const auto& orders) {
         auto orderIterator = orders.find(id);
         if(orderIterator == orders.end()) {
-          return nullptr;
+          return std::shared_ptr<OrderExecutionService::PrimitiveOrder>();
         }
         return orderIterator->second;
       });
@@ -293,7 +291,7 @@ namespace Details {
       (*orderRecord)->m_info.m_orderId);
     if(recoveredExecutionReports.is_initialized()) {
       recoveredExecutionReports->ForEach(
-        [&] (const RecoveredExecutionReport& recoveredExecutionReport) {
+        [&] (const auto& recoveredExecutionReport) {
           auto fixTimestamp = FIX::UtcTimeStamp();
           std::visit(
             [&] (auto& message) {
@@ -396,8 +394,7 @@ namespace Details {
       Beam::Store(orderCancelRequest));
     auto sendMessage = false;
     order->With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+      [&] (auto status, const auto& reports) {
         if(IsTerminal(status) || reports.empty()) {
           return;
         }
@@ -438,8 +435,7 @@ namespace Details {
       FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
     Beam::Threading::With(m_orders,
-      [&] (std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<OrderExecutionService::PrimitiveOrder>>& orders) {
+      [&] (auto& orders) {
         orders.insert(std::make_pair(info.m_orderId, order));
       });
     return order;
@@ -450,8 +446,7 @@ namespace Details {
       const OrderExecutionService::OrderRecord& orderRecord, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(orderRecord, side);
     Beam::Threading::With(m_orders,
-      [&] (std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<OrderExecutionService::PrimitiveOrder>>& orders) {
+      [&] (auto& orders) {
         orders.insert(std::make_pair(orderRecord.m_info.m_orderId, order));
       });
     return order;
@@ -462,8 +457,7 @@ namespace Details {
       const std::string& reason) {
     auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
     Beam::Threading::With(m_orders,
-      [&] (std::unordered_map<OrderExecutionService::OrderId,
-          std::shared_ptr<OrderExecutionService::PrimitiveOrder>>& orders) {
+      [&] (auto& orders) {
         orders.insert(std::make_pair(info.m_orderId, order));
       });
     return order;
@@ -501,15 +495,14 @@ namespace Details {
       message.get(text);
     }
     order->With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+      [&] (auto status, const auto& reports) {
         if(reports.empty() || IsTerminal(reports.back().m_status)) {
           std::cout << "Stale Report: " << message.toString() << std::endl;
           return;
         }
         if(isPendingCancel) {
           auto filledQuantity = lastQuantity;
-          for(const auto& report : reports) {
+          for(auto& report : reports) {
             filledQuantity += report.m_lastQuantity;
           }
           if(filledQuantity >= order->GetInfo().m_fields.m_quantity) {
