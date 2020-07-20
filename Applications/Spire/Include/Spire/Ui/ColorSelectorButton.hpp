@@ -38,10 +38,6 @@ namespace Spire {
         const ColorSignal::slot_type& slot) const;
 
     protected:
-      //bool eventFilter(QObject* watched, QEvent* event) override;
-      //void focusOutEvent(QFocusEvent* event) override;
-      //void keyPressEvent(QKeyEvent* event) override;
-      //void mousePressEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -49,8 +45,6 @@ namespace Spire {
       QColor m_current_color;
       ColorSelectorDropDown* m_selector_widget;
 
-      //void hide_dropdown();
-      //void move_color_dropdown();
       void on_color_selected(const QColor& color);
   };
 }

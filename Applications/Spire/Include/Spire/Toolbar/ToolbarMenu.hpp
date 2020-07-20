@@ -1,7 +1,5 @@
 #ifndef SPIRE_TOOLBAR_MENU_HPP
 #define SPIRE_TOOLBAR_MENU_HPP
-#include <QEvent>
-#include <QHash>
 #include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
