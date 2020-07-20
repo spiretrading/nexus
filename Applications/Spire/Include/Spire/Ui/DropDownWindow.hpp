@@ -5,13 +5,27 @@
 
 namespace Spire {
 
+  //! Represents a pop-up window for displaying a widget.
   class DropDownWindow : public QWidget {
     public:
 
+      //! Constructs a DropDownWindow.
+      /*!
+        \param is_click_activated True if the DropDownWindow should be shown
+                                  or hidden in response to parent widget
+                                  mouse/keyboard activation events, false
+                                  otherwise.
+        \param parent The parent widget. Used to determine the position of the
+                      DropDownWindow.
+      */
       explicit DropDownWindow(bool is_click_activated,
         QWidget* parent = nullptr);
 
-      void set_widget(QWidget* widget);
+      virtual ~DropDownWindow() = default;
+
+      //! Sets the widget to display in the DropDownWindow. Does nothing if a
+      //! widget has already been set.
+      virtual void set_widget(QWidget* widget);
 
     protected:
       bool event(QEvent* event) override;

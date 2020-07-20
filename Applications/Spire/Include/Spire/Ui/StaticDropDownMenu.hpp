@@ -7,35 +7,68 @@
 
 namespace Spire {
 
+  //! Represents a DropDownMenu that isn't modified by user interactions.
   class StaticDropDownMenu : public QWidget {
     public:
 
+      //! Signals that an item was selected.
+      /*!
+        \param index The index of the selected item.
+      */
       using IndexSelectedSignal = Signal<void (int index)>;
 
+      //! Signals that an item was selected.
+      /*!
+        \param value The value of the selected item.
+      */
       using ValueSelectedSignal = Signal<void (const QVariant& value)>;
 
+      //! Constructs a StaticDropDownMenu.
+      /*!
+        \param items The items to display.
+        \param parent The parent widget.
+      */
       explicit StaticDropDownMenu(const std::vector<QVariant>& items,
         QWidget* parent = nullptr);
 
       virtual ~StaticDropDownMenu() = default;
 
+      //! Constructs a StaticDropDownMenu with a fixed input label.
+      /*!
+        \param items The items to display.
+        \param display_text The fixed input label text to display.
+        \param parent The parent widget.
+      */
       StaticDropDownMenu(const std::vector<QVariant>& items,
         const QString& display_text, QWidget* parent = nullptr);
 
-      int item_count() const;
+      //! Returns the number of items in the list.
+      virtual int item_count() const;
 
-      void insert_item(DropDownItem* item);
+      //! Appends an item to the list.
+      virtual void insert_item(DropDownItem* item);
 
+      //! Removes and deletes the item at the given index.
+      /*!
+        \param index The index of the item to remove.
+      */
       virtual void remove_item(int index);
 
-      void set_items(const std::vector<QVariant>& items);
+      //! Sets the items to display, overwriting any existing items.
+      /*!
+        \param items The items to display.
+      */
+      virtual void set_items(const std::vector<QVariant>& items);
 
-      const QVariant& get_current_item() const;
+      //! Returns the currently selected item.
+      virtual const QVariant& get_current_item() const;
 
-      boost::signals2::connection connect_index_selected_signal(
+      //! Connects a slot to the index selected signal.
+      virtual boost::signals2::connection connect_index_selected_signal(
         const IndexSelectedSignal::slot_type& slot) const;
 
-      boost::signals2::connection connect_value_selected_signal(
+      //! Connects a slot to the value selected signal.
+      virtual boost::signals2::connection connect_value_selected_signal(
         const ValueSelectedSignal::slot_type& slot) const;
 
     protected:

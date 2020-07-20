@@ -7,16 +7,32 @@
 
 namespace Spire {
 
+  //! Represents a drop down list that filters items that do not match the
+  //! input text.
   class FilteredDropDownMenu : public TextInputWidget {
     public:
 
+      //! Signals that an item was selected.
+      /*!
+        \param value The value of the selected item.
+      */
       using SelectedSignal = Signal<void (const QVariant& value)>;
 
+      //! Constructs a FilteredDropDownMenu.
+      /*!
+        \param items The initial items to display.
+        \param parent The parent widget.
+      */
       explicit FilteredDropDownMenu(const std::vector<QVariant>& items,
         QWidget* parent = nullptr);
 
+      //! Sets the items to display, overwriting any existing items.
+      /*!
+        \param items The new items to display.
+      */
       void set_items(const std::vector<QVariant>& items);
 
+      //! Connects a slot to the selected signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 

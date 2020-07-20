@@ -5,9 +5,14 @@
 
 namespace Spire {
 
+  //! Represents a Spire-style line edit.
   class TextInputWidget : public QLineEdit {
     public:
 
+      //! Constructs a TextInputWidget.
+      /*!
+        \param parent The parent widget.
+      */
       TextInputWidget(QWidget* parent = nullptr);
   };
 }

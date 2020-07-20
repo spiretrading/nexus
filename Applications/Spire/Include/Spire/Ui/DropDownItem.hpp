@@ -7,27 +7,52 @@
 
 namespace Spire {
 
+  //! Represents an item used in a DropDownList.
   class DropDownItem : public QWidget {
     public:
 
+      //! Signals that the item was highlighted with the mouse.
+      /*!
+        \param value The value of the DropDownItem.
+      */
       using HighlightedSignal = Signal<void (QVariant value)>;
 
+      //! Signals that the item was selected.
+      /*!
+        \param value The value of the DropDownItem.
+      */
       using SelectedSignal = Signal<void (QVariant value)>;
 
+      //! Constructs a text DropDownItem.
+      /*!
+        \param value The value represented by the DropDownItem.
+        \param parent The parent widget.
+      */
       explicit DropDownItem(const QVariant& value, QWidget* parent = nullptr);
 
+      //! Consstructs a text DropDownItem with an icon.
+      /*!
+        \param value The value represented by the DropDownItem.
+        \param icon The icon to display beside the value.
+        \param parent The parent widget.
+      */
       DropDownItem(const QVariant& value, const QImage& icon,
         QWidget* parent = nullptr);
 
+      //! Returns the item's value.
       const QVariant& get_value() const;
 
+      //! Displays the item's highlight style.
       void set_highlight();
 
+      //! Removes the item's highlight style.
       void reset_highlight();
 
+      //! Connects a slot to the highlighted signal.
       boost::signals2::connection connect_highlighted_signal(
         const HighlightedSignal::slot_type& slot) const;
       
+      //! Connects a slot to the selected signal.
       boost::signals2::connection connect_selected_signal(
         const SelectedSignal::slot_type& slot) const;
 
