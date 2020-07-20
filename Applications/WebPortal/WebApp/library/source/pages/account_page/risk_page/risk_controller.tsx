@@ -50,13 +50,11 @@ export class RiskController extends React.Component<Properties, State> {
       onSubmit={this.onSubmit}/>;  
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({
-          isLoaded: true
-        });
-      });
+  public async componentDidMount(): Promise<void> {
+    await this.props.model.load();
+    this.setState({
+      isLoaded: true
+    });
   }
 
   private onSubmit = async (comment: string,
