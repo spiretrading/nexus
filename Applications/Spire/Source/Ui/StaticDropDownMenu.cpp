@@ -126,7 +126,7 @@ void StaticDropDownMenu::draw_item_text(const QString& text,
   if(isEnabled()) {
     painter.setPen(Qt::black);
   } else {
-    painter.setPen(QColor("#C8C8C8"));
+    painter.setPen(QColor("#A0A0A0"));
   }
   painter.drawText(QPoint(PADDING(),
     (height() / 2) + (metrics.ascent() / 2) - 1),
