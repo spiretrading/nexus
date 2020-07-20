@@ -14,7 +14,9 @@ namespace Spire {
 
       using HighlightedSignal = Signal<void (const QVariant& value)>;
 
-      using SelectedSignal = Signal<void (const QVariant& value)>;
+      using IndexSelectedSignal = Signal<void (int index)>;
+
+      using ValueSelectedSignal = Signal<void (const QVariant& value)>;
 
       explicit DropDownList(std::vector<DropDownItem*> items,
         bool is_click_activated, QWidget* parent = nullptr);
@@ -22,6 +24,8 @@ namespace Spire {
       QVariant get_value(int index);
 
       void insert_item(DropDownItem* item);
+
+      int item_count() const;
 
       void remove_item(int index);
 
@@ -33,8 +37,11 @@ namespace Spire {
       boost::signals2::connection connect_highlighted_signal(
         const HighlightedSignal::slot_type& slot) const;
       
-      boost::signals2::connection connect_selected_signal(
-        const SelectedSignal::slot_type& slot) const;
+      boost::signals2::connection connect_index_selected_signal(
+        const IndexSelectedSignal::slot_type& slot) const;
+      
+      boost::signals2::connection connect_value_selected_signal(
+        const ValueSelectedSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event);
@@ -44,11 +51,14 @@ namespace Spire {
     private:
       mutable ActivatedSignal m_activated_signal;
       mutable HighlightedSignal m_highlighted_signal;
-      mutable SelectedSignal m_selected_signal;
+      mutable IndexSelectedSignal m_index_selected_signal;
+      mutable ValueSelectedSignal m_value_selected_signal;
       int m_max_displayed_items;
       QVBoxLayout* m_layout;
       ScrollArea* m_scroll_area;
       boost::optional<int> m_highlight_index;
+      std::vector<boost::signals2::scoped_connection>
+        m_item_selected_connections;
 
       DropDownItem* get_widget(int index);
       void focus_next();
@@ -56,7 +66,7 @@ namespace Spire {
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();
-      void on_item_selected(const QVariant& value);
+      void on_item_selected(const QVariant& value, int index);
   };
 }
 
