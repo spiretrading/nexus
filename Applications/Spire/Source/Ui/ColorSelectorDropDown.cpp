@@ -120,6 +120,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   add_basic_color_button(2, 0, QColor("#FF00CC"));
   add_basic_color_button(2, 1, QColor("#FFFFFF"));
   add_basic_color_button(2, 2, QColor("#000000"));
+  setFocusProxy(m_basic_colors_layout->itemAt(0)->widget());
   horizontal_color_layout->addStretch(1);
   auto color_picker_layout = new QVBoxLayout();
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
@@ -186,6 +187,8 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
       on_color_selected(m_current_color);
+      window()->hide();
+    } else if(e->key() == Qt::Key_Escape) {
       window()->hide();
     }
   } else if(event->type() == QEvent::MouseButtonDblClick) {

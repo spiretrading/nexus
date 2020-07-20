@@ -38,6 +38,7 @@ namespace Spire {
         const ColorSignal::slot_type& slot) const;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
