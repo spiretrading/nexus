@@ -146,7 +146,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     m_color_value_slider->set_color(color);
     m_color_hue_slider->set_color(color);
     on_color_selected(color);
-    hide();
+    window()->hide();
   });
   m_hex_input->setFocusPolicy(Qt::StrongFocus);
   color_picker_layout->addWidget(m_hex_input);

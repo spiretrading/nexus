@@ -114,7 +114,7 @@ namespace Spire {
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();
-      void on_item_selected(const QVariant& value, int index);
+      void on_item_selected(QVariant value, int index);
   };
 }
 
