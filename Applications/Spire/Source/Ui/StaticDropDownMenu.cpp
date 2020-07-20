@@ -28,14 +28,13 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
     m_current_item = items.front();
   }
   m_menu_list = new DropDownList({}, true, this);
-  m_menu_list->connect_selected_signal([=] (const auto& value) {
-    on_item_selected(value);
-  });
+  m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
+    [=] (const auto& value) { on_item_selected(value); });
   set_items(items);
 }
 
-void StaticDropDownMenu::set_list_width(int width) {
-  m_menu_list->setFixedWidth(width);
+int StaticDropDownMenu::item_count() const {
+  return m_menu_list->item_count();
 }
 
 void StaticDropDownMenu::insert_item(DropDownItem* item) {
@@ -84,9 +83,14 @@ void StaticDropDownMenu::resizeEvent(QResizeEvent* event) {
   m_menu_list->setFixedWidth(width());
 }
 
-connection StaticDropDownMenu::connect_selected_signal(
-    const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+connection StaticDropDownMenu::connect_index_selected_signal(
+    const IndexSelectedSignal::slot_type& slot) const {
+  return m_menu_list->connect_index_selected_signal(slot);
+}
+
+connection StaticDropDownMenu::connect_value_selected_signal(
+    const ValueSelectedSignal::slot_type& slot) const {
+  return m_value_selected_signal.connect(slot);
 }
 
 void StaticDropDownMenu::draw_item_text(const QString& text,
@@ -102,6 +106,6 @@ void StaticDropDownMenu::draw_item_text(const QString& text,
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
-  m_selected_signal(m_current_item);
+  m_value_selected_signal(m_current_item);
   update();
 }
