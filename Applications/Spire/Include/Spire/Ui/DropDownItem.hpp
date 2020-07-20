@@ -10,9 +10,9 @@ namespace Spire {
   class DropDownItem : public QWidget {
     public:
 
-      using HighlightedSignal = Signal<void (const QVariant& value)>;
+      using HighlightedSignal = Signal<void (QVariant value)>;
 
-      using SelectedSignal = Signal<void (const QVariant& value)>;
+      using SelectedSignal = Signal<void (QVariant value)>;
 
       explicit DropDownItem(const QVariant& value, QWidget* parent = nullptr);
 
