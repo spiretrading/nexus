@@ -4,6 +4,7 @@
 using namespace Spire;
 
 #include <QLabel>
+#include <QPushButton>
 #include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/ToolbarMenu.hpp"
@@ -11,6 +12,16 @@ using namespace Spire;
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
 #include "Spire/Ui/StaticDropDownMenu.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
+
+auto ICON_SIZE() {
+  static auto icon_size = scale(10, 10);
+  return icon_size;
+}
+
+auto ICON_RECT() {
+  static auto icon_rect = QRect(QPoint(0, 0), scale(10, 10));
+  return icon_rect;
+}
 
 int main(int argc, char** argv) {
   auto application = new QApplication(argc, argv);
@@ -25,7 +36,7 @@ int main(int argc, char** argv) {
   auto dropdown1 = new StaticDropDownMenu({"One", "Two", "Three", "Four",
     "Five", "Six", "Seven"}, test_window);
   dropdown1->setFixedSize(scale(100, 28));
-  dropdown1->connect_selected_signal([&] (const auto& value) {
+  dropdown1->connect_value_selected_signal([&] (const auto& value) {
     label->setText(value.value<QString>());
   });
   layout->addWidget(dropdown1);
@@ -45,17 +56,45 @@ int main(int argc, char** argv) {
   auto dropdown2 = new StaticDropDownMenu({"One", "Two", "Three", "Four",
     "Five", "Six", "Seven"}, "Numbers", test_window);
   dropdown2->setFixedSize(scale(100, 28));
-  dropdown2->connect_selected_signal([&] (const auto& value) {
+  dropdown2->connect_value_selected_signal([&] (const auto& value) {
     label->setText(value.value<QString>());
   });
   layout->addWidget(dropdown2);
   auto toolbar = new ToolbarMenu("Toolbar", test_window);
   toolbar->setFixedSize(scale(100, 28));
+  toolbar->add("A.TSX",
+    imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+    ICON_RECT()));
+  toolbar->add("B.TSX",
+    imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+    ICON_RECT()));
+  toolbar->add("C.TSX",
+    imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+    ICON_RECT()));
+  toolbar->add("D.TSX",
+    imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+    ICON_RECT()));
+  toolbar->add("E.TSX",
+    imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+    ICON_RECT()));
+  toolbar->connect_index_selected_signal([=] (auto index) {
+    label->setText(QString::number(index));
+  });
   layout->addWidget(toolbar);
   auto t = new TextInputWidget(test_window);
   t->setFixedSize(scale(100, 28));
   t->connect(t, &QLineEdit::editingFinished, [=] {
     label->setText(t->text());
+  });
+  auto button = new QPushButton("Remove ToolbarMenu Items", test_window);
+  button->move(translate(650, 100));
+  button->setFixedSize(scale(150, 28));
+  button->connect(button, &QPushButton::pressed, [=] {
+    toolbar->remove_item(0);
+    toolbar->remove_item(0);
+    toolbar->remove_item(0);
+    toolbar->remove_item(0);
+    toolbar->remove_item(0);
   });
   layout->addWidget(t);
   auto l1 = new QLabel("Static Menu", test_window);
