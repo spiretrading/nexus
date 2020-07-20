@@ -31,7 +31,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
   m_menu_list->connect_activated_signal([=] (const auto& value) {
     on_item_activated(value);
   });
-  m_list_selection_connection = m_menu_list->connect_selected_signal(
+  m_list_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   set_items(items);
   m_menu_list->installEventFilter(this);
@@ -183,7 +183,7 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
   m_current_item = item;
   setText(m_item_delegate.displayText(m_current_item));
   m_selected_signal(m_current_item);
-  m_list_selection_connection = m_menu_list->connect_selected_signal(
+  m_list_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   set_items(m_items);
   update();

@@ -58,7 +58,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_recently_closed_button = new ToolbarMenu(tr("Recently Closed"), body);
   m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_recently_closed_button->connect_item_selected_signal(
+  m_recently_closed_button->connect_index_selected_signal(
     [=] (auto index) { on_item_selected(index); });
   combo_box_layout->addWidget(m_recently_closed_button);
   combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
@@ -160,7 +160,7 @@ void ToolbarWindow::entry_removed(const RecentlyClosedModel::Entry& e) {
   for(auto i = 0; i < static_cast<int>(m_entries.size()); ++i) {
     if(m_entries[i].m_id == e.m_id) {
       m_entries.erase(m_entries.begin() + i);
-      m_recently_closed_button->remove(i);
+      m_recently_closed_button->remove_item(i);
     }
   }
 }
