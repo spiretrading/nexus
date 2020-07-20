@@ -62,13 +62,11 @@ export class ProfileController extends React.Component<Properties, State> {
       onSubmitPassword={this.onSubmitPassword}/>;
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({
-          isLoaded: true
-        });
-      });
+  public async componentDidMount(): Promise<void> {
+    await this.props.model.load();
+    this.setState({
+      isLoaded: true
+    });
   }
 
   private onSubmitPassword = async (password: string) => {
