@@ -109,5 +109,6 @@
         <file>Icons/text_effects/underline-active.svg</file>
         <file>Icons/text_effects/underline-hover.svg</file>
         <file>Icons/text_effects/underline-inactive.svg</file>
+        <file>Icons/arrow-down-grey.svg</file>
     </qresource>
 </RCC>

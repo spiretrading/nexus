@@ -80,10 +80,14 @@ namespace Spire {
       QVariant m_current_item;
       QString m_display_text;
       QImage m_dropdown_image;
+      QImage m_disabled_dropdown_image;
       DropDownList* m_menu_list;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_menu_selection_connection;
 
+      void draw_arrow(const QImage& arrow_image, QPainter& painter);
+      void draw_background(const QColor& color, QPainter& painter);
+      void draw_border(const QColor& color, QPainter& painter);
       void draw_item_text(const QString& text, QPainter& painter);
       void on_item_selected(const QVariant& value);
   };
