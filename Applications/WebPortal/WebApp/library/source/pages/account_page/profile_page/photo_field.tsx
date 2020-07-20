@@ -156,107 +156,107 @@ export class PhotoField extends React.Component<Properties, {}> {
   private static ANIMATION_STYLE = {
     entering: {
       opacity: 0
-    },
+    } as React.CSSProperties,
     entered: {
       opacity: 1
-    },
+    } as React.CSSProperties,
     exited: {
-      display: 'none' as 'none'
-    }
+      display: 'none'
+    } as React.CSSProperties
   };
   private static readonly STYLE = {
     wrapper: {
       maxHeight: '288px',
       maxWidth: '424px'
-    },
+    } as React.CSSProperties,
     animationBase: {
       opacity: 0,
       transition: 'opacity 200ms ease'
-    },
+    } as React.CSSProperties,
     boxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#F8F8F8',
       width: '100%',
       paddingTop: '68%',
       maxHeight: '288px',
       maxWidth: '424px',
-      position: 'relative' as 'relative',
+      position: 'relative',
       borderRadius: '1px',
       border: '1px solid #EBEBEB',
-      overflow: 'hidden' as 'hidden'
-    },
+      overflow: 'hidden'
+    } as React.CSSProperties,
     boxMedium: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
       borderRadius: '1px',
       height: '190px',
       width: '280px',
-      position: 'relative' as 'relative',
-      overflow: 'hidden' as 'hidden'
-    },
+      position: 'relative',
+      overflow: 'hidden'
+    } as React.CSSProperties,
     boxLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
       backgroundColor: '#F8F8F8',
       border: '1px solid #E6E6E6',
       borderRadius: '1px',
       height: '258px',
       width: '380px',
-      position: 'relative' as 'relative',
-      overflow: 'hidden' as 'hidden'
-    },
+      position: 'relative',
+      overflow: 'hidden'
+    } as React.CSSProperties,
     placeholder: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       height: '24px',
       width: '30px'
-    },
+    } as React.CSSProperties,
     placeholderSmall: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       height: '24px',
       width: '30px',
       top: 'calc(50% - 12px)',
       left: 'calc(50% - 15px)'
-    },
+    } as React.CSSProperties,
     image: {
-      objectFit: 'cover' as 'cover',
+      objectFit: 'cover',
       height: '100%',
       width: '100%'
-    },
+    } as React.CSSProperties,
     imageSmall: {
-      position: 'absolute' as 'absolute',
-      objectFit: 'cover' as 'cover',
+      position: 'absolute',
+      objectFit: 'cover',
       top: '0%',
       left: '0%',
       height: '100%',
       width: '100%'
-    },
+    } as React.CSSProperties,
     cameraIcon: {
       height: '20px',
       width: '20px'
-    },
+    } as React.CSSProperties,
     cameraIconWrapper: {
       height: '24px',
       width: '24px',
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
-      position: 'absolute' as 'absolute',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
       top: 'calc(0% + 10px)',
       left: 'calc(100% - 10px - 24px)',
-      cursor: 'pointer' as 'pointer'
-    },
+      cursor: 'pointer'
+    } as React.CSSProperties,
     hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    }
+      visibility: 'hidden',
+      display: 'none'
+    } as React.CSSProperties
   };
   private static readonly TIMEOUT = 200;
 }
@@ -295,14 +295,6 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     onPhotoChange: () => {},
     onScalingChange: () => {}
   };
-
-  constructor(properties: ModalProperties) {
-    super(properties);
-    this.onSliderMovement = this.onSliderMovement.bind(this);
-    this.onGetImageFile = this.onGetImageFile.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-    this.onClose = this.onClose.bind(this);
-  }
 
   public render(): JSX.Element {
     const boxStyle = (() => {
@@ -365,7 +357,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
           transform: `scale(${this.props.scaling})`
         });
       } else {
-        return { transform: 'scale(1)' };
+        return {transform: 'scale(1)'};
       }
     })();
     return (
@@ -387,7 +379,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <div style={imageBoxStyle}>
               <img src={imageSrc}
-                style={{ ...imageStyle, ...imageScaling }}/>
+                style={{...imageStyle, ...imageScaling}}/>
             </div>
             <Padding size={ChangePictureModal.PADDING_BETWEEN_ELEMENTS}/>
             <Slider onChange={this.onSliderMovement}
@@ -419,23 +411,23 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       </div>);
   }
 
-  private onSliderMovement(value: number) {
+  private onSliderMovement = (value: number) => {
     this.props.onScalingChange(value);
   }
 
-  private onGetImageFile(selectorFiles: FileList) {
+  private onGetImageFile = (selectorFiles: FileList) => {
     const file = selectorFiles.item(0);
     const someURL = URL.createObjectURL(file);
     this.props.onPhotoChange(someURL);
     this.setState({});
   }
 
-  private onClose() {
+  private onClose = () => {
     this.props.onCloseModal();
-    this.setState({ scaling: 1 });
+    this.setState({scaling: 1});
   }
 
-  private onSubmit() {
+  private onSubmit = () => {
     if(this.props.imageSource) {
       this.props.onSubmitImage(this.props.imageSource,
         this.props.scaling);
@@ -445,124 +437,124 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
 
   private static readonly STYLE = {
     transparentBackground: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       top: '0px',
       left: '0px',
-      position: 'fixed' as 'fixed',
+      position: 'fixed',
       width: '100%',
       height: '100%',
       backgroundColor: '#FFFFFF',
       opacity: 0.9
-    },
+    } as React.CSSProperties,
     boxShadowSmall:{
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       opacity: 0.4,
       display: 'block',
       boxShadow: '0px 0px 6px #000000',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
       width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
-    },
+    } as React.CSSProperties,
     boxShadowLarge:{
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       opacity: 0.4,
       boxShadow: '0px 0px 6px #000000',
       display: 'block',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '447px',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)'
-    },
+    } as React.CSSProperties,
     boxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       display: 'block',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       border: '1px solid #FFFFFF',
       backgroundColor: '#FFFFFF',
       width: '282px',
       height: '100%',
       top: '0%',
       right: '0%'
-    },
+    } as React.CSSProperties,
     boxLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       display: 'block',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       backgroundColor: '#FFFFFF',
       width: '360px',
       height: '447px',
       top: 'calc(50% - 223.5px)',
       left: 'calc(50% - 180px)'
-    },
+    } as React.CSSProperties,
     header: {
-      display: 'flex' as 'flex',
-      justifyContent: 'space-between' as 'space-between',
+      display: 'flex',
+      justifyContent: 'space-between',
       font: '400 16px Roboto'
-    },
+    } as React.CSSProperties,
     buttonBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      flexWrap: 'wrap' as 'wrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between' as 'space-between',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       height: '86px'
-    },
+    } as React.CSSProperties,
     buttonBoxLarge: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    } as React.CSSProperties,
     placeholderImage: {
-      position: 'relative' as 'relative',
+      position: 'relative',
       height: '24px',
       width: '30px',
       top: 'calc(50% - 12px)',
       left: 'calc(50% - 15px)'
-    },
+    } as React.CSSProperties,
     imageSmall: {
-      objectFit: 'cover' as 'cover',
+      objectFit: 'cover',
       height: '100%',
       width: '100%'
-    },
+    } as React.CSSProperties,
     imageLarge: {
-      objectFit: 'cover' as 'cover',
+      objectFit: 'cover',
       height: '100%',
       width: '100%'
-    },
+    } as React.CSSProperties,
     imageBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '166px',
       width: '246px',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       borderRadius: '1px',
       border: '1px solid #EBEBEB',
       backgroundColor: '#F8F8F8'
-    },
+    } as React.CSSProperties,
     imageBoxLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '216px',
       width: '324px',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       borderRadius: '1px',
       border: '1px solid #EBEBEB',
       backgroundColor: '#F8F8F8'
-    },
+    } as React.CSSProperties,
     hiddenInput: {
       width: '0.1px',
       height: '0.1px',
       opacity: 0,
-      overflow: 'hidden' as 'hidden',
-      position: 'absolute' as 'absolute'
-    }
+      overflow: 'hidden',
+      position: 'absolute'
+    } as React.CSSProperties
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
@@ -657,11 +649,6 @@ export class Slider extends React.Component<SliderProperties, {}> {
     readonly: false
   };
 
-  constructor(properties: SliderProperties) {
-    super(properties);
-    this.onValueChange = this.onValueChange.bind(this);
-  }
-
   public render(): JSX.Element {
     const sliderStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -686,7 +673,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       className={css(sliderStyle, cursorStyle)}/>);
   }
 
-  private onValueChange(event: any) {
+  private onValueChange = (event: any) => {
     const num = event.target.value;
     const diff = Math.abs(this.props.scale - num);
     if(this.props.scale < num) {
