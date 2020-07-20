@@ -79,7 +79,7 @@ export class FormEntry extends React.Component<Properties> {
 
   private static STYLE = {
     box: {
-      boxSizing: 'border-box',
+      boxSizing: 'border-box'
     } as React.CSSProperties,
     childBox: {
       width: '100%',
