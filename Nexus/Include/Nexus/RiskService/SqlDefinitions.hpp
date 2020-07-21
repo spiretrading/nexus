@@ -47,22 +47,22 @@ namespace Nexus::RiskService {
               [] (auto& row, auto column) {
                 row = Security(row.GetSymbol(), row.GetMarket(), column);
               }),
-            [] (auto& entry) -> decltype(auto) {
+            [] (auto& entry) -> auto& {
               return entry.m_index;
             }).
           add_column("currency",
-            [] (auto& entry) -> decltype(auto) {
+            [] (auto& entry) -> auto& {
               return entry.m_currency;
             }),
-          [] (auto& entry) -> decltype(auto) {
+          [] (auto& entry) -> auto& {
             return entry.m_key;
           }).
         add_column("quantity",
-          [] (auto& entry) -> decltype(auto) {
+          [] (auto& entry) -> auto& {
             return entry.m_quantity;
           }).
         add_column("cost_basis",
-          [] (auto& entry) -> decltype(auto) {
+          [] (auto& entry) -> auto& {
             return entry.m_costBasis;
           }), &PositionEntry::m_position).
       add_index("account", "account");
@@ -113,6 +113,14 @@ namespace Nexus::RiskService {
       add_column("id", &PositionExcludedOrderId::m_id).
       add_index("account", "account");
     return ROW;
+  }
+
+  /** Converts an order id into a PositionExcludedOrderId. */
+  inline auto ConvertPositionExcludedOrders(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return [=] (OrderExecutionService::OrderId id) {
+      return PositionExcludedOrderId{account.m_id, id};
+    };
   }
 }
 

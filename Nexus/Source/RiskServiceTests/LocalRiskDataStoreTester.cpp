@@ -11,7 +11,7 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 
-TEST_SUITE("RiskServlet") {
+TEST_SUITE("LocalRiskDataStore") {
   TEST_CASE("load_empty_position") {
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();

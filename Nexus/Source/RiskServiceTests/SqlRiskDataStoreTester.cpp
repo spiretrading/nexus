@@ -18,7 +18,7 @@ namespace {
   using TestSqlRiskDataStore = SqlRiskDataStore<Connection>;
 }
 
-TEST_SUITE("RiskServlet") {
+TEST_SUITE("SqlRiskDataStore") {
   TEST_CASE("load_empty_position") {
     auto dataStore = TestSqlRiskDataStore(
       std::make_unique<Connection>(":memory:"));
