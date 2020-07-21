@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKPORTFOLIOTYPES_HPP
-#define NEXUS_RISKPORTFOLIOTYPES_HPP
+#ifndef NEXUS_RISK_PORTFOLIO_TYPES_HPP
+#define NEXUS_RISK_PORTFOLIO_TYPES_HPP
 #include <functional>
 #include <boost/functional/hash.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -8,69 +8,63 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  /*! \struct RiskPortfolioKey
-      \brief Used as a key into an account's Inventory.
-   */
+  /** Used as a key into an account's Inventory. */
   struct RiskPortfolioKey {
 
-    //! The portfolio's account.
+    /** The portfolio's account. */
     Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The Security being indexed.
+    /** The Security being indexed. */
     Security m_security;
 
-    //! Constructs a RiskPortfolioKey.
-    RiskPortfolioKey();
+    /** Constructs a RiskPortfolioKey. */
+    RiskPortfolioKey() = default;
 
-    //! Constructs a RiskPortfolioKey.
-    /*!
-      \param account The portfolio's account.
-      \param security The Security being indexed.
-    */
-    RiskPortfolioKey(const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security);
+    /**
+     * Constructs a RiskPortfolioKey.
+     * @param account The portfolio's account.
+     * @param security The Security being indexed.
+     */
+    RiskPortfolioKey(Beam::ServiceLocator::DirectoryEntry account,
+      Security security);
 
-    //! Tests for equality.
+    /** Tests for equality. */
     bool operator ==(const RiskPortfolioKey& key) const;
 
-    //! Tests for equality.
+    /** Tests for equality. */
     bool operator !=(const RiskPortfolioKey& key) const;
   };
 
-  //! The type used to represent a portfolio's position.
+  /** The type used to represent a portfolio's position. */
   using RiskPortfolioPosition = Accounting::Position<Security>;
 
-  //! The type used to represent a portfolio's Inventory.
+  /** The type used to represent a portfolio's Inventory. */
   using RiskPortfolioInventory = Accounting::Inventory<RiskPortfolioPosition>;
 
-  //! The type of valuation used.
+  /** The type of valuation used. */
   using RiskSecurityValuation = Accounting::SecurityValuation;
 
-  //! Stores an Inventory update.
+  /** Stores an Inventory update. */
   using RiskPortfolioInventoryEntry =
     Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>;
 
-  //! The Publisher used for portfolio events.
+  /** The Publisher used for portfolio events. */
   using RiskPortfolioUpdatePublisher = Beam::Publisher<
     Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
-    std::size_t seed = 0;
+    auto seed = std::size_t(0);
     boost::hash_combine(seed, value.m_account);
     boost::hash_combine(seed, value.m_security);
     return seed;
   }
 
-  inline RiskPortfolioKey::RiskPortfolioKey() {}
-
   inline RiskPortfolioKey::RiskPortfolioKey(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const Security& security)
-      : m_account(account),
-        m_security(security) {}
+    Beam::ServiceLocator::DirectoryEntry account, Security security)
+    : m_account(std::move(account)),
+      m_security(std::move(security)) {}
 
   inline bool RiskPortfolioKey::operator ==(
       const RiskPortfolioKey& key) const {
@@ -82,10 +76,8 @@ namespace RiskService {
     return !(*this == key);
   }
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::RiskService::RiskPortfolioKey> {
     template<typename Shuttler>
@@ -96,7 +88,6 @@ namespace Serialization {
       shuttle.Shuttle("security", value.m_security);
     }
   };
-}
 }
 
 namespace std {

@@ -25,7 +25,7 @@ namespace Nexus::Compliance {
       using Connection = C;
 
       /**
-       * Constructs a MySqlComplianceRuleDataStore.
+       * Constructs an SqlComplianceRuleDataStore.
        * @param connection The SQL connection to use.
        */
       explicit SqlComplianceRuleDataStore(

@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKSERVLET_HPP
-#define NEXUS_RISKSERVLET_HPP
+#ifndef NEXUS_RISK_SERVLET_HPP
+#define NEXUS_RISK_SERVLET_HPP
 #include <algorithm>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -16,59 +16,52 @@
 #include "Nexus/RiskService/RiskStateMonitor.hpp"
 #include "Nexus/RiskService/RiskTransitionController.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  /*! \class RiskServlet
-      \brief Monitors a trader's positions and orders for risk compliance.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam AdministrationClientType The type of AdministrationClient used to
-              access account info.
-      \tparam OrderExecutionClientType The type of OrderExecutionClient used to
-              manage a trader's position.
-      \tparam RiskStateMonitorType The type of RiskStateMonitor used for risk
-              monitoring.
+  /**
+   * Monitors a trader's positions and orders for risk compliance.
+   * @param <C> The container instantiating this servlet.
+   * @param <A> The type of AdministrationClient used to access account info.
+   * @param <O> The type of OrderExecutionClient used to manage a trader's
+   *        position.
+   * @param <R> The type of RiskStateMonitor used for risk monitoring.
    */
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
+  template<typename C, typename A, typename O, typename R>
   class RiskServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of AdministrationClient used to access account info.
-      using AdministrationClient =
-        Beam::GetTryDereferenceType<AdministrationClientType>;
+      /** The type of AdministrationClient used to access account info. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of OrderExecutionClient used to manage a trader's position.
-      using OrderExecutionClient =
-        Beam::GetTryDereferenceType<OrderExecutionClientType>;
+      /**
+       * The type of OrderExecutionClient used to manage a trader's position.
+       */
+      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
 
-      //! The type of RiskStateMonitor used for risk monitoring.
-      using ServletRiskStateMonitor =
-        Beam::GetTryDereferenceType<RiskStateMonitorType>;
+      /** The type of RiskStateMonitor used for risk monitoring. */
+      using ServletRiskStateMonitor = Beam::GetTryDereferenceType<R>;
 
-      //! The type of RiskTransitionController used to transition accounts.
+      /** The type of RiskTransitionController used to transition accounts. */
       using RiskTransitionController = RiskService::RiskTransitionController<
         AdministrationClient*, OrderExecutionClient*>;
 
-      //! Constructs a RiskServlet.
-      /*!
-        \param orderQueue The Queue publishing Orders to monitor.
-        \param administrationClient Initializes the AdministrationClient.
-        \param orderExecutionClient Initializes the OrderExecutionClient.
-        \param riskStateMonitor Initializes the RiskStateMonitor.
-        \param destinations The database of available destinations.
-        \param markets The database of available markets.
-      */
-      template<typename AdministrationClientForward,
-        typename OrderExecutionClientForward, typename RiskStateMonitorForward>
+      /**
+       * Constructs a RiskServlet.
+       * @param orderQueue The Queue publishing Orders to monitor.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param orderExecutionClient Initializes the OrderExecutionClient.
+       * @param riskStateMonitor Initializes the RiskStateMonitor.
+       * @param destinations The database of available destinations.
+       * @param markets The database of available markets.
+       */
+      template<typename AF, typename OF, typename RF>
       RiskServlet(const std::shared_ptr<Beam::QueueReader<
         const OrderExecutionService::Order*>>& orderQueue,
-        AdministrationClientForward&& administrationClient,
-        OrderExecutionClientForward&& orderExecutionClient,
-        RiskStateMonitorForward&& riskStateMonitor,
-        const DestinationDatabase& destinations, const MarketDatabase& markets);
+        AF&& administrationClient, OF&& orderExecutionClient,
+        RF&& riskStateMonitor, const DestinationDatabase& destinations,
+        const MarketDatabase& markets);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -80,12 +73,9 @@ namespace RiskService {
       void Close();
 
     private:
-      typename Beam::OptionalLocalPtr<AdministrationClientType>::type
-        m_administrationClient;
-      typename Beam::OptionalLocalPtr<OrderExecutionClientType>::type
-        m_orderExecutionClient;
-      typename Beam::OptionalLocalPtr<RiskStateMonitorType>::type
-        m_riskStateMonitor;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
+      Beam::GetOptionalLocalPtr<R> m_riskStateMonitor;
       RiskTransitionController m_riskTransitionController;
       Beam::Threading::Sync<std::vector<ServiceProtocolClient*>,
         Beam::Threading::Mutex> m_portfolioSubscribers;
@@ -106,41 +96,29 @@ namespace RiskService {
         int dummy);
   };
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType,
-    typename RiskStateMonitorType>
+  template<typename A, typename O, typename R>
   struct MetaRiskServlet {
     using Session = RiskSession;
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = RiskServlet<ContainerType, AdministrationClientType,
-        OrderExecutionClientType, RiskStateMonitorType>;
+      using type = RiskServlet<C, A, O, R>;
     };
   };
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  template<typename AdministrationClientForward,
-    typename OrderExecutionClientForward, typename RiskStateMonitorForward>
-  RiskServlet<ContainerType, AdministrationClientType, OrderExecutionClientType,
-      RiskStateMonitorType>::RiskServlet(const std::shared_ptr<
-      Beam::QueueReader<const OrderExecutionService::Order*>>& orderQueue,
-      AdministrationClientForward&& administrationClient,
-      OrderExecutionClientForward&& orderExecutionClient,
-      RiskStateMonitorForward&& riskStateMonitor,
-      const DestinationDatabase& destinations, const MarketDatabase& markets)
-      : m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)),
-        m_orderExecutionClient(std::forward<OrderExecutionClientForward>(
-          orderExecutionClient)),
-        m_riskStateMonitor(std::forward<RiskStateMonitorForward>(
-          riskStateMonitor)),
-        m_riskTransitionController(orderQueue, &*m_administrationClient,
-          &*m_orderExecutionClient, destinations, markets) {}
+  template<typename C, typename A, typename O, typename R>
+  template<typename AF, typename OF, typename RF>
+  RiskServlet<C, A, O, R>::RiskServlet(const std::shared_ptr<
+    Beam::QueueReader<const OrderExecutionService::Order*>>& orderQueue,
+    AF&& administrationClient, OF&& orderExecutionClient, RF&& riskStateMonitor,
+    const DestinationDatabase& destinations, const MarketDatabase& markets)
+    : m_administrationClient(std::forward<AF>(administrationClient)),
+      m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
+      m_riskStateMonitor(std::forward<RF>(riskStateMonitor)),
+      m_riskTransitionController(orderQueue, &*m_administrationClient,
+        &*m_orderExecutionClient, destinations, markets) {}
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::RegisterServices(
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterRiskServices(Store(slots));
     RegisterRiskMessages(Store(slots));
@@ -149,22 +127,18 @@ namespace RiskService {
       std::placeholders::_1, std::placeholders::_2));
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::HandleClientClosed(
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::HandleClientClosed(
       ServiceProtocolClient& client) {
     Beam::Threading::With(m_portfolioSubscribers,
-      [&] (std::vector<ServiceProtocolClient*>& subscribers) {
+      [&] (auto& subscribers) {
         subscribers.erase(std::remove(subscribers.begin(),
           subscribers.end(), &client), subscribers.end());
       });
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::Open() {
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -185,20 +159,16 @@ namespace RiskService {
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::Close() {
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::Shutdown() {
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::Shutdown() {
     m_riskTransitionController.Close();
     m_administrationClient->Close();
     m_orderExecutionClient->Close();
@@ -206,11 +176,8 @@ namespace RiskService {
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  Beam::ServiceLocator::DirectoryEntry RiskServlet<ContainerType,
-      AdministrationClientType, OrderExecutionClientType,
-      RiskStateMonitorType>::LoadGroup(
+  template<typename C, typename A, typename O, typename R>
+  Beam::ServiceLocator::DirectoryEntry RiskServlet<C, A, O, R>::LoadGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_accountToGroup.GetOrInsert(account,
       [&] {
@@ -218,25 +185,23 @@ namespace RiskService {
       });
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::OnInventoryUpdate(
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::OnInventoryUpdate(
       const RiskPortfolioInventoryEntry& entry) {
     auto& volume = m_volume[entry.m_key];
     if(volume == entry.m_value.m_volume) {
       return;
     }
     volume = entry.m_value.m_volume;
-    std::vector<InventoryUpdate> inventories;
-    InventoryUpdate update;
+    auto inventories = std::vector<InventoryUpdate>();
+    auto update = InventoryUpdate();
     update.account = entry.m_key.m_account;
     update.inventory = entry.m_value;
     inventories.push_back(update);
     auto group = LoadGroup(update.account);
     Beam::Threading::With(m_portfolioSubscribers,
-      [&] (const std::vector<ServiceProtocolClient*>& subscribers) {
-        for(const auto& client : subscribers) {
+      [&] (const auto& subscribers) {
+        for(auto& client : subscribers) {
           auto& session = client->GetSession();
           if(session.HasGroupPortfolioSubscription(group)) {
             Beam::Services::SendRecordMessage<InventoryMessage>(*client,
@@ -246,36 +211,31 @@ namespace RiskService {
       });
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::OnRiskState(
-      const RiskStateEntry& entry) {
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::OnRiskState(const RiskStateEntry& entry) {
     m_administrationClient->StoreRiskState(entry.m_key, entry.m_value);
   }
 
-  template<typename ContainerType, typename AdministrationClientType,
-    typename OrderExecutionClientType, typename RiskStateMonitorType>
-  void RiskServlet<ContainerType, AdministrationClientType,
-      OrderExecutionClientType, RiskStateMonitorType>::
-      OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
+  template<typename C, typename A, typename O, typename R>
+  void RiskServlet<C, A, O, R>::OnSubscribeRiskPortfolioUpdatesRequest(
+      Beam::Services::RequestToken<
       ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request,
       int dummy) {
     auto& session = request.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());
-    std::vector<Beam::ServiceLocator::DirectoryEntry> groups;
+    auto groups = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     if(!isAdministrator) {
       groups = m_administrationClient->LoadManagedTradingGroups(
         session.GetAccount());
     }
-    std::vector<RiskPortfolioInventoryEntry> entries;
+    auto entries = std::vector<RiskPortfolioInventoryEntry>();
     Beam::Threading::With(m_portfolioSubscribers,
-      [&] (std::vector<ServiceProtocolClient*>& subscribers) {
+      [&] (auto& subscribers) {
         if(isAdministrator) {
           session.AddAllPortfolioGroups();
         } else {
-          for(const auto& group : groups) {
+          for(auto& group : groups) {
             session.AddPortfolioGroup(group);
           }
         }
@@ -298,7 +258,6 @@ namespace RiskService {
         request.SetResult(entries);
       });
   }
-}
 }
 
 #endif

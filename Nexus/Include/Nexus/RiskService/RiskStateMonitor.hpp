@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKSTATEMONITOR_HPP
-#define NEXUS_RISKSTATEMONITOR_HPP
+#ifndef NEXUS_RISK_STATE_MONITOR_HPP
+#define NEXUS_RISK_STATE_MONITOR_HPP
 #include <unordered_map>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/FilteredPublisher.hpp>
@@ -17,78 +17,69 @@
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskStateTracker.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  //! Represents an entry in a RiskState table.
+  /** Represents an entry in a RiskState table. */
   using RiskStateEntry = Beam::TableEntry<Beam::ServiceLocator::DirectoryEntry,
     RiskState>;
 
-  /*! \class RiskStateMonitor
-      \brief Instantiates RiskStateTrackers for all accounts executing Orders
-             and notifies when changes to an account's RiskState occur.
-             Portfolio's are valued using the BboQuote published by a
-             MarketDataClient and Orders published by an
-             OrderExecutionPublisher.
-      \tparam RiskStateTrackerType The type of RiskStateTracker to update.
-      \tparam AdministrationClientType The type of AdministrationClient used to
-              load an account's RiskParameters.
-      \tparam MarketDataClientType The type of MarketDataClient to use.
-      \tparam TransitionTimerType The type of Timer to use to transition from
-              CLOSED_ORDERS to DISABLED.
-      \tparam TimeClientType The type of TimeClient to use.
+  /**
+   * Instantiates RiskStateTrackers for all accounts executing Orders and
+   * notifies when changes to an account's RiskState occur.
+   * Portfolio's are valued using the BboQuote published by a MarketDataClient
+   * and Orders published by an OrderExecutionPublisher.
+   * @param <R> The type of RiskStateTracker to update.
+   * @param <A> The type of AdministrationClient used to load an account's
+   *        RiskParameters.
+   * @param <M> The type of MarketDataClient to use.
+   * @param <T> The type of Timer to use to transition from CLOSED_ORDERS to
+   *        DISABLED.
+   * @param <C> The type of TimeClient to use.
    */
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
+  template<typename R, typename A, typename M, typename T, typename C>
   class RiskStateMonitor : private boost::noncopyable {
     public:
 
-      //! The type of RiskStateTrackers to update.
-      using RiskStateTracker =
-        Beam::GetTryDereferenceType<RiskStateTrackerType>;
+      /** The type of RiskStateTrackers to update. */
+      using RiskStateTracker = Beam::GetTryDereferenceType<R>;
 
-      //! The type of AdministrationClient used to load an account's
-      //! RiskParameters.
-      using AdministrationClient =
-        Beam::GetTryDereferenceType<AdministrationClientType>;
+      /**
+       * The type of AdministrationClient used to load an account's
+       * RiskParameters.
+       */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of MarketDataClient to use.
-      using MarketDataClient =
-        Beam::GetTryDereferenceType<MarketDataClientType>;
+      /** The type of MarketDataClient to use. */
+      using MarketDataClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of TransitionTimer to use.
-      using TransitionTimer = Beam::GetTryDereferenceType<TransitionTimerType>;
+      /** The type of TransitionTimer to use. */
+      using TransitionTimer = Beam::GetTryDereferenceType<T>;
 
-      //! The type of TimeClient to use.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient to use. */
+      using TimeClient = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a RiskStateMonitor.
-      /*!
-        \param administrationClient Initializes the AdministrationClient.
-        \param marketDataClient Initializes the MarketDataClient.
-        \param orderSubmissionQueue Used to monitor Order submissions.
-        \param transitionTimer Initializes the transition Timer.
-        \param timeClient Initializes the TimeClient.
-        \param marketDatabase The database of markets.
-        \param exchangeRates The list of ExchangeRates.
-      */
-      template<typename AdministrationClientForward,
-        typename MarketDataClientForward, typename TransitionTimerForward,
-        typename TimeClientForward>
-      RiskStateMonitor(AdministrationClientForward&& administrationClient,
-        MarketDataClientForward&& marketDataClient, const std::shared_ptr<
+      /**
+       * Constructs a RiskStateMonitor.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param marketDataClient Initializes the MarketDataClient.
+       * @param orderSubmissionQueue Used to monitor Order submissions.
+       * @param transitionTimer Initializes the transition Timer.
+       * @param timeClient Initializes the TimeClient.
+       * @param marketDatabase The database of markets.
+       * @param exchangeRates The list of ExchangeRates.
+       */
+      template<typename AF, typename MF, typename TF, typename CF>
+      RiskStateMonitor(AF&& administrationClient, MF&& marketDataClient,
+        const std::shared_ptr<
         Beam::QueueReader<const OrderExecutionService::Order*>>&
-        orderSubmissionQueue, TransitionTimerForward&& transitionTimer,
-        TimeClientForward&& timeClient, const MarketDatabase& marketDatabase,
+        orderSubmissionQueue, TF&& transitionTimer, CF&& timeClient,
+        const MarketDatabase& marketDatabase,
         std::vector<ExchangeRate> exchangeRates);
 
-      ~RiskStateMonitor();
-
-      //! Returns the object used to publish RiskState updates.
+      /** Returns the object used to publish RiskState updates. */
       const Beam::Publisher<RiskStateEntry>& GetRiskStatePublisher() const;
 
-      //! Returns the object used to publish Inventory updates.
+      /** Returns the object used to publish Inventory updates. */
       const RiskPortfolioUpdatePublisher& GetInventoryPublisher() const;
 
     private:
@@ -107,13 +98,12 @@ namespace RiskService {
           orderPublisher, MarketDataClient* marketDataClient,
           TimeClient* timeClient);
       };
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::QueuePublisher<Beam::SequencePublisher<
         const OrderExecutionService::Order*>> m_orderSubmissionPublisher;
-      Beam::GetOptionalLocalPtr<TransitionTimerType> m_transitionTimer;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
+      Beam::GetOptionalLocalPtr<T> m_transitionTimer;
+      Beam::GetOptionalLocalPtr<C> m_timeClient;
       MarketDatabase m_marketDatabase;
       std::vector<ExchangeRate> m_exchangeRates;
       Beam::TablePublisher<Beam::ServiceLocator::DirectoryEntry, RiskState>
@@ -134,20 +124,16 @@ namespace RiskService {
         const typename PortfolioMonitor::UpdateEntry& update);
   };
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::AccountEntry::
-      AccountEntry(const Beam::ServiceLocator::DirectoryEntry& account,
-      const MarketDatabase& marketDatabase,
-      const std::vector<ExchangeRate>& exchangeRates,
-      const Beam::Publisher<const OrderExecutionService::Order*>&
-      orderPublisher, MarketDataClient* marketDataClient,
-      TimeClient* timeClient)
+  template<typename R, typename A, typename M, typename T, typename C>
+  RiskStateMonitor<R, A, M, T, C>::AccountEntry::AccountEntry(
+    const Beam::ServiceLocator::DirectoryEntry& account,
+    const MarketDatabase& marketDatabase,
+    const std::vector<ExchangeRate>& exchangeRates,
+    const Beam::Publisher<const OrderExecutionService::Order*>& orderPublisher,
+    MarketDataClient* marketDataClient, TimeClient* timeClient)
       : m_orderPublisher(std::make_shared<Beam::FilteredPublisher<
           Beam::SequencePublisher<const OrderExecutionService::Order*>>>(
-          [=] (const OrderExecutionService::Order* order) {
+          [=] (auto order) {
             return order->GetInfo().m_fields.m_account == account;
           }, Beam::Initialize())),
         m_tracker(typename RiskStateTracker::Portfolio(marketDatabase),
@@ -157,28 +143,19 @@ namespace RiskService {
     orderPublisher.Monitor(m_orderPublisher);
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  template<typename AdministrationClientForward,
-    typename MarketDataClientForward, typename TransitionTimerForward,
-    typename TimeClientForward>
-  RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      RiskStateMonitor(AdministrationClientForward&& administrationClient,
-      MarketDataClientForward&& marketDataClient, const std::shared_ptr<
+  template<typename R, typename A, typename M, typename T, typename C>
+  template<typename AF, typename MF, typename TF, typename CF>
+  RiskStateMonitor<R, A, M, T, C>::RiskStateMonitor(AF&& administrationClient,
+      MF&& marketDataClient, const std::shared_ptr<
       Beam::QueueReader<const OrderExecutionService::Order*>>&
-      orderSubmissionQueue, TransitionTimerForward&& transitionTimer,
-      TimeClientForward&& timeClient, const MarketDatabase& marketDatabase,
+      orderSubmissionQueue, TF&& transitionTimer, CF&& timeClient,
+      const MarketDatabase& marketDatabase,
       std::vector<ExchangeRate> exchangeRates)
-      : m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)),
-        m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)),
+      : m_administrationClient(std::forward<AF>(administrationClient)),
+        m_marketDataClient(std::forward<MF>(marketDataClient)),
         m_orderSubmissionPublisher(orderSubmissionQueue),
-        m_transitionTimer(std::forward<TransitionTimerForward>(
-          transitionTimer)),
-        m_timeClient(std::forward<TimeClientForward>(timeClient)),
+        m_transitionTimer(std::forward<TF>(transitionTimer)),
+        m_timeClient(std::forward<CF>(timeClient)),
         m_marketDatabase(marketDatabase),
         m_exchangeRates(std::move(exchangeRates)) {
     m_orderSubmissionPublisher.Monitor(
@@ -191,42 +168,23 @@ namespace RiskService {
     m_transitionTimer->Start();
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      ~RiskStateMonitor() {
-    m_tasks.Break();
-  }
-
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  const Beam::Publisher<RiskStateEntry>&
-      RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
+  template<typename R, typename A, typename M, typename T, typename C>
+  const Beam::Publisher<RiskStateEntry>& RiskStateMonitor<R, A, M, T, C>::
       GetRiskStatePublisher() const {
     return m_riskPublisher;
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  const RiskPortfolioUpdatePublisher& RiskStateMonitor<RiskStateTrackerType,
-      AdministrationClientType, MarketDataClientType, TransitionTimerType,
-      TimeClientType>::GetInventoryPublisher() const {
+  template<typename R, typename A, typename M, typename T, typename C>
+  const RiskPortfolioUpdatePublisher& RiskStateMonitor<R, A, M, T, C>::
+      GetInventoryPublisher() const {
     return m_inventoryPublisher;
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  void RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      OnTransitionTimer(const Beam::Threading::Timer::Result& result) {
-    for(const auto& accountEntry : m_accountEntries) {
-      const auto& account = accountEntry.first;
+  template<typename R, typename A, typename M, typename T, typename C>
+  void RiskStateMonitor<R, A, M, T, C>::OnTransitionTimer(
+      const Beam::Threading::Timer::Result& result) {
+    for(auto& accountEntry : m_accountEntries) {
+      auto& account = accountEntry.first;
       auto& entry = *accountEntry.second;
       auto previousState = entry.m_tracker.GetRiskState();
       entry.m_tracker.Update(boost::posix_time::seconds(1));
@@ -238,13 +196,10 @@ namespace RiskService {
     m_transitionTimer->Start();
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  void RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      OnOrderSubmission(const OrderExecutionService::Order* order) {
-    const auto& account = order->GetInfo().m_fields.m_account;
+  template<typename R, typename A, typename M, typename T, typename C>
+  void RiskStateMonitor<R, A, M, T, C>::OnOrderSubmission(
+      const OrderExecutionService::Order* order) {
+    auto& account = order->GetInfo().m_fields.m_account;
     auto accountIterator = m_accountEntries.find(account);
     if(accountIterator != m_accountEntries.end()) {
       return;
@@ -263,12 +218,8 @@ namespace RiskService {
       std::placeholders::_1)));
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  void RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      OnRiskParametersModified(
+  template<typename R, typename A, typename M, typename T, typename C>
+  void RiskStateMonitor<R, A, M, T, C>::OnRiskParametersModified(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskParameters& riskParameters) {
     auto accountIterator = m_accountEntries.find(account);
@@ -284,19 +235,16 @@ namespace RiskService {
     }
   }
 
-  template<typename RiskStateTrackerType, typename AdministrationClientType,
-    typename MarketDataClientType, typename TransitionTimerType,
-    typename TimeClientType>
-  void RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
-      MarketDataClientType, TransitionTimerType, TimeClientType>::
-      OnPortfolioUpdate(const Beam::ServiceLocator::DirectoryEntry& account,
+  template<typename R, typename A, typename M, typename T, typename C>
+  void RiskStateMonitor<R, A, M, T, C>::OnPortfolioUpdate(
+      const Beam::ServiceLocator::DirectoryEntry& account,
       const typename PortfolioMonitor::UpdateEntry& update) {
     auto accountIterator = m_accountEntries.find(account);
     if(accountIterator == m_accountEntries.end()) {
       return;
     }
     auto& entry = *accountIterator->second;
-    RiskPortfolioKey key(account,
+    auto key = RiskPortfolioKey(account,
       update.m_securityInventory.m_position.m_key.m_index);
     m_inventoryPublisher.Push(key, update.m_securityInventory);
     auto previousState = entry.m_tracker.GetRiskState();
@@ -306,7 +254,6 @@ namespace RiskService {
       m_riskPublisher.Push(RiskStateEntry(account, currentState));
     }
   }
-}
 }
 
 #endif

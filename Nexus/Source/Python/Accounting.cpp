@@ -31,7 +31,9 @@ namespace {
       .def_readwrite("currency",
         &Accounting::Details::Key<IndexType>::m_currency)
       .def("__str__",
-        &lexical_cast<std::string, Accounting::Details::Key<IndexType>>);
+        &lexical_cast<std::string, Accounting::Details::Key<IndexType>>)
+    .def(self == self)
+    .def(self != self);
   }
 
   Money PythonGetTotalProfitAndLoss(
@@ -86,7 +88,9 @@ void Nexus::Python::ExportPosition(pybind11::module& module) {
     .def_readwrite("key", &Position<Security>::m_key)
     .def_readwrite("quantity", &Position<Security>::m_quantity)
     .def_readwrite("cost_basis", &Position<Security>::m_costBasis)
-    .def("__str__", &lexical_cast<std::string, Position<Security>>);
+    .def("__str__", &lexical_cast<std::string, Position<Security>>)
+    .def(self == self)
+    .def(self != self);
   ExportKey<Security>(outer, "Key");
   module.def("average_price", &GetAveragePrice<Security>);
   module.def("side", &Accounting::GetSide<Security>);

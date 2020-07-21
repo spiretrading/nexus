@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKTRANSITIONCONTROLLER_HPP
-#define NEXUS_RISKTRANSITIONCONTROLLER_HPP
+#ifndef NEXUS_RISK_TRANSITION_CONTROLLER_HPP
+#define NEXUS_RISK_TRANSITION_CONTROLLER_HPP
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -12,43 +12,38 @@
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskTransitionTracker.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  /*! \class RiskTransitionController
-      \brief Instantiates and updates RiskTransitionTrackers based on signals
-             received from an AdministrationClient and OrderExecutionClient.
-      \tparam AdministrationClientType The type of AdministrationClient used to
-              receive RiskState updates.
-      \tparam OrderExecutionClientType The type of OrderExecutionClient used to
-              monitor Order executions.
+  /**
+   * Instantiates and updates RiskTransitionTrackers based on signals received
+   * from an AdministrationClient and OrderExecutionClient.
+   * @param <A> The type of AdministrationClient used to receive RiskState
+   *        updates.
+   * @param <O> The type of OrderExecutionClient used to monitor Order
+   *        executions.
    */
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
+  template<typename A, typename O>
   class RiskTransitionController : private boost::noncopyable {
     public:
 
-      //! The type of AdministrationClient used to receive RiskState updates.
-      using AdministrationClient =
-        Beam::GetTryDereferenceType<AdministrationClientType>;
+      /** The type of AdministrationClient used to receive RiskState updates. */
+      using AdministrationClient = Beam::GetTryDereferenceType<A>;
 
-      //! The type of OrderExecutionClient used to monitor Order executions.
-      using OrderExecutionClient =
-        Beam::GetTryDereferenceType<OrderExecutionClientType>;
+      /** The type of OrderExecutionClient used to monitor Order executions. */
+      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
 
-      //! Constructs a RiskTransitionController.
-      /*!
-        \param orderQueue The Queue publishing Orders to monitor.
-        \param administrationClient Initializes the AdministrationClient.
-        \param orderExecutionClient Initializes the OrderExecutionClient.
-        \param destinations The database of available Destinations.
-        \param markets The database of available Markets.
-      */
-      template<typename AdministrationClientForward,
-        typename OrderExecutionClientForward>
+      /**
+       * Constructs a RiskTransitionController.
+       * @param orderQueue The Queue publishing Orders to monitor.
+       * @param administrationClient Initializes the AdministrationClient.
+       * @param orderExecutionClient Initializes the OrderExecutionClient.
+       * @param destinations The database of available Destinations.
+       * @param markets The database of available Markets.
+       */
+      template<typename AF, typename OF>
       RiskTransitionController(const std::shared_ptr<Beam::QueueReader<
         const OrderExecutionService::Order*>>& orderQueue,
-        AdministrationClientForward&& administrationClient,
-        OrderExecutionClientForward&& orderExecutionClient,
+        AF&& administrationClient, OF&& orderExecutionClient,
         const DestinationDatabase& destinations, const MarketDatabase& markets);
 
       ~RiskTransitionController();
@@ -60,10 +55,8 @@ namespace RiskService {
     private:
       Beam::QueuePublisher<Beam::MultiQueueWriter<
         const OrderExecutionService::Order*>> m_orderPublisher;
-      Beam::GetOptionalLocalPtr<AdministrationClientType>
-        m_administrationClient;
-      Beam::GetOptionalLocalPtr<OrderExecutionClientType>
-        m_orderExecutionClient;
+      Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
       DestinationDatabase m_destinations;
       MarketDatabase m_markets;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
@@ -81,32 +74,26 @@ namespace RiskService {
         const OrderExecutionService::ExecutionReport& report);
   };
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  template<typename AdministrationClientForward,
-    typename OrderExecutionClientForward>
-  RiskTransitionController<AdministrationClientType, OrderExecutionClientType>::
-      RiskTransitionController(const std::shared_ptr<Beam::QueueReader<
-      const OrderExecutionService::Order*>>& orderQueue,
-      AdministrationClientForward&& administrationClient,
-      OrderExecutionClientForward&& orderExecutionClient,
-      const DestinationDatabase& destinations, const MarketDatabase& markets)
-      : m_orderPublisher(orderQueue),
-        m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)),
-        m_orderExecutionClient(std::forward<OrderExecutionClientForward>(
-          orderExecutionClient)),
-        m_destinations(destinations),
-        m_markets(markets) {}
+  template<typename A, typename O>
+  template<typename AF, typename OF>
+  RiskTransitionController<A, O>::RiskTransitionController(
+    const std::shared_ptr<Beam::QueueReader<
+    const OrderExecutionService::Order*>>& orderQueue,
+    AF&& administrationClient, OF&& orderExecutionClient,
+    const DestinationDatabase& destinations, const MarketDatabase& markets)
+    : m_orderPublisher(orderQueue),
+      m_administrationClient(std::forward<AF>(administrationClient)),
+      m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
+      m_destinations(destinations),
+      m_markets(markets) {}
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  RiskTransitionController<AdministrationClientType, OrderExecutionClientType>::
-      ~RiskTransitionController() {
+  template<typename A, typename O>
+  RiskTransitionController<A, O>::~RiskTransitionController() {
     Close();
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::Open() {
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -124,33 +111,29 @@ namespace RiskService {
     m_openState.SetOpen();
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::Close() {
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::Shutdown() {
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::Shutdown() {
     m_tasks.Break();
     m_openState.SetClosed();
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::OnRiskState(
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::OnRiskState(
       RiskTransitionTracker<OrderExecutionClient*>& tracker,
       const RiskState& riskState) {
     tracker.Update(riskState);
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::OnOrderSubmission(
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::OnOrderSubmission(
       const OrderExecutionService::Order* order) {
     auto& account = order->GetInfo().m_fields.m_account;
     auto trackerIterator = m_trackers.find(account);
@@ -170,14 +153,12 @@ namespace RiskService {
       std::placeholders::_1)));
   }
 
-  template<typename AdministrationClientType, typename OrderExecutionClientType>
-  void RiskTransitionController<AdministrationClientType,
-      OrderExecutionClientType>::OnExecutionReport(
+  template<typename A, typename O>
+  void RiskTransitionController<A, O>::OnExecutionReport(
       RiskTransitionTracker<OrderExecutionClient*>& tracker,
       const OrderExecutionService::ExecutionReport& executionReport) {
     tracker.Update(executionReport);
   }
-}
 }
 
 #endif

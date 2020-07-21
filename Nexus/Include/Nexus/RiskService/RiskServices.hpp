@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKSERVICES_HPP
-#define NEXUS_RISKSERVICES_HPP
+#ifndef NEXUS_RISK_SERVICES_HPP
+#define NEXUS_RISK_SERVICES_HPP
 #include <vector>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -9,8 +9,7 @@
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
     RiskSecurityValuation, valuation);
   BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
@@ -20,46 +19,37 @@ namespace RiskService {
 
   BEAM_DEFINE_SERVICES(RiskServices,
 
-    /*! \interface Nexus::RiskService::SubscribeRiskPortfolioUpdatesService
-        \brief Subscribes to the RiskPortfolioUpdates permissioned by the
-               session's account.
-        \param dummy <code>int</code> unused
-    */
-    //! \cond
+    /**
+     * Subscribes to the RiskPortfolioUpdates permissioned by the session's
+     * account.
+     * @param dummy unused.
+     */
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
       std::vector<RiskPortfolioInventoryEntry>, int, dummy));
-    //! \endcond
 
   BEAM_DEFINE_MESSAGES(RiskMessages,
 
-    /*! \interface Nexus::RiskService::SecurityValuationMessage
-        \brief Indicates a list of updates to a Security's valuation.
-        \param valuations The list of Securities whose valuations have updated.
-    */
-    //! \cond
+    /**
+     * Indicates a list of updates to a Security's valuation.
+     * @param valuations The list of Securities whose valuations have updated.
+     */
     (SecurityValuationMessage, "Nexus.RiskService.SecurityValuationMessage",
       std::vector<SecurityValuationUpdate>, valuations),
-    //! \endcond
 
-    /*! \interface Nexus::RiskService::InventoryMessage
-        \brief Indicates a list of updates to an account's Inventory.
-        \param inventories The list of updated Inventories.
-    */
-    //! \cond
+    /**
+     * Indicates a list of updates to an account's Inventory.
+     * @param inventories The list of updated Inventories.
+     */
     (InventoryMessage, "Nexus.RiskService.InventoryMessage",
       std::vector<InventoryUpdate>, inventories),
-    //! \endcond
 
-    /*! \interface Nexus::RiskService::RiskStateMessage
-        \brief Indicates a list of updates to an account's RiskState.
-        \param riskStates The list of updated RiskStates.
-    */
-    //! \cond
+    /**
+     * Indicates a list of updates to an account's RiskState.
+     * @param riskStates The list of updated RiskStates.
+     */
     (RiskStateMessage, "Nexus.RiskService.RiskStateMessage",
       std::vector<RiskStateUpdate>, risk_states));
-    //! \endcond
-}
 }
 
 #endif

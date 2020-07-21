@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISKCLIENT_HPP
-#define NEXUS_RISKCLIENT_HPP
+#ifndef NEXUS_RISK_CLIENT_HPP
+#define NEXUS_RISK_CLIENT_HPP
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -12,32 +12,30 @@
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
 
-namespace Nexus {
-namespace RiskService {
+namespace Nexus::RiskService {
 
-  /*! \class RiskClient
-      \brief Client used to access the Risk service.
-      \tparam ServiceProtocolClientBuilderType The type used to build
-              ServiceProtocolClients to the server.
+  /**
+   * Client used to access the Risk service.
+   * @param <B> The type used to build ServiceProtocolClients to the server.
    */
-  template<typename ServiceProtocolClientBuilderType>
+  template<typename B>
   class RiskClient : private boost::noncopyable {
     public:
 
-      //! The type used to build ServiceProtocolClients to the server.
+      /** The type used to build ServiceProtocolClients to the server. */
       using ServiceProtocolClientBuilder =
-        Beam::GetTryDereferenceType<ServiceProtocolClientBuilderType>;
+        Beam::GetTryDereferenceType<B>;
 
-      //! Constructs an RiskClient.
-      /*!
-        \param clientBuilder Initializes the ServiceProtocolClientBuilder.
-      */
-      template<typename ClientBuilderForward>
-      RiskClient(ClientBuilderForward&& clientBuilder);
+      /**
+       * Constructs an RiskClient.
+       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       */
+      template<typename BF>
+      RiskClient(BF&& clientBuilder);
 
       ~RiskClient();
 
-      //! Returns the object publishing a RiskPortfolioUpdates.
+      /** Returns the object publishing a RiskPortfolioUpdates. */
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher();
 
       void Open();
@@ -49,8 +47,7 @@ namespace RiskService {
         typename ServiceProtocolClientBuilder::Client;
       Beam::Remote<Beam::TablePublisher<RiskPortfolioKey,
         RiskPortfolioInventory>> m_publisher;
-      Beam::Services::ServiceProtocolClientHandler<
-        ServiceProtocolClientBuilderType> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -60,11 +57,10 @@ namespace RiskService {
         const std::vector<InventoryUpdate>& inventories);
   };
 
-  template<typename ServiceProtocolClientBuilderType>
-  template<typename ClientBuilderForward>
-  RiskClient<ServiceProtocolClientBuilderType>::RiskClient(
-      ClientBuilderForward&& clientBuilder)
-      : m_clientHandler{std::forward<ClientBuilderForward>(clientBuilder)} {
+  template<typename B>
+  template<typename BF>
+  RiskClient<B>::RiskClient(BF&& clientBuilder)
+      : m_clientHandler(std::forward<BF>(clientBuilder)) {
     m_clientHandler.SetReconnectHandler(
       std::bind(&RiskClient::OnReconnect, this, std::placeholders::_1));
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
@@ -78,7 +74,7 @@ namespace RiskService {
         publisher.emplace();
         m_tasks.Push(
           [=] {
-            std::vector<RiskPortfolioInventoryEntry> entries;
+            auto entries = std::vector<RiskPortfolioInventoryEntry>();
             try {
               auto client = m_clientHandler.GetClient();
               entries = client->template SendRequest<
@@ -98,19 +94,19 @@ namespace RiskService {
       });
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  RiskClient<ServiceProtocolClientBuilderType>::~RiskClient() {
+  template<typename B>
+  RiskClient<B>::~RiskClient() {
     Close();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  const RiskPortfolioUpdatePublisher& RiskClient<
-      ServiceProtocolClientBuilderType>::GetRiskPortfolioUpdatePublisher() {
+  template<typename B>
+  const RiskPortfolioUpdatePublisher& RiskClient<B>::
+      GetRiskPortfolioUpdatePublisher() {
     return *m_publisher;
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void RiskClient<ServiceProtocolClientBuilderType>::Open() {
+  template<typename B>
+  void RiskClient<B>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -123,30 +119,30 @@ namespace RiskService {
     m_openState.SetOpen();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void RiskClient<ServiceProtocolClientBuilderType>::Close() {
+  template<typename B>
+  void RiskClient<B>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void RiskClient<ServiceProtocolClientBuilderType>::Shutdown() {
+  template<typename B>
+  void RiskClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_tasks.Break();
     m_openState.SetClosed();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void RiskClient<ServiceProtocolClientBuilderType>::OnReconnect(
+  template<typename B>
+  void RiskClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
     m_tasks.Push(
       [=] {
         if(!m_publisher.IsAvailable()) {
           return;
         }
-        std::vector<RiskPortfolioInventoryEntry> entries;
+        auto entries = std::vector<RiskPortfolioInventoryEntry>();
         try {
           entries = client->template SendRequest<
             SubscribeRiskPortfolioUpdatesService>(0);
@@ -154,8 +150,8 @@ namespace RiskService {
           m_publisher->Break(std::current_exception());
           return;
         }
-        Beam::TablePublisher<RiskPortfolioKey, RiskPortfolioInventory>::
-          Snapshot snapshot;
+        auto snapshot = Beam::TablePublisher<
+          RiskPortfolioKey, RiskPortfolioInventory>::Snapshot();
         m_publisher->WithSnapshot(
           [&] (auto publisherSnapshot) {
             if(publisherSnapshot.is_initialized()) {
@@ -169,7 +165,7 @@ namespace RiskService {
             });
           if(entryIterator == entries.end()) {
             m_publisher->Delete(snapshotEntry.first,
-              RiskPortfolioInventory{snapshotEntry.second.m_position.m_key});
+              RiskPortfolioInventory(snapshotEntry.second.m_position.m_key));
           }
         }
         for(auto& entry : entries) {
@@ -178,9 +174,8 @@ namespace RiskService {
       });
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void RiskClient<ServiceProtocolClientBuilderType>::OnInventoryUpdate(
-      ServiceProtocolClient& client,
+  template<typename B>
+  void RiskClient<B>::OnInventoryUpdate(ServiceProtocolClient& client,
       const std::vector<InventoryUpdate>& inventories) {
     m_tasks.Push(
       [=] {
@@ -195,7 +190,6 @@ namespace RiskService {
         }
       });
   }
-}
 }
 
 #endif

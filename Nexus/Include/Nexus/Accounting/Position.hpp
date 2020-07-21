@@ -44,6 +44,14 @@ namespace Details {
      * @return <code>true</code> iff <i>key</i> has the same Index and Currency.
      */
     bool operator ==(const Key& key) const;
+
+    /**
+     * Tests two Keys for inequality.
+     * @param key The Key to test for inequality.
+     * @return <code>true</code> iff <i>key</i> has a different Index or
+     *         Currency.
+     */
+    bool operator !=(const Key& key) const;
   };
 
   template<typename I>
@@ -54,6 +62,11 @@ namespace Details {
   template<typename I>
   bool Key<I>::operator ==(const Key& key) const {
     return m_index == key.m_index && m_currency == key.m_currency;
+  }
+
+  template<typename I>
+  bool Key<I>::operator !=(const Key& key) const {
+    return !(*this == key);
   }
 
   template<typename Index>
@@ -89,6 +102,12 @@ namespace Details {
 
     /** Constructs a Position. */
     explicit Position(const Key& key);
+
+    /** Tests if two Positions are equal */
+    bool operator ==(const Position& position) const;
+
+    /** Tests if two Positions are not equal. */
+    bool operator !=(const Position& position) const;
   };
 
   template<typename Index>
@@ -134,6 +153,17 @@ namespace Details {
   Position<I>::Position(const Key& key)
     : m_quantity(0),
       m_key(key) {}
+
+  template<typename I>
+  bool Position<I>::operator ==(const Position& position) const {
+    return m_key == position.m_key && m_quantity == position.m_quantity &&
+      m_costBasis == position.m_costBasis;
+  }
+
+  template<typename I>
+  bool Position<I>::operator !=(const Position& position) const {
+    return !(*this == position);
+  }
 }
 
 namespace Beam::Serialization {
