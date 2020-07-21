@@ -134,7 +134,7 @@ class MediumHeader extends React.Component<HeaderProps> {
       height: '40px',
       width: '389px',
       display: 'flex',
-      justifyContent: 'end',
+      justifyContent: 'flex-end',
       flexWrap: 'wrap'
     } as React.CSSProperties
   }
@@ -184,7 +184,7 @@ class SmallHeader extends React.Component<HeaderProps> {
     usernameContainer: {
       height: '40px',
       display: 'flex',
-      justifyContent: 'end',
+      justifyContent: 'flex-end',
       flexWrap: 'wrap'
     } as React.CSSProperties
   }
