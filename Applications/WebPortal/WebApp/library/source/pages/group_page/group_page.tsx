@@ -95,7 +95,7 @@ class LargeHeader extends React.Component<HeaderProps> {
       display: 'flex',
       flexWrap: 'wrap'
     } as React.CSSProperties
-  }
+  };
 }
 
 class MediumHeader extends React.Component<HeaderProps> {
@@ -137,7 +137,7 @@ class MediumHeader extends React.Component<HeaderProps> {
       justifyContent: 'flex-end',
       flexWrap: 'wrap'
     } as React.CSSProperties
-  }
+  };
 }
 
 class SmallHeader extends React.Component<HeaderProps> {
@@ -187,7 +187,7 @@ class SmallHeader extends React.Component<HeaderProps> {
       justifyContent: 'flex-end',
       flexWrap: 'wrap'
     } as React.CSSProperties
-  }
+  };
 }
 
 interface UsernameProps {

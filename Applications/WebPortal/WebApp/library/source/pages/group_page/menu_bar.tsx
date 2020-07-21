@@ -84,7 +84,8 @@ export class MenuBar extends React.Component<Properties, State> {
               `-${this.getIconColor(GroupSubPage.PROFIT_LOSS)}.svg`}
             name='Profit/Loss' displaySize={this.props.displaySize}
             isSelected={this.props.selected === GroupSubPage.PROFIT_LOSS}
-            onMouseEnter={() => this.onIconMouseEnter(GroupSubPage.PROFIT_LOSS)}
+            onMouseEnter={
+              () => this.onIconMouseEnter(GroupSubPage.PROFIT_LOSS)}
             onMouseLeave={this.onIconMouseLeave}
             onClick={() => this.onIconClick(GroupSubPage.PROFIT_LOSS)}/>
           <div style={this.getIconUnderlineStyle(GroupSubPage.PROFIT_LOSS)}/>
@@ -147,7 +148,7 @@ export class MenuBar extends React.Component<Properties, State> {
       height: '2px',
       backgroundColor: 'rgba(255, 255, 255, 0)'
     }
-  }
+  };
 }
 
 interface ItemProperties {
