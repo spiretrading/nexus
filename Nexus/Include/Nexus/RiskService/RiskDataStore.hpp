@@ -2,7 +2,7 @@
 #define NEXUS_RISK_DATA_STORE_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/Concept.hpp>
-#include "Nexus/RiskService/PositionSnapshot.hpp"
+#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
 namespace Nexus::RiskService {
@@ -11,20 +11,20 @@ namespace Nexus::RiskService {
   struct RiskDataStore : Beam::Concept<RiskDataStore> {
 
     /**
-     * Loads an account's PositionSnapshot.
+     * Loads an account's InventorySnapshot.
      * @param account The account whose snapshot is to be loaded.
-     * @return The <i>account</i>'s PositionSnapshot.
+     * @return The <i>account</i>'s InventorySnapshot.
      */
-    PositionSnapshot LoadPositionSnapshot(
+    InventorySnapshot LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account);
 
     /**
-     * Stores an account's PositionSnapshot.
+     * Stores an account's InventorySnapshot.
      * @param account The account whose snapshot is being stored.
      * @param snapshot The snapshot to store.
      */
     void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-      const PositionSnapshot& snapshot);
+      const InventorySnapshot& snapshot);
 
     void Open();
 

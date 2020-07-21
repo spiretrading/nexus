@@ -107,7 +107,9 @@ void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
     .def_readwrite("fees", &Inventory::m_fees)
     .def_readwrite("volume", &Inventory::m_volume)
     .def_readwrite("transaction_count", &Inventory::m_transactionCount)
-    .def("__str__", &lexical_cast<std::string, Inventory>);
+    .def("__str__", &lexical_cast<std::string, Inventory>)
+    .def(self == self)
+    .def(self != self);
 }
 
 void Nexus::Python::ExportTrueAverageBookkeeper(pybind11::module& module) {

@@ -1,5 +1,5 @@
-#ifndef NEXUS_POSITION_SNAPSHOT_HPP
-#define NEXUS_POSITION_SNAPSHOT_HPP
+#ifndef NEXUS_INVENTORY_SNAPSHOT_HPP
+#define NEXUS_INVENTORY_SNAPSHOT_HPP
 #include <vector>
 #include <Beam/Queries/Sequence.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -7,11 +7,11 @@
 
 namespace Nexus::RiskService {
 
-  /** Stores a snapshot of Positions. */
-  struct PositionSnapshot {
+  /** Stores a snapshot of inventories. */
+  struct InventorySnapshot {
 
-    /** The list of non-empty positions. */
-    std::vector<RiskPortfolioPosition> m_positions;
+    /** The list of non-empty inventories. */
+    std::vector<RiskPortfolioInventory> m_inventories;
 
     /** The sequence that this snapshot is valid for (inclusive). */
     Beam::Queries::Sequence m_sequence;
@@ -21,34 +21,34 @@ namespace Nexus::RiskService {
 
     /**
      * Tests if two snapshots have identical structure, including order of
-     * positions and excluded orders.
+     * inventories and excluded orders.
      */
-    bool operator ==(const PositionSnapshot& snapshot) const;
+    bool operator ==(const InventorySnapshot& snapshot) const;
 
     /** Tests if two snapshots have different structures. */
-    bool operator !=(const PositionSnapshot& snapshot) const;
+    bool operator !=(const InventorySnapshot& snapshot) const;
   };
 
-  inline bool PositionSnapshot::operator ==(
-      const PositionSnapshot& snapshot) const {
-    return m_positions == snapshot.m_positions &&
+  inline bool InventorySnapshot::operator ==(
+      const InventorySnapshot& snapshot) const {
+    return m_inventories == snapshot.m_inventories &&
       m_sequence == snapshot.m_sequence &&
       m_excludedOrders == snapshot.m_excludedOrders;
   }
 
-  inline bool PositionSnapshot::operator !=(
-      const PositionSnapshot& snapshot) const {
+  inline bool InventorySnapshot::operator !=(
+      const InventorySnapshot& snapshot) const {
     return !(*this == snapshot);
   }
 }
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::RiskService::PositionSnapshot> {
+  struct Shuttle<Nexus::RiskService::InventorySnapshot> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::RiskService::PositionSnapshot& value, unsigned int version) {
-      shuttle.Shuttle("positions", value.m_positions);
+        Nexus::RiskService::InventorySnapshot& value, unsigned int version) {
+      shuttle.Shuttle("inventories", value.m_inventories);
       shuttle.Shuttle("sequence", value.m_sequence);
       shuttle.Shuttle("excluded_orders", value.m_excludedOrders);
     }

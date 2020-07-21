@@ -1,6 +1,7 @@
 #ifndef NEXUS_INVENTORY_HPP
 #define NEXUS_INVENTORY_HPP
 #include <ostream>
+#include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Position.hpp"
@@ -39,7 +40,13 @@ namespace Nexus::Accounting {
      * Constructs an Inventory.
      * @param key The Key uniquely identifying this Inventory.
      */
-    explicit Inventory(const typename Position::Key& key);
+    explicit Inventory(typename Position::Key key);
+
+    /** Tests if two inventories are equal. */
+    bool operator ==(const Inventory& inventory) const;
+
+    /** Tests if two inventories are not equal. */
+    bool operator !=(const Inventory& inventory) const;
   };
 
   template<typename P>
@@ -48,10 +55,23 @@ namespace Nexus::Accounting {
       m_transactionCount(0) {}
 
   template<typename P>
-  Inventory<P>::Inventory(const typename P::Key& key)
-    : m_position(key),
+  Inventory<P>::Inventory(typename P::Key key)
+    : m_position(std::move(key)),
       m_volume(0),
       m_transactionCount(0) {}
+
+  template<typename P>
+  bool Inventory<P>::operator ==(const Inventory& inventory) const {
+    return m_position == inventory.m_position &&
+      m_grossProfitAndLoss == inventory.m_grossProfitAndLoss &&
+      m_fees == inventory.m_fees && m_volume == inventory.m_volume &&
+      m_transactionCount == inventory.m_transactionCount;
+  }
+
+  template<typename P>
+  bool Inventory<P>::operator !=(const Inventory& inventory) const {
+    return !(*this == inventory);
+  }
 
   template<typename Position>
   std::ostream& operator <<(std::ostream& out,

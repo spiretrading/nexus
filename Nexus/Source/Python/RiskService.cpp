@@ -47,16 +47,16 @@ namespace {
   };
 
   struct TrampolineRiskDataStore final : VirtualRiskDataStore {
-    PositionSnapshot LoadPositionSnapshot(
+    InventorySnapshot LoadInventorySnapshot(
         const DirectoryEntry& account) override {
-      PYBIND11_OVERLOAD_PURE_NAME(PositionSnapshot, VirtualRiskDataStore,
-        "load_position_snapshot", LoadPositionSnapshot, account);
+      PYBIND11_OVERLOAD_PURE_NAME(InventorySnapshot, VirtualRiskDataStore,
+        "load_inventory_snapshot", LoadInventorySnapshot, account);
     }
 
     void Store(const DirectoryEntry& account,
-        const PositionSnapshot& snapshot) override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "store",
-        Store, account, snapshot);
+        const InventorySnapshot& snapshot) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "store", Store,
+        account, snapshot);
     }
 
     void Open() override {
@@ -139,7 +139,8 @@ void Nexus::Python::ExportRiskClient(pybind11::module& module) {
 void Nexus::Python::ExportRiskDataStore(pybind11::module& module) {
   class_<VirtualRiskDataStore, TrampolineRiskDataStore,
       std::shared_ptr<VirtualRiskDataStore>>(module, "RiskDataStore")
-    .def("load_position_snapshot", &VirtualRiskDataStore::LoadPositionSnapshot)
+    .def("load_inventory_snapshot",
+      &VirtualRiskDataStore::LoadInventorySnapshot)
     .def("store", &VirtualRiskDataStore::Store)
     .def("open", &VirtualRiskDataStore::Open)
     .def("close", &VirtualRiskDataStore::Close);

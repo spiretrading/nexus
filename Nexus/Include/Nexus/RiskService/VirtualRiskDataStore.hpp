@@ -12,11 +12,11 @@ namespace Nexus::RiskService {
     public:
       virtual ~VirtualRiskDataStore() = default;
 
-      virtual PositionSnapshot LoadPositionSnapshot(
+      virtual InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const PositionSnapshot& snapshot) = 0;
+        const InventorySnapshot& snapshot) = 0;
 
       virtual void Open() = 0;
 
@@ -46,11 +46,11 @@ namespace Nexus::RiskService {
       template<typename DF>
       WrapperRiskDataStore(DF&& dataStore);
 
-      PositionSnapshot LoadPositionSnapshot(
+      InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const PositionSnapshot& snapshot) override;
+        const InventorySnapshot& snapshot) override;
 
       void Open() override;
 
@@ -77,15 +77,15 @@ namespace Nexus::RiskService {
     : m_dataStore(std::forward<DF>(dataStore)) {}
 
   template<typename D>
-  PositionSnapshot WrapperRiskDataStore<D>::LoadPositionSnapshot(
+  InventorySnapshot WrapperRiskDataStore<D>::LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_dataStore->LoadPositionSnapshot(account);
+    return m_dataStore->LoadInventorySnapshot(account);
   }
 
   template<typename D>
   void WrapperRiskDataStore<D>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const PositionSnapshot& snapshot) {
+      const InventorySnapshot& snapshot) {
     return m_dataStore->Store(account, snapshot);
   }
 

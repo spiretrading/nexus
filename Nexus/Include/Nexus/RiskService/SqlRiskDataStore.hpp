@@ -33,11 +33,11 @@ namespace Nexus::RiskService {
 
       ~SqlRiskDataStore();
 
-      PositionSnapshot LoadPositionSnapshot(
+      InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const PositionSnapshot& snapshot);
+        const InventorySnapshot& snapshot);
 
       void Open();
 
@@ -62,21 +62,21 @@ namespace Nexus::RiskService {
   }
 
   template<typename C>
-  PositionSnapshot SqlRiskDataStore<C>::LoadPositionSnapshot(
+  InventorySnapshot SqlRiskDataStore<C>::LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto snapshot = PositionSnapshot();
+    auto snapshot = InventorySnapshot();
     auto lock = std::lock_guard(m_mutex);
     Viper::transaction(*m_connection, [&] {
-      m_connection->execute(Viper::select(GetPositionEntriesRow(),
-        "position_entries", Viper::sym("account") == account.m_id,
+      m_connection->execute(Viper::select(GetInventoryEntriesRow(),
+        "inventory_entries", Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (auto& row) {
-          snapshot.m_positions.push_back(std::move(row.m_position));
+          snapshot.m_inventories.push_back(std::move(row.m_inventory));
         })));
       m_connection->execute(Viper::select(
-        Viper::Row<Beam::Queries::Sequence>("sequence"), "position_sequences",
+        Viper::Row<Beam::Queries::Sequence>("sequence"), "inventory_sequences",
         Viper::sym("account") == account.m_id, &snapshot.m_sequence));
-      m_connection->execute(Viper::select(GetPositionExcludedOrdersRow(),
-        "position_excluded_orders", Viper::sym("account") == account.m_id,
+      m_connection->execute(Viper::select(GetInventoryExcludedOrdersRow(),
+        "inventory_excluded_orders", Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (auto& row) {
           snapshot.m_excludedOrders.push_back(row.m_id);
         })));
@@ -87,29 +87,29 @@ namespace Nexus::RiskService {
   template<typename C>
   void SqlRiskDataStore<C>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const PositionSnapshot& snapshot) {
+      const InventorySnapshot& snapshot) {
     auto lock = std::lock_guard(m_mutex);
     Viper::transaction(*m_connection, [&] {
-      m_connection->execute(Viper::erase("position_entries",
+      m_connection->execute(Viper::erase("inventory_entries",
         Viper::sym("account") == account.m_id));
-      m_connection->execute(Viper::erase("position_sequences",
+      m_connection->execute(Viper::erase("inventory_sequences",
         Viper::sym("account") == account.m_id));
-      m_connection->execute(Viper::erase("position_excluded_orders",
+      m_connection->execute(Viper::erase("inventory_excluded_orders",
         Viper::sym("account") == account.m_id));
-      m_connection->execute(Viper::insert(GetPositionEntriesRow(),
-        "position_entries", boost::iterators::make_transform_iterator(
-        snapshot.m_positions.begin(), ConvertPositionSnapshotPositions(
+      m_connection->execute(Viper::insert(GetInventoryEntriesRow(),
+        "inventory_entries", boost::iterators::make_transform_iterator(
+        snapshot.m_inventories.begin(), ConvertInventorySnapshotInventories(
         account)), boost::iterators::make_transform_iterator(
-        snapshot.m_positions.end(), ConvertPositionSnapshotPositions(
+        snapshot.m_inventories.end(), ConvertInventorySnapshotInventories(
         account))));
-      auto sequence = PositionSequence{account.m_id, snapshot.m_sequence};
-      m_connection->execute(Viper::insert(GetPositionSequencesRow(),
-        "position_sequences", &sequence));
-      m_connection->execute(Viper::insert(GetPositionExcludedOrdersRow(),
-        "position_excluded_orders", boost::iterators::make_transform_iterator(
-        snapshot.m_excludedOrders.begin(), ConvertPositionExcludedOrders(
+      auto sequence = InventorySequence{account.m_id, snapshot.m_sequence};
+      m_connection->execute(Viper::insert(GetInventorySequencesRow(),
+        "inventory_sequences", &sequence));
+      m_connection->execute(Viper::insert(GetInventoryExcludedOrdersRow(),
+        "inventory_excluded_orders", boost::iterators::make_transform_iterator(
+        snapshot.m_excludedOrders.begin(), ConvertInventoryExcludedOrders(
         account)), boost::iterators::make_transform_iterator(
-        snapshot.m_excludedOrders.end(), ConvertPositionExcludedOrders(
+        snapshot.m_excludedOrders.end(), ConvertInventoryExcludedOrders(
         account))));
     });
   }
@@ -122,11 +122,11 @@ namespace Nexus::RiskService {
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
-        GetPositionEntriesRow(), "position_entries"));
+        GetInventoryEntriesRow(), "inventory_entries"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetPositionSequencesRow(), "position_sequences"));
+        GetInventorySequencesRow(), "inventory_sequences"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetPositionExcludedOrdersRow(), "position_excluded_orders"));
+        GetInventoryExcludedOrdersRow(), "inventory_excluded_orders"));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

@@ -12,11 +12,11 @@ namespace Nexus::RiskService {
     public:
       ~LocalRiskDataStore();
 
-      PositionSnapshot LoadPositionSnapshot(
+      InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const PositionSnapshot& snapshot);
+        const InventorySnapshot& snapshot);
 
       void Open();
 
@@ -24,7 +24,7 @@ namespace Nexus::RiskService {
 
     private:
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        PositionSnapshot> m_snapshots;
+        InventorySnapshot> m_snapshots;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -34,18 +34,18 @@ namespace Nexus::RiskService {
     Close();
   }
 
-  inline PositionSnapshot LocalRiskDataStore::LoadPositionSnapshot(
+  inline InventorySnapshot LocalRiskDataStore::LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto snapshot = m_snapshots.Find(account);
     if(snapshot) {
       return *snapshot;
     }
-    return PositionSnapshot();
+    return InventorySnapshot();
   }
 
   inline void LocalRiskDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const PositionSnapshot& snapshot) {
+      const InventorySnapshot& snapshot) {
     m_snapshots.Update(account, snapshot);
   }
 

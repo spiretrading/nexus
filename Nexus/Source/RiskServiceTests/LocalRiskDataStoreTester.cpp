@@ -12,33 +12,37 @@ using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 
 TEST_SUITE("LocalRiskDataStore") {
-  TEST_CASE("load_empty_position") {
+  TEST_CASE("load_empty_inventories") {
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();
-    auto snapshot = dataStore.LoadPositionSnapshot(DirectoryEntry::MakeAccount(
+    auto snapshot = dataStore.LoadInventorySnapshot(DirectoryEntry::MakeAccount(
       123, "test"));
     REQUIRE(snapshot.m_sequence == Sequence::First());
-    REQUIRE(snapshot.m_positions.empty());
+    REQUIRE(snapshot.m_inventories.empty());
     REQUIRE(snapshot.m_excludedOrders.empty());
   }
 
-  TEST_CASE("store_load_position") {
+  TEST_CASE("store_load_inventory") {
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();
-    auto positions = std::vector<RiskPortfolioPosition>();
-    positions.emplace_back(RiskPortfolioPosition::Key(
+    auto inventories = std::vector<RiskPortfolioInventory>();
+    inventories.emplace_back(RiskPortfolioInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
       DefaultCurrencies::USD()));
-    positions.back().m_costBasis = 1000 * Money::ONE;
-    positions.back().m_quantity = 123;
+    inventories.back().m_position.m_costBasis = 1000 * Money::ONE;
+    inventories.back().m_position.m_quantity = 123;
+    inventories.back().m_fees = 3 * Money::ONE;
+    inventories.back().m_transactionCount = 332;
+    inventories.back().m_volume = 433;
     auto excludedOrders = std::vector<OrderId>();
     excludedOrders.push_back(100);
     excludedOrders.push_back(102);
     excludedOrders.push_back(110);
     auto account = DirectoryEntry::MakeAccount(123, "test");
-    auto snapshot = PositionSnapshot{positions, Sequence(200), excludedOrders};
+    auto snapshot = InventorySnapshot{inventories, Sequence(200),
+      excludedOrders};
     dataStore.Store(account, snapshot);
-    auto storedSnapshot = dataStore.LoadPositionSnapshot(account);
+    auto storedSnapshot = dataStore.LoadInventorySnapshot(account);
     REQUIRE(storedSnapshot == snapshot);
   }
 }
