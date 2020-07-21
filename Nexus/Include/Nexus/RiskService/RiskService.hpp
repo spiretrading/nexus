@@ -21,7 +21,9 @@ namespace Nexus::RiskService {
   template<typename O> class RiskTransitionTracker;
   template<typename C> class SqlRiskDataStore;
   class VirtualRiskClient;
+  class VirtualRiskDataStore;
   template<typename C> class WrapperRiskClient;
+  template<typename D> class WrapperRiskDataStore;
 
   /** Standard name for the risk service. */
   inline const std::string SERVICE_NAME = "risk_service";

@@ -12,6 +12,7 @@
 #include "Nexus/Python/DefinitionsClient.hpp"
 #include "Nexus/Python/MarketDataClient.hpp"
 #include "Nexus/Python/OrderExecutionClient.hpp"
+#include "Nexus/Python/RiskClient.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 
 namespace Nexus {
@@ -114,6 +115,7 @@ namespace Python {
       std::unique_ptr<MarketDataClient> m_marketDataClient;
       std::unique_ptr<ComplianceClient> m_complianceClient;
       std::unique_ptr<OrderExecutionClient> m_orderExecutionClient;
+      std::unique_ptr<RiskClient> m_riskClient;
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
@@ -139,6 +141,7 @@ namespace Python {
     Close();
     auto release = Beam::Python::GilRelease();
     m_timeClient.reset();
+    m_riskClient.reset();
     m_orderExecutionClient.reset();
     m_complianceClient.reset();
     m_marketDataClient.reset();
@@ -217,7 +220,10 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::RiskClient&
       ToPythonServiceClients<C>::GetRiskClient() {
-    throw std::runtime_error("Not implemented");
+    if(m_openState.IsOpen()) {
+      return *m_riskClient;
+    }
+    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
   }
 
   template<typename C>
@@ -270,6 +276,9 @@ namespace Python {
         OrderExecutionService::MakeVirtualOrderExecutionClient(
         &m_client->GetOrderExecutionClient()));
       m_orderExecutionClient->Open();
+      m_riskClient = RiskService::MakeToPythonRiskClient(
+        RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()));
+      m_riskClient->Open();
       m_timeClient = Beam::TimeService::MakeToPythonTimeClient(
         Beam::TimeService::MakeVirtualTimeClient(&m_client->GetTimeClient()));
       m_timeClient->Open();
@@ -293,6 +302,9 @@ namespace Python {
   void ToPythonServiceClients<C>::Shutdown() {
     if(m_timeClient != nullptr) {
       m_timeClient->Close();
+    }
+    if(m_riskClient != nullptr) {
+      m_riskClient->Close();
     }
     if(m_orderExecutionClient != nullptr) {
       m_orderExecutionClient->Close();
