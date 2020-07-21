@@ -19,183 +19,183 @@
 
 namespace Nexus {
 
-  /* Used to represent a quantity up to 15 significant decimal places. */
+  /** Used to represent a quantity up to 15 significant decimal places. */
   class Quantity {
     public:
 
-      //! The number of decimal places that can be represented accurately.
+      /** The number of decimal places that can be represented accurately. */
       static constexpr auto DECIMAL_PLACES = 6;
 
-      //! The multiplier used.
+      /** The multiplier used. */
       static constexpr auto MULTIPLIER = std::int64_t(1000000);
 
-      //! Returns a Quantity from a string.
-      /*!
-        \param value The value to represent.
-        \return A Quantity representing the specified <i>value</i>.
-      */
+      /**
+       * Returns a Quantity from a string.
+       * @param value The value to represent.
+       * @return A Quantity representing the specified <i>value</i>.
+       */
       static boost::optional<Quantity> FromValue(const std::string& value);
 
-      //! Constructs a Quantity with a value of 0.
+      /** Constructs a Quantity with a value of 0. */
       constexpr Quantity();
 
-      //! Constructs a Quantity from an int32.
+      /** Constructs a Quantity from an int32. */
       constexpr Quantity(std::int32_t value);
 
-      //! Constructs a Quantity from a uint32.
+      /** Constructs a Quantity from a uint32. */
       constexpr Quantity(std::uint32_t value);
 
-      //! Constructs a Quantity from an int64.
+      /** Constructs a Quantity from an int64. */
       constexpr Quantity(std::int64_t value);
 
-      //! Constructs a Quantity from a uint64.
+      /** Constructs a Quantity from a uint64. */
       constexpr Quantity(std::uint64_t value);
 
-      //! Constructs a Quantity from a double.
+      /** Constructs a Quantity from a double. */
       constexpr Quantity(double value);
 
-      //! Returns a Quantity from its raw representation.
+      /** Returns a Quantity from its raw representation. */
       static constexpr  Quantity FromRepresentation(boost::float64_t value);
 
-      //! Converts this Quantity into a float.
+      /** Converts this Quantity into a float. */
       explicit constexpr operator boost::float64_t() const;
 
-      //! Converts this Quantity into an int.
+      /** Converts this Quantity into an int. */
       explicit constexpr operator int() const;
 
-      //! Converts this Quantity into an unsigned int.
+      /** Converts this Quantity into an unsigned int. */
       explicit constexpr operator unsigned int() const;
 
-      //! Converts this Quantity into a long.
+      /** Converts this Quantity into a long. */
       explicit constexpr operator long() const;
 
-      //! Converts this Quantity into an unsigned long.
+      /** Converts this Quantity into an unsigned long. */
       explicit constexpr operator unsigned long() const;
 
-      //! Converts this Quantity into a long long.
+      /** Converts this Quantity into a long long. */
       explicit constexpr operator long long() const;
 
-      //! Converts this Quantity into an unsigned long long.
+      /** Converts this Quantity into an unsigned long long. */
       explicit constexpr operator unsigned long long() const;
 
-      //! Less than test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is less than <i>rhs</i>.
-      */
+      /**
+       * Less than test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is less than <i>rhs</i>.
+       */
       constexpr bool operator <(Quantity rhs) const;
 
-      //! Less than or equal test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-      */
+      /**
+       * Less than or equal test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
+       */
       constexpr bool operator <=(Quantity rhs) const;
 
-      //! Tests for equality.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is equal to <i>rhs</i>.
-      */
+      /**
+       * Tests for equality.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is equal to <i>rhs</i>.
+       */
       constexpr bool operator ==(Quantity rhs) const;
 
-      //! Tests for inequality.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is not equal to <i>rhs</i>.
-      */
+      /**
+       * Tests for inequality.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
+       */
       constexpr bool operator !=(Quantity rhs) const;
 
-      //! Greater than or equal test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is greater than or equal to
-                <i>rhs</i>.
-      */
+      /**
+       * Greater than or equal test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is greater than or equal to
+       *         <i>rhs</i>.
+       */
       constexpr bool operator >=(Quantity rhs) const;
 
-      //! Greater than test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is greater than <i>rhs</i>.
-      */
+      /**
+       * Greater than test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is greater than <i>rhs</i>.
+       */
       constexpr bool operator >(Quantity rhs) const;
 
-      //! Adds two Quantities together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> + <i>rhs</i>.
-      */
+      /**
+       * Adds two Quantities together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> + <i>rhs</i>.
+       */
       constexpr Quantity operator +(Quantity rhs) const;
 
-      //! Increases this Quantity.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Increases this Quantity.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Quantity& operator +=(Quantity rhs);
 
-      //! Increments this Quantity.
+      /** Increments this Quantity. */
       constexpr Quantity& operator ++();
 
-      //! Increments this Quantity.
+      /** Increments this Quantity. */
       constexpr Quantity operator ++(int);
 
-      //! Subtracts two Quantities together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> - <i>rhs</i>.
-      */
+      /**
+       * Subtracts two Quantities together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> - <i>rhs</i>.
+       */
       constexpr Quantity operator -(Quantity rhs) const;
 
-      //! Decreases this Quantity.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Decreases this Quantity.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Quantity& operator -=(Quantity rhs);
 
-      //! Decrements this Quantity.
+      /** Decrements this Quantity. */
       constexpr Quantity& operator --();
 
-      //! Decrements this Quantity.
+      /** Decrements this Quantity. */
       constexpr Quantity operator --(int);
 
-      //! Multiplies two Quantities together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> * <i>rhs</i>.
-      */
+      /**
+       * Multiplies two Quantities together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> * <i>rhs</i>.
+       */
       constexpr Quantity operator *(Quantity rhs) const;
 
-      //! Multiplies this Quantity.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Multiplies this Quantity.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Quantity& operator *=(Quantity rhs);
 
-      //! Divides two Quantities together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> / <i>rhs</i>.
-      */
+      /**
+       * Divides two Quantities together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> / <i>rhs</i>.
+       */
       constexpr Quantity operator /(Quantity rhs) const;
 
-      //! Divides this Quantity.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Divides this Quantity.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Quantity& operator /=(Quantity rhs);
 
-      //! Returns the unary negation of this Quantity.
-      /*!
-        \return -<i>this</i>.
-      */
+      /**
+       * Returns the unary negation of this Quantity.
+       * @return -<i>this</i>.
+       */
       constexpr Quantity operator -() const;
 
-      //! Returns the raw representation of this Quantity.
+      /** Returns the raw representation of this Quantity. */
       constexpr boost::float64_t GetRepresentation() const;
 
     private:
@@ -298,29 +298,29 @@ namespace Nexus {
     return Quantity(lhs) / rhs;
   }
 
-  //! Returns the modulus of two Quantities.
-  /*!
-    \param lhs The left hand side.
-    \param rhs The right hand side.
-    \return <i>lhs</i> % <i>rhs</i>
-  */
+  /**
+   * Returns the modulus of two Quantities.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
   inline Quantity operator %(Quantity lhs, Quantity rhs) {
     return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
   }
 
-  //! Returns the absolute value.
-  /*!
-    \param value The value.
-  */
+  /**
+   * Returns the absolute value.
+   * @param value The value.
+   */
   inline Quantity Abs(Quantity value) {
     return Quantity::FromRepresentation(std::abs(value.m_value));
   }
 
-  //! Returns the floor.
-  /*!
-    \param value The value to floor.
-    \param decimalPlaces The decimal place to floor to.
-  */
+  /**
+   * Returns the floor.
+   * @param value The value to floor.
+   * @param decimalPlaces The decimal place to floor to.
+   */
   inline Quantity Floor(Quantity value, int decimalPlaces) {
     if(decimalPlaces > 0) {
       auto multiplier = Beam::PowerOfTen(decimalPlaces);
@@ -341,20 +341,20 @@ namespace Nexus {
     }
   }
 
-  //! Returns the ceiling.
-  /*!
-    \param value The value to ceil.
-    \param decimalPlaces The decimal place to ceil to.
-  */
+  /**
+   * Returns the ceiling.
+   * @param value The value to ceil.
+   * @param decimalPlaces The decimal place to ceil to.
+   */
   inline Quantity Ceil(Quantity value, int decimalPlaces) {
     return -Floor(-value, decimalPlaces);
   }
 
-  //! Returns the truncated value.
-  /*!
-    \param value The value to truncate.
-    \param decimalPlaces The decimal place to truncate.
-  */
+  /**
+   * Returns the truncated value.
+   * @param value The value to truncate.
+   * @param decimalPlaces The decimal place to truncate.
+   */
   inline Quantity Truncate(Quantity value, int decimalPlaces) {
     if(value < 0) {
       return Ceil(value, decimalPlaces);
@@ -363,11 +363,11 @@ namespace Nexus {
     }
   }
 
-  //! Returns the rounded value.
-  /*!
-    \param value The value to round.
-    \param decimalPlaces The decimal place to round to.
-  */
+  /**
+   * Returns the rounded value.
+   * @param value The value to round.
+   * @param decimalPlaces The decimal place to round to.
+   */
   inline Quantity Round(Quantity value, int decimalPlaces) {
     if(decimalPlaces >= 0) {
       auto multiplier = Beam::PowerOfTen(decimalPlaces + 1);
@@ -437,22 +437,22 @@ namespace Nexus {
   }
 
   inline constexpr Quantity::Quantity()
-      : m_value(0) {}
+    : m_value(0) {}
 
   inline constexpr Quantity::Quantity(std::int32_t value)
-      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
+    : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::uint32_t value)
-      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
+    : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::int64_t value)
-      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
+    : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(std::uint64_t value)
-      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
+    : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity::Quantity(double value)
-      : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
+    : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity Quantity::FromRepresentation(
       boost::float64_t value) {
@@ -580,12 +580,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-  inline std::string ToString(Nexus::Quantity value) {
-    return boost::lexical_cast<std::string>(value);
-  }
-
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<Nexus::Quantity> : std::false_type {};
 
@@ -608,7 +603,6 @@ namespace Serialization {
       value = Nexus::Quantity::FromRepresentation(representation);
     }
   };
-}
 }
 
 namespace std {

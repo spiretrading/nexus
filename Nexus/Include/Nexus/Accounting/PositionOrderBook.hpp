@@ -14,8 +14,9 @@
 
 namespace Nexus::Accounting {
 
-  /** Maintains an Order book for the purpose of keeping track of positions and
-      opening/closing orders.
+  /**
+   * Maintains an Order book for the purpose of keeping track of positions and
+   * opening/closing orders.
    */
   class PositionOrderBook {
     public:
@@ -23,61 +24,61 @@ namespace Nexus::Accounting {
       /** Stores a single position. */
       struct PositionEntry {
 
-        //! The position's Security.
+        /** The position's Security. */
         Security m_security;
 
-        //! The position's quantity.
+        /** The position's quantity. */
         Quantity m_quantity;
 
-        //! Constructs a PositionEntry.
-        /*!
-          \param security The position's Security.
-          \param quantity The position's quantity.
-        */
+        /**
+         * Constructs a PositionEntry.
+         * @param security The position's Security.
+         * @param quantity The position's quantity.
+         */
         PositionEntry(const Security& security, Quantity quantity);
       };
 
-      //! Constructs a PositionOrderBook.
+      /** Constructs a PositionOrderBook. */
       PositionOrderBook();
 
       //! Returns all live Orders.
       const std::vector<const OrderExecutionService::Order*>&
         GetLiveOrders() const;
 
-      //! Returns all opening Orders.
-      /*!
-        \return The list of all all opening Orders.
-      */
+      /**
+       * Returns all opening Orders.
+       * @return The list of all all opening Orders.
+       */
       const std::vector<const OrderExecutionService::Order*>&
         GetOpeningOrders() const;
 
-      //! Returns all Positions.
-      /*!
-        \return The list of all all Positions.
-      */
+      /**
+       * Returns all Positions.
+       * @return The list of all all Positions.
+       */
       const std::vector<PositionEntry>& GetPositions() const;
 
-      //! Returns <code>true</code> iff an Order submission would result in an
-      //! opening Order.
-      /*!
-        \param fields The OrderFields being submitted.
-        \return <code>true</code> iff the <i>fields</i> would result in an
-                opening Order, otherwise the <i>fields</i> represent a closing
-                Order.
-      */
+      /**
+       * Returns <code>true</code> iff an Order submission would result in an
+       * opening Order.
+       * @param fields The OrderFields being submitted.
+       * @return <code>true</code> iff the <i>fields</i> would result in an
+       *         opening Order, otherwise the <i>fields</i> represent a closing
+       *         Order.
+       */
       bool TestOpeningOrderSubmission(
         const OrderExecutionService::OrderFields& fields) const;
 
-      //! Adds an Order to this book.
-      /*!
-        \param order The Order to add.
-      */
+      /**
+       * Adds an Order to this book.
+       * @param order The Order to add.
+       */
       void Add(const OrderExecutionService::Order& order);
 
-      //! Updates an Order with an ExecutionReport.
-      /*!
-        \param report The ExecutionReport with the details of the update.
-      */
+      /**
+       * Updates an Order with an ExecutionReport.
+       * @param report The ExecutionReport with the details of the update.
+       */
       void Update(const OrderExecutionService::ExecutionReport& report);
 
     private:
@@ -120,28 +121,27 @@ namespace Nexus::Accounting {
   }
 
   inline PositionOrderBook::PositionEntry::PositionEntry(
-      const Security& security, Quantity quantity)
-      : m_security(security),
-        m_quantity(quantity) {}
+    const Security& security, Quantity quantity)
+    : m_security(security),
+      m_quantity(quantity) {}
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
-      const OrderExecutionService::Order& order, int sequenceNumber)
-      : m_order(&order),
-        m_remainingQuantity(m_order->GetInfo().m_fields.m_quantity),
-        m_sequenceNumber(sequenceNumber) {}
+    const OrderExecutionService::Order& order, int sequenceNumber)
+    : m_order(&order),
+      m_remainingQuantity(m_order->GetInfo().m_fields.m_quantity),
+      m_sequenceNumber(sequenceNumber) {}
 
   inline PositionOrderBook::SecurityEntry::SecurityEntry()
-      : m_position(0),
-        m_askOpenQuantity(0),
-        m_bidOpenQuantity(0) {}
+    : m_position(0),
+      m_askOpenQuantity(0),
+      m_bidOpenQuantity(0) {}
 
   inline PositionOrderBook::PositionOrderBook()
       : m_orderSequenceNumber(0) {
     m_liveOrders.SetComputation(
       [=] {
-        std::vector<const OrderExecutionService::Order*> orders;
-        for(const auto& entry : m_securityEntries |
-            boost::adaptors::map_values) {
+        auto orders = std::vector<const OrderExecutionService::Order*>();
+        for(auto& entry : m_securityEntries | boost::adaptors::map_values) {
           std::transform(entry.m_asks.begin(), entry.m_asks.end(),
             std::back_inserter(orders), std::mem_fn(&OrderEntry::m_order));
           std::transform(entry.m_bids.begin(), entry.m_bids.end(),
@@ -151,9 +151,8 @@ namespace Nexus::Accounting {
       });
     m_openingOrders.SetComputation(
       [=] {
-        std::vector<const OrderExecutionService::Order*> orders;
-        for(const auto& entry : m_securityEntries |
-            boost::adaptors::map_values) {
+        auto orders = std::vector<const OrderExecutionService::Order*>();
+        for(auto& entry : m_securityEntries | boost::adaptors::map_values) {
           if(entry.m_position == 0) {
             std::transform(entry.m_asks.begin(), entry.m_asks.end(),
               std::back_inserter(orders), std::mem_fn(&OrderEntry::m_order));
@@ -161,7 +160,7 @@ namespace Nexus::Accounting {
               std::back_inserter(orders), std::mem_fn(&OrderEntry::m_order));
           } else if(entry.m_position > 0) {
             auto remainingQuantity = entry.m_position;
-            for(const auto& orderEntry : entry.m_asks) {
+            for(auto& orderEntry : entry.m_asks) {
               if(remainingQuantity <= 0) {
                 orders.push_back(orderEntry.m_order);
               } else if(remainingQuantity >= orderEntry.m_remainingQuantity) {
@@ -177,7 +176,7 @@ namespace Nexus::Accounting {
             std::transform(entry.m_asks.begin(), entry.m_asks.end(),
               std::back_inserter(orders), std::mem_fn(&OrderEntry::m_order));
             auto remainingQuantity = -entry.m_position;
-            for(const auto& orderEntry : entry.m_bids) {
+            for(auto& orderEntry : entry.m_bids) {
               if(remainingQuantity <= 0) {
                 orders.push_back(orderEntry.m_order);
               } else if(remainingQuantity >= orderEntry.m_remainingQuantity) {
@@ -193,8 +192,8 @@ namespace Nexus::Accounting {
       });
     m_positions.SetComputation(
       [=] {
-        std::vector<PositionEntry> positions;
-        for(const auto& securityEntryPair : m_securityEntries) {
+        auto positions = std::vector<PositionEntry>();
+        for(auto& securityEntryPair : m_securityEntries) {
           if(securityEntryPair.second.m_position != 0) {
             positions.emplace_back(securityEntryPair.first,
               securityEntryPair.second.m_position);
@@ -250,11 +249,11 @@ namespace Nexus::Accounting {
     auto& openQuantity = Pick(fields.m_side, securityEntry.m_askOpenQuantity,
       securityEntry.m_bidOpenQuantity);
     openQuantity += fields.m_quantity;
-    OrderEntry entry(order, m_orderSequenceNumber);
+    auto entry = OrderEntry(order, m_orderSequenceNumber);
     ++m_orderSequenceNumber;
     auto insertIterator = std::lower_bound(orders.begin(), orders.end(),
       entry,
-      [] (const OrderEntry& lhs, const OrderEntry& rhs) {
+      [] (const auto& lhs, const auto& rhs) {
         return std::tie(lhs.m_order->GetInfo().m_fields, lhs.m_sequenceNumber) <
           std::tie(rhs.m_order->GetInfo().m_fields, rhs.m_sequenceNumber);
       });
@@ -272,7 +271,7 @@ namespace Nexus::Accounting {
     if(fieldsIterator == m_fields.end()) {
       return;
     }
-    const auto& fields = fieldsIterator->second;
+    auto& fields = fieldsIterator->second;
     auto securityEntryIterator = m_securityEntries.find(fields.m_security);
     if(securityEntryIterator == m_securityEntries.end()) {
       return;
@@ -281,7 +280,7 @@ namespace Nexus::Accounting {
     auto& orders = Pick(fields.m_side, securityEntry.m_asks,
       securityEntry.m_bids);
     auto entryIterator = std::find_if(orders.begin(), orders.end(),
-      [&] (const OrderEntry& entry) {
+      [&] (const auto& entry) {
         return entry.m_order->GetInfo().m_orderId == report.m_id;
       });
     if(entryIterator == orders.end()) {

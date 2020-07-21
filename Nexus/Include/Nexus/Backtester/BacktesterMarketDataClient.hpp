@@ -97,8 +97,8 @@ namespace Nexus {
     Beam::Ref<BacktesterMarketDataService> service,
     std::unique_ptr<MarketDataService::VirtualMarketDataClient>
     marketDataClient)
-    : m_service{service.Get()},
-      m_marketDataClient{std::move(marketDataClient)} {}
+    : m_service(service.Get()),
+      m_marketDataClient(std::move(marketDataClient)) {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
@@ -149,8 +149,7 @@ namespace Nexus {
 
   inline void BacktesterMarketDataClient::QueryMarketQuotes(
       const MarketDataService::SecurityMarketDataQuery& query,
-      const std::shared_ptr<
-      Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
     m_service->QueryMarketQuotes(query);
     m_marketDataClient->QueryMarketQuotes(query, queue);
   }

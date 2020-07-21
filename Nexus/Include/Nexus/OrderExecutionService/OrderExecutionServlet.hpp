@@ -565,7 +565,7 @@ namespace Nexus::OrderExecutionService {
         m_destinationDatabase.GetPreferredDestination(
         fields->m_security.GetMarket()).m_id;
     }
-    if(fields->m_currency == CurrencyId::NONE()) {
+    if(fields->m_currency == CurrencyId::NONE) {
       if(!revisedFields.is_initialized()) {
         revisedFields.emplace(*fields);
         fields = revisedFields.get_ptr();

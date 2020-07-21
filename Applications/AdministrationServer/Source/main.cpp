@@ -177,8 +177,6 @@ int main(int argc, const char** argv) {
     cerr << "Unable to connect to the definitions service." << endl;
     return -1;
   }
-  auto organizationName = Extract<string>(config, "organization",
-    "Spire Trading Inc.");
   auto entitlements = EntitlementDatabase();
   try {
     entitlements = ParseEntitlements(GetNode(config, "entitlements"),
@@ -196,7 +194,7 @@ int main(int argc, const char** argv) {
     mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema);
   auto administrationServer = AdministrationServletContainer(
     Initialize(serviceLocatorClient.Get(),
-    Initialize(serviceLocatorClient.Get(), organizationName, entitlements,
+    Initialize(serviceLocatorClient.Get(), entitlements,
     Initialize(Initialize(std::move(mySqlConnection), accountSource)))),
     Initialize(administrationServerConnectionInitializer.m_interface,
     Ref(socketThreadPool)),

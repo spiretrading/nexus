@@ -21,45 +21,36 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \class AdministrationServlet
-      \brief Provides management and administration services for Nexus accounts.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam ServiceLocatorClientType The type of ServiceLocatorClient used to
-              manage accounts.
-      \tparam AdministrationDataStoreType The type of AdministrationDataStore to
-              use.
+  /**
+   * Provides management and administration services for Nexus accounts.
+   * @param <C> The container instantiating this servlet.
+   * @param <S> The type of ServiceLocatorClient used to manage accounts.
+   * @param <D> The type of AdministrationDataStore to use.
    */
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
+  template<typename C, typename S, typename D>
   class AdministrationServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of ServiceLocatorClient used to manage accounts.
-      using ServiceLocatorClient =
-        Beam::GetTryDereferenceType<ServiceLocatorClientType>;
+      /** The type of ServiceLocatorClient used to manage accounts. */
+      using ServiceLocatorClient = Beam::GetTryDereferenceType<S>;
 
-      //! The type of AdministrationDataStore used.
-      using AdministrationDataStore =
-        Beam::GetTryDereferenceType<AdministrationDataStoreType>;
+      /** The type of AdministrationDataStore used. */
+      using AdministrationDataStore = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs an AdministrationServlet.
-      /*!
-        \param serviceLocatorClient Initializes the ServiceLocatorClient.
-        \param organizationName The name of the organization.
-        \param entitlements The list of available entitlements.
-        \param dataStore Initializes the AdministrationDataStore.
-      */
-      template<typename ServiceLocatorClientForward,
-        typename AdministrationDataStoreForward>
-      AdministrationServlet(ServiceLocatorClientForward&& serviceLocatorClient,
-        std::string organizationName,
+      /**
+       * Constructs an AdministrationServlet.
+       * @param serviceLocatorClient Initializes the ServiceLocatorClient.
+       * @param entitlements The list of available entitlements.
+       * @param dataStore Initializes the AdministrationDataStore.
+       */
+      template<typename SF, typename DF>
+      AdministrationServlet(SF&& serviceLocatorClient,
         const MarketDataService::EntitlementDatabase& entitlements,
-        AdministrationDataStoreForward&& dataStore);
+        DF&& dataStore);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -85,11 +76,9 @@ namespace AdministrationService {
         Beam::ServiceLocator::DirectoryEntry, SyncRiskParameterSubscribers>;
       using SyncAccountToSubscribers =
         Beam::Threading::Sync<AccountToRiskSubscribers>;
-      Beam::GetOptionalLocalPtr<ServiceLocatorClientType>
-        m_serviceLocatorClient;
-      std::string m_organizationName;
+      Beam::GetOptionalLocalPtr<S> m_serviceLocatorClient;
       MarketDataService::EntitlementDatabase m_entitlements;
-      Beam::GetOptionalLocalPtr<AdministrationDataStoreType> m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_dataStore;
       Beam::ServiceLocator::DirectoryEntry m_administratorsRoot;
       Beam::ServiceLocator::DirectoryEntry m_servicesRoot;
       Beam::ServiceLocator::DirectoryEntry m_tradingGroupsRoot;
@@ -134,8 +123,6 @@ namespace AdministrationService {
         const AccountRoles& roles, AccountModificationRequest::Type type);
       void StoreModificationRequest(const AccountModificationRequest& request,
         const Message& comment, const AccountRoles& roles);
-      std::string OnLoadOrganizationName(ServiceProtocolClient& client,
-        int dummy);
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
         ServiceProtocolClient& client, AccountRoles roles);
       Beam::ServiceLocator::DirectoryEntry OnLoadAdministratorsRootEntry(
@@ -231,43 +218,29 @@ namespace AdministrationService {
         Message message);
   };
 
-  template<typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
+  template<typename S, typename D>
   struct MetaAdministrationServlet {
     using Session = AdministrationSession;
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = AdministrationServlet<ContainerType,
-        ServiceLocatorClientType, AdministrationDataStoreType>;
+      using type = AdministrationServlet<C, S, D>;
     };
   };
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  template<typename ServiceLocatorClientForward,
-    typename AdministrationDataStoreForward>
-  AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::AdministrationServlet(
-      ServiceLocatorClientForward&& serviceLocatorClient,
-      std::string organizationName,
-      const MarketDataService::EntitlementDatabase& entitlements,
-      AdministrationDataStoreForward&& dataStore)
-      : m_serviceLocatorClient{std::forward<ServiceLocatorClientForward>(
-          serviceLocatorClient)},
-        m_organizationName{std::move(organizationName)},
-        m_entitlements{entitlements},
-        m_dataStore{std::forward<AdministrationDataStoreForward>(dataStore)} {}
+  template<typename C, typename S, typename D>
+  template<typename SF, typename DF>
+  AdministrationServlet<C, S, D>::AdministrationServlet(
+    SF&& serviceLocatorClient,
+    const MarketDataService::EntitlementDatabase& entitlements, DF&& dataStore)
+    : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
+      m_entitlements(entitlements),
+      m_dataStore(std::forward<DF>(dataStore)) {}
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::RegisterServices(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterAdministrationServices(Store(slots));
     RegisterAdministrationMessages(Store(slots));
-    LoadOrganizationNameService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadOrganizationName, this,
-      std::placeholders::_1, std::placeholders::_2));
     LoadAccountsByRolesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountsByRoles, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -378,33 +351,29 @@ namespace AdministrationService {
       std::placeholders::_3));
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::HandleClientClosed(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     Beam::Threading::With(m_riskParametersSubscribers,
-      [&] (AccountToRiskSubscribers& accountToSubscribers) {
+      [&] (auto& accountToSubscribers) {
         for(auto& subscribers : accountToSubscribers |
             boost::adaptors::map_values) {
           Beam::Threading::With(subscribers,
-            [&] (RiskParameterSubscribers& subscribers) {
+            [&] (auto& subscribers) {
               Beam::RemoveAll(subscribers, &client);
             });
         }
       });
     Beam::Threading::With(m_riskStateEntries,
-      [&] (RiskStateEntries& riskStateEntries) {
+      [&] (auto& riskStateEntries) {
         for(auto& entry : riskStateEntries | boost::adaptors::map_values) {
           Beam::RemoveAll(entry.m_subscribers, &client);
         }
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::Open() {
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -434,30 +403,24 @@ namespace AdministrationService {
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::Close() {
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::Shutdown() {
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::Shutdown() {
     m_dataStore->Close();
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::LoadAccountRoles(
+  template<typename C, typename S, typename D>
+  AccountRoles AdministrationServlet<C, S, D>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    AccountRoles roles;
+    auto roles = AccountRoles();
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto tradingGroups = m_serviceLocatorClient->LoadChildren(
       m_tradingGroupsRoot);
@@ -491,16 +454,14 @@ namespace AdministrationService {
     return roles;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::LoadAccountRoles(
+  template<typename C, typename S, typename D>
+  AccountRoles AdministrationServlet<C, S, D>::LoadAccountRoles(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     if(parent == child) {
       return LoadAccountRoles(child);
     }
-    AccountRoles roles;
+    auto roles = AccountRoles();
     if(CheckAdministrator(parent)) {
       roles.Set(AccountRole::ADMINISTRATOR);
     }
@@ -525,10 +486,8 @@ namespace AdministrationService {
     return roles;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::CheckAdministrator(
+  template<typename C, typename S, typename D>
+  bool AdministrationServlet<C, S, D>::CheckAdministrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto isAdministrator = std::find(parents.begin(), parents.end(),
@@ -536,10 +495,8 @@ namespace AdministrationService {
     return isAdministrator;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::CheckReadPermission(
+  template<typename C, typename S, typename D>
+  bool AdministrationServlet<C, S, D>::CheckReadPermission(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     if(parent == child) {
@@ -567,11 +524,9 @@ namespace AdministrationService {
     return false;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
+  template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      LoadManagedTradingGroups(
+      C, S, D>::LoadManagedTradingGroups(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto tradingGroups = m_serviceLocatorClient->LoadChildren(
@@ -581,7 +536,7 @@ namespace AdministrationService {
         return tradingGroups;
       }
     }
-    std::vector<Beam::ServiceLocator::DirectoryEntry> result;
+    auto result = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     for(auto& parent : parents) {
       if(parent.m_name == "managers") {
         auto entryParents = m_serviceLocatorClient->LoadParents(parent);
@@ -597,10 +552,8 @@ namespace AdministrationService {
     return result;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  TradingGroup AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::LoadTradingGroup(
+  template<typename C, typename S, typename D>
+  TradingGroup AdministrationServlet<C, S, D>::LoadTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto managersDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
       directory, "managers");
@@ -608,18 +561,17 @@ namespace AdministrationService {
       directory, "traders");
     auto managers = m_serviceLocatorClient->LoadChildren(managersDirectory);
     auto traders = m_serviceLocatorClient->LoadChildren(tradersDirectory);
-    TradingGroup tradingGroup(directory, managersDirectory, managers,
+    auto tradingGroup = TradingGroup(directory, managersDirectory, managers,
       tradersDirectory, traders);
     return tradingGroup;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      LoadEntitlements(const Beam::ServiceLocator::DirectoryEntry& account) {
+  template<typename C, typename S, typename D>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::LoadEntitlements(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
-    std::vector<Beam::ServiceLocator::DirectoryEntry> result;
+    auto result = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     auto& availableEntitlements = m_entitlements.GetEntries();
     for(auto& availableEntitlement : availableEntitlements) {
       auto entryIterator = std::find(parents.begin(), parents.end(),
@@ -631,15 +583,14 @@ namespace AdministrationService {
     return result;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::GrantEntitlements(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::GrantEntitlements(
       const Beam::ServiceLocator::DirectoryEntry& adminAccount,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
     auto existingEntitlements = LoadEntitlements(account);
-    std::unordered_set<Beam::ServiceLocator::DirectoryEntry> entitlementSet(
+    auto entitlementSet =
+      std::unordered_set<Beam::ServiceLocator::DirectoryEntry>(
       entitlements.begin(), entitlements.end());
     for(auto& entitlement : m_entitlements.GetEntries()) {
       auto& entry = entitlement.m_groupEntry;
@@ -648,7 +599,7 @@ namespace AdministrationService {
             existingEntitlements.end(), entry) ==
             existingEntitlements.end()) {
           m_serviceLocatorClient->Associate(account, entry);
-          std::stringstream ss;
+          auto ss = std::stringstream();
           ss << boost::posix_time::to_simple_string(
             boost::posix_time::second_clock::universal_time()) << ": " <<
             adminAccount.m_name << " grants entitlement \"" <<
@@ -660,7 +611,7 @@ namespace AdministrationService {
             existingEntitlements.end(), entry) !=
             existingEntitlements.end()) {
           m_serviceLocatorClient->Detach(account, entry);
-          std::stringstream ss;
+          auto ss = std::stringstream();
           ss << boost::posix_time::to_simple_string(
             boost::posix_time::second_clock::universal_time()) << ": " <<
             adminAccount.m_name << " revokes entitlement \"" <<
@@ -671,10 +622,8 @@ namespace AdministrationService {
     }
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::UpdateRiskParameters(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::UpdateRiskParameters(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& parameters) {
     auto& subscribers = Beam::Threading::With(m_riskParametersSubscribers,
@@ -694,49 +643,43 @@ namespace AdministrationService {
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::EnsureModificationReadPermission(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::EnsureModificationReadPermission(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id id) {
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     if(!CheckReadPermission(account, request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest AdministrationServlet<C, S, D>::
       MakeModificationRequest(
       const Beam::ServiceLocator::DirectoryEntry& sessionAccount,
       const Beam::ServiceLocator::DirectoryEntry& submissionAccount,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountRoles& roles, AccountModificationRequest::Type type) {
     if(!CheckReadPermission(sessionAccount, submissionAccount)) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     if(roles.GetBitset().none()) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto requestId = ++m_nextModificationRequestId;
     auto timestamp = boost::posix_time::second_clock::universal_time();
     return {requestId, type, account, submissionAccount, timestamp};
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::StoreModificationRequest(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::StoreModificationRequest(
       const AccountModificationRequest& request, const Message& comment,
       const AccountRoles& roles) {
     if(comment.GetBodies().size() > 1 || !comment.GetBody().m_message.empty()) {
@@ -745,39 +688,29 @@ namespace AdministrationService {
       m_dataStore->Store(request.GetId(), message);
     }
     if(roles.Test(AccountRole::ADMINISTRATOR)) {
-      AccountModificationRequest::Update update{
+      auto update = AccountModificationRequest::Update{
         AccountModificationRequest::Status::GRANTED,
         request.GetSubmissionAccount(), 0, request.GetTimestamp()};
       m_dataStore->Store(request.GetId(), update);
     } else if(roles.Test(AccountRole::MANAGER)) {
-      AccountModificationRequest::Update update{
+      auto update = AccountModificationRequest::Update{
         AccountModificationRequest::Status::REVIEWED,
         request.GetSubmissionAccount(), 0, request.GetTimestamp()};
       m_dataStore->Store(request.GetId(), update);
     } else {
-      AccountModificationRequest::Update update{
+      auto update = AccountModificationRequest::Update{
         AccountModificationRequest::Status::PENDING,
         request.GetSubmissionAccount(), 0, request.GetTimestamp()};
       m_dataStore->Store(request.GetId(), update);
     }
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::string AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadOrganizationName(
-      ServiceProtocolClient& client, int dummy) {
-    return m_organizationName;
-  }
-
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
+  template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadAccountsByRoles(
+      AdministrationServlet<C, S, D>::OnLoadAccountsByRoles(
       ServiceProtocolClient& client, AccountRoles roles) {
     auto& session = client.GetSession();
-    std::vector<Beam::ServiceLocator::DirectoryEntry> accounts;
+    auto accounts = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     if(CheckAdministrator(session.GetAccount())) {
       if(roles.Test(AccountRole::ADMINISTRATOR)) {
         auto administrators = m_serviceLocatorClient->LoadChildren(
@@ -806,62 +739,48 @@ namespace AdministrationService {
     return accounts;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
       OnLoadAdministratorsRootEntry(ServiceProtocolClient& client, int dummy) {
     return m_administratorsRoot;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
       OnLoadServicesRootEntry(ServiceProtocolClient& client, int dummy) {
     return m_servicesRoot;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
       OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client, int dummy) {
     return m_tradingGroupsRoot;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  bool AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnCheckAdministratorRequest(
+  template<typename C, typename S, typename D>
+  bool AdministrationServlet<C, S, D>::OnCheckAdministratorRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return CheckAdministrator(account);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadAccountRolesRequest(
+  template<typename C, typename S, typename D>
+  AccountRoles AdministrationServlet<C, S, D>::OnLoadAccountRolesRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return LoadAccountRoles(account);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountRoles AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadSupervisedAccountRolesRequest(
-      ServiceProtocolClient& client,
+  template<typename C, typename S, typename D>
+  AccountRoles AdministrationServlet<C, S, D>::
+      OnLoadSupervisedAccountRolesRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     return LoadAccountRoles(parent, child);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
       OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
@@ -878,16 +797,14 @@ namespace AdministrationService {
         }
       }
     }
-    return Beam::ServiceLocator::DirectoryEntry();
+    return {};
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountIdentity AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadAccountIdentityRequest(
+  template<typename C, typename S, typename D>
+  AccountIdentity AdministrationServlet<C, S, D>::OnLoadAccountIdentityRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    AccountIdentity identity;
+    auto identity = AccountIdentity();
     m_dataStore->WithTransaction(
       [&] {
         identity = m_dataStore->LoadIdentity(account);
@@ -899,10 +816,8 @@ namespace AdministrationService {
     return identity;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnStoreAccountIdentityRequest(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::OnStoreAccountIdentityRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
@@ -914,10 +829,8 @@ namespace AdministrationService {
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  TradingGroup AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadTradingGroupRequest(
+  template<typename C, typename S, typename D>
+  TradingGroup AdministrationServlet<C, S, D>::OnLoadTradingGroupRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto properDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
@@ -925,76 +838,65 @@ namespace AdministrationService {
     return LoadTradingGroup(properDirectory);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadAdministratorsRequest(ServiceProtocolClient& client, int dummy) {
+  template<typename C, typename S, typename D>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::OnLoadAdministratorsRequest(
+      ServiceProtocolClient& client, int dummy) {
     return m_serviceLocatorClient->LoadChildren(m_administratorsRoot);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadServicesRequest(ServiceProtocolClient& client, int dummy) {
+  template<typename C, typename S, typename D>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::OnLoadServicesRequest(
+      ServiceProtocolClient& client, int dummy) {
     auto servicesDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(), "services");
     return m_serviceLocatorClient->LoadChildren(servicesDirectory);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  MarketDataService::EntitlementDatabase
-      AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadEntitlementsRequest(
-      ServiceProtocolClient& client, int dummy) {
+  template<typename C, typename S, typename D>
+  MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D>::
+      OnLoadEntitlementsRequest(ServiceProtocolClient& client, int dummy) {
     return m_entitlements;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadAccountEntitlementsRequest(ServiceProtocolClient& client,
+  template<typename C, typename S, typename D>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::OnLoadAccountEntitlementsRequest(
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return LoadEntitlements(account);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnStoreEntitlementsRequest(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::OnStoreEntitlementsRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
     auto& session = client.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     GrantEntitlements(session.GetAccount(), account, entitlements);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  RiskService::RiskParameters AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  RiskService::RiskParameters AdministrationServlet<C, S, D>::
       OnMonitorRiskParametersRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    SyncRiskParameterSubscribers* syncSubscribers;
-    Beam::Threading::With(m_riskParametersSubscribers,
-      [&] (AccountToRiskSubscribers& accountToSubscribers) {
-        syncSubscribers = &(accountToSubscribers[account]);
+    auto& syncSubscribers = Beam::Threading::With(m_riskParametersSubscribers,
+      [&] (auto& accountToSubscribers) -> decltype(auto) {
+        return accountToSubscribers[account];
       });
-    Beam::Threading::With(*syncSubscribers,
-      [&] (RiskParameterSubscribers& subscribers) {
+    Beam::Threading::With(syncSubscribers,
+      [&] (auto& subscribers) {
         if(std::find(subscribers.begin(), subscribers.end(), &client) ==
             subscribers.end()) {
           subscribers.push_back(&client);
         }
       });
-    RiskService::RiskParameters parameters;
+    auto parameters = RiskService::RiskParameters();
     m_dataStore->WithTransaction(
       [&] {
         parameters = m_dataStore->LoadRiskParameters(account);
@@ -1002,28 +904,24 @@ namespace AdministrationService {
     return parameters;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnStoreRiskParametersRequest(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::OnStoreRiskParametersRequest(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& parameters) {
     auto& session = client.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     UpdateRiskParameters(account, parameters);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  RiskService::RiskState AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  RiskService::RiskState AdministrationServlet<C, S, D>::
       OnMonitorRiskStateRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    RiskService::RiskState riskState;
+    auto riskState = RiskService::RiskState();
     m_dataStore->WithTransaction(
       [&] {
         Beam::Threading::With(m_riskStateEntries,
@@ -1041,18 +939,16 @@ namespace AdministrationService {
     return riskState;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  void AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnStoreRiskStateRequest(
+  template<typename C, typename S, typename D>
+  void AdministrationServlet<C, S, D>::OnStoreRiskStateRequest(
       Beam::Services::RequestToken<ServiceProtocolClient,
       StoreRiskStateService>& request,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& riskState) {
     auto& session = request.GetSession();
     if(!CheckAdministrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     m_dataStore->WithTransaction(
       [&] {
@@ -1074,47 +970,43 @@ namespace AdministrationService {
       });
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Beam::ServiceLocator::DirectoryEntry> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadManagedTradingGroupsRequest(ServiceProtocolClient& client,
+  template<typename C, typename S, typename D>
+  std::vector<Beam::ServiceLocator::DirectoryEntry>
+      AdministrationServlet<C, S, D>::OnLoadManagedTradingGroupsRequest(
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return LoadManagedTradingGroups(account);
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest AdministrationServlet<C, S, D>::
       OnLoadAccountModificationRequest(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     return request;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<AccountModificationRequest::Id> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadAccountModificationRequestIds(ServiceProtocolClient& client,
+  template<typename C, typename S, typename D>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationServlet<C, S, D>::OnLoadAccountModificationRequestIds(
+      ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
     auto& session = client.GetSession();
     if(!CheckReadPermission(session.GetAccount(), account)) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    std::vector<AccountModificationRequest::Id> ids;
+    auto ids = std::vector<AccountModificationRequest::Id>();
     m_dataStore->WithTransaction(
       [&] {
         ids = m_dataStore->LoadAccountModificationRequestIds(account, startId,
@@ -1123,20 +1015,18 @@ namespace AdministrationService {
     return ids;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<AccountModificationRequest::Id> AdministrationServlet<
-      ContainerType, ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  std::vector<AccountModificationRequest::Id> AdministrationServlet<C, S, D>::
       OnLoadManagedAccountModificationRequestIds(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id startId, int maxCount) {
     auto& session = client.GetSession();
     if(!CheckReadPermission(session.GetAccount(), account)) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     if(CheckAdministrator(session.GetAccount())) {
-      std::vector<AccountModificationRequest::Id> ids;
+      auto ids = std::vector<AccountModificationRequest::Id>();
       m_dataStore->WithTransaction(
         [&] {
           ids = m_dataStore->LoadAccountModificationRequestIds(startId,
@@ -1145,7 +1035,7 @@ namespace AdministrationService {
       return ids;
     }
     auto tradingGroupEntries = LoadManagedTradingGroups(account);
-    std::vector<Beam::ServiceLocator::DirectoryEntry> accounts;
+    auto accounts = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     for(auto& tradingGroupEntry : tradingGroupEntries) {
       auto tradingGroup = LoadTradingGroup(tradingGroupEntry);
       std::move(tradingGroup.GetManagers().begin(),
@@ -1154,12 +1044,12 @@ namespace AdministrationService {
         tradingGroup.GetTraders().end(), std::back_inserter(accounts));
     }
     std::sort(accounts.begin(), accounts.end());
-    std::vector<AccountModificationRequest::Id> ids;
-    for(std::size_t i = 0; i != accounts.size(); ++i) {
+    auto ids = std::vector<AccountModificationRequest::Id>();
+    for(auto i = std::size_t(0); i != accounts.size(); ++i) {
       if(i != 0 && accounts[i] == accounts[i - 1]) {
         continue;
       }
-      std::vector<AccountModificationRequest::Id> accountRequestIds;
+      auto accountRequestIds = std::vector<AccountModificationRequest::Id>();
       m_dataStore->WithTransaction(
         [&] {
           accountRequestIds = m_dataStore->LoadAccountModificationRequestIds(
@@ -1174,15 +1064,13 @@ namespace AdministrationService {
     return ids;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  EntitlementModification AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  EntitlementModification AdministrationServlet<C, S, D>::
       OnLoadEntitlementModification(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     EnsureModificationReadPermission(session.GetAccount(), id);
-    EntitlementModification modification;
+    auto modification = EntitlementModification();
     m_dataStore->WithTransaction(
       [&] {
         modification = m_dataStore->LoadEntitlementModification(id);
@@ -1190,10 +1078,8 @@ namespace AdministrationService {
     return modification;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest AdministrationServlet<C, S, D>::
       OnSubmitEntitlementModificationRequest(ServiceProtocolClient& client,
       Beam::ServiceLocator::DirectoryEntry account,
       const EntitlementModification& modification, Message comment) {
@@ -1208,14 +1094,14 @@ namespace AdministrationService {
     for(auto& entitlement : modification.GetEntitlements()) {
       if(entitlement.m_type !=
           Beam::ServiceLocator::DirectoryEntry::Type::DIRECTORY) {
-        throw Beam::Services::ServiceRequestException{"Invalid entitlement."};
+        throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
       if(std::find_if(m_entitlements.GetEntries().begin(),
           m_entitlements.GetEntries().end(),
           [&] (auto& entry) {
             return entry.m_groupEntry == entitlement;
           }) == m_entitlements.GetEntries().end()) {
-        throw Beam::Services::ServiceRequestException{"Invalid entitlement."};
+        throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
     }
     m_dataStore->WithTransaction(
@@ -1230,15 +1116,12 @@ namespace AdministrationService {
     return request;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  RiskModification AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
-      OnLoadRiskModification(ServiceProtocolClient& client,
-      AccountModificationRequest::Id id) {
+  template<typename C, typename S, typename D>
+  RiskModification AdministrationServlet<C, S, D>::OnLoadRiskModification(
+      ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     EnsureModificationReadPermission(session.GetAccount(), id);
-    RiskModification modification;
+    auto modification = RiskModification();
     m_dataStore->WithTransaction(
       [&] {
         modification = m_dataStore->LoadRiskModification(id);
@@ -1246,10 +1129,8 @@ namespace AdministrationService {
     return modification;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest AdministrationServlet<C, S, D>::
       OnSubmitRiskModificationRequest(ServiceProtocolClient& client,
       Beam::ServiceLocator::DirectoryEntry account,
       const RiskModification& modification, Message comment) {
@@ -1272,23 +1153,21 @@ namespace AdministrationService {
     return request;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest::Update AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
       OnLoadAccountModificationRequestStatus(ServiceProtocolClient& client,
       AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    AccountModificationRequest::Update status;
+    auto status = AccountModificationRequest::Update();
     m_dataStore->WithTransaction(
       [&] {
         status = m_dataStore->LoadAccountModificationRequestStatus(id);
@@ -1296,22 +1175,20 @@ namespace AdministrationService {
     return status;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest::Update AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
       OnApproveAccountModificationRequest(ServiceProtocolClient& client,
       AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     auto roles = LoadAccountRoles(session.GetAccount(), request.GetAccount());
     if(roles.GetBitset().none()) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto timestamp = boost::posix_time::second_clock::universal_time();
     if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
@@ -1320,14 +1197,14 @@ namespace AdministrationService {
       comment = Message{++m_nextMessageId, session.GetAccount(), timestamp,
         comment.GetBodies()};
     }
-    AccountModificationRequest::Update update;
+    auto update = AccountModificationRequest::Update();
     m_dataStore->WithTransaction(
       [&] {
         update = m_dataStore->LoadAccountModificationRequestStatus(
           request.GetId());
         if(IsTerminal(update.m_status)) {
-          throw Beam::Services::ServiceRequestException{
-            "Request can not be updated."};
+          throw Beam::Services::ServiceRequestException(
+            "Request can not be updated.");
         }
         if(comment.GetId() != -1) {
           m_dataStore->Store(request.GetId(), comment);
@@ -1344,7 +1221,7 @@ namespace AdministrationService {
       });
     if(update.m_status == AccountModificationRequest::Status::GRANTED) {
       if(request.GetType() == AccountModificationRequest::Type::ENTITLEMENTS) {
-        EntitlementModification modification;
+        auto modification = EntitlementModification();
         m_dataStore->WithTransaction(
           [&] {
             modification = m_dataStore->LoadEntitlementModification(
@@ -1353,7 +1230,7 @@ namespace AdministrationService {
         GrantEntitlements(update.m_account, session.GetAccount(),
           modification.GetEntitlements());
       } else if(request.GetType() == AccountModificationRequest::Type::RISK) {
-        RiskModification modification;
+        auto modification = RiskModification();
         m_dataStore->WithTransaction(
           [&] {
             modification = m_dataStore->LoadRiskModification(request.GetId());
@@ -1365,22 +1242,20 @@ namespace AdministrationService {
     return update;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  AccountModificationRequest::Update AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::
+  template<typename C, typename S, typename D>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
       OnRejectAccountModificationRequest(ServiceProtocolClient& client,
       AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     auto roles = LoadAccountRoles(session.GetAccount(), request.GetAccount());
     if(roles.GetBitset().none()) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
     auto timestamp = boost::posix_time::second_clock::universal_time();
     if(comment.GetBodies().size() == 1 && comment.GetBody().m_message.empty()) {
@@ -1389,14 +1264,14 @@ namespace AdministrationService {
       comment = Message{++m_nextMessageId, session.GetAccount(), timestamp,
         comment.GetBodies()};
     }
-    AccountModificationRequest::Update update;
+    auto update = AccountModificationRequest::Update();
     m_dataStore->WithTransaction(
       [&] {
         update = m_dataStore->LoadAccountModificationRequestStatus(
           request.GetId());
         if(IsTerminal(update.m_status)) {
-          throw Beam::Services::ServiceRequestException{
-            "Request can not be updated."};
+          throw Beam::Services::ServiceRequestException(
+            "Request can not be updated.");
         }
         if(comment.GetId() != -1) {
           m_dataStore->Store(request.GetId(), comment);
@@ -1410,13 +1285,11 @@ namespace AdministrationService {
     return update;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Message AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnLoadMessage(ServiceProtocolClient& client,
-      Message::Id id) {
+  template<typename C, typename S, typename D>
+  Message AdministrationServlet<C, S, D>::OnLoadMessage(
+      ServiceProtocolClient& client, Message::Id id) {
     auto& session = client.GetSession();
-    Message message;
+    auto message = Message();
     m_dataStore->WithTransaction(
       [&] {
         message = m_dataStore->LoadMessage(id);
@@ -1424,22 +1297,20 @@ namespace AdministrationService {
     return message;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  std::vector<Message::Id> AdministrationServlet<ContainerType,
-      ServiceLocatorClientType, AdministrationDataStoreType>::OnLoadMessageIds(
+  template<typename C, typename S, typename D>
+  std::vector<Message::Id> AdministrationServlet<C, S, D>::OnLoadMessageIds(
       ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
-    AccountModificationRequest request;
+    auto request = AccountModificationRequest();
     m_dataStore->WithTransaction(
       [&] {
         request = m_dataStore->LoadAccountModificationRequest(id);
       });
     if(!CheckReadPermission(session.GetAccount(), request.GetAccount())) {
-      throw Beam::Services::ServiceRequestException{
-        "Insufficient permissions."};
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
     }
-    std::vector<Message::Id> messageIds;
+    auto messageIds = std::vector<Message::Id>();
     m_dataStore->WithTransaction(
       [&] {
         messageIds = m_dataStore->LoadMessageIds(id);
@@ -1447,20 +1318,18 @@ namespace AdministrationService {
     return messageIds;
   }
 
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType>
-  Message AdministrationServlet<ContainerType, ServiceLocatorClientType,
-      AdministrationDataStoreType>::OnSendAccountModificationRequestMessage(
-      ServiceProtocolClient& client, AccountModificationRequest::Id id,
-      Message message) {
+  template<typename C, typename S, typename D>
+  Message AdministrationServlet<C, S, D>::
+      OnSendAccountModificationRequestMessage(ServiceProtocolClient& client,
+      AccountModificationRequest::Id id, Message message) {
     auto& session = client.GetSession();
     auto account = message.GetAccount();
     if(account.m_id == -1) {
       account = session.GetAccount();
     } else {
       if(!CheckReadPermission(session.GetAccount(), message.GetAccount())) {
-        throw Beam::Services::ServiceRequestException{
-          "Insufficient permissions."};
+        throw Beam::Services::ServiceRequestException(
+          "Insufficient permissions.");
       }
     }
     auto timestamp = boost::posix_time::second_clock::universal_time();
@@ -1472,7 +1341,6 @@ namespace AdministrationService {
       });
     return message;
   }
-}
 }
 
 #endif

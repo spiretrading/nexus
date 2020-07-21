@@ -5,14 +5,12 @@
 namespace Nexus::AdministrationService {
   struct AccountIdentity;
   class AccountModificationRequest;
-  template<typename ServiceProtocolClientBuilderType>
-    class AdministrationClient;
+  template<typename B> class AdministrationClient;
   class AdministrationDataStore;
-  template<typename ContainerType, typename ServiceLocatorClientType,
-    typename AdministrationDataStoreType> class AdministrationServlet;
+  template<typename C, typename S, typename D> class AdministrationServlet;
   class AdministrationSession;
   class ApplicationAdministrationClient;
-  template<typename DataStoreType> class CachedAdministrationDataStore;
+  template<typename D> class CachedAdministrationDataStore;
   class EntitlementModification;
   class LocalAdministrationDataStore;
   class Message;
@@ -20,7 +18,7 @@ namespace Nexus::AdministrationService {
   template<typename C> class SqlAdministrationDataStore;
   class TradingGroup;
   class VirtualAdministrationClient;
-  template<typename ClientType> class WrapperAdministrationClient;
+  template<typename C> class WrapperAdministrationClient;
 
   // Standard name for the administration service.
   inline const std::string SERVICE_NAME = "administration_service";

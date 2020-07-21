@@ -50,7 +50,7 @@ void SecurityInfoListView::set_list(const std::vector<SecurityInfo>& list) {
   for(int i = 0; i != list.size(); ++i) {
     auto& security = list[i];
     auto icon_path = QString(":/Icons/%1.png").arg(
-      security.m_security.GetCountry());
+      static_cast<std::uint16_t>(security.m_security.GetCountry()));
     auto security_widget = new SecurityInfoWidget(security, this);
     security_widget->connect_highlighted_signal(
       [=] (auto value) { on_highlight(i, value); });

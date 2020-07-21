@@ -2,13 +2,14 @@
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
   auto to_qstring(TimeInForce::Type type) {
-    return QString::fromStdString(ToString(type));
+    return QString::fromStdString(lexical_cast<std::string>(type));
   }
 
   auto create_time_in_force_item_list() {

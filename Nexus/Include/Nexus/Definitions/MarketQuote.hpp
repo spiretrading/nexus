@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKETQUOTE_HPP
-#define NEXUS_MARKETQUOTE_HPP
+#ifndef NEXUS_MARKET_QUOTE_HPP
+#define NEXUS_MARKET_QUOTE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -8,48 +8,46 @@
 
 namespace Nexus {
 
-  /*! \struct MarketQuote
-      \brief Stores the best bid and ask Quotes for a particular market.
-   */
+  /** Stores the best bid and ask Quotes for a particular market. */
   struct MarketQuote {
 
-    //! The Market listing this Quote.
+    /** The Market listing this Quote. */
     MarketCode m_market;
 
-    //! The bid.
+    /** The bid. */
     Quote m_bid;
 
-    //! The ask.
+    /** The ask. */
     Quote m_ask;
 
-    //! The timestamp.
+    /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    //! Constructs a MarketQuote with 0 size and price.
+    /** Constructs a MarketQuote with 0 size and price. */
     MarketQuote();
 
-    //! Constructs an MarketQuote.
-    /*!
-      \param market The Market listing this Quote.
-      \param bid The Market's bid.
-      \param ask The Market's ask.
-      \param timestamp The timestamp.
-    */
-    MarketQuote(MarketCode market, const Quote& bid, const Quote& ask,
-      const boost::posix_time::ptime& timestamp);
+    /**
+     * Constructs an MarketQuote.
+     * @param market The Market listing this Quote.
+     * @param bid The Market's bid.
+     * @param ask The Market's ask.
+     * @param timestamp The timestamp.
+     */
+    MarketQuote(MarketCode market, Quote bid, Quote ask,
+      boost::posix_time::ptime timestamp);
 
-    //! Tests if two MarketQuote are equal.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
-    */
+    /**
+     * Tests if two MarketQuote are equal.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
+     */
     bool operator ==(const MarketQuote& rhs) const;
 
-    //! Tests if two MarketQuote are not equal.
-    /*!
-      \param rhs The right hand side of the equality.
-      \return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
-    */
+    /**
+     * Tests if two MarketQuote are not equal.
+     * @param rhs The right hand side of the equality.
+     * @return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
+     */
     bool operator !=(const MarketQuote& rhs) const;
   };
 
@@ -64,11 +62,11 @@ namespace Nexus {
     m_ask.m_side = Side::ASK;
   }
 
-  inline MarketQuote::MarketQuote(MarketCode market, const Quote& bid,
-      const Quote& ask, const boost::posix_time::ptime& timestamp)
+  inline MarketQuote::MarketQuote(MarketCode market, Quote bid,
+      Quote ask, boost::posix_time::ptime timestamp)
       : m_market(market),
-        m_bid(bid),
-        m_ask(ask),
+        m_bid(std::move(bid)),
+        m_ask(std::move(ask)),
         m_timestamp(timestamp) {
     assert(m_bid.m_side == Side::BID);
     assert(m_ask.m_side == Side::ASK);
@@ -84,8 +82,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::MarketQuote> {
     template<typename Shuttler>
@@ -97,7 +94,6 @@ namespace Serialization {
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };
-}
 }
 
 #endif

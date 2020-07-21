@@ -245,8 +245,8 @@ namespace Details {
   inline Security MarketDataRegistry::GetPrimaryListing(
       const Security& security) {
     if(security.GetSymbol().empty() ||
-        security.GetCountry() == CountryDatabase::NONE) {
-      return Security{security.GetSymbol(), CountryDatabase::NONE};
+        security.GetCountry() == CountryCode::NONE) {
+      return Security{security.GetSymbol(), CountryCode::NONE};
     }
     auto verifiedSecurity = m_verifiedSecurities.Find(security);
     if(verifiedSecurity.is_initialized()) {
@@ -463,7 +463,7 @@ namespace Details {
       MarketDataRegistry::LoadSecurityEntry(const Security& security,
       DataStore& dataStore) {
     if(security.GetSymbol().empty() ||
-        security.GetCountry() == CountryDatabase::NONE) {
+        security.GetCountry() == CountryCode::NONE) {
       return boost::none;
     }
     auto entry = m_securityEntries.GetOrInsert(security,

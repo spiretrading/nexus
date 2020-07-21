@@ -1,65 +1,60 @@
-#ifndef NEXUS_ACCOUNTIDENTITY_HPP
-#define NEXUS_ACCOUNTIDENTITY_HPP
+#ifndef NEXUS_ACCOUNT_IDENTITY_HPP
+#define NEXUS_ACCOUNT_IDENTITY_HPP
+#include <string>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
-#include <string>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus {
-namespace AdministrationService {
+namespace Nexus::AdministrationService {
 
-  /*! \struct AccountIdentity
-      \brief Stores identity related info about an account.
-   */
+  /** Stores identity related info about an account. */
   struct AccountIdentity {
 
-    //! When the account was registered/created.
+    /** When the account was registered/created. */
     boost::posix_time::ptime m_registrationTime;
 
-    //! The last time the account logged onto the system.
+    /** The last time the account logged onto the system. */
     boost::posix_time::ptime m_lastLoginTime;
 
-    //! The first name.
+    /** The first name. */
     std::string m_firstName;
 
-    //! The last name.
+    /** The last name. */
     std::string m_lastName;
 
-    //! The e-mail address.
+    /** The e-mail address. */
     std::string m_emailAddress;
 
-    //! The first line of the account's address, typically the street.
+    /** The first line of the account's address, typically the street. */
     std::string m_addressLineOne;
 
-    //! The second line of the account's address, such as floor number.
+    /** The second line of the account's address, such as floor number. */
     std::string m_addressLineTwo;
 
-    //! The third line of the account's address, used for misc. purposes.
+    /** The third line of the account's address, used for misc. purposes. */
     std::string m_addressLineThree;
 
-    //! The city of residence.
+    /** The city of residence. */
     std::string m_city;
 
-    //! The province/state/region of residence.
+    /** The province/state/region of residence. */
     std::string m_province;
 
-    //! The country of residence.
+    /** The country of residence. */
     CountryCode m_country;
 
-    //! The photo ID in JPG format.
+    /** The photo ID in JPG format. */
     Beam::IO::SharedBuffer m_photoId;
 
-    //! Some additional/misc. user notes.
+    /** Some additional/misc. user notes. */
     std::string m_userNotes;
   };
 }
-}
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::AdministrationService::AccountIdentity> {
     template<typename Shuttler>
@@ -81,7 +76,6 @@ namespace Serialization {
       shuttle.Shuttle("user_notes", value.m_userNotes);
     }
   };
-}
 }
 
 #endif

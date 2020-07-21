@@ -2,6 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 #include <ostream>
 #include <string>
+#include <typeinfo>
 #include <variant>
 #include <vector>
 #include <boost/optional.hpp>
@@ -24,58 +25,127 @@ namespace Details {
     using Type = std::variant<boost::optional<T>...>;
   };
 
-  using CustomTagType =
-    typename ToVariantOfOptionals<Nexus::Tag::Type>::Type;
+  template<typename...>
+  struct AddOptionalToVariant;
+
+  template<template<typename...> class C, typename T, typename... T0>
+  struct AddOptionalToVariant<C<T0...>, T> {
+    using Type = std::variant<T0..., boost::optional<T>>;
+  };
 }
 
-  /*! \class KeyBindings
-      \brief Stores the user's key bindings.
-  */
+  //! Stores the user's key bindings.
   class KeyBindings {
     public:
 
-      /*! \struct OrderAction
-          \brief Stores a description of an order submission action.
-      */
-      struct OrderAction {
+      //! Represents a tag with an optional value that can be passed to an
+      //! order action.
+      class Tag {
+        public:
 
-        /*! \struct CustomTag
-            \brief Represents a tag other than the standard order fields.
-        */
-        struct CustomTag {
+          //! The variant of all possible types of tag values.
+          using Type = typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
+            typename Details::AddOptionalToVariant<
+            typename Details::ToVariantOfOptionals<Nexus::Tag::Type>::Type,
+            Nexus::Side>::Type, Nexus::OrderType>::Type,
+            Nexus::Region>::Type, Nexus::TimeInForce>::Type;
 
-          //! Specifies the types of values that can be stored by a CustomTag.
-          using Type = Details::CustomTagType;
+          //! Constructs a Tag.
+          /*!
+            \param key The key of the tag.
+            \param value The value of the tag.
+          */
+          template<typename T>
+          Tag(int key, T value);
 
-          //! The name of the tag.
-          std::string m_name;
+          //! Constructs a Tag.
+          /*!
+            \param key The key of the tag.
+            \param value The value of the tag.
+          */
+          template<typename T>
+          Tag(int key, boost::optional<T> value);
 
-          //! The optional value of the tag.
+          //! Returns the key of the tag.
+          int get_key() const;
+
+          //! Returns the value of the tag.
+          /*!
+            \tparam T The type of tag's value.
+            \return The value of the tag.
+            \throw std::bad_cast If the type of the tag value is not T.
+          */
+          template<typename T>
+          boost::optional<T> get_value() const;
+
+          //! Returns the value of the tag.
+          /*!
+            \return The value of the tag contained in a variant of all possible
+                    types.
+          */
+          Type get_value() const;
+
+          //! Checks whether two tags are equal.
+          bool operator ==(const Tag& other) const;
+
+          //! Checks whether two tags are not equal.
+          bool operator !=(const Tag& other) const;
+
+        private:
+          friend std::ostream& operator <<(std::ostream& out,
+            const KeyBindings::Tag& tag);
+
+          int m_key;
           Type m_value;
-        };
-
-        //! The name of the action.
-        std::string m_name;
-
-        //! The type of the order.
-        boost::optional<Nexus::OrderType> m_type;
-
-        //! The side of the order.
-        boost::optional<Nexus::Side> m_side;
-
-        //! The expiry of the order.
-        boost::optional<Nexus::TimeInForce> m_time_in_force;
-
-        //! The quantity of the order.
-        boost::optional<Nexus::Quantity> m_quantity;
-
-        //! The list of custom tags.
-        std::vector<CustomTag> m_tags;
       };
 
-      /*! \enum CancelAction
-          \brief Represents an order cancellation action.
-      */
+      //! Stores a description of an order submission action.
+      class OrderAction {
+        public:
+
+          //! Constructs an unnamed OrderAction with no tags.
+          OrderAction() = default;
+
+          //! Constructs an OrderAction.
+          /*!
+            \param name The name of the action.
+            \param tags The list of the tags.
+          */
+          OrderAction(std::string name, std::vector<Tag> tags);
+
+          //! Returns the name of the action.
+          const std::string& get_name() const;
+
+          //! Renames the action.
+          /*!
+            \param name The new name of the action.
+          */
+          void set_name(std::string name);
+
+          //! Returns the tag with the key provided.
+          /*!
+            \return The tag if present, boost::none otherwise.
+          */
+          boost::optional<const Tag&> get_tag(int tag_key) const;
+
+          //! Adds a new tag to the list, or updates a value of the existing
+          //! tag if one with the same key is already stored.
+          /*!
+            \param tag The tag to set.
+          */
+          void set_tag(Tag tag);
+
+          //! Returns a list of all tags.
+          const std::vector<Tag>& get_tags() const;
+
+        private:
+          std::string m_name;
+          std::vector<Tag> m_tags;
+      };
+
+      //! Represents an order cancellation action.
       enum class CancelAction {
 
         //! Cancels the most recent OrderAction.
@@ -121,9 +191,7 @@ namespace Details {
       //! The type of any action supported by bindings.
       using Action = std::variant<OrderAction, CancelAction>;
 
-      /*! \struct OrderActionBinding
-          \brief Stores a key binding to an OrderAction.
-      */
+      //! Stores a key binding to an OrderAction.
       struct OrderActionBinding {
 
         //! The key sequence the binding is mapped to.
@@ -136,9 +204,7 @@ namespace Details {
         OrderAction m_action;
       };
 
-      /*! \struct CancelActionBinding
-          \brief Stores a key binding to a CancelAction.
-      */
+      //! Stores a key binding to a CancelAction.
       struct CancelActionBinding {
 
         //! The key sequence the binding is mapped to.
@@ -155,9 +221,7 @@ namespace Details {
         bool operator !=(const CancelActionBinding& rhs) const;
       };
 
-      /*! \struct ActionBinding
-          \brief Stores a key binding to an Action.
-      */
+      //! Stores a key binding to an Action.
       struct ActionBinding {
 
         //! The key sequence the binding is mapped to.
@@ -227,11 +291,39 @@ namespace Details {
       std::vector<KeyBindingMapping> m_bindings;
   };
 
+  template<typename T>
+  KeyBindings::Tag::Tag(int key, T value)
+    : Tag(key, boost::optional<T>(std::move(value))) {}
+
+  template<typename T>
+  KeyBindings::Tag::Tag(int key, boost::optional<T> value)
+    : m_key(key),
+      m_value(std::move(value)) {}
+
+  template<typename T>
+  boost::optional<T> KeyBindings::Tag::get_value() const {
+    return std::visit(
+      [] (auto& value) -> boost::optional<T> {
+        if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
+            boost::optional<T>>) {
+          return value;
+        } else {
+          throw std::bad_cast();
+        }
+      }, m_value);
+  }
+
+  std::ostream& operator <<(std::ostream& out,
+    const boost::optional<Nexus::Region>& region);
+
+  std::ostream& operator <<(std::ostream& out,
+    const KeyBindings::Action& action);
+
   std::ostream& operator <<(std::ostream& out,
     const KeyBindings::OrderAction& action);
 
   std::ostream& operator <<(std::ostream& out,
-    const KeyBindings::OrderAction::CustomTag& tag);
+    const KeyBindings::Tag& tag);
 
   std::ostream& operator <<(std::ostream& out,
     KeyBindings::CancelAction action);

@@ -1,12 +1,8 @@
-#ifndef NEXUS_DEFINITIONSSERVICETESTS_HPP
-#define NEXUS_DEFINITIONSSERVICETESTS_HPP
+#ifndef NEXUS_DEFINITIONS_SERVICE_TESTS_HPP
+#define NEXUS_DEFINITIONS_SERVICE_TESTS_HPP
 
-namespace Nexus {
-namespace DefinitionsService {
-namespace Tests {
+namespace Nexus::DefinitionsService::Tests {
   class DefinitionsServiceTestEnvironment;
-}
-}
 }
 
 #endif

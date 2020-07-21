@@ -25,6 +25,11 @@ using namespace Spire;
 using ValidSequence = KeySequenceEditor::ValidKeySequence;
 
 namespace {
+  const auto ORDER_TYPE_TAG_KEY = 40;
+  const auto SIDE_TAG_KEY = 54;
+  const auto TIME_IN_FORCE_TAG_KEY = 59;
+  const auto QUANTITY_TAG_KEY = 38;
+
   const auto& FUNCTION_KEYS() {
     static auto function_keys = QSet<Qt::Key>({
       Qt::Key_F1,
@@ -112,24 +117,26 @@ void TaskKeyBindingsTableView::on_item_modified(
   auto binding = KeyBindings::OrderActionBinding{};
   auto name = m_model->index(row, 0).data().value<QString>();
   if(!name.isEmpty()) {
-    binding.m_action.m_name = name.toStdString();
+    binding.m_action.set_name(name.toStdString());
   }
   if(is_valid(row, 1)) {
     binding.m_region = Region(m_model->index(row, 1).data().value<Security>());
   }
   if(is_valid(row, 3)) {
-    binding.m_action.m_type = m_model->index(row, 3).data().value<OrderType>();
+    binding.m_action.set_tag(KeyBindings::Tag(ORDER_TYPE_TAG_KEY,
+      m_model->index(row, 3).data().value<OrderType>()));
   }
   if(is_valid(row, 4)) {
-    binding.m_action.m_side = m_model->index(row, 4).data().value<Side>();
+    binding.m_action.set_tag(KeyBindings::Tag(SIDE_TAG_KEY,
+      m_model->index(row, 4).data().value<Side>()));
   }
   if(is_valid(row, 5)) {
-    binding.m_action.m_quantity =
-      m_model->index(row, 5).data().value<Quantity>();
+    binding.m_action.set_tag(KeyBindings::Tag(QUANTITY_TAG_KEY,
+      m_model->index(row, 5).data().value<Quantity>()));
   }
   if(is_valid(row, 6)) {
-    binding.m_action.m_time_in_force =
-      m_model->index(row, 6).data().value<TimeInForce>();
+    binding.m_action.set_tag(KeyBindings::Tag(TIME_IN_FORCE_TAG_KEY,
+      m_model->index(row, 6).data().value<TimeInForce>()));
   }
   if(is_valid(row, 8)) {
     binding.m_sequence = m_model->index(row, 8).data().value<QKeySequence>();

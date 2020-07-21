@@ -1,5 +1,5 @@
-#ifndef NEXUS_LOCALCOMPLIANCERULEDATASTORE_HPP
-#define NEXUS_LOCALCOMPLIANCERULEDATASTORE_HPP
+#ifndef NEXUS_LOCAL_COMPLIANCE_RULE_DATA_STORE_HPP
+#define NEXUS_LOCAL_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -11,16 +11,13 @@
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class LocalComplianceRuleDataStore
-      \brief Implements a ComplianceRuleDataStore in memory.
-   */
+  /** Implements a ComplianceRuleDataStore in memory. */
   class LocalComplianceRuleDataStore : private boost::noncopyable {
     public:
 
-      //! Constructs a LocalComplianceRuleDataStore.
+      /** Constructs a LocalComplianceRuleDataStore. */
       LocalComplianceRuleDataStore() = default;
 
       ~LocalComplianceRuleDataStore();
@@ -61,8 +58,8 @@ namespace Compliance {
 
   inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
       LoadAllComplianceRuleEntries() {
-    std::vector<ComplianceRuleEntry> entries;
-    boost::lock_guard<boost::mutex> lock{m_mutex};
+    auto entries = std::vector<ComplianceRuleEntry>();
+    auto lock = boost::lock_guard(m_mutex);
     entries.reserve(m_entriesById.size());
     std::transform(m_entriesById.begin(), m_entriesById.end(),
       std::back_inserter(entries),
@@ -74,8 +71,8 @@ namespace Compliance {
 
   inline ComplianceRuleId LocalComplianceRuleDataStore::
       LoadNextComplianceRuleEntryId() {
-    boost::lock_guard<boost::mutex> lock{m_mutex};
-    ComplianceRuleId id = 1;
+    auto lock = boost::lock_guard(m_mutex);
+    auto id = ComplianceRuleId(1);
     for(auto& entry : m_entriesById) {
       id = std::max(entry.second->GetId() + 1, id);
     }
@@ -85,7 +82,7 @@ namespace Compliance {
   inline boost::optional<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::LoadComplianceRuleEntry(
       ComplianceRuleId id) {
-    boost::lock_guard<boost::mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     auto entry = Beam::Retrieve(m_entriesById, id);
     if(!entry.is_initialized()) {
       return boost::none;
@@ -96,15 +93,14 @@ namespace Compliance {
   inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
       LoadComplianceRuleEntries(
       const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
-    boost::lock_guard<boost::mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     auto entries = Beam::Retrieve(m_entriesByDirectoryEntry, directoryEntry);
     if(!entries.is_initialized()) {
       return {};
     }
-    std::vector<ComplianceRuleEntry> result;
+    auto result = std::vector<ComplianceRuleEntry>();
     result.reserve(entries->size());
-    std::transform(entries->begin(), entries->end(),
-      std::back_inserter(result),
+    std::transform(entries->begin(), entries->end(), std::back_inserter(result),
       [] (auto& entry) {
         return *entry;
       });
@@ -114,7 +110,7 @@ namespace Compliance {
   inline void LocalComplianceRuleDataStore::Store(
       const ComplianceRuleEntry& entry) {
     auto newEntry = std::make_shared<ComplianceRuleEntry>(entry);
-    boost::lock_guard<boost::mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     auto& previousEntry = m_entriesById[entry.GetId()];
     if(previousEntry != nullptr) {
       auto& previousAccountEntries = m_entriesByDirectoryEntry[
@@ -131,7 +127,7 @@ namespace Compliance {
   }
 
   inline void LocalComplianceRuleDataStore::Delete(ComplianceRuleId id) {
-    boost::lock_guard<boost::mutex> lock{m_mutex};
+    auto lock = boost::lock_guard(m_mutex);
     auto entryByIdIterator = m_entriesById.find(id);
     if(entryByIdIterator == m_entriesById.end()) {
       return;
@@ -163,7 +159,6 @@ namespace Compliance {
     }
     m_openState.SetClosed();
   }
-}
 }
 
 #endif

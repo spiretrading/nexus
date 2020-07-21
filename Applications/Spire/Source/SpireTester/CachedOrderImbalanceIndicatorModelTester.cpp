@@ -13,13 +13,13 @@ using namespace Spire;
 
 namespace {
   auto make_imbalance(const std::string& symbol, const ptime& timestamp) {
-    return OrderImbalance(Security(symbol, 0), Side::BID, 100,
-      Money(Money::ONE), timestamp);
+    return OrderImbalance(
+      Security(symbol, DefaultMarkets::NYSE(), DefaultCountries::US()),
+      Side::BID, 100, Money::ONE, timestamp);
   }
 
   auto make_imbalance(const Security security, const ptime& timestamp) {
-    return OrderImbalance(security, Side::BID, 100,
-      Money(Money::ONE), timestamp);
+    return OrderImbalance(security, Side::BID, 100, Money::ONE, timestamp);
   }
 
   const auto A = make_imbalance("A", from_time_t(100));
@@ -28,7 +28,7 @@ namespace {
   const auto D = make_imbalance("D", from_time_t(400));
   const auto E = make_imbalance("E", from_time_t(500));
 
-  const auto S = Security("A", 0);
+  const auto S = Security("A", DefaultMarkets::NYSE(), DefaultCountries::US());
   const auto F = make_imbalance(S, from_time_t(100));
   const auto G = make_imbalance(S, from_time_t(200));
   const auto H = make_imbalance(S, from_time_t(300));
@@ -43,7 +43,8 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
       auto slot_data = OrderImbalance();
       cached_model.subscribe([&] (const auto& imbalance) {
-        slot_data = imbalance; });
+        slot_data = imbalance;
+      });
       local_model->publish(A);
       REQUIRE(slot_data == A);
       local_model->publish(B);
@@ -73,8 +74,9 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       auto promise1 = cached_model.load(TimeInterval::closed(from_time_t(0),
         from_time_t(1000)));
       wait(std::move(promise1));
-      auto promise2 = cached_model.load(Security("A", 0), TimeInterval::closed(
-        from_time_t(0), from_time_t(1000)));
+      auto promise2 = cached_model.load(
+        Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
+        TimeInterval::closed(from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise2));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
     });
@@ -374,8 +376,9 @@ TEST_SUITE("CachedOrderImbalanceIndicatorModel") {
       local_model->insert(A3);
       local_model->insert(A4);
       auto cached_model = CachedOrderImbalanceIndicatorModel(local_model);
-      auto promise = cached_model.load(Security("A", 0), TimeInterval::closed(
-        from_time_t(0), from_time_t(1000)));
+      auto promise = cached_model.load(
+        Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
+        TimeInterval::closed(from_time_t(0), from_time_t(1000)));
       auto data = wait(std::move(promise));
       REQUIRE(data == std::vector<OrderImbalance>({A, A2, A3, A4}));
     });

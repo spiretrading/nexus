@@ -8,7 +8,7 @@
 
 namespace Nexus::AdministrationService {
 
-  //! Returns a row representing an AccountIdentity.
+  /** Returns a row representing an AccountIdentity. */
   inline const auto& GetAccountIdentityRow() {
     static auto ROW = Viper::Row<AccountIdentity>().
       add_column("first_name", Viper::varchar(64),
@@ -29,7 +29,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing an IndexedAccountIdentity.
+  /** Returns a row representing an IndexedAccountIdentity. */
   inline const auto& GetIndexedAccountIdentityRow() {
     static auto ROW = Viper::Row<
       AdministrationDataStore::IndexedAccountIdentity>().
@@ -54,7 +54,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing RiskParameters.
+  /** Returns a row representing RiskParameters. */
   inline const auto& GetRiskParametersRow() {
     static auto ROW = Viper::Row<RiskService::RiskParameters>().
       add_column("currency", &RiskService::RiskParameters::m_currency).
@@ -70,7 +70,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing an account's RiskParameters.
+  /** Returns a row representing an account's RiskParameters. */
   inline const auto& GetIndexedRiskParametersRow() {
     static auto ROW = Viper::Row<
       AdministrationDataStore::IndexedRiskParameters>().
@@ -90,7 +90,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing a RiskState.
+  /** Returns a row representing a RiskState. */
   inline const auto& GetRiskStateRow() {
     static auto ROW = Viper::Row<RiskService::RiskState>().
       add_column("state", &RiskService::RiskState::m_type).
@@ -98,7 +98,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing an IndexedRiskState.
+  /** Returns a row representing an IndexedRiskState. */
   inline const auto& GetIndexedRiskStateRow() {
     static auto ROW = Viper::Row<AdministrationDataStore::IndexedRiskState>().
       add_column("account",
@@ -117,7 +117,7 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing an AccountModificationRequest.
+  /** Returns a row representing an AccountModificationRequest. */
   inline const auto& GetAccountModificationRequestRow() {
     static auto ROW = Viper::Row<AccountModificationRequest>().
       add_column("id",
@@ -167,18 +167,18 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents a row representing a single entitlement modification.
+  /** Represents a row representing a single entitlement modification. */
   struct EntitlementModificationRow {
 
-    //! The modification's id.
+    /** The modification's id. */
     int m_id;
 
-    //! The entitlement to grant.
+    /** The entitlement to grant. */
     Beam::ServiceLocator::DirectoryEntry m_entitlement;
   };
 
-  //! Returns a row representing a single entitlement modification.
-  inline const auto GetEntitlementModificationRow() {
+  /** Returns a row representing a single entitlement modification. */
+  inline const auto& GetEntitlementModificationRow() {
     static const auto ROW = Viper::Row<EntitlementModificationRow>().
       add_column("id", &EntitlementModificationRow::m_id).
       add_column("entitlement",
@@ -193,21 +193,21 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an indexed RiskModification.
+  /** Represents an indexed RiskModification. */
   struct IndexedRiskModification {
 
-    //! The request's id.
+    /** The request's id. */
     int m_id;
 
-    //! The account being modified.
+    /** The account being modified. */
     Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The requested parameters.
+    /** The requested parameters. */
     RiskService::RiskParameters m_parameters;
   };
 
-  //! Returns a row representing a RiskModification.
-  inline const auto GetRiskModificationRow() {
+  /** Returns a row representing a RiskModification. */
+  inline const auto& GetRiskModificationRow() {
     static const auto ROW = Viper::Row<IndexedRiskModification>().
       add_column("id", &IndexedRiskModification::m_id).
       add_column("account",
@@ -223,8 +223,8 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing an AccountModificationRequest's status.
-  inline const auto GetAccountModificationRequestStatusRow() {
+  /** Returns a row representing an AccountModificationRequest's status. */
+  inline const auto& GetAccountModificationRequestStatusRow() {
     static const auto ROW = Viper::Row<AccountModificationRequest::Update>().
       add_column("status", &AccountModificationRequest::Update::m_status).
       add_column("account",
@@ -241,18 +241,18 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an indexed status of an account modification request.
+  /** Represents an indexed status of an account modification request. */
   struct IndexedAccountModificationRequestStatus {
 
-    //! The request's id.
+    /** The request's id. */
     int m_id;
 
-    //! The update representing the status.
+    /** The update representing the status. */
     AccountModificationRequest::Update m_update;
   };
 
-  //! Returns a row representring an IndexedAccountModificationRequestStatus.
-  inline const auto GetIndexedAccountModificationRequestStatus() {
+  /** Returns a row representring an IndexedAccountModificationRequestStatus. */
+  inline const auto& GetIndexedAccountModificationRequestStatus() {
     static const auto ROW = Viper::Row<
       IndexedAccountModificationRequestStatus>().
       add_column("id", &IndexedAccountModificationRequestStatus::m_id).
@@ -262,21 +262,21 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents the indicies used to access messages.
+  /** Represents the indicies used to access messages. */
   struct AdministrationMessageIndex {
 
-    //! The message id.
+    /** The message id. */
     int m_id;
 
-    //! The account that sent the message.
+    /** The account that sent the message. */
     Beam::ServiceLocator::DirectoryEntry m_account;
 
-    //! The message's timestamp.
+    /** The message's timestamp. */
     boost::posix_time::ptime m_timestamp;
   };
 
-  //! Returns a row representing an AdministrationMessageIndex.
-  inline const auto GetAdministrationMessageIndexRow() {
+  /** Returns a row representing an AdministrationMessageIndex. */
+  inline const auto& GetAdministrationMessageIndexRow() {
     static const auto ROW = Viper::Row<AdministrationMessageIndex>().
       add_column("id", &AdministrationMessageIndex::m_id).
       add_column("account",
@@ -292,8 +292,8 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Returns a row representing a Message::Body.
-  inline const auto GetMessageBodyRow() {
+  /** Returns a row representing a Message::Body. */
+  inline const auto& GetMessageBodyRow() {
     static const auto ROW = Viper::Row<Message::Body>().
       add_column("content_type", Viper::varchar(100),
         &Message::Body::m_contentType).
@@ -301,18 +301,18 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an indexed message body.
+  /** Represents an indexed message body. */
   struct IndexedMessageBody {
 
-    //! The Message id.
+    /** The Message id. */
     int m_id;
 
-    //! The Message Body.
+    /** The Message Body. */
     Message::Body m_body;
   };
 
-  //! Returns a row representing a message body.
-  inline const auto GetIndexedMessageBodyRow() {
+  /** Returns a row representing a message body. */
+  inline const auto& GetIndexedMessageBodyRow() {
     static const auto ROW = Viper::Row<IndexedMessageBody>().
       add_column("id", &IndexedMessageBody::m_id).
       extend(GetMessageBodyRow(), &IndexedMessageBody::m_body).
@@ -320,18 +320,18 @@ namespace Nexus::AdministrationService {
     return ROW;
   }
 
-  //! Represents an index to an administration message.
+  /** Represents an index to an administration message. */
   struct AccountModificationRequestMessageIndex {
 
-    //! The id of the request the message belongs to.
+    /** The id of the request the message belongs to. */
     int m_requestId;
 
-    //! The id of the message.
+    /** The id of the message. */
     int m_messageId;
   };
 
-  //! Returns a row representing a message body.
-  inline const auto GetAccountModificationRequestMessageIndexRow() {
+  /** Returns a row representing a message body. */
+  inline const auto& GetAccountModificationRequestMessageIndexRow() {
     static const auto ROW = Viper::Row<
       AccountModificationRequestMessageIndex>().
       add_column("request_id",

@@ -37,7 +37,7 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
   m_icon_label->setFixedSize(scale(14, 14));
   m_icon_label->setStyleSheet("background-color: transparent;");
   auto icon_path = QString(":/Icons/%1.png").arg(
-    m_info.m_security.GetCountry());
+    static_cast<std::uint16_t>(m_info.m_security.GetCountry()));
   m_icon_label->setPixmap(QPixmap::fromImage(
     QImage(icon_path).scaled(scale(14, 8), Qt::KeepAspectRatio,
     Qt::SmoothTransformation)));

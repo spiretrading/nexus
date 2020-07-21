@@ -11,27 +11,28 @@
 
 namespace Nexus::AdministrationService {
 
-  /** Stores account administration data in a MySQL database.
-      \tparam C The type of SQL connection.
+  /**
+   * Stores account administration data in a MySQL database.
+   * @param <C> The type of SQL connection.
    */
   template<typename C>
   class SqlAdministrationDataStore : public AdministrationDataStore {
     public:
 
-      //! The type of SQL connection.
+      /** The type of SQL connection. */
       using Connection = C;
 
-      //! The function used to load DirectoryEntries.
+      /** The function used to load DirectoryEntries. */
       using DirectoryEntrySourceFunction = Beam::KeyValueCache<unsigned int,
         Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex>::SourceFunction;
 
-      //! Constructs an SqlAdministrationDataStore.
-      /*!
-        \param connection The connection to the SQL database.
-        \param directoryEntrySourceFunction The function used to load
-               DirectoryEntries.
-      */
+      /**
+       * Constructs an SqlAdministrationDataStore.
+       * @param connection The connection to the SQL database.
+       * @param directoryEntrySourceFunction The function used to load
+       *        DirectoryEntries.
+       */
       SqlAdministrationDataStore(std::unique_ptr<Connection> connection,
         const DirectoryEntrySourceFunction& directoryEntrySourceFunction);
 
@@ -119,10 +120,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   SqlAdministrationDataStore<C>::SqlAdministrationDataStore(
-      std::unique_ptr<Connection> connection,
-      const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
-      : m_connection(std::move(connection)),
-        m_directoryEntries(directoryEntrySourceFunction) {}
+    std::unique_ptr<Connection> connection,
+    const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
+    : m_connection(std::move(connection)),
+      m_directoryEntries(directoryEntrySourceFunction) {}
 
   template<typename C>
   SqlAdministrationDataStore<C>::~SqlAdministrationDataStore() {

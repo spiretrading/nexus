@@ -79,6 +79,17 @@ void Nexus::Python::ExportBookQuote(pybind11::module& module) {
 }
 
 void Nexus::Python::ExportCountry(pybind11::module& module) {
+  class_<CountryCode>(module, "CountryCode")
+    .def(init())
+    .def(init<int>())
+    .def_readonly_static("NONE", &CountryCode::NONE)
+    .def("__str__", &lexical_cast<std::string, CountryCode>)
+    .def("__hash__", [] (CountryCode self) {
+      return std::hash<CountryCode>()(self);
+    })
+    .def(self == self)
+    .def(self != self)
+    .def(self < self);
   auto outer = class_<CountryDatabase>(module, "CountryDatabase")
     .def(init())
     .def(init<const CountryDatabase&>())
@@ -102,9 +113,11 @@ void Nexus::Python::ExportCurrency(pybind11::module& module) {
   class_<CurrencyId>(module, "CurrencyId")
     .def(init())
     .def(init<int>())
-    .def_property_readonly_static("NONE", &CurrencyId::NONE)
-    .def_readwrite("value", &CurrencyId::m_value)
+    .def_readonly_static("NONE", &CurrencyId::NONE)
     .def("__str__", &lexical_cast<std::string, CurrencyId>)
+    .def("__hash__", [] (CurrencyId self) {
+      return std::hash<CurrencyId>()(self);
+    })
     .def(self == self)
     .def(self != self)
     .def(self < self);
@@ -129,7 +142,10 @@ void Nexus::Python::ExportCurrencyPair(pybind11::module& module) {
     .def(init<CurrencyId, CurrencyId>())
     .def(init<const CurrencyPair&>())
     .def_readwrite("base", &CurrencyPair::m_base)
-    .def_readwrite("counter", &CurrencyPair::m_counter);
+    .def_readwrite("counter", &CurrencyPair::m_counter)
+    .def(self == self)
+    .def(self != self)
+    .def(self < self);
   module.def("parse_currency_pair",
     static_cast<CurrencyPair (*)(const std::string&, const CurrencyDatabase&)>(
     &ParseCurrencyPair));
@@ -258,12 +274,14 @@ void Nexus::Python::ExportDestination(pybind11::module& module) {
     .def("from_id", &DestinationDatabase::FromId)
     .def("get_preferred_destination",
       &DestinationDatabase::GetPreferredDestination)
-    .def("select_entry", static_cast<const DestinationDatabase::Entry&
-      (DestinationDatabase::*)(object) const>(
-      &DestinationDatabase::SelectEntry<object>))
-    .def("select_entries", static_cast<std::vector<DestinationDatabase::Entry>
-      (DestinationDatabase::*)(object) const>(
-      &DestinationDatabase::SelectEntries<object>))
+    .def("select_entry",
+      [] (DestinationDatabase& self, const object& predicate) {
+        return self.SelectEntry(predicate);
+      })
+    .def("select_entries",
+      [] (DestinationDatabase& self, const object& predicate) {
+        return self.SelectEntries(predicate);
+      })
     .def_property("manual_order_entry_destination",
       &DestinationDatabase::GetManualOrderEntryDestination,
       &DestinationDatabase::SetManualOrderEntryDestination)
@@ -354,7 +372,7 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
     .def_static("from_value",
       static_cast<boost::optional<Money> (*)(const std::string&)>(
       &Money::FromValue))
-    .def("__str__", &Money::ToString)
+    .def("__str__", &lexical_cast<std::string, Money>)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
     .def("__floor__", bind_integer_precision(
       static_cast<Money (*)(Money, int)>(&Floor)))

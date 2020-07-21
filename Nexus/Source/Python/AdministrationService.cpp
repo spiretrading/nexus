@@ -34,11 +34,6 @@ namespace {
   struct TrampoilineAdministrationClient final : VirtualAdministrationClient {
     using VirtualAdministrationClient::VirtualAdministrationClient;
 
-    std::string LoadOrganizationName() override {
-      PYBIND11_OVERLOAD_PURE_NAME(std::string, VirtualAdministrationClient,
-        "load_organization_name", LoadOrganizationName);
-    }
-
     std::vector<DirectoryEntry> LoadAccountsByRoles(
         AccountRoles roles) override {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<DirectoryEntry>,
@@ -326,8 +321,6 @@ void Nexus::Python::ExportAccountModificationRequest(pybind11::module& module) {
 void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
   class_<VirtualAdministrationClient, TrampoilineAdministrationClient>(module,
       "AdministrationClient")
-    .def("load_organization_name",
-      &VirtualAdministrationClient::LoadOrganizationName)
     .def("load_accounts_by_roles",
       &VirtualAdministrationClient::LoadAccountsByRoles)
     .def("load_administrators_root_entry",

@@ -14,16 +14,16 @@ namespace Details {
   template<typename T>
   struct MoneyDefinitions {
 
-    //! Stores a value of 0.
+    /** Stores a value of 0.00. */
     static const T ZERO;
 
-    //! Stores a value of 1.
+    /** Stores a value of 1.00. */
     static const T ONE;
 
-    //! Stores a value of 0.01.
+    /** Stores a value of 0.01. */
     static const T CENT;
 
-    //! Stores a value of 0.0001.
+    /** Stores a value of 0.0001. */
     static const T BIP;
   };
 
@@ -44,136 +44,133 @@ namespace Details {
   class Money : private Details::MoneyDefinitions<Money> {
     public:
 
-      //! Returns a Money value from a string.
-      /*!
-        \param value The value to represent.
-        \return A Money value representing the specified <i>value</i>.
-      */
+      /**
+       * Returns a Money value from a string.
+       * @param value The value to represent.
+       * @return A Money value representing the specified <i>value</i>.
+       */
       static boost::optional<Money> FromValue(const std::string& value);
 
-      //! Constructs a Money value of ZERO.
+      /** Constructs a Money value of ZERO. */
       constexpr Money() = default;
 
-      //! Constructs a Money value.
-      /*!
-        \param value The value to represent.
-      */
+      /**
+       * Constructs a Money value.
+       * @param value The value to represent.
+       */
       explicit constexpr Money(Quantity value);
 
-      //! Converts this Money to a float.
+      /** Converts this Money to a float. */
       explicit constexpr operator boost::float64_t() const;
 
-      //! Converts this Money to a Quantity.
+      /** Converts this Money to a Quantity. */
       explicit constexpr operator Quantity() const;
 
-      //! Returns the string representation of this value.
-      std::string ToString() const;
-
-      //! Less than test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is less than <i>rhs</i>.
-      */
+      /**
+       * Less than test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is less than <i>rhs</i>.
+       */
       constexpr bool operator <(Money rhs) const;
 
-      //! Less than or equal test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-      */
+      /**
+       * Less than or equal test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
+       */
       constexpr bool operator <=(Money rhs) const;
 
-      //! Tests for equality.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is equal to <i>rhs</i>.
-      */
+      /**
+       * Tests for equality.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is equal to <i>rhs</i>.
+       */
       constexpr bool operator ==(Money rhs) const;
 
-      //! Tests for inequality.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is not equal to <i>rhs</i>.
-      */
+      /**
+       * Tests for inequality.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
+       */
       constexpr bool operator !=(Money rhs) const;
 
-      //! Greater than or equal test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is greater than or equal to
-                <i>rhs</i>.
-      */
+      /**
+       * Greater than or equal test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is greater than or equal to
+       *         <i>rhs</i>.
+       */
       constexpr bool operator >=(Money rhs) const;
 
-      //! Greater than test.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <code>true</code> iff this is greater than <i>rhs</i>.
-      */
+      /**
+       * Greater than test.
+       * @param rhs The right hand side of the operation.
+       * @return <code>true</code> iff this is greater than <i>rhs</i>.
+       */
       constexpr bool operator >(Money rhs) const;
 
-      //! Assignment operator.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Assignment operator.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Money& operator =(Money rhs);
 
-      //! Adds two Money instances together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> + <i>rhs</i>.
-      */
+      /**
+       * Adds two Money instances together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> + <i>rhs</i>.
+       */
       constexpr Money operator +(Money rhs) const;
 
-      //! Increases this Money instance.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Increases this Money instance.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Money& operator +=(Money rhs);
 
-      //! Subtracts two Money instances together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> - <i>rhs</i>.
-      */
+      /**
+       * Subtracts two Money instances together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> - <i>rhs</i>.
+       */
       constexpr Money operator -(Money rhs) const;
 
-      //! Decreases this Money instance.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Decreases this Money instance.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       constexpr Money& operator -=(Money rhs);
 
-      //! Divides two Money instances together.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i> / <i>rhs</i>.
-      */
+      /**
+       * Divides two Money instances together.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i> / <i>rhs</i>.
+       */
       constexpr double operator /(Money rhs) const;
 
-      //! Multiplies this Money instance.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Multiplies this Money instance.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       template<typename T>
       constexpr Money& operator *=(T rhs);
 
-      //! Divides this Money instance.
-      /*!
-        \param rhs The right hand side of the operation.
-        \return <i>this</i>.
-      */
+      /**
+       * Divides this Money instance.
+       * @param rhs The right hand side of the operation.
+       * @return <i>this</i>.
+       */
       template<typename T>
       constexpr Money& operator /=(T rhs);
 
-      //! Returns the unary negation of this Money instance.
-      /*!
-        \return -<i>this</i>.
-      */
+      /**
+       * Returns the unary negation of this Money instance.
+       * @return -<i>this</i>.
+       */
       constexpr Money operator -() const;
 
       using Details::MoneyDefinitions<Money>::ZERO;
@@ -183,6 +180,7 @@ namespace Details {
     private:
       template<typename T> friend constexpr Money operator *(T lhs, Money rhs);
       template<typename T> friend constexpr Money operator /(Money lhs, T rhs);
+      friend std::ostream& operator <<(std::ostream& out, Money value);
       friend Money Abs(Money value);
       friend Money Floor(Money value, int decimalPlaces);
       friend Money Ceil(Money value, int decimalPlaces);
@@ -193,88 +191,106 @@ namespace Details {
       Quantity m_value;
   };
 
-  //! Returns the modulus of two Money objects.
-  /*!
-    \param lhs The left hand side.
-    \param rhs The right hand side.
-    \return <i>lhs</i> % <i>rhs</i>
-  */
+  /**
+   * Returns the modulus of two Money objects.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
   inline Money operator %(Money lhs, Money rhs) {
     return Money(static_cast<Quantity>(lhs) % static_cast<Quantity>(rhs));
   }
 
-  //! Multiplies a Money instance by a scalar quantity.
-  /*!
-    \param lhs The scalar quantity.
-    \param rhs The Money instance to be multiplied.
-    \return <i>lhs</i> * <i>rhs</i>.
-  */
+  /**
+   * Multiplies a Money instance by a scalar quantity.
+   * @param lhs The scalar quantity.
+   * @param rhs The Money instance to be multiplied.
+   * @return <i>lhs</i> * <i>rhs</i>.
+   */
   template<typename T>
   constexpr Money operator *(T lhs, Money rhs) {
     return Money{lhs * rhs.m_value};
   }
 
-  //! Divides a Money instance by a scalar quantity.
-  /*!
-    \param lhs The Money instance to be divided.
-    \param rhs The scalar quantity.
-    \return <i>lhs</i> / <i>rhs</i>.
-  */
+  /**
+   * Divides a Money instance by a scalar quantity.
+   * @param lhs The Money instance to be divided.
+   * @param rhs The scalar quantity.
+   * @return <i>lhs</i> / <i>rhs</i>.
+   */
   template<typename T>
   constexpr Money operator /(Money lhs, T rhs) {
     return Money{lhs.m_value / rhs};
   }
 
-  //! Returns the absolute value.
-  /*!
-    \param value The value.
-  */
+  /**
+   * Returns the absolute value.
+   * @param value The value.
+   */
   inline Money Abs(Money value) {
     return Money{Abs(value.m_value)};
   }
 
-  //! Returns the floor.
-  /*!
-    \param value The value to floor.
-    \param decimalPlaces The decimal place to floor to.
-  */
+  /**
+   * Returns the floor.
+   * @param value The value to floor.
+   * @param decimalPlaces The decimal place to floor to.
+   */
   inline Money Floor(Money value, int decimalPlaces) {
     return Money{Floor(value.m_value, decimalPlaces)};
   }
 
-  //! Returns the ceiling.
-  /*!
-    \param value The value to ceil.
-    \param decimalPlaces The decimal place to ceil to.
-  */
+  /**
+   * Returns the ceiling.
+   * @param value The value to ceil.
+   * @param decimalPlaces The decimal place to ceil to.
+   */
   inline Money Ceil(Money value, int decimalPlaces) {
     return Money{Ceil(value.m_value, decimalPlaces)};
   }
 
-  //! Returns the truncated value.
-  /*!
-    \param value The value to truncate.
-    \param decimalPlaces The decimal place to truncate.
-  */
+  /**
+   * Returns the truncated value.
+   * @param value The value to truncate.
+   * @param decimalPlaces The decimal place to truncate.
+   */
   inline Money Truncate(Money value, int decimalPlaces) {
     return Money{Truncate(value.m_value, decimalPlaces)};
   }
 
-  //! Returns the rounded value.
-  /*!
-    \param value The value to round.
-    \param decimalPlaces The decimal place to round to.
-  */
+  /**
+   * Returns the rounded value.
+   * @param value The value to round.
+   * @param decimalPlaces The decimal place to round to.
+   */
   inline Money Round(Money value, int decimalPlaces) {
     return Money{Round(value.m_value, decimalPlaces)};
   }
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
-    return out << value.ToString();
+    auto fraction = value.m_value - Floor(value.m_value, 0);
+    auto s = boost::lexical_cast<std::string>(value.m_value);
+    if(fraction == 0) {
+      return out << s << ".00";
+    }
+    if(s.size() > 1 && *(s.end() - 1) == '.') {
+      return out << s << "00";
+    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
+      return out << s << "0";
+    } else {
+      while(s.size() > 3) {
+        if(s.back() == '0' && *(s.end() - 3) != '.') {
+          s.pop_back();
+        } else {
+          break;
+        }
+      }
+      return out << s;
+    }
   }
 
   inline std::istream& operator >>(std::istream& in, Money& value) {
-    std::string symbol;
+    auto symbol = std::string();
     in >> symbol;
     auto parsedValue = Money::FromValue(symbol);
     if(!parsedValue.is_initialized()) {
@@ -294,7 +310,7 @@ namespace Details {
   }
 
   inline constexpr Money::Money(Quantity value)
-      : m_value{value} {}
+    : m_value(value) {}
 
   inline constexpr Money::operator boost::float64_t() const {
     return static_cast<boost::float64_t>(m_value);
@@ -302,28 +318,6 @@ namespace Details {
 
   inline constexpr Money::operator Quantity() const {
     return m_value;
-  }
-
-  inline std::string Money::ToString() const {
-    auto fraction = m_value - Floor(m_value, 0);
-    auto s = Beam::ToString(m_value);
-    if(fraction == 0) {
-      return s + ".00";
-    }
-    if(s.size() > 1 && *(s.end() - 1) == '.') {
-      return s + "00";
-    } else if(s.size() > 2 && *(s.end() - 2) == '.') {
-      return s + "0";
-    } else {
-      while(s.size() > 3) {
-        if(s.back() == '0' && *(s.end() - 3) != '.') {
-          s.pop_back();
-        } else {
-          break;
-        }
-      }
-      return s;
-    }
   }
 
   inline constexpr bool Money::operator <(Money rhs) const {
@@ -390,16 +384,11 @@ namespace Details {
   }
 
   inline constexpr Money Money::operator -() const {
-    return Money{-m_value};
+    return Money(-m_value);
   }
 }
 
-namespace Beam {
-  inline std::string ToString(Nexus::Money value) {
-    return value.ToString();
-  }
-
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<Nexus::Money> : std::false_type {};
 
@@ -407,7 +396,7 @@ namespace Serialization {
   struct Send<Nexus::Money> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
-        const Nexus::Money& value) const {
+        Nexus::Money value) const {
       shuttle.Send(name, value.m_value);
     }
   };
@@ -417,12 +406,11 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         Nexus::Money& value) const {
-      Nexus::Quantity representation;
+      auto representation = Nexus::Quantity();
       shuttle.Shuttle(name, representation);
       value = Nexus::Money{representation};
     }
   };
-}
 }
 
 namespace std {
@@ -475,39 +463,39 @@ namespace std {
         numeric_limits<Nexus::Quantity>::tinyness_before;
 
       static constexpr Nexus::Money min() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::min()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::min());
       }
 
       static constexpr Nexus::Money lowest() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::lowest()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::lowest());
       }
 
       static constexpr Nexus::Money max() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::max()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::max());
       }
 
       static constexpr Nexus::Money epsilon() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::epsilon()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::epsilon());
       }
 
       static constexpr Nexus::Money round_error() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::round_error()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::round_error());
       }
 
       static constexpr Nexus::Money infinity() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::infinity()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::infinity());
       }
 
       static constexpr Nexus::Money quiet_NaN() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::quiet_NaN()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::quiet_NaN());
       }
 
       static constexpr Nexus::Money signaling_NaN() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::signaling_NaN()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::signaling_NaN());
       }
 
       static constexpr Nexus::Money denorm_min() {
-        return Nexus::Money{numeric_limits<Nexus::Quantity>::denorm_min()};
+        return Nexus::Money(numeric_limits<Nexus::Quantity>::denorm_min());
       }
   };
 }

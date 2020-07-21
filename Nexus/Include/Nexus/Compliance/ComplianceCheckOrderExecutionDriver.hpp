@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCECHECKORDEREXECUTIONDRIVER_HPP
-#define NEXUS_COMPLIANCECHECKORDEREXECUTIONDRIVER_HPP
+#ifndef NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
+#define NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -14,49 +14,42 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus {
-namespace Compliance {
+namespace Nexus::Compliance {
 
-  /*! \class ComplianceCheckOrderExecutionDriver
-      \brief Performs a series of compliance checks on order execution
-             operations.
-      \tparam OrderExecutionDriverType The type of OrderExecutionDriver to send
-              operations to to if all checks pass.
-      \tparam TimeClientType The type of TimeClient used for Order timestamps.
-      \tparam ComplianceRuleSetType The type of ComplianceRuleSet used to
-              validate operations.
+  /**
+   * Performs a series of compliance checks on order execution operations.
+   * @param <D> The type of OrderExecutionDriver to send operations to to if all
+   *        checks pass.
+   * @param <C> The type of TimeClient used for Order timestamps.
+   * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
+  template<typename D, typename C, typename S>
   class ComplianceCheckOrderExecutionDriver : private boost::noncopyable {
     public:
 
-      //! The type of OrderExecutionDriver to send operations to if all checks
-      //! pass.
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<
-        OrderExecutionDriverType>;
+      /**
+       * The type of OrderExecutionDriver to send operations to if all checks
+       * pass.
+       */
+      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
 
-      //! The type of TimeClient used for Order timestamps.
-      using TimeClient = Beam::GetTryDereferenceType<TimeClientType>;
+      /** The type of TimeClient used for Order timestamps. */
+      using TimeClient = Beam::GetTryDereferenceType<C>;
 
-      //! The type of ComplianceRuleSet used to validate operations.
-      using ComplianceRuleSet = Beam::GetTryDereferenceType<
-        ComplianceRuleSetType>;
+      /** The type of ComplianceRuleSet used to validate operations. */
+      using ComplianceRuleSet = Beam::GetTryDereferenceType<S>;
 
-      //! Constructs a ComplianceCheckOrderExecutionDriver.
-      /*!
-        \param orderExecutionDriver The OrderExecutionDriver to send operations
-               to if all checks pass.
-        \param timeClient Initializes the TimeClient.
-        \param complianceRuleSet Contains the set of compliance rules used to
-               check order execution operations.
-      */
-      template<typename OrderExecutionDriverForward, typename TimeClientForward,
-        typename ComplianceRuleSetForward>
-      ComplianceCheckOrderExecutionDriver(
-        OrderExecutionDriverForward&& orderExecutionDriver,
-        TimeClientForward&& timeClient,
-        ComplianceRuleSetForward&& complianceRuleSet);
+      /**
+       * Constructs a ComplianceCheckOrderExecutionDriver.
+       * @param orderExecutionDriver The OrderExecutionDriver to send operations
+       *        to if all checks pass.
+       * @param timeClient Initializes the TimeClient.
+       * @param complianceRuleSet Contains the set of compliance rules used to
+       *        check order execution operations.
+       */
+      template<typename DF, typename CF, typename SF>
+      ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
+        CF&& timeClient, SF&& complianceRuleSet);
 
       ~ComplianceCheckOrderExecutionDriver();
 
@@ -78,10 +71,9 @@ namespace Compliance {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<OrderExecutionDriverType>
-        m_orderExecutionDriver;
-      Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
-      Beam::GetOptionalLocalPtr<ComplianceRuleSetType> m_complianceRuleSet;
+      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
+      Beam::GetOptionalLocalPtr<C> m_timeClient;
+      Beam::GetOptionalLocalPtr<S> m_complianceRuleSet;
       Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
         std::unique_ptr<OrderExecutionService::PrimitiveOrder>> m_orders;
       Beam::IO::OpenState m_openState;
@@ -92,45 +84,33 @@ namespace Compliance {
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  template<typename OrderExecutionDriverForward, typename TimeClientForward,
-    typename ComplianceRuleSetForward>
-  ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::
-      ComplianceCheckOrderExecutionDriver(
-      OrderExecutionDriverForward&& orderExecutionDriver,
-      TimeClientForward&& timeClient,
-      ComplianceRuleSetForward&& complianceRuleSet)
-      : m_orderExecutionDriver{std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)},
-        m_timeClient{std::forward<TimeClientForward>(timeClient)},
-        m_complianceRuleSet{std::forward<ComplianceRuleSetForward>(
-          complianceRuleSet)} {}
+  template<typename D, typename C, typename S>
+  template<typename DF, typename CF, typename SF>
+  ComplianceCheckOrderExecutionDriver<D, C, S>::
+    ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
+    CF&& timeClient, SF&& complianceRuleSet)
+    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
+      m_timeClient(std::forward<CF>(timeClient)),
+      m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::
+  template<typename D, typename C, typename S>
+  ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
     Close();
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
+  template<typename D, typename C, typename S>
   const OrderExecutionService::Order& ComplianceCheckOrderExecutionDriver<
-      OrderExecutionDriverType, TimeClientType, ComplianceRuleSetType>::Recover(
+      D, C, S>::Recover(
       const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
     auto& order = m_orderExecutionDriver->Recover(orderRecord);
     m_complianceRuleSet->Add(order);
     return order;
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
+  template<typename D, typename C, typename S>
   const OrderExecutionService::Order& ComplianceCheckOrderExecutionDriver<
-      OrderExecutionDriverType, TimeClientType, ComplianceRuleSetType>::Submit(
-      const OrderExecutionService::OrderInfo& orderInfo) {
+      D, C, S>::Submit(const OrderExecutionService::OrderInfo& orderInfo) {
     auto instance = std::make_unique<OrderExecutionService::PrimitiveOrder>(
       orderInfo);
     auto& order = *instance;
@@ -139,13 +119,11 @@ namespace Compliance {
       m_complianceRuleSet->Submit(order);
     } catch(const std::exception& e) {
       order.With(
-        [&] (OrderStatus status,
-            const std::vector<OrderExecutionService::ExecutionReport>&
-            reports) {
+        [&] (auto status, const auto& reports) {
           auto& lastReport = reports.back();
-          auto updatedReport = OrderExecutionService::ExecutionReport::
-            BuildUpdatedReport(lastReport, OrderStatus::REJECTED,
-            m_timeClient->GetTime());
+          auto updatedReport =
+            OrderExecutionService::ExecutionReport::BuildUpdatedReport(
+            lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
           updatedReport.m_text = e.what();
           order.Update(updatedReport);
         });
@@ -159,10 +137,8 @@ namespace Compliance {
     return order;
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::Cancel(
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
     auto order = m_orders.Find(orderId);
@@ -180,20 +156,16 @@ namespace Compliance {
     m_orderExecutionDriver->Cancel(session, orderId);
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::Update(
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::Update(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
     m_orderExecutionDriver->Update(session, orderId, executionReport);
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::Open() {
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -207,42 +179,34 @@ namespace Compliance {
     m_openState.SetOpen();
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::Close() {
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::Shutdown() {
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::Shutdown() {
     m_orderExecutionDriver->Close();
     m_openState.SetClosed();
   }
 
-  template<typename OrderExecutionDriverType, typename TimeClientType,
-    typename ComplianceRuleSetType>
-  void ComplianceCheckOrderExecutionDriver<OrderExecutionDriverType,
-      TimeClientType, ComplianceRuleSetType>::OnExecutionReport(
+  template<typename D, typename C, typename S>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::OnExecutionReport(
       OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
     order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
+      [&] (auto status, const auto& reports) {
         auto update = executionReport;
         update.m_sequence = reports.back().m_sequence + 1;
         order.Update(update);
       });
   }
-}
 }
 
 #endif

@@ -84,7 +84,11 @@ export class HttpAccountDirectoryModel extends AccountDirectoryModel {
         entries = [];
         result.set(match[0], entries);
       }
-      entries.push(new AccountEntry(match[1], match[2]));
+      if(match[1].type === Beam.DirectoryEntry.Type.ACCOUNT &&
+          entries.findIndex((entry: AccountEntry) =>
+            (entry.account.id === match[1].id)) < 0) {
+        entries.push(new AccountEntry(match[1], match[2]));
+      }
     }
     return result;
   }

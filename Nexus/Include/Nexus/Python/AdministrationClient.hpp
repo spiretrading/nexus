@@ -26,8 +26,6 @@ namespace Nexus::AdministrationService {
 
       ~ToPythonAdministrationClient() override;
 
-      std::string LoadOrganizationName() override;
-
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
 
@@ -167,12 +165,6 @@ namespace Nexus::AdministrationService {
     Close();
     auto release = Beam::Python::GilRelease();
     m_client.reset();
-  }
-
-  template<typename C>
-  std::string ToPythonAdministrationClient<C>::LoadOrganizationName() {
-    auto release = Beam::Python::GilRelease();
-    return m_client->LoadOrganizationName();
   }
 
   template<typename C>
