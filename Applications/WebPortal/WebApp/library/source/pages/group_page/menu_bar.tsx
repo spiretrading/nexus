@@ -50,7 +50,7 @@ export class MenuBar extends React.Component<Properties, State> {
     })();
     const menuBarWidth = (() => {
       if(this.props.displaySize !== DisplaySize.SMALL) {
-        return '590px';
+        return '343px';
       }
     })();
     return (
@@ -89,6 +89,7 @@ export class MenuBar extends React.Component<Properties, State> {
             onClick={() => this.onIconClick(GroupSubPage.PROFIT_LOSS)}/>
           <div style={this.getIconUnderlineStyle(GroupSubPage.PROFIT_LOSS)}/>
         </VBoxLayout>
+        {menuBarPadding}
       </HBoxLayout>);
   }
 
@@ -123,12 +124,12 @@ export class MenuBar extends React.Component<Properties, State> {
   private static readonly STYLE = {
     base: {
       height: '40px',
-      width: '590px'
+      width: '343px'
     },
     small: {
       width: '55%',
-      minWidth: '176px',
-      maxWidth: '308px'
+      minWidth: '114px',
+      maxWidth: '162px'
     },
     smallPadding: {
       width: '100%',

@@ -74,7 +74,6 @@ class LargeHeader extends React.Component<HeaderProps> {
             <div style={LargeHeader.STYLES.usernameContainer}>
               <div style={LargeHeader.STYLES.usernameWrapper}>
                 <UsernameLabel name={this.props.name} height='40px'/>
-                <Padding size='10px'/>
               </div>
             </div>
             <Padding size='18px'/>
@@ -106,20 +105,13 @@ class MediumHeader extends React.Component<HeaderProps> {
         <HBoxLayout width='100%' height='40px'>
           <div style={MediumHeader.STYLES.headerPadding}/>
           <Padding size='18px'/>
-          <HBoxLayout height='40px' width='750px'>
+          <HBoxLayout height='40px' width='732px'>
             {this.props.children}
-            <div style={MediumHeader.STYLES.innerPadding}/>
-          </HBoxLayout>
-          <Padding size='18px'/>
-          <div style={MediumHeader.STYLES.headerPadding}/>
-        </HBoxLayout>
-        <HeaderUnderline/>
-        <HBoxLayout width='100%' height='30px'>
-          <div style={MediumHeader.STYLES.headerPadding}/>
-          <Padding size='18px'/>
-          <HBoxLayout height='30px' width='750px'>
-            <Padding/>
-            <UsernameLabel name={this.props.name} height='30px'/>
+            <div style={MediumHeader.STYLES.usernameContainer}>
+              <div style={MediumHeader.STYLES.usernameWrapper}>
+                <UsernameLabel name={this.props.name} height='40px'/>
+              </div>
+            </div>
           </HBoxLayout>
           <Padding size='18px'/>
           <div style={MediumHeader.STYLES.headerPadding}/>
@@ -130,12 +122,20 @@ class MediumHeader extends React.Component<HeaderProps> {
 
   private static readonly STYLES = {
     headerPadding: {
-      width: 'calc(50% - 393px)',
+      width: 'calc(50% - 384px)',
       height: '100%'
     } as React.CSSProperties,
-    innerPadding: {
-      width: 'calc(100% - 658px)',
-      height: '100%'
+    usernameWrapper: {
+      height: '40px',
+      width: 'auto',
+      display: 'flex'
+    } as React.CSSProperties,
+    usernameContainer: {
+      height: '40px',
+      width: '389px',
+      display: 'flex',
+      justifyContent: 'end',
+      flexWrap: 'wrap'
     } as React.CSSProperties
   }
 }
@@ -150,17 +150,11 @@ class SmallHeader extends React.Component<HeaderProps> {
           <HBoxLayout height='40px' style={SmallHeader.STYLES.accountHeader}>
             {this.props.children}
             <div style={SmallHeader.STYLES.innerPadding}/>
-          </HBoxLayout>
-          <Padding size='18px'/>
-          <div style={SmallHeader.STYLES.headerPadding}/>
-        </HBoxLayout>
-        <HeaderUnderline/>
-        <HBoxLayout width='100%' height='30px'>
-          <div style={SmallHeader.STYLES.headerPadding}/>
-          <Padding size='18px'/>
-          <HBoxLayout height='30px' style={SmallHeader.STYLES.accountHeader}>
-            <Padding/>
-            <UsernameLabel name={this.props.name} height='30px'/>
+            <div style={SmallHeader.STYLES.usernameContainer}>
+              <div style={SmallHeader.STYLES.usernameWrapper}>
+                <UsernameLabel name={this.props.name} height='40px'/>
+              </div>
+            </div>
           </HBoxLayout>
           <Padding size='18px'/>
           <div style={SmallHeader.STYLES.headerPadding}/>
@@ -176,11 +170,22 @@ class SmallHeader extends React.Component<HeaderProps> {
       maxWidth: '424px'
     } as React.CSSProperties,
     headerPadding: {
-      width: 'calc(20% - 18px)'
+      width: 'calc(23% - 18px)'
     } as React.CSSProperties,
     innerPadding: {
-      width: 'calc(45% - 68px)',
+      width: '35%',
       height: '100%'
+    } as React.CSSProperties,
+    usernameWrapper: {
+      height: '40px',
+      width: 'auto',
+      display: 'flex'
+    } as React.CSSProperties,
+    usernameContainer: {
+      height: '40px',
+      display: 'flex',
+      justifyContent: 'end',
+      flexWrap: 'wrap'
     } as React.CSSProperties
   }
 }
