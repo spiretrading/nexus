@@ -59,6 +59,16 @@ namespace Nexus::DefinitionsService {
       /** Loads the list of ComplianceRuleSchemas. */
       std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
 
+      /**
+       * Loads a single day's market trading schedule.
+       * @param market The market to load.
+       * @param date The date to load.
+       * @return The TradingSchedule for the specified <i>market</i> and
+       *         <i>date</i>.
+       */
+      TradingSchedule LoadTradingSchedule(MarketCode market,
+        boost::gregorian::date date);
+
       void Open();
 
       void Close();
@@ -141,6 +151,14 @@ namespace Nexus::DefinitionsService {
       DefinitionsClient<B>::LoadComplianceRuleSchemas() {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadComplianceRuleSchemasService>(0);
+  }
+
+  template<typename B>
+  TradingSchedule DefinitionsClient<B>::LoadTradingSchedule(MarketCode market,
+      boost::gregorian::date date) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadTradingScheduleService>(market,
+      date);
   }
 
   template<typename B>

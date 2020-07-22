@@ -22,6 +22,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefinitionsService;
@@ -76,6 +77,11 @@ namespace {
       PYBIND11_OVERLOAD_PURE_NAME(std::vector<Compliance::ComplianceRuleSchema>,
         VirtualDefinitionsClient, "load_compliance_rule_schemas",
         LoadComplianceRuleSchemas);
+    }
+
+    TradingSchedule LoadTradingSchedule(MarketCode market, date date) override {
+      PYBIND11_OVERLOAD_PURE_NAME(TradingSchedule, VirtualDefinitionsClient,
+        "load_trading_schedule", LoadTradingSchedule);
     }
 
     void Open() override {
@@ -145,6 +151,8 @@ void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {
       &VirtualDefinitionsClient::LoadExchangeRates)
     .def("load_compliance_rule_schemas",
       &VirtualDefinitionsClient::LoadComplianceRuleSchemas)
+    .def("load_trading_schedule",
+      &VirtualDefinitionsClient::LoadTradingSchedule)
     .def("open", &VirtualDefinitionsClient::Open)
     .def("close", &VirtualDefinitionsClient::Close);
 }

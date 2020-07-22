@@ -3,6 +3,7 @@
 #include <vector>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Definitions/Country.hpp"
@@ -10,6 +11,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
 namespace Nexus::DefinitionsService {
@@ -94,7 +96,18 @@ namespace Nexus::DefinitionsService {
      */
     (LoadComplianceRuleSchemasService,
       "Nexus.DefinitionsServices.LoadComplianceRuleSchemasService",
-      std::vector<Compliance::ComplianceRuleSchema>, int, dummy));
+      std::vector<Compliance::ComplianceRuleSchema>, int, dummy),
+
+    /**
+     * Loads a single day's market trading schedule.
+     * @param market The market code to load.
+     * @param date The date to load.
+     * @return The TradingSchedule for the specified <i>market</i> and
+     *         <i>date</i>.
+     */
+    (LoadTradingScheduleService,
+      "Nexus.DefinitionsServices.LoadTradingScheduleService", TradingSchedule,
+      MarketCode, market, boost::gregorian::date, date));
 }
 
 #endif

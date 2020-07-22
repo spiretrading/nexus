@@ -13,6 +13,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
 namespace Nexus::DefinitionsService {
@@ -40,6 +41,9 @@ namespace Nexus::DefinitionsService {
 
       virtual std::vector<Compliance::ComplianceRuleSchema>
         LoadComplianceRuleSchemas() = 0;
+
+      virtual TradingSchedule LoadTradingSchedule(MarketCode market,
+        boost::gregorian::date date) = 0;
 
       virtual void Open() = 0;
 
@@ -87,6 +91,9 @@ namespace Nexus::DefinitionsService {
 
       std::vector<Compliance::ComplianceRuleSchema>
         LoadComplianceRuleSchemas() override;
+
+      TradingSchedule LoadTradingSchedule(MarketCode market,
+        boost::gregorian::date date) override;
 
       void Open() override;
 
@@ -157,6 +164,12 @@ namespace Nexus::DefinitionsService {
   std::vector<Compliance::ComplianceRuleSchema>
       WrapperDefinitionsClient<C>::LoadComplianceRuleSchemas() {
     return m_client->LoadComplianceRuleSchemas();
+  }
+
+  template<typename C>
+  TradingSchedule WrapperDefinitionsClient<C>::LoadTradingSchedule(
+      MarketCode market, boost::gregorian::date date) {
+    return m_client->LoadTradingSchedule(market, date);
   }
 
   template<typename C>

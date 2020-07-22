@@ -25,6 +25,7 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 
@@ -38,7 +39,7 @@ using namespace pybind11;
 
 namespace {
   template<typename T>
-  auto bind_integer_precision(T (*function)(T, int)) {
+  auto BindIntegerPrecision(T (*function)(T, int)) {
     return [=] (T object) {
       return function(std::move(object), 0);
     };
@@ -265,6 +266,7 @@ void Nexus::Python::ExportDefinitions(pybind11::module& module) {
   ExportTag(module);
   ExportTimeAndSale(module);
   ExportTimeInForce(module);
+  ExportTradingSchedule(module);
 }
 
 void Nexus::Python::ExportDestination(pybind11::module& module) {
@@ -374,13 +376,13 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
       &Money::FromValue))
     .def("__str__", &lexical_cast<std::string, Money>)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
-    .def("__floor__", bind_integer_precision(
+    .def("__floor__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Floor)))
-    .def("__ceil__", bind_integer_precision(
+    .def("__ceil__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Ceil)))
-    .def("__trunc__", bind_integer_precision(
+    .def("__trunc__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Truncate)))
-    .def("__round__", bind_integer_precision(
+    .def("__round__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Round)))
     .def("__float__",
       [] (Money self) {
@@ -466,13 +468,13 @@ void Nexus::Python::ExportQuantity(pybind11::module& module) {
       &Quantity::FromValue))
     .def("__str__", &lexical_cast<std::string, Quantity>)
     .def("__abs__", static_cast<Quantity (*)(Quantity)>(&Abs))
-    .def("__floor__", bind_integer_precision(
+    .def("__floor__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Floor)))
-    .def("__ceil__", bind_integer_precision(
+    .def("__ceil__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Ceil)))
-    .def("__trunc__", bind_integer_precision(
+    .def("__trunc__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Truncate)))
-    .def("__round__", bind_integer_precision(
+    .def("__round__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Round)))
     .def("__int__",
       [] (Quantity self) {
@@ -687,4 +689,21 @@ void Nexus::Python::ExportTimeInForce(pybind11::module& module) {
     .value("FOK", TimeInForce::Type::FOK)
     .value("GTX", TimeInForce::Type::GTX)
     .value("GTD", TimeInForce::Type::GTD);
+}
+
+void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
+  auto outer = class_<TradingSchedule>(module, "TradingSchedule")
+    .def(init<std::vector<TradingSchedule::Event>>())
+    .def_property_readonly("events", &TradingSchedule::GetEvents);
+  enum_<TradingSchedule::Type>(outer, "Type")
+    .value("PRE_OPEN", TradingSchedule::Type::PRE_OPEN)
+    .value("OPEN", TradingSchedule::Type::OPEN)
+    .value("CLOSE", TradingSchedule::Type::CLOSE)
+    .value("OTHER", TradingSchedule::Type::OTHER);
+  class_<TradingSchedule::Event>(outer, "Event")
+    .def_readwrite("type", &TradingSchedule::Event::m_type)
+    .def_readwrite("code", &TradingSchedule::Event::m_code)
+    .def_readwrite("timestamp", &TradingSchedule::Event::m_timestamp)
+    .def(self == self)
+    .def(self != self);
 }
