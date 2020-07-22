@@ -32,6 +32,7 @@
 using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -693,8 +694,14 @@ void Nexus::Python::ExportTimeInForce(pybind11::module& module) {
 
 void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
   auto outer = class_<TradingSchedule>(module, "TradingSchedule")
-    .def(init<std::vector<TradingSchedule::Event>>())
-    .def_property_readonly("events", &TradingSchedule::GetEvents);
+    .def(init<std::vector<TradingSchedule::Rule>>())
+    .def("find", [] (TradingSchedule& self, date date, MarketCode market) {
+      return self.Find(date, market);
+    })
+    .def("find", [] (TradingSchedule& self, date date, MarketCode market,
+        const object& f) {
+      return self.Find(date, market, f);
+    });
   enum_<TradingSchedule::Type>(outer, "Type")
     .value("PRE_OPEN", TradingSchedule::Type::PRE_OPEN)
     .value("OPEN", TradingSchedule::Type::OPEN)
@@ -704,6 +711,19 @@ void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
     .def_readwrite("type", &TradingSchedule::Event::m_type)
     .def_readwrite("code", &TradingSchedule::Event::m_code)
     .def_readwrite("timestamp", &TradingSchedule::Event::m_timestamp)
+    .def("__str__", &lexical_cast<std::string, TradingSchedule::Event>)
     .def(self == self)
     .def(self != self);
+  class_<TradingSchedule::Rule>(outer, "Rule")
+    .def_readwrite("market", &TradingSchedule::Rule::m_market)
+    .def_readwrite("days_of_week", &TradingSchedule::Rule::m_daysOfWeek)
+    .def_readwrite("days", &TradingSchedule::Rule::m_days)
+    .def_readwrite("months", &TradingSchedule::Rule::m_months)
+    .def_readwrite("years", &TradingSchedule::Rule::m_years)
+    .def_readwrite("events", &TradingSchedule::Rule::m_events)
+    .def(self == self)
+    .def(self != self);
+  module.def("is_match",
+    static_cast<bool (*)(MarketCode, date, const TradingSchedule::Rule&)>(
+    &IsMatch));
 }

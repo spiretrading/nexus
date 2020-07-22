@@ -42,8 +42,7 @@ namespace Nexus::DefinitionsService {
       virtual std::vector<Compliance::ComplianceRuleSchema>
         LoadComplianceRuleSchemas() = 0;
 
-      virtual TradingSchedule LoadTradingSchedule(MarketCode market,
-        boost::gregorian::date date) = 0;
+      virtual TradingSchedule LoadTradingSchedule() = 0;
 
       virtual void Open() = 0;
 
@@ -92,8 +91,7 @@ namespace Nexus::DefinitionsService {
       std::vector<Compliance::ComplianceRuleSchema>
         LoadComplianceRuleSchemas() override;
 
-      TradingSchedule LoadTradingSchedule(MarketCode market,
-        boost::gregorian::date date) override;
+      TradingSchedule LoadTradingSchedule() override;
 
       void Open() override;
 
@@ -167,9 +165,8 @@ namespace Nexus::DefinitionsService {
   }
 
   template<typename C>
-  TradingSchedule WrapperDefinitionsClient<C>::LoadTradingSchedule(
-      MarketCode market, boost::gregorian::date date) {
-    return m_client->LoadTradingSchedule(market, date);
+  TradingSchedule WrapperDefinitionsClient<C>::LoadTradingSchedule() {
+    return m_client->LoadTradingSchedule();
   }
 
   template<typename C>

@@ -100,14 +100,12 @@ namespace Nexus::DefinitionsService {
 
     /**
      * Loads a single day's market trading schedule.
-     * @param market The market code to load.
-     * @param date The date to load.
-     * @return The TradingSchedule for the specified <i>market</i> and
-     *         <i>date</i>.
+     * @param dummy Unused.
+     * @return The TradingSchedule.
      */
     (LoadTradingScheduleService,
       "Nexus.DefinitionsServices.LoadTradingScheduleService", TradingSchedule,
-      MarketCode, market, boost::gregorian::date, date));
+      int, dummy));
 }
 
 #endif

@@ -68,8 +68,8 @@ namespace {
     }
 
     std::vector<ExchangeRate> LoadExchangeRates() override {
-      PYBIND11_OVERLOAD_PURE_NAME(std::vector<ExchangeRate>, VirtualDefinitionsClient,
-        "load_exchange_rates", LoadExchangeRates);
+      PYBIND11_OVERLOAD_PURE_NAME(std::vector<ExchangeRate>,
+        VirtualDefinitionsClient, "load_exchange_rates", LoadExchangeRates);
     }
 
     std::vector<Compliance::ComplianceRuleSchema>
@@ -79,7 +79,7 @@ namespace {
         LoadComplianceRuleSchemas);
     }
 
-    TradingSchedule LoadTradingSchedule(MarketCode market, date date) override {
+    TradingSchedule LoadTradingSchedule() override {
       PYBIND11_OVERLOAD_PURE_NAME(TradingSchedule, VirtualDefinitionsClient,
         "load_trading_schedule", LoadTradingSchedule);
     }
