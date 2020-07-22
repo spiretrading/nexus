@@ -147,7 +147,7 @@ class SmallHeader extends React.Component<HeaderProps> {
         <HBoxLayout width='100%' height='40px'>
           <div style={SmallHeader.STYLES.headerPadding}/>
           <Padding size='18px'/>
-          <HBoxLayout height='40px' style={SmallHeader.STYLES.accountHeader}>
+          <HBoxLayout height='40px' style={SmallHeader.STYLES.groupHeader}>
             {this.props.children}
             <div style={SmallHeader.STYLES.innerPadding}/>
             <div style={SmallHeader.STYLES.groupNameContainer}>
@@ -164,7 +164,7 @@ class SmallHeader extends React.Component<HeaderProps> {
   }
 
   private static readonly STYLES = {
-    accountHeader: {
+    groupHeader: {
       width: '60%',
       minWidth: '284px',
       maxWidth: '424px'
