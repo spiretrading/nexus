@@ -1,4 +1,5 @@
 #include "Spire/Ui/StaticDropDownMenu.hpp"
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
@@ -67,10 +68,14 @@ const QVariant& StaticDropDownMenu::get_current_item() const {
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
-      
+      on_key_press(static_cast<QKeyEvent*>(event));
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void StaticDropDownMenu::keyPressEvent(QKeyEvent* event) {
+  on_key_press(event);
 }
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
@@ -147,4 +152,10 @@ void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
   m_value_selected_signal(m_current_item);
   update();
+}
+
+void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
+  if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
+    m_menu_list->set_highlight(event->text());
+  }
 }

@@ -73,6 +73,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event);
       void resizeEvent(QResizeEvent* event);
 
@@ -91,6 +92,7 @@ namespace Spire {
       void draw_border(const QColor& color, QPainter& painter);
       void draw_item_text(const QString& text, QPainter& painter);
       void on_item_selected(const QVariant& value);
+      void on_key_press(QKeyEvent* event);
   };
 }
 

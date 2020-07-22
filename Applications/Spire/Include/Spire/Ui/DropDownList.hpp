@@ -2,6 +2,7 @@
 #define SPIRE_DROP_DOWN_LIST_HPP
 #include <QVBoxLayout>
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"
 #include "Spire/Ui/DropDownWindow.hpp"
 
@@ -69,6 +70,12 @@ namespace Spire {
       */
       void remove_item(int index);
 
+      //! Highlights the next item in the list that starts with the given text.
+      /*!
+        \param text The text to match against the next item.
+      */
+      void set_highlight(const QString& text);
+
       //! Sets the items to display, overwriting any existing items.
       /*!
         \param items The new items to display.
@@ -106,6 +113,7 @@ namespace Spire {
       QVBoxLayout* m_layout;
       ScrollArea* m_scroll_area;
       boost::optional<int> m_highlight_index;
+      CustomVariantItemDelegate m_item_delegate;
       std::vector<boost::signals2::scoped_connection>
         m_item_selected_connections;
 

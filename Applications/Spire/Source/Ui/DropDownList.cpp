@@ -35,11 +35,15 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Up) {
-        focus_previous();
-        return true;
+        if(isVisible()) {
+          focus_previous();
+          return true;
+        }
       } else if(e->key() == Qt::Key_Down) {
-        focus_next();
-        return true;
+        if(isVisible()) {
+          focus_next();
+          return true;
+        }
       } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
         if(isVisible() && m_highlight_index) {
           on_item_selected(get_widget(*m_highlight_index)->get_value(),
@@ -71,9 +75,13 @@ void DropDownList::hideEvent(QHideEvent* event) {
 
 void DropDownList::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Up) {
-    focus_previous();
+    if(isVisible()) {
+      focus_previous();
+    }
   } else if(event->key() == Qt::Key_Down) {
-    focus_next();
+    if(isVisible()) {
+      focus_next();
+    }
   } else if(event->key() == Qt::Key_Escape) {
     hide();
   } else if(event->key() == Qt::Key_Enter) {
@@ -151,6 +159,23 @@ void DropDownList::remove_item(int index) {
   delete layout_item->widget();
   delete layout_item;
   update_height();
+}
+
+void DropDownList::set_highlight(const QString& text) {
+  if(m_highlight_index && *m_highlight_index != item_count() - 1) {
+    if(m_item_delegate.displayText(get_value(
+        *m_highlight_index + 1)).startsWith(text, Qt::CaseInsensitive)) {
+      set_highlight(*m_highlight_index + 1);
+      return;
+    }
+  }
+  for(auto i = 0; i < item_count(); ++i) {
+    if(m_item_delegate.displayText(get_value(i)).startsWith(text,
+        Qt::CaseInsensitive)) {
+      set_highlight(i);
+      break;
+    }
+  }
 }
 
 void DropDownList::set_items(std::vector<DropDownItem*> items) {
