@@ -7,8 +7,8 @@ import { MenuBar } from './menu_bar';
 
 interface Properties {
 
-  /** The account being displayed. */
-  account: Beam.DirectoryEntry;
+  /** The group being displayed. */
+  group: Beam.DirectoryEntry;
 
   /** The sub page currently selected. */
   subPage: GroupSubPage;
@@ -22,7 +22,7 @@ interface Properties {
   onMenuClick?: (subPage: GroupSubPage) => void;
 }
 
-/** Implements the container used to display account information. */
+/** Implements the container used to display group information. */
 export class GroupPage extends React.Component<Properties> {
   public static readonly defaultProps = {
     onMenuClick: () => {}
@@ -42,7 +42,7 @@ export class GroupPage extends React.Component<Properties> {
     return (
       <VBoxLayout height='100%' width='100%'
           style={{overflow: 'hidden' as 'hidden'}}>
-        <Header name={this.props.account.name}>
+        <Header name={this.props.group.name}>
           <MenuBar displaySize={this.props.displaySize}
             selected={this.props.subPage} onClick={this.props.onMenuClick}/>
         </Header>

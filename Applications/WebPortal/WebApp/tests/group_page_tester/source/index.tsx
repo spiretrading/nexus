@@ -10,7 +10,7 @@ interface Properties {
 
 interface State {
   subPage: GroupSubPage;
-  account: Beam.DirectoryEntry;
+  group: Beam.DirectoryEntry;
 }
 
 class GroupPageTester extends React.Component<Properties, State> {
@@ -18,14 +18,14 @@ class GroupPageTester extends React.Component<Properties, State> {
     super(props);
     this.state = {
       subPage: GroupSubPage.NONE,
-      account: Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here')
+      group: Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here')
     };
   }
 
   public render(): JSX.Element {
     return (
       <GroupPage displaySize={this.props.displaySize}
-        subPage={this.state.subPage} account={this.state.account}
+        subPage={this.state.subPage} group={this.state.group}
         onMenuClick={this.onMenuClick}/>);
   }
 
