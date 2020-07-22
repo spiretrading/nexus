@@ -71,9 +71,9 @@ class LargeHeader extends React.Component<HeaderProps> {
             <Padding size='18px'/>
             {this.props.children}
             <Padding/>
-            <div style={LargeHeader.STYLES.usernameContainer}>
-              <div style={LargeHeader.STYLES.usernameWrapper}>
-                <UsernameLabel name={this.props.name} height='40px'/>
+            <div style={LargeHeader.STYLES.groupNameContainer}>
+              <div style={LargeHeader.STYLES.groupNameWrapper}>
+                <GroupNameLabel name={this.props.name} height='40px'/>
               </div>
             </div>
             <Padding size='18px'/>
@@ -85,12 +85,12 @@ class LargeHeader extends React.Component<HeaderProps> {
   }
 
   private static readonly STYLES = {
-    usernameWrapper: {
+    groupNameWrapper: {
       height: '40px',
       width: 'auto',
       display: 'flex'
     } as React.CSSProperties,
-    usernameContainer: {
+    groupNameContainer: {
       height: '40px',
       display: 'flex',
       flexWrap: 'wrap'
@@ -107,9 +107,9 @@ class MediumHeader extends React.Component<HeaderProps> {
           <Padding size='18px'/>
           <HBoxLayout height='40px' width='732px'>
             {this.props.children}
-            <div style={MediumHeader.STYLES.usernameContainer}>
-              <div style={MediumHeader.STYLES.usernameWrapper}>
-                <UsernameLabel name={this.props.name} height='40px'/>
+            <div style={MediumHeader.STYLES.groupNameContainer}>
+              <div style={MediumHeader.STYLES.groupNameWrapper}>
+                <GroupNameLabel name={this.props.name} height='40px'/>
               </div>
             </div>
           </HBoxLayout>
@@ -125,12 +125,12 @@ class MediumHeader extends React.Component<HeaderProps> {
       width: 'calc(50% - 384px)',
       height: '100%'
     } as React.CSSProperties,
-    usernameWrapper: {
+    groupNameWrapper: {
       height: '40px',
       width: 'auto',
       display: 'flex'
     } as React.CSSProperties,
-    usernameContainer: {
+    groupNameContainer: {
       height: '40px',
       width: '389px',
       display: 'flex',
@@ -150,9 +150,9 @@ class SmallHeader extends React.Component<HeaderProps> {
           <HBoxLayout height='40px' style={SmallHeader.STYLES.accountHeader}>
             {this.props.children}
             <div style={SmallHeader.STYLES.innerPadding}/>
-            <div style={SmallHeader.STYLES.usernameContainer}>
-              <div style={SmallHeader.STYLES.usernameWrapper}>
-                <UsernameLabel name={this.props.name} height='40px'/>
+            <div style={SmallHeader.STYLES.groupNameContainer}>
+              <div style={SmallHeader.STYLES.groupNameWrapper}>
+                <GroupNameLabel name={this.props.name} height='40px'/>
               </div>
             </div>
           </HBoxLayout>
@@ -176,12 +176,12 @@ class SmallHeader extends React.Component<HeaderProps> {
       width: '35%',
       height: '100%'
     } as React.CSSProperties,
-    usernameWrapper: {
+    groupNameWrapper: {
       height: '40px',
       width: 'auto',
       display: 'flex'
     } as React.CSSProperties,
-    usernameContainer: {
+    groupNameContainer: {
       height: '40px',
       display: 'flex',
       justifyContent: 'flex-end',
@@ -190,17 +190,17 @@ class SmallHeader extends React.Component<HeaderProps> {
   };
 }
 
-interface UsernameProps {
+interface GroupNameProps {
   name: string;
   height: string;
 }
 
-class UsernameLabel extends React.Component<UsernameProps>  {
+class GroupNameLabel extends React.Component<GroupNameProps>  {
   public render(): JSX.Element {
     return (
       <VBoxLayout height={this.props.height}>
         <Padding/>
-        <span style={UsernameLabel.STYLES.username}>
+        <span style={GroupNameLabel.STYLES.groupName}>
           {this.props.name}
         </span>
         <Padding/>
@@ -208,7 +208,7 @@ class UsernameLabel extends React.Component<UsernameProps>  {
   }
 
   private static readonly STYLES = {
-    username: {
+    groupName: {
       font: '500 14px Roboto',
       color: '#4B23A0',
       whiteSpace: 'nowrap'
