@@ -78,6 +78,14 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
   DropDownWindow::keyPressEvent(event);
 }
 
+void DropDownList::showEvent(QShowEvent* event) {
+  if(m_layout->count() != 0) {
+    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
+    m_highlight_index = 0;
+  }
+  DropDownWindow::showEvent(event);
+}
+
 connection DropDownList::connect_activated_signal(
     const ActivatedSignal::slot_type& slot) const {
   return m_activated_signal.connect(slot);
@@ -153,6 +161,8 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
   if(m_layout->count() > 0) {
     update_height();
+    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
+    m_highlight_index = 0;
   } else {
     hide();
   }
@@ -211,7 +221,7 @@ void DropDownList::scroll_to_highlight() {
 }
 
 void DropDownList::update_height() {
-  if(m_layout->isEmpty()) {
+  if(m_layout->count() == 0) {
     return;
   }
   setFixedHeight(std::min(m_max_displayed_items, m_layout->count()) *

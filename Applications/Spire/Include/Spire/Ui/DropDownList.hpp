@@ -92,9 +92,10 @@ namespace Spire {
         const ValueSelectedSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event);
-      void hideEvent(QHideEvent* event);
-      void keyPressEvent(QKeyEvent* event);
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       mutable ActivatedSignal m_activated_signal;
