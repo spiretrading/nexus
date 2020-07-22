@@ -32,6 +32,7 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
   m_menu_list = new DropDownList({}, true, this);
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
+  m_menu_list->installEventFilter(this);
   set_items(items);
 }
 
@@ -61,6 +62,15 @@ void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
 
 const QVariant& StaticDropDownMenu::get_current_item() const {
   return m_current_item;
+}
+
+bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_menu_list) {
+    if(event->type() == QEvent::KeyPress) {
+      
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void StaticDropDownMenu::paintEvent(QPaintEvent* event) {

@@ -1,4 +1,5 @@
 #include "Spire/Ui/DropDownList.hpp"
+#include <QFocusEvent>
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -45,6 +46,12 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
             *m_highlight_index);
           return true;
         }
+      }
+    } else if(event->type() == QEvent::FocusIn) {
+      auto e = static_cast<QFocusEvent*>(event);
+      if(e->reason() == Qt::TabFocusReason ||
+          e->reason() == Qt::BacktabFocusReason) {
+        window()->show();
       }
     }
   }

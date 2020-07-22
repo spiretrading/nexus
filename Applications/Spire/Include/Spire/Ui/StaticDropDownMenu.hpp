@@ -72,6 +72,7 @@ namespace Spire {
         const ValueSelectedSignal::slot_type& slot) const;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void paintEvent(QPaintEvent* event);
       void resizeEvent(QResizeEvent* event);
 
