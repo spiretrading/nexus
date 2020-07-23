@@ -1,5 +1,4 @@
 import * as Beam from 'beam';
-import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { DisplaySize, displaySizeRenderer, GroupPage, GroupSubPage,
@@ -22,8 +21,7 @@ class GroupPageTester extends React.Component<Properties, State> {
       isLoaded: false
     };
     this.groupModel = new LocalGroupModel(
-      Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here'),
-      new Nexus.AccountRoles())
+      Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here'));
   }
 
   public async componentDidMount(): Promise<void> {
@@ -37,7 +35,7 @@ class GroupPageTester extends React.Component<Properties, State> {
     }
     return (
       <GroupPage displaySize={this.props.displaySize}
-        subPage={this.state.subPage} group={this.groupModel.account}
+        subPage={this.state.subPage} group={this.groupModel.group}
         onMenuClick={this.onMenuClick}/>);
   }
 

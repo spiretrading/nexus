@@ -1,16 +1,14 @@
 import * as Beam from 'beam';
-import * as Nexus from 'nexus';
 import { GroupModel } from './group_model';
 
 /** Implements an in-memory GroupModel. */
 export class LocalGroupModel extends GroupModel {
 
   /** Constructs a LocalGroupModel. */
-  constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles) {
+  constructor(group: Beam.DirectoryEntry) {
     super();
     this._isLoaded = false;
-    this._account = account;
-    this._roles = roles;
+    this._group = group;
   }
 
   /** Returns true of this model has been loaded. */
@@ -18,25 +16,11 @@ export class LocalGroupModel extends GroupModel {
     return this._isLoaded;
   }
 
-  public get account(): Beam.DirectoryEntry {
+  public get group(): Beam.DirectoryEntry {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return this._account;
-  }
-
-  public get roles(): Nexus.AccountRoles {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
-    return this._roles;
-  }
-
-  public get groups(): Beam.DirectoryEntry[] {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
-    return [];
+    return this._group;
   }
 
   public async load(): Promise<void> {
@@ -44,6 +28,5 @@ export class LocalGroupModel extends GroupModel {
   }
 
   private _isLoaded: boolean;
-  private _account: Beam.DirectoryEntry;
-  private _roles: Nexus.AccountRoles;
+  private _group: Beam.DirectoryEntry;
 }
