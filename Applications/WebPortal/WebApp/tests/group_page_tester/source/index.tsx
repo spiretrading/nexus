@@ -37,7 +37,7 @@ class GroupPageTester extends React.Component<Properties, State> {
     }
     return (
       <GroupPage displaySize={this.props.displaySize}
-        subPage={this.state.subPage} account={this.groupModel.account}
+        subPage={this.state.subPage} group={this.groupModel.account}
         onMenuClick={this.onMenuClick}/>);
   }
 

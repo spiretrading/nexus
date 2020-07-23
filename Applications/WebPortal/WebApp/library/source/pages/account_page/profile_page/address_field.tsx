@@ -48,7 +48,7 @@ export class AddressField extends React.Component<Properties, State> {
       displayValue: this.props.addressLineOne + 
         '\n' + this.props.addressLineTwo + '\n' + this.props.addressLineThree,
       isEditing: false
-    }
+    };
   }
 
   public render(): JSX.Element {
@@ -154,7 +154,7 @@ export class AddressField extends React.Component<Properties, State> {
 
   public static readonly STYLE = {
     containerSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       font: '400 14px Roboto',
@@ -171,7 +171,7 @@ export class AddressField extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties,
     containerMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '284px',
@@ -186,7 +186,7 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     containerLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '350px',
@@ -201,7 +201,7 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     readonlySmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       font: '400 14px Roboto',
@@ -218,7 +218,7 @@ export class AddressField extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties,
     readonlyMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '284px',
@@ -233,7 +233,7 @@ export class AddressField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties,
     readonlyLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
       minWidth: '350px',

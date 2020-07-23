@@ -22,7 +22,7 @@ interface State {
   hovered: GroupSubPage;
 }
 
-/** Displays the horizontal menu used to navigate an account's properties. */
+/** Displays the horizontal menu used to navigate a group's properties. */
 export class MenuBar extends React.Component<Properties, State> {
   public static defaultProps = {
     onClick: () => {},
