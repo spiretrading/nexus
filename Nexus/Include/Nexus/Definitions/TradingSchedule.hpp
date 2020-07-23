@@ -1,7 +1,6 @@
 #ifndef NEXUS_TRADING_SCHEDULE_HPP
 #define NEXUS_TRADING_SCHEDULE_HPP
 #include <algorithm>
-#include <istream>
 #include <ostream>
 #include <string>
 #include <tuple>
@@ -22,27 +21,8 @@ namespace Nexus {
   class TradingSchedule {
     public:
 
-      /** Lists the abstract types of scheduled events. */
-      enum class Type {
-
-        /** The market enters its pre-opening phase. */
-        PRE_OPEN,
-
-        /** The market enters its opening phase. */
-        OPEN,
-
-        /** The market enters its closing phase. */
-        CLOSE,
-
-        /** Used for events specific to an exchange. */
-        OTHER
-      };
-
       /** Stores an event. */
       struct Event {
-
-        /** The type of event taking place. */
-        Type m_type;
 
         /** The exchange specific code identifying the event. */
         std::string m_code;
@@ -130,24 +110,6 @@ namespace Nexus {
       std::vector<Rule> m_rules;
   };
 
-  inline std::istream& operator >>(std::istream& in,
-      TradingSchedule::Type& type) {
-    auto value = std::string();
-    in >> value;
-    if(value == "PRE_OPEN") {
-      type = TradingSchedule::Type::PRE_OPEN;
-    } else if(value == "OPEN") {
-      type = TradingSchedule::Type::OPEN;
-    } else if(value == "CLOSE") {
-      type = TradingSchedule::Type::CLOSE;
-    } else if(value == "OTHER") {
-      type = TradingSchedule::Type::OTHER;
-    } else {
-      in.setstate(std::ios::failbit);
-    }
-    return in;
-  }
-
   /**
    * Tests if a market and date match a rule.
    * @param market The market to test.
@@ -200,68 +162,72 @@ namespace Nexus {
    */
   inline std::vector<TradingSchedule::Rule> ParseTradingScheduleRules(
       const YAML::Node& node, const MarketDatabase& database) {
-    auto rule = TradingSchedule::Rule();
+    auto rules = std::vector<TradingSchedule::Rule>();
+    rules.emplace_back();
     for(auto& marketNode : node["markets"]) {
-      rule.m_markets.push_back(ParseMarketCode(
+      rules.back().m_markets.push_back(ParseMarketCode(
         Beam::Extract<std::string>(marketNode), database));
     }
+    for(auto& eventNode : node["events"]) {
+      auto event = TradingSchedule::Event();
+      auto time = Beam::Parsers::Parse<boost::posix_time::time_duration>(
+        Beam::Extract<std::string>(eventNode, "time"));
+      event.m_timestamp = boost::posix_time::ptime(boost::gregorian::date(
+        1900, 1, 1), time);
+      event.m_code = Beam::Extract<std::string>(eventNode, "code");
+      rules.back().m_events.push_back(event);
+    }
+    std::sort(rules.back().m_events.begin(), rules.back().m_events.end(),
+      [] (auto& left, auto& right) {
+        return std::tie(left.m_timestamp, left.m_type, left.m_code) <
+          std::tie(right.m_timestamp, left.m_type, left.m_code);
+      });
     auto& timeNode = node["time"];
     if(timeNode.IsDefined()) {
       auto& weekdaysNode = timeNode["weekdays"];
       if(weekdaysNode.IsDefined()) {
         for(auto& weekdayNode : weekdaysNode) {
-          rule.m_weekdays.push_back(
+          rules.back().m_weekdays.push_back(
             Beam::Extract<boost::gregorian::greg_weekday>(weekdayNode));
         }
       }
       auto& daysNode = timeNode["days"];
       if(daysNode.IsDefined()) {
         for(auto& dayNode : daysNode) {
-          rule.m_days.push_back(
+          rules.back().m_days.push_back(
             Beam::Extract<boost::gregorian::greg_day>(dayNode));
         }
       }
       auto& monthsNode = timeNode["months"];
       if(monthsNode.IsDefined()) {
         for(auto& monthNode : monthsNode) {
-          rule.m_months.push_back(
+          rules.back().m_months.push_back(
             Beam::Extract<boost::gregorian::greg_month>(monthNode));
         }
       }
       auto& yearsNode = timeNode["years"];
       if(yearsNode.IsDefined()) {
         for(auto& yearNode : yearsNode) {
-          rule.m_years.push_back(
+          rules.back().m_years.push_back(
             Beam::Extract<boost::gregorian::greg_year>(yearNode));
         }
       }
     } else {
       auto& datesNode = node["dates"];
       if(datesNode.IsDefined()) {
+        auto rule = rules.back();
+        rules.pop_back();
         for(auto& dateNode : datesNode) {
-          
+          auto date = Beam::Extract<boost::gregorian::date>(dateNode);
+          auto dateRule = rule;
+          dateRule.m_days.push_back(date.day());
+          dateRule.m_months.push_back(date.month());
+          dateRule.m_years.push_back(date.year());
+          rules.push_back(dateRule);
         }
       }
     }
-    for(auto& eventNode : node["events"]) {
-      auto event = TradingSchedule::Event();
-      event.m_type = Beam::Extract<TradingSchedule::Type>(eventNode, "type");
-      auto time = Beam::Parsers::Parse<boost::posix_time::time_duration>(
-        Beam::Extract<std::string>(eventNode, "time"));
-      event.m_timestamp = boost::posix_time::ptime(boost::gregorian::date(
-        1900, 1, 1), time);
-      auto& codeNode = eventNode["code"];
-      if(codeNode.IsDefined()) {
-        event.m_code = Beam::Extract<std::string>(codeNode);
-      }
-      rule.m_events.push_back(event);
-    }
-    std::sort(rule.m_events.begin(), rule.m_events.end(),
-      [] (auto& left, auto& right) {
-        return std::tie(left.m_timestamp, left.m_type, left.m_code) <
-          std::tie(right.m_timestamp, left.m_type, left.m_code);
-      });
-    return rule;
+    return rules;
   }
 
   /**
@@ -274,33 +240,20 @@ namespace Nexus {
       const MarketDatabase& database) {
     auto rules = std::vector<TradingSchedule::Rule>();
     for(auto& node : node) {
-      rules.push_back(ParseTradingScheduleRule(node, database));
+      auto subRules = ParseTradingScheduleRules(node, database);
+      rules.insert(rules.end(), std::make_move_iterator(subRules.begin()),
+        std::make_move_iterator(subRules.end()));
     }
     return TradingSchedule(std::move(rules));
   }
 
   inline std::ostream& operator <<(std::ostream& out,
-      TradingSchedule::Type type) {
-    if(type == TradingSchedule::Type::PRE_OPEN) {
-      return out << "PRE_OPEN";
-    } else if(type == TradingSchedule::Type::OPEN) {
-      return out << "OPEN";
-    } else if(type == TradingSchedule::Type::CLOSE) {
-      return out << "CLOSE";
-    } else {
-      return out << "OTHER";
-    }
-  }
-
-  inline std::ostream& operator <<(std::ostream& out,
       const TradingSchedule::Event& event) {
-    return out << '(' << event.m_type << " " << event.m_code << " " <<
-      event.m_timestamp << ')';
+    return out << '(' << " " << event.m_code << " " << event.m_timestamp << ')';
   }
 
   inline bool TradingSchedule::Event::operator ==(const Event& event) const {
-    return m_type == event.m_type && m_code == event.m_code &&
-      m_timestamp == event.m_timestamp;
+    return m_code == event.m_code && m_timestamp == event.m_timestamp;
   }
 
   inline bool TradingSchedule::Event::operator !=(const Event& event) const {
@@ -351,7 +304,6 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Event& value,
         unsigned int version) {
-      shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("code", value.m_code);
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }

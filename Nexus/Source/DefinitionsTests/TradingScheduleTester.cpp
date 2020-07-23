@@ -110,17 +110,17 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("find_type") {
     auto events = std::vector<TradingSchedule::Event>();
-    events.push_back({TradingSchedule::Type::OPEN, "O",
-      ptime(date(1984, 5, 7), time_duration(1, 30, 0, 0))});
-    events.push_back({TradingSchedule::Type::CLOSE, "C",
-      ptime(date(1984, 5, 7), time_duration(4, 30, 0, 0))});
+    events.push_back({"O", ptime(date(1984, 5, 7),
+      time_duration(1, 30, 0, 0))});
+    events.push_back({"C", ptime(date(1984, 5, 7),
+      time_duration(4, 30, 0, 0))});
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.push_back(TradingSchedule::Rule{{DefaultMarkets::NYSE()}, {}, {}, {},
       {}, events});
     auto schedule = TradingSchedule(rules);
     auto foundEvents = schedule.Find(date(1984, 5, 7), DefaultMarkets::NYSE(),
       [] (auto& event) {
-        return event.m_type == TradingSchedule::Type::OPEN;
+        return event.m_code == "OPEN";
       });
     REQUIRE(foundEvents.size() == 1);
     REQUIRE(foundEvents.front() == events.front());
@@ -132,7 +132,7 @@ TEST_SUITE("TradingSchedule") {
           "  time:\n"
           "    weekdays: [Sat, Sun]\n"
           "  events:\n"
-          "    - type: OPEN\n"
+          "    - code: OPEN\n"
           "      time: 9:30:00";
     auto node = YAML::Load(ss);
     auto schedule = ParseTradingSchedule(node, GetDefaultMarketDatabase());
@@ -141,6 +141,6 @@ TEST_SUITE("TradingSchedule") {
     REQUIRE(emptyEvents.empty());
     auto event = schedule.Find(date(2020, 7, 18), DefaultMarkets::NASDAQ());
     REQUIRE(event.size() == 1);
-    REQUIRE(event.front().m_type == TradingSchedule::Type::OPEN);
+    REQUIRE(event.front().m_code == "OPEN");
   }
 }

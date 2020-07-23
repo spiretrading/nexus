@@ -702,13 +702,7 @@ void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
         const object& f) {
       return self.Find(date, market, f);
     });
-  enum_<TradingSchedule::Type>(outer, "Type")
-    .value("PRE_OPEN", TradingSchedule::Type::PRE_OPEN)
-    .value("OPEN", TradingSchedule::Type::OPEN)
-    .value("CLOSE", TradingSchedule::Type::CLOSE)
-    .value("OTHER", TradingSchedule::Type::OTHER);
   class_<TradingSchedule::Event>(outer, "Event")
-    .def_readwrite("type", &TradingSchedule::Event::m_type)
     .def_readwrite("code", &TradingSchedule::Event::m_code)
     .def_readwrite("timestamp", &TradingSchedule::Event::m_timestamp)
     .def("__str__", &lexical_cast<std::string, TradingSchedule::Event>)
