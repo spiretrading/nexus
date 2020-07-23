@@ -87,14 +87,6 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
   DropDownWindow::keyPressEvent(event);
 }
 
-void DropDownList::showEvent(QShowEvent* event) {
-  if(m_layout->count() != 0) {
-    static_cast<DropDownItem*>(m_layout->itemAt(0)->widget())->set_highlight();
-    m_highlight_index = 0;
-  }
-  DropDownWindow::showEvent(event);
-}
-
 connection DropDownList::connect_activated_signal(
     const ActivatedSignal::slot_type& slot) const {
   return m_activated_signal.connect(slot);

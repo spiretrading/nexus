@@ -69,6 +69,8 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
       on_key_press(static_cast<QKeyEvent*>(event));
+    } else if(event->type() == QEvent::Show) {
+      m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -155,7 +157,7 @@ void StaticDropDownMenu::on_item_selected(const QVariant& value) {
 }
 
 void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
-  if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
-    m_menu_list->set_highlight(event->text());
-  }
+  //if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
+  //  m_menu_list->set_highlight(event->text());
+  //}
 }
