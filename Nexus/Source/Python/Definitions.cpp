@@ -715,8 +715,8 @@ void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
     .def(self == self)
     .def(self != self);
   class_<TradingSchedule::Rule>(outer, "Rule")
-    .def_readwrite("market", &TradingSchedule::Rule::m_market)
-    .def_readwrite("days_of_week", &TradingSchedule::Rule::m_daysOfWeek)
+    .def_readwrite("markets", &TradingSchedule::Rule::m_markets)
+    .def_readwrite("weekdays", &TradingSchedule::Rule::m_weekdays)
     .def_readwrite("days", &TradingSchedule::Rule::m_days)
     .def_readwrite("months", &TradingSchedule::Rule::m_months)
     .def_readwrite("years", &TradingSchedule::Rule::m_years)

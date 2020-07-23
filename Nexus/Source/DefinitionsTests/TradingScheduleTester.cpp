@@ -9,14 +9,14 @@ using namespace Nexus;
 
 TEST_SUITE("TradingSchedule") {
   TEST_CASE("match_all_dates") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::NYSE(), {}, {}, {}, {},
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::NYSE()}, {}, {}, {}, {},
       {}};
     REQUIRE(IsMatch(DefaultMarkets::NYSE(), date(1984, 5, 7), rule));
     REQUIRE(!IsMatch(DefaultMarkets::NASDAQ(), date(1984, 5, 7), rule));
   }
 
   TEST_CASE("match_day_of_week") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::NYSE(),
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::NYSE()},
       {greg_weekday::weekday_enum::Monday}, {}, {}, {}, {}};
     REQUIRE(IsMatch(DefaultMarkets::NYSE(), date(2020, 7, 20), rule));
     REQUIRE(!IsMatch(DefaultMarkets::NYSE(), date(2020, 7, 21), rule));
@@ -30,8 +30,8 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_day") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::TSX(),
-      {}, {12}, {}, {}, {}};
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::TSX()}, {}, {12}, {}, {},
+      {}};
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 7, 12), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 8, 12), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 3, 12), rule));
@@ -47,8 +47,8 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_month") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::TSX(),
-      {}, {}, {greg_month::month_enum::Feb}, {}, {}};
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::TSX()}, {}, {},
+      {greg_month::month_enum::Feb}, {}, {}};
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 2, 1), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 2, 5), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2020, 2, 7), rule));
@@ -64,8 +64,8 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_year") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::TSX(),
-      {}, {}, {}, {2002}, {}};
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::TSX()}, {}, {}, {},
+      {2002}, {}};
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2002, 2, 1), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2002, 5, 5), rule));
     REQUIRE(IsMatch(DefaultMarkets::TSX(), date(2002, 1, 7), rule));
@@ -81,8 +81,8 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_date") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::NYSE(),
-      {}, {6}, {greg_month::month_enum::May}, {1990}, {}};
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::NYSE()}, {}, {6},
+      {greg_month::month_enum::May}, {1990}, {}};
     REQUIRE(IsMatch(DefaultMarkets::NYSE(), date(1990, 5, 6), rule));
     REQUIRE(!IsMatch(DefaultMarkets::TSX(), date(1990, 5, 6), rule));
     REQUIRE(!IsMatch(DefaultMarkets::TSX(), date(2020, 7, 13), rule));
@@ -95,7 +95,7 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_weekends_2020") {
-    auto rule = TradingSchedule::Rule{DefaultMarkets::NYSE(),
+    auto rule = TradingSchedule::Rule{{DefaultMarkets::NYSE()},
       {greg_weekday::weekday_enum::Saturday,
       greg_weekday::weekday_enum::Sunday}, {}, {}, {2020}, {}};
     REQUIRE(IsMatch(DefaultMarkets::NYSE(), date(2020, 7, 4), rule));
@@ -115,7 +115,7 @@ TEST_SUITE("TradingSchedule") {
     events.push_back({TradingSchedule::Type::CLOSE, "C",
       ptime(date(1984, 5, 7), time_duration(4, 30, 0, 0))});
     auto rules = std::vector<TradingSchedule::Rule>();
-    rules.push_back(TradingSchedule::Rule{DefaultMarkets::NYSE(), {}, {}, {},
+    rules.push_back(TradingSchedule::Rule{{DefaultMarkets::NYSE()}, {}, {}, {},
       {}, events});
     auto schedule = TradingSchedule(rules);
     auto foundEvents = schedule.Find(date(1984, 5, 7), DefaultMarkets::NYSE(),
@@ -124,5 +124,23 @@ TEST_SUITE("TradingSchedule") {
       });
     REQUIRE(foundEvents.size() == 1);
     REQUIRE(foundEvents.front() == events.front());
+  }
+
+  TEST_CASE("parse_schedule") {
+    auto ss = std::stringstream();
+    ss << "- market: NSDQ\n"
+          "  time:\n"
+          "    weekdays: [Sat, Sun]\n"
+          "  events:\n"
+          "    - type: OPEN\n"
+          "      time: 9:30:00";
+    auto node = YAML::Load(ss);
+    auto schedule = ParseTradingSchedule(node, GetDefaultMarketDatabase());
+    auto emptyEvents = schedule.Find(
+      date(2020, 1, 15), DefaultMarkets::NASDAQ());
+    REQUIRE(emptyEvents.empty());
+    auto event = schedule.Find(date(2020, 7, 18), DefaultMarkets::NASDAQ());
+    REQUIRE(event.size() == 1);
+    REQUIRE(event.front().m_type == TradingSchedule::Type::OPEN);
   }
 }
