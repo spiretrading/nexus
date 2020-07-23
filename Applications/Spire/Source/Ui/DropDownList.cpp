@@ -147,21 +147,15 @@ void DropDownList::remove_item(int index) {
   update_height();
 }
 
-void DropDownList::set_highlight(const QString& text) {
-  if(m_highlight_index && *m_highlight_index != item_count() - 1) {
-    if(m_item_delegate.displayText(get_value(
-        *m_highlight_index + 1)).startsWith(text, Qt::CaseInsensitive)) {
-      set_highlight(*m_highlight_index + 1);
-      return;
-    }
-  }
+bool DropDownList::set_highlight(const QString& text) {
   for(auto i = 0; i < item_count(); ++i) {
     if(m_item_delegate.displayText(get_value(i)).startsWith(text,
         Qt::CaseInsensitive)) {
       set_highlight(i);
-      break;
+      return true;
     }
   }
+  return false;
 }
 
 void DropDownList::set_items(std::vector<DropDownItem*> items) {

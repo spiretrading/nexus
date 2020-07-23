@@ -70,11 +70,13 @@ namespace Spire {
       */
       void remove_item(int index);
 
-      //! Highlights the next item in the list that starts with the given text.
+      //! Highlights the first item in the list that starts with the given
+      //! text.
       /*!
-        \param text The text to match against the next item.
+        \param text The text to match against the item.
+        \return True if an item was highlighted, false if no match was found.
       */
-      void set_highlight(const QString& text);
+      bool set_highlight(const QString& text);
 
       //! Sets the items to display, overwriting any existing items.
       /*!

@@ -1,5 +1,6 @@
 #ifndef SPIRE_STATIC_DROP_DOWN_MENU_HPP
 #define SPIRE_STATIC_DROP_DOWN_MENU_HPP
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -86,11 +87,14 @@ namespace Spire {
       DropDownList* m_menu_list;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_menu_selection_connection;
+      QString m_entered_text;
+      QTimer m_input_timer;
 
       void draw_arrow(const QImage& arrow_image, QPainter& painter);
       void draw_background(const QColor& color, QPainter& painter);
       void draw_border(const QColor& color, QPainter& painter);
       void draw_item_text(const QString& text, QPainter& painter);
+      void on_input_timeout();
       void on_item_selected(const QVariant& value);
       void on_key_press(QKeyEvent* event);
   };

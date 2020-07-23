@@ -35,6 +35,8 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
   set_items(items);
+  connect(&m_input_timer, &QTimer::timeout, this,
+    &StaticDropDownMenu::on_input_timeout);
 }
 
 int StaticDropDownMenu::item_count() const {
@@ -69,7 +71,7 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
       on_key_press(static_cast<QKeyEvent*>(event));
-    } else if(event->type() == QEvent::Show) {
+    } else if(event->type() == QEvent::Show && m_entered_text.isEmpty()) {
       m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
     }
   }
@@ -150,6 +152,11 @@ void StaticDropDownMenu::draw_item_text(const QString& text,
     metrics.elidedText(text, Qt::ElideRight, width() - (PADDING() * 3)));
 }
 
+void StaticDropDownMenu::on_input_timeout() {
+  m_input_timer.stop();
+  m_entered_text.clear();
+}
+
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
   m_current_item = value;
   m_value_selected_signal(m_current_item);
@@ -157,7 +164,11 @@ void StaticDropDownMenu::on_item_selected(const QVariant& value) {
 }
 
 void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
-  //if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
-  //  m_menu_list->set_highlight(event->text());
-  //}
+  if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
+    m_input_timer.start(1000);
+    m_entered_text.push_back(event->text());
+    if(m_menu_list->set_highlight(m_entered_text)) {
+      m_menu_list->show();
+    }
+  }
 }
