@@ -173,6 +173,8 @@ void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
     m_entered_text.push_back(event->text());
     if(m_menu_list->set_highlight(m_entered_text)) {
       m_menu_list->show();
+    } else if(m_entered_text.size() == 1) {
+      on_input_timeout();
     }
   }
 }
