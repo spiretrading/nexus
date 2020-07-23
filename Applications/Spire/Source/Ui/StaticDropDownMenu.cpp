@@ -9,6 +9,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  const auto INPUT_TIMEOUT_MS = 1000;
+
   auto PADDING() {
     static auto padding = scale_width(8);
     return padding;
@@ -165,7 +167,7 @@ void StaticDropDownMenu::on_item_selected(const QVariant& value) {
 
 void StaticDropDownMenu::on_key_press(QKeyEvent* event) {
   if(event->key() >= Qt::Key_Exclam && event->key() <= Qt::Key_AsciiTilde) {
-    m_input_timer.start(1000);
+    m_input_timer.start(INPUT_TIMEOUT_MS);
     m_entered_text.push_back(event->text());
     if(m_menu_list->set_highlight(m_entered_text)) {
       m_menu_list->show();
