@@ -75,6 +75,8 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       on_key_press(static_cast<QKeyEvent*>(event));
     } else if(event->type() == QEvent::Show && m_entered_text.isEmpty()) {
       m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
+    } else if(event->type() == QEvent::Hide) {
+      on_input_timeout();
     }
   }
   return QWidget::eventFilter(watched, event);
