@@ -185,7 +185,8 @@ void ColorSelectorDropDown::childEvent(QChildEvent* event) {
 bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+        e->key() == Qt::Key_Space) {
       on_color_selected(m_current_color);
       window()->hide();
     } else if(e->key() == Qt::Key_Escape) {

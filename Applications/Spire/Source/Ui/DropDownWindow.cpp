@@ -77,6 +77,10 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
 void DropDownWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     hide();
+  } else if(event->key() == Qt::Key_Space) {
+    if(m_is_click_activated) {
+      swap_visibility();
+    }
   }
 }
 
