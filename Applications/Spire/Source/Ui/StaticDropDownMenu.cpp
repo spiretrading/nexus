@@ -33,10 +33,8 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
     m_current_item = items.front();
   }
   m_menu_list = new DropDownList({}, true, this);
-  if(m_display_text.isEmpty()) {
-    m_menu_activated_connection = m_menu_list->connect_activated_signal(
-      [=] (const auto& value) { on_item_activated(value); });
-  }
+  m_menu_activated_connection = m_menu_list->connect_activated_signal(
+    [=] (const auto& value) { on_item_activated(value); });
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
@@ -117,13 +115,13 @@ void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   } else {
     draw_background(Qt::transparent, painter);
   }
-  if(m_last_activated_item.isValid()) {
+  if(!m_display_text.isEmpty()) {
+    draw_item_text(m_display_text, painter);
+  } else if(m_last_activated_item.isValid()) {
     draw_item_text(m_item_delegate.displayText(m_last_activated_item),
       painter);
-  } else if(m_display_text.isEmpty()) {
-    draw_item_text(m_item_delegate.displayText(m_current_item), painter);
   } else {
-    draw_item_text(m_display_text, painter);
+    draw_item_text(m_item_delegate.displayText(m_current_item), painter);
   }
   if(isEnabled()) {
     draw_arrow(m_dropdown_image, painter);
