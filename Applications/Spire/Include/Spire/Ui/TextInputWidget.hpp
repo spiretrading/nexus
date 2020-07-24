@@ -13,7 +13,7 @@ namespace Spire {
       /*!
         \param parent The parent widget.
       */
-      TextInputWidget(QWidget* parent = nullptr);
+      explicit TextInputWidget(QWidget* parent = nullptr);
   };
 }
 

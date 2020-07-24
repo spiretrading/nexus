@@ -17,11 +17,11 @@ namespace {
   }
 }
 
-StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
+StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   QWidget* parent)
-  : StaticDropDownMenu(items, "", parent) {}
+  : StaticDropDownMenu(std::move(items), "", parent) {}
 
-StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
+StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
     const QString& display_text, QWidget* parent)
     : QWidget(parent),
       m_display_text(display_text),
@@ -38,13 +38,13 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
-  set_items(items);
+  set_items(std::move(items));
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
 }
 
-int StaticDropDownMenu::item_count() const {
+unsigned int StaticDropDownMenu::item_count() const {
   return m_menu_list->item_count();
 }
 
@@ -52,23 +52,24 @@ void StaticDropDownMenu::insert_item(DropDownItem* item) {
   m_menu_list->insert_item(item);
 }
 
-void StaticDropDownMenu::remove_item(int index) {
+void StaticDropDownMenu::remove_item(unsigned int index) {
   m_menu_list->remove_item(index);
 }
 
-void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
+void StaticDropDownMenu::set_items(std::vector<QVariant> items) {
   auto widget_items = std::vector<DropDownItem*>();
   widget_items.reserve(items.size());
-  for(auto& item : items) {
-    auto item_widget = new DropDownItem(item, this);
-    item_widget->setFixedHeight(scale_height(20));
-    widget_items.push_back(item_widget);
-  }
+  std::transform(items.begin(), items.end(), std::back_inserter(widget_items),
+    [=] (const auto& item) {
+      auto item_widget = new DropDownItem(item, this);
+      item_widget->setFixedHeight(scale_height(20));
+      return item_widget;
+    });
   m_menu_list->set_items(widget_items);
   m_menu_list->setFixedWidth(width());
 }
 
-const QVariant& StaticDropDownMenu::get_current_item() const {
+QVariant StaticDropDownMenu::get_current_item() const {
   return m_current_item;
 }
 

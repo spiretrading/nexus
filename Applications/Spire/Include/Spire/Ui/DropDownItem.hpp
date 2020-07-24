@@ -28,7 +28,7 @@ namespace Spire {
         \param value The value represented by the DropDownItem.
         \param parent The parent widget.
       */
-      explicit DropDownItem(const QVariant& value, QWidget* parent = nullptr);
+      explicit DropDownItem(QVariant value, QWidget* parent = nullptr);
 
       //! Consstructs a text DropDownItem with an icon.
       /*!
@@ -36,11 +36,10 @@ namespace Spire {
         \param icon The icon to display beside the value.
         \param parent The parent widget.
       */
-      DropDownItem(const QVariant& value, const QImage& icon,
-        QWidget* parent = nullptr);
+      DropDownItem(QVariant value, QImage icon, QWidget* parent = nullptr);
 
       //! Returns the item's value.
-      const QVariant& get_value() const;
+      QVariant get_value() const;
 
       //! Displays the item's highlight style.
       void set_highlight();

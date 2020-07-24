@@ -16,7 +16,7 @@ namespace Spire {
       /*!
         \param index The index of the selected item.
       */
-      using IndexSelectedSignal = Signal<void (int index)>;
+      using IndexSelectedSignal = Signal<void (unsigned int index)>;
 
       //! Signals that an item was selected.
       /*!
@@ -29,10 +29,8 @@ namespace Spire {
         \param items The items to display.
         \param parent The parent widget.
       */
-      explicit StaticDropDownMenu(const std::vector<QVariant>& items,
+      explicit StaticDropDownMenu(std::vector<QVariant> items,
         QWidget* parent = nullptr);
-
-      virtual ~StaticDropDownMenu() = default;
 
       //! Constructs a StaticDropDownMenu with a fixed input label.
       /*!
@@ -40,11 +38,13 @@ namespace Spire {
         \param display_text The fixed input label text to display.
         \param parent The parent widget.
       */
-      StaticDropDownMenu(const std::vector<QVariant>& items,
+      StaticDropDownMenu(std::vector<QVariant> items,
         const QString& display_text, QWidget* parent = nullptr);
 
+      virtual ~StaticDropDownMenu() = default;
+
       //! Returns the number of items in the list.
-      virtual int item_count() const;
+      virtual unsigned int item_count() const;
 
       //! Appends an item to the list.
       virtual void insert_item(DropDownItem* item);
@@ -53,16 +53,16 @@ namespace Spire {
       /*!
         \param index The index of the item to remove.
       */
-      virtual void remove_item(int index);
+      virtual void remove_item(unsigned int index);
 
       //! Sets the items to display, overwriting any existing items.
       /*!
         \param items The items to display.
       */
-      virtual void set_items(const std::vector<QVariant>& items);
+      virtual void set_items(std::vector<QVariant> items);
 
       //! Returns the currently selected item.
-      virtual const QVariant& get_current_item() const;
+      virtual QVariant get_current_item() const;
 
       //! Connects a slot to the index selected signal.
       virtual boost::signals2::connection connect_index_selected_signal(

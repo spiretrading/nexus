@@ -36,28 +36,38 @@ bool DropDownWindow::eventFilter(QObject* watched, QEvent* event) {
       resize(m_widget->width() + 2, m_widget->height() + 2);
     }
   } else if(watched == parent()) {
-    if(event->type() == QEvent::Move) {
-      move_to_parent();
-    } else if(event->type() == QEvent::FocusOut && !isActiveWindow()) {
-      static_cast<QWidget*>(parent())->update();
-      hide();
-    } else if(event->type() == QEvent::KeyPress) {
-      auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Escape) {
-        hide();
-      } else if(e->key() == Qt::Key_Space || e->key() == Qt::Key_Down) {
-        if(m_is_click_activated) {
-          swap_visibility();
-          return true;
+    switch(event->type()) {
+      case QEvent::Move:
+        move_to_parent();
+        break;
+      case QEvent::FocusOut:
+        if(!isActiveWindow()) {
+          static_cast<QWidget*>(parent())->update();
+          hide();
         }
-      }
-    } else if(event->type() == QEvent::MouseButtonPress &&
-        m_is_click_activated) {
-      auto e = static_cast<QMouseEvent*>(event);
-      if(e->button() == Qt::LeftButton) {
-        swap_visibility();
-        return true;
-      }
+        break;
+      case QEvent::KeyPress:
+        {
+          auto e = static_cast<QKeyEvent*>(event);
+          if(e->key() == Qt::Key_Escape) {
+            hide();
+          } else if(e->key() == Qt::Key_Space || e->key() == Qt::Key_Down) {
+            if(m_is_click_activated) {
+              swap_visibility();
+              return true;
+            }
+          }
+        }
+        break;
+      case QEvent::MouseButtonPress:
+        if(m_is_click_activated) {
+          auto e = static_cast<QMouseEvent*>(event);
+          if(e->button() == Qt::LeftButton) {
+            swap_visibility();
+            return true;
+          }
+        }
+        break;
     }
   } else if(watched == static_cast<QWidget*>(parent())->window()) {
     if(event->type() == QEvent::WindowDeactivate && !isActiveWindow()) {

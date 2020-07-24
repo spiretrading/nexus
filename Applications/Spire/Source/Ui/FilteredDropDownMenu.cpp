@@ -13,7 +13,7 @@ namespace {
   }
 }
 
-FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
+FilteredDropDownMenu::FilteredDropDownMenu(std::vector<QVariant> items,
     QWidget* parent)
     : TextInputWidget(parent),
       m_was_click_focused(false) {
@@ -33,7 +33,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(const std::vector<QVariant>& items,
   });
   m_list_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
-  set_items(items);
+  set_items(std::move(items));
   m_menu_list->installEventFilter(this);
 }
 
@@ -105,21 +105,20 @@ connection FilteredDropDownMenu::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
-void FilteredDropDownMenu::set_items(const std::vector<QVariant>& items) {
-  m_items = items;
-  m_menu_list->set_items(create_widget_items(m_items));
+void FilteredDropDownMenu::set_items(std::vector<QVariant> items) {
+  m_items = std::move(items);
+  m_menu_list->set_items(std::move(create_widget_items(m_items)));
   m_menu_list->setFixedWidth(width());
 }
 
-const std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
+std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
     const std::vector<QVariant>& items) {
   return create_widget_items(items, "");
 }
 
-const std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
+std::vector<DropDownItem*> FilteredDropDownMenu::create_widget_items(
     const std::vector<QVariant>& items, const QString& filter_text) {
   auto widget_items = std::vector<DropDownItem*>();
-  widget_items.reserve(items.size());
   for(const auto& item : items) {
     if(filter_text.isEmpty() || m_item_delegate.displayText(item).startsWith(
         filter_text, Qt::CaseInsensitive)) {
@@ -157,22 +156,17 @@ void FilteredDropDownMenu::draw_highlight(const QString& highlight_text) {
 void FilteredDropDownMenu::on_editing_finished() {
   if(text().isEmpty()) {
     setText(m_item_delegate.displayText(m_current_item));
-    return;
-  }
-  if(m_last_activated_item.isValid()) {
+  } else if(m_last_activated_item.isValid()) {
     on_item_selected(m_last_activated_item);
     setText(m_item_delegate.displayText(m_last_activated_item));
     m_last_activated_item = QVariant();
-    return;
-  }
-  auto item = std::move(m_menu_list->get_value(0));
-  if(item.isValid() &&
-      m_item_delegate.displayText(item).startsWith(text(),
+  } else if(m_menu_list->get_value(0).isValid() &&
+      m_item_delegate.displayText(m_menu_list->get_value(0)).startsWith(text(),
       Qt::CaseInsensitive)) {
-    on_item_selected(item);
-    return;
+    on_item_selected(m_menu_list->get_value(0));
+  } else {
+    setText(m_item_delegate.displayText(m_current_item));
   }
-  setText(m_item_delegate.displayText(m_current_item));
 }
 
 void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
@@ -193,11 +187,11 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
 void FilteredDropDownMenu::on_text_edited(const QString& text) {
   m_last_activated_item = QVariant();
   if(text.isEmpty()) {
-    m_menu_list->set_items(create_widget_items(m_items));
+    m_menu_list->set_items(std::move(create_widget_items(m_items)));
     m_menu_list->show();
     return;
   }
-  auto items = create_widget_items(m_items, text);
+  auto items = std::move(create_widget_items(m_items, text));
   if(items.empty()) {
     m_menu_list->hide();
     return;

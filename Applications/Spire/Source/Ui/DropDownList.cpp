@@ -15,17 +15,7 @@ namespace {
 
 DropDownList::DropDownList(std::vector<DropDownItem*> items,
     bool is_click_activated, QWidget* parent)
-    : DropDownWindow(is_click_activated, parent),
-      m_max_displayed_items(5) {
-  m_scroll_area = new ScrollArea(this);
-  m_scroll_area->setFocusProxy(parent);
-  m_scroll_area->setWidgetResizable(true);
-  auto main_widget = new QWidget(this);
-  m_layout = new QVBoxLayout(main_widget);
-  m_layout->setContentsMargins({});
-  m_layout->setSpacing(0);
-  m_scroll_area->setWidget(main_widget);
-  set_widget(m_scroll_area);
+    : DropDownWindow(is_click_activated, parent) {
   set_items(items);
   parent->installEventFilter(this);
 }
@@ -34,22 +24,27 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parent()) {
     if(event->type() == QEvent::KeyPress) {
       auto e = static_cast<QKeyEvent*>(event);
-      if(e->key() == Qt::Key_Up) {
-        if(isVisible()) {
-          focus_previous();
-          return true;
-        }
-      } else if(e->key() == Qt::Key_Down) {
-        if(isVisible()) {
-          focus_next();
-          return true;
-        }
-      } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-        if(isVisible() && m_highlight_index) {
-          on_item_selected(get_widget(*m_highlight_index)->get_value(),
-            *m_highlight_index);
-          return true;
-        }
+      switch(e->key()) {
+        case Qt::Key_Down:
+          if(isVisible()) {
+            focus_next();
+            return true;
+          }
+          break;
+        case Qt::Key_Up:
+          if(isVisible()) {
+            focus_previous();
+            return true;
+          }
+          break;
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+          if(isVisible() && m_highlight_index) {
+            on_item_selected(get_widget(*m_highlight_index)->get_value(),
+              *m_highlight_index);
+            return true;
+          }
+          break;
       }
     }
   }
@@ -68,21 +63,26 @@ void DropDownList::hideEvent(QHideEvent* event) {
 }
 
 void DropDownList::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Up) {
-    if(isVisible()) {
-      focus_previous();
-    }
-  } else if(event->key() == Qt::Key_Down) {
-    if(isVisible()) {
-      focus_next();
-    }
-  } else if(event->key() == Qt::Key_Escape) {
-    hide();
-  } else if(event->key() == Qt::Key_Enter) {
-    if(m_highlight_index) {
-      on_item_selected(get_widget(*m_highlight_index)->get_value(),
-        *m_highlight_index);
-    }
+  switch(event->key()) {
+    case Qt::Key_Down:
+      if(isVisible()) {
+        focus_next();
+      }
+      break;
+    case Qt::Key_Enter:
+      if(m_highlight_index) {
+        on_item_selected(get_widget(*m_highlight_index)->get_value(),
+          *m_highlight_index);
+      }
+      break;
+    case Qt::Key_Escape:
+      hide();
+      break;
+    case Qt::Key_Up:
+      if(isVisible()) {
+        focus_previous();
+      }
+      break;
   }
   DropDownWindow::keyPressEvent(event);
 }
@@ -107,8 +107,8 @@ connection DropDownList::connect_value_selected_signal(
   return m_value_selected_signal.connect(slot);
 }
 
-QVariant DropDownList::get_value(int index) {
-  if(m_layout->count() - 1 < index) {
+QVariant DropDownList::get_value(unsigned int index) {
+  if(static_cast<unsigned int>(m_layout->count() - 1) < index) {
     return QVariant();
   }
   return get_widget(index)->get_value();
@@ -124,12 +124,12 @@ void DropDownList::insert_item(DropDownItem* item) {
   update_height();
 }
 
-int DropDownList::item_count() const {
+unsigned int DropDownList::item_count() const {
   return m_layout->count();
 }
 
-void DropDownList::remove_item(int index) {
-  if(index > m_layout->count() - 1 || index < 0) {
+void DropDownList::remove_item(unsigned int index) {
+  if(index > static_cast<unsigned int>(m_layout->count() - 1)) {
     return;
   }
   m_item_selected_connections.pop_back();
@@ -137,8 +137,8 @@ void DropDownList::remove_item(int index) {
       ++i) {
     m_item_selected_connections[i] =
       std::move(get_widget(i + 1)->connect_selected_signal(
-      [=, index = i] (auto value) {
-        on_item_selected(std::move(value), index);
+      [=] (auto value) {
+        on_item_selected(std::move(value), i);
       }));
   }
   auto layout_item = m_layout->takeAt(index);
@@ -148,7 +148,7 @@ void DropDownList::remove_item(int index) {
 }
 
 bool DropDownList::set_highlight(const QString& text) {
-  for(auto i = 0; i < item_count(); ++i) {
+  for(auto i = unsigned int(0); i < item_count(); ++i) {
     if(m_item_delegate.displayText(get_value(i)).startsWith(text,
         Qt::CaseInsensitive)) {
       set_highlight(i);
@@ -167,8 +167,8 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   for(auto i = std::size_t(0); i < items.size(); ++i) {
     m_layout->addWidget(items[i]);
     m_item_selected_connections.push_back(std::move(
-      items[i]->connect_selected_signal([=, index = i] (auto value) {
-        on_item_selected(std::move(value), index);
+      items[i]->connect_selected_signal([=] (auto value) {
+        on_item_selected(std::move(value), i);
       })));
   }
   if(m_layout->count() > 0) {
@@ -180,7 +180,7 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
 }
 
-DropDownItem* DropDownList::get_widget(int index) {
+DropDownItem* DropDownList::get_widget(unsigned int index) {
   return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
 }
 
@@ -240,7 +240,7 @@ void DropDownList::update_height() {
     m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
 }
 
-void DropDownList::on_item_selected(QVariant value, int index) {
+void DropDownList::on_item_selected(QVariant value, unsigned int index) {
   m_index_selected_signal(index);
   m_value_selected_signal(std::move(value));
   hide();

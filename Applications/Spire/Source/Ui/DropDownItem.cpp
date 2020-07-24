@@ -18,14 +18,13 @@ namespace {
   }
 }
 
-DropDownItem::DropDownItem(const QVariant& value, QWidget* parent)
-  : DropDownItem(value, {}, parent) {}
+DropDownItem::DropDownItem(QVariant value, QWidget* parent)
+  : DropDownItem(std::move(value), {}, parent) {}
 
-DropDownItem::DropDownItem(const QVariant& value, const QImage& icon,
-    QWidget* parent)
+DropDownItem::DropDownItem(QVariant value, QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_value(value),
-      m_icon(icon),
+      m_value(std::move(value)),
+      m_icon(std::move(icon)),
       m_is_highlighted(false) {
   setAttribute(Qt::WA_Hover);
   auto font = QFont("Roboto");
@@ -74,7 +73,7 @@ connection DropDownItem::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
-const QVariant& DropDownItem::get_value() const {
+QVariant DropDownItem::get_value() const {
   return m_value;
 }
 

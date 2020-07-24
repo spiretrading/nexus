@@ -5,6 +5,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"
 #include "Spire/Ui/DropDownWindow.hpp"
+#include "Spire/Ui/ListWidget.hpp"
 
 namespace Spire {
 
@@ -28,7 +29,7 @@ namespace Spire {
       /*!
         \param index The item's list index.
       */
-      using IndexSelectedSignal = Signal<void (int index)>;
+      using IndexSelectedSignal = Signal<void (unsigned int index)>;
 
       //! Signals that an item was selected.
       /*!
@@ -53,7 +54,7 @@ namespace Spire {
       /*!
         \param index The index of the item.
       */
-      QVariant get_value(int index);
+      QVariant get_value(unsigned int index);
 
       //! Appends an item to the list.
       /*!
@@ -62,13 +63,13 @@ namespace Spire {
       void insert_item(DropDownItem* item);
 
       //! Returns the number of items in the list.
-      int item_count() const;
+      unsigned int item_count() const;
 
       //! Removes and deletes an item.
       /*!
         \param index The index of the item to remove.
       */
-      void remove_item(int index);
+      void remove_item(unsigned int index);
 
       //! Highlights the first item in the list that starts with the given
       //! text.
@@ -110,21 +111,19 @@ namespace Spire {
       mutable HighlightedSignal m_highlighted_signal;
       mutable IndexSelectedSignal m_index_selected_signal;
       mutable ValueSelectedSignal m_value_selected_signal;
-      int m_max_displayed_items;
-      QVBoxLayout* m_layout;
-      ScrollArea* m_scroll_area;
+      ListWidget* m_list_widget;
       boost::optional<int> m_highlight_index;
       CustomVariantItemDelegate m_item_delegate;
       std::vector<boost::signals2::scoped_connection>
         m_item_selected_connections;
 
-      DropDownItem* get_widget(int index);
+      DropDownItem* get_widget(unsigned int index);
       void focus_next();
       void focus_previous();
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();
-      void on_item_selected(QVariant value, int index);
+      void on_item_selected(QVariant value, unsigned int index);
   };
 }
 

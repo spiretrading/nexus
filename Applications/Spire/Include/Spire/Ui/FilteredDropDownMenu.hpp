@@ -23,14 +23,14 @@ namespace Spire {
         \param items The initial items to display.
         \param parent The parent widget.
       */
-      explicit FilteredDropDownMenu(const std::vector<QVariant>& items,
+      explicit FilteredDropDownMenu(std::vector<QVariant> items,
         QWidget* parent = nullptr);
 
       //! Sets the items to display, overwriting any existing items.
       /*!
         \param items The new items to display.
       */
-      void set_items(const std::vector<QVariant>& items);
+      void set_items(std::vector<QVariant> items);
 
       //! Connects a slot to the selected signal.
       boost::signals2::connection connect_selected_signal(
@@ -45,17 +45,17 @@ namespace Spire {
 
     private:
       mutable SelectedSignal m_selected_signal;
-      DropDownList* m_menu_list;
       std::vector<QVariant> m_items;
+      DropDownList* m_menu_list;
       QVariant m_current_item;
       QVariant m_last_activated_item;
       bool m_was_click_focused;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_list_selection_connection;
 
-      const std::vector<DropDownItem*> create_widget_items(
+      std::vector<DropDownItem*> create_widget_items(
         const std::vector<QVariant>& items);
-      const std::vector<DropDownItem*> create_widget_items(
+      std::vector<DropDownItem*> create_widget_items(
         const std::vector<QVariant>& items, const QString& filter_text);
       void draw_border(const QColor& color);
       void draw_highlight(const QString& highlight_text);

@@ -24,18 +24,20 @@ namespace Spire {
       */
       explicit ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
 
+      virtual ~ScrollArea() = default;
+
       //! Sets the scroll area's border style.
       /*
         \param width The border width.
         \param color The border color.
       */
-      void set_border_style(int width, const QColor& color);
+      virtual void set_border_style(int width, const QColor& color);
 
       //! Sets the widget displayed in the scroll area.
       /*
         \param widget The widget to display.
       */
-      void setWidget(QWidget* widget);
+      virtual void setWidget(QWidget* widget);
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
