@@ -197,6 +197,7 @@ bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
     if(e->button() == Qt::LeftButton) {
       on_color_selected(m_current_color);
       window()->hide();
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
