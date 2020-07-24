@@ -82,7 +82,7 @@ namespace Spire {
       mutable ValueSelectedSignal m_value_selected_signal;
       QVariant m_current_item;
       QString m_display_text;
-      QString m_preview_text;
+      QVariant m_last_activated_item;
       QImage m_dropdown_image;
       QImage m_disabled_dropdown_image;
       DropDownList* m_menu_list;

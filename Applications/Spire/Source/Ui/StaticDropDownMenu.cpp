@@ -43,6 +43,7 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
   set_items(items);
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
+  installEventFilter(this);
 }
 
 int StaticDropDownMenu::item_count() const {
@@ -76,13 +77,25 @@ const QVariant& StaticDropDownMenu::get_current_item() const {
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
-      on_key_press(static_cast<QKeyEvent*>(event));
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape) {
+        m_last_activated_item = QVariant();
+      }
+      on_key_press(e);
     } else if(event->type() == QEvent::Show && m_entered_text.isEmpty()) {
       m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
     } else if(event->type() == QEvent::Hide) {
-      m_preview_text.clear();
-      on_input_timeout();
+      if(m_last_activated_item.isValid()) {
+        on_item_selected(m_last_activated_item);
+      }
       update();
+    }
+  } else if(watched == this) {
+    if(event->type() == QEvent::KeyPress) {
+      auto e = static_cast<QKeyEvent*>(event);
+      if(e->key() == Qt::Key_Escape) {
+        m_last_activated_item = QVariant();
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -104,8 +117,9 @@ void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   } else {
     draw_background(Qt::transparent, painter);
   }
-  if(!m_preview_text.isEmpty()) {
-    draw_item_text(m_preview_text, painter);
+  if(m_last_activated_item.isValid()) {
+    draw_item_text(m_item_delegate.displayText(m_last_activated_item),
+      painter);
   } else if(m_display_text.isEmpty()) {
     draw_item_text(m_item_delegate.displayText(m_current_item), painter);
   } else {
@@ -170,14 +184,14 @@ void StaticDropDownMenu::on_input_timeout() {
 }
 
 void StaticDropDownMenu::on_item_activated(const QVariant& value) {
-  m_preview_text = m_item_delegate.displayText(value);
+  m_last_activated_item = value;
   update();
 }
 
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
-  m_preview_text.clear();
   m_current_item = value;
   m_value_selected_signal(m_current_item);
+  m_last_activated_item = QVariant();
   update();
 }
 
