@@ -56,7 +56,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.buyingPower}
-            min={RiskParametersView.ZERO_MONEY}
+            min={Nexus.Money.ZERO}
             onChange={this.onBuyingPowerChange}/>
           <Padding size='30px'/>
           <Label text={`Net Loss (${currencySign})`}/>
@@ -64,7 +64,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <MoneyField
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.netLoss}
-            min={RiskParametersView.ZERO_MONEY}
+            min={Nexus.Money.ZERO}
             onChange={this.onNetLossChange}/>
           <Padding size='30px'/>
           <Label text='Transition Time'/>
@@ -205,7 +205,6 @@ export class RiskParametersView extends React.Component<Properties> {
       }
     }
   });
-  private static ZERO_MONEY = new Nexus.Money(0);
 }
 
 interface LabelProperties {
