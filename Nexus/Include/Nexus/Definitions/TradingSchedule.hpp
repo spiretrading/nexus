@@ -179,8 +179,8 @@ namespace Nexus {
     }
     std::sort(rules.back().m_events.begin(), rules.back().m_events.end(),
       [] (auto& left, auto& right) {
-        return std::tie(left.m_timestamp, left.m_type, left.m_code) <
-          std::tie(right.m_timestamp, left.m_type, left.m_code);
+        return std::tie(left.m_timestamp, left.m_code) <
+          std::tie(right.m_timestamp, left.m_code);
       });
     auto& timeNode = node["time"];
     if(timeNode.IsDefined()) {

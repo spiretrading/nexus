@@ -120,7 +120,7 @@ TEST_SUITE("TradingSchedule") {
     auto schedule = TradingSchedule(rules);
     auto foundEvents = schedule.Find(date(1984, 5, 7), DefaultMarkets::NYSE(),
       [] (auto& event) {
-        return event.m_code == "OPEN";
+        return event.m_code == "O";
       });
     REQUIRE(foundEvents.size() == 1);
     REQUIRE(foundEvents.front() == events.front());
