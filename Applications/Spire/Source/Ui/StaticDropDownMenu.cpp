@@ -33,6 +33,10 @@ StaticDropDownMenu::StaticDropDownMenu(const std::vector<QVariant>& items,
     m_current_item = items.front();
   }
   m_menu_list = new DropDownList({}, true, this);
+  if(m_display_text.isEmpty()) {
+    m_menu_activated_connection = m_menu_list->connect_activated_signal(
+      [=] (const auto& value) { on_item_activated(value); });
+  }
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
@@ -76,7 +80,9 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Show && m_entered_text.isEmpty()) {
       m_menu_list->set_highlight(m_item_delegate.displayText(m_current_item));
     } else if(event->type() == QEvent::Hide) {
+      m_preview_text.clear();
       on_input_timeout();
+      update();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -98,7 +104,9 @@ void StaticDropDownMenu::paintEvent(QPaintEvent* event) {
   } else {
     draw_background(Qt::transparent, painter);
   }
-  if(m_display_text.isEmpty()) {
+  if(!m_preview_text.isEmpty()) {
+    draw_item_text(m_preview_text, painter);
+  } else if(m_display_text.isEmpty()) {
     draw_item_text(m_item_delegate.displayText(m_current_item), painter);
   } else {
     draw_item_text(m_display_text, painter);
@@ -161,7 +169,13 @@ void StaticDropDownMenu::on_input_timeout() {
   m_entered_text.clear();
 }
 
+void StaticDropDownMenu::on_item_activated(const QVariant& value) {
+  m_preview_text = m_item_delegate.displayText(value);
+  update();
+}
+
 void StaticDropDownMenu::on_item_selected(const QVariant& value) {
+  m_preview_text.clear();
   m_current_item = value;
   m_value_selected_signal(m_current_item);
   update();

@@ -82,11 +82,13 @@ namespace Spire {
       mutable ValueSelectedSignal m_value_selected_signal;
       QVariant m_current_item;
       QString m_display_text;
+      QString m_preview_text;
       QImage m_dropdown_image;
       QImage m_disabled_dropdown_image;
       DropDownList* m_menu_list;
       CustomVariantItemDelegate m_item_delegate;
       boost::signals2::scoped_connection m_menu_selection_connection;
+      boost::signals2::scoped_connection m_menu_activated_connection;
       QString m_entered_text;
       QTimer m_input_timer;
 
@@ -95,6 +97,7 @@ namespace Spire {
       void draw_border(const QColor& color, QPainter& painter);
       void draw_item_text(const QString& text, QPainter& painter);
       void on_input_timeout();
+      void on_item_activated(const QVariant& value);
       void on_item_selected(const QVariant& value);
       void on_key_press(QKeyEvent* event);
   };
