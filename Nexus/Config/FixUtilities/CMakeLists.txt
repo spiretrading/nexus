@@ -3,6 +3,9 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 add_executable(FixUtilitiesTests ${source_files})
+target_link_libraries(FixUtilitiesTests
+  debug ${QUICK_FIX_LIBRARY_DEBUG_PATH}
+  optimized ${QUICK_FIX_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
   target_link_libraries(FixUtilitiesTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
@@ -15,8 +18,6 @@ if(UNIX)
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${QUICK_FIX_LIBRARY_DEBUG_PATH}
-    optimized ${QUICK_FIX_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
 add_custom_command(TARGET FixUtilitiesTests

@@ -59,6 +59,9 @@ namespace Nexus::DefinitionsService {
       /** Loads the list of ComplianceRuleSchemas. */
       std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
 
+      /** Loads the TradingSchedule. */
+      TradingSchedule LoadTradingSchedule();
+
       void Open();
 
       void Close();
@@ -141,6 +144,12 @@ namespace Nexus::DefinitionsService {
       DefinitionsClient<B>::LoadComplianceRuleSchemas() {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadComplianceRuleSchemasService>(0);
+  }
+
+  template<typename B>
+  TradingSchedule DefinitionsClient<B>::LoadTradingSchedule() {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadTradingScheduleService>(0);
   }
 
   template<typename B>

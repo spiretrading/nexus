@@ -25,12 +25,14 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -38,7 +40,7 @@ using namespace pybind11;
 
 namespace {
   template<typename T>
-  auto bind_integer_precision(T (*function)(T, int)) {
+  auto BindIntegerPrecision(T (*function)(T, int)) {
     return [=] (T object) {
       return function(std::move(object), 0);
     };
@@ -265,6 +267,7 @@ void Nexus::Python::ExportDefinitions(pybind11::module& module) {
   ExportTag(module);
   ExportTimeAndSale(module);
   ExportTimeInForce(module);
+  ExportTradingSchedule(module);
 }
 
 void Nexus::Python::ExportDestination(pybind11::module& module) {
@@ -374,13 +377,13 @@ void Nexus::Python::ExportMoney(pybind11::module& module) {
       &Money::FromValue))
     .def("__str__", &lexical_cast<std::string, Money>)
     .def("__abs__", static_cast<Money (*)(Money)>(&Abs))
-    .def("__floor__", bind_integer_precision(
+    .def("__floor__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Floor)))
-    .def("__ceil__", bind_integer_precision(
+    .def("__ceil__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Ceil)))
-    .def("__trunc__", bind_integer_precision(
+    .def("__trunc__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Truncate)))
-    .def("__round__", bind_integer_precision(
+    .def("__round__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Round)))
     .def("__float__",
       [] (Money self) {
@@ -466,13 +469,13 @@ void Nexus::Python::ExportQuantity(pybind11::module& module) {
       &Quantity::FromValue))
     .def("__str__", &lexical_cast<std::string, Quantity>)
     .def("__abs__", static_cast<Quantity (*)(Quantity)>(&Abs))
-    .def("__floor__", bind_integer_precision(
+    .def("__floor__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Floor)))
-    .def("__ceil__", bind_integer_precision(
+    .def("__ceil__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Ceil)))
-    .def("__trunc__", bind_integer_precision(
+    .def("__trunc__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Truncate)))
-    .def("__round__", bind_integer_precision(
+    .def("__round__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Round)))
     .def("__int__",
       [] (Quantity self) {
@@ -687,4 +690,34 @@ void Nexus::Python::ExportTimeInForce(pybind11::module& module) {
     .value("FOK", TimeInForce::Type::FOK)
     .value("GTX", TimeInForce::Type::GTX)
     .value("GTD", TimeInForce::Type::GTD);
+}
+
+void Nexus::Python::ExportTradingSchedule(pybind11::module& module) {
+  auto outer = class_<TradingSchedule>(module, "TradingSchedule")
+    .def(init<std::vector<TradingSchedule::Rule>>())
+    .def("find", [] (TradingSchedule& self, date date, MarketCode market) {
+      return self.Find(date, market);
+    })
+    .def("find", [] (TradingSchedule& self, date date, MarketCode market,
+        const object& f) {
+      return self.Find(date, market, f);
+    });
+  class_<TradingSchedule::Event>(outer, "Event")
+    .def_readwrite("code", &TradingSchedule::Event::m_code)
+    .def_readwrite("timestamp", &TradingSchedule::Event::m_timestamp)
+    .def("__str__", &lexical_cast<std::string, TradingSchedule::Event>)
+    .def(self == self)
+    .def(self != self);
+  class_<TradingSchedule::Rule>(outer, "Rule")
+    .def_readwrite("markets", &TradingSchedule::Rule::m_markets)
+    .def_readwrite("weekdays", &TradingSchedule::Rule::m_weekdays)
+    .def_readwrite("days", &TradingSchedule::Rule::m_days)
+    .def_readwrite("months", &TradingSchedule::Rule::m_months)
+    .def_readwrite("years", &TradingSchedule::Rule::m_years)
+    .def_readwrite("events", &TradingSchedule::Rule::m_events)
+    .def(self == self)
+    .def(self != self);
+  module.def("is_match",
+    static_cast<bool (*)(MarketCode, date, const TradingSchedule::Rule&)>(
+    &IsMatch));
 }

@@ -80,6 +80,8 @@ namespace Nexus::DefinitionsService {
         ServiceProtocolClient& client, int dummy);
       std::vector<Compliance::ComplianceRuleSchema> OnLoadComplianceRuleSchemas(
         ServiceProtocolClient& client, int dummy);
+      TradingSchedule OnLoadTradingSchedule(ServiceProtocolClient& client,
+        int dummy);
   };
 
   struct MetaDefinitionsServlet {
@@ -139,6 +141,9 @@ namespace Nexus::DefinitionsService {
     LoadComplianceRuleSchemasService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadComplianceRuleSchemas, this,
       std::placeholders::_1, std::placeholders::_2));
+    LoadTradingScheduleService::AddSlot(Store(slots), std::bind(
+      &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1,
+      std::placeholders::_2));
   }
 
   template<typename C>
@@ -215,6 +220,12 @@ namespace Nexus::DefinitionsService {
       DefinitionsServlet<C>::OnLoadComplianceRuleSchemas(
       ServiceProtocolClient& client, int dummy) {
     return m_complianceRuleSchemas;
+  }
+
+  template<typename C>
+  TradingSchedule DefinitionsServlet<C>::OnLoadTradingSchedule(
+      ServiceProtocolClient& client, int dummy) {
+    return TradingSchedule();
   }
 }
 
