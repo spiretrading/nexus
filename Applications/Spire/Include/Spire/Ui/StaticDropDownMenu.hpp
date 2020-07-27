@@ -16,7 +16,7 @@ namespace Spire {
       /*!
         \param index The index of the selected item.
       */
-      using IndexSelectedSignal = Signal<void (unsigned int index)>;
+      using IndexSelectedSignal = Signal<void (int index)>;
 
       //! Signals that an item was selected.
       /*!
@@ -44,7 +44,7 @@ namespace Spire {
       virtual ~StaticDropDownMenu() = default;
 
       //! Returns the number of items in the list.
-      virtual unsigned int item_count() const;
+      virtual int item_count() const;
 
       //! Appends an item to the list.
       virtual void insert_item(DropDownItem* item);
@@ -53,7 +53,7 @@ namespace Spire {
       /*!
         \param index The index of the item to remove.
       */
-      virtual void remove_item(unsigned int index);
+      virtual void remove_item(int index);
 
       //! Sets the items to display, overwriting any existing items.
       /*!

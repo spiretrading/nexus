@@ -16,7 +16,7 @@ void ToolbarMenu::add(const QString& text, const QImage& icon) {
   setEnabled(true);
 }
 
-void ToolbarMenu::remove_item(unsigned int index) {
+void ToolbarMenu::remove_item(int index) {
   StaticDropDownMenu::remove_item(index);
   if(item_count() == 0) {
     setDisabled(true);

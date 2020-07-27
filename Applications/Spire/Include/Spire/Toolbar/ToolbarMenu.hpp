@@ -24,7 +24,7 @@ namespace Spire {
       */
       void add(const QString& text, const QImage& icon);
 
-      void remove_item(unsigned int index) override;
+      void remove_item(int index) override;
   };
 }
 

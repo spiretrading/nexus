@@ -29,7 +29,7 @@ namespace Spire {
       /*!
         \param index The item's list index.
       */
-      using IndexSelectedSignal = Signal<void (unsigned int index)>;
+      using IndexSelectedSignal = Signal<void (int index)>;
 
       //! Signals that an item was selected.
       /*!
@@ -54,7 +54,7 @@ namespace Spire {
       /*!
         \param index The index of the item.
       */
-      QVariant get_value(unsigned int index);
+      QVariant get_value(int index);
 
       //! Appends an item to the list.
       /*!
@@ -63,13 +63,13 @@ namespace Spire {
       void insert_item(DropDownItem* item);
 
       //! Returns the number of items in the list.
-      unsigned int item_count() const;
+      int item_count() const;
 
       //! Removes and deletes an item.
       /*!
         \param index The index of the item to remove.
       */
-      void remove_item(unsigned int index);
+      void remove_item(int index);
 
       //! Highlights the first item in the list that starts with the given
       //! text.
@@ -119,13 +119,13 @@ namespace Spire {
       std::vector<boost::signals2::scoped_connection>
         m_item_selected_connections;
 
-      DropDownItem* get_widget(unsigned int index);
+      DropDownItem* get_widget(int index);
       void focus_next();
       void focus_previous();
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();
-      void on_item_selected(QVariant value, unsigned int index);
+      void on_item_selected(QVariant value, int index);
   };
 }
 

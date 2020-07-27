@@ -119,8 +119,8 @@ connection DropDownList::connect_value_selected_signal(
   return m_value_selected_signal.connect(slot);
 }
 
-QVariant DropDownList::get_value(unsigned int index) {
-  if(static_cast<unsigned int>(m_layout->count() - 1) < index) {
+QVariant DropDownList::get_value(int index) {
+  if(m_layout->count() - 1 < index) {
     return QVariant();
   }
   return get_widget(index)->get_value();
@@ -136,12 +136,12 @@ void DropDownList::insert_item(DropDownItem* item) {
   update_height();
 }
 
-unsigned int DropDownList::item_count() const {
+int DropDownList::item_count() const {
   return m_layout->count();
 }
 
-void DropDownList::remove_item(unsigned int index) {
-  if(index > static_cast<unsigned int>(m_layout->count() - 1)) {
+void DropDownList::remove_item(int index) {
+  if(index > m_layout->count() - 1) {
     return;
   }
   m_item_selected_connections.pop_back();
@@ -160,7 +160,7 @@ void DropDownList::remove_item(unsigned int index) {
 }
 
 bool DropDownList::set_highlight(const QString& text) {
-  for(auto i = unsigned int(0); i < item_count(); ++i) {
+  for(auto i = 0; i < item_count(); ++i) {
     if(m_item_delegate.displayText(get_value(i)).startsWith(text,
         Qt::CaseInsensitive)) {
       set_highlight(i);
@@ -192,7 +192,7 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
 }
 
-DropDownItem* DropDownList::get_widget(unsigned int index) {
+DropDownItem* DropDownList::get_widget(int index) {
   return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
 }
 
@@ -252,7 +252,7 @@ void DropDownList::update_height() {
     m_layout->itemAt(0)->widget()->height() + BORDER_PADDING);
 }
 
-void DropDownList::on_item_selected(QVariant value, unsigned int index) {
+void DropDownList::on_item_selected(QVariant value, int index) {
   m_index_selected_signal(index);
   m_value_selected_signal(std::move(value));
   hide();

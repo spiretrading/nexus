@@ -44,7 +44,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   installEventFilter(this);
 }
 
-unsigned int StaticDropDownMenu::item_count() const {
+int StaticDropDownMenu::item_count() const {
   return m_menu_list->item_count();
 }
 
@@ -52,7 +52,7 @@ void StaticDropDownMenu::insert_item(DropDownItem* item) {
   m_menu_list->insert_item(item);
 }
 
-void StaticDropDownMenu::remove_item(unsigned int index) {
+void StaticDropDownMenu::remove_item(int index) {
   m_menu_list->remove_item(index);
 }
 
