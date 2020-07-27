@@ -5,7 +5,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"
 #include "Spire/Ui/DropDownWindow.hpp"
-#include "Spire/Ui/ListWidget.hpp"
+#include "Spire/Ui/ScrollArea.hpp"
 
 namespace Spire {
 
@@ -111,7 +111,9 @@ namespace Spire {
       mutable HighlightedSignal m_highlighted_signal;
       mutable IndexSelectedSignal m_index_selected_signal;
       mutable ValueSelectedSignal m_value_selected_signal;
-      ListWidget* m_list_widget;
+      int m_max_displayed_items;
+      QVBoxLayout* m_layout;
+      ScrollArea* m_scroll_area;
       boost::optional<int> m_highlight_index;
       CustomVariantItemDelegate m_item_delegate;
       std::vector<boost::signals2::scoped_connection>

@@ -23,9 +23,8 @@ namespace Spire {
 
       virtual ~DropDownWindow() = default;
 
-      //! Sets the widget to display in the DropDownWindow. Does nothing if a
-      //! widget has already been set.
-      virtual void set_widget(QWidget* widget);
+      //! Sets the widget to display in the DropDownWindow.
+      virtual void initialize_widget(QWidget* widget);
 
     protected:
       bool event(QEvent* event) override;

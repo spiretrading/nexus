@@ -18,7 +18,7 @@ ColorSelectorButton::ColorSelectorButton(const QColor& current_color,
   });
   m_selector_widget->installEventFilter(this);
   auto dropdown = new DropDownWindow(true, this);
-  dropdown->set_widget(m_selector_widget);
+  dropdown->initialize_widget(m_selector_widget);
   set_color(current_color);
 }
 

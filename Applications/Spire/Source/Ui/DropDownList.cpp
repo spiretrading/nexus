@@ -15,10 +15,22 @@ namespace {
 
 DropDownList::DropDownList(std::vector<DropDownItem*> items,
     bool is_click_activated, QWidget* parent)
-    : DropDownWindow(is_click_activated, parent) {
+    : DropDownWindow(is_click_activated, parent),
+      m_max_displayed_items(5) {
+  m_scroll_area = new ScrollArea(this);
+  m_scroll_area->setFocusProxy(parent);
+  m_scroll_area->setWidgetResizable(true);
+  auto main_widget = new QWidget(this);
+  m_layout = new QVBoxLayout(main_widget);
+  m_layout->setContentsMargins({});
+  m_layout->setSpacing(0);
+  m_scroll_area->setWidget(main_widget);
+  initialize_widget(m_scroll_area);
   set_items(items);
   parent->installEventFilter(this);
 }
+
+
 
 bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parent()) {

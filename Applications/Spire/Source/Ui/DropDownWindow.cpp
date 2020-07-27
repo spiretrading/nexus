@@ -103,7 +103,7 @@ void DropDownWindow::paintEvent(QPaintEvent* event) {
   painter.drawLine(0, 0, static_cast<QWidget*>(parent())->width() - 1, 0);
 }
 
-void DropDownWindow::set_widget(QWidget* widget) {
+void DropDownWindow::initialize_widget(QWidget* widget) {
   if(m_widget != nullptr) {
     return;
   }
