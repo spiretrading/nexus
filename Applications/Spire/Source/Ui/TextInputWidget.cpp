@@ -1,4 +1,5 @@
 #include "Spire/Ui/TextInputWidget.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -24,4 +25,16 @@ TextInputWidget::TextInputWidget(QString text, QWidget* parent)
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
         .arg(scale_width(6)));
+}
+
+void TextInputWidget::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Delete) {
+    setText("");
+    Q_EMIT editingFinished();
+    return;
+  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    Q_EMIT editingFinished();
+    return;
+  }
+  QLineEdit::keyPressEvent(event);
 }

@@ -21,6 +21,9 @@ namespace Spire {
         \param parent The parent widget.
       */
       explicit TextInputWidget(QString text, QWidget* parent = nullptr);
+
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
   };
 }
 
