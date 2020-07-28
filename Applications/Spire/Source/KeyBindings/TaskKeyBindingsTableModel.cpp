@@ -67,10 +67,11 @@ namespace {
       int tag_key) {
     auto tag = action.get_tag(tag_key);
     if(tag) {
-      return tag->get_value<T>();
-    } else {
-      return boost::optional<T>();
+      try {
+        return tag->get_value<T>();
+      } catch (const std::bad_cast&) {}
     }
+    return boost::optional<T>();
   }
 }
 
