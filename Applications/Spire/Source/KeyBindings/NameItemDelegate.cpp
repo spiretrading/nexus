@@ -1,8 +1,8 @@
 #include "Spire/KeyBindings/NameItemDelegate.hpp"
 #include <QFontMetrics>
 #include <QPainter>
-#include "Spire/KeyBindings/NameInputEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/TextInputWidget.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -12,8 +12,9 @@ NameItemDelegate::NameItemDelegate(QWidget* parent)
 
 QWidget* NameItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new NameInputEditor(static_cast<QWidget*>(this->parent()));
-  connect(editor, &NameInputEditor::editingFinished,
+  auto editor = new TextInputWidget(static_cast<QWidget*>(this->parent()));
+  editor->set_cell_style();
+  connect(editor, &TextInputWidget::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
   return editor;
 }
@@ -37,7 +38,7 @@ void NameItemDelegate::paint(QPainter* painter,
 
 void NameItemDelegate::setEditorData(QWidget *editor,
     const QModelIndex &index) const {
-  auto line_edit = static_cast<NameInputEditor*>(editor);
+  auto line_edit = static_cast<TextInputWidget*>(editor);
   line_edit->setText(index.data().value<QString>());
   line_edit->setCursorPosition(line_edit->text().length());
 }
