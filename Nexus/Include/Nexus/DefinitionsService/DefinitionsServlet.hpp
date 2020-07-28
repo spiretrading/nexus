@@ -62,26 +62,20 @@ namespace Nexus::DefinitionsService {
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
-      std::string OnLoadMinimumSpireClientVersion(ServiceProtocolClient& client,
-        int dummy);
-      std::string OnLoadOrganizationName(ServiceProtocolClient& client,
-        int dummy);
-      CountryDatabase OnLoadCountryDatabase(ServiceProtocolClient& client,
-        int dummy);
-      std::string OnLoadTimeZoneDatabase(ServiceProtocolClient& client,
-        int dummy);
-      CurrencyDatabase OnLoadCurrencyDatabase(ServiceProtocolClient& client,
-        int dummy);
+      std::string OnLoadMinimumSpireClientVersion(
+        ServiceProtocolClient& client);
+      std::string OnLoadOrganizationName(ServiceProtocolClient& client);
+      CountryDatabase OnLoadCountryDatabase(ServiceProtocolClient& client);
+      std::string OnLoadTimeZoneDatabase(ServiceProtocolClient& client);
+      CurrencyDatabase OnLoadCurrencyDatabase(ServiceProtocolClient& client);
       DestinationDatabase OnLoadDestinationDatabase(
-        ServiceProtocolClient& client, int dummy);
-      MarketDatabase OnLoadMarketDatabase(ServiceProtocolClient& client,
-        int dummy);
+        ServiceProtocolClient& client);
+      MarketDatabase OnLoadMarketDatabase(ServiceProtocolClient& client);
       std::vector<ExchangeRate> OnLoadExchangeRates(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       std::vector<Compliance::ComplianceRuleSchema> OnLoadComplianceRuleSchemas(
-        ServiceProtocolClient& client, int dummy);
-      TradingSchedule OnLoadTradingSchedule(ServiceProtocolClient& client,
-        int dummy);
+        ServiceProtocolClient& client);
+      TradingSchedule OnLoadTradingSchedule(ServiceProtocolClient& client);
   };
 
   struct MetaDefinitionsServlet {
@@ -116,34 +110,30 @@ namespace Nexus::DefinitionsService {
     RegisterDefinitionsServices(Store(slots));
     LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadMinimumSpireClientVersion, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadOrganizationNameService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadOrganizationName, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadOrganizationName, this,
+      std::placeholders::_1));
     LoadCountryDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadCountryDatabase, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadCountryDatabase, this, std::placeholders::_1));
     LoadTimeZoneDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadTimeZoneDatabase, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadTimeZoneDatabase, this,
+      std::placeholders::_1));
     LoadCurrencyDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadCurrencyDatabase, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadCurrencyDatabase, this,
+      std::placeholders::_1));
     LoadDestinationDatabaseService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadDestinationDatabase, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadMarketDatabaseService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadMarketDatabase, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadMarketDatabase, this, std::placeholders::_1));
     LoadExchangeRatesService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadExchangeRates, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadExchangeRates, this, std::placeholders::_1));
     LoadComplianceRuleSchemasService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadComplianceRuleSchemas, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadTradingScheduleService::AddSlot(Store(slots), std::bind(
-      &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1));
   }
 
   template<typename C>
@@ -169,62 +159,62 @@ namespace Nexus::DefinitionsService {
 
   template<typename C>
   std::string DefinitionsServlet<C>::OnLoadMinimumSpireClientVersion(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_minimumSpireClientVersion;
   }
 
   template<typename C>
   std::string DefinitionsServlet<C>::OnLoadOrganizationName(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_organizationName;
   }
 
   template<typename C>
   CountryDatabase DefinitionsServlet<C>::OnLoadCountryDatabase(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_countryDatabase;
   }
 
   template<typename C>
   std::string DefinitionsServlet<C>::OnLoadTimeZoneDatabase(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_timeZoneDatabase;
   }
 
   template<typename C>
   CurrencyDatabase DefinitionsServlet<C>::OnLoadCurrencyDatabase(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_currencyDatabase;
   }
 
   template<typename C>
   DestinationDatabase DefinitionsServlet<C>::OnLoadDestinationDatabase(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_destinationDatabase;
   }
 
   template<typename C>
   MarketDatabase DefinitionsServlet<C>::OnLoadMarketDatabase(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_marketDatabase;
   }
 
   template<typename C>
   std::vector<ExchangeRate> DefinitionsServlet<C>::OnLoadExchangeRates(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_exchangeRates;
   }
 
   template<typename C>
   std::vector<Compliance::ComplianceRuleSchema>
       DefinitionsServlet<C>::OnLoadComplianceRuleSchemas(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_complianceRuleSchemas;
   }
 
   template<typename C>
   TradingSchedule DefinitionsServlet<C>::OnLoadTradingSchedule(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return TradingSchedule();
   }
 }

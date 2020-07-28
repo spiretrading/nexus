@@ -23,12 +23,11 @@ namespace RiskService {
     /*! \interface Nexus::RiskService::SubscribeRiskPortfolioUpdatesService
         \brief Subscribes to the RiskPortfolioUpdates permissioned by the
                session's account.
-        \param dummy <code>int</code> unused
     */
     //! \cond
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
-      std::vector<RiskPortfolioInventoryEntry>, int, dummy));
+      std::vector<RiskPortfolioInventoryEntry>));
     //! \endcond
 
   BEAM_DEFINE_MESSAGES(RiskMessages,

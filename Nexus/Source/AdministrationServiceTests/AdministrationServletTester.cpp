@@ -154,14 +154,14 @@ TEST_SUITE("AdministrationServlet") {
     auto administratorA = MakeAccount("adminA", GetAdministratorsDirectory());
     auto administratorB = MakeAccount("adminB", GetAdministratorsDirectory());
     auto administratorsResult =
-      m_clientProtocol->SendRequest<LoadAdministratorsService>(0);
+      m_clientProtocol->SendRequest<LoadAdministratorsService>();
     REQUIRE(administratorsResult.size() == 2);
   }
 
   TEST_CASE_FIXTURE(Fixture, "load_services") {
     auto serviceA = MakeAccount("serviceA", GetServicesDirectory());
     auto serviceB = MakeAccount("serviceB", GetServicesDirectory());
-    auto servicesResult = m_clientProtocol->SendRequest<LoadServicesService>(0);
+    auto servicesResult = m_clientProtocol->SendRequest<LoadServicesService>();
     REQUIRE(servicesResult.size() == 2);
     auto services = std::unordered_set<DirectoryEntry>();
     services.insert(serviceA);

@@ -88,27 +88,26 @@ namespace Nexus::DefinitionsService {
   template<typename B>
   std::string DefinitionsClient<B>::LoadMinimumSpireClientVersion() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<
-      LoadMinimumSpireClientVersionService>(0);
+    return client->template SendRequest<LoadMinimumSpireClientVersionService>();
   }
 
   template<typename B>
   std::string DefinitionsClient<B>::LoadOrganizationName() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadOrganizationNameService>(0);
+    return client->template SendRequest<LoadOrganizationNameService>();
   }
 
   template<typename B>
   CountryDatabase DefinitionsClient<B>::LoadCountryDatabase() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadCountryDatabaseService>(0);
+    return client->template SendRequest<LoadCountryDatabaseService>();
   }
 
   template<typename B>
   boost::local_time::tz_database DefinitionsClient<B>::LoadTimeZoneDatabase() {
     auto client = m_clientHandler.GetClient();
     auto timeZones =
-      client->template SendRequest<LoadTimeZoneDatabaseService>(0);
+      client->template SendRequest<LoadTimeZoneDatabaseService>();
     auto database = boost::local_time::tz_database();
     auto stream = std::stringstream(timeZones);
     database.load_from_stream(stream);
@@ -118,38 +117,38 @@ namespace Nexus::DefinitionsService {
   template<typename B>
   CurrencyDatabase DefinitionsClient<B>::LoadCurrencyDatabase() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadCurrencyDatabaseService>(0);
+    return client->template SendRequest<LoadCurrencyDatabaseService>();
   }
 
   template<typename B>
   DestinationDatabase DefinitionsClient<B>::LoadDestinationDatabase() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadDestinationDatabaseService>(0);
+    return client->template SendRequest<LoadDestinationDatabaseService>();
   }
 
   template<typename B>
   MarketDatabase DefinitionsClient<B>::LoadMarketDatabase() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadMarketDatabaseService>(0);
+    return client->template SendRequest<LoadMarketDatabaseService>();
   }
 
   template<typename B>
   std::vector<ExchangeRate> DefinitionsClient<B>::LoadExchangeRates() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadExchangeRatesService>(0);
+    return client->template SendRequest<LoadExchangeRatesService>();
   }
 
   template<typename B>
   std::vector<Compliance::ComplianceRuleSchema>
       DefinitionsClient<B>::LoadComplianceRuleSchemas() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadComplianceRuleSchemasService>(0);
+    return client->template SendRequest<LoadComplianceRuleSchemasService>();
   }
 
   template<typename B>
   TradingSchedule DefinitionsClient<B>::LoadTradingSchedule() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadTradingScheduleService>(0);
+    return client->template SendRequest<LoadTradingScheduleService>();
   }
 
   template<typename B>

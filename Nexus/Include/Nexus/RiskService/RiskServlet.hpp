@@ -102,8 +102,7 @@ namespace RiskService {
       void OnRiskState(const RiskStateEntry& entry);
       void OnInventoryUpdate(const RiskPortfolioInventoryEntry& entry);
       void OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
-        ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request,
-        int dummy);
+        ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request);
   };
 
   template<typename AdministrationClientType, typename OrderExecutionClientType,
@@ -146,7 +145,7 @@ namespace RiskService {
     RegisterRiskMessages(Store(slots));
     SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
       std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
   }
 
   template<typename ContainerType, typename AdministrationClientType,
@@ -259,8 +258,7 @@ namespace RiskService {
   void RiskServlet<ContainerType, AdministrationClientType,
       OrderExecutionClientType, RiskStateMonitorType>::
       OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
-      ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request,
-      int dummy) {
+      ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request) {
     auto& session = request.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());

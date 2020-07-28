@@ -82,7 +82,7 @@ namespace RiskService {
             try {
               auto client = m_clientHandler.GetClient();
               entries = client->template SendRequest<
-                SubscribeRiskPortfolioUpdatesService>(0);
+                SubscribeRiskPortfolioUpdatesService>();
             } catch(const std::exception&) {
               m_publisher->Break(std::current_exception());
               return;
@@ -149,7 +149,7 @@ namespace RiskService {
         std::vector<RiskPortfolioInventoryEntry> entries;
         try {
           entries = client->template SendRequest<
-            SubscribeRiskPortfolioUpdatesService>(0);
+            SubscribeRiskPortfolioUpdatesService>();
         } catch(const std::exception&) {
           m_publisher->Break(std::current_exception());
           return;

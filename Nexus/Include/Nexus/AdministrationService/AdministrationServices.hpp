@@ -30,30 +30,27 @@ namespace Nexus::AdministrationService {
 
     /**
      * Loads the DirectoryEntry containing all administrators.
-     * @param dummy Unused.
      * @return The DirectoryEntry containing all administrators.
      */
     (LoadAdministratorsRootEntryService,
       "Nexus.AdministrationServices.LoadAdministratorsRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+      Beam::ServiceLocator::DirectoryEntry),
 
     /**
      * Loads the DirectoryEntry containing all service accounts.
-     * @param dummy Unused.
      * @return DirectoryEntry containing all service accounts.
      */
     (LoadServicesRootEntryService,
       "Nexus.AdministrationServices.LoadServicesRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+      Beam::ServiceLocator::DirectoryEntry),
 
     /**
      * Loads the DirectoryEntry containing all trading groups.
-     * @param dummy Unused.
      * @return The DirectoryEntry containing all trading groups.
      */
     (LoadTradingGroupsRootEntryService,
       "Nexus.AdministrationServices.LoadTradingGroupsRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry, int, dummy),
+      Beam::ServiceLocator::DirectoryEntry),
 
     /**
      * Tests if an account is an administrator.
@@ -125,29 +122,26 @@ namespace Nexus::AdministrationService {
 
     /**
      * Loads the list of system administrators.
-     * @param dummy Unused.
      * @return The list of system administrators.
      */
     (LoadAdministratorsService,
       "Nexus.AdministrationServices.LoadAdministratorsService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>, int, dummy),
+      std::vector<Beam::ServiceLocator::DirectoryEntry>),
 
     /**
      * Loads the list of accounts providing system services.
-     * @param dummy Unused.
      * @return The list of system service providers.
      */
     (LoadServicesService, "Nexus.AdministrationServices.LoadServicesService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>, int, dummy),
+      std::vector<Beam::ServiceLocator::DirectoryEntry>),
 
     /**
      * Loads the database of available entitlements.
-     * @param dummy Unused.
      * @return The database of available entitlements.
      */
     (LoadEntitlementsService,
       "Nexus.AdministrationServices.LoadEntitlementsService",
-      MarketDataService::EntitlementDatabase, int, dummy),
+      MarketDataService::EntitlementDatabase),
 
     /**
      * Loads the entitlements granted to an account.
