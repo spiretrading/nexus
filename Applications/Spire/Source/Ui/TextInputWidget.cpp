@@ -32,9 +32,6 @@ void TextInputWidget::keyPressEvent(QKeyEvent* event) {
     setText("");
     Q_EMIT editingFinished();
     return;
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    Q_EMIT editingFinished();
-    return;
   }
   QLineEdit::keyPressEvent(event);
 }
