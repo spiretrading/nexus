@@ -126,11 +126,11 @@ namespace Nexus::AdministrationService {
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadAccountsByRoles(
         ServiceProtocolClient& client, AccountRoles roles);
       Beam::ServiceLocator::DirectoryEntry OnLoadAdministratorsRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       Beam::ServiceLocator::DirectoryEntry OnLoadServicesRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       Beam::ServiceLocator::DirectoryEntry OnLoadTradingGroupsRootEntry(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       bool OnCheckAdministratorRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountRoles OnLoadAccountRolesRequest(ServiceProtocolClient& client,
@@ -151,11 +151,11 @@ namespace Nexus::AdministrationService {
       TradingGroup OnLoadTradingGroupRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& directory);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
-        OnLoadAdministratorsRequest(ServiceProtocolClient& client, int dummy);
+        OnLoadAdministratorsRequest(ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry> OnLoadServicesRequest(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       MarketDataService::EntitlementDatabase OnLoadEntitlementsRequest(
-        ServiceProtocolClient& client, int dummy);
+        ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         OnLoadAccountEntitlementsRequest(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
@@ -246,13 +246,13 @@ namespace Nexus::AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     LoadAdministratorsRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAdministratorsRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadServicesRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadServicesRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadTradingGroupsRootEntryService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadTradingGroupsRootEntry, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     CheckAdministratorService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnCheckAdministratorRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -276,13 +276,13 @@ namespace Nexus::AdministrationService {
       std::placeholders::_1, std::placeholders::_2));
     LoadAdministratorsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAdministratorsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadServicesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadServicesRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadEntitlementsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadEntitlementsRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
     LoadAccountEntitlementsService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountEntitlementsRequest, this,
       std::placeholders::_1, std::placeholders::_2));
@@ -741,19 +741,19 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadAdministratorsRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadAdministratorsRootEntry(ServiceProtocolClient& client) {
     return m_administratorsRoot;
   }
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadServicesRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadServicesRootEntry(ServiceProtocolClient& client) {
     return m_servicesRoot;
   }
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client, int dummy) {
+      OnLoadTradingGroupsRootEntry(ServiceProtocolClient& client) {
     return m_tradingGroupsRoot;
   }
 
@@ -841,14 +841,14 @@ namespace Nexus::AdministrationService {
   template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D>::OnLoadAdministratorsRequest(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     return m_serviceLocatorClient->LoadChildren(m_administratorsRoot);
   }
 
   template<typename C, typename S, typename D>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D>::OnLoadServicesRequest(
-      ServiceProtocolClient& client, int dummy) {
+      ServiceProtocolClient& client) {
     auto servicesDirectory = m_serviceLocatorClient->LoadDirectoryEntry(
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(), "services");
     return m_serviceLocatorClient->LoadChildren(servicesDirectory);
@@ -856,7 +856,7 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D>::
-      OnLoadEntitlementsRequest(ServiceProtocolClient& client, int dummy) {
+      OnLoadEntitlementsRequest(ServiceProtocolClient& client) {
     return m_entitlements;
   }
 

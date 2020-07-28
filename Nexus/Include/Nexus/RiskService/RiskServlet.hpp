@@ -92,8 +92,7 @@ namespace Nexus::RiskService {
       void OnRiskState(const RiskStateEntry& entry);
       void OnInventoryUpdate(const RiskPortfolioInventoryEntry& entry);
       void OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
-        ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request,
-        int dummy);
+        ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request);
   };
 
   template<typename A, typename O, typename R>
@@ -124,7 +123,7 @@ namespace Nexus::RiskService {
     RegisterRiskMessages(Store(slots));
     SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
       std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
-      std::placeholders::_1, std::placeholders::_2));
+      std::placeholders::_1));
   }
 
   template<typename C, typename A, typename O, typename R>
@@ -219,8 +218,7 @@ namespace Nexus::RiskService {
   template<typename C, typename A, typename O, typename R>
   void RiskServlet<C, A, O, R>::OnSubscribeRiskPortfolioUpdatesRequest(
       Beam::Services::RequestToken<
-      ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request,
-      int dummy) {
+      ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request) {
     auto& session = request.GetSession();
     auto isAdministrator = m_administrationClient->CheckAdministrator(
       session.GetAccount());

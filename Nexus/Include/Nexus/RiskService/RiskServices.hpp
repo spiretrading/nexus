@@ -26,7 +26,7 @@ namespace Nexus::RiskService {
      */
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
-      std::vector<RiskPortfolioInventoryEntry>, int, dummy));
+      std::vector<RiskPortfolioInventoryEntry>));
 
   BEAM_DEFINE_MESSAGES(RiskMessages,
 

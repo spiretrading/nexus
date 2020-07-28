@@ -390,21 +390,21 @@ namespace Nexus::AdministrationService {
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadAdministratorsRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAdministratorsRootEntryService>(0);
+    return client->template SendRequest<LoadAdministratorsRootEntryService>();
   }
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadServicesRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadServicesRootEntryService>(0);
+    return client->template SendRequest<LoadServicesRootEntryService>();
   }
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadTradingGroupsRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadTradingGroupsRootEntryService>(0);
+    return client->template SendRequest<LoadTradingGroupsRootEntryService>();
   }
 
   template<typename B>
@@ -475,21 +475,21 @@ namespace Nexus::AdministrationService {
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationClient<B>::LoadAdministrators() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAdministratorsService>(0);
+    return client->template SendRequest<LoadAdministratorsService>();
   }
 
   template<typename B>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationClient<B>::LoadServices() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadServicesService>(0);
+    return client->template SendRequest<LoadServicesService>();
   }
 
   template<typename B>
   MarketDataService::EntitlementDatabase
       AdministrationClient<B>::LoadEntitlements() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadEntitlementsService>(0);
+    return client->template SendRequest<LoadEntitlementsService>();
   }
 
   template<typename B>
