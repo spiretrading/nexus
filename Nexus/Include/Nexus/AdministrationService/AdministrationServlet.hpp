@@ -139,8 +139,8 @@ namespace Nexus::AdministrationService {
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child);
-      Beam::ServiceLocator::DirectoryEntry
-        OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
+      Beam::ServiceLocator::DirectoryEntry OnLoadParentTradingGroupRequest(
+        ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountIdentity OnLoadAccountIdentityRequest(
         ServiceProtocolClient& client,
@@ -262,8 +262,8 @@ namespace Nexus::AdministrationService {
     LoadSupervisedAccountRolesService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadSupervisedAccountRolesRequest, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    LoadAccountTradingGroupEntryService::AddSlot(Store(slots), std::bind(
-      &AdministrationServlet::OnLoadAccountTradingGroupEntryRequest, this,
+    LoadParentTradingGroupService::AddSlot(Store(slots), std::bind(
+      &AdministrationServlet::OnLoadParentTradingGroupRequest, this,
       std::placeholders::_1, std::placeholders::_2));
     LoadAccountIdentityService::AddSlot(Store(slots), std::bind(
       &AdministrationServlet::OnLoadAccountIdentityRequest, this,
@@ -781,7 +781,7 @@ namespace Nexus::AdministrationService {
 
   template<typename C, typename S, typename D>
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
-      OnLoadAccountTradingGroupEntryRequest(ServiceProtocolClient& client,
+      OnLoadParentTradingGroupRequest(ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_serviceLocatorClient->LoadParents(account);
     auto tradingGroups = m_serviceLocatorClient->LoadChildren(

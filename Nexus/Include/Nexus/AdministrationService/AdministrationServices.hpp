@@ -83,12 +83,12 @@ namespace Nexus::AdministrationService {
       Beam::ServiceLocator::DirectoryEntry, child),
 
     /**
-     * Loads an account's trading group Directory.
+     * Loads the DirectoryEntry representing an account's trading group.
      * @param account The account whose trading group is to be loaded.
-     * @return The directory of the trading <i>account</i>'s group.
+     * @return The directory of the <i>account</i>'s trading group.
      */
-    (LoadAccountTradingGroupEntryService,
-      "Nexus.AdministrationServices.LoadAccountTradingGroupEntryService",
+    (LoadParentTradingGroupService,
+      "Nexus.AdministrationServices.LoadParentTradingGroupService",
       Beam::ServiceLocator::DirectoryEntry,
       Beam::ServiceLocator::DirectoryEntry, account),
 

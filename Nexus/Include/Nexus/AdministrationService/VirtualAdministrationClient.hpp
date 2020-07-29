@@ -47,7 +47,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) = 0;
 
-      virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      virtual Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
       virtual AccountIdentity LoadIdentity(
@@ -194,7 +194,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) override;
 
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       AccountIdentity LoadIdentity(
@@ -353,9 +353,9 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
-      LoadTradingGroupEntry(
+      LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_client->LoadTradingGroupEntry(account);
+    return m_client->LoadParentTradingGroup(account);
   }
 
   template<typename C>
