@@ -58,14 +58,11 @@ namespace Nexus::RiskService {
        */
       void Update(const RiskParameters& parameters);
 
-      /**
-       * Updates the transition timer.
-       * @param period The amount of time elapsed since the last timer expiry.
-       */
-      void Update(boost::posix_time::time_duration period);
+      /** Updates based on the time. */
+      void UpdateTime();
 
       /** Updates based on a change to the Portfolio. */
-      void Update();
+      void UpdatePortfolio();
 
     private:
       Portfolio m_portfolio;
@@ -73,7 +70,6 @@ namespace Nexus::RiskService {
       ExchangeRateTable m_exchangeRates;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       RiskState m_riskState;
-      boost::posix_time::time_duration m_transitionTimeRemaining;
   };
 
   template<typename Portfolio, typename TimeClient>
@@ -87,11 +83,12 @@ namespace Nexus::RiskService {
       RiskParameters parameters, const std::vector<ExchangeRate>& exchangeRates,
       TF&& timeClient)
       : m_portfolio(std::move(portfolio)),
-        m_parameters(std::move(parameters)),
         m_timeClient(std::forward<TF>(timeClient)) {
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
     }
+    m_timeClient->Open();
+    Update(parameters);
   }
 
   template<typename P, typename T>
@@ -122,22 +119,20 @@ namespace Nexus::RiskService {
     if(m_riskState.m_type == RiskState::Type::ACTIVE) {
       m_riskState = m_parameters.m_allowedState;
     }
-    Update();
+    UpdateTime();
+    UpdatePortfolio();
   }
 
   template<typename P, typename T>
-  void RiskStateProcessor<P, T>::Update(
-      boost::posix_time::time_duration period) {
-    if(m_riskState.m_type == RiskState::Type::CLOSE_ORDERS) {
-      m_transitionTimeRemaining -= period;
-      if(m_transitionTimeRemaining <= boost::posix_time::seconds(0)) {
-        m_riskState = RiskState::Type::DISABLED;
-      }
+  void RiskStateProcessor<P, T>::UpdateTime() {
+    if(m_riskState.m_type == RiskState::Type::CLOSE_ORDERS &&
+        m_timeClient->GetTime() >= m_riskState.m_expiry) {
+      m_riskState = RiskState::Type::DISABLED;
     }
   }
 
   template<typename P, typename T>
-  void RiskStateProcessor<P, T>::Update() {
+  void RiskStateProcessor<P, T>::UpdatePortfolio() {
     if(m_parameters.m_currency == CurrencyId::NONE) {
       return;
     }
@@ -156,17 +151,16 @@ namespace Nexus::RiskService {
         if(m_riskState.m_type == RiskState::Type::ACTIVE) {
           m_riskState.m_type = RiskState::Type::CLOSE_ORDERS;
           m_riskState.m_expiry = m_timeClient->GetTime() +
-            m_transitionTimeRemaining;
+            m_parameters.m_transitionTime;
         }
         return;
       }
     }
     if(m_riskState.m_type == RiskState::Type::ACTIVE) {
       if(profitAndLoss <= -m_parameters.m_netLoss) {
-        m_transitionTimeRemaining = m_parameters.m_transitionTime;
         m_riskState.m_type = RiskState::Type::CLOSE_ORDERS;
         m_riskState.m_expiry = m_timeClient->GetTime() +
-          m_transitionTimeRemaining;
+          m_parameters.m_transitionTime;
       }
     } else {
       if(profitAndLoss > -m_parameters.m_netLoss) {

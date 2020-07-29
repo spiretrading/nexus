@@ -146,10 +146,11 @@ namespace Nexus::Accounting {
       SecurityEntryMap m_securityEntries;
       UnrealizedProfitAndLossMap m_unrealizedCurrencies;
 
-      static Money CalculateUnrealized(
+      static boost::optional<Money> CalculateUnrealized(
         const typename PortfolioBookkeeper::Inventory& inventory,
         const SecurityEntry& securityEntry);
       SecurityEntry& GetSecurityEntry(const Security& security);
+      void Update(const Security& security, SecurityEntry& entry);
   };
 
   /**
@@ -315,88 +316,54 @@ namespace Nexus::Accounting {
     auto securityInventory = m_bookkeeper.GetInventory(security, currency);
     auto unrealizedSecurity = CalculateUnrealized(securityInventory,
       securityEntry);
-    auto& unrealizedCurrency = m_unrealizedCurrencies[currency];
-    if(unrealizedSecurity != securityEntry.m_unrealized) {
-      unrealizedCurrency -= securityEntry.m_unrealized;
-      securityEntry.m_unrealized = unrealizedSecurity;
-      unrealizedCurrency += securityEntry.m_unrealized;
+    if(unrealizedSecurity) {
+      auto& unrealizedCurrency = m_unrealizedCurrencies[currency];
+      if(*unrealizedSecurity != securityEntry.m_unrealized) {
+        unrealizedCurrency -= securityEntry.m_unrealized;
+        securityEntry.m_unrealized = *unrealizedSecurity;
+        unrealizedCurrency += securityEntry.m_unrealized;
+      }
     }
   }
 
   template<typename B>
   void Portfolio<B>::UpdateAsk(const Security& security, Money value) {
-    auto& securityEntry = GetSecurityEntry(security);
-    securityEntry.m_valuation.m_askValue = value;
-    auto securityInventory = m_bookkeeper.GetInventory(security,
-      securityEntry.m_valuation.m_currency);
-    auto unrealizedSecurity = CalculateUnrealized(securityInventory,
-      securityEntry);
-    if(unrealizedSecurity == securityEntry.m_unrealized) {
-      return;
-    }
-    auto& unrealizedCurrency =
-      m_unrealizedCurrencies[securityEntry.m_valuation.m_currency];
-    unrealizedCurrency -= securityEntry.m_unrealized;
-    securityEntry.m_unrealized = unrealizedSecurity;
-    unrealizedCurrency += securityEntry.m_unrealized;
+    auto& entry = GetSecurityEntry(security);
+    entry.m_valuation.m_askValue = value;
+    Update(security, entry);
   }
 
   template<typename B>
   void Portfolio<B>::UpdateBid(const Security& security, Money value) {
-    auto& securityEntry = GetSecurityEntry(security);
-    securityEntry.m_valuation.m_bidValue = value;
-    auto securityInventory = m_bookkeeper.GetInventory(security,
-      securityEntry.m_valuation.m_currency);
-    auto unrealizedSecurity = CalculateUnrealized(securityInventory,
-      securityEntry);
-    if(unrealizedSecurity == securityEntry.m_unrealized) {
-      return;
-    }
-    auto& unrealizedCurrency =
-      m_unrealizedCurrencies[securityEntry.m_valuation.m_currency];
-    unrealizedCurrency -= securityEntry.m_unrealized;
-    securityEntry.m_unrealized = unrealizedSecurity;
-    unrealizedCurrency += securityEntry.m_unrealized;
+    auto& entry = GetSecurityEntry(security);
+    entry.m_valuation.m_bidValue = value;
+    Update(security, entry);
   }
 
   template<typename B>
   void Portfolio<B>::Update(const Security& security, Money askValue,
       Money bidValue) {
-    auto& securityEntry = GetSecurityEntry(security);
-    securityEntry.m_valuation.m_askValue = askValue;
-    securityEntry.m_valuation.m_bidValue = bidValue;
-    auto securityInventory = m_bookkeeper.GetInventory(security,
-      securityEntry.m_valuation.m_currency);
-    auto unrealizedSecurity = CalculateUnrealized(securityInventory,
-      securityEntry);
-    if(unrealizedSecurity == securityEntry.m_unrealized) {
-      return;
-    }
-    auto& unrealizedCurrency =
-      m_unrealizedCurrencies[securityEntry.m_valuation.m_currency];
-    unrealizedCurrency -= securityEntry.m_unrealized;
-    securityEntry.m_unrealized = unrealizedSecurity;
-    unrealizedCurrency += securityEntry.m_unrealized;
+    auto& entry = GetSecurityEntry(security);
+    entry.m_valuation.m_askValue = askValue;
+    entry.m_valuation.m_bidValue = bidValue;
+    Update(security, entry);
   }
 
   template<typename B>
-  Money Portfolio<B>::CalculateUnrealized(
+  boost::optional<Money> Portfolio<B>::CalculateUnrealized(
       const typename PortfolioBookkeeper::Inventory& inventory,
       const SecurityEntry& securityEntry) {
     auto valuation = [&] {
       if(inventory.m_position.m_quantity >= 0) {
-        if(securityEntry.m_valuation.m_bidValue.is_initialized()) {
-          return *securityEntry.m_valuation.m_bidValue;
-        }
-      } else {
-        if(securityEntry.m_valuation.m_askValue.is_initialized()) {
-          return *securityEntry.m_valuation.m_askValue;
-        }
+        return securityEntry.m_valuation.m_bidValue;
       }
-      return Money::ZERO;
+      return securityEntry.m_valuation.m_askValue;
     }();
-    return inventory.m_position.m_quantity * valuation -
-      inventory.m_position.m_costBasis;
+    if(valuation) {
+      return inventory.m_position.m_quantity * *valuation -
+        inventory.m_position.m_costBasis;
+    }
+    return boost::none;
   }
 
   template<typename B>
@@ -410,6 +377,24 @@ namespace Nexus::Accounting {
         std::pair(security, SecurityEntry(currency))).first;
     }
     return securityIterator->second;
+  }
+
+  template<typename B>
+  void Portfolio<B>::Update(const Security& security, SecurityEntry& entry) {
+    auto inventory = m_bookkeeper.GetInventory(security,
+      entry.m_valuation.m_currency);
+    auto unrealizedSecurity = CalculateUnrealized(inventory, entry);
+    if(!unrealizedSecurity) {
+      return;
+    }
+    if(*unrealizedSecurity == entry.m_unrealized) {
+      return;
+    }
+    auto& unrealizedCurrency =
+      m_unrealizedCurrencies[entry.m_valuation.m_currency];
+    unrealizedCurrency -= entry.m_unrealized;
+    entry.m_unrealized = *unrealizedSecurity;
+    unrealizedCurrency += entry.m_unrealized;
   }
 }
 

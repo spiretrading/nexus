@@ -59,13 +59,6 @@ namespace Details {
     RiskState(Type type, boost::posix_time::ptime expiry);
 
     /**
-     * Assigns a RiskState with an indefinite expiry.
-     * @param type The Type to assign to <code>this</code>.
-     * @return A reference to <code>this</code>.
-     */
-    RiskState& operator =(Type type);
-
-    /**
      * Tests a RiskState for equality.
      * @param rhs The right hand side of the equality.
      * @return <code>true</code> if the Types and expiries are equal.
@@ -108,12 +101,6 @@ namespace Details {
   inline RiskState::RiskState(Type type, boost::posix_time::ptime expiry)
     : m_type(type),
       m_expiry(expiry) {}
-
-  inline RiskState& RiskState::operator =(Type type) {
-    m_type = type;
-    m_expiry = boost::posix_time::pos_infin;
-    return *this;
-  }
 
   inline bool RiskState::operator ==(const RiskState& rhs) const {
     return m_type == rhs.m_type && m_expiry == rhs.m_expiry;
