@@ -34,6 +34,9 @@ connection MoneyInputWidget::connect_modified_signal(
 
 void MoneyInputWidget::on_line_edit_committed() {
   if(!text().isEmpty()) {
+    if(text().endsWith(".")) {
+      setText(text().remove('.'));
+    }
     auto value = Money::FromValue(text().toStdString());
     if(value) {
       m_committed_signal(*value);
