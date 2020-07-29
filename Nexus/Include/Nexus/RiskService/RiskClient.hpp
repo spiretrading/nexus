@@ -23,15 +23,14 @@ namespace Nexus::RiskService {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder =
-        Beam::GetTryDereferenceType<B>;
+      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
 
       /**
        * Constructs an RiskClient.
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
        */
       template<typename BF>
-      RiskClient(BF&& clientBuilder);
+      explicit RiskClient(BF&& clientBuilder);
 
       ~RiskClient();
 
