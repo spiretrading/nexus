@@ -297,7 +297,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     auto groupIterator = m_groups.find(entry.m_key.m_account);
     if(groupIterator == m_groups.end()) {
       auto group = m_userProfile->GetServiceClients().GetAdministrationClient().
-        LoadTradingGroupEntry(entry.m_key.m_account);
+        LoadParentTradingGroup(entry.m_key.m_account);
       groupIterator = m_groups.insert(
         std::make_pair(entry.m_key.m_account, group)).first;
     }
