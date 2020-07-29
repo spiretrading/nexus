@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISK_TRANSITION_TRACKER_HPP
-#define NEXUS_RISK_TRANSITION_TRACKER_HPP
+#ifndef NEXUS_RISK_TRANSITION_PROCESSOR_HPP
+#define NEXUS_RISK_TRANSITION_PROCESSOR_HPP
 #include <iostream>
 #include <unordered_set>
 #include <Beam/Utilities/ReportException.hpp>
@@ -20,7 +20,7 @@ namespace Nexus::RiskService {
    *        flatten Positions.
    */
   template<typename O>
-  class RiskTransitionTracker {
+  class RiskTransitionProcessor {
     public:
 
       /**
@@ -30,7 +30,7 @@ namespace Nexus::RiskService {
       using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
 
       /**
-       * Constructs a RiskTransitionTracker.
+       * Constructs a RiskTransitionProcessor.
        * @param account The account being tracked.
        * @param orderExecutionClient The OrderExecutionClient used to cancel
        *        Orders and flatten Positions.
@@ -39,7 +39,7 @@ namespace Nexus::RiskService {
        * @param markets The database of markets used to flatten Orders.
        */
       template<typename OF>
-      RiskTransitionTracker(Beam::ServiceLocator::DirectoryEntry account,
+      RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry account,
         OF&& orderExecutionClient, const DestinationDatabase& destinations,
         const MarketDatabase& markets);
 
@@ -86,7 +86,7 @@ namespace Nexus::RiskService {
 
   template<typename O>
   template<typename OF>
-  RiskTransitionTracker<O>::RiskTransitionTracker(
+  RiskTransitionProcessor<O>::RiskTransitionProcessor(
     Beam::ServiceLocator::DirectoryEntry account, OF&& orderExecutionClient,
     const DestinationDatabase& destinations, const MarketDatabase& markets)
     : m_account(std::move(account)),
@@ -96,13 +96,13 @@ namespace Nexus::RiskService {
       m_state(0) {}
 
   template<typename O>
-  void RiskTransitionTracker<O>::Add(
+  void RiskTransitionProcessor<O>::Add(
       const OrderExecutionService::Order& order) {
     m_book.Add(order);
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::Update(const RiskState& state) {
+  void RiskTransitionProcessor<O>::Update(const RiskState& state) {
     m_riskState = state;
     if(m_state == 0) {
       return S0();
@@ -116,7 +116,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::Update(
+  void RiskTransitionProcessor<O>::Update(
       const OrderExecutionService::ExecutionReport& report) {
     m_book.Update(report);
     if(IsTerminal(report.m_status)) {
@@ -128,27 +128,27 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  bool RiskTransitionTracker<O>::C0() {
+  bool RiskTransitionProcessor<O>::C0() {
     return m_riskState.m_type == RiskState::Type::CLOSE_ORDERS;
   }
 
   template<typename O>
-  bool RiskTransitionTracker<O>::C1() {
+  bool RiskTransitionProcessor<O>::C1() {
     return m_riskState.m_type == RiskState::Type::ACTIVE;
   }
 
   template<typename O>
-  bool RiskTransitionTracker<O>::C2() {
+  bool RiskTransitionProcessor<O>::C2() {
     return m_riskState.m_type == RiskState::Type::DISABLED;
   }
 
   template<typename O>
-  bool RiskTransitionTracker<O>::C3() {
+  bool RiskTransitionProcessor<O>::C3() {
     return m_liveOrders.empty();
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S0() {
+  void RiskTransitionProcessor<O>::S0() {
     m_state = 0;
     if(C0()) {
       return S1();
@@ -156,7 +156,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S1() {
+  void RiskTransitionProcessor<O>::S1() {
     m_state = 1;
     for(auto& openingOrder : m_book.GetOpeningOrders()) {
       m_orderExecutionClient->Cancel(*openingOrder);
@@ -165,7 +165,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S2() {
+  void RiskTransitionProcessor<O>::S2() {
     m_state = 2;
     if(C1()) {
       return S0();
@@ -175,7 +175,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S3() {
+  void RiskTransitionProcessor<O>::S3() {
     m_state = 3;
     auto& liveOrders = m_book.GetLiveOrders();
     m_liveOrders.clear();
@@ -187,7 +187,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S4() {
+  void RiskTransitionProcessor<O>::S4() {
     m_state = 4;
     if(C1()) {
       return S0();
@@ -197,7 +197,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S5() {
+  void RiskTransitionProcessor<O>::S5() {
     m_state = 5;
     for(auto& position : m_book.GetPositions()) {
       auto currency = m_markets.FromCode(
@@ -218,7 +218,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionTracker<O>::S6() {
+  void RiskTransitionProcessor<O>::S6() {
     m_state = 6;
     if(C1()) {
       return S0();
