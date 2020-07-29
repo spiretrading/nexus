@@ -1,6 +1,7 @@
 #ifndef NEXUS_RISK_TRANSITION_PROCESSOR_HPP
 #define NEXUS_RISK_TRANSITION_PROCESSOR_HPP
 #include <iostream>
+#include <type_traits>
 #include <unordered_set>
 #include <Beam/Utilities/ReportException.hpp>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -32,16 +33,16 @@ namespace Nexus::RiskService {
       /**
        * Constructs a RiskTransitionProcessor.
        * @param account The account being tracked.
+       * @param riskState The account's initial RiskState.
        * @param orderExecutionClient The OrderExecutionClient used to cancel
        *        Orders and flatten Positions.
        * @param destinations The database of destinations used to flatten
        *        Orders.
-       * @param markets The database of markets used to flatten Orders.
        */
       template<typename OF>
       RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry account,
-        OF&& orderExecutionClient, const DestinationDatabase& destinations,
-        const MarketDatabase& markets);
+        RiskState riskState, OF&& orderExecutionClient,
+        const DestinationDatabase& destinations);
 
       /**
        * Adds an Order.
@@ -63,10 +64,9 @@ namespace Nexus::RiskService {
 
     private:
       Beam::ServiceLocator::DirectoryEntry m_account;
+      RiskState m_riskState;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
       DestinationDatabase m_destinations;
-      MarketDatabase m_markets;
-      RiskState m_riskState;
       Accounting::PositionOrderBook m_book;
       std::unordered_set<OrderExecutionService::OrderId> m_liveOrders;
       int m_state;
@@ -84,16 +84,22 @@ namespace Nexus::RiskService {
       void S6();
   };
 
+  template<typename OF>
+  RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry, RiskState, OF&&,
+    const DestinationDatabase&) -> RiskTransitionProcessor<std::decay_t<OF>>;
+
   template<typename O>
   template<typename OF>
   RiskTransitionProcessor<O>::RiskTransitionProcessor(
-    Beam::ServiceLocator::DirectoryEntry account, OF&& orderExecutionClient,
-    const DestinationDatabase& destinations, const MarketDatabase& markets)
+    Beam::ServiceLocator::DirectoryEntry account, RiskState riskState,
+    OF&& orderExecutionClient, const DestinationDatabase& destinations)
     : m_account(std::move(account)),
+      m_riskState(std::move(riskState)),
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
       m_destinations(destinations),
-      m_markets(markets),
-      m_state(0) {}
+      m_state(0) {
+    m_orderExecutionClient->Open();
+  }
 
   template<typename O>
   void RiskTransitionProcessor<O>::Add(
@@ -200,12 +206,10 @@ namespace Nexus::RiskService {
   void RiskTransitionProcessor<O>::S5() {
     m_state = 5;
     for(auto& position : m_book.GetPositions()) {
-      auto currency = m_markets.FromCode(
-        position.m_security.GetMarket()).m_currency;
       auto destination = m_destinations.GetPreferredDestination(
         position.m_security.GetMarket()).m_id;
       auto orderFields = OrderExecutionService::OrderFields::BuildMarketOrder(
-        m_account, position.m_security, currency,
+        m_account, position.m_security,
         GetOpposite(GetSide(position.m_quantity)), destination,
         Abs(position.m_quantity));
       try {
