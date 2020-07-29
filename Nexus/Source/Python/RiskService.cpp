@@ -162,6 +162,7 @@ void Nexus::Python::ExportRiskParameters(pybind11::module& module) {
   class_<RiskParameters>(module, "RiskParameters")
     .def(init())
     .def(init<const RiskParameters&>())
+    .def(init<CurrencyId, Money, RiskState, Money, int, time_duration>())
     .def_readwrite("currency", &RiskParameters::m_currency)
     .def_readwrite("buying_power", &RiskParameters::m_buyingPower)
     .def_readwrite("allowed_state", &RiskParameters::m_allowedState)
@@ -180,6 +181,7 @@ void Nexus::Python::ExportRiskState(pybind11::module& module) {
     .def(init<const RiskState&>())
     .def_readwrite("type", &RiskState::m_type)
     .def_readwrite("expiry", &RiskState::m_expiry)
+    .def("__str__", &lexical_cast<std::string, RiskState>)
     .def(self == self)
     .def(self != self);
   enum_<RiskState::Type::Type>(outer, "Type")

@@ -13,12 +13,9 @@ namespace Nexus::RiskService {
   template<typename C, typename A, typename O, typename R> class RiskServlet;
   class RiskSession;
   struct RiskState;
-  template<typename R, typename A, typename M, typename T, typename C>
-    class RiskStateMonitor;
-  template<typename P, typename T> class RiskStateTracker;
+  template<typename P, typename T> class RiskStateCalculator;
   struct RiskStateUpdate;
-  template<typename A, typename O> class RiskTransitionController;
-  template<typename O> class RiskTransitionTracker;
+  template<typename O> class RiskTransitionCalculator;
   template<typename C> class SqlRiskDataStore;
   class VirtualRiskClient;
   class VirtualRiskDataStore;

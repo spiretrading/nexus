@@ -1,5 +1,6 @@
 #ifndef NEXUS_RISK_STATE_HPP
 #define NEXUS_RISK_STATE_HPP
+#include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
@@ -45,6 +46,12 @@ namespace Details {
     RiskState(Type type);
 
     /**
+     * Constructs a RiskState with an indefinite expiry.
+     * @param type The state's type.
+     */
+    RiskState(Type::Type type);
+
+    /**
      * Constructs a RiskState.
      * @param type The state's type.
      * @param expiry When this state is expected to expire.
@@ -56,7 +63,7 @@ namespace Details {
      * @param type The Type to assign to <code>this</code>.
      * @return A reference to <code>this</code>.
      */
-    RiskState& operator =(RiskState::Type type);
+    RiskState& operator =(Type type);
 
     /**
      * Tests a RiskState for equality.
@@ -73,19 +80,36 @@ namespace Details {
     bool operator !=(const RiskState& rhs) const;
   };
 
+  inline std::ostream& operator <<(std::ostream& out, RiskState::Type type) {
+    if(type == RiskState::Type::ACTIVE) {
+      return out << "ACTIVE";
+    } else if(type == RiskState::Type::CLOSE_ORDERS) {
+      return out << "CLOSE_ORDERS";
+    } else if(type == RiskState::Type::DISABLED) {
+      return out << "DISABLED";
+    } else {
+      return out << "NONE";
+    }
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, const RiskState& state) {
+    return out << '(' << state.m_type << ' ' << state.m_expiry << ')';
+  }
+
   inline RiskState::RiskState()
-    : m_type(Type::ACTIVE),
-      m_expiry(boost::posix_time::pos_infin) {}
+    : RiskState(Type::ACTIVE) {}
 
   inline RiskState::RiskState(Type type)
-    : m_type(type),
-      m_expiry(boost::posix_time::pos_infin) {}
+    : RiskState(type, boost::posix_time::pos_infin) {}
+
+  inline RiskState::RiskState(Type::Type type)
+    : RiskState(Type(type)) {}
 
   inline RiskState::RiskState(Type type, boost::posix_time::ptime expiry)
     : m_type(type),
       m_expiry(expiry) {}
 
-  inline RiskState& RiskState::operator =(RiskState::Type type) {
+  inline RiskState& RiskState::operator =(Type type) {
     m_type = type;
     m_expiry = boost::posix_time::pos_infin;
     return *this;

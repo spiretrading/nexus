@@ -1,6 +1,8 @@
-#ifndef NEXUS_RISK_STATE_TRACKER_HPP
-#define NEXUS_RISK_STATE_TRACKER_HPP
+#ifndef NEXUS_RISK_STATE_PROCESSOR_HPP
+#define NEXUS_RISK_STATE_PROCESSOR_HPP
 #include <iostream>
+#include <type_traits>
+#include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -18,7 +20,7 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient used.
    */
   template<typename P, typename T>
-  class RiskStateTracker {
+  class RiskStateProcessor {
     public:
 
       /** The type of Portfolio to monitor. */
@@ -28,17 +30,18 @@ namespace Nexus::RiskService {
       using TimeClient = Beam::GetTryDereferenceType<T>;
 
       /**
-       * Constructs a RiskStateTracker.
+       * Constructs a RiskStateProcessor.
        * @param portfolio The initial state of the Portfolio.
+       * @param parameters The initial RiskParameters.
        * @param exchangeRates The list of ExchangeRates.
        * @param timeClient Initializes the TimeClient.
        */
       template<typename TF>
-      RiskStateTracker(const Portfolio& portfolio,
+      RiskStateProcessor(Portfolio portfolio, RiskParameters parameters,
         const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient);
 
       /** Returns the RiskParameters. */
-      const RiskParameters& GetRiskParameters() const;
+      const RiskParameters& GetParameters() const;
 
       /** Returns the Portfolio. */
       const Portfolio& GetPortfolio() const;
@@ -51,9 +54,9 @@ namespace Nexus::RiskService {
 
       /**
        * Updates the RiskParameters.
-       * @param riskParameters The new RiskParameters to use.
+       * @param parameters The new RiskParameters to use.
        */
-      void Update(const RiskParameters& riskParameters);
+      void Update(const RiskParameters& parameters);
 
       /**
        * Updates the transition timer.
@@ -65,19 +68,26 @@ namespace Nexus::RiskService {
       void Update();
 
     private:
-      RiskParameters m_riskParameters;
       Portfolio m_portfolio;
+      RiskParameters m_parameters;
       ExchangeRateTable m_exchangeRates;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       RiskState m_riskState;
       boost::posix_time::time_duration m_transitionTimeRemaining;
   };
 
+  template<typename Portfolio, typename TimeClient>
+  RiskStateProcessor(Portfolio, RiskParameters,
+    const std::vector<ExchangeRate>&, TimeClient&&) ->
+    RiskStateProcessor<Portfolio, std::decay_t<TimeClient>>;
+
   template<typename P, typename T>
   template<typename TF>
-  RiskStateTracker<P, T>::RiskStateTracker(const Portfolio& portfolio,
-      const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient)
-      : m_portfolio(portfolio),
+  RiskStateProcessor<P, T>::RiskStateProcessor(Portfolio portfolio,
+      RiskParameters parameters, const std::vector<ExchangeRate>& exchangeRates,
+      TF&& timeClient)
+      : m_portfolio(std::move(portfolio)),
+        m_parameters(std::move(parameters)),
         m_timeClient(std::forward<TF>(timeClient)) {
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
@@ -85,38 +95,39 @@ namespace Nexus::RiskService {
   }
 
   template<typename P, typename T>
-  const RiskParameters& RiskStateTracker<P, T>::GetRiskParameters() const {
-    return m_riskParameters;
+  const RiskParameters& RiskStateProcessor<P, T>::GetParameters() const {
+    return m_parameters;
   }
 
   template<typename P, typename T>
-  const typename RiskStateTracker<P, T>::Portfolio&
-      RiskStateTracker<P, T>::GetPortfolio() const {
+  const typename RiskStateProcessor<P, T>::Portfolio&
+      RiskStateProcessor<P, T>::GetPortfolio() const {
     return m_portfolio;
   }
 
   template<typename P, typename T>
-  typename RiskStateTracker<P, T>::Portfolio&
-      RiskStateTracker<P, T>::GetPortfolio() {
+  typename RiskStateProcessor<P, T>::Portfolio&
+      RiskStateProcessor<P, T>::GetPortfolio() {
     return m_portfolio;
   }
 
   template<typename P, typename T>
-  const RiskState& RiskStateTracker<P, T>::GetRiskState() const {
+  const RiskState& RiskStateProcessor<P, T>::GetRiskState() const {
     return m_riskState;
   }
 
   template<typename P, typename T>
-  void RiskStateTracker<P, T>::Update(const RiskParameters& riskParameters) {
-    m_riskParameters = riskParameters;
+  void RiskStateProcessor<P, T>::Update(const RiskParameters& parameters) {
+    m_parameters = parameters;
     if(m_riskState.m_type == RiskState::Type::ACTIVE) {
-      m_riskState = m_riskParameters.m_allowedState;
+      m_riskState = m_parameters.m_allowedState;
     }
     Update();
   }
 
   template<typename P, typename T>
-  void RiskStateTracker<P, T>::Update(boost::posix_time::time_duration period) {
+  void RiskStateProcessor<P, T>::Update(
+      boost::posix_time::time_duration period) {
     if(m_riskState.m_type == RiskState::Type::CLOSE_ORDERS) {
       m_transitionTimeRemaining -= period;
       if(m_transitionTimeRemaining <= boost::posix_time::seconds(0)) {
@@ -126,8 +137,8 @@ namespace Nexus::RiskService {
   }
 
   template<typename P, typename T>
-  void RiskStateTracker<P, T>::Update() {
-    if(m_riskParameters.m_currency == CurrencyId::NONE) {
+  void RiskStateProcessor<P, T>::Update() {
+    if(m_parameters.m_currency == CurrencyId::NONE) {
       return;
     }
     auto profitAndLoss = Money::ZERO;
@@ -137,11 +148,11 @@ namespace Nexus::RiskService {
         auto currencyProfitAndLoss =
           Accounting::GetTotalProfitAndLoss(m_portfolio, currency);
         auto convertedProfitAndLoss = m_exchangeRates.Convert(
-          currencyProfitAndLoss, currency, m_riskParameters.m_currency);
+          currencyProfitAndLoss, currency, m_parameters.m_currency);
         profitAndLoss += convertedProfitAndLoss;
-      } catch(const std::exception&) {
+      } catch(const CurrencyPairNotFoundException&) {
         std::cerr << "Currency pair not found: " << currency << " " <<
-          m_riskParameters.m_currency << std::endl;
+          m_parameters.m_currency << std::endl;
         if(m_riskState.m_type == RiskState::Type::ACTIVE) {
           m_riskState.m_type = RiskState::Type::CLOSE_ORDERS;
           m_riskState.m_expiry = m_timeClient->GetTime() +
@@ -151,15 +162,15 @@ namespace Nexus::RiskService {
       }
     }
     if(m_riskState.m_type == RiskState::Type::ACTIVE) {
-      if(profitAndLoss <= -m_riskParameters.m_netLoss) {
-        m_transitionTimeRemaining = m_riskParameters.m_transitionTime;
+      if(profitAndLoss <= -m_parameters.m_netLoss) {
+        m_transitionTimeRemaining = m_parameters.m_transitionTime;
         m_riskState.m_type = RiskState::Type::CLOSE_ORDERS;
         m_riskState.m_expiry = m_timeClient->GetTime() +
           m_transitionTimeRemaining;
       }
     } else {
-      if(profitAndLoss > -m_riskParameters.m_netLoss) {
-        m_riskState = m_riskParameters.m_allowedState;
+      if(profitAndLoss > -m_parameters.m_netLoss) {
+        m_riskState = m_parameters.m_allowedState;
       }
     }
   }
