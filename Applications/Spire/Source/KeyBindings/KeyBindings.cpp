@@ -41,7 +41,7 @@ void KeyBindings::OrderAction::set_name(std::string name) {
 boost::optional<const KeyBindings::Tag&> KeyBindings::OrderAction::get_tag(
     int tag_key) const {
   auto it = std::find_if(m_tags.begin(), m_tags.end(), [&] (auto& stored_tag) {
-    return stored_tag.get_key() == stored_tag.get_key();
+    return stored_tag.get_key() == tag_key;
   });
   if(it != m_tags.end()) {
     return *it;
