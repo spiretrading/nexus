@@ -70,21 +70,23 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
     QEvent* event) {
   if(watched == m_text_input && event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-      auto text = m_text_input->text();
-      if(text.length() == 6 || text.length() == 3) {
-        auto color = QColor();
-        color.setNamedColor(QString("#%1").arg(m_text_input->text()));
-        m_color_name = color_name(color);
-        m_color_signal(color);
-        if(text.length() == 3) {
+    switch(e->key()) {
+      case Qt::Key_Enter:
+      case Qt::Key_Return:
+        auto text = m_text_input->text();
+        if(text.length() == 6 || text.length() == 3) {
+          auto color = QColor();
+          color.setNamedColor(QString("#%1").arg(m_text_input->text()));
+          m_color_name = color_name(color);
+          m_color_signal(color);
+          if(text.length() == 3) {
+            m_text_input->setText(m_color_name);
+          }
+          m_text_input->clearFocus();
+        } else {
           m_text_input->setText(m_color_name);
         }
-        m_text_input->clearFocus();
-      } else {
-        m_text_input->setText(m_color_name);
-      }
-      return true;
+        return true;
     }
   }
   return QWidget::eventFilter(watched, event);
