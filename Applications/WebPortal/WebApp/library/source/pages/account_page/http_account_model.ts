@@ -16,7 +16,7 @@ export class HttpAccountModel extends AccountModel {
   constructor(account: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
     super();
-    this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0));
+    this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
     this.serviceClients = serviceClients;
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
@@ -63,7 +63,9 @@ export class HttpAccountModel extends AccountModel {
     })();
     const roles =
       await this.serviceClients.administrationClient.loadAccountRoles(account);
-    this.model = new LocalAccountModel(account, roles);
+    const group = await
+      this.serviceClients.administrationClient.loadParentTradingGroup(account);
+    this.model = new LocalAccountModel(account, roles, [group]);
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
