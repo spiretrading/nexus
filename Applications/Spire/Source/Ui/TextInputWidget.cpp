@@ -57,7 +57,7 @@ void TextInputWidget::set_cell_style() {
     font-family: Roboto;
     font-size: %1px;
     padding-left: %2px;
-  )").arg(scale_height(12)).arg(scale_width(7)));
+  )").arg(scale_height(12)).arg(scale_width(5)));
 }
 
 void TextInputWidget::set_default_style() {
