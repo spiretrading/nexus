@@ -9,6 +9,7 @@ export class LocalDashboardModel extends DashboardModel {
   /** Constructs a LocalDashboardModel.
    * @param account - The account that's logged in.
    * @param roles - The account's roles.
+   * @param groups - The account's groups.
    * @param entitlementDatabase - The entitlement database to use.
    * @param countryDatabase - The country database to use.
    * @param currencyDatabase - The currency database to use.
@@ -16,6 +17,7 @@ export class LocalDashboardModel extends DashboardModel {
    * @param accountDirectoryModel - The AccountDirectoryModel to return.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
+      groups: Beam.DirectoryEntry[],
       entitlementDatabase: Nexus.EntitlementDatabase,
       countryDatabase: Nexus.CountryDatabase,
       currencyDatabase: Nexus.CurrencyDatabase,
@@ -29,6 +31,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._marketDatabase = marketDatabase;
     this._account = account;
     this._roles = roles;
+    this._groups = groups;
     this._accountDirectoryModel = accountDirectoryModel;
   }
 
@@ -67,13 +70,20 @@ export class LocalDashboardModel extends DashboardModel {
     return this._roles;
   }
 
+  public get groups(): Beam.DirectoryEntry[] {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return this._groups;
+  }
+
   public get accountDirectoryModel(): AccountDirectoryModel {
     return this._accountDirectoryModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     if(account.equals(this._account)) {
-      return new LocalAccountModel(this.account, this.roles, []);
+      return new LocalAccountModel(this.account, this.roles, this.groups);
     }
     return new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
   }
@@ -93,5 +103,6 @@ export class LocalDashboardModel extends DashboardModel {
   private _marketDatabase: Nexus.MarketDatabase;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
+  private _groups: Beam.DirectoryEntry[];
   private _accountDirectoryModel: AccountDirectoryModel;
 }
