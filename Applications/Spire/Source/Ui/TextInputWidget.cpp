@@ -20,6 +20,9 @@ TextInputWidget::TextInputWidget(QString text, QWidget* parent)
 
 void TextInputWidget::focusInEvent(QFocusEvent* event) {
   setText(m_current_text);
+  if(event->reason() == Qt::OtherFocusReason) {
+    selectAll();
+  }
   QLineEdit::focusInEvent(event);
 }
 

@@ -12,7 +12,8 @@ NameItemDelegate::NameItemDelegate(QWidget* parent)
 
 QWidget* NameItemDelegate::createEditor(QWidget* parent,
     const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  auto editor = new TextInputWidget(static_cast<QWidget*>(this->parent()));
+  auto editor = new TextInputWidget(index.data().toString(),
+    static_cast<QWidget*>(this->parent()));
   editor->set_cell_style();
   connect(editor, &TextInputWidget::editingFinished,
     this, &NameItemDelegate::on_editing_finished);
@@ -38,9 +39,9 @@ void NameItemDelegate::paint(QPainter* painter,
 
 void NameItemDelegate::setEditorData(QWidget *editor,
     const QModelIndex &index) const {
-  auto line_edit = static_cast<TextInputWidget*>(editor);
-  line_edit->setText(index.data().value<QString>());
-  line_edit->setCursorPosition(line_edit->text().length());
+  auto text_input = static_cast<TextInputWidget*>(editor);
+  text_input->setText(index.data().value<QString>());
+  text_input->setCursorPosition(text_input->text().length());
 }
 
 void NameItemDelegate::setModelData(QWidget* editor,
