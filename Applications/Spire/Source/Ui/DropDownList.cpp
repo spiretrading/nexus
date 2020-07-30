@@ -39,13 +39,13 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
       switch(e->key()) {
         case Qt::Key_Down:
           if(isVisible()) {
-            focus_next();
+            activate_next();
             return true;
           }
           break;
         case Qt::Key_Up:
           if(isVisible()) {
-            focus_previous();
+            activate_previous();
             return true;
           }
           break;
@@ -78,7 +78,7 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Down:
       if(isVisible()) {
-        focus_next();
+        activate_next();
       }
       break;
     case Qt::Key_Enter:
@@ -92,7 +92,7 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Up:
       if(isVisible()) {
-        focus_previous();
+        activate_previous();
       }
       break;
   }
@@ -196,7 +196,7 @@ DropDownItem* DropDownList::get_widget(int index) {
   return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
 }
 
-void DropDownList::focus_next() {
+void DropDownList::activate_next() {
   if(m_layout->count() == 0) {
     return;
   }
@@ -207,7 +207,7 @@ void DropDownList::focus_next() {
   set_highlight((*m_highlight_index) + 1);
 }
 
-void DropDownList::focus_previous() {
+void DropDownList::activate_previous() {
   if(m_layout->count() == 0) {
     return;
   }

@@ -94,6 +94,12 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       auto e = static_cast<QKeyEvent*>(event);
       if(e->key() == Qt::Key_Escape) {
         m_last_activated_item = QVariant();
+      } else if(e->key() == Qt::Key_Down) {
+        if(!m_menu_list->isVisible()) {
+          m_menu_list->show();
+          m_menu_list->activate_next();
+          return true;
+        }
       }
     }
   }

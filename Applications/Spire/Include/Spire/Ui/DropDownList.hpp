@@ -50,6 +50,14 @@ namespace Spire {
       DropDownList(std::vector<DropDownItem*> items,
         bool is_click_activated, QWidget* parent = nullptr);
 
+      //! Activates the next item in the list without sending an activated
+      //! signal. Activates the first item if no item is currently activated.
+      void activate_next();
+
+      //! Activates the previous item in the list without sending an activated
+      //! signal. Activates the last item if no item is currently activated.
+      void activate_previous();
+
       //! Returns the value of the item at the given index.
       /*!
         \param index The index of the item.
@@ -120,8 +128,6 @@ namespace Spire {
         m_item_selected_connections;
 
       DropDownItem* get_widget(int index);
-      void focus_next();
-      void focus_previous();
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();
