@@ -42,6 +42,17 @@ namespace Nexus::Accounting {
      */
     explicit Inventory(typename Position::Key key);
 
+    /**
+     * Constructs an Inventory.
+     * @param position The currently held Position.
+     * @param grossProfitAndLoss The Inventory's gross profit and loss.
+     * @param fees The transaction fees.
+     * @param volume The total quantity that was transacted.
+     * @param transactionCount The number of transactions made.
+     */
+    Inventory(Position position, Money grossProfitAndLoss, Money fees,
+      Quantity volume, int transactionCount);
+
     /** Tests if two inventories are equal. */
     bool operator ==(const Inventory& inventory) const;
 
@@ -59,6 +70,15 @@ namespace Nexus::Accounting {
     : m_position(std::move(key)),
       m_volume(0),
       m_transactionCount(0) {}
+
+  template<typename P>
+  Inventory<P>::Inventory(Position position, Money grossProfitAndLoss,
+    Money fees, Quantity volume, int transactionCount)
+    : m_position(std::move(position)),
+      m_grossProfitAndLoss(grossProfitAndLoss),
+      m_fees(fees),
+      m_volume(volume),
+      m_transactionCount(transactionCount) {}
 
   template<typename P>
   bool Inventory<P>::operator ==(const Inventory& inventory) const {

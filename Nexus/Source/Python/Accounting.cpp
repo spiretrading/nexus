@@ -25,7 +25,7 @@ namespace {
   void ExportKey(pybind11::object& module, const std::string& name) {
     class_<Accounting::Details::Key<IndexType>>(module, name.c_str())
       .def(init())
-      .def(init<const IndexType&, CurrencyId>())
+      .def(init<IndexType, CurrencyId>())
       .def(init<const Accounting::Details::Key<IndexType>&>())
       .def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index)
       .def_readwrite("currency",
@@ -83,8 +83,9 @@ void Nexus::Python::ExportPositionOrderBook(pybind11::module& module) {
 void Nexus::Python::ExportPosition(pybind11::module& module) {
   auto outer = class_<Position<Security>>(module, "Position")
     .def(init())
-    .def(init<const Position<Security>::Key&>())
+    .def(init<Position<Security>::Key>())
     .def(init<const Position<Security>&>())
+    .def(init<Position<Security>::Key, Quantity, Money>())
     .def_readwrite("key", &Position<Security>::m_key)
     .def_readwrite("quantity", &Position<Security>::m_quantity)
     .def_readwrite("cost_basis", &Position<Security>::m_costBasis)
@@ -100,7 +101,8 @@ void Nexus::Python::ExportSecurityInventory(pybind11::module& module) {
   using Inventory = Accounting::Inventory<Position<Security>>;
   class_<Inventory>(module, "SecurityInventory")
     .def(init())
-    .def(init<const Position<Security>::Key&>())
+    .def(init<Position<Security>::Key>())
+    .def(init<Position<Security>, Money, Money, Quantity, int>())
     .def(init<const Inventory&>())
     .def_readwrite("position", &Inventory::m_position)
     .def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss)

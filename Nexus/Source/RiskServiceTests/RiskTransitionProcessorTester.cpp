@@ -18,6 +18,7 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 
@@ -64,8 +65,9 @@ TEST_SUITE("RiskTransitionProcessor") {
       [&] (auto& client, auto orderId) {
         cancelQueue->Push(orderId);
       });
-    auto processor = RiskTransitionProcessor(ACCOUNT, RiskState::Type::ACTIVE,
-      &*m_serviceClient, GetDefaultDestinationDatabase());
+    auto processor = RiskTransitionProcessor(ACCOUNT, {},
+      RiskState::Type::ACTIVE, &*m_serviceClient,
+      GetDefaultDestinationDatabase());
     auto bidOrder = std::make_shared<PrimitiveOrder>(
       OrderInfo(OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE), 112, time_from_string(
@@ -106,12 +108,12 @@ TEST_SUITE("RiskTransitionProcessor") {
   }
 
   TEST_CASE_FIXTURE(Fixture, "flatten_disabled") {
-    auto submissionQueue = std::make_shared<Queue<OrderFields>>();
     auto cancelQueue = std::make_shared<Queue<OrderId>>();
     AddMessageSlot<CancelOrderMessage>(Store(m_protocolServer->GetSlots()),
       [&] (auto& client, auto orderId) {
         cancelQueue->Push(orderId);
       });
+    auto submissionQueue = std::make_shared<Queue<OrderFields>>();
     NewOrderSingleService::AddSlot(Store(m_protocolServer->GetSlots()),
       [&] (auto& client, const auto& fields) {
         submissionQueue->Push(fields);
@@ -119,8 +121,9 @@ TEST_SUITE("RiskTransitionProcessor") {
           OrderInfo(fields, 100, time_from_string("2020-11-17 12:22:06")),
           ACCOUNT), Beam::Queries::Sequence(100));
       });
-    auto processor = RiskTransitionProcessor(ACCOUNT, RiskState::Type::ACTIVE,
-      &*m_serviceClient, GetDefaultDestinationDatabase());
+    auto processor = RiskTransitionProcessor(ACCOUNT, {},
+      RiskState::Type::ACTIVE, &*m_serviceClient,
+      GetDefaultDestinationDatabase());
     auto bidOrder = std::make_shared<PrimitiveOrder>(
       OrderInfo(OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE), 112, time_from_string(
@@ -190,5 +193,85 @@ TEST_SUITE("RiskTransitionProcessor") {
     REQUIRE(flatteningOrder.m_quantity == 100);
     REQUIRE(flatteningOrder.m_type == OrderType::MARKET);
     REQUIRE(flatteningOrder.m_destination == "NASDAQ");
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "initial_inventory") {
+    auto cancelQueue = std::make_shared<Queue<OrderId>>();
+    AddMessageSlot<CancelOrderMessage>(Store(m_protocolServer->GetSlots()),
+      [&] (auto& client, auto orderId) {
+        cancelQueue->Push(orderId);
+      });
+    auto submissionQueue = std::make_shared<Queue<OrderFields>>();
+    NewOrderSingleService::AddSlot(Store(m_protocolServer->GetSlots()),
+      [&] (auto& client, const auto& fields) {
+        submissionQueue->Push(fields);
+        return SequencedValue(IndexedValue(
+          OrderInfo(fields, 100, time_from_string("2020-11-17 12:22:06")),
+          ACCOUNT), Beam::Queries::Sequence(100));
+      });
+    auto inventory = std::vector<RiskPortfolioInventory>();
+    inventory.push_back(Inventory(Position<Security>(
+      Position<Security>::Key(XIU, DefaultCurrencies::CAD()), -300,
+      300 * Money::ONE), Money::ONE, Money::ZERO, 300, 1));
+    auto processor = RiskTransitionProcessor(ACCOUNT, inventory,
+      RiskState::Type::ACTIVE, &*m_serviceClient,
+      GetDefaultDestinationDatabase());
+    auto bidOrder = std::make_shared<PrimitiveOrder>(
+      OrderInfo(OrderFields::BuildLimitOrder(XIU, DefaultCurrencies::CAD(),
+      Side::BID, 300, Money::ONE), 113,
+      time_from_string("2020-11-17 12:22:06")));
+    processor.Add(*bidOrder);
+    auto bidReport = ExecutionReport();
+    bidOrder->With(
+      [&] (auto& state, auto& reports) {
+        bidReport = reports.front();
+      });
+    processor.Update(bidReport);
+    bidReport = ExecutionReport::BuildUpdatedReport(bidReport, OrderStatus::NEW,
+      bidReport.m_timestamp);
+    processor.Update(bidReport);
+    auto bidOrder2 = std::make_shared<PrimitiveOrder>(
+      OrderInfo(OrderFields::BuildLimitOrder(XIU, DefaultCurrencies::CAD(),
+      Side::BID, 100, 2 * Money::ONE), 114,
+      time_from_string("2020-11-17 12:22:06")));
+    processor.Add(*bidOrder2);
+    auto bidReport2 = ExecutionReport();
+    bidOrder2->With(
+      [&] (auto& state, auto& reports) {
+        bidReport2 = reports.front();
+      });
+    processor.Update(bidReport2);
+    bidReport2 = ExecutionReport::BuildUpdatedReport(bidReport2,
+      OrderStatus::NEW, bidReport2.m_timestamp);
+    processor.Update(bidReport2);
+    processor.Update(RiskState::Type::CLOSE_ORDERS);
+    auto cancelId = cancelQueue->Top();
+    cancelQueue->Pop();
+    REQUIRE(cancelId == 114);
+    bidReport2 = ExecutionReport::BuildUpdatedReport(bidReport2,
+      OrderStatus::CANCELED, bidReport2.m_timestamp);
+    processor.Update(bidReport2);
+    auto syncOrder = std::make_shared<PrimitiveOrder>(
+      OrderInfo(OrderFields::BuildLimitOrder(XIU, DefaultCurrencies::CAD(),
+      Side::ASK, 100, Money::ONE + Money::CENT), 1000,
+      time_from_string("2020-11-17 12:22:06")));
+    m_serviceClient->Cancel(*syncOrder);
+    cancelId = cancelQueue->Top();
+    cancelQueue->Pop();
+    REQUIRE(cancelId == 1000);
+    processor.Update(RiskState::Type::DISABLED);
+    cancelId = cancelQueue->Top();
+    cancelQueue->Pop();
+    REQUIRE(cancelId == 113);
+    bidReport = ExecutionReport::BuildUpdatedReport(bidReport,
+      OrderStatus::CANCELED, bidReport.m_timestamp);
+    processor.Update(bidReport);
+    auto flatteningOrder = submissionQueue->Top();
+    submissionQueue->Pop();
+    REQUIRE(flatteningOrder.m_security == XIU);
+    REQUIRE(flatteningOrder.m_side == Side::BID);
+    REQUIRE(flatteningOrder.m_quantity == 300);
+    REQUIRE(flatteningOrder.m_type == OrderType::MARKET);
+    REQUIRE(flatteningOrder.m_destination == "TSX");
   }
 }

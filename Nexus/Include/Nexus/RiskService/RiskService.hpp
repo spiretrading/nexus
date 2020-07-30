@@ -3,9 +3,10 @@
 #include <string>
 
 namespace Nexus::RiskService {
-  struct AccountRecord;
-  struct PositionSnapshot;
+  struct InventorySnapshot;
   template<typename B> class RiskClient;
+  template<typename A, typename M, typename O, typename R, typename T>
+    class RiskController;
   struct RiskDataStore;
   struct RiskParameters;
   struct RiskPositionUpdate;

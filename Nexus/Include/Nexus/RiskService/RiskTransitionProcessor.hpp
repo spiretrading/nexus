@@ -9,6 +9,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
+#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
@@ -33,6 +34,7 @@ namespace Nexus::RiskService {
       /**
        * Constructs a RiskTransitionProcessor.
        * @param account The account being tracked.
+       * @param inventory A snapshot of the account's positions.
        * @param riskState The account's initial RiskState.
        * @param orderExecutionClient The OrderExecutionClient used to cancel
        *        Orders and flatten Positions.
@@ -41,6 +43,7 @@ namespace Nexus::RiskService {
        */
       template<typename OF>
       RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry account,
+        const std::vector<RiskPortfolioInventory>& inventory,
         RiskState riskState, OF&& orderExecutionClient,
         const DestinationDatabase& destinations);
 
@@ -85,18 +88,21 @@ namespace Nexus::RiskService {
   };
 
   template<typename OF>
-  RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry, RiskState, OF&&,
+  RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry,
+    const std::vector<RiskPortfolioInventory>&, RiskState, OF&&,
     const DestinationDatabase&) -> RiskTransitionProcessor<std::decay_t<OF>>;
 
   template<typename O>
   template<typename OF>
   RiskTransitionProcessor<O>::RiskTransitionProcessor(
-    Beam::ServiceLocator::DirectoryEntry account, RiskState riskState,
+    Beam::ServiceLocator::DirectoryEntry account,
+    const std::vector<RiskPortfolioInventory>& inventory, RiskState riskState,
     OF&& orderExecutionClient, const DestinationDatabase& destinations)
     : m_account(std::move(account)),
       m_riskState(std::move(riskState)),
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
       m_destinations(destinations),
+      m_book(inventory),
       m_state(0) {
     m_orderExecutionClient->Open();
   }
