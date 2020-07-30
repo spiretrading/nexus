@@ -29,7 +29,14 @@ namespace Spire {
       void set_default_style();
 
     protected:
+      void focusInEvent(QFocusEvent* event) override;
+      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+
+    private:
+      QString m_current_text;
+
+      void on_text_edited();
   };
 }
 

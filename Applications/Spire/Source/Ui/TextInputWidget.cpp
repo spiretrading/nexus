@@ -9,9 +9,27 @@ TextInputWidget::TextInputWidget(QWidget* parent)
   : TextInputWidget({}, parent) {}
 
 TextInputWidget::TextInputWidget(QString text, QWidget* parent)
-    : QLineEdit(std::move(text), parent) {
+    : QLineEdit(text, parent),
+      m_current_text(std::move(text)) {
   setContextMenuPolicy(Qt::NoContextMenu);
   set_default_style();
+  connect(this, &TextInputWidget::textEdited, [=] {
+    on_text_edited();
+  });
+}
+
+void TextInputWidget::focusInEvent(QFocusEvent* event) {
+  setText(m_current_text);
+  QLineEdit::focusInEvent(event);
+}
+
+void TextInputWidget::focusOutEvent(QFocusEvent* event) {
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  auto metrics = QFontMetrics(font);
+  setText(metrics.elidedText(text(),
+    Qt::ElideRight, width() - scale_width(16)));
+  QLineEdit::focusOutEvent(event);
 }
 
 void TextInputWidget::keyPressEvent(QKeyEvent* event) {
@@ -39,7 +57,7 @@ void TextInputWidget::set_cell_style() {
     font-family: Roboto;
     font-size: %1px;
     padding-left: %2px;
-  )").arg(scale_height(12)).arg(scale_width(5)));
+  )").arg(scale_height(12)).arg(scale_width(7)));
 }
 
 void TextInputWidget::set_default_style() {
@@ -56,5 +74,9 @@ void TextInputWidget::set_default_style() {
     QLineEdit:focus {
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-        .arg(scale_width(6)));
+        .arg(scale_width(8)));
+}
+
+void TextInputWidget::on_text_edited() {
+  m_current_text = text();
 }
