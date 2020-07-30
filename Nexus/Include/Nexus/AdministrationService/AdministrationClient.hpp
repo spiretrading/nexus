@@ -94,11 +94,11 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& child);
 
       /**
-       * Loads an account's trading group Directory.
+       * Loads the DirectoryEntry representing an account's trading group.
        * @param account The account whose trading group is to be loaded.
-       * @return The directory of the trading <i>account</i>'s group.
+       * @return The directory of the <i>account</i>'s trading group.
        */
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
@@ -432,11 +432,10 @@ namespace Nexus::AdministrationService {
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadTradingGroupEntry(
+      AdministrationClient<B>::LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAccountTradingGroupEntryService>(
-      account);
+    return client->template SendRequest<LoadParentTradingGroupService>(account);
   }
 
   template<typename B>

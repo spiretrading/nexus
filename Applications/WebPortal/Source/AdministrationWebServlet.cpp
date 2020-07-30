@@ -50,6 +50,10 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     std::bind(&AdministrationWebServlet::OnLoadManagedTradingGroups, this,
     std::placeholders::_1));
   slots.emplace_back(MatchesPath(HttpMethod::POST,
+    "/api/administration_service/load_parent_trading_group"),
+    std::bind(&AdministrationWebServlet::OnLoadParentTradingGroup, this,
+    std::placeholders::_1));
+  slots.emplace_back(MatchesPath(HttpMethod::POST,
     "/api/administration_service/load_account_roles"),
     std::bind(&AdministrationWebServlet::OnLoadAccountRoles, this,
     std::placeholders::_1));
@@ -267,6 +271,30 @@ HttpResponse AdministrationWebServlet::OnLoadManagedTradingGroups(
   auto& serviceClients = session->GetServiceClients();
   auto tradingGroups =
     serviceClients.GetAdministrationClient().LoadManagedTradingGroups(
+    parameters.m_account);
+  session->ShuttleResponse(tradingGroups, Store(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::OnLoadParentTradingGroup(
+    const Beam::WebServices::HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+
+    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.Shuttle("account", m_account);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->Find(request);
+  if(session == nullptr) {
+    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->ShuttleParameters<Parameters>(request);
+  auto& serviceClients = session->GetServiceClients();
+  auto tradingGroups =
+    serviceClients.GetAdministrationClient().LoadParentTradingGroup(
     parameters.m_account);
   session->ShuttleResponse(tradingGroups, Store(response));
   return response;

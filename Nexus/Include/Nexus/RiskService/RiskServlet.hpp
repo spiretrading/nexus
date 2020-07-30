@@ -180,7 +180,7 @@ namespace Nexus::RiskService {
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_accountToGroup.GetOrInsert(account,
       [&] {
-        return m_administrationClient->LoadTradingGroupEntry(account);
+        return m_administrationClient->LoadParentTradingGroup(account);
       });
   }
 
