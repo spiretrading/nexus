@@ -16,13 +16,13 @@ int main(int argc, char** argv) {
   auto bindings = KeyBindings::get_default_key_bindings();
   auto region = Region(Security("MSFT", DefaultMarkets::NASDAQ(),
     DefaultCountries::US()));
-  auto action1 = KeyBindings::OrderAction{"Name 1",
+  auto action1 = KeyBindings::OrderAction("Name 1",
     {{40, OrderType(OrderType::LIMIT)}, {54, Side(Side::BID)},
-     {59, TimeInForce(TimeInForce::Type::GTC)}, {38, 456}}};
+     {59, TimeInForce(TimeInForce::Type::GTC)}, {38, Quantity(456)}});
   bindings.set(Qt::Key_F1, region, action1);
-  auto action2 = KeyBindings::OrderAction{"Name 2",
+  auto action2 = KeyBindings::OrderAction("Name 2",
     {{40, OrderType(OrderType::LIMIT)}, {54, Side(Side::BID)},
-     {59, TimeInForce(TimeInForce::Type::GTC)}, {38, 789}}};
+     {59, TimeInForce(TimeInForce::Type::GTC)}, {38, Quantity(789)}});
   bindings.set(Qt::Key_F2, region, action2);
   bindings.set({Qt::Key_Shift, Qt::Key_Escape}, Region::Global(),
     KeyBindings::CancelAction::ALL);

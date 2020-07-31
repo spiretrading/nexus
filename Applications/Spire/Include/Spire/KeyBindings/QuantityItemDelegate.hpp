@@ -5,6 +5,7 @@
 #include <QStyleOptionViewItem>
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindingItemDelegate.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 

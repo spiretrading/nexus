@@ -55,13 +55,6 @@ namespace Spire {
   */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
 
-  //! Applies the Spire line edit style to a line edit, overwriting any
-  //! previously set style.
-  /*
-    \param widget The line edit to apply the style to.
-  */
-  void apply_line_edit_style(QLineEdit* widget);
-
   //! Constructs a horizontal Spire-styled table header with fixed size,
   //! immovable, column headers.
   /*

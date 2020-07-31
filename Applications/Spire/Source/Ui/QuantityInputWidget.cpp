@@ -7,9 +7,8 @@ using namespace Nexus;
 using namespace Spire;
 
 QuantityInputWidget::QuantityInputWidget(QWidget* parent)
-    : QLineEdit(parent),
+    : TextInputWidget(parent),
       m_item_delegate(this) {
-  apply_line_edit_style(this);
   setValidator(new QRegularExpressionValidator(
     QRegularExpression("^[0-9]*$"), this));
   connect(this, &QLineEdit::editingFinished, this,
