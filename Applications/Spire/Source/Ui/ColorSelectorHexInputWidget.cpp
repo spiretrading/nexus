@@ -4,7 +4,6 @@
 #include <QLabel>
 #include <QRegExpValidator>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -43,23 +42,22 @@ ColorSelectorHexInputWidget::ColorSelectorHexInputWidget(
   hash_label->setFixedSize(scale(14, 26));
   hash_label->setStyleSheet(label_style);
   layout->addWidget(hash_label);
-  m_line_edit = new QLineEdit(m_color_name, this);
-  m_line_edit->setValidator(new QRegExpValidator(QRegExp("^[0-9a-fA-F]{1,6}$"),
+  m_text_input = new TextInputWidget(m_color_name, this);
+  m_text_input->setValidator(new QRegExpValidator(QRegExp("^[0-9a-fA-F]{1,6}$"),
     this));
-  m_line_edit->setFixedHeight(26);
-  connect(m_line_edit, &QLineEdit::textChanged, this,
+  m_text_input->setFixedHeight(26);
+  connect(m_text_input, &QLineEdit::textChanged, this,
     &ColorSelectorHexInputWidget::on_text_changed);
-  m_line_edit->installEventFilter(this);
-  apply_line_edit_style(m_line_edit);
-  layout->addWidget(m_line_edit);
-  setFocusProxy(m_line_edit);
+  m_text_input->installEventFilter(this);
+  layout->addWidget(m_text_input);
+  setFocusProxy(m_text_input);
 }
 
 void ColorSelectorHexInputWidget::set_color(const QColor& color) {
   if(color_name(color) != m_color_name) {
     m_color_name = color_name(color);
-    m_line_edit->setText(m_color_name);
-    m_line_edit->selectAll();
+    m_text_input->setText(m_color_name);
+    m_text_input->selectAll();
   }
 }
 
@@ -70,21 +68,21 @@ connection ColorSelectorHexInputWidget::connect_color_signal(
 
 bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
     QEvent* event) {
-  if(watched == m_line_edit && event->type() == QEvent::KeyPress) {
+  if(watched == m_text_input && event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
     if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-      auto text = m_line_edit->text();
+      auto text = m_text_input->text();
       if(text.length() == 6 || text.length() == 3) {
         auto color = QColor();
-        color.setNamedColor(QString("#%1").arg(m_line_edit->text()));
+        color.setNamedColor(QString("#%1").arg(m_text_input->text()));
         m_color_name = color_name(color);
         m_color_signal(color);
         if(text.length() == 3) {
-          m_line_edit->setText(m_color_name);
+          m_text_input->setText(m_color_name);
         }
-        m_line_edit->clearFocus();
+        m_text_input->clearFocus();
       } else {
-        m_line_edit->setText(m_color_name);
+        m_text_input->setText(m_color_name);
       }
       return true;
     }
@@ -93,5 +91,5 @@ bool ColorSelectorHexInputWidget::eventFilter(QObject* watched,
 }
 
 void ColorSelectorHexInputWidget::on_text_changed(const QString& text) {
-  m_line_edit->setText(text.toUpper());
+  m_text_input->setText(text.toUpper());
 }

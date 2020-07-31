@@ -7,9 +7,8 @@ using namespace Nexus;
 using namespace Spire;
 
 MoneyInputWidget::MoneyInputWidget(QWidget* parent)
-    : QLineEdit(parent),
+    : TextInputWidget(parent),
       m_item_delegate(this) {
-  apply_line_edit_style(this);
   setValidator(new QRegularExpressionValidator(
     QRegularExpression("((\\d+\\.?\\d{0,2})|(\\.\\d{0,2}))"), this));
   connect(this, &QLineEdit::editingFinished, this,
@@ -35,6 +34,9 @@ connection MoneyInputWidget::connect_modified_signal(
 
 void MoneyInputWidget::on_line_edit_committed() {
   if(!text().isEmpty()) {
+    if(text().endsWith(".")) {
+      setText(text().remove('.'));
+    }
     auto value = Money::FromValue(text().toStdString());
     if(value) {
       m_committed_signal(*value);
