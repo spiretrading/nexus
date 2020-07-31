@@ -37,16 +37,13 @@ void TextInputWidget::focusOutEvent(QFocusEvent* event) {
 
 void TextInputWidget::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-      return;
     case Qt::Key_Delete:
       setText("");
-      Q_EMIT editingFinished();
-      return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
       Q_EMIT editingFinished();
+    case Qt::Key_Up:
+    case Qt::Key_Down:
       return;
   }
   QLineEdit::keyPressEvent(event);
