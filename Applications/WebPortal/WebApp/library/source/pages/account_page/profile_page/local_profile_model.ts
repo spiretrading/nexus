@@ -38,6 +38,17 @@ export class LocalProfileModel extends ProfileModel {
     return this._roles.clone();
   }
 
+  public get groups(): Beam.DirectoryEntry[] {
+    if(!this.isLoaded) {
+      throw Error('Model not loaded.');
+    }
+    return this._groups;
+  }
+
+  public set groups(groups:Beam.DirectoryEntry[]) {
+    this._groups = groups;
+  }
+
   public get identity(): Nexus.AccountIdentity {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
@@ -60,5 +71,6 @@ export class LocalProfileModel extends ProfileModel {
   private _isLoaded: boolean;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
+  private _groups: Beam.DirectoryEntry[];
   private _identity: Nexus.AccountIdentity;
 }
