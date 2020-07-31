@@ -23,14 +23,14 @@ namespace Spire {
       */
       using SelectedSignal = Signal<void (QVariant value)>;
 
-      //! Constructs a text DropDownItem.
+      //! Constructs a DropDownItem.
       /*!
         \param value The value represented by the DropDownItem.
         \param parent The parent widget.
       */
       explicit DropDownItem(QVariant value, QWidget* parent = nullptr);
 
-      //! Consstructs a text DropDownItem with an icon.
+      //! Consstructs a DropDownItem with an icon.
       /*!
         \param value The value represented by the DropDownItem.
         \param icon The icon to display beside the value.
