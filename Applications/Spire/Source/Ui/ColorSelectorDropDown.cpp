@@ -68,17 +68,15 @@ namespace {
 
 ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     QWidget* parent)
-    : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint),
+    : QWidget(parent),
       m_recent_colors(RecentColors::get_instance()),
       m_current_color(current_color),
       m_original_color(current_color) {
-  m_drop_shadow = new DropShadow(true, false, this);
   setFixedSize(scale(232, 198));
   setObjectName("color_selector_drop_down");
   setStyleSheet(R"(
     #color_selector_drop_down {
       background-color: #FFFFFF;
-      border: 1px solid #C8C8C8;
     })");
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(HORIZONTAL_PADDING(), VERTICAL_PADDING(),
@@ -122,6 +120,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
   add_basic_color_button(2, 0, QColor("#FF00CC"));
   add_basic_color_button(2, 1, QColor("#FFFFFF"));
   add_basic_color_button(2, 2, QColor("#000000"));
+  setFocusProxy(m_basic_colors_layout->itemAt(0)->widget());
   horizontal_color_layout->addStretch(1);
   auto color_picker_layout = new QVBoxLayout();
   color_picker_layout->setContentsMargins(0, scale_height(10), 0, 0);
@@ -148,7 +147,7 @@ ColorSelectorDropDown::ColorSelectorDropDown(const QColor& current_color,
     m_color_value_slider->set_color(color);
     m_color_hue_slider->set_color(color);
     on_color_selected(color);
-    hide();
+    window()->hide();
   });
   m_hex_input->setFocusPolicy(Qt::StrongFocus);
   color_picker_layout->addWidget(m_hex_input);
@@ -186,17 +185,19 @@ void ColorSelectorDropDown::childEvent(QChildEvent* event) {
 bool ColorSelectorDropDown::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto e = static_cast<QKeyEvent*>(event);
-    if(e->key() == Qt::Key_Escape) {
-      hide();
-    } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+    if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+        e->key() == Qt::Key_Space) {
       on_color_selected(m_current_color);
-      hide();
+      window()->hide();
+    } else if(e->key() == Qt::Key_Escape) {
+      window()->hide();
     }
   } else if(event->type() == QEvent::MouseButtonDblClick) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton) {
       on_color_selected(m_current_color);
-      hide();
+      window()->hide();
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
