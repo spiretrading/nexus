@@ -13,9 +13,6 @@ interface Properties {
   /** The database of all available countries. */
   countryDatabase?: Nexus.CountryDatabase;
 
-  /** The groups the account belongs to. */
-  groups: Beam.DirectoryEntry[];
-
   /** The model representing the account's profile. */
   model: ProfileModel;
 }
@@ -49,7 +46,7 @@ export class ProfileController extends React.Component<Properties, State> {
       account={this.props.model.account}
       roles={this.props.model.roles}
       identity={this.props.model.identity}
-      groups={this.props.groups}
+      groups={this.props.model.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
       readonly={!this.props.model.roles.test(
