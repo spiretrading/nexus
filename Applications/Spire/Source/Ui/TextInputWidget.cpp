@@ -12,20 +12,7 @@ TextInputWidget::TextInputWidget(QString text, QWidget* parent)
     : QLineEdit(text, parent),
       m_current_text(std::move(text)) {
   setContextMenuPolicy(Qt::NoContextMenu);
-  setStyleSheet(QString(R"(
-    QLineEdit {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %3px;
-      padding-left: %4px;
-    }
-
-    QLineEdit:focus {
-      border: %1px solid #4B23A0 %2px solid #4B23A0;
-    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
-        .arg(scale_width(8)));
+  set_default_style();
   connect(this, &TextInputWidget::textEdited, [=] {
     on_text_edited();
   });
@@ -63,6 +50,34 @@ void TextInputWidget::keyPressEvent(QKeyEvent* event) {
       return;
   }
   QLineEdit::keyPressEvent(event);
+}
+
+void TextInputWidget::set_cell_style() {
+  setStyleSheet(QString(R"(
+    background-color: #FFFFFF;
+    border: none;
+    color: #000000;
+    font-family: Roboto;
+    font-size: %1px;
+    padding-left: %2px;
+  )").arg(scale_height(12)).arg(scale_width(5)));
+}
+
+void TextInputWidget::set_default_style() {
+  setStyleSheet(QString(R"(
+    QLineEdit {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8 %2px solid #C8C8C8;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %3px;
+      padding-left: %4px;
+    }
+
+    QLineEdit:focus {
+      border: %1px solid #4B23A0 %2px solid #4B23A0;
+    })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
+        .arg(scale_width(8)));
 }
 
 void TextInputWidget::on_text_edited() {
