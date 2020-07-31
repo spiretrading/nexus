@@ -6,11 +6,18 @@
 using namespace Spire;
 
 QuantityInputEditor::QuantityInputEditor(int initial_value, QWidget* parent)
-    : TextInputWidget(parent),
+    : QLineEdit(parent),
       m_initial_value(initial_value) {
   setContextMenuPolicy(Qt::NoContextMenu);
   setValidator(new QIntValidator(0, std::numeric_limits<int>::max(), this));
-  set_cell_style();
+  setStyleSheet(QString(R"(
+    background-color: #FFFFFF;
+    border: none;
+    color: #000000;
+    font-family: Roboto;
+    font-size: %1px;
+    padding-left: %2px;
+  )").arg(scale_height(12)).arg(scale_width(6)));
 }
 
 void QuantityInputEditor::keyPressEvent(QKeyEvent* event) {
@@ -26,5 +33,5 @@ void QuantityInputEditor::keyPressEvent(QKeyEvent* event) {
     Q_EMIT editingFinished();
     return;
   }
-  TextInputWidget::keyPressEvent(event);
+  insert(event->text());
 }

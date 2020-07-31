@@ -1,11 +1,11 @@
 #ifndef SPIRE_QUANTITY_INPUT_EDITOR_HPP
 #define SPIRE_QUANTITY_INPUT_EDITOR_HPP
-#include "Spire/Ui/TextInputWidget.hpp"
+#include <QLineEdit>
 
 namespace Spire {
 
-  //! Represents a table editor for editing Quantities.
-  class QuantityInputEditor : public TextInputWidget {
+  //! Represents a line input for editing Quantities.
+  class QuantityInputEditor : public QLineEdit {
     public:
 
       //! Constructs a QuantityInputEditor.
