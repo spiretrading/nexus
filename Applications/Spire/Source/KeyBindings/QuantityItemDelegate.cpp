@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/QuantityItemDelegate.hpp"
 #include <QKeyEvent>
-#include <QPainter>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/KeyBindings/QuantityInputEditor.hpp"
 #include "Spire/Spire/Dimensions.hpp"

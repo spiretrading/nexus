@@ -26,9 +26,6 @@ namespace Spire {
     
       void setModelData(QWidget* editor, QAbstractItemModel* model,
         const QModelIndex& index) const override;
-
-    private:
-      CustomVariantItemDelegate m_item_delegate;
   };
 }
 
