@@ -12,6 +12,18 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  auto ICON_SIZE() {
+    static auto icon_size = scale(10, 10);
+    return icon_size;
+  }
+
+  auto ICON_RECT() {
+    static auto icon_rect = QRect(QPoint(0, 0), scale(10, 10));
+    return icon_rect;
+  }
+}
+
 ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
     const DirectoryEntry& account, QWidget* parent)
     : Window(parent),
@@ -35,20 +47,19 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   layout->setStretchFactor(combo_box_layout, 26);
   layout->addStretch(10);
   combo_box_layout->addStretch(8);
-  m_window_manager_button = new ToolbarMenu(tr("Window Manager"), body);
+  m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
+    tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
+    body);
   m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_window_manager_button->add(tr("Minimize All"));
-  m_window_manager_button->add(tr("Restore All"));
-  m_window_manager_button->add(tr("Import/Export Settings"));
   combo_box_layout->addWidget(m_window_manager_button);
   combo_box_layout->setStretchFactor(m_window_manager_button, 138);
   combo_box_layout->addStretch(16);
   m_recently_closed_button = new ToolbarMenu(tr("Recently Closed"), body);
   m_recently_closed_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_recently_closed_button->connect_item_selected_signal(
-    [=] (auto index) {on_item_selected(index);});
+  m_recently_closed_button->connect_index_selected_signal(
+    [=] (auto index) { on_item_selected(index); });
   combo_box_layout->addWidget(m_recently_closed_button);
   combo_box_layout->setStretchFactor(m_recently_closed_button, 138);
   combo_box_layout->addStretch(8);
@@ -127,35 +138,19 @@ connection ToolbarWindow::connect_reopen_signal(
   return m_reopen_signal.connect(slot);
 }
 
-void ToolbarWindow::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_window_manager_button->hasFocus()) {
-      m_window_manager_button->showMenu();
-    } else if(m_recently_closed_button->hasFocus()) {
-      m_recently_closed_button->showMenu();
-      m_recently_closed_button->menu()->setFocus();
-    }
-    event->accept();
-  } else {
-    QWidget::keyPressEvent(event);
-  }
-}
-
 void ToolbarWindow::entry_added(const RecentlyClosedModel::Entry& e) {
-  auto icon_size = scale(18, 10);
-  auto icon_rect = QRect(translate(8, 0), scale(10, 10));
   m_entries.push_back(e);
   switch(e.m_type) {
     case RecentlyClosedModel::Type::BOOK_VIEW: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/bookview-black.svg"), icon_size,
-          icon_rect));
+        imageFromSvg(QString(":/Icons/bookview-black.svg"), ICON_SIZE(),
+          ICON_RECT()));
       break;
     }
     case RecentlyClosedModel::Type::TIME_AND_SALE: {
       m_recently_closed_button->add(QString::fromStdString(e.m_identifier),
-        imageFromSvg(QString(":/Icons/time-sale-black.svg"), icon_size,
-          icon_rect));
+        imageFromSvg(QString(":/Icons/time-sale-black.svg"), ICON_SIZE(),
+          ICON_RECT()));
       break;
     }
   }
@@ -165,7 +160,7 @@ void ToolbarWindow::entry_removed(const RecentlyClosedModel::Entry& e) {
   for(auto i = 0; i < static_cast<int>(m_entries.size()); ++i) {
     if(m_entries[i].m_id == e.m_id) {
       m_entries.erase(m_entries.begin() + i);
-      m_recently_closed_button->remove(i);
+      m_recently_closed_button->remove_item(i);
     }
   }
 }
