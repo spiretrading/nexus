@@ -20,23 +20,6 @@ QWidget* NameItemDelegate::createEditor(QWidget* parent,
   return editor;
 }
 
-void NameItemDelegate::paint(QPainter* painter,
-    const QStyleOptionViewItem& option, const QModelIndex& index) const {
-  painter->save();
-  painter->fillRect(option.rect,
-    index.data(Qt::BackgroundRole).value<QColor>());
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_height(12));
-  painter->setFont(font);
-  auto metrics = QFontMetrics(font);
-  auto shortened_text = metrics.elidedText(index.data().toString(),
-    Qt::ElideRight, option.rect.width() - scale_width(8));
-  auto pos = QPoint(option.rect.left() + scale_width(9),
-    option.rect.bottom() + 1 - (option.rect.height() - metrics.ascent()) / 2);
-  painter->drawText(pos, shortened_text);
-  painter->restore();
-}
-
 void NameItemDelegate::setEditorData(QWidget *editor,
     const QModelIndex &index) const {
   auto text_input = static_cast<TextInputWidget*>(editor);
