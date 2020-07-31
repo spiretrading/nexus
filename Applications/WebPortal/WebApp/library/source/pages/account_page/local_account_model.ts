@@ -9,13 +9,11 @@ import { LocalRiskModel } from './risk_page';
 export class LocalAccountModel extends AccountModel {
 
   /** Constructs a LocalAccountModel. */
-  constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
-      groups: Beam.DirectoryEntry[]) {
+  constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles) {
     super();
     this._isLoaded = false;
     this._account = account;
     this._roles = roles;
-    this._groups = groups;
     this._entitlementsModel = new LocalEntitlementsModel(this._account,
       new Beam.Set<Beam.DirectoryEntry>());
     this._profileModel = new LocalProfileModel(this._account, this._roles, 
@@ -41,13 +39,6 @@ export class LocalAccountModel extends AccountModel {
       throw Error('Model not loaded.');
     }
     return this._roles;
-  }
-
-  public get groups(): Beam.DirectoryEntry[] {
-    if(!this.isLoaded) {
-      throw Error('Model not loaded.');
-    }
-    return this._groups;
   }
 
   public get entitlementsModel(): LocalEntitlementsModel {
@@ -78,7 +69,6 @@ export class LocalAccountModel extends AccountModel {
   private _isLoaded: boolean;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
-  private _groups: Beam.DirectoryEntry[];
   private _entitlementsModel: LocalEntitlementsModel;
   private _profileModel: LocalProfileModel;
   private _riskModel: LocalRiskModel;
