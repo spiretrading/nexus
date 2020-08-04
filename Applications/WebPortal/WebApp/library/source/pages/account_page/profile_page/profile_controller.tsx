@@ -69,6 +69,15 @@ export class ProfileController extends React.Component<Properties, State> {
     });
   }
 
+  public componentDidUpdate(prevProps: Properties): void {
+    if(prevProps.model.account &&
+        !prevProps.model.account.equals(this.props.model.account)) {
+      this.setState({isLoaded: false}, () => {
+        this.setState({isLoaded: true});
+      });
+    }
+  }
+
   private onSubmitPassword = async (password: string) => {
     try {
       this.setState({
