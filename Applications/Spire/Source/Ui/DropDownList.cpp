@@ -127,11 +127,11 @@ QVariant DropDownList::get_value(int index) {
 }
 
 void DropDownList::insert_item(DropDownItem* item) {
-  m_item_selected_connections.push_back(std::move(
+  m_item_selected_connections.push_back(
     item->connect_selected_signal(
       [=, index = m_layout->count()] (auto value) {
         on_item_selected(std::move(value), index);
-      })));
+      }));
   m_layout->insertWidget(m_layout->count(), item);
   update_height();
 }
@@ -148,10 +148,9 @@ void DropDownList::remove_item(int index) {
   for(auto i = std::size_t(index); i < m_item_selected_connections.size();
       ++i) {
     m_item_selected_connections[i] =
-      std::move(get_widget(i + 1)->connect_selected_signal(
-      [=] (auto value) {
+      get_widget(i + 1)->connect_selected_signal([=] (auto value) {
         on_item_selected(std::move(value), i);
-      }));
+      });
   }
   auto layout_item = m_layout->takeAt(index);
   delete layout_item->widget();
@@ -178,10 +177,10 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   m_item_selected_connections.clear();
   for(auto i = std::size_t(0); i < items.size(); ++i) {
     m_layout->addWidget(items[i]);
-    m_item_selected_connections.push_back(std::move(
+    m_item_selected_connections.push_back(
       items[i]->connect_selected_signal([=] (auto value) {
         on_item_selected(std::move(value), i);
-      })));
+      }));
   }
   if(m_layout->count() > 0) {
     update_height();

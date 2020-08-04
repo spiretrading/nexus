@@ -57,9 +57,8 @@ void StaticDropDownMenu::remove_item(int index) {
 }
 
 void StaticDropDownMenu::set_items(std::vector<QVariant> items) {
-  auto widget_items = std::vector<DropDownItem*>();
-  widget_items.reserve(items.size());
-  std::transform(items.begin(), items.end(), std::back_inserter(widget_items),
+  auto widget_items = std::vector<DropDownItem*>(items.size());
+  std::transform(items.begin(), items.end(), widget_items.begin(),
     [=] (const auto& item) {
       auto item_widget = new DropDownItem(item, this);
       item_widget->setFixedHeight(scale_height(20));
