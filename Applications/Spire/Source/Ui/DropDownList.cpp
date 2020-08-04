@@ -127,11 +127,10 @@ QVariant DropDownList::get_value(int index) {
 }
 
 void DropDownList::insert_item(DropDownItem* item) {
-  m_item_selected_connections.push_back(
-    item->connect_selected_signal(
-      [=, index = m_layout->count()] (auto value) {
-        on_item_selected(std::move(value), index);
-      }));
+  m_item_selected_connections.push_back(item->connect_selected_signal(
+    [=] (auto value) {
+      on_item_selected(std::move(value), item);
+    }));
   m_layout->insertWidget(m_layout->count(), item);
   update_height();
 }
@@ -144,14 +143,8 @@ void DropDownList::remove_item(int index) {
   if(index > m_layout->count() - 1) {
     return;
   }
-  m_item_selected_connections.pop_back();
-  for(auto i = std::size_t(index); i < m_item_selected_connections.size();
-      ++i) {
-    m_item_selected_connections[i] =
-      get_widget(i + 1)->connect_selected_signal([=] (auto value) {
-        on_item_selected(std::move(value), i);
-      });
-  }
+  m_item_selected_connections.erase(
+    m_item_selected_connections.begin() + index);
   auto layout_item = m_layout->takeAt(index);
   delete layout_item->widget();
   delete layout_item;
@@ -177,9 +170,9 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   m_item_selected_connections.clear();
   for(auto i = std::size_t(0); i < items.size(); ++i) {
     m_layout->addWidget(items[i]);
-    m_item_selected_connections.push_back(
-      items[i]->connect_selected_signal([=] (auto value) {
-        on_item_selected(std::move(value), i);
+    m_item_selected_connections.push_back(items[i]->connect_selected_signal(
+      [=] (auto value) {
+        on_item_selected(std::move(value), items[i]);
       }));
   }
   if(m_layout->count() > 0) {
@@ -255,4 +248,8 @@ void DropDownList::on_item_selected(QVariant value, int index) {
   m_index_selected_signal(index);
   m_value_selected_signal(std::move(value));
   hide();
+}
+
+void DropDownList::on_item_selected(QVariant value, DropDownItem* item) {
+  on_item_selected(value, m_layout->indexOf(item));
 }

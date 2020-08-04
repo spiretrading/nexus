@@ -132,6 +132,7 @@ namespace Spire {
       void scroll_to_highlight();
       void update_height();
       void on_item_selected(QVariant value, int index);
+      void on_item_selected(QVariant value, DropDownItem* item);
   };
 }
 
