@@ -171,8 +171,8 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   for(auto i = std::size_t(0); i < items.size(); ++i) {
     m_layout->addWidget(items[i]);
     m_item_selected_connections.push_back(items[i]->connect_selected_signal(
-      [=] (auto value) {
-        on_item_selected(std::move(value), items[i]);
+      [=, item = items[i]] (auto value) {
+        on_item_selected(std::move(value), item);
       }));
   }
   if(m_layout->count() > 0) {
