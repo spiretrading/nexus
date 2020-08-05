@@ -1,11 +1,11 @@
 #ifndef NEXUS_BUYINGPOWERCHECK_HPP
 #define NEXUS_BUYINGPOWERCHECK_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Accounting/BuyingPowerTracker.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"

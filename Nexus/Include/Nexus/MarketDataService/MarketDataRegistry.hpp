@@ -2,12 +2,12 @@
 #define NEXUS_MARKET_DATA_REGISTRY_HPP
 #include <memory>
 #include <unordered_set>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
+#include <Beam/Collections/Trie.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <Beam/Utilities/Remote.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
-#include <Beam/Utilities/Trie.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/range/adaptor/map.hpp>

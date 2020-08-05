@@ -243,7 +243,7 @@ namespace Nexus::Accounting {
    * @param f The function to call with a Portfolio's entry.
    */
   template<typename Portfolio, typename F>
-  void ForEachPortfolioEntry(const Portfolio& portfolio, F f) {
+  void ForEachPortfolioEntry(const Portfolio& portfolio, F&& f) {
     auto& securityEntries = portfolio.GetSecurityEntries();
     for(auto& securityEntryPair : securityEntries) {
       auto& security = securityEntryPair.first;
@@ -263,7 +263,7 @@ namespace Nexus::Accounting {
       } else {
         update.m_unrealizedCurrency = unrealizedCurrencyIterator->second;
       }
-      f(update);
+      f(std::move(update));
     }
   }
 

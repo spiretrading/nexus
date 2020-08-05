@@ -1,13 +1,13 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVLET_HPP
 #define NEXUS_ORDER_EXECUTION_SERVLET_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>

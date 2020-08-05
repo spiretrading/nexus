@@ -3,7 +3,7 @@
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -16,16 +16,16 @@ namespace Nexus::OrderExecutionService {
       virtual ~VirtualOrderExecutionClient() = default;
 
       virtual void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) = 0;
+        Beam::ScopedQueueWriter<OrderRecord> queue) = 0;
 
       virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) = 0;
+        Beam::ScopedQueueWriter<SequencedOrder> queue) = 0;
 
       virtual void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) = 0;
+        Beam::ScopedQueueWriter<const Order*> queue) = 0;
 
       virtual void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) = 0;
+        Beam::ScopedQueueWriter<ExecutionReport> queue) = 0;
 
       virtual const Order& Submit(const OrderFields& fields) = 0;
 
@@ -59,22 +59,20 @@ namespace Nexus::OrderExecutionService {
         \param client The OrderExecutionClient to wrap.
       */
       template<typename OrderExecutionClientForward>
-      WrapperOrderExecutionClient(OrderExecutionClientForward&& client);
+      explicit WrapperOrderExecutionClient(
+        OrderExecutionClientForward&& client);
 
       void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) override;
+        Beam::ScopedQueueWriter<OrderRecord> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue)
-        override;
+        Beam::ScopedQueueWriter<SequencedOrder> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue)
-        override;
+        Beam::ScopedQueueWriter<const Order*> queue) override;
 
       void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
-        override;
+        Beam::ScopedQueueWriter<ExecutionReport> queue) override;
 
       const Order& Submit(const OrderFields& fields) override;
 
@@ -111,29 +109,29 @@ namespace Nexus::OrderExecutionService {
   template<typename ClientType>
   void WrapperOrderExecutionClient<ClientType>::QueryOrderRecords(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) {
-    m_client->QueryOrderRecords(query, queue);
+      Beam::ScopedQueueWriter<OrderRecord> queue) {
+    m_client->QueryOrderRecords(query, std::move(queue));
   }
 
   template<typename ClientType>
   void WrapperOrderExecutionClient<ClientType>::QueryOrderSubmissions(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) {
-    m_client->QueryOrderSubmissions(query, queue);
+      Beam::ScopedQueueWriter<SequencedOrder> queue) {
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
   template<typename ClientType>
   void WrapperOrderExecutionClient<ClientType>::QueryOrderSubmissions(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
-    m_client->QueryOrderSubmissions(query, queue);
+      Beam::ScopedQueueWriter<const Order*> queue) {
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
   template<typename ClientType>
   void WrapperOrderExecutionClient<ClientType>::QueryExecutionReports(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
-    m_client->QueryExecutionReports(query, queue);
+      Beam::ScopedQueueWriter<ExecutionReport> queue) {
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
   template<typename ClientType>

@@ -74,28 +74,25 @@ TEST_SUITE("PortfolioMonitor") {
     auto date = m_serviceClients.GetTimeClient().GetTime().date();
     FillOrder(orderA, 100, ptime{date, seconds(1)});
     {
-      auto update = queue->Top();
-      queue->Pop();
+      auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 100);
       REQUIRE(GetAveragePrice(update.m_securityInventory.m_position) ==
         Money::CENT);
     }
     FillOrder(orderC, 100, ptime{date, seconds(2)});
     {
-      auto update = queue->Top();
-      queue->Pop();
+      auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 0);
       REQUIRE(GetAveragePrice(update.m_securityInventory.m_position) ==
         Money::ZERO);
     }
     FillOrder(orderB, 100, ptime{date, seconds(3)});
     {
-      auto update = queue->Top();
-      queue->Pop();
+      auto update = queue->Pop();
       REQUIRE(update.m_securityInventory.m_position.m_quantity == 100);
       REQUIRE(GetAveragePrice(update.m_securityInventory.m_position) ==
         2 * Money::CENT);
     }
-    REQUIRE(queue->IsEmpty());
+    REQUIRE(!queue->TryPop());
   }
 }

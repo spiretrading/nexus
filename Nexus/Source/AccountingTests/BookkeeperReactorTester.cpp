@@ -43,7 +43,6 @@ TEST_SUITE("BookkeeperReactor") {
       } else if(Aspen::has_continuation(state)) {
         continue;
       } else {
-        commits.Top();
         commits.Pop();
       }
     }

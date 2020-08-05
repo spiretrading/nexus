@@ -86,7 +86,7 @@ namespace Nexus::Accounting {
           [] (auto snapshot, auto& monitor) {
             ForEachPortfolioEntry(*snapshot,
               [&] (auto& update) {
-                monitor->Push(update);
+                monitor.Push(std::move(update));
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
     m_executionReportPublisher.Monitor(

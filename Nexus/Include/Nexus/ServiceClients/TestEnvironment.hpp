@@ -1,8 +1,8 @@
 #ifndef NEXUS_TEST_ENVIRONMENT_HPP
 #define NEXUS_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
-#include "Beam/Queues/AliasQueue.hpp"
-#include <Beam/Queues/ConverterWriterQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
@@ -109,8 +109,8 @@ namespace Nexus {
       /*!
         \param queue The Queue to publish submitted Orders to.
       */
-      void MonitorOrderSubmissions(const std::shared_ptr<
-        Beam::QueueWriter<const OrderExecutionService::Order*>>& queue);
+      void MonitorOrderSubmissions(
+        Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue);
 
       //! Updates a submitted order to OrderStatus NEW.
       /*!
@@ -285,17 +285,16 @@ namespace Nexus {
       boost::posix_time::not_a_date_time);
   }
 
-  inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
-      Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
-    std::shared_ptr<Beam::QueueWriter<OrderExecutionService::PrimitiveOrder*>>
-      conversionQueue = Beam::MakeConverterWriterQueue<
-      OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
+  inline void TestEnvironment::MonitorOrderSubmissions(
+      Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue) {
+    auto conversionQueue = Beam::MakeConverterQueueWriter<
+      OrderExecutionService::PrimitiveOrder*>(std::move(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
     auto& driver = static_cast<
       OrderExecutionService::WrapperOrderExecutionDriver<
       OrderExecutionService::Tests::MockOrderExecutionDriver>&>(
       GetOrderExecutionEnvironment().GetDriver()).GetDriver();
-    driver.GetPublisher().Monitor(Beam::MakeAliasQueue(conversionQueue, queue));
+    driver.GetPublisher().Monitor(std::move(conversionQueue));
   }
 
   inline void TestEnvironment::AcceptOrder(
