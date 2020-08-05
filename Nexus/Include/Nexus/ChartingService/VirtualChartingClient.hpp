@@ -53,7 +53,7 @@ namespace Nexus::ChartingService {
        * @param client The ChartingClient to wrap.
        */
       template<typename CF>
-      WrapperChartingClient(CF&& client);
+      explicit WrapperChartingClient(CF&& client);
 
       void QuerySecurity(const SecurityChartingQuery& query,
         const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>&

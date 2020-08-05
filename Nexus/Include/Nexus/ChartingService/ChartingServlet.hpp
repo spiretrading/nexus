@@ -19,8 +19,7 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
-namespace Nexus {
-namespace ChartingService {
+namespace Nexus::ChartingService {
 namespace Details {
   struct ExpressionConverter {
     template<typename T>
@@ -36,28 +35,26 @@ namespace Details {
   };
 }
 
-  /*! \class ChartingServlet
-      \brief Provides historical and charting related data.
-      \tparam ContainerType The container instantiating this servlet.
-      \tparam MarketDataClientType The type of MarketDataClient used to access
-              real-time data.
+  /**
+   * Provides historical and charting related data.
+   * @param <C> The container instantiating this servlet.
+   * @param <M> The type of MarketDataClient used to access real-time data.
    */
-  template<typename ContainerType, typename MarketDataClientType>
+  template<typename C, typename M>
   class ChartingServlet : private boost::noncopyable {
     public:
-      using Container = ContainerType;
+      using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      //! The type of MarketDataClient used.
-      using MarketDataClient = Beam::GetTryDereferenceType<
-        MarketDataClientType>;
+      /** The type of MarketDataClient used. */
+      using MarketDataClient = Beam::GetTryDereferenceType<M>;
 
-      //! Constructs a ChartingServlet.
-      /*!
-        \param marketDataClient Initializes the MarketDataClient.
-      */
-      template<typename MarketDataClientForward>
-      ChartingServlet(MarketDataClientForward&& marketDataClient);
+      /**
+       * Constructs a ChartingServlet.
+       * @param marketDataClient Initializes the MarketDataClient.
+       */
+      template<typename MF>
+      explicit ChartingServlet(MF&& marketDataClient);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -79,7 +76,7 @@ namespace Details {
         Beam::SynchronizedUnorderedSet<Security, Beam::Threading::Mutex>
           m_realTimeSubscriptions;
       };
-      Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       MarketDataService::CachedHistoricalDataStore<
         MarketDataService::ClientHistoricalDataStore<MarketDataClient*>>
         m_dataStore;
@@ -94,9 +91,8 @@ namespace Details {
       void OnEndSecurityQuery(ServiceProtocolClient& client, int id);
       TimePriceQueryResult OnLoadSecurityTimePriceSeriesRequest(
         ServiceProtocolClient& client, const Security& security,
-        const boost::posix_time::ptime& startTime,
-        const boost::posix_time::ptime& endTime,
-        const boost::posix_time::time_duration& interval);
+        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+        boost::posix_time::time_duration interval);
       template<typename MarketDataType>
       void HandleQuery(Beam::Services::RequestToken<
         ServiceProtocolClient, QuerySecurityService>& request,
@@ -107,29 +103,26 @@ namespace Details {
         QueryEntry<MarketDataType>& queryEntry);
   };
 
-  template<typename MarketDataClientType>
+  template<typename M>
   struct MetaChartingServlet {
     using Session = Beam::NullType;
     static constexpr auto SupportsParallelism = true;
 
-    template<typename ContainerType>
+    template<typename C>
     struct apply {
-      using type = ChartingServlet<ContainerType, MarketDataClientType>;
+      using type = ChartingServlet<C, M>;
     };
   };
 
-  template<typename ContainerType, typename MarketDataClientType>
-  template<typename MarketDataClientForward>
-  ChartingServlet<ContainerType, MarketDataClientType>::ChartingServlet(
-      MarketDataClientForward&& marketDataClient)
-      : m_marketDataClient(std::forward<MarketDataClientForward>(
-          marketDataClient)),
-        m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
+  template<typename C, typename M>
+  template<typename MF>
+  ChartingServlet<C, M>::ChartingServlet(MF&& marketDataClient)
+    : m_marketDataClient(std::forward<MF>(marketDataClient)),
+      m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>>
-      slots) {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::RegisterServices(
+      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterChartingServices(Store(slots));
     RegisterChartingMessages(Store(slots));
@@ -145,14 +138,14 @@ namespace Details {
       std::placeholders::_4, std::placeholders::_5));
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::
-      HandleClientClosed(ServiceProtocolClient& client) {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::HandleClientClosed(
+      ServiceProtocolClient& client) {
     m_timeAndSaleQueries.m_queries.RemoveAll(client);
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::Open() {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -166,51 +159,50 @@ namespace Details {
     m_openState.SetOpen();
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::Close() {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::Shutdown() {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::Shutdown() {
     m_marketDataClient->Close();
     m_openState.SetClosed();
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::
-      OnQuerySecurityRequest(Beam::Services::RequestToken<
-      ServiceProtocolClient, QuerySecurityService>& request,
-      const SecurityChartingQuery& query, int clientQueryId) {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::OnQuerySecurityRequest(
+      Beam::Services::RequestToken<ServiceProtocolClient, QuerySecurityService>&
+      request, const SecurityChartingQuery& query, int clientQueryId) {
     auto& session = request.GetSession();
     if(query.GetMarketDataType() ==
         MarketDataService::MarketDataType::TIME_AND_SALE) {
       HandleQuery(request, query, clientQueryId, m_timeAndSaleQueries);
     } else {
-      request.SetResult(SecurityChartingQueryResult());
+      request.SetResult({});
     }
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::
-      OnEndSecurityQuery(ServiceProtocolClient& client, int id) {
+  template<typename C, typename M>
+  void ChartingServlet<C, M>::OnEndSecurityQuery(ServiceProtocolClient& client,
+      int id) {
     auto& session = client.GetSession();
     m_timeAndSaleQueries.m_queries.End(client, id);
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
-  TimePriceQueryResult ChartingServlet<ContainerType, MarketDataClientType>::
+  template<typename C, typename M>
+  TimePriceQueryResult ChartingServlet<C, M>::
       OnLoadSecurityTimePriceSeriesRequest(ServiceProtocolClient& client,
-      const Security& security, const boost::posix_time::ptime& startTime,
-      const boost::posix_time::ptime& endTime,
-      const boost::posix_time::time_duration& interval) {
+      const Security& security, boost::posix_time::ptime startTime,
+      boost::posix_time::ptime endTime,
+      boost::posix_time::time_duration interval) {
     if(endTime < startTime + interval ||
         startTime == boost::posix_time::neg_infin  ||
         endTime == boost::posix_time::pos_infin) {
-      throw Beam::Services::ServiceRequestException{"Invalid time range."};
+      throw Beam::Services::ServiceRequestException("Invalid time range.");
     }
     auto queue = std::make_shared<Beam::Queue<SequencedTimeAndSale>>();
     auto timeAndSaleQuery = MarketDataService::SecurityMarketDataQuery();
@@ -249,9 +241,9 @@ namespace Details {
     return result;
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
+  template<typename C, typename M>
   template<typename MarketDataType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::HandleQuery(
+  void ChartingServlet<C, M>::HandleQuery(
       Beam::Services::RequestToken<ServiceProtocolClient,
       QuerySecurityService>& request, const SecurityChartingQuery& query,
       int clientQueryId, QueryEntry<MarketDataType>& queryEntry) {
@@ -294,11 +286,10 @@ namespace Details {
       });
   }
 
-  template<typename ContainerType, typename MarketDataClientType>
+  template<typename C, typename M>
   template<typename Index, typename MarketDataType>
-  void ChartingServlet<ContainerType, MarketDataClientType>::OnQueryUpdate(
-      const Index& index, const MarketDataType& value,
-      QueryEntry<MarketDataType>& queries) {
+  void ChartingServlet<C, M>::OnQueryUpdate(const Index& index,
+      const MarketDataType& value, QueryEntry<MarketDataType>& queries) {
     auto indexedValue = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     m_dataStore.Store(indexedValue);
@@ -308,7 +299,6 @@ namespace Details {
           value);
       });
   }
-}
 }
 
 #endif
