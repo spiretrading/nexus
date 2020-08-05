@@ -1,7 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_LIST_HPP
 #define SPIRE_DROP_DOWN_LIST_HPP
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <QVBoxLayout>
-#include "Beam/SignalHandling/ConnectionGroup.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"

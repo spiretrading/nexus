@@ -7,7 +7,6 @@
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
-using namespace Beam::SignalHandling;
 using namespace Spire;
 
 namespace {
