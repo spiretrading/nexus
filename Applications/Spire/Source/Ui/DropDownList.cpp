@@ -7,6 +7,7 @@
 #include "Spire/Ui/ScrollArea.hpp"
 
 using namespace boost::signals2;
+using namespace Beam::SignalHandling;
 using namespace Spire;
 
 namespace {
@@ -30,8 +31,6 @@ DropDownList::DropDownList(std::vector<DropDownItem*> items,
   parent->installEventFilter(this);
 }
 
-
-
 bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parent()) {
     if(event->type() == QEvent::KeyPress) {
@@ -52,7 +51,7 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
         case Qt::Key_Enter:
         case Qt::Key_Return:
           if(isVisible() && m_highlight_index) {
-            on_item_selected(get_widget(*m_highlight_index)->get_value(),
+            on_item_selected(get_item(*m_highlight_index)->get_value(),
               *m_highlight_index);
             return true;
           }
@@ -61,17 +60,6 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return DropDownWindow::eventFilter(watched, event);
-}
-
-void DropDownList::hideEvent(QHideEvent* event) {
-  m_scroll_area->verticalScrollBar()->setValue(0);
-  if(m_highlight_index) {
-    auto item = m_layout->itemAt(*m_highlight_index);
-    if(item != nullptr) {
-      static_cast<DropDownItem*>(item->widget())->reset_highlight();
-    }
-    m_highlight_index = boost::none;
-  }
 }
 
 void DropDownList::keyPressEvent(QKeyEvent* event) {
@@ -83,7 +71,7 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Enter:
       if(m_highlight_index) {
-        on_item_selected(get_widget(*m_highlight_index)->get_value(),
+        on_item_selected(get_item(*m_highlight_index)->get_value(),
           *m_highlight_index);
       }
       break;
@@ -119,17 +107,18 @@ connection DropDownList::connect_value_selected_signal(
   return m_value_selected_signal.connect(slot);
 }
 
-QVariant DropDownList::get_value(int index) {
+const QVariant& DropDownList::get_value(int index) {
   if(m_layout->count() - 1 < index) {
-    return QVariant();
+    static auto SENTINEL = QVariant();
+    return SENTINEL;
   }
-  return get_widget(index)->get_value();
+  return get_item(index)->get_value();
 }
 
 void DropDownList::insert_item(DropDownItem* item) {
-  m_item_selected_connections.push_back(item->connect_selected_signal(
-    [=] (auto value) {
-      on_item_selected(std::move(value), item);
+  m_item_selected_connections.AddConnection(item->connect_selected_signal(
+    [=] (const auto& value) {
+      on_item_selected(value, item);
     }));
   m_layout->insertWidget(m_layout->count(), item);
   update_height();
@@ -143,9 +132,8 @@ void DropDownList::remove_item(int index) {
   if(index > m_layout->count() - 1) {
     return;
   }
-  m_item_selected_connections.erase(
-    m_item_selected_connections.begin() + index);
   auto layout_item = m_layout->takeAt(index);
+  m_item_selected_connections.Disconnect(layout_item->widget());
   delete layout_item->widget();
   delete layout_item;
   update_height();
@@ -162,17 +150,17 @@ bool DropDownList::set_highlight(const QString& text) {
   return false;
 }
 
-void DropDownList::set_items(std::vector<DropDownItem*> items) {
+void DropDownList::set_items(const std::vector<DropDownItem*>& items) {
   while(auto item = m_layout->takeAt(0)) {
     delete item->widget();
     delete item;
   }
-  m_item_selected_connections.clear();
-  for(auto i = std::size_t(0); i < items.size(); ++i) {
-    m_layout->addWidget(items[i]);
-    m_item_selected_connections.push_back(items[i]->connect_selected_signal(
-      [=, item = items[i]] (auto value) {
-        on_item_selected(std::move(value), item);
+  m_item_selected_connections.DisconnectAll();
+  for(auto& item : items) {
+    m_layout->addWidget(item);
+    m_item_selected_connections.AddConnection(item->connect_selected_signal(
+      [=] (const auto& value) {
+        on_item_selected(value, item);
       }));
   }
   if(m_layout->count() > 0) {
@@ -184,7 +172,7 @@ void DropDownList::set_items(std::vector<DropDownItem*> items) {
   }
 }
 
-DropDownItem* DropDownList::get_widget(int index) {
+DropDownItem* DropDownList::get_item(int index) {
   return static_cast<DropDownItem*>(m_layout->itemAt(index)->widget());
 }
 
@@ -196,7 +184,14 @@ void DropDownList::activate_next() {
     set_highlight(0);
     return;
   }
-  set_highlight((*m_highlight_index) + 1);
+  auto next_index = [&] {
+    auto index = *m_highlight_index + 1;
+    if(index > m_layout->count() - 1) {
+      return 0;
+    }
+    return index;
+  }();
+  set_highlight(next_index);
 }
 
 void DropDownList::activate_previous() {
@@ -207,20 +202,22 @@ void DropDownList::activate_previous() {
     set_highlight(m_layout->count() - 1);
     return;
   }
-  set_highlight((*m_highlight_index) - 1);
+  auto previous_index = [&] {
+    auto index = *m_highlight_index - 1;
+    if(index < 0) {
+      return m_layout->count() - 1;
+    }
+    return index;
+  }();
+  set_highlight(previous_index);
 }
 
 void DropDownList::set_highlight(int index) {
   if(m_highlight_index) {
-    get_widget(*m_highlight_index)->reset_highlight();
-  }
-  if(index < 0) {
-    index = m_layout->count() - 1;
-  } else if(index > m_layout->count() - 1) {
-    index = 0;
+    get_item(*m_highlight_index)->reset_highlight();
   }
   m_highlight_index = index;
-  auto highlighted_widget = get_widget(*m_highlight_index);
+  auto highlighted_widget = get_item(*m_highlight_index);
   highlighted_widget->set_highlight();
   scroll_to_highlight();
   m_activated_signal(highlighted_widget->get_value());
@@ -228,7 +225,7 @@ void DropDownList::set_highlight(int index) {
 
 void DropDownList::scroll_to_highlight() {
   if(m_highlight_index != m_layout->count() - 1) {
-    m_scroll_area->ensureWidgetVisible(get_widget(*m_highlight_index), 0,
+    m_scroll_area->ensureWidgetVisible(get_item(*m_highlight_index), 0,
       0);
   } else {
     m_scroll_area->verticalScrollBar()->setValue(

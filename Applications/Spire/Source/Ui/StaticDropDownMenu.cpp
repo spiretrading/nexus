@@ -38,7 +38,7 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
   m_menu_selection_connection = m_menu_list->connect_value_selected_signal(
     [=] (const auto& value) { on_item_selected(value); });
   m_menu_list->installEventFilter(this);
-  set_items(std::move(items));
+  set_items(items);
   connect(&m_input_timer, &QTimer::timeout, this,
     &StaticDropDownMenu::on_input_timeout);
   installEventFilter(this);
@@ -56,10 +56,10 @@ void StaticDropDownMenu::remove_item(int index) {
   m_menu_list->remove_item(index);
 }
 
-void StaticDropDownMenu::set_items(std::vector<QVariant> items) {
+void StaticDropDownMenu::set_items(const std::vector<QVariant>& items) {
   auto widget_items = std::vector<DropDownItem*>(items.size());
   std::transform(items.begin(), items.end(), widget_items.begin(),
-    [=] (const auto& item) {
+    [&] (const auto& item) {
       auto item_widget = new DropDownItem(item, this);
       item_widget->setFixedHeight(scale_height(20));
       return item_widget;

@@ -21,8 +21,6 @@ namespace Spire {
       explicit DropDownWindow(bool is_click_activated,
         QWidget* parent = nullptr);
 
-      virtual ~DropDownWindow() = default;
-
       //! Sets the widget to display in the DropDownWindow.
       virtual void initialize_widget(QWidget* widget);
 

@@ -1,6 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_LIST_HPP
 #define SPIRE_DROP_DOWN_LIST_HPP
 #include <QVBoxLayout>
+#include "Beam/SignalHandling/ConnectionGroup.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownItem.hpp"
@@ -40,12 +41,11 @@ namespace Spire {
       //! Constructs a DropDownList.
       /*!
         \param items The items to display.
-        \param is_click_activated True if the DropDownList should be shown
-                                  or hidden in response to parent widget
-                                  mouse/keyboard activation events, false
-                                  otherwise.
+        \param is_click_activated True iff the DropDownList should be shown
+               or hidden in response to parent widget mouse/keyboard activation
+               events.
         \param parent The parent widget. Used to determine the position of the
-                      DropDownList.
+               DropDownList.
       */
       DropDownList(std::vector<DropDownItem*> items,
         bool is_click_activated, QWidget* parent = nullptr);
@@ -62,7 +62,7 @@ namespace Spire {
       /*!
         \param index The index of the item.
       */
-      QVariant get_value(int index);
+      const QVariant& get_value(int index);
 
       //! Appends an item to the list.
       /*!
@@ -83,7 +83,7 @@ namespace Spire {
       //! text.
       /*!
         \param text The text to match against the item.
-        \return True if an item was highlighted, false if no match was found.
+        \return True iff an item was highlighted.
       */
       bool set_highlight(const QString& text);
 
@@ -91,7 +91,7 @@ namespace Spire {
       /*!
         \param items The new items to display.
       */
-      void set_items(std::vector<DropDownItem*> items);
+      void set_items(const std::vector<DropDownItem*>& items);
 
       //! Connects a slot to the activated signal.
       boost::signals2::connection connect_activated_signal(
@@ -111,7 +111,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void hideEvent(QHideEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
@@ -124,10 +123,9 @@ namespace Spire {
       ScrollArea* m_scroll_area;
       boost::optional<int> m_highlight_index;
       CustomVariantItemDelegate m_item_delegate;
-      std::vector<boost::signals2::scoped_connection>
-        m_item_selected_connections;
+      Beam::SignalHandling::ConnectionGroup m_item_selected_connections;
 
-      DropDownItem* get_widget(int index);
+      DropDownItem* get_item(int index);
       void set_highlight(int index);
       void scroll_to_highlight();
       void update_height();

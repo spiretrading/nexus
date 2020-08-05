@@ -33,12 +33,14 @@ DropDownItem::DropDownItem(QVariant value, QImage icon, QWidget* parent)
 }
 
 void DropDownItem::enterEvent(QEvent* event) {
-  m_highlighted_signal(m_value);
+  auto value = m_value;
+  m_highlighted_signal(value);
 }
 
 void DropDownItem::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
-    m_selected_signal(m_value);
+    auto value = m_value;
+    m_selected_signal(value);
   }
 }
 
@@ -73,7 +75,7 @@ connection DropDownItem::connect_selected_signal(
   return m_selected_signal.connect(slot);
 }
 
-QVariant DropDownItem::get_value() const {
+const QVariant& DropDownItem::get_value() const {
   return m_value;
 }
 

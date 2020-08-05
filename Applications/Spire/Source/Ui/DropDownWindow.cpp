@@ -23,8 +23,7 @@ DropDownWindow::DropDownWindow(bool is_click_activated, QWidget* parent)
 
 bool DropDownWindow::event(QEvent* event) {
   if(event->type() == QEvent::WindowDeactivate &&
-      focusWidget() != nullptr &&
-      !isAncestorOf(focusWidget())) {
+      focusWidget() != nullptr && !isAncestorOf(focusWidget())) {
     hide();
   }
   return QWidget::event(event);

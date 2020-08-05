@@ -24,8 +24,6 @@ namespace Spire {
       */
       explicit ScrollArea(bool is_dynamic, QWidget* parent = nullptr);
 
-      virtual ~ScrollArea() = default;
-
       //! Sets the scroll area's border style.
       /*
         \param width The border width.

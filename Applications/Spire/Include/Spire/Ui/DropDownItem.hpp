@@ -39,7 +39,7 @@ namespace Spire {
       DropDownItem(QVariant value, QImage icon, QWidget* parent = nullptr);
 
       //! Returns the item's value.
-      QVariant get_value() const;
+      const QVariant& get_value() const;
 
       //! Displays the item's highlight style.
       void set_highlight();
