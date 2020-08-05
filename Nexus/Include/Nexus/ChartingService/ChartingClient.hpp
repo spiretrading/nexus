@@ -1,14 +1,13 @@
 #ifndef NEXUS_CHARTINGCLIENT_HPP
 #define NEXUS_CHARTINGCLIENT_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/SequencedValuePublisher.hpp>
-#include <Beam/Queues/ConverterWriterQueue.hpp>
-#include <Beam/Queues/WeakQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/ChartingService.hpp"
@@ -38,7 +37,7 @@ namespace ChartingService {
         \param clientBuilder Initializes the ServiceProtocolClientBuilder.
       */
       template<typename ClientBuilderForward>
-      ChartingClient(ClientBuilderForward&& clientBuilder);
+      explicit ChartingClient(ClientBuilderForward&& clientBuilder);
 
       ~ChartingClient();
 
@@ -48,7 +47,7 @@ namespace ChartingService {
         \param queue The queue that will store the result of the query.
       */
       void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue);
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
 
       //! Loads a Security's time/price series.
       /*!
@@ -113,20 +112,19 @@ namespace ChartingService {
   template<typename ServiceProtocolClientBuilderType>
   void ChartingClient<ServiceProtocolClientBuilderType>::QuerySecurity(
       const SecurityChartingQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       m_queryRoutines.Spawn(
-        [=] {
+        [=, queue = std::move(queue)] {
           auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
             query.GetFilter());
-          auto weakQueue = Beam::MakeWeakQueue(queue);
-          auto conversionQueue = Beam::MakeConverterWriterQueue<
-            Queries::SequencedQueryVariant>(weakQueue,
-            [] (const Queries::SequencedQueryVariant& value) {
+          auto conversionQueue = Beam::MakeConverterQueueWriter<
+            Queries::SequencedQueryVariant>(std::move(queue),
+            [] (auto& value) {
               return *value;
             });
           auto publisher = std::make_shared<SecurityChartingPublisher>(query,
-            std::move(filter), conversionQueue);
+            std::move(filter), std::move(conversionQueue));
           auto id = ++m_nextQueryId;
           try {
             publisher->BeginSnapshot();
@@ -138,23 +136,25 @@ namespace ChartingService {
               queryResult.m_snapshot.end());
             publisher->EndSnapshot(queryResult.m_queryId);
           } catch(const std::exception&) {
-            publisher->Break();
+            publisher->Break(std::current_exception());
             m_securityChartingPublishers.Erase(id);
           }
         });
     } else {
       m_queryRoutines.Spawn(
-        [=] {
+        [=, queue = std::move(queue)] {
           try {
             auto client = m_clientHandler.GetClient();
             auto id = ++m_nextQueryId;
             auto queryResult =
               client->template SendRequest<QuerySecurityService>(query, id);
             for(auto& value : queryResult.m_snapshot) {
-              queue->Push(std::move(value));
+              queue.Push(std::move(value));
             }
-          } catch(const std::exception&) {}
-          queue->Break();
+            queue.Break();
+          } catch(const std::exception&) {
+            queue.Break(std::current_exception());
+          }
         });
     }
   }

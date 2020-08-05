@@ -1,5 +1,6 @@
 #ifndef NEXUS_CHARTING_SERVLET_HPP
 #define NEXUS_CHARTING_SERVLET_HPP
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConversionEvaluatorNode.hpp>
 #include <Beam/Queries/IndexedExpressionSubscriptions.hpp>
@@ -8,7 +9,6 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Casts.hpp>
 #include <Beam/Utilities/InstantiateTemplate.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/ChartingService.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
