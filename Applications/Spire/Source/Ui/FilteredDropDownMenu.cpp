@@ -63,9 +63,8 @@ void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
       return;
     }
     if(!text().isEmpty() && m_menu_list->isVisible()) {
-      auto item = std::move(m_menu_list->get_value(0));
+      auto item = m_menu_list->get_value(0);
       if(item.isValid()) {
-        m_list_selection_connection.disconnect();
         on_item_selected(item);
       }
     }
@@ -85,7 +84,7 @@ void FilteredDropDownMenu::mousePressEvent(QMouseEvent* event) {
 void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
   TextInputWidget::paintEvent(event);
   if(!text().isEmpty()) {
-    auto item = std::move(m_menu_list->get_value(0));
+    auto item = m_menu_list->get_value(0);
     if(item.isValid()) {
       auto item_text = m_item_delegate.displayText(item);
       if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
@@ -178,8 +177,6 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
   m_current_item = item;
   setText(m_item_delegate.displayText(m_current_item));
   m_selected_signal(m_current_item);
-  m_list_selection_connection = m_menu_list->connect_value_selected_signal(
-    [=] (const auto& value) { on_item_selected(value); });
   set_items(m_items);
   update();
 }
