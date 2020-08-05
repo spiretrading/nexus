@@ -182,7 +182,7 @@ namespace Details {
         MarketDataService::MarketDataType::TIME_AND_SALE) {
       HandleQuery(request, query, clientQueryId, m_timeAndSaleQueries);
     } else {
-      request.SetResult({});
+      request.SetResult(SecurityChartingQueryResult());
     }
   }
 
