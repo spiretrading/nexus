@@ -42,11 +42,11 @@ export class LocalProfileModel extends ProfileModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
-    return this._groups;
+    return this._groups.slice();
   }
 
-  public set groups(groups:Beam.DirectoryEntry[]) {
-    this._groups = groups;
+  public set groups(groups: Beam.DirectoryEntry[]) {
+    this._groups = groups.slice();
   }
 
   public get identity(): Nexus.AccountIdentity {

@@ -27,7 +27,7 @@ export class HttpProfileModel extends ProfileModel {
   }
 
   public get groups(): Beam.DirectoryEntry[] {
-    return this.model.groups;
+    return this.model.groups.slice();
   }
 
   public get identity(): Nexus.AccountIdentity {
