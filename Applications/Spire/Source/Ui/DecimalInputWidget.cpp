@@ -1,4 +1,5 @@
 #include "Spire/Ui/DecimalInputWidget.hpp"
+#include <QFocusEvent>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,9 +11,10 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       m_value(value),
       m_last_cursor_pos(0) {
   setDecimals(std::numeric_limits<double>::digits10 - 1);
-  setMinimum(std::numeric_limits<double>::lowest());
-  setMaximum(std::numeric_limits<double>::max());
-  setMaximum(5.5);
+  //setMinimum(std::numeric_limits<double>::lowest());
+  //setMaximum(std::numeric_limits<double>::max());
+  setMinimum(0);
+  setMaximum(99);
   setValue(m_value);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
@@ -54,8 +56,6 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
   //  &DecimalInputWidget::on_value_changed);
   connect(lineEdit(), &QLineEdit::textEdited, this,
     &DecimalInputWidget::on_text_edited);
-  connect(lineEdit(), &QLineEdit::cursorPositionChanged, this,
-    &DecimalInputWidget::on_cursor_position_changed);
   connect(this, &QDoubleSpinBox::editingFinished, this,
     &DecimalInputWidget::on_editing_finished);
 }
@@ -70,6 +70,16 @@ QString DecimalInputWidget::textFromValue(double value) const {
   return str;
 }
 
+void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
+  QDoubleSpinBox::focusInEvent(event);
+  switch(event->reason()) {
+    case Qt::MouseFocusReason:
+    case Qt::TabFocusReason:
+    case Qt::BacktabFocusReason:
+      lineEdit()->selectAll();
+  }
+}
+
 void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Enter:
@@ -77,28 +87,42 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
       Q_EMIT valueChanged(value());
       return;
     case Qt::Key_Up:
+      connect(lineEdit(), &QLineEdit::selectionChanged, this,
+        &DecimalInputWidget::revert_cursor);
+      m_last_cursor_pos = lineEdit()->cursorPosition();
       stepBy(1);
-      lineEdit()->deselect();
+      disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
+        &DecimalInputWidget::revert_cursor);
       return;
     case Qt::Key_Down:
+      connect(lineEdit(), &QLineEdit::selectionChanged, this,
+        &DecimalInputWidget::revert_cursor);
+      m_last_cursor_pos = lineEdit()->cursorPosition();
       stepBy(-1);
-      lineEdit()->deselect();
+      disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
+        &DecimalInputWidget::revert_cursor);
       return;
   }
   QDoubleSpinBox::keyPressEvent(event);
-}
-
-void DecimalInputWidget::on_cursor_position_changed(int old_pos, int new_pos) {
-  qDebug() << new_pos;
-  m_last_cursor_pos = new_pos;
 }
 
 void DecimalInputWidget::on_editing_finished() {
   //lineEdit()->deselect();
 }
 
+void DecimalInputWidget::revert_cursor() {
+  lineEdit()->blockSignals(true);
+  lineEdit()->deselect();
+  lineEdit()->setCursorPosition(m_last_cursor_pos);
+  lineEdit()->blockSignals(false);
+}
+
 void DecimalInputWidget::on_text_edited(const QString& text) {
-  //lineEdit()->deselect();
+  if(minimum() >= 0.0 && text.contains("-")) {
+    lineEdit()->blockSignals(true);
+    lineEdit()->setText(lineEdit()->text().remove("-"));
+    lineEdit()->blockSignals(false);
+  }
 }
 
 void DecimalInputWidget::on_value_changed(double value) {
