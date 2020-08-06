@@ -249,6 +249,9 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
+      if(this.props.isPasswordFixed) {
+        return '';
+      }
       const passwordButtonEnabled = this.state.password1 !== '' &&
         this.state.password2 !== '';
       const status = (() => {
