@@ -13,6 +13,9 @@ export abstract class ProfileModel {
   /** Returns the account's identity. */
   public abstract get identity(): Nexus.AccountIdentity;
 
+  /** Returns the account's readonly condition. */
+  public abstract get isReadonly(): boolean;
+
   /** Loads this model. */
   public abstract async load(): Promise<void>;
 
