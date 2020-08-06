@@ -54,7 +54,8 @@ export class HttpDashboardModel extends DashboardModel {
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
     let model = this.accountModels.get(account);
     if(model === undefined) {
-      model = new HttpAccountModel(account, this.serviceClients);
+      model = new HttpAccountModel(this.model.account, this.model.roles, 
+        account, this.serviceClients);
       this.accountModels.set(account, model);
     }
     return model;

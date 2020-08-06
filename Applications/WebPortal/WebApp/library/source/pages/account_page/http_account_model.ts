@@ -10,13 +10,18 @@ import { LocalAccountModel } from './local_account_model';
 export class HttpAccountModel extends AccountModel {
 
   /** Constructs an HttpAccountModel.
+   * @param authUserAccount - The authenticated user's account.
+   * @param authUserRoles - The authenticated user's roles.
    * @param account - The account this model represents.
    * @param serviceClients - The clients used to access the HTTP services.
    */
-  constructor(account: Beam.DirectoryEntry,
+  constructor(authUserAccount: Beam.DirectoryEntry,
+      authUserRoles:Nexus.AccountRoles, account: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
     super();
     this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0));
+    this.authUserAccount = authUserAccount;
+    this.authUserRoles = authUserRoles;
     this.serviceClients = serviceClients;
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
@@ -68,10 +73,22 @@ export class HttpAccountModel extends AccountModel {
       this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
+    this._profileModel.isReadonly = (() => {
+      if(this.authUserRoles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        if(this.authUserAccount.equals(account) ||
+            roles.test(Nexus.AccountRoles.Role.TRADER) ||
+            roles.test(Nexus.AccountRoles.Role.MANAGER)) {
+          return false;
+        }
+      }
+      return true;
+    })();
     return this.model.load();
   }
 
   private model: LocalAccountModel;
+  private authUserAccount: Beam.DirectoryEntry;
+  private authUserRoles: Nexus.AccountRoles;
   private serviceClients: Nexus.ServiceClients;
   private _entitlementsModel: HttpEntitlementsModel;
   private _profileModel: HttpProfileModel;
