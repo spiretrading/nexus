@@ -35,6 +35,9 @@ interface Properties {
   /** Whether the form can be edited. */
   readonly?: boolean;
 
+  /** Whether the password can be edited. */
+  isPasswordFixed: boolean;
+
   /** The status of the submission. */
   submitStatus?: string;
 
