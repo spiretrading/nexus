@@ -1,10 +1,10 @@
 #ifndef NEXUS_RISKSTATECHECK_HPP
 #define NEXUS_RISKSTATECHECK_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/MultiQueueReader.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
@@ -76,12 +76,10 @@ namespace OrderExecutionService {
     auto& accountEntry = LoadAccountEntry(orderInfo.m_fields.m_account);
     Beam::Threading::With(accountEntry.m_positionOrderBook,
       [&] (Accounting::PositionOrderBook& positionOrderBook) {
-        while(!accountEntry.m_executionReportQueue.IsEmpty()) {
-          auto report = accountEntry.m_executionReportQueue.Top();
-          accountEntry.m_executionReportQueue.Pop();
-          positionOrderBook.Update(report);
+        while(auto report = accountEntry.m_executionReportQueue.TryPop()) {
+          positionOrderBook.Update(std::move(*report));
         }
-        assert(!accountEntry.m_riskStateQueue->IsEmpty());
+        assert(!accountEntry.m_riskStateQueue->TryTop());
         if(accountEntry.m_riskStateQueue->Top().m_type !=
             RiskService::RiskState::Type::ACTIVE) {
           if(positionOrderBook.TestOpeningOrderSubmission(orderInfo.m_fields)) {

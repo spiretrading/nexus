@@ -1,5 +1,5 @@
 #include "WebPortal/ServiceLocatorWebServlet.hpp"
-#include <Beam/Utilities/Trie.hpp>
+#include <Beam/Collections/Trie.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>

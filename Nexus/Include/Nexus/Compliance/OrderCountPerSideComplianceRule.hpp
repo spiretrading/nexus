@@ -3,9 +3,9 @@
 #include <vector>
 #include <boost/atomic/atomic.hpp>
 #include <boost/functional/factory.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"

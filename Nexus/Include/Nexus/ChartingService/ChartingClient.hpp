@@ -108,7 +108,7 @@ namespace Nexus::ChartingService {
       Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       m_queryRoutines.Spawn(
-        [=, queue = std::move(queue)] {
+        [=, queue = std::move(queue)] () mutable {
           auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
             query.GetFilter());
           auto conversionQueue = Beam::MakeConverterQueueWriter<
@@ -129,13 +129,13 @@ namespace Nexus::ChartingService {
               queryResult.m_snapshot.end());
             publisher->EndSnapshot(queryResult.m_queryId);
           } catch(const std::exception&) {
-            publisher->Break(std::current_exception());
+            publisher->Break();
             m_securityChartingPublishers.Erase(id);
           }
         });
     } else {
       m_queryRoutines.Spawn(
-        [=, queue = std::move(queue)] {
+        [=, queue = std::move(queue)] () mutable {
           try {
             auto client = m_clientHandler.GetClient();
             auto id = ++m_nextQueryId;

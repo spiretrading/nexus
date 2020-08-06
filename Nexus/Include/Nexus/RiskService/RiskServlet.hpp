@@ -1,6 +1,7 @@
 #ifndef NEXUS_RISKSERVLET_HPP
 #define NEXUS_RISKSERVLET_HPP
 #include <algorithm>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -8,7 +9,6 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/ReportException.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
