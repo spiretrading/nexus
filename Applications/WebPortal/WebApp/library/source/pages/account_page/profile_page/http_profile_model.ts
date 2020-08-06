@@ -38,6 +38,14 @@ export class HttpProfileModel extends ProfileModel {
     this.model.isReadonly = bool;
   }
 
+  public get isPasswordFixed(): boolean {
+    return this.model.isPasswordFixed;
+  }
+
+  public set isPasswordFixed(bool: boolean) {
+    this.model.isPasswordFixed = bool;
+  }
+
   public async load(): Promise<void> {
     this.model.load();
     const roles =
