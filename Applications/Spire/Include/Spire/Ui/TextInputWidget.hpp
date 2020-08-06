@@ -32,6 +32,9 @@ namespace Spire {
       void focusInEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+
+    private:
+      int m_left_padding;
   };
 }
 
