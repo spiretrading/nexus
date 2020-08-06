@@ -52,8 +52,7 @@ export class ProfileController extends React.Component<Properties, State> {
       groups={this.props.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
-      readonly={!this.props.model.roles.test(
-        Nexus.AccountRoles.Role.ADMINISTRATOR)}
+      readonly={this.props.model.isReadonly}
       submitStatus={this.state.identityStatus}
       hasError={this.state.hasIdentityError}
       onSubmit={this.onSubmitIdentity}
