@@ -285,12 +285,10 @@ namespace RiskService {
             m_riskStateMonitor->GetInventoryPublisher().Monitor(queue);
             queue->Break();
           });
-        while(!queue->IsEmpty()) {
-          auto entry = queue->Top();
-          queue->Pop();
-          auto group = LoadGroup(entry.m_key.m_account);
+        while(auto entry = queue->TryPop()) {
+          auto group = LoadGroup(entry->m_key.m_account);
           if(session.HasGroupPortfolioSubscription(group)) {
-            entries.push_back(entry);
+            entries.push_back(std::move(*entry));
           }
         }
         request.SetResult(entries);

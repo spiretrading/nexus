@@ -200,8 +200,8 @@ int main(int argc, const char** argv) {
         Beam::Queries::Sequence::Last());
     }
     auto accounts = serviceLocatorClient->LoadAllAccounts();
-    vector<std::shared_ptr<QueueReader<const Order*>>> accountServletQueues;
-    vector<std::shared_ptr<QueueReader<const Order*>>> accountTransitionQueues;
+    vector<ScopedQueueReader<const Order*>> accountServletQueues;
+    vector<ScopedQueueReader<const Order*>> accountTransitionQueues;
     for(const auto& account : accounts) {
       AccountQuery query;
       query.SetIndex(account);
