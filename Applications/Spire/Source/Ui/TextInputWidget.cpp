@@ -1,5 +1,6 @@
 #include "Spire/Ui/TextInputWidget.hpp"
 #include <QKeyEvent>
+#include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -9,30 +10,16 @@ TextInputWidget::TextInputWidget(QWidget* parent)
   : TextInputWidget({}, parent) {}
 
 TextInputWidget::TextInputWidget(QString text, QWidget* parent)
-    : QLineEdit(text, parent),
-      m_current_text(std::move(text)) {
+    : QLineEdit(std::move(text), parent) {
   setContextMenuPolicy(Qt::NoContextMenu);
   set_default_style();
-  connect(this, &TextInputWidget::textEdited, [=] {
-    on_text_edited();
-  });
 }
 
 void TextInputWidget::focusInEvent(QFocusEvent* event) {
-  setText(m_current_text);
   if(event->reason() == Qt::OtherFocusReason) {
     selectAll();
   }
   QLineEdit::focusInEvent(event);
-}
-
-void TextInputWidget::focusOutEvent(QFocusEvent* event) {
-  auto font = QFont("Roboto");
-  font.setPixelSize(scale_height(12));
-  auto metrics = QFontMetrics(font);
-  setText(metrics.elidedText(text(),
-    Qt::ElideRight, width() - scale_width(16)));
-  QLineEdit::focusOutEvent(event);
 }
 
 void TextInputWidget::keyPressEvent(QKeyEvent* event) {
@@ -47,6 +34,28 @@ void TextInputWidget::keyPressEvent(QKeyEvent* event) {
       return;
   }
   QLineEdit::keyPressEvent(event);
+}
+
+void TextInputWidget::paintEvent(QPaintEvent* event) {
+  if(hasFocus()) {
+    QLineEdit::paintEvent(event);
+    return;
+  }
+  auto painter = QPainter(this);
+  painter.fillRect(rect(), Qt::white);
+  painter.setPen(QColor("#C8C8C8"));
+  painter.drawRect(0, 0, width() - 1, height() - 1);
+  auto font = QFont("Roboto");
+  font.setPixelSize(scale_height(12));
+  auto metrics = QFontMetrics(font);
+  auto elided_text = metrics.elidedText(text(), Qt::ElideRight,
+    width() - scale_width(16));
+  painter.setPen(Qt::black);
+  //painter.drawText(QPoint(0, 0), elided_text);
+  //auto vscroll = r.y() + (r.height() - fm.height() + 1) / 2;
+  auto r = QRect(9 + 2, 1 + (26 - metrics.height() + 1) / 2,
+    width() - 2 - (2 * 2), metrics.height());
+  painter.drawText(r, elided_text);
 }
 
 void TextInputWidget::set_cell_style() {
@@ -75,8 +84,4 @@ void TextInputWidget::set_default_style() {
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
         .arg(scale_width(8)));
-}
-
-void TextInputWidget::on_text_edited() {
-  m_current_text = text();
 }
