@@ -9,6 +9,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
+  const auto DEFAULT_DECIMALS = 6;
   const auto SHIFT_STEPS = 10;
 
   auto ARROW_WIDTH() {
@@ -26,7 +27,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_last_cursor_pos(0) {
   setValue(value);
-  setDecimals(10);
+  setDecimals(DEFAULT_DECIMALS);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
       background-color: #FFFFFF;
