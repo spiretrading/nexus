@@ -9,7 +9,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  const auto DEFAULT_DECIMALS = 6;
+  const auto DEFAULT_DECIMAL_PLACES = 6;
   const auto SHIFT_STEPS = 10;
 
   auto ARROW_WIDTH() {
@@ -27,7 +27,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_last_cursor_pos(0) {
   setValue(value);
-  setDecimals(DEFAULT_DECIMALS);
+  setDecimals(DEFAULT_DECIMAL_PLACES);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
       background-color: #FFFFFF;
@@ -117,6 +117,7 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
         setValue(0);
         blockSignals(false);
       }
+      lineEdit()->setText(textFromValue(value()));
       m_submit_signal(value());
       return;
     case Qt::Key_Up:
