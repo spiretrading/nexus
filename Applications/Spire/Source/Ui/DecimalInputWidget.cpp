@@ -26,7 +26,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_last_cursor_pos(0) {
   setValue(value);
-  setDecimals(std::numeric_limits<double>::digits10 - 1);
+  setDecimals(10);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
       background-color: #FFFFFF;
