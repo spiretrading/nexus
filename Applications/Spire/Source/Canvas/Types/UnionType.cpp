@@ -1,5 +1,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 #include <algorithm>
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include <Beam/Utilities/Comparators.hpp>
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
@@ -49,7 +50,7 @@ namespace {
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
-      DereferenceView(types), "Any"));
+      MakeDereferenceView(types), "Any"));
   }
 
   std::shared_ptr<UnionType> BuildAnyValueType() {
@@ -73,13 +74,13 @@ namespace {
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
-      DereferenceView(types), "Any Value"));
+      MakeDereferenceView(types), "Any Value"));
   }
 }
 
 const UnionType& UnionType::GetEmptyType() {
   static auto type = std::static_pointer_cast<UnionType>(UnionType::Create(
-    DereferenceView(vector<std::shared_ptr<NativeType>>())));
+    MakeDereferenceView(vector<std::shared_ptr<NativeType>>())));
   return *type;
 }
 
@@ -124,7 +125,7 @@ std::shared_ptr<CanvasType> UnionType::Create(
     }
     name += filteredTypes.back()->GetName();
   }
-  return Create(DereferenceView(filteredTypes), std::move(name));
+  return Create(MakeDereferenceView(filteredTypes), std::move(name));
 }
 
 std::shared_ptr<CanvasType> UnionType::Create(
@@ -150,7 +151,7 @@ std::shared_ptr<CanvasType> UnionType::Create(
 }
 
 View<NativeType> UnionType::GetCompatibleTypes() const {
-  return DereferenceView(m_compatibleTypes);
+  return MakeDereferenceView(m_compatibleTypes);
 }
 
 string UnionType::GetName() const {

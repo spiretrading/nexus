@@ -117,19 +117,17 @@ namespace OrderExecutionService {
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
         auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Top();
-        while(!buyingPowerEntry.m_executionReportQueue.IsEmpty()) {
-          auto report = buyingPowerEntry.m_executionReportQueue.Top();
-          buyingPowerEntry.m_executionReportQueue.Pop();
-          if(report.m_lastQuantity != 0) {
-            auto currency = buyingPowerEntry.m_currencies.Find(report.m_id);
-            if(!currency.is_initialized()) {
+        while(auto report = buyingPowerEntry.m_executionReportQueue.TryPop()) {
+          if(report->m_lastQuantity != 0) {
+            auto currency = buyingPowerEntry.m_currencies.Find(report->m_id);
+            if(!currency) {
               BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
                 "Currency not recognized."});
             }
-            report.m_lastPrice = m_exchangeRates.Convert(report.m_lastPrice,
+            report->m_lastPrice = m_exchangeRates.Convert(report->m_lastPrice,
               *currency, riskParameters.m_currency);
           }
-          buyingPowerTracker.Update(report);
+          buyingPowerTracker.Update(*report);
         }
         auto convertedFields = fields;
         convertedFields.m_currency = riskParameters.m_currency;

@@ -2,7 +2,6 @@
 #ifdef slots
   #undef slots
 #endif
-#include <Beam/Queues/ConverterReaderQueue.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>

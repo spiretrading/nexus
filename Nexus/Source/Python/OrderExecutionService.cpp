@@ -54,28 +54,30 @@ using namespace pybind11;
 namespace {
   struct TrampolineOrderExecutionClient final : VirtualOrderExecutionClient {
     void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<QueueWriter<OrderRecord>>& queue) override {
+        ScopedQueueWriter<OrderRecord> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_order_records", QueryOrderRecords, query, queue);
+        "query_order_records", QueryOrderRecords, query, std::move(queue));
     }
 
     void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedOrder>>& queue) override {
+        ScopedQueueWriter<SequencedOrder> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
         "query_sequenced_order_submissions", QueryOrderSubmissions, query,
-        queue);
+        std::move(queue));
     }
 
-    void QueryOrderSubmissions(const AccountQuery& query, const std::shared_ptr<
-        QueueWriter<const Order*>>& queue) override {
+    void QueryOrderSubmissions(const AccountQuery& query,
+        ScopedQueueWriter<const Order*> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_order_submissions", QueryOrderSubmissions, query, queue);
+        "query_order_submissions", QueryOrderSubmissions, query,
+        std::move(queue));
     }
 
-    void QueryExecutionReports(const AccountQuery& query, const std::shared_ptr<
-        QueueWriter<ExecutionReport>>& queue) override {
+    void QueryExecutionReports(const AccountQuery& query,
+        ScopedQueueWriter<ExecutionReport> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient,
-        "query_execution_reports", QueryExecutionReports, query, queue);
+        "query_execution_reports", QueryExecutionReports, query,
+        std::move(queue));
     }
 
     const Order& Submit(const OrderFields& fields) override {
@@ -132,7 +134,7 @@ void Nexus::Python::ExportApplicationOrderExecutionClient(
             return std::make_unique<TcpSocketChannel>(addresses,
               Ref(*GetSocketThreadPool()));
           },
-          [=] {
+          [] {
             return std::make_unique<LiveTimer>(seconds(10),
               Ref(*GetTimerThreadPool()));
           });
@@ -216,11 +218,11 @@ void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
     .def("query_order_records", &VirtualOrderExecutionClient::QueryOrderRecords)
     .def("query_sequenced_order_submissions",
       static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
-      const std::shared_ptr<QueueWriter<SequencedOrder>>&)>(
+      ScopedQueueWriter<SequencedOrder>)>(
       &VirtualOrderExecutionClient::QueryOrderSubmissions))
     .def("query_order_submissions",
       static_cast<void (VirtualOrderExecutionClient::*)(const AccountQuery&,
-      const std::shared_ptr<QueueWriter<const Order*>>&)>(
+      ScopedQueueWriter<const Order*>)>(
       &VirtualOrderExecutionClient::QueryOrderSubmissions))
     .def("query_execution_reports",
       &VirtualOrderExecutionClient::QueryExecutionReports)
@@ -252,13 +254,10 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   testModule.def("cancel_order", &CancelOrder, call_guard<GilRelease>());
   testModule.def("set_order_status", &SetOrderStatus, call_guard<GilRelease>());
   testModule.def("fill_order",
-    static_cast<void (*)(PrimitiveOrder& order, Money price,
-    Quantity quantity, const ptime& timestamp)>(&FillOrder),
+    static_cast<void (*)(PrimitiveOrder&, Money, Quantity, ptime)>(&FillOrder),
     call_guard<GilRelease>());
-  testModule.def("fill_order",
-    static_cast<void (*)(PrimitiveOrder& order,
-    Quantity quantity, const ptime& timestamp)>(&FillOrder),
-    call_guard<GilRelease>());
+  testModule.def("fill_order", static_cast<void (*)(PrimitiveOrder&, Quantity,
+    ptime)>(&FillOrder), call_guard<GilRelease>());
   testModule.def("is_pending_cancel", &IsPendingCancel,
     call_guard<GilRelease>());
 }

@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -8,7 +9,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -357,7 +357,7 @@ namespace Nexus::MarketDataService {
           auto initialValueQueue =
             std::make_shared<Beam::Queue<MarketDataType>>();
           QueryMarketDataClient(*queryEntry.m_marketDataClient,
-            initialValueQuery, initialValueQueue);
+            initialValueQuery, Beam::ScopedQueueWriter(initialValueQueue));
           auto initialValues = std::vector<MarketDataType>();
           Beam::FlushQueue(initialValueQueue,
             std::back_inserter(initialValues));
@@ -385,7 +385,8 @@ namespace Nexus::MarketDataService {
       auto snapshotQuery = query;
       snapshotQuery.SetRange(query.GetRange().GetStart(),
         Beam::Queries::Sequence::Present());
-      QueryMarketDataClient(*client, snapshotQuery, queue);
+      QueryMarketDataClient(*client, snapshotQuery,
+        Beam::ScopedQueueWriter(queue));
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
         [&] (auto&& result) {
@@ -394,7 +395,8 @@ namespace Nexus::MarketDataService {
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
-      QueryMarketDataClient(*client, query, queue);
+      QueryMarketDataClient(*client, query,
+        Beam::ScopedQueueWriter(queue));
       Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
       request.SetResult(result);
     }

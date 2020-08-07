@@ -27,18 +27,16 @@ namespace Nexus::OrderExecutionService {
       ~ToPythonOrderExecutionClient() override;
 
       void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) override;
+        Beam::ScopedQueueWriter<OrderRecord> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue)
-        override;
+        Beam::ScopedQueueWriter<SequencedOrder> queue) override;
 
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) override;
+        Beam::ScopedQueueWriter<const Order*> queue) override;
 
       void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue)
-        override;
+        Beam::ScopedQueueWriter<ExecutionReport> queue) override;
 
       const Order& Submit(const OrderFields& fields) override;
 
@@ -79,34 +77,32 @@ namespace Nexus::OrderExecutionService {
 
   template<typename C>
   void ToPythonOrderExecutionClient<C>::QueryOrderRecords(
-      const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) {
+      const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderRecords(query, queue);
+    m_client->QueryOrderRecords(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonOrderExecutionClient<C>::QueryOrderSubmissions(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) {
+      Beam::ScopedQueueWriter<SequencedOrder> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderSubmissions(query, queue);
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonOrderExecutionClient<C>::QueryOrderSubmissions(
-      const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
+      const AccountQuery& query, Beam::ScopedQueueWriter<const Order*> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderSubmissions(query, queue);
+    m_client->QueryOrderSubmissions(query, std::move(queue));
   }
 
   template<typename C>
   void ToPythonOrderExecutionClient<C>::QueryExecutionReports(
       const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
+      Beam::ScopedQueueWriter<ExecutionReport> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryExecutionReports(query, queue);
+    m_client->QueryExecutionReports(query, std::move(queue));
   }
 
   template<typename C>

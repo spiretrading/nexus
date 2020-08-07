@@ -2,8 +2,8 @@
 #define NEXUS_RISKSTATEMONITOR_HPP
 #include <unordered_map>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/FilteredPublisher.hpp>
-#include <Beam/Queues/QueuePublisher.hpp>
+#include <Beam/Queues/FilteredQueueWriter.hpp>
+#include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
@@ -21,8 +21,8 @@ namespace Nexus {
 namespace RiskService {
 
   //! Represents an entry in a RiskState table.
-  using RiskStateEntry = Beam::TableEntry<Beam::ServiceLocator::DirectoryEntry,
-    RiskState>;
+  using RiskStateEntry = Beam::KeyValuePair<
+    Beam::ServiceLocator::DirectoryEntry, RiskState>;
 
   /*! \class RiskStateMonitor
       \brief Instantiates RiskStateTrackers for all accounts executing Orders
@@ -95,8 +95,8 @@ namespace RiskService {
       using PortfolioMonitor = Accounting::PortfolioMonitor<
         typename RiskStateTracker::Portfolio*, MarketDataClient*>;
       struct AccountEntry : private boost::noncopyable {
-        std::shared_ptr<Beam::FilteredPublisher<Beam::SequencePublisher<
-          const OrderExecutionService::Order*>>> m_orderPublisher;
+        std::shared_ptr<Beam::SequencePublisher<
+          const OrderExecutionService::Order*>> m_orderPublisher;
         RiskStateTracker m_tracker;
         PortfolioMonitor m_portfolio;
 
@@ -110,8 +110,8 @@ namespace RiskService {
       Beam::GetOptionalLocalPtr<AdministrationClientType>
         m_administrationClient;
       Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
-      Beam::QueuePublisher<Beam::SequencePublisher<
-        const OrderExecutionService::Order*>> m_orderSubmissionPublisher;
+      Beam::QueueReaderPublisher<const OrderExecutionService::Order*>
+        m_orderSubmissionPublisher;
       Beam::GetOptionalLocalPtr<TransitionTimerType> m_transitionTimer;
       Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
       MarketDatabase m_marketDatabase;
@@ -145,16 +145,16 @@ namespace RiskService {
       const Beam::Publisher<const OrderExecutionService::Order*>&
       orderPublisher, MarketDataClient* marketDataClient,
       TimeClient* timeClient)
-      : m_orderPublisher(std::make_shared<Beam::FilteredPublisher<
-          Beam::SequencePublisher<const OrderExecutionService::Order*>>>(
-          [=] (const OrderExecutionService::Order* order) {
-            return order->GetInfo().m_fields.m_account == account;
-          }, Beam::Initialize())),
+      : m_orderPublisher(std::make_shared<Beam::SequencePublisher<
+          const OrderExecutionService::Order*>>()),
         m_tracker(typename RiskStateTracker::Portfolio(marketDatabase),
           exchangeRates, timeClient),
         m_portfolio(&m_tracker.GetPortfolio(), marketDataClient,
           *m_orderPublisher) {
-    orderPublisher.Monitor(m_orderPublisher);
+    orderPublisher.Monitor(Beam::MakeFilteredQueueWriter(m_orderPublisher,
+      [=] (auto order) {
+        return order->GetInfo().m_fields.m_account == account;
+      }));
   }
 
   template<typename RiskStateTrackerType, typename AdministrationClientType,
