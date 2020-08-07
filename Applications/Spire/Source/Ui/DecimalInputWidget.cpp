@@ -2,9 +2,24 @@
 #include <QFocusEvent>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
+
+namespace {
+  const auto SHIFT_STEPS = 10;
+
+  auto ARROW_WIDTH() {
+    static auto width = scale_width(6);
+    return width;
+  }
+
+  auto BUTTON_PADDING() {
+    static auto padding = scale_width(17);
+    return padding;
+  }
+}
 
 DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
@@ -32,10 +47,12 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
 
     QDoubleSpinBox::up-button {
       border: none;
+      background-color: red;
     }
 
     QDoubleSpinBox::down-button {
       border: none;
+      background-color: red;
     }
 
     QDoubleSpinBox::up-arrow {
@@ -49,7 +66,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       height: %2px;
       image: url(:/Icons/arrow-down.svg);
       width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
+    })").arg(scale_width(1)).arg(scale_height(6)).arg(ARROW_WIDTH())
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
   setContextMenuPolicy(Qt::NoContextMenu);
   //connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
@@ -87,27 +104,44 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
       Q_EMIT valueChanged(value());
       return;
     case Qt::Key_Up:
-      connect(lineEdit(), &QLineEdit::selectionChanged, this,
-        &DecimalInputWidget::revert_cursor);
-      m_last_cursor_pos = lineEdit()->cursorPosition();
-      stepBy(1);
-      disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
-        &DecimalInputWidget::revert_cursor);
+      add_step(1, event->modifiers());
       return;
     case Qt::Key_Down:
-      connect(lineEdit(), &QLineEdit::selectionChanged, this,
-        &DecimalInputWidget::revert_cursor);
-      m_last_cursor_pos = lineEdit()->cursorPosition();
-      stepBy(-1);
-      disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
-        &DecimalInputWidget::revert_cursor);
+      add_step(-1, event->modifiers());
       return;
   }
   QDoubleSpinBox::keyPressEvent(event);
 }
 
+void DecimalInputWidget::mousePressEvent(QMouseEvent* event) {
+  if(event->x() > width() - BUTTON_PADDING()) {
+    if(event->y() < height() / 2) {
+      add_step(1, event->modifiers());
+    } else {
+      add_step(-1, event->modifiers());
+    }
+    return;
+  }
+  QDoubleSpinBox::mousePressEvent(event);
+}
+
 void DecimalInputWidget::on_editing_finished() {
   //lineEdit()->deselect();
+}
+
+void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
+  connect(lineEdit(), &QLineEdit::selectionChanged, this,
+    &DecimalInputWidget::revert_cursor);
+  m_last_cursor_pos = lineEdit()->cursorPosition();
+  step = [&] {
+    if(modifiers == Qt::ShiftModifier) {
+      return step * SHIFT_STEPS;
+    }
+    return step;
+  }();
+  stepBy(step);
+  disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
+    &DecimalInputWidget::revert_cursor);
 }
 
 void DecimalInputWidget::revert_cursor() {
