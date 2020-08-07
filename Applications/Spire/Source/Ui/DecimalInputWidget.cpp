@@ -151,6 +151,7 @@ void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
   }();
   if(text().isEmpty()) {
     setValue(singleStep() * step);
+    lineEdit()->setCursorPosition(text().length());
     return;
   }
   connect(lineEdit(), &QLineEdit::selectionChanged, this,
