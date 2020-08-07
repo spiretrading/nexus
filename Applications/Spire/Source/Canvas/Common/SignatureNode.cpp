@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Common/SignatureNode.hpp"
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include <Beam/Collections/IndexedIterator.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -20,7 +21,7 @@ namespace {
         compatibleTypes.push_back(signature[index]);
       }
     }
-    return UnionType::Create(DereferenceView(compatibleTypes));
+    return UnionType::Create(MakeDereferenceView(compatibleTypes));
   }
 
   std::shared_ptr<CanvasType> GetReturnType(const CanvasNode& node,
@@ -42,7 +43,7 @@ namespace {
         returnTypes.emplace_back(signature.back());
       }
     }
-    return UnionType::Create(DereferenceView(returnTypes));
+    return UnionType::Create(MakeDereferenceView(returnTypes));
   }
 }
 
@@ -62,11 +63,12 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
   auto clone = Clone(*this);
   for(const auto& signature : DropLast(MakeIndexedView(signatureEntries))) {
     auto parameterType = UnionType::Create(
-      DereferenceView(signature.GetValue()));
+      MakeDereferenceView(signature.GetValue()));
     auto& child = clone->GetChildren()[signature.GetIndex()];
     clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
   }
-  auto returnType = UnionType::Create(DereferenceView(signatureEntries.back()));
+  auto returnType = UnionType::Create(MakeDereferenceView(
+    signatureEntries.back()));
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }

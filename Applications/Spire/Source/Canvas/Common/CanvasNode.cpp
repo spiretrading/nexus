@@ -29,7 +29,7 @@ boost::optional<const CanvasNode&> CanvasNode::GetParent() const {
 }
 
 View<const CanvasNode> CanvasNode::GetChildren() const {
-  return DereferenceView(m_children);
+  return MakeDereferenceView(m_children);
 }
 
 const CanvasType& CanvasNode::GetType() const {

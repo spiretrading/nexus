@@ -1,5 +1,5 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
-#include <Beam/Queues/QueuePublisher.hpp>
+#include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"

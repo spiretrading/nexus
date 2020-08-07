@@ -1,5 +1,5 @@
 #include "Spire/AccountViewer/AccountActivityReportWidget.hpp"
-#include <Beam/Queues/QueuePublisher.hpp>
+#include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -62,9 +62,8 @@ void AccountActivityReportWidget::OnUpdate(bool checked) {
   QueryDailyOrderSubmissions(m_account, startTime, endTime,
     m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
     m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
-  auto orderPublisher = std::make_shared<QueuePublisher<
-    SequencePublisher<const Order*>>>(orderQueue);
-  m_model = std::nullopt;
+  auto orderPublisher = MakeSequencePublisherAdaptor(
+    std::make_unique<QueueReaderPublisher<const Order*>>(orderQueue));
   m_model.emplace(Ref(*m_userProfile), orderPublisher);
   m_ui->m_profitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_model->m_profitAndLossModel));
