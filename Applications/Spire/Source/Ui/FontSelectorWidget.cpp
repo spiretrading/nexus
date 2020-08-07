@@ -84,11 +84,12 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
   m_underline_button->connect_clicked_signal(
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
-  m_size_input = new IntegerInputWidget(6, 72, this);
+  m_size_input = new IntegerInputWidget(0, this);
+  m_size_input->setRange(6, 72);
   m_size_input->setFixedHeight(scale_height(26));
-  connect(m_size_input,
-    static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
-    &FontSelectorWidget::on_size_selected);
+  m_size_input->connect_change_signal([=] (auto value) {
+    on_size_selected(value);
+  });
   grid_layout->addWidget(m_size_input, 1, 3, 1, 2);
   set_font(current_font);
 }

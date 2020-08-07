@@ -15,75 +15,42 @@ namespace {
   }
 }
 
-IntegerInputWidget::IntegerInputWidget(int min_value, int max_value,
-    QWidget* parent)
-    : QSpinBox(parent),
-      m_min_value(min_value),
-      m_max_value(max_value) {
-  installEventFilter(this);
-  setMinimum(m_min_value);
-  setMaximum(m_max_value);
-  setStyleSheet(QString(R"(
-    QSpinBox {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %5px;
-      padding-left: %4px;
-    }
-
-    QSpinBox:focus {
-      border: %1px solid #4B23A0;
-    }
-
-    QSpinBox::up-button {
-      border: none;
-    }
-
-    QSpinBox::down-button {
-      border: none;
-    }
-
-    QSpinBox::up-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-up.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QSpinBox::down-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-down.svg);
-      width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(6)).arg(scale_width(6))
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
-  setContextMenuPolicy(Qt::NoContextMenu);
-  findChild<QLineEdit*>()->installEventFilter(this);
+IntegerInputWidget::IntegerInputWidget(int value, QWidget* parent)
+    : DecimalInputWidget(value, parent) {
+  setDecimals(0);
+  DecimalInputWidget::connect_change_signal([=] (auto value) {
+    m_change_signal(static_cast<int>(value));
+  });
+  DecimalInputWidget::connect_submit_signal([=] (auto value) {
+    m_submit_signal(static_cast<int>(value));
+  });
+  connect(lineEdit(), &QLineEdit::textEdited, this,
+    &IntegerInputWidget::on_text_edited);
 }
 
-bool IntegerInputWidget::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseButtonPress) {
-    auto e = static_cast<QMouseEvent*>(event);
-    if(e->button() == Qt::LeftButton && e->pos().x() < width() - BUTTON_X()) {
-      selectAll();
-      return true;
-    }
-  }
-  return QSpinBox::eventFilter(watched, event);
+connection IntegerInputWidget::connect_change_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_change_signal.connect(slot);
 }
 
-void IntegerInputWidget::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    setValue(text().toInt());
-    if(value() < m_min_value) {
-      setValue(m_min_value);
-    }
-    Q_EMIT valueChanged(value());
-  } else if(event->key() == Qt::Key_Down && value() <= m_min_value) {
-    setValue(m_min_value);
-    Q_EMIT valueChanged(value());
-  } else {
-    QSpinBox::keyPressEvent(event);
+connection IntegerInputWidget::connect_submit_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
+}
+
+//bool IntegerInputWidget::eventFilter(QObject* watched, QEvent* event) {
+//  if(event->type() == QEvent::MouseButtonPress) {
+//    auto e = static_cast<QMouseEvent*>(event);
+//    if(e->button() == Qt::LeftButton && e->pos().x() < width() - BUTTON_X()) {
+//      selectAll();
+//      return true;
+//    }
+//  }
+//  return QSpinBox::eventFilter(watched, event);
+//}
+
+void IntegerInputWidget::on_text_edited(const QString& text) {
+  if(text.contains(QLocale().decimalPoint())) {
+    lineEdit()->setText(lineEdit()->text().remove(QLocale().decimalPoint()));
   }
 }

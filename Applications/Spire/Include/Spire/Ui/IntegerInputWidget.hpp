@@ -1,29 +1,36 @@
 #ifndef SPIRE_INTEGER_INPUT_WIDGET_HPP
 #define SPIRE_INTEGER_INPUT_WIDGET_HPP
-#include <QSpinBox>
+#include "Spire/Ui/DecimalInputWidget.hpp"
 
 namespace Spire {
 
   //! Represents a widget for inputting whole numbers.
-  class IntegerInputWidget : public QSpinBox {
+  class IntegerInputWidget : public DecimalInputWidget {
     public:
+
+      //! Signals a user interaction with the value.
+      using ValueSignal = Signal<void (int value)>;
 
       //! Constructs a ValueInputWidget.
       /*
-        \param min_value The lowest value that can be entered.
-        \param max_value The highest value that can be entered.
+        \param value The initial value to display.
         \param parent The parent widget.
       */
-      IntegerInputWidget(int min_value, int max_value,
-        QWidget* parent = nullptr);
+      IntegerInputWidget(int value, QWidget* parent = nullptr);
 
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
+      //! Connects a slot to the value change signal.
+      boost::signals2::connection connect_change_signal(
+        const ValueSignal::slot_type& slot) const;
+
+      //! Connects a slot to the value submit signal.
+      boost::signals2::connection connect_submit_signal(
+        const ValueSignal::slot_type& slot) const;
 
     private:
-      int m_min_value;
-      int m_max_value;
+      mutable ValueSignal m_change_signal;
+      mutable ValueSignal m_submit_signal;
+
+      void on_text_edited(const QString& text);
   };
 }
 
