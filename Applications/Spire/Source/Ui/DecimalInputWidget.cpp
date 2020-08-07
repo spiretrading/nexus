@@ -101,6 +101,9 @@ void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
 }
 
 void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
+  if(text().isEmpty()) {
+    setValue(0);
+  }
   QDoubleSpinBox::focusOutEvent(event);
   m_submit_signal(value());
 }
