@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -23,14 +24,9 @@ namespace {
 
 DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_value(value),
       m_last_cursor_pos(0) {
+  setValue(value);
   setDecimals(std::numeric_limits<double>::digits10 - 1);
-  //setMinimum(std::numeric_limits<double>::lowest());
-  //setMaximum(std::numeric_limits<double>::max());
-  setMinimum(0);
-  setMaximum(99);
-  setValue(m_value);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
       background-color: #FFFFFF;
@@ -47,12 +43,10 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
 
     QDoubleSpinBox::up-button {
       border: none;
-      background-color: red;
     }
 
     QDoubleSpinBox::down-button {
       border: none;
-      background-color: red;
     }
 
     QDoubleSpinBox::up-arrow {
@@ -69,12 +63,10 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     })").arg(scale_width(1)).arg(scale_height(6)).arg(ARROW_WIDTH())
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
   setContextMenuPolicy(Qt::NoContextMenu);
-  //connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
-  //  &DecimalInputWidget::on_value_changed);
+  connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+    &DecimalInputWidget::on_value_changed);
   connect(lineEdit(), &QLineEdit::textEdited, this,
     &DecimalInputWidget::on_text_edited);
-  connect(this, &QDoubleSpinBox::editingFinished, this,
-    &DecimalInputWidget::on_editing_finished);
 }
 
 QString DecimalInputWidget::textFromValue(double value) const {
@@ -87,6 +79,16 @@ QString DecimalInputWidget::textFromValue(double value) const {
   return str;
 }
 
+connection DecimalInputWidget::connect_change_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_change_signal.connect(slot);
+}
+
+connection DecimalInputWidget::connect_submit_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
+}
+
 void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
   QDoubleSpinBox::focusInEvent(event);
   switch(event->reason()) {
@@ -97,11 +99,24 @@ void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
   }
 }
 
+void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
+  QDoubleSpinBox::focusOutEvent(event);
+  m_submit_signal(value());
+}
+
 void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
+    case Qt::Key_Delete:
+      setValue(std::max(0.0, minimum()));
+      return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
-      Q_EMIT valueChanged(value());
+      if(text().isEmpty()) {
+        blockSignals(true);
+        setValue(0);
+        blockSignals(false);
+      }
+      m_submit_signal(value());
       return;
     case Qt::Key_Up:
       add_step(1, event->modifiers());
@@ -125,20 +140,20 @@ void DecimalInputWidget::mousePressEvent(QMouseEvent* event) {
   QDoubleSpinBox::mousePressEvent(event);
 }
 
-void DecimalInputWidget::on_editing_finished() {
-  //lineEdit()->deselect();
-}
-
 void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
-  connect(lineEdit(), &QLineEdit::selectionChanged, this,
-    &DecimalInputWidget::revert_cursor);
-  m_last_cursor_pos = lineEdit()->cursorPosition();
   step = [&] {
     if(modifiers == Qt::ShiftModifier) {
       return step * SHIFT_STEPS;
     }
     return step;
   }();
+  if(text().isEmpty()) {
+    setValue(singleStep() * step);
+    return;
+  }
+  connect(lineEdit(), &QLineEdit::selectionChanged, this,
+    &DecimalInputWidget::revert_cursor);
+  m_last_cursor_pos = lineEdit()->cursorPosition();
   stepBy(step);
   disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
     &DecimalInputWidget::revert_cursor);
@@ -160,6 +175,5 @@ void DecimalInputWidget::on_text_edited(const QString& text) {
 }
 
 void DecimalInputWidget::on_value_changed(double value) {
-  //m_last_cursor_pos = lineEdit()->cursorPosition();
-  //lineEdit()->deselect();
+  m_change_signal(value);
 }
