@@ -6,41 +6,28 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-QuantityInputWidget::QuantityInputWidget(QWidget* parent)
-    : TextInputWidget(parent),
-      m_item_delegate(this) {
-  setValidator(new QRegularExpressionValidator(
-    QRegularExpression("^[0-9]*$"), this));
-  connect(this, &QLineEdit::editingFinished, this,
-    &QuantityInputWidget::on_line_edit_committed);
-  connect(this, &QLineEdit::textEdited, this,
-    &QuantityInputWidget::on_line_edit_modified);
-  m_locale.setNumberOptions(QLocale::OmitGroupSeparator);
+QuantityInputWidget::QuantityInputWidget(Nexus::Quantity value,
+    QWidget* parent)
+    : DecimalInputWidget(static_cast<double>(value), parent) {
+  setMinimum(0);
+  DecimalInputWidget::connect_change_signal([=] (auto value) {
+    m_change_signal({value});
+  });
+  DecimalInputWidget::connect_submit_signal([=] (auto value) {
+    m_submit_signal({value});
+  });
 }
 
 void QuantityInputWidget::set_value(Quantity value) {
-  setText(m_item_delegate.displayText(
-    QVariant::fromValue(Truncate(value, 0)), m_locale));
+  setValue(static_cast<double>(value));
 }
 
-connection QuantityInputWidget::connect_committed_signal(
-    const InputSignal::slot_type& slot) const {
-  return m_committed_signal.connect(slot);
+connection QuantityInputWidget::connect_change_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_change_signal.connect(slot);
 }
 
-connection QuantityInputWidget::connect_modified_signal(
-    const InputSignal::slot_type& slot) const {
-  return m_modified_signal.connect(slot);
-}
-
-void QuantityInputWidget::on_line_edit_committed() {
-  if(!text().isEmpty()) {
-    m_committed_signal(*Quantity::FromValue(text().toStdString()));
-  }
-}
-
-void QuantityInputWidget::on_line_edit_modified(const QString& text) {
-  if(!text.isEmpty()) {
-    m_modified_signal(*Quantity::FromValue(text.toStdString()));
-  }
+connection QuantityInputWidget::connect_submit_signal(
+    const ValueSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
 }

@@ -1,48 +1,42 @@
 #ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #define SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/TextInputWidget.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/DecimalInputWidget.hpp"
 
 namespace Spire {
 
-  //! Displays an input box that accepts Quantities.
-  class QuantityInputWidget : public TextInputWidget {
+  //! Represents a widget for displaying and modifying Quantities.
+  class QuantityInputWidget : public DecimalInputWidget {
     public:
 
-      //! Signals that the user has modified the input box or submitted a
-      //! value.
-      using InputSignal = Signal<void (Nexus::Quantity)>;
+      //! Signals a user interaction with the value.
+      using ValueSignal = Signal<void (Nexus::Quantity value)>;
 
       //! Constructs a QuantityInputWidget.
       /*
+        \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit QuantityInputWidget(QWidget* parent = nullptr);
+      explicit QuantityInputWidget(Nexus::Quantity value,
+        QWidget* parent = nullptr);
 
-      //! Sets the value to display in the input box.
+      //! Sets the current value of the input.
       /*
         \param value The value to display.
       */
       void set_value(Nexus::Quantity value);
 
-      //! Connects a signal to the value committed signal.
-      boost::signals2::connection connect_committed_signal(
-        const InputSignal::slot_type& slot) const;
+      //! Connects a slot to the value change signal.
+      boost::signals2::connection connect_change_signal(
+        const ValueSignal::slot_type& slot) const;
 
-      //! Connects a signal to the value modified signal.
-      boost::signals2::connection connect_modified_signal(
-        const InputSignal::slot_type& slot) const;
+      //! Connects a slot to the value submit signal.
+      boost::signals2::connection connect_submit_signal(
+        const ValueSignal::slot_type& slot) const;
 
     private:
-      CustomVariantItemDelegate m_item_delegate;
-      mutable InputSignal m_committed_signal;
-      mutable InputSignal m_modified_signal;
-      QLocale m_locale;
-
-      void on_line_edit_committed();
-      void on_line_edit_modified(const QString& text);
+      mutable ValueSignal m_change_signal;
+      mutable ValueSignal m_submit_signal;
   };
 }
 
