@@ -157,6 +157,7 @@ void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
   stepBy(step);
   disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
     &DecimalInputWidget::revert_cursor);
+  lineEdit()->setCursorPosition(text().length());
 }
 
 void DecimalInputWidget::revert_cursor() {

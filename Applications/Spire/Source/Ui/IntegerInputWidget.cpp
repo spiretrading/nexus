@@ -8,13 +8,6 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  auto BUTTON_X() {
-    static auto x = scale_width(12);
-    return x;
-  }
-}
-
 IntegerInputWidget::IntegerInputWidget(int value, QWidget* parent)
     : DecimalInputWidget(value, parent) {
   setDecimals(0);
@@ -37,17 +30,6 @@ connection IntegerInputWidget::connect_submit_signal(
     const ValueSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
 }
-
-//bool IntegerInputWidget::eventFilter(QObject* watched, QEvent* event) {
-//  if(event->type() == QEvent::MouseButtonPress) {
-//    auto e = static_cast<QMouseEvent*>(event);
-//    if(e->button() == Qt::LeftButton && e->pos().x() < width() - BUTTON_X()) {
-//      selectAll();
-//      return true;
-//    }
-//  }
-//  return QSpinBox::eventFilter(watched, event);
-//}
 
 void IntegerInputWidget::on_text_edited(const QString& text) {
   if(text.contains(QLocale().decimalPoint())) {
