@@ -97,47 +97,45 @@ namespace Nexus::OrderExecutionService {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       OrderExecutionClient& orderExecutionClient,
-      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
-    Beam::Routines::Spawn(
-      [=, &orderExecutionClient] {
-        auto marketTimeZones =
-          std::unordered_map<std::string, std::vector<MarketCode>>();
-        for(auto& market : marketDatabase.GetEntries()) {
-          marketTimeZones[market.m_timeZone].push_back(market.m_code);
+      Beam::ScopedQueueWriter<const Order*> queue) {
+    Beam::Routines::Spawn([=, queue = std::move(queue),
+        &orderExecutionClient] () mutable {
+      auto marketTimeZones =
+        std::unordered_map<std::string, std::vector<MarketCode>>();
+      for(auto& market : marketDatabase.GetEntries()) {
+        marketTimeZones[market.m_timeZone].push_back(market.m_code);
+      }
+      for(auto& marketTimeZone : marketTimeZones) {
+        auto marketStartDate = MarketDateToUtc(marketTimeZone.second.front(),
+          startTime, marketDatabase, timeZoneDatabase);
+        auto marketEndDate = MarketDateToUtc(marketTimeZone.second.front(),
+          endTime, marketDatabase, timeZoneDatabase) +
+          boost::gregorian::days(1);
+        auto marketExpressions = std::vector<Beam::Queries::Expression>();
+        for(auto& market : marketTimeZone.second) {
+          marketExpressions.push_back(BuildMarketFilter(market));
         }
-        for(auto& marketTimeZone : marketTimeZones) {
-          auto marketStartDate = MarketDateToUtc(marketTimeZone.second.front(),
-            startTime, marketDatabase, timeZoneDatabase);
-          auto marketEndDate = MarketDateToUtc(marketTimeZone.second.front(),
-            endTime, marketDatabase, timeZoneDatabase) +
-            boost::gregorian::days(1);
-          auto marketExpressions = std::vector<Beam::Queries::Expression>();
-          for(auto& market : marketTimeZone.second) {
-            marketExpressions.push_back(BuildMarketFilter(market));
-          }
-          auto marketFilter = Beam::Queries::MakeOrExpression(
-            marketExpressions.begin(), marketExpressions.end());
-          auto dailyOrderSubmissionQuery = AccountQuery();
-          dailyOrderSubmissionQuery.SetIndex(account);
-          dailyOrderSubmissionQuery.SetRange(marketStartDate, marketEndDate);
-          dailyOrderSubmissionQuery.SetFilter(marketFilter);
-          dailyOrderSubmissionQuery.SetSnapshotLimit(
-            Beam::Queries::SnapshotLimit::Unlimited());
-          auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
-          orderExecutionClient.QueryOrderSubmissions(dailyOrderSubmissionQuery,
-            snapshotQueue);
-          try {
-            while(true) {
-              auto value = snapshotQueue->Top();
-              snapshotQueue->Pop();
-              if(value.GetValue()->GetInfo().m_timestamp < marketEndDate) {
-                queue->Push(std::move(value.GetValue()));
-              }
+        auto marketFilter = Beam::Queries::MakeOrExpression(
+          marketExpressions.begin(), marketExpressions.end());
+        auto dailyOrderSubmissionQuery = AccountQuery();
+        dailyOrderSubmissionQuery.SetIndex(account);
+        dailyOrderSubmissionQuery.SetRange(marketStartDate, marketEndDate);
+        dailyOrderSubmissionQuery.SetFilter(marketFilter);
+        dailyOrderSubmissionQuery.SetSnapshotLimit(
+          Beam::Queries::SnapshotLimit::Unlimited());
+        auto snapshotQueue = std::make_shared<Beam::Queue<SequencedOrder>>();
+        orderExecutionClient.QueryOrderSubmissions(dailyOrderSubmissionQuery,
+          snapshotQueue);
+        try {
+          while(true) {
+            auto value = snapshotQueue->Pop();
+            if(value.GetValue()->GetInfo().m_timestamp < marketEndDate) {
+              queue.Push(std::move(value.GetValue()));
             }
-          } catch(const std::exception&) {}
-        }
-        queue->Break();
-      });
+          }
+        } catch(const std::exception&) {}
+      }
+    });
   }
 }
 

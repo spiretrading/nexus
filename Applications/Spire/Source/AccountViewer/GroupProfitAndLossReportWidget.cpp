@@ -1,5 +1,6 @@
 #include "Spire/AccountViewer/GroupProfitAndLossReportWidget.hpp"
-#include <Beam/Queues/QueuePublisher.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
+#include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -71,26 +72,27 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
     GetServiceLocatorClient().LoadDirectoryEntry(m_group, "traders");
   auto traders = m_userProfile->GetServiceClients().GetServiceLocatorClient().
     LoadChildren(traderDirectory);
-  auto totalsPublisher = std::make_shared<
-    AggregatePublisher<SequencePublisher<const Order*>>>(Beam::Initialize());
   sort(traders.begin(), traders.end(),
     [] (const DirectoryEntry& lhs, const DirectoryEntry& rhs) {
       return lhs.m_name < rhs.m_name;
     });
+  auto orderQueues = std::make_shared<MultiQueueWriter<const Order*>>();
   for(auto& trader : traders) {
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     QueryDailyOrderSubmissions(trader, startTime, endTime,
       m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
       m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
-    auto orderPublisher = std::make_shared<
-      QueuePublisher<SequencePublisher<const Order*>>>(orderQueue);
+    auto orderPublisher = MakeSequencePublisherAdaptor(
+      std::make_shared<QueueReaderPublisher<const Order*>>(orderQueue));
     auto reportModel = std::make_unique<ReportModel>(Ref(*m_userProfile),
       orderPublisher);
     m_groupModels.push_back(std::move(reportModel));
-    totalsPublisher->Add(*orderPublisher);
+    orderPublisher->Monitor(orderQueues->GetWriter());
   }
+  auto totalsPublisher = MakeSequencePublisherAdaptor(
+    std::make_shared<QueueReaderPublisher<const Order*>>(orderQueues));
   m_totalsModel = std::nullopt;
-  m_totalsModel.emplace(Ref(*m_userProfile), totalsPublisher);
+  m_totalsModel.emplace(Ref(*m_userProfile), std::move(totalsPublisher));
   auto totalsProfitAndLossWidget = new ProfitAndLossWidget();
   totalsProfitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_totalsModel->m_profitAndLossModel));
