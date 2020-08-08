@@ -107,10 +107,10 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
     if(bboQuoteIterator == m_bboQuotes.end()) {
       return BboQuote{};
     }
-    if(bboQuoteIterator->second.m_bboQuote->IsEmpty()) {
-      return BboQuote{};
+    if(auto bboQuote = bboQuoteIterator->second.m_bboQuote->TryTop()) {
+      return *bboQuote;
     }
-    return bboQuoteIterator->second.m_bboQuote->Top();
+    return BboQuote();
   }();
   if(m_orderTaskView->HandleKeyPressEvent(*event, *security,
       bboQuote.m_ask.m_price, bboQuote.m_bid.m_price)) {

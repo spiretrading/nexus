@@ -3,7 +3,7 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
@@ -67,7 +67,7 @@ namespace Nexus::Compliance {
       Beam::GetOptionalLocalPtr<C> m_marketDataClient;
       Beam::Threading::Sync<Accounting::BuyingPowerTracker>
         m_buyingPowerTracker;
-      Beam::MultiQueueReader<OrderExecutionService::ExecutionReport>
+      Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
         m_executionReportQueue;
       std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
         m_currencies;

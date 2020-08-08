@@ -198,9 +198,9 @@ namespace Spire {
       QTimer m_updateTimer;
       QTimer m_expiryTimer;
       bool m_isRefreshing;
-      SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
-      std::optional<SpireAggregateOrderExecutionPublisher>
-        m_linkedOrderExecutionPublisher;
+// TODO      SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
+//      std::optional<SpireAggregateOrderExecutionPublisher>
+//        m_linkedOrderExecutionPublisher;
       std::vector<std::unique_ptr<TaskEntry>> m_entries;
       std::unordered_map<int, TaskEntry*> m_taskIds;
       std::vector<BlotterTaskMonitor> m_taskMonitors;

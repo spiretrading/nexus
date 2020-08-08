@@ -111,7 +111,7 @@ namespace Details {
   void QueryMarketDataClient(MarketDataClient& client,
       const Query& query, Beam::ScopedQueueWriter<Q, U> queue) {
     return Details::QueryMarketDataClientOperator<
-      typename Beam::ScopedQueueWriter<Q, U>::Source, MarketDataClient>()(
+      typename Beam::ScopedQueueWriter<Q, U>::Target, MarketDataClient>()(
       client, query, std::move(queue));
   }
 }

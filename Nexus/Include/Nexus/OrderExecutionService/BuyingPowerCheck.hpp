@@ -2,7 +2,7 @@
 #define NEXUS_BUYINGPOWERCHECK_HPP
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -66,7 +66,7 @@ namespace OrderExecutionService {
           m_buyingPowerTracker;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskParameters>>
           m_riskParametersQueue;
-        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
+        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
         Beam::SynchronizedUnorderedMap<OrderId, CurrencyId> m_currencies;
 
         BuyingPowerEntry();

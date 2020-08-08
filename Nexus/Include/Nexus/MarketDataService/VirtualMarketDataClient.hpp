@@ -166,7 +166,7 @@ namespace Nexus::MarketDataService {
       Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
     return Beam::Routines::Spawn(
       [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] {
+          interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
           snapshot = marketDataClient.LoadSecuritySnapshot(security);
@@ -221,7 +221,7 @@ namespace Nexus::MarketDataService {
       Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE) {
     return Beam::Routines::Spawn(
       [&marketDataClient, security, queue = std::move(queue),
-          interruptionPolicy] {
+          interruptionPolicy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
           snapshot = marketDataClient.LoadSecuritySnapshot(security);
