@@ -1,4 +1,3 @@
-#include <Beam/Queues/SequencePublisher.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/PortfolioMonitor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -45,10 +44,10 @@ TEST_SUITE("PortfolioMonitor") {
       DefaultCountries::US());
     m_environment.Publish(security, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), not_a_date_time));
-    auto orderPublisher = SequencePublisher<const Order*>();
+    auto orders = std::make_shared<Queue<const Order*>>();
     auto portfolioMonitor = TestPortfolioMonitor(
       Initialize(GetDefaultMarketDatabase()),
-      &m_serviceClients.GetMarketDataClient(), orderPublisher);
+      &m_serviceClients.GetMarketDataClient(), orders);
     auto queue = std::make_shared<Queue<TestPortfolioMonitor::UpdateEntry>>();
     portfolioMonitor.GetPublisher().Monitor(queue);
     auto fieldsA = OrderFields::BuildLimitOrder(
@@ -68,9 +67,9 @@ TEST_SUITE("PortfolioMonitor") {
     m_environment.AdvanceTime(seconds(1));
     auto orderC = PrimitiveOrder({fieldsC, 3,
       m_serviceClients.GetTimeClient().GetTime()});
-    orderPublisher.Push(&orderA);
-    orderPublisher.Push(&orderB);
-    orderPublisher.Push(&orderC);
+    orders->Push(&orderA);
+    orders->Push(&orderB);
+    orders->Push(&orderC);
     auto date = m_serviceClients.GetTimeClient().GetTime().date();
     FillOrder(orderA, 100, ptime{date, seconds(1)});
     {

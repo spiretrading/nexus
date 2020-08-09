@@ -2,9 +2,10 @@
 #define NEXUS_EXECUTION_REPORT_PUBLISHER_HPP
 #include <vector>
 #include <Beam/Queues/CallbackQueueWriter.hpp>
-#include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Queues/Publisher.hpp>
+#include <Beam/Queues/QueuePipe.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
+#include <boost/optional.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -42,11 +43,9 @@ namespace Nexus::OrderExecutionService {
 
       /**
        * Constructs an ExecutionReportPublisher.
-       * @param orderExecutionPublisher The OrderExecutionPublisher to monitor
-       *        for Orders.
+       * @param orders The Orders whose ExecutionReports are to be published.
        */
-      ExecutionReportPublisher(
-        const OrderExecutionPublisher& orderExecutionPublisher);
+      ExecutionReportPublisher(Beam::ScopedQueueReader<const Order*> orders);
 
       void With(const std::function<void ()>& f) const override;
 
@@ -54,11 +53,8 @@ namespace Nexus::OrderExecutionService {
         const override;
 
     private:
-      std::shared_ptr<Beam::SequencePublisher<ExecutionReportEntry>>
-        m_publisher;
-      std::shared_ptr<Beam::QueueWriter<const Order*>> m_callbackQueue;
-      std::vector<std::shared_ptr<Beam::QueueWriter<ExecutionReport>>>
-        m_converters;
+      Beam::SequencePublisher<ExecutionReportEntry> m_publisher;
+      boost::optional<Beam::QueuePipe<const Order*>> m_pipe;
   };
 
   inline ExecutionReportEntry::ExecutionReportEntry()
@@ -70,77 +66,58 @@ namespace Nexus::OrderExecutionService {
       m_executionReport(std::move(executionReport)) {}
 
   inline ExecutionReportPublisher::ExecutionReportPublisher(
-      const OrderExecutionPublisher& orderExecutionPublisher)
-      BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_publisher(std::make_shared<
-          Beam::SequencePublisher<ExecutionReportEntry>>()),
-        m_callbackQueue(Beam::MakeCallbackQueueWriter<const Order*>(
-          [=] (auto order) {
-            auto converter = Beam::MakeCallbackQueueWriter<ExecutionReport>(
-              [=] (auto& executionReport) {
-                m_publisher->Push(ExecutionReportEntry(order, executionReport));
-              });
-            m_converters.push_back(converter);
-            order->GetPublisher().Monitor(converter);
-          })) {
-      BEAM_UNSUPPRESS_THIS_INITIALIZER()
-    orderExecutionPublisher.With(
-      [&] {
-        auto orderSnapshot = boost::optional<std::vector<const Order*>>();
-        orderExecutionPublisher.Monitor(m_callbackQueue,
-          Beam::Store(orderSnapshot));
-        if(!orderSnapshot) {
-          return;
-        }
-        try {
-          auto executionReportEntrySnapshot =
-            std::vector<ExecutionReportEntry>();
-          for(auto order : *orderSnapshot) {
-            order->GetPublisher().With(
-              [&] {
-                auto converter = Beam::MakeCallbackQueueWriter<ExecutionReport>(
-                  [=] (auto& executionReport) {
-                    m_publisher->Push(ExecutionReportEntry(order,
-                      executionReport));
-                  });
-                auto executionReportSnapshot =
-                  boost::optional<std::vector<ExecutionReport>>();
-                order->GetPublisher().Monitor(converter,
-                  Beam::Store(executionReportSnapshot));
-                if(!executionReportSnapshot) {
-                  return;
-                }
-                std::transform(executionReportSnapshot->begin(),
-                  executionReportSnapshot->end(),
-                  std::back_inserter(executionReportEntrySnapshot),
-                  [&] (auto& executionReport) {
-                    return ExecutionReportEntry(order, executionReport);
-                  });
-              });
-          }
-          std::sort(executionReportEntrySnapshot.begin(),
-            executionReportEntrySnapshot.end(),
-            [] (auto& lhs, auto& rhs) {
-              return std::tie(lhs.m_executionReport.m_timestamp,
-                lhs.m_executionReport.m_id, lhs.m_executionReport.m_status) <
-                std::tie(rhs.m_executionReport.m_timestamp,
-                rhs.m_executionReport.m_id, rhs.m_executionReport.m_status);
+      Beam::ScopedQueueReader<const Order*> orders) {
+    m_publisher.With([&] {
+      auto executionReportEntrySnapshot = std::vector<ExecutionReportEntry>();
+      while(auto topOrder = orders.TryPop()) {
+        auto order = *topOrder;
+        auto executionReportSnapshot =
+          boost::optional<std::vector<ExecutionReport>>();
+        order->GetPublisher().Monitor(
+          Beam::MakeCallbackQueueWriter<ExecutionReport>(
+            [=] (auto& executionReport) {
+              m_publisher.Push(ExecutionReportEntry(order,
+                std::move(executionReport)));
+            }), Beam::Store(executionReportSnapshot));
+        if(executionReportSnapshot) {
+          std::transform(executionReportSnapshot->begin(),
+            executionReportSnapshot->end(),
+            std::back_inserter(executionReportEntrySnapshot),
+            [&] (auto& executionReport) {
+              return ExecutionReportEntry(order, executionReport);
             });
-          for(auto& executionReportEntry : executionReportEntrySnapshot) {
-            m_publisher->Push(executionReportEntry);
-          }
-        } catch(const std::exception&) {}
-      });
+        }
+      }
+      std::sort(executionReportEntrySnapshot.begin(),
+        executionReportEntrySnapshot.end(),
+        [] (auto& lhs, auto& rhs) {
+          return std::tie(lhs.m_executionReport.m_timestamp,
+            lhs.m_executionReport.m_id, lhs.m_executionReport.m_status) <
+            std::tie(rhs.m_executionReport.m_timestamp,
+            rhs.m_executionReport.m_id, rhs.m_executionReport.m_status);
+        });
+      for(auto& executionReportEntry : executionReportEntrySnapshot) {
+        m_publisher.Push(std::move(executionReportEntry));
+      }
+    });
+    m_pipe.emplace(std::move(orders),
+      Beam::MakeCallbackQueueWriter<const Order*>([=] (auto order) {
+        order->GetPublisher().Monitor(
+          Beam::MakeCallbackQueueWriter<ExecutionReport>(
+          [=] (auto& executionReport) {
+            m_publisher.Push(ExecutionReportEntry(order, executionReport));
+          }));
+      }));
   }
 
   inline void ExecutionReportPublisher::With(
       const std::function<void ()>& f) const {
-    m_publisher->With(f);
+    m_publisher.With(f);
   }
 
   inline void ExecutionReportPublisher::Monitor(
       Beam::ScopedQueueWriter<ExecutionReportEntry> monitor) const {
-    m_publisher->Monitor(std::move(monitor));
+    m_publisher.Monitor(std::move(monitor));
   }
 }
 
