@@ -153,9 +153,11 @@ void BlotterModel::Unlink(BlotterModel& blotter) {
 
 void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
+  auto orders = std::make_shared<Queue<const Order*>>();
+  orderExecutionPublisher.Monitor(orders);
   m_portfolioMonitor.emplace(Initialize(m_userProfile->GetMarketDatabase()),
     &m_userProfile->GetServiceClients().GetMarketDataClient(),
-    orderExecutionPublisher);
+    std::move(orders));
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
   m_openPositionsModel.SetPortfolioMonitor(Ref(*m_portfolioMonitor));
   m_profitAndLossModel.SetPortfolioMonitor(Ref(*m_portfolioMonitor));
