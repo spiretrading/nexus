@@ -21,14 +21,12 @@ using namespace Spire::UI;
 using namespace std;
 
 AccountActivityReportWidget::ReportModel::ReportModel(
-    Ref<UserProfile> userProfile,
-    const std::shared_ptr<OrderExecutionPublisher>& orderPublisher)
-    : m_orderPublisher(orderPublisher),
-      m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
+    Ref<UserProfile> userProfile, ScopedQueueReader<const Order*> orders)
+    : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), false),
       m_portfolioMonitor(Beam::Initialize(userProfile->GetMarketDatabase()),
         &userProfile->GetServiceClients().GetMarketDataClient(),
-        *m_orderPublisher) {
+        std::move(orders)) {
   m_profitAndLossModel.SetPortfolioMonitor(Ref(m_portfolioMonitor));
 }
 
@@ -58,13 +56,11 @@ void AccountActivityReportWidget::OnUpdate(bool checked) {
   auto startTime = ToUtcTime(
     ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
   auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
-  auto orderQueue = std::make_shared<Queue<const Order*>>();
+  auto orders = std::make_shared<Queue<const Order*>>();
   QueryDailyOrderSubmissions(m_account, startTime, endTime,
     m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
-    m_userProfile->GetServiceClients().GetOrderExecutionClient(), orderQueue);
-  auto orderPublisher = MakeSequencePublisherAdaptor(
-    std::make_unique<QueueReaderPublisher<const Order*>>(orderQueue));
-  m_model.emplace(Ref(*m_userProfile), orderPublisher);
+    m_userProfile->GetServiceClients().GetOrderExecutionClient(), orders);
+  m_model.emplace(Ref(*m_userProfile), orders);
   m_ui->m_profitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_model->m_profitAndLossModel));
 }
