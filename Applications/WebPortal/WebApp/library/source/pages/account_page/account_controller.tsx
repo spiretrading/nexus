@@ -110,18 +110,11 @@ export class AccountController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      const readonly = (() => {
-        if(this.props.roles.test(
-            Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-          if(this.props.authenticatedAccount.
-              equals(this.props.model.account) ||
-              this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
-              this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)) {
-            return false;
-          }
-        }
-        return true;
-      })();
+      const readonly = 
+        !(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) && (
+          this.props.authenticatedAccount.equals(this.props.model.account) ||
+          this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
+          this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)));
       const isPasswordReadOnly =
         !(this.props.authenticatedAccount.equals(this.props.model.account) ||
         !readonly);
