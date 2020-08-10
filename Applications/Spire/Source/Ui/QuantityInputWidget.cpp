@@ -18,6 +18,14 @@ QuantityInputWidget::QuantityInputWidget(Nexus::Quantity value,
   });
 }
 
+void QuantityInputWidget::set_minimum(Nexus::Quantity minimum) {
+  setMinimum(static_cast<double>(minimum));
+}
+
+void QuantityInputWidget::set_maximum(Nexus::Quantity maximum) {
+  setMaximum(static_cast<double>(maximum));
+}
+
 void QuantityInputWidget::set_value(Quantity value) {
   setValue(static_cast<double>(value));
 }

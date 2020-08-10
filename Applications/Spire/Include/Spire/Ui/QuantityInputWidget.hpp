@@ -20,6 +20,18 @@ namespace Spire {
       explicit QuantityInputWidget(Nexus::Quantity value,
         QWidget* parent = nullptr);
 
+      //! Sets the minimum accepted value.
+      /*!
+        \param minimum The minimum value.
+      */
+      void set_minimum(Nexus::Quantity minimum);
+
+      //! Sets the maximum accepted value.
+      /*!
+        \param maximum The maximum value.
+      */
+      void set_maximum(Nexus::Quantity maximum);
+
       //! Sets the current value of the input.
       /*
         \param value The value to display.
