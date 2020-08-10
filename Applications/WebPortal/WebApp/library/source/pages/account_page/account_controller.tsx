@@ -106,6 +106,7 @@ export class AccountController extends React.Component<Properties, State> {
   public componentDidMount(): void {
     this.props.model.load().then(
       () => {
+        this.setAccountReadonlyProperties();
         this.setState({isLoaded: true});
       }).catch(() => this.setState({cannotLoad: true}));
   }
@@ -123,6 +124,23 @@ export class AccountController extends React.Component<Properties, State> {
       return url;
     }
     return prefix;
+  }
+
+  private setAccountReadonlyProperties = () => {
+    this.props.model.profileModel.isReadonly = (() => {
+      if(this.props.authUserRoles.test(
+          Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+        if(this.props.authUserAccount.equals(this.props.model.account) ||
+            this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
+            this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)) {
+          return false;
+        }
+      }
+      return true;
+    })();
+    this.props.model.profileModel.isPasswordReadOnly =
+      !(this.props.authUserAccount.equals(this.props.model.account) ||
+        !this.props.model.profileModel.isReadonly);
   }
 
   private renderProfilePage() {

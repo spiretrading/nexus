@@ -16,8 +16,14 @@ export abstract class ProfileModel {
   /** Returns the account's readonly condition. */
   public abstract get isReadonly(): boolean;
 
+  /** Sets the account's readonly condition. */
+  public abstract set isReadonly(bool: boolean);
+
   /** Returns the account's isPasswordReadOnly condition. */
   public abstract get isPasswordReadOnly(): boolean;
+
+  /** Sets the account's isPasswordReadOnly condition. */
+  public abstract set isPasswordReadOnly(bool: boolean);
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;

@@ -73,19 +73,6 @@ export class HttpAccountModel extends AccountModel {
       this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
-    this._profileModel.isReadonly = (() => {
-      if(this.authUserRoles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        if(this.authUserAccount.equals(account) ||
-            roles.test(Nexus.AccountRoles.Role.TRADER) ||
-            roles.test(Nexus.AccountRoles.Role.MANAGER)) {
-          return false;
-        }
-      }
-      return true;
-    })();
-    this._profileModel.isPasswordReadOnly =
-      !(this.authUserAccount.equals(account) ||
-        !this._profileModel.isReadonly);
     return this.model.load();
   }
 
