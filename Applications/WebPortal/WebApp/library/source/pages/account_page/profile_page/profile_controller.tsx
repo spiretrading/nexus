@@ -55,7 +55,7 @@ export class ProfileController extends React.Component<Properties, State> {
       account={this.props.model.account}
       roles={this.props.model.roles}
       identity={this.props.model.identity}
-      groups={this.props.groups}
+      groups={this.props.model.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
       readonly={this.props.readonly}
@@ -73,6 +73,15 @@ export class ProfileController extends React.Component<Properties, State> {
     this.setState({
       isLoaded: true
     });
+  }
+
+  public componentDidUpdate(prevProps: Properties): void {
+    if(prevProps.model.account &&
+        !prevProps.model.account.equals(this.props.model.account)) {
+      this.setState({isLoaded: false}, () => {
+        this.setState({isLoaded: true});
+      });
+    }
   }
 
   private onSubmitPassword = async (password: string) => {
