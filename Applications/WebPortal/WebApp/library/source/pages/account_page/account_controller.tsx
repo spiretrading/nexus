@@ -41,6 +41,8 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
+  isReadonly: boolean;
+  isPasswordReadOnly: boolean;
 }
 
 /** Implements a controller for the AccountPage. */
@@ -50,7 +52,9 @@ export class AccountController extends React.Component<Properties, State> {
     this.state = {
       isLoaded: false,
       cannotLoad: false,
-      redirect: null
+      redirect: null,
+      isReadonly: true,
+      isPasswordReadOnly: true
     };
     this.renderProfilePage = this.renderProfilePage.bind(this);
     this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
@@ -106,8 +110,26 @@ export class AccountController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      this.setAccountReadonlyProperties();
-      this.setState({isLoaded: true});
+      const isReadonly = (() => {
+        if(this.props.roles.test(
+            Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+          if(this.props.authenticatedAccount.
+              equals(this.props.model.account) ||
+              this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
+              this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)) {
+            return false;
+          }
+        }
+        return true;
+      })();
+      const isPasswordReadOnly =
+        !(this.props.authenticatedAccount.equals(this.props.model.account) ||
+        !isReadonly);
+      this.setState({
+        isLoaded: true,
+        isReadonly: isReadonly,
+        isPasswordReadOnly: isPasswordReadOnly
+      });
     } catch {
       this.setState({cannotLoad: true});
     }
@@ -128,28 +150,13 @@ export class AccountController extends React.Component<Properties, State> {
     return prefix;
   }
 
-  private setAccountReadonlyProperties = () => {
-    this.props.model.profileModel.isReadonly = (() => {
-      if(this.props.roles.test(
-          Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        if(this.props.authenticatedAccount.equals(this.props.model.account) ||
-            this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
-            this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)) {
-          return false;
-        }
-      }
-      return true;
-    })();
-    this.props.model.profileModel.isPasswordReadOnly =
-      !(this.props.authenticatedAccount.equals(this.props.model.account) ||
-        !this.props.model.profileModel.isReadonly);
-  }
-
   private renderProfilePage() {
     return <ProfileController
       displaySize={this.props.displaySize}
       countryDatabase={this.props.countryDatabase}
       groups={this.props.model.groups}
+      isReadonly={this.state.isReadonly}
+      isPasswordReadOnly={this.state.isPasswordReadOnly}
       model={this.props.model.profileModel}/>;
   }
 

@@ -16,6 +16,12 @@ interface Properties {
   /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
+  /** Indicates the profile's readonly condition. */
+  isReadonly: boolean;
+
+  /** Indicates the profile's PasswordReadonly condition. */
+  isPasswordReadOnly: boolean;
+
   /** The model representing the account's profile. */
   model: ProfileModel;
 }
@@ -52,8 +58,8 @@ export class ProfileController extends React.Component<Properties, State> {
       groups={this.props.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
-      readonly={this.props.model.isReadonly}
-      isPasswordReadOnly={this.props.model.isPasswordReadOnly}
+      readonly={this.props.isReadonly}
+      isPasswordReadOnly={this.props.isPasswordReadOnly}
       submitStatus={this.state.identityStatus}
       hasError={this.state.hasIdentityError}
       onSubmit={this.onSubmitIdentity}
