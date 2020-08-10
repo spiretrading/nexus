@@ -131,6 +131,10 @@ void DropDownList::remove_item(int index) {
   if(index > m_layout->count() - 1) {
     return;
   }
+  if(index == m_highlight_index) {
+    get_item(*m_highlight_index)->reset_highlight();
+    m_highlight_index = boost::none;
+  }
   auto layout_item = m_layout->takeAt(index);
   m_item_selected_connections.Disconnect(layout_item->widget());
   delete layout_item->widget();
