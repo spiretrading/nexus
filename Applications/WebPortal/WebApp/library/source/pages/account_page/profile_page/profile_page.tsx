@@ -36,7 +36,7 @@ interface Properties {
   readonly?: boolean;
 
   /** Whether the password can be edited. */
-  isPasswordFixed: boolean;
+  isPasswordReadOnly: boolean;
 
   /** The status of the submission. */
   submitStatus?: string;
@@ -249,7 +249,7 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
-      if(this.props.isPasswordFixed) {
+      if(this.props.isPasswordReadOnly) {
         return '';
       }
       const passwordButtonEnabled = this.state.password1 !== '' &&

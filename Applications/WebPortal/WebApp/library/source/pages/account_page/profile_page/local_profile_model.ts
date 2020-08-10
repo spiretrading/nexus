@@ -18,7 +18,7 @@ export class LocalProfileModel extends ProfileModel {
     this._roles = roles;
     this._identity = identity.clone();
     this._isReadonly = true;
-    this._isPasswordFixed = true;
+    this._isPasswordReadOnly = true;
   }
 
   /** Returns true if this model has been loaded. */
@@ -55,12 +55,12 @@ export class LocalProfileModel extends ProfileModel {
     this._isReadonly = bool;
   }
 
-  public get isPasswordFixed(): boolean {
-    return this._isPasswordFixed;
+  public get isPasswordReadOnly(): boolean {
+    return this._isPasswordReadOnly;
   }
 
-  public set isPasswordFixed(bool: boolean) {
-    this._isPasswordFixed = bool;
+  public set isPasswordReadOnly(bool: boolean) {
+    this._isPasswordReadOnly = bool;
   }
 
   public async load(): Promise<void> {
@@ -80,5 +80,5 @@ export class LocalProfileModel extends ProfileModel {
   private _roles: Nexus.AccountRoles;
   private _identity: Nexus.AccountIdentity;
   private _isReadonly: boolean;
-  private _isPasswordFixed: boolean;
+  private _isPasswordReadOnly: boolean;
 }

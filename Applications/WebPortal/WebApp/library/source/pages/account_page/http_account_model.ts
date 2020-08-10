@@ -83,7 +83,7 @@ export class HttpAccountModel extends AccountModel {
       }
       return true;
     })();
-    this._profileModel.isPasswordFixed =
+    this._profileModel.isPasswordReadOnly =
       !(this.authUserAccount.equals(account) ||
         !this._profileModel.isReadonly);
     return this.model.load();

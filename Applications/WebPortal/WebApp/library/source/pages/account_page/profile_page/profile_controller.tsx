@@ -53,7 +53,7 @@ export class ProfileController extends React.Component<Properties, State> {
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
       readonly={this.props.model.isReadonly}
-      isPasswordFixed={this.props.model.isPasswordFixed}
+      isPasswordReadOnly={this.props.model.isPasswordReadOnly}
       submitStatus={this.state.identityStatus}
       hasError={this.state.hasIdentityError}
       onSubmit={this.onSubmitIdentity}
