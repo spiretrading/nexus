@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
@@ -25,6 +26,12 @@ interface Properties {
 
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
+
+  /** The authenticated user's account. */
+  authUserAccount: Beam.DirectoryEntry;
+  
+  /** The authenticated user's roles. */
+  authUserRoles: Nexus.AccountRoles;
 
   /** The model representing the account to display. */
   model: AccountModel;
