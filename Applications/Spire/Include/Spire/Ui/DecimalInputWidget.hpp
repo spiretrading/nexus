@@ -45,6 +45,7 @@ namespace Spire {
 
       void add_step(int step, Qt::KeyboardModifiers modifiers);
       void revert_cursor();
+      void set_stylesheet(bool is_up_disabled, bool is_down_disabled);
       void on_text_edited(const QString& text);
       void on_value_changed(double value);
   };

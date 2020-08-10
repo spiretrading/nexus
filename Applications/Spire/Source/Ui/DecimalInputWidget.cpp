@@ -11,6 +11,12 @@ using namespace Spire;
 namespace {
   const auto DEFAULT_DECIMAL_PLACES = 6;
   const auto SHIFT_STEPS = 10;
+  const auto DOWN_ARROW_ICON = ":/Icons/arrow-down.svg";
+  const auto DOWN_ARROW_HOVER_ICON = ":/Icons/arrow-down-hover.svg";
+  const auto DOWN_ARROW_DISABLED_ICON = ":/Icons/arrow-down-disabled.svg";
+  const auto UP_ARROW_ICON = ":/Icons/arrow-up.svg";
+  const auto UP_ARROW_HOVER_ICON = ":/Icons/arrow-up-hover.svg";
+  const auto UP_ARROW_DISABLED_ICON = ":/Icons/arrow-up-disabled.svg";
 
   auto ARROW_WIDTH() {
     static auto width = scale_width(8);
@@ -30,71 +36,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       m_has_first_click(false) {
   setValue(m_last_valid_value);
   setDecimals(DEFAULT_DECIMAL_PLACES);
-  setStyleSheet(QString(R"(
-    QDoubleSpinBox {
-      background-color: #FFFFFF;
-      border: %1px solid #C8C8C8;
-      color: #000000;
-      font-family: Roboto;
-      font-size: %5px;
-      padding-left: %4px;
-    }
-
-    QDoubleSpinBox:disabled {
-      color: #C8C8C8;
-    }
-
-    QDoubleSpinBox:focus {
-      border: %1px solid #4B23A0;
-    }
-
-    QDoubleSpinBox::up-button {
-      border: none;
-    }
-
-    QDoubleSpinBox::down-button {
-      border: none;
-    }
-
-    QDoubleSpinBox::up-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-up.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QDoubleSpinBox::up-arrow:disabled {
-      height: %2px;
-      image: url(:/Icons/arrow-up-disabled.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QDoubleSpinBox::up-arrow:hover {
-      height: %2px;
-      image: url(:/Icons/arrow-up-hover.svg);
-      padding-top: %6px;
-      width: %3px;
-    }
-
-    QDoubleSpinBox::down-arrow {
-      height: %2px;
-      image: url(:/Icons/arrow-down.svg);
-      width: %3px;
-    }
-
-    QDoubleSpinBox::down-arrow:disabled {
-      height: %2px;
-      image: url(:/Icons/arrow-down-disabled.svg);
-      width: %3px;
-    }
-
-    QDoubleSpinBox::down-arrow:hover {
-      height: %2px;
-      image: url(:/Icons/arrow-down-hover.svg);
-      width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(8)).arg(ARROW_WIDTH())
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
+  set_stylesheet(false, false);
   setContextMenuPolicy(Qt::NoContextMenu);
   connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
     &DecimalInputWidget::on_value_changed);
@@ -228,6 +170,85 @@ void DecimalInputWidget::revert_cursor() {
   lineEdit()->blockSignals(false);
 }
 
+void DecimalInputWidget::set_stylesheet(bool is_up_disabled,
+    bool is_down_disabled) {
+  auto [up_icon, up_icon_hover] = [&] () -> std::pair<QString, QString> {
+    if(is_up_disabled) {
+      return {UP_ARROW_DISABLED_ICON, UP_ARROW_DISABLED_ICON};
+    }
+    return {UP_ARROW_ICON, UP_ARROW_HOVER_ICON};
+  }();
+  auto [down_icon, down_icon_hover] = [&] () -> std::pair<QString, QString> {
+    if(is_down_disabled) {
+      return {DOWN_ARROW_DISABLED_ICON, DOWN_ARROW_DISABLED_ICON};
+    }
+    return {DOWN_ARROW_ICON, DOWN_ARROW_HOVER_ICON};
+  }();
+  setStyleSheet(QString(R"(
+    QDoubleSpinBox {
+      background-color: #FFFFFF;
+      border: %1px solid #C8C8C8;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %5px;
+      padding-left: %4px;
+    }
+
+    QDoubleSpinBox:focus {
+      border: %1px solid #4B23A0;
+    }
+
+    QDoubleSpinBox::up-button {
+      border: none;
+    }
+
+    QDoubleSpinBox::down-button {
+      border: none;
+    }
+
+    QDoubleSpinBox::up-arrow {
+      height: %2px;
+      image: url(%7);
+      padding-top: %6px;
+      width: %3px;
+    }
+
+    QDoubleSpinBox::up-arrow:disabled {
+      height: %2px;
+      image: url(%11);
+      padding-top: %6px;
+      width: %3px;
+    }
+
+    QDoubleSpinBox::up-arrow:hover {
+      height: %2px;
+      image: url(%8);
+      padding-top: %6px;
+      width: %3px;
+    }
+
+    QDoubleSpinBox::down-arrow {
+      height: %2px;
+      image: url(%9);
+      width: %3px;
+    }
+
+    QDoubleSpinBox::down-arrow:disabled {
+      height: %2px;
+      image: url(%12);
+      width: %3px;
+    }
+
+    QDoubleSpinBox::down-arrow:hover {
+      height: %2px;
+      image: url(%10);
+      width: %3px;
+    })").arg(scale_width(1)).arg(scale_height(8)).arg(ARROW_WIDTH())
+        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4))
+        .arg(up_icon).arg(up_icon_hover).arg(down_icon).arg(down_icon_hover)
+        .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
+}
+
 void DecimalInputWidget::on_text_edited(const QString& text) {
   if(minimum() >= 0.0 && text.contains("-")) {
     lineEdit()->blockSignals(true);
@@ -237,5 +258,12 @@ void DecimalInputWidget::on_text_edited(const QString& text) {
 }
 
 void DecimalInputWidget::on_value_changed(double value) {
+  if(value == minimum()) {
+    set_stylesheet(false, true);
+  } else if(value == maximum()) {
+    set_stylesheet(true, false);
+  } else {
+    set_stylesheet(false, false);
+  }
   m_change_signal(value);
 }
