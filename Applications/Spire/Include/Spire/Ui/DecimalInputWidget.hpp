@@ -39,6 +39,7 @@ namespace Spire {
     private:
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_submit_signal;
+      double m_last_valid_value;
       int m_last_cursor_pos;
       bool m_has_first_click;
 

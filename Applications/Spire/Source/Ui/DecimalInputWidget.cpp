@@ -25,9 +25,10 @@ namespace {
 
 DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
+      m_last_valid_value(value),
       m_last_cursor_pos(0),
       m_has_first_click(false) {
-  setValue(value);
+  setValue(m_last_valid_value);
   setDecimals(DEFAULT_DECIMAL_PLACES);
   setStyleSheet(QString(R"(
     QDoubleSpinBox {
@@ -115,26 +116,30 @@ void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
 void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
   m_has_first_click = false;
   if(text().isEmpty()) {
-    setValue(0);
+    blockSignals(true);
+    setValue(m_last_valid_value);
+    blockSignals(false);
   }
   QDoubleSpinBox::focusOutEvent(event);
-  m_submit_signal(value());
+  m_last_valid_value = value();
+  m_submit_signal(m_last_valid_value);
 }
 
 void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Delete:
-      setValue(std::max(0.0, minimum()));
+      setValue(m_last_valid_value);
       return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
       if(text().isEmpty()) {
         blockSignals(true);
-        setValue(0);
+        setValue(m_last_valid_value);
         blockSignals(false);
       }
       lineEdit()->setText(textFromValue(value()));
-      m_submit_signal(value());
+      m_last_valid_value = value();
+      m_submit_signal(m_last_valid_value);
       return;
     case Qt::Key_Up:
       add_step(1, event->modifiers());
