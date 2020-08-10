@@ -128,7 +128,9 @@ void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
 void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Delete:
+      blockSignals(true);
       setValue(m_last_valid_value);
+      blockSignals(false);
       return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
