@@ -41,7 +41,7 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
-  isReadonly: boolean;
+  readonly: boolean;
   isPasswordReadOnly: boolean;
 }
 
@@ -53,7 +53,7 @@ export class AccountController extends React.Component<Properties, State> {
       isLoaded: false,
       cannotLoad: false,
       redirect: null,
-      isReadonly: true,
+      readonly: true,
       isPasswordReadOnly: true
     };
     this.renderProfilePage = this.renderProfilePage.bind(this);
@@ -110,7 +110,7 @@ export class AccountController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      const isReadonly = (() => {
+      const readonly = (() => {
         if(this.props.roles.test(
             Nexus.AccountRoles.Role.ADMINISTRATOR)) {
           if(this.props.authenticatedAccount.
@@ -124,10 +124,10 @@ export class AccountController extends React.Component<Properties, State> {
       })();
       const isPasswordReadOnly =
         !(this.props.authenticatedAccount.equals(this.props.model.account) ||
-        !isReadonly);
+        !readonly);
       this.setState({
         isLoaded: true,
-        isReadonly: isReadonly,
+        readonly: readonly,
         isPasswordReadOnly: isPasswordReadOnly
       });
     } catch {
@@ -155,7 +155,7 @@ export class AccountController extends React.Component<Properties, State> {
       displaySize={this.props.displaySize}
       countryDatabase={this.props.countryDatabase}
       groups={this.props.model.groups}
-      isReadonly={this.state.isReadonly}
+      readonly={this.state.readonly}
       isPasswordReadOnly={this.state.isPasswordReadOnly}
       model={this.props.model.profileModel}/>;
   }
