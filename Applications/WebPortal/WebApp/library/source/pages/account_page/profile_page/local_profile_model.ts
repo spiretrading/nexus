@@ -47,22 +47,6 @@ export class LocalProfileModel extends ProfileModel {
     return this._identity.clone();
   }
 
-  public get isReadonly(): boolean {
-    return this._isReadonly;
-  }
-
-  public set isReadonly(bool: boolean) {
-    this._isReadonly = bool;
-  }
-
-  public get isPasswordReadOnly(): boolean {
-    return this._isPasswordReadOnly;
-  }
-
-  public set isPasswordReadOnly(bool: boolean) {
-    this._isPasswordReadOnly = bool;
-  }
-
   public async load(): Promise<void> {
     this._isLoaded = true;
   }

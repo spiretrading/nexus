@@ -30,22 +30,6 @@ export class HttpProfileModel extends ProfileModel {
     return this.model.identity;
   }
 
-  public get isReadonly(): boolean {
-    return this.model.isReadonly;
-  }
-
-  public set isReadonly(bool: boolean) {
-    this.model.isReadonly = bool;
-  }
-
-  public get isPasswordReadOnly(): boolean {
-    return this.model.isPasswordReadOnly;
-  }
-
-  public set isPasswordReadOnly(bool: boolean) {
-    this.model.isPasswordReadOnly = bool;
-  }
-
   public async load(): Promise<void> {
     this.model.load();
     const roles =
