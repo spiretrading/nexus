@@ -25,7 +25,8 @@ namespace {
 
 DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_last_cursor_pos(0) {
+      m_last_cursor_pos(0),
+      m_has_first_click(false) {
   setValue(value);
   setDecimals(DEFAULT_DECIMAL_PLACES);
   setStyleSheet(QString(R"(
@@ -68,6 +69,7 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     &DecimalInputWidget::on_value_changed);
   connect(lineEdit(), &QLineEdit::textEdited, this,
     &DecimalInputWidget::on_text_edited);
+  lineEdit()->installEventFilter(this);
 }
 
 QString DecimalInputWidget::textFromValue(double value) const {
@@ -90,17 +92,28 @@ connection DecimalInputWidget::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
-  QDoubleSpinBox::focusInEvent(event);
-  switch(event->reason()) {
-    case Qt::MouseFocusReason:
-    case Qt::TabFocusReason:
-    case Qt::BacktabFocusReason:
-      lineEdit()->selectAll();
+bool DecimalInputWidget::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == lineEdit() && event->type() == QEvent::MouseButtonPress &&
+      !m_has_first_click) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton) {
+      m_has_first_click = true;
+      selectAll();
+      return true;
+    }
   }
+  return QDoubleSpinBox::eventFilter(watched, event);
+}
+
+void DecimalInputWidget::focusInEvent(QFocusEvent* event) {
+  if(event->reason() != Qt::MouseFocusReason) {
+    m_has_first_click = true;
+  }
+  QDoubleSpinBox::focusInEvent(event);
 }
 
 void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
+  m_has_first_click = false;
   if(text().isEmpty()) {
     setValue(0);
   }
@@ -134,13 +147,18 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
 }
 
 void DecimalInputWidget::mousePressEvent(QMouseEvent* event) {
-  if(event->x() > width() - BUTTON_PADDING()) {
-    if(event->y() < height() / 2) {
-      add_step(1, event->modifiers());
-    } else {
-      add_step(-1, event->modifiers());
+  if(event->button() == Qt::LeftButton) {
+    if(event->x() > width() - BUTTON_PADDING()) {
+      if(event->y() < height() / 2) {
+        add_step(1, event->modifiers());
+      } else {
+        add_step(-1, event->modifiers());
+      }
+      return;
+    } else if(!m_has_first_click) {
+      selectAll();
+      m_has_first_click = true;
     }
-    return;
   }
   QDoubleSpinBox::mousePressEvent(event);
 }

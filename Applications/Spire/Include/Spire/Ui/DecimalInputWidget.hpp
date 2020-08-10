@@ -30,6 +30,7 @@ namespace Spire {
         const ValueSignal::slot_type& slot) const;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -39,6 +40,7 @@ namespace Spire {
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_submit_signal;
       int m_last_cursor_pos;
+      bool m_has_first_click;
 
       void add_step(int step, Qt::KeyboardModifiers modifiers);
       void revert_cursor();
