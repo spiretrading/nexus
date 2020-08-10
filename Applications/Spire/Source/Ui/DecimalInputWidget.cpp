@@ -13,12 +13,12 @@ namespace {
   const auto SHIFT_STEPS = 10;
 
   auto ARROW_WIDTH() {
-    static auto width = scale_width(6);
+    static auto width = scale_width(8);
     return width;
   }
 
   auto BUTTON_PADDING() {
-    static auto padding = scale_width(17);
+    static auto padding = scale_width(15);
     return padding;
   }
 }
@@ -59,11 +59,24 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       width: %3px;
     }
 
+    QDoubleSpinBox::up-arrow:hover {
+      height: %2px;
+      image: url(:/Icons/arrow-up-hover.svg);
+      padding-top: %6px;
+      width: %3px;
+    }
+
     QDoubleSpinBox::down-arrow {
       height: %2px;
       image: url(:/Icons/arrow-down.svg);
       width: %3px;
-    })").arg(scale_width(1)).arg(scale_height(6)).arg(ARROW_WIDTH())
+    }
+
+    QDoubleSpinBox::down-arrow:hover {
+      height: %2px;
+      image: url(:/Icons/arrow-down-hover.svg);
+      width: %3px;
+    })").arg(scale_width(1)).arg(scale_height(8)).arg(ARROW_WIDTH())
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4)));
   setContextMenuPolicy(Qt::NoContextMenu);
   connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
