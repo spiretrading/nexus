@@ -15,13 +15,10 @@ export class HttpAccountModel extends AccountModel {
    * @param account - The account this model represents.
    * @param serviceClients - The clients used to access the HTTP services.
    */
-  constructor(authUserAccount: Beam.DirectoryEntry,
-      authUserRoles:Nexus.AccountRoles, account: Beam.DirectoryEntry,
+  constructor(account: Beam.DirectoryEntry,
       serviceClients: Nexus.ServiceClients) {
     super();
     this.model = new LocalAccountModel(account, new Nexus.AccountRoles(0));
-    this.authUserAccount = authUserAccount;
-    this.authUserRoles = authUserRoles;
     this.serviceClients = serviceClients;
     this._entitlementsModel = new HttpEntitlementsModel(account,
       this.serviceClients);
@@ -77,8 +74,6 @@ export class HttpAccountModel extends AccountModel {
   }
 
   private model: LocalAccountModel;
-  private authUserAccount: Beam.DirectoryEntry;
-  private authUserRoles: Nexus.AccountRoles;
   private serviceClients: Nexus.ServiceClients;
   private _entitlementsModel: HttpEntitlementsModel;
   private _profileModel: HttpProfileModel;
