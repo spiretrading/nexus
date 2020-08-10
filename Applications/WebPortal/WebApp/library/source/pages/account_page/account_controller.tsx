@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
@@ -26,6 +27,12 @@ interface Properties {
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
 
+  /** The authenticated user's account. */
+  authenticatedAccount: Beam.DirectoryEntry;
+  
+  /** The authenticated user's roles. */
+  roles: Nexus.AccountRoles;
+
   /** The model representing the account to display. */
   model: AccountModel;
 }
@@ -34,6 +41,8 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
+  readonly: boolean;
+  isPasswordReadOnly: boolean;
 }
 
 /** Implements a controller for the AccountPage. */
@@ -43,7 +52,9 @@ export class AccountController extends React.Component<Properties, State> {
     this.state = {
       isLoaded: false,
       cannotLoad: false,
-      redirect: null
+      redirect: null,
+      readonly: true,
+      isPasswordReadOnly: true
     };
     this.renderProfilePage = this.renderProfilePage.bind(this);
     this.renderEntitlementsPage = this.renderEntitlementsPage.bind(this);
@@ -96,11 +107,25 @@ export class AccountController extends React.Component<Properties, State> {
       </AccountPage>);
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({isLoaded: true});
-      }).catch(() => this.setState({cannotLoad: true}));
+  public async componentDidMount(): Promise<void> {
+    try {
+      await this.props.model.load();
+      const readonly = 
+        !(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) && (
+          this.props.authenticatedAccount.equals(this.props.model.account) ||
+          this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
+          this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)));
+      const isPasswordReadOnly =
+        !(this.props.authenticatedAccount.equals(this.props.model.account) ||
+        !readonly);
+      this.setState({
+        isLoaded: true,
+        readonly: readonly,
+        isPasswordReadOnly: isPasswordReadOnly
+      });
+    } catch {
+      this.setState({cannotLoad: true});
+    }
   }
 
   public componentDidUpdate(): void {
@@ -122,6 +147,10 @@ export class AccountController extends React.Component<Properties, State> {
     return <ProfileController
       displaySize={this.props.displaySize}
       countryDatabase={this.props.countryDatabase}
+
+      groups={this.props.model.groups}
+      readonly={this.state.readonly}
+      isPasswordReadOnly={this.state.isPasswordReadOnly}
       model={this.props.model.profileModel}/>;
   }
 
