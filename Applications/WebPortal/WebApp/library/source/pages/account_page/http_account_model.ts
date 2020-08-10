@@ -10,8 +10,6 @@ import { LocalAccountModel } from './local_account_model';
 export class HttpAccountModel extends AccountModel {
 
   /** Constructs an HttpAccountModel.
-   * @param authUserAccount - The authenticated user's account.
-   * @param authUserRoles - The authenticated user's roles.
    * @param account - The account this model represents.
    * @param serviceClients - The clients used to access the HTTP services.
    */
