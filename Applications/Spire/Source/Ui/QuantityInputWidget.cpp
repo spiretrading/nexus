@@ -9,7 +9,6 @@ using namespace Spire;
 QuantityInputWidget::QuantityInputWidget(Nexus::Quantity value,
     QWidget* parent)
     : DecimalInputWidget(static_cast<double>(value), parent) {
-  setMinimum(0);
   DecimalInputWidget::connect_change_signal([=] (auto value) {
     m_change_signal({value});
   });
