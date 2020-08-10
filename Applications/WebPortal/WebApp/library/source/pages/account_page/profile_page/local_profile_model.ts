@@ -17,8 +17,6 @@ export class LocalProfileModel extends ProfileModel {
     this._account = account;
     this._roles = roles;
     this._identity = identity.clone();
-    this._isReadonly = true;
-    this._isPasswordReadOnly = true;
   }
 
   /** Returns true if this model has been loaded. */
@@ -63,6 +61,4 @@ export class LocalProfileModel extends ProfileModel {
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _identity: Nexus.AccountIdentity;
-  private _isReadonly: boolean;
-  private _isPasswordReadOnly: boolean;
 }
