@@ -28,10 +28,10 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The authenticated user's account. */
-  authUserAccount: Beam.DirectoryEntry;
+  authenticatedUser: Beam.DirectoryEntry;
   
   /** The authenticated user's roles. */
-  authUserRoles: Nexus.AccountRoles;
+  roles: Nexus.AccountRoles;
 
   /** The model representing the account to display. */
   model: AccountModel;
@@ -128,9 +128,9 @@ export class AccountController extends React.Component<Properties, State> {
 
   private setAccountReadonlyProperties = () => {
     this.props.model.profileModel.isReadonly = (() => {
-      if(this.props.authUserRoles.test(
+      if(this.props.roles.test(
           Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        if(this.props.authUserAccount.equals(this.props.model.account) ||
+        if(this.props.authenticatedUser.equals(this.props.model.account) ||
             this.props.model.roles.test(Nexus.AccountRoles.Role.TRADER) ||
             this.props.model.roles.test(Nexus.AccountRoles.Role.MANAGER)) {
           return false;
@@ -139,7 +139,7 @@ export class AccountController extends React.Component<Properties, State> {
       return true;
     })();
     this.props.model.profileModel.isPasswordReadOnly =
-      !(this.props.authUserAccount.equals(this.props.model.account) ||
+      !(this.props.authenticatedUser.equals(this.props.model.account) ||
         !this.props.model.profileModel.isReadonly);
   }
 
