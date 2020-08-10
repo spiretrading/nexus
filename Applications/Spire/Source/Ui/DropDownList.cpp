@@ -131,7 +131,7 @@ void DropDownList::remove_item(int index) {
   if(index > m_layout->count() - 1) {
     return;
   }
-  if(index == m_highlight_index) {
+  if(m_highlight_index) {
     get_item(*m_highlight_index)->reset_highlight();
     m_highlight_index = boost::none;
   }
