@@ -40,6 +40,10 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       padding-left: %4px;
     }
 
+    QDoubleSpinBox:disabled {
+      color: #C8C8C8;
+    }
+
     QDoubleSpinBox:focus {
       border: %1px solid #4B23A0;
     }
@@ -59,6 +63,13 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
       width: %3px;
     }
 
+    QDoubleSpinBox::up-arrow:disabled {
+      height: %2px;
+      image: url(:/Icons/arrow-up-disabled.svg);
+      padding-top: %6px;
+      width: %3px;
+    }
+
     QDoubleSpinBox::up-arrow:hover {
       height: %2px;
       image: url(:/Icons/arrow-up-hover.svg);
@@ -69,6 +80,12 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     QDoubleSpinBox::down-arrow {
       height: %2px;
       image: url(:/Icons/arrow-down.svg);
+      width: %3px;
+    }
+
+    QDoubleSpinBox::down-arrow:disabled {
+      height: %2px;
+      image: url(:/Icons/arrow-down-disabled.svg);
       width: %3px;
     }
 
@@ -108,7 +125,7 @@ connection DecimalInputWidget::connect_submit_signal(
 
 bool DecimalInputWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == lineEdit() && event->type() == QEvent::MouseButtonPress &&
-      !m_has_first_click) {
+      !m_has_first_click && isEnabled()) {
     auto e = static_cast<QMouseEvent*>(event);
     if(e->button() == Qt::LeftButton) {
       m_has_first_click = true;
