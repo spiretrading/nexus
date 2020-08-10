@@ -103,12 +103,14 @@ export class AccountController extends React.Component<Properties, State> {
       </AccountPage>);
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setAccountReadonlyProperties();
-        this.setState({isLoaded: true});
-      }).catch(() => this.setState({cannotLoad: true}));
+  public async componentDidMount(): Promise<void> {
+    try {
+      await this.props.model.load();
+      this.setAccountReadonlyProperties();
+      this.setState({isLoaded: true});
+    } catch {
+      this.setState({cannotLoad: true});
+    }
   }
 
   public componentDidUpdate(): void {
