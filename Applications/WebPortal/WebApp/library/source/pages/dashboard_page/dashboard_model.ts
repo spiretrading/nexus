@@ -30,7 +30,7 @@ export abstract class DashboardModel {
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;
 
   /** Makes a new group model. */
-  public abstract makeGroupModel(account: Beam.DirectoryEntry): GroupModel;
+  public abstract makeGroupModel(group: Beam.DirectoryEntry): GroupModel;
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;
