@@ -113,7 +113,7 @@ namespace Nexus::ChartingService {
             query.GetFilter());
           auto conversionQueue = Beam::MakeConverterQueueWriter<
             Queries::SequencedQueryVariant>(std::move(queue),
-            [] (auto& value) {
+            [] (const auto& value) {
               return *value;
             });
           auto publisher = std::make_shared<SecurityChartingPublisher>(query,
