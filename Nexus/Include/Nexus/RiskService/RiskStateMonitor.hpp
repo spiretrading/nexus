@@ -5,6 +5,7 @@
 #include <Beam/Queues/FilteredQueueWriter.hpp>
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -77,9 +78,9 @@ namespace RiskService {
         typename MarketDataClientForward, typename TransitionTimerForward,
         typename TimeClientForward>
       RiskStateMonitor(AdministrationClientForward&& administrationClient,
-        MarketDataClientForward&& marketDataClient, const std::shared_ptr<
-        Beam::QueueReader<const OrderExecutionService::Order*>>&
-        orderSubmissionQueue, TransitionTimerForward&& transitionTimer,
+        MarketDataClientForward&& marketDataClient,
+        Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders,
+        TransitionTimerForward&& transitionTimer,
         TimeClientForward&& timeClient, const MarketDatabase& marketDatabase,
         std::vector<ExchangeRate> exchangeRates);
 
@@ -95,23 +96,20 @@ namespace RiskService {
       using PortfolioMonitor = Accounting::PortfolioMonitor<
         typename RiskStateTracker::Portfolio*, MarketDataClient*>;
       struct AccountEntry : private boost::noncopyable {
-        std::shared_ptr<Beam::SequencePublisher<
-          const OrderExecutionService::Order*>> m_orderPublisher;
         RiskStateTracker m_tracker;
         PortfolioMonitor m_portfolio;
 
         AccountEntry(const Beam::ServiceLocator::DirectoryEntry& account,
           const MarketDatabase& marketDatabase,
           const std::vector<ExchangeRate>& exchangeRates,
-          const Beam::Publisher<const OrderExecutionService::Order*>&
-          orderPublisher, MarketDataClient* marketDataClient,
-          TimeClient* timeClient);
+          Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders,
+          MarketDataClient* marketDataClient, TimeClient* timeClient);
       };
       Beam::GetOptionalLocalPtr<AdministrationClientType>
         m_administrationClient;
       Beam::GetOptionalLocalPtr<MarketDataClientType> m_marketDataClient;
-      Beam::QueueReaderPublisher<const OrderExecutionService::Order*>
-        m_orderSubmissionPublisher;
+      std::shared_ptr<Beam::Publisher<const OrderExecutionService::Order*>>
+        m_orderPublisher;
       Beam::GetOptionalLocalPtr<TransitionTimerType> m_transitionTimer;
       Beam::GetOptionalLocalPtr<TimeClientType> m_timeClient;
       MarketDatabase m_marketDatabase;
@@ -142,20 +140,12 @@ namespace RiskService {
       AccountEntry(const Beam::ServiceLocator::DirectoryEntry& account,
       const MarketDatabase& marketDatabase,
       const std::vector<ExchangeRate>& exchangeRates,
-      const Beam::Publisher<const OrderExecutionService::Order*>&
-      orderPublisher, MarketDataClient* marketDataClient,
-      TimeClient* timeClient)
-      : m_orderPublisher(std::make_shared<Beam::SequencePublisher<
-          const OrderExecutionService::Order*>>()),
-        m_tracker(typename RiskStateTracker::Portfolio(marketDatabase),
+      Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders,
+      MarketDataClient* marketDataClient, TimeClient* timeClient)
+      : m_tracker(typename RiskStateTracker::Portfolio(marketDatabase),
           exchangeRates, timeClient),
         m_portfolio(&m_tracker.GetPortfolio(), marketDataClient,
-          *m_orderPublisher) {
-    orderPublisher.Monitor(Beam::MakeFilteredQueueWriter(m_orderPublisher,
-      [=] (auto order) {
-        return order->GetInfo().m_fields.m_account == account;
-      }));
-  }
+          std::move(orders)) {}
 
   template<typename RiskStateTrackerType, typename AdministrationClientType,
     typename MarketDataClientType, typename TransitionTimerType,
@@ -166,22 +156,24 @@ namespace RiskService {
   RiskStateMonitor<RiskStateTrackerType, AdministrationClientType,
       MarketDataClientType, TransitionTimerType, TimeClientType>::
       RiskStateMonitor(AdministrationClientForward&& administrationClient,
-      MarketDataClientForward&& marketDataClient, const std::shared_ptr<
-      Beam::QueueReader<const OrderExecutionService::Order*>>&
-      orderSubmissionQueue, TransitionTimerForward&& transitionTimer,
-      TimeClientForward&& timeClient, const MarketDatabase& marketDatabase,
+      MarketDataClientForward&& marketDataClient,
+      Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders,
+      TransitionTimerForward&& transitionTimer, TimeClientForward&& timeClient,
+      const MarketDatabase& marketDatabase,
       std::vector<ExchangeRate> exchangeRates)
       : m_administrationClient(std::forward<AdministrationClientForward>(
           administrationClient)),
         m_marketDataClient(std::forward<MarketDataClientForward>(
           marketDataClient)),
-        m_orderSubmissionPublisher(orderSubmissionQueue),
+        m_orderPublisher(Beam::MakeSequencePublisherAdaptor(
+          std::make_shared<Beam::QueueReaderPublisher<
+          const OrderExecutionService::Order*>>(std::move(orders)))),
         m_transitionTimer(std::forward<TransitionTimerForward>(
           transitionTimer)),
         m_timeClient(std::forward<TimeClientForward>(timeClient)),
         m_marketDatabase(marketDatabase),
         m_exchangeRates(std::move(exchangeRates)) {
-    m_orderSubmissionPublisher.Monitor(
+    m_orderPublisher->Monitor(
       m_tasks.GetSlot<const OrderExecutionService::Order*>(std::bind(
       &RiskStateMonitor::OnOrderSubmission, this, std::placeholders::_1)));
     m_transitionTimer->GetPublisher().Monitor(
@@ -253,10 +245,15 @@ namespace RiskService {
       m_tasks.GetSlot<RiskParameters>(
       std::bind(&RiskStateMonitor::OnRiskParametersModified, this, account,
       std::placeholders::_1)));
+    auto accountOrders = std::make_shared<
+      Beam::Queue<const OrderExecutionService::Order*>>();
+    m_orderPublisher->Monitor(Beam::MakeFilteredQueueWriter(accountOrders,
+      [=] (auto order) {
+        return order->GetInfo().m_fields.m_account == account;
+      }));
     auto& entry = *m_accountEntries.emplace(account,
       std::make_shared<AccountEntry>(account, m_marketDatabase, m_exchangeRates,
-      m_orderSubmissionPublisher, &*m_marketDataClient,
-      &*m_timeClient)).first->second;
+      accountOrders, &*m_marketDataClient, &*m_timeClient)).first->second;
     entry.m_portfolio.GetPublisher().Monitor(
       m_tasks.GetSlot<typename PortfolioMonitor::UpdateEntry>(
       std::bind(&RiskStateMonitor::OnPortfolioUpdate, this, account,
