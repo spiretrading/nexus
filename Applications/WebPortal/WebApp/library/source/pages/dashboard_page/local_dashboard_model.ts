@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel, LocalAccountModel } from '..';
+import { AccountDirectoryModel, LocalAccountModel, LocalGroupModel } from '..';
 import { DashboardModel } from './dashboard_model';
 
 /** Implements the DashboardModel using local memory. */
@@ -76,6 +76,10 @@ export class LocalDashboardModel extends DashboardModel {
       return new LocalAccountModel(this.account, this.roles);
     }
     return new LocalAccountModel(account, new Nexus.AccountRoles(0));
+  }
+
+  public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
+    return new LocalGroupModel(group);
   }
 
   public async load(): Promise<void> {

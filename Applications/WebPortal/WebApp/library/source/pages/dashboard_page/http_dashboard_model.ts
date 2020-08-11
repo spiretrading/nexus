@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
-  HttpAccountModel, LocalAccountDirectoryModel } from '..';
+  HttpAccountModel, HttpGroupModel, LocalAccountDirectoryModel } from '..';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -58,6 +58,10 @@ export class HttpDashboardModel extends DashboardModel {
       this.accountModels.set(account, model);
     }
     return model;
+  }
+
+  public makeGroupModel(group: Beam.DirectoryEntry): HttpGroupModel {
+    return new HttpGroupModel(group, this.serviceClients);
   }
 
   public async load(): Promise<void> {

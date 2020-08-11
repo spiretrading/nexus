@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel, AccountModel } from '..';
+import { AccountDirectoryModel, AccountModel, GroupModel } from '..';
 
 /** Base class for the model used by the DashboardPage. */
 export abstract class DashboardModel {
@@ -28,6 +28,9 @@ export abstract class DashboardModel {
 
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;
+
+  /** Makes a new group model. */
+  public abstract makeGroupModel(account: Beam.DirectoryEntry): GroupModel;
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;
