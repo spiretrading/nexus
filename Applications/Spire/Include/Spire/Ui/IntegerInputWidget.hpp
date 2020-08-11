@@ -16,7 +16,7 @@ namespace Spire {
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      IntegerInputWidget(int value, QWidget* parent = nullptr);
+      explicit IntegerInputWidget(int value, QWidget* parent = nullptr);
 
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(

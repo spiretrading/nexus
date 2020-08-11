@@ -46,10 +46,10 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
 }
 
 QString DecimalInputWidget::textFromValue(double value) const {
-  if(value == 0.0) {
+  if(value == 0) {
     return "0";
   }
-  QString str = QString::number(value, 'f', decimals());
+  auto str = QString::number(value, 'f', decimals());
   str.remove(QRegExp("0+$"));
   str.remove(QRegExp("\\.$"));
   return str;
@@ -250,7 +250,7 @@ void DecimalInputWidget::set_stylesheet(bool is_up_disabled,
 }
 
 void DecimalInputWidget::on_text_edited(const QString& text) {
-  if(minimum() >= 0.0 && text.contains("-")) {
+  if(minimum() >= 0 && text.contains("-")) {
     lineEdit()->blockSignals(true);
     lineEdit()->setText(lineEdit()->text().remove("-"));
     lineEdit()->blockSignals(false);

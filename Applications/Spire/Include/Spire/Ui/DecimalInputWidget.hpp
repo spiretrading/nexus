@@ -19,8 +19,6 @@ namespace Spire {
       */
       explicit DecimalInputWidget(double value, QWidget* parent = nullptr);
 
-      QString textFromValue(double value) const override;
-
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(
         const ValueSignal::slot_type& slot) const;
@@ -35,6 +33,7 @@ namespace Spire {
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
+      QString textFromValue(double value) const override;
 
     private:
       mutable ValueSignal m_change_signal;
