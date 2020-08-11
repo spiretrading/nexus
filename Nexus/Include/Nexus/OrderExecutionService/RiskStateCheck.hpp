@@ -1,7 +1,7 @@
 #ifndef NEXUS_RISKSTATECHECK_HPP
 #define NEXUS_RISKSTATECHECK_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -45,7 +45,7 @@ namespace OrderExecutionService {
           m_positionOrderBook;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
           m_riskStateQueue;
-        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
+        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
 
         AccountEntry();
       };
