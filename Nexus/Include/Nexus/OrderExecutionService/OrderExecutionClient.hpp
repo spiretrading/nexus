@@ -182,7 +182,7 @@ namespace OrderExecutionService {
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
     auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
       std::move(queue),
-      [=] (auto& orderRecord) {
+      [=] (const auto& orderRecord) {
         auto sequence = orderRecord.GetSequence();
         auto order = static_cast<const Order*>(LoadOrder(orderRecord).get());
         return Beam::Queries::SequencedValue(std::move(order),
@@ -197,7 +197,7 @@ namespace OrderExecutionService {
       Beam::ScopedQueueWriter<const Order*> queue) {
     auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
       std::move(queue),
-      [=] (auto& orderRecord) {
+      [=] (const auto& orderRecord) {
         return static_cast<const Order*>(LoadOrder(orderRecord).get());
       });
     m_orderSubmissionPublisher.SubmitQuery(query, std::move(conversionQueue));

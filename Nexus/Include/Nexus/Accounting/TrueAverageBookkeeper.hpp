@@ -126,14 +126,14 @@ namespace Nexus::Accounting {
       const typename TrueAverageBookkeeper<I>::Key,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetInventoryRange() const {
-    return Beam::MakeView(m_inventories.begin(), m_inventories.end());
+    return Beam::View(m_inventories.begin(), m_inventories.end());
   }
 
   template<typename I>
   Beam::View<std::pair<const CurrencyId,
       typename TrueAverageBookkeeper<I>::Inventory>>
       TrueAverageBookkeeper<I>::GetTotalsRange() const {
-    return Beam::MakeView(m_totals.begin(), m_totals.end());
+    return Beam::View(m_totals.begin(), m_totals.end());
   }
 
   template<typename I>
