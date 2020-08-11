@@ -4,7 +4,7 @@ import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController,
-  CreateAccountController } from '..';
+  CreateAccountController, GroupController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -70,6 +70,7 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
+          <Router.Route path='/group' render={this.renderGroupPage}/>
           <Router.Route render={this.renderPageNotFound}/>
         </Router.Switch>
       </DashboardPage>);
@@ -115,6 +116,24 @@ export class DashboardController extends React.Component<Properties, State> {
         displaySize={this.props.displaySize}/>);
   }
 
+  private renderGroupPage = () => {
+    const model = (() => {
+      const pattern = Path.pathToRegexp(
+        '/group/:id(\\d+)?', [], { end: false });
+      const match = pattern.exec(window.location.pathname);
+      const group = (() => {
+        if(match[1]) {
+          return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
+        }
+        return Beam.DirectoryEntry.makeAccount(-1, '');
+      })();
+      return this.props.model.makeGroupModel(group);
+    })();
+    return (
+      <GroupController model={model}
+        displaySize={this.props.displaySize}/>);
+  }
+  
   private renderPageNotFound = () => {
     return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
