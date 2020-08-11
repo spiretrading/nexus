@@ -117,21 +117,15 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private renderGroupPage = () => {
-    const model = (() => {
-      const pattern = Path.pathToRegexp(
-        '/group/:id(\\d+)?', [], { end: false });
-      const match = pattern.exec(window.location.pathname);
-      const group = (() => {
-        if(match[1]) {
-          return Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
-        }
-        return Beam.DirectoryEntry.makeAccount(-1, '');
-      })();
-      return this.props.model.makeGroupModel(group);
-    })();
+    const pattern = Path.pathToRegexp('/group/:id(\\d+)?', [], { end: false });
+    const match = pattern.exec(window.location.pathname);
+    if(!match[1]) {
+      return this.renderPageNotFound();
+    }
+    const group = Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
+    const model = this.props.model.makeGroupModel(group);
     return (
-      <GroupController model={model}
-        displaySize={this.props.displaySize}/>);
+      <GroupController model={model} displaySize={this.props.displaySize}/>);
   }
   
   private renderPageNotFound = () => {
