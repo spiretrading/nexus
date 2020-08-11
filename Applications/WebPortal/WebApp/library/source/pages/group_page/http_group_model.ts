@@ -26,12 +26,13 @@ export class HttpGroupModel extends GroupModel {
       return;
     }
     await this.model.load();
-    const group = await this.serviceClients.serviceLocatorClient
-      .loadDirectoryEntryFromId(this.model.group.id);
-    this.model = new LocalGroupModel(group);
+    this.tradingGroup = await this.serviceClients.administrationClient
+      .loadTradingGroup(this.model.group);
+    this.model = new LocalGroupModel(this.tradingGroup.entry);
     await this.model.load();
   }
 
   private model: LocalGroupModel;
   private serviceClients: Nexus.ServiceClients;
+  private tradingGroup: Nexus.TradingGroup;
 }

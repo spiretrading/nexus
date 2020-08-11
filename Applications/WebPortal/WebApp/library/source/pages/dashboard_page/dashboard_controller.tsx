@@ -123,7 +123,7 @@ export class DashboardController extends React.Component<Properties, State> {
       const match = pattern.exec(window.location.pathname);
       const group = (() => {
         if(match[1]) {
-          return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
+          return Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
         }
         return Beam.DirectoryEntry.makeAccount(-1, '');
       })();
