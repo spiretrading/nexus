@@ -61,7 +61,10 @@ export class HttpDashboardModel extends DashboardModel {
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): HttpGroupModel {
-    return new HttpGroupModel(group, this.serviceClients);
+    if(!this.groupModel || group.id !== this.groupModel.group.id) {
+      this.groupModel = new HttpGroupModel(group, this.serviceClients);
+    }
+    return this.groupModel;
   }
 
   public async load(): Promise<void> {
@@ -89,4 +92,5 @@ export class HttpDashboardModel extends DashboardModel {
   private serviceClients: Nexus.ServiceClients;
   private accountModels: Beam.Map<Beam.DirectoryEntry, HttpAccountModel>;
   private model: LocalDashboardModel;
+  private groupModel: HttpGroupModel;
 }
