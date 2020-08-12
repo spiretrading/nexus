@@ -5,7 +5,6 @@
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -45,14 +44,14 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
   lineEdit()->installEventFilter(this);
 }
 
-connection DecimalInputWidget::connect_change_signal(
-    const ValueSignal::slot_type& slot) const {
-  return m_change_signal.connect(slot);
-}
-
-connection DecimalInputWidget::connect_submit_signal(
-    const ValueSignal::slot_type& slot) const {
-  return m_submit_signal.connect(slot);
+QString DecimalInputWidget::textFromValue(double value) const {
+  if(value == 0.0) {
+    return "0";
+  }
+  auto str = QString::number(value, 'f', decimals());
+  str.remove(QRegExp("0+$"));
+  str.remove(QRegExp("\\.$"));
+  return str;
 }
 
 bool DecimalInputWidget::eventFilter(QObject* watched, QEvent* event) {
@@ -84,7 +83,6 @@ void DecimalInputWidget::focusOutEvent(QFocusEvent* event) {
   }
   QDoubleSpinBox::focusOutEvent(event);
   m_last_valid_value = value();
-  m_submit_signal(m_last_valid_value);
 }
 
 void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
@@ -104,7 +102,6 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
       lineEdit()->setText(textFromValue(value()));
       m_last_valid_value = value();
       Q_EMIT editingFinished();
-      m_submit_signal(m_last_valid_value);
       return;
     case Qt::Key_Up:
       add_step(1, event->modifiers());
@@ -131,16 +128,6 @@ void DecimalInputWidget::mousePressEvent(QMouseEvent* event) {
     }
   }
   QDoubleSpinBox::mousePressEvent(event);
-}
-
-QString DecimalInputWidget::textFromValue(double value) const {
-  if(value == 0.0) {
-    return "0";
-  }
-  auto str = QString::number(value, 'f', decimals());
-  str.remove(QRegExp("0+$"));
-  str.remove(QRegExp("\\.$"));
-  return str;
 }
 
 void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
@@ -266,5 +253,4 @@ void DecimalInputWidget::on_value_changed(double value) {
   } else {
     set_stylesheet(false, false);
   }
-  m_change_signal(value);
 }

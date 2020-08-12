@@ -1,5 +1,6 @@
 #ifndef SPIRE_INTEGER_INPUT_WIDGET_HPP
 #define SPIRE_INTEGER_INPUT_WIDGET_HPP
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/DecimalInputWidget.hpp"
 
 namespace Spire {

@@ -11,12 +11,11 @@ using namespace Spire;
 IntegerInputWidget::IntegerInputWidget(int value, QWidget* parent)
     : DecimalInputWidget(value, parent) {
   setDecimals(0);
-  DecimalInputWidget::connect_change_signal([=] (auto value) {
-    m_change_signal(static_cast<int>(value));
+  connect(this, &DecimalInputWidget::editingFinished, [=]  {
+    m_submit_signal(static_cast<int>(this->value()));
   });
-  DecimalInputWidget::connect_submit_signal([=] (auto value) {
-    m_submit_signal(static_cast<int>(value));
-  });
+  connect(this, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+    [=] (auto value) { m_change_signal(static_cast<int>(value)); });
   connect(lineEdit(), &QLineEdit::textEdited, this,
     &IntegerInputWidget::on_text_edited);
 }

@@ -26,15 +26,21 @@ void QuantityInputWidget::resizeEvent(QResizeEvent* event) {
 }
 
 void QuantityInputWidget::set_minimum(Nexus::Quantity minimum) {
-  m_input_widget->setMinimum(static_cast<double>(minimum));
+  auto quantity = m_item_delegate.displayText(
+    QVariant::fromValue<Quantity>(minimum));
+  m_input_widget->setMinimum(value_from_text(quantity));
 }
 
 void QuantityInputWidget::set_maximum(Nexus::Quantity maximum) {
-  m_input_widget->setMaximum(static_cast<double>(maximum));
+  auto quantity = m_item_delegate.displayText(
+    QVariant::fromValue<Quantity>(maximum));
+  m_input_widget->setMaximum(value_from_text(quantity));
 }
 
 void QuantityInputWidget::set_value(Quantity value) {
-  m_input_widget->setValue(static_cast<double>(value));
+  auto quantity = m_item_delegate.displayText(
+    QVariant::fromValue<Quantity>(value));
+  m_input_widget->setValue(value_from_text(quantity));
 }
 
 connection QuantityInputWidget::connect_change_signal(
@@ -47,10 +53,27 @@ connection QuantityInputWidget::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+double QuantityInputWidget::value_from_text(const QString& text) {
+  auto min = m_input_widget->minimum();
+  auto max = m_input_widget->maximum();
+  m_input_widget->setMinimum(std::numeric_limits<double>::lowest());
+  m_input_widget->setMaximum(std::numeric_limits<double>::max());
+  auto value = m_input_widget->valueFromText(text);
+  m_input_widget->setMinimum(min);
+  m_input_widget->setMaximum(max);
+  return value;
+}
+
 void QuantityInputWidget::on_editing_finished() {
-  m_submit_signal(*Quantity::FromValue(m_input_widget->text().toStdString()));
+  auto quantity = Quantity::FromValue(m_input_widget->text().toStdString());
+  if(quantity) {
+    m_submit_signal(*quantity);
+  }
 }
 
 void QuantityInputWidget::on_value_changed() {
-  m_change_signal(*Quantity::FromValue(m_input_widget->text().toStdString()));
+  auto quantity = Quantity::FromValue(m_input_widget->text().toStdString());
+  if(quantity) {
+    m_change_signal(*quantity);
+  }
 }

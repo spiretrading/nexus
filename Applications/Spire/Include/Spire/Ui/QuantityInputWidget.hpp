@@ -1,6 +1,8 @@
 #ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #define SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalInputWidget.hpp"
 
 namespace Spire {
@@ -53,7 +55,9 @@ namespace Spire {
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_submit_signal;
       DecimalInputWidget* m_input_widget;
+      CustomVariantItemDelegate m_item_delegate;
 
+      double value_from_text(const QString& text);
       void on_editing_finished();
       void on_value_changed();
   };
