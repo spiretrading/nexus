@@ -45,16 +45,6 @@ DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
   lineEdit()->installEventFilter(this);
 }
 
-QString DecimalInputWidget::textFromValue(double value) const {
-  if(value == 0.0) {
-    return "0";
-  }
-  auto str = QString::number(value, 'f', decimals());
-  str.remove(QRegExp("0+$"));
-  str.remove(QRegExp("\\.$"));
-  return str;
-}
-
 connection DecimalInputWidget::connect_change_signal(
     const ValueSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
@@ -113,6 +103,7 @@ void DecimalInputWidget::keyPressEvent(QKeyEvent* event) {
       }
       lineEdit()->setText(textFromValue(value()));
       m_last_valid_value = value();
+      Q_EMIT editingFinished();
       m_submit_signal(m_last_valid_value);
       return;
     case Qt::Key_Up:
@@ -140,6 +131,16 @@ void DecimalInputWidget::mousePressEvent(QMouseEvent* event) {
     }
   }
   QDoubleSpinBox::mousePressEvent(event);
+}
+
+QString DecimalInputWidget::textFromValue(double value) const {
+  if(value == 0.0) {
+    return "0";
+  }
+  auto str = QString::number(value, 'f', decimals());
+  str.remove(QRegExp("0+$"));
+  str.remove(QRegExp("\\.$"));
+  return str;
 }
 
 void DecimalInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {

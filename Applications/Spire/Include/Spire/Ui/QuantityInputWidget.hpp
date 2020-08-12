@@ -6,7 +6,7 @@
 namespace Spire {
 
   //! Represents a widget for displaying and modifying Quantities.
-  class QuantityInputWidget : public DecimalInputWidget {
+  class QuantityInputWidget : public QWidget {
     public:
 
       //! Signals a user interaction with the value.
@@ -46,9 +46,16 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const ValueSignal::slot_type& slot) const;
 
+    protected:
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_submit_signal;
+      DecimalInputWidget* m_input_widget;
+
+      void on_editing_finished();
+      void on_value_changed();
   };
 }
 

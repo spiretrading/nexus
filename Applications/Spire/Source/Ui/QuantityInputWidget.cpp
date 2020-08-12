@@ -1,6 +1,6 @@
 #include "Spire/Ui/QuantityInputWidget.hpp"
 #include <QHBoxLayout>
-#include <QRegularExpressionValidator>
+#include <QLineEdit>
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -8,25 +8,33 @@ using namespace Spire;
 
 QuantityInputWidget::QuantityInputWidget(Nexus::Quantity value,
     QWidget* parent)
-    : DecimalInputWidget(static_cast<double>(value), parent) {
-  DecimalInputWidget::connect_change_signal([=] (auto value) {
-    m_change_signal({value});
-  });
-  DecimalInputWidget::connect_submit_signal([=] (auto value) {
-    m_submit_signal({value});
-  });
+    : QWidget(parent) {
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  m_input_widget = new DecimalInputWidget(0, this);
+  layout->addWidget(m_input_widget);
+  setFocusProxy(m_input_widget);
+  connect(m_input_widget, &DecimalInputWidget::editingFinished,
+    this, &QuantityInputWidget::on_editing_finished);
+  connect(m_input_widget, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+    [=] (auto value) { on_value_changed(); });
+}
+
+void QuantityInputWidget::resizeEvent(QResizeEvent* event) {
+  m_input_widget->setFixedSize(size());
+  QWidget::resizeEvent(event);
 }
 
 void QuantityInputWidget::set_minimum(Nexus::Quantity minimum) {
-  setMinimum(static_cast<double>(minimum));
+  m_input_widget->setMinimum(static_cast<double>(minimum));
 }
 
 void QuantityInputWidget::set_maximum(Nexus::Quantity maximum) {
-  setMaximum(static_cast<double>(maximum));
+  m_input_widget->setMaximum(static_cast<double>(maximum));
 }
 
 void QuantityInputWidget::set_value(Quantity value) {
-  setValue(static_cast<double>(value));
+  m_input_widget->setValue(static_cast<double>(value));
 }
 
 connection QuantityInputWidget::connect_change_signal(
@@ -37,4 +45,12 @@ connection QuantityInputWidget::connect_change_signal(
 connection QuantityInputWidget::connect_submit_signal(
     const ValueSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+void QuantityInputWidget::on_editing_finished() {
+  m_submit_signal(*Quantity::FromValue(m_input_widget->text().toStdString()));
+}
+
+void QuantityInputWidget::on_value_changed() {
+  m_change_signal(*Quantity::FromValue(m_input_widget->text().toStdString()));
 }
