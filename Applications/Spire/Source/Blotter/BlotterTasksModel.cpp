@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
+#include <unordered_set>
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -28,12 +29,11 @@ namespace {
   const auto EXPIRY_INTERVAL = 500;
 
   void QueryDailyOrderSubmissions(const UserProfile& userProfile,
-      const DirectoryEntry& account,
-      const std::shared_ptr<QueueWriter<const Order*>>& queue) {
+      const DirectoryEntry& account, ScopedQueueWriter<const Order*> queue) {
     Spawn(
-      [&userProfile, account, queue] {
-        auto currentTime = userProfile.GetServiceClients().GetTimeClient().
-          GetTime();
+      [&userProfile, account, queue = std::move(queue)] () mutable {
+        auto currentTime =
+          userProfile.GetServiceClients().GetTimeClient().GetTime();
         auto lastSequence = Beam::Queries::Sequence::First();
         auto timeOfDay =
           userProfile.GetServiceClients().GetTimeClient().GetTime();
@@ -46,7 +46,7 @@ namespace {
             QueryOrderSubmissions(snapshotQuery, snapshotQueue);
           try {
             while(true) {
-              queue->Push(snapshotQueue->Top().GetValue());
+              queue.Push(snapshotQueue->Top().GetValue());
               lastSequence = std::max(lastSequence,
                 snapshotQueue->Top().GetSequence());
               snapshotQueue->Pop();
@@ -62,9 +62,17 @@ namespace {
           query.SetRange(Increment(lastSequence), pos_infin);
         }
         userProfile.GetServiceClients().GetOrderExecutionClient().
-          QueryOrderSubmissions(query, queue);
+          QueryOrderSubmissions(query, std::move(queue));
       });
   }
+
+  struct UniqueFilter {
+    std::unordered_set<const Order*> m_orders;
+
+    bool operator ()(const Order* order) {
+      return m_orders.insert(order).second;
+    }
+  };
 }
 
 BlotterTasksModel::ObserverEntry::ObserverEntry(std::string name,
@@ -119,8 +127,7 @@ void BlotterTasksModel::SetProperties(const BlotterTaskProperties& properties) {
 
 const OrderExecutionPublisher&
     BlotterTasksModel::GetOrderExecutionPublisher() const {
-  return *static_cast<const OrderExecutionPublisher*>(nullptr);
-//  return *m_linkedOrderExecutionPublisher;
+  return *m_linkedOrderExecutionPublisher;
 }
 
 const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
@@ -333,6 +340,9 @@ bool BlotterTasksModel::setData(const QModelIndex& index,
 }
 
 void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
+  m_orders = std::make_shared<MultiQueueWriter<const Order*>>();
+  m_linkedOrderExecutionPublisher = MakeSequencePublisherAdaptor(
+    std::make_shared<QueueReaderPublisher<const Order*>>(m_orders));
 //  m_linkedOrderExecutionPublisher.emplace(
 //    Initialize(UniqueFilter<const Order*>(), Initialize()));
 //  m_linkedOrderExecutionPublisher->Add(m_properOrderExecutionPublisher);

@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/any.hpp>
 #include <boost/noncopyable.hpp>
@@ -199,8 +200,10 @@ namespace Spire {
       QTimer m_expiryTimer;
       bool m_isRefreshing;
 // TODO      SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
-//      std::optional<SpireAggregateOrderExecutionPublisher>
-//        m_linkedOrderExecutionPublisher;
+      std::shared_ptr<Beam::MultiQueueWriter<
+        const Nexus::OrderExecutionService::Order*>> m_orders;
+      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+        m_linkedOrderExecutionPublisher;
       std::vector<std::unique_ptr<TaskEntry>> m_entries;
       std::unordered_map<int, TaskEntry*> m_taskIds;
       std::vector<BlotterTaskMonitor> m_taskMonitors;
