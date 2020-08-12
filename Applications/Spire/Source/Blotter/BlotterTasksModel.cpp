@@ -85,22 +85,21 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     const BlotterTaskProperties& properties)
     : m_userProfile(userProfile.Get()),
       m_executingAccount(executingAccount),
-      m_isConsolidated(isConsolidated),
       m_properties(properties),
       m_isRefreshing(false) {
-//      m_properOrderExecutionPublisher(
-//        Initialize(UniqueFilter<const Order*>(), Initialize())) {
   m_taskSlotHandler.emplace();
-  SetupLinkedOrderExecutionMonitor();
-  if(m_isConsolidated) {
+  if(isConsolidated) {
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     QueryDailyOrderSubmissions(*m_userProfile, m_executingAccount, orderQueue);
-//    m_accountOrderPublisher =
-//      std::make_unique<QueuePublisher<SequencePublisher<const Order*>>>(
-//      orderQueue);
-//    m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
-//      [=] (const Order* order) { OnOrderSubmitted(order); }));
+    m_accountOrderPublisher = MakeSequencePublisherAdaptor(
+      std::make_shared<QueueReaderPublisher<const Order*>>(orderQueue));
+  } else {
+    m_accountOrderPublisher = 
+      std::make_shared<SequencePublisher<const Order*>>();
   }
+  m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
+    [=] (const Order* order) { OnOrderSubmitted(order); }));
+  SetupLinkedOrderExecutionMonitor();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
@@ -174,8 +173,8 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   for(auto& link : m_outgoingLinks) {
     link->Add(entryReference.m_task);
   }
-//  m_properOrderExecutionPublisher.Add(
-//    entryReference.m_task->GetContext().GetOrderPublisher());
+  entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
+    m_orders->GetWriter());
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
     m_orderSlotHandler.GetSlot<const Order*>(
     [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
@@ -214,7 +213,7 @@ void BlotterTasksModel::Refresh() {
   }
   WithModels(*this,
     [&] (const BlotterTasksModel& model) {
-//      m_linkedOrderExecutionPublisher->Add(model.GetOrderExecutionPublisher());
+      model.GetOrderExecutionPublisher().Monitor(m_orders->GetWriter());
       auto size = model.rowCount();
       for(auto i = 0; i != size; ++i) {
         auto& entry = model.GetEntry(i);
@@ -226,7 +225,7 @@ void BlotterTasksModel::Refresh() {
 }
 
 void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
-//  m_linkedOrderExecutionPublisher->Add(model->GetOrderExecutionPublisher());
+  model->GetOrderExecutionPublisher().Monitor(m_orders->GetWriter());
   m_incomingLinks.push_back(model.Get());
   model->m_outgoingLinks.push_back(this);
   for(const auto& link : m_outgoingLinks) {
@@ -343,12 +342,7 @@ void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
   m_orders = std::make_shared<MultiQueueWriter<const Order*>>();
   m_linkedOrderExecutionPublisher = MakeSequencePublisherAdaptor(
     std::make_shared<QueueReaderPublisher<const Order*>>(m_orders));
-//  m_linkedOrderExecutionPublisher.emplace(
-//    Initialize(UniqueFilter<const Order*>(), Initialize()));
-//  m_linkedOrderExecutionPublisher->Add(m_properOrderExecutionPublisher);
-//  if(m_isConsolidated && m_accountOrderPublisher != nullptr) {
-//    m_linkedOrderExecutionPublisher->Add(*m_accountOrderPublisher);
-//  }
+  m_accountOrderPublisher->Monitor(m_orders->GetWriter());
 }
 
 void BlotterTasksModel::OnMonitorUpdate(TaskEntry& entry,
@@ -382,7 +376,7 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
   order->GetPublisher().Monitor(reportQueue);
   if(auto report = reportQueue->TryTop()) {
     if(!report || IsTerminal(report->m_status)) {
-//    m_properOrderExecutionPublisher.Push(order);
+      m_orders->Push(order);
       return;
     }
   }
