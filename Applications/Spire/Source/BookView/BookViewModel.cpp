@@ -486,7 +486,8 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 void BookViewModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();) {
+  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
+      task = slotHandler->TryPop()) {
     (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
