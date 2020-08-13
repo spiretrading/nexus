@@ -57,7 +57,7 @@ export class GroupController extends React.Component<Properties, State> {
           onMenuClick={this.onMenuClick}>
         <Router.Switch>
           <Router.Route path='/group/:id(\d+)?/group'
-            render={this.renderGroupPage}/>
+            render={this.renderGroupInfoPage}/>
           <Router.Route path='/group/:id(\d+)?/compliance'
             render={this.renderCompliancePage}/>
           <Router.Route path='/group/:id(\d+)?/profit_loss'
@@ -102,7 +102,7 @@ export class GroupController extends React.Component<Properties, State> {
     return prefix;
   }
 
-  private renderGroupPage = () => {
+  private renderGroupInfoPage = () => {
     return <div/>;
   }
 
