@@ -62,16 +62,9 @@ export class GroupController extends React.Component<Properties, State> {
             render={this.renderCompliancePage}/>
           <Router.Route path='/group/:id(\d+)?/profit_loss'
             render={this.renderProfitLossPage}/>
-          <Router.Route path='/group/invalid_id'
-            render={this.renderPageNotFound}/>
           <Router.Route path='/group/:id(\d+)?'
             render={({match}) => {
-              const url = (() => {
-                if(match.params.id) {
-                  return `/group/${match.params.id}/group`;
-                }
-                return '/group/invalid_id';
-              })();
+              const url = `/group/${match.params.id}/group`;
               return <Router.Redirect to={url}/>;
             }}/>
         </Router.Switch>
@@ -112,10 +105,6 @@ export class GroupController extends React.Component<Properties, State> {
 
   private renderProfitLossPage = () => {
     return <div/>;
-  }
-
-  private renderPageNotFound = () => {
-    return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
 
   private onMenuClick = (subPage: GroupSubPage) => {
