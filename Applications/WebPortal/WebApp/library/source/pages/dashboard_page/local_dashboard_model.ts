@@ -79,7 +79,7 @@ export class LocalDashboardModel extends DashboardModel {
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
-    return new LocalGroupModel(group);
+    return new LocalGroupModel(group, []);
   }
 
   public async load(): Promise<void> {

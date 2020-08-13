@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import { AccountEntry } from '../account_directory_page';
 
 /** Interface for a model representing a single group. */
 export abstract class GroupModel {
@@ -8,4 +9,7 @@ export abstract class GroupModel {
 
   /** Loads this model. */
   public abstract async load(): Promise<void>;
+  
+  /** Returns the accounts belonging to the group. */
+  public abstract get accounts(): AccountEntry[];
 }
