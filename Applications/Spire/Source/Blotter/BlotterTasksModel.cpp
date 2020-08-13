@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include <unordered_set>
+#include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -340,7 +341,8 @@ bool BlotterTasksModel::setData(const QModelIndex& index,
 void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
   m_orders = std::make_shared<MultiQueueWriter<const Order*>>();
   m_linkedOrderExecutionPublisher = MakeSequencePublisherAdaptor(
-    std::make_shared<QueueReaderPublisher<const Order*>>(m_orders));
+    std::make_shared<QueueReaderPublisher<const Order*>>(
+    MakeFilteredQueueReader(m_orders, UniqueFilter())));
   m_accountOrderPublisher->Monitor(m_orders->GetWriter());
 }
 
@@ -373,7 +375,7 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
   m_submittedOrders.erase(order);
   auto reportQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(reportQueue);
-  if(auto report = reportQueue->Peek(); IsTerminal(report->m_status)) {
+  if(auto report = reportQueue->Peek(); IsTerminal(report.m_status)) {
     m_orders->Push(order);
     return;
   }
