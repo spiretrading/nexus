@@ -42,7 +42,7 @@ export class GroupController extends React.Component<Properties, State> {
       return <LoadingPage/>;
     }
     const subPage = (() => {
-      if(window.location.pathname.endsWith('/group')) {
+      if(window.location.pathname.endsWith('/group_info')) {
         return GroupSubPage.GROUP;
       } else if(window.location.pathname.endsWith('/compliance')) {
         return GroupSubPage.COMPLIANCE;
@@ -56,7 +56,7 @@ export class GroupController extends React.Component<Properties, State> {
           subPage={subPage} group={this.props.model.group}
           onMenuClick={this.onMenuClick}>
         <Router.Switch>
-          <Router.Route path='/group/:id(\d+)?/group'
+          <Router.Route path='/group/:id(\d+)?/group_info'
             render={this.renderGroupInfoPage}/>
           <Router.Route path='/group/:id(\d+)?/compliance'
             render={this.renderCompliancePage}/>
@@ -64,7 +64,7 @@ export class GroupController extends React.Component<Properties, State> {
             render={this.renderProfitLossPage}/>
           <Router.Route path='/group/:id(\d+)?'
             render={({match}) => {
-              const url = `/group/${match.params.id}/group`;
+              const url = `/group/${match.params.id}/group_info`;
               return <Router.Redirect to={url}/>;
             }}/>
         </Router.Switch>
@@ -110,7 +110,7 @@ export class GroupController extends React.Component<Properties, State> {
   private onMenuClick = (subPage: GroupSubPage) => {
     const urlPrefix = this.parseUrlPrefix();
     if(subPage === GroupSubPage.GROUP) {
-      this.setState({redirect: `${urlPrefix}/group`});
+      this.setState({redirect: `${urlPrefix}/group_info`});
     } else if(subPage === GroupSubPage.COMPLIANCE) {
       this.setState({redirect: `${urlPrefix}/compliance`});
     } else if(subPage === GroupSubPage.PROFIT_LOSS) {
