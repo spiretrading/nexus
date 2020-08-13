@@ -215,7 +215,7 @@ namespace Nexus::Compliance {
         return publisher;
       });
     try {
-      return publisher->Top();
+      return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(ComplianceCheckException(

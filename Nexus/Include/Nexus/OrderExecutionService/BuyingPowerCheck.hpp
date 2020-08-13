@@ -116,7 +116,7 @@ namespace OrderExecutionService {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(fields.m_account);
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
-        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Top();
+        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Peek();
         while(auto report = buyingPowerEntry.m_executionReportQueue.TryPop()) {
           if(report->m_lastQuantity != 0) {
             auto currency = buyingPowerEntry.m_currencies.Find(report->m_id);
@@ -171,7 +171,7 @@ namespace OrderExecutionService {
           order.GetInfo().m_fields.m_currency);
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
-          buyingPowerEntry.m_riskParametersQueue->Top().m_currency;
+          buyingPowerEntry.m_riskParametersQueue->Peek().m_currency;
         Money convertedPrice;
         try {
           convertedFields.m_price = m_exchangeRates.Convert(
@@ -217,7 +217,7 @@ namespace OrderExecutionService {
         return publisher;
       });
     try {
-      return publisher->Top();
+      return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
@@ -259,7 +259,7 @@ namespace OrderExecutionService {
           entry->m_riskParametersQueue);
         return entry;
       });
-    entry.m_riskParametersQueue->Top();
+    entry.m_riskParametersQueue->Peek();
     return entry;
   }
 }

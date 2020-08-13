@@ -79,8 +79,7 @@ namespace OrderExecutionService {
         while(auto report = accountEntry.m_executionReportQueue.TryPop()) {
           positionOrderBook.Update(std::move(*report));
         }
-        assert(!accountEntry.m_riskStateQueue->TryTop());
-        if(accountEntry.m_riskStateQueue->Top().m_type !=
+        if(accountEntry.m_riskStateQueue->Peek().m_type !=
             RiskService::RiskState::Type::ACTIVE) {
           if(positionOrderBook.TestOpeningOrderSubmission(orderInfo.m_fields)) {
             BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
@@ -112,7 +111,7 @@ namespace OrderExecutionService {
           entry->m_riskStateQueue);
         return entry;
       });
-    entry.m_riskStateQueue->Top();
+    entry.m_riskStateQueue->Peek();
     return entry;
   }
 }

@@ -137,7 +137,7 @@ namespace OrderExecutionService {
         return publisher;
       });
     try {
-      return publisher->Top().m_bid.m_price;
+      return publisher->Peek().m_bid.m_price;
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{

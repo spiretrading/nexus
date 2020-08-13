@@ -46,10 +46,9 @@ namespace {
             QueryOrderSubmissions(snapshotQuery, snapshotQueue);
           try {
             while(true) {
-              queue.Push(snapshotQueue->Top().GetValue());
-              lastSequence = std::max(lastSequence,
-                snapshotQueue->Top().GetSequence());
-              snapshotQueue->Pop();
+              auto value = snapshotQueue->Pop();
+              queue.Push(value.GetValue());
+              lastSequence = std::max(lastSequence, value.GetSequence());
             }
           } catch(const std::exception&) {}
         }
@@ -374,11 +373,9 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
   m_submittedOrders.erase(order);
   auto reportQueue = std::make_shared<StateQueue<ExecutionReport>>();
   order->GetPublisher().Monitor(reportQueue);
-  if(auto report = reportQueue->TryTop()) {
-    if(!report || IsTerminal(report->m_status)) {
-      m_orders->Push(order);
-      return;
-    }
+  if(auto report = reportQueue->Peek(); IsTerminal(report->m_status)) {
+    m_orders->Push(order);
+    return;
   }
   auto& entry = Add(OrderWrapperTaskNode(*order, *m_userProfile));
   entry.m_task->Execute();

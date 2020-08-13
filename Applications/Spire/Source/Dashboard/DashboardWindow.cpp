@@ -105,12 +105,9 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
   auto bboQuote = [&] {
     auto bboQuoteIterator = m_bboQuotes.find(*security);
     if(bboQuoteIterator == m_bboQuotes.end()) {
-      return BboQuote{};
+      return BboQuote();
     }
-    if(auto bboQuote = bboQuoteIterator->second.m_bboQuote->TryTop()) {
-      return *bboQuote;
-    }
-    return BboQuote();
+    return bboQuoteIterator->second.m_bboQuote->Peek();
   }();
   if(m_orderTaskView->HandleKeyPressEvent(*event, *security,
       bboQuote.m_ask.m_price, bboQuote.m_bid.m_price)) {
@@ -190,6 +187,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   auto& bboQuoteEntry = GetOrInsert(m_bboQuotes, *security);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
+    bboQuoteEntry.m_bboQuote->Push(BboQuote());
     auto query = BuildCurrentQuery(*security);
     m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
       query, bboQuoteEntry.m_bboQuote);

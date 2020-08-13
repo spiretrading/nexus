@@ -148,9 +148,8 @@ void TimeAndSalesModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
 void TimeAndSalesModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  while(!slotHandler.unique() && slotHandler->TryTop()) {
-    auto task = slotHandler->Pop();
-    task();
+  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();) {
+    (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
       QCoreApplication::instance()->processEvents();

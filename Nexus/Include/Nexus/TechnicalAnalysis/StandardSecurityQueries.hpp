@@ -95,8 +95,7 @@ namespace TechnicalAnalysis {
     client.QueryTimeAndSales(query, queue);
     boost::optional<TimeAndSale> open;
     try {
-      open = queue->Top();
-      queue->Pop();
+      open = queue->Pop();
     } catch(const std::exception&) {}
     return open;
   }
@@ -134,8 +133,7 @@ namespace TechnicalAnalysis {
         auto localQueue = std::make_shared<Beam::Queue<TimeAndSale>>();
         client.QueryTimeAndSales(query, localQueue);
         try {
-          auto timeAndSale = localQueue->Top();
-          localQueue->Pop();
+          auto timeAndSale = localQueue->Pop();
           queue.Push(std::move(timeAndSale));
         } catch(const std::exception&) {}
         localQueue->Break();
@@ -217,8 +215,7 @@ namespace TechnicalAnalysis {
     client.QueryTimeAndSales(query, queue);
     boost::optional<TimeAndSale> previousClose;
     try {
-      previousClose = queue->Top();
-      queue->Pop();
+      previousClose = queue->Pop();
     } catch(const std::exception&) {}
     return previousClose;
   }

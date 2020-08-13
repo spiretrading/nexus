@@ -321,7 +321,7 @@ namespace Details {
       });
     auto bboQuote = [&] () -> boost::optional<BboQuote> {
       try {
-        return securityEntry->m_bboQuote->Top();
+        return securityEntry->m_bboQuote->Peek();
       } catch(const Beam::PipeBrokenException&) {
         m_securityEntries.erase(fields.m_security);
         return boost::none;
