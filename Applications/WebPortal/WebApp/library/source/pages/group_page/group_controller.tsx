@@ -1,8 +1,7 @@
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
-import { GroupInfoController, GroupInfoModel, LocalGroupInfoModel }
-  from './group_info_page';
+import { GroupInfoController } from './group_info_page';
 import { GroupModel } from './group_model';
 import { GroupPage } from './group_page';
 import { GroupSubPage } from './group_sub_page';
@@ -20,7 +19,6 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
-  groupInfoModel: GroupInfoModel;
 }
 
 /** Implements a controller for the GroupPage. */
@@ -30,8 +28,7 @@ export class GroupController extends React.Component<Properties, State> {
     this.state = {
       isLoaded: false,
       cannotLoad: false,
-      redirect: null,
-      groupInfoModel: new LocalGroupInfoModel([])
+      redirect: null
     };
   }
 
@@ -78,10 +75,7 @@ export class GroupController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      this.setState({
-        isLoaded: true,
-        groupInfoModel: new LocalGroupInfoModel(this.props.model.accounts)
-      });
+      this.setState({isLoaded: true});
     } catch {
       this.setState({cannotLoad: true});
     }
