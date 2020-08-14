@@ -16,6 +16,7 @@ export class HttpDashboardModel extends DashboardModel {
     super();
     this.serviceClients = serviceClients;
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, HttpAccountModel>();
+    this.groupModels = new Beam.Map<Beam.DirectoryEntry, HttpGroupModel>();
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
@@ -61,10 +62,12 @@ export class HttpDashboardModel extends DashboardModel {
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): HttpGroupModel {
-    if(!this.groupModel || group.id !== this.groupModel.group.id) {
-      this.groupModel = new HttpGroupModel(group, this.serviceClients);
+    let model = this.groupModels.get(group);
+    if(model === undefined) {
+      model = new HttpGroupModel(group, this.serviceClients);
+      this.groupModels.set(group, model);
     }
-    return this.groupModel;
+    return model;
   }
 
   public async load(): Promise<void> {
@@ -91,6 +94,6 @@ export class HttpDashboardModel extends DashboardModel {
 
   private serviceClients: Nexus.ServiceClients;
   private accountModels: Beam.Map<Beam.DirectoryEntry, HttpAccountModel>;
+  private groupModels: Beam.Map<Beam.DirectoryEntry, HttpGroupModel>;
   private model: LocalDashboardModel;
-  private groupModel: HttpGroupModel;
 }
