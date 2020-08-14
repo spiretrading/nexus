@@ -3,7 +3,7 @@
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingQueryResults.hpp"
@@ -20,8 +20,7 @@ namespace Nexus::ChartingService {
       virtual ~VirtualChartingClient() = default;
 
       virtual void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>&
-        queue) = 0;
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue) = 0;
 
       virtual TimePriceQueryResult LoadTimePriceSeries(const Security& security,
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
@@ -53,11 +52,10 @@ namespace Nexus::ChartingService {
        * @param client The ChartingClient to wrap.
        */
       template<typename CF>
-      WrapperChartingClient(CF&& client);
+      explicit WrapperChartingClient(CF&& client);
 
       void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>&
-        queue) override;
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue) override;
 
       TimePriceQueryResult LoadTimePriceSeries(const Security& security,
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
@@ -90,8 +88,8 @@ namespace Nexus::ChartingService {
   template<typename C>
   void WrapperChartingClient<C>::QuerySecurity(
       const SecurityChartingQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
-    m_client->QuerySecurity(query, queue);
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+    m_client->QuerySecurity(query, std::move(queue));
   }
 
   template<typename C>

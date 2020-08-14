@@ -140,8 +140,7 @@ TEST_SUITE("OrderExecutionServlet") {
       orderFields);
     auto driverMonitor = std::make_shared<Queue<PrimitiveOrder*>>();
     m_driver->GetPublisher().Monitor(driverMonitor);
-    auto receivedOrder = driverMonitor->Top();
-    driverMonitor->Pop();
+    auto receivedOrder = driverMonitor->Pop();
     messageAsync.Get();
     messageAsync.Reset();
     REQUIRE(report.m_status == OrderStatus::PENDING_NEW);

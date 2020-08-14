@@ -114,7 +114,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedOrderImbalance> ClientHistoricalDataStore<C>::
       LoadOrderImbalances(const MarketWideDataQuery& query) {
     using MemberType = void (ClientType::*)(const MarketWideDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrderImbalance>>&);
+      Beam::ScopedQueueWriter<SequencedOrderImbalance>);
     return SubmitQuery<SequencedOrderImbalance>(query,
       static_cast<MemberType>(&ClientType::QueryOrderImbalances));
   }
@@ -123,7 +123,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedBboQuote> ClientHistoricalDataStore<C>::LoadBboQuotes(
       const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>&);
+      Beam::ScopedQueueWriter<SequencedBboQuote>);
     return SubmitQuery<SequencedBboQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBboQuotes));
   }
@@ -132,7 +132,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedBookQuote> ClientHistoricalDataStore<C>::LoadBookQuotes(
       const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>&);
+      Beam::ScopedQueueWriter<SequencedBookQuote>);
     return SubmitQuery<SequencedBookQuote>(query,
       static_cast<MemberType>(&ClientType::QueryBookQuotes));
   }
@@ -141,7 +141,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedMarketQuote> ClientHistoricalDataStore<C>::
       LoadMarketQuotes(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>&);
+      Beam::ScopedQueueWriter<SequencedMarketQuote>);
     return SubmitQuery<SequencedMarketQuote>(query,
       static_cast<MemberType>(&ClientType::QueryMarketQuotes));
   }
@@ -150,7 +150,7 @@ namespace Nexus::MarketDataService {
   std::vector<SequencedTimeAndSale> ClientHistoricalDataStore<C>::
       LoadTimeAndSales(const SecurityMarketDataQuery& query) {
     using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>&);
+      Beam::ScopedQueueWriter<SequencedTimeAndSale>);
     return SubmitQuery<SequencedTimeAndSale>(query,
       static_cast<MemberType>(&ClientType::QueryTimeAndSales));
   }

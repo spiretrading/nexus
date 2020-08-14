@@ -6,6 +6,7 @@
 #include <Beam/Pointers/NativePointerPolicy.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/ValueSnapshotPublisher.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
@@ -46,12 +47,11 @@ namespace Nexus::Accounting {
        * Constructs a PortfolioMonitor.
        * @param portfolio Initializes the Portfolio.
        * @param marketDataClient Initializes the MarketDataClient.
-       * @param orderExecutionPublisher Publishes Order executions.
+       * @param orders The Orders to include in the Portfolio.
        */
       template<typename PF, typename CF>
       PortfolioMonitor(PF&& portfolio, CF&& marketDataClient,
-        const OrderExecutionService::OrderExecutionPublisher&
-        orderExecutionPublisher);
+        Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders);
 
       /** Returns the object publishing updates to the monitored Portfolio. */
       const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
@@ -77,16 +77,15 @@ namespace Nexus::Accounting {
   template<typename PF, typename CF>
   PortfolioMonitor<P, C>::PortfolioMonitor(PF&& portfolio,
       CF&& marketDataClient,
-      const OrderExecutionService::OrderExecutionPublisher&
-      orderExecutionPublisher)
+      Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders)
       : m_portfolio(std::forward<PF>(portfolio)),
         m_marketDataClient(std::forward<CF>(marketDataClient)),
-        m_executionReportPublisher(orderExecutionPublisher),
+        m_executionReportPublisher(std::move(orders)),
         m_publisher(
           [] (auto snapshot, auto& monitor) {
             ForEachPortfolioEntry(*snapshot,
-              [&] (auto& update) {
-                monitor->Push(update);
+              [&] (const auto& update) {
+                monitor.Push(update);
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
     m_executionReportPublisher.Monitor(

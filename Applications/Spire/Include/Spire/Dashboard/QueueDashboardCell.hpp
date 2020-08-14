@@ -1,6 +1,6 @@
 #ifndef SPIRE_QUEUEDASHBOARDCELL_HPP
 #define SPIRE_QUEUEDASHBOARDCELL_HPP
-#include <Beam/Queues/ConverterReaderQueue.hpp>
+#include <Beam/Queues/ConverterQueueReader.hpp>
 #include <Beam/Queues/QueueReader.hpp>
 #include <Beam/Utilities/Casts.hpp>
 #include <QTimer>
@@ -51,7 +51,7 @@ namespace Spire {
   template<typename T>
   QueueDashboardCell::QueueDashboardCell(
       std::shared_ptr<Beam::QueueReader<T>> queue)
-      : QueueDashboardCell{Beam::MakeConverterReaderQueue<Value>(queue,
+      : QueueDashboardCell{Beam::MakeConverterQueueReader(queue,
         Beam::StaticCastConverter<Value>())} {}
 }
 

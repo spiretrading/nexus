@@ -168,12 +168,9 @@ TEST_SUITE("Translation") {
     auto taskState = std::make_shared<Queue<Task::StateEntry>>();
     task->GetPublisher().Monitor(taskState);
     task->Execute();
-    REQUIRE(taskState->Top().m_state == Task::State::INITIALIZING);
-    taskState->Pop();
-    auto submittedOrder1 = submittedOrders->Top();
-    submittedOrders->Pop();
-    REQUIRE(taskState->Top().m_state == Task::State::ACTIVE);
-    taskState->Pop();
+    REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
+    auto submittedOrder1 = submittedOrders->Pop();
+    REQUIRE(taskState->Pop().m_state == Task::State::ACTIVE);
     REQUIRE(submittedOrder1->GetInfo().m_fields.m_security ==
       TEST_SECURITY);
     REQUIRE(submittedOrder1->GetInfo().m_fields.m_quantity == 100);
@@ -183,22 +180,16 @@ TEST_SUITE("Translation") {
       OrderType::LIMIT);
     auto receivedOrders = std::make_shared<Queue<const Order*>>();
     environment.m_environment.MonitorOrderSubmissions(receivedOrders);
-    auto receivedOrder1 = receivedOrders->Top();
-    receivedOrders->Pop();
+    auto receivedOrder1 = receivedOrders->Pop();
     environment.m_environment.AcceptOrder(*receivedOrder1);
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
     submittedOrder1->GetPublisher().Monitor(executionReports);
-    REQUIRE(executionReports->Top().m_status == OrderStatus::PENDING_NEW);
-    executionReports->Pop();
-    REQUIRE(executionReports->Top().m_status == OrderStatus::NEW);
-    executionReports->Pop();
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
     task->Cancel();
-    REQUIRE(taskState->Top().m_state == Task::State::PENDING_CANCEL);
-    taskState->Pop();
-    REQUIRE(executionReports->Top().m_status ==
-      OrderStatus::PENDING_CANCEL);
+    REQUIRE(taskState->Pop().m_state == Task::State::PENDING_CANCEL);
+    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_CANCEL);
     environment.m_environment.CancelOrder(*receivedOrder1);
-    REQUIRE(taskState->Top().m_state == Task::State::CANCELED);
-    taskState->Pop();
+    REQUIRE(taskState->Pop().m_state == Task::State::CANCELED);
   }
 }

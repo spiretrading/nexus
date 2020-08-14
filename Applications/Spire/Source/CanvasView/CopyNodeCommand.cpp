@@ -1,4 +1,5 @@
 #include "Spire/CanvasView/CopyNodeCommand.hpp"
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include <boost/throw_exception.hpp>
 #include <QApplication>
 #include <QClipboard>
@@ -21,7 +22,7 @@ void CopyNodeCommand::undo() {
 void CopyNodeCommand::redo() {
   vector<const CanvasNode*> nodes;
   nodes.push_back(m_copyNode.get());
-  auto data = EncodeAsMimeData(DereferenceView(nodes));
+  auto data = EncodeAsMimeData(MakeDereferenceView(nodes));
   QApplication::clipboard()->setMimeData(data.release());
   BOOST_THROW_EXCEPTION(IgnoreCommandException());
 }

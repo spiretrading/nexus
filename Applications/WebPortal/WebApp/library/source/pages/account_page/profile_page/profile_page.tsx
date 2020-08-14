@@ -35,6 +35,9 @@ interface Properties {
   /** Whether the form can be edited. */
   readonly?: boolean;
 
+  /** Whether the password can be edited. */
+  isPasswordReadOnly: boolean;
+
   /** The status of the submission. */
   submitStatus?: string;
 
@@ -64,6 +67,10 @@ interface State {
   newRoles: Nexus.AccountRoles;
   newIdentity: Nexus.AccountIdentity;
   isProfileChanged: boolean;
+  photoUploaderMode: PhotoFieldDisplayMode;
+  photoId: string;
+  newPhoto: string;
+  newScaling: number;
 }
 
 /** Displays an account's profile page. */
@@ -89,7 +96,11 @@ export class ProfilePage extends React.Component<Properties, State> {
       isPasswordChanged: false,
       newRoles: this.props.roles.clone(),
       newIdentity: this.props.identity.clone(),
-      isProfileChanged: false
+      isProfileChanged: false,
+      photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
+      photoId: this.props.identity.photoId,
+      newPhoto: '',
+      newScaling: 1
     };
   }
 
@@ -111,11 +122,16 @@ export class ProfilePage extends React.Component<Properties, State> {
         return (
           <PhotoField
             displaySize={this.props.displaySize}
-            displayMode={PhotoFieldDisplayMode.DISPLAY}
-            imageSource={this.props.identity.photoId}
-            newImageSource={null}
-            newScaling={1}
-            scaling={1}/>);
+            displayMode={this.state.photoUploaderMode}
+            imageSource={this.state.newIdentity.photoId}
+            onToggleUploader={this.onPhotoFieldClick}
+            onSubmit={this.onPhotoSubmit}
+            onNewPhotoChange={this.onPhotoChange}
+            onNewScalingChange={this.onScaleChange}
+            newImageSource={this.state.newPhoto}
+            newScaling={this.state.newScaling}
+            scaling={1}
+            readonly={this.props.readonly}/>);
       }
     })();
     const sidePanelPhotoPadding = (() => {
@@ -134,11 +150,16 @@ export class ProfilePage extends React.Component<Properties, State> {
           <Dali.VBoxLayout>
             <PhotoField
               displaySize={this.props.displaySize}
-              displayMode={PhotoFieldDisplayMode.DISPLAY}
-              imageSource={this.props.identity.photoId}
-              newImageSource={null}
-              newScaling={1}
-              scaling={1}/>
+              displayMode={this.state.photoUploaderMode}
+              imageSource={this.state.newIdentity.photoId}
+              onToggleUploader={this.onPhotoFieldClick}
+              onSubmit={this.onPhotoSubmit}
+              onNewPhotoChange={this.onPhotoChange}
+              onNewScalingChange={this.onScaleChange}
+              newImageSource={this.state.newPhoto}
+              newScaling={this.state.newScaling}
+              scaling={1}
+              readonly={this.props.readonly}/>
             <Dali.Padding size={ProfilePage.STANDARD_PADDING}/>
           </Dali.VBoxLayout>);
       } else {
@@ -228,6 +249,9 @@ export class ProfilePage extends React.Component<Properties, State> {
       }
     })();
     const changePasswordBox = (() => {
+      if(this.props.isPasswordReadOnly) {
+        return '';
+      }
       const passwordButtonEnabled = this.state.password1 !== '' &&
         this.state.password2 !== '';
       const status = (() => {
@@ -446,6 +470,37 @@ export class ProfilePage extends React.Component<Properties, State> {
           <div style={ProfilePage.STYLE.pagePadding}/>
         </div>
       </PageWrapper>);
+  }
+
+  private onPhotoFieldClick = () => {
+    if(this.state.photoUploaderMode === PhotoFieldDisplayMode.DISPLAY) {
+      this.setState({
+        photoUploaderMode: PhotoFieldDisplayMode.UPLOADING,
+        newPhoto: this.state.newIdentity.photoId,
+        newScaling: 1
+      });
+    } else {
+      this.setState({
+        photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
+        newPhoto: this.state.newIdentity.photoId
+      });
+    }
+  }
+
+  private onPhotoChange = (photo: string) => {
+    this.setState({newPhoto: photo});
+  }
+
+  private onScaleChange = (scaling: number) => {
+    this.setState({newScaling: scaling});
+  }
+
+  private onPhotoSubmit = (newFileLocation: string, scaling: number) => {
+    this.state.newIdentity.photoId = newFileLocation;
+    this.setState({
+      newIdentity: this.state.newIdentity,
+      isProfileChanged: true
+    });
   }
 
   private onFirstNameChange = (value: string) => {

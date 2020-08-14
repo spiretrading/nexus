@@ -16,6 +16,12 @@ interface Properties {
   /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
 
+  /** Indicates the profile's readonly condition. */
+  readonly: boolean;
+
+  /** Indicates the profile's PasswordReadonly condition. */
+  isPasswordReadOnly: boolean;
+
   /** The model representing the account's profile. */
   model: ProfileModel;
 }
@@ -49,11 +55,11 @@ export class ProfileController extends React.Component<Properties, State> {
       account={this.props.model.account}
       roles={this.props.model.roles}
       identity={this.props.model.identity}
-      groups={this.props.groups}
+      groups={this.props.model.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
-      readonly={!this.props.model.roles.test(
-        Nexus.AccountRoles.Role.ADMINISTRATOR)}
+      readonly={this.props.readonly}
+      isPasswordReadOnly={this.props.isPasswordReadOnly}
       submitStatus={this.state.identityStatus}
       hasError={this.state.hasIdentityError}
       onSubmit={this.onSubmitIdentity}
@@ -67,6 +73,15 @@ export class ProfileController extends React.Component<Properties, State> {
     this.setState({
       isLoaded: true
     });
+  }
+
+  public componentDidUpdate(prevProps: Properties): void {
+    if(prevProps.model.account &&
+        !prevProps.model.account.equals(this.props.model.account)) {
+      this.setState({isLoaded: false}, () => {
+        this.setState({isLoaded: true});
+      });
+    }
   }
 
   private onSubmitPassword = async (password: string) => {

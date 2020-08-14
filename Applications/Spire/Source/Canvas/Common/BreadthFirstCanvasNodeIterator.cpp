@@ -67,6 +67,6 @@ const CanvasNode& BreadthFirstCanvasNodeIterator::dereference() const {
 }
 
 View<const CanvasNode> Spire::BreadthFirstView(const CanvasNode& node) {
-  return MakeView(BreadthFirstCanvasNodeIterator(node),
+  return View(BreadthFirstCanvasNodeIterator(node),
     BreadthFirstCanvasNodeIterator());
 }

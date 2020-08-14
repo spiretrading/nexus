@@ -3,7 +3,7 @@
 #include <optional>
 #include <vector>
 #include <QWidget>
-#include <Beam/Queues/SequencePublisher.hpp>
+#include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
 #include "Spire/Blotter/ProfitAndLossModel.hpp"
@@ -39,15 +39,12 @@ namespace Spire {
 
     private:
       struct ReportModel {
-        std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
-          m_orderPublisher;
         ProfitAndLossModel m_profitAndLossModel;
         SpirePortfolioMonitor m_portfolioMonitor;
 
         ReportModel(Beam::Ref<UserProfile> userProfile,
-          const std::shared_ptr<
-          Nexus::OrderExecutionService::OrderExecutionPublisher>&
-          orderPublisher);
+          Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*>
+          orders);
       };
       std::unique_ptr<Ui_GroupProfitAndLossReportWidget> m_ui;
       UserProfile* m_userProfile;

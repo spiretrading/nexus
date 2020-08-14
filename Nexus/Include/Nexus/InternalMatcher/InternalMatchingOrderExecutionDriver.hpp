@@ -1,5 +1,7 @@
 #ifndef NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
@@ -9,8 +11,6 @@
 #include <Beam/Threading/TimedConditionVariable.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -321,7 +321,7 @@ namespace Details {
       });
     auto bboQuote = [&] () -> boost::optional<BboQuote> {
       try {
-        return securityEntry->m_bboQuote->Top();
+        return securityEntry->m_bboQuote->Peek();
       } catch(const Beam::PipeBrokenException&) {
         m_securityEntries.erase(fields.m_security);
         return boost::none;

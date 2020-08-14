@@ -173,7 +173,7 @@ namespace OrderExecutionService {
   OrderStatus SecurityOrderSimulator<TimeClientType>::UpdateOrder(
       PrimitiveOrder& order) {
     OrderStatus finalStatus;
-    BboQuote bboQuote = m_bboQuoteQueue->Top();
+    BboQuote bboQuote = m_bboQuoteQueue->Peek();
     order.With(
       [&] (auto status, auto& reports) {
         auto side = order.GetInfo().m_fields.m_side;

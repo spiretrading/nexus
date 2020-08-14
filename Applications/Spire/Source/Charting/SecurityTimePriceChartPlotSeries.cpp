@@ -99,7 +99,7 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
     query, timeAndSalesQueue);
   ChartValue domain;
   try {
-    domain = ChartValue(timeAndSalesQueue->Top().m_timestamp);
+    domain = ChartValue(timeAndSalesQueue->Pop().m_timestamp);
   } catch(const std::exception&) {
     BOOST_THROW_EXCEPTION(std::runtime_error("Unable to load last point."));
   }

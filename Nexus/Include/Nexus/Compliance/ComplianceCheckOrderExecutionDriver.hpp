@@ -1,11 +1,11 @@
 #ifndef NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"

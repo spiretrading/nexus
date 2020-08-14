@@ -91,15 +91,14 @@ TEST_SUITE("OrderExecutionClient") {
     auto pendingNewReportOut = ExecutionReport::BuildInitialReport(
       order.GetInfo().m_orderId, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, pendingNewReportOut);
-    auto pendingNewReportIn = updates->Top();
-    updates->Pop();
+    auto pendingNewReportIn = updates->Pop();
     REQUIRE(pendingNewReportIn.m_status == OrderStatus::PENDING_NEW);
     REQUIRE(pendingNewReportIn.m_id == 1);
     REQUIRE(pendingNewReportIn.m_additionalTags.empty());
     auto newReportOut = ExecutionReport::BuildUpdatedReport(pendingNewReportOut,
       OrderStatus::NEW, microsec_clock::universal_time());
     SendRecordMessage<OrderUpdateMessage>(*serverClient, newReportOut);
-    auto newReportIn = updates->Top();
+    auto newReportIn = updates->Pop();
     REQUIRE(newReportIn.m_status == OrderStatus::NEW);
     REQUIRE(newReportIn.m_id == 1);
     REQUIRE(newReportIn.m_additionalTags.empty());

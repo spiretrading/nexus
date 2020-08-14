@@ -85,7 +85,7 @@ namespace {
     }
 
     ~Fixture() {
-      REQUIRE(m_mockDriverMonitor->IsEmpty());
+      REQUIRE(!m_mockDriverMonitor->TryPop());
     }
 
     void SetBbo(Money bid, Money ask) {
@@ -158,9 +158,8 @@ namespace {
 
     void ExpectStatus(const std::shared_ptr<Queue<ExecutionReport>>& queue,
         OrderStatus status) {
-      auto report = queue->Top();
+      auto report = queue->Pop();
       REQUIRE(report.m_status == status);
-      queue->Pop();
     }
 
     void ExpectPassiveInternalMatch(OrderEntry& orderEntry,
@@ -172,8 +171,7 @@ namespace {
       m_environment.CancelOrder(*orderEntry.m_mockOrder);
 
       // Check that the passive order was filled.
-      auto fillReport = orderEntry.m_executionReportQueue->Top();
-      orderEntry.m_executionReportQueue->Pop();
+      auto fillReport = orderEntry.m_executionReportQueue->Pop();
       REQUIRE(fillReport.m_lastPrice ==
         orderEntry.m_order->GetInfo().m_fields.m_price);
       REQUIRE(fillReport.m_lastQuantity == expectedQuantity);
@@ -184,14 +182,13 @@ namespace {
         REQUIRE(fillReport.m_status == OrderStatus::PARTIALLY_FILLED);
       }
 
-      // Check for any remaining quantity left over and that an Order is executed
-      // for the remaining amount.
+      // Check for any remaining quantity left over and that an Order is
+      // executed for the remaining amount.
       if(orderEntry.m_remainingQuantity > 0) {
         Accept(orderEntry);
         auto matchedFields = orderEntry.m_order->GetInfo().m_fields;
         matchedFields.m_quantity = orderEntry.m_remainingQuantity;
-        REQUIRE(orderEntry.m_mockOrder->GetInfo().m_fields ==
-          matchedFields);
+        REQUIRE(orderEntry.m_mockOrder->GetInfo().m_fields == matchedFields);
       }
     }
 
@@ -199,8 +196,7 @@ namespace {
         Quantity expectedQuantity, int condition = 0) {
 
       //! Check that the active order was filled.
-      auto fillReport = orderEntry.m_executionReportQueue->Top();
-      orderEntry.m_executionReportQueue->Pop();
+      auto fillReport = orderEntry.m_executionReportQueue->Pop();
       REQUIRE(fillReport.m_lastPrice == expectedPrice);
       REQUIRE(fillReport.m_lastQuantity == expectedQuantity);
       orderEntry.m_remainingQuantity -= fillReport.m_lastQuantity;
@@ -216,8 +212,7 @@ namespace {
 
     void PullMockOrder(std::shared_ptr<Queue<const Order*>>& monitor,
         Out<OrderEntry> orderEntry) {
-      orderEntry->m_mockOrder = monitor->Top();
-      monitor->Pop();
+      orderEntry->m_mockOrder = monitor->Pop();
       orderEntry->m_mockExecutionReportQueue =
         std::make_shared<Queue<ExecutionReport>>();
       orderEntry->m_mockOrder->GetPublisher().Monitor(

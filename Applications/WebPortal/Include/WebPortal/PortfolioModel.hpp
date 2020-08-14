@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
-#include <Beam/Queues/MultiQueueWriter.hpp>
+#include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -71,7 +71,7 @@ namespace Nexus::WebPortal {
         m_entries;
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
         m_securityToEntries;
-      Beam::MultiQueueWriter<Entry> m_publisher;
+      Beam::QueueWriterPublisher<Entry> m_publisher;
       std::unordered_map<Security, Accounting::SecurityValuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
