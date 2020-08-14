@@ -1,6 +1,6 @@
 #include "Spire/Canvas/Common/SignatureNode.hpp"
 #include <Beam/Collections/DereferenceIterator.hpp>
-#include <Beam/Collections/IndexedIterator.hpp>
+#include <Beam/Collections/IndexIterator.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
@@ -29,7 +29,7 @@ namespace {
     vector<std::shared_ptr<NativeType>> returnTypes;
     for(const auto& signature : signatures) {
       bool validSignature = true;
-      for(const auto& child : MakeIndexedView(node.GetChildren())) {
+      for(const auto& child : MakeIndexView(node.GetChildren())) {
         if(!IsCompatible(child.GetValue().GetType(),
             *signature[child.GetIndex()]) &&
             (dynamic_cast<const RecordType*>(&child.GetValue().GetType()) ==
@@ -52,7 +52,7 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
     GetSignatures().front().size());
   for(const auto& signature : GetSignatures()) {
     if(IsCompatible(type, *signature.back())) {
-      for(const auto& type : MakeIndexedView(signature)) {
+      for(const auto& type : MakeIndexView(signature)) {
         signatureEntries[type.GetIndex()].push_back(type.GetValue());
       }
     }
@@ -61,7 +61,7 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
   auto clone = Clone(*this);
-  for(const auto& signature : DropLast(MakeIndexedView(signatureEntries))) {
+  for(const auto& signature : DropLast(MakeIndexView(signatureEntries))) {
     auto parameterType = UnionType::Create(
       MakeDereferenceView(signature.GetValue()));
     auto& child = clone->GetChildren()[signature.GetIndex()];
@@ -79,7 +79,7 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
 unique_ptr<CanvasNode> SignatureNode::Replace(const CanvasNode& child,
     unique_ptr<CanvasNode> replacement) const {
   size_t replacementIndex;
-  for(const auto& selfChild : MakeIndexedView(GetChildren())) {
+  for(const auto& selfChild : MakeIndexView(GetChildren())) {
     if(&selfChild.GetValue() == &child) {
       replacementIndex = selfChild.GetIndex();
       break;
