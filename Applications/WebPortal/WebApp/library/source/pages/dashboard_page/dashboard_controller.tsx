@@ -137,8 +137,8 @@ export class DashboardController extends React.Component<Properties, State> {
     }
   }
 
-  static ACCOUNT_PATTERN = Path.pathToRegexp('/account/:id(\\d+)?', [],
-    { end: false });
-  static GROUP_PATTERN = Path.pathToRegexp('/group/:id(\\d+)?', [],
-    { end: false });
+  private static readonly ACCOUNT_PATTERN = Path.pathToRegexp(
+    '/account/:id(\\d+)?', [], { end: false });
+  private static readonly GROUP_PATTERN = Path.pathToRegexp(
+    '/group/:id(\\d+)?', [], { end: false });
 }
