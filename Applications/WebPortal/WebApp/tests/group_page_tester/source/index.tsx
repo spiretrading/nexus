@@ -21,7 +21,7 @@ class GroupPageTester extends React.Component<Properties, State> {
       isLoaded: false
     };
     this.groupModel = new LocalGroupModel(
-      Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here'));
+      Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here'), []);
   }
 
   public async componentDidMount(): Promise<void> {
