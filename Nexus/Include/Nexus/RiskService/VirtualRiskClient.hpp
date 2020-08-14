@@ -44,7 +44,7 @@ namespace Nexus::RiskService {
        * @param client The RiskClient to wrap.
        */
       template<typename CF>
-      WrapperRiskClient(CF&& client);
+      explicit WrapperRiskClient(CF&& client);
 
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher()
         override;

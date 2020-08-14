@@ -1,7 +1,7 @@
 #ifndef NEXUS_LOCAL_RISK_DATA_STORE_HPP
 #define NEXUS_LOCAL_RISK_DATA_STORE_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 

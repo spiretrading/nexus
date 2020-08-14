@@ -98,10 +98,8 @@ TEST_SUITE("RiskTransitionProcessor") {
     processor.Update(askReport);
     processor.Update(RiskState::Type::CLOSE_ORDERS);
     auto cancelIds = std::vector<OrderId>();
-    cancelIds.push_back(cancelQueue->Top());
-    cancelQueue->Pop();
-    cancelIds.push_back(cancelQueue->Top());
-    cancelQueue->Pop();
+    cancelIds.push_back(cancelQueue->Pop());
+    cancelIds.push_back(cancelQueue->Pop());
     auto expectedCancelIds = std::vector<OrderId>{112, 113};
     REQUIRE(std::is_permutation(cancelIds.begin(), cancelIds.end(),
       expectedCancelIds.begin(), expectedCancelIds.end()));
@@ -172,22 +170,19 @@ TEST_SUITE("RiskTransitionProcessor") {
       askReport.m_timestamp);
     processor.Update(askReport);
     processor.Update(RiskState::Type::CLOSE_ORDERS);
-    auto cancelId = cancelQueue->Top();
-    cancelQueue->Pop();
+    auto cancelId = cancelQueue->Pop();
     REQUIRE(cancelId == 127);
     bidReport2 = ExecutionReport::BuildUpdatedReport(bidReport2,
       OrderStatus::CANCELED, bidReport2.m_timestamp);
     bidReport2.m_id = 127;
     processor.Update(bidReport2);
     processor.Update(RiskState::Type::DISABLED);
-    cancelId = cancelQueue->Top();
-    cancelQueue->Pop();
+    cancelId = cancelQueue->Pop();
     REQUIRE(cancelId == 143);
     askReport = ExecutionReport::BuildUpdatedReport(askReport,
       OrderStatus::CANCELED, askReport.m_timestamp);
     processor.Update(askReport);
-    auto flatteningOrder = submissionQueue->Top();
-    submissionQueue->Pop();
+    auto flatteningOrder = submissionQueue->Pop();
     REQUIRE(flatteningOrder.m_security == TSLA);
     REQUIRE(flatteningOrder.m_side == Side::ASK);
     REQUIRE(flatteningOrder.m_quantity == 100);
@@ -245,8 +240,7 @@ TEST_SUITE("RiskTransitionProcessor") {
       OrderStatus::NEW, bidReport2.m_timestamp);
     processor.Update(bidReport2);
     processor.Update(RiskState::Type::CLOSE_ORDERS);
-    auto cancelId = cancelQueue->Top();
-    cancelQueue->Pop();
+    auto cancelId = cancelQueue->Pop();
     REQUIRE(cancelId == 114);
     bidReport2 = ExecutionReport::BuildUpdatedReport(bidReport2,
       OrderStatus::CANCELED, bidReport2.m_timestamp);
@@ -256,18 +250,15 @@ TEST_SUITE("RiskTransitionProcessor") {
       Side::ASK, 100, Money::ONE + Money::CENT), 1000,
       time_from_string("2020-11-17 12:22:06")));
     m_serviceClient->Cancel(*syncOrder);
-    cancelId = cancelQueue->Top();
-    cancelQueue->Pop();
+    cancelId = cancelQueue->Pop();
     REQUIRE(cancelId == 1000);
     processor.Update(RiskState::Type::DISABLED);
-    cancelId = cancelQueue->Top();
-    cancelQueue->Pop();
+    cancelId = cancelQueue->Pop();
     REQUIRE(cancelId == 113);
     bidReport = ExecutionReport::BuildUpdatedReport(bidReport,
       OrderStatus::CANCELED, bidReport.m_timestamp);
     processor.Update(bidReport);
-    auto flatteningOrder = submissionQueue->Top();
-    submissionQueue->Pop();
+    auto flatteningOrder = submissionQueue->Pop();
     REQUIRE(flatteningOrder.m_security == XIU);
     REQUIRE(flatteningOrder.m_side == Side::BID);
     REQUIRE(flatteningOrder.m_quantity == 300);

@@ -1,3 +1,5 @@
+#include <Beam/Queues/ConverterQueueReader.hpp>
+#include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/ServicesTests/TestServices.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/RiskService/RiskController.hpp"
@@ -33,7 +35,8 @@ namespace {
 TEST_SUITE("RiskController") {
   TEST_CASE_FIXTURE(Fixture, "single_account") {
     auto accountUpdateQueue = std::make_shared<Queue<AccountUpdate>>();
-    m_serviceClients.GetServiceLocatorClient().MonitorAccounts(accountQueue);
+    m_serviceClients.GetServiceLocatorClient().MonitorAccounts(
+      accountUpdateQueue);
     auto accountQueue = MakeConverterQueueReader(MakeFilteredQueueReader(
       std::move(accountUpdateQueue),
       [] (const auto& update) {
@@ -42,10 +45,13 @@ TEST_SUITE("RiskController") {
       [] (const auto& update) {
         return update.m_account;
       });
+    auto exchangeRates = std::vector<ExchangeRate>();
     auto controller = RiskController(accountQueue,
-      m_serviceClients.GetAdministrationClient(),
-      m_serviceClients.GetMarketDataClient(),
-      m_serviceClients.GetOrderExecutionClient(),
-      m_serviceClients.BuildTimer(seconds(1)));
+      &m_serviceClients.GetAdministrationClient(),
+      &m_serviceClients.GetMarketDataClient(),
+      &m_serviceClients.GetOrderExecutionClient(),
+      m_serviceClients.BuildTimer(seconds(1)),
+      &m_serviceClients.GetTimeClient(), exchangeRates,
+      GetDefaultDestinationDatabase());
   }
 }

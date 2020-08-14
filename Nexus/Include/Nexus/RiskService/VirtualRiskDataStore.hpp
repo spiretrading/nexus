@@ -44,7 +44,7 @@ namespace Nexus::RiskService {
        * @param dataStore The RiskDataStore to wrap.
        */
       template<typename DF>
-      WrapperRiskDataStore(DF&& dataStore);
+      explicit WrapperRiskDataStore(DF&& dataStore);
 
       InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
