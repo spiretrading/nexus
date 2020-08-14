@@ -95,8 +95,8 @@ export class DashboardController extends React.Component<Properties, State> {
 
   private renderAccountPage = () => {
     const model = (() => {
-      const match = DashboardController.ACCOUNT_PATTERN
-        .exec(window.location.pathname);
+      const match = DashboardController.ACCOUNT_PATTERN.exec(
+        window.location.pathname);
       const account = (() => {
         if(match[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
@@ -116,8 +116,8 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private renderGroupPage = () => {
-    const match = DashboardController.GROUP_PATTERN
-      .exec(window.location.pathname);
+    const match = DashboardController.GROUP_PATTERN.exec(
+      window.location.pathname);
     if(!match[1]) {
       return this.renderPageNotFound();
     }
