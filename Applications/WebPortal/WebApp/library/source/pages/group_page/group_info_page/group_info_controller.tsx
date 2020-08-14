@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AccountEntry, DisplaySize, LoadingPage } from '../../..';
+import { AccountEntry, DisplaySize } from '../../..';
 import { GroupInfoPage } from './group_info_page';
 
 interface Properties {
@@ -12,7 +12,6 @@ interface Properties {
 }
 
 interface State {
-  isLoaded: boolean;
   accounts: AccountEntry[];
 }
 
@@ -21,26 +20,15 @@ export class GroupInfoController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false,
-      accounts: []
+      accounts: this.props.accounts.sort(GroupInfoController.accountComparator)
     }
   }
 
   public render(): JSX.Element {
-    if(!this.state.isLoaded) {
-      return <LoadingPage/>;
-    }
     return(
       <GroupInfoPage
         displaySize={this.props.displaySize}
         group={this.state.accounts}/>);
-  }
-
-  public componentDidMount(): void {
-    this.setState({
-      isLoaded: true,
-      accounts: this.props.accounts.sort(GroupInfoController.accountComparator)
-    });
   }
 
   private static accountComparator(accountA: AccountEntry,
