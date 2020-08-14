@@ -23,7 +23,7 @@ export class HttpGroupModel extends GroupModel {
   }
 
   public get accounts(): AccountEntry[] {
-    return this._accounts.slice();
+    return this.model.accounts;
   }
 
   public async load(): Promise<void> {
@@ -44,16 +44,17 @@ export class HttpGroupModel extends GroupModel {
         .loadAccountRoles(trader);
       accounts.push(new AccountEntry(trader, roles));
     }
-    this._accounts = accounts.filter(
-      (value: AccountEntry, index: number, array: AccountEntry[]) => {
-        return array.findIndex((target: AccountEntry) =>
-          (target.account.id === value.account.id)) === index});
-    this.model = new LocalGroupModel(this.tradingGroup.entry, this._accounts);
+    const nonDuplicateAccounts = accounts.filter(
+      (accountEntry: AccountEntry, index: number,
+          accountEntries: AccountEntry[]) => {
+        return accountEntries.findIndex((target: AccountEntry) =>
+          (target.account.id === accountEntry.account.id)) === index});
+    this.model = new LocalGroupModel(this.tradingGroup.entry,
+      nonDuplicateAccounts);
     await this.model.load();
   }
 
   private model: LocalGroupModel;
   private serviceClients: Nexus.ServiceClients;
   private tradingGroup: Nexus.TradingGroup;
-  private _accounts: AccountEntry[];
 }
