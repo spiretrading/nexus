@@ -1,7 +1,5 @@
 #ifndef SPIRE_HPP
 #define SPIRE_HPP
-#include <Beam/Queues/AggregatePublisher.hpp>
-#include <Beam/Queues/FilteredPublisher.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/PortfolioMonitor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -18,9 +16,6 @@ namespace Spire {
   using SpirePortfolio = Nexus::Accounting::Portfolio<SpireBookkeeper>;
   using SpirePortfolioMonitor = Nexus::Accounting::PortfolioMonitor<
     SpirePortfolio, Nexus::MarketDataService::VirtualMarketDataClient*>;
-  using SpireAggregateOrderExecutionPublisher = Beam::AggregatePublisher<
-    Beam::FilteredPublisher<Beam::SequencePublisher<
-    const Nexus::OrderExecutionService::Order*>>>;
   class UserProfile;
 }
 

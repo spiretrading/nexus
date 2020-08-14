@@ -7,6 +7,7 @@
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queries/StandardValues.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -94,8 +95,7 @@ namespace TechnicalAnalysis {
     client.QueryTimeAndSales(query, queue);
     boost::optional<TimeAndSale> open;
     try {
-      open = queue->Top();
-      queue->Pop();
+      open = queue->Pop();
     } catch(const std::exception&) {}
     return open;
   }
@@ -116,14 +116,13 @@ namespace TechnicalAnalysis {
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
       const std::string& marketCenter,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
     Beam::Routines::Spawn(
-      [=, &client] {
+      [=, queue = std::move(queue), &client] () mutable {
         auto open = LoadOpen(client, security, date, marketDatabase,
           timeZoneDatabase, marketCenter);
-        if(open.is_initialized()) {
-          queue->Push(*open);
-          queue->Break();
+        if(open) {
+          queue.Push(*open);
           return;
         }
         auto query = BuildOpenQuery(security, date, marketDatabase,
@@ -134,12 +133,10 @@ namespace TechnicalAnalysis {
         auto localQueue = std::make_shared<Beam::Queue<TimeAndSale>>();
         client.QueryTimeAndSales(query, localQueue);
         try {
-          auto timeAndSale = localQueue->Top();
-          localQueue->Pop();
-          queue->Push(std::move(timeAndSale));
+          auto timeAndSale = localQueue->Pop();
+          queue.Push(std::move(timeAndSale));
         } catch(const std::exception&) {}
         localQueue->Break();
-        queue->Break();
       });
   }
 
@@ -218,8 +215,7 @@ namespace TechnicalAnalysis {
     client.QueryTimeAndSales(query, queue);
     boost::optional<TimeAndSale> previousClose;
     try {
-      previousClose = queue->Top();
-      queue->Pop();
+      previousClose = queue->Pop();
     } catch(const std::exception&) {}
     return previousClose;
   }
@@ -285,10 +281,10 @@ namespace TechnicalAnalysis {
       const boost::posix_time::ptime& endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     auto query = BuildDailyHighQuery(security, startDay, endDay, marketDatabase,
       timeZoneDatabase);
-    client.QuerySecurity(query, queue);
+    client.QuerySecurity(query, std::move(queue));
   }
 
   //! Builds a query for a Security's low price.
@@ -352,10 +348,10 @@ namespace TechnicalAnalysis {
       const boost::posix_time::ptime& endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     auto query = BuildDailyLowQuery(security, startDay, endDay, marketDatabase,
       timeZoneDatabase);
-    client.QuerySecurity(query, queue);
+    client.QuerySecurity(query, std::move(queue));
   }
 
   //! Builds a query over a Security's volume.
@@ -418,10 +414,10 @@ namespace TechnicalAnalysis {
       const boost::posix_time::ptime& endDay,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     auto query = BuildDailyVolumeQuery(security, startDay, endDay,
       marketDatabase, timeZoneDatabase);
-    client.QuerySecurity(query, queue);
+    client.QuerySecurity(query, std::move(queue));
   }
 }
 }

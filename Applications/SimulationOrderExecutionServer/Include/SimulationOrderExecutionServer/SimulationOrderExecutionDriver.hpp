@@ -1,10 +1,10 @@
 #ifndef NEXUS_SIMULATIONORDEREXECUTIONDRIVER_HPP
 #define NEXUS_SIMULATIONORDEREXECUTIONDRIVER_HPP
 #include <unordered_map>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"

@@ -44,8 +44,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
       Money::ONE);
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
-    auto submittedRecoveryOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
+    auto submittedRecoveryOrder = m_orderSubmissions->Pop();
     m_testEnvironment.AcceptOrder(*submittedRecoveryOrder);
     m_testEnvironment.FillOrder(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
@@ -53,8 +52,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
       2 * Money::ONE);
     auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       submissionFields);
-    auto submittedOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
+    auto submittedOrder = m_orderSubmissions->Pop();
     REQUIRE_NOTHROW(rule.Submit(*submittedOrder));
   }
 }

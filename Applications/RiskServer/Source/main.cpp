@@ -4,7 +4,7 @@
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/Parsers/Parse.hpp>
-#include <Beam/Queues/AggregateQueue.hpp>
+#include <Beam/Queues/AggregateQueueReader.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
@@ -200,8 +200,8 @@ int main(int argc, const char** argv) {
         Beam::Queries::Sequence::Last());
     }
     auto accounts = serviceLocatorClient->LoadAllAccounts();
-    vector<std::shared_ptr<QueueReader<const Order*>>> accountServletQueues;
-    vector<std::shared_ptr<QueueReader<const Order*>>> accountTransitionQueues;
+    vector<ScopedQueueReader<const Order*>> accountServletQueues;
+    vector<ScopedQueueReader<const Order*>> accountTransitionQueues;
     for(const auto& account : accounts) {
       AccountQuery query;
       query.SetIndex(account);
@@ -215,9 +215,11 @@ int main(int argc, const char** argv) {
         accountTransitionQueue);
       accountTransitionQueues.push_back(accountTransitionQueue);
     }
-    auto orderServletQueue = std::make_shared<AggregateQueue<const Order*>>(
+    auto orderServletQueue =
+      std::make_shared<AggregateQueueReader<const Order*>>(
       std::move(accountServletQueues));
-    auto orderTransitionQueue = std::make_shared<AggregateQueue<const Order*>>(
+    auto orderTransitionQueue =
+      std::make_shared<AggregateQueueReader<const Order*>>(
       std::move(accountTransitionQueues));
     riskServer.emplace(Initialize(serviceLocatorClient.Get(),
       Initialize(orderServletQueue, administrationClient.Get(),

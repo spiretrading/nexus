@@ -1,4 +1,5 @@
 #include "Spire/CanvasView/CutNodeCommand.hpp"
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
@@ -33,7 +34,7 @@ void CutNodeCommand::redo() {
     }
     vector<const CanvasNode*> nodes;
     nodes.push_back(&*optionalNode);
-    auto data = EncodeAsMimeData(DereferenceView(nodes));
+    auto data = EncodeAsMimeData(MakeDereferenceView(nodes));
     QApplication::clipboard()->setMimeData(data.release());
   }
   m_deleteCommand.redo();

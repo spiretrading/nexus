@@ -88,7 +88,7 @@ namespace Nexus::OrderExecutionService {
     marketDataClient.QueryBboQuotes(Beam::Queries::BuildLatestQuery(security),
       snapshot);
     try {
-      m_bboQuote = snapshot->Top();
+      m_bboQuote = snapshot->Pop();
     } catch(const std::exception&) {
       return;
     }

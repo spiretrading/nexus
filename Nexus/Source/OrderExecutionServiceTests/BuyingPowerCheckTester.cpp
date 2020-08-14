@@ -101,8 +101,7 @@ TEST_SUITE("BuyingPowerCheck") {
       Money::ONE);
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
-    auto submittedRecoveryOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
+    auto submittedRecoveryOrder = m_orderSubmissions->Pop();
     m_environment.AcceptOrder(*submittedRecoveryOrder);
     m_environment.FillOrder(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(m_buyingPowerCheck.Add(*submittedRecoveryOrder));
@@ -110,8 +109,7 @@ TEST_SUITE("BuyingPowerCheck") {
       2 * Money::ONE);
     auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       submissionFields);
-    auto submittedOrder = m_orderSubmissions->Top();
-    m_orderSubmissions->Pop();
+    auto submittedOrder = m_orderSubmissions->Pop();
     REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(submittedOrder->GetInfo()));
   }
 }

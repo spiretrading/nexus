@@ -486,10 +486,9 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
 void BookViewModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  while(slotHandler.use_count() != 1 && !slotHandler->IsEmpty()) {
-    std::function<void ()> task;
-    slotHandler->Emplace(Store(task));
-    task();
+  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
+      task = slotHandler->TryPop()) {
+    (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
       QCoreApplication::instance()->processEvents();

@@ -1,7 +1,7 @@
 #ifndef NEXUS_PER_ACCOUNT_COMPLIANCE_RULE_HPP
 #define NEXUS_PER_ACCOUNT_COMPLIANCE_RULE_HPP
 #include <functional>
-#include <Beam/Utilities/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"

@@ -3,8 +3,8 @@
 #include <exception>
 #include <sstream>
 #include <unordered_set>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"

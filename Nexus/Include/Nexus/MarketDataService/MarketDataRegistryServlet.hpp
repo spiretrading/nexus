@@ -1,11 +1,11 @@
 #ifndef NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"

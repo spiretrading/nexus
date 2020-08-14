@@ -524,7 +524,7 @@ HttpResponse AdministrationWebServlet::OnLoadRiskParameters(
   auto queue = std::make_shared<Queue<RiskParameters>>();
   serviceClients.GetAdministrationClient().GetRiskParametersPublisher(
     parameters.m_account).Monitor(queue);
-  auto riskParameters = queue->Top();
+  auto riskParameters = queue->Pop();
   session->ShuttleResponse(riskParameters, Store(response));
   return response;
 }

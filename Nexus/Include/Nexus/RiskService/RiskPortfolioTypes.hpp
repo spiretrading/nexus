@@ -3,6 +3,7 @@
 #include <functional>
 #include <boost/functional/hash.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Utilities/KeyValuePair.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -51,11 +52,11 @@ namespace RiskService {
 
   //! Stores an Inventory update.
   using RiskPortfolioInventoryEntry =
-    Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>;
+    Beam::KeyValuePair<RiskPortfolioKey, RiskPortfolioInventory>;
 
   //! The Publisher used for portfolio events.
   using RiskPortfolioUpdatePublisher = Beam::Publisher<
-    Beam::TableEntry<RiskPortfolioKey, RiskPortfolioInventory>>;
+    Beam::KeyValuePair<RiskPortfolioKey, RiskPortfolioInventory>>;
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     std::size_t seed = 0;

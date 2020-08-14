@@ -27,13 +27,13 @@ std::unique_ptr<DashboardCell> LowDashboardCellBuilder::Build(
     userProfile.Get()->GetTimeZoneDatabase());
   auto baseQueue = std::make_shared<Queue<Nexus::Queries::QueryVariant>>();
   std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterReaderQueue<Money>(baseQueue,
-    [] (const Nexus::Queries::QueryVariant& value) {
-      return boost::get<Money>(value);
-    });
+    MakeConverterQueueReader(baseQueue,
+      [] (const Nexus::Queries::QueryVariant& value) {
+        return boost::get<Money>(value);
+      });
   serviceClients.GetChartingClient().QuerySecurity(query, baseQueue);
   auto cell = std::make_unique<QueueDashboardCell>(queue);
-  return std::move(cell);
+  return cell;
 }
 
 std::unique_ptr<DashboardCellBuilder> LowDashboardCellBuilder::Clone() const {

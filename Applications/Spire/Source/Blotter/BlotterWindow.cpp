@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include <unordered_map>
+#include <Beam/Utilities/Algorithm.hpp>
 #include <QAbstractItemModel>
 #include <QDesktopWidget>
 #include <QKeyEvent>

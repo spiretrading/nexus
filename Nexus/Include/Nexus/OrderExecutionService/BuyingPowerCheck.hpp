@@ -1,11 +1,11 @@
 #ifndef NEXUS_BUYINGPOWERCHECK_HPP
 #define NEXUS_BUYINGPOWERCHECK_HPP
 #include <vector>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Accounting/BuyingPowerTracker.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -66,7 +66,7 @@ namespace OrderExecutionService {
           m_buyingPowerTracker;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskParameters>>
           m_riskParametersQueue;
-        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
+        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
         Beam::SynchronizedUnorderedMap<OrderId, CurrencyId> m_currencies;
 
         BuyingPowerEntry();
@@ -116,20 +116,18 @@ namespace OrderExecutionService {
     auto& buyingPowerEntry = LoadBuyingPowerEntry(fields.m_account);
     Beam::Threading::With(buyingPowerEntry.m_buyingPowerTracker,
       [&] (auto& buyingPowerTracker) {
-        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Top();
-        while(!buyingPowerEntry.m_executionReportQueue.IsEmpty()) {
-          auto report = buyingPowerEntry.m_executionReportQueue.Top();
-          buyingPowerEntry.m_executionReportQueue.Pop();
-          if(report.m_lastQuantity != 0) {
-            auto currency = buyingPowerEntry.m_currencies.Find(report.m_id);
-            if(!currency.is_initialized()) {
+        auto riskParameters = buyingPowerEntry.m_riskParametersQueue->Peek();
+        while(auto report = buyingPowerEntry.m_executionReportQueue.TryPop()) {
+          if(report->m_lastQuantity != 0) {
+            auto currency = buyingPowerEntry.m_currencies.Find(report->m_id);
+            if(!currency) {
               BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
                 "Currency not recognized."});
             }
-            report.m_lastPrice = m_exchangeRates.Convert(report.m_lastPrice,
+            report->m_lastPrice = m_exchangeRates.Convert(report->m_lastPrice,
               *currency, riskParameters.m_currency);
           }
-          buyingPowerTracker.Update(report);
+          buyingPowerTracker.Update(*report);
         }
         auto convertedFields = fields;
         convertedFields.m_currency = riskParameters.m_currency;
@@ -173,7 +171,7 @@ namespace OrderExecutionService {
           order.GetInfo().m_fields.m_currency);
         auto convertedFields = order.GetInfo().m_fields;
         convertedFields.m_currency =
-          buyingPowerEntry.m_riskParametersQueue->Top().m_currency;
+          buyingPowerEntry.m_riskParametersQueue->Peek().m_currency;
         Money convertedPrice;
         try {
           convertedFields.m_price = m_exchangeRates.Convert(
@@ -219,7 +217,7 @@ namespace OrderExecutionService {
         return publisher;
       });
     try {
-      return publisher->Top();
+      return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{
@@ -261,7 +259,7 @@ namespace OrderExecutionService {
           entry->m_riskParametersQueue);
         return entry;
       });
-    entry.m_riskParametersQueue->Top();
+    entry.m_riskParametersQueue->Peek();
     return entry;
   }
 }

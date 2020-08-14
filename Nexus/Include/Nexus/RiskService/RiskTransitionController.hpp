@@ -4,8 +4,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
-#include <Beam/Queues/MultiQueueWriter.hpp>
-#include <Beam/Queues/QueuePublisher.hpp>
+#include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/noncopyable.hpp>
@@ -58,8 +57,8 @@ namespace RiskService {
       void Close();
 
     private:
-      Beam::QueuePublisher<Beam::MultiQueueWriter<
-        const OrderExecutionService::Order*>> m_orderPublisher;
+      Beam::QueueReaderPublisher<const OrderExecutionService::Order*>
+        m_orderPublisher;
       Beam::GetOptionalLocalPtr<AdministrationClientType>
         m_administrationClient;
       Beam::GetOptionalLocalPtr<OrderExecutionClientType>

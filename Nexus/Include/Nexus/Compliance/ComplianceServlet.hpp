@@ -1,13 +1,13 @@
 #ifndef NEXUS_COMPLIANCE_SERVLET_HPP
 #define NEXUS_COMPLIANCE_SERVLET_HPP
+#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Services/ServiceRequestException.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
