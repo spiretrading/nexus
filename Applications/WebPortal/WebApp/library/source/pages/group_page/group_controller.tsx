@@ -106,7 +106,7 @@ export class GroupController extends React.Component<Properties, State> {
     return (
       <GroupInfoController
         displaySize={this.props.displaySize}
-        model={this.state.groupInfoModel}/>);
+        accounts={this.props.model.accounts}/>);
   }
 
   private renderCompliancePage = () => {
