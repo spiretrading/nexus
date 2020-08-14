@@ -95,9 +95,8 @@ export class DashboardController extends React.Component<Properties, State> {
 
   private renderAccountPage = () => {
     const model = (() => {
-      const pattern = Path.pathToRegexp(
-        '/account/:id(\\d+)?', [], { end: false });
-      const match = pattern.exec(window.location.pathname);
+      const match = DashboardController.ACCOUNT_PATTERN
+        .exec(window.location.pathname);
       const account = (() => {
         if(match[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
@@ -117,8 +116,8 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private renderGroupPage = () => {
-    const pattern = Path.pathToRegexp('/group/:id(\\d+)?', [], { end: false });
-    const match = pattern.exec(window.location.pathname);
+    const match = DashboardController.GROUP_PATTERN
+      .exec(window.location.pathname);
     if(!match[1]) {
       return this.renderPageNotFound();
     }
@@ -137,4 +136,9 @@ export class DashboardController extends React.Component<Properties, State> {
       this.props.model.logout().then(this.props.onLogout);
     }
   }
+
+  private static ACCOUNT_PATTERN = Path.pathToRegexp('/account/:id(\\d+)?', [],
+    { end: false });
+  private static GROUP_PATTERN = Path.pathToRegexp('/group/:id(\\d+)?', [],
+    { end: false });
 }
