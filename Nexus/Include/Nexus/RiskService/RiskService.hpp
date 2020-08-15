@@ -5,8 +5,8 @@
 namespace Nexus::RiskService {
   struct InventorySnapshot;
   template<typename B> class RiskClient;
-  template<typename A, typename M, typename O, typename R, typename T>
-    class RiskController;
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D> class RiskController;
   struct RiskDataStore;
   struct RiskParameters;
   struct RiskPositionUpdate;
@@ -14,7 +14,7 @@ namespace Nexus::RiskService {
   template<typename C, typename A, typename O, typename R> class RiskServlet;
   class RiskSession;
   struct RiskState;
-  template<typename P, typename T> class RiskStateProcessor;
+  template<typename T> class RiskStateProcessor;
   struct RiskStateUpdate;
   template<typename O> class RiskTransitionProcessor;
   template<typename C> class SqlRiskDataStore;

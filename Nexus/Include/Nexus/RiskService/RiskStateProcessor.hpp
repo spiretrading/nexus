@@ -9,6 +9,7 @@
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
+#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
@@ -16,38 +17,33 @@ namespace Nexus::RiskService {
 
   /**
    * Monitors a Portfolio against a set of RiskParameters.
-   * @param <P> The type of Portfolio to monitor.
    * @param <T> The type of TimeClient used.
    */
-  template<typename P, typename T>
+  template<typename T>
   class RiskStateProcessor {
     public:
-
-      /** The type of Portfolio to monitor. */
-      using Portfolio = P;
 
       /** The type of TimeClient used. */
       using TimeClient = Beam::GetTryDereferenceType<T>;
 
       /**
        * Constructs a RiskStateProcessor.
-       * @param portfolio The initial state of the Portfolio.
-       * @param parameters The initial RiskParameters.
+       * @param markets The MarketDatabase used by the Portfolio.
        * @param exchangeRates The list of ExchangeRates.
        * @param timeClient Initializes the TimeClient.
        */
       template<typename TF>
-      RiskStateProcessor(Portfolio portfolio, RiskParameters parameters,
+      RiskStateProcessor(MarketDatabase markets,
         const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient);
 
       /** Returns the RiskParameters. */
       const RiskParameters& GetParameters() const;
 
       /** Returns the Portfolio. */
-      const Portfolio& GetPortfolio() const;
+      const RiskPortfolio& GetPortfolio() const;
 
       /** Returns the Portfolio. */
-      Portfolio& GetPortfolio();
+      RiskPortfolio& GetPortfolio();
 
       /** Returns the current RiskState. */
       const RiskState& GetRiskState() const;
@@ -65,56 +61,51 @@ namespace Nexus::RiskService {
       void UpdatePortfolio();
 
     private:
-      Portfolio m_portfolio;
+      RiskPortfolio m_portfolio;
       RiskParameters m_parameters;
       ExchangeRateTable m_exchangeRates;
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       RiskState m_riskState;
   };
 
-  template<typename Portfolio, typename TimeClient>
-  RiskStateProcessor(Portfolio, RiskParameters,
-    const std::vector<ExchangeRate>&, TimeClient&&) ->
-    RiskStateProcessor<Portfolio, std::decay_t<TimeClient>>;
+  template<typename TimeClient>
+  RiskStateProcessor(MarketDatabase, const std::vector<ExchangeRate>&,
+    TimeClient&&) -> RiskStateProcessor<std::decay_t<TimeClient>>;
 
-  template<typename P, typename T>
+  template<typename T>
   template<typename TF>
-  RiskStateProcessor<P, T>::RiskStateProcessor(Portfolio portfolio,
-      RiskParameters parameters, const std::vector<ExchangeRate>& exchangeRates,
-      TF&& timeClient)
-      : m_portfolio(std::move(portfolio)),
+  RiskStateProcessor<T>::RiskStateProcessor(MarketDatabase markets,
+      const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient)
+      : m_portfolio(std::move(markets)),
         m_timeClient(std::forward<TF>(timeClient)) {
+    m_timeClient->Open();
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
     }
-    m_timeClient->Open();
-    Update(parameters);
   }
 
-  template<typename P, typename T>
-  const RiskParameters& RiskStateProcessor<P, T>::GetParameters() const {
+  template<typename T>
+  const RiskParameters& RiskStateProcessor<T>::GetParameters() const {
     return m_parameters;
   }
 
-  template<typename P, typename T>
-  const typename RiskStateProcessor<P, T>::Portfolio&
-      RiskStateProcessor<P, T>::GetPortfolio() const {
+  template<typename T>
+  const RiskPortfolio& RiskStateProcessor<T>::GetPortfolio() const {
     return m_portfolio;
   }
 
-  template<typename P, typename T>
-  typename RiskStateProcessor<P, T>::Portfolio&
-      RiskStateProcessor<P, T>::GetPortfolio() {
+  template<typename T>
+  RiskPortfolio& RiskStateProcessor<T>::GetPortfolio() {
     return m_portfolio;
   }
 
-  template<typename P, typename T>
-  const RiskState& RiskStateProcessor<P, T>::GetRiskState() const {
+  template<typename T>
+  const RiskState& RiskStateProcessor<T>::GetRiskState() const {
     return m_riskState;
   }
 
-  template<typename P, typename T>
-  void RiskStateProcessor<P, T>::Update(const RiskParameters& parameters) {
+  template<typename T>
+  void RiskStateProcessor<T>::Update(const RiskParameters& parameters) {
     m_parameters = parameters;
     if(m_riskState.m_type == RiskState::Type::ACTIVE) {
       m_riskState = m_parameters.m_allowedState;
@@ -123,16 +114,16 @@ namespace Nexus::RiskService {
     UpdatePortfolio();
   }
 
-  template<typename P, typename T>
-  void RiskStateProcessor<P, T>::UpdateTime() {
+  template<typename T>
+  void RiskStateProcessor<T>::UpdateTime() {
     if(m_riskState.m_type == RiskState::Type::CLOSE_ORDERS &&
         m_timeClient->GetTime() >= m_riskState.m_expiry) {
       m_riskState = RiskState::Type::DISABLED;
     }
   }
 
-  template<typename P, typename T>
-  void RiskStateProcessor<P, T>::UpdatePortfolio() {
+  template<typename T>
+  void RiskStateProcessor<T>::UpdatePortfolio() {
     if(m_parameters.m_currency == CurrencyId::NONE) {
       return;
     }

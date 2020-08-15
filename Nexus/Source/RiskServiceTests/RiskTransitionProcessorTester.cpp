@@ -204,7 +204,7 @@ TEST_SUITE("RiskTransitionProcessor") {
           OrderInfo(fields, 100, time_from_string("2020-11-17 12:22:06")),
           ACCOUNT), Beam::Queries::Sequence(100));
       });
-    auto inventory = std::vector<RiskPortfolioInventory>();
+    auto inventory = std::vector<RiskInventory>();
     inventory.push_back(Inventory(Position<Security>(
       Position<Security>::Key(XIU, DefaultCurrencies::CAD()), -300,
       300 * Money::ONE), Money::ONE, Money::ZERO, 300, 1));

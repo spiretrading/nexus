@@ -1,6 +1,7 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #define NEXUS_ORDER_EXECUTION_SERVICE_STANDARD_QUERIES_HPP
 #include <unordered_map>
+#include <vector>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/ParameterExpression.hpp>
@@ -17,12 +18,12 @@
 
 namespace Nexus::OrderExecutionService {
 
-  //! Builds Query Expression to filter Orders by MarketCode.
-  /*!
-    \param market The market to query.
-    \return A Query Expression that filters any Order not submitted to the
-            specified <i>market</i>.
-  */
+  /**
+   * Builds a Query Expression to filter Orders by MarketCode.
+   * @param market The market to query.
+   * @return A Query Expression that filters any Order not submitted to the
+   *         specified <i>market</i>.
+   */
   inline auto BuildMarketFilter(MarketCode market) {
     auto queryMarketCode = Beam::Queries::StringValue(market.GetData());
     auto marketCodeExpression = Beam::Queries::ConstantExpression(
@@ -40,23 +41,22 @@ namespace Nexus::OrderExecutionService {
     return equalExpression;
   }
 
-  //! Builds a query to retrieve Orders submitted to a specified market on
-  //! on a daily basis.
-  /*!
-    \param market The market to query.
-    \param account The account to query.
-    \param startTime The first day to retrieve order submissions for.
-    \param endTime The last day to retrieve order submissions for.
-    \param marketDatabase The database containing Market info.
-    \param timeZoneDatabase The database of timezones.
-    \return An AccountQuery that can be used to retrieve the daily Order
-            submissions for the specified <i>account</i> on the specified
-            <i>market</i>.
-  */
+  /**
+   * Builds a query to retrieve Orders submitted to a specified market on
+   * on a daily basis.
+   * @param market The market to query.
+   * @param account The account to query.
+   * @param startTime The first day to retrieve order submissions for.
+   * @param endTime The last day to retrieve order submissions for.
+   * @param marketDatabase The database containing Market info.
+   * @param timeZoneDatabase The database of timezones.
+   * @return An AccountQuery that can be used to retrieve the daily Order
+   *         submissions for the specified <i>account</i> on the specified
+   *         <i>market</i>.
+   */
   inline AccountQuery BuildDailyOrderSubmissionQuery(MarketCode market,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const boost::posix_time::ptime& startTime,
-      const boost::posix_time::ptime& endTime,
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
       const MarketDatabase& marketDatabase,
       const boost::local_time::tz_database& timeZoneDatabase) {
     auto marketStartOfDay = MarketDateToUtc(market, startTime, marketDatabase,
@@ -79,17 +79,16 @@ namespace Nexus::OrderExecutionService {
     return dailyOrderSubmissionQuery;
   }
 
-  //! Builds a query to retrieve Orders submitted to a specified market on
-  //! on a daily basis.
-  /*!
-    \param account The account to query.
-    \param startTime The first day to retrieve order submissions for.
-    \param endTime The last day to retrieve order submissions for.
-    \param marketDatabase The database containing Market info.
-    \param timeZoneDatabase The database of timezones.
-    \param orderExecutionClient The OrderExecutionClient to query.
-    \param queue The Queue to write to.
-  */
+  /**
+   * Queries for Orders submitted to a specified market on a daily basis.
+   * @param account The account to query.
+   * @param startTime The first day to retrieve order submissions for.
+   * @param endTime The last day to retrieve order submissions for.
+   * @param marketDatabase The database containing Market info.
+   * @param timeZoneDatabase The database of timezones.
+   * @param orderExecutionClient The OrderExecutionClient to query.
+   * @param queue The Queue to write to.
+   */
   template<typename OrderExecutionClient>
   void QueryDailyOrderSubmissions(
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -136,6 +135,38 @@ namespace Nexus::OrderExecutionService {
         } catch(const std::exception&) {}
       }
     });
+  }
+
+  /**
+   * Builds a query to retrieve Orders by their id.
+   * @param account The account to query.
+   * @param ids The order ids to query.
+   * @param orderExecutionClient The OrderExecutionClient to query.
+   * @param queue The Queue to write to.
+   */
+  template<typename OrderExecutionClient>
+  void QueryOrderSubmissions(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<OrderId>& ids,
+      OrderExecutionClient& orderExecutionClient,
+      Beam::ScopedQueueWriter<const Order*> queue) {}
+
+  /**
+   * Loads a list of Orders by id.
+   * @param account The account to query.
+   * @param ids The order ids to query.
+   * @param orderExecutionClient The OrderExecutionClient to query.
+   */
+  template<typename OrderExecutionClient>
+  std::vector<const Order*> LoadOrderSubmissions(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<OrderId>& ids,
+      OrderExecutionClient& orderExecutionClient) {
+    auto queue = std::make_shared<Beam::Queue<const Order*>>();
+    QueryOrderSubmissions(account, ids, orderExecutionClient, queue);
+    auto orders = std::vector<const Order*>();
+    Beam::FlushQueue(queue, std::back_inserter(orders));
+    return orders;
   }
 }
 

@@ -90,7 +90,7 @@ namespace Nexus::RiskService {
       Beam::ServiceLocator::DirectoryEntry LoadGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void OnRiskState(const RiskStateEntry& entry);
-      void OnInventoryUpdate(const RiskPortfolioInventoryEntry& entry);
+      void OnInventoryUpdate(const RiskInventoryEntry& entry);
       void OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request);
   };
@@ -149,7 +149,7 @@ namespace Nexus::RiskService {
         m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState,
         this, std::placeholders::_1)));
       m_riskStateMonitor->GetInventoryPublisher().Monitor(
-        m_tasks.GetSlot<RiskPortfolioInventoryEntry>(std::bind(
+        m_tasks.GetSlot<RiskInventoryEntry>(std::bind(
         &RiskServlet::OnInventoryUpdate, this, std::placeholders::_1)));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
@@ -186,7 +186,7 @@ namespace Nexus::RiskService {
 
   template<typename C, typename A, typename O, typename R>
   void RiskServlet<C, A, O, R>::OnInventoryUpdate(
-      const RiskPortfolioInventoryEntry& entry) {
+      const RiskInventoryEntry& entry) {
     auto& volume = m_volume[entry.m_key];
     if(volume == entry.m_value.m_volume) {
       return;
@@ -227,7 +227,7 @@ namespace Nexus::RiskService {
       groups = m_administrationClient->LoadManagedTradingGroups(
         session.GetAccount());
     }
-    auto entries = std::vector<RiskPortfolioInventoryEntry>();
+    auto entries = std::vector<RiskInventoryEntry>();
     Beam::Threading::With(m_portfolioSubscribers,
       [&] (auto& subscribers) {
         if(isAdministrator) {
@@ -239,7 +239,7 @@ namespace Nexus::RiskService {
         }
         subscribers.push_back(&request.GetClient());
         auto queue =
-          std::make_shared<Beam::Queue<RiskPortfolioInventoryEntry>>();
+          std::make_shared<Beam::Queue<RiskInventoryEntry>>();
         m_riskStateMonitor->GetInventoryPublisher().With(
           [&] {
             m_riskStateMonitor->GetInventoryPublisher().Monitor(queue);

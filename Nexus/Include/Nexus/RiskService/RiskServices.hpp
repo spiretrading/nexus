@@ -13,7 +13,7 @@ namespace Nexus::RiskService {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
     RiskSecurityValuation, valuation);
   BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
-    account, RiskPortfolioInventory, inventory);
+    account, RiskInventory, inventory);
   BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
     account, RiskState, risk_state);
 
@@ -26,7 +26,7 @@ namespace Nexus::RiskService {
      */
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
-      std::vector<RiskPortfolioInventoryEntry>));
+      std::vector<RiskInventoryEntry>));
 
   BEAM_DEFINE_MESSAGES(RiskMessages,
 

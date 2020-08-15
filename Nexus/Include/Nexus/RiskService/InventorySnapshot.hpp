@@ -11,7 +11,7 @@ namespace Nexus::RiskService {
   struct InventorySnapshot {
 
     /** The list of non-empty inventories. */
-    std::vector<RiskPortfolioInventory> m_inventories;
+    std::vector<RiskInventory> m_inventories;
 
     /** The sequence that this snapshot is valid for (inclusive). */
     Beam::Queries::Sequence m_sequence;

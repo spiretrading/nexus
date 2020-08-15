@@ -34,8 +34,8 @@ TEST_SUITE("SqlRiskDataStore") {
     auto dataStore = TestSqlRiskDataStore(
       std::make_unique<Connection>(":memory:"));
     dataStore.Open();
-    auto inventories = std::vector<RiskPortfolioInventory>();
-    inventories.emplace_back(RiskPortfolioInventory::Position::Key(
+    auto inventories = std::vector<RiskInventory>();
+    inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
       DefaultCurrencies::USD()));
     inventories.back().m_position.m_costBasis = 1000 * Money::ONE;

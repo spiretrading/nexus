@@ -44,8 +44,8 @@ namespace Nexus::RiskService {
     private:
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Remote<Beam::TablePublisher<RiskPortfolioKey,
-        RiskPortfolioInventory>> m_publisher;
+      Beam::Remote<Beam::TablePublisher<RiskPortfolioKey, RiskInventory>>
+        m_publisher;
       Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
@@ -73,7 +73,7 @@ namespace Nexus::RiskService {
         publisher.emplace();
         m_tasks.Push(
           [=] {
-            auto entries = std::vector<RiskPortfolioInventoryEntry>();
+            auto entries = std::vector<RiskInventoryEntry>();
             try {
               auto client = m_clientHandler.GetClient();
               entries = client->template SendRequest<
@@ -141,7 +141,7 @@ namespace Nexus::RiskService {
         if(!m_publisher.IsAvailable()) {
           return;
         }
-        auto entries = std::vector<RiskPortfolioInventoryEntry>();
+        auto entries = std::vector<RiskInventoryEntry>();
         try {
           entries = client->template SendRequest<
             SubscribeRiskPortfolioUpdatesService>();
@@ -150,7 +150,7 @@ namespace Nexus::RiskService {
           return;
         }
         auto snapshot = Beam::TablePublisher<
-          RiskPortfolioKey, RiskPortfolioInventory>::Snapshot();
+          RiskPortfolioKey, RiskInventory>::Snapshot();
         m_publisher->WithSnapshot(
           [&] (auto publisherSnapshot) {
             if(publisherSnapshot.is_initialized()) {
@@ -164,7 +164,7 @@ namespace Nexus::RiskService {
             });
           if(entryIterator == entries.end()) {
             m_publisher->Delete(snapshotEntry.first,
-              RiskPortfolioInventory(snapshotEntry.second.m_position.m_key));
+              RiskInventory(snapshotEntry.second.m_position.m_key));
           }
         }
         for(auto& entry : entries) {

@@ -25,8 +25,8 @@ TEST_SUITE("LocalRiskDataStore") {
   TEST_CASE("store_load_inventory") {
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();
-    auto inventories = std::vector<RiskPortfolioInventory>();
-    inventories.emplace_back(RiskPortfolioInventory::Position::Key(
+    auto inventories = std::vector<RiskInventory>();
+    inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
       DefaultCurrencies::USD()));
     inventories.back().m_position.m_costBasis = 1000 * Money::ONE;

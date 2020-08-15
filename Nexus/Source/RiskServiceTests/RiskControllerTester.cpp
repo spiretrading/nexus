@@ -2,6 +2,9 @@
 #include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/ServicesTests/TestServices.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskController.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
@@ -14,8 +17,7 @@ using namespace Nexus;
 using namespace Nexus::RiskService;
 
 namespace {
-  auto ACCOUNT_A = DirectoryEntry::MakeAccount(153, "simba");
-  auto ACCOUNT_B = DirectoryEntry::MakeAccount(155, "mufassa");
+  auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");
   auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
   auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
@@ -33,25 +35,16 @@ namespace {
 }
 
 TEST_SUITE("RiskController") {
-  TEST_CASE_FIXTURE(Fixture, "single_account") {
-    auto accountUpdateQueue = std::make_shared<Queue<AccountUpdate>>();
-    m_serviceClients.GetServiceLocatorClient().MonitorAccounts(
-      accountUpdateQueue);
-    auto accountQueue = MakeConverterQueueReader(MakeFilteredQueueReader(
-      std::move(accountUpdateQueue),
-      [] (const auto& update) {
-        return update.m_type == AccountUpdate::Type::ADDED;
-      }),
-      [] (const auto& update) {
-        return update.m_account;
-      });
+  TEST_CASE_FIXTURE(Fixture, "single_security") {
     auto exchangeRates = std::vector<ExchangeRate>();
-    auto controller = RiskController(accountQueue,
+    auto dataStore = LocalRiskDataStore();
+    dataStore.Open();
+    auto controller = RiskController(ACCOUNT,
       &m_serviceClients.GetAdministrationClient(),
       &m_serviceClients.GetMarketDataClient(),
       &m_serviceClients.GetOrderExecutionClient(),
       m_serviceClients.BuildTimer(seconds(1)),
-      &m_serviceClients.GetTimeClient(), exchangeRates,
-      GetDefaultDestinationDatabase());
+      &m_serviceClients.GetTimeClient(), &dataStore, exchangeRates,
+      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
   }
 }
