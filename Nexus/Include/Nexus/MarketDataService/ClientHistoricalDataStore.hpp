@@ -234,7 +234,7 @@ namespace Nexus::MarketDataService {
       ((*m_client).*f)(query, queue);
     }
     std::vector<T> matches;
-    Beam::FlushQueue(queue, std::back_inserter(matches));
+    Beam::Flush(queue, std::back_inserter(matches));
     return matches;
   }
 

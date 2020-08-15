@@ -242,7 +242,7 @@ namespace Nexus {
     MarketDataService::QueryMarketDataClient(*m_service->m_marketDataClient,
       query, Beam::ScopedQueueWriter(queue));
     auto data = std::vector<Beam::Queries::SequencedValue<MarketDataType>>();
-    Beam::FlushQueue(queue, std::back_inserter(data));
+    Beam::Flush(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
     }

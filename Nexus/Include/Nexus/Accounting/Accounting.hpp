@@ -6,7 +6,7 @@ namespace Nexus::Accounting {
   class BuyingPowerTracker;
   template<typename P> struct Inventory;
   template<typename B> class Portfolio;
-  template<typename P, typename C> class PortfolioMonitor;
+  template<typename P, typename C> class PortfolioController;
   template<typename I> struct PortfolioUpdateEntry;
   template<typename I> struct Position;
   class PositionOrderBook;

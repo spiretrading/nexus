@@ -165,7 +165,7 @@ namespace Nexus::OrderExecutionService {
     auto queue = std::make_shared<Beam::Queue<const Order*>>();
     QueryOrderSubmissions(account, ids, orderExecutionClient, queue);
     auto orders = std::vector<const Order*>();
-    Beam::FlushQueue(queue, std::back_inserter(orders));
+    Beam::Flush(queue, std::back_inserter(orders));
     return orders;
   }
 }

@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Accounting/PortfolioMonitor.hpp"
+#include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
@@ -21,7 +21,7 @@ using namespace Nexus::OrderExecutionService::Tests;
 
 namespace {
   struct Fixture {
-    using TestPortfolioMonitor = PortfolioMonitor<Portfolio<
+    using TestPortfolioController = PortfolioController<Portfolio<
       TrueAverageBookkeeper<Inventory<Position<Security>>>>,
       VirtualMarketDataClient*>;
 
@@ -38,18 +38,19 @@ namespace {
   };
 }
 
-TEST_SUITE("PortfolioMonitor") {
+TEST_SUITE("PortfolioController") {
   TEST_CASE_FIXTURE(Fixture, "out_of_order_execution_reports") {
     auto security = Security("TST", DefaultMarkets::NYSE(),
       DefaultCountries::US());
     m_environment.Publish(security, BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE, 100, Side::ASK), not_a_date_time));
     auto orders = std::make_shared<Queue<const Order*>>();
-    auto portfolioMonitor = TestPortfolioMonitor(
+    auto controller = TestPortfolioController(
       Initialize(GetDefaultMarketDatabase()),
       &m_serviceClients.GetMarketDataClient(), orders);
-    auto queue = std::make_shared<Queue<TestPortfolioMonitor::UpdateEntry>>();
-    portfolioMonitor.GetPublisher().Monitor(queue);
+    auto queue = std::make_shared<
+      Queue<TestPortfolioController::UpdateEntry>>();
+    controller.GetPublisher().Monitor(queue);
     auto fieldsA = OrderFields::BuildLimitOrder(
       DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
       Side::BID, "NYSE", 100, Money::CENT);

@@ -1,5 +1,5 @@
-#ifndef NEXUS_PORTFOLIO_MONITOR_HPP
-#define NEXUS_PORTFOLIO_MONITOR_HPP
+#ifndef NEXUS_PORTFOLIO_CONTROLLER_HPP
+#define NEXUS_PORTFOLIO_CONTROLLER_HPP
 #include <unordered_set>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -28,7 +28,7 @@ namespace Nexus::Accounting {
    * @param <C> The type of MarketDataClient to use.
    */
   template<typename P, typename C>
-  class PortfolioMonitor : private boost::noncopyable {
+  class PortfolioController : private boost::noncopyable {
     public:
 
       /** The type of Portfolio to update. */
@@ -44,16 +44,16 @@ namespace Nexus::Accounting {
       using UpdateEntry = typename Portfolio::UpdateEntry;
 
       /**
-       * Constructs a PortfolioMonitor.
+       * Constructs a PortfolioController.
        * @param portfolio Initializes the Portfolio.
        * @param marketDataClient Initializes the MarketDataClient.
        * @param orders The Orders to include in the Portfolio.
        */
       template<typename PF, typename CF>
-      PortfolioMonitor(PF&& portfolio, CF&& marketDataClient,
+      PortfolioController(PF&& portfolio, CF&& marketDataClient,
         Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders);
 
-      /** Returns the object publishing updates to the monitored Portfolio. */
+      /** Returns the object publishing updates to the Portfolio. */
       const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
         GetPublisher() const;
 
@@ -75,34 +75,34 @@ namespace Nexus::Accounting {
 
   template<typename P, typename C>
   template<typename PF, typename CF>
-  PortfolioMonitor<P, C>::PortfolioMonitor(PF&& portfolio,
+  PortfolioController<P, C>::PortfolioController(PF&& portfolio,
       CF&& marketDataClient,
       Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders)
       : m_portfolio(std::forward<PF>(portfolio)),
         m_marketDataClient(std::forward<CF>(marketDataClient)),
         m_executionReportPublisher(std::move(orders)),
         m_publisher(
-          [] (auto snapshot, auto& monitor) {
+          [] (auto snapshot, auto& queue) {
             ForEachPortfolioEntry(*snapshot,
               [&] (const auto& update) {
-                monitor.Push(update);
+                queue.Push(update);
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
     m_executionReportPublisher.Monitor(
       m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
-      std::bind(&PortfolioMonitor::OnExecutionReport, this,
+      std::bind(&PortfolioController::OnExecutionReport, this,
       std::placeholders::_1)));
   }
 
   template<typename P, typename C>
-  const Beam::SnapshotPublisher<typename PortfolioMonitor<P, C>::UpdateEntry,
-      typename PortfolioMonitor<P, C>::Portfolio*>& PortfolioMonitor<P, C>::
-      GetPublisher() const {
+  const Beam::SnapshotPublisher<typename PortfolioController<P, C>::UpdateEntry,
+      typename PortfolioController<P, C>::Portfolio*>&
+      PortfolioController<P, C>::GetPublisher() const {
     return m_publisher;
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::PushUpdate(const Security& security) {
+  void PortfolioController<P, C>::PushUpdate(const Security& security) {
     auto securityEntryIterator = m_portfolio->GetSecurityEntries().find(
       security);
     if(securityEntryIterator == m_portfolio->GetSecurityEntries().end()) {
@@ -135,7 +135,7 @@ namespace Nexus::Accounting {
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::OnBbo(const Security& security,
+  void PortfolioController<P, C>::OnBbo(const Security& security,
       const BboQuote& bbo) {
     m_publisher.With(
       [&] {
@@ -160,7 +160,7 @@ namespace Nexus::Accounting {
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::OnExecutionReport(
+  void PortfolioController<P, C>::OnExecutionReport(
       const OrderExecutionService::ExecutionReportEntry& executionReport) {
     if(executionReport.m_executionReport.m_status == OrderStatus::PENDING_NEW) {
       auto& security = executionReport.m_order->GetInfo().m_fields.m_security;
@@ -168,7 +168,7 @@ namespace Nexus::Accounting {
       if(securityIterator == m_securities.end()) {
         auto bboQuery = Beam::Queries::BuildCurrentQuery(security);
         m_marketDataClient->QueryBboQuotes(bboQuery,
-          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioMonitor::OnBbo, this,
+          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioController::OnBbo, this,
           security, std::placeholders::_1)));
         m_securities.insert(security);
       }

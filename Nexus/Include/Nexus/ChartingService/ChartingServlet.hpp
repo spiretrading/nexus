@@ -212,7 +212,7 @@ namespace Details {
       Beam::Queries::SnapshotLimit::Unlimited());
     m_marketDataClient->QueryTimeAndSales(timeAndSaleQuery, queue);
     auto timeAndSales = std::vector<SequencedTimeAndSale>();
-    Beam::FlushQueue(queue, std::back_inserter(timeAndSales));
+    Beam::Flush(queue, std::back_inserter(timeAndSales));
     auto result = TimePriceQueryResult();
     if(!timeAndSales.empty()) {
       result.start = timeAndSales.front().GetSequence();

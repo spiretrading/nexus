@@ -359,8 +359,7 @@ namespace Nexus::MarketDataService {
           QueryMarketDataClient(*queryEntry.m_marketDataClient,
             initialValueQuery, Beam::ScopedQueueWriter(initialValueQueue));
           auto initialValues = std::vector<MarketDataType>();
-          Beam::FlushQueue(initialValueQueue,
-            std::back_inserter(initialValues));
+          Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
           auto initialSequence = Beam::Queries::Sequence();
           if(initialValues.empty()) {
             initialSequence = Beam::Queries::Sequence::First();
@@ -387,7 +386,7 @@ namespace Nexus::MarketDataService {
         Beam::Queries::Sequence::Present());
       QueryMarketDataClient(*client, snapshotQuery,
         Beam::ScopedQueueWriter(queue));
-      Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
+      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
         [&] (auto&& result) {
           request.SetResult(std::forward<decltype(result)>(result));
@@ -397,7 +396,7 @@ namespace Nexus::MarketDataService {
       auto client = m_marketDataClients.Acquire();
       QueryMarketDataClient(*client, query,
         Beam::ScopedQueueWriter(queue));
-      Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
+      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
       request.SetResult(result);
     }
   }
