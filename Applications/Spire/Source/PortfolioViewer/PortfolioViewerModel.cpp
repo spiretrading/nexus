@@ -46,7 +46,7 @@ PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
   m_updateTimer.start(UPDATE_INTERVAL);
   m_userProfile->GetServiceClients().GetRiskClient().
     GetRiskPortfolioUpdatePublisher().Monitor(
-    m_slotHandler->GetSlot<RiskPortfolioInventoryEntry>(std::bind(
+    m_slotHandler->GetSlot<RiskInventoryEntry>(std::bind(
     &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this,
     std::placeholders::_1)));
   connect(m_selectionModel, &PortfolioSelectionModel::dataChanged, this,
@@ -220,7 +220,7 @@ QVariant PortfolioViewerModel::headerData(int section,
 }
 
 boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
-    const RiskPortfolioInventory& inventory) const {
+    const RiskInventory& inventory) const {
   auto valuationIterator = m_valuations.find(
     inventory.m_position.m_key.m_index);
   if(valuationIterator == m_valuations.end()) {
@@ -275,7 +275,7 @@ void PortfolioViewerModel::OnBboQuote(const Security& security,
 }
 
 void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
-    const RiskPortfolioInventoryEntry& entry) {
+    const RiskInventoryEntry& entry) {
   auto& security = entry.m_key.m_security;
   auto baseCurrency = entry.m_value.m_position.m_key.m_currency;
   if(m_valuations.find(security) == m_valuations.end()) {

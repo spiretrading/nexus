@@ -279,7 +279,7 @@ void BlotterWindow::OnActiveBlotterChanged(BlotterModel& blotter) {
 }
 
 void BlotterWindow::OnProfitAndLossUpdate(
-    const SpirePortfolioMonitor::UpdateEntry& update) {
+    const SpirePortfolioController::UpdateEntry& update) {
   m_totalProfitAndLossLabel->SetValue(QVariant::fromValue(
     update.m_currencyInventory.m_grossProfitAndLoss -
     update.m_currencyInventory.m_fees + update.m_unrealizedCurrency));

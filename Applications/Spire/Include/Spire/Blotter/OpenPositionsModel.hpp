@@ -77,13 +77,13 @@ namespace Spire {
 
       virtual ~OpenPositionsModel();
 
-      //! Sets the PortfolioMonitor whose open positions are to be modeled.
+      //! Sets the PortfolioController whose open positions are to be modeled.
       /*!
-        \param portfolioMonitor The PortfolioMonitor whose open positions
+        \param portfolioController The PortfolioController whose open positions
                are to be modelled.
       */
-      void SetPortfolioMonitor(Beam::Ref<SpirePortfolioMonitor>
-        portfolioMonitor);
+      void SetPortfolioController(Beam::Ref<SpirePortfolioController>
+        portfolioController);
 
       //! Returns all open positions.
       std::vector<Entry> GetOpenPositions() const;
@@ -107,13 +107,14 @@ namespace Spire {
         int role) const;
 
     private:
-      SpirePortfolioMonitor* m_portfolioMonitor;
+      SpirePortfolioController* m_portfolioController;
       QTimer m_updateTimer;
       std::vector<std::unique_ptr<Entry>> m_entries;
       std::unordered_map<Nexus::Security, Entry*> m_securityToEntry;
       std::optional<Beam::TaskQueue> m_slotHandler;
 
-      void OnPortfolioUpdate(const SpirePortfolioMonitor::UpdateEntry& update);
+      void OnPortfolioUpdate(
+        const SpirePortfolioController::UpdateEntry& update);
       void OnUpdateTimer();
   };
 }

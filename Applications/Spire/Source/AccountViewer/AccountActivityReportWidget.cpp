@@ -24,10 +24,10 @@ AccountActivityReportWidget::ReportModel::ReportModel(
     Ref<UserProfile> userProfile, ScopedQueueReader<const Order*> orders)
     : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), false),
-      m_portfolioMonitor(Beam::Initialize(userProfile->GetMarketDatabase()),
+      m_portfolioController(Beam::Initialize(userProfile->GetMarketDatabase()),
         &userProfile->GetServiceClients().GetMarketDataClient(),
         std::move(orders)) {
-  m_profitAndLossModel.SetPortfolioMonitor(Ref(m_portfolioMonitor));
+  m_profitAndLossModel.SetPortfolioController(Ref(m_portfolioController));
 }
 
 AccountActivityReportWidget::AccountActivityReportWidget(QWidget* parent,

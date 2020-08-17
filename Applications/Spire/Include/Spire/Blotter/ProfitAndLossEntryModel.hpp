@@ -68,7 +68,8 @@ namespace Spire {
       /*
         \param update The update to the Portfolio.
       */
-      void OnPortfolioUpdate(const SpirePortfolioMonitor::UpdateEntry& update);
+      void OnPortfolioUpdate(
+        const SpirePortfolioController::UpdateEntry& update);
 
       //! Connects a slot to the ProfitAndLossSignal.
       /*!

@@ -40,7 +40,7 @@ namespace Spire {
     private:
       struct ReportModel {
         ProfitAndLossModel m_profitAndLossModel;
-        SpirePortfolioMonitor m_portfolioMonitor;
+        SpirePortfolioController m_portfolioController;
 
         ReportModel(Beam::Ref<UserProfile> userProfile,
           Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*>

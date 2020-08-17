@@ -19,7 +19,7 @@ OpenPositionsModel::Entry::Entry(int index, const SpireBookkeeper::Key& key)
       m_unrealizedEarnings(Money::ZERO) {}
 
 OpenPositionsModel::OpenPositionsModel()
-    : m_portfolioMonitor(nullptr) {
+    : m_portfolioController(nullptr) {
   m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &OpenPositionsModel::OnUpdateTimer);
@@ -28,8 +28,8 @@ OpenPositionsModel::OpenPositionsModel()
 
 OpenPositionsModel::~OpenPositionsModel() {}
 
-void OpenPositionsModel::SetPortfolioMonitor(
-    Ref<SpirePortfolioMonitor> portfolioMonitor) {
+void OpenPositionsModel::SetPortfolioController(
+    Ref<SpirePortfolioController> portfolioController) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     m_securityToEntry.clear();
@@ -38,9 +38,9 @@ void OpenPositionsModel::SetPortfolioMonitor(
   }
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
-  m_portfolioMonitor = portfolioMonitor.Get();
-  m_portfolioMonitor->GetPublisher().Monitor(
-    m_slotHandler->GetSlot<SpirePortfolioMonitor::UpdateEntry>(
+  m_portfolioController = portfolioController.Get();
+  m_portfolioController->GetPublisher().Monitor(
+    m_slotHandler->GetSlot<SpirePortfolioController::UpdateEntry>(
     std::bind(&OpenPositionsModel::OnPortfolioUpdate, this,
     std::placeholders::_1)));
 }
@@ -127,7 +127,7 @@ void OpenPositionsModel::OnUpdateTimer() {
 }
 
 void OpenPositionsModel::OnPortfolioUpdate(
-    const SpirePortfolioMonitor::UpdateEntry& update) {
+    const SpirePortfolioController::UpdateEntry& update) {
   const SpirePosition::Key& key = update.m_securityInventory.m_position.m_key;
   auto entryIterator = m_securityToEntry.find(key.m_index);
   if(entryIterator == m_securityToEntry.end()) {

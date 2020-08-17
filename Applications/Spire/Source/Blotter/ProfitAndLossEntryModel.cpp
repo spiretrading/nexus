@@ -29,7 +29,7 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 }
 
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
-    const SpirePortfolioMonitor::UpdateEntry& update) {
+    const SpirePortfolioController::UpdateEntry& update) {
   const SpirePosition::Key& key = update.m_securityInventory.m_position.m_key;
   Money currencyProfitAndLoss =
     update.m_currencyInventory.m_grossProfitAndLoss -
