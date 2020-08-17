@@ -110,8 +110,14 @@ namespace Nexus::RiskService {
 
       RiskController(const RiskController&) = delete;
       RiskController& operator =(const RiskController&) = delete;
+      template<typename F>
+      void Update(F&& f);
       void OnTransitionTimer(Beam::Threading::Timer::Result result);
       void OnRiskParametersUpdate(const RiskParameters& parameters);
+      void OnPortfolioUpdate(const RiskPortfolio::UpdateEntry& update);
+      void OnOrderSubmission(const OrderExecutionService::Order* order);
+      void OnExecutionReport(
+        const OrderExecutionService::ExecutionReport& report);
   };
 
   template<typename A, typename M, typename O, typename R, typename T,
@@ -164,8 +170,14 @@ namespace Nexus::RiskService {
     auto realTimeQueue = std::make_shared<
       Beam::Queue<const OrderExecutionService::Order*>>();
     m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery, realTimeQueue);
+    m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery,
+      m_tasks.GetSlot<const OrderExecutionService::Order*>(std::bind(
+      &RiskController::OnOrderSubmission, this, std::placeholders::_1)));
     m_portfolioController.emplace(&m_stateProcessor.GetPortfolio(),
       std::forward<MF>(marketDataClient), realTimeQueue);
+    m_portfolioController->GetPublisher().Monitor(
+      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(std::bind(
+      &RiskController::OnPortfolioUpdate, this, std::placeholders::_1)));
     m_administrationClient->GetRiskParametersPublisher(account).Monitor(
       m_tasks.GetSlot<RiskParameters>(std::bind(
       &RiskController::OnRiskParametersUpdate, this, std::placeholders::_1)));
@@ -192,14 +204,24 @@ namespace Nexus::RiskService {
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
-  void RiskController<A, M, O, R, T, D>::OnTransitionTimer(
-      Beam::Threading::Timer::Result result) {
+  template<typename F>
+  void RiskController<A, M, O, R, T, D>::Update(F&& f) {
     auto previousState = m_stateProcessor.GetRiskState();
-    m_stateProcessor.UpdateTime();
+    f();
     auto& currentState = m_stateProcessor.GetRiskState();
     if(previousState != currentState) {
+      m_transitionProcessor->Update(currentState);
       m_statePublisher.Push(currentState);
     }
+  }
+
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
+  void RiskController<A, M, O, R, T, D>::OnTransitionTimer(
+      Beam::Threading::Timer::Result result) {
+    Update([&] {
+      m_stateProcessor.UpdateTime();
+    });
     m_transitionTimer->Start();
   }
 
@@ -207,12 +229,38 @@ namespace Nexus::RiskService {
     typename D>
   void RiskController<A, M, O, R, T, D>::OnRiskParametersUpdate(
       const RiskParameters& parameters) {
-    auto previousState = m_stateProcessor.GetRiskState();
-    m_stateProcessor.Update(parameters);
-    auto& currentState = m_stateProcessor.GetRiskState();
-    if(previousState != currentState) {
-      m_statePublisher.Push(currentState);
-    }
+    Update([&] {
+      m_stateProcessor.Update(parameters);
+    });
+  }
+
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
+  void RiskController<A, M, O, R, T, D>::OnPortfolioUpdate(
+      const RiskPortfolio::UpdateEntry& update) {
+    Update([&] {
+      m_portfolioController->GetPublisher().With([&] {
+        m_stateProcessor.UpdatePortfolio();
+      });
+    });
+  }
+
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
+  void RiskController<A, M, O, R, T, D>::OnOrderSubmission(
+      const OrderExecutionService::Order* order) {
+    m_transitionProcessor->Add(*order);
+    order->GetPublisher().Monitor(
+      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
+      std::bind(&RiskController::OnExecutionReport, this,
+      std::placeholders::_1)));
+  }
+
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
+  void RiskController<A, M, O, R, T, D>::OnExecutionReport(
+      const OrderExecutionService::ExecutionReport& report) {
+    m_transitionProcessor->Update(report);
   }
 }
 
