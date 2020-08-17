@@ -44,7 +44,7 @@ namespace Nexus::RiskService {
       template<typename OF>
       RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry account,
         const std::vector<RiskInventory>& inventory, RiskState riskState,
-        OF&& orderExecutionClient, const DestinationDatabase& destinations);
+        OF&& orderExecutionClient, DestinationDatabase destinations);
 
       /**
        * Adds an Order.
@@ -88,19 +88,19 @@ namespace Nexus::RiskService {
 
   template<typename OF>
   RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry,
-    const std::vector<RiskInventory>&, RiskState, OF&&,
-    const DestinationDatabase&) -> RiskTransitionProcessor<std::decay_t<OF>>;
+    const std::vector<RiskInventory>&, RiskState, OF&&, DestinationDatabase) ->
+    RiskTransitionProcessor<std::remove_reference_t<OF>>;
 
   template<typename O>
   template<typename OF>
   RiskTransitionProcessor<O>::RiskTransitionProcessor(
     Beam::ServiceLocator::DirectoryEntry account,
     const std::vector<RiskInventory>& inventory, RiskState riskState,
-    OF&& orderExecutionClient, const DestinationDatabase& destinations)
+    OF&& orderExecutionClient, DestinationDatabase destinations)
     : m_account(std::move(account)),
       m_riskState(std::move(riskState)),
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
-      m_destinations(destinations),
+      m_destinations(std::move(destinations)),
       m_book(inventory),
       m_state(0) {
     m_orderExecutionClient->Open();

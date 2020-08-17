@@ -65,10 +65,10 @@ namespace Nexus::Accounting {
     public:
 
       /** The type of Bookkeeper to use. */
-      using PortfolioBookkeeper = B;
+      using Bookkeeper = B;
 
       /** The type of Inventory stored by the Portfolio. */
-      using Inventory = typename PortfolioBookkeeper::Inventory;
+      using Inventory = typename Bookkeeper::Inventory;
 
       /** The type of update published. */
       using UpdateEntry = PortfolioUpdateEntry<Inventory>;
@@ -99,10 +99,17 @@ namespace Nexus::Accounting {
        * Constructs a Portfolio.
        * @param markets The database of markets used.
        */
-      explicit Portfolio(const MarketDatabase& markets);
+      explicit Portfolio(MarketDatabase markets);
+
+      /**
+       * Constructs a Portfolio.
+       * @param markets The database of markets used.
+       * @param bookkeeper 
+       */
+      Portfolio(MarketDatabase markets, Bookkeeper bookkeeper);
 
       /** Returns the Bookkeeper. */
-      const PortfolioBookkeeper& GetBookkeeper() const;
+      const Bookkeeper& GetBookkeeper() const;
 
       /** Returns the Portfolio's SecurityEntries. */
       const SecurityEntryMap& GetSecurityEntries() const;
@@ -142,12 +149,12 @@ namespace Nexus::Accounting {
 
     private:
       MarketDatabase m_marketDatabase;
-      PortfolioBookkeeper m_bookkeeper;
+      Bookkeeper m_bookkeeper;
       SecurityEntryMap m_securityEntries;
       UnrealizedProfitAndLossMap m_unrealizedCurrencies;
 
       static boost::optional<Money> CalculateUnrealized(
-        const typename PortfolioBookkeeper::Inventory& inventory,
+        const typename Bookkeeper::Inventory& inventory,
         const SecurityEntry& securityEntry);
       SecurityEntry& GetSecurityEntry(const Security& security);
       void Update(const Security& security, SecurityEntry& entry);
@@ -243,13 +250,13 @@ namespace Nexus::Accounting {
    * @param portfolio The Portfolio to get entries from.
    * @param f The function to call with a Portfolio's entry.
    */
-  template<typename Portfolio, typename F>
-  void ForEachPortfolioEntry(const Portfolio& portfolio, F&& f) {
+  template<typename B, typename F>
+  void ForEach(const Portfolio<B>& portfolio, F&& f) {
     auto& securityEntries = portfolio.GetSecurityEntries();
     for(auto& securityEntryPair : securityEntries) {
       auto& security = securityEntryPair.first;
       auto& securityEntry = securityEntryPair.second;
-      auto update = typename Portfolio::UpdateEntry();
+      auto update = typename Portfolio<B>::UpdateEntry();
       update.m_securityInventory = portfolio.GetBookkeeper().GetInventory(
         security, securityEntry.m_valuation.m_currency);
       update.m_unrealizedSecurity = securityEntry.m_unrealized;
@@ -276,12 +283,16 @@ namespace Nexus::Accounting {
     : m_valuation(currency) {}
 
   template<typename B>
-  Portfolio<B>::Portfolio(const MarketDatabase& marketDatabase)
-    : m_marketDatabase(marketDatabase) {}
+  Portfolio<B>::Portfolio(MarketDatabase marketDatabase)
+    : m_marketDatabase(std::move(marketDatabase)) {}
 
   template<typename B>
-  const typename Portfolio<B>::PortfolioBookkeeper&
-      Portfolio<B>::GetBookkeeper() const {
+  Portfolio<B>::Portfolio(MarketDatabase marketDatabase, Bookkeeper bookkeeper)
+    : m_marketDatabase(std::move(marketDatabase)),
+      m_bookkeeper(std::move(bookkeeper)) {}
+
+  template<typename B>
+  const typename Portfolio<B>::Bookkeeper& Portfolio<B>::GetBookkeeper() const {
     return m_bookkeeper;
   }
 
@@ -351,7 +362,7 @@ namespace Nexus::Accounting {
 
   template<typename B>
   boost::optional<Money> Portfolio<B>::CalculateUnrealized(
-      const typename PortfolioBookkeeper::Inventory& inventory,
+      const typename Bookkeeper::Inventory& inventory,
       const SecurityEntry& securityEntry) {
     auto valuation = [&] {
       if(inventory.m_position.m_quantity >= 0) {

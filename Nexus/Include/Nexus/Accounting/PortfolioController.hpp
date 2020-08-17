@@ -38,7 +38,7 @@ namespace Nexus::Accounting {
       using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
       /** The type of Inventory stored by the Portfolio. */
-      using Inventory = typename Portfolio::PortfolioBookkeeper::Inventory;
+      using Inventory = typename Portfolio::Bookkeeper::Inventory;
 
       /** The type of updates published. */
       using UpdateEntry = typename Portfolio::UpdateEntry;
@@ -83,7 +83,7 @@ namespace Nexus::Accounting {
         m_executionReportPublisher(std::move(orders)),
         m_publisher(
           [] (auto snapshot, auto& queue) {
-            ForEachPortfolioEntry(*snapshot,
+            ForEach(*snapshot,
               [&] (const auto& update) {
                 queue.Push(update);
               });

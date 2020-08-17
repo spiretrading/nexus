@@ -28,12 +28,14 @@ namespace Nexus::RiskService {
 
       /**
        * Constructs a RiskStateProcessor.
-       * @param markets The MarketDatabase used by the Portfolio.
+       * @param portfolio The initial state of the Portfolio.
+       * @param parameters The initial RiskParameters.
        * @param exchangeRates The list of ExchangeRates.
        * @param timeClient Initializes the TimeClient.
        */
       template<typename TF>
-      RiskStateProcessor(MarketDatabase markets,
+      RiskStateProcessor(RiskPortfolio portfolio,
+        const RiskParameters& parameters,
         const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient);
 
       /** Returns the RiskParameters. */
@@ -69,19 +71,22 @@ namespace Nexus::RiskService {
   };
 
   template<typename TimeClient>
-  RiskStateProcessor(MarketDatabase, const std::vector<ExchangeRate>&,
-    TimeClient&&) -> RiskStateProcessor<std::decay_t<TimeClient>>;
+  RiskStateProcessor(RiskPortfolio, const RiskParameters&,
+    const std::vector<ExchangeRate>&, TimeClient&&) ->
+    RiskStateProcessor<std::remove_reference_t<TimeClient>>;
 
   template<typename T>
   template<typename TF>
-  RiskStateProcessor<T>::RiskStateProcessor(MarketDatabase markets,
+  RiskStateProcessor<T>::RiskStateProcessor(RiskPortfolio portfolio,
+      const RiskParameters& parameters,
       const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient)
-      : m_portfolio(std::move(markets)),
+      : m_portfolio(std::move(portfolio)),
         m_timeClient(std::forward<TF>(timeClient)) {
     m_timeClient->Open();
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
     }
+    Update(parameters);
   }
 
   template<typename T>

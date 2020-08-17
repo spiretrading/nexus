@@ -26,11 +26,10 @@ namespace {
 TEST_SUITE("RiskStateProcessor") {
   TEST_CASE("transition_closed_disabled") {
     auto timeClient = FixedTimeClient(time_from_string("2020-03-20 13:12:00"));
-    auto processor = RiskStateProcessor(GetDefaultMarketDatabase(), {},
-      &timeClient);
     auto parameters = RiskParameters(DefaultCurrencies::USD(), Money::ZERO,
       RiskState::Type::ACTIVE, Money::ONE, 0, minutes(1));
-    processor.Update(parameters);
+    auto processor = RiskStateProcessor(
+      RiskPortfolio(GetDefaultMarketDatabase()), parameters, {}, &timeClient);
     REQUIRE(processor.GetParameters() == parameters);
     REQUIRE(processor.GetRiskState() == RiskState::Type::ACTIVE);
     auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
@@ -77,34 +76,34 @@ TEST_SUITE("RiskStateProcessor") {
 
   TEST_CASE("immediate_close") {
     auto timeClient = FixedTimeClient(time_from_string("1995-01-22 14:16:00"));
-    auto processor = RiskStateProcessor(GetDefaultMarketDatabase(), {},
-      &timeClient);
-    processor.Update(RiskParameters(DefaultCurrencies::USD(), Money::ZERO,
-      RiskState::Type::ACTIVE, Money::ONE, 0, minutes(5)));
-    processor.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
+    auto portfolio = RiskPortfolio(GetDefaultMarketDatabase());
+    portfolio.Update(TSLA, Money::ONE, 99 * Money::CENT);
     auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE);
     auto report = ExecutionReport::BuildInitialReport(1, timeClient.GetTime());
-    processor.GetPortfolio().Update(fields, report);
+    portfolio.Update(fields, report);
     auto fillReport = ExecutionReport::BuildUpdatedReport(report,
       OrderStatus::FILLED, timeClient.GetTime());
     fillReport.m_lastQuantity = 100;
     fillReport.m_lastPrice = Money::ONE;
-    processor.GetPortfolio().Update(fields, fillReport);
-    processor.UpdatePortfolio();
+    portfolio.Update(fields, fillReport);
+    auto parameters = RiskParameters(DefaultCurrencies::USD(), Money::ZERO,
+      RiskState::Type::ACTIVE, Money::ONE, 0, minutes(5));
+    auto processor = RiskStateProcessor(portfolio, parameters, {}, &timeClient);
     REQUIRE(processor.GetRiskState() == RiskState(RiskState::Type::CLOSE_ORDERS,
       time_from_string("1995-01-22 14:21:00")));
   }
 
   TEST_CASE("mixed_currencies") {
     auto timeClient = FixedTimeClient(time_from_string("2006-07-2 3:11:30"));
+    auto parameters = RiskParameters(DefaultCurrencies::USD(), Money::ZERO,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, 0, minutes(2));
     auto exchangeRates = std::vector<ExchangeRate>();
     exchangeRates.push_back(ExchangeRate(ParseCurrencyPair("USD/CAD"),
       rational<int>(1, 2)));
-    auto processor = RiskStateProcessor(GetDefaultMarketDatabase(),
-      exchangeRates, &timeClient);
-    processor.Update(RiskParameters(DefaultCurrencies::USD(), Money::ZERO,
-      RiskState::Type::ACTIVE, 10 * Money::ONE, 0, minutes(2)));
+    auto processor = RiskStateProcessor(
+      RiskPortfolio(GetDefaultMarketDatabase()), parameters, exchangeRates,
+      &timeClient);
     processor.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
     processor.GetPortfolio().Update(XIU, 2 * Money::ONE,
       Money::ONE + 99 * Money::CENT);
@@ -145,10 +144,10 @@ TEST_SUITE("RiskStateProcessor") {
 
   TEST_CASE("unknown_currency") {
     auto timeClient = FixedTimeClient(time_from_string("2006-07-2 3:11:30"));
-    auto processor = RiskStateProcessor(GetDefaultMarketDatabase(), {},
-      &timeClient);
-    processor.Update(RiskParameters(DefaultCurrencies::JPY(), Money::ZERO,
-      RiskState::Type::ACTIVE, 10 * Money::ONE, 0, minutes(2)));
+    auto parameters = RiskParameters(DefaultCurrencies::JPY(), Money::ZERO,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, 0, minutes(2));
+    auto processor = RiskStateProcessor(
+      RiskPortfolio(GetDefaultMarketDatabase()), parameters, {}, &timeClient);
     processor.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
     auto fields = OrderFields::BuildLimitOrder(TSLA, DefaultCurrencies::USD(),
       Side::BID, 100, Money::ONE);

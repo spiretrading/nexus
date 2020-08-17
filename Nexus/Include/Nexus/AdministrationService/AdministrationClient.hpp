@@ -6,6 +6,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/noncopyable.hpp>
@@ -354,6 +355,21 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         RiskService::RiskState riskState);
   };
+
+  /**
+   * Loads an account's RiskParameters.
+   * @param client The AdministrationClient used to load the parameters.
+   * @param account The account whose parameters are to be loaded.
+   * @return The <i>account</i>'s RiskParameters.
+   */
+  template<typename Client>
+  RiskService::RiskParameters LoadRiskParameters(Client& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto queue = std::make_shared<
+      Beam::StateQueue<RiskService::RiskParameters>>();
+    client.GetRiskParametersPublisher(account).Monitor(queue);
+    return queue->Pop();
+  }
 
   template<typename B>
   template<typename BF>

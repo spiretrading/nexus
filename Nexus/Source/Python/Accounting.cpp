@@ -149,6 +149,7 @@ void Nexus::Python::ExportTrueAveragePortfolio(pybind11::module& module) {
   using Portfolio = Accounting::Portfolio<TrueAverageBookkeeper<Inventory>>;
   auto outer = class_<Portfolio>(module, "TrueAveragePortfolio")
     .def(init<const MarketDatabase&>())
+    .def(init<const MarketDatabase&, TrueAverageBookkeeper<Inventory>>())
     .def(init<const Portfolio&>())
     .def_property_readonly("bookkeeper", &Portfolio::GetBookkeeper)
     .def_property_readonly("security_entries", &Portfolio::GetSecurityEntries)

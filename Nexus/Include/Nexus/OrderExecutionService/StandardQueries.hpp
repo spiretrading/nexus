@@ -141,6 +141,33 @@ namespace Nexus::OrderExecutionService {
    * Builds a query to retrieve Orders by their id.
    * @param account The account to query.
    * @param ids The order ids to query.
+   */
+  inline AccountQuery BuildOrderSubmissionQuery(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const std::vector<OrderId>& ids) {
+    auto info = Beam::Queries::ParameterExpression(0,
+      Nexus::Queries::OrderInfoType());
+    auto field = Beam::Queries::MemberAccessExpression("order_id",
+      Beam::Queries::NativeDataType<OrderId>(), info);
+    auto clauses = std::vector<Beam::Queries::Expression>();
+    std::transform(ids.begin(), ids.end(), std::back_inserter(clauses),
+      [&] (auto& id) {
+        return Beam::Queries::MakeEqualsExpression(field,
+          Beam::Queries::ConstantExpression(Beam::Queries::NativeValue(id)));
+      });
+    auto query = AccountQuery();
+    query.SetIndex(account);
+    query.SetRange(Beam::Queries::Range::Historical());
+    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    query.SetFilter(Beam::Queries::MakeOrExpression(
+      clauses.begin(), clauses.end()));
+    return query;
+  }
+
+  /**
+   * Builds a query to retrieve Orders by their id.
+   * @param account The account to query.
+   * @param ids The order ids to query.
    * @param orderExecutionClient The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
@@ -149,7 +176,10 @@ namespace Nexus::OrderExecutionService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<OrderId>& ids,
       OrderExecutionClient& orderExecutionClient,
-      Beam::ScopedQueueWriter<const Order*> queue) {}
+      Beam::ScopedQueueWriter<const Order*> queue) {
+    auto query = BuildOrderSubmissionQuery(account, ids);
+    orderExecutionClient.QueryOrderSubmissions(query, std::move(queue));
+  }
 
   /**
    * Loads a list of Orders by id.
