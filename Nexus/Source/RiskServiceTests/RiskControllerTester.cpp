@@ -49,7 +49,7 @@ namespace {
         "1234", DirectoryEntry::GetStarDirectory());
       adminClient.GetAdministrationClient().StoreRiskParameters(m_account,
         RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-        RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(10)));
+        RiskState::Type::ACTIVE, 2 * Money::ONE, 1, minutes(10)));
       adminClient.GetAdministrationClient().StoreRiskState(m_account,
         RiskState::Type::ACTIVE);
       m_adminClients.Open();
@@ -71,16 +71,23 @@ TEST_SUITE("RiskController") {
       m_adminClients.BuildTimer(seconds(1)),
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    auto states = std::make_shared<Queue<RiskState>>();
-    controller.GetRiskStatePublisher().Monitor(states);
-    REQUIRE(states->Pop() == RiskState::Type::ACTIVE);
+    auto state = std::make_shared<Queue<RiskState>>();
+    controller.GetRiskStatePublisher().Monitor(state);
+    REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
     auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
     controller.GetPortfolioPublisher().Monitor(portfolio);
     auto& order = m_userClients.GetOrderExecutionClient().Submit(
       OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
     auto receivedOrder = m_orders->Pop();
     m_environment.AcceptOrder(*receivedOrder);
-    m_environment.FillOrder(*receivedOrder, 100);
+    m_environment.FillOrder(*receivedOrder, *Money::FromValue("1.01"), 100);
     auto update = portfolio->Pop();
+    REQUIRE(update.m_unrealizedSecurity == -Money::ONE);
+    REQUIRE(update.m_unrealizedCurrency == -Money::ONE);
+    m_environment.Publish(TSLA, BboQuote(
+      Quote(*Money::FromValue("0.99"), 100, Side::BID),
+      Quote(*Money::FromValue("1.00"), 100, Side::ASK),
+      m_environment.GetTimeEnvironment().GetTime()));
+    REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
   }
 }
