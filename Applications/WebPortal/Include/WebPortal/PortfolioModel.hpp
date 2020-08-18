@@ -27,7 +27,7 @@ namespace Nexus::WebPortal {
         Beam::ServiceLocator::DirectoryEntry m_account;
 
         /** The Entry's Inventory. */
-        RiskService::RiskPortfolioInventory m_inventory;
+        RiskService::RiskInventory m_inventory;
 
         /** The position's unrealized profit and loss. */
         boost::optional<Money> m_unrealizedProfitAndLoss;
@@ -76,7 +76,7 @@ namespace Nexus::WebPortal {
       Beam::RoutineTaskQueue m_tasks;
 
       void OnRiskPortfolioInventoryUpdate(
-        const RiskService::RiskPortfolioInventoryEntry& inventory);
+        const RiskService::RiskInventoryEntry& inventory);
       void OnBboQuote(const Security& security,
         Accounting::SecurityValuation& valuation, const BboQuote& quote);
   };

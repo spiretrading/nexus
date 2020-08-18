@@ -2,8 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/RiskService/ConsolidatedRiskController.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
-#include "Nexus/RiskService/RiskController.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
@@ -24,13 +24,16 @@ namespace {
   struct Fixture {
     TestEnvironment m_environment;
     TestServiceClients m_adminClients;
-    TestServiceClients m_userClients;
+    TestServiceClients m_userAClients;
+    TestServiceClients m_userBClients;
     std::shared_ptr<Queue<const Order*>> m_orders;
-    DirectoryEntry m_account;
+    DirectoryEntry m_accountA;
+    DirectoryEntry m_accountB;
 
     Fixture()
         : m_adminClients(Ref(m_environment)),
-          m_userClients(Ref(m_environment)),
+          m_userAClients(Ref(m_environment)),
+          m_userBClients(Ref(m_environment)),
           m_orders(std::make_shared<Queue<const Order*>>()) {
       m_environment.MonitorOrderSubmissions(m_orders);
       m_environment.Open();
@@ -41,48 +44,39 @@ namespace {
         Quote(*Money::FromValue("1.01"), 100, Side::ASK),
         m_environment.GetTimeEnvironment().GetTime()));
       m_adminClients.Open();
-      m_account = m_adminClients.GetServiceLocatorClient().MakeAccount("simba",
+      m_accountA = MakeAccount("simba1", 2 * Money::ONE, minutes(10));
+      m_accountB = MakeAccount("simba2", 10 * Money::ONE, minutes(3));
+    }
+
+    DirectoryEntry MakeAccount(std::string name, Money netLoss,
+        time_duration transitionTime) {
+      auto account = m_adminClients.GetServiceLocatorClient().MakeAccount(name,
         "1234", DirectoryEntry::GetStarDirectory());
-      m_adminClients.GetAdministrationClient().StoreRiskParameters(m_account,
+      m_adminClients.GetAdministrationClient().StoreRiskParameters(account,
         RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-        RiskState::Type::ACTIVE, 2 * Money::ONE, 1, minutes(10)));
-      m_adminClients.GetAdministrationClient().StoreRiskState(m_account,
+        RiskState::Type::ACTIVE, netLoss, 1, transitionTime));
+      m_adminClients.GetAdministrationClient().StoreRiskState(account,
         RiskState::Type::ACTIVE);
-      m_userClients.GetServiceLocatorClient().SetCredentials("simba", "1234");
-      m_userClients.Open();
+      return account;
     }
   };
 }
 
-TEST_SUITE("RiskController") {
-  TEST_CASE_FIXTURE(Fixture, "single_security") {
+TEST_SUITE("ConsolidatedRiskController") {
+  TEST_CASE_FIXTURE(Fixture, "single_account") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();
-    auto controller = RiskController(m_account,
+    auto accounts = std::make_shared<Queue<DirectoryEntry>>();
+    auto controller = ConsolidatedRiskController(accounts,
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
       &m_adminClients.GetOrderExecutionClient(),
-      m_adminClients.BuildTimer(seconds(1)),
+      [=] {
+        return m_adminClients.BuildTimer(seconds(1));
+      },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    auto state = std::make_shared<Queue<RiskState>>();
-    controller.GetRiskStatePublisher().Monitor(state);
-    REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
-    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
-    controller.GetPortfolioPublisher().Monitor(portfolio);
-    auto& order = m_userClients.GetOrderExecutionClient().Submit(
-      OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
-    auto receivedOrder = m_orders->Pop();
-    m_environment.AcceptOrder(*receivedOrder);
-    m_environment.FillOrder(*receivedOrder, *Money::FromValue("1.01"), 100);
-    auto update = portfolio->Pop();
-    REQUIRE(update.m_unrealizedSecurity == -Money::ONE);
-    REQUIRE(update.m_unrealizedCurrency == -Money::ONE);
-    m_environment.Publish(TSLA, BboQuote(
-      Quote(*Money::FromValue("0.99"), 100, Side::BID),
-      Quote(*Money::FromValue("1.00"), 100, Side::ASK),
-      m_environment.GetTimeEnvironment().GetTime()));
-    REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
+    accounts->Push(m_accountA);
   }
 }

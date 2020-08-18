@@ -34,7 +34,7 @@ const Publisher<PortfolioModel::Entry>& PortfolioModel::GetPublisher() const {
 
 void PortfolioModel::Open() {
   m_serviceClients->GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
-    m_tasks.GetSlot<RiskPortfolioInventoryEntry>(
+    m_tasks.GetSlot<RiskInventoryEntry>(
     std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
     std::placeholders::_1)));
 }
@@ -42,15 +42,14 @@ void PortfolioModel::Open() {
 void PortfolioModel::Close() {}
 
 void PortfolioModel::OnRiskPortfolioInventoryUpdate(
-    const RiskPortfolioInventoryEntry& inventory) {
+    const RiskInventoryEntry& inventory) {
   auto& security = inventory.m_key.m_security;
   auto entryIterator = m_entries.find(inventory.m_key);
   if(entryIterator == m_entries.end()) {
     auto entry = std::make_shared<Entry>(inventory.m_key.m_account,
       inventory.m_key.m_security,
       inventory.m_value.m_position.m_key.m_currency);
-    entryIterator = m_entries.insert(
-      std::make_pair(inventory.m_key, entry)).first;
+    entryIterator = m_entries.insert(std::pair(inventory.m_key, entry)).first;
     m_securityToEntries[security].push_back(entry);
   }
   auto& valuation =

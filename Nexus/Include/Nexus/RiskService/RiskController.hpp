@@ -6,9 +6,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
-#include <Beam/Queues/ValueSnapshotPublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/optional/optional.hpp>

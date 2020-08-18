@@ -22,7 +22,6 @@ namespace Nexus::RiskService {
     /**
      * Subscribes to the RiskPortfolioUpdates permissioned by the session's
      * account.
-     * @param dummy unused.
      */
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",

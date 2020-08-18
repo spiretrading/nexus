@@ -3,6 +3,8 @@
 #include <string>
 
 namespace Nexus::RiskService {
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D> class ConsolidatedRiskController;
   struct InventorySnapshot;
   template<typename B> class RiskClient;
   template<typename A, typename M, typename O, typename R, typename T,
@@ -11,7 +13,6 @@ namespace Nexus::RiskService {
   struct RiskParameters;
   struct RiskPositionUpdate;
   struct RiskProfitAndLossUpdate;
-  template<typename C, typename A, typename O, typename R> class RiskServlet;
   class RiskSession;
   struct RiskState;
   template<typename T> class RiskStateProcessor;
