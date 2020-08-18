@@ -252,7 +252,12 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   ExportOrderExecutionServiceTestEnvironment(testModule);
   ExportMockOrderExecutionDriver(testModule);
   testModule.def("cancel_order", &CancelOrder, call_guard<GilRelease>());
-  testModule.def("set_order_status", &SetOrderStatus, call_guard<GilRelease>());
+  testModule.def("set_order_status",
+    static_cast<void (*)(PrimitiveOrder&, OrderStatus, ptime)>(&SetOrderStatus),
+    call_guard<GilRelease>());
+  testModule.def("set_order_status",
+    static_cast<void (*)(PrimitiveOrder&, OrderStatus)>(&SetOrderStatus),
+    call_guard<GilRelease>());
   testModule.def("fill_order",
     static_cast<void (*)(PrimitiveOrder&, Money, Quantity, ptime)>(&FillOrder),
     call_guard<GilRelease>());

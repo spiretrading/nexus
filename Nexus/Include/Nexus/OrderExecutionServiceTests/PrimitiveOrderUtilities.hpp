@@ -49,6 +49,39 @@ namespace Nexus::OrderExecutionService::Tests {
   }
 
   /**
+   * Sets the OrderStatus of an Order being tested.
+   * @param order The Order to set the OrderStatus for.
+   * @param newStatus The OrderStatus to assign to the <i>order</i>.
+   */
+  inline void SetOrderStatus(PrimitiveOrder& order, OrderStatus newStatus) {
+    order.With(
+      [&] (auto status, auto& reports) {
+        auto& lastReport = reports.back();
+        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
+          newStatus, lastReport.m_timestamp);
+        order.Update(updatedReport);
+      });
+  }
+
+  /**
+   * Sets the OrderStatus of an Order to new.
+   * @param order The Order to set the OrderStatus for.
+   * @param timestamp The modification's timestamp.
+   */
+  inline void Accept(PrimitiveOrder& order,
+      boost::posix_time::ptime timestamp) {
+    SetOrderStatus(order, OrderStatus::NEW, timestamp);
+  }
+
+  /**
+   * Sets the OrderStatus of an Order to new.
+   * @param order The Order to set the OrderStatus for.
+   */
+  inline void Accept(PrimitiveOrder& order) {
+    SetOrderStatus(order, OrderStatus::NEW);
+  }
+
+  /**
    * Fills an Order.
    * @param order The Order to fill.
    * @param price The price of the fill.

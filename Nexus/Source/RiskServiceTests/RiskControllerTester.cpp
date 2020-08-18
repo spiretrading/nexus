@@ -14,22 +14,47 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
+using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::RiskService;
 
 namespace {
-  auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");
   auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
     DefaultCountries::US());
   auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
 
   struct Fixture {
     TestEnvironment m_environment;
-    TestServiceClients m_serviceClients;
+    TestServiceClients m_adminClients;
+    TestServiceClients m_userClients;
+    std::shared_ptr<Queue<const Order*>> m_orders;
+    DirectoryEntry m_account;
 
     Fixture()
-        : m_serviceClients(Ref(m_environment)) {
+        : m_adminClients(Ref(m_environment)),
+          m_userClients(Ref(m_environment)),
+          m_orders(std::make_shared<Queue<const Order*>>()) {
+      m_environment.MonitorOrderSubmissions(m_orders);
       m_environment.Open();
-      m_serviceClients.Open();
+      m_environment.GetAdministrationEnvironment().MakeAdministrator(
+        DirectoryEntry::GetRootAccount());
+      m_environment.Publish(TSLA, BboQuote(
+        Quote(*Money::FromValue("1.00"), 100, Side::BID),
+        Quote(*Money::FromValue("1.01"), 100, Side::ASK),
+        m_environment.GetTimeEnvironment().GetTime()));
+      auto adminClient = TestServiceClients(Ref(m_environment));
+      adminClient.GetServiceLocatorClient().SetCredentials("root", "");
+      adminClient.Open();
+      m_account = adminClient.GetServiceLocatorClient().MakeAccount("simba",
+        "1234", DirectoryEntry::GetStarDirectory());
+      adminClient.GetAdministrationClient().StoreRiskParameters(m_account,
+        RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
+        RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(10)));
+      adminClient.GetAdministrationClient().StoreRiskState(m_account,
+        RiskState::Type::ACTIVE);
+      m_adminClients.Open();
+      m_userClients.GetServiceLocatorClient().SetCredentials("simba", "1234");
+      m_userClients.Open();
     }
   };
 }
@@ -39,12 +64,23 @@ TEST_SUITE("RiskController") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = LocalRiskDataStore();
     dataStore.Open();
-    auto controller = RiskController(ACCOUNT,
-      &m_serviceClients.GetAdministrationClient(),
-      &m_serviceClients.GetMarketDataClient(),
-      &m_serviceClients.GetOrderExecutionClient(),
-      m_serviceClients.BuildTimer(seconds(1)),
-      &m_serviceClients.GetTimeClient(), &dataStore, exchangeRates,
+    auto controller = RiskController(m_account,
+      &m_adminClients.GetAdministrationClient(),
+      &m_adminClients.GetMarketDataClient(),
+      &m_adminClients.GetOrderExecutionClient(),
+      m_adminClients.BuildTimer(seconds(1)),
+      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
+    auto states = std::make_shared<Queue<RiskState>>();
+    controller.GetRiskStatePublisher().Monitor(states);
+    REQUIRE(states->Pop() == RiskState::Type::ACTIVE);
+    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
+    controller.GetPortfolioPublisher().Monitor(portfolio);
+    auto& order = m_userClients.GetOrderExecutionClient().Submit(
+      OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
+    auto receivedOrder = m_orders->Pop();
+    m_environment.AcceptOrder(*receivedOrder);
+    m_environment.FillOrder(*receivedOrder, 100);
+    auto update = portfolio->Pop();
   }
 }
