@@ -19,14 +19,27 @@ namespace {
     static auto width = scale_width(8);
     return width;
   }
+
+  auto clamped_real(NumericInputWidget::Real value,
+      NumericInputWidget::Real min, NumericInputWidget::Real max) {
+    if(value.compare(min) < 0) {
+      return min;
+    } else if(value.compare(max) > 0) {
+      return max;
+    }
+    return value;
+  }
 }
 
-NumericInputWidget::NumericInputWidget(QWidget* parent)
+NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
     : QAbstractSpinBox(parent),
-      m_validator(new QDoubleValidator(std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::max(), DEFAULT_DECIMAL_PLACES, this)),
-      m_step("1") {
-  set_stylesheet(false, false);
+      m_minimum(std::numeric_limits<Real>::lowest()),
+      m_maximum(std::numeric_limits<Real>::max()),
+      m_step(1) {
+  lineEdit()->setText(display_string(value));
+  set_decimals(DEFAULT_DECIMAL_PLACES);
+  update_stylesheet();
+  connect(this, &QAbstractSpinBox::valueChanged, [=] (auto value) {});
 }
 
 void NumericInputWidget::focusOutEvent(QFocusEvent* event) {
@@ -65,9 +78,7 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
       auto current_text = lineEdit()->text().remove(
         lineEdit()->selectedText());
       current_text.insert(lineEdit()->cursorPosition(), input);
-      auto validation_result = validate(current_text);
-      if(validation_result == QValidator::Acceptable ||
-          validation_result == QValidator::Intermediate) {
+      if(is_valid(current_text)) {
         QAbstractSpinBox::keyPressEvent(event);
       }
     }
@@ -76,6 +87,34 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
 
 QAbstractSpinBox::StepEnabled NumericInputWidget::stepEnabled() const {
   return QAbstractSpinBox::StepUpEnabled | QAbstractSpinBox::StepDownEnabled;
+}
+
+void NumericInputWidget::set_decimals(int decimals) {
+  m_decimals = std::min(decimals, MAX_DECIMAL_PLACES);
+  auto point_count = [&] {
+    if(m_decimals > 0) {
+      return 1;
+    }
+    return 0;
+  }();
+  m_real_regex = QRegularExpression(QString(
+    "^[-]?([0-9]*[.]{0,%1}[0-9]{0,%2})$").arg(point_count).arg(m_decimals));
+}
+
+void NumericInputWidget::set_minimum_decimals(int decimals) {
+  m_minimum_decimals = decimals;
+}
+
+void NumericInputWidget::set_minimum(Real minimum) {
+  m_minimum = minimum;
+}
+
+void NumericInputWidget::set_maximum(Real maximum) {
+  m_maximum = maximum;
+}
+
+void NumericInputWidget::set_step(Real step) {
+  m_step = step;
 }
 
 void NumericInputWidget::stepBy(int step) {
@@ -94,17 +133,42 @@ void NumericInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
     return step;
   }();
   if(text().isEmpty()) {
-    //setValue(singleStep() * step);
-    //lineEdit()->setCursorPosition(text().length());
+    auto value = Real(step);
+    value *= m_step;
+    lineEdit()->setText(display_string(value));
+    lineEdit()->setCursorPosition(text().length());
     return;
   }
-  //connect(lineEdit(), &QLineEdit::selectionChanged, this,
-  //  &DecimalInputWidget::revert_cursor);
-  //m_last_cursor_pos = lineEdit()->cursorPosition();
-  //stepBy(step);
-  //disconnect(lineEdit(), &QLineEdit::selectionChanged, this,
-  //  &DecimalInputWidget::revert_cursor);
-  //lineEdit()->setCursorPosition(text().length());
+  auto value = Real(lineEdit()->text().toStdString().c_str());
+  value += step;
+  value = clamped_real(value, m_minimum, m_maximum);
+  lineEdit()->setText(display_string(value));
+  lineEdit()->setCursorPosition(text().length());
+}
+
+QString NumericInputWidget::display_string(Real value) {
+  auto str = text();
+  str.remove(QRegExp("0+$"));
+  str.remove(QRegExp("\\.$"));
+  if(str.contains(m_locale.decimalPoint())) {
+    return QString::fromStdString(value.str(
+      str.length() - str.indexOf(m_locale.decimalPoint()) - 1,
+      std::ios_base::fixed));
+  }
+  return QString::fromStdString(value.str(text().length() + 1,
+    std::ios_base::dec));
+}
+
+bool NumericInputWidget::is_valid(const QString& text) {
+  // TODO: create localized version of this string?
+  if(!text.contains(m_real_regex)) {
+    return false;
+  }
+  if(!text.contains(QRegularExpression("[0-9]"))) {
+    return true;
+  }
+  auto value = Real(text.toStdString().c_str());
+  return value.compare(m_minimum) >= 0 && value.compare(m_maximum) <= 0;
 }
 
 void NumericInputWidget::set_stylesheet(bool is_up_disabled,
@@ -186,22 +250,22 @@ void NumericInputWidget::set_stylesheet(bool is_up_disabled,
         .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
 }
 
-QValidator::State NumericInputWidget::validate(QString& text) {
-  auto index = 0;
-  return m_validator->validate(text, index);
+void NumericInputWidget::update_stylesheet() {
+  auto value = Real(lineEdit()->text().toStdString().c_str());
+  if(value.compare(m_minimum) == 0) {
+    set_stylesheet(false, true);
+  } else if(value.compare(m_maximum) == 0) {
+    set_stylesheet(true, false);
+  } else {
+    set_stylesheet(false, false);
+  }
 }
 
 void NumericInputWidget::on_editing_finished() {
-  auto text = lineEdit()->text();
-  text.remove(QRegExp("^[0]*"));
-  text.remove(QRegExp("0+$"));
-  text.remove(QRegExp("\\.$"));
-  if(text.startsWith(m_locale.decimalPoint())) {
-    lineEdit()->setText(lineEdit()->text().insert(0, "0"));
-  } else if(text.isEmpty()) {
+  if(text().isEmpty()) {
     lineEdit()->setText("0");
-  } else {
-    lineEdit()->setText(text);
   }
+  auto value = Real(text().toStdString().c_str());
+  lineEdit()->setText(display_string(value));
   Q_EMIT editingFinished();
 }
