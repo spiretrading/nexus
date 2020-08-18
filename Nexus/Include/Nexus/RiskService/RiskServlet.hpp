@@ -1,8 +1,10 @@
 #ifndef NEXUS_RISK_SERVLET_HPP
 #define NEXUS_RISK_SERVLET_HPP
+#include <unordered_map>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/ConsolidatedRiskController.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
@@ -86,17 +88,21 @@ namespace Nexus::RiskService {
         RiskService::ConsolidatedRiskController<AdministrationClient*, M, O, R,
         T, D>;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
+      std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
+      ConsolidatedRiskController m_controller;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         Beam::ServiceLocator::DirectoryEntry, Beam::Threading::Mutex>
         m_accountToGroup;
       Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Threading::Mutex>
         m_portfolioSubscribers;
-      boost::optional<ConsolidatedRiskController> m_controller;
       Beam::IO::OpenState m_openState;
+      Beam::RoutineTaskQueue m_tasks;
 
       void Shutdown();
       Beam::ServiceLocator::DirectoryEntry LoadGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
+      void OnRiskState(const RiskStateEntry& entry);
+      void OnPortfolio(const RiskInventoryEntry& entry);
       void OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request);
   };
@@ -121,7 +127,14 @@ namespace Nexus::RiskService {
     std::unique_ptr<TransitionTimer> ()> transitionTimerFactory,
     TF&& timeClient, DF&& dataStore,
     std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
-    DestinationDatabase destinations) {}
+    DestinationDatabase destinations)
+    : m_administrationClient(std::forward<AF>(administrationClient)),
+      m_controller(std::move(accounts), &*m_administrationClient,
+        std::forward<MF>(marketDataClient),
+        std::forward<OF>(orderExecutionClient),
+        std::move(transitionTimerFactory), std::forward<TF>(timeClient),
+        std::forward<DF>(dataStore), std::move(exchangeRates),
+        std::move(markets), std::move(destinations)) {}
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
@@ -148,6 +161,14 @@ namespace Nexus::RiskService {
       return;
     }
     try {
+      m_administrationClient->Open();
+      m_controller.GetRiskStatePublisher().Monitor(
+        m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState,
+        this, std::placeholders::_1)));
+      m_controller.GetPortfolioPublisher().Monitor(
+        m_tasks.GetSlot<RiskInventoryEntry>(std::bind(&RiskServlet::OnPortfolio,
+        this, std::placeholders::_1)));
+      m_controller.Open();
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();
@@ -167,6 +188,7 @@ namespace Nexus::RiskService {
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
   void RiskServlet<C, A, M, O, R, T, D>::Shutdown() {
+    m_controller.Close();
     m_openState.SetClosed();
   }
 
@@ -178,6 +200,39 @@ namespace Nexus::RiskService {
       [&] {
         return m_administrationClient->LoadParentTradingGroup(account);
       });
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
+  void RiskServlet<C, A, M, O, R, T, D>::OnRiskState(
+      const RiskStateEntry& entry) {
+    m_administrationClient->StoreRiskState(entry.m_key, entry.m_value);
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
+  void RiskServlet<C, A, M, O, R, T, D>::OnPortfolio(
+      const RiskInventoryEntry& entry) {
+    auto& volume = m_volumes[entry.m_key];
+    if(volume == entry.m_value.m_volume) {
+      return;
+    }
+    volume = entry.m_value.m_volume;
+    auto inventories = std::vector<InventoryUpdate>();
+    auto update = InventoryUpdate();
+    update.account = entry.m_key.m_account;
+    update.inventory = entry.m_value;
+    inventories.push_back(update);
+    auto group = LoadGroup(entry.m_key.m_account);
+    m_portfolioSubscribers.With([&] (auto& subscribers) {
+      for(auto& subscriber : subscribers) {
+        auto& session = subscriber->GetSession();
+        if(session.HasGroupPortfolioSubscription(group)) {
+          Beam::Services::SendRecordMessage<InventoryMessage>(*subscriber,
+            inventories);
+        }
+      }
+    });
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -204,7 +259,7 @@ namespace Nexus::RiskService {
       }
       subscribers.push_back(&request.GetClient());
       auto queue = std::make_shared<Beam::Queue<RiskInventoryEntry>>();
-      m_controller->GetPortfolioPublisher().Monitor(queue);
+      m_controller.GetPortfolioPublisher().Monitor(queue);
       while(auto entry = queue->TryPop()) {
         auto group = LoadGroup(entry->m_key.m_account);
         if(session.HasGroupPortfolioSubscription(group)) {

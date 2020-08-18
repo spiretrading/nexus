@@ -23,8 +23,10 @@ include_directories(${NEXUS_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
 include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
+include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
+include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
 include_directories(SYSTEM ${ZLIB_INCLUDE_PATH})
 link_directories(${BOOST_DEBUG_PATH})
@@ -70,6 +72,8 @@ set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(RiskServer
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${MYSQL_LIBRARY_DEBUG_PATH}
+  optimized ${MYSQL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
@@ -93,6 +97,6 @@ if(UNIX)
     dl pthread rt)
 endif()
 if(WIN32)
-  target_link_libraries(RiskServer Crypt32.lib)
+  target_link_libraries(RiskServer Crypt32.lib shlwapi)
 endif()
 install(TARGETS RiskServer DESTINATION ${PROJECT_BINARY_DIR}/Application)

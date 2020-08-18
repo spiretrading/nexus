@@ -4,29 +4,29 @@
 #include <Beam/Network/TcpServerSocket.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/Parsers/Parse.hpp>
-#include <Beam/Queues/AggregateQueueReader.hpp>
+#include <Beam/Queues/ConverterQueueReader.hpp>
+#include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
+#include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
-#include "Nexus/Accounting/Portfolio.hpp"
-#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
+#include <Viper/MySql/Connection.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
+#include "Nexus/RiskService/SqlRiskDataStore.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -34,8 +34,6 @@ using namespace Beam::Codecs;
 using namespace Beam::IO;
 using namespace Beam::Network;
 using namespace Beam::Parsers;
-using namespace Beam::Queries;
-using namespace Beam::Routines;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
@@ -49,69 +47,68 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::DefinitionsService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Queries;
 using namespace Nexus::RiskService;
-using namespace std;
 using namespace TCLAP;
+using namespace Viper;
 
 namespace {
-  using ApplicationPortfolio =
-    Portfolio<TrueAverageBookkeeper<Inventory<Position<Security>>>>;
-  using ApplicationRiskStateMonitor =
-    RiskStateMonitor<RiskStateTracker<ApplicationPortfolio,
-    LiveNtpTimeClient*>, ApplicationAdministrationClient::Client*,
-    ApplicationMarketDataClient::Client*, LiveTimer, LiveNtpTimeClient*>;
+  using ApplicationDataStore = SqlRiskDataStore<MySql::Connection>;
   using RiskServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
     MetaRiskServlet<ApplicationAdministrationClient::Client*,
-    ApplicationOrderExecutionClient::Client*, ApplicationRiskStateMonitor>,
+    ApplicationMarketDataClient::Client*,
+    ApplicationOrderExecutionClient::Client*, LiveTimer,
+    std::unique_ptr<LiveNtpTimeClient>, ApplicationDataStore*>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
   struct RiskServerConnectionInitializer {
-    string m_serviceName;
+    std::string m_serviceName;
     IpAddress m_interface;
-    vector<IpAddress> m_addresses;
+    std::vector<IpAddress> m_addresses;
 
     void Initialize(const YAML::Node& config);
   };
 
   void RiskServerConnectionInitializer::Initialize(const YAML::Node& config) {
-    m_serviceName = Extract<string>(config, "service",
+    m_serviceName = Extract<std::string>(config, "service",
       RiskService::SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
-    vector<IpAddress> addresses;
+    auto addresses = std::vector<IpAddress>();
     addresses.push_back(m_interface);
-    m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
+    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
+      addresses);
   }
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "0.9-r" RISK_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ', "0.9-r" RISK_SERVER_VERSION
+      "\nCopyright (C) 2020 Spire Trading Inc.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto socketThreadPool = SocketThreadPool();
+  auto timerThreadPool = TimerThreadPool();
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
     serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
       Ref(socketThreadPool), Ref(timerThreadPool));
@@ -119,129 +116,131 @@ int main(int argc, const char** argv) {
       serviceLocatorClientConfig.m_password);
     serviceLocatorClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
-  ApplicationDefinitionsClient definitionsClient;
+  auto definitionsClient = ApplicationDefinitionsClient();
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     definitionsClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the definitions service." << endl;
+    std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
   }
-  ApplicationAdministrationClient administrationClient;
+  auto administrationClient = ApplicationAdministrationClient();
   try {
     administrationClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     administrationClient->Open();
   } catch(const std::exception& e) {
-    cerr << "Error connecting to the administration service: " << e.what() <<
-      endl;
+    std::cerr << "Error connecting to the administration service: " <<
+      e.what() << std::endl;
     return -1;
   }
-  ApplicationMarketDataClient marketDataClient;
+  auto marketDataClient = ApplicationMarketDataClient();
   try {
     marketDataClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     marketDataClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the market data service." << endl;
+    std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
   }
-  ApplicationOrderExecutionClient orderExecutionClient;
+  auto orderExecutionClient = ApplicationOrderExecutionClient();
   try {
     orderExecutionClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
     orderExecutionClient->Open();
   } catch(const std::exception&) {
-    cerr << "Unable to connect to the order execution service." << endl;
+    std::cerr << "Unable to connect to the order execution service." <<
+      std::endl;
     return -1;
   }
-  unique_ptr<LiveNtpTimeClient> timeClient;
+  auto timeClient = std::unique_ptr<LiveNtpTimeClient>();
   try {
     auto timeServices = serviceLocatorClient->Locate(TimeService::SERVICE_NAME);
     if(timeServices.empty()) {
-      cerr << "No time services available." << endl;
+      std::cerr << "No time services available." << std::endl;
       return -1;
     }
     auto& timeService = timeServices.front();
-    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
+    auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
     timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
       Ref(timerThreadPool));
   } catch(const  std::exception& e) {
-    cerr << "Unable to initialize NTP client: " << e.what() << endl;
+    std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
   try {
     timeClient->Open();
   } catch(const std::exception&) {
-    cerr << "NTP service unavailable." << endl;
+    std::cerr << "NTP service unavailable." << std::endl;
     return -1;
   }
-  RiskServerConnectionInitializer riskServerConnectionInitializer;
+  auto mySqlConfig = MySqlConfig();
+  try {
+    mySqlConfig = MySqlConfig::Parse(GetNode(config, "data_store"));
+  } catch(const std::exception& e) {
+    std::cerr << "Error parsing section 'data_store': " << e.what() <<
+      std::endl;
+    return -1;
+  }
+  auto dataStore = ApplicationDataStore(std::make_unique<MySql::Connection>(
+    mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
+    mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema));
+  auto exchangeRates = std::vector<ExchangeRate>();
+  try {
+    exchangeRates = definitionsClient->LoadExchangeRates();
+  } catch(const std::exception& e) {
+    std::cerr << "Error loading exchange rates: " << e.what() << std::endl;
+    return -1;
+  }
+  auto markets = optional<MarketDatabase>();
+  try {
+    markets = definitionsClient->LoadMarketDatabase();
+  } catch(const std::exception& e) {
+    std::cerr << "Error loading markets database: " << e.what() << std::endl;
+    return -1;
+  }
+  auto destinations = optional<DestinationDatabase>();
+  try {
+    destinations = definitionsClient->LoadDestinationDatabase();
+  } catch(const std::exception& e) {
+    std::cerr << "Error loading destination database: " << e.what() <<
+      std::endl;
+    return -1;
+  }
+  auto riskServerConnectionInitializer = RiskServerConnectionInitializer();
   try {
     riskServerConnectionInitializer.Initialize(GetNode(config, "server"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'server': " << e.what() << endl;
+    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
     return -1;
   }
-  boost::optional<RiskServletContainer> riskServer;
+  auto accounts = std::make_shared<Queue<AccountUpdate>>();
+  serviceLocatorClient->MonitorAccounts(accounts);
+  auto riskServer = RiskServletContainer(Initialize(serviceLocatorClient.Get(),
+    Initialize(MakeConverterQueueReader(MakeFilteredQueueReader(
+    std::move(accounts), [] (auto& update) {
+      return update.m_type == AccountUpdate::Type::ADDED;
+    }),
+    [] (auto& update) {
+      return update.m_account;
+    }), administrationClient.Get(), marketDataClient.Get(),
+    orderExecutionClient.Get(),
+    [&] {
+      return std::make_unique<LiveTimer>(seconds(1), Ref(timerThreadPool));
+    }, std::move(timeClient), &dataStore, std::move(exchangeRates),
+    std::move(*markets), std::move(*destinations))), Initialize(
+    riskServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
+    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+    Ref(timerThreadPool)));
   try {
-    auto sessionStartTime = ToUtcTime(Extract<ptime>(config,
-      "session_start_time", pos_infin));
-    Beam::Queries::Range timeRange;
-    if(sessionStartTime == pos_infin) {
-      timeRange = Beam::Queries::Range::RealTime();
-    } else {
-      timeRange = Beam::Queries::Range(sessionStartTime,
-        Beam::Queries::Sequence::Last());
-    }
-    auto accounts = serviceLocatorClient->LoadAllAccounts();
-    vector<ScopedQueueReader<const Order*>> accountServletQueues;
-    vector<ScopedQueueReader<const Order*>> accountTransitionQueues;
-    for(const auto& account : accounts) {
-      AccountQuery query;
-      query.SetIndex(account);
-      query.SetRange(timeRange);
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto accountServletQueue = std::make_shared<Queue<const Order*>>();
-      orderExecutionClient->QueryOrderSubmissions(query, accountServletQueue);
-      accountServletQueues.push_back(accountServletQueue);
-      auto accountTransitionQueue = std::make_shared<Queue<const Order*>>();
-      orderExecutionClient->QueryOrderSubmissions(query,
-        accountTransitionQueue);
-      accountTransitionQueues.push_back(accountTransitionQueue);
-    }
-    auto orderServletQueue =
-      std::make_shared<AggregateQueueReader<const Order*>>(
-      std::move(accountServletQueues));
-    auto orderTransitionQueue =
-      std::make_shared<AggregateQueueReader<const Order*>>(
-      std::move(accountTransitionQueues));
-    riskServer.emplace(Initialize(serviceLocatorClient.Get(),
-      Initialize(orderServletQueue, administrationClient.Get(),
-      orderExecutionClient.Get(), Initialize(administrationClient.Get(),
-      marketDataClient.Get(), orderTransitionQueue,
-      Initialize(seconds{1}, Ref(timerThreadPool)), timeClient.get(),
-      definitionsClient->LoadMarketDatabase(),
-      definitionsClient->LoadExchangeRates()),
-      definitionsClient->LoadDestinationDatabase(),
-      definitionsClient->LoadMarketDatabase())),
-      Initialize(riskServerConnectionInitializer.m_interface,
-      Ref(socketThreadPool)),
-      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-      Ref(timerThreadPool)));
+    riskServer.Open();
   } catch(const std::exception& e) {
-    cerr << "Error initializing server: " << e.what() << endl;
-    return -1;
-  }
-  try {
-    riskServer->Open();
-  } catch(const std::exception& e) {
-    cerr << "Error opening server: " << e.what() << endl;
+    std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;
   }
   try {
@@ -251,7 +250,7 @@ int main(int argc, const char** argv) {
     serviceLocatorClient->Register(
       riskServerConnectionInitializer.m_serviceName, service);
   } catch(const std::exception& e) {
-    cerr << "Error registering service: " << e.what() << endl;
+    std::cerr << "Error registering service: " << e.what() << std::endl;
     return -1;
   }
   WaitForKillEvent();
