@@ -223,10 +223,10 @@ int main(int argc, const char** argv) {
   serviceLocatorClient->MonitorAccounts(accounts);
   auto riskServer = RiskServletContainer(Initialize(serviceLocatorClient.Get(),
     Initialize(MakeConverterQueueReader(MakeFilteredQueueReader(
-    std::move(accounts), [] (auto& update) {
+    std::move(accounts), [] (const auto& update) {
       return update.m_type == AccountUpdate::Type::ADDED;
     }),
-    [] (auto& update) {
+    [] (const auto& update) {
       return update.m_account;
     }), administrationClient.Get(), marketDataClient.Get(),
     orderExecutionClient.Get(),

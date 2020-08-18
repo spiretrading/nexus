@@ -69,7 +69,7 @@ namespace Nexus::RiskService {
     Viper::transaction(*m_connection, [&] {
       m_connection->execute(Viper::select(GetInventoryEntriesRow(),
         "inventory_entries", Viper::sym("account") == account.m_id,
-        boost::make_function_output_iterator([&] (auto& row) {
+        boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_inventories.push_back(std::move(row.m_inventory));
         })));
       m_connection->execute(Viper::select(
@@ -77,7 +77,7 @@ namespace Nexus::RiskService {
         Viper::sym("account") == account.m_id, &snapshot.m_sequence));
       m_connection->execute(Viper::select(GetInventoryExcludedOrdersRow(),
         "inventory_excluded_orders", Viper::sym("account") == account.m_id,
-        boost::make_function_output_iterator([&] (auto& row) {
+        boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_excludedOrders.push_back(row.m_id);
         })));
     });
