@@ -84,7 +84,6 @@ namespace Spire {
       void update_stylesheet();
       void on_editing_finished();
       void on_text_changed(const QString& text);
-      void on_text_pasted();
   };
 }
 
