@@ -1,4 +1,6 @@
 #include "Spire/Ui/NumericInputWidget.hpp"
+#include <QApplication>
+#include <QClipboard>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include "Spire/Spire/Dimensions.hpp"
@@ -82,6 +84,10 @@ void NumericInputWidget::focusOutEvent(QFocusEvent* event) {
 }
 
 void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers().testFlag(Qt::ControlModifier)) {
+    QAbstractSpinBox::keyPressEvent(event);
+    return;
+  }
   switch(event->key()) {
     case Qt::Key_Backspace:
       lineEdit()->backspace();
@@ -367,9 +373,27 @@ void NumericInputWidget::on_editing_finished() {
 }
 
 void NumericInputWidget::on_text_changed(const QString& text) {
+  if(!text.contains(m_real_regex)) {
+    lineEdit()->blockSignals(true);
+    lineEdit()->setText(m_last_valid_text);
+    lineEdit()->blockSignals(false);
+    return;
+  }
+  m_last_valid_text = text;
   update_stylesheet();
-  auto value = get_value(text);
+  auto value = get_value(m_last_valid_text);
   if(value != boost::none) {
     m_change_signal(*value);
+  }
+}
+
+void NumericInputWidget::on_text_pasted() {
+  auto text = qApp->clipboard()->text();
+  if(!text.isEmpty()) {
+    auto potential_text = lineEdit()->text().remove(
+      lineEdit()->selectedText()).insert(lineEdit()->cursorPosition(), text);
+    if(potential_text.contains(m_real_regex)) {
+      lineEdit()->setText(potential_text);
+    }
   }
 }

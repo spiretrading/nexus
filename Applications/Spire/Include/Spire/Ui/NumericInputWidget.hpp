@@ -72,6 +72,7 @@ namespace Spire {
       int m_minimum_decimals;
       Real m_step;
       Real m_last_valid_value;
+      QString m_last_valid_text;
       bool m_has_first_click;
 
       void add_step(int step);
@@ -83,6 +84,7 @@ namespace Spire {
       void update_stylesheet();
       void on_editing_finished();
       void on_text_changed(const QString& text);
+      void on_text_pasted();
   };
 }
 
