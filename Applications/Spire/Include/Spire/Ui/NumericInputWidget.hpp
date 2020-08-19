@@ -54,6 +54,7 @@ namespace Spire {
         const ChangeSignal::slot_type& slot) const;
 
     protected:
+      void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;

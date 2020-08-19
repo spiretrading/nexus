@@ -47,6 +47,12 @@ NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
   lineEdit()->installEventFilter(this);
 }
 
+void NumericInputWidget::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    update_stylesheet();
+  }
+}
+
 bool NumericInputWidget::eventFilter(QObject* watched, QEvent* event) {
   if(watched == lineEdit() && event->type() == QEvent::MouseButtonPress &&
       !m_has_first_click && isEnabled()) {
@@ -254,6 +260,11 @@ bool NumericInputWidget::is_valid(const QString& text) {
 
 void NumericInputWidget::set_stylesheet(bool is_up_disabled,
     bool is_down_disabled) {
+  if(isEnabled()) {
+    setButtonSymbols(UpDownArrows);
+  } else {
+    setButtonSymbols(NoButtons);
+  }
   auto [up_icon, up_icon_hover] = [&] () -> std::pair<QString, QString> {
     if(is_up_disabled) {
       return {UP_ARROW_DISABLED_ICON, UP_ARROW_DISABLED_ICON};
