@@ -1,6 +1,8 @@
 #ifndef NEXUS_RISK_CONTROLLER_HPP
 #define NEXUS_RISK_CONTROLLER_HPP
+#include <iostream>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -79,7 +81,7 @@ namespace Nexus::RiskService {
        */
       template<typename AF, typename MF, typename OF, typename RF, typename TF,
         typename DF>
-      RiskController(const Beam::ServiceLocator::DirectoryEntry& account,
+      RiskController(Beam::ServiceLocator::DirectoryEntry account,
         AF&& administrationClient, MF&& marketDataClient,
         OF&& orderExecutionClient, RF&& transitionTimer, TF&& timeClient,
         DF&& dataStore, const std::vector<ExchangeRate>& exchangeRates,
@@ -93,6 +95,7 @@ namespace Nexus::RiskService {
         GetPortfolioPublisher() const;
 
     private:
+      Beam::ServiceLocator::DirectoryEntry m_account;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
       Beam::GetOptionalLocalPtr<R> m_transitionTimer;
@@ -103,22 +106,26 @@ namespace Nexus::RiskService {
       Beam::StatePublisher<RiskState> m_statePublisher;
       boost::optional<Accounting::PortfolioController<RiskPortfolio*, M>>
         m_portfolioController;
+      RiskPortfolio m_snapshotPortfolio;
+      Beam::Queries::Sequence m_snapshotSequence;
+      std::unordered_set<OrderExecutionService::OrderId> m_excludedOrders;
       Beam::RoutineTaskQueue m_tasks;
 
       RiskController(const RiskController&) = delete;
       RiskController& operator =(const RiskController&) = delete;
+      void UpdateSnapshot(const OrderExecutionService::Order& order);
       void UpdatePortfolio(RiskPortfolio& portfolio,
         std::vector<const OrderExecutionService::Order*> orders);
       std::tuple<RiskPortfolio, Beam::Queries::Sequence> BuildPortfolio(
-        const Beam::ServiceLocator::DirectoryEntry& account,
         MarketDatabase markets);
       template<typename F>
       void Update(F&& f);
       void OnTransitionTimer(Beam::Threading::Timer::Result result);
       void OnRiskParametersUpdate(const RiskParameters& parameters);
       void OnPortfolioUpdate(const RiskPortfolio::UpdateEntry& update);
-      void OnOrderSubmission(const OrderExecutionService::Order* order);
-      void OnExecutionReport(
+      void OnOrderSubmission(
+        const OrderExecutionService::SequencedOrder& order);
+      void OnExecutionReport(const OrderExecutionService::Order& order,
         const OrderExecutionService::ExecutionReport& report);
   };
 
@@ -136,32 +143,34 @@ namespace Nexus::RiskService {
   template<typename AF, typename MF, typename OF, typename RF, typename TF,
     typename DF>
   RiskController<A, M, O, R, T, D>::RiskController(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      Beam::ServiceLocator::DirectoryEntry account,
       AF&& administrationClient, MF&& marketDataClient,
       OF&& orderExecutionClient, RF&& transitionTimer, TF&& timeClient,
       DF&& dataStore, const std::vector<ExchangeRate>& exchangeRates,
       MarketDatabase markets, DestinationDatabase destinations)
-      : m_administrationClient(std::forward<AF>(administrationClient)),
+      : m_account(std::move(account)),
+        m_administrationClient(std::forward<AF>(administrationClient)),
         m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
         m_transitionTimer(std::forward<RF>(transitionTimer)),
-        m_dataStore(std::forward<DF>(dataStore)) {
-    auto [portfolio, sequence] = BuildPortfolio(account, std::move(markets));
+        m_dataStore(std::forward<DF>(dataStore)),
+        m_snapshotPortfolio(markets) {
+    auto [portfolio, sequence] = BuildPortfolio(std::move(markets));
     auto inventories = std::vector<RiskInventory>();
     for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
       inventories.push_back(inventory.second);
     }
     m_stateProcessor.emplace(std::move(portfolio),
       AdministrationService::LoadRiskParameters(*m_administrationClient,
-      account), exchangeRates, std::forward<TF>(timeClient));
-    m_transitionProcessor.emplace(account, std::move(inventories),
+      m_account), exchangeRates, std::forward<TF>(timeClient));
+    m_transitionProcessor.emplace(m_account, std::move(inventories),
       m_stateProcessor->GetRiskState(), &*m_orderExecutionClient,
       std::move(destinations));
     auto realTimeQuery = OrderExecutionService::AccountQuery();
-    realTimeQuery.SetIndex(account);
+    realTimeQuery.SetIndex(m_account);
     realTimeQuery.SetRange(sequence, Beam::Queries::Sequence::Last());
     realTimeQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
     m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery,
-      m_tasks.GetSlot<const OrderExecutionService::Order*>(std::bind(
+      m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(std::bind(
       &RiskController::OnOrderSubmission, this, std::placeholders::_1)));
     auto realTimeQueue = std::make_shared<
       Beam::Queue<const OrderExecutionService::Order*>>();
@@ -171,7 +180,7 @@ namespace Nexus::RiskService {
     m_portfolioController->GetPublisher().Monitor(
       m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(std::bind(
       &RiskController::OnPortfolioUpdate, this, std::placeholders::_1)));
-    m_administrationClient->GetRiskParametersPublisher(account).Monitor(
+    m_administrationClient->GetRiskParametersPublisher(m_account).Monitor(
       m_tasks.GetSlot<RiskParameters>(std::bind(
       &RiskController::OnRiskParametersUpdate, this, std::placeholders::_1)));
     m_transitionTimer->GetPublisher().Monitor(
@@ -197,6 +206,37 @@ namespace Nexus::RiskService {
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
+  void RiskController<A, M, O, R, T, D>::UpdateSnapshot(
+      const OrderExecutionService::Order& order) {
+    auto executionReports =
+      std::vector<OrderExecutionService::ExecutionReport>();
+    order.GetPublisher().WithSnapshot(
+      [&] (auto snapshot) {
+        if(snapshot) {
+          executionReports = *snapshot;
+        }
+      });
+    for(auto& executionReport : executionReports) {
+      m_snapshotPortfolio.Update(order.GetInfo().m_fields, executionReport);
+    }
+    m_excludedOrders.erase(order.GetInfo().m_orderId);
+    auto snapshot = InventorySnapshot();
+    for(auto& inventory :
+        m_snapshotPortfolio.GetBookkeeper().GetInventoryRange()) {
+      snapshot.m_inventories.push_back(inventory.second);
+    }
+    snapshot.m_sequence = m_snapshotSequence;
+    snapshot.m_excludedOrders.insert(snapshot.m_excludedOrders.end(),
+      m_excludedOrders.begin(), m_excludedOrders.end());
+    try {
+      m_dataStore->Store(m_account, snapshot);
+    } catch(const std::exception&) {
+      std::cerr << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+    }
+  }
+
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
   void RiskController<A, M, O, R, T, D>::UpdatePortfolio(
       RiskPortfolio& portfolio,
       std::vector<const OrderExecutionService::Order*> orders) {
@@ -206,7 +246,7 @@ namespace Nexus::RiskService {
         std::vector<OrderExecutionService::ExecutionReport>>();
       order->GetPublisher().Monitor(
         m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-        std::bind(&RiskController::OnExecutionReport, this,
+        std::bind(&RiskController::OnExecutionReport, this, std::ref(*order),
         std::placeholders::_1)), Beam::Store(snapshot));
       if(snapshot) {
         std::transform(snapshot->begin(), snapshot->end(),
@@ -225,6 +265,9 @@ namespace Nexus::RiskService {
           right.m_executionReport.m_id, right.m_executionReport.m_sequence);
       });
     for(auto& report : reports) {
+      if(IsTerminal(report.m_executionReport.m_status)) {
+        UpdateSnapshot(*report.m_order);
+      }
       portfolio.Update(report.m_order->GetInfo().m_fields,
         report.m_executionReport);
     }
@@ -233,14 +276,15 @@ namespace Nexus::RiskService {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   std::tuple<RiskPortfolio, Beam::Queries::Sequence>
-      RiskController<A, M, O, R, T, D>::BuildPortfolio(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      MarketDatabase markets) {
-    auto snapshot = m_dataStore->LoadInventorySnapshot(account);
-    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(account,
+      RiskController<A, M, O, R, T, D>::BuildPortfolio(MarketDatabase markets) {
+    auto snapshot = m_dataStore->LoadInventorySnapshot(m_account);
+    m_snapshotSequence = snapshot.m_sequence;
+    m_excludedOrders.insert(snapshot.m_excludedOrders.begin(),
+      snapshot.m_excludedOrders.end());
+    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(m_account,
       snapshot.m_excludedOrders, *m_orderExecutionClient);
     auto trailingOrderQuery = OrderExecutionService::AccountQuery();
-    trailingOrderQuery.SetIndex(account);
+    trailingOrderQuery.SetIndex(m_account);
     trailingOrderQuery.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
       Beam::Queries::Sequence::Present());
     trailingOrderQuery.SetSnapshotLimit(
@@ -256,6 +300,7 @@ namespace Nexus::RiskService {
     });
     auto portfolio = RiskPortfolio(std::move(markets),
       RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+    m_snapshotPortfolio = portfolio;
     UpdatePortfolio(portfolio, std::move(excludedOrders));
     return {std::move(portfolio), Beam::Queries::Increment(lastSequence)};
   }
@@ -306,18 +351,24 @@ namespace Nexus::RiskService {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   void RiskController<A, M, O, R, T, D>::OnOrderSubmission(
-      const OrderExecutionService::Order* order) {
-    m_transitionProcessor->Add(*order);
-    order->GetPublisher().Monitor(
+      const OrderExecutionService::SequencedOrder& order) {
+    m_transitionProcessor->Add(**order);
+    m_snapshotSequence = std::max(m_snapshotSequence, order.GetSequence());
+    m_excludedOrders.insert((*order)->GetInfo().m_orderId);
+    (*order)->GetPublisher().Monitor(
       m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(
-      std::bind(&RiskController::OnExecutionReport, this,
+      std::bind(&RiskController::OnExecutionReport, this, std::ref(**order),
       std::placeholders::_1)));
   }
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   void RiskController<A, M, O, R, T, D>::OnExecutionReport(
+      const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& report) {
+    if(IsTerminal(report.m_status)) {
+      UpdateSnapshot(order);
+    }
     m_transitionProcessor->Update(report);
   }
 }

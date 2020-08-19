@@ -165,6 +165,7 @@ void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, ExecutionReport>)
     .def(self == self)
     .def(self != self);
+  module.def("get_fee_total", &GetFeeTotal);
   ExportQueueSuite<ExecutionReport>(module, "ExecutionReport");
   ExportQueueSuite<SequencedExecutionReport>(module,
     "SequencedExecutionReport");

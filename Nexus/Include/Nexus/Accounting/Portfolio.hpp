@@ -322,8 +322,7 @@ namespace Nexus::Accounting {
       executionReport.m_lastQuantity;
     m_bookkeeper.RecordTransaction(security, currency, quantity,
       executionReport.m_lastQuantity * executionReport.m_lastPrice,
-      executionReport.m_commission + executionReport.m_executionFee +
-      executionReport.m_processingFee);
+      OrderExecutionService::GetFeeTotal(executionReport));
     auto securityInventory = m_bookkeeper.GetInventory(security, currency);
     auto unrealizedSecurity = CalculateUnrealized(securityInventory,
       securityEntry);
