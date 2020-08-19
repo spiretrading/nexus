@@ -1,9 +1,11 @@
 #ifndef SPIRE_NUMERIC_INPUT_WIDGET_HPP
 #define SPIRE_NUMERIC_INPUT_WIDGET_HPP
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/optional.hpp>
 #include <QAbstractSpinBox>
 #include <QLocale>
 #include <QRegularExpression>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -13,6 +15,8 @@ namespace Spire {
       static const auto MAX_DECIMAL_PLACES = 15;
 
       using Real = boost::multiprecision::cpp_dec_float<MAX_DECIMAL_PLACES>;
+
+      using ChangeSignal = Signal<void (Real value)>;
 
       //! Constructs a NumericInputWidget with a default step of 1.
       /*!
@@ -40,14 +44,25 @@ namespace Spire {
 
       void set_step(Real step);
 
+      Real get_value() const;
+
+      void set_value(Real value);
+
       void stepBy(int step) override;
 
+      boost::signals2::connection connect_change_signal(
+        const ChangeSignal::slot_type& slot) const;
+
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
       QAbstractSpinBox::StepEnabled stepEnabled() const override;
 
     private:
+      mutable ChangeSignal m_change_signal;
       QRegularExpression m_real_regex;
       QLocale m_locale;
       Real m_minimum;
@@ -55,14 +70,18 @@ namespace Spire {
       int m_decimals;
       int m_minimum_decimals;
       Real m_step;
+      Real m_last_valid_value;
+      bool m_has_first_click;
 
       void add_step(int step);
       void add_step(int step, Qt::KeyboardModifiers modifiers);
       QString display_string(Real value);
+      boost::optional<Real> get_value(const QString& text) const;
       bool is_valid(const QString& string);
       void set_stylesheet(bool is_up_disabled, bool is_down_disabled);
       void update_stylesheet();
       void on_editing_finished();
+      void on_text_changed(const QString& text);
   };
 }
 

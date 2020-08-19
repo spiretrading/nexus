@@ -3,6 +3,7 @@
 #include <QLineEdit>
 #include "Spire/Spire/Dimensions.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -33,16 +34,44 @@ namespace {
 
 NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
     : QAbstractSpinBox(parent),
-      m_minimum(std::numeric_limits<Real>::lowest()),
-      m_maximum(std::numeric_limits<Real>::max()),
-      m_step(1) {
-  lineEdit()->setText(display_string(value));
+      m_minimum(std::numeric_limits<long double>::lowest()),
+      m_maximum(std::numeric_limits<long double>::max()),
+      m_step(1),
+      m_last_valid_value(value),
+      m_has_first_click(false) {
+  connect(lineEdit(), &QLineEdit::textChanged, this,
+    &NumericInputWidget::on_text_changed);
+  setContextMenuPolicy(Qt::NoContextMenu);
+  lineEdit()->setText(display_string(m_last_valid_value));
   set_decimals(DEFAULT_DECIMAL_PLACES);
-  update_stylesheet();
-  connect(this, &QAbstractSpinBox::valueChanged, [=] (auto value) {});
+  lineEdit()->installEventFilter(this);
+}
+
+bool NumericInputWidget::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == lineEdit() && event->type() == QEvent::MouseButtonPress &&
+      !m_has_first_click && isEnabled()) {
+    auto e = static_cast<QMouseEvent*>(event);
+    if(e->button() == Qt::LeftButton) {
+      m_has_first_click = true;
+      selectAll();
+      return true;
+    }
+  }
+  return QAbstractSpinBox::eventFilter(watched, event);
+}
+
+void NumericInputWidget::focusInEvent(QFocusEvent* event) {
+  if(event->reason() != Qt::MouseFocusReason) {
+    m_has_first_click = true;
+  }
+  QAbstractSpinBox::focusInEvent(event);
 }
 
 void NumericInputWidget::focusOutEvent(QFocusEvent* event) {
+  m_has_first_click = false;
+  blockSignals(true);
+  QAbstractSpinBox::focusOutEvent(event);
+  blockSignals(false);
   on_editing_finished();
 }
 
@@ -52,6 +81,7 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
       lineEdit()->backspace();
       return;
     case Qt::Key_Delete:
+      lineEdit()->setText(display_string(m_last_valid_value));
       return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -78,11 +108,19 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
       auto current_text = lineEdit()->text().remove(
         lineEdit()->selectedText());
       current_text.insert(lineEdit()->cursorPosition(), input);
-      if(is_valid(current_text)) {
+      if(is_valid(current_text.trimmed())) {
         QAbstractSpinBox::keyPressEvent(event);
       }
     }
   }
+}
+
+void NumericInputWidget::mousePressEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton && !m_has_first_click) {
+    selectAll();
+    m_has_first_click = true;
+  }
+  QAbstractSpinBox::mousePressEvent(event);
 }
 
 QAbstractSpinBox::StepEnabled NumericInputWidget::stepEnabled() const {
@@ -98,7 +136,8 @@ void NumericInputWidget::set_decimals(int decimals) {
     return 0;
   }();
   m_real_regex = QRegularExpression(QString(
-    "^[-]?([0-9]*[.]{0,%1}[0-9]{0,%2})$").arg(point_count).arg(m_decimals));
+    "^[%1]?([0-9]*[%2]{0,%3}[0-9]{0,%4})$").arg(m_locale.negativeSign())
+    .arg(m_locale.decimalPoint()).arg(point_count).arg(m_decimals));
 }
 
 void NumericInputWidget::set_minimum_decimals(int decimals) {
@@ -107,18 +146,45 @@ void NumericInputWidget::set_minimum_decimals(int decimals) {
 
 void NumericInputWidget::set_minimum(Real minimum) {
   m_minimum = minimum;
+  auto value = get_value(text());
+  if(value != boost::none && value->compare(m_minimum) < 0) {
+    m_last_valid_value = m_minimum;
+    lineEdit()->setText(display_string(m_minimum));
+  }
 }
 
 void NumericInputWidget::set_maximum(Real maximum) {
   m_maximum = maximum;
+  auto value = get_value(text());
+  if(value != boost::none && value->compare(m_maximum) > 0) {
+    m_last_valid_value = m_maximum;
+    lineEdit()->setText(display_string(m_maximum));
+  }
 }
 
 void NumericInputWidget::set_step(Real step) {
   m_step = step;
 }
 
+
+NumericInputWidget::Real NumericInputWidget::get_value() const {
+  return m_last_valid_value;
+}
+
+void NumericInputWidget::set_value(Real value) {
+  blockSignals(true);
+  value = clamped_real(value, m_minimum, m_maximum);
+  lineEdit()->setText(display_string(value));
+  blockSignals(false);
+}
+
 void NumericInputWidget::stepBy(int step) {
   add_step(step);
+}
+
+connection NumericInputWidget::connect_change_signal(
+    const ChangeSignal::slot_type& slot) const {
+  return m_change_signal.connect(slot);
 }
 
 void NumericInputWidget::add_step(int step) {
@@ -132,43 +198,58 @@ void NumericInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
     }
     return step;
   }();
-  if(text().isEmpty()) {
+  auto value = get_value(text());
+  if(text().isEmpty() || value == boost::none) {
     auto value = Real(step);
     value *= m_step;
     lineEdit()->setText(display_string(value));
     lineEdit()->setCursorPosition(text().length());
     return;
   }
-  auto value = Real(lineEdit()->text().toStdString().c_str());
-  value += step;
-  value = clamped_real(value, m_minimum, m_maximum);
-  lineEdit()->setText(display_string(value));
+  *value += step;
+  value = clamped_real(*value, m_minimum, m_maximum);
+  lineEdit()->setText(display_string(*value));
   lineEdit()->setCursorPosition(text().length());
 }
 
 QString NumericInputWidget::display_string(Real value) {
   auto str = text();
-  str.remove(QRegExp("0+$"));
-  str.remove(QRegExp("\\.$"));
+  str.remove(QRegularExpression("0+$"));
+  str.remove(QRegularExpression(
+    QString("\\%1$").arg(m_locale.decimalPoint())));
   if(str.contains(m_locale.decimalPoint())) {
-    return QString::fromStdString(value.str(
+    auto displayed_text = QString::fromStdString(value.str(
       str.length() - str.indexOf(m_locale.decimalPoint()) - 1,
       std::ios_base::fixed));
+    return displayed_text.remove(
+      QRegularExpression(QString("\\%1%2*$").arg(m_locale.decimalPoint())
+      .arg(0))).trimmed();
   }
   return QString::fromStdString(value.str(text().length() + 1,
     std::ios_base::dec));
 }
 
+boost::optional<NumericInputWidget::Real>
+    NumericInputWidget::get_value(const QString& text) const {
+  try {
+    return Real(text.toStdString().c_str());
+  } catch (const std::runtime_error&) {
+    return boost::none;
+  }
+}
+
 bool NumericInputWidget::is_valid(const QString& text) {
-  // TODO: create localized version of this string?
   if(!text.contains(m_real_regex)) {
     return false;
   }
   if(!text.contains(QRegularExpression("[0-9]"))) {
     return true;
   }
-  auto value = Real(text.toStdString().c_str());
-  return value.compare(m_minimum) >= 0 && value.compare(m_maximum) <= 0;
+  auto value = get_value(text);
+  if(value == boost::none) {
+    return true;
+  }
+  return value->compare(m_minimum) >= 0 && value->compare(m_maximum) <= 0;
 }
 
 void NumericInputWidget::set_stylesheet(bool is_up_disabled,
@@ -251,10 +332,12 @@ void NumericInputWidget::set_stylesheet(bool is_up_disabled,
 }
 
 void NumericInputWidget::update_stylesheet() {
-  auto value = Real(lineEdit()->text().toStdString().c_str());
-  if(value.compare(m_minimum) == 0) {
+  auto value = get_value(text());
+  if(value == boost::none) {
+    set_stylesheet(false, false);
+  } else if(value->compare(m_minimum) == 0) {
     set_stylesheet(false, true);
-  } else if(value.compare(m_maximum) == 0) {
+  } else if(value->compare(m_maximum) == 0) {
     set_stylesheet(true, false);
   } else {
     set_stylesheet(false, false);
@@ -262,10 +345,20 @@ void NumericInputWidget::update_stylesheet() {
 }
 
 void NumericInputWidget::on_editing_finished() {
-  if(text().isEmpty()) {
-    lineEdit()->setText("0");
+  auto value = get_value(text());
+  if(text().isEmpty() || value == boost::none) {
+    lineEdit()->setText(display_string(m_last_valid_value));
+  } else {
+    m_last_valid_value = *value;
+    lineEdit()->setText(display_string(m_last_valid_value));
   }
-  auto value = Real(text().toStdString().c_str());
-  lineEdit()->setText(display_string(value));
   Q_EMIT editingFinished();
+}
+
+void NumericInputWidget::on_text_changed(const QString& text) {
+  update_stylesheet();
+  auto value = get_value(text);
+  if(value != boost::none) {
+    m_change_signal(*value);
+  }
 }
