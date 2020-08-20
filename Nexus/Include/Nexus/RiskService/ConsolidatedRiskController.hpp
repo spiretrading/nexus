@@ -201,7 +201,9 @@ namespace Nexus::RiskService {
           &*m_orderExecutionClient, m_transitionTimerFactory(), &*m_timeClient,
           &*m_dataStore, m_exchangeRates, m_markets, m_destinations);
       } catch(const std::exception&) {
-        std::cerr << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+        std::cerr << "Unable to load risk controller:\n\t" <<
+          "Account: " << account << "\n\t" <<
+          BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
         return std::unique_ptr<RiskController>();
       }
     }();

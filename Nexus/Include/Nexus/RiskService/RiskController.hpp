@@ -231,7 +231,8 @@ namespace Nexus::RiskService {
     try {
       m_dataStore->Store(m_account, snapshot);
     } catch(const std::exception&) {
-      std::cerr << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+      std::cerr << "Unable to store inventory snapshot:\n\t" <<
+        BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
     }
   }
 

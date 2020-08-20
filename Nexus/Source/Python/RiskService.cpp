@@ -134,6 +134,8 @@ void Nexus::Python::ExportRiskClient(pybind11::module& module) {
       &VirtualRiskClient::GetRiskPortfolioUpdatePublisher)
     .def("open", &VirtualRiskClient::Open)
     .def("close", &VirtualRiskClient::Close);
+  ExportQueueSuite<KeyValuePair<RiskPortfolioKey, RiskInventory>>(module,
+    "RiskPortfolioUpdateEntry");
 }
 
 void Nexus::Python::ExportRiskDataStore(pybind11::module& module) {
