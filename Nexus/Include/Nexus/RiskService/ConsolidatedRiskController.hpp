@@ -1,5 +1,6 @@
 #ifndef NEXUS_CONSOLIDATED_RISK_CONTROLLER_HPP
 #define NEXUS_CONSOLIDATED_RISK_CONTROLLER_HPP
+#include <iostream>
 #include <memory>
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
@@ -193,10 +194,21 @@ namespace Nexus::RiskService {
     typename D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::OnAccount(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto controller = std::make_unique<RiskController>(account,
-      &*m_administrationClient, &*m_marketDataClient, &*m_orderExecutionClient,
-      m_transitionTimerFactory(), &*m_timeClient, &*m_dataStore,
-      m_exchangeRates, m_markets, m_destinations);
+    auto controller = [&] {
+      try {
+        return std::make_unique<RiskController>(account,
+          &*m_administrationClient, &*m_marketDataClient,
+          &*m_orderExecutionClient, m_transitionTimerFactory(), &*m_timeClient,
+          &*m_dataStore, m_exchangeRates, m_markets, m_destinations);
+      } catch(const std::exception&) {
+        std::cerr << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+        return std::unique_ptr<RiskController>();
+      }
+    }();
+    if(!controller) {
+      m_statePublisher.Push(account, RiskState::Type::DISABLED);
+      return;
+    }
     controller->GetRiskStatePublisher().Monitor(m_tasks.GetSlot<RiskState>(
       std::bind(&ConsolidatedRiskController::OnRiskState, this, account,
       std::placeholders::_1)));

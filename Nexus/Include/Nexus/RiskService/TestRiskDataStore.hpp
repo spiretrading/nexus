@@ -74,6 +74,30 @@ namespace Nexus::RiskService {
       Beam::IO::OpenState m_openState;
   };
 
+  /**
+   * Handles opening a TestRiskDataStore.
+   * @param dataStore The TestDataStore to open.
+   */
+  inline void Open(TestRiskDataStore& dataStore) {
+    auto operations = std::make_shared<
+      Beam::Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
+    dataStore.GetPublisher().Monitor(operations);
+    auto openReceiver = Beam::Routines::Async<void>();
+    Beam::Routines::Spawn([&] {
+      dataStore.Open();
+      openReceiver.GetEval().SetResult();
+    });
+    while(true) {
+      auto operation = operations->Pop();
+      if(auto openOperation =
+          boost::get<TestRiskDataStore::OpenOperation>(&*operation)) {
+        openOperation->m_result.SetResult();
+        openReceiver.Get();
+        break;
+      }
+    }
+  }
+
   inline TestRiskDataStore::~TestRiskDataStore() {
     m_openState.SetClosed();
   }

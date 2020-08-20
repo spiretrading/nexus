@@ -11,28 +11,6 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 
-namespace {
-  void Open(TestRiskDataStore& dataStore) {
-    auto operations = std::make_shared<
-      Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
-    dataStore.GetPublisher().Monitor(operations);
-    auto openReceiver = Async<void>();
-    Spawn([&] {
-      dataStore.Open();
-      openReceiver.GetEval().SetResult();
-    });
-    while(true) {
-      auto operation = operations->Pop();
-      if(auto openOperation =
-          get<TestRiskDataStore::OpenOperation>(&*operation)) {
-        openOperation->m_result.SetResult();
-        openReceiver.Get();
-        break;
-      }
-    }
-  }
-}
-
 TEST_SUITE("TestRiskDataStore") {
   TEST_CASE("open_close") {
     auto dataStore = TestRiskDataStore();

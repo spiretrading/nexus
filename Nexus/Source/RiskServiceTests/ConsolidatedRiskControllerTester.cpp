@@ -1,9 +1,11 @@
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/TestServices.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/RiskService/ConsolidatedRiskController.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
+#include "Nexus/RiskService/TestRiskDataStore.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 
@@ -77,6 +79,39 @@ TEST_SUITE("ConsolidatedRiskController") {
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
+    controller.Open();
     accounts->Push(m_accountA);
+  }
+
+  TEST_CASE_FIXTURE(Fixture, "data_store_exception") {
+    auto exchangeRates = std::vector<ExchangeRate>();
+    auto dataStore = TestRiskDataStore();
+    Open(dataStore);
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
+    dataStore.GetPublisher().Monitor(operations);
+    auto accounts = std::make_shared<Queue<DirectoryEntry>>();
+    auto controller = ConsolidatedRiskController(accounts,
+      &m_adminClients.GetAdministrationClient(),
+      &m_adminClients.GetMarketDataClient(),
+      &m_adminClients.GetOrderExecutionClient(),
+      [=] {
+        return m_adminClients.BuildTimer(seconds(1));
+      },
+      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
+      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
+    auto states = std::make_shared<Queue<RiskStateEntry>>();
+    controller.GetRiskStatePublisher().Monitor(states);
+    controller.Open();
+    accounts->Push(m_accountA);
+    auto operation = operations->Pop();
+    auto loadOperation = get<TestRiskDataStore::LoadInventorySnapshotOperation>(
+      &*operation);
+    REQUIRE(loadOperation);
+    REQUIRE(*loadOperation->m_account == m_accountA);
+    loadOperation->m_result.SetException(std::runtime_error("Fail"));
+    auto state = states->Pop();
+    REQUIRE(state.m_key == m_accountA);
+    REQUIRE(state.m_value == RiskState::Type::DISABLED);
   }
 }
