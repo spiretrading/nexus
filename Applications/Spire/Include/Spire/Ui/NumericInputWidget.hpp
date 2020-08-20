@@ -4,6 +4,7 @@
 #include <boost/optional.hpp>
 #include <QAbstractSpinBox>
 #include <QLocale>
+#include <QStyle>
 #include <QRegularExpression>
 #include "Spire/Spire/Spire.hpp"
 
@@ -59,7 +60,10 @@ namespace Spire {
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
+      void timerEvent(QTimerEvent* event) override;
       QAbstractSpinBox::StepEnabled stepEnabled() const override;
 
     private:
@@ -74,13 +78,17 @@ namespace Spire {
       Real m_last_valid_value;
       QString m_last_valid_text;
       bool m_has_first_click;
+      int m_up_arrow_timer_id;
+      int m_down_arrow_timer_id;
 
       void add_step(int step);
       void add_step(int step, Qt::KeyboardModifiers modifiers);
       QString display_string(Real value);
+      QStyle::SubControl get_current_control(const QPoint& mouse_pos);
       boost::optional<Real> get_value(const QString& text) const;
       bool is_valid(const QString& string);
       void set_stylesheet(bool is_up_disabled, bool is_down_disabled);
+      void stop_timer(int& timer_id);
       void update_stylesheet();
       void on_editing_finished();
       void on_text_changed(const QString& text);

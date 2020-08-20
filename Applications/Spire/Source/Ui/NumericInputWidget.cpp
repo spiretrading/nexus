@@ -1,6 +1,8 @@
 #include "Spire/Ui/NumericInputWidget.hpp"
+#include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <QStyleOption>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::signals2;
@@ -9,6 +11,7 @@ using namespace Spire;
 namespace {
   const auto DEFAULT_DECIMAL_PLACES = 6;
   const auto SHIFT_STEPS = 10;
+  const auto MOUSE_REPEAT_DELAY_MS = 20;
   const auto DOWN_ARROW_ICON = ":/Icons/arrow-down.svg";
   const auto DOWN_ARROW_HOVER_ICON = ":/Icons/arrow-down-hover.svg";
   const auto DOWN_ARROW_DISABLED_ICON = ":/Icons/arrow-down-disabled.svg";
@@ -38,7 +41,9 @@ NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
       m_maximum(std::numeric_limits<long double>::max()),
       m_step(1),
       m_last_valid_value(value),
-      m_has_first_click(false) {
+      m_has_first_click(false),
+      m_up_arrow_timer_id(-1),
+      m_down_arrow_timer_id(-1) {
   connect(lineEdit(), &QLineEdit::textChanged, this,
     &NumericInputWidget::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
@@ -51,6 +56,7 @@ void NumericInputWidget::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_stylesheet();
   }
+  QAbstractSpinBox::changeEvent(event);
 }
 
 bool NumericInputWidget::eventFilter(QObject* watched, QEvent* event) {
@@ -125,12 +131,48 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void NumericInputWidget::mouseMoveEvent(QMouseEvent* event) {
+  auto control = get_current_control(event->pos());
+  if(m_up_arrow_timer_id != -1 &&
+      control != QStyle::SubControl::SC_ScrollBarAddLine) {
+    stop_timer(m_up_arrow_timer_id);
+  } else if(m_down_arrow_timer_id != -1 &&
+      control != QStyle::SubControl::SC_ScrollBarSubLine) {
+    stop_timer(m_down_arrow_timer_id);
+  }
+  QAbstractSpinBox::mouseMoveEvent(event);
+}
+
 void NumericInputWidget::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && !m_has_first_click) {
     selectAll();
     m_has_first_click = true;
   }
+  auto control = get_current_control(event->pos());
+  if(control == QStyle::SubControl::SC_ScrollBarAddLine) {
+    m_up_arrow_timer_id = startTimer(qApp->keyboardInputInterval());
+  } else if(control == QStyle::SubControl::SC_ScrollBarSubLine) {
+    m_down_arrow_timer_id = startTimer(qApp->keyboardInputInterval());
+  }
   QAbstractSpinBox::mousePressEvent(event);
+}
+
+void NumericInputWidget::mouseReleaseEvent(QMouseEvent* event) {
+  stop_timer(m_up_arrow_timer_id);
+  stop_timer(m_down_arrow_timer_id);
+  QAbstractSpinBox::mouseReleaseEvent(event);
+}
+
+void NumericInputWidget::timerEvent(QTimerEvent* event) {
+  if(event->timerId() == m_up_arrow_timer_id) {
+    stop_timer(m_up_arrow_timer_id);
+    m_up_arrow_timer_id = startTimer(MOUSE_REPEAT_DELAY_MS);
+    add_step(1, qApp->keyboardModifiers());
+  } else if(event->timerId() == m_down_arrow_timer_id) {
+    stop_timer(m_down_arrow_timer_id);
+    m_down_arrow_timer_id = startTimer(MOUSE_REPEAT_DELAY_MS);
+    add_step(-1, qApp->keyboardModifiers());
+  }
 }
 
 QAbstractSpinBox::StepEnabled NumericInputWidget::stepEnabled() const {
@@ -239,6 +281,15 @@ QString NumericInputWidget::display_string(Real value) {
     std::ios_base::dec));
 }
 
+QStyle::SubControl NumericInputWidget::get_current_control(
+    const QPoint& mouse_pos) {
+  QStyleOptionSpinBox opt;
+  initStyleOption(&opt);
+  opt.subControls = QStyle::SC_All;
+  return style()->hitTestComplexControl(QStyle::CC_SpinBox, &opt, mouse_pos,
+    this);
+}
+
 boost::optional<NumericInputWidget::Real>
     NumericInputWidget::get_value(const QString& text) const {
   try {
@@ -344,6 +395,13 @@ void NumericInputWidget::set_stylesheet(bool is_up_disabled,
         .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4))
         .arg(up_icon).arg(up_icon_hover).arg(down_icon).arg(down_icon_hover)
         .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
+}
+
+void NumericInputWidget::stop_timer(int& timer_id) {
+  if(timer_id != -1) {
+    killTimer(timer_id);
+    timer_id = -1;
+  }
 }
 
 void NumericInputWidget::update_stylesheet() {
