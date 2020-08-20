@@ -92,7 +92,7 @@ namespace Nexus::RiskService {
     auto operation = std::make_shared<Operation>(
       LoadInventorySnapshotOperation{&account, result.GetEval()});
     m_publisher.Push(operation);
-    result.Get();
+    return result.Get();
   }
 
   inline void TestRiskDataStore::Store(
