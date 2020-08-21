@@ -36,6 +36,10 @@ namespace OrderExecutionService {
       template<typename F>
       decltype(auto) With(F&& f);
 
+      //! Provides synchronized access to this Order.
+      template<typename F>
+      decltype(auto) With(F&& f) const;
+
       virtual const OrderInfo& GetInfo() const;
 
       virtual const Beam::SnapshotPublisher<ExecutionReport,
@@ -80,6 +84,13 @@ namespace OrderExecutionService {
 
   template<typename F>
   decltype(auto) PrimitiveOrder::With(F&& f) {
+    return m_publisher.With([&] (auto executionReports) {
+      return f(m_status, *executionReports);
+    });
+  }
+
+  template<typename F>
+  decltype(auto) PrimitiveOrder::With(F&& f) const {
     return m_publisher.With([&] (auto executionReports) {
       return f(m_status, *executionReports);
     });

@@ -74,8 +74,8 @@ TEST_SUITE("RiskController") {
     auto& order = m_userClients.GetOrderExecutionClient().Submit(
       OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
     auto receivedOrder = m_orders->Pop();
-    m_environment.AcceptOrder(*receivedOrder);
-    m_environment.FillOrder(*receivedOrder, *Money::FromValue("1.01"), 100);
+    m_environment.Accept(*receivedOrder);
+    m_environment.Fill(*receivedOrder, *Money::FromValue("1.01"), 100);
     auto update = portfolio->Pop();
     REQUIRE(update.m_unrealizedSecurity == -Money::ONE);
     REQUIRE(update.m_unrealizedCurrency == -Money::ONE);

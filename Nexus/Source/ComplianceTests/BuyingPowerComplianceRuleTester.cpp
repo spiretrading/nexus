@@ -45,8 +45,8 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
     auto submittedRecoveryOrder = m_orderSubmissions->Pop();
-    m_testEnvironment.AcceptOrder(*submittedRecoveryOrder);
-    m_testEnvironment.FillOrder(*submittedRecoveryOrder, 100);
+    m_testEnvironment.Accept(*submittedRecoveryOrder);
+    m_testEnvironment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
     auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
       2 * Money::ONE);

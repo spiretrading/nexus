@@ -102,8 +102,8 @@ TEST_SUITE("BuyingPowerCheck") {
     auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
       recoveryFields);
     auto submittedRecoveryOrder = m_orderSubmissions->Pop();
-    m_environment.AcceptOrder(*submittedRecoveryOrder);
-    m_environment.FillOrder(*submittedRecoveryOrder, 100);
+    m_environment.Accept(*submittedRecoveryOrder);
+    m_environment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(m_buyingPowerCheck.Add(*submittedRecoveryOrder));
     auto submissionFields = OrderFields::BuildLimitOrder(TST, Side::BID, 100,
       2 * Money::ONE);

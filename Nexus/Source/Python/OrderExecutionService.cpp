@@ -252,18 +252,34 @@ void Nexus::Python::ExportOrderExecutionService(pybind11::module& module) {
   auto testModule = submodule.def_submodule("tests");
   ExportOrderExecutionServiceTestEnvironment(testModule);
   ExportMockOrderExecutionDriver(testModule);
-  testModule.def("cancel_order", &CancelOrder, call_guard<GilRelease>());
+  testModule.def("cancel", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Cancel), call_guard<GilRelease>());
+  testModule.def("cancel", static_cast<void (*)(PrimitiveOrder&)>(&Cancel),
+    call_guard<GilRelease>());
   testModule.def("set_order_status",
     static_cast<void (*)(PrimitiveOrder&, OrderStatus, ptime)>(&SetOrderStatus),
     call_guard<GilRelease>());
   testModule.def("set_order_status",
     static_cast<void (*)(PrimitiveOrder&, OrderStatus)>(&SetOrderStatus),
     call_guard<GilRelease>());
-  testModule.def("fill_order",
-    static_cast<void (*)(PrimitiveOrder&, Money, Quantity, ptime)>(&FillOrder),
+  testModule.def("accept", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Accept), call_guard<GilRelease>());
+  testModule.def("accept", static_cast<void (*)(PrimitiveOrder&)>(&Accept),
     call_guard<GilRelease>());
-  testModule.def("fill_order", static_cast<void (*)(PrimitiveOrder&, Quantity,
-    ptime)>(&FillOrder), call_guard<GilRelease>());
+  testModule.def("reject", static_cast<void (*)(PrimitiveOrder&, ptime)>(
+    &Reject), call_guard<GilRelease>());
+  testModule.def("reject", static_cast<void (*)(PrimitiveOrder&)>(&Reject),
+    call_guard<GilRelease>());
+  testModule.def("fill",
+    static_cast<void (*)(PrimitiveOrder&, Money, Quantity, ptime)>(&Fill),
+    call_guard<GilRelease>());
+  testModule.def("fill",
+    static_cast<void (*)(PrimitiveOrder&, Money, Quantity)>(&Fill),
+    call_guard<GilRelease>());
+  testModule.def("fill", static_cast<void (*)(PrimitiveOrder&, Quantity,
+    ptime)>(&Fill), call_guard<GilRelease>());
+  testModule.def("fill", static_cast<void (*)(PrimitiveOrder&, Quantity)>(
+    &Fill), call_guard<GilRelease>());
   testModule.def("is_pending_cancel", &IsPendingCancel,
     call_guard<GilRelease>());
 }

@@ -155,17 +155,13 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
       &TestEnvironment::UpdateBboPrice), call_guard<GilRelease>())
     .def("monitor_order_submissions", &TestEnvironment::MonitorOrderSubmissions,
       call_guard<GilRelease>())
-    .def("accept_order", &TestEnvironment::AcceptOrder,
-      call_guard<GilRelease>())
-    .def("reject_order", &TestEnvironment::RejectOrder,
-      call_guard<GilRelease>())
-    .def("cancel_order", &TestEnvironment::CancelOrder,
-      call_guard<GilRelease>())
-    .def("fill_order", static_cast<void (TestEnvironment::*)(const Order&,
-      Money, Quantity)>(&TestEnvironment::FillOrder),
-      call_guard<GilRelease>())
-    .def("fill_order", static_cast<void (TestEnvironment::*)(const Order&,
-      Quantity)>(&TestEnvironment::FillOrder), call_guard<GilRelease>())
+    .def("accept", &TestEnvironment::Accept, call_guard<GilRelease>())
+    .def("reject", &TestEnvironment::Reject, call_guard<GilRelease>())
+    .def("cancel", &TestEnvironment::Cancel, call_guard<GilRelease>())
+    .def("fill", static_cast<void (TestEnvironment::*)(const Order&, Money,
+      Quantity)>(&TestEnvironment::Fill), call_guard<GilRelease>())
+    .def("fill", static_cast<void (TestEnvironment::*)(const Order&, Quantity)>(
+      &TestEnvironment::Fill), call_guard<GilRelease>())
     .def("update", static_cast<void (TestEnvironment::*)(const Order&,
       const ExecutionReport&)>(&TestEnvironment::Update),
       call_guard<GilRelease>())

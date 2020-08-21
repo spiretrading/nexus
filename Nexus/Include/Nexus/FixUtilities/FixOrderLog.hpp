@@ -182,7 +182,7 @@ namespace Details {
         const OrderExecutionService::OrderInfo& orderInfo, FIX::Side side);
       std::shared_ptr<OrderExecutionService::PrimitiveOrder> AddOrder(
         const OrderExecutionService::OrderRecord& orderRecord, FIX::Side side);
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder> RejectOrder(
+      std::shared_ptr<OrderExecutionService::PrimitiveOrder> Reject(
         const OrderExecutionService::OrderInfo& orderInfo,
         const std::string& reason);
       template<typename E, typename F>
@@ -320,11 +320,11 @@ namespace Details {
       const FIX::TargetCompID targetCompId, F f) {
     auto ordType = GetOrderType(orderInfo.m_fields.m_type);
     if(!ordType.is_initialized()) {
-      return *RejectOrder(orderInfo, "Invalid order type.");
+      return *Reject(orderInfo, "Invalid order type.");
     }
     auto side = GetSide(orderInfo.m_fields.m_side, orderInfo.m_shortingFlag);
     if(!side.is_initialized()) {
-      return *RejectOrder(orderInfo, "Invalid side.");
+      return *Reject(orderInfo, "Invalid side.");
     }
     auto newOrderSingle = typename Details::FixNewOrderSingle<F>::type();
     auto clOrdId = FIX::ClOrdID(boost::lexical_cast<std::string>(
@@ -342,7 +342,7 @@ namespace Details {
     auto timeInForceType = GetTimeInForceType(
       orderInfo.m_fields.m_timeInForce.GetType());
     if(!timeInForceType.is_initialized()) {
-      return *RejectOrder(orderInfo, "Invalid time in force.");
+      return *Reject(orderInfo, "Invalid time in force.");
     }
     newOrderSingle.set(*timeInForceType);
     if(orderInfo.m_fields.m_type == OrderType::LIMIT ||
@@ -356,7 +356,7 @@ namespace Details {
     try {
       f(Beam::Store(newOrderSingle));
     } catch(const std::exception& e) {
-      return *RejectOrder(orderInfo, e.what());
+      return *Reject(orderInfo, e.what());
     }
     auto order = AddOrder(orderInfo, *side);
     FIX::Session::sendToTarget(newOrderSingle, senderCompId, targetCompId);
@@ -453,7 +453,7 @@ namespace Details {
   }
 
   inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-      FixOrderLog::RejectOrder(const OrderExecutionService::OrderInfo& info,
+      FixOrderLog::Reject(const OrderExecutionService::OrderInfo& info,
       const std::string& reason) {
     auto order = std::shared_ptr(BuildRejectedOrder(info, reason));
     Beam::Threading::With(m_orders,

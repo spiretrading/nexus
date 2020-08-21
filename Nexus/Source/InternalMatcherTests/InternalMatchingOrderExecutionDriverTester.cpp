@@ -119,7 +119,7 @@ namespace {
       REQUIRE(orderEntry.m_mockOrder->GetInfo().m_fields == matchedFields);
       ExpectStatus(orderEntry.m_mockExecutionReportQueue,
         OrderStatus::PENDING_NEW);
-      m_environment.AcceptOrder(*orderEntry.m_mockOrder);
+      m_environment.Accept(*orderEntry.m_mockOrder);
       ExpectStatus(orderEntry.m_mockExecutionReportQueue, OrderStatus::NEW);
     }
 
@@ -131,7 +131,7 @@ namespace {
     }
 
     void Fill(OrderEntry& orderEntry, Money price, Quantity quantity) {
-      m_environment.FillOrder(*orderEntry.m_mockOrder, price, quantity);
+      m_environment.Fill(*orderEntry.m_mockOrder, price, quantity);
       if(orderEntry.m_remainingQuantity > quantity) {
         ExpectStatus(orderEntry.m_mockExecutionReportQueue,
           OrderStatus::PARTIALLY_FILLED);
@@ -152,7 +152,7 @@ namespace {
         orderEntry.m_order->GetInfo().m_orderId);
       ExpectStatus(orderEntry.m_executionReportQueue,
         OrderStatus::PENDING_CANCEL);
-      m_environment.CancelOrder(*orderEntry.m_mockOrder);
+      m_environment.Cancel(*orderEntry.m_mockOrder);
       ExpectStatus(orderEntry.m_executionReportQueue, OrderStatus::CANCELED);
     }
 
@@ -168,7 +168,7 @@ namespace {
         ExpectStatus(orderEntry.m_mockExecutionReportQueue,
           OrderStatus::PENDING_CANCEL);
       }
-      m_environment.CancelOrder(*orderEntry.m_mockOrder);
+      m_environment.Cancel(*orderEntry.m_mockOrder);
 
       // Check that the passive order was filled.
       auto fillReport = orderEntry.m_executionReportQueue->Pop();

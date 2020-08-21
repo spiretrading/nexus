@@ -12,7 +12,7 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param order The Order to cancel.
    * @param timestamp The cancel timestamp.
    */
-  inline void CancelOrder(PrimitiveOrder& order,
+  inline void Cancel(PrimitiveOrder& order,
       boost::posix_time::ptime timestamp) {
     auto monitor = std::make_shared<Beam::Queue<ExecutionReport>>();
     order.GetPublisher().Monitor(monitor);
@@ -29,6 +29,14 @@ namespace Nexus::OrderExecutionService::Tests {
     auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
       OrderStatus::CANCELED, timestamp);
     order.Update(updatedReport);
+  }
+
+  /**
+   * Sets the OrderStatus of an Order to CANCELED.
+   * @param order The Order to cancel.
+   */
+  inline void Cancel(PrimitiveOrder& order) {
+    Cancel(order, order.GetPublisher().GetSnapshot()->back().m_timestamp);
   }
 
   /**
@@ -54,17 +62,12 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param newStatus The OrderStatus to assign to the <i>order</i>.
    */
   inline void SetOrderStatus(PrimitiveOrder& order, OrderStatus newStatus) {
-    order.With(
-      [&] (auto status, auto& reports) {
-        auto& lastReport = reports.back();
-        auto updatedReport = ExecutionReport::BuildUpdatedReport(lastReport,
-          newStatus, lastReport.m_timestamp);
-        order.Update(updatedReport);
-      });
+    SetOrderStatus(order, newStatus,
+      order.GetPublisher().GetSnapshot()->back().m_timestamp);
   }
 
   /**
-   * Sets the OrderStatus of an Order to new.
+   * Sets the OrderStatus of an Order to NEW.
    * @param order The Order to set the OrderStatus for.
    * @param timestamp The modification's timestamp.
    */
@@ -74,11 +77,29 @@ namespace Nexus::OrderExecutionService::Tests {
   }
 
   /**
-   * Sets the OrderStatus of an Order to new.
+   * Sets the OrderStatus of an Order to NEW.
    * @param order The Order to set the OrderStatus for.
    */
   inline void Accept(PrimitiveOrder& order) {
     SetOrderStatus(order, OrderStatus::NEW);
+  }
+
+  /**
+   * Sets the OrderStatus of an Order to REJECTED.
+   * @param order The Order to set the OrderStatus for.
+   * @param timestamp The modification's timestamp.
+   */
+  inline void Reject(PrimitiveOrder& order,
+      boost::posix_time::ptime timestamp) {
+    SetOrderStatus(order, OrderStatus::REJECTED, timestamp);
+  }
+
+  /**
+   * Sets the OrderStatus of an Order to REJECTED.
+   * @param order The Order to set the OrderStatus for.
+   */
+  inline void Reject(PrimitiveOrder& order) {
+    SetOrderStatus(order, OrderStatus::REJECTED);
   }
 
   /**
@@ -88,7 +109,7 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param quantity The amount to fill the order for.
    * @param timestamp The modification's timestamp.
    */
-  inline void FillOrder(PrimitiveOrder& order, Money price, Quantity quantity,
+  inline void Fill(PrimitiveOrder& order, Money price, Quantity quantity,
       boost::posix_time::ptime timestamp) {
     order.With(
       [&] (auto status, auto& reports) {
@@ -119,12 +140,32 @@ namespace Nexus::OrderExecutionService::Tests {
   /**
    * Fills an Order.
    * @param order The Order to fill.
+   * @param price The price of the fill.
+   * @param quantity The amount to fill the order for.
+   */
+  inline void Fill(PrimitiveOrder& order, Money price, Quantity quantity) {
+    Fill(order, price, quantity,
+      order.GetPublisher().GetSnapshot()->back().m_timestamp);
+  }
+
+  /**
+   * Fills an Order.
+   * @param order The Order to fill.
    * @param quantity The amount to fill the order for.
    * @param timestamp The modification's timestamp.
    */
-  inline void FillOrder(PrimitiveOrder& order, Quantity quantity,
+  inline void Fill(PrimitiveOrder& order, Quantity quantity,
       boost::posix_time::ptime timestamp) {
-    FillOrder(order, order.GetInfo().m_fields.m_price, quantity, timestamp);
+    Fill(order, order.GetInfo().m_fields.m_price, quantity, timestamp);
+  }
+
+  /**
+   * Fills an Order.
+   * @param order The Order to fill.
+   * @param quantity The amount to fill the order for.
+   */
+  inline void Fill(PrimitiveOrder& order, Quantity quantity) {
+    Fill(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
   /**
@@ -133,18 +174,17 @@ namespace Nexus::OrderExecutionService::Tests {
    * @return <code>true</code> iff the <i>order</i> is PENDING_CANCEL.
    */
   inline bool IsPendingCancel(const PrimitiveOrder& order) {
-    auto isPendingCancel = false;
-    const_cast<PrimitiveOrder&>(order).With(
-      [&] (auto status, auto& executionReports) {
-        for(auto& executionReport : executionReports) {
-          if(executionReport.m_status == OrderStatus::PENDING_CANCEL) {
-            isPendingCancel = true;
-            break;
-          }
+    return order.With([] (auto status, auto& executionReports) {
+      auto isPendingCancel = false;
+      for(auto& executionReport : executionReports) {
+        if(executionReport.m_status == OrderStatus::PENDING_CANCEL) {
+          isPendingCancel = true;
+          break;
         }
-        isPendingCancel &= !IsTerminal(status);
-      });
-    return isPendingCancel;
+      }
+      isPendingCancel &= !IsTerminal(status);
+      return isPendingCancel;
+    });
   }
 }
 

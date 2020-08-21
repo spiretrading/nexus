@@ -116,19 +116,19 @@ namespace Nexus {
       /*!
         \param order The Order to accept.
       */
-      void AcceptOrder(const OrderExecutionService::Order& order);
+      void Accept(const OrderExecutionService::Order& order);
 
       //! Updates a submitted order to OrderStatus REJECTED.
       /*!
         \param order The Order to reject.
       */
-      void RejectOrder(const OrderExecutionService::Order& order);
+      void Reject(const OrderExecutionService::Order& order);
 
       //! Updates a submitted order to OrderStatus CANCELED.
       /*!
         \param order The Order to reject.
       */
-      void CancelOrder(const OrderExecutionService::Order& order);
+      void Cancel(const OrderExecutionService::Order& order);
 
       //! Fills an Order.
       /*!
@@ -136,7 +136,7 @@ namespace Nexus {
         \param price The price of the fill.
         \param quantity The Quantity to fill the <i>order</i> for.
       */
-      void FillOrder(const OrderExecutionService::Order& order, Money price,
+      void Fill(const OrderExecutionService::Order& order, Money price,
         Quantity quantity);
 
       //! Fills an Order.
@@ -144,8 +144,7 @@ namespace Nexus {
         \param order The Order to fill.
         \param quantity The Quantity to fill the <i>order</i> for.
       */
-      void FillOrder(const OrderExecutionService::Order& order,
-        Quantity quantity);
+      void Fill(const OrderExecutionService::Order& order, Quantity quantity);
 
       //! Updates an Order.
       /*!
@@ -297,7 +296,7 @@ namespace Nexus {
     driver.GetPublisher().Monitor(std::move(conversionQueue));
   }
 
-  inline void TestEnvironment::AcceptOrder(
+  inline void TestEnvironment::Accept(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -318,7 +317,7 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::RejectOrder(
+  inline void TestEnvironment::Reject(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -339,7 +338,7 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::CancelOrder(
+  inline void TestEnvironment::Cancel(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -354,15 +353,14 @@ namespace Nexus {
             TestEnvironmentException("Order is already TERMINAL."));
         }
       });
-    OrderExecutionService::Tests::CancelOrder(
+    OrderExecutionService::Tests::Cancel(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Money price,
-      Quantity quantity) {
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Money price, Quantity quantity) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
@@ -376,15 +374,15 @@ namespace Nexus {
             TestEnvironmentException("Order is already TERMINAL."));
         }
       });
-    OrderExecutionService::Tests::FillOrder(
+    OrderExecutionService::Tests::Fill(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       price, quantity, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Quantity quantity) {
-    FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Quantity quantity) {
+    Fill(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
   inline void TestEnvironment::Update(
