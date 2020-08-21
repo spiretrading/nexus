@@ -1,9 +1,8 @@
 #ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #define SPIRE_QUANTITY_INPUT_WIDGET_HPP
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DecimalInputWidget.hpp"
+#include "Spire/Ui/NumericInputWidget.hpp"
 
 namespace Spire {
 
@@ -15,7 +14,7 @@ namespace Spire {
       using ValueSignal = Signal<void (Nexus::Quantity value)>;
 
       //! Constructs a QuantityInputWidget.
-      /*
+      /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
@@ -34,9 +33,12 @@ namespace Spire {
       */
       void set_maximum(Nexus::Quantity maximum);
 
-      //! Sets the current value of the input.
-      /*
-        \param value The value to display.
+      //! Returns the last submitted value.
+      Nexus::Quantity get_value() const;
+
+      //! Sets the current displayed value.
+      /*!
+        \param value The current value.
       */
       void set_value(Nexus::Quantity value);
 
@@ -44,8 +46,8 @@ namespace Spire {
       boost::signals2::connection connect_change_signal(
         const ValueSignal::slot_type& slot) const;
 
-      //! Connects a slot to the value submit signal.
-      boost::signals2::connection connect_submit_signal(
+      //! Connects a slot to the value commit signal.
+      boost::signals2::connection connect_commit_signal(
         const ValueSignal::slot_type& slot) const;
 
     protected:
@@ -53,13 +55,12 @@ namespace Spire {
 
     private:
       mutable ValueSignal m_change_signal;
-      mutable ValueSignal m_submit_signal;
-      DecimalInputWidget* m_input_widget;
+      mutable ValueSignal m_commit_signal;
+      NumericInputWidget* m_input_widget;
       CustomVariantItemDelegate m_item_delegate;
 
-      double value_from_text(const QString& text);
+      std::string display_string(Nexus::Quantity value);
       void on_editing_finished();
-      void on_value_changed();
   };
 }
 

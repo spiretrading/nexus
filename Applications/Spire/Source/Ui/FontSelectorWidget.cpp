@@ -85,10 +85,11 @@ FontSelectorWidget::FontSelectorWidget(const QFont& current_font,
     [=] { on_underline_button_clicked(); });
   grid_layout->addWidget(m_underline_button, 1, 2);
   m_size_input = new IntegerInputWidget(0, this);
-  m_size_input->setRange(6, 72);
+  m_size_input->set_minimum(6);
+  m_size_input->set_maximum(72);
   m_size_input->setFixedHeight(scale_height(26));
   m_size_input->connect_change_signal([=] (auto value) {
-    on_size_selected(value);
+    on_size_selected(static_cast<int>(value));
   });
   grid_layout->addWidget(m_size_input, 1, 3, 1, 2);
   set_font(current_font);
@@ -101,7 +102,7 @@ const QFont& FontSelectorWidget::get_font() const {
 void FontSelectorWidget::set_font(const QFont& font) {
   m_current_font = font;
   m_font_list->set_current_text(m_current_font.family());
-  m_size_input->setValue(m_current_font.pointSize());
+  m_size_input->set_value(m_current_font.pointSize());
   m_bold_button->set_toggled(m_current_font.bold());
   m_italics_button->set_toggled(m_current_font.italic());
   m_underline_button->set_toggled(m_current_font.underline());

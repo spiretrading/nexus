@@ -1,39 +1,61 @@
 #ifndef SPIRE_DECIMAL_INPUT_WIDGET_HPP
 #define SPIRE_DECIMAL_INPUT_WIDGET_HPP
-#include <QDoubleSpinBox>
+#include "Spire/Ui/NumericInputWidget.hpp"
 
 namespace Spire {
 
   //! Represents a widget for displaying and modifying decimal numbers.
-  class DecimalInputWidget : public QDoubleSpinBox {
+  class DecimalInputWidget : public QWidget {
     public:
+
+      //! Signals a user interaction with the value.
+      using ValueSignal = Signal<void (long double value)>;
 
       //! Constructs a DecimalInputWidget.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit DecimalInputWidget(double value, QWidget* parent = nullptr);
+      explicit DecimalInputWidget(long double value, QWidget* parent = nullptr);
 
-      QString textFromValue(double value) const override;
+      //! Sets the minimum accepted value.
+      /*!
+        \param minimum The minimum value.
+      */
+      void set_minimum(long double minimum);
+
+      //! Sets the maximum accepted value.
+      /*!
+        \param maximum The maximum value.
+      */
+      void set_maximum(long double maximum);
+
+      //! Returns the last submitted value.
+      long double get_value() const;
+
+      //! Sets the current displayed value.
+      /*!
+        \param value The current value.
+      */
+      void set_value(long double value);
+
+      //! Connects a slot to the value change signal.
+      boost::signals2::connection connect_change_signal(
+        const ValueSignal::slot_type& slot) const;
+
+      //! Connects a slot to the value commit signal.
+      boost::signals2::connection connect_commit_signal(
+        const ValueSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
-      double m_last_valid_value;
-      int m_last_cursor_pos;
-      bool m_has_first_click;
+      mutable ValueSignal m_change_signal;
+      mutable ValueSignal m_commit_signal;
+      NumericInputWidget* m_input_widget;
 
-      void add_step(int step, Qt::KeyboardModifiers modifiers);
-      void revert_cursor();
-      void set_stylesheet(bool is_up_disabled, bool is_down_disabled);
-      void on_text_edited(const QString& text);
-      void on_value_changed(double value);
+      void on_editing_finished();
   };
 }
 

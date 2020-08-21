@@ -1,46 +1,20 @@
 #include "Spire/Ui/QuantityInputWidget.hpp"
-#include <QHBoxLayout>
-#include <QLineEdit>
 
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-QuantityInputWidget::QuantityInputWidget(Nexus::Quantity value,
-    QWidget* parent)
+QuantityInputWidget::QuantityInputWidget(Quantity value, QWidget* parent)
     : QWidget(parent) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  m_input_widget = new DecimalInputWidget(0, this);
-  layout->addWidget(m_input_widget);
-  setFocusProxy(m_input_widget);
-  connect(m_input_widget, &DecimalInputWidget::editingFinished,
-    this, &QuantityInputWidget::on_editing_finished);
-  connect(m_input_widget, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-    [=] (auto value) { on_value_changed(); });
+  m_input_widget = new NumericInputWidget(display_string(value).c_str(), this);
+  m_input_widget->connect_change_signal([=] (auto value) {
+    m_change_signal(0);
+  });
 }
 
 void QuantityInputWidget::resizeEvent(QResizeEvent* event) {
-  m_input_widget->setFixedSize(size());
+  m_input_widget->resize(size());
   QWidget::resizeEvent(event);
-}
-
-void QuantityInputWidget::set_minimum(Nexus::Quantity minimum) {
-  auto quantity = m_item_delegate.displayText(
-    QVariant::fromValue<Quantity>(minimum));
-  m_input_widget->setMinimum(value_from_text(quantity));
-}
-
-void QuantityInputWidget::set_maximum(Nexus::Quantity maximum) {
-  auto quantity = m_item_delegate.displayText(
-    QVariant::fromValue<Quantity>(maximum));
-  m_input_widget->setMaximum(value_from_text(quantity));
-}
-
-void QuantityInputWidget::set_value(Quantity value) {
-  auto quantity = m_item_delegate.displayText(
-    QVariant::fromValue<Quantity>(value));
-  m_input_widget->setValue(value_from_text(quantity));
 }
 
 connection QuantityInputWidget::connect_change_signal(
@@ -48,32 +22,38 @@ connection QuantityInputWidget::connect_change_signal(
   return m_change_signal.connect(slot);
 }
 
-connection QuantityInputWidget::connect_submit_signal(
+connection QuantityInputWidget::connect_commit_signal(
     const ValueSignal::slot_type& slot) const {
-  return m_submit_signal.connect(slot);
+  return m_commit_signal.connect(slot);
 }
 
-double QuantityInputWidget::value_from_text(const QString& text) {
-  auto min = m_input_widget->minimum();
-  auto max = m_input_widget->maximum();
-  m_input_widget->setMinimum(std::numeric_limits<double>::lowest());
-  m_input_widget->setMaximum(std::numeric_limits<double>::max());
-  auto value = m_input_widget->valueFromText(text);
-  m_input_widget->setMinimum(min);
-  m_input_widget->setMaximum(max);
-  return value;
+void QuantityInputWidget::set_minimum(Quantity minimum) {
+  m_input_widget->set_minimum(display_string(minimum).c_str());
+}
+
+void QuantityInputWidget::set_maximum(Quantity maximum) {
+  m_input_widget->set_maximum(display_string(maximum).c_str());
+}
+
+Quantity QuantityInputWidget::get_value() const {
+  qDebug() << QString::fromStdString(
+    m_input_widget->get_value().str(100000, std::ios_base::dec));
+  return 0;//m_input_widget->get_value();
+}
+
+void QuantityInputWidget::set_value(Quantity value) {
+  m_input_widget->set_value(display_string(value).c_str());
+}
+
+std::string QuantityInputWidget::display_string(Quantity value) {
+  auto a = m_item_delegate.displayText(
+    QVariant::fromValue(value));
+  qDebug() << a;
+  return a.toStdString();
 }
 
 void QuantityInputWidget::on_editing_finished() {
-  auto quantity = Quantity::FromValue(m_input_widget->text().toStdString());
-  if(quantity) {
-    m_submit_signal(*quantity);
-  }
-}
-
-void QuantityInputWidget::on_value_changed() {
-  auto quantity = Quantity::FromValue(m_input_widget->text().toStdString());
-  if(quantity) {
-    m_change_signal(*quantity);
-  }
+  qDebug() << QString::fromStdString(
+    m_input_widget->get_value().str(100000, std::ios_base::dec));
+  m_commit_signal(0);
 }

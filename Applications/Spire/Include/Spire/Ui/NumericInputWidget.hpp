@@ -10,13 +10,20 @@
 
 namespace Spire {
 
+  //! Represents a widget for entering numeric values.
   class NumericInputWidget : public QAbstractSpinBox {
     public:
 
+      //! The maximum number of accepted decimal places.
       static const auto MAX_DECIMAL_PLACES = 15;
 
+      //! Numeric type used by the widget.
       using Real = boost::multiprecision::cpp_dec_float<MAX_DECIMAL_PLACES>;
 
+      //! Signal type for value changes.
+      /*!
+        \param value The updated value.
+      */
       using ChangeSignal = Signal<void (Real value)>;
 
       //! Constructs a NumericInputWidget with a default step of 1.
@@ -39,18 +46,40 @@ namespace Spire {
       */
       void set_minimum_decimals(int decimals);
 
+      //! Sets the minimum accepted value.
+      /*!
+        \param minimum The minimum value.
+      */
       void set_minimum(Real minimum);
 
+      //! Sets the maximum accepted value.
+      /*!
+        \param maximum The maximum value.
+      */
       void set_maximum(Real maximum);
 
+      //! Sets the value to increment/decrement by when stepping up or down.
+      /*!
+        \param step The increment/decrement value.
+      */
       void set_step(Real step);
 
+      //! Returns the last submitted value.
       Real get_value() const;
 
+      //! Sets the current displayed value.
+      /*!
+        \param value The current value.
+      */
       void set_value(Real value);
 
+      //! Increments the value by the given number of steps.
+      /*!
+        \param step The number of steps to increment/decrement the value by.
+      */
       void stepBy(int step) override;
 
+      //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(
         const ChangeSignal::slot_type& slot) const;
 
