@@ -4,12 +4,27 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  auto real_to_quantity(NumericInputWidget::Real value) {
+    auto quantity = Quantity::FromValue(value.str(
+      std::numeric_limits<Quantity>::digits10, std::ios_base::dec));
+    if(quantity != boost::none) {
+      return *quantity;
+    }
+    return Quantity();
+  }
+}
+
 QuantityInputWidget::QuantityInputWidget(Quantity value, QWidget* parent)
     : QWidget(parent) {
   m_input_widget = new NumericInputWidget(display_string(value).c_str(), this);
   m_input_widget->connect_change_signal([=] (auto value) {
-    m_change_signal(0);
+    m_change_signal(real_to_quantity(value));
   });
+  connect(m_input_widget, &NumericInputWidget::editingFinished, this,
+    &QuantityInputWidget::on_editing_finished);
+  m_locale.setNumberOptions(m_locale.numberOptions().setFlag(
+    QLocale::OmitGroupSeparator, true));
 }
 
 void QuantityInputWidget::resizeEvent(QResizeEvent* event) {
@@ -36,9 +51,7 @@ void QuantityInputWidget::set_maximum(Quantity maximum) {
 }
 
 Quantity QuantityInputWidget::get_value() const {
-  qDebug() << QString::fromStdString(
-    m_input_widget->get_value().str(100000, std::ios_base::dec));
-  return 0;//m_input_widget->get_value();
+  return real_to_quantity(m_input_widget->get_value());
 }
 
 void QuantityInputWidget::set_value(Quantity value) {
@@ -46,14 +59,10 @@ void QuantityInputWidget::set_value(Quantity value) {
 }
 
 std::string QuantityInputWidget::display_string(Quantity value) {
-  auto a = m_item_delegate.displayText(
-    QVariant::fromValue(value));
-  qDebug() << a;
-  return a.toStdString();
+  return m_item_delegate.displayText(
+    QVariant::fromValue(value), m_locale).toStdString();
 }
 
 void QuantityInputWidget::on_editing_finished() {
-  qDebug() << QString::fromStdString(
-    m_input_widget->get_value().str(100000, std::ios_base::dec));
-  m_commit_signal(0);
+  m_commit_signal(real_to_quantity(m_input_widget->get_value()));
 }

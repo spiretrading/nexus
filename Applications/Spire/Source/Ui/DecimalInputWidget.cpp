@@ -13,6 +13,8 @@ DecimalInputWidget::DecimalInputWidget(long double value, QWidget* parent)
   m_input_widget->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_long_double());
   });
+  connect(m_input_widget, &NumericInputWidget::editingFinished, this,
+    &DecimalInputWidget::on_editing_finished);
 }
 
 void DecimalInputWidget::resizeEvent(QResizeEvent* event) {

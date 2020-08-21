@@ -58,6 +58,7 @@ namespace Spire {
       mutable ValueSignal m_commit_signal;
       NumericInputWidget* m_input_widget;
       CustomVariantItemDelegate m_item_delegate;
+      QLocale m_locale;
 
       std::string display_string(Nexus::Quantity value);
       void on_editing_finished();

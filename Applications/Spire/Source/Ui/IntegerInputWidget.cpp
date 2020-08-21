@@ -13,6 +13,8 @@ IntegerInputWidget::IntegerInputWidget(std::uint64_t value, QWidget* parent)
   m_input_widget->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_unsigned_long_long());
   });
+  connect(m_input_widget, &NumericInputWidget::editingFinished, this,
+    &IntegerInputWidget::on_editing_finished);
 }
 
 void IntegerInputWidget::resizeEvent(QResizeEvent* event) {
