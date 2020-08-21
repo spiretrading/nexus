@@ -99,7 +99,8 @@ namespace Nexus::RiskService {
       std::vector<ExchangeRate> m_exchangeRates;
       MarketDatabase m_markets;
       DestinationDatabase m_destinations;
-      std::shared_ptr<Beam::Publisher<Beam::ServiceLocator::DirectoryEntry>>
+      std::shared_ptr<
+        Beam::SnapshotPublisher<Beam::ServiceLocator::DirectoryEntry>>
         m_accountPublisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
@@ -113,6 +114,7 @@ namespace Nexus::RiskService {
 
       void Shutdown();
       void BuildController();
+      void ResetAccount(const Beam::ServiceLocator::DirectoryEntry& account);
       Beam::ServiceLocator::DirectoryEntry LoadGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void OnRiskState(const RiskStateEntry& entry);
@@ -232,6 +234,31 @@ namespace Nexus::RiskService {
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
+  void RiskServlet<C, A, M, O, R, T, D>::ResetAccount(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto snapshot = m_dataStore->LoadInventorySnapshot(account);
+    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(account,
+      snapshot.m_excludedOrders, *m_orderExecutionClient);
+    auto trailingOrderQuery = OrderExecutionService::AccountQuery();
+    trailingOrderQuery.SetIndex(account);
+    trailingOrderQuery.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
+      Beam::Queries::Sequence::Present());
+    trailingOrderQuery.SetSnapshotLimit(
+      Beam::Queries::SnapshotLimit::Unlimited());
+    auto trailingOrdersQueue = std::make_shared<
+      Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
+    m_orderExecutionClient->QueryOrderSubmissions(trailingOrderQuery,
+      trailingOrdersQueue);
+    Beam::ForEach(trailingOrdersQueue, [&] (const auto& order) {
+      excludedOrders.push_back(*order);
+    });
+    auto portfolio = RiskPortfolio(m_markets,
+      RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+    UpdatePortfolio(portfolio);
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
   Beam::ServiceLocator::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
       LoadGroup(const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_accountToGroup.GetOrInsert(account,
@@ -315,6 +342,18 @@ namespace Nexus::RiskService {
     auto& session = client.GetSession();
     if(!m_administrationClient->CheckAdministrator(session.GetAccount())) {
       return;
+    }
+    m_controller = boost::none;
+    auto accounts = boost::optional<
+      std::vector<Beam::ServiceLocator::DirectoryEntry>>();
+    m_accountPublisher->WithSnapshot(
+      [&] (auto snapshot) {
+        if(snapshot) {
+          accounts = *snapshot;
+        }
+      });
+    for(auto& account : accounts) {
+      ResetAccount(account);
     }
     BuildController();
   }
