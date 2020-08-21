@@ -225,7 +225,8 @@ namespace Nexus::RiskService {
     try {
       m_dataStore->Store(m_account, snapshot);
     } catch(const std::exception&) {
-      std::cerr << "Unable to store inventory snapshot:\n\t" <<
+      std::cerr << "Snapshot update failed for account:\n\t" <<
+        "Account: " << m_account << "\n\t" <<
         BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
     }
   }
@@ -288,7 +289,7 @@ namespace Nexus::RiskService {
       Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
     m_orderExecutionClient->QueryOrderSubmissions(trailingOrderQuery,
       trailingOrdersQueue);
-    auto lastSequence = Beam::Queries::Sequence::First();
+    auto lastSequence = snapshot.m_sequence;
     Beam::ForEach(trailingOrdersQueue, [&] (const auto& order) {
       excludedOrders.push_back(order.GetValue());
       lastSequence = std::max(lastSequence, order.GetSequence());

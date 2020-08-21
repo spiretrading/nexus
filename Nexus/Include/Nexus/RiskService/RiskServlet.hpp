@@ -249,23 +249,33 @@ namespace Nexus::RiskService {
       Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
     m_orderExecutionClient->QueryOrderSubmissions(trailingOrderQuery,
       trailingOrdersQueue);
+    auto lastSequence = snapshot.m_sequence;
     Beam::ForEach(trailingOrdersQueue, [&] (const auto& order) {
-      excludedOrders.push_back(*order);
+      excludedOrders.push_back(order);
+      lastSequence = std::max(lastSequence, order.GetSequence());
     });
     auto portfolio = RiskPortfolio(m_markets,
       RiskPortfolio::Bookkeeper(snapshot.m_inventories));
     auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
-    for(auto& order : excludedOrders) {
-      auto snapshot = order->GetPublisher().GetSnapshot();
-      if(snapshot) {
-        std::transform(snapshot->begin(), snapshot->end(),
-          std::back_inserter(reports),
-          [&] (auto& report) {
-            return OrderExecutionService::ExecutionReportEntry(order,
-              std::move(report));
-          });
-      }
-    }
+    excludedOrders.erase(std::remove_if(excludedOrders.begin(),
+      excludedOrders.end(), [&] (const auto& order) {
+        if(auto snapshot = order->GetPublisher().GetSnapshot()) {
+          if(IsTerminal(snapshot->back().m_status)) {
+            for(auto& report : *snapshot) {
+              portfolio.Update(order->GetInfo().m_fields, report);
+            }
+            return true;
+          } else {
+            std::transform(snapshot->begin(), snapshot->end(),
+              std::back_inserter(reports),
+              [&] (auto& report) {
+                return OrderExecutionService::ExecutionReportEntry(order,
+                  std::move(report));
+              });
+          }
+        }
+        return false;
+      }), excludedOrders.end());
     std::sort(reports.begin(), reports.end(),
       [] (auto& left, auto& right) {
         return std::tie(left.m_executionReport.m_timestamp,
@@ -273,15 +283,25 @@ namespace Nexus::RiskService {
           std::tie(right.m_executionReport.m_timestamp,
           right.m_executionReport.m_id, right.m_executionReport.m_sequence);
       });
-/*
     for(auto& report : reports) {
-      if(IsTerminal(report.m_executionReport.m_status)) {
-        UpdateSnapshot(*report.m_order);
-      }
-      portfolio.Update(report.m_order->GetInfo().m_fields,
-        report.m_executionReport);
+      auto inverseReport = report.m_executionReport;
+      inverseReport.m_lastQuantity = -inverseReport.m_lastQuantity;
+      inverseReport.m_executionFee = -inverseReport.m_executionFee;
+      inverseReport.m_processingFee = -inverseReport.m_processingFee;
+      inverseReport.m_commission = -inverseReport.m_commission;
+      portfolio.Update(report.m_order->GetInfo().m_fields, inverseReport);
     }
-*/
+    auto updatedSnapshot = InventorySnapshot();
+    for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
+      updatedSnapshot.m_inventories.push_back(inventory.second);
+    }
+    updatedSnapshot.m_sequence = lastSequence;
+    std::transform(excludedOrders.begin(), excludedOrders.end(),
+      std::back_inserter(updatedSnapshot.m_excludedOrders),
+      [] (const auto& order) {
+        return order->GetInfo().m_orderId;
+      });
+    m_dataStore->Store(account, updatedSnapshot);
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -373,7 +393,13 @@ namespace Nexus::RiskService {
     m_controller = boost::none;
     if(auto accounts = m_accountPublisher->GetSnapshot()) {
       for(auto& account : *accounts) {
-        ResetAccount(account);
+        try {
+          ResetAccount(account);
+        } catch(const std::exception&) {
+          std::cerr << "Region reset failed for account:\n\t" <<
+            "Account: " << account << "\n\t" <<
+            BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+        }
       }
     }
     BuildController();
