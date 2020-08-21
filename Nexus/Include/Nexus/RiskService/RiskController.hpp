@@ -208,16 +208,10 @@ namespace Nexus::RiskService {
     typename D>
   void RiskController<A, M, O, R, T, D>::UpdateSnapshot(
       const OrderExecutionService::Order& order) {
-    auto executionReports =
-      std::vector<OrderExecutionService::ExecutionReport>();
-    order.GetPublisher().WithSnapshot(
-      [&] (auto snapshot) {
-        if(snapshot) {
-          executionReports = *snapshot;
-        }
-      });
-    for(auto& executionReport : executionReports) {
-      m_snapshotPortfolio.Update(order.GetInfo().m_fields, executionReport);
+    if(auto executionReports = order.GetPublisher().GetSnapshot()) {
+      for(auto& executionReport : *executionReports) {
+        m_snapshotPortfolio.Update(order.GetInfo().m_fields, executionReport);
+      }
     }
     m_excludedOrders.erase(order.GetInfo().m_orderId);
     auto snapshot = InventorySnapshot();

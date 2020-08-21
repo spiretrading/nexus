@@ -100,8 +100,8 @@ namespace Nexus::RiskService {
       MarketDatabase m_markets;
       DestinationDatabase m_destinations;
       std::shared_ptr<
-        Beam::SnapshotPublisher<Beam::ServiceLocator::DirectoryEntry>>
-        m_accountPublisher;
+        Beam::SnapshotPublisher<Beam::ServiceLocator::DirectoryEntry,
+        std::vector<Beam::ServiceLocator::DirectoryEntry>>> m_accountPublisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
@@ -254,7 +254,34 @@ namespace Nexus::RiskService {
     });
     auto portfolio = RiskPortfolio(m_markets,
       RiskPortfolio::Bookkeeper(snapshot.m_inventories));
-    UpdatePortfolio(portfolio);
+    auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
+    for(auto& order : excludedOrders) {
+      auto snapshot = order->GetPublisher().GetSnapshot();
+      if(snapshot) {
+        std::transform(snapshot->begin(), snapshot->end(),
+          std::back_inserter(reports),
+          [&] (auto& report) {
+            return OrderExecutionService::ExecutionReportEntry(order,
+              std::move(report));
+          });
+      }
+    }
+    std::sort(reports.begin(), reports.end(),
+      [] (auto& left, auto& right) {
+        return std::tie(left.m_executionReport.m_timestamp,
+          left.m_executionReport.m_id, left.m_executionReport.m_sequence) <
+          std::tie(right.m_executionReport.m_timestamp,
+          right.m_executionReport.m_id, right.m_executionReport.m_sequence);
+      });
+/*
+    for(auto& report : reports) {
+      if(IsTerminal(report.m_executionReport.m_status)) {
+        UpdateSnapshot(*report.m_order);
+      }
+      portfolio.Update(report.m_order->GetInfo().m_fields,
+        report.m_executionReport);
+    }
+*/
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -344,16 +371,10 @@ namespace Nexus::RiskService {
       return;
     }
     m_controller = boost::none;
-    auto accounts = boost::optional<
-      std::vector<Beam::ServiceLocator::DirectoryEntry>>();
-    m_accountPublisher->WithSnapshot(
-      [&] (auto snapshot) {
-        if(snapshot) {
-          accounts = *snapshot;
-        }
-      });
-    for(auto& account : accounts) {
-      ResetAccount(account);
+    if(auto accounts = m_accountPublisher->GetSnapshot()) {
+      for(auto& account : *accounts) {
+        ResetAccount(account);
+      }
     }
     BuildController();
   }

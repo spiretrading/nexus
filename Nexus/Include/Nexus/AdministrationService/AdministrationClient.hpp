@@ -757,16 +757,7 @@ namespace Nexus::AdministrationService {
         auto parameters =
           client.template SendRequest<MonitorRiskParametersService>(
           std::get<0>(entry));
-        auto publish = bool();
-        publisher->WithSnapshot(
-          [&] (auto snapshot) {
-            if(!snapshot.is_initialized() || *snapshot != parameters) {
-              publish = true;
-            } else {
-              publish = false;
-            }
-          });
-        if(publish) {
+        if(publisher->GetSnapshot() != parameters) {
           publisher->Push(parameters);
         }
       } catch(const std::exception&) {
@@ -793,16 +784,7 @@ namespace Nexus::AdministrationService {
       try {
         auto state = client.template SendRequest<MonitorRiskStateService>(
           std::get<0>(entry));
-        auto publish = bool();
-        publisher->WithSnapshot(
-          [&] (auto snapshot) {
-            if(!snapshot.is_initialized() || *snapshot != state) {
-              publish = true;
-            } else {
-              publish = false;
-            }
-          });
-        if(publish) {
+        if(publisher->GetSnapshot() != state) {
           publisher->Push(state);
         }
       } catch(const std::exception&) {

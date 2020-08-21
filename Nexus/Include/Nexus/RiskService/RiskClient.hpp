@@ -149,22 +149,16 @@ namespace Nexus::RiskService {
           m_publisher->Break(std::current_exception());
           return;
         }
-        auto snapshot = Beam::TablePublisher<
-          RiskPortfolioKey, RiskInventory>::Snapshot();
-        m_publisher->WithSnapshot(
-          [&] (auto publisherSnapshot) {
-            if(publisherSnapshot.is_initialized()) {
-              snapshot = *publisherSnapshot;
+        if(auto snapshot = m_publisher->GetSnapshot()) {
+          for(auto& snapshotEntry : *snapshot) {
+            auto entryIterator = std::find_if(entries.begin(), entries.end(),
+              [&] (auto& entry) {
+                return entry.m_key == snapshotEntry.first;
+              });
+            if(entryIterator == entries.end()) {
+              m_publisher->Delete(snapshotEntry.first,
+                RiskInventory(snapshotEntry.second.m_position.m_key));
             }
-          });
-        for(auto& snapshotEntry : snapshot) {
-          auto entryIterator = std::find_if(entries.begin(), entries.end(),
-            [&] (auto& entry) {
-              return entry.m_key == snapshotEntry.first;
-            });
-          if(entryIterator == entries.end()) {
-            m_publisher->Delete(snapshotEntry.first,
-              RiskInventory(snapshotEntry.second.m_position.m_key));
           }
         }
         for(auto& entry : entries) {

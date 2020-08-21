@@ -34,7 +34,7 @@ namespace OrderExecutionService {
 
       //! Provides synchronized access to this Order.
       template<typename F>
-      void With(F f);
+      decltype(auto) With(F&& f);
 
       virtual const OrderInfo& GetInfo() const;
 
@@ -46,6 +46,49 @@ namespace OrderExecutionService {
       OrderStatus m_status;
       Beam::SequencePublisher<ExecutionReport> m_publisher;
   };
+
+  inline PrimitiveOrder::PrimitiveOrder(OrderInfo info)
+      : m_info{std::move(info)} {
+    auto report = ExecutionReport::BuildInitialReport(m_info.m_orderId,
+      m_info.m_timestamp);
+    Update(report);
+  }
+
+  inline PrimitiveOrder::PrimitiveOrder(OrderRecord orderRecord)
+      : m_info{std::move(orderRecord.m_info)} {
+    for(auto& executionReport : orderRecord.m_executionReports) {
+      Update(executionReport);
+    }
+  }
+
+  inline void PrimitiveOrder::Update(const ExecutionReport& report) {
+    m_publisher.With(
+      [&] {
+        if(report.m_status != OrderStatus::PARTIALLY_FILLED) {
+          m_status = report.m_status;
+        }
+        m_publisher.Push(report);
+        if(IsTerminal(report.m_status)) {
+          m_publisher.Break();
+        }
+      });
+  }
+
+  inline const OrderInfo& PrimitiveOrder::GetInfo() const {
+    return m_info;
+  }
+
+  template<typename F>
+  decltype(auto) PrimitiveOrder::With(F&& f) {
+    return m_publisher.With([&] (auto executionReports) {
+      return f(m_status, *executionReports);
+    });
+  }
+
+  inline const Beam::SnapshotPublisher<ExecutionReport,
+      std::vector<ExecutionReport>>& PrimitiveOrder::GetPublisher() const {
+    return m_publisher;
+  }
 
   //! Builds a PrimitiveOrder that is immediately rejected.
   /*!
@@ -85,51 +128,6 @@ namespace OrderExecutionService {
         updatedReport.m_text = std::move(reason);
         order.Update(updatedReport);
       });
-  }
-
-  inline PrimitiveOrder::PrimitiveOrder(OrderInfo info)
-      : m_info{std::move(info)} {
-    auto report = ExecutionReport::BuildInitialReport(m_info.m_orderId,
-      m_info.m_timestamp);
-    Update(report);
-  }
-
-  inline PrimitiveOrder::PrimitiveOrder(OrderRecord orderRecord)
-      : m_info{std::move(orderRecord.m_info)} {
-    for(auto& executionReport : orderRecord.m_executionReports) {
-      Update(executionReport);
-    }
-  }
-
-  inline void PrimitiveOrder::Update(const ExecutionReport& report) {
-    m_publisher.With(
-      [&] {
-        if(report.m_status != OrderStatus::PARTIALLY_FILLED) {
-          m_status = report.m_status;
-        }
-        m_publisher.Push(report);
-        if(IsTerminal(report.m_status)) {
-          m_publisher.Break();
-        }
-      });
-  }
-
-  inline const OrderInfo& PrimitiveOrder::GetInfo() const {
-    return m_info;
-  }
-
-  template<typename F>
-  void PrimitiveOrder::With(F f) {
-    m_publisher.WithSnapshot(
-      [&] (boost::optional<const std::vector<ExecutionReport>&>
-          executionReports) {
-        f(m_status, *executionReports);
-      });
-  }
-
-  inline const Beam::SnapshotPublisher<ExecutionReport,
-      std::vector<ExecutionReport>>& PrimitiveOrder::GetPublisher() const {
-    return m_publisher;
   }
 }
 }
