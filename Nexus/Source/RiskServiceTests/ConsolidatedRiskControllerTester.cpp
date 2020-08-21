@@ -79,7 +79,6 @@ TEST_SUITE("ConsolidatedRiskController") {
       },
       &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    controller.Open();
     accounts->Push(m_accountA);
   }
 
@@ -102,7 +101,6 @@ TEST_SUITE("ConsolidatedRiskController") {
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     auto states = std::make_shared<Queue<RiskStateEntry>>();
     controller.GetRiskStatePublisher().Monitor(states);
-    controller.Open();
     accounts->Push(m_accountA);
     auto operation = operations->Pop();
     auto loadOperation = get<TestRiskDataStore::LoadInventorySnapshotOperation>(

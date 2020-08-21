@@ -5,6 +5,7 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
@@ -25,7 +26,14 @@ namespace Nexus::RiskService {
      */
     (SubscribeRiskPortfolioUpdatesService,
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
-      std::vector<RiskInventoryEntry>));
+      std::vector<RiskInventoryEntry>),
+
+    /**
+     * Resets all inventories whose Security is within a Region.
+     * @param region The Region to reset.
+     */
+    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,
+      Region, region));
 
   BEAM_DEFINE_MESSAGES(RiskMessages,
 

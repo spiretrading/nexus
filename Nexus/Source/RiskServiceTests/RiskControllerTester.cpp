@@ -51,15 +51,6 @@ namespace {
       m_userClients.GetServiceLocatorClient().SetCredentials("simba", "1234");
       m_userClients.Open();
     }
-
-    void Fill(TestServiceClients& clients, const Security security, Side side,
-        Quantity quantity, Money price) {
-      auto& order = clients.GetOrderExecutionClient().Submit(
-        OrderFields::BuildMarketOrder(security, side, quantity));
-      auto receivedOrder = m_orders->Pop();
-      m_environment.AcceptOrder(*receivedOrder);
-      m_environment.FillOrder(*receivedOrder, price, quantity);
-    }
   };
 }
 
@@ -80,7 +71,11 @@ TEST_SUITE("RiskController") {
     REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
     auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
     controller.GetPortfolioPublisher().Monitor(portfolio);
-    Fill(m_userClients, TSLA, Side::BID, 100, *Money::FromValue("1.01"));
+    auto& order = m_userClients.GetOrderExecutionClient().Submit(
+      OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
+    auto receivedOrder = m_orders->Pop();
+    m_environment.AcceptOrder(*receivedOrder);
+    m_environment.FillOrder(*receivedOrder, *Money::FromValue("1.01"), 100);
     auto update = portfolio->Pop();
     REQUIRE(update.m_unrealizedSecurity == -Money::ONE);
     REQUIRE(update.m_unrealizedCurrency == -Money::ONE);
@@ -89,42 +84,5 @@ TEST_SUITE("RiskController") {
       Quote(*Money::FromValue("1.00"), 100, Side::ASK),
       m_environment.GetTimeEnvironment().GetTime()));
     REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "reset_market") {
-    auto exchangeRates = std::vector<ExchangeRate>();
-    exchangeRates.push_back(ExchangeRate(CurrencyPair(DefaultCurrencies::USD(),
-      DefaultCurrencies::CAD()), 1));
-    auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
-    m_environment.Publish(TSLA, BboQuote(
-      Quote(*Money::FromValue("0.99"), 100, Side::BID),
-      Quote(*Money::FromValue("1.00"), 100, Side::ASK),
-      m_environment.GetTimeEnvironment().GetTime()));
-    m_environment.Publish(XIU, BboQuote(
-      Quote(*Money::FromValue("1.99"), 100, Side::BID),
-      Quote(*Money::FromValue("2.00"), 100, Side::ASK),
-      m_environment.GetTimeEnvironment().GetTime()));
-    auto controller = RiskController(m_account,
-      &m_adminClients.GetAdministrationClient(),
-      &m_adminClients.GetMarketDataClient(),
-      &m_adminClients.GetOrderExecutionClient(),
-      m_adminClients.BuildTimer(seconds(1)),
-      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
-      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
-    controller.GetPortfolioPublisher().Monitor(portfolio);
-    Fill(m_userClients, TSLA, Side::BID, 100, *Money::FromValue("1.01"));
-    Fill(m_userClients, XIU, Side::BID, 300, *Money::FromValue("2.00"));
-    Fill(m_userClients, XIU, Side::ASK, 300, *Money::FromValue("1.99"));
-    portfolio->Pop();
-    portfolio->Pop();
-    portfolio->Pop();
-    controller.Reset(DefaultMarkets::TSX());
-    auto resetUpdate = portfolio->Pop();
-    REQUIRE(resetUpdate.m_securityInventory == RiskInventory(
-      RiskPosition::Key(XIU, DefaultCurrencies::CAD())));
-    REQUIRE(resetUpdate.m_currencyInventory == RiskInventory(
-      RiskPosition::Key(Security(), DefaultCurrencies::CAD())));
   }
 }

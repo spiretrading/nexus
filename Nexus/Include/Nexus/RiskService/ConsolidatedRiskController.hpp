@@ -8,6 +8,7 @@
 #include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskController.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
@@ -88,15 +89,10 @@ namespace Nexus::RiskService {
       /** Returns a Publisher for all accounts Portfolio. */
       const Beam::Publisher<RiskPortfolioEntry>& GetPortfolioPublisher() const;
 
-      void Open();
-
-      void Close();
-
     private:
       using RiskController = RiskService::RiskController<AdministrationClient*,
         MarketDataClient*, OrderExecutionClient*,
         std::unique_ptr<TransitionTimer>, TimeClient*, RiskDataStore*>;
-      Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> m_accounts;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
@@ -146,8 +142,7 @@ namespace Nexus::RiskService {
     std::unique_ptr<TransitionTimer> ()> transitionTimerFactory,
     TF&& timeClient, DF&& dataStore, std::vector<ExchangeRate> exchangeRates,
     MarketDatabase markets, DestinationDatabase destinations)
-    : m_accounts(std::move(accounts)),
-      m_administrationClient(std::forward<AF>(administrationClient)),
+    : m_administrationClient(std::forward<AF>(administrationClient)),
       m_marketDataClient(std::forward<MF>(marketDataClient)),
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
       m_transitionTimerFactory(std::move(transitionTimerFactory)),
@@ -155,7 +150,11 @@ namespace Nexus::RiskService {
       m_dataStore(std::forward<DF>(dataStore)),
       m_exchangeRates(std::move(exchangeRates)),
       m_markets(std::move(markets)),
-      m_destinations(std::move(destinations)) {}
+      m_destinations(std::move(destinations)) {
+    m_accountsPipe.emplace(std::move(accounts),
+      m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
+      &ConsolidatedRiskController::OnAccount, this, std::placeholders::_1)));
+  }
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
@@ -169,25 +168,6 @@ namespace Nexus::RiskService {
   const Beam::Publisher<RiskPortfolioEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::GetPortfolioPublisher() const {
     return m_portfolioPublisher;
-  }
-
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
-  void ConsolidatedRiskController<A, M, O, R, T, D>::Open() {
-    m_marketDataClient->Open();
-    m_orderExecutionClient->Open();
-    m_timeClient->Open();
-    m_dataStore->Open();
-    m_accountsPipe.emplace(std::move(m_accounts),
-      m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
-      &ConsolidatedRiskController::OnAccount, this,
-      std::placeholders::_1)));
-  }
-
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
-  void ConsolidatedRiskController<A, M, O, R, T, D>::Close() {
-    m_accountsPipe = boost::none;
   }
 
   template<typename A, typename M, typename O, typename R, typename T,
