@@ -39,7 +39,7 @@ namespace Spire {
       */
       void set_decimals(int decimals);
 
-      //! Sets the number minimum number of displayed decimals to display
+      //! Sets the minimum number of displayed decimals to display
       //! when a value is committed.
       /*!
         \param decimals The minimum number of decimals to display.

@@ -1,15 +1,12 @@
 #include "Spire/Ui/IntegerInputWidget.hpp"
-#include <QHBoxLayout>
 
 using namespace boost::signals2;
 using namespace Spire;
 
 IntegerInputWidget::IntegerInputWidget(std::uint64_t value, QWidget* parent)
     : QWidget(parent) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_input_widget = new NumericInputWidget(value, this);
-  layout->addWidget(m_input_widget);
+  m_input_widget->set_decimals(0);
   m_input_widget->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_unsigned_long_long());
   });

@@ -1,15 +1,11 @@
 #include "Spire/Ui/DecimalInputWidget.hpp"
-#include <QHBoxLayout>
 
 using namespace boost::signals2;
 using namespace Spire;
 
 DecimalInputWidget::DecimalInputWidget(long double value, QWidget* parent)
     : QWidget(parent) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_input_widget = new NumericInputWidget(value, this);
-  layout->addWidget(m_input_widget);
   m_input_widget->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_long_double());
   });
