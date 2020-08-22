@@ -24,7 +24,7 @@ namespace Nexus::Accounting {
        * Constructs a bookkeeper with an initial inventory.
        * @param inventories The initial inventories.
        */
-      TrueAverageBookkeeper(const Beam::View<Inventory>& inventories);
+      TrueAverageBookkeeper(const Beam::View<const Inventory>& inventories);
 
       void RecordTransaction(const Index& index, CurrencyId currency,
         Quantity quantity, Money costBasis, Money fees);
@@ -47,11 +47,16 @@ namespace Nexus::Accounting {
 
   template<typename I>
   TrueAverageBookkeeper<I>::TrueAverageBookkeeper(
-      const Beam::View<Inventory>& inventories) {
+      const Beam::View<const Inventory>& inventories) {
     for(auto& inventory : inventories) {
-      RecordTransaction(inventory.m_position.m_key.m_index,
-        inventory.m_position.m_key.m_currency, inventory.m_position.m_quantity,
-        inventory.m_position.m_costBasis, inventory.m_fees);
+      m_inventories.insert(std::pair(inventory.m_position.m_key, inventory));
+      auto& total = InternalGetTotal(inventory.m_position.m_key.m_currency);
+      total.m_grossProfitAndLoss += inventory.m_grossProfitAndLoss;
+      total.m_position.m_quantity += Abs(inventory.m_position.m_quantity);
+      total.m_position.m_costBasis += Abs(inventory.m_position.m_costBasis);
+      total.m_fees += inventory.m_fees;
+      total.m_volume += inventory.m_volume;
+      total.m_transactionCount += inventory.m_transactionCount;
     }
   }
 

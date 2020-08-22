@@ -237,25 +237,8 @@ namespace Nexus::RiskService {
   void RiskServlet<C, A, M, O, R, T, D>::ResetAccount(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto snapshot = m_dataStore->LoadInventorySnapshot(account);
-    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(account,
-      snapshot.m_excludedOrders, *m_orderExecutionClient);
-    auto trailingOrderQuery = OrderExecutionService::AccountQuery();
-    trailingOrderQuery.SetIndex(account);
-    trailingOrderQuery.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
-      Beam::Queries::Sequence::Present());
-    trailingOrderQuery.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Unlimited());
-    auto trailingOrdersQueue = std::make_shared<
-      Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
-    m_orderExecutionClient->QueryOrderSubmissions(trailingOrderQuery,
-      trailingOrdersQueue);
-    auto lastSequence = snapshot.m_sequence;
-    Beam::ForEach(trailingOrdersQueue, [&] (const auto& order) {
-      excludedOrders.push_back(order);
-      lastSequence = std::max(lastSequence, order.GetSequence());
-    });
-    auto portfolio = RiskPortfolio(m_markets,
-      RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+    auto [portfolio, sequence, excludedOrders] = BuildPortfolio(snapshot,
+      account, m_markets, *m_orderExecutionClient);
     auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
     excludedOrders.erase(std::remove_if(excludedOrders.begin(),
       excludedOrders.end(), [&] (const auto& order) {
@@ -285,39 +268,41 @@ namespace Nexus::RiskService {
       });
     auto inversePortfolio = RiskPortfolio(m_markets);
     for(auto& report : reports) {
-      inversePortfolio.Update(report.m_order->GetInfo().m_fields,
+      portfolio.Update(report.m_order->GetInfo().m_fields,
         report.m_executionReport);
+      auto inverseReport = report.m_executionReport;
+      inverseReport.m_executionFee = -inverseReport.m_executionFee;
+      inverseReport.m_processingFee = -inverseReport.m_processingFee;
+      inverseReport.m_commission = -inverseReport.m_commission;
+      auto inverseFields = report.m_order->GetInfo().m_fields;
+      inverseFields.m_side = GetOpposite(inverseFields.m_side);
+      inversePortfolio.Update(inverseFields, inverseReport);
     }
     auto updatedSnapshot = InventorySnapshot();
     for(auto& inventoryPair : portfolio.GetBookkeeper().GetInventoryRange()) {
       auto& inventory = inventoryPair.second;
       inventory.m_fees = Money::ZERO;
       inventory.m_grossProfitAndLoss = Money::ZERO;
-      inventory.m_volume = Abs(inventory.m_position.m_quantity);
-      if(inventory.m_volume != 0) {
-        inventory.m_transactionCount = 1;
-      } else {
-        inventory.m_transactionCount = 0;
-      }
+      inventory.m_volume = 0;
+      inventory.m_transactionCount = 0;
       updatedSnapshot.m_inventories.push_back(inventory);
     }
-    for(auto& inventoryPair :
+    for(auto& inverseInventoryPair :
         inversePortfolio.GetBookkeeper().GetInventoryRange()) {
-      auto& inventory = inventoryPair.second;
+      auto& inverseInventory = inverseInventoryPair.second;
       auto snapshot = std::find_if(updatedSnapshot.m_inventories.begin(),
         updatedSnapshot.m_inventories.end(), [&] (const auto& snapshot) {
           return snapshot.m_position.m_key.m_index ==
-            inventoryPair.first.m_index;
+            inverseInventoryPair.first.m_index;
         });
-      if(snapshot == updatedSnapshot.m_inventories.end()) {
-        snapshot = updatedSnapshot.m_inventories.insert(
-          updatedSnapshot.m_inventories.end(), inventory);
-      }
-      snapshot->m_fees = -inventory.m_fees;
-      snapshot->m_grossProfitAndLoss = -inventory.m_grossProfitAndLoss;
-      snapshot->m_volume = -inventory.m_volume;
+      snapshot->m_position.m_quantity += inverseInventory.m_position.m_quantity;
+      snapshot->m_position.m_costBasis +=
+        inverseInventory.m_position.m_costBasis;
+      snapshot->m_grossProfitAndLoss += inverseInventory.m_grossProfitAndLoss;
+      snapshot->m_fees += inverseInventory.m_fees;
+      snapshot->m_volume -= inverseInventory.m_volume;
     }
-    updatedSnapshot.m_sequence = lastSequence;
+    updatedSnapshot.m_sequence = sequence;
     std::transform(excludedOrders.begin(), excludedOrders.end(),
       std::back_inserter(updatedSnapshot.m_excludedOrders),
       [] (const auto& order) {

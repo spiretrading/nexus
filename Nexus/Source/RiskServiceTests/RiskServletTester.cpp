@@ -104,6 +104,14 @@ namespace {
         GetDefaultMarketDatabase(), GetDefaultDestinationDatabase())),
         m_serverConnection, factory<std::unique_ptr<TriggerTimer>>());
       m_container->Open();
+      m_marketDataServiceEnvironment->Publish(TSLA, BboQuote(
+        Quote(*Money::FromValue("1.00"), 100, Side::BID),
+        Quote(*Money::FromValue("1.01"), 100, Side::ASK),
+        second_clock::universal_time()));
+      m_marketDataServiceEnvironment->Publish(XIU, BboQuote(
+        Quote(*Money::FromValue("2.00"), 100, Side::BID),
+        Quote(*Money::FromValue("2.01"), 100, Side::ASK),
+        second_clock::universal_time()));
     }
 
     Client MakeClient(std::string name) {
@@ -129,7 +137,6 @@ namespace {
       auto authenticator = SessionAuthenticator(
         Ref(*client.m_serviceLocatorClient));
       authenticator(*client.m_riskClient);
-      client.m_riskClient->SpawnMessageHandler();
       return client;
     }
   };
@@ -140,11 +147,15 @@ TEST_SUITE("RiskServlet") {
     auto client = MakeClient("simba");
     m_administrationServiceEnvironment->MakeAdministrator(
       client.m_serviceLocatorClient->GetAccount());
+    auto subscriptionResponse =
+      client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
     m_accounts->Push(client.m_serviceLocatorClient->GetAccount());
     auto& sentOrder = client.m_orderExecutionClient->Submit(
       OrderFields::BuildLimitOrder(XIU, Side::BID, 200, Money::ONE));
     auto receivedOrder = m_orders->Pop();
     Fill(*receivedOrder, 100);
+    auto inventoryMessage = client.m_riskClient->ReadMessage();
     client.m_riskClient->SendRequest<ResetRegionService>(XIU);
+    inventoryMessage = client.m_riskClient->ReadMessage();
   }
 }

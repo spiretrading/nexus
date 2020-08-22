@@ -280,25 +280,9 @@ namespace Nexus::RiskService {
     m_snapshotSequence = snapshot.m_sequence;
     m_excludedOrders.insert(snapshot.m_excludedOrders.begin(),
       snapshot.m_excludedOrders.end());
-    auto excludedOrders = OrderExecutionService::LoadOrderSubmissions(m_account,
-      snapshot.m_excludedOrders, *m_orderExecutionClient);
-    auto trailingOrderQuery = OrderExecutionService::AccountQuery();
-    trailingOrderQuery.SetIndex(m_account);
-    trailingOrderQuery.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
-      Beam::Queries::Sequence::Present());
-    trailingOrderQuery.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Unlimited());
-    auto trailingOrdersQueue = std::make_shared<
-      Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
-    m_orderExecutionClient->QueryOrderSubmissions(trailingOrderQuery,
-      trailingOrdersQueue);
-    auto lastSequence = snapshot.m_sequence;
-    Beam::ForEach(trailingOrdersQueue, [&] (const auto& order) {
-      excludedOrders.push_back(order.GetValue());
-      lastSequence = std::max(lastSequence, order.GetSequence());
-    });
-    auto portfolio = RiskPortfolio(std::move(markets),
-      RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+    auto [portfolio, lastSequence, excludedOrders] =
+      RiskService::BuildPortfolio(snapshot, m_account, std::move(markets),
+      *m_orderExecutionClient);
     m_snapshotPortfolio = portfolio;
     UpdatePortfolio(portfolio, std::move(excludedOrders));
     return {std::move(portfolio), Beam::Queries::Increment(lastSequence)};
