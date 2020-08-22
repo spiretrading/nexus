@@ -108,9 +108,8 @@ namespace Nexus::RiskService {
       Beam::TablePublisher<RiskPortfolioKey, RiskInventory>
         m_portfolioPublisher;
       std::vector<std::unique_ptr<RiskController>> m_controllers;
-      boost::optional<Beam::QueuePipe<Beam::ServiceLocator::DirectoryEntry>>
-        m_accountsPipe;
       Beam::RoutineTaskQueue m_tasks;
+      Beam::QueuePipe<Beam::ServiceLocator::DirectoryEntry> m_accountsPipe;
 
       ConsolidatedRiskController(const ConsolidatedRiskController&) = delete;
       ConsolidatedRiskController& operator =(
@@ -150,11 +149,11 @@ namespace Nexus::RiskService {
       m_dataStore(std::forward<DF>(dataStore)),
       m_exchangeRates(std::move(exchangeRates)),
       m_markets(std::move(markets)),
-      m_destinations(std::move(destinations)) {
-    m_accountsPipe.emplace(std::move(accounts),
-      m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
-      &ConsolidatedRiskController::OnAccount, this, std::placeholders::_1)));
-  }
+      m_destinations(std::move(destinations)),
+      m_accountsPipe(std::move(accounts),
+        m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(std::bind(
+        &ConsolidatedRiskController::OnAccount, this,
+        std::placeholders::_1))) {}
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>

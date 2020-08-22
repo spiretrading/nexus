@@ -48,15 +48,14 @@ namespace {
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     UidServiceTestEnvironment m_uidServiceEnvironment;
-    boost::optional<AdministrationServiceTestEnvironment>
+    optional<AdministrationServiceTestEnvironment>
       m_administrationServiceEnvironment;
     std::unique_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
       m_clientServiceLocatorClient;
     std::shared_ptr<MockOrderExecutionDriver> m_driver;
     std::shared_ptr<LocalOrderExecutionDataStore> m_dataStore;
-    boost::optional<TestServletContainer> m_container;
-    boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
-      m_clientProtocol;
+    optional<TestServletContainer> m_container;
+    optional<TestServiceProtocolClient> m_clientProtocol;
 
     Fixture() {
       m_serviceLocatorEnvironment.Open();

@@ -45,6 +45,7 @@ namespace {
   struct Client {
     std::unique_ptr<VirtualServiceLocatorClient> m_serviceLocatorClient;
     std::unique_ptr<VirtualOrderExecutionClient> m_orderExecutionClient;
+    std::unique_ptr<TestServiceProtocolClient> m_riskClient;
   };
 
   struct Fixture {
@@ -59,11 +60,13 @@ namespace {
     std::shared_ptr<Queue<DirectoryEntry>> m_accounts;
     std::shared_ptr<Queue<PrimitiveOrder*>> m_orders;
     LocalRiskDataStore m_dataStore;
+    std::shared_ptr<TestServerConnection> m_serverConnection;
     optional<TestServletContainer> m_container;
     std::shared_ptr<VirtualAdministrationClient> m_administrationClient;
 
     Fixture()
-        : m_accounts(std::make_shared<Queue<DirectoryEntry>>()) {
+        : m_accounts(std::make_shared<Queue<DirectoryEntry>>()),
+          m_serverConnection(std::make_shared<TestServerConnection>()) {
       m_serviceLocatorEnvironment.Open();
       m_uidServiceEnvironment.Open();
       auto serviceLocatorClient =
@@ -88,7 +91,6 @@ namespace {
       m_orders = std::make_shared<Queue<PrimitiveOrder*>>();
       m_driver.GetPublisher().Monitor(m_orders);
       m_orderExecutionServiceEnvironment->Open();
-      auto serverConnection = std::make_shared<TestServerConnection>();
       auto exchangeRates = std::vector<ExchangeRate>();
       m_container.emplace(Initialize(serviceLocatorClient,
         Initialize(m_accounts, &*m_administrationClient,
@@ -100,7 +102,7 @@ namespace {
           return std::make_unique<TriggerTimer>();
         }, std::make_shared<FixedTimeClient>(), &m_dataStore, exchangeRates,
         GetDefaultMarketDatabase(), GetDefaultDestinationDatabase())),
-        serverConnection, factory<std::unique_ptr<TriggerTimer>>());
+        m_serverConnection, factory<std::unique_ptr<TriggerTimer>>());
       m_container->Open();
     }
 
@@ -119,6 +121,15 @@ namespace {
         m_orderExecutionServiceEnvironment->BuildClient(
         Ref(*client.m_serviceLocatorClient));
       client.m_orderExecutionClient->Open();
+      client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
+        Initialize("test", Ref(*m_serverConnection)), Initialize());
+      RegisterRiskServices(Store(client.m_riskClient->GetSlots()));
+      RegisterRiskMessages(Store(client.m_riskClient->GetSlots()));
+      client.m_riskClient->Open();
+      auto authenticator = SessionAuthenticator(
+        Ref(*client.m_serviceLocatorClient));
+      authenticator(*client.m_riskClient);
+      client.m_riskClient->SpawnMessageHandler();
       return client;
     }
   };
@@ -127,10 +138,13 @@ namespace {
 TEST_SUITE("RiskServlet") {
   TEST_CASE_FIXTURE(Fixture, "reset_region") {
     auto client = MakeClient("simba");
+    m_administrationServiceEnvironment->MakeAdministrator(
+      client.m_serviceLocatorClient->GetAccount());
     m_accounts->Push(client.m_serviceLocatorClient->GetAccount());
     auto& sentOrder = client.m_orderExecutionClient->Submit(
       OrderFields::BuildLimitOrder(XIU, Side::BID, 200, Money::ONE));
     auto receivedOrder = m_orders->Pop();
     Fill(*receivedOrder, 100);
+    client.m_riskClient->SendRequest<ResetRegionService>(XIU);
   }
 }

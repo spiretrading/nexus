@@ -9,6 +9,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/optional/optional.hpp>
@@ -95,6 +96,7 @@ namespace Nexus::RiskService {
         GetPortfolioPublisher() const;
 
     private:
+      mutable Beam::Threading::Mutex m_mutex;
       Beam::ServiceLocator::DirectoryEntry m_account;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
@@ -154,6 +156,7 @@ namespace Nexus::RiskService {
         m_transitionTimer(std::forward<RF>(transitionTimer)),
         m_dataStore(std::forward<DF>(dataStore)),
         m_snapshotPortfolio(markets) {
+    auto lock = std::lock_guard(m_mutex);
     auto [portfolio, sequence] = BuildPortfolio(std::move(markets));
     auto inventories = std::vector<RiskInventory>();
     for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
@@ -362,6 +365,7 @@ namespace Nexus::RiskService {
   void RiskController<A, M, O, R, T, D>::OnExecutionReport(
       const OrderExecutionService::Order& order,
       const OrderExecutionService::ExecutionReport& report) {
+    auto lock = std::lock_guard(m_mutex);
     if(IsTerminal(report.m_status)) {
       UpdateSnapshot(order);
     }

@@ -283,17 +283,39 @@ namespace Nexus::RiskService {
           std::tie(right.m_executionReport.m_timestamp,
           right.m_executionReport.m_id, right.m_executionReport.m_sequence);
       });
+    auto inversePortfolio = RiskPortfolio(m_markets);
     for(auto& report : reports) {
-      auto inverseReport = report.m_executionReport;
-      inverseReport.m_lastQuantity = -inverseReport.m_lastQuantity;
-      inverseReport.m_executionFee = -inverseReport.m_executionFee;
-      inverseReport.m_processingFee = -inverseReport.m_processingFee;
-      inverseReport.m_commission = -inverseReport.m_commission;
-      portfolio.Update(report.m_order->GetInfo().m_fields, inverseReport);
+      inversePortfolio.Update(report.m_order->GetInfo().m_fields,
+        report.m_executionReport);
     }
     auto updatedSnapshot = InventorySnapshot();
-    for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
-      updatedSnapshot.m_inventories.push_back(inventory.second);
+    for(auto& inventoryPair : portfolio.GetBookkeeper().GetInventoryRange()) {
+      auto& inventory = inventoryPair.second;
+      inventory.m_fees = Money::ZERO;
+      inventory.m_grossProfitAndLoss = Money::ZERO;
+      inventory.m_volume = Abs(inventory.m_position.m_quantity);
+      if(inventory.m_volume != 0) {
+        inventory.m_transactionCount = 1;
+      } else {
+        inventory.m_transactionCount = 0;
+      }
+      updatedSnapshot.m_inventories.push_back(inventory);
+    }
+    for(auto& inventoryPair :
+        inversePortfolio.GetBookkeeper().GetInventoryRange()) {
+      auto& inventory = inventoryPair.second;
+      auto snapshot = std::find_if(updatedSnapshot.m_inventories.begin(),
+        updatedSnapshot.m_inventories.end(), [&] (const auto& snapshot) {
+          return snapshot.m_position.m_key.m_index ==
+            inventoryPair.first.m_index;
+        });
+      if(snapshot == updatedSnapshot.m_inventories.end()) {
+        snapshot = updatedSnapshot.m_inventories.insert(
+          updatedSnapshot.m_inventories.end(), inventory);
+      }
+      snapshot->m_fees = -inventory.m_fees;
+      snapshot->m_grossProfitAndLoss = -inventory.m_grossProfitAndLoss;
+      snapshot->m_volume = -inventory.m_volume;
     }
     updatedSnapshot.m_sequence = lastSequence;
     std::transform(excludedOrders.begin(), excludedOrders.end(),
