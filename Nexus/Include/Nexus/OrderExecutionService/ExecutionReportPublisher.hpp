@@ -37,8 +37,8 @@ namespace Nexus::OrderExecutionService {
    * Publishes a synchronized sequence of ExecutionReportEntries based off of
    * the Orders published by an OrderExecutionPublisher.
    */
-  class ExecutionReportPublisher final :
-      public Beam::Publisher<ExecutionReportEntry> {
+  class ExecutionReportPublisher final : public Beam::SnapshotPublisher<
+      ExecutionReportEntry, std::vector<ExecutionReportEntry>> {
     public:
 
       /**
@@ -46,6 +46,12 @@ namespace Nexus::OrderExecutionService {
        * @param orders The Orders whose ExecutionReports are to be published.
        */
       ExecutionReportPublisher(Beam::ScopedQueueReader<const Order*> orders);
+
+      void With(const std::function<void (boost::optional<const Snapshot&>)>& f)
+        const override;
+
+      void Monitor(Beam::ScopedQueueWriter<Type> monitor,
+        Beam::Out<boost::optional<Snapshot>> snapshot) const override;
 
       void With(const std::function<void ()>& f) const override;
 
@@ -107,6 +113,17 @@ namespace Nexus::OrderExecutionService {
             m_publisher.Push(ExecutionReportEntry(order, executionReport));
           }));
       }));
+  }
+
+  inline void ExecutionReportPublisher::With(
+      const std::function<void (boost::optional<const Snapshot&>)>& f) const {
+    m_publisher.With(f);
+  }
+
+  inline void ExecutionReportPublisher::Monitor(
+      Beam::ScopedQueueWriter<Type> monitor,
+      Beam::Out<boost::optional<Snapshot>> snapshot) const {
+    m_publisher.Monitor(std::move(monitor), Beam::Store(snapshot));
   }
 
   inline void ExecutionReportPublisher::With(

@@ -88,10 +88,19 @@ namespace Nexus::Accounting {
                 queue.Push(update);
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
-    m_executionReportPublisher.Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
-      std::bind(&PortfolioController::OnExecutionReport, this,
-      std::placeholders::_1)));
+    m_publisher.With([&] {
+      auto snapshot = boost::optional<
+        std::vector<OrderExecutionService::ExecutionReportEntry>>();
+      m_executionReportPublisher.Monitor(
+        m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
+        std::bind(&PortfolioController::OnExecutionReport, this,
+        std::placeholders::_1)), Beam::Store(snapshot));
+      if(snapshot) {
+        for(auto& report : *snapshot) {
+          OnExecutionReport(report);
+        }
+      }
+    });
   }
 
   template<typename P, typename C>
