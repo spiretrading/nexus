@@ -225,8 +225,8 @@ namespace Nexus::RiskService {
       &*m_timeClient, &*m_dataStore, m_exchangeRates, m_markets,
       m_destinations);
     m_controller->GetRiskStatePublisher().Monitor(
-      m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState,
-      this, std::placeholders::_1)));
+      m_tasks.GetSlot<RiskStateEntry>(std::bind(&RiskServlet::OnRiskState, this,
+      std::placeholders::_1)));
     m_controller->GetPortfolioPublisher().Monitor(
       m_tasks.GetSlot<RiskInventoryEntry>(std::bind(&RiskServlet::OnPortfolio,
       this, std::placeholders::_1)));
@@ -283,9 +283,13 @@ namespace Nexus::RiskService {
       auto& inventory = inventoryPair.second;
       inventory.m_fees = Money::ZERO;
       inventory.m_grossProfitAndLoss = Money::ZERO;
-      inventory.m_volume = 0;
+      inventory.m_volume = Abs(inventory.m_position.m_quantity);
       inventory.m_transactionCount = 0;
       updatedSnapshot.m_inventories.push_back(inventory);
+      m_tasks.Push([=, key = RiskPortfolioKey(account,
+          inventoryPair.second.m_position.m_key.m_index)] {
+        m_volumes[key] = -1;
+      });
     }
     for(auto& inverseInventoryPair :
         inversePortfolio.GetBookkeeper().GetInventoryRange()) {

@@ -42,6 +42,9 @@ namespace {
     std::unique_ptr<VirtualOrderExecutionClient>, TriggerTimer,
     std::shared_ptr<FixedTimeClient>, LocalRiskDataStore*>>;
 
+  using TestInventoryMessage = RecordMessage<InventoryMessage,
+    TestServiceProtocolClient>;
+
   struct Client {
     std::unique_ptr<VirtualServiceLocatorClient> m_serviceLocatorClient;
     std::unique_ptr<VirtualOrderExecutionClient> m_orderExecutionClient;
@@ -92,6 +95,8 @@ namespace {
       m_driver.GetPublisher().Monitor(m_orders);
       m_orderExecutionServiceEnvironment->Open();
       auto exchangeRates = std::vector<ExchangeRate>();
+      exchangeRates.push_back(ExchangeRate(CurrencyPair(
+        DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
       m_container.emplace(Initialize(serviceLocatorClient,
         Initialize(m_accounts, &*m_administrationClient,
         m_marketDataServiceEnvironment->BuildClient(
@@ -150,12 +155,85 @@ TEST_SUITE("RiskServlet") {
     auto subscriptionResponse =
       client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
     m_accounts->Push(client.m_serviceLocatorClient->GetAccount());
-    auto& sentOrder = client.m_orderExecutionClient->Submit(
-      OrderFields::BuildLimitOrder(XIU, Side::BID, 200, Money::ONE));
-    auto receivedOrder = m_orders->Pop();
-    Fill(*receivedOrder, 100);
-    auto inventoryMessage = client.m_riskClient->ReadMessage();
+    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+      Side::BID, 200, Money::ONE));
+    auto& receivedBid = *m_orders->Pop();
+    Accept(receivedBid);
+    receivedBid.With(
+      [&] (auto status, const auto& executionReports) {
+        auto report = ExecutionReport::BuildUpdatedReport(
+          executionReports.back(), OrderStatus::PARTIALLY_FILLED,
+          executionReports.back().m_timestamp);
+        report.m_executionFee = Money::CENT;
+        report.m_processingFee = Money::CENT;
+        report.m_commission = Money::CENT;
+        report.m_lastQuantity = 100;
+        report.m_lastPrice = Money::ONE;
+        receivedBid.Update(report);
+      });
+    auto bidMessage = std::static_pointer_cast<TestInventoryMessage>(
+      client.m_riskClient->ReadMessage());
+    REQUIRE(bidMessage != nullptr);
+    REQUIRE(bidMessage->GetRecord().inventories.size() == 1);
+    REQUIRE(bidMessage->GetRecord().inventories[0].account ==
+      client.m_serviceLocatorClient->GetAccount());
+    auto bidInventory = bidMessage->GetRecord().inventories[0].inventory;
+    REQUIRE(bidInventory.m_position.m_key ==
+      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
+    REQUIRE(bidInventory.m_position.m_quantity == 100);
+    REQUIRE(bidInventory.m_position.m_costBasis == 100 * Money::ONE);
+    REQUIRE(bidInventory.m_fees == 3 * Money::CENT);
+    REQUIRE(bidInventory.m_grossProfitAndLoss == Money::ZERO);
+    REQUIRE(bidInventory.m_transactionCount == 1);
+    REQUIRE(bidInventory.m_volume == 100);
+    client.m_orderExecutionClient->Submit(OrderFields::BuildLimitOrder(XIU,
+      Side::ASK, 200, Money::ONE + Money::CENT));
+    auto& receivedAsk = *m_orders->Pop();
+    Accept(receivedAsk);
+    receivedAsk.With(
+      [&] (auto status, const auto& executionReports) {
+        auto report = ExecutionReport::BuildUpdatedReport(
+          executionReports.back(), OrderStatus::FILLED,
+          executionReports.back().m_timestamp);
+        report.m_executionFee = Money::CENT;
+        report.m_processingFee = Money::CENT;
+        report.m_commission = Money::CENT;
+        report.m_lastQuantity = 200;
+        report.m_lastPrice = Money::ONE + Money::CENT;
+        receivedAsk.Update(report);
+      });
+    auto askMessage = std::static_pointer_cast<TestInventoryMessage>(
+      client.m_riskClient->ReadMessage());
+    REQUIRE(askMessage != nullptr);
+    REQUIRE(askMessage->GetRecord().inventories.size() == 1);
+    REQUIRE(askMessage->GetRecord().inventories[0].account ==
+      client.m_serviceLocatorClient->GetAccount());
+    auto askInventory = askMessage->GetRecord().inventories[0].inventory;
+    REQUIRE(askInventory.m_position.m_key ==
+      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
+    REQUIRE(askInventory.m_position.m_quantity == -100);
+    REQUIRE(askInventory.m_position.m_costBasis ==
+      -100 * (Money::ONE + Money::CENT));
+    REQUIRE(askInventory.m_fees == 6 * Money::CENT);
+    REQUIRE(askInventory.m_grossProfitAndLoss == Money::ONE);
+    REQUIRE(askInventory.m_transactionCount == 2);
+    REQUIRE(askInventory.m_volume == 300);
     client.m_riskClient->SendRequest<ResetRegionService>(XIU);
-    inventoryMessage = client.m_riskClient->ReadMessage();
+    auto resetMessage = std::static_pointer_cast<TestInventoryMessage>(
+      client.m_riskClient->ReadMessage());
+    REQUIRE(resetMessage != nullptr);
+    REQUIRE(resetMessage->GetRecord().inventories.size() == 1);
+    REQUIRE(resetMessage->GetRecord().inventories[0].account ==
+      client.m_serviceLocatorClient->GetAccount());
+    auto resetInventory = resetMessage->GetRecord().inventories[0].inventory;
+    REQUIRE(resetInventory.m_position.m_key ==
+      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
+    REQUIRE(resetInventory.m_position.m_quantity == -100);
+    REQUIRE(resetInventory.m_position.m_costBasis ==
+      -100 * (Money::ONE + Money::CENT));
+    REQUIRE(resetInventory.m_fees == Money::ZERO);
+    REQUIRE(resetInventory.m_grossProfitAndLoss == Money::ZERO);
+    REQUIRE(resetInventory.m_transactionCount == 1);
+    REQUIRE(resetInventory.m_volume == 100);
   }
 }

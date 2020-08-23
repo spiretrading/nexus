@@ -280,12 +280,12 @@ namespace Nexus::RiskService {
     m_snapshotSequence = snapshot.m_sequence;
     m_excludedOrders.insert(snapshot.m_excludedOrders.begin(),
       snapshot.m_excludedOrders.end());
-    auto [portfolio, lastSequence, excludedOrders] =
+    auto [portfolio, sequence, excludedOrders] =
       RiskService::BuildPortfolio(snapshot, m_account, std::move(markets),
       *m_orderExecutionClient);
     m_snapshotPortfolio = portfolio;
     UpdatePortfolio(portfolio, std::move(excludedOrders));
-    return {std::move(portfolio), Beam::Queries::Increment(lastSequence)};
+    return {std::move(portfolio), Beam::Queries::Increment(sequence)};
   }
 
   template<typename A, typename M, typename O, typename R, typename T,

@@ -76,8 +76,7 @@ namespace Nexus::OrderExecutionService {
         order->GetPublisher().Monitor(
           Beam::MakeCallbackQueueWriter<ExecutionReport>(
             [=] (const auto& executionReport) {
-              m_publisher.Push(ExecutionReportEntry(order,
-                std::move(executionReport)));
+              m_publisher.Push(ExecutionReportEntry(order, executionReport));
             }), Beam::Store(executionReportSnapshot));
         if(executionReportSnapshot) {
           std::transform(executionReportSnapshot->begin(),
