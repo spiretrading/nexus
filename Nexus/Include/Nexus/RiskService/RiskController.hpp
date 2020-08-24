@@ -21,17 +21,16 @@
 #include "Nexus/RiskService/RiskDataStore.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
-#include "Nexus/RiskService/RiskStateProcessor.hpp"
-#include "Nexus/RiskService/RiskTransitionProcessor.hpp"
+#include "Nexus/RiskService/RiskStateModel.hpp"
+#include "Nexus/RiskService/RiskTransitionModel.hpp"
 
 namespace Nexus::RiskService {
 
   /**
-   * Implements a controller for a single account's RiskStateProcessor and
-   * RiskTransitionProcessor updating both processors based on Orders
-   * submitted and market data. Portfolio's are valued using the BboQuote
-   * published by a MarketDataClient and Orders published by an
-   * OrderExecutionPublisher.
+   * Implements a controller for a single account's RiskStateModel and
+   * RiskTransitionModel updating both models based on Orders submitted and
+   * market data. Portfolio's are valued using the BboQuote published by a
+   * MarketDataClient and Orders published by an OrderExecutionPublisher.
    * @param <A> The type of AdministrationClient used to load an account's
    *        RiskParameters.
    * @param <M> The type of MarketDataClient to use.
@@ -102,11 +101,11 @@ namespace Nexus::RiskService {
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
       Beam::GetOptionalLocalPtr<R> m_transitionTimer;
       Beam::GetOptionalLocalPtr<D> m_dataStore;
-      boost::optional<RiskStateProcessor<T>> m_stateProcessor;
+      boost::optional<RiskStateModel<T>> m_stateModel;
       boost::optional<Accounting::PortfolioController<RiskPortfolio*, M>>
         m_portfolioController;
-      boost::optional<RiskTransitionProcessor<OrderExecutionClient*>>
-        m_transitionProcessor;
+      boost::optional<RiskTransitionModel<OrderExecutionClient*>>
+        m_transitionModel;
       Beam::StatePublisher<RiskState> m_statePublisher;
       RiskPortfolio m_snapshotPortfolio;
       Beam::Queries::Sequence m_snapshotSequence;
@@ -162,7 +161,7 @@ namespace Nexus::RiskService {
     for(auto& inventory : portfolio.GetBookkeeper().GetInventoryRange()) {
       inventories.push_back(inventory.second);
     }
-    m_stateProcessor.emplace(std::move(portfolio),
+    m_stateModel.emplace(std::move(portfolio),
       AdministrationService::LoadRiskParameters(*m_administrationClient,
       m_account), exchangeRates, std::forward<TF>(timeClient));
     auto realTimeQuery = OrderExecutionService::AccountQuery();
@@ -175,10 +174,10 @@ namespace Nexus::RiskService {
       realTimeQueue->Push(order);
     }
     m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery, realTimeQueue);
-    m_portfolioController.emplace(&m_stateProcessor->GetPortfolio(),
+    m_portfolioController.emplace(&m_stateModel->GetPortfolio(),
       std::forward<MF>(marketDataClient), realTimeQueue);
-    m_transitionProcessor.emplace(m_account, std::move(inventories),
-      m_stateProcessor->GetRiskState(), &*m_orderExecutionClient,
+    m_transitionModel.emplace(m_account, std::move(inventories),
+      m_stateModel->GetRiskState(), &*m_orderExecutionClient,
       std::move(destinations));
     m_orderExecutionClient->QueryOrderSubmissions(realTimeQuery,
       m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(std::bind(
@@ -193,7 +192,7 @@ namespace Nexus::RiskService {
       m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind(
       &RiskController::OnTransitionTimer, this, std::placeholders::_1)));
     m_transitionTimer->Start();
-    m_statePublisher.Push(m_stateProcessor->GetRiskState());
+    m_statePublisher.Push(m_stateModel->GetRiskState());
   }
 
   template<typename A, typename M, typename O, typename R, typename T,
@@ -264,11 +263,11 @@ namespace Nexus::RiskService {
     typename D>
   template<typename F>
   void RiskController<A, M, O, R, T, D>::Update(F&& f) {
-    auto previousState = m_stateProcessor->GetRiskState();
+    auto previousState = m_stateModel->GetRiskState();
     f();
-    auto& currentState = m_stateProcessor->GetRiskState();
+    auto& currentState = m_stateModel->GetRiskState();
     if(previousState != currentState) {
-      m_transitionProcessor->Update(currentState);
+      m_transitionModel->Update(currentState);
       m_statePublisher.Push(currentState);
     }
   }
@@ -278,7 +277,7 @@ namespace Nexus::RiskService {
   void RiskController<A, M, O, R, T, D>::OnTransitionTimer(
       Beam::Threading::Timer::Result result) {
     Update([&] {
-      m_stateProcessor->UpdateTime();
+      m_stateModel->UpdateTime();
     });
     m_transitionTimer->Start();
   }
@@ -288,7 +287,7 @@ namespace Nexus::RiskService {
   void RiskController<A, M, O, R, T, D>::OnRiskParametersUpdate(
       const RiskParameters& parameters) {
     Update([&] {
-      m_stateProcessor->Update(parameters);
+      m_stateModel->Update(parameters);
     });
   }
 
@@ -298,7 +297,7 @@ namespace Nexus::RiskService {
       const RiskPortfolio::UpdateEntry& update) {
     Update([&] {
       m_portfolioController->GetPublisher().With([&] {
-        m_stateProcessor->UpdatePortfolio();
+        m_stateModel->UpdatePortfolio();
       });
     });
   }
@@ -307,7 +306,7 @@ namespace Nexus::RiskService {
     typename D>
   void RiskController<A, M, O, R, T, D>::OnOrderSubmission(
       const OrderExecutionService::SequencedOrder& order) {
-    m_transitionProcessor->Add(**order);
+    m_transitionModel->Add(**order);
     m_snapshotSequence = std::max(m_snapshotSequence, order.GetSequence());
     m_excludedOrders.insert((*order)->GetInfo().m_orderId);
     (*order)->GetPublisher().Monitor(
@@ -325,7 +324,7 @@ namespace Nexus::RiskService {
     if(IsTerminal(report.m_status)) {
       UpdateSnapshot(order);
     }
-    m_transitionProcessor->Update(report);
+    m_transitionModel->Update(report);
   }
 }
 

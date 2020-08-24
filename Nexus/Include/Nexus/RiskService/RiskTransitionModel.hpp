@@ -1,5 +1,5 @@
-#ifndef NEXUS_RISK_TRANSITION_PROCESSOR_HPP
-#define NEXUS_RISK_TRANSITION_PROCESSOR_HPP
+#ifndef NEXUS_RISK_TRANSITION_MODEL_HPP
+#define NEXUS_RISK_TRANSITION_MODEL_HPP
 #include <iostream>
 #include <type_traits>
 #include <unordered_set>
@@ -22,7 +22,7 @@ namespace Nexus::RiskService {
    *        flatten Positions.
    */
   template<typename O>
-  class RiskTransitionProcessor {
+  class RiskTransitionModel {
     public:
 
       /**
@@ -32,7 +32,7 @@ namespace Nexus::RiskService {
       using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
 
       /**
-       * Constructs a RiskTransitionProcessor.
+       * Constructs a RiskTransitionModel.
        * @param account The account being tracked.
        * @param inventory A snapshot of the account's positions.
        * @param riskState The account's initial RiskState.
@@ -42,7 +42,7 @@ namespace Nexus::RiskService {
        *        Orders.
        */
       template<typename OF>
-      RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry account,
+      RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry account,
         const std::vector<RiskInventory>& inventory, RiskState riskState,
         OF&& orderExecutionClient, DestinationDatabase destinations);
 
@@ -87,13 +87,13 @@ namespace Nexus::RiskService {
   };
 
   template<typename OF>
-  RiskTransitionProcessor(Beam::ServiceLocator::DirectoryEntry,
+  RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry,
     const std::vector<RiskInventory>&, RiskState, OF&&, DestinationDatabase) ->
-    RiskTransitionProcessor<std::remove_reference_t<OF>>;
+    RiskTransitionModel<std::remove_reference_t<OF>>;
 
   template<typename O>
   template<typename OF>
-  RiskTransitionProcessor<O>::RiskTransitionProcessor(
+  RiskTransitionModel<O>::RiskTransitionModel(
     Beam::ServiceLocator::DirectoryEntry account,
     const std::vector<RiskInventory>& inventory, RiskState riskState,
     OF&& orderExecutionClient, DestinationDatabase destinations)
@@ -107,13 +107,12 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::Add(
-      const OrderExecutionService::Order& order) {
+  void RiskTransitionModel<O>::Add(const OrderExecutionService::Order& order) {
     m_book.Add(order);
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::Update(const RiskState& state) {
+  void RiskTransitionModel<O>::Update(const RiskState& state) {
     m_riskState = state;
     if(m_state == 0) {
       return S0();
@@ -127,7 +126,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::Update(
+  void RiskTransitionModel<O>::Update(
       const OrderExecutionService::ExecutionReport& report) {
     m_book.Update(report);
     if(IsTerminal(report.m_status)) {
@@ -139,27 +138,27 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  bool RiskTransitionProcessor<O>::C0() {
+  bool RiskTransitionModel<O>::C0() {
     return m_riskState.m_type == RiskState::Type::CLOSE_ORDERS;
   }
 
   template<typename O>
-  bool RiskTransitionProcessor<O>::C1() {
+  bool RiskTransitionModel<O>::C1() {
     return m_riskState.m_type == RiskState::Type::ACTIVE;
   }
 
   template<typename O>
-  bool RiskTransitionProcessor<O>::C2() {
+  bool RiskTransitionModel<O>::C2() {
     return m_riskState.m_type == RiskState::Type::DISABLED;
   }
 
   template<typename O>
-  bool RiskTransitionProcessor<O>::C3() {
+  bool RiskTransitionModel<O>::C3() {
     return m_liveOrders.empty();
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S0() {
+  void RiskTransitionModel<O>::S0() {
     m_state = 0;
     if(C0()) {
       return S1();
@@ -167,7 +166,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S1() {
+  void RiskTransitionModel<O>::S1() {
     m_state = 1;
     for(auto& openingOrder : m_book.GetOpeningOrders()) {
       m_orderExecutionClient->Cancel(*openingOrder);
@@ -176,7 +175,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S2() {
+  void RiskTransitionModel<O>::S2() {
     m_state = 2;
     if(C1()) {
       return S0();
@@ -186,7 +185,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S3() {
+  void RiskTransitionModel<O>::S3() {
     m_state = 3;
     auto& liveOrders = m_book.GetLiveOrders();
     m_liveOrders.clear();
@@ -198,7 +197,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S4() {
+  void RiskTransitionModel<O>::S4() {
     m_state = 4;
     if(C1()) {
       return S0();
@@ -208,7 +207,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S5() {
+  void RiskTransitionModel<O>::S5() {
     m_state = 5;
     for(auto& position : m_book.GetPositions()) {
       auto destination = m_destinations.GetPreferredDestination(
@@ -227,7 +226,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename O>
-  void RiskTransitionProcessor<O>::S6() {
+  void RiskTransitionModel<O>::S6() {
     m_state = 6;
     if(C1()) {
       return S0();
