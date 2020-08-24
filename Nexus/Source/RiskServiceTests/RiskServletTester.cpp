@@ -233,7 +233,7 @@ TEST_SUITE("RiskServlet") {
       -100 * (Money::ONE + Money::CENT));
     REQUIRE(resetInventory.m_fees == Money::ZERO);
     REQUIRE(resetInventory.m_grossProfitAndLoss == Money::ZERO);
-    REQUIRE(resetInventory.m_transactionCount == 1);
-    REQUIRE(resetInventory.m_volume == 100);
+    REQUIRE(resetInventory.m_transactionCount == 0);
+    REQUIRE(resetInventory.m_volume == 0);
   }
 }

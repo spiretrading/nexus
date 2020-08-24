@@ -240,71 +240,44 @@ namespace Nexus::RiskService {
     auto [portfolio, sequence, excludedOrders] = BuildPortfolio(snapshot,
       account, m_markets, *m_orderExecutionClient);
     auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
-    excludedOrders.erase(std::remove_if(excludedOrders.begin(),
-      excludedOrders.end(), [&] (const auto& order) {
-        if(auto snapshot = order->GetPublisher().GetSnapshot()) {
-          if(IsTerminal(snapshot->back().m_status)) {
-            for(auto& report : *snapshot) {
-              portfolio.Update(order->GetInfo().m_fields, report);
-            }
-            return true;
-          } else {
-            std::transform(snapshot->begin(), snapshot->end(),
-              std::back_inserter(reports),
-              [&] (auto& report) {
-                return OrderExecutionService::ExecutionReportEntry(order,
-                  std::move(report));
-              });
-          }
-        }
-        return false;
-      }), excludedOrders.end());
-    std::sort(reports.begin(), reports.end(),
-      [] (auto& left, auto& right) {
-        return std::tie(left.m_executionReport.m_timestamp,
-          left.m_executionReport.m_id, left.m_executionReport.m_sequence) <
-          std::tie(right.m_executionReport.m_timestamp,
-          right.m_executionReport.m_id, right.m_executionReport.m_sequence);
-      });
-    auto inversePortfolio = RiskPortfolio(m_markets);
+    for(auto& order : excludedOrders) {
+      if(auto snapshot = order->GetPublisher().GetSnapshot()) {
+        std::transform(snapshot->begin(), snapshot->end(),
+          std::back_inserter(reports), [&] (auto& report) {
+            return OrderExecutionService::ExecutionReportEntry(order, report);
+          });
+      }
+    }
+    std::sort(reports.begin(), reports.end(), [] (auto& left, auto& right) {
+      return std::tie(left.m_executionReport.m_timestamp,
+        left.m_executionReport.m_id, left.m_executionReport.m_sequence) <
+        std::tie(right.m_executionReport.m_timestamp,
+        right.m_executionReport.m_id, right.m_executionReport.m_sequence);
+    });
+    auto basePortfolio = portfolio;
     for(auto& report : reports) {
       portfolio.Update(report.m_order->GetInfo().m_fields,
         report.m_executionReport);
-      auto inverseReport = report.m_executionReport;
-      inverseReport.m_executionFee = -inverseReport.m_executionFee;
-      inverseReport.m_processingFee = -inverseReport.m_processingFee;
-      inverseReport.m_commission = -inverseReport.m_commission;
-      auto inverseFields = report.m_order->GetInfo().m_fields;
-      inverseFields.m_side = GetOpposite(inverseFields.m_side);
-      inversePortfolio.Update(inverseFields, inverseReport);
     }
     auto updatedSnapshot = InventorySnapshot();
     for(auto& inventoryPair : portfolio.GetBookkeeper().GetInventoryRange()) {
       auto& inventory = inventoryPair.second;
-      inventory.m_fees = Money::ZERO;
-      inventory.m_grossProfitAndLoss = Money::ZERO;
-      inventory.m_volume = Abs(inventory.m_position.m_quantity);
-      inventory.m_transactionCount = 0;
+      auto& baseInventory = basePortfolio.GetBookkeeper().GetInventory(
+        inventory.m_position.m_key.m_index,
+        inventory.m_position.m_key.m_currency);
+      inventory.m_position.m_quantity = baseInventory.m_position.m_quantity;
+      inventory.m_position.m_costBasis = baseInventory.m_position.m_costBasis;
+      inventory.m_fees = baseInventory.m_fees - inventory.m_fees;
+      inventory.m_grossProfitAndLoss = baseInventory.m_grossProfitAndLoss -
+        inventory.m_grossProfitAndLoss;
+      inventory.m_volume = baseInventory.m_volume - inventory.m_volume;
+      inventory.m_transactionCount = baseInventory.m_transactionCount -
+        inventory.m_transactionCount;
       updatedSnapshot.m_inventories.push_back(inventory);
       m_tasks.Push([=, key = RiskPortfolioKey(account,
           inventoryPair.second.m_position.m_key.m_index)] {
         m_volumes[key] = -1;
       });
-    }
-    for(auto& inverseInventoryPair :
-        inversePortfolio.GetBookkeeper().GetInventoryRange()) {
-      auto& inverseInventory = inverseInventoryPair.second;
-      auto snapshot = std::find_if(updatedSnapshot.m_inventories.begin(),
-        updatedSnapshot.m_inventories.end(), [&] (const auto& snapshot) {
-          return snapshot.m_position.m_key.m_index ==
-            inverseInventoryPair.first.m_index;
-        });
-      snapshot->m_position.m_quantity += inverseInventory.m_position.m_quantity;
-      snapshot->m_position.m_costBasis +=
-        inverseInventory.m_position.m_costBasis;
-      snapshot->m_grossProfitAndLoss += inverseInventory.m_grossProfitAndLoss;
-      snapshot->m_fees += inverseInventory.m_fees;
-      snapshot->m_volume -= inverseInventory.m_volume;
     }
     updatedSnapshot.m_sequence = sequence;
     std::transform(excludedOrders.begin(), excludedOrders.end(),
