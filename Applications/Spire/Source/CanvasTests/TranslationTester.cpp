@@ -181,7 +181,7 @@ TEST_SUITE("Translation") {
     auto receivedOrders = std::make_shared<Queue<const Order*>>();
     environment.m_environment.MonitorOrderSubmissions(receivedOrders);
     auto receivedOrder1 = receivedOrders->Pop();
-    environment.m_environment.AcceptOrder(*receivedOrder1);
+    environment.m_environment.Accept(*receivedOrder1);
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
     submittedOrder1->GetPublisher().Monitor(executionReports);
     REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
@@ -189,7 +189,7 @@ TEST_SUITE("Translation") {
     task->Cancel();
     REQUIRE(taskState->Pop().m_state == Task::State::PENDING_CANCEL);
     REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_CANCEL);
-    environment.m_environment.CancelOrder(*receivedOrder1);
+    environment.m_environment.Cancel(*receivedOrder1);
     REQUIRE(taskState->Pop().m_state == Task::State::CANCELED);
   }
 }
