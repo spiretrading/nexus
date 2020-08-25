@@ -4,8 +4,8 @@
 #include <boost/optional.hpp>
 #include <QAbstractSpinBox>
 #include <QLocale>
-#include <QStyle>
 #include <QRegularExpression>
+#include <QStyle>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -28,9 +28,10 @@ namespace Spire {
 
       //! Constructs a NumericInputWidget with a default step of 1.
       /*!
+        \param value The initial value to display.
         \param parent The parent widget.
       */
-      NumericInputWidget(Real value, QWidget* parent = nullptr);
+      explicit NumericInputWidget(Real value, QWidget* parent = nullptr);
 
       //! Sets the number of decimal places that can be input, up to
       //! MAX_DECIMAL_PLACES.
@@ -93,7 +94,7 @@ namespace Spire {
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
       void timerEvent(QTimerEvent* event) override;
-      QAbstractSpinBox::StepEnabled stepEnabled() const override;
+      StepEnabled stepEnabled() const override;
 
     private:
       mutable ChangeSignal m_change_signal;

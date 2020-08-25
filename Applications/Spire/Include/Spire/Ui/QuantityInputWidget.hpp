@@ -11,6 +11,9 @@ namespace Spire {
     public:
 
       //! Signals a user interaction with the value.
+      /*!
+        \param value The current value.
+      */
       using ValueSignal = Signal<void (Nexus::Quantity value)>;
 
       //! Constructs a QuantityInputWidget.

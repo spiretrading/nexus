@@ -9,36 +9,39 @@ namespace Spire {
     public:
 
       //! Signals a user interaction with the value.
-      using ValueSignal = Signal<void (std::uint64_t value)>;
+      /*!
+        \param value The current value.
+      */
+      using ValueSignal = Signal<void (std::int64_t value)>;
 
       //! Constructs an IntegerInputWidget.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit IntegerInputWidget(std::uint64_t value,
+      explicit IntegerInputWidget(std::int64_t value,
         QWidget* parent = nullptr);
 
       //! Sets the minimum accepted value.
       /*!
         \param minimum The minimum value.
       */
-      void set_minimum(std::uint64_t minimum);
+      void set_minimum(std::int64_t minimum);
 
       //! Sets the maximum accepted value.
       /*!
         \param maximum The maximum value.
       */
-      void set_maximum(std::uint64_t maximum);
+      void set_maximum(std::int64_t maximum);
 
       //! Returns the last submitted value.
-      std::uint64_t get_value() const;
+      std::int64_t get_value() const;
 
       //! Sets the current displayed value.
       /*!
         \param value The current value.
       */
-      void set_value(std::uint64_t value);
+      void set_value(std::int64_t value);
 
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(

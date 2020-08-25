@@ -3,7 +3,7 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-IntegerInputWidget::IntegerInputWidget(std::uint64_t value, QWidget* parent)
+IntegerInputWidget::IntegerInputWidget(std::int64_t value, QWidget* parent)
     : QWidget(parent) {
   m_input_widget = new NumericInputWidget(value, this);
   m_input_widget->set_decimals(0);
@@ -29,19 +29,19 @@ connection IntegerInputWidget::connect_commit_signal(
   return m_commit_signal.connect(slot);
 }
 
-void IntegerInputWidget::set_minimum(std::uint64_t minimum) {
+void IntegerInputWidget::set_minimum(std::int64_t minimum) {
   m_input_widget->set_minimum(minimum);
 }
 
-void IntegerInputWidget::set_maximum(std::uint64_t maximum) {
+void IntegerInputWidget::set_maximum(std::int64_t maximum) {
   m_input_widget->set_maximum(maximum);
 }
 
-std::uint64_t IntegerInputWidget::get_value() const {
+std::int64_t IntegerInputWidget::get_value() const {
   return m_input_widget->get_value().extract_unsigned_long_long();
 }
 
-void IntegerInputWidget::set_value(std::uint64_t value) {
+void IntegerInputWidget::set_value(std::int64_t value) {
   m_input_widget->set_value(value);
 }
 

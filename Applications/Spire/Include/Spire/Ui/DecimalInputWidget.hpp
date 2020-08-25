@@ -9,35 +9,38 @@ namespace Spire {
     public:
 
       //! Signals a user interaction with the value.
-      using ValueSignal = Signal<void (long double value)>;
+      /*!
+        \param value The current value.
+      */
+      using ValueSignal = Signal<void (double value)>;
 
       //! Constructs a DecimalInputWidget.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit DecimalInputWidget(long double value, QWidget* parent = nullptr);
+      explicit DecimalInputWidget(double value, QWidget* parent = nullptr);
 
       //! Sets the minimum accepted value.
       /*!
         \param minimum The minimum value.
       */
-      void set_minimum(long double minimum);
+      void set_minimum(double minimum);
 
       //! Sets the maximum accepted value.
       /*!
         \param maximum The maximum value.
       */
-      void set_maximum(long double maximum);
+      void set_maximum(double maximum);
 
       //! Returns the last submitted value.
-      long double get_value() const;
+      double get_value() const;
 
       //! Sets the current displayed value.
       /*!
         \param value The current value.
       */
-      void set_value(long double value);
+      void set_value(double value);
 
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(

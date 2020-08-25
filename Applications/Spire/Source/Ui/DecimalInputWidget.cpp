@@ -3,11 +3,12 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-DecimalInputWidget::DecimalInputWidget(long double value, QWidget* parent)
+DecimalInputWidget::DecimalInputWidget(double value, QWidget* parent)
     : QWidget(parent) {
-  m_input_widget = new NumericInputWidget(value, this);
+  m_input_widget = new NumericInputWidget(static_cast<long double>(value),
+    this);
   m_input_widget->connect_change_signal([=] (auto value) {
-    m_change_signal(value.extract_long_double());
+    m_change_signal(value.extract_double());
   });
   connect(m_input_widget, &NumericInputWidget::editingFinished, this,
     &DecimalInputWidget::on_editing_finished);
@@ -28,22 +29,22 @@ connection DecimalInputWidget::connect_commit_signal(
   return m_commit_signal.connect(slot);
 }
 
-void DecimalInputWidget::set_minimum(long double minimum) {
-  m_input_widget->set_minimum(minimum);
+void DecimalInputWidget::set_minimum(double minimum) {
+  m_input_widget->set_minimum(static_cast<long double>(minimum));
 }
 
-void DecimalInputWidget::set_maximum(long double maximum) {
-  m_input_widget->set_maximum(maximum);
+void DecimalInputWidget::set_maximum(double maximum) {
+  m_input_widget->set_maximum(static_cast<long double>(maximum));
 }
 
-long double DecimalInputWidget::get_value() const {
-  return m_input_widget->get_value().extract_long_double();
+double DecimalInputWidget::get_value() const {
+  return m_input_widget->get_value().extract_double();
 }
 
-void DecimalInputWidget::set_value(long double value) {
-  m_input_widget->set_value(value);
+void DecimalInputWidget::set_value(double value) {
+  m_input_widget->set_value(static_cast<long double>(value));
 }
 
 void DecimalInputWidget::on_editing_finished() {
-  m_commit_signal(m_input_widget->get_value().extract_long_double());
+  m_commit_signal(m_input_widget->get_value().extract_double());
 }
