@@ -114,7 +114,8 @@ namespace Nexus::RiskService {
 
       void Shutdown();
       void BuildController();
-      void ResetAccount(const Beam::ServiceLocator::DirectoryEntry& account);
+      void Reset(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Region& region);
       Beam::ServiceLocator::DirectoryEntry LoadGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void OnRiskState(const RiskStateEntry& entry);
@@ -239,8 +240,9 @@ namespace Nexus::RiskService {
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
-  void RiskServlet<C, A, M, O, R, T, D>::ResetAccount(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+  void RiskServlet<C, A, M, O, R, T, D>::Reset(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Region& region) {
     auto snapshot = m_dataStore->LoadInventorySnapshot(account);
     auto [portfolio, sequence, excludedOrders] = BuildPortfolio(snapshot,
       account, m_markets, *m_orderExecutionClient);
@@ -270,15 +272,19 @@ namespace Nexus::RiskService {
       auto& baseInventory = basePortfolio.GetBookkeeper().GetInventory(
         inventory.m_position.m_key.m_index,
         inventory.m_position.m_key.m_currency);
-      inventory.m_position.m_quantity = baseInventory.m_position.m_quantity;
-      inventory.m_position.m_costBasis = baseInventory.m_position.m_costBasis;
-      inventory.m_fees = baseInventory.m_fees - inventory.m_fees;
-      inventory.m_grossProfitAndLoss = baseInventory.m_grossProfitAndLoss -
-        inventory.m_grossProfitAndLoss;
-      inventory.m_volume = baseInventory.m_volume - inventory.m_volume;
-      inventory.m_transactionCount = baseInventory.m_transactionCount -
-        inventory.m_transactionCount;
-      updatedSnapshot.m_inventories.push_back(inventory);
+      if(baseInventory.m_position.m_key.m_index <= region) {
+        inventory.m_position.m_quantity = baseInventory.m_position.m_quantity;
+        inventory.m_position.m_costBasis = baseInventory.m_position.m_costBasis;
+        inventory.m_fees = baseInventory.m_fees - inventory.m_fees;
+        inventory.m_grossProfitAndLoss = baseInventory.m_grossProfitAndLoss -
+          inventory.m_grossProfitAndLoss;
+        inventory.m_volume = baseInventory.m_volume - inventory.m_volume;
+        inventory.m_transactionCount = baseInventory.m_transactionCount -
+          inventory.m_transactionCount;
+        updatedSnapshot.m_inventories.push_back(inventory);
+      } else {
+        updatedSnapshot.m_inventories.push_back(baseInventory);
+      }
       m_tasks.Push([=, key = RiskPortfolioKey(account,
           inventoryPair.second.m_position.m_key.m_index)] {
         m_volumes[key] = -1;
@@ -362,7 +368,7 @@ namespace Nexus::RiskService {
     if(auto accounts = m_accountPublisher->GetSnapshot()) {
       for(auto& account : *accounts) {
         try {
-          ResetAccount(account);
+          Reset(account, region);
         } catch(const std::exception&) {
           std::cerr << "Region reset failed for account:\n\t" <<
             "Account: " << account << "\n\t" <<
