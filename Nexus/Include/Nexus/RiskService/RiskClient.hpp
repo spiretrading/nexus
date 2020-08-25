@@ -34,6 +34,20 @@ namespace Nexus::RiskService {
 
       ~RiskClient();
 
+      /**
+       * Loads the InventorySnapshot of a given account.
+       * @param account The account to load.
+       * @return The <i>account</i>'s InventorySnapshot.
+       */
+      InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+
+      /**
+       * Resets the inventories belonging to a region for all accounts.
+       * @param region The region to reset.
+       */
+      void Reset(const Region& region);
+
       /** Returns the object publishing a RiskPortfolioUpdates. */
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher();
 
@@ -96,6 +110,19 @@ namespace Nexus::RiskService {
   template<typename B>
   RiskClient<B>::~RiskClient() {
     Close();
+  }
+
+  template<typename B>
+  InventorySnapshot RiskClient<B>::LoadInventorySnapshot(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto client = m_clientHandler.GetClient();
+    return client->template SendRequest<LoadInventorySnapshotService>(account);
+  }
+
+  template<typename B>
+  void RiskClient<B>::Reset(const Region& region) {
+    auto client = m_clientHandler.GetClient();
+    client->template SendRequest<ResetRegionService>(region);
   }
 
   template<typename B>

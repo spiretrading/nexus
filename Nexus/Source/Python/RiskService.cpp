@@ -30,6 +30,16 @@ using namespace pybind11;
 
 namespace {
   struct TrampolineRiskClient final : VirtualRiskClient {
+    InventorySnapshot LoadInventorySnapshot(
+        const DirectoryEntry& account) override {
+      PYBIND11_OVERLOAD_PURE_NAME(InventorySnapshot, VirtualRiskClient,
+        "load_inventory_snapshot", LoadInventorySnapshot);
+    }
+
+    void Reset(const Region& region) override {
+      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskClient, "reset", Reset);
+    }
+
     const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() override {
       PYBIND11_OVERLOAD_PURE_NAME(const RiskPortfolioUpdatePublisher&,
@@ -130,6 +140,8 @@ void Nexus::Python::ExportMySqlRiskDataStore(pybind11::module& module) {
 
 void Nexus::Python::ExportRiskClient(pybind11::module& module) {
   class_<VirtualRiskClient, TrampolineRiskClient>(module, "RiskClient")
+    .def("load_inventory_snapshot", &VirtualRiskClient::LoadInventorySnapshot)
+    .def("reset", &VirtualRiskClient::Reset)
     .def("get_risk_portfolio_update_publisher",
       &VirtualRiskClient::GetRiskPortfolioUpdatePublisher)
     .def("open", &VirtualRiskClient::Open)

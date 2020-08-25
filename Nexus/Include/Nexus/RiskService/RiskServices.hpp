@@ -6,6 +6,7 @@
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/Region.hpp"
+#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
@@ -21,19 +22,28 @@ namespace Nexus::RiskService {
   BEAM_DEFINE_SERVICES(RiskServices,
 
     /**
-     * Subscribes to the RiskPortfolioUpdates permissioned by the session's
-     * account.
+     * Loads the InventorySnapshot of a given account.
+     * @param account The account to load.
+     * @return The <i>account</i>'s InventorySnapshot.
      */
-    (SubscribeRiskPortfolioUpdatesService,
-      "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
-      std::vector<RiskInventoryEntry>),
+    (LoadInventorySnapshotService,
+      "Nexus.RiskService.LoadInventorySnapshotService", InventorySnapshot,
+      Beam::ServiceLocator::DirectoryEntry, account),
 
     /**
      * Resets all inventories whose Security is within a Region.
      * @param region The Region to reset.
      */
-    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,
-      Region, region));
+    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void, Region,
+      region),
+
+    /**
+     * Subscribes to the RiskPortfolioUpdates permissioned by the session's
+     * account.
+     */
+    (SubscribeRiskPortfolioUpdatesService,
+      "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
+      std::vector<RiskInventoryEntry>));
 
   BEAM_DEFINE_MESSAGES(RiskMessages,
 

@@ -26,6 +26,11 @@ namespace Nexus::RiskService {
 
       ~ToPythonRiskClient() override;
 
+      InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
+
+      void Reset(const Region& region) override;
+
       const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() override;
 
@@ -55,6 +60,19 @@ namespace Nexus::RiskService {
     Close();
     auto release = Beam::Python::GilRelease();
     m_client.reset();
+  }
+
+  template<typename C>
+  InventorySnapshot ToPythonRiskClient<C>::LoadInventorySnapshot(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->LoadInventorySnapshot(account);
+  }
+
+  template<typename C>
+  void ToPythonRiskClient<C>::Reset(const Region& region) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->Reset(region);
   }
 
   template<typename C>

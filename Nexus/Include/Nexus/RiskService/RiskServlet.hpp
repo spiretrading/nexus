@@ -119,9 +119,11 @@ namespace Nexus::RiskService {
         const Beam::ServiceLocator::DirectoryEntry& account);
       void OnRiskState(const RiskStateEntry& entry);
       void OnPortfolio(const RiskInventoryEntry& entry);
+      InventorySnapshot OnLoadInventorySnapshot(ServiceProtocolClient& client,
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void OnResetRegion(ServiceProtocolClient& client, const Region& region);
       void OnSubscribeRiskPortfolioUpdatesRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request);
-      void OnResetRegion(ServiceProtocolClient& client, const Region& region);
   };
 
   template<typename A, typename M, typename O, typename R, typename T,
@@ -163,12 +165,15 @@ namespace Nexus::RiskService {
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterRiskServices(Store(slots));
     RegisterRiskMessages(Store(slots));
-    SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
-      std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
-      std::placeholders::_1));
+    LoadInventorySnapshotService::AddSlot(Beam::Store(slots), std::bind(
+      &RiskServlet::OnLoadInventorySnapshot, this, std::placeholders::_1,
+      std::placeholders::_2));
     ResetRegionService::AddSlot(Beam::Store(slots), std::bind(
       &RiskServlet::OnResetRegion, this, std::placeholders::_1,
       std::placeholders::_2));
+    SubscribeRiskPortfolioUpdatesService::AddRequestSlot(Store(slots),
+      std::bind(&RiskServlet::OnSubscribeRiskPortfolioUpdatesRequest, this,
+      std::placeholders::_1));
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -333,6 +338,43 @@ namespace Nexus::RiskService {
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
+  InventorySnapshot RiskServlet<C, A, M, O, R, T, D>::OnLoadInventorySnapshot(
+      ServiceProtocolClient& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!m_administrationClient->CheckAdministrator(session.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
+    return m_dataStore->LoadInventorySnapshot(account);
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
+  void RiskServlet<C, A, M, O, R, T, D>::OnResetRegion(
+      ServiceProtocolClient& client, const Region& region) {
+    auto& session = client.GetSession();
+    if(!m_administrationClient->CheckAdministrator(session.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
+    m_controller = boost::none;
+    if(auto accounts = m_accountPublisher->GetSnapshot()) {
+      for(auto& account : *accounts) {
+        try {
+          ResetAccount(account);
+        } catch(const std::exception&) {
+          std::cerr << "Region reset failed for account:\n\t" <<
+            "Account: " << account << "\n\t" <<
+            BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
+        }
+      }
+    }
+    BuildController();
+  }
+
+  template<typename C, typename A, typename M, typename O, typename R,
+    typename T, typename D>
   void RiskServlet<C, A, M, O, R, T, D>::OnSubscribeRiskPortfolioUpdatesRequest(
       Beam::Services::RequestToken<ServiceProtocolClient,
       SubscribeRiskPortfolioUpdatesService>& request) {
@@ -364,29 +406,6 @@ namespace Nexus::RiskService {
       }
       request.SetResult(entries);
     });
-  }
-
-  template<typename C, typename A, typename M, typename O, typename R,
-    typename T, typename D>
-  void RiskServlet<C, A, M, O, R, T, D>::OnResetRegion(
-      ServiceProtocolClient& client, const Region& region) {
-    auto& session = client.GetSession();
-    if(!m_administrationClient->CheckAdministrator(session.GetAccount())) {
-      return;
-    }
-    m_controller = boost::none;
-    if(auto accounts = m_accountPublisher->GetSnapshot()) {
-      for(auto& account : *accounts) {
-        try {
-          ResetAccount(account);
-        } catch(const std::exception&) {
-          std::cerr << "Region reset failed for account:\n\t" <<
-            "Account: " << account << "\n\t" <<
-            BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
-        }
-      }
-    }
-    BuildController();
   }
 }
 

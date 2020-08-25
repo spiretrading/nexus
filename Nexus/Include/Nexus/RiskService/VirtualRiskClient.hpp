@@ -3,8 +3,8 @@
 #include <memory>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/TablePublisher.hpp>
 #include <boost/noncopyable.hpp>
+#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
@@ -14,6 +14,11 @@ namespace Nexus::RiskService {
   class VirtualRiskClient : private boost::noncopyable {
     public:
       virtual ~VirtualRiskClient() = default;
+
+      virtual InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) = 0;
+
+      virtual void Reset(const Region& region) = 0;
 
       virtual const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() = 0;
@@ -46,6 +51,11 @@ namespace Nexus::RiskService {
       template<typename CF>
       explicit WrapperRiskClient(CF&& client);
 
+      InventorySnapshot LoadInventorySnapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) override;
+
+      void Reset(const Region& region) override;
+
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher()
         override;
 
@@ -72,6 +82,17 @@ namespace Nexus::RiskService {
   template<typename CF>
   WrapperRiskClient<C>::WrapperRiskClient(CF&& client)
     : m_client(std::forward<CF>(client)) {}
+
+  template<typename C>
+  InventorySnapshot WrapperRiskClient<C>::LoadInventorySnapshot(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_client->LoadInventorySnapshot(account);
+  }
+
+  template<typename C>
+  void WrapperRiskClient<C>::Reset(const Region& region) {
+    return m_client->Reset(region);
+  }
 
   template<typename C>
   const RiskPortfolioUpdatePublisher& WrapperRiskClient<C>::
