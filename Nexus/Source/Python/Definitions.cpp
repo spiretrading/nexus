@@ -18,6 +18,7 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Quote.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
@@ -260,6 +261,7 @@ void Nexus::Python::ExportDefinitions(pybind11::module& module) {
   ExportOrderType(module);
   ExportQuantity(module);
   ExportQuote(module);
+  ExportRegion(module);
   ExportSecurity(module);
   ExportSecurityInfo(module);
   ExportSecurityTechnicals(module);
@@ -558,6 +560,32 @@ void Nexus::Python::ExportQuote(pybind11::module& module) {
     .def("__str__", &lexical_cast<std::string, Quote>)
     .def(self == self)
     .def(self != self);
+}
+
+void Nexus::Python::ExportRegion(pybind11::module& module) {
+  class_<Region>(module, "Region")
+    .def_property_readonly_static("GLOBAL",
+      static_cast<Region (*)()>(&Region::Global))
+    .def_static("make_global_region",
+      [] (std::string name) {
+        return Region::Global(std::move(name));
+      })
+    .def(init<>())
+    .def(init<std::string>())
+    .def(init<CountryCode>())
+    .def(init<const MarketDatabase::Entry&>())
+    .def(init<Security>())
+    .def_property("name", &Region::GetName, &Region::SetName)
+    .def_property_readonly("is_global", &Region::IsGlobal)
+    .def_property_readonly("countries", &Region::GetCountries)
+    .def_property_readonly("securities", &Region::GetSecurities)
+    .def(self + self)
+    .def(self < self)
+    .def(self <= self)
+    .def(self == self)
+    .def(self != self)
+    .def(self >= self)
+    .def(self > self);
 }
 
 void Nexus::Python::ExportSecurity(pybind11::module& module) {

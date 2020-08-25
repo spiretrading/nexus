@@ -131,6 +131,12 @@ namespace Nexus::Python {
   void ExportQuote(pybind11::module& module);
 
   /**
+   * Exports the Region class.
+   * @param module The module to export to.
+   */
+  void ExportRegion(pybind11::module& module);
+
+  /**
    * Exports the Security class.
    * @param module The module to export to.
    */
