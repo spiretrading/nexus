@@ -49,7 +49,9 @@ def main():
   region = nexus.parse_country_code(args.region, countries)
   if region == nexus.CountryCode.NONE:
     region = nexus.parse_market_code(args.region, markets)
-    if region == '':
+    if region != '':
+      region = markets.from_code(region)
+    else:
       region = nexus.parse_security(args.region, markets)
   service_clients.get_risk_client().reset(nexus.Region(region))
 
