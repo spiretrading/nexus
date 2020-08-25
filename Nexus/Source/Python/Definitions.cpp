@@ -93,6 +93,11 @@ void Nexus::Python::ExportCountry(pybind11::module& module) {
     .def(self == self)
     .def(self != self)
     .def(self < self);
+  module.def("parse_country_code",
+    static_cast<CountryCode (*)(const std::string&, const CountryDatabase&)>(
+    &ParseCountryCode));
+  module.def("parse_country_code",
+    static_cast<CountryCode (*)(const std::string&)>(&ParseCountryCode));
   auto outer = class_<CountryDatabase>(module, "CountryDatabase")
     .def(init())
     .def(init<const CountryDatabase&>())
@@ -137,6 +142,11 @@ void Nexus::Python::ExportCurrency(pybind11::module& module) {
     .def_readwrite("id", &CurrencyDatabase::Entry::m_id)
     .def_readwrite("code", &CurrencyDatabase::Entry::m_code)
     .def_readwrite("sign", &CurrencyDatabase::Entry::m_sign);
+  module.def("parse_currency", static_cast<
+    CurrencyId (*)(const std::string&, const CurrencyDatabase&)>(
+    &ParseCurrency));
+  module.def("parse_currency", static_cast<
+    CurrencyId (*)(const std::string&)>(&ParseCurrency));
 }
 
 void Nexus::Python::ExportCurrencyPair(pybind11::module& module) {
@@ -344,7 +354,11 @@ void Nexus::Python::ExportMarket(pybind11::module& module) {
     .def(self == self)
     .def(self != self)
     .def("__str__", &lexical_cast<std::string, MarketDatabase::Entry>);
-  module.def("parse_market_code", &ParseMarketCode);
+  module.def("parse_market_code", static_cast<
+    MarketCode (*)(const std::string&, const MarketDatabase&)>(
+    &ParseMarketCode));
+  module.def("parse_market_code", static_cast<
+    MarketCode (*)(const std::string&)>(&ParseMarketCode));
   module.def("parse_market_entry", &ParseMarketEntry);
 }
 

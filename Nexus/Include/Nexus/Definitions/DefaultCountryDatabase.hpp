@@ -74,6 +74,15 @@ namespace Details {
     return database;
   }
 
+  /**
+   * Parses a CountryCode from a string using the default database.
+   * @param source The string to parse.
+   * @return The CountryCode represented by the <i>source</i>.
+   */
+  inline CountryCode ParseCountryCode(const std::string& source) {
+    return ParseCountryCode(source, GetDefaultCountryDatabase());
+  }
+
   namespace DefaultCountries {
     inline CountryCode AU() {
       static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
