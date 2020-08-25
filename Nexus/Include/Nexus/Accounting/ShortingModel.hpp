@@ -1,5 +1,5 @@
-#ifndef NEXUS_SHORTING_TRACKER_HPP
-#define NEXUS_SHORTING_TRACKER_HPP
+#ifndef NEXUS_SHORTING_MODEL_HPP
+#define NEXUS_SHORTING_MODEL_HPP
 #include <unordered_map>
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -10,7 +10,7 @@
 namespace Nexus::Accounting {
 
   /** Tracks whether an Order should be submitted as a short sale. */
-  class ShortingTracker {
+  class ShortingModel {
     public:
 
       /**
@@ -26,8 +26,8 @@ namespace Nexus::Accounting {
         const OrderExecutionService::OrderFields& orderFields);
 
       /**
-       * Updates this tracker with the contents of an ExecutionReport.
-       * @param executionReport The ExecutionReport to update this tracker with.
+       * Updates this model with the contents of an ExecutionReport.
+       * @param executionReport The ExecutionReport to update this model with.
        */
       void Update(const OrderExecutionService::ExecutionReport&
         executionReport);
@@ -52,12 +52,12 @@ namespace Nexus::Accounting {
       PositionEntry& GetPosition(const Security& security);
   };
 
-  inline ShortingTracker::OrderEntry::OrderEntry()
+  inline ShortingModel::OrderEntry::OrderEntry()
     : m_side(Side::BID),
       m_quantity(0),
       m_remainingQuantity(0) {}
 
-  inline bool ShortingTracker::Submit(OrderExecutionService::OrderId id,
+  inline bool ShortingModel::Submit(OrderExecutionService::OrderId id,
       const OrderExecutionService::OrderFields& orderFields) {
     auto orderIterator = m_orderIdToOrderEntry.find(id);
     if(orderIterator != m_orderIdToOrderEntry.end()) {
@@ -77,7 +77,7 @@ namespace Nexus::Accounting {
     return false;
   }
 
-  inline void ShortingTracker::Update(
+  inline void ShortingModel::Update(
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto orderIterator = m_orderIdToOrderEntry.find(executionReport.m_id);
     if(orderIterator == m_orderIdToOrderEntry.end()) {
@@ -98,7 +98,7 @@ namespace Nexus::Accounting {
     }
   }
 
-  inline ShortingTracker::PositionEntry& ShortingTracker::GetPosition(
+  inline ShortingModel::PositionEntry& ShortingModel::GetPosition(
       const Security& security) {
     auto positionIterator = m_securityToPositionEntry.find(security);
     if(positionIterator == m_securityToPositionEntry.end()) {

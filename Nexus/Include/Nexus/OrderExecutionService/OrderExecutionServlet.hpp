@@ -11,7 +11,7 @@
 #include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Accounting/ShortingTracker.hpp"
+#include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
@@ -108,8 +108,8 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
-      using SyncShortingTracker = Beam::Threading::Sync<
-        Accounting::ShortingTracker>;
+      using SyncShortingModel = Beam::Threading::Sync<
+        Accounting::ShortingModel>;
       boost::posix_time::ptime m_sessionStartTime;
       MarketDatabase m_marketDatabase;
       DestinationDatabase m_destinationDatabase;
@@ -133,7 +133,7 @@ namespace Nexus::OrderExecutionService {
         m_executionReportSubscriptions;
       std::vector<std::unique_ptr<PrimitiveOrder>> m_rejectedOrders;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<SyncShortingTracker>> m_shortingTrackers;
+        std::shared_ptr<SyncShortingModel>> m_shortingModels;
       Beam::SynchronizedUnorderedSet<OrderId> m_liveOrders;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
@@ -142,7 +142,7 @@ namespace Nexus::OrderExecutionService {
       void Shutdown();
       void OnExecutionReport(const ExecutionReport& executionReport,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        SyncShortingTracker& shortingTracker);
+        SyncShortingModel& shortingModel);
       void OnQueryOrderSubmissionsRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
         const AccountQuery& query);
@@ -328,15 +328,15 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::SnapshotLimit::Unlimited());
       const auto& orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
       for(const auto& orderRecord : orders) {
-        auto& syncShortingTracker = m_shortingTrackers.GetOrInsert(
+        auto& syncShortingModel = m_shortingModels.GetOrInsert(
           orderRecord->m_info.m_fields.m_account,
-          boost::factory<std::shared_ptr<SyncShortingTracker>>());
-        syncShortingTracker->With(
-          [&] (auto& shortingTracker) {
-            shortingTracker.Submit(orderRecord->m_info.m_orderId,
+          boost::factory<std::shared_ptr<SyncShortingModel>>());
+        syncShortingModel->With(
+          [&] (auto& shortingModel) {
+            shortingModel.Submit(orderRecord->m_info.m_orderId,
               orderRecord->m_info.m_fields);
             for(auto& executionReport : orderRecord->m_executionReports) {
-              shortingTracker.Update(executionReport);
+              shortingModel.Update(executionReport);
             }
           });
         if(!orderRecord->m_executionReports.empty() &&
@@ -358,7 +358,7 @@ namespace Nexus::OrderExecutionService {
             order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
               std::bind(&OrderExecutionServlet::OnExecutionReport, this,
               std::placeholders::_1, order->GetInfo().m_fields.m_account,
-              std::ref(*syncShortingTracker))),
+              std::ref(*syncShortingModel))),
               Beam::Store(existingExecutionReports));
             if(existingExecutionReports.is_initialized()) {
               existingExecutionReports->erase(
@@ -369,7 +369,7 @@ namespace Nexus::OrderExecutionService {
                 m_tasks.Push(
                   std::bind(&OrderExecutionServlet::OnExecutionReport, this,
                   executionReport, order->GetInfo().m_fields.m_account,
-                  std::ref(*syncShortingTracker)));
+                  std::ref(*syncShortingModel)));
               }
             }
           });
@@ -386,7 +386,7 @@ namespace Nexus::OrderExecutionService {
       OrderExecutionDriverType, OrderExecutionDataStoreType>::Shutdown() {
     m_dataStore->Close();
     m_driver->Close();
-    m_shortingTrackers.Clear();
+    m_shortingModels.Clear();
     m_openState.SetClosed();
   }
 
@@ -399,10 +399,10 @@ namespace Nexus::OrderExecutionService {
       OrderExecutionDriverType, OrderExecutionDataStoreType>::
       OnExecutionReport(const ExecutionReport& executionReport,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      SyncShortingTracker& shortingTracker) {
-    Beam::Threading::With(shortingTracker,
-      [&] (auto& shortingTracker) {
-        shortingTracker.Update(executionReport);
+      SyncShortingModel& shortingModel) {
+    Beam::Threading::With(shortingModel,
+      [&] (auto& shortingModel) {
+        shortingModel.Update(executionReport);
       });
     try {
       m_registry.Publish(
@@ -574,11 +574,11 @@ namespace Nexus::OrderExecutionService {
         m_marketDatabase.FromCode(fields->m_security.GetMarket()).m_currency;
     }
     auto orderId = m_uidClient->LoadNextUid();
-    auto shortingTracker = m_shortingTrackers.GetOrInsert(fields->m_account,
-      boost::factory<std::shared_ptr<SyncShortingTracker>>());
-    auto shortingFlag = Beam::Threading::With(*shortingTracker,
-      [&] (auto& shortingTracker) {
-        return shortingTracker.Submit(orderId, *fields);
+    auto shortingModel = m_shortingModels.GetOrInsert(fields->m_account,
+      boost::factory<std::shared_ptr<SyncShortingModel>>());
+    auto shortingFlag = Beam::Threading::With(*shortingModel,
+      [&] (auto& shortingModel) {
+        return shortingModel.Submit(orderId, *fields);
       });
     OrderInfo orderInfo{*fields, session.GetAccount(), orderId, shortingFlag,
       m_timeClient->GetTime()};
@@ -615,7 +615,7 @@ namespace Nexus::OrderExecutionService {
     order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
       std::bind(&OrderExecutionServlet::OnExecutionReport, this,
       std::placeholders::_1, orderInfo.m_fields.m_account,
-      std::ref(*shortingTracker))));
+      std::ref(*shortingModel))));
   }
 
   template<typename ContainerType, typename TimeClientType,

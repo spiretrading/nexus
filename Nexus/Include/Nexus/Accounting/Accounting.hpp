@@ -3,7 +3,7 @@
 
 namespace Nexus::Accounting {
   template<typename I> class Bookkeeper;
-  class BuyingPowerTracker;
+  class BuyingPowerModel;
   template<typename P> struct Inventory;
   template<typename B> class Portfolio;
   template<typename P, typename C> class PortfolioController;
@@ -11,7 +11,7 @@ namespace Nexus::Accounting {
   template<typename I> struct Position;
   class PositionOrderBook;
   struct SecurityValuation;
-  class ShortingTracker;
+  class ShortingModel;
   template<typename I> class TrueAverageBookkeeper;
 }
 
