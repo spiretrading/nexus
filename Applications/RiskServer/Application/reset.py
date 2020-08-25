@@ -44,11 +44,14 @@ def main():
   service_clients = nexus.ApplicationServiceClients(address, username,
     password)
   service_clients.open()
+  countries = service_clients.get_definitions_client().load_country_database()
   markets = service_clients.get_definitions_client().load_market_database()
-  region = nexus.parse_market_code(args.region, markets)
-  if region == nexus.MarketCode():
-    region = nexus.parse_security(args.region, markets)
-  service_clients.get_risk_client().reset(region)
+  region = nexus.parse_country_code(args.region, countries)
+  if region == nexus.CountryCode.NONE:
+    region = nexus.parse_market_code(args.region, markets)
+    if region == '':
+      region = nexus.parse_security(args.region, markets)
+  service_clients.get_risk_client().reset(nexus.Region(region))
 
 if __name__ == '__main__':
   main()
