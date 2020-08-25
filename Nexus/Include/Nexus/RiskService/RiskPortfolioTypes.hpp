@@ -5,6 +5,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/KeyValuePair.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
