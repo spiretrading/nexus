@@ -3,7 +3,6 @@
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
@@ -28,11 +27,10 @@ FilteredDropDownMenu::FilteredDropDownMenu(std::vector<QVariant> items,
     setText(m_item_delegate.displayText(m_current_item));
   }
   m_menu_list = new DropDownList({}, false, this);
-  m_menu_list->connect_activated_signal([=] (const auto& value) {
-    on_item_activated(value);
-  });
+  m_item_activated_connection = m_menu_list->connect_activated_signal(
+    [=] (const auto& value) { on_item_activated(value); });
   m_list_selection_connection = m_menu_list->connect_value_selected_signal(
-    [=] (const auto& value) { on_item_selected(value); });
+    [=] (const auto& value) { on_item_selected(value, true); });
   set_items(std::move(items));
   m_menu_list->installEventFilter(this);
 }
@@ -54,6 +52,12 @@ void FilteredDropDownMenu::focusInEvent(QFocusEvent* event) {
   }
 }
 
+void FilteredDropDownMenu::focusOutEvent(QFocusEvent* event) {
+  if(!m_menu_list->isActiveWindow()) {
+    TextInputWidget::focusOutEvent(event);
+  }
+}
+
 void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Delete:
@@ -64,13 +68,13 @@ void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
       if(m_last_activated_item.isValid()) {
-        on_item_selected(m_last_activated_item);
+        on_item_selected(m_last_activated_item, true);
         return;
       }
       if(!text().isEmpty() && m_menu_list->isVisible()) {
         auto item = m_menu_list->get_value(0);
         if(item.isValid()) {
-          on_item_selected(item);
+          on_item_selected(item, true);
         }
       }
       return;
@@ -104,9 +108,8 @@ void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
   }
 }
 
-connection FilteredDropDownMenu::connect_selected_signal(
-    const SelectedSignal::slot_type& slot) const {
-  return m_selected_signal.connect(slot);
+const QVariant& FilteredDropDownMenu::get_item() const {
+  return m_current_item;
 }
 
 void FilteredDropDownMenu::set_items(std::vector<QVariant> items) {
@@ -179,9 +182,17 @@ void FilteredDropDownMenu::on_item_activated(const QVariant& item) {
 }
 
 void FilteredDropDownMenu::on_item_selected(const QVariant& item) {
+  on_item_selected(item, false);
+}
+
+void FilteredDropDownMenu::on_item_selected(const QVariant& item,
+    bool emit_finished) {
   m_current_item = item;
   setText(m_item_delegate.displayText(m_current_item));
-  m_selected_signal(m_current_item);
+  if(emit_finished) {
+    Q_EMIT editingFinished();
+  }
+  m_menu_list->hide();
   set_items(m_items);
   update();
 }
