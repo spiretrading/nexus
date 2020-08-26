@@ -14,11 +14,14 @@ namespace Spire {
   class RealSpinBox : public QAbstractSpinBox {
     public:
 
-      //! The maximum number of accepted decimal places.
-      static const auto MAX_DECIMAL_PLACES = 15;
+      //! The maximum number of decimal places that can be input.
+      static const auto MAXIMUM_DECIMAL_PLACES = 6;
+
+      //! The precision of the spin box's floating point type.
+      static constexpr auto PRECISION = 15;
 
       //! Numeric type used by the widget.
-      using Real = boost::multiprecision::cpp_dec_float<MAX_DECIMAL_PLACES>;
+      using Real = boost::multiprecision::cpp_dec_float<PRECISION>;
 
       //! Signal type for value changes.
       /*!
@@ -34,18 +37,18 @@ namespace Spire {
       explicit RealSpinBox(Real value, QWidget* parent = nullptr);
 
       //! Sets the number of decimal places that can be input, up to
-      //! MAX_DECIMAL_PLACES.
+      //! MAXIMUM_DECIMAL_PLACES.
       /*!
         \param decimals The number of accepted decimal places.
       */
-      void set_decimals(int decimals);
+      void set_decimal_places(int decimals);
 
       //! Sets the minimum number of displayed decimals to display
       //! when a value is committed.
       /*!
         \param decimals The minimum number of decimals to display.
       */
-      void set_minimum_decimals(int decimals);
+      void set_minimum_decimal_places(int decimals);
 
       //! Sets the minimum accepted value.
       /*!

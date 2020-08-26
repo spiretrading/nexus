@@ -14,6 +14,7 @@ namespace Spire {
   class CheckBox;
   class ColonWidget;
   class DateInputWidget;
+  class DecimalSpinBox;
   class Dialog;
   class DropDownMenu;
   class DropDownMenuItem;
@@ -21,6 +22,7 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
+  class IntegerSpinBox;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;

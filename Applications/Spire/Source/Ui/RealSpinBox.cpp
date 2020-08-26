@@ -9,7 +9,6 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  const auto DEFAULT_DECIMAL_PLACES = 6;
   const auto SHIFT_STEPS = 10;
   const auto MOUSE_REPEAT_DELAY_MS = 20;
   const auto DOWN_ARROW_ICON = ":/Icons/arrow-down.svg";
@@ -48,7 +47,7 @@ RealSpinBox::RealSpinBox(Real value, QWidget* parent)
     &RealSpinBox::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
   lineEdit()->setText(display_string(m_last_valid_value));
-  set_decimals(DEFAULT_DECIMAL_PLACES);
+  set_decimal_places(MAXIMUM_DECIMAL_PLACES);
   lineEdit()->installEventFilter(this);
 }
 
@@ -179,8 +178,8 @@ QAbstractSpinBox::StepEnabled RealSpinBox::stepEnabled() const {
   return QAbstractSpinBox::StepUpEnabled | QAbstractSpinBox::StepDownEnabled;
 }
 
-void RealSpinBox::set_decimals(int decimals) {
-  m_decimals = std::min(decimals, MAX_DECIMAL_PLACES);
+void RealSpinBox::set_decimal_places(int decimals) {
+  m_decimals = std::min(decimals, MAXIMUM_DECIMAL_PLACES);
   auto point_count = [&] {
     if(m_decimals > 0) {
       return 1;
@@ -192,7 +191,7 @@ void RealSpinBox::set_decimals(int decimals) {
     .arg(m_locale.decimalPoint()).arg(point_count).arg(m_decimals));
 }
 
-void RealSpinBox::set_minimum_decimals(int decimals) {
+void RealSpinBox::set_minimum_decimal_places(int decimals) {
   m_minimum_decimals = decimals;
 }
 

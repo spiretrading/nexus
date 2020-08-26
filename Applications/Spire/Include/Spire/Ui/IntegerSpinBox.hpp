@@ -9,11 +9,11 @@ namespace Spire {
   class IntegerSpinBox : public QAbstractSpinBox {
     public:
 
-      //! Signals a user interaction with the value.
+      //! Signals that the value was modified.
       /*!
         \param value The current value.
       */
-      using ValueSignal = Signal<void (std::int64_t value)>;
+      using ChangeSignal = Signal<void (std::int64_t value)>;
 
       //! Constructs an IntegerSpinBox.
       /*!
@@ -46,17 +46,11 @@ namespace Spire {
 
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(
-        const ValueSignal::slot_type& slot) const;
-
-    protected:
-      void resizeEvent(QResizeEvent* event) override;
+        const ChangeSignal::slot_type& slot) const;
 
     private:
-      mutable ValueSignal m_change_signal;
-      mutable ValueSignal m_commit_signal;
+      mutable ChangeSignal m_change_signal;
       RealSpinBox* m_spin_box;
-
-      void on_editing_finished();
   };
 }
 

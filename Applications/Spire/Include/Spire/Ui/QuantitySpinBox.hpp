@@ -10,11 +10,11 @@ namespace Spire {
   class QuantitySpinBox : public QAbstractSpinBox {
     public:
 
-      //! Signals a user interaction with the value.
+      //! Signals that the value was modified.
       /*!
         \param value The current value.
       */
-      using ValueSignal = Signal<void (Nexus::Quantity value)>;
+      using ChangeSignal = Signal<void (Nexus::Quantity value)>;
 
       //! Constructs a QuantitySpinBox.
       /*!
@@ -44,22 +44,18 @@ namespace Spire {
         \param value The current value.
       */
       void set_value(Nexus::Quantity value);
+
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(
-        const ValueSignal::slot_type& slot) const;
-
-    protected:
-      void resizeEvent(QResizeEvent* event) override;
+        const ChangeSignal::slot_type& slot) const;
 
     private:
-      mutable ValueSignal m_change_signal;
-      mutable ValueSignal m_commit_signal;
+      mutable ChangeSignal m_change_signal;
       RealSpinBox* m_spin_box;
       CustomVariantItemDelegate m_item_delegate;
       QLocale m_locale;
 
-      std::string display_string(Nexus::Quantity value);
-      void on_editing_finished();
+      RealSpinBox::Real to_real(Nexus::Quantity value);
   };
 }
 

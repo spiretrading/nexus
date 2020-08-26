@@ -1,14 +1,14 @@
 #include "Spire/Ui/QuantitySpinBox.hpp"
+#include <QHBoxLayout>
 
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto real_to_quantity(RealSpinBox::Real value) {
-    auto quantity = Quantity::FromValue(value.str(
-      std::numeric_limits<Quantity>::digits10, std::ios_base::dec));
-    if(quantity != boost::none) {
+  auto to_quantity(RealSpinBox::Real value) {
+    if(auto quantity = Quantity::FromValue(value.str(
+        std::numeric_limits<Quantity>::digits10, std::ios_base::dec))) {
       return *quantity;
     }
     throw std::runtime_error(R"(QuantitySpinBox: failed to convert Real to
@@ -18,48 +18,43 @@ namespace {
 
 QuantitySpinBox::QuantitySpinBox(Quantity value, QWidget* parent)
     : QAbstractSpinBox(parent) {
-  m_spin_box = new RealSpinBox(display_string(value).c_str(), this);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  m_spin_box = new RealSpinBox(to_real(value), this);
+  m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
+  layout->addWidget(m_spin_box);
   m_spin_box->connect_change_signal([=] (auto value) {
-    m_change_signal(real_to_quantity(value));
+    m_change_signal(to_quantity(value));
   });
   connect(m_spin_box, &RealSpinBox::editingFinished, this,
-    &QuantitySpinBox::on_editing_finished);
+    &QuantitySpinBox::editingFinished);
   m_locale.setNumberOptions(m_locale.numberOptions().setFlag(
     QLocale::OmitGroupSeparator, true));
 }
 
-void QuantitySpinBox::resizeEvent(QResizeEvent* event) {
-  m_spin_box->resize(size());
-  QWidget::resizeEvent(event);
-}
-
 connection QuantitySpinBox::connect_change_signal(
-    const ValueSignal::slot_type& slot) const {
+    const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
 }
 
 void QuantitySpinBox::set_minimum(Quantity minimum) {
-  m_spin_box->set_minimum(display_string(minimum).c_str());
+  m_spin_box->set_minimum(to_real(minimum));
 }
 
 void QuantitySpinBox::set_maximum(Quantity maximum) {
-  m_spin_box->set_maximum(display_string(maximum).c_str());
+  m_spin_box->set_maximum(to_real(maximum));
 }
 
 Quantity QuantitySpinBox::get_value() const {
-  return real_to_quantity(m_spin_box->get_value());
+  return to_quantity(m_spin_box->get_value());
 }
 
 void QuantitySpinBox::set_value(Quantity value) {
-  m_spin_box->set_value(display_string(value).c_str());
+  m_spin_box->set_value(to_real(value));
 }
 
-std::string QuantitySpinBox::display_string(Quantity value) {
+RealSpinBox::Real QuantitySpinBox::to_real(Nexus::Quantity value) {
   return m_item_delegate.displayText(
-    QVariant::fromValue(value), m_locale).toStdString();
-}
-
-void QuantitySpinBox::on_editing_finished() {
-  Q_EMIT editingFinished();
+    QVariant::fromValue(value), m_locale).toStdString().c_str();
 }

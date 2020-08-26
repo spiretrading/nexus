@@ -1,18 +1,22 @@
 #include "Spire/Ui/DecimalSpinBox.hpp"
+#include <QHBoxLayout>
 
 using namespace boost::signals2;
 using namespace Spire;
 
 DecimalSpinBox::DecimalSpinBox(double value, QWidget* parent)
     : QAbstractSpinBox(parent) {
-  m_spin_box = new RealSpinBox(static_cast<long double>(value),
-    this);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  m_spin_box = new RealSpinBox(static_cast<long double>(value), this);
   setFocusProxy(m_spin_box);
+  m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  layout->addWidget(m_spin_box);
   m_spin_box->connect_change_signal([=] (auto value) {
     m_change_signal(value.extract_double());
   });
   connect(m_spin_box, &RealSpinBox::editingFinished, this,
-    &DecimalSpinBox::on_editing_finished);
+    &DecimalSpinBox::editingFinished);
 }
 
 void DecimalSpinBox::resizeEvent(QResizeEvent* event) {
@@ -21,7 +25,7 @@ void DecimalSpinBox::resizeEvent(QResizeEvent* event) {
 }
 
 connection DecimalSpinBox::connect_change_signal(
-    const ValueSignal::slot_type& slot) const {
+    const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
 }
 
@@ -39,8 +43,4 @@ double DecimalSpinBox::get_value() const {
 
 void DecimalSpinBox::set_value(double value) {
   m_spin_box->set_value(static_cast<long double>(value));
-}
-
-void DecimalSpinBox::on_editing_finished() {
-  Q_EMIT editingFinished();
 }
