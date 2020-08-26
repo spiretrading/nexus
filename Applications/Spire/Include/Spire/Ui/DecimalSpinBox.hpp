@@ -47,9 +47,6 @@ namespace Spire {
       boost::signals2::connection connect_change_signal(
         const ChangeSignal::slot_type& slot) const;
 
-    protected:
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
       mutable ChangeSignal m_change_signal;
       RealSpinBox* m_spin_box;

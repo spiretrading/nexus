@@ -19,11 +19,6 @@ DecimalSpinBox::DecimalSpinBox(double value, QWidget* parent)
     &DecimalSpinBox::editingFinished);
 }
 
-void DecimalSpinBox::resizeEvent(QResizeEvent* event) {
-  m_spin_box->resize(size());
-  QWidget::resizeEvent(event);
-}
-
 connection DecimalSpinBox::connect_change_signal(
     const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);

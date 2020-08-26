@@ -29,6 +29,7 @@ namespace Spire {
   class QuantitySpinBox;
   class RangeInputSlider;
   class RangeInputWidget;
+  class RealSpinBox;
   class ScalarWidget;
   class ScrollArea;
   class SecurityStack;
