@@ -73,9 +73,9 @@ export class LocalDashboardModel extends DashboardModel {
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     if(account.equals(this._account)) {
-      return new LocalAccountModel(this.account, this.roles);
+      return new LocalAccountModel(this.account, this.roles, []);
     }
-    return new LocalAccountModel(account, new Nexus.AccountRoles(0));
+    return new LocalAccountModel(account, new Nexus.AccountRoles(0), []);
   }
 
   public makeGroupModel(group: Beam.DirectoryEntry): LocalGroupModel {
