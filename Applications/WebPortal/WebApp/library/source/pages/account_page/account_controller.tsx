@@ -147,7 +147,6 @@ export class AccountController extends React.Component<Properties, State> {
     return <ProfileController
       displaySize={this.props.displaySize}
       countryDatabase={this.props.countryDatabase}
-
       groups={this.props.model.groups}
       readonly={this.state.readonly}
       isPasswordReadOnly={this.state.isPasswordReadOnly}
