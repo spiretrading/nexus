@@ -1,13 +1,13 @@
-#ifndef SPIRE_QUANTITY_INPUT_WIDGET_HPP
-#define SPIRE_QUANTITY_INPUT_WIDGET_HPP
+#ifndef SPIRE_QUANTITY_SPIN_BOX_HPP
+#define SPIRE_QUANTITY_SPIN_BOX_HPP
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/NumericInputWidget.hpp"
+#include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
 
   //! Represents a widget for displaying and modifying Quantities.
-  class QuantityInputWidget : public QWidget {
+  class QuantitySpinBox : public QAbstractSpinBox {
     public:
 
       //! Signals a user interaction with the value.
@@ -16,12 +16,12 @@ namespace Spire {
       */
       using ValueSignal = Signal<void (Nexus::Quantity value)>;
 
-      //! Constructs a QuantityInputWidget.
+      //! Constructs a QuantitySpinBox.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit QuantityInputWidget(Nexus::Quantity value,
+      explicit QuantitySpinBox(Nexus::Quantity value,
         QWidget* parent = nullptr);
 
       //! Sets the minimum accepted value.
@@ -44,13 +44,8 @@ namespace Spire {
         \param value The current value.
       */
       void set_value(Nexus::Quantity value);
-
       //! Connects a slot to the value change signal.
       boost::signals2::connection connect_change_signal(
-        const ValueSignal::slot_type& slot) const;
-
-      //! Connects a slot to the value commit signal.
-      boost::signals2::connection connect_commit_signal(
         const ValueSignal::slot_type& slot) const;
 
     protected:
@@ -59,7 +54,7 @@ namespace Spire {
     private:
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_commit_signal;
-      NumericInputWidget* m_input_widget;
+      RealSpinBox* m_spin_box;
       CustomVariantItemDelegate m_item_delegate;
       QLocale m_locale;
 

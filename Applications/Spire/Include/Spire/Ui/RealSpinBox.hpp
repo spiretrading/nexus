@@ -1,5 +1,5 @@
-#ifndef SPIRE_NUMERIC_INPUT_WIDGET_HPP
-#define SPIRE_NUMERIC_INPUT_WIDGET_HPP
+#ifndef SPIRE_REAL_SPIN_BOX_HPP
+#define SPIRE_REAL_SPIN_BOX_HPP
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/optional.hpp>
 #include <QAbstractSpinBox>
@@ -11,7 +11,7 @@
 namespace Spire {
 
   //! Represents a widget for entering numeric values.
-  class NumericInputWidget : public QAbstractSpinBox {
+  class RealSpinBox : public QAbstractSpinBox {
     public:
 
       //! The maximum number of accepted decimal places.
@@ -26,12 +26,12 @@ namespace Spire {
       */
       using ChangeSignal = Signal<void (Real value)>;
 
-      //! Constructs a NumericInputWidget with a default step of 1.
+      //! Constructs a RealSpinBox with a default step of 1.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit NumericInputWidget(Real value, QWidget* parent = nullptr);
+      explicit RealSpinBox(Real value, QWidget* parent = nullptr);
 
       //! Sets the number of decimal places that can be input, up to
       //! MAX_DECIMAL_PLACES.

@@ -1,11 +1,12 @@
-#ifndef SPIRE_INTEGER_INPUT_WIDGET_HPP
-#define SPIRE_INTEGER_INPUT_WIDGET_HPP
-#include "Spire/Ui/NumericInputWidget.hpp"
+#ifndef SPIRE_INTEGER_SPIN_BOX_HPP
+#define SPIRE_INTEGER_SPIN_BOX_HPP
+#include <QAbstractSpinBox>
+#include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
 
   //! Represents a widget for displaying and modifying integers.
-  class IntegerInputWidget : public QWidget {
+  class IntegerSpinBox : public QAbstractSpinBox {
     public:
 
       //! Signals a user interaction with the value.
@@ -14,12 +15,12 @@ namespace Spire {
       */
       using ValueSignal = Signal<void (std::int64_t value)>;
 
-      //! Constructs an IntegerInputWidget.
+      //! Constructs an IntegerSpinBox.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit IntegerInputWidget(std::int64_t value,
+      explicit IntegerSpinBox(std::int64_t value,
         QWidget* parent = nullptr);
 
       //! Sets the minimum accepted value.
@@ -47,17 +48,13 @@ namespace Spire {
       boost::signals2::connection connect_change_signal(
         const ValueSignal::slot_type& slot) const;
 
-      //! Connects a slot to the value commit signal.
-      boost::signals2::connection connect_commit_signal(
-        const ValueSignal::slot_type& slot) const;
-
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_commit_signal;
-      NumericInputWidget* m_input_widget;
+      RealSpinBox* m_spin_box;
 
       void on_editing_finished();
   };

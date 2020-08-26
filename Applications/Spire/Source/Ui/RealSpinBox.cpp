@@ -1,4 +1,4 @@
-#include "Spire/Ui/NumericInputWidget.hpp"
+#include "Spire/Ui/RealSpinBox.hpp"
 #include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -24,8 +24,8 @@ namespace {
     return width;
   }
 
-  auto clamped_real(NumericInputWidget::Real value,
-      NumericInputWidget::Real min, NumericInputWidget::Real max) {
+  auto clamped_real(RealSpinBox::Real value, RealSpinBox::Real min,
+      RealSpinBox::Real max) {
     if(value.compare(min) < 0) {
       return min;
     } else if(value.compare(max) > 0) {
@@ -35,7 +35,7 @@ namespace {
   }
 }
 
-NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
+RealSpinBox::RealSpinBox(Real value, QWidget* parent)
     : QAbstractSpinBox(parent),
       m_minimum(std::numeric_limits<long double>::lowest()),
       m_maximum(std::numeric_limits<long double>::max()),
@@ -45,21 +45,21 @@ NumericInputWidget::NumericInputWidget(Real value, QWidget* parent)
       m_up_arrow_timer_id(-1),
       m_down_arrow_timer_id(-1) {
   connect(lineEdit(), &QLineEdit::textChanged, this,
-    &NumericInputWidget::on_text_changed);
+    &RealSpinBox::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
   lineEdit()->setText(display_string(m_last_valid_value));
   set_decimals(DEFAULT_DECIMAL_PLACES);
   lineEdit()->installEventFilter(this);
 }
 
-void NumericInputWidget::changeEvent(QEvent* event) {
+void RealSpinBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_stylesheet();
   }
   QAbstractSpinBox::changeEvent(event);
 }
 
-bool NumericInputWidget::eventFilter(QObject* watched, QEvent* event) {
+bool RealSpinBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == lineEdit() && event->type() == QEvent::MouseButtonPress &&
       !m_has_first_click && isEnabled()) {
     auto e = static_cast<QMouseEvent*>(event);
@@ -72,14 +72,14 @@ bool NumericInputWidget::eventFilter(QObject* watched, QEvent* event) {
   return QAbstractSpinBox::eventFilter(watched, event);
 }
 
-void NumericInputWidget::focusInEvent(QFocusEvent* event) {
+void RealSpinBox::focusInEvent(QFocusEvent* event) {
   if(event->reason() != Qt::MouseFocusReason) {
     m_has_first_click = true;
   }
   QAbstractSpinBox::focusInEvent(event);
 }
 
-void NumericInputWidget::focusOutEvent(QFocusEvent* event) {
+void RealSpinBox::focusOutEvent(QFocusEvent* event) {
   m_has_first_click = false;
   blockSignals(true);
   QAbstractSpinBox::focusOutEvent(event);
@@ -87,7 +87,7 @@ void NumericInputWidget::focusOutEvent(QFocusEvent* event) {
   on_editing_finished();
 }
 
-void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
+void RealSpinBox::keyPressEvent(QKeyEvent* event) {
   if(event->modifiers().testFlag(Qt::ControlModifier)) {
     QAbstractSpinBox::keyPressEvent(event);
     return;
@@ -131,7 +131,7 @@ void NumericInputWidget::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void NumericInputWidget::mouseMoveEvent(QMouseEvent* event) {
+void RealSpinBox::mouseMoveEvent(QMouseEvent* event) {
   auto control = get_current_control(event->pos());
   if(m_up_arrow_timer_id != -1 &&
       control != QStyle::SubControl::SC_ScrollBarAddLine) {
@@ -143,7 +143,7 @@ void NumericInputWidget::mouseMoveEvent(QMouseEvent* event) {
   QAbstractSpinBox::mouseMoveEvent(event);
 }
 
-void NumericInputWidget::mousePressEvent(QMouseEvent* event) {
+void RealSpinBox::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && !m_has_first_click) {
     selectAll();
     m_has_first_click = true;
@@ -157,13 +157,13 @@ void NumericInputWidget::mousePressEvent(QMouseEvent* event) {
   QAbstractSpinBox::mousePressEvent(event);
 }
 
-void NumericInputWidget::mouseReleaseEvent(QMouseEvent* event) {
+void RealSpinBox::mouseReleaseEvent(QMouseEvent* event) {
   stop_timer(m_up_arrow_timer_id);
   stop_timer(m_down_arrow_timer_id);
   QAbstractSpinBox::mouseReleaseEvent(event);
 }
 
-void NumericInputWidget::timerEvent(QTimerEvent* event) {
+void RealSpinBox::timerEvent(QTimerEvent* event) {
   if(event->timerId() == m_up_arrow_timer_id) {
     stop_timer(m_up_arrow_timer_id);
     m_up_arrow_timer_id = startTimer(MOUSE_REPEAT_DELAY_MS);
@@ -175,11 +175,11 @@ void NumericInputWidget::timerEvent(QTimerEvent* event) {
   }
 }
 
-QAbstractSpinBox::StepEnabled NumericInputWidget::stepEnabled() const {
+QAbstractSpinBox::StepEnabled RealSpinBox::stepEnabled() const {
   return QAbstractSpinBox::StepUpEnabled | QAbstractSpinBox::StepDownEnabled;
 }
 
-void NumericInputWidget::set_decimals(int decimals) {
+void RealSpinBox::set_decimals(int decimals) {
   m_decimals = std::min(decimals, MAX_DECIMAL_PLACES);
   auto point_count = [&] {
     if(m_decimals > 0) {
@@ -192,11 +192,11 @@ void NumericInputWidget::set_decimals(int decimals) {
     .arg(m_locale.decimalPoint()).arg(point_count).arg(m_decimals));
 }
 
-void NumericInputWidget::set_minimum_decimals(int decimals) {
+void RealSpinBox::set_minimum_decimals(int decimals) {
   m_minimum_decimals = decimals;
 }
 
-void NumericInputWidget::set_minimum(Real minimum) {
+void RealSpinBox::set_minimum(Real minimum) {
   m_minimum = minimum;
   auto value = get_value(text());
   if(value != boost::none && value->compare(m_minimum) < 0) {
@@ -205,7 +205,7 @@ void NumericInputWidget::set_minimum(Real minimum) {
   }
 }
 
-void NumericInputWidget::set_maximum(Real maximum) {
+void RealSpinBox::set_maximum(Real maximum) {
   m_maximum = maximum;
   auto value = get_value(text());
   if(value != boost::none && value->compare(m_maximum) > 0) {
@@ -214,36 +214,36 @@ void NumericInputWidget::set_maximum(Real maximum) {
   }
 }
 
-void NumericInputWidget::set_step(Real step) {
+void RealSpinBox::set_step(Real step) {
   m_step = step;
 }
 
 
-NumericInputWidget::Real NumericInputWidget::get_value() const {
+RealSpinBox::Real RealSpinBox::get_value() const {
   return m_last_valid_value;
 }
 
-void NumericInputWidget::set_value(Real value) {
+void RealSpinBox::set_value(Real value) {
   blockSignals(true);
   value = clamped_real(value, m_minimum, m_maximum);
   lineEdit()->setText(display_string(value));
   blockSignals(false);
 }
 
-void NumericInputWidget::stepBy(int step) {
+void RealSpinBox::stepBy(int step) {
   add_step(step);
 }
 
-connection NumericInputWidget::connect_change_signal(
+connection RealSpinBox::connect_change_signal(
     const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
 }
 
-void NumericInputWidget::add_step(int step) {
+void RealSpinBox::add_step(int step) {
   add_step(step, Qt::NoModifier);
 }
 
-void NumericInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
+void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   step = [&] {
     if(modifiers == Qt::ShiftModifier) {
       return step * SHIFT_STEPS;
@@ -264,7 +264,7 @@ void NumericInputWidget::add_step(int step, Qt::KeyboardModifiers modifiers) {
   lineEdit()->setCursorPosition(text().length());
 }
 
-QString NumericInputWidget::display_string(Real value) {
+QString RealSpinBox::display_string(Real value) {
   auto str = text();
   str.remove(QRegularExpression("0+$"));
   str.remove(QRegularExpression(
@@ -281,8 +281,7 @@ QString NumericInputWidget::display_string(Real value) {
     std::ios_base::dec));
 }
 
-QStyle::SubControl NumericInputWidget::get_current_control(
-    const QPoint& mouse_pos) {
+QStyle::SubControl RealSpinBox::get_current_control(const QPoint& mouse_pos) {
   QStyleOptionSpinBox opt;
   initStyleOption(&opt);
   opt.subControls = QStyle::SC_All;
@@ -290,8 +289,8 @@ QStyle::SubControl NumericInputWidget::get_current_control(
     this);
 }
 
-boost::optional<NumericInputWidget::Real>
-    NumericInputWidget::get_value(const QString& text) const {
+boost::optional<RealSpinBox::Real> RealSpinBox::get_value(
+    const QString& text) const {
   try {
     return Real(text.toStdString().c_str());
   } catch (const std::runtime_error&) {
@@ -299,7 +298,7 @@ boost::optional<NumericInputWidget::Real>
   }
 }
 
-bool NumericInputWidget::is_valid(const QString& text) {
+bool RealSpinBox::is_valid(const QString& text) {
   if(!text.contains(m_real_regex)) {
     return false;
   }
@@ -313,8 +312,7 @@ bool NumericInputWidget::is_valid(const QString& text) {
   return value->compare(m_minimum) >= 0 && value->compare(m_maximum) <= 0;
 }
 
-void NumericInputWidget::set_stylesheet(bool is_up_disabled,
-    bool is_down_disabled) {
+void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
   if(isEnabled()) {
     setButtonSymbols(UpDownArrows);
   } else {
@@ -397,14 +395,14 @@ void NumericInputWidget::set_stylesheet(bool is_up_disabled,
         .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
 }
 
-void NumericInputWidget::stop_timer(int& timer_id) {
+void RealSpinBox::stop_timer(int& timer_id) {
   if(timer_id != -1) {
     killTimer(timer_id);
     timer_id = -1;
   }
 }
 
-void NumericInputWidget::update_stylesheet() {
+void RealSpinBox::update_stylesheet() {
   auto value = get_value(text());
   if(value == boost::none) {
     set_stylesheet(false, false);
@@ -417,7 +415,7 @@ void NumericInputWidget::update_stylesheet() {
   }
 }
 
-void NumericInputWidget::on_editing_finished() {
+void RealSpinBox::on_editing_finished() {
   auto value = get_value(text());
   if(text().isEmpty() || value == boost::none) {
     lineEdit()->setText(display_string(m_last_valid_value));
@@ -428,7 +426,7 @@ void NumericInputWidget::on_editing_finished() {
   Q_EMIT editingFinished();
 }
 
-void NumericInputWidget::on_text_changed(const QString& text) {
+void RealSpinBox::on_text_changed(const QString& text) {
   if(!is_valid(text)) {
     lineEdit()->blockSignals(true);
     lineEdit()->setText(m_last_valid_text);

@@ -24,7 +24,7 @@ namespace Spire {
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
   class PropertiesWindowButtonsWidget;
-  class QuantityInputWidget;
+  class QuantitySpinBox;
   class RangeInputSlider;
   class RangeInputWidget;
   class ScalarWidget;

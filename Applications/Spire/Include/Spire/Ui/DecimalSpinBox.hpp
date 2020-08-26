@@ -1,11 +1,12 @@
-#ifndef SPIRE_DECIMAL_INPUT_WIDGET_HPP
-#define SPIRE_DECIMAL_INPUT_WIDGET_HPP
-#include "Spire/Ui/NumericInputWidget.hpp"
+#ifndef SPIRE_DECIMAL_SPIN_BOX_HPP
+#define SPIRE_DECIMAL_SPIN_BOX_HPP
+#include <QAbstractSpinBox>
+#include "Spire/Ui/RealSpinBox.hpp"
 
 namespace Spire {
 
   //! Represents a widget for displaying and modifying decimal numbers.
-  class DecimalInputWidget : public QWidget {
+  class DecimalSpinBox : public QAbstractSpinBox {
     public:
 
       //! Signals a user interaction with the value.
@@ -14,12 +15,12 @@ namespace Spire {
       */
       using ValueSignal = Signal<void (double value)>;
 
-      //! Constructs a DecimalInputWidget.
+      //! Constructs a DecimalSpinBox.
       /*!
         \param value The initial value to display.
         \param parent The parent widget.
       */
-      explicit DecimalInputWidget(double value, QWidget* parent = nullptr);
+      explicit DecimalSpinBox(double value, QWidget* parent = nullptr);
 
       //! Sets the minimum accepted value.
       /*!
@@ -46,17 +47,13 @@ namespace Spire {
       boost::signals2::connection connect_change_signal(
         const ValueSignal::slot_type& slot) const;
 
-      //! Connects a slot to the value commit signal.
-      boost::signals2::connection connect_commit_signal(
-        const ValueSignal::slot_type& slot) const;
-
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable ValueSignal m_change_signal;
       mutable ValueSignal m_commit_signal;
-      NumericInputWidget* m_input_widget;
+      RealSpinBox* m_spin_box;
 
       void on_editing_finished();
   };
