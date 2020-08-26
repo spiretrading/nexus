@@ -289,13 +289,13 @@ namespace Nexus::RiskService {
         inventory.m_transactionCount = baseInventory.m_transactionCount -
           inventory.m_transactionCount;
         updatedSnapshot.m_inventories.push_back(inventory);
+        m_tasks.Push([=, key = RiskPortfolioKey(account,
+            inventoryPair.second.m_position.m_key.m_index)] {
+          m_volumes[key] = -1;
+        });
       } else {
         updatedSnapshot.m_inventories.push_back(baseInventory);
       }
-      m_tasks.Push([=, key = RiskPortfolioKey(account,
-          inventoryPair.second.m_position.m_key.m_index)] {
-        m_volumes[key] = -1;
-      });
     }
     updatedSnapshot.m_sequence = sequence;
     std::transform(excludedOrders.begin(), excludedOrders.end(),
