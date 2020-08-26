@@ -267,12 +267,19 @@ namespace Nexus::RiskService {
         report.m_executionReport);
     }
     auto updatedSnapshot = InventorySnapshot();
+    auto resetInventories = std::vector<InventoryUpdate>();
     for(auto& inventoryPair : portfolio.GetBookkeeper().GetInventoryRange()) {
       auto& inventory = inventoryPair.second;
       auto& baseInventory = basePortfolio.GetBookkeeper().GetInventory(
         inventory.m_position.m_key.m_index,
         inventory.m_position.m_key.m_currency);
       if(baseInventory.m_position.m_key.m_index <= region) {
+        if(inventory.m_position.m_quantity == 0) {
+          auto update = InventoryUpdate();
+          update.account = account;
+          update.inventory = RiskInventory(inventory.m_position.m_key);
+          resetInventories.push_back(update);
+        }
         inventory.m_position.m_quantity = baseInventory.m_position.m_quantity;
         inventory.m_position.m_costBasis = baseInventory.m_position.m_costBasis;
         inventory.m_fees = baseInventory.m_fees - inventory.m_fees;
@@ -297,6 +304,18 @@ namespace Nexus::RiskService {
         return order->GetInfo().m_orderId;
       });
     m_dataStore->Store(account, updatedSnapshot);
+    auto group = LoadGroup(account);
+    m_portfolioSubscribers.With([&] (auto& subscribers) {
+      if(!resetInventories.empty()) {
+        for(auto& subscriber : subscribers) {
+          auto& session = subscriber->GetSession();
+          if(session.HasGroupPortfolioSubscription(group)) {
+            Beam::Services::SendRecordMessage<InventoryMessage>(*subscriber,
+              resetInventories);
+          }
+        }
+      }
+    });
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
