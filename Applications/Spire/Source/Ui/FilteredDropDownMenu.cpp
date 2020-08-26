@@ -55,20 +55,25 @@ void FilteredDropDownMenu::focusInEvent(QFocusEvent* event) {
 }
 
 void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape) {
-    setText(m_item_delegate.displayText(m_current_item));
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_last_activated_item.isValid()) {
-      on_item_selected(m_last_activated_item);
+  switch(event->key()) {
+    case Qt::Key_Delete:
+      setText("");
       return;
-    }
-    if(!text().isEmpty() && m_menu_list->isVisible()) {
-      auto item = m_menu_list->get_value(0);
-      if(item.isValid()) {
-        on_item_selected(item);
+    case Qt::Key_Escape:
+      setText(m_item_delegate.displayText(m_current_item));
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      if(m_last_activated_item.isValid()) {
+        on_item_selected(m_last_activated_item);
+        return;
       }
-    }
-    return;
+      if(!text().isEmpty() && m_menu_list->isVisible()) {
+        auto item = m_menu_list->get_value(0);
+        if(item.isValid()) {
+          on_item_selected(item);
+        }
+      }
+      return;
   }
   TextInputWidget::keyPressEvent(event);
 }
