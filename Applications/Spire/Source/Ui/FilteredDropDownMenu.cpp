@@ -65,6 +65,8 @@ void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
       return;
     case Qt::Key_Escape:
       setText(m_item_delegate.displayText(m_current_item));
+      m_last_activated_item = QVariant();
+      return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
       if(m_last_activated_item.isValid()) {
@@ -93,7 +95,7 @@ void FilteredDropDownMenu::mousePressEvent(QMouseEvent* event) {
 void FilteredDropDownMenu::paintEvent(QPaintEvent* event) {
   TextInputWidget::paintEvent(event);
   if(!text().isEmpty()) {
-    auto item = m_menu_list->get_value(0);
+    auto& item = m_menu_list->get_value(0);
     if(item.isValid()) {
       auto item_text = m_item_delegate.displayText(item);
       if(item_text.startsWith(text(), Qt::CaseInsensitive) &&
@@ -200,11 +202,11 @@ void FilteredDropDownMenu::on_item_selected(const QVariant& item,
 void FilteredDropDownMenu::on_text_edited(const QString& text) {
   m_last_activated_item = QVariant();
   if(text.isEmpty()) {
-    m_menu_list->set_items(std::move(create_widget_items(m_items)));
+    m_menu_list->set_items(create_widget_items(m_items));
     m_menu_list->show();
     return;
   }
-  auto items = std::move(create_widget_items(m_items, text));
+  auto items = create_widget_items(m_items, text);
   if(items.empty()) {
     m_menu_list->hide();
     return;
