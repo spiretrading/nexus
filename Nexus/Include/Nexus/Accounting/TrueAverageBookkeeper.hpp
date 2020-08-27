@@ -24,7 +24,8 @@ namespace Nexus::Accounting {
        * Constructs a bookkeeper with an initial inventory.
        * @param inventories The initial inventories.
        */
-      TrueAverageBookkeeper(const Beam::View<const Inventory>& inventories);
+      explicit TrueAverageBookkeeper(
+        const Beam::View<const Inventory>& inventories);
 
       void RecordTransaction(const Index& index, CurrencyId currency,
         Quantity quantity, Money costBasis, Money fees);
