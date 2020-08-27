@@ -30,13 +30,11 @@ namespace Spire {
 
     protected:
       void focusInEvent(QFocusEvent* event) override;
-      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
 
     private:
-      QString m_current_text;
-
-      void on_text_edited();
+      int m_left_padding;
   };
 }
 
