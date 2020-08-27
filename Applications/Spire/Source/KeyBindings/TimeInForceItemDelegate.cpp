@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/TimeInForceItemDelegate.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/KeyBindings/InputFieldEditor.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -8,20 +9,16 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto to_qstring(TimeInForce::Type type) {
-    return QString::fromStdString(lexical_cast<std::string>(type));
-  }
-
   auto create_time_in_force_item_list() {
     static auto list = std::vector<QString>({
-      to_qstring(TimeInForce::Type::DAY),
-      to_qstring(TimeInForce::Type::FOK),
-      to_qstring(TimeInForce::Type::GTC),
-      to_qstring(TimeInForce::Type::GTD),
-      to_qstring(TimeInForce::Type::GTX),
-      to_qstring(TimeInForce::Type::IOC),
-      to_qstring(TimeInForce::Type::MOC),
-      to_qstring(TimeInForce::Type::OPG)
+      displayText(TimeInForce(TimeInForce::Type::DAY)),
+      displayText(TimeInForce(TimeInForce::Type::FOK)),
+      displayText(TimeInForce(TimeInForce::Type::GTC)),
+      displayText(TimeInForce(TimeInForce::Type::GTD)),
+      displayText(TimeInForce(TimeInForce::Type::GTX)),
+      displayText(TimeInForce(TimeInForce::Type::IOC)),
+      displayText(TimeInForce(TimeInForce::Type::MOC)),
+      displayText(TimeInForce(TimeInForce::Type::OPG))
     });
     return list;
   }
@@ -31,7 +28,7 @@ namespace {
         TimeInForce::Type::GTC, TimeInForce::Type::GTD, TimeInForce::Type::GTX,
         TimeInForce::Type::IOC, TimeInForce::Type::MOC,
         TimeInForce::Type::OPG }) {
-      if(text == to_qstring(type)) {
+      if(text == Spire::displayText(TimeInForce(type))) {
         return QVariant::fromValue<TimeInForce>({type});
       }
     }
@@ -47,7 +44,7 @@ QWidget* TimeInForceItemDelegate::createEditor(QWidget* parent,
   auto current_data = [&] {
     auto data = index.data(Qt::DisplayRole);
     if(data.isValid()) {
-      return to_qstring(data.value<TimeInForce>().GetType());
+      return Spire::displayText(data.value<TimeInForce>());
     }
     return QString();
   }();
