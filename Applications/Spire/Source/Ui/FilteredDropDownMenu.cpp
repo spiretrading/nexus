@@ -37,7 +37,7 @@ FilteredDropDownMenu::FilteredDropDownMenu(std::vector<QVariant> items,
 
 bool FilteredDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
-    if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+    if(event->type() == QEvent::Show) {
       m_menu_list->setFixedWidth(width());
       update();
     }
