@@ -1,5 +1,6 @@
 #ifndef SPIRE_SIDE_INPUT_WIDGET_HPP
 #define SPIRE_SIDE_INPUT_WIDGET_HPP
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/FilteredDropDownMenu.hpp"
 
 namespace Spire {

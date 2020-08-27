@@ -1,5 +1,4 @@
 #include "Spire/Ui/SideInputWidget.hpp"
-#include "Nexus/Definitions/Side.hpp"
 
 using namespace Nexus;
 using namespace Spire;
