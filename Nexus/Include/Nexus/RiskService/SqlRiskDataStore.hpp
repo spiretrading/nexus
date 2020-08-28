@@ -88,6 +88,7 @@ namespace Nexus::RiskService {
   void SqlRiskDataStore<C>::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
+    auto strippedSnapshot = Strip(snapshot);
     auto lock = std::lock_guard(m_mutex);
     Viper::transaction(*m_connection, [&] {
       m_connection->execute(Viper::erase("inventory_entries",
@@ -98,18 +99,21 @@ namespace Nexus::RiskService {
         Viper::sym("account") == account.m_id));
       m_connection->execute(Viper::insert(GetInventoryEntriesRow(),
         "inventory_entries", boost::iterators::make_transform_iterator(
-        snapshot.m_inventories.begin(), ConvertInventorySnapshotInventories(
-        account)), boost::iterators::make_transform_iterator(
-        snapshot.m_inventories.end(), ConvertInventorySnapshotInventories(
-        account))));
-      auto sequence = InventorySequence{account.m_id, snapshot.m_sequence};
+        strippedSnapshot.m_inventories.begin(),
+        ConvertInventorySnapshotInventories(account)),
+        boost::iterators::make_transform_iterator(
+        strippedSnapshot.m_inventories.end(),
+        ConvertInventorySnapshotInventories(account))));
+      auto sequence = InventorySequence{account.m_id,
+        strippedSnapshot.m_sequence};
       m_connection->execute(Viper::insert(GetInventorySequencesRow(),
         "inventory_sequences", &sequence));
       m_connection->execute(Viper::insert(GetInventoryExcludedOrdersRow(),
         "inventory_excluded_orders", boost::iterators::make_transform_iterator(
-        snapshot.m_excludedOrders.begin(), ConvertInventoryExcludedOrders(
-        account)), boost::iterators::make_transform_iterator(
-        snapshot.m_excludedOrders.end(), ConvertInventoryExcludedOrders(
+        strippedSnapshot.m_excludedOrders.begin(),
+        ConvertInventoryExcludedOrders(account)),
+        boost::iterators::make_transform_iterator(
+        strippedSnapshot.m_excludedOrders.end(), ConvertInventoryExcludedOrders(
         account))));
     });
   }

@@ -46,7 +46,7 @@ namespace Nexus::RiskService {
   inline void LocalRiskDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
-    m_snapshots.Update(account, snapshot);
+    m_snapshots.Update(account, Strip(snapshot));
   }
 
   inline void LocalRiskDataStore::Open() {

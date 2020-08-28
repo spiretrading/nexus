@@ -424,7 +424,8 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
       }
       m_totalsUpdatedSignal(m_totals);
     }
-    if(entry.m_value.m_transactionCount == 0) {
+    if(entry.m_value.m_transactionCount == 0 &&
+        entry.m_value.m_position.m_quantity == 0) {
       if(viewerEntry.m_isDisplayed) {
         beginRemoveRows(QModelIndex(), viewerEntry.m_displayIndex,
           viewerEntry.m_displayIndex);

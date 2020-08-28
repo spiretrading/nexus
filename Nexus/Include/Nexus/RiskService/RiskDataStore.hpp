@@ -30,6 +30,21 @@ namespace Nexus::RiskService {
 
     void Close();
   };
+
+  /**
+   * Strips a snapshot of empty Inventory objects, used to avoid storing empty
+   * inventories in a RiskDataStore.
+   * @param snapshot The snapshot to trim.
+   * @return A copy of the <i>snapshot</i> with all empty Inventory objects
+   *         removed.
+   */
+  inline InventorySnapshot Strip(InventorySnapshot snapshot) {
+    snapshot.m_inventories.erase(std::remove_if(snapshot.m_inventories.begin(),
+      snapshot.m_inventories.end(), [] (const auto& inventory) {
+        return inventory == RiskInventory(inventory.m_position.m_key);
+      }), snapshot.m_inventories.end());
+    return snapshot;
+  }
 }
 
 #endif

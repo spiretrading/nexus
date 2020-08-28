@@ -304,9 +304,9 @@ namespace Nexus::RiskService {
         return order->GetInfo().m_orderId;
       });
     m_dataStore->Store(account, updatedSnapshot);
-    auto group = LoadGroup(account);
-    m_portfolioSubscribers.With([&] (auto& subscribers) {
-      if(!resetInventories.empty()) {
+    if(!resetInventories.empty()) {
+      auto group = LoadGroup(account);
+      m_portfolioSubscribers.With([&] (auto& subscribers) {
         for(auto& subscriber : subscribers) {
           auto& session = subscriber->GetSession();
           if(session.HasGroupPortfolioSubscription(group)) {
@@ -314,8 +314,8 @@ namespace Nexus::RiskService {
               resetInventories);
           }
         }
-      }
-    });
+      });
+    }
   }
 
   template<typename C, typename A, typename M, typename O, typename R,

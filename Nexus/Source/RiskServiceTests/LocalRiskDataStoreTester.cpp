@@ -45,4 +45,27 @@ TEST_SUITE("LocalRiskDataStore") {
     auto storedSnapshot = dataStore.LoadInventorySnapshot(account);
     REQUIRE(storedSnapshot == snapshot);
   }
+
+  TEST_CASE("store_empty_inventory") {
+    auto dataStore = LocalRiskDataStore();
+    dataStore.Open();
+    auto inventories = std::vector<RiskInventory>();
+    inventories.emplace_back(RiskInventory::Position::Key(
+      Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
+      DefaultCurrencies::USD()));
+    inventories.back().m_position.m_costBasis = 1000 * Money::ONE;
+    inventories.back().m_position.m_quantity = 123;
+    inventories.back().m_fees = 3 * Money::ONE;
+    inventories.back().m_transactionCount = 332;
+    inventories.back().m_volume = 433;
+    inventories.emplace_back(RiskInventory::Position::Key(
+      Security("B", DefaultMarkets::NYSE(), DefaultCountries::US()),
+      DefaultCurrencies::USD()));
+    auto account = DirectoryEntry::MakeAccount(123, "test");
+    auto snapshot = InventorySnapshot{inventories, Sequence(200), {}};
+    dataStore.Store(account, snapshot);
+    auto storedSnapshot = dataStore.LoadInventorySnapshot(account);
+    REQUIRE(storedSnapshot.m_inventories.size() == 1);
+    REQUIRE(storedSnapshot.m_inventories[0] == inventories[0]);
+  }
 }
