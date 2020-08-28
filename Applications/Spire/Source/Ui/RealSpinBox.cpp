@@ -239,7 +239,7 @@ void RealSpinBox::add_step(int step) {
 void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   if(modifiers == Qt::ShiftModifier) {
     step *= SHIFT_STEPS;
-  };
+  }
   auto value = get_value(text());
   if(text().isEmpty() || !value) {
     value = 0;
@@ -308,18 +308,15 @@ void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
   }
   auto [up_icon, up_icon_hover] = [&] {
     if(is_up_disabled) {
-      return std::tuple<QString, QString>(UP_ARROW_DISABLED_ICON,
-        UP_ARROW_DISABLED_ICON);
+      return std::tuple(UP_ARROW_DISABLED_ICON, UP_ARROW_DISABLED_ICON);
     }
-    return std::tuple<QString, QString>(UP_ARROW_ICON, UP_ARROW_HOVER_ICON);
+    return std::tuple(UP_ARROW_ICON, UP_ARROW_HOVER_ICON);
   }();
   auto [down_icon, down_icon_hover] = [&] {
     if(is_down_disabled) {
-      return std::tuple<QString, QString>(DOWN_ARROW_DISABLED_ICON,
-        DOWN_ARROW_DISABLED_ICON);
+      return std::tuple(DOWN_ARROW_DISABLED_ICON, DOWN_ARROW_DISABLED_ICON);
     }
-    return std::tuple<QString, QString>(DOWN_ARROW_ICON,
-      DOWN_ARROW_HOVER_ICON);
+    return std::tuple(DOWN_ARROW_ICON, DOWN_ARROW_HOVER_ICON);
   }();
   setStyleSheet(QString(R"(
     QAbstractSpinBox {
