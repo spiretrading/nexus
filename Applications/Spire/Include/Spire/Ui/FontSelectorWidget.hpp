@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Spire/Ui/DropDownMenu.hpp"
 #include "Spire/Ui/FontSelectorButton.hpp"
-#include "Spire/Ui/IntegerInputWidget.hpp"
+#include "Spire/Ui/IntegerSpinBox.hpp"
 
 namespace Spire {
 
@@ -54,7 +54,7 @@ namespace Spire {
       mutable FontSelectedSignal m_font_selected_signal;
       QFont m_current_font;
       DropDownMenu* m_font_list;
-      IntegerInputWidget* m_size_input;
+      IntegerSpinBox* m_size_input;
       FontSelectorButton* m_bold_button;
       FontSelectorButton* m_italics_button;
       FontSelectorButton* m_underline_button;

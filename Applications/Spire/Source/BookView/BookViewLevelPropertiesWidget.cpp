@@ -10,7 +10,7 @@
 #include "Spire/Ui/FlatButton.hpp"
 #include "Spire/Ui/FontSelectorWidget.hpp"
 #include "Spire/Ui/ScrollArea.hpp"
-#include "Spire/Ui/IntegerInputWidget.hpp"
+#include "Spire/Ui/IntegerSpinBox.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -89,13 +89,14 @@ BookViewLevelPropertiesWidget::BookViewLevelPropertiesWidget(
   number_of_bands_label->setStyleSheet(generic_label_style);
   band_properties_layout->addWidget(number_of_bands_label);
   band_properties_layout->addStretch(4);
-  auto number_of_bands_spin_box = new IntegerInputWidget(1, INT_MAX, this);
-  number_of_bands_spin_box->setValue(static_cast<int>(bg_colors.size()));
-  number_of_bands_spin_box->setKeyboardTracking(false);
+  auto number_of_bands_spin_box = new IntegerSpinBox(0, this);
+  number_of_bands_spin_box->set_minimum(1);
+  number_of_bands_spin_box->set_maximum(INT_MAX);
+  number_of_bands_spin_box->set_value(static_cast<int>(bg_colors.size()));
   number_of_bands_spin_box->setFixedSize(BUTTON_SIZE());
-  connect(number_of_bands_spin_box,
-    static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
-    &BookViewLevelPropertiesWidget::on_number_of_bands_spin_box_changed);
+  number_of_bands_spin_box->connect_change_signal([=] (auto value) {
+    on_number_of_bands_spin_box_changed(static_cast<int>(value));
+  });
   band_properties_layout->addWidget(number_of_bands_spin_box);
   band_properties_layout->addStretch(10);
   auto band_color_label = new QLabel(tr("Band Color"), this);
