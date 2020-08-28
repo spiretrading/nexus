@@ -68,7 +68,7 @@ namespace Nexus::Accounting {
       Beam::RoutineTaskQueue m_tasks;
 
       void Subscribe(const Security& security);
-      void PushUpdate(const Security& security, bool isValuation);
+      void PushUpdate(const Security& security);
       void OnBbo(const Security& security, const BboQuote& bbo);
       void OnExecutionReport(
         const OrderExecutionService::ExecutionReportEntry& executionReport);
@@ -126,8 +126,7 @@ namespace Nexus::Accounting {
   }
 
   template<typename P, typename C>
-  void PortfolioController<P, C>::PushUpdate(const Security& security,
-      bool isValuation) {
+  void PortfolioController<P, C>::PushUpdate(const Security& security) {
     auto securityEntryIterator = m_portfolio->GetSecurityEntries().find(
       security);
     if(securityEntryIterator == m_portfolio->GetSecurityEntries().end()) {
@@ -136,13 +135,6 @@ namespace Nexus::Accounting {
     auto& securityEntry = securityEntryIterator->second;
     auto& securityInventory = m_portfolio->GetBookkeeper().GetInventory(
       security, securityEntry.m_valuation.m_currency);
-    if(securityInventory.m_position.m_quantity < 0 &&
-        !securityEntry.m_valuation.m_askValue ||
-        securityInventory.m_position.m_quantity > 0 &&
-        !securityEntry.m_valuation.m_bidValue ||
-        isValuation && securityInventory.m_position.m_quantity == 0) {
-      return;
-    }
     auto update = UpdateEntry();
     update.m_securityInventory = securityInventory;
     update.m_unrealizedSecurity = securityEntry.m_unrealized;
@@ -174,14 +166,18 @@ namespace Nexus::Accounting {
     }
     m_publisher.With(
       [&] {
-        if(bbo.m_ask.m_price == Money::ZERO) {
-          m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
-        } else if(bbo.m_bid.m_price == Money::ZERO) {
-          m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
-        } else {
-          m_portfolio->Update(security, bbo.m_ask.m_price, bbo.m_bid.m_price);
+        auto hasUpdate = [&] {
+          if(bbo.m_ask.m_price == Money::ZERO) {
+            return m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
+          } else if(bbo.m_bid.m_price == Money::ZERO) {
+            return m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
+          }
+          return m_portfolio->Update(security, bbo.m_ask.m_price,
+            bbo.m_bid.m_price);
+        }();
+        if(hasUpdate) {
+          PushUpdate(security);
         }
-        PushUpdate(security, true);
       });
   }
 
@@ -193,11 +189,9 @@ namespace Nexus::Accounting {
     }
     m_publisher.With(
       [&] {
-        m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
-          executionReport.m_executionReport);
-        if(executionReport.m_executionReport.m_lastQuantity != 0) {
-          PushUpdate(executionReport.m_order->GetInfo().m_fields.m_security,
-            false);
+        if(m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
+            executionReport.m_executionReport)) {
+          PushUpdate(executionReport.m_order->GetInfo().m_fields.m_security);
         }
       });
   }

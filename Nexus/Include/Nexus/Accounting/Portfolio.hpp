@@ -121,31 +121,39 @@ namespace Nexus::Accounting {
        * Updates a position held by this Portfolio.
        * @param orderFields Specifies the Order's details.
        * @param executionReport The ExecutionReport specifying the update.
+       * @return <code>true</code> iff the update resulted in a change to
+       *         the portfolio.
        */
-      void Update(const OrderExecutionService::OrderFields& orderFields,
+      bool Update(const OrderExecutionService::OrderFields& orderFields,
         const OrderExecutionService::ExecutionReport& executionReport);
 
       /**
        * Updates the ask value of a Security.
        * @param security The Security whose value is being updated.
        * @param value The <i>security</i>'s ask side value.
+       * @return <code>true</code> iff the update resulted in a change to
+       *         the portfolio.
        */
-      void UpdateAsk(const Security& security, Money value);
+      bool UpdateAsk(const Security& security, Money value);
 
       /**
        * Updates the bid value of a Security.
        * @param security The Security whose value is being updated.
        * @param value The <i>security</i>'s bid side value.
+       * @return <code>true</code> iff the update resulted in a change to
+       *         the portfolio.
        */
-      void UpdateBid(const Security& security, Money value);
+      bool UpdateBid(const Security& security, Money value);
 
       /**
        * Updates the market value of a Security.
        * @param security The Security whose value is being updated.
        * @param askValue The <i>security</i>'s ask side value.
        * @param bidValue The <i>security</i>'s bid side value.
+       * @return <code>true</code> iff the update resulted in a change to
+       *         the portfolio.
        */
-      void Update(const Security& security, Money askValue, Money bidValue);
+      bool Update(const Security& security, Money askValue, Money bidValue);
 
     private:
       MarketDatabase m_marketDatabase;
@@ -157,7 +165,7 @@ namespace Nexus::Accounting {
         const typename Bookkeeper::Inventory& inventory,
         const SecurityEntry& securityEntry);
       SecurityEntry& GetSecurityEntry(const Security& security);
-      void Update(const Security& security, SecurityEntry& entry);
+      bool Update(const Security& security, SecurityEntry& entry);
   };
 
   /**
@@ -309,11 +317,11 @@ namespace Nexus::Accounting {
   }
 
   template<typename B>
-  void Portfolio<B>::Update(
+  bool Portfolio<B>::Update(
       const OrderExecutionService::OrderFields& orderFields,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
-      return;
+      return false;
     }
     auto& security = orderFields.m_security;
     auto currency = orderFields.m_currency;
@@ -334,29 +342,30 @@ namespace Nexus::Accounting {
         unrealizedCurrency += securityEntry.m_unrealized;
       }
     }
+    return true;
   }
 
   template<typename B>
-  void Portfolio<B>::UpdateAsk(const Security& security, Money value) {
+  bool Portfolio<B>::UpdateAsk(const Security& security, Money value) {
     auto& entry = GetSecurityEntry(security);
     entry.m_valuation.m_askValue = value;
-    Update(security, entry);
+    return Update(security, entry);
   }
 
   template<typename B>
-  void Portfolio<B>::UpdateBid(const Security& security, Money value) {
+  bool Portfolio<B>::UpdateBid(const Security& security, Money value) {
     auto& entry = GetSecurityEntry(security);
     entry.m_valuation.m_bidValue = value;
-    Update(security, entry);
+    return Update(security, entry);
   }
 
   template<typename B>
-  void Portfolio<B>::Update(const Security& security, Money askValue,
+  bool Portfolio<B>::Update(const Security& security, Money askValue,
       Money bidValue) {
     auto& entry = GetSecurityEntry(security);
     entry.m_valuation.m_askValue = askValue;
     entry.m_valuation.m_bidValue = bidValue;
-    Update(security, entry);
+    return Update(security, entry);
   }
 
   template<typename B>
@@ -390,21 +399,19 @@ namespace Nexus::Accounting {
   }
 
   template<typename B>
-  void Portfolio<B>::Update(const Security& security, SecurityEntry& entry) {
+  bool Portfolio<B>::Update(const Security& security, SecurityEntry& entry) {
     auto inventory = m_bookkeeper.GetInventory(security,
       entry.m_valuation.m_currency);
     auto unrealizedSecurity = CalculateUnrealized(inventory, entry);
-    if(!unrealizedSecurity) {
-      return;
-    }
-    if(*unrealizedSecurity == entry.m_unrealized) {
-      return;
+    if(!unrealizedSecurity || *unrealizedSecurity == entry.m_unrealized) {
+      return false;
     }
     auto& unrealizedCurrency =
       m_unrealizedCurrencies[entry.m_valuation.m_currency];
     unrealizedCurrency -= entry.m_unrealized;
     entry.m_unrealized = *unrealizedSecurity;
     unrealizedCurrency += entry.m_unrealized;
+    return true;
   }
 }
 

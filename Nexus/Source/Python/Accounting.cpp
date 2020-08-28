@@ -155,11 +155,11 @@ void Nexus::Python::ExportTrueAveragePortfolio(pybind11::module& module) {
     .def_property_readonly("security_entries", &Portfolio::GetSecurityEntries)
     .def_property_readonly("unrealized_profit_and_losses",
       &Portfolio::GetUnrealizedProfitAndLosses)
-    .def("update", static_cast<void (Portfolio::*)(const OrderFields&,
+    .def("update", static_cast<bool (Portfolio::*)(const OrderFields&,
       const ExecutionReport& executionReport)>(&Portfolio::Update))
     .def("update_ask", &Portfolio::UpdateAsk)
     .def("update_bid", &Portfolio::UpdateBid)
-    .def("update", static_cast<void (Portfolio::*)(const Security&, Money,
+    .def("update", static_cast<bool (Portfolio::*)(const Security&, Money,
       Money)>(&Portfolio::Update));
   module.def("get_realized_profit_and_loss", &GetRealizedProfitAndLoss<
     Inventory::Position>);
