@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  //! Represents a widget for selecting Currencies.
+  //! Represents a widget for selecting currencies.
   class CurrencyInputWidget : public FilteredDropDownMenu {
     public:
 
@@ -15,7 +15,7 @@ namespace Spire {
       */
       CurrencyInputWidget(QWidget* parent = nullptr);
 
-      //! Returns the currently selected Currency.
+      //! Returns the id of the currently selected currency.
       Nexus::CurrencyId get_currency() const;
   };
 }

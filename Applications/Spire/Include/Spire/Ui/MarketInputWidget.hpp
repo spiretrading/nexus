@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  //! Represents a widget for selecting Markets.
+  //! Represents a widget for selecting markets.
   class MarketInputWidget : public FilteredDropDownMenu {
     public:
 
@@ -15,7 +15,7 @@ namespace Spire {
       */
       MarketInputWidget(QWidget* parent = nullptr);
 
-      //! Returns the currently selected Market.
+      //! Returns a MarketToken representing the currently selected Market.
       MarketToken get_market() const;
   };
 }
