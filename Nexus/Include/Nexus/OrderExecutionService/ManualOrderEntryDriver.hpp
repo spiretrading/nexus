@@ -1,10 +1,10 @@
 #ifndef NEXUS_MANUALORDERENTRYDRIVER_HPP
 #define NEXUS_MANUALORDERENTRYDRIVER_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
