@@ -108,6 +108,38 @@ posix_time::ptime Spire::to_ptime(const QDateTime& time) {
 
 void Spire::register_custom_qt_variants() {}
 
+const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
+  auto type = time_in_force.GetType();
+  if(type == TimeInForce::Type::DAY) {
+    static const auto value = QObject::tr("DAY");
+    return value;
+  } else if(type == TimeInForce::Type::FOK) {
+    static const auto value = QObject::tr("FOK");
+    return value;
+  } else if(type == TimeInForce::Type::GTC) {
+    static const auto value = QObject::tr("GTC");
+    return value;
+  } else if(type == TimeInForce::Type::GTD) {
+    static const auto value = QObject::tr("GTD");
+    return value;
+  } else if(type == TimeInForce::Type::GTX) {
+    static const auto value = QObject::tr("GTX");
+    return value;
+  } else if(type == TimeInForce::Type::IOC) {
+    static const auto value = QObject::tr("IOC");
+    return value;
+  } else if(type == TimeInForce::Type::MOC) {
+    static const auto value = QObject::tr("MOC");
+    return value;
+  } else if(type == TimeInForce::Type::OPG) {
+    static const auto value = QObject::tr("OPG");
+    return value;
+  } else {
+    static const auto value = QObject::tr("NONE");
+    return value;
+  }
+}
+
 const QString& Spire::displayText(Side side) {
   if(side == Side::ASK) {
     static const auto value = QObject::tr("Ask");
@@ -231,8 +263,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<Side>()) {
     return Spire::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
-    return QString::fromStdString(
-      lexical_cast<std::string>(value.value<TimeInForce>().GetType()));
+    return Spire::displayText(value.value<TimeInForce>().GetType());
   } else if(value.canConvert<any>()) {
     auto translated_value = to_variant(value.value<any>());
     return displayText(translated_value, locale);
@@ -286,8 +317,8 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       displayText(right_variant.value<Side>()), left, right);
   } else if(left_variant.canConvert<TimeInForce>()) {
     return compare(
-      lexical_cast<std::string>(left_variant.value<TimeInForce>().GetType()),
-      lexical_cast<std::string>(right_variant.value<TimeInForce>().GetType()),
+      displayText(left_variant.value<TimeInForce>().GetType()),
+      displayText(right_variant.value<TimeInForce>().GetType()),
       left, right);
   } else if(left_variant.canConvert<CurrencyId>()) {
     auto& leftEntry = GetDefaultCurrencyDatabase().FromId(
