@@ -9,7 +9,7 @@ namespace Spire {
   class OrderTypeInputWidget : public FilteredDropDownMenu {
     public:
 
-      //! Constructs a OrderTypeInputWidget.
+      //! Constructs an OrderTypeInputWidget.
       /*!
         \param parent The parent widget.
       */
