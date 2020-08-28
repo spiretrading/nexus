@@ -97,7 +97,11 @@ void RealSpinBox::keyPressEvent(QKeyEvent* event) {
       lineEdit()->backspace();
       return;
     case Qt::Key_Delete:
+      lineEdit()->clear();
+      return;
+    case Qt::Key_Escape:
       lineEdit()->setText(display_string(m_last_valid_value));
+      Q_EMIT editingFinished();
       return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
