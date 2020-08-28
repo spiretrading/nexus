@@ -46,7 +46,7 @@ export class SideMenu extends React.Component<Properties> {
     height: '100%',
     minHeight: '568px',
     backgroundColor: '#4B23A0'
-  }
+  } as React.CSSProperties
 }
 
 export namespace SideMenu {

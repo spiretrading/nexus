@@ -1,9 +1,9 @@
 #ifndef NEXUS_ORDERSUBMISSIONREGISTRY_HPP
 #define NEXUS_ORDERSUBMISSIONREGISTRY_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/AccountOrderSubmissionEntry.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"

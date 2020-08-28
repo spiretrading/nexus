@@ -32,35 +32,34 @@ namespace Nexus::MarketDataService {
       ~DistributedMarketDataClient();
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<
-        Beam::QueueWriter<SequencedOrderImbalance>>& queue);
+        Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
 
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue);
+        Beam::ScopedQueueWriter<OrderImbalance> queue);
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBboQuote> queue);
 
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue);
+        Beam::ScopedQueueWriter<BboQuote> queue);
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBookQuote> queue);
 
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue);
+        Beam::ScopedQueueWriter<BookQuote> queue);
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
 
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue);
+        Beam::ScopedQueueWriter<MarketQuote> queue);
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
 
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       SecuritySnapshot LoadSecuritySnapshot(const Security& security);
 
@@ -99,113 +98,103 @@ namespace Nexus::MarketDataService {
   }
 
   inline void DistributedMarketDataClient::QueryOrderImbalances(
-      const MarketWideDataQuery& query, const std::shared_ptr<
-      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
+      const MarketWideDataQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryOrderImbalances(query, queue);
+    marketDataClient->QueryOrderImbalances(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryOrderImbalances(
       const MarketWideDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
+      Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryOrderImbalances(query, queue);
+    marketDataClient->QueryOrderImbalances(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryBboQuotes(query, queue);
+    marketDataClient->QueryBboQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryBboQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
+      Beam::ScopedQueueWriter<BboQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryBboQuotes(query, queue);
+    marketDataClient->QueryBboQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryBookQuotes(query, queue);
+    marketDataClient->QueryBookQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
+      Beam::ScopedQueueWriter<BookQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryBookQuotes(query, queue);
+    marketDataClient->QueryBookQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryMarketQuotes(query, queue);
+    marketDataClient->QueryMarketQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
+      Beam::ScopedQueueWriter<MarketQuote> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryMarketQuotes(query, queue);
+    marketDataClient->QueryMarketQuotes(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryTimeAndSales(query, queue);
+    marketDataClient->QueryTimeAndSales(query, std::move(queue));
   }
 
   inline void DistributedMarketDataClient::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto marketDataClient = FindMarketDataClient(query.GetIndex());
     if(marketDataClient == nullptr) {
-      queue->Break();
       return;
     }
-    marketDataClient->QueryTimeAndSales(query, queue);
+    marketDataClient->QueryTimeAndSales(query, std::move(queue));
   }
 
   inline SecuritySnapshot DistributedMarketDataClient::LoadSecuritySnapshot(

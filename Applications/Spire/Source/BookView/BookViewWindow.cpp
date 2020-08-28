@@ -1,6 +1,6 @@
 #include "Spire/BookView/BookViewWindow.hpp"
 #include <tuple>
-#include <Beam/Utilities/Utilities.hpp>
+#include <Beam/Utilities/Algorithm.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QApplication>
 #include <QHeaderView>

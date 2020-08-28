@@ -109,7 +109,7 @@ namespace Spire {
       UserProfile* m_userProfile;
       bool m_isPersistent;
       BlotterTasksModel m_tasksModel;
-      std::optional<SpirePortfolioMonitor> m_portfolioMonitor;
+      std::optional<SpirePortfolioController> m_portfolioController;
       OrderLogModel m_orderLogModel;
       OpenPositionsModel m_openPositionsModel;
       ProfitAndLossModel m_profitAndLossModel;

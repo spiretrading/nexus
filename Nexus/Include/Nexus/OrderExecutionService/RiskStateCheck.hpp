@@ -1,10 +1,10 @@
 #ifndef NEXUS_RISKSTATECHECK_HPP
 #define NEXUS_RISKSTATECHECK_HPP
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
@@ -45,7 +45,7 @@ namespace OrderExecutionService {
           m_positionOrderBook;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
           m_riskStateQueue;
-        Beam::MultiQueueReader<ExecutionReport> m_executionReportQueue;
+        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
 
         AccountEntry();
       };
@@ -76,13 +76,10 @@ namespace OrderExecutionService {
     auto& accountEntry = LoadAccountEntry(orderInfo.m_fields.m_account);
     Beam::Threading::With(accountEntry.m_positionOrderBook,
       [&] (Accounting::PositionOrderBook& positionOrderBook) {
-        while(!accountEntry.m_executionReportQueue.IsEmpty()) {
-          auto report = accountEntry.m_executionReportQueue.Top();
-          accountEntry.m_executionReportQueue.Pop();
-          positionOrderBook.Update(report);
+        while(auto report = accountEntry.m_executionReportQueue.TryPop()) {
+          positionOrderBook.Update(std::move(*report));
         }
-        assert(!accountEntry.m_riskStateQueue->IsEmpty());
-        if(accountEntry.m_riskStateQueue->Top().m_type !=
+        if(accountEntry.m_riskStateQueue->Peek().m_type !=
             RiskService::RiskState::Type::ACTIVE) {
           if(positionOrderBook.TestOpeningOrderSubmission(orderInfo.m_fields)) {
             BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
@@ -114,7 +111,7 @@ namespace OrderExecutionService {
           entry->m_riskStateQueue);
         return entry;
       });
-    entry.m_riskStateQueue->Top();
+    entry.m_riskStateQueue->Peek();
     return entry;
   }
 }

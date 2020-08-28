@@ -56,10 +56,6 @@ export class TextField extends React.Component<Properties, State> {
     this.state = {
       effects: Effects.NONE
     };
-    this.onInputBlurred = this.onInputBlurred.bind(this);
-    this.onInputFocused = this.onInputFocused.bind(this);
-    this.onMouseEnter = this.onMouseEnter.bind(this);
-    this.onMouseLeave = this.onMouseLeave.bind(this);
   }
 
   public render(): JSX.Element {
@@ -117,7 +113,7 @@ export class TextField extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onInputFocused() {
+  private onInputFocused = () => {
     if(!this.props.readonly) {
       this.setState({
         effects: Effects.FOCUSED
@@ -125,7 +121,7 @@ export class TextField extends React.Component<Properties, State> {
     }
   }
 
-  private onInputBlurred() {
+  private onInputBlurred = () => {
     if(!this.props.readonly) {
       this.setState({
         effects: Effects.NONE
@@ -133,7 +129,7 @@ export class TextField extends React.Component<Properties, State> {
     }
   }
 
-  private onMouseEnter() {
+  private onMouseEnter = () => {
     if(!this.props.readonly && this.state.effects !== Effects.FOCUSED) {
       this.setState({
         effects: Effects.HOVER
@@ -141,7 +137,7 @@ export class TextField extends React.Component<Properties, State> {
     }
   }
 
-  private onMouseLeave() {
+  private onMouseLeave = () => {
     if(!this.props.readonly && this.state.effects !== Effects.FOCUSED) {
       this.setState({
         effects: Effects.NONE

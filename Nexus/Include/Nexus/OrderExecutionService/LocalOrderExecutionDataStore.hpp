@@ -1,9 +1,9 @@
 #ifndef NEXUS_LOCALORDEREXECUTIONDATASTORE_HPP
 #define NEXUS_LOCALORDEREXECUTIONDATASTORE_HPP
+#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"

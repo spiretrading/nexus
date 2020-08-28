@@ -1,7 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_LOCAL_HISTORICAL_DATA_STORE_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queries/LocalDataStore.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"

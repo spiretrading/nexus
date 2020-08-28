@@ -40,7 +40,7 @@ elif [ "$config" = "reset" ]; then
   fi
 else
   cores="`grep -c "processor" < /proc/cpuinfo` / 2 + 1"
-  mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 8388608"
+  mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 12582912"
   jobs="$(($cores<$mem?$cores:$mem))"
   if [ "$dependencies" != "" ]; then
     "$directory/configure.sh" $config -DD="$dependencies"

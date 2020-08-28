@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, LoadingPage } from '../../..'
+import { DisplaySize, LoadingPage } from '../../..';
 import { ProfileModel } from './profile_model';
 import { ProfilePage } from './profile_page';
 
@@ -15,6 +15,12 @@ interface Properties {
 
   /** The groups the account belongs to. */
   groups: Beam.DirectoryEntry[];
+
+  /** Indicates the profile's readonly condition. */
+  readonly: boolean;
+
+  /** Indicates the profile's PasswordReadonly condition. */
+  isPasswordReadOnly: boolean;
 
   /** The model representing the account's profile. */
   model: ProfileModel;
@@ -39,8 +45,6 @@ export class ProfileController extends React.Component<Properties, State> {
       hasPasswordError: false,
       passwordStatus: ''
     };
-    this.onSubmitIdentity = this.onSubmitIdentity.bind(this);
-    this.onSubmitPassword = this.onSubmitPassword.bind(this);
   }
 
   public render(): JSX.Element {
@@ -51,11 +55,11 @@ export class ProfileController extends React.Component<Properties, State> {
       account={this.props.model.account}
       roles={this.props.model.roles}
       identity={this.props.model.identity}
-      groups={this.props.groups}
+      groups={this.props.model.groups}
       countryDatabase={this.props.countryDatabase}
       displaySize={this.props.displaySize}
-      readonly={!this.props.model.roles.test(
-        Nexus.AccountRoles.Role.ADMINISTRATOR)}
+      readonly={this.props.readonly}
+      isPasswordReadOnly={this.props.isPasswordReadOnly}
       submitStatus={this.state.identityStatus}
       hasError={this.state.hasIdentityError}
       onSubmit={this.onSubmitIdentity}
@@ -64,16 +68,23 @@ export class ProfileController extends React.Component<Properties, State> {
       onSubmitPassword={this.onSubmitPassword}/>;
   }
 
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({
-          isLoaded: true
-        });
-      });
+  public async componentDidMount(): Promise<void> {
+    await this.props.model.load();
+    this.setState({
+      isLoaded: true
+    });
   }
 
-  private async onSubmitPassword(password: string) {
+  public componentDidUpdate(prevProps: Properties): void {
+    if(prevProps.model.account &&
+        !prevProps.model.account.equals(this.props.model.account)) {
+      this.setState({isLoaded: false}, () => {
+        this.setState({isLoaded: true});
+      });
+    }
+  }
+
+  private onSubmitPassword = async (password: string) => {
     try {
       this.setState({
         hasPasswordError: false,
@@ -91,8 +102,8 @@ export class ProfileController extends React.Component<Properties, State> {
     }
   }
 
-  private async onSubmitIdentity(
-      roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) {
+  private onSubmitIdentity = async (
+      roles: Nexus.AccountRoles, identity: Nexus.AccountIdentity) => {
     try {
       this.setState({
         hasIdentityError: false,

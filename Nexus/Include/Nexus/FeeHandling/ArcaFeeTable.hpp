@@ -1,5 +1,5 @@
-#ifndef NEXUS_ARCAFEETABLE_HPP
-#define NEXUS_ARCAFEETABLE_HPP
+#ifndef NEXUS_ARCA_FEE_TABLE_HPP
+#define NEXUS_ARCA_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/rational.hpp>
@@ -11,163 +11,156 @@
 
 namespace Nexus {
 
-  /*! \struct ArcaFeeTable
-      \brief Stores the table of fees used by ARCA.
-   */
+  /** Stores the table of fees used by ARCA. */
   struct ArcaFeeTable {
 
-    enum class Category : int {
+    /** Enumerates order fill categories. */
+    enum class Category {
 
-      //! Default category.
+      /** Default category. */
       DEFAULT = 0,
 
-      //! Order was routed to another market.
+      /** Order was routed to another market. */
       ROUTED,
 
-      //! Order participated in an auction.
+      /** Order participated in an auction. */
       AUCTION
     };
 
-    //! The number of categories enumerated.
-    static const std::size_t CATEGORY_COUNT = 3;
+    /** The number of categories enumerated. */
+    static constexpr auto CATEGORY_COUNT = std::size_t(3);
 
-    /*! \enum Tape
-        \brief Enumerates the tapes.
-     */
-    enum class Tape : int {
+    /** Enumerates the tapes. */
+    enum class Tape {
 
-      //! Tape A - NYSE
+      /** Tape A - NYSE */
       A = 0,
 
-      //! Tape B - AMEX, ARCA, BATS, etc...
+      /** Tape B - AMEX, ARCA, BATS, etc... */
       B,
 
-      //! Tape C - NASDAQ
+      /** Tape C - NASDAQ */
       C
     };
 
-    //! The number of tapes enumerated.
-    static const std::size_t TAPE_COUNT = 3;
+    /** The number of tapes enumerated. */
+    static constexpr auto TAPE_COUNT = std::size_t(3);
 
-    /*! \enum Type
-        \brief Enumerates the types of trades.
-     */
-    enum class Type : int {
+    /** Enumerates the types of trades. */
+    enum class Type {
 
-      //! Active.
+      /** Active. */
       ACTIVE = 0,
 
-      //! Passive.
+      /** Passive. */
       PASSIVE,
 
-      //! Hidden Active.
+      /** Hidden Active. */
       HIDDEN_ACTIVE,
 
-      //! Hidden Passive.
+      /** Hidden Passive. */
       HIDDEN_PASSIVE,
 
-      //! At the open.
+      /** At the open. */
       AT_THE_OPEN,
 
-      //! At the close.
+      /** At the close. */
       AT_THE_CLOSE
     };
 
-    //! The number of trade types enumerated.
-    static const std::size_t TYPE_COUNT = 6;
+    /** The number of trade types enumerated. */
+    static constexpr auto TYPE_COUNT = std::size_t(6);
 
-    /*! \enum SubDollarType
-        \brief Enumerates the types of sub dollar trades.
-     */
-    enum class SubDollarType {
+    /** Enumerates the types of subdollar trades. */
+    enum class SubdollarType {
 
-      //! The order was routed to another market.
+      /** The order was routed to another market. */
       ROUTED = 0,
 
-      //! The order participated in an auction.
+      /** The order participated in an auction. */
       AUCTION,
 
-      //! The order removed liquidity.
+      /** The order removed liquidity. */
       ACTIVE,
 
-      //! The order added liquidity.
+      /** The order added liquidity. */
       PASSIVE
     };
 
-    //! The number of sub dollar types enumerated.
-    static const std::size_t SUB_DOLLAR_TYPE_COUNT = 4;
+    /** The number of subdollar types enumerated. */
+    static constexpr auto SUBDOLLAR_TYPE_COUNT = std::size_t(4);
 
-    //! The fee table.
+    /** The fee table. */
     std::array<std::array<Money, TYPE_COUNT>, TAPE_COUNT> m_feeTable;
 
-    //! The sub-dollar rates.
-    std::array<boost::rational<int>, SUB_DOLLAR_TYPE_COUNT> m_subDollarTable;
+    /** The subdollar rates. */
+    std::array<boost::rational<int>, SUBDOLLAR_TYPE_COUNT> m_subdollarTable;
 
-    //! The fee for routed orders.
+    /** The fee for routed orders. */
     Money m_routedFee;
 
-    //! The fee for auction orders.
+    /** The fee for auction orders. */
     Money m_auctionFee;
   };
 
-  //! Parses an ArcaFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the ArcaFeeTable from.
-    \return The ArcaFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses an ArcaFeeTable from a YAML configuration.
+   * @param config The configuration to parse the ArcaFeeTable from.
+   * @return The ArcaFeeTable represented by the <i>config</i>.
+   */
   inline ArcaFeeTable ParseArcaFeeTable(const YAML::Node& config) {
-    ArcaFeeTable feeTable;
+    auto feeTable = ArcaFeeTable();
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
-    ParseFeeTable(config, "sub_dollar_table",
-      Beam::Store(feeTable.m_subDollarTable));
+    ParseFeeTable(config, "subdollar_table",
+      Beam::Store(feeTable.m_subdollarTable));
     feeTable.m_routedFee = Beam::Extract<Money>(config, "routed_fee");
     feeTable.m_auctionFee = Beam::Extract<Money>(config, "auction_fee");
     return feeTable;
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The ArcaFeeTable used to lookup the fee.
-    \param tape The tape the Security is listed on.
-    \param type The trade's type.
-    \return The fee corresponding to the specified <i>tape</i> and <i>type</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The ArcaFeeTable used to lookup the fee.
+   * @param tape The tape the Security is listed on.
+   * @param type The trade's type.
+   * @return The fee corresponding to the specified <i>tape</i> and <i>type</i>.
+   */
   inline Money LookupFee(const ArcaFeeTable& feeTable, ArcaFeeTable::Tape tape,
       ArcaFeeTable::Type type) {
     return feeTable.m_feeTable[static_cast<int>(tape)][
       static_cast<int>(type)];
   }
 
-  //! Looks up a fee.
-  /*!
-    \param feeTable The ArcaFeeTable used to lookup the fee.
-    \param type The trade's type.
-    \return The fee corresponding to the specified <i>type</i>.
-  */
+  /**
+   * Looks up a fee.
+   * @param feeTable The ArcaFeeTable used to lookup the fee.
+   * @param type The trade's type.
+   * @return The fee corresponding to the specified <i>type</i>.
+   */
   inline boost::rational<int> LookupFee(const ArcaFeeTable& feeTable,
-      ArcaFeeTable::SubDollarType type) {
-    return feeTable.m_subDollarTable[static_cast<int>(type)];
+      ArcaFeeTable::SubdollarType type) {
+    return feeTable.m_subdollarTable[static_cast<int>(type)];
   }
 
-  //! Tests if an OrderFields represents a hidden liquidity provider.
-  /*!
-    \param fields The OrderFields to test.
-    \return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
-            provider.
-  */
+  /**
+   * Tests if an OrderFields represents a hidden liquidity provider.
+   * @param fields The OrderFields to test.
+   * @return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
+   *         provider.
+   */
   inline bool IsArcaHiddenLiquidityProvider(
       const OrderExecutionService::OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED &&
       OrderExecutionService::HasField(fields, Tag{18, "M"});
   }
 
-  //! Calculates the fee on a trade executed on ARCA.
-  /*!
-    \param feeTable The ArcaFeeTable used to calculate the fee.
-    \param fields The OrderFields used to place the Order.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on ARCA.
+   * @param feeTable The ArcaFeeTable used to calculate the fee.
+   * @param fields The OrderFields used to place the Order.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const ArcaFeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& executionReport) {
@@ -211,17 +204,17 @@ namespace Nexus {
       auto type =
         [&] {
           if(isRouted) {
-            return ArcaFeeTable::SubDollarType::ROUTED;
+            return ArcaFeeTable::SubdollarType::ROUTED;
           } else if(isAuction) {
-            return ArcaFeeTable::SubDollarType::AUCTION;
+            return ArcaFeeTable::SubdollarType::AUCTION;
           } else if(isActive) {
-            return ArcaFeeTable::SubDollarType::ACTIVE;
+            return ArcaFeeTable::SubdollarType::ACTIVE;
           } else if(isPassive) {
-            return ArcaFeeTable::SubDollarType::PASSIVE;
+            return ArcaFeeTable::SubdollarType::PASSIVE;
           } else {
             std::cout << "Unknown liquidity flag [ARCA]: \"" <<
               executionReport.m_liquidityFlag << "\"\n";
-            return ArcaFeeTable::SubDollarType::ACTIVE;
+            return ArcaFeeTable::SubdollarType::ACTIVE;
           }
         }();
       auto rate = LookupFee(feeTable, type);

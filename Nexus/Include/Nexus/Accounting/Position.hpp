@@ -36,7 +36,7 @@ namespace Details {
      * @param index The inventory's index.
      * @param currency The Currency used to value the inventory.
      */
-    Key(const Index& index, CurrencyId currency);
+    Key(Index index, CurrencyId currency);
 
     /**
      * Tests two Keys for equality.
@@ -44,16 +44,29 @@ namespace Details {
      * @return <code>true</code> iff <i>key</i> has the same Index and Currency.
      */
     bool operator ==(const Key& key) const;
+
+    /**
+     * Tests two Keys for inequality.
+     * @param key The Key to test for inequality.
+     * @return <code>true</code> iff <i>key</i> has a different Index or
+     *         Currency.
+     */
+    bool operator !=(const Key& key) const;
   };
 
   template<typename I>
-  Key<I>::Key(const Index& index, CurrencyId currency)
-    : m_index(index),
-      m_currency{currency} {}
+  Key<I>::Key(Index index, CurrencyId currency)
+    : m_index(std::move(index)),
+      m_currency(currency) {}
 
   template<typename I>
   bool Key<I>::operator ==(const Key& key) const {
     return m_index == key.m_index && m_currency == key.m_currency;
+  }
+
+  template<typename I>
+  bool Key<I>::operator !=(const Key& key) const {
+    return !(*this == key);
   }
 
   template<typename Index>
@@ -85,10 +98,24 @@ namespace Details {
     Money m_costBasis;
 
     /** Constructs a default Position. */
-    Position();
+    Position() = default;
 
     /** Constructs a Position. */
-    explicit Position(const Key& key);
+    explicit Position(Key key);
+
+    /**
+     * Constructs a Position.
+     * @param key Uniquely identifies this Position.
+     * @param quantity The quantity of inventory held.
+     * @param costBasis The total cost of the currently held inventory.
+     */
+    Position(Key key, Quantity quantity, Money costBasis);
+
+    /** Tests if two Positions are equal */
+    bool operator ==(const Position& position) const;
+
+    /** Tests if two Positions are not equal. */
+    bool operator !=(const Position& position) const;
   };
 
   template<typename Index>
@@ -127,13 +154,25 @@ namespace Details {
   }
 
   template<typename I>
-  Position<I>::Position()
-    : m_quantity(0) {}
+  Position<I>::Position(Key key)
+    : m_key(std::move(key)) {}
 
   template<typename I>
-  Position<I>::Position(const Key& key)
-    : m_quantity(0),
-      m_key(key) {}
+  Position<I>::Position(Key key, Quantity quantity, Money costBasis)
+    : m_key(std::move(key)),
+      m_quantity(quantity),
+      m_costBasis(costBasis) {}
+
+  template<typename I>
+  bool Position<I>::operator ==(const Position& position) const {
+    return m_key == position.m_key && m_quantity == position.m_quantity &&
+      m_costBasis == position.m_costBasis;
+  }
+
+  template<typename I>
+  bool Position<I>::operator !=(const Position& position) const {
+    return !(*this == position);
+  }
 }
 
 namespace Beam::Serialization {

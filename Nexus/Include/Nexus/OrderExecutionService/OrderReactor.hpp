@@ -7,7 +7,7 @@
 #include <Aspen/Sync.hpp>
 #include <Aspen/VectorSync.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -121,7 +121,7 @@ namespace Nexus::OrderExecutionService {
       Aspen::Maybe<const Order*> m_order;
       std::uint8_t m_state;
       Quantity m_filled;
-      std::shared_ptr<Beam::MultiQueueReader<ExecutionReport>>
+      std::shared_ptr<Beam::MultiQueueWriter<ExecutionReport>>
         m_executionReports;
       Beam::Reactors::QueueReactor<ExecutionReport> m_queue;
   };
@@ -208,7 +208,7 @@ namespace Nexus::OrderExecutionService {
       m_order(nullptr),
       m_state(NONE),
       m_executionReports(
-        std::make_shared<Beam::MultiQueueReader<ExecutionReport>>()),
+        std::make_shared<Beam::MultiQueueWriter<ExecutionReport>>()),
       m_queue(m_executionReports) {}
 
   template<typename C, typename AR, typename SR, typename CR, typename OR,

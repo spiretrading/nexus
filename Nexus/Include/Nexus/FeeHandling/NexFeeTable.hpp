@@ -7,32 +7,30 @@
 
 namespace Nexus {
 
-  /*! \struct NexFeeTable
-      \brief Stores the table of fees used by NEX listed securities.
-   */
+  /** Stores the table of fees used by NEX listed securities. */
   struct NexFeeTable {
 
-    //! The fee per share.
+    /** The fee per share. */
     Money m_fee;
   };
 
-  //! Parses an NexFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the NexFeeTable from.
-    \return The NexFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses an NexFeeTable from a YAML configuration.
+   * @param config The configuration to parse the NexFeeTable from.
+   * @return The NexFeeTable represented by the <i>config</i>.
+   */
   inline NexFeeTable ParseNexFeeTable(const YAML::Node& config) {
-    NexFeeTable feeTable;
+    auto feeTable = NexFeeTable();
     feeTable.m_fee = Beam::Extract<Money>(config, "fee");
     return feeTable;
   }
 
-  //! Calculates the fee on a trade executed on NEX.
-  /*!
-    \param feeTable The NexFeeTable used to calculate the fee.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return The fee calculated for the specified trade.
-  */
+  /**
+   * Calculates the fee on a trade executed on NEX.
+   * @param feeTable The NexFeeTable used to calculate the fee.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The fee calculated for the specified trade.
+   */
   inline Money CalculateFee(const NexFeeTable& feeTable,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {

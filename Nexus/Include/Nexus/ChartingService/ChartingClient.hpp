@@ -1,14 +1,13 @@
-#ifndef NEXUS_CHARTINGCLIENT_HPP
-#define NEXUS_CHARTINGCLIENT_HPP
+#ifndef NEXUS_CHARTING_CLIENT_HPP
+#define NEXUS_CHARTING_CLIENT_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/SequencedValuePublisher.hpp>
-#include <Beam/Queues/ConverterWriterQueue.hpp>
-#include <Beam/Queues/WeakQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/ChartingService.hpp"
@@ -17,50 +16,46 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
-namespace Nexus {
-namespace ChartingService {
+namespace Nexus::ChartingService {
 
-  /*! \class ChartingClient
-      \brief Client used to access the charting related services.
-      \tparam ServiceProtocolClientBuilderType The type used to build
-              ServiceProtocolClients to the server.
+  /**
+   * Client used to access the charting related services.
+   * @param <B> The type used to build ServiceProtocolClients to the server.
    */
-  template<typename ServiceProtocolClientBuilderType>
+  template<typename B>
   class ChartingClient : private boost::noncopyable {
     public:
 
-      //! The type used to build ServiceProtocolClients to the server.
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<
-        ServiceProtocolClientBuilderType>;
+      /** The type used to build ServiceProtocolClients to the server. */
+      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
 
-      //! Constructs a ChartingClient.
-      /*!
-        \param clientBuilder Initializes the ServiceProtocolClientBuilder.
-      */
-      template<typename ClientBuilderForward>
-      ChartingClient(ClientBuilderForward&& clientBuilder);
+      /**
+       * Constructs a ChartingClient.
+       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       */
+      template<typename BF>
+      explicit ChartingClient(BF&& clientBuilder);
 
       ~ChartingClient();
 
-      //! Submits a query for a Security's technical info.
-      /*!
-        \param query The query to submit.
-        \param queue The queue that will store the result of the query.
-      */
+      /**
+       * Submits a query for a Security's technical info.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
       void QuerySecurity(const SecurityChartingQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue);
+        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
 
-      //! Loads a Security's time/price series.
-      /*!
-        \param security The Security to load the series for.
-        \param startTime The series start time (inclusive).
-        \param endTime The series end time (inclusive).
-        \param interval The time interval per Candlestick.
-        \return The Security's time/price series with the specified parameters.
-      */
+      /**
+       * Loads a Security's time/price series.
+       * @param security The Security to load the series for.
+       * @param startTime The series start time (inclusive).
+       * @param endTime The series end time (inclusive).
+       * @param interval The time interval per Candlestick.
+       * @return The Security's time/price series with the specified parameters.
+       */
       TimePriceQueryResult LoadTimePriceSeries(const Security& security,
-        const boost::posix_time::ptime& startTime,
-        const boost::posix_time::ptime& endTime,
+        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
         boost::posix_time::time_duration interval);
 
       void Open();
@@ -76,8 +71,7 @@ namespace ChartingService {
       Beam::SynchronizedUnorderedMap<int,
         std::shared_ptr<SecurityChartingPublisher>>
         m_securityChartingPublishers;
-      Beam::Services::ServiceProtocolClientHandler<
-        ServiceProtocolClientBuilderType> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_queryRoutines;
 
@@ -87,12 +81,11 @@ namespace ChartingService {
         const Queries::SequencedQueryVariant& value);
   };
 
-  template<typename ServiceProtocolClientBuilderType>
-  template<typename ClientBuilderForward>
-  ChartingClient<ServiceProtocolClientBuilderType>::ChartingClient(
-      ClientBuilderForward&& clientBuilder)
+  template<typename B>
+  template<typename BF>
+  ChartingClient<B>::ChartingClient(BF&& clientBuilder)
       : m_nextQueryId(0),
-        m_clientHandler(std::forward<ClientBuilderForward>(clientBuilder)) {
+        m_clientHandler(std::forward<BF>(clientBuilder)) {
     m_clientHandler.SetReconnectHandler(
       std::bind(&ChartingClient::OnReconnect, this, std::placeholders::_1));
     Queries::RegisterQueryTypes(Beam::Store(
@@ -105,28 +98,26 @@ namespace ChartingService {
       std::placeholders::_2, std::placeholders::_3));
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  ChartingClient<ServiceProtocolClientBuilderType>::~ChartingClient() {
+  template<typename B>
+  ChartingClient<B>::~ChartingClient() {
     Close();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::QuerySecurity(
-      const SecurityChartingQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<Queries::QueryVariant>>& queue) {
+  template<typename B>
+  void ChartingClient<B>::QuerySecurity(const SecurityChartingQuery& query,
+      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       m_queryRoutines.Spawn(
-        [=] {
+        [=, queue = std::move(queue)] () mutable {
           auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
             query.GetFilter());
-          auto weakQueue = Beam::MakeWeakQueue(queue);
-          auto conversionQueue = Beam::MakeConverterWriterQueue<
-            Queries::SequencedQueryVariant>(weakQueue,
-            [] (const Queries::SequencedQueryVariant& value) {
+          auto conversionQueue = Beam::MakeConverterQueueWriter<
+            Queries::SequencedQueryVariant>(std::move(queue),
+            [] (const auto& value) {
               return *value;
             });
           auto publisher = std::make_shared<SecurityChartingPublisher>(query,
-            std::move(filter), conversionQueue);
+            std::move(filter), std::move(conversionQueue));
           auto id = ++m_nextQueryId;
           try {
             publisher->BeginSnapshot();
@@ -144,34 +135,35 @@ namespace ChartingService {
         });
     } else {
       m_queryRoutines.Spawn(
-        [=] {
+        [=, queue = std::move(queue)] () mutable {
           try {
             auto client = m_clientHandler.GetClient();
             auto id = ++m_nextQueryId;
             auto queryResult =
               client->template SendRequest<QuerySecurityService>(query, id);
             for(auto& value : queryResult.m_snapshot) {
-              queue->Push(std::move(value));
+              queue.Push(std::move(value));
             }
-          } catch(const std::exception&) {}
-          queue->Break();
+            queue.Break();
+          } catch(const std::exception&) {
+            queue.Break(std::current_exception());
+          }
         });
     }
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  TimePriceQueryResult ChartingClient<ServiceProtocolClientBuilderType>::
-      LoadTimePriceSeries(const Security& security,
-      const boost::posix_time::ptime& startTime,
-      const boost::posix_time::ptime& endTime,
+  template<typename B>
+  TimePriceQueryResult ChartingClient<B>::LoadTimePriceSeries(
+      const Security& security, boost::posix_time::ptime startTime,
+      boost::posix_time::ptime endTime,
       boost::posix_time::time_duration interval) {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityTimePriceSeriesService>(
       security, startTime, endTime, interval);
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::Open() {
+  template<typename B>
+  void ChartingClient<B>::Open() {
     if(m_openState.SetOpening()) {
       return;
     }
@@ -184,33 +176,32 @@ namespace ChartingService {
     m_openState.SetOpen();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::Close() {
+  template<typename B>
+  void ChartingClient<B>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
     Shutdown();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::Shutdown() {
+  template<typename B>
+  void ChartingClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_openState.SetClosed();
   }
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::OnReconnect(
-      const std::shared_ptr<ServiceProtocolClient>& client) {}
+  template<typename B>
+  void ChartingClient<B>::OnReconnect(
+    const std::shared_ptr<ServiceProtocolClient>& client) {}
 
-  template<typename ServiceProtocolClientBuilderType>
-  void ChartingClient<ServiceProtocolClientBuilderType>::OnSecurityQuery(
-      ServiceProtocolClient& client, int queryId,
-      const Queries::SequencedQueryVariant& value) {
+  template<typename B>
+  void ChartingClient<B>::OnSecurityQuery(ServiceProtocolClient& client,
+      int queryId, const Queries::SequencedQueryVariant& value) {
     auto checkPublisher = m_securityChartingPublishers.FindValue(queryId);
     if(!checkPublisher.is_initialized()) {
       return;
     }
-    const auto& publisher = *checkPublisher;
+    auto& publisher = *checkPublisher;
     try {
       publisher->Push(value);
     } catch(const std::exception&) {
@@ -221,7 +212,6 @@ namespace ChartingService {
       }
     }
   }
-}
 }
 
 #endif

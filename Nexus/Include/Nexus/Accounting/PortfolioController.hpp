@@ -1,11 +1,12 @@
-#ifndef NEXUS_PORTFOLIO_MONITOR_HPP
-#define NEXUS_PORTFOLIO_MONITOR_HPP
+#ifndef NEXUS_PORTFOLIO_CONTROLLER_HPP
+#define NEXUS_PORTFOLIO_CONTROLLER_HPP
 #include <unordered_set>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/NativePointerPolicy.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Queues/ScopedQueueReader.hpp>
 #include <Beam/Queues/ValueSnapshotPublisher.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
@@ -27,7 +28,7 @@ namespace Nexus::Accounting {
    * @param <C> The type of MarketDataClient to use.
    */
   template<typename P, typename C>
-  class PortfolioMonitor : private boost::noncopyable {
+  class PortfolioController : private boost::noncopyable {
     public:
 
       /** The type of Portfolio to update. */
@@ -37,23 +38,22 @@ namespace Nexus::Accounting {
       using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
       /** The type of Inventory stored by the Portfolio. */
-      using Inventory = typename Portfolio::PortfolioBookkeeper::Inventory;
+      using Inventory = typename Portfolio::Bookkeeper::Inventory;
 
       /** The type of updates published. */
       using UpdateEntry = typename Portfolio::UpdateEntry;
 
       /**
-       * Constructs a PortfolioMonitor.
+       * Constructs a PortfolioController.
        * @param portfolio Initializes the Portfolio.
        * @param marketDataClient Initializes the MarketDataClient.
-       * @param orderExecutionPublisher Publishes Order executions.
+       * @param orders The Orders to include in the Portfolio.
        */
       template<typename PF, typename CF>
-      PortfolioMonitor(PF&& portfolio, CF&& marketDataClient,
-        const OrderExecutionService::OrderExecutionPublisher&
-        orderExecutionPublisher);
+      PortfolioController(PF&& portfolio, CF&& marketDataClient,
+        Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders);
 
-      /** Returns the object publishing updates to the monitored Portfolio. */
+      /** Returns the object publishing updates to the Portfolio. */
       const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
         GetPublisher() const;
 
@@ -67,6 +67,7 @@ namespace Nexus::Accounting {
       std::unordered_set<Security> m_securities;
       Beam::RoutineTaskQueue m_tasks;
 
+      void Subscribe(const Security& security);
       void PushUpdate(const Security& security);
       void OnBbo(const Security& security, const BboQuote& bbo);
       void OnExecutionReport(
@@ -75,51 +76,67 @@ namespace Nexus::Accounting {
 
   template<typename P, typename C>
   template<typename PF, typename CF>
-  PortfolioMonitor<P, C>::PortfolioMonitor(PF&& portfolio,
+  PortfolioController<P, C>::PortfolioController(PF&& portfolio,
       CF&& marketDataClient,
-      const OrderExecutionService::OrderExecutionPublisher&
-      orderExecutionPublisher)
+      Beam::ScopedQueueReader<const OrderExecutionService::Order*> orders)
       : m_portfolio(std::forward<PF>(portfolio)),
         m_marketDataClient(std::forward<CF>(marketDataClient)),
-        m_executionReportPublisher(orderExecutionPublisher),
+        m_executionReportPublisher(std::move(orders)),
         m_publisher(
-          [] (auto snapshot, auto& monitor) {
-            ForEachPortfolioEntry(*snapshot,
-              [&] (auto& update) {
-                monitor->Push(update);
+          [] (auto snapshot, auto& queue) {
+            ForEach(*snapshot,
+              [&] (const auto& update) {
+                queue.Push(update);
               });
           }, Beam::SignalHandling::NullSlot(), &*m_portfolio) {
-    m_executionReportPublisher.Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
-      std::bind(&PortfolioMonitor::OnExecutionReport, this,
-      std::placeholders::_1)));
+    m_publisher.With([&] {
+      for(auto& inventory : m_portfolio->GetBookkeeper().GetInventoryRange()) {
+        Subscribe(inventory.first.m_index);
+      }
+      auto snapshot = boost::optional<
+        std::vector<OrderExecutionService::ExecutionReportEntry>>();
+      m_executionReportPublisher.Monitor(
+        m_tasks.GetSlot<OrderExecutionService::ExecutionReportEntry>(
+        std::bind(&PortfolioController::OnExecutionReport, this,
+        std::placeholders::_1)), Beam::Store(snapshot));
+      if(snapshot) {
+        for(auto& report : *snapshot) {
+          OnExecutionReport(report);
+        }
+      }
+    });
   }
 
   template<typename P, typename C>
-  const Beam::SnapshotPublisher<typename PortfolioMonitor<P, C>::UpdateEntry,
-      typename PortfolioMonitor<P, C>::Portfolio*>& PortfolioMonitor<P, C>::
-      GetPublisher() const {
+  const Beam::SnapshotPublisher<typename PortfolioController<P, C>::UpdateEntry,
+      typename PortfolioController<P, C>::Portfolio*>&
+      PortfolioController<P, C>::GetPublisher() const {
     return m_publisher;
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::PushUpdate(const Security& security) {
+  void PortfolioController<P, C>::Subscribe(const Security& security) {
+    if(auto securityIterator = m_securities.find(security);
+        securityIterator == m_securities.end()) {
+      m_marketDataClient->QueryBboQuotes(Beam::Queries::BuildCurrentQuery(
+        security), m_tasks.GetSlot<BboQuote>(std::bind(
+        &PortfolioController::OnBbo, this, security, std::placeholders::_1)));
+      m_securities.insert(security);
+    }
+  }
+
+  template<typename P, typename C>
+  void PortfolioController<P, C>::PushUpdate(const Security& security) {
     auto securityEntryIterator = m_portfolio->GetSecurityEntries().find(
       security);
     if(securityEntryIterator == m_portfolio->GetSecurityEntries().end()) {
       return;
     }
     auto& securityEntry = securityEntryIterator->second;
-    if(!securityEntry.m_valuation.m_askValue.is_initialized() ||
-        !securityEntry.m_valuation.m_bidValue.is_initialized()) {
-      return;
-    }
-    auto update = UpdateEntry();
-    update.m_securityInventory = m_portfolio->GetBookkeeper().GetInventory(
+    auto& securityInventory = m_portfolio->GetBookkeeper().GetInventory(
       security, securityEntry.m_valuation.m_currency);
-    if(update.m_securityInventory.m_transactionCount == 0) {
-      return;
-    }
+    auto update = UpdateEntry();
+    update.m_securityInventory = securityInventory;
     update.m_unrealizedSecurity = securityEntry.m_unrealized;
     update.m_currencyInventory = m_portfolio->GetBookkeeper().GetTotal(
       securityEntry.m_valuation.m_currency);
@@ -136,49 +153,44 @@ namespace Nexus::Accounting {
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::OnBbo(const Security& security,
+  void PortfolioController<P, C>::OnBbo(const Security& security,
       const BboQuote& bbo) {
+    auto& lastBbo = m_bboQuotes[security];
+    if(lastBbo.m_ask.m_price == bbo.m_ask.m_price &&
+        lastBbo.m_bid.m_price == bbo.m_bid.m_price) {
+      return;
+    }
+    lastBbo = bbo;
+    if(bbo.m_ask.m_price == Money::ZERO && bbo.m_bid.m_price == Money::ZERO) {
+      return;
+    }
     m_publisher.With(
       [&] {
-        auto& lastBbo = m_bboQuotes[security];
-        if(lastBbo.m_ask.m_price == bbo.m_ask.m_price &&
-            lastBbo.m_bid.m_price == bbo.m_bid.m_price) {
-          return;
-        }
-        lastBbo = bbo;
-        if(bbo.m_ask.m_price == Money::ZERO) {
-          if(bbo.m_bid.m_price == Money::ZERO) {
-            return;
+        auto hasUpdate = [&] {
+          if(bbo.m_ask.m_price == Money::ZERO) {
+            return m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
+          } else if(bbo.m_bid.m_price == Money::ZERO) {
+            return m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
           }
-          m_portfolio->UpdateBid(security, bbo.m_bid.m_price);
-        } else if(bbo.m_bid.m_price == Money::ZERO) {
-          m_portfolio->UpdateAsk(security, bbo.m_ask.m_price);
-        } else {
-          m_portfolio->Update(security, bbo.m_ask.m_price, bbo.m_bid.m_price);
+          return m_portfolio->Update(security, bbo.m_ask.m_price,
+            bbo.m_bid.m_price);
+        }();
+        if(hasUpdate) {
+          PushUpdate(security);
         }
-        PushUpdate(security);
       });
   }
 
   template<typename P, typename C>
-  void PortfolioMonitor<P, C>::OnExecutionReport(
+  void PortfolioController<P, C>::OnExecutionReport(
       const OrderExecutionService::ExecutionReportEntry& executionReport) {
     if(executionReport.m_executionReport.m_status == OrderStatus::PENDING_NEW) {
-      auto& security = executionReport.m_order->GetInfo().m_fields.m_security;
-      auto securityIterator = m_securities.find(security);
-      if(securityIterator == m_securities.end()) {
-        auto bboQuery = Beam::Queries::BuildCurrentQuery(security);
-        m_marketDataClient->QueryBboQuotes(bboQuery,
-          m_tasks.GetSlot<BboQuote>(std::bind(&PortfolioMonitor::OnBbo, this,
-          security, std::placeholders::_1)));
-        m_securities.insert(security);
-      }
+      Subscribe(executionReport.m_order->GetInfo().m_fields.m_security);
     }
     m_publisher.With(
       [&] {
-        m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
-          executionReport.m_executionReport);
-        if(executionReport.m_executionReport.m_lastQuantity != 0) {
+        if(m_portfolio->Update(executionReport.m_order->GetInfo().m_fields,
+            executionReport.m_executionReport)) {
           PushUpdate(executionReport.m_order->GetInfo().m_fields.m_security);
         }
       });

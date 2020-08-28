@@ -10,6 +10,9 @@ export abstract class ProfileModel {
   /** Returns the account's roles. */
   public abstract get roles(): Nexus.AccountRoles;
 
+  /** The trading groups the account is a member of. */
+  public abstract get groups(): Beam.DirectoryEntry[];
+
   /** Returns the account's identity. */
   public abstract get identity(): Nexus.AccountIdentity;
 

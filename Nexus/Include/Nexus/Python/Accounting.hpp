@@ -11,10 +11,10 @@ namespace Nexus::Python {
   void ExportAccounting(pybind11::module& module);
 
   /**
-   * Exports the BuyingPowerTracker class.
+   * Exports the BuyingPowerModel class.
    * @param module The module to export to.
    */
-  void ExportBuyingPowerTracker(pybind11::module& module);
+  void ExportBuyingPowerModel(pybind11::module& module);
 
   /**
    * Exports the PositionOrderBook class.

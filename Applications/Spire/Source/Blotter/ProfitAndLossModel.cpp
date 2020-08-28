@@ -21,7 +21,7 @@ ProfitAndLossModel::ProfitAndLossModel(
     : m_currencyDatabase(currencyDatabase.Get()),
       m_exchangeRates(exchangeRates.Get()),
       m_showUnrealized{showUnrealized},
-      m_portfolioMonitor(nullptr) {
+      m_portfolioController(nullptr) {
   m_slotHandler.emplace();
   connect(&m_updateTimer, &QTimer::timeout, this,
     &ProfitAndLossModel::OnUpdateTimer);
@@ -30,21 +30,21 @@ ProfitAndLossModel::ProfitAndLossModel(
 
 ProfitAndLossModel::~ProfitAndLossModel() {}
 
-void ProfitAndLossModel::SetPortfolioMonitor(
-    Ref<SpirePortfolioMonitor> portfolioMonitor) {
+void ProfitAndLossModel::SetPortfolioController(
+    Ref<SpirePortfolioController> portfolioController) {
   for(auto& model : m_currencyToModel | boost::adaptors::map_values) {
     m_profitAndLossEntryModelRemovedSignal(*model);
     model.reset();
   }
   m_currencyToModel.clear();
-  m_update = SpirePortfolioMonitor::UpdateEntry();
+  m_update = SpirePortfolioController::UpdateEntry();
   m_update.m_currencyInventory.m_position.m_key.m_currency = m_currency;
   m_update.m_securityInventory.m_position.m_key.m_currency = m_currency;
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
-  m_portfolioMonitor = portfolioMonitor.Get();
-  m_portfolioMonitor->GetPublisher().Monitor(
-    m_slotHandler->GetSlot<SpirePortfolioMonitor::UpdateEntry>(
+  m_portfolioController = portfolioController.Get();
+  m_portfolioController->GetPublisher().Monitor(
+    m_slotHandler->GetSlot<SpirePortfolioController::UpdateEntry>(
     std::bind(&ProfitAndLossModel::OnPortfolioUpdate, this,
     std::placeholders::_1)));
   m_profitAndLossUpdateSignal(m_update);
@@ -55,10 +55,10 @@ void ProfitAndLossModel::SetCurrency(CurrencyId currency) {
     return;
   }
   m_currency = currency;
-  if(m_portfolioMonitor != nullptr) {
-    SetPortfolioMonitor(Ref(*m_portfolioMonitor));
+  if(m_portfolioController != nullptr) {
+    SetPortfolioController(Ref(*m_portfolioController));
   } else {
-    m_update = SpirePortfolioMonitor::UpdateEntry();
+    m_update = SpirePortfolioController::UpdateEntry();
     m_update.m_currencyInventory.m_position.m_key.m_currency = m_currency;
     m_update.m_securityInventory.m_position.m_key.m_currency = m_currency;
   }
@@ -81,7 +81,7 @@ connection ProfitAndLossModel::ConnectProfitAndLossEntryModelRemovedSignal(
 }
 
 void ProfitAndLossModel::OnPortfolioUpdate(
-    const SpirePortfolioMonitor::UpdateEntry& update) {
+    const SpirePortfolioController::UpdateEntry& update) {
   auto& key = update.m_securityInventory.m_position.m_key;
   auto& model = m_currencyToModel[key.m_currency];
   if(model == nullptr) {

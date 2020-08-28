@@ -2,12 +2,12 @@
 #define NEXUS_EVALUATORTRANSLATOR_HPP
 #include <memory>
 #include <vector>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queries/EvaluatorTranslator.hpp>
 #include <Beam/Queries/FunctionEvaluatorNode.hpp>
 #include <Beam/Queries/MemberAccessEvaluatorNode.hpp>
 #include <Beam/Utilities/Casts.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/FunctionEvaluators.hpp"

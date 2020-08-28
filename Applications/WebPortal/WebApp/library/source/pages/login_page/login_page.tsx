@@ -26,9 +26,6 @@ export class LoginPage extends React.Component<Properties> {
 
   constructor(properties: Properties) {
     super(properties);
-    this.onSubmit = this.onSubmit.bind(this);
-    this.onKeyDown = this.onKeyDown.bind(this);
-    this.onUsernameChange = this.onUsernameChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -98,12 +95,12 @@ export class LoginPage extends React.Component<Properties> {
     window.removeEventListener('keydown', this.onKeyDown);
   }
 
-  private onSubmit() {
+  private onSubmit = () => {
     this.props.onSubmit(this.usernameInputField.value,
       this.passwordInputField.value);
   }
 
-  private onKeyDown(event: KeyboardEvent) {
+  private onKeyDown = (event: KeyboardEvent) => {
     if(document.activeElement !== this.usernameInputField &&
         document.activeElement !== this.passwordInputField &&
         document.activeElement !== this.submitButton &&
@@ -116,7 +113,7 @@ export class LoginPage extends React.Component<Properties> {
     }
   }
 
-  private onUsernameChange() {
+  private onUsernameChange = () => {
     this.submitButton.disabled = this.usernameInputField.value.trim() === '' ||
       this.props.status === LoginPage.Status.LOADING;
   }
@@ -124,23 +121,23 @@ export class LoginPage extends React.Component<Properties> {
   private static readonly STATIC_STYLES = {
     page: {
       backgroundColor: '#4B23A0',
-      boxSizing: 'border-box' as 'border-box'
-    },
+      boxSizing: 'border-box'
+    } as React.CSSProperties,
     logoVisible: {
       width: '130px',
       height: '50px'
-    },
+    } as React.CSSProperties,
     logoInvisible: {
       width: '0px',
       height: '0px'
-    },
+    } as React.CSSProperties,
     errorMessage: {
       width: '100%',
-      textAlign: 'center' as 'center',
+      textAlign: 'center',
       font: '300 14px Roboto',
       height: '20px',
       color: '#FAEB96'
-    }
+    } as React.CSSProperties
   };
 
   private static DYNAMIC_STYLES = StyleSheet.create({

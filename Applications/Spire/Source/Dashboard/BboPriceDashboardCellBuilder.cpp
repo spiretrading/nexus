@@ -1,5 +1,5 @@
 #include "Spire/Dashboard/BboPriceDashboardCellBuilder.hpp"
-#include <Beam/Queues/ConverterReaderQueue.hpp>
+#include <Beam/Queues/ConverterQueueReader.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -23,10 +23,10 @@ std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Build(
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
   auto side = m_side;
   std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterReaderQueue<Money>(baseQueue,
-    [=] (const BboQuote& quote) {
-      return Pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
-    });
+    MakeConverterQueueReader(baseQueue,
+      [=] (const BboQuote& quote) {
+        return Pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
+      });
   auto query = BuildCurrentQuery(security);
   marketDataClient.QueryBboQuotes(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);

@@ -1,14 +1,14 @@
 #ifndef NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
 #define NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/MultiQueueReader.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/Accounting/BuyingPowerTracker.hpp"
+#include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -65,9 +65,8 @@ namespace Nexus::Compliance {
       SecuritySet m_securities;
       ExchangeRateTable m_exchangeRates;
       Beam::GetOptionalLocalPtr<C> m_marketDataClient;
-      Beam::Threading::Sync<Accounting::BuyingPowerTracker>
-        m_buyingPowerTracker;
-      Beam::MultiQueueReader<OrderExecutionService::ExecutionReport>
+      Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buyingPowerModel;
+      Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
         m_executionReportQueue;
       std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
         m_currencies;
@@ -132,21 +131,19 @@ namespace Nexus::Compliance {
       return;
     }
     auto price = GetExpectedPrice(fields);
-    Beam::Threading::With(m_buyingPowerTracker,
-      [&] (auto& buyingPowerTracker) {
-        while(!m_executionReportQueue.IsEmpty()) {
-          auto report = m_executionReportQueue.Top();
-          m_executionReportQueue.Pop();
-          if(report.m_lastQuantity != 0) {
-            auto currency = Beam::Lookup(m_currencies, report.m_id);
+    Beam::Threading::With(m_buyingPowerModel,
+      [&] (auto& buyingPowerModel) {
+        while(auto report = m_executionReportQueue.TryPop()) {
+          if(report->m_lastQuantity != 0) {
+            auto currency = Beam::Lookup(m_currencies, report->m_id);
             if(!currency.is_initialized()) {
               BOOST_THROW_EXCEPTION(ComplianceCheckException(
                 "Currency not recognized."));
             }
-            report.m_lastPrice = m_exchangeRates.Convert(report.m_lastPrice,
+            report->m_lastPrice = m_exchangeRates.Convert(report->m_lastPrice,
               *currency, m_currency);
           }
-          buyingPowerTracker.Update(report);
+          buyingPowerModel.Update(*report);
         }
         auto convertedFields = fields;
         convertedFields.m_currency = m_currency;
@@ -162,13 +159,13 @@ namespace Nexus::Compliance {
         }
         m_currencies.insert(std::pair(order.GetInfo().m_orderId,
           fields.m_currency));
-        auto updatedBuyingPower = buyingPowerTracker.Submit(
+        auto updatedBuyingPower = buyingPowerModel.Submit(
           order.GetInfo().m_orderId, convertedFields, convertedPrice);
         if(updatedBuyingPower > m_buyingPower) {
           auto report = OrderExecutionService::ExecutionReport();
           report.m_id = order.GetInfo().m_orderId;
           report.m_status = OrderStatus::REJECTED;
-          buyingPowerTracker.Update(report);
+          buyingPowerModel.Update(report);
           BOOST_THROW_EXCEPTION(ComplianceCheckException(
             "Order exceeds available buying power."));
         } else {
@@ -185,8 +182,8 @@ namespace Nexus::Compliance {
       return;
     }
     auto price = GetExpectedPrice(fields);
-    Beam::Threading::With(m_buyingPowerTracker,
-      [&] (auto& buyingPowerTracker) {
+    Beam::Threading::With(m_buyingPowerModel,
+      [&] (auto& buyingPowerModel) {
         auto convertedFields = fields;
         m_currencies.insert(std::pair(order.GetInfo().m_orderId,
           fields.m_currency));
@@ -200,7 +197,7 @@ namespace Nexus::Compliance {
         } catch(const CurrencyPairNotFoundException&) {
           return;
         }
-        buyingPowerTracker.Submit(order.GetInfo().m_orderId, convertedFields,
+        buyingPowerModel.Submit(order.GetInfo().m_orderId, convertedFields,
           convertedPrice);
         order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
     });
@@ -217,7 +214,7 @@ namespace Nexus::Compliance {
         return publisher;
       });
     try {
-      return publisher->Top();
+      return publisher->Peek();
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(ComplianceCheckException(

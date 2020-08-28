@@ -53,10 +53,10 @@ TEST_SUITE("TsxFeeHandling") {
       std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("active_interlisted_sub_dollar") {
+  TEST_CASE("active_interlisted_subdollar") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupContinuousFee(feeTable,
-      TsxFeeTable::PriceClass::SUB_DOLLAR, TsxFeeTable::Type::ACTIVE);
+      TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::ACTIVE);
     auto fields = BuildOrderFields(50 * Money::CENT);
     fields.m_quantity = 100;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
@@ -65,10 +65,10 @@ TEST_SUITE("TsxFeeHandling") {
       std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("passive_interlisted_sub_dollar") {
+  TEST_CASE("passive_interlisted_subdollar") {
     auto feeTable = BuildFeeTable();
     auto expectedFee = LookupContinuousFee(feeTable,
-      TsxFeeTable::PriceClass::SUB_DOLLAR, TsxFeeTable::Type::PASSIVE);
+      TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::PASSIVE);
     auto fields = BuildOrderFields(50 * Money::CENT);
     fields.m_quantity = 100;
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,

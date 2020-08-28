@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { AccountEntry, DisplaySize, LoadingPage } from '../../..';
-import { GroupInfoModel } from './group_info_model';
+import { AccountEntry, DisplaySize } from '../../..';
 import { GroupInfoPage } from './group_info_page';
 
 interface Properties {
@@ -9,11 +8,10 @@ interface Properties {
   displaySize: DisplaySize;
 
   /** The model representing the group. */
-  model: GroupInfoModel;
+  accounts: AccountEntry[];
 }
 
 interface State {
-  isLoaded: boolean;
   accounts: AccountEntry[];
 }
 
@@ -22,30 +20,15 @@ export class GroupInfoController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isLoaded: false,
-      accounts: []
+      accounts: this.props.accounts.sort(GroupInfoController.accountComparator)
     }
   }
 
   public render(): JSX.Element {
-    if(!this.state.isLoaded) {
-      return <LoadingPage/>;
-    }
     return(
       <GroupInfoPage
         displaySize={this.props.displaySize}
         group={this.state.accounts}/>);
-  }
-
-  public componentDidMount(): void {
-    this.props.model.load().then(
-      () => {
-        this.setState({
-          isLoaded: true,
-          accounts: this.props.model.group.sort(
-            GroupInfoController.accountComparator)
-        });
-      });
   }
 
   private static accountComparator(accountA: AccountEntry,

@@ -32,7 +32,7 @@ namespace Nexus::MarketDataService {
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
        */
       template<typename ClientBuilderForward>
-      MarketDataClient(ClientBuilderForward&& clientBuilder);
+      explicit MarketDataClient(ClientBuilderForward&& clientBuilder);
 
       ~MarketDataClient();
 
@@ -42,8 +42,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrderImbalance>>&
-        queue);
+        Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
 
       /**
        * Submits a query for a Market's OrderImbalances.
@@ -51,7 +50,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue);
+        Beam::ScopedQueueWriter<OrderImbalance> queue);
 
       /**
        * Submits a query for a Security's BboQuotes.
@@ -59,7 +58,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBboQuote> queue);
 
       /**
        * Submits a query for a Security's BboQuotes.
@@ -67,7 +66,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue);
+        Beam::ScopedQueueWriter<BboQuote> queue);
 
       /**
        * Submits a query for a Security's BookQuotes.
@@ -75,7 +74,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedBookQuote> queue);
 
       /**
        * Submits a query for a Security's BookQuotes.
@@ -83,7 +82,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue);
+        Beam::ScopedQueueWriter<BookQuote> queue);
 
       /**
        * Submits a query for a Security's MarketQuotes.
@@ -91,7 +90,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue);
+        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
 
       /**
        * Submits a query for a Security's MarketQuotes.
@@ -99,7 +98,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue);
+        Beam::ScopedQueueWriter<MarketQuote> queue);
 
       /**
        * Submits a query for a Security's TimeAndSales.
@@ -107,7 +106,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
 
       /**
        * Submits a query for a Security's TimeAndSales.
@@ -115,7 +114,7 @@ namespace Nexus::MarketDataService {
        * @param queue The queue that will store the result of the query.
        */
       void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue);
+        Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       /**
        * Loads a Security's real-time snapshot.
@@ -209,70 +208,70 @@ namespace Nexus::MarketDataService {
 
   template<typename B>
   void MarketDataClient<B>::QueryOrderImbalances(
-      const MarketWideDataQuery& query, const std::shared_ptr<
-      Beam::QueueWriter<SequencedOrderImbalance>>& queue) {
-    m_orderImbalancePublisher.SubmitQuery(query, queue);
+      const MarketWideDataQuery& query,
+      Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
+    m_orderImbalancePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderImbalance>>& queue) {
-    m_orderImbalancePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<OrderImbalance> queue) {
+    m_orderImbalancePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBboQuote>>& queue) {
-    m_bboQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
+    m_bboQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BboQuote>>& queue) {
-    m_bboQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<BboQuote> queue) {
+    m_bboQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedBookQuote>>& queue) {
-    m_bookQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
+    m_bookQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryBookQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<BookQuote>>& queue) {
-    m_bookQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<BookQuote> queue) {
+    m_bookQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedMarketQuote>>& queue) {
-    m_marketQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
+    m_marketQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryMarketQuotes(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<MarketQuote>>& queue) {
-    m_marketQuotePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<MarketQuote> queue) {
+    m_marketQuotePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedTimeAndSale>>& queue) {
-    m_timeAndSalePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
+    m_timeAndSalePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
   void MarketDataClient<B>::QueryTimeAndSales(
       const SecurityMarketDataQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<TimeAndSale>>& queue) {
-    m_timeAndSalePublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+    m_timeAndSalePublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>

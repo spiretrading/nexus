@@ -1,5 +1,6 @@
 #include "Spire/Canvas/Common/SignatureNode.hpp"
-#include <Beam/Collections/IndexedIterator.hpp>
+#include <Beam/Collections/DereferenceIterator.hpp>
+#include <Beam/Collections/IndexIterator.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
@@ -20,7 +21,7 @@ namespace {
         compatibleTypes.push_back(signature[index]);
       }
     }
-    return UnionType::Create(DereferenceView(compatibleTypes));
+    return UnionType::Create(MakeDereferenceView(compatibleTypes));
   }
 
   std::shared_ptr<CanvasType> GetReturnType(const CanvasNode& node,
@@ -28,7 +29,7 @@ namespace {
     vector<std::shared_ptr<NativeType>> returnTypes;
     for(const auto& signature : signatures) {
       bool validSignature = true;
-      for(const auto& child : MakeIndexedView(node.GetChildren())) {
+      for(const auto& child : MakeIndexView(node.GetChildren())) {
         if(!IsCompatible(child.GetValue().GetType(),
             *signature[child.GetIndex()]) &&
             (dynamic_cast<const RecordType*>(&child.GetValue().GetType()) ==
@@ -42,7 +43,7 @@ namespace {
         returnTypes.emplace_back(signature.back());
       }
     }
-    return UnionType::Create(DereferenceView(returnTypes));
+    return UnionType::Create(MakeDereferenceView(returnTypes));
   }
 }
 
@@ -51,7 +52,7 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
     GetSignatures().front().size());
   for(const auto& signature : GetSignatures()) {
     if(IsCompatible(type, *signature.back())) {
-      for(const auto& type : MakeIndexedView(signature)) {
+      for(const auto& type : MakeIndexView(signature)) {
         signatureEntries[type.GetIndex()].push_back(type.GetValue());
       }
     }
@@ -60,13 +61,14 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
   auto clone = Clone(*this);
-  for(const auto& signature : DropLast(MakeIndexedView(signatureEntries))) {
+  for(const auto& signature : DropLast(MakeIndexView(signatureEntries))) {
     auto parameterType = UnionType::Create(
-      DereferenceView(signature.GetValue()));
+      MakeDereferenceView(signature.GetValue()));
     auto& child = clone->GetChildren()[signature.GetIndex()];
     clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
   }
-  auto returnType = UnionType::Create(DereferenceView(signatureEntries.back()));
+  auto returnType = UnionType::Create(MakeDereferenceView(
+    signatureEntries.back()));
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }
@@ -77,7 +79,7 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
 unique_ptr<CanvasNode> SignatureNode::Replace(const CanvasNode& child,
     unique_ptr<CanvasNode> replacement) const {
   size_t replacementIndex;
-  for(const auto& selfChild : MakeIndexedView(GetChildren())) {
+  for(const auto& selfChild : MakeIndexView(GetChildren())) {
     if(&selfChild.GetValue() == &child) {
       replacementIndex = selfChild.GetIndex();
       break;

@@ -1,4 +1,5 @@
 #include "Spire/CanvasView/OrderTaskView.hpp"
+#include <Beam/Utilities/Algorithm.hpp>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include "Nexus/Definitions/Security.hpp"

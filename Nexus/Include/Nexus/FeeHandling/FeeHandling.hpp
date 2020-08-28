@@ -32,12 +32,12 @@ namespace Nexus {
   struct XatsFeeTable;
   struct Xcx2FeeTable;
 
-  //! Parses the set of symbols from a YAML config.
-  /*!
-    \param config The config to parse.
-    \param marketDatabase The MarketDatabase used to parse the symbols.
-    \return The set of symbols.
-  */
+  /**
+   * Parses the set of symbols from a YAML config.
+   * @param config The config to parse.
+   * @param marketDatabase The MarketDatabase used to parse the symbols.
+   * @return The set of symbols.
+   */
   inline std::unordered_set<Security> ParseSecuritySet(const YAML::Node& config,
       const MarketDatabase& marketDatabase) {
     auto securities = std::unordered_set<Security>();

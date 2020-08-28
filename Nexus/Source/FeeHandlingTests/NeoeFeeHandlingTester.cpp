@@ -92,12 +92,12 @@ TEST_SUITE("NeoeFeeHandling") {
     }
   }
 
-  TEST_CASE("sub_dollar_active") {
+  TEST_CASE("subdollar_active") {
     auto feeTable = BuildFeeTable();
     {
       auto orderFields = BuildOrderFields(Money::CENT);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::ACTIVE,
-        NeoeFeeTable::PriceClass::SUB_DOLLAR);
+        NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
         false, orderFields, std::placeholders::_2), expectedFee);
@@ -105,19 +105,19 @@ TEST_SUITE("NeoeFeeHandling") {
     {
       auto orderFields = BuildOrderFields(Money::CENT);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::ACTIVE,
-        NeoeFeeTable::PriceClass::SUB_DOLLAR);
+        NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
         true, orderFields, std::placeholders::_2), expectedFee);
     }
   }
 
-  TEST_CASE("sub_dollar_passive") {
+  TEST_CASE("subdollar_passive") {
     auto feeTable = BuildFeeTable();
     {
       auto orderFields = BuildOrderFields(Money::CENT);
       auto expectedFee = LookupGeneralFee(feeTable, LiquidityFlag::PASSIVE,
-        NeoeFeeTable::PriceClass::SUB_DOLLAR);
+        NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
         false, orderFields, std::placeholders::_2), expectedFee);
@@ -125,7 +125,7 @@ TEST_SUITE("NeoeFeeHandling") {
     {
       auto orderFields = BuildOrderFields(Money::CENT);
       auto expectedFee = LookupInterlistedFee(feeTable, LiquidityFlag::PASSIVE,
-        NeoeFeeTable::PriceClass::SUB_DOLLAR);
+        NeoeFeeTable::PriceClass::SUBDOLLAR);
       TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
         LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
         true, orderFields, std::placeholders::_2), expectedFee);
@@ -170,7 +170,7 @@ TEST_SUITE("NeoeFeeHandling") {
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
           feeTable, LiquidityFlag::ACTIVE,
-          NeoeFeeTable::PriceClass::SUB_DOLLAR);
+          NeoeFeeTable::PriceClass::SUBDOLLAR);
         REQUIRE(calculatedFee == expectedFee);
       }
       {
@@ -179,7 +179,7 @@ TEST_SUITE("NeoeFeeHandling") {
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
           LookupInterlistedFee(feeTable, LiquidityFlag::ACTIVE,
-          NeoeFeeTable::PriceClass::SUB_DOLLAR);
+          NeoeFeeTable::PriceClass::SUBDOLLAR);
         REQUIRE(calculatedFee == expectedFee);
       }
     }
@@ -247,7 +247,7 @@ TEST_SUITE("NeoeFeeHandling") {
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity * LookupGeneralFee(
           feeTable, LiquidityFlag::ACTIVE,
-          NeoeFeeTable::PriceClass::SUB_DOLLAR);
+          NeoeFeeTable::PriceClass::SUBDOLLAR);
         REQUIRE(calculatedFee == expectedFee);
       }
       {
@@ -256,7 +256,7 @@ TEST_SUITE("NeoeFeeHandling") {
           executionReport);
         auto expectedFee = executionReport.m_lastQuantity *
           LookupInterlistedFee(feeTable, LiquidityFlag::ACTIVE,
-          NeoeFeeTable::PriceClass::SUB_DOLLAR);
+          NeoeFeeTable::PriceClass::SUBDOLLAR);
         REQUIRE(calculatedFee == expectedFee);
       }
     }

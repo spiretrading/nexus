@@ -42,14 +42,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
       isEditing: false,
       localValue: this.props.value.slice(),
       selection: -1
-    }
-    this.addEntry = this.addEntry.bind(this);
-    this.onInputChange = this.onInputChange.bind(this);
-    this.onSubmitChange = this.onSubmitChange.bind(this);
-    this.removeEntry = this.removeEntry.bind(this);
-    this.selectEntry = this.selectEntry.bind(this);
-    this.onClose = this.onClose.bind(this);
-    this.onOpen = this.onOpen.bind(this);
+    };
   }
 
   public render() {
@@ -238,23 +231,23 @@ export class SecuritiesField extends React.Component<Properties, State> {
       </div>);
   }
   
-  private addEntry(paramter: Nexus.Security) {
+  private addEntry = (paramter: Nexus.Security) => {
     this.setState({
       inputString: '',
       localValue: this.state.localValue.slice().concat(paramter)
     });
   }
 
-  private onInputChange(value: string) {
+  private onInputChange = (value: string) => {
     this.setState({inputString: value});
   }
 
-  private onSubmitChange(){
+  private onSubmitChange = () => {
     this.props.onChange(this.state.localValue);
     this.onClose();
   }
 
-  private removeEntry() {
+  private removeEntry = () => {
     if(this.state.selection !== -1) {
       this.setState({
         selection: -1,
@@ -264,11 +257,11 @@ export class SecuritiesField extends React.Component<Properties, State> {
     }
   }
 
-  private selectEntry(index: number) {
+  private selectEntry = (index: number) => {
     this.setState({selection: index});
   }
 
-  private onOpen() {
+  private onOpen = () => {
     this.setState({
       inputString: '',
       isEditing: true,
@@ -277,7 +270,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     });
   }
 
-  private onClose(){
+  private onClose = () => {
     this.setState({
       isEditing: false
     });
@@ -285,13 +278,13 @@ export class SecuritiesField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     textBox: {
-      textOverflow: 'ellipsis' as 'ellipsis',
-      boxSizing: 'border-box' as 'border-box',
+      textOverflow: 'ellipsis',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -299,107 +292,107 @@ export class SecuritiesField extends React.Component<Properties, State> {
       flexGrow: 1,
       width: '100%',
       paddingLeft: '10px',
-      cursor: 'pointer' as 'pointer'
-    },
+      cursor: 'pointer'
+    } as React.CSSProperties,
     hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
+      visibility: 'hidden',
+      display: 'none'
+    } as React.CSSProperties,
     modalPadding: {
       padding: '18px'
-    },
+    } as React.CSSProperties,
     clickable: {
-      cursor: 'pointer' as 'pointer'
-    },
+      cursor: 'pointer'
+    } as React.CSSProperties,
     header: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       height: '20px',
       marginBottom: '30px'
-    },
+    } as React.CSSProperties,
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1,
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     iconClickableStyle: {
-      cursor: 'pointer' as 'pointer'
-    },
+      cursor: 'pointer'
+    } as React.CSSProperties,
     iconWrapperSmall: {
       height: '24px',
       width: '24px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'pointer' as 'pointer'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'pointer'
+    } as React.CSSProperties,
     iconWrapperSmallReadonly: {
       height: '24px',
       width: '24px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'default' as 'default'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'default'
+    } as React.CSSProperties,
     iconWrapperLarge:  {
       height: '16px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'pointer' as 'pointer'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'pointer'
+    } as React.CSSProperties,
     iconWrapperLargeReadonly:  {
       height: '16px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
-      pointer: 'default' as 'default'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointer: 'default'
+    } as React.CSSProperties,
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
       paddingLeft: '8px',
-      cursor: 'pointer' as 'pointer'
-    },
+      cursor: 'pointer'
+    } as React.CSSProperties,
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
       paddingLeft: '8px',
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     iconRowSmall: {
       height: '24px',
       width: '100%',
       marginBottom: '30px',
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-evenly' as 'space-evenly' 
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly'
+    } as React.CSSProperties,
     iconRowBig: {
       height: '16px',
       width: '100%',
       marginBottom: '30px',
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-evenly' as 'space-evenly' 
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly'
+    } as React.CSSProperties,
     buttonWrapper: {
       marginTop: '30px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
-    }
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center'
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
@@ -561,70 +554,70 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1,
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     scrollBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '246px',
       width: '246px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
+      overflowY: 'auto'
+    } as React.CSSProperties,
     scrollBoxSmallReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '342px',
       width: '246px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
+      overflowY: 'auto'
+    } as React.CSSProperties,
     scrollBoxBig: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '280px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
+      overflowY: 'auto'
+    } as React.CSSProperties,
     scrollBoxBigReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '342px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
-      overflowY: 'auto' as 'auto'
-    },
+      overflowY: 'auto'
+    } as React.CSSProperties,
     scrollBoxHeaderSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
       height: '40px',
       maxWidth: '246px',
       color: '#4B23A0',
       font: '500 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       borderBottom: '1px solid #C8C8C8',
-      position: 'sticky' as 'sticky',
+      position: 'sticky',
       top: 0,
-      cursor: 'default' as 'default'
-    },
+      cursor: 'default'
+    } as React.CSSProperties,
     scrollBoxHeaderLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
       height: '40px',
       maxWidth: '264px',
       color: '#4B23A0',
       font: '500 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       borderBottom: '1px solid #C8C8C8',
-      position: 'sticky' as 'sticky',
+      position: 'sticky',
       top: 0,
-      cursor: 'default' as 'default'
-    }
+      cursor: 'default'
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     entry: {

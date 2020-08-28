@@ -1,8 +1,8 @@
 #ifndef NEXUS_TEST_ENVIRONMENT_HPP
 #define NEXUS_TEST_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
-#include "Beam/Queues/AliasQueue.hpp"
-#include <Beam/Queues/ConverterWriterQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
@@ -109,26 +109,26 @@ namespace Nexus {
       /*!
         \param queue The Queue to publish submitted Orders to.
       */
-      void MonitorOrderSubmissions(const std::shared_ptr<
-        Beam::QueueWriter<const OrderExecutionService::Order*>>& queue);
+      void MonitorOrderSubmissions(
+        Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue);
 
       //! Updates a submitted order to OrderStatus NEW.
       /*!
         \param order The Order to accept.
       */
-      void AcceptOrder(const OrderExecutionService::Order& order);
+      void Accept(const OrderExecutionService::Order& order);
 
       //! Updates a submitted order to OrderStatus REJECTED.
       /*!
         \param order The Order to reject.
       */
-      void RejectOrder(const OrderExecutionService::Order& order);
+      void Reject(const OrderExecutionService::Order& order);
 
       //! Updates a submitted order to OrderStatus CANCELED.
       /*!
         \param order The Order to reject.
       */
-      void CancelOrder(const OrderExecutionService::Order& order);
+      void Cancel(const OrderExecutionService::Order& order);
 
       //! Fills an Order.
       /*!
@@ -136,7 +136,7 @@ namespace Nexus {
         \param price The price of the fill.
         \param quantity The Quantity to fill the <i>order</i> for.
       */
-      void FillOrder(const OrderExecutionService::Order& order, Money price,
+      void Fill(const OrderExecutionService::Order& order, Money price,
         Quantity quantity);
 
       //! Fills an Order.
@@ -144,8 +144,7 @@ namespace Nexus {
         \param order The Order to fill.
         \param quantity The Quantity to fill the <i>order</i> for.
       */
-      void FillOrder(const OrderExecutionService::Order& order,
-        Quantity quantity);
+      void Fill(const OrderExecutionService::Order& order, Quantity quantity);
 
       //! Updates an Order.
       /*!
@@ -285,20 +284,19 @@ namespace Nexus {
       boost::posix_time::not_a_date_time);
   }
 
-  inline void TestEnvironment::MonitorOrderSubmissions(const std::shared_ptr<
-      Beam::QueueWriter<const OrderExecutionService::Order*>>& queue) {
-    std::shared_ptr<Beam::QueueWriter<OrderExecutionService::PrimitiveOrder*>>
-      conversionQueue = Beam::MakeConverterWriterQueue<
-      OrderExecutionService::PrimitiveOrder*>(Beam::MakeWeakQueue(queue),
+  inline void TestEnvironment::MonitorOrderSubmissions(
+      Beam::ScopedQueueWriter<const OrderExecutionService::Order*> queue) {
+    auto conversionQueue = Beam::MakeConverterQueueWriter<
+      OrderExecutionService::PrimitiveOrder*>(std::move(queue),
       Beam::StaticCastConverter<const OrderExecutionService::Order*>());
     auto& driver = static_cast<
       OrderExecutionService::WrapperOrderExecutionDriver<
       OrderExecutionService::Tests::MockOrderExecutionDriver>&>(
       GetOrderExecutionEnvironment().GetDriver()).GetDriver();
-    driver.GetPublisher().Monitor(Beam::MakeAliasQueue(conversionQueue, queue));
+    driver.GetPublisher().Monitor(std::move(conversionQueue));
   }
 
-  inline void TestEnvironment::AcceptOrder(
+  inline void TestEnvironment::Accept(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -319,7 +317,7 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::RejectOrder(
+  inline void TestEnvironment::Reject(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -340,7 +338,7 @@ namespace Nexus {
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::CancelOrder(
+  inline void TestEnvironment::Cancel(
       const OrderExecutionService::Order& order) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
@@ -355,15 +353,14 @@ namespace Nexus {
             TestEnvironmentException("Order is already TERMINAL."));
         }
       });
-    OrderExecutionService::Tests::CancelOrder(
+    OrderExecutionService::Tests::Cancel(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Money price,
-      Quantity quantity) {
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Money price, Quantity quantity) {
     auto primitiveOrder = const_cast<OrderExecutionService::PrimitiveOrder*>(
       dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
     if(primitiveOrder == nullptr) {
@@ -377,15 +374,15 @@ namespace Nexus {
             TestEnvironmentException("Order is already TERMINAL."));
         }
       });
-    OrderExecutionService::Tests::FillOrder(
+    OrderExecutionService::Tests::Fill(
       *const_cast<OrderExecutionService::PrimitiveOrder*>(primitiveOrder),
       price, quantity, m_timeEnvironment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::FillOrder(
-      const OrderExecutionService::Order& order, Quantity quantity) {
-    FillOrder(order, order.GetInfo().m_fields.m_price, quantity);
+  inline void TestEnvironment::Fill(const OrderExecutionService::Order& order,
+      Quantity quantity) {
+    Fill(order, order.GetInfo().m_fields.m_price, quantity);
   }
 
   inline void TestEnvironment::Update(
@@ -468,6 +465,15 @@ namespace Nexus {
       m_administrationEnvironment.Open();
       m_marketDataEnvironment.Open();
       m_orderExecutionEnvironment.Open();
+      m_serviceLocatorClient->Open();
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      auto administrationClient = m_administrationEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      administrationClient->Open();
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadServicesRootEntry());
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

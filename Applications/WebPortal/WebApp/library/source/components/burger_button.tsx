@@ -32,8 +32,6 @@ export class BurgerButton extends React.Component<Properties, State> {
     this.state = {
       isHovered: false,
     };
-    this.onHover = this.onHover.bind(this);
-    this.onLeave = this.onLeave.bind(this);
   }
 
   public render(): JSX.Element {
@@ -51,7 +49,7 @@ export class BurgerButton extends React.Component<Properties, State> {
       height: this.props.height,
       display: 'inline-block',
       cursor: 'pointer'
-    };
+    } as React.CSSProperties;
     return (
       <div style={style}>
         <VBoxLayout width={this.props.width}
@@ -66,13 +64,13 @@ export class BurgerButton extends React.Component<Properties, State> {
       </div>);
   }
 
-  private onHover() {
+  private onHover = () => {
     this.setState({
       isHovered: true
     });
   }
 
-  private onLeave() {
+  private onLeave = () => {
     this.setState({
       isHovered: false
     });

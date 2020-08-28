@@ -168,73 +168,71 @@ namespace {
 
   struct TrampolineMarketDataClient final : VirtualMarketDataClient {
     void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>& queue)
-        override {
+        ScopedQueueWriter<SequencedOrderImbalance> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_sequenced_order_imbalances", QueryOrderImbalances, query, queue);
+        "query_sequenced_order_imbalances", QueryOrderImbalances, query,
+        std::move(queue));
     }
 
     void QueryOrderImbalances(const MarketWideDataQuery& query,
-        const std::shared_ptr<QueueWriter<OrderImbalance>>& queue)
-        override {
+        ScopedQueueWriter<OrderImbalance> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_order_imbalances", QueryOrderImbalances, query, queue);
+        "query_order_imbalances", QueryOrderImbalances, query,
+        std::move(queue));
     }
 
     void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedBboQuote>>& queue)
-        override {
+        ScopedQueueWriter<SequencedBboQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_sequenced_bbo_quotes", QueryBboQuotes, query, queue);
+        "query_sequenced_bbo_quotes", QueryBboQuotes, query, std::move(queue));
     }
 
     void QueryBboQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<BboQuote>>& queue) override {
+        ScopedQueueWriter<BboQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_bbo_quotes", QueryBboQuotes, query, queue);
+        "query_bbo_quotes", QueryBboQuotes, query, std::move(queue));
     }
 
     void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedBookQuote>>& queue)
-        override {
+        ScopedQueueWriter<SequencedBookQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_sequenced_book_quotes", QueryBookQuotes, query, queue);
+        "query_sequenced_book_quotes", QueryBookQuotes, query,
+        std::move(queue));
     }
 
     void QueryBookQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<BookQuote>>& queue) override {
+        ScopedQueueWriter<BookQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_book_quotes", QueryBookQuotes, query, queue);
+        "query_book_quotes", QueryBookQuotes, query, std::move(queue));
     }
 
     void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedMarketQuote>>& queue)
-        override {
+        ScopedQueueWriter<SequencedMarketQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_sequenced_market_quotes", QueryMarketQuotes, query, queue);
+        "query_sequenced_market_quotes", QueryMarketQuotes, query,
+        std::move(queue));
     }
 
     void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<MarketQuote>>& queue) override {
+        ScopedQueueWriter<MarketQuote> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_market_quotes", QueryMarketQuotes, query, queue);
+        "query_market_quotes", QueryMarketQuotes, query, std::move(queue));
     }
 
     void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>& queue)
-        override {
+        ScopedQueueWriter<SequencedTimeAndSale> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_sequenced_time_and_sales", QueryTimeAndSales, query, queue);
+        "query_sequenced_time_and_sales", QueryTimeAndSales, query,
+        std::move(queue));
     }
 
     void QueryTimeAndSales(const SecurityMarketDataQuery& query,
-        const std::shared_ptr<QueueWriter<TimeAndSale>>& queue) override {
+        ScopedQueueWriter<TimeAndSale> queue) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient,
-        "query_time_and_sales", QueryTimeAndSales, query, queue);
+        "query_time_and_sales", QueryTimeAndSales, query, std::move(queue));
     }
 
-    SecuritySnapshot LoadSecuritySnapshot(
-        const Security& security) override {
+    SecuritySnapshot LoadSecuritySnapshot(const Security& security) override {
       PYBIND11_OVERLOAD_PURE_NAME(SecuritySnapshot, VirtualMarketDataClient,
         "load_security_snapshot", LoadSecuritySnapshot, security);
     }
@@ -369,8 +367,8 @@ namespace {
     if(!service.is_initialized()) {
       return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
     }
-    auto addresses = Parse<std::vector<IpAddress>>(
-      get<std::string>(service->GetProperties().At("addresses")));
+    auto addresses = Parse<std::vector<IpAddress>>(get<std::string>(
+      service->GetProperties().At("addresses")));
     return MakeToPythonMarketDataFeedClient(
       std::make_unique<PythonMarketDataFeedClient>(
       Initialize(addresses, Ref(*GetSocketThreadPool())),
@@ -407,7 +405,7 @@ void Nexus::Python::ExportApplicationMarketDataClient(
             return std::make_unique<TcpSocketChannel>(addresses,
               Ref(*GetSocketThreadPool()));
           },
-          [=] {
+          [] {
             return std::make_unique<LiveTimer>(seconds(10),
               Ref(*GetTimerThreadPool()));
           });
@@ -497,47 +495,39 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
       "MarketDataClient")
     .def("query_sequenced_order_imbalances",
       static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
-      const std::shared_ptr<QueueWriter<SequencedOrderImbalance>>&)>(
+      ScopedQueueWriter<SequencedOrderImbalance>)>(
       &VirtualMarketDataClient::QueryOrderImbalances))
     .def("query_order_imbalances",
       static_cast<void (VirtualMarketDataClient::*)(const MarketWideDataQuery&,
-      const std::shared_ptr<QueueWriter<OrderImbalance>>&)>(
+      ScopedQueueWriter<OrderImbalance>)>(
       &VirtualMarketDataClient::QueryOrderImbalances))
     .def("query_sequenced_bbo_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<SequencedBboQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<SequencedBboQuote>)>(
       &VirtualMarketDataClient::QueryBboQuotes))
     .def("query_bbo_quotes", static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<BboQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<BboQuote>)>(
       &VirtualMarketDataClient::QueryBboQuotes))
     .def("query_sequenced_book_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<SequencedBookQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<SequencedBookQuote>)>(
       &VirtualMarketDataClient::QueryBookQuotes))
     .def("query_book_quotes", static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<BookQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<BookQuote>)>(
       &VirtualMarketDataClient::QueryBookQuotes))
     .def("query_sequenced_market_quotes",
       static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<SequencedMarketQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<SequencedMarketQuote>)>(
       &VirtualMarketDataClient::QueryMarketQuotes))
     .def("query_market_quotes", static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<MarketQuote>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<MarketQuote>)>(
       &VirtualMarketDataClient::QueryMarketQuotes))
     .def("query_sequenced_time_and_sales",
       static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<SequencedTimeAndSale>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<SequencedTimeAndSale>)>(
       &VirtualMarketDataClient::QueryTimeAndSales))
     .def("query_time_and_sales", static_cast<void (VirtualMarketDataClient::*)(
-      const SecurityMarketDataQuery&,
-      const std::shared_ptr<QueueWriter<TimeAndSale>>&)>(
+      const SecurityMarketDataQuery&, ScopedQueueWriter<TimeAndSale>)>(
       &VirtualMarketDataClient::QueryTimeAndSales))
     .def("load_security_snapshot",
       &VirtualMarketDataClient::LoadSecuritySnapshot)

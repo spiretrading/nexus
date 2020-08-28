@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/any.hpp>
 #include <boost/noncopyable.hpp>
@@ -193,13 +194,13 @@ namespace Spire {
     private:
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
-      bool m_isConsolidated;
       BlotterTaskProperties m_properties;
       QTimer m_updateTimer;
       QTimer m_expiryTimer;
       bool m_isRefreshing;
-      SpireAggregateOrderExecutionPublisher m_properOrderExecutionPublisher;
-      std::optional<SpireAggregateOrderExecutionPublisher>
+      std::shared_ptr<Beam::MultiQueueWriter<
+        const Nexus::OrderExecutionService::Order*>> m_orders;
+      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         m_linkedOrderExecutionPublisher;
       std::vector<std::unique_ptr<TaskEntry>> m_entries;
       std::unordered_map<int, TaskEntry*> m_taskIds;
@@ -208,7 +209,7 @@ namespace Spire {
       std::vector<TaskEntry*> m_expiredEntries;
       std::vector<BlotterTasksModel*> m_incomingLinks;
       std::vector<BlotterTasksModel*> m_outgoingLinks;
-      std::unique_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
         m_accountOrderPublisher;
       std::set<const Nexus::OrderExecutionService::Order*> m_submittedOrders;
       std::set<const Nexus::OrderExecutionService::Order*> m_taskOrders;

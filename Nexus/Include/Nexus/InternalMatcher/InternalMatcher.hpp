@@ -1,15 +1,11 @@
-#ifndef NEXUS_INTERNALMATCHER_HPP
-#define NEXUS_INTERNALMATCHER_HPP
+#ifndef NEXUS_INTERNAL_MATCHER_HPP
+#define NEXUS_INTERNAL_MATCHER_HPP
 
-namespace Nexus {
-namespace InternalMatcher {
-  template<typename MatchReportBuilderType, typename MarketDataClientType,
-    typename TimeClientType, typename UidClientType,
-    typename OrderExecutionDriverType>
+namespace Nexus::InternalMatcher {
+  template<typename B, typename M, typename T, typename U, typename D>
     class InternalMatchingOrderExecutionDriver;
   struct MatchReportBuilder;
   class NullMatchReportBuilder;
-}
 }
 
 #endif

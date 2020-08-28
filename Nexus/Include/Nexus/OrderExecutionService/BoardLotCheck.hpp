@@ -2,11 +2,11 @@
 #define NEXUS_BOARDLOTCHECK_HPP
 #include <memory>
 #include <type_traits>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -137,7 +137,7 @@ namespace OrderExecutionService {
         return publisher;
       });
     try {
-      return publisher->Top().m_bid.m_price;
+      return publisher->Peek().m_bid.m_price;
     } catch(const Beam::PipeBrokenException&) {
       m_bboQuotes.Erase(security);
       BOOST_THROW_EXCEPTION(OrderSubmissionCheckException{

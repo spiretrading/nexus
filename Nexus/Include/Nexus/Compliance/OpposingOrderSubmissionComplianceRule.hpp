@@ -3,7 +3,7 @@
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/TaggedQueue.hpp>
+#include <Beam/Queues/TaggedQueueReader.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -54,7 +54,7 @@ namespace Nexus::Compliance {
       boost::posix_time::time_duration m_timeout;
       Money m_offset;
       Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::TaggedQueue<const OrderExecutionService::Order*,
+      Beam::TaggedQueueReader<const OrderExecutionService::Order*,
         OrderExecutionService::ExecutionReport> m_executionReportQueue;
       boost::posix_time::ptime m_lastAskCancelTime;
       Money m_askPrice;
@@ -166,19 +166,17 @@ namespace Nexus::Compliance {
       return;
     }
     auto time = m_timeClient->GetTime();
-    while(!m_executionReportQueue.IsEmpty()) {
-      auto executionReport = m_executionReportQueue.Top();
-      m_executionReportQueue.Pop();
-      if(executionReport.m_value.m_status == OrderStatus::CANCELED) {
-        auto side = executionReport.m_key->GetInfo().m_fields.m_side;
-        auto submissionPrice = GetSubmissionPrice(*executionReport.m_key);
+    while(auto executionReport = m_executionReportQueue.TryPop()) {
+      if(executionReport->m_value.m_status == OrderStatus::CANCELED) {
+        auto side = executionReport->m_key->GetInfo().m_fields.m_side;
+        auto submissionPrice = GetSubmissionPrice(*executionReport->m_key);
         if(side == Side::ASK) {
           if((time - m_lastAskCancelTime) > m_timeout) {
             m_askPrice = std::numeric_limits<Money>::max();
           }
-          if(executionReport.m_value.m_timestamp >= m_lastAskCancelTime) {
+          if(executionReport->m_value.m_timestamp >= m_lastAskCancelTime) {
             if(submissionPrice <= m_askPrice) {
-              m_lastAskCancelTime = executionReport.m_value.m_timestamp;
+              m_lastAskCancelTime = executionReport->m_value.m_timestamp;
               m_askPrice = submissionPrice;
             }
           }
@@ -186,9 +184,9 @@ namespace Nexus::Compliance {
           if((time - m_lastBidCancelTime) > m_timeout) {
             m_bidPrice = Money::ZERO;
           }
-          if(executionReport.m_value.m_timestamp >= m_lastBidCancelTime) {
+          if(executionReport->m_value.m_timestamp >= m_lastBidCancelTime) {
             if(submissionPrice >= m_bidPrice) {
-              m_lastBidCancelTime = executionReport.m_value.m_timestamp;
+              m_lastBidCancelTime = executionReport->m_value.m_timestamp;
               m_bidPrice = submissionPrice;
             }
           }

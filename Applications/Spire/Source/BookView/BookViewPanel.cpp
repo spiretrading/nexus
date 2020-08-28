@@ -84,6 +84,7 @@ void BookViewPanel::SetProperties(const BookViewProperties& properties) {
 
 void BookViewPanel::DisplaySecurity(const Security& security) {
   m_security = security;
+  m_bestQuote = Quote();
   vector<int> widths;
   for(int i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
     widths.push_back(m_ui->m_bookView->columnWidth(i));

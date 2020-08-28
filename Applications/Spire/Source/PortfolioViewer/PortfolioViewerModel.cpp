@@ -46,7 +46,7 @@ PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
   m_updateTimer.start(UPDATE_INTERVAL);
   m_userProfile->GetServiceClients().GetRiskClient().
     GetRiskPortfolioUpdatePublisher().Monitor(
-    m_slotHandler->GetSlot<RiskPortfolioInventoryEntry>(std::bind(
+    m_slotHandler->GetSlot<RiskInventoryEntry>(std::bind(
     &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this,
     std::placeholders::_1)));
   connect(m_selectionModel, &PortfolioSelectionModel::dataChanged, this,
@@ -220,7 +220,7 @@ QVariant PortfolioViewerModel::headerData(int section,
 }
 
 boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
-    const RiskPortfolioInventory& inventory) const {
+    const RiskInventory& inventory) const {
   auto valuationIterator = m_valuations.find(
     inventory.m_position.m_key.m_index);
   if(valuationIterator == m_valuations.end()) {
@@ -275,7 +275,7 @@ void PortfolioViewerModel::OnBboQuote(const Security& security,
 }
 
 void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
-    const RiskPortfolioInventoryEntry& entry) {
+    const RiskInventoryEntry& entry) {
   auto& security = entry.m_key.m_security;
   auto baseCurrency = entry.m_value.m_position.m_key.m_currency;
   if(m_valuations.find(security) == m_valuations.end()) {
@@ -297,7 +297,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     auto groupIterator = m_groups.find(entry.m_key.m_account);
     if(groupIterator == m_groups.end()) {
       auto group = m_userProfile->GetServiceClients().GetAdministrationClient().
-        LoadTradingGroupEntry(entry.m_key.m_account);
+        LoadParentTradingGroup(entry.m_key.m_account);
       groupIterator = m_groups.insert(
         std::make_pair(entry.m_key.m_account, group)).first;
     }
@@ -424,7 +424,8 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
       }
       m_totalsUpdatedSignal(m_totals);
     }
-    if(entry.m_value.m_transactionCount == 0) {
+    if(entry.m_value.m_transactionCount == 0 &&
+        entry.m_value.m_position.m_quantity == 0) {
       if(viewerEntry.m_isDisplayed) {
         beginRemoveRows(QModelIndex(), viewerEntry.m_displayIndex,
           viewerEntry.m_displayIndex);
@@ -493,10 +494,9 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
 void PortfolioViewerModel::OnUpdateTimer() {
   auto startTime = boost::posix_time::microsec_clock::universal_time();
   auto slotHandler = m_slotHandler;
-  while(slotHandler.use_count() != 1 && !slotHandler->IsEmpty()) {
-    std::function<void ()> task;
-    slotHandler->Emplace(Store(task));
-    task();
+  for(auto task = slotHandler->TryPop(); task && !slotHandler.unique();
+      task = slotHandler->TryPop()) {
+    (*task)();
     auto frameTime = boost::posix_time::microsec_clock::universal_time();
     if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
       QCoreApplication::instance()->processEvents();

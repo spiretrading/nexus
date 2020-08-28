@@ -46,6 +46,8 @@ namespace Nexus::WebPortal {
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
         const Beam::WebServices::HttpRequest& request);
+      Beam::WebServices::HttpResponse OnLoadParentTradingGroup(
+        const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnLoadAccountRoles(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnStoreAccountRoles(

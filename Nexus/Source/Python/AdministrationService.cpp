@@ -72,10 +72,10 @@ namespace {
         "load_account_roles", LoadAccountRoles, parent, child);
     }
 
-    DirectoryEntry LoadTradingGroupEntry(
+    DirectoryEntry LoadParentTradingGroup(
         const DirectoryEntry& account) override {
       PYBIND11_OVERLOAD_PURE_NAME(DirectoryEntry, VirtualAdministrationClient,
-        "load_trading_group_entry", LoadTradingGroupEntry, account);
+        "load_parent_trading_group", LoadParentTradingGroup, account);
     }
 
     AccountIdentity LoadIdentity(const DirectoryEntry& account) override {
@@ -338,8 +338,8 @@ void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
       static_cast<AccountRoles (VirtualAdministrationClient::*)(
       const DirectoryEntry&, const DirectoryEntry&)>(
       &VirtualAdministrationClient::LoadAccountRoles))
-    .def("load_trading_group_entry",
-      &VirtualAdministrationClient::LoadTradingGroupEntry)
+    .def("load_parent_trading_group",
+      &VirtualAdministrationClient::LoadParentTradingGroup)
     .def("load_identity", &VirtualAdministrationClient::LoadIdentity)
     .def("store_identity", &VirtualAdministrationClient::StoreIdentity)
     .def("load_trading_group", &VirtualAdministrationClient::LoadTradingGroup)

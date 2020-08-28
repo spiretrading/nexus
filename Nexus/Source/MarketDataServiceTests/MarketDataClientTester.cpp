@@ -89,8 +89,7 @@ TEST_SUITE("MarketDataClient") {
     query.SetRange(Beam::Queries::Range::RealTime());
     auto bboQuotes = std::make_shared<Queue<BboQuote>>();
     client->m_client.QueryBboQuotes(query, bboQuotes);
-    auto request = m_requestQueue->Top();
-    m_requestQueue->Pop();
+    auto request = m_requestQueue->Pop();
     REQUIRE(request.size() == 2);
     auto requestToken = optional<Request<QueryBboQuotesService>>();
     REQUIRE_NOTHROW(requestToken =
@@ -109,7 +108,7 @@ TEST_SUITE("MarketDataClient") {
     SendRecordMessage<BboQuoteMessage>(requestToken->GetClient(),
       SequencedValue(IndexedValue(bbo, SECURITY_A),
       Beam::Queries::Sequence(1)));
-    auto updatedBbo = bboQuotes->Top();
+    auto updatedBbo = bboQuotes->Pop();
     REQUIRE(updatedBbo == bbo);
   }
 }

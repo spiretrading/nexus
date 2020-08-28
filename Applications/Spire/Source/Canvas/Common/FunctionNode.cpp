@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Common/FunctionNode.hpp"
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 
@@ -13,7 +14,7 @@ namespace {
     for(const auto& signature : signatures) {
       compatibleTypes.push_back(signature[index]);
     }
-    return UnionType::Create(DereferenceView(compatibleTypes));
+    return UnionType::Create(MakeDereferenceView(compatibleTypes));
   }
 
   unique_ptr<CanvasNode> BuildParameter(size_t index,

@@ -24,7 +24,7 @@ namespace Spire {
                the currency entries are populated.
       */
       using ProfitAndLossUpdateSignal = boost::signals2::signal<
-        void (const SpirePortfolioMonitor::UpdateEntry& update)>;
+        void (const SpirePortfolioController::UpdateEntry& update)>;
 
       //! Signals that a ProfitAndLossEntryModel was added.
       /*!
@@ -40,9 +40,9 @@ namespace Spire {
       using ProfitAndLossEntryModelRemovedSignal = boost::signals2::signal<
         void (ProfitAndLossEntryModel& model)>;
 
-      //! Defines the factory used to build a PortfolioMonitor.
-      using PortfolioMonitorFactory = std::function<
-        std::unique_ptr<SpirePortfolioMonitor> ()>;
+      //! Defines the factory used to build a PortfolioController.
+      using PortfolioControllerFactory = std::function<
+        std::unique_ptr<SpirePortfolioController> ()>;
 
       //! Constructs a ProfitAndLossModel.
       /*!
@@ -56,13 +56,13 @@ namespace Spire {
 
       virtual ~ProfitAndLossModel();
 
-      //! Sets the PortfolioMonitor whose profit and loss is to be modeled.
+      //! Sets the PortfolioController whose profit and loss is to be modeled.
       /*!
-        \param portfolioMonitor The PortfolioMonitor whose profit and loss is to
-               be modeled.
+        \param portfolioController The PortfolioController whose profit and loss
+               is to be modeled.
       */
-      void SetPortfolioMonitor(Beam::Ref<SpirePortfolioMonitor>
-        portfolioMonitor);
+      void SetPortfolioController(Beam::Ref<SpirePortfolioController>
+        portfolioController);
 
       //! Set the currency that profit and loss updates are expressed in.
       void SetCurrency(Nexus::CurrencyId currency);
@@ -91,14 +91,14 @@ namespace Spire {
       const Nexus::CurrencyDatabase* m_currencyDatabase;
       const Nexus::ExchangeRateTable* m_exchangeRates;
       bool m_showUnrealized;
-      SpirePortfolioMonitor* m_portfolioMonitor;
+      SpirePortfolioController* m_portfolioController;
       Nexus::CurrencyId m_currency;
       QTimer m_updateTimer;
-      std::unordered_map<Nexus::CurrencyId, SpirePortfolioMonitor::UpdateEntry>
-        m_currencyToPortfolio;
+      std::unordered_map<Nexus::CurrencyId,
+        SpirePortfolioController::UpdateEntry> m_currencyToPortfolio;
       std::unordered_map<Nexus::CurrencyId,
         std::unique_ptr<ProfitAndLossEntryModel>> m_currencyToModel;
-      SpirePortfolioMonitor::UpdateEntry m_update;
+      SpirePortfolioController::UpdateEntry m_update;
       mutable ProfitAndLossUpdateSignal m_profitAndLossUpdateSignal;
       mutable ProfitAndLossEntryModelAddedSignal
         m_profitAndLossEntryModelAddedSignal;
@@ -106,7 +106,8 @@ namespace Spire {
         m_profitAndLossEntryModelRemovedSignal;
       std::optional<Beam::TaskQueue> m_slotHandler;
 
-      void OnPortfolioUpdate(const SpirePortfolioMonitor::UpdateEntry& update);
+      void OnPortfolioUpdate(
+        const SpirePortfolioController::UpdateEntry& update);
       void OnUpdateTimer();
   };
 }

@@ -141,89 +141,89 @@ TEST_SUITE("OmgaFeeHandling") {
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_active") {
+  TEST_CASE("subdollar_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ACTIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_passive") {
+  TEST_CASE("subdollar_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::PASSIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_hidden_passive") {
+  TEST_CASE("subdollar_hidden_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildHiddenOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_PASSIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_hidden_active") {
+  TEST_CASE("subdollar_hidden_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildHiddenOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::HIDDEN_ACTIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_etf_active") {
+  TEST_CASE("subdollar_etf_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_ACTIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_etf_passive") {
+  TEST_CASE("subdollar_etf_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ETF_PASSIVE,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, true,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_odd_lot_active") {
+  TEST_CASE("subdollar_odd_lot_active") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
   }
 
-  TEST_CASE("sub_dollar_odd_lot_passive") {
+  TEST_CASE("subdollar_odd_lot_passive") {
     auto feeTable = OmgaFeeTable();
     PopulateFeeTable(Store(feeTable.m_feeTable));
     auto fields = BuildOrderFields(Money::CENT, 50);
     auto expectedFee = LookupFee(feeTable, OmgaFeeTable::Type::ODD_LOT,
-      OmgaFeeTable::PriceClass::SUB_DOLLAR);
+      OmgaFeeTable::PriceClass::SUBDOLLAR);
     TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
       std::bind(&CalculateFee, std::placeholders::_1, false,
       std::placeholders::_2, std::placeholders::_3), expectedFee);
@@ -320,7 +320,7 @@ TEST_SUITE("OmgaFeeHandling") {
       auto calculatedFee = CalculateFee(feeTable, false, fields,
         executionReport);
       auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-        OmgaFeeTable::Type::PASSIVE, OmgaFeeTable::PriceClass::SUB_DOLLAR);
+        OmgaFeeTable::Type::PASSIVE, OmgaFeeTable::PriceClass::SUBDOLLAR);
       REQUIRE(calculatedFee == expectedFee);
     }
     {

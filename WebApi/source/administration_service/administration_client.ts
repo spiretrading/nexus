@@ -39,6 +39,14 @@ export abstract class AdministrationClient {
     Promise<Beam.DirectoryEntry[]>;
 
   /**
+   * Loads the DirectoryEntry representing an account's trading group.
+   * @param account The account whose trading group is to be loaded.
+   * @return The directory of the <i>account</i>'s trading group.
+   */
+  public abstract async loadParentTradingGroup(account: Beam.DirectoryEntry):
+    Promise<Beam.DirectoryEntry>;
+
+  /**
    * Loads an account's roles.
    * @param account - The directory entry of the account.
    * @return The account's roles.

@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -8,7 +9,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -266,27 +266,18 @@ namespace Nexus::MarketDataService {
   void MarketDataRelayServlet<C, M, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    auto roles = m_administrationClient->LoadAccountRoles(session.GetAccount());
-    if(roles.Test(AdministrationService::AccountRole::SERVICE)) {
-      auto& entitlements = m_entitlementDatabase.GetEntries();
-      for(auto& entitlement : entitlements) {
+    session.m_roles = m_administrationClient->LoadAccountRoles(
+      session.GetAccount());
+    auto& entitlements = m_entitlementDatabase.GetEntries();
+    auto accountEntitlements = m_administrationClient->LoadEntitlements(
+      session.GetAccount());
+    for(auto& entitlement : entitlements) {
+      auto entryIterator = std::find(accountEntitlements.begin(),
+        accountEntitlements.end(), entitlement.m_groupEntry);
+      if(entryIterator != accountEntitlements.end()) {
         for(auto& applicability : entitlement.m_applicability) {
-          session.GetEntitlements().GrantEntitlement(applicability.first,
+          session.m_entitlements.GrantEntitlement(applicability.first,
             applicability.second);
-        }
-      }
-    } else {
-      auto& entitlements = m_entitlementDatabase.GetEntries();
-      auto accountEntitlements = m_administrationClient->LoadEntitlements(
-        session.GetAccount());
-      for(auto& entitlement : entitlements) {
-        auto entryIterator = std::find(accountEntitlements.begin(),
-          accountEntitlements.end(), entitlement.m_groupEntry);
-        if(entryIterator != accountEntitlements.end()) {
-          for(auto& applicability : entitlement.m_applicability) {
-            session.GetEntitlements().GrantEntitlement(applicability.first,
-              applicability.second);
-          }
         }
       }
     }
@@ -345,8 +336,7 @@ namespace Nexus::MarketDataService {
     using MarketDataType = typename Result::Type;
     auto& session = request.GetSession();
     auto result = Result();
-    if(!HasEntitlement<typename MarketDataType::Value>(
-        session.GetEntitlements(), query)) {
+    if(!HasEntitlement<typename MarketDataType::Value>(session, query)) {
       request.SetResult(result);
       return;
     }
@@ -367,10 +357,9 @@ namespace Nexus::MarketDataService {
           auto initialValueQueue =
             std::make_shared<Beam::Queue<MarketDataType>>();
           QueryMarketDataClient(*queryEntry.m_marketDataClient,
-            initialValueQuery, initialValueQueue);
+            initialValueQuery, Beam::ScopedQueueWriter(initialValueQueue));
           auto initialValues = std::vector<MarketDataType>();
-          Beam::FlushQueue(initialValueQueue,
-            std::back_inserter(initialValues));
+          Beam::Flush(initialValueQueue, std::back_inserter(initialValues));
           auto initialSequence = Beam::Queries::Sequence();
           if(initialValues.empty()) {
             initialSequence = Beam::Queries::Sequence::First();
@@ -395,8 +384,9 @@ namespace Nexus::MarketDataService {
       auto snapshotQuery = query;
       snapshotQuery.SetRange(query.GetRange().GetStart(),
         Beam::Queries::Sequence::Present());
-      QueryMarketDataClient(*client, snapshotQuery, queue);
-      Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
+      QueryMarketDataClient(*client, snapshotQuery,
+        Beam::ScopedQueueWriter(queue));
+      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
       subscriptions.Commit(query.GetIndex(), std::move(result),
         [&] (auto&& result) {
           request.SetResult(std::forward<decltype(result)>(result));
@@ -404,8 +394,9 @@ namespace Nexus::MarketDataService {
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
-      QueryMarketDataClient(*client, query, queue);
-      Beam::FlushQueue(queue, std::back_inserter(result.m_snapshot));
+      QueryMarketDataClient(*client, query,
+        Beam::ScopedQueueWriter(queue));
+      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
       request.SetResult(result);
     }
   }
@@ -424,22 +415,22 @@ namespace Nexus::MarketDataService {
     auto& session = client.GetSession();
     auto marketDataClient = m_marketDataClients.Acquire();
     auto securitySnapshot = marketDataClient->LoadSecuritySnapshot(security);
-    if(!session.GetEntitlements().HasEntitlement(security.GetMarket(),
+    if(!HasEntitlement(session, security.GetMarket(),
         MarketDataType::BBO_QUOTE)) {
       securitySnapshot.m_bboQuote = SequencedBboQuote();
     }
-    if(!session.GetEntitlements().HasEntitlement(security.GetMarket(),
+    if(!HasEntitlement(session, security.GetMarket(),
         MarketDataType::TIME_AND_SALE)) {
       securitySnapshot.m_timeAndSale = SequencedTimeAndSale();
     }
-    if(!session.GetEntitlements().HasEntitlement(security.GetMarket(),
+    if(!HasEntitlement(session, security.GetMarket(),
         MarketDataType::MARKET_QUOTE)) {
       securitySnapshot.m_marketQuotes.clear();
     }
     auto askEndRange = std::remove_if(securitySnapshot.m_askBook.begin(),
       securitySnapshot.m_askBook.end(),
       [&] (auto& bookQuote) {
-        return !session.GetEntitlements().HasEntitlement(
+        return !HasEntitlement(session,
           EntitlementKey(security.GetMarket(), bookQuote->m_market),
           MarketDataType::BOOK_QUOTE);
       });
@@ -448,7 +439,7 @@ namespace Nexus::MarketDataService {
     auto bidEndRange = std::remove_if(securitySnapshot.m_bidBook.begin(),
       securitySnapshot.m_bidBook.end(),
       [&] (auto& bookQuote) {
-        return !session.GetEntitlements().HasEntitlement(
+        return !HasEntitlement(session,
           EntitlementKey(security.GetMarket(), bookQuote->m_market),
           MarketDataType::BOOK_QUOTE);
       });
@@ -505,7 +496,7 @@ namespace Nexus::MarketDataService {
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
     subscriptions.Publish(indexedValue,
       [&] (auto& client) {
-        return client.GetSession().GetEntitlements().HasEntitlement(key,
+        return HasEntitlement(client.GetSession(), key,
           MarketDataType::BOOK_QUOTE);
       },
       [&] (auto& clients) {

@@ -27,10 +27,10 @@ std::unique_ptr<DashboardCell> VolumeDashboardCellBuilder::Build(
     userProfile.Get()->GetTimeZoneDatabase());
   auto baseQueue = std::make_shared<Queue<Nexus::Queries::QueryVariant>>();
   std::shared_ptr<QueueReader<Quantity>> queue =
-    MakeConverterReaderQueue<Quantity>(baseQueue,
-    [] (const Nexus::Queries::QueryVariant& value) {
-      return boost::get<Quantity>(value);
-    });
+    MakeConverterQueueReader(baseQueue,
+      [] (const Nexus::Queries::QueryVariant& value) {
+        return boost::get<Quantity>(value);
+      });
   serviceClients.GetChartingClient().QuerySecurity(query, baseQueue);
   auto cell = std::make_unique<QueueDashboardCell>(queue);
   return std::move(cell);

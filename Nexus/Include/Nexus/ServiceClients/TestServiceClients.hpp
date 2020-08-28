@@ -116,7 +116,9 @@ namespace Nexus {
           BuildClient(Beam::Ref(*m_serviceLocatorClient))},
         m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
           std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-          Beam::Ref(m_environment->GetTimeEnvironment())))} {}
+          Beam::Ref(m_environment->GetTimeEnvironment())))} {
+    m_serviceLocatorClient->SetCredentials("root", "");
+  }
 
   inline TestServiceClients::~TestServiceClients() {
     Close();
@@ -182,7 +184,6 @@ namespace Nexus {
       return;
     }
     try {
-      m_serviceLocatorClient->SetCredentials("root", "");
       m_serviceLocatorClient->Open();
       m_definitionsClient->Open();
       m_administrationClient->Open();

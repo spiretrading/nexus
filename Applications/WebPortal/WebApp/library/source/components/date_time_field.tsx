@@ -45,9 +45,6 @@ export class DateTimeField extends React.Component<Properties, State> {
       period: Periods.AM,
       displayedTime: this.props.value.timeOfDay
     };
-    this.onPeriodChange = this.onPeriodChange.bind(this);
-    this.onTimeChange = this.onTimeChange.bind(this);
-    this.onDateChange = this.onDateChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -93,7 +90,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     });
   }
 
-  private getPeriod() {
+  private getPeriod = () => {
     const sourceTime = this.props.value.timeOfDay.split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Periods.AM;
@@ -104,7 +101,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private getTimeIn12HourFormat() {
+  private getTimeIn12HourFormat = () => {
     const sourceTime = this.props.value.timeOfDay.split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Beam.Duration.HOUR.multiply(12).add(
@@ -123,7 +120,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private getTimeIn24HourFormat() {
+  private getTimeIn24HourFormat = () => {
     const sourceTime = this.state.displayedTime.split();
     if(this.state.period === Periods.PM) {
       if(sourceTime.hours === 12) {
@@ -148,7 +145,7 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private onPeriodChange(event: React.ChangeEvent<HTMLSelectElement>): void {
+  private onPeriodChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const period = parseInt(event.target.value);
     this.setState({
       period: period,
@@ -158,11 +155,11 @@ export class DateTimeField extends React.Component<Properties, State> {
       this.getTimeIn24HourFormat()));
   }
 
-  private onDateChange(date: Beam.Date) {
+  private onDateChange = (date: Beam.Date) => {
     this.props.onChange(new Beam.DateTime(date, this.props.value.timeOfDay));
   }
 
-  private onTimeChange(time: Beam.Duration) {
+  private onTimeChange = (time: Beam.Duration) => {
     this.setState({displayedTime: time});
     this.props.onChange(new Beam.DateTime(this.props.value.date,
       this.getTimeIn24HourFormat()));
@@ -170,17 +167,17 @@ export class DateTimeField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     outerWrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
       height: '78px'
-    },
+    } as React.CSSProperties,
     durationWrapper: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row'
-    },
+      display: 'flex',
+      flexDirection: 'row'
+    } as React.CSSProperties,
     select: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       marginLeft: '10px',
       paddingLeft: '7px',
@@ -196,12 +193,12 @@ export class DateTimeField extends React.Component<Properties, State> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
-    },
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none'
+    } as React.CSSProperties,
     selectReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       marginLeft: '10px',
       paddingLeft: '7px',
@@ -217,14 +214,14 @@ export class DateTimeField extends React.Component<Properties, State> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none'
-    },
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none'
+    } as React.CSSProperties,
     filler: {
       height: '10px',
       width: '100%'
-    }
+    } as React.CSSProperties
   };
   public static readonly EXTRA_STYLE = StyleSheet.create({
     focusEffects: {

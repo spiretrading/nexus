@@ -85,7 +85,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
     SetOrderStatus(bidOrder, OrderStatus::NEW, timeClient.GetTime());
-    FillOrder(askOrder, 100, timeClient.GetTime());
+    Fill(askOrder, 100, timeClient.GetTime());
     REQUIRE_THROWS_AS(rule.Cancel(bidOrder), ComplianceCheckException);
     REQUIRE_NOTHROW(rule.Cancel(askOrder));
     timeClient.SetTime(TIMESTAMP + DURATION + seconds(1));
@@ -103,7 +103,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
     SetOrderStatus(bidOrder, OrderStatus::NEW, timeClient.GetTime());
-    FillOrder(askOrder, 100, timeClient.GetTime());
+    Fill(askOrder, 100, timeClient.GetTime());
     REQUIRE_NOTHROW(rule.Cancel(askOrder));
     REQUIRE_THROWS_AS(rule.Cancel(bidOrder), ComplianceCheckException);
     timeClient.SetTime(TIMESTAMP + DURATION + seconds(1));
@@ -121,7 +121,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
     SetOrderStatus(bidOrder, OrderStatus::NEW, timeClient.GetTime());
-    FillOrder(askOrder, 100, timeClient.GetTime());
+    Fill(askOrder, 100, timeClient.GetTime());
     timeClient.SetTime(TIMESTAMP + DURATION + seconds(1));
     REQUIRE_NOTHROW(rule.Cancel(bidOrder));
     REQUIRE_NOTHROW(rule.Cancel(askOrder));
@@ -138,7 +138,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     rule.Add(bidOrder);
     SetOrderStatus(askOrder, OrderStatus::NEW, timeClient.GetTime());
     SetOrderStatus(bidOrder, OrderStatus::NEW, timeClient.GetTime());
-    FillOrder(askOrder, 100, timeClient.GetTime());
+    Fill(askOrder, 100, timeClient.GetTime());
     timeClient.SetTime(TIMESTAMP + DURATION + seconds(1));
     REQUIRE_NOTHROW(rule.Cancel(askOrder));
     REQUIRE_NOTHROW(rule.Cancel(bidOrder));

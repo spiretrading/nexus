@@ -1,5 +1,5 @@
 #include "Spire/Dashboard/LastPriceDashboardCellBuilder.hpp"
-#include <Beam/Queues/ConverterReaderQueue.hpp>
+#include <Beam/Queues/ConverterQueueReader.hpp>
 #include "Nexus/ServiceClients/VirtualServiceClients.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -19,10 +19,10 @@ std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Build(
     userProfile.Get()->GetServiceClients().GetMarketDataClient();
   auto baseQueue = std::make_shared<Queue<TimeAndSale>>();
   std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterReaderQueue<Money>(baseQueue,
-    [] (const TimeAndSale& timeAndSale) {
-      return timeAndSale.m_price;
-    });
+    MakeConverterQueueReader(baseQueue,
+      [] (const TimeAndSale& timeAndSale) {
+        return timeAndSale.m_price;
+      });
   auto query = BuildCurrentQuery(security);
   marketDataClient.QueryTimeAndSales(query, baseQueue);
   auto last = std::make_unique<QueueDashboardCell>(queue);

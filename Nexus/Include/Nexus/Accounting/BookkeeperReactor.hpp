@@ -31,7 +31,7 @@ namespace Nexus::Accounting {
           order.GetInfo().m_fields.m_currency,
           GetDirection(order.GetInfo().m_fields.m_side) * report.m_lastQuantity,
           report.m_lastQuantity * report.m_lastPrice,
-          report.m_executionFee + report.m_processingFee + report.m_commission);
+          OrderExecutionService::GetFeeTotal(report));
         return bookkeeper.GetInventory(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency);
       }, Aspen::concur(Aspen::lift(

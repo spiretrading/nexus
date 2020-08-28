@@ -32,7 +32,7 @@ namespace Spire {
         Beam::ServiceLocator::DirectoryEntry m_group;
 
         //! A single Inventory item held by the <i>account</i>.
-        Nexus::RiskService::RiskPortfolioInventory m_inventory;
+        Nexus::RiskService::RiskInventory m_inventory;
 
         //! Constructs an Entry.
         Entry();
@@ -208,11 +208,11 @@ namespace Spire {
       mutable TotalsUpdatedSignal m_totalsUpdatedSignal;
 
       boost::optional<Nexus::Money> GetUnrealizedProfitAndLoss(
-        const Nexus::RiskService::RiskPortfolioInventory& inventory) const;
+        const Nexus::RiskService::RiskInventory& inventory) const;
       void OnBboQuote(const Nexus::Security& security,
         const Nexus::BboQuote& bboQuote);
       void OnRiskPortfolioInventoryUpdate(
-        const Nexus::RiskService::RiskPortfolioInventoryEntry& entry);
+        const Nexus::RiskService::RiskInventoryEntry& entry);
       void OnSelectionModelUpdated(const QModelIndex& topLeft,
         const QModelIndex& bottomRight);
       void OnUpdateTimer();

@@ -22,8 +22,6 @@ interface Properties {
 export class SecurityInput extends React.Component<Properties> {
   constructor(props: Properties) {
     super(props);
-    this.onInputChange = this.onInputChange.bind(this);
-    this.onKeyDown = this.onKeyDown.bind(this);
   }
 
   public render() {
@@ -36,11 +34,11 @@ export class SecurityInput extends React.Component<Properties> {
       value={this.props.value}/>);
   }
 
-  private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+  private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.props.onChange(event.target.value);
   }
 
-  private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.keyCode === 13) {
       const newSecurity =
         new Nexus.Security(
@@ -54,14 +52,14 @@ export class SecurityInput extends React.Component<Properties> {
   private static readonly STYLE = {
     input: {
       width: '100%',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       height: '34px',
       paddingLeft: '10px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       marginBottom: '18px'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

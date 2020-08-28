@@ -3,6 +3,9 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 add_executable(DefinitionsTests ${source_files})
+target_link_libraries(DefinitionsTests
+  debug ${YAML_LIBRARY_DEBUG_PATH}
+  optimized ${YAML_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
   target_link_libraries(DefinitionsTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}

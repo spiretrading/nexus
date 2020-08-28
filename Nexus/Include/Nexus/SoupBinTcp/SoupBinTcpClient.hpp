@@ -180,8 +180,7 @@ namespace SoupBinTcp {
     BuildClientHeartbeatPacket(Beam::Store(heartbeatBuffer));
     try {
       while(m_openState.IsRunning()) {
-        auto result = m_timerQueue->Top();
-        m_timerQueue->Pop();
+        auto result = m_timerQueue->Pop();
         if(result == Beam::Threading::Timer::Result::EXPIRED) {
           m_channel->GetWriter().Write(heartbeatBuffer);
         } else {

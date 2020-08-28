@@ -24,10 +24,10 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Build(
   std::shared_ptr<Money> closePrice = std::make_shared<Money>();
   auto baseQueue = std::make_shared<Queue<TimeAndSale>>();
   std::shared_ptr<QueueReader<double>> queue =
-    MakeConverterReaderQueue<double>(baseQueue,
-    [=] (const TimeAndSale& timeAndSale) {
-      return (timeAndSale.m_price - *closePrice) / *closePrice;
-    });
+    MakeConverterQueueReader(baseQueue,
+      [=] (const TimeAndSale& timeAndSale) {
+        return (timeAndSale.m_price - *closePrice) / *closePrice;
+      });
   auto cell = std::make_unique<QueueDashboardCell>(queue);
   auto selfUserProfile = userProfile.Get();
   Spawn(

@@ -1,13 +1,14 @@
 #ifndef NEXUS_ADMINISTRATION_CLIENT_HPP
 #define NEXUS_ADMINISTRATION_CLIENT_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
@@ -94,11 +95,11 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& child);
 
       /**
-       * Loads an account's trading group Directory.
+       * Loads the DirectoryEntry representing an account's trading group.
        * @param account The account whose trading group is to be loaded.
-       * @return The directory of the trading <i>account</i>'s group.
+       * @return The directory of the <i>account</i>'s trading group.
        */
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
@@ -355,6 +356,21 @@ namespace Nexus::AdministrationService {
         RiskService::RiskState riskState);
   };
 
+  /**
+   * Loads an account's RiskParameters.
+   * @param client The AdministrationClient used to load the parameters.
+   * @param account The account whose parameters are to be loaded.
+   * @return The <i>account</i>'s RiskParameters.
+   */
+  template<typename Client>
+  RiskService::RiskParameters LoadRiskParameters(Client& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto queue = std::make_shared<
+      Beam::StateQueue<RiskService::RiskParameters>>();
+    client.GetRiskParametersPublisher(account).Monitor(queue);
+    return queue->Pop();
+  }
+
   template<typename B>
   template<typename BF>
   AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
@@ -390,21 +406,21 @@ namespace Nexus::AdministrationService {
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadAdministratorsRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAdministratorsRootEntryService>(0);
+    return client->template SendRequest<LoadAdministratorsRootEntryService>();
   }
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadServicesRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadServicesRootEntryService>(0);
+    return client->template SendRequest<LoadServicesRootEntryService>();
   }
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
       AdministrationClient<B>::LoadTradingGroupsRootEntry() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadTradingGroupsRootEntryService>(0);
+    return client->template SendRequest<LoadTradingGroupsRootEntryService>();
   }
 
   template<typename B>
@@ -432,11 +448,10 @@ namespace Nexus::AdministrationService {
 
   template<typename B>
   Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadTradingGroupEntry(
+      AdministrationClient<B>::LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAccountTradingGroupEntryService>(
-      account);
+    return client->template SendRequest<LoadParentTradingGroupService>(account);
   }
 
   template<typename B>
@@ -475,21 +490,21 @@ namespace Nexus::AdministrationService {
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationClient<B>::LoadAdministrators() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadAdministratorsService>(0);
+    return client->template SendRequest<LoadAdministratorsService>();
   }
 
   template<typename B>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationClient<B>::LoadServices() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadServicesService>(0);
+    return client->template SendRequest<LoadServicesService>();
   }
 
   template<typename B>
   MarketDataService::EntitlementDatabase
       AdministrationClient<B>::LoadEntitlements() {
     auto client = m_clientHandler.GetClient();
-    return client->template SendRequest<LoadEntitlementsService>(0);
+    return client->template SendRequest<LoadEntitlementsService>();
   }
 
   template<typename B>
@@ -742,16 +757,7 @@ namespace Nexus::AdministrationService {
         auto parameters =
           client.template SendRequest<MonitorRiskParametersService>(
           std::get<0>(entry));
-        auto publish = bool();
-        publisher->WithSnapshot(
-          [&] (auto snapshot) {
-            if(!snapshot.is_initialized() || *snapshot != parameters) {
-              publish = true;
-            } else {
-              publish = false;
-            }
-          });
-        if(publish) {
+        if(publisher->GetSnapshot() != parameters) {
           publisher->Push(parameters);
         }
       } catch(const std::exception&) {
@@ -778,16 +784,7 @@ namespace Nexus::AdministrationService {
       try {
         auto state = client.template SendRequest<MonitorRiskStateService>(
           std::get<0>(entry));
-        auto publish = bool();
-        publisher->WithSnapshot(
-          [&] (auto snapshot) {
-            if(!snapshot.is_initialized() || *snapshot != state) {
-              publish = true;
-            } else {
-              publish = false;
-            }
-          });
-        if(publish) {
+        if(publisher->GetSnapshot() != state) {
           publisher->Push(state);
         }
       } catch(const std::exception&) {

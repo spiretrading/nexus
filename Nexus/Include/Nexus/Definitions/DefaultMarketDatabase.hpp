@@ -360,6 +360,15 @@ namespace Details {
     return database;
   }
 
+  /**
+   * Parses a MarketCode from a string using the default database.
+   * @param source The string to parse.
+   * @return The MarketCode represented by the <i>source</i>.
+   */
+  inline MarketCode ParseMarketCode(const std::string& source) {
+    return ParseMarketCode(source, GetDefaultMarketDatabase());
+  }
+
   namespace DefaultMarkets {
     inline MarketCode HKEX() {
       static auto value = GetDefaultMarketDatabase().FromCode("XHKG").m_code;

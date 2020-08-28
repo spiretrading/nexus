@@ -3,6 +3,8 @@
 #include <deque>
 #include <unordered_set>
 #include <vector>
+#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -11,8 +13,6 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/Rethrow.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Compliance/Compliance.hpp"

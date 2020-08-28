@@ -1,5 +1,5 @@
-#ifndef NEXUS_CONSOLIDATEDUSFEETABLE_HPP
-#define NEXUS_CONSOLIDATEDUSFEETABLE_HPP
+#ifndef NEXUS_CONSOLIDATED_US_FEE_TABLE_HPP
+#define NEXUS_CONSOLIDATED_US_FEE_TABLE_HPP
 #include <exception>
 #include <sstream>
 #include <unordered_set>
@@ -22,60 +22,58 @@
 
 namespace Nexus {
 
-  /*! \struct ConsolidatedUsFeeTable
-      \brief Consolidates all U.S. related market fees together.
-   */
+  /** Consolidates all U.S. related market fees together. */
   struct ConsolidatedUsFeeTable {
 
-    //! Fee charged for the software.
+    /** Fee charged for the software. */
     Money m_spireFee;
 
-    //! The SEC rate.
+    /** The SEC rate. */
     boost::rational<int> m_secRate;
 
-    //! The TAF fee.
+    /** The TAF fee. */
     Money m_tafFee;
 
-    //! The NSCC rate.
+    /** The NSCC rate. */
     boost::rational<int> m_nsccRate;
 
-    //! The clearing fee.
+    /** The clearing fee. */
     Money m_clearingFee;
 
-    //! Fee table used by AMEX.
+    /** Fee table used by AMEX. */
     AmexFeeTable m_amexFeeTable;
 
-    //! Fee table used by ARCA.
+    /** Fee table used by ARCA. */
     ArcaFeeTable m_arcaFeeTable;
 
-    //! Fee table used by BATS.
+    /** Fee table used by BATS. */
     BatsFeeTable m_batsFeeTable;
 
-    //! Fee table used by BATY.
+    /** Fee table used by BATY. */
     BatyFeeTable m_batyFeeTable;
 
-    //! Fee table used by EDGA.
+    /** Fee table used by EDGA. */
     EdgaFeeTable m_edgaFeeTable;
 
-    //! Fee table used by EDGX.
+    /** Fee table used by EDGX. */
     EdgxFeeTable m_edgxFeeTable;
 
-    //! Fee table used by NSDQ.
+    /** Fee table used by NSDQ. */
     NsdqFeeTable m_nsdqFeeTable;
 
-    //! Fee table used by NYSE.
+    /** Fee table used by NYSE. */
     NyseFeeTable m_nyseFeeTable;
   };
 
-  //! Parses a ConsolidatedUsFeeTable from a YAML configuration.
-  /*!
-    \param config The configuration to parse the ConsolidatedUsFeeTable from.
-    \param marketDatabase The MarketDatabase used to parse Securities.
-    \return The ConsolidatedUsFeeTable represented by the <i>config</i>.
-  */
+  /**
+   * Parses a ConsolidatedUsFeeTable from a YAML configuration.
+   * @param config The configuration to parse the ConsolidatedUsFeeTable from.
+   * @param marketDatabase The MarketDatabase used to parse Securities.
+   * @return The ConsolidatedUsFeeTable represented by the <i>config</i>.
+   */
   inline ConsolidatedUsFeeTable ParseConsolidatedUsFeeTable(
       const YAML::Node& config, const MarketDatabase& marketDatabase) {
-    ConsolidatedUsFeeTable feeTable;
+    auto feeTable = ConsolidatedUsFeeTable();
     feeTable.m_spireFee = Beam::Extract<Money>(config, "spire_fee");
     feeTable.m_secRate = Beam::Extract<boost::rational<int>>(
       config, "sec_rate");
@@ -85,63 +83,63 @@ namespace Nexus {
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
     auto amexConfig = config["amex"];
     if(!amexConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for AMEX missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for AMEX missing."));
     } else {
       feeTable.m_amexFeeTable = ParseAmexFeeTable(amexConfig);
     }
     auto arcaConfig = config["arca"];
     if(!arcaConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for ARCA missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for ARCA missing."));
     } else {
       feeTable.m_arcaFeeTable = ParseArcaFeeTable(arcaConfig);
     }
     auto batsConfig = config["bats"];
     if(!batsConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATS missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for BATS missing."));
     } else {
       feeTable.m_batsFeeTable = ParseBatsFeeTable(batsConfig);
     }
     auto batyConfig = config["baty"];
     if(!batyConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for BATY missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for BATY missing."));
     } else {
       feeTable.m_batyFeeTable = ParseBatyFeeTable(batyConfig);
     }
     auto edgaConfig = config["edga"];
     if(!edgaConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGA missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for EDGA missing."));
     } else {
       feeTable.m_edgaFeeTable = ParseEdgaFeeTable(edgaConfig);
     }
     auto edgxConfig = config["edgx"];
     if(!edgxConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for EDGX missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for EDGX missing."));
     } else {
       feeTable.m_edgxFeeTable = ParseEdgxFeeTable(edgxConfig);
     }
     auto nasdaqConfig = config["nasdaq"];
     if(!nasdaqConfig) {
       BOOST_THROW_EXCEPTION(
-        std::runtime_error{"Fee table for NASDAQ missing."});
+        std::runtime_error("Fee table for NASDAQ missing."));
     } else {
       feeTable.m_nsdqFeeTable = ParseNsdqFeeTable(nasdaqConfig);
     }
     auto nyseConfig = config["nyse"];
     if(!nyseConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Fee table for NYSE missing."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for NYSE missing."));
     } else {
       feeTable.m_nyseFeeTable = ParseNyseFeeTable(nyseConfig);
     }
     return feeTable;
   }
 
-  //! Calculates the fee on a trade executed on a U.S. market.
-  /*!
-    \param feeTable The ConsolidatedUsFeeTable used to calculate the fee.
-    \param order The Order that was traded against.
-    \param executionReport The ExecutionReport to calculate the fee for.
-    \return An ExecutionReport containing the calculated fees.
-  */
+  /**
+   * Calculates the fee on a trade executed on a U.S. market.
+   * @param feeTable The ConsolidatedUsFeeTable used to calculate the fee.
+   * @param order The Order that was traded against.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return An ExecutionReport containing the calculated fees.
+   */
   inline OrderExecutionService::ExecutionReport CalculateFee(
       const ConsolidatedUsFeeTable& feeTable,
       const OrderExecutionService::Order& order,
@@ -166,7 +164,7 @@ namespace Nexus {
       } else if(destination == DefaultDestinations::NYSE()) {
         return boost::lexical_cast<std::string>(DefaultMarkets::NYSE());
       } else {
-        return std::string{};
+        return std::string();
       }
     }();
     feesReport.m_executionFee += [&] {

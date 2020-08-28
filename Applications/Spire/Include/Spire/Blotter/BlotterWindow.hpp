@@ -89,7 +89,7 @@ namespace Spire {
       void OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry);
       void OnActiveBlotterChanged(BlotterModel& blotter);
       void OnProfitAndLossUpdate(
-        const SpirePortfolioMonitor::UpdateEntry& update);
+        const SpirePortfolioController::UpdateEntry& update);
       void OnTaskState(const std::shared_ptr<Task>& task,
         const Task::StateEntry& update);
       void OnExecuteAction();

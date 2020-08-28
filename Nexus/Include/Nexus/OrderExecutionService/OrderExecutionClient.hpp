@@ -1,16 +1,16 @@
 #ifndef NEXUS_ORDEREXECUTIONCLIENT_HPP
 #define NEXUS_ORDEREXECUTIONCLIENT_HPP
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
-#include <Beam/Queues/ConverterWriterQueue.hpp>
+#include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Queues/WeakQueue.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
-#include <Beam/Utilities/SynchronizedSet.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
@@ -41,7 +41,7 @@ namespace OrderExecutionService {
         \param clientBuilder Initializes the ServiceProtocolClientBuilder.
       */
       template<typename ClientBuilderForward>
-      OrderExecutionClient(ClientBuilderForward&& clientBuilder);
+      explicit OrderExecutionClient(ClientBuilderForward&& clientBuilder);
 
       ~OrderExecutionClient();
 
@@ -51,7 +51,7 @@ namespace OrderExecutionService {
         \param queue The queue that will store the result of the query.
       */
       void QueryOrderRecords(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue);
+        Beam::ScopedQueueWriter<OrderRecord> queue);
 
       //! Submits a query for Order submissions.
       /*!
@@ -59,7 +59,7 @@ namespace OrderExecutionService {
         \param queue The queue that will store the result of the query.
       */
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue);
+        Beam::ScopedQueueWriter<SequencedOrder> queue);
 
       //! Submits a query for Order submissions.
       /*!
@@ -67,7 +67,7 @@ namespace OrderExecutionService {
         \param queue The queue that will store the result of the query.
       */
       void QueryOrderSubmissions(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue);
+        Beam::ScopedQueueWriter<const Order*> queue);
 
       //! Submits a query for ExecutionReports.
       /*!
@@ -75,7 +75,7 @@ namespace OrderExecutionService {
         \param queue The queue that will store the result of the query.
       */
       void QueryExecutionReports(const AccountQuery& query,
-        const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue);
+        Beam::ScopedQueueWriter<ExecutionReport> queue);
 
       //! Submits a new single Order.
       /*!
@@ -172,44 +172,42 @@ namespace OrderExecutionService {
   template<typename ServiceProtocolClientBuilderType>
   void OrderExecutionClient<ServiceProtocolClientBuilderType>::
       QueryOrderRecords(const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<OrderRecord>>& queue) {
-    m_orderSubmissionPublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<OrderRecord> queue) {
+    m_orderSubmissionPublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename ServiceProtocolClientBuilderType>
   void OrderExecutionClient<ServiceProtocolClientBuilderType>::
       QueryOrderSubmissions(const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<SequencedOrder>>& queue) {
-    auto weakQueue = Beam::MakeWeakQueue(queue);
-    std::shared_ptr<Beam::QueueWriter<SequencedOrderRecord>> conversionQueue =
-      Beam::MakeConverterWriterQueue<SequencedOrderRecord>(weakQueue,
-      [=] (const SequencedOrderRecord& orderRecord) {
+      Beam::ScopedQueueWriter<SequencedOrder> queue) {
+    auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
+      std::move(queue),
+      [=] (const auto& orderRecord) {
         auto sequence = orderRecord.GetSequence();
-        auto order = LoadOrder(orderRecord).get();
+        auto order = static_cast<const Order*>(LoadOrder(orderRecord).get());
         return Beam::Queries::SequencedValue(std::move(order),
           std::move(sequence));
       });
-    m_orderSubmissionPublisher.SubmitQuery(query, conversionQueue);
+    m_orderSubmissionPublisher.SubmitQuery(query, std::move(conversionQueue));
   }
 
   template<typename ServiceProtocolClientBuilderType>
   void OrderExecutionClient<ServiceProtocolClientBuilderType>::
       QueryOrderSubmissions(const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<const Order*>>& queue) {
-    auto weakQueue = Beam::MakeWeakQueue(queue);
-    std::shared_ptr<Beam::QueueWriter<SequencedOrderRecord>> conversionQueue =
-      Beam::MakeConverterWriterQueue<SequencedOrderRecord>(weakQueue,
-      [=] (const SequencedOrderRecord& orderRecord) {
-        return LoadOrder(orderRecord).get();
+      Beam::ScopedQueueWriter<const Order*> queue) {
+    auto conversionQueue = Beam::MakeConverterQueueWriter<SequencedOrderRecord>(
+      std::move(queue),
+      [=] (const auto& orderRecord) {
+        return static_cast<const Order*>(LoadOrder(orderRecord).get());
       });
-    m_orderSubmissionPublisher.SubmitQuery(query, conversionQueue);
+    m_orderSubmissionPublisher.SubmitQuery(query, std::move(conversionQueue));
   }
 
   template<typename ServiceProtocolClientBuilderType>
   void OrderExecutionClient<ServiceProtocolClientBuilderType>::
       QueryExecutionReports(const AccountQuery& query,
-      const std::shared_ptr<Beam::QueueWriter<ExecutionReport>>& queue) {
-    m_executionReportPublisher.SubmitQuery(query, queue);
+      Beam::ScopedQueueWriter<ExecutionReport> queue) {
+    m_executionReportPublisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename ServiceProtocolClientBuilderType>

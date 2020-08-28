@@ -102,7 +102,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
     query.SetSnapshotLimit(SnapshotLimit::Unlimited());
     marketDataClient.QueryBboQuotes(query, snapshot);
     auto received = std::vector<SequencedBboQuote>();
-    FlushQueue(snapshot, std::back_inserter(received));
+    Flush(snapshot, std::back_inserter(received));
     REQUIRE(received.size() == 3);
     REQUIRE(received[0]->m_timestamp == startTime - seconds(3));
     REQUIRE(received[1]->m_timestamp == startTime - seconds(2));

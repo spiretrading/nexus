@@ -30,8 +30,6 @@ export class DashboardPage extends React.Component<Properties, State> {
     this.state = {
       isSideMenuOpen: false,
     };
-    this.onSideMenuClick = this.onSideMenuClick.bind(this);
-    this.onToggleSideMenu = this.onToggleSideMenu.bind(this);
   }
 
   public render(): JSX.Element {
@@ -121,12 +119,12 @@ export class DashboardPage extends React.Component<Properties, State> {
       </VBoxLayout>);
   }
 
-  private onSideMenuClick(item: SideMenu.Item) {
+  private onSideMenuClick = (item: SideMenu.Item) => {
     this.onToggleSideMenu();
     this.props.onSideMenuClick(item);
   }
 
-  private onToggleSideMenu() {
+  private onToggleSideMenu = () => {
     this.setState({isSideMenuOpen: !this.state.isSideMenuOpen});
   }
 

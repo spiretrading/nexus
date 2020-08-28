@@ -1,26 +1,21 @@
-#ifndef NEXUS_FIXAPPLICATION_HPP
-#define NEXUS_FIXAPPLICATION_HPP
+#ifndef NEXUS_FIX_APPLICATION_HPP
+#define NEXUS_FIX_APPLICATION_HPP
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <quickfix/Application.h>
 #include "Nexus/FixUtilities/FixUtilities.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus {
-namespace FixUtilities {
+namespace Nexus::FixUtilities {
 
-  /*! \class FixApplication
-      \brief Implements a FIX Application to be used by the
-             FixOrderExecutionDriver.
-   */
+  /** Implements a FIX Application to be used by the FixOrderExecutionDriver. */
   class FixApplication : public FIX::Application {
     public:
-      virtual ~FixApplication() = default;
 
-      //! Returns the session id.
+      /** Returns the session id. */
       const FIX::SessionID& GetSessionId() const;
 
-      //! Returns the session settings.
+      /** Returns the session settings. */
       const FIX::SessionSettings& GetSessionSettings() const;
 
       virtual const OrderExecutionService::Order& Recover(
@@ -41,11 +36,11 @@ namespace FixUtilities {
 
     protected:
 
-      //! Sets the application's session settings.
-      /*!
-        \param sessionId The application's session id.
-        \param sessionSettings The session's settings.
-      */
+      /**
+       * Sets the application's session settings.
+       * @param sessionId The application's session id.
+       * @param sessionSettings The session's settings.
+       */
       void SetSessionSettings(const FIX::SessionID& sessionId,
         const FIX::SessionSettings& sessionSettings);
 
@@ -70,7 +65,6 @@ namespace FixUtilities {
     m_sessionId = sessionId;
     m_sessionSettings = sessionSettings;
   }
-}
 }
 
 #endif

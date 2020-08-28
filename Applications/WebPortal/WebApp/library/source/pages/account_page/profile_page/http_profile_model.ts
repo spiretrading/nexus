@@ -26,6 +26,10 @@ export class HttpProfileModel extends ProfileModel {
     return this.model.roles;
   }
 
+  public get groups(): Beam.DirectoryEntry[] {
+    return this.model.groups.slice();
+  }
+
   public get identity(): Nexus.AccountIdentity {
     return this.model.identity;
   }
@@ -38,6 +42,10 @@ export class HttpProfileModel extends ProfileModel {
     const identity =
       await this.serviceClients.administrationClient.loadAccountIdentity(
       this.account);
+    const group = await
+      this.serviceClients.administrationClient.loadParentTradingGroup(
+        this.account);
+    this.model.groups = [group];
     await this.model.updateIdentity(roles, identity);
   }
 

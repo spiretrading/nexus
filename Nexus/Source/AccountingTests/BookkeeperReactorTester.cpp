@@ -34,7 +34,7 @@ TEST_SUITE("BookkeeperReactor") {
       TST_SECURITY, DefaultCurrencies::USD(), Side::BID, "NYSE", 1000,
       Money::ONE), 10, ptime(date(2019, 10, 3))));
     SetOrderStatus(order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
-    FillOrder(order, 100, ptime(date(2019, 10, 3)));
+    Fill(order, 100, ptime(date(2019, 10, 3)));
     auto bookkeeper = BookkeeperReactor<TestBookkeeper>(constant(&order));
     for(auto i = 0; i < 10; ++i) {
       auto state = bookkeeper.commit(i);
@@ -43,7 +43,6 @@ TEST_SUITE("BookkeeperReactor") {
       } else if(Aspen::has_continuation(state)) {
         continue;
       } else {
-        commits.Top();
         commits.Pop();
       }
     }

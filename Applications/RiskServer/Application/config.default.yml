@@ -3,10 +3,14 @@ server:
   interface: "$local_interface:20600"
   addresses: ["$global_interface:20600", "$local_interface:20600"]
 
+data_store:
+  address: $mysql_address
+  username: $mysql_username
+  password: $mysql_password
+  schema: $mysql_schema
+
 service_locator:
   address: $service_locator_address
   username: risk_service
   password: $admin_password
-
-#session_start_time: 2013-10-31 00:00:00
 ...

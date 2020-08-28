@@ -18,7 +18,7 @@ void RiskModel::Load() {
   auto queue = std::make_shared<Queue<RiskParameters>>();
   m_userProfile->GetServiceClients().GetAdministrationClient().
     GetRiskParametersPublisher(m_account).Monitor(queue);
-  m_riskParameters = queue->Top();
+  m_riskParameters = queue->Pop();
 }
 
 void RiskModel::Commit() {

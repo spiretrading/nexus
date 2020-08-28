@@ -41,9 +41,6 @@ export class MoneyField extends React.Component<Properties, State> {
     this.state = {
       value: props.value || Nexus.Money.ZERO
     };
-    this.onKeyDown = this.onKeyDown.bind(this);
-    this.onWheel = this.onWheel.bind(this);
-    this.onChange = this.onChange.bind(this);
   }
 
   public render(): JSX.Element {
@@ -68,7 +65,7 @@ export class MoneyField extends React.Component<Properties, State> {
     }
   }
 
-  private onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.keyCode === 38) {
       this.increment();
     } else if(event.keyCode === 40) {
@@ -76,7 +73,7 @@ export class MoneyField extends React.Component<Properties, State> {
     }
   }
 
-  private onWheel(event: React.WheelEvent<HTMLInputElement>) {
+  private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
     if(document.activeElement !== event.target) {
       return;
     }
@@ -87,7 +84,7 @@ export class MoneyField extends React.Component<Properties, State> {
     }
   }
 
-  private onChange(event: React.ChangeEvent<HTMLInputElement>) {
+  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const pointIndex = event.target.value.search('\\.');
     const sanitizedValue = (() => {
       if(pointIndex === -1) {
@@ -127,7 +124,7 @@ export class MoneyField extends React.Component<Properties, State> {
     this.update(value);
   }
 
-  private increment() {
+  private increment = () => {
     const increment = this.state.value.add(Nexus.Money.ONE);
     if(this.props.max && increment.compare(this.props.max) > 0) {
       return;
@@ -135,7 +132,7 @@ export class MoneyField extends React.Component<Properties, State> {
     this.update(increment);
   }
 
-  private decrement() {
+  private decrement = () => {
     const decrement = this.state.value.subtract(Nexus.Money.ONE);
     if(this.props.min && decrement.compare(this.props.min) < 0) {
       return;
@@ -143,7 +140,7 @@ export class MoneyField extends React.Component<Properties, State> {
     this.update(decrement);
   }
 
-  private update(value: Nexus.Money) {
+  private update = (value: Nexus.Money) => {
     if(this.props.onChange) {
       const commit = this.props.onChange(value);
       if(commit != null && commit === false) {
@@ -159,12 +156,12 @@ export class MoneyField extends React.Component<Properties, State> {
 
   private static readonly STYLE = {
     input: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',

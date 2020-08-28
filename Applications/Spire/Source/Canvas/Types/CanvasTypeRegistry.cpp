@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
+#include <Beam/Collections/DereferenceIterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRedefinitionException.hpp"
@@ -95,9 +96,9 @@ void CanvasTypeRegistry::Register(const CanvasType& type) {
 }
 
 View<CanvasType> CanvasTypeRegistry::GetTypes() const {
-  return DereferenceView(m_types);
+  return MakeDereferenceView(m_types);
 }
 
 View<NativeType> CanvasTypeRegistry::GetNativeTypes() const {
-  return DereferenceView(m_nativeTypes);
+  return MakeDereferenceView(m_nativeTypes);
 }

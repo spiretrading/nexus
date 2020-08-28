@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import { VBoxLayout } from 'dali';
 import * as React from 'react';
+import * as Router from 'react-router-dom';
 import { Transition } from 'react-transition-group';
 import { DisplaySize, DropDownButton, HLine } from '../../..';
 import { AccountEntry } from './account_entry';
@@ -134,7 +135,11 @@ export class GroupCard extends React.Component<Properties, State> {
           <div style={headerTextStyle}
               onMouseEnter={this.onGroupMouseEnter}
               onMouseLeave={this.onGroupMouseLeave}>
-            {this.props.group.name}
+            <Router.Link
+                style={GroupCard.STYLE.link}
+                to={`/group/${this.props.group.id}`}>
+              {this.props.group.name}
+            </Router.Link>
           </div>
         </div>
         {lineWhenOpen}
@@ -230,6 +235,10 @@ export class GroupCard extends React.Component<Properties, State> {
       alignItems: 'center' as 'center',
       paddingLeft: '10px',
       paddingRight: '10px'
+    },
+    link: {
+      textDecoration: 'none',
+      color: 'inherit'
     }
   };
   private static readonly animationStyle = {

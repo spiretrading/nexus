@@ -2,7 +2,7 @@
 #define NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Queues/TaggedQueue.hpp>
+#include <Beam/Queues/TaggedQueueReader.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -47,7 +47,7 @@ namespace Nexus::Compliance {
     private:
       boost::posix_time::time_duration m_timeout;
       Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::TaggedQueue<const OrderExecutionService::Order*,
+      Beam::TaggedQueueReader<const OrderExecutionService::Order*,
         OrderExecutionService::ExecutionReport> m_executionReportQueue;
       boost::posix_time::ptime m_lastAskFillTime;
       boost::posix_time::ptime m_lastBidFillTime;
@@ -139,14 +139,12 @@ namespace Nexus::Compliance {
   template<typename C>
   void OpposingOrderCancellationComplianceRule<C>::Cancel(
       const OrderExecutionService::Order& order) {
-    while(!m_executionReportQueue.IsEmpty()) {
-      auto executionReport = m_executionReportQueue.Top();
-      m_executionReportQueue.Pop();
-      if(executionReport.m_value.m_lastQuantity != 0) {
+    while(auto executionReport = m_executionReportQueue.TryPop()) {
+      if(executionReport->m_value.m_lastQuantity != 0) {
         auto& lastFillTime = Pick(
-          executionReport.m_key->GetInfo().m_fields.m_side, m_lastAskFillTime,
+          executionReport->m_key->GetInfo().m_fields.m_side, m_lastAskFillTime,
           m_lastBidFillTime);
-        lastFillTime = executionReport.m_value.m_timestamp;
+        lastFillTime = executionReport->m_value.m_timestamp;
       }
     }
     auto time = m_timeClient->GetTime();

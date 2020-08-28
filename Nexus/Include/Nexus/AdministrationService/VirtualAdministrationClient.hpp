@@ -47,7 +47,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) = 0;
 
-      virtual Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      virtual Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) = 0;
 
       virtual AccountIdentity LoadIdentity(
@@ -171,9 +171,7 @@ namespace Nexus::AdministrationService {
        * @param client The AdministrationClient to wrap.
        */
       template<typename CF>
-      WrapperAdministrationClient(CF&& client);
-
-      ~WrapperAdministrationClient() override;
+      explicit WrapperAdministrationClient(CF&& client);
 
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         LoadAccountsByRoles(AccountRoles roles) override;
@@ -196,7 +194,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) override;
 
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupEntry(
+      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
         const Beam::ServiceLocator::DirectoryEntry& account) override;
 
       AccountIdentity LoadIdentity(
@@ -311,11 +309,6 @@ namespace Nexus::AdministrationService {
     : m_client(std::forward<CF>(client)) {}
 
   template<typename C>
-  WrapperAdministrationClient<C>::~WrapperAdministrationClient() {
-    Close();
-  }
-
-  template<typename C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       WrapperAdministrationClient<C>::LoadAccountsByRoles(AccountRoles roles) {
     return m_client->LoadAccountsByRoles(roles);
@@ -360,9 +353,9 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   Beam::ServiceLocator::DirectoryEntry WrapperAdministrationClient<C>::
-      LoadTradingGroupEntry(
+      LoadParentTradingGroup(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_client->LoadTradingGroupEntry(account);
+    return m_client->LoadParentTradingGroup(account);
   }
 
   template<typename C>

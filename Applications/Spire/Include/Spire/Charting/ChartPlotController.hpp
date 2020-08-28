@@ -3,11 +3,11 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Beam/Collections/SortedVector.hpp>
+#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
-#include <Beam/Utilities/SortedVector.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>

@@ -53,12 +53,12 @@ export class SideMenuButton extends React.Component<Properties> {
       width: '100%',
       height: '40px',
       backgroundColor: 'inherit'
-    },
+    } as React.CSSProperties,
     buttonText: {
       color: 'white',
       font: 'inherit',
       lineHeight: '20px'
-    }
+    } as React.CSSProperties
   }
   private static readonly DYNAMIC_STYLES = StyleSheet.create({
     button: {

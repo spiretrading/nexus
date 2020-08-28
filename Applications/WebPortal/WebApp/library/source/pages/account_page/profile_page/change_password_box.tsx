@@ -147,63 +147,63 @@ export class ChangePasswordBox extends React.Component<Properties> {
   private static readonly STYLE = {
     hidden: {
       opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
+      visibility: 'hidden',
+      display: 'none'
+    } as React.CSSProperties,
     headerStyler: {
       color: '#4B23A0',
       font: '400 14px Roboto',
       width: '100%'
-    },
+    } as React.CSSProperties,
     errorMessage: {
       color: '#E63F44',
       font: '400 14px Roboto'
-    },
+    } as React.CSSProperties,
     statusMessage: {
       color: '#36BB55',
       font: '400 14px Roboto'
-    },
+    } as React.CSSProperties,
     filler: {
       flexGrow: 1,
       height: '30px'
-    },
+    } as React.CSSProperties,
     fillerMessage: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       flexGrow: 1,
-      textAlign: 'right' as 'right',
+      textAlign: 'right',
       marginRight: '30px',
-      justifyContent: 'flex-end' as 'flex-end'
-    },
+      justifyContent: 'flex-end'
+    } as React.CSSProperties,
     smallPadding: {
       width: '100%',
       height: '18px'
-    },
+    } as React.CSSProperties,
     mediumPadding: {
       width: '100%',
       height: '30px'
-    },
+    } as React.CSSProperties,
     passwordBoxLarge: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center'
+    } as React.CSSProperties,
     passwordBoxSmall: {
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center'
-    },
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    } as React.CSSProperties,
     passwordPadding: {
       height: '18px',
       width: '18px'
-    },
+    } as React.CSSProperties,
     passwordButtonPadding: {
       height: '30px',
       width: '30px'
-    }
+    } as React.CSSProperties
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
     inputBoxSmall: {
