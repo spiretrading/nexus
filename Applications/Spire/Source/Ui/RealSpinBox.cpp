@@ -266,9 +266,7 @@ QString RealSpinBox::display_string(Real value) {
       QRegularExpression(QString("\\%1%2*$").arg(m_locale.decimalPoint())
       .arg(0))).trimmed();
   }
-  qDebug() << QString::fromStdString(value.str(text().length() + 1,
-    std::ios_base::dec));
-  return QString::fromStdString(value.str(text().length() + 1,
+  return QString::fromStdString(value.str(text().length(),
     std::ios_base::dec));
 }
 
