@@ -13,6 +13,7 @@ namespace Spire {
   class CalendarWidget;
   class CheckBox;
   class ColonWidget;
+  class CurrencyInputWidget;
   class DateInputWidget;
   class Dialog;
   class DropDownMenu;
@@ -21,8 +22,10 @@ namespace Spire {
   class DropShadow;
   class FlatButton;
   class IconButton;
+  class MarketInputWidget;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
+  class OrderTypeInputWidget;
   class PropertiesWindowButtonsWidget;
   class QuantityInputWidget;
   class RangeInputSlider;
@@ -31,6 +34,8 @@ namespace Spire {
   class ScrollArea;
   class SecurityStack;
   class SecurityWidget;
+  class SideInputWidget;
+  class TimeInForceInputWidget;
   class TitleBar;
   class ToggleButton;
   class TransitionWidget;
