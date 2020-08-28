@@ -1,10 +1,10 @@
 #ifndef OASIS_OMEGA_FIX_APPLICATION_HPP
 #define OASIS_OMEGA_FIX_APPLICATION_HPP
 #include <unordered_map>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Network/Network.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/FixUtilities/FixApplication.hpp"

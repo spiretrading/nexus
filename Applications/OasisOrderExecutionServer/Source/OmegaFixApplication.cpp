@@ -190,14 +190,14 @@ void OmegaFixApplication::onMessage(const FIX42::OrderCancelReject& message,
     const FIX::SessionID& sessionId) {}
 
 BboQuote OmegaFixApplication::LoadBboQuote(const Security& security) {
-  auto publisher = m_bboQuotes.GetOrInsert(security,
+  auto bbo = m_bboQuotes.GetOrInsert(security,
     [&] {
-      auto publisher = std::make_shared<StateQueue<BboQuote>>();
-      QueryRealTimeWithSnapshot(security, *m_marketDataClient, publisher);
-      return publisher;
+      auto bbo = std::make_shared<StateQueue<BboQuote>>();
+      QueryRealTimeWithSnapshot(security, *m_marketDataClient, bbo);
+      return bbo;
     });
   try {
-    return publisher->Top();
+    return bbo->Peek();
   } catch(const Beam::PipeBrokenException&) {
     m_bboQuotes.Erase(security);
     BOOST_THROW_EXCEPTION(
