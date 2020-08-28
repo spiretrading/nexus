@@ -394,7 +394,7 @@ void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
       image: url(%10);
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(8)).arg(ARROW_WIDTH())
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4))
+        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(2))
         .arg(up_icon).arg(up_icon_hover).arg(down_icon).arg(down_icon_hover)
         .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
 }
