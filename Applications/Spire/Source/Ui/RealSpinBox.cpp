@@ -38,6 +38,7 @@ RealSpinBox::RealSpinBox(Real value, QWidget* parent)
     : QAbstractSpinBox(parent),
       m_minimum(std::numeric_limits<long double>::lowest()),
       m_maximum(std::numeric_limits<long double>::max()),
+      m_minimum_decimals(0),
       m_step(1),
       m_last_valid_value(value),
       m_has_first_click(false),
@@ -193,6 +194,7 @@ void RealSpinBox::set_decimal_places(int decimals) {
 
 void RealSpinBox::set_minimum_decimal_places(int decimals) {
   m_minimum_decimals = decimals;
+  lineEdit()->setText(display_string(m_last_valid_value));
 }
 
 void RealSpinBox::set_minimum(Real minimum) {
@@ -268,13 +270,16 @@ QString RealSpinBox::display_string(Real value) {
   str.remove(QRegularExpression("0+$"));
   str.remove(QRegularExpression(
     QString("\\%1$").arg(m_locale.decimalPoint())));
-  if(str.contains(m_locale.decimalPoint())) {
-    auto displayed_text = QString::fromStdString(value.str(
-      str.length() - str.indexOf(m_locale.decimalPoint()) - 1,
+  auto point_index = str.indexOf(m_locale.decimalPoint());
+  if(point_index != -1 || m_minimum_decimals > 0) {
+    auto decimal_places = [&] {
+      if(point_index != -1) {
+        return std::max(m_minimum_decimals, str.length() - point_index - 1);
+      }
+      return m_minimum_decimals;
+    }();
+    return QString::fromStdString(value.str(decimal_places,
       std::ios_base::fixed));
-    return displayed_text.remove(
-      QRegularExpression(QString("\\%1%2*$").arg(m_locale.decimalPoint())
-      .arg(0))).trimmed();
   }
   return QString::fromStdString(value.str(text().length() + 1,
     std::ios_base::dec));
