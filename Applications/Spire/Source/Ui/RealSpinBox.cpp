@@ -23,12 +23,12 @@ namespace {
     return width;
   }
 
-  auto clamped_real(RealSpinBox::Real value, RealSpinBox::Real min,
+  auto clamp(RealSpinBox::Real value, RealSpinBox::Real min,
       RealSpinBox::Real max) {
     return std::clamp(value, min, max, [] (const RealSpinBox::Real& a,
-          const RealSpinBox::Real& b) {
-        return a.compare(b) == -1;
-      });
+        const RealSpinBox::Real& b) {
+      return a.compare(b) == -1;
+    });
   }
 }
 
@@ -218,7 +218,7 @@ RealSpinBox::Real RealSpinBox::get_value() const {
 
 void RealSpinBox::set_value(Real value) {
   blockSignals(true);
-  value = clamped_real(value, m_minimum, m_maximum);
+  value = clamp(value, m_minimum, m_maximum);
   lineEdit()->setText(display_string(value));
   blockSignals(false);
 }
@@ -247,7 +247,7 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   auto stepped_value = m_step;
   stepped_value *= step;
   *value += stepped_value;
-  value = clamped_real(*value, m_minimum, m_maximum);
+  value = clamp(*value, m_minimum, m_maximum);
   lineEdit()->setText(display_string(*value));
   lineEdit()->setCursorPosition(text().length());
 }
