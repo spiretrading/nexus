@@ -25,6 +25,7 @@ namespace Spire {
   class MarketInputWidget;
   class MoneyInputWidget;
   class MonthAndYearSpinBox;
+  class OrderStatusInputWidget;
   class OrderTypeInputWidget;
   class PropertiesWindowButtonsWidget;
   class QuantityInputWidget;
