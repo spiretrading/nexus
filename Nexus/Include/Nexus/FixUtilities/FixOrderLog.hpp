@@ -3,11 +3,11 @@
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Functional.hpp>
-#include <Beam/Utilities/SynchronizedList.hpp>
-#include <Beam/Utilities/SynchronizedMap.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
