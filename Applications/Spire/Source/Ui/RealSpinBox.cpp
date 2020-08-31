@@ -214,6 +214,10 @@ void RealSpinBox::set_maximum(Real maximum) {
   update_stylesheet();
 }
 
+RealSpinBox::Real RealSpinBox::get_step() const {
+  return m_step;
+}
+
 void RealSpinBox::set_step(Real step) {
   assign_value(m_step, step);
 }

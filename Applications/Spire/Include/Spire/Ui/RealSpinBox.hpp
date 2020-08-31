@@ -64,6 +64,9 @@ namespace Spire {
       */
       void set_maximum(Real maximum);
 
+      //! Returns the current step value.
+      Real get_step() const;
+
       //! Sets the value to increment/decrement by when stepping up or down,
       //! iff the given value is a valid number.
       /*!

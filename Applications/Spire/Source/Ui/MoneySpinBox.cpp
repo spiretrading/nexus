@@ -20,8 +20,8 @@ MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(to_real(value), this);
-  m_spin_box->set_step(static_cast<long double>(0.01));
   m_spin_box->set_minimum_decimal_places(2);
+  set_step(0.01);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);
@@ -45,6 +45,14 @@ void MoneySpinBox::set_minimum(Money minimum) {
 
 void MoneySpinBox::set_maximum(Money maximum) {
   m_spin_box->set_maximum(to_real(maximum));
+}
+
+Money MoneySpinBox::get_step() const {
+  return to_money(m_spin_box->get_step());
+}
+
+void MoneySpinBox::set_step(Money step) {
+  m_spin_box->set_step(to_real(step));
 }
 
 Money MoneySpinBox::get_value() const {

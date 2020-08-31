@@ -46,6 +46,14 @@ void QuantitySpinBox::set_maximum(Quantity maximum) {
   m_spin_box->set_maximum(to_real(maximum));
 }
 
+Quantity QuantitySpinBox::get_step() const {
+  return to_quantity(m_spin_box->get_step());
+}
+
+void QuantitySpinBox::set_step(Quantity step) {
+  m_spin_box->set_step(to_real(step));
+}
+
 Quantity QuantitySpinBox::get_value() const {
   return to_quantity(m_spin_box->get_value());
 }

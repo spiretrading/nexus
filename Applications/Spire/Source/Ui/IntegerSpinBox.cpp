@@ -32,6 +32,14 @@ void IntegerSpinBox::set_maximum(std::int64_t maximum) {
   m_spin_box->set_maximum(maximum);
 }
 
+std::int64_t IntegerSpinBox::get_step() const {
+  return m_spin_box->get_step().extract_signed_long_long();
+}
+
+void IntegerSpinBox::set_step(std::int64_t step) {
+  m_spin_box->set_step(step);
+}
+
 std::int64_t IntegerSpinBox::get_value() const {
   return m_spin_box->get_value().extract_signed_long_long();
 }

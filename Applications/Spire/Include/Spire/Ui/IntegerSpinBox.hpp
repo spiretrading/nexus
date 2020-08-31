@@ -35,6 +35,15 @@ namespace Spire {
       */
       void set_maximum(std::int64_t maximum);
 
+      //! Returns the current step value.
+      std::int64_t get_step() const;
+
+      //! Sets the value to increment/decrement by when stepping up or down
+      /*!
+        \param step The increment/decrement value.
+      */
+      void set_step(std::int64_t step);
+
       //! Returns the last submitted value.
       std::int64_t get_value() const;
 
