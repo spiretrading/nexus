@@ -39,7 +39,7 @@ namespace Spire {
       //! Returns the current step value.
       Nexus::Money get_step() const;
 
-      //! Sets the value to increment/decrement by when stepping up or down
+      //! Sets the value to increment/decrement by when stepping up or down.
       /*!
         \param step The increment/decrement value.
       */
