@@ -20,6 +20,7 @@ MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(to_real(value), this);
+  m_spin_box->set_step(static_cast<long double>(0.01));
   m_spin_box->set_minimum_decimal_places(2);
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);

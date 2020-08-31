@@ -38,10 +38,10 @@ RealSpinBox::RealSpinBox(Real value, QWidget* parent)
       m_minimum(std::numeric_limits<Real>::lowest()),
       m_maximum(std::numeric_limits<Real>::max()),
       m_step(1),
-      m_last_valid_value(value),
       m_has_first_click(false),
       m_up_arrow_timer_id(-1),
       m_down_arrow_timer_id(-1) {
+  set_value(value);
   connect(lineEdit(), &QLineEdit::textChanged, this,
     &RealSpinBox::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
@@ -197,7 +197,7 @@ void RealSpinBox::set_minimum_decimal_places(int decimals) {
 }
 
 void RealSpinBox::set_minimum(Real minimum) {
-  m_minimum = minimum;
+  assign_value(m_minimum, minimum);
   if(auto value = get_value(text()); value && value->compare(m_minimum) < 0) {
     m_last_valid_value = m_minimum;
     lineEdit()->setText(display_string(m_minimum));
@@ -206,7 +206,7 @@ void RealSpinBox::set_minimum(Real minimum) {
 }
 
 void RealSpinBox::set_maximum(Real maximum) {
-  m_maximum = maximum;
+  assign_value(m_maximum, maximum);
   if(auto value = get_value(text()); value && value->compare(m_maximum) > 0) {
     m_last_valid_value = m_maximum;
     lineEdit()->setText(display_string(m_maximum));
@@ -215,7 +215,7 @@ void RealSpinBox::set_maximum(Real maximum) {
 }
 
 void RealSpinBox::set_step(Real step) {
-  m_step = step;
+  assign_value(m_step, step);
 }
 
 RealSpinBox::Real RealSpinBox::get_value() const {
@@ -224,8 +224,9 @@ RealSpinBox::Real RealSpinBox::get_value() const {
 
 void RealSpinBox::set_value(Real value) {
   blockSignals(true);
-  value = clamp(value, m_minimum, m_maximum);
-  lineEdit()->setText(display_string(value));
+  assign_value(m_last_valid_value, value);
+  m_last_valid_value = clamp(m_last_valid_value, m_minimum, m_maximum);
+  lineEdit()->setText(display_string(m_last_valid_value));
   blockSignals(false);
 }
 
@@ -248,7 +249,7 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   }
   auto value = get_value(text());
   if(text().isEmpty() || !value) {
-    value = 0;
+    value = get_value("0");
   }
   auto stepped_value = m_step;
   stepped_value *= step;
@@ -256,6 +257,13 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   value = clamp(*value, m_minimum, m_maximum);
   lineEdit()->setText(display_string(*value));
   lineEdit()->setCursorPosition(text().length());
+}
+
+void RealSpinBox::assign_value(Real& variable, Real value) {
+  if(auto parsed_value = get_value(
+      value.str(MAXIMUM_DECIMAL_PLACES, std::ios_base::fixed).c_str())) {
+    variable = *parsed_value;
+  }
 }
 
 QString RealSpinBox::display_string(Real value) {
