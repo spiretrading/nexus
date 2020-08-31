@@ -62,6 +62,7 @@ void FilteredDropDownMenu::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Delete:
       setText("");
+      on_text_edited("");
       return;
     case Qt::Key_Escape:
       setText(m_item_delegate.displayText(m_current_item));
