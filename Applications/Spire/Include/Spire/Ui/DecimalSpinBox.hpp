@@ -34,6 +34,15 @@ namespace Spire {
       */
       void set_maximum(double maximum);
 
+      //! Returns the current step value.
+      double get_step() const;
+
+      //! Sets the value to increment/decrement by when stepping up or down.
+      /*!
+        \param step The increment/decrement value.
+      */
+      void set_step(double step);
+
       //! Returns the last submitted value.
       double get_value() const;
 

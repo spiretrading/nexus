@@ -50,19 +50,25 @@ namespace Spire {
       */
       void set_minimum_decimal_places(int decimals);
 
-      //! Sets the minimum accepted value.
+      //! Sets the minimum accepted value iff the given value is a valid
+      //! number.
       /*!
         \param minimum The minimum value.
       */
       void set_minimum(Real minimum);
 
-      //! Sets the maximum accepted value.
+      //! Sets the maximum accepted value iff the given value is a valid
+      //! number.
       /*!
         \param maximum The maximum value.
       */
       void set_maximum(Real maximum);
 
-      //! Sets the value to increment/decrement by when stepping up or down.
+      //! Returns the current step value.
+      Real get_step() const;
+
+      //! Sets the value to increment/decrement by when stepping up or down,
+      //! iff the given value is a valid number.
       /*!
         \param step The increment/decrement value.
       */
@@ -71,7 +77,8 @@ namespace Spire {
       //! Returns the last submitted value.
       Real get_value() const;
 
-      //! Sets the current displayed value.
+      //! Sets the current displayed value iff the given value is a valid
+      //! number.
       /*!
         \param value The current value.
       */
@@ -116,6 +123,7 @@ namespace Spire {
 
       void add_step(int step);
       void add_step(int step, Qt::KeyboardModifiers modifiers);
+      void assign_value(Real& variable, Real value);
       QString display_string(Real value);
       QStyle::SubControl get_current_control(const QPoint& mouse_pos);
       boost::optional<Real> get_value(const QString& text) const;

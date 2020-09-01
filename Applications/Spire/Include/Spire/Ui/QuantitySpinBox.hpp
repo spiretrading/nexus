@@ -36,6 +36,15 @@ namespace Spire {
       */
       void set_maximum(Nexus::Quantity maximum);
 
+      //! Returns the current step value.
+      Nexus::Quantity get_step() const;
+
+      //! Sets the value to increment/decrement by when stepping up or down.
+      /*!
+        \param step The increment/decrement value.
+      */
+      void set_step(Nexus::Quantity step);
+
       //! Returns the last submitted value.
       Nexus::Quantity get_value() const;
 

@@ -34,13 +34,14 @@ namespace {
 
 RealSpinBox::RealSpinBox(Real value, QWidget* parent)
     : QAbstractSpinBox(parent),
+      m_minimum_decimals(0),
       m_minimum(std::numeric_limits<Real>::lowest()),
       m_maximum(std::numeric_limits<Real>::max()),
       m_step(1),
-      m_last_valid_value(value),
       m_has_first_click(false),
       m_up_arrow_timer_id(-1),
       m_down_arrow_timer_id(-1) {
+  set_value(value);
   connect(lineEdit(), &QLineEdit::textChanged, this,
     &RealSpinBox::on_text_changed);
   setContextMenuPolicy(Qt::NoContextMenu);
@@ -94,7 +95,11 @@ void RealSpinBox::keyPressEvent(QKeyEvent* event) {
       lineEdit()->backspace();
       return;
     case Qt::Key_Delete:
+      lineEdit()->clear();
+      return;
+    case Qt::Key_Escape:
       lineEdit()->setText(display_string(m_last_valid_value));
+      Q_EMIT editingFinished();
       return;
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -188,10 +193,11 @@ void RealSpinBox::set_decimal_places(int decimals) {
 
 void RealSpinBox::set_minimum_decimal_places(int decimals) {
   m_minimum_decimals = decimals;
+  lineEdit()->setText(display_string(m_last_valid_value));
 }
 
 void RealSpinBox::set_minimum(Real minimum) {
-  m_minimum = minimum;
+  assign_value(m_minimum, minimum);
   if(auto value = get_value(text()); value && value->compare(m_minimum) < 0) {
     m_last_valid_value = m_minimum;
     lineEdit()->setText(display_string(m_minimum));
@@ -200,7 +206,7 @@ void RealSpinBox::set_minimum(Real minimum) {
 }
 
 void RealSpinBox::set_maximum(Real maximum) {
-  m_maximum = maximum;
+  assign_value(m_maximum, maximum);
   if(auto value = get_value(text()); value && value->compare(m_maximum) > 0) {
     m_last_valid_value = m_maximum;
     lineEdit()->setText(display_string(m_maximum));
@@ -208,8 +214,12 @@ void RealSpinBox::set_maximum(Real maximum) {
   update_stylesheet();
 }
 
+RealSpinBox::Real RealSpinBox::get_step() const {
+  return m_step;
+}
+
 void RealSpinBox::set_step(Real step) {
-  m_step = step;
+  assign_value(m_step, step);
 }
 
 RealSpinBox::Real RealSpinBox::get_value() const {
@@ -218,8 +228,9 @@ RealSpinBox::Real RealSpinBox::get_value() const {
 
 void RealSpinBox::set_value(Real value) {
   blockSignals(true);
-  value = clamp(value, m_minimum, m_maximum);
-  lineEdit()->setText(display_string(value));
+  assign_value(m_last_valid_value, value);
+  m_last_valid_value = clamp(m_last_valid_value, m_minimum, m_maximum);
+  lineEdit()->setText(display_string(m_last_valid_value));
   blockSignals(false);
 }
 
@@ -242,7 +253,7 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   }
   auto value = get_value(text());
   if(text().isEmpty() || !value) {
-    value = 0;
+    value = get_value("0");
   }
   auto stepped_value = m_step;
   stepped_value *= step;
@@ -252,19 +263,29 @@ void RealSpinBox::add_step(int step, Qt::KeyboardModifiers modifiers) {
   lineEdit()->setCursorPosition(text().length());
 }
 
+void RealSpinBox::assign_value(Real& variable, Real value) {
+  if(auto parsed_value = get_value(
+      value.str(MAXIMUM_DECIMAL_PLACES, std::ios_base::fixed).c_str())) {
+    variable = *parsed_value;
+  }
+}
+
 QString RealSpinBox::display_string(Real value) {
   auto current_text = text();
   current_text.remove(QRegularExpression("0+$"));
   current_text.remove(QRegularExpression(
     QString("\\%1$").arg(m_locale.decimalPoint())));
-  if(current_text.contains(m_locale.decimalPoint())) {
-    auto displayed_text = QString::fromStdString(value.str(
-      current_text.length() -
-      current_text.indexOf(m_locale.decimalPoint()) - 1,
+  auto point_index = current_text.indexOf(m_locale.decimalPoint());
+  if(point_index != -1 || m_minimum_decimals > 0) {
+    auto decimal_places = [&] {
+      if(point_index != -1) {
+        return std::max(m_minimum_decimals,
+          current_text.length() - point_index - 1);
+      }
+      return m_minimum_decimals;
+    }();
+    return QString::fromStdString(value.str(decimal_places,
       std::ios_base::fixed));
-    return displayed_text.remove(
-      QRegularExpression(QString("\\%1%2*$").arg(m_locale.decimalPoint())
-      .arg(0))).trimmed();
   }
   return QString::fromStdString(value.str(text().length(),
     std::ios_base::dec));
@@ -378,7 +399,7 @@ void RealSpinBox::set_stylesheet(bool is_up_disabled, bool is_down_disabled) {
       image: url(%10);
       width: %3px;
     })").arg(scale_width(1)).arg(scale_height(8)).arg(ARROW_WIDTH())
-        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(4))
+        .arg(scale_width(10)).arg(scale_height(12)).arg(scale_height(2))
         .arg(up_icon).arg(up_icon_hover).arg(down_icon).arg(down_icon_hover)
         .arg(UP_ARROW_DISABLED_ICON).arg(DOWN_ARROW_DISABLED_ICON));
 }

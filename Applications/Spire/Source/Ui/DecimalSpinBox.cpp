@@ -32,6 +32,14 @@ void DecimalSpinBox::set_maximum(double maximum) {
   m_spin_box->set_maximum(static_cast<long double>(maximum));
 }
 
+double DecimalSpinBox::get_step() const {
+  return m_spin_box->get_step().extract_double();
+}
+
+void DecimalSpinBox::set_step(double step) {
+  m_spin_box->set_step(static_cast<long double>(step));
+}
+
 double DecimalSpinBox::get_value() const {
   return m_spin_box->get_value().extract_double();
 }

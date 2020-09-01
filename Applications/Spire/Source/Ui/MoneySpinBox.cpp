@@ -1,4 +1,4 @@
-#include "Spire/Ui/QuantitySpinBox.hpp"
+#include "Spire/Ui/MoneySpinBox.hpp"
 #include <QHBoxLayout>
 
 using namespace boost::signals2;
@@ -6,63 +6,65 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto to_quantity(RealSpinBox::Real value) {
-    if(auto quantity = Quantity::FromValue(value.str(
-        std::numeric_limits<Quantity>::digits10, std::ios_base::dec))) {
-      return *quantity;
+  auto to_money(RealSpinBox::Real value) {
+    if(auto money = Money::FromValue(value.str(
+        std::numeric_limits<Money>::digits10, std::ios_base::dec))) {
+      return *money;
     }
-    throw std::runtime_error(R"(QuantitySpinBox: failed to convert Real to
-      Quantity.")");
+    throw std::runtime_error("MoneySpinBox: failed to convert Real to Money.");
   }
 }
 
-QuantitySpinBox::QuantitySpinBox(Quantity value, QWidget* parent)
+MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
     : QAbstractSpinBox(parent) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   m_spin_box = new RealSpinBox(to_real(value), this);
+  m_spin_box->set_minimum_decimal_places(2);
+  // TODO: workaround for Money::CENT compiling as 0.
+  set_step(*Money::FromValue("0.01"));
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);
   m_spin_box->connect_change_signal([=] (auto value) {
-    m_change_signal(to_quantity(value));
+    m_change_signal(to_money(value));
   });
   connect(m_spin_box, &RealSpinBox::editingFinished, this,
-    &QuantitySpinBox::editingFinished);
+    &MoneySpinBox::editingFinished);
   m_locale.setNumberOptions(m_locale.numberOptions().setFlag(
     QLocale::OmitGroupSeparator, true));
 }
 
-connection QuantitySpinBox::connect_change_signal(
+connection MoneySpinBox::connect_change_signal(
     const ChangeSignal::slot_type& slot) const {
   return m_change_signal.connect(slot);
 }
 
-void QuantitySpinBox::set_minimum(Quantity minimum) {
+void MoneySpinBox::set_minimum(Money minimum) {
   m_spin_box->set_minimum(to_real(minimum));
 }
 
-void QuantitySpinBox::set_maximum(Quantity maximum) {
+void MoneySpinBox::set_maximum(Money maximum) {
   m_spin_box->set_maximum(to_real(maximum));
 }
 
-Quantity QuantitySpinBox::get_step() const {
-  return to_quantity(m_spin_box->get_step());
+Money MoneySpinBox::get_step() const {
+  return to_money(m_spin_box->get_step());
 }
 
-void QuantitySpinBox::set_step(Quantity step) {
+void MoneySpinBox::set_step(Money step) {
   m_spin_box->set_step(to_real(step));
 }
 
-Quantity QuantitySpinBox::get_value() const {
-  return to_quantity(m_spin_box->get_value());
+Money MoneySpinBox::get_value() const {
+  return to_money(m_spin_box->get_value());
 }
 
-void QuantitySpinBox::set_value(Quantity value) {
+void MoneySpinBox::set_value(Money value) {
   m_spin_box->set_value(to_real(value));
 }
 
-RealSpinBox::Real QuantitySpinBox::to_real(Nexus::Quantity value) {
+RealSpinBox::Real MoneySpinBox::to_real(Nexus::Money value) {
   return m_item_delegate.displayText(
     QVariant::fromValue(value), m_locale).toStdString().c_str();
 }
