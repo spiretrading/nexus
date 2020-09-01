@@ -52,6 +52,7 @@ namespace Spire {
       DropShadow* m_shadow;
       ScrollArea* m_scroll_area;
       QWidget* m_list_widget;
+      QWidget* m_key_widget;
       int m_highlighted_index;
       int m_active_index;
 

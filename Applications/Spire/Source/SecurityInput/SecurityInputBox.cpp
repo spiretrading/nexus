@@ -28,7 +28,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
     #SecurityInputBox {
       border: %1px solid #C8C8C8;
     }
-    #SecurityInputBox:hover {
+    :hover {
       border: %1px solid #4b23A0;
     })").arg(scale_width(1)));
   auto layout = new QHBoxLayout(this);
@@ -37,8 +37,7 @@ SecurityInputBox::SecurityInputBox(Ref<SecurityInputModel> model,
   m_security_line_edit = [&] {
     auto line_edit = new SecurityInputLineEdit(initial_text, model, true,
       this);
-    //line_edit->setFixedSize(scale(180, 30));
-    //line_edit->connect_commit_signal([=] (auto& s) { on_commit(s); });
+    line_edit->connect_commit_signal([=] (auto& s) { on_commit(s); });
     line_edit->installEventFilter(this);
     return line_edit;
   }();

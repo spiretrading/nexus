@@ -52,12 +52,12 @@ void SecurityInfoListView::set_list(const std::vector<SecurityInfo>& list) {
     auto icon_path = QString(":/Icons/%1.png").arg(
       static_cast<std::uint16_t>(security.m_security.GetCountry()));
     auto security_widget = new SecurityInfoWidget(security, this);
-    //security_widget->connect_highlighted_signal(
-    //  [=] (auto value) { on_highlight(i, value); });
-    //security_widget->connect_commit_signal(
-    //  [=] {
-    //    on_commit(security.m_security);
-    //  });
+    security_widget->connect_highlighted_signal(
+      [=] (auto value) { on_highlight(i, value); });
+    security_widget->connect_commit_signal(
+      [=] {
+        on_commit(security.m_security);
+      });
     m_list_widget->layout()->addWidget(security_widget);
   }
   if(m_list_widget->layout()->count() == 0) {
@@ -108,12 +108,12 @@ void SecurityInfoListView::update_active(int active_index) {
   if(m_highlighted_index != -1) {
     auto highlighted_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
-    //highlighted_widget->remove_highlight();
+    highlighted_widget->remove_highlight();
   }
   if(m_active_index != -1) {
     auto active_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_active_index)->widget());
-    //active_widget->remove_highlight();
+    active_widget->remove_highlight();
   };
   m_active_index = active_index;
   if(m_active_index == -1) {
@@ -121,7 +121,7 @@ void SecurityInfoListView::update_active(int active_index) {
   }
   auto active_widget = static_cast<SecurityInfoWidget*>(
     m_list_widget->layout()->itemAt(m_active_index)->widget());
-  //active_widget->set_highlighted();
+  active_widget->set_highlighted();
   m_scroll_area->ensureWidgetVisible(active_widget, 0, 0);
   m_activate_signal(active_widget->get_info().m_security);
 }
@@ -131,13 +131,13 @@ void SecurityInfoListView::on_highlight(int index, bool is_highlighted) {
     if(m_active_index != -1 && m_active_index != index) {
       auto active_widget = static_cast<SecurityInfoWidget*>(
         m_list_widget->layout()->itemAt(m_active_index)->widget());
-      //active_widget->remove_highlight();
+      active_widget->remove_highlight();
       m_active_index = -1;
     }
     m_highlighted_index = index;
     auto highlighted_widget = static_cast<SecurityInfoWidget*>(
       m_list_widget->layout()->itemAt(m_highlighted_index)->widget());
-    //highlighted_widget->set_highlighted();
+    highlighted_widget->set_highlighted();
   } else {
     m_highlighted_index = m_active_index;
   }
