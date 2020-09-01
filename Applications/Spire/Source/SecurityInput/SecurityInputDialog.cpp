@@ -56,36 +56,39 @@ const Security& SecurityInputDialog::get_security() const noexcept {
   return m_security;
 }
 
-void SecurityInputDialog::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ActivationChange) {
-    if(QApplication::activeWindow() != this) {
-      if(auto c = m_security_input_box->findChild<SecurityInfoListView*>(
-          "SecurityInputLineEdit")) {
-        c->installEventFilter(this);
-        return;
-      }
-      reject();
-    }
+bool SecurityInputDialog::event(QEvent* event) {
+  if(event->type() == QEvent::WindowDeactivate) {
+    // TODO: close/reject
+    auto a = 0;
+//    if(QApplication::activeWindow() != this) {
+//      if(auto c = m_security_input_box->findChild<SecurityInfoListView*>(
+//          "SecurityInputLineEdit")) {
+//        c->installEventFilter(this);
+//        return;
+//      }
+//      reject();
+//    }
   }
+  return QDialog::event(event);
 }
 
 void SecurityInputDialog::closeEvent(QCloseEvent* event) {
   reject();
 }
 
-bool SecurityInputDialog::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::ActivationChange) {
-    auto c = static_cast<QWidget*>(watched);
-    if(QApplication::activeWindow() != c) {
-      if(QApplication::activeWindow() == this) {
-        c->removeEventFilter(this);
-      } else {
-        reject();
-      }
-    }
-  }
-  return QDialog::eventFilter(watched, event);
-}
+//bool SecurityInputDialog::eventFilter(QObject* watched, QEvent* event) {
+//  if(event->type() == QEvent::ActivationChange) {
+//    auto c = static_cast<QWidget*>(watched);
+//    if(QApplication::activeWindow() != c) {
+//      if(QApplication::activeWindow() == this) {
+//        c->removeEventFilter(this);
+//      } else {
+//        reject();
+//      }
+//    }
+//  }
+//  return QDialog::eventFilter(watched, event);
+//}
 
 void SecurityInputDialog::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
@@ -120,6 +123,7 @@ void SecurityInputDialog::showEvent(QShowEvent* event) {
   m_security_input_box->connect_commit_signal(
     [=] (const auto& s) { set_security(s); });
   m_layout->addWidget(m_security_input_box);
+  m_security_input_box->setFocus();
 }
 
 void SecurityInputDialog::set_security(const Security& security) {

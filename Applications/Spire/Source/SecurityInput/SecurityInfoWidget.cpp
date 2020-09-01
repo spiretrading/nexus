@@ -10,9 +10,8 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
-    : QWidget(parent),
-      m_info(std::move(info)),
-      m_is_highlighted(false) {
+    : DropDownItem({}, (parent)),
+      m_info(std::move(info)) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFocusPolicy(Qt::NoFocus);
@@ -53,51 +52,10 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
   )").arg(scale_height(10)));
   display_company_name();
   layout->addWidget(m_company_name_label);
-  setMouseTracking(true);
 }
 
 const SecurityInfo& SecurityInfoWidget::get_info() const {
   return m_info;
-}
-
-void SecurityInfoWidget::set_highlighted() {
-  if(m_is_highlighted) {
-    return;
-  }
-  setStyleSheet("background-color: #F2F2FF;");
-  m_is_highlighted = true;
-  m_highlighted_signal(true);
-}
-
-void SecurityInfoWidget::remove_highlight() {
-  if(!m_is_highlighted) {
-    return;
-  }
-  setStyleSheet("background-color: transparent;");
-  m_is_highlighted = false;
-  m_highlighted_signal(false);
-}
-
-connection SecurityInfoWidget::connect_highlighted_signal(
-    const HighlightedSignal::slot_type& slot) const {
-  return m_highlighted_signal.connect(slot);
-}
-
-connection SecurityInfoWidget::connect_commit_signal(
-    const CommitSignal::slot_type& slot) const {
-  return m_commit_signal.connect(slot);
-}
-
-void SecurityInfoWidget::enterEvent(QEvent* event) {
-  set_highlighted();
-}
-
-void SecurityInfoWidget::leaveEvent(QEvent* event) {
-  remove_highlight();
-}
-
-void SecurityInfoWidget::mouseReleaseEvent(QMouseEvent* event) {
-  m_commit_signal();
 }
 
 void SecurityInfoWidget::resizeEvent(QResizeEvent* event) {
