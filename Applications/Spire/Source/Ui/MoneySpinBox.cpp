@@ -22,7 +22,7 @@ MoneySpinBox::MoneySpinBox(Money value, QWidget* parent)
   m_spin_box = new RealSpinBox(to_real(value), this);
   m_spin_box->set_minimum_decimal_places(2);
   // TODO: workaround for Money::CENT compiling as 0.
-  set_step(Money(0.01));
+  set_step(*Money::FromValue("0.01"));
   m_spin_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_spin_box);
   layout->addWidget(m_spin_box);
