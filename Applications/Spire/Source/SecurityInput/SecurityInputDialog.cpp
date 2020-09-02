@@ -135,6 +135,7 @@ void SecurityInputDialog::reject_dialog() {
   disconnect(m_security_line_edit,
     &SecurityInputLineEdit::editingFinished, nullptr, nullptr);
   reject();
+  static_cast<QWidget*>(parent())->activateWindow();
 }
 
 void SecurityInputDialog::set_security(const Security& security) {
