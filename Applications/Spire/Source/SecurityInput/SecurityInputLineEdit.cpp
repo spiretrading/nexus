@@ -42,25 +42,17 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
       m_model(model.Get()),
       m_is_icon_visible(is_icon_visible) {
   setText(initial_text);
-  set_cell_style();
-  //parent->installEventFilter(this);
-  setObjectName("SecurityInputLineEdit");
-  setStyleSheet(QString(R"(
-    #SecurityInputLineEdit {
-      background-color: #FFFFFF;
-      border: none;
-      font-family: Roboto;
-      font-size: %1px;
-      padding: %2px 0px %2px %3px;
-    })").arg(scale_height(12)).arg(scale_height(6)).arg(scale_width(6)));
+  parent->installEventFilter(this);
   connect(this, &TextInputWidget::textEdited, this,
     &SecurityInputLineEdit::on_text_edited);
   m_securities = new DropDownList({}, false, this);
-  //m_securities->connect_activate_signal(
-  //  [=] (auto& s) { on_activated(s); });
-  //m_securities->connect_commit_signal([=] (auto& s) {
-  //  on_commit(s);
-  //});
+  m_securities->connect_activated_signal(
+    [=] (auto& s) {
+      auto a = s.value<Security>();
+      on_activated(s.value<Security>()); });
+  m_securities->connect_value_selected_signal([=] (auto& s) {
+    on_commit(s.value<Security>());
+  });
   m_securities->setVisible(false);
   window()->installEventFilter(this);
 }
@@ -69,38 +61,24 @@ const Nexus::Security& SecurityInputLineEdit::get_security() const {
   return m_security;
 }
 
-//connection SecurityInputLineEdit::connect_commit_signal(
-//    const CommitSignal::slot_type& slot) const {
-//  return m_commit_signal.connect(slot);
-//}
-
-//bool SecurityInputLineEdit::eventFilter(QObject* watched, QEvent* event) {
-//  if(watched == window()) {
-//    if(event->type() == QEvent::Move) {
-//      move_securities_list();
-//    } else if(event->type() == QEvent::FocusIn) {
-//      setFocus();
-//    } else if(event->type() == QEvent::WindowDeactivate &&
-//        !m_securities->isActiveWindow()) {
-//      m_securities->hide();
-//    }
-//  } else if(watched == parent()) {
-//    if(event->type() == QEvent::Wheel) {
-//      m_securities->hide();
-//    }
-//   }
-//  return TextInputWidget::eventFilter(watched, event);
-//}
-
-void SecurityInputLineEdit::focusInEvent(QFocusEvent* event) {
-  if(!m_is_icon_visible) {
-    TextInputWidget::focusInEvent(event);
-  }
+bool SecurityInputLineEdit::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == window()) {
+    if(event->type() == QEvent::WindowDeactivate &&
+        !m_securities->isActiveWindow()) {
+      m_securities->hide();
+    }
+  } else if(watched == parent()) {
+    if(event->type() == QEvent::Wheel) {
+      m_securities->hide();
+    }
+   }
+  return TextInputWidget::eventFilter(watched, event);
 }
 
-//void SecurityInputLineEdit::hideEvent(QHideEvent* event) {
-//  m_securities->close();
-//}
+void SecurityInputLineEdit::focusInEvent(QFocusEvent* event) {
+  TextInputWidget::focusInEvent(event);
+  setCursorPosition(text().length());
+}
 
 void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
@@ -118,7 +96,7 @@ void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
 }
 
 void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
-  QLineEdit::paintEvent(event);
+  TextInputWidget::paintEvent(event);
   if(m_is_icon_visible) {
     auto painter = QPainter(this);
     painter.drawImage(width() - ICON_WIDTH() - scale_width(8),
@@ -126,22 +104,10 @@ void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
   }
 }
 
-//void SecurityInputLineEdit::resizeEvent(QResizeEvent* event) {
-//  m_securities->setFixedWidth(std::max(width(), scale_width(142)));
-//}
-
 void SecurityInputLineEdit::showEvent(QShowEvent* event) {
   on_text_edited();
   m_securities->setFixedWidth(std::max(width(), scale_width(142)));
 }
-
-//void SecurityInputLineEdit::move_securities_list() {
-//  auto x_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-//    geometry().bottomLeft()).x();
-//  auto y_pos = static_cast<QWidget*>(parent())->mapToGlobal(
-//    frameGeometry().bottomLeft()).y();
-//  m_securities->move(x_pos, y_pos + 2);
-//}
 
 void SecurityInputLineEdit::on_activated(const Security& security) {
   auto item_delegate = CustomVariantItemDelegate();
@@ -152,7 +118,6 @@ void SecurityInputLineEdit::on_activated(const Security& security) {
 void SecurityInputLineEdit::on_commit(const Security& security) {
   m_security = security;
   Q_EMIT editingFinished();
-  //m_commit_signal(security);
 }
 
 void SecurityInputLineEdit::on_text_edited() {
@@ -165,9 +130,6 @@ void SecurityInputLineEdit::on_text_edited() {
         return std::vector<SecurityInfo>();
       }
     }();
-    //m_securities->
-    //m_securities->set_list(completions);
-    //m_securities->set_items()
     auto widget_items = std::vector<DropDownItem*>(completions.size());
     std::transform(completions.begin(), completions.end(),
       widget_items.begin(), [&] (const auto& item) {
@@ -175,10 +137,9 @@ void SecurityInputLineEdit::on_text_edited() {
         return item_widget;
       });
     m_securities->set_items(widget_items);
-    if(completions.empty()) {
+    if(widget_items.empty()) {
       m_securities->hide();
     } else {
-      //move_securities_list();
       m_securities->setVisible(true);
       m_securities->raise();
     }

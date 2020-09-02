@@ -17,6 +17,7 @@ DropDownList::DropDownList(std::vector<DropDownItem*> items,
     bool is_click_activated, QWidget* parent)
     : DropDownWindow(is_click_activated, parent),
       m_max_displayed_items(5) {
+  setObjectName("DropDownList");
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);
@@ -69,6 +70,7 @@ void DropDownList::keyPressEvent(QKeyEvent* event) {
       }
       break;
     case Qt::Key_Enter:
+    case Qt::Key_Return:
       if(m_highlight_index) {
         on_item_selected(get_item(*m_highlight_index)->get_value(),
           *m_highlight_index);

@@ -1,5 +1,6 @@
 #include "Spire/SecurityInput/SecurityInfoWidget.hpp"
 #include <QHBoxLayout>
+#include <QPainter>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -10,7 +11,7 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
-    : DropDownItem({}, (parent)),
+    : DropDownItem(QVariant::fromValue<Security>(info.m_security), (parent)),
       m_info(std::move(info)) {
   setFixedHeight(scale_height(40));
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -56,6 +57,16 @@ SecurityInfoWidget::SecurityInfoWidget(SecurityInfo info, QWidget* parent)
 
 const SecurityInfo& SecurityInfoWidget::get_info() const {
   return m_info;
+}
+
+void SecurityInfoWidget::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  if(underMouse() || is_highlighted()) {
+    painter.fillRect(rect(), QColor("#F2F2FF"));
+  } else {
+    painter.fillRect(rect(), Qt::white);
+  }
+  QWidget::paintEvent(event);
 }
 
 void SecurityInfoWidget::resizeEvent(QResizeEvent* event) {

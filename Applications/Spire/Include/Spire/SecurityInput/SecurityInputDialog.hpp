@@ -6,7 +6,6 @@
 #include <QVBoxLayout>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
-#include "Spire/SecurityInput/SecurityInputBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -41,10 +40,9 @@ namespace Spire {
       const Nexus::Security& get_security() const noexcept;
 
     protected:
-      //void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
-      //bool eventFilter(QObject* watched, QEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
@@ -55,7 +53,7 @@ namespace Spire {
       SecurityInputModel* m_model;
       DropShadow* m_shadow;
       QVBoxLayout* m_layout;
-      SecurityInputBox* m_security_input_box;
+      SecurityInputLineEdit* m_security_line_edit;
       QString m_initial_text;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
