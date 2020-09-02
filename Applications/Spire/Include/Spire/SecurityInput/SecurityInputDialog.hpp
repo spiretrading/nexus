@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -51,13 +52,14 @@ namespace Spire {
     private:
       Nexus::Security m_security;
       SecurityInputModel* m_model;
-      DropShadow* m_shadow;
       QVBoxLayout* m_layout;
       SecurityInputLineEdit* m_security_line_edit;
+      DropDownList* m_security_list;
       QString m_initial_text;
       bool m_is_dragging;
       QPoint m_last_mouse_pos;
 
+      void reject_dialog();
       void set_security(const Nexus::Security& security);
   };
 }

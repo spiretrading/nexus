@@ -17,7 +17,6 @@ DropDownList::DropDownList(std::vector<DropDownItem*> items,
     bool is_click_activated, QWidget* parent)
     : DropDownWindow(is_click_activated, parent),
       m_max_displayed_items(5) {
-  setObjectName("DropDownList");
   m_scroll_area = new ScrollArea(this);
   m_scroll_area->setFocusProxy(parent);
   m_scroll_area->setWidgetResizable(true);

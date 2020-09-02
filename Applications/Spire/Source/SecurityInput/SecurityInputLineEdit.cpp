@@ -46,10 +46,9 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
   connect(this, &TextInputWidget::textEdited, this,
     &SecurityInputLineEdit::on_text_edited);
   m_securities = new DropDownList({}, false, this);
+  m_securities->findChild<ScrollArea*>()->setFocusProxy(this);
   m_securities->connect_activated_signal(
-    [=] (auto& s) {
-      auto a = s.value<Security>();
-      on_activated(s.value<Security>()); });
+    [=] (auto& s) { on_activated(s.value<Security>()); });
   m_securities->connect_value_selected_signal([=] (auto& s) {
     on_commit(s.value<Security>());
   });
@@ -71,7 +70,7 @@ bool SecurityInputLineEdit::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Wheel) {
       m_securities->hide();
     }
-   }
+  }
   return TextInputWidget::eventFilter(watched, event);
 }
 

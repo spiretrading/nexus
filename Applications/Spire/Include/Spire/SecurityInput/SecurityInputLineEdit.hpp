@@ -50,6 +50,7 @@ namespace Spire {
     private:
       SecurityInputModel* m_model;
       DropDownList* m_securities;
+      ScrollArea* m_scroll_area;
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
       Nexus::Security m_security;
       bool m_is_icon_visible;
