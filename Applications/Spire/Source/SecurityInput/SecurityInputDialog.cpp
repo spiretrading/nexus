@@ -1,5 +1,4 @@
 #include "Spire/SecurityInput/SecurityInputDialog.hpp"
-#include <QApplication>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QVBoxLayout>
