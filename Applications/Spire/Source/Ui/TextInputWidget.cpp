@@ -80,7 +80,7 @@ void TextInputWidget::set_cell_style() {
 void TextInputWidget::set_default_style() {
   m_left_padding = scale_width(8);
   setStyleSheet(QString(R"(
-    QLineEdit {
+    QLineEdit#TextInputWidget {
       background-color: #FFFFFF;
       border: %1px solid #C8C8C8 %2px solid #C8C8C8;
       color: #000000;
@@ -89,7 +89,7 @@ void TextInputWidget::set_default_style() {
       padding-left: %4px;
     }
 
-    QLineEdit:focus {
+    QLineEdit#TextInputWidget:focus {
       border: %1px solid #4B23A0 %2px solid #4B23A0;
     })").arg(scale_height(1)).arg(scale_width(1)).arg(scale_height(12))
         .arg(m_left_padding));
