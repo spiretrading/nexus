@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/SecurityInput/SecurityInput.hpp"
 #include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/TextInputWidget.hpp"
 
@@ -54,6 +55,7 @@ namespace Spire {
       QtPromise<std::vector<Nexus::SecurityInfo>> m_completions;
       Nexus::Security m_security;
       bool m_is_icon_visible;
+      CustomVariantItemDelegate m_item_delegate;
 
       void on_activated(const Nexus::Security& security);
       void on_commit(const Nexus::Security& security);

@@ -64,6 +64,10 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
   painter.drawText(text_rect, elided_text);
 }
 
+int TextInputWidget::get_padding() const {
+  return m_left_padding;
+}
+
 void TextInputWidget::set_cell_style() {
   m_left_padding = scale_width(5);
   setStyleSheet(QString(R"(

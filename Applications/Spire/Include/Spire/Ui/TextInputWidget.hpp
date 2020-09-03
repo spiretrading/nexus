@@ -22,6 +22,9 @@ namespace Spire {
       */
       explicit TextInputWidget(QString text, QWidget* parent = nullptr);
 
+      //! Returns the left text padding.
+      int get_padding() const;
+
       //! Sets the input's style to the table cell style.
       void set_cell_style();
 
