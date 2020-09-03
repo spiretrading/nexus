@@ -17,6 +17,7 @@ TextInputWidget::TextInputWidget(QWidget* parent)
 TextInputWidget::TextInputWidget(QString text, QWidget* parent)
     : QLineEdit(std::move(text), parent),
       m_left_padding(0) {
+  setObjectName("TextInputWidget");
   setContextMenuPolicy(Qt::NoContextMenu);
   set_default_style();
 }
@@ -66,13 +67,14 @@ void TextInputWidget::paintEvent(QPaintEvent* event) {
 void TextInputWidget::set_cell_style() {
   m_left_padding = scale_width(5);
   setStyleSheet(QString(R"(
-    background-color: #FFFFFF;
-    border: none;
-    color: #000000;
-    font-family: Roboto;
-    font-size: %1px;
-    padding-left: %2px;
-  )").arg(scale_height(12)).arg(m_left_padding));
+    #TextInputWidget {
+      background-color: #FFFFFF;
+      border: none;
+      color: #000000;
+      font-family: Roboto;
+      font-size: %1px;
+      padding-left: %2px;
+    })").arg(scale_height(12)).arg(m_left_padding));
 }
 
 void TextInputWidget::set_default_style() {
