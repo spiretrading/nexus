@@ -255,7 +255,7 @@ namespace Nexus::MarketDataService::Tests {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
       [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_market_data_client", Beam::Ref(m_serverConnection));
+          "test_market_data_client", m_serverConnection);
       },
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
@@ -273,8 +273,7 @@ namespace Nexus::MarketDataService::Tests {
       ClientChannel, Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
       Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
     auto client = std::make_unique<Client>(Beam::Initialize(
-      std::string("test_market_data_feed_client"),
-      Beam::Ref(m_feedServerConnection)),
+      "test_market_data_feed_client", m_feedServerConnection),
       Beam::ServiceLocator::SessionAuthenticator<ServiceLocatorClient>(
       Beam::Ref(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
     return MakeVirtualMarketDataFeedClient(std::move(client));

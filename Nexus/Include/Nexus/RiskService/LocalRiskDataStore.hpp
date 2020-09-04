@@ -9,8 +9,6 @@ namespace Nexus::RiskService {
   /** Implements a RiskDataStore in memory. */
   class LocalRiskDataStore : private boost::noncopyable {
     public:
-      ~LocalRiskDataStore();
-
       InventorySnapshot LoadInventorySnapshot(
         const Beam::ServiceLocator::DirectoryEntry& account);
 

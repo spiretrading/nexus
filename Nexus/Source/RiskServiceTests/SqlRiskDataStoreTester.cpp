@@ -22,7 +22,6 @@ TEST_SUITE("SqlRiskDataStore") {
   TEST_CASE("load_empty_inventories") {
     auto dataStore = TestSqlRiskDataStore(
       std::make_unique<Connection>(":memory:"));
-    dataStore.Open();
     auto snapshot = dataStore.LoadInventorySnapshot(DirectoryEntry::MakeAccount(
       123, "test"));
     REQUIRE(snapshot.m_sequence == Sequence::First());
@@ -33,7 +32,6 @@ TEST_SUITE("SqlRiskDataStore") {
   TEST_CASE("store_load_inventory") {
     auto dataStore = TestSqlRiskDataStore(
       std::make_unique<Connection>(":memory:"));
-    dataStore.Open();
     auto inventories = std::vector<RiskInventory>();
     inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
@@ -58,7 +56,6 @@ TEST_SUITE("SqlRiskDataStore") {
   TEST_CASE("store_empty_inventory") {
     auto dataStore = TestSqlRiskDataStore(
       std::make_unique<Connection>(":memory:"));
-    dataStore.Open();
     auto inventories = std::vector<RiskInventory>();
     inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),

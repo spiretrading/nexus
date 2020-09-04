@@ -24,23 +24,20 @@ namespace {
   struct Fixture {
     TestEnvironment m_environment;
     TestServiceClients m_adminClients;
-    TestServiceClients m_userClients;
+    optional<TestServiceClients> m_userClients;
     std::shared_ptr<Queue<const Order*>> m_orders;
     DirectoryEntry m_account;
 
     Fixture()
         : m_adminClients(Ref(m_environment)),
-          m_userClients(Ref(m_environment)),
           m_orders(std::make_shared<Queue<const Order*>>()) {
       m_environment.MonitorOrderSubmissions(m_orders);
-      m_environment.Open();
       m_environment.GetAdministrationEnvironment().MakeAdministrator(
         DirectoryEntry::GetRootAccount());
       m_environment.Publish(TSLA, BboQuote(
         Quote(*Money::FromValue("1.00"), 100, Side::BID),
         Quote(*Money::FromValue("1.01"), 100, Side::ASK),
         m_environment.GetTimeEnvironment().GetTime()));
-      m_adminClients.Open();
       m_account = m_adminClients.GetServiceLocatorClient().MakeAccount("simba",
         "1234", DirectoryEntry::GetStarDirectory());
       m_adminClients.GetAdministrationClient().StoreRiskParameters(m_account,
@@ -48,8 +45,7 @@ namespace {
         RiskState::Type::ACTIVE, 2 * Money::ONE, 1, minutes(10)));
       m_adminClients.GetAdministrationClient().StoreRiskState(m_account,
         RiskState::Type::ACTIVE);
-      m_userClients.GetServiceLocatorClient().SetCredentials("simba", "1234");
-      m_userClients.Open();
+      m_userClients.emplace("simba", "1234", Ref(m_environment));
     }
   };
 }
@@ -58,7 +54,6 @@ TEST_SUITE("RiskController") {
   TEST_CASE_FIXTURE(Fixture, "single_security") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
     auto controller = RiskController(m_account,
       &m_adminClients.GetAdministrationClient(),
       &m_adminClients.GetMarketDataClient(),
@@ -71,7 +66,7 @@ TEST_SUITE("RiskController") {
     REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
     auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
     controller.GetPortfolioPublisher().Monitor(portfolio);
-    auto& order = m_userClients.GetOrderExecutionClient().Submit(
+    auto& order = m_userClients->GetOrderExecutionClient().Submit(
       OrderFields::BuildMarketOrder(TSLA, Side::BID, 100));
     auto receivedOrder = m_orders->Pop();
     m_environment.Accept(*receivedOrder);

@@ -41,13 +41,10 @@ namespace {
       RegisterQueryTypes(Store(m_protocolServer->GetSlots().GetRegistry()));
       RegisterOrderExecutionServices(Store(m_protocolServer->GetSlots()));
       RegisterOrderExecutionMessages(Store(m_protocolServer->GetSlots()));
-      m_protocolServer->Open();
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
-          auto channel = std::make_unique<
-            TestServiceProtocolClientBuilder::Channel>("test",
-            Ref(*serverConnection));
-          return channel;
+          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
+            "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_serviceClient.emplace(builder);
       QueryOrderSubmissionsService::AddSlot(Store(m_protocolServer->GetSlots()),

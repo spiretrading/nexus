@@ -1,5 +1,5 @@
-#ifndef NEXUS_TESTSERVICECLIENTS_HPP
-#define NEXUS_TESTSERVICECLIENTS_HPP
+#ifndef NEXUS_TEST_SERVICE_CLIENTS_HPP
+#define NEXUS_TEST_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/RegistryService/VirtualRegistryClient.hpp>
@@ -8,7 +8,6 @@
 #include <Beam/TimeService/VirtualTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/ChartingService/VirtualChartingClient.hpp"
 #include "Nexus/Compliance/VirtualComplianceClient.hpp"
 #include "Nexus/DefinitionsService/VirtualDefinitionsClient.hpp"
@@ -19,10 +18,8 @@
 
 namespace Nexus {
 
-  /*! \class TestServiceClients
-      \brief Implements the ServiceClients interface for testing.
-   */
-  class TestServiceClients : private boost::noncopyable {
+  /** Implements the ServiceClients interface for testing. */
+  class TestServiceClients {
     public:
       using ServiceLocatorClient =
         Beam::ServiceLocator::VirtualServiceLocatorClient;
@@ -49,11 +46,20 @@ namespace Nexus {
 
       using Timer = Beam::Threading::VirtualTimer;
 
-      //! Constructs a TestServiceClients.
-      /*!
-        \param environment The TestEnvironment to use.
-      */
+      /**
+       * Constructs a TestServiceClients.
+       * @param environment The TestEnvironment to use.
+       */
       TestServiceClients(Beam::Ref<TestEnvironment> environment);
+
+      /**
+       * Constructs a TestServiceClients.
+       * @param username The username to login with.
+       * @param password The password to use.
+       * @param environment The TestEnvironment to use.
+       */
+      TestServiceClients(std::string username, std::string password,
+        Beam::Ref<TestEnvironment> environment);
 
       ~TestServiceClients();
 
@@ -96,25 +102,31 @@ namespace Nexus {
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
+      TestServiceClients(const TestServiceClients&) = delete;
+      TestServiceClients& operator =(const TestServiceClients&) = delete;
       void Shutdown();
   };
 
   inline TestServiceClients::TestServiceClients(
-      Beam::Ref<TestEnvironment> environment)
-      : m_environment{environment.Get()},
-        m_serviceLocatorClient{
-          m_environment->GetServiceLocatorEnvironment().BuildClient()},
-        m_definitionsClient{m_environment->GetDefinitionsEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_administrationClient{m_environment->GetAdministrationEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_marketDataClient{m_environment->GetMarketDataEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_orderExecutionClient{m_environment->GetOrderExecutionEnvironment().
-          BuildClient(Beam::Ref(*m_serviceLocatorClient))},
-        m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
+    Beam::Ref<TestEnvironment> environment)
+    : TestServiceClients("root", "", Beam::Ref(environment)) {}
+
+  inline TestServiceClients::TestServiceClients(std::string username,
+      std::string password, Beam::Ref<TestEnvironment> environment)
+      : m_environment(environment.Get()),
+        m_serviceLocatorClient(
+          m_environment->GetServiceLocatorEnvironment().BuildClient()),
+        m_definitionsClient(m_environment->GetDefinitionsEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_administrationClient(m_environment->GetAdministrationEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_marketDataClient(m_environment->GetMarketDataEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_orderExecutionClient(m_environment->GetOrderExecutionEnvironment().
+          BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
           std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
-          Beam::Ref(m_environment->GetTimeEnvironment())))} {
+          Beam::Ref(m_environment->GetTimeEnvironment())))) {
     m_openState.SetOpen();
   }
 

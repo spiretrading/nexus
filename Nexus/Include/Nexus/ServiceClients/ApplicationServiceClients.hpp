@@ -6,7 +6,6 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
 #include "Nexus/Compliance/ApplicationDefinitions.hpp"
@@ -107,7 +106,7 @@ namespace Nexus {
       OrderExecutionService::ApplicationOrderExecutionClient
         m_orderExecutionClient;
       RiskService::ApplicationRiskClient m_riskClient;
-      boost::optional<TimeClient> m_timeClient;
+      std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
       void Shutdown();
@@ -143,8 +142,6 @@ namespace Nexus {
       auto timeServices = m_serviceLocatorClient->Locate(
         Beam::TimeService::SERVICE_NAME);
       if(timeServices.empty()) {
-        m_timeClient.emplace(Beam::TimeService::MakeLiveNtpTimeClient({},
-          Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool)));
         BOOST_THROW_EXCEPTION(
           Beam::IO::ConnectException("No time services available."));
       }
@@ -152,8 +149,8 @@ namespace Nexus {
       auto ntpPool = Beam::Parsers::Parse<
         std::vector<Beam::Network::IpAddress>>(boost::get<std::string>(
         timeService.GetProperties().At("addresses")));
-      m_timeClient.emplace(Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
-        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool)));
+      m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
+        Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

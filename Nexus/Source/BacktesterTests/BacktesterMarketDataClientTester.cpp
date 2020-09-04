@@ -33,14 +33,11 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    testEnvironment.Open();
     auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
       Initialize(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
-    backtesterEnvironment.Open();
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    serviceClients.Open();
     auto routines = RoutineTaskQueue();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
     auto query = BuildRealTimeQuery(security);
@@ -86,14 +83,11 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    testEnvironment.Open();
     auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
       Initialize(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
-    backtesterEnvironment.Open();
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    serviceClients.Open();
     auto& marketDataClient = serviceClients.GetMarketDataClient();
     auto snapshot = std::make_shared<Queue<SequencedBboQuote>>();
     auto query = SecurityMarketDataQuery();

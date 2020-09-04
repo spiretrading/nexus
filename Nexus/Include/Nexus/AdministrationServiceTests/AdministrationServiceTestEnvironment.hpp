@@ -168,7 +168,7 @@ namespace Nexus::AdministrationService::Tests {
             m_globalEntitlementGroup);
         }
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_administration_client", Beam::Ref(m_serverConnection));
+          "test_administration_client", m_serverConnection);
       },
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();

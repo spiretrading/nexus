@@ -58,7 +58,6 @@ namespace {
     optional<TestServiceProtocolClient> m_clientProtocol;
 
     Fixture() {
-      m_serviceLocatorEnvironment.Open();
       auto servicesDirectory =
         m_serviceLocatorEnvironment.GetRoot().MakeDirectory("services",
         DirectoryEntry::GetStarDirectory());
@@ -75,28 +74,14 @@ namespace {
         "order_execution_service", "", servicesDirectory);
       auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
         "client", "", DirectoryEntry::GetStarDirectory());
-      m_uidServiceEnvironment.Open();
-      auto administationServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      administationServiceLocatorClient->SetCredentials(
-        "administration_service", "");
-      administationServiceLocatorClient->Open();
       m_administrationServiceEnvironment.emplace(
-        std::move(administationServiceLocatorClient));
-      m_administrationServiceEnvironment->Open();
+        m_serviceLocatorEnvironment.BuildClient("administration_service", ""));
       auto servletServiceLocatorClient =
-        std::shared_ptr(m_serviceLocatorEnvironment.BuildClient());
-      servletServiceLocatorClient->SetCredentials("order_execution_service",
-        "");
-      servletServiceLocatorClient->Open();
-      auto serverConnection = std::make_shared<TestServerConnection>();
-      m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
-        Initialize());
-      RegisterQueryTypes(Store(m_clientProtocol->GetSlots().GetRegistry()));
-      RegisterOrderExecutionServices(Store(m_clientProtocol->GetSlots()));
-      RegisterOrderExecutionMessages(Store(m_clientProtocol->GetSlots()));
+        std::shared_ptr(m_serviceLocatorEnvironment.BuildClient(
+        "order_execution_service", ""));
       m_driver = std::make_shared<MockOrderExecutionDriver>();
       m_dataStore = std::make_shared<LocalOrderExecutionDataStore>();
+      auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(servletServiceLocatorClient,
         Initialize(pos_infin, GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), Initialize(),
@@ -104,11 +89,13 @@ namespace {
         m_administrationServiceEnvironment->BuildClient(
         Ref(*servletServiceLocatorClient)), m_driver, m_dataStore)),
         serverConnection, factory<std::unique_ptr<TriggerTimer>>());
-      m_container->Open();
-      m_clientServiceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
-      m_clientServiceLocatorClient->SetCredentials("client", "");
-      m_clientServiceLocatorClient->Open();
-      m_clientProtocol->Open();
+      m_clientProtocol.emplace(Initialize("test", *serverConnection),
+        Initialize());
+      RegisterQueryTypes(Store(m_clientProtocol->GetSlots().GetRegistry()));
+      RegisterOrderExecutionServices(Store(m_clientProtocol->GetSlots()));
+      RegisterOrderExecutionMessages(Store(m_clientProtocol->GetSlots()));
+      m_clientServiceLocatorClient = m_serviceLocatorEnvironment.BuildClient(
+        "client", "");
       auto authenticator = SessionAuthenticator(
         Ref(*m_clientServiceLocatorClient));
       authenticator(*m_clientProtocol);

@@ -105,11 +105,12 @@ void Nexus::Python::ExportApplicationServiceClients(pybind11::module& module) {
       std::shared_ptr<ToPythonServiceClients<ApplicationServiceClients>>,
       VirtualServiceClients>(module, "ApplicationServiceClients")
     .def(init(
-      [] (const IpAddress& address, const std::string& username,
-          const std::string& password) {
+      [] (std::string username, std::string password,
+          const IpAddress& address) {
         return MakeToPythonServiceClients(
-          std::make_unique<ApplicationServiceClients>(address, username,
-          password, Ref(*GetSocketThreadPool()), Ref(*GetTimerThreadPool())));
+          std::make_unique<ApplicationServiceClients>(std::move(username),
+          std::move(password), address, Ref(*GetSocketThreadPool()),
+          Ref(*GetTimerThreadPool())));
       }));
 }
 

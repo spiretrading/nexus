@@ -182,7 +182,7 @@ namespace Nexus::OrderExecutionService::Tests {
     ServiceProtocolClientBuilder builder{Beam::Ref(serviceLocatorClient),
       [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_order_execution_client", Beam::Ref(m_serverConnection));
+          "test_order_execution_client", m_serverConnection);
       },
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();

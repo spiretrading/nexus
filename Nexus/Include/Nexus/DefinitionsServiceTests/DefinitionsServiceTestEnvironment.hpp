@@ -101,7 +101,7 @@ namespace Nexus::DefinitionsService::Tests {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
       [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_definitions_client", Beam::Ref(m_serverConnection));
+          "test_definitions_client", m_serverConnection);
       },
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();

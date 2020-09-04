@@ -87,7 +87,6 @@ namespace Nexus::MarketDataService {
       template<typename V, typename I>
       using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
         Queries::SqlTranslator>;
-      ConnectionBuilder m_connectionBuilder;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
       Beam::Threading::ThreadPool m_threadPool;
@@ -108,7 +107,18 @@ namespace Nexus::MarketDataService {
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
       ConnectionBuilder connectionBuilder)
-      : m_connectionBuilder(std::move(connectionBuilder)),
+      : m_readerPool(std::thread::hardware_concurrency(),
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
+        m_writerPool(1,
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
         m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
           GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)),
@@ -126,19 +136,9 @@ namespace Nexus::MarketDataService {
           Beam::Ref(m_threadPool)) {
     m_openState.SetOpening();
     try {
-      for(auto i = std::size_t(0);
-          i <= std::thread::hardware_concurrency(); ++i) {
-        auto readerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        readerConnection->open();
-        m_readerPool.Add(std::move(readerConnection));
-      }
-      auto writerConnection =
-        std::make_unique<Connection>(m_connectionBuilder());
-      writerConnection->open();
-      writerConnection->execute(Viper::create_if_not_exists(
+      auto connection = m_writerPool.Acquire();
+      connection->execute(Viper::create_if_not_exists(
         GetSecurityInfoRow(), "security_info"));
-      m_writerPool.Add(std::move(writerConnection));
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();
       Shutdown();

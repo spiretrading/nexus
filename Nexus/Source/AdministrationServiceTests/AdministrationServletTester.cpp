@@ -9,6 +9,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
+using namespace Beam::ServiceLocator::Tests;
 using namespace Beam::Services;
 using namespace Beam::Services::Tests;
 using namespace Beam::Threading;
@@ -23,25 +24,21 @@ namespace {
       MetaAdministrationServlet<VirtualServiceLocatorClient*,
       LocalAdministrationDataStore*>>;
 
-    Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
-      m_serviceLocatorEnvironment;
+    ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     LocalAdministrationDataStore m_dataStore;
-    boost::optional<ServletContainer> m_container;
-    boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
-      m_clientProtocol;
+    std::shared_ptr<TestServerConnection> m_serverConnection;
+    ServletContainer m_container;
+    TestServiceProtocolClient m_clientProtocol;
 
-    Fixture() {
-      m_serviceLocatorEnvironment.Open();
-      auto serverConnection = std::make_unique<TestServerConnection>();
-      m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
-        Initialize());
-      RegisterAdministrationServices(Store(m_clientProtocol->GetSlots()));
-      RegisterAdministrationMessages(Store(m_clientProtocol->GetSlots()));
-      m_container.emplace(Initialize(&m_serviceLocatorEnvironment.GetRoot(),
-        EntitlementDatabase(), &m_dataStore), std::move(serverConnection),
-        factory<std::unique_ptr<TriggerTimer>>());
-      m_container->Open();
-      m_clientProtocol->Open();
+    Fixture()
+      : m_serverConnection(std::make_shared<TestServerConnection>()),
+        m_container(Initialize(&m_serviceLocatorEnvironment.GetRoot(),
+          EntitlementDatabase(), &m_dataStore), m_serverConnection,
+          factory<std::unique_ptr<TriggerTimer>>()),
+        m_clientProtocol(Initialize("test", *m_serverConnection),
+          Initialize()) {
+      RegisterAdministrationServices(Store(m_clientProtocol.GetSlots()));
+      RegisterAdministrationMessages(Store(m_clientProtocol.GetSlots()));
     }
 
     auto GetAdministratorsDirectory() {
@@ -85,7 +82,7 @@ TEST_SUITE("AdministrationServlet") {
     accountIdentity.m_firstName = "test_first_name";
     accountIdentity.m_lastName = "test_last_name";
     m_dataStore.Store(account, accountIdentity);
-    auto accountIdentityResult = m_clientProtocol->SendRequest<
+    auto accountIdentityResult = m_clientProtocol.SendRequest<
       LoadAccountIdentityService>(account);
     REQUIRE(accountIdentityResult.m_firstName == accountIdentity.m_firstName);
     REQUIRE(accountIdentityResult.m_lastName == accountIdentity.m_lastName);
@@ -94,7 +91,7 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE_FIXTURE(Fixture, "invalid_load_account_identity") {
     auto invalidAccount = DirectoryEntry::MakeAccount(123, "dummy");
     REQUIRE_THROWS_AS(
-      m_clientProtocol->SendRequest<LoadAccountIdentityService>(invalidAccount),
+      m_clientProtocol.SendRequest<LoadAccountIdentityService>(invalidAccount),
       ServiceRequestException);
   }
 
@@ -104,7 +101,7 @@ TEST_SUITE("AdministrationServlet") {
     auto sendAccountIdentity = AccountIdentity();
     sendAccountIdentity.m_firstName = "send";
     sendAccountIdentity.m_lastName = "account";
-    m_clientProtocol->SendRequest<StoreAccountIdentityService>(account,
+    m_clientProtocol.SendRequest<StoreAccountIdentityService>(account,
       sendAccountIdentity);
     auto receiveAccountIdentity = AccountIdentity();
     m_dataStore.WithTransaction(
@@ -127,7 +124,7 @@ TEST_SUITE("AdministrationServlet") {
     auto sendAccountIdentity = AccountIdentity();
     sendAccountIdentity.m_firstName = "send";
     sendAccountIdentity.m_lastName = "account";
-    m_clientProtocol->SendRequest<StoreAccountIdentityService>(account,
+    m_clientProtocol.SendRequest<StoreAccountIdentityService>(account,
       sendAccountIdentity);
     auto receiveAccountIdentity = AccountIdentity();
     m_dataStore.WithTransaction(
@@ -145,7 +142,7 @@ TEST_SUITE("AdministrationServlet") {
     auto sendAccountIdentity = AccountIdentity();
     sendAccountIdentity.m_firstName = "send";
     sendAccountIdentity.m_lastName = "account";
-    REQUIRE_THROWS_AS(m_clientProtocol->SendRequest<
+    REQUIRE_THROWS_AS(m_clientProtocol.SendRequest<
       StoreAccountIdentityService>(account, sendAccountIdentity),
       ServiceRequestException);
   }
@@ -154,14 +151,14 @@ TEST_SUITE("AdministrationServlet") {
     auto administratorA = MakeAccount("adminA", GetAdministratorsDirectory());
     auto administratorB = MakeAccount("adminB", GetAdministratorsDirectory());
     auto administratorsResult =
-      m_clientProtocol->SendRequest<LoadAdministratorsService>();
+      m_clientProtocol.SendRequest<LoadAdministratorsService>();
     REQUIRE(administratorsResult.size() == 2);
   }
 
   TEST_CASE_FIXTURE(Fixture, "load_services") {
     auto serviceA = MakeAccount("serviceA", GetServicesDirectory());
     auto serviceB = MakeAccount("serviceB", GetServicesDirectory());
-    auto servicesResult = m_clientProtocol->SendRequest<LoadServicesService>();
+    auto servicesResult = m_clientProtocol.SendRequest<LoadServicesService>();
     REQUIRE(servicesResult.size() == 2);
     auto services = std::unordered_set<DirectoryEntry>();
     services.insert(serviceA);
@@ -183,11 +180,11 @@ TEST_SUITE("AdministrationServlet") {
     auto manager = MakeAccount("test_manager", managers);
     auto trader = MakeAccount("test_trader", traders);
     auto managedTradingGroupsResult =
-      m_clientProtocol->SendRequest<LoadManagedTradingGroupsService>(manager);
+      m_clientProtocol.SendRequest<LoadManagedTradingGroupsService>(manager);
     REQUIRE(managedTradingGroupsResult.size() == 1);
     REQUIRE(managedTradingGroupsResult.front() == tradingGroupA);
     managedTradingGroupsResult =
-      m_clientProtocol->SendRequest<LoadManagedTradingGroupsService>(trader);
+      m_clientProtocol.SendRequest<LoadManagedTradingGroupsService>(trader);
     REQUIRE(managedTradingGroupsResult.empty());
   }
 }
