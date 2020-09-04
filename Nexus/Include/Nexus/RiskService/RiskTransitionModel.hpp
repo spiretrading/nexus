@@ -102,9 +102,7 @@ namespace Nexus::RiskService {
       m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
       m_destinations(std::move(destinations)),
       m_book(inventory),
-      m_state(0) {
-    m_orderExecutionClient->Open();
-  }
+      m_state(0) {}
 
   template<typename O>
   void RiskTransitionModel<O>::Add(const OrderExecutionService::Order& order) {

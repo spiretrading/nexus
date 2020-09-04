@@ -45,8 +45,6 @@ namespace Nexus::DefinitionsService {
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
 
-      void Open();
-
       void Close();
 
     private:
@@ -134,13 +132,6 @@ namespace Nexus::DefinitionsService {
       std::placeholders::_1));
     LoadTradingScheduleService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1));
-  }
-
-  template<typename C>
-  void DefinitionsServlet<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
     m_openState.SetOpen();
   }
 

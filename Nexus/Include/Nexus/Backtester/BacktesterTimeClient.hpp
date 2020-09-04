@@ -22,8 +22,6 @@ namespace Nexus {
 
       boost::posix_time::ptime GetTime();
 
-      void Open();
-
       void Close();
 
     private:
@@ -34,8 +32,10 @@ namespace Nexus {
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-    Beam::Ref<BacktesterEventHandler> eventHandler)
-    : m_eventHandler(eventHandler.Get()) {}
+      Beam::Ref<BacktesterEventHandler> eventHandler)
+      : m_eventHandler(eventHandler.Get()) {
+    m_openState.SetOpen();
+  }
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {
     Close();
@@ -43,13 +43,6 @@ namespace Nexus {
 
   inline boost::posix_time::ptime BacktesterTimeClient::GetTime() {
     return m_eventHandler->GetTime();
-  }
-
-  inline void BacktesterTimeClient::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterTimeClient::Close() {

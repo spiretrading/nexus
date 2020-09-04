@@ -66,8 +66,6 @@ namespace Nexus::MarketDataService {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -202,12 +200,6 @@ namespace Nexus::MarketDataService {
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  template<typename C>
-  void ToPythonMarketDataClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

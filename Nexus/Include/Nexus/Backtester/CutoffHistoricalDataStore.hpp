@@ -75,8 +75,6 @@ namespace Nexus {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -105,9 +103,11 @@ namespace Nexus {
   template<typename H>
   template<typename D>
   CutoffHistoricalDataStore<H>::CutoffHistoricalDataStore(D&& dataStore,
-    boost::posix_time::ptime cutoff)
-    : m_dataStore(std::forward<D>(dataStore)),
-      m_cutoff(cutoff) {}
+      boost::posix_time::ptime cutoff)
+      : m_dataStore(std::forward<D>(dataStore)),
+        m_cutoff(cutoff) {
+    m_openState.SetOpen();
+  }
 
   template<typename H>
   CutoffHistoricalDataStore<H>::~CutoffHistoricalDataStore() {
@@ -237,20 +237,6 @@ namespace Nexus {
   void CutoffHistoricalDataStore<H>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_dataStore->Store(timeAndSales);
-  }
-
-  template<typename H>
-  void CutoffHistoricalDataStore<H>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename H>

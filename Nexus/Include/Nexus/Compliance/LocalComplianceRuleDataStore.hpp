@@ -18,7 +18,7 @@ namespace Nexus::Compliance {
     public:
 
       /** Constructs a LocalComplianceRuleDataStore. */
-      LocalComplianceRuleDataStore() = default;
+      LocalComplianceRuleDataStore();
 
       ~LocalComplianceRuleDataStore();
 
@@ -38,8 +38,6 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
@@ -51,6 +49,10 @@ namespace Nexus::Compliance {
         m_entriesByDirectoryEntry;
       Beam::IO::OpenState m_openState;
   };
+
+  inline LocalComplianceRuleDataStore::LocalComplianceRuleDataStore() {
+    m_openState.SetOpen();
+  }
 
   inline LocalComplianceRuleDataStore::~LocalComplianceRuleDataStore() {
     Close();
@@ -145,13 +147,6 @@ namespace Nexus::Compliance {
 
   inline void LocalComplianceRuleDataStore::Store(
     const ComplianceRuleViolationRecord& violationRecord) {}
-
-  inline void LocalComplianceRuleDataStore::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
-  }
 
   inline void LocalComplianceRuleDataStore::Close() {
     if(m_openState.SetClosing()) {

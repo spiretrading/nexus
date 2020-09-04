@@ -84,10 +84,6 @@ namespace {
         "load_trading_schedule", LoadTradingSchedule);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualDefinitionsClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualDefinitionsClient, "close",
         Close);
@@ -153,7 +149,6 @@ void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {
       &VirtualDefinitionsClient::LoadComplianceRuleSchemas)
     .def("load_trading_schedule",
       &VirtualDefinitionsClient::LoadTradingSchedule)
-    .def("open", &VirtualDefinitionsClient::Open)
     .def("close", &VirtualDefinitionsClient::Close);
 }
 

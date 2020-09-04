@@ -18,8 +18,6 @@ namespace Nexus::RiskService {
       virtual void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const InventorySnapshot& snapshot) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -51,8 +49,6 @@ namespace Nexus::RiskService {
 
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const InventorySnapshot& snapshot) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -87,11 +83,6 @@ namespace Nexus::RiskService {
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     return m_dataStore->Store(account, snapshot);
-  }
-
-  template<typename D>
-  void WrapperRiskDataStore<D>::Open() {
-    m_dataStore->Open();
   }
 
   template<typename D>

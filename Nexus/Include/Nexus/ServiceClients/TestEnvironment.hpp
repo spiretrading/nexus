@@ -182,8 +182,6 @@ namespace Nexus {
       OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
         GetOrderExecutionEnvironment();
 
-      void Open();
-
       void Close();
 
     private:
@@ -227,7 +225,20 @@ namespace Nexus {
       m_orderExecutionEnvironment(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), m_serviceLocatorClient,
         m_uidEnvironment.BuildClient(), m_administrationClient) {
-    m_serviceLocatorClient->SetCredentials("root", "");
+    m_openState.SetOpening();
+    try {
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      auto administrationClient = m_administrationEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadServicesRootEntry());
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   inline TestEnvironment::~TestEnvironment() {
@@ -451,34 +462,6 @@ namespace Nexus {
   inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
       TestEnvironment::GetOrderExecutionEnvironment() {
     return m_orderExecutionEnvironment;
-  }
-
-  inline void TestEnvironment::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_timeEnvironment.Open();
-      m_serviceLocatorEnvironment.Open();
-      m_uidEnvironment.Open();
-      m_definitionsEnvironment.Open();
-      m_administrationEnvironment.Open();
-      m_marketDataEnvironment.Open();
-      m_orderExecutionEnvironment.Open();
-      m_serviceLocatorClient->Open();
-      auto rootAccount = m_serviceLocatorClient->GetAccount();
-      auto administrationClient = m_administrationEnvironment.BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
-      administrationClient->Open();
-      m_serviceLocatorClient->Associate(rootAccount,
-        administrationClient->LoadAdministratorsRootEntry());
-      m_serviceLocatorClient->Associate(rootAccount,
-        administrationClient->LoadServicesRootEntry());
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void TestEnvironment::Close() {

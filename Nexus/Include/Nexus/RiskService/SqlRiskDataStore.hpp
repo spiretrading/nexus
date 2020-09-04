@@ -39,8 +39,6 @@ namespace Nexus::RiskService {
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
 
-      void Open();
-
       void Close();
 
     private:
@@ -54,7 +52,22 @@ namespace Nexus::RiskService {
 
   template<typename C>
   SqlRiskDataStore<C>::SqlRiskDataStore(std::unique_ptr<Connection> connection)
-    : m_connection(std::move(connection)) {}
+      : m_connection(std::move(connection)) {
+    m_openState.SetOpening();
+    try {
+      m_connection->open();
+      m_connection->execute(Viper::create_if_not_exists(
+        GetInventoryEntriesRow(), "inventory_entries"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetInventorySequencesRow(), "inventory_sequences"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetInventoryExcludedOrdersRow(), "inventory_excluded_orders"));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   SqlRiskDataStore<C>::~SqlRiskDataStore() {
@@ -116,26 +129,6 @@ namespace Nexus::RiskService {
         strippedSnapshot.m_excludedOrders.end(), ConvertInventoryExcludedOrders(
         account))));
     });
-  }
-
-  template<typename C>
-  void SqlRiskDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_connection->open();
-      m_connection->execute(Viper::create_if_not_exists(
-        GetInventoryEntriesRow(), "inventory_entries"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetInventorySequencesRow(), "inventory_sequences"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetInventoryExcludedOrdersRow(), "inventory_excluded_orders"));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C>

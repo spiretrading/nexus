@@ -80,8 +80,6 @@ namespace Nexus {
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      void Open();
-
       void Close();
 
     private:
@@ -117,7 +115,7 @@ namespace Nexus {
         m_timeClient{Beam::TimeService::MakeVirtualTimeClient(
           std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
           Beam::Ref(m_environment->GetTimeEnvironment())))} {
-    m_serviceLocatorClient->SetCredentials("root", "");
+    m_openState.SetOpen();
   }
 
   inline TestServiceClients::~TestServiceClients() {
@@ -177,24 +175,6 @@ namespace Nexus {
     return Beam::Threading::MakeVirtualTimer(
       std::make_unique<Beam::TimeService::Tests::TestTimer>(expiry,
       Beam::Ref(m_environment->GetTimeEnvironment())));
-  }
-
-  inline void TestServiceClients::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->Open();
-      m_definitionsClient->Open();
-      m_administrationClient->Open();
-      m_marketDataClient->Open();
-      m_orderExecutionClient->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void TestServiceClients::Close() {

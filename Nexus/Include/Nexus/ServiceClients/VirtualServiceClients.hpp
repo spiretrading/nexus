@@ -73,8 +73,6 @@ namespace Nexus {
       virtual std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -149,8 +147,6 @@ namespace Nexus {
 
       virtual std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry) override;
-
-      virtual void Open() override;
 
       virtual void Close() override;
 
@@ -335,11 +331,6 @@ namespace Nexus {
       WrapperServiceClients<ClientType>::BuildTimer(
       boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(m_client->BuildTimer(expiry));
-  }
-
-  template<typename ClientType>
-  void WrapperServiceClients<ClientType>::Open() {
-    m_client->Open();
   }
 
   template<typename ClientType>

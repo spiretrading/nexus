@@ -60,8 +60,6 @@ namespace Nexus::AdministrationService::Tests {
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
-      void Open();
-
       void Close();
 
     private:
@@ -98,7 +96,47 @@ namespace Nexus::AdministrationService::Tests {
       AdministrationServiceTestEnvironment(
       const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
       serviceLocatorClient)
-      : m_serviceLocatorClient(serviceLocatorClient) {}
+      : m_serviceLocatorClient(serviceLocatorClient) {
+    if(!m_entitlements) {
+      auto entitlementsDirectory = m_serviceLocatorClient->MakeDirectory(
+        "entitlements",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
+        entitlementsDirectory);
+      auto globalEntitlement = MarketDataService::EntitlementDatabase::Entry();
+      globalEntitlement.m_name = "global";
+      globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
+      auto& marketDatabase = GetDefaultMarketDatabase();
+      auto markets = std::vector<MarketCode>();
+      for(auto& entry : marketDatabase.GetEntries()) {
+        markets.push_back(entry.m_code);
+      }
+      markets.push_back(MarketCode());
+      for(auto& market : markets) {
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey(market)].Set(
+          MarketDataService::MarketDataType::TIME_AND_SALE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey(market)].Set(
+          MarketDataService::MarketDataType::BOOK_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey(market)].Set(
+          MarketDataService::MarketDataType::MARKET_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey(market)].Set(
+          MarketDataService::MarketDataType::BBO_QUOTE);
+        globalEntitlement.m_applicability[
+          MarketDataService::EntitlementKey(market)].Set(
+          MarketDataService::MarketDataType::ORDER_IMBALANCE);
+      }
+      m_entitlements.emplace();
+      m_entitlements->Add(globalEntitlement);
+    }
+    m_container.emplace(Beam::Initialize(m_serviceLocatorClient,
+      Beam::Initialize(m_serviceLocatorClient, *m_entitlements, &m_dataStore)),
+      &m_serverConnection,
+      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
+  }
 
   inline AdministrationServiceTestEnvironment::
       ~AdministrationServiceTestEnvironment() {
@@ -138,50 +176,6 @@ namespace Nexus::AdministrationService::Tests {
     auto client = std::make_unique<AdministrationService::AdministrationClient<
       ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualAdministrationClient(std::move(client));
-  }
-
-  inline void AdministrationServiceTestEnvironment::Open() {
-    m_serviceLocatorClient->Open();
-    if(!m_entitlements.is_initialized()) {
-      auto entitlementsDirectory = m_serviceLocatorClient->MakeDirectory(
-        "entitlements",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      m_globalEntitlementGroup = m_serviceLocatorClient->MakeDirectory("global",
-        entitlementsDirectory);
-      auto globalEntitlement = MarketDataService::EntitlementDatabase::Entry();
-      globalEntitlement.m_name = "global";
-      globalEntitlement.m_groupEntry = m_globalEntitlementGroup;
-      auto& marketDatabase = GetDefaultMarketDatabase();
-      auto markets = std::vector<MarketCode>();
-      for(auto& entry : marketDatabase.GetEntries()) {
-        markets.push_back(entry.m_code);
-      }
-      markets.push_back(MarketCode());
-      for(auto& market : markets) {
-        globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::TIME_AND_SALE);
-        globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::BOOK_QUOTE);
-        globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::MARKET_QUOTE);
-        globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::BBO_QUOTE);
-        globalEntitlement.m_applicability[
-          MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::ORDER_IMBALANCE);
-      }
-      m_entitlements.emplace();
-      m_entitlements->Add(globalEntitlement);
-    }
-    m_container.emplace(Beam::Initialize(m_serviceLocatorClient,
-      Beam::Initialize(m_serviceLocatorClient, *m_entitlements, &m_dataStore)),
-      &m_serverConnection,
-      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_container->Open();
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {

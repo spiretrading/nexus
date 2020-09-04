@@ -145,8 +145,6 @@ namespace Nexus::MarketDataService {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
@@ -199,6 +197,7 @@ namespace Nexus::MarketDataService {
     m_bookQuotePublisher.template AddMessageHandler<BookQuoteMessage>();
     m_marketQuotePublisher.template AddMessageHandler<MarketQuoteMessage>();
     m_timeAndSalePublisher.template AddMessageHandler<TimeAndSaleMessage>();
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -302,20 +301,6 @@ namespace Nexus::MarketDataService {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityInfoFromPrefixService>(
       prefix);
-  }
-
-  template<typename B>
-  void MarketDataClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

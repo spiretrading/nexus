@@ -61,8 +61,6 @@ namespace Nexus::Compliance {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -136,6 +134,14 @@ namespace Nexus::Compliance {
       Beam::Store(slots), std::bind(
       &ComplianceServlet::OnReportComplianceRuleViolation, this,
       std::placeholders::_1, std::placeholders::_2));
+    m_openState.SetOpening();
+    try {
+      m_nextEntryId = m_dataStore->LoadNextComplianceRuleEntryId();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename C, typename S, typename A, typename D, typename T>
@@ -147,23 +153,6 @@ namespace Nexus::Compliance {
           subscription.Remove(&client);
         }
       });
-  }
-
-  template<typename C, typename S, typename A, typename D, typename T>
-  void ComplianceServlet<C, S, A, D, T>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->Open();
-      m_administrationClient->Open();
-      m_dataStore->Open();
-      m_nextEntryId = m_dataStore->LoadNextComplianceRuleEntryId();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename S, typename A, typename D, typename T>

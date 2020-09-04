@@ -59,8 +59,6 @@ namespace OrderExecutionService {
       void Update(const OrderExecutionSession& session, OrderId orderId,
         const ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -87,7 +85,9 @@ namespace OrderExecutionService {
         m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
           orderExecutionDriver)),
         m_administrationClient(std::forward<AdministrationClientForward>(
-          administrationClient)) {}
+          administrationClient)) {
+    m_openState.SetOpen();
+  }
 
   template<typename OrderExecutionDriverType, typename AdministrationClientType>
   ManualOrderEntryDriver<OrderExecutionDriverType, AdministrationClientType>::
@@ -161,22 +161,6 @@ namespace OrderExecutionService {
       return;
     }
     return m_orderExecutionDriver->Update(session, orderId, executionReport);
-  }
-
-  template<typename OrderExecutionDriverType, typename AdministrationClientType>
-  void ManualOrderEntryDriver<OrderExecutionDriverType,
-      AdministrationClientType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_administrationClient->Open();
-      m_orderExecutionDriver->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename OrderExecutionDriverType, typename AdministrationClientType>

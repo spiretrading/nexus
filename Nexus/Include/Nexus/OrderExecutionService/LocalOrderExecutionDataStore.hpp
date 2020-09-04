@@ -42,8 +42,6 @@ namespace OrderExecutionService {
       void Store(const std::vector<SequencedAccountExecutionReport>&
         executionReports);
 
-      void Open();
-
       void Close();
 
     private:
@@ -143,8 +141,6 @@ namespace OrderExecutionService {
       Store(executionReport);
     }
   }
-
-  inline void LocalOrderExecutionDataStore::Open() {}
 
   inline void LocalOrderExecutionDataStore::Close() {}
 }

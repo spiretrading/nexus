@@ -73,10 +73,6 @@ namespace {
       return MakeVirtualTimer(BuildPythonTimer(expiry));
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualServiceClients, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualServiceClients, "close", Close);
     }
@@ -181,7 +177,6 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
     .def("get_order_execution_environment",
       &TestEnvironment::GetOrderExecutionEnvironment,
       return_value_policy::reference_internal)
-    .def("open", &TestEnvironment::Open, call_guard<GilRelease>())
     .def("close", &TestEnvironment::Close, call_guard<GilRelease>());
 }
 
@@ -225,6 +220,5 @@ void Nexus::Python::ExportVirtualServiceClients(pybind11::module& module) {
       [] (VirtualServiceClients& serviceClients, const time_duration& expiry) {
         return std::shared_ptr(serviceClients.BuildTimer(expiry));
       })
-    .def("open", &VirtualServiceClients::Open)
     .def("close", &VirtualServiceClients::Close);
 }

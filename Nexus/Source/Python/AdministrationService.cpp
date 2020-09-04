@@ -254,11 +254,6 @@ namespace {
         SendAccountModificationRequestMessage, id, message);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualAdministrationClient, "open",
-        Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualAdministrationClient, "close",
         Close);
@@ -394,7 +389,6 @@ void Nexus::Python::ExportAdministrationClient(pybind11::module& module) {
     .def("load_message_ids", &VirtualAdministrationClient::LoadMessageIds)
     .def("send_account_modification_request_message",
       &VirtualAdministrationClient::SendAccountModificationRequestMessage)
-    .def("open", &VirtualAdministrationClient::Open)
     .def("close", &VirtualAdministrationClient::Close);
 }
 
@@ -421,9 +415,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
       [] (std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient) {
         return std::make_unique<AdministrationServiceTestEnvironment>(
           std::move(serviceLocatorClient));
-      }))
-    .def("open", &AdministrationServiceTestEnvironment::Open,
-      call_guard<GilRelease>())
+      }), call_guard<GilRelease>())
     .def("close", &AdministrationServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("make_administrator",

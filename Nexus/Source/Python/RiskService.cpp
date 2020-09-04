@@ -47,10 +47,6 @@ namespace {
         GetRiskPortfolioUpdatePublisher);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskClient, "close", Close);
     }
@@ -67,10 +63,6 @@ namespace {
         const InventorySnapshot& snapshot) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "store", Store,
         account, snapshot);
-    }
-
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "open", Open);
     }
 
     void Close() override {
@@ -144,7 +136,6 @@ void Nexus::Python::ExportRiskClient(pybind11::module& module) {
     .def("reset", &VirtualRiskClient::Reset)
     .def("get_risk_portfolio_update_publisher",
       &VirtualRiskClient::GetRiskPortfolioUpdatePublisher)
-    .def("open", &VirtualRiskClient::Open)
     .def("close", &VirtualRiskClient::Close);
   ExportQueueSuite<KeyValuePair<RiskPortfolioKey, RiskInventory>>(module,
     "RiskPortfolioUpdateEntry");
@@ -156,7 +147,6 @@ void Nexus::Python::ExportRiskDataStore(pybind11::module& module) {
     .def("load_inventory_snapshot",
       &VirtualRiskDataStore::LoadInventorySnapshot)
     .def("store", &VirtualRiskDataStore::Store)
-    .def("open", &VirtualRiskDataStore::Open)
     .def("close", &VirtualRiskDataStore::Close);
 }
 

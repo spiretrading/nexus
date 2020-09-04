@@ -103,8 +103,6 @@ namespace Python {
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -133,8 +131,33 @@ namespace Python {
 
   template<typename C>
   ToPythonServiceClients<C>::ToPythonServiceClients(
-    std::unique_ptr<Client> client)
-    : m_client(std::move(client)) {}
+      std::unique_ptr<Client> client)
+      : m_client(std::move(client)),
+        m_serviceLocatorClient(
+          Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
+          Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
+          &m_client->GetServiceLocatorClient()))),
+        m_administrationClient(
+          AdministrationService::MakeToPythonAdministrationClient(
+          AdministrationService::MakeVirtualAdministrationClient(
+          &m_client->GetAdministrationClient()))),
+        m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
+          DefinitionsService::MakeVirtualDefinitionsClient(
+          &m_client->GetDefinitionsClient()))),
+        m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
+          MarketDataService::MakeVirtualMarketDataClient(
+          &m_client->GetMarketDataClient()))),
+        m_orderExecutionClient(
+          OrderExecutionService::MakeToPythonOrderExecutionClient(
+          OrderExecutionService::MakeVirtualOrderExecutionClient(
+          &m_client->GetOrderExecutionClient()))),
+        m_riskClient(RiskService::MakeToPythonRiskClient(
+          RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
+        m_timeClient(Beam::TimeService::MakeToPythonTimeClient(
+          Beam::TimeService::MakeVirtualTimeClient(
+          &m_client->GetTimeClient()))) {
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
@@ -245,51 +268,6 @@ namespace Python {
   }
 
   template<typename C>
-  void ToPythonServiceClients<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_client->Open();
-      m_serviceLocatorClient =
-        Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
-        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-        &m_client->GetServiceLocatorClient()));
-      m_serviceLocatorClient->Open();
-      m_administrationClient =
-        AdministrationService::MakeToPythonAdministrationClient(
-        AdministrationService::MakeVirtualAdministrationClient(
-        &m_client->GetAdministrationClient()));
-      m_administrationClient->Open();
-      m_definitionsClient = DefinitionsService::MakeToPythonDefinitionsClient(
-        DefinitionsService::MakeVirtualDefinitionsClient(
-        &m_client->GetDefinitionsClient()));
-      m_definitionsClient->Open();
-      m_marketDataClient = MarketDataService::MakeToPythonMarketDataClient(
-        MarketDataService::MakeVirtualMarketDataClient(
-        &m_client->GetMarketDataClient()));
-      m_marketDataClient->Open();
-      // TODO: Implement the compliance client.
-      m_orderExecutionClient =
-        OrderExecutionService::MakeToPythonOrderExecutionClient(
-        OrderExecutionService::MakeVirtualOrderExecutionClient(
-        &m_client->GetOrderExecutionClient()));
-      m_orderExecutionClient->Open();
-      m_riskClient = RiskService::MakeToPythonRiskClient(
-        RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()));
-      m_riskClient->Open();
-      m_timeClient = Beam::TimeService::MakeToPythonTimeClient(
-        Beam::TimeService::MakeVirtualTimeClient(&m_client->GetTimeClient()));
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C>
   void ToPythonServiceClients<C>::Close() {
     auto release = Beam::Python::GilRelease();
     if(m_openState.SetClosing()) {
@@ -300,30 +278,14 @@ namespace Python {
 
   template<typename C>
   void ToPythonServiceClients<C>::Shutdown() {
-    if(m_timeClient != nullptr) {
-      m_timeClient->Close();
-    }
-    if(m_riskClient != nullptr) {
-      m_riskClient->Close();
-    }
-    if(m_orderExecutionClient != nullptr) {
-      m_orderExecutionClient->Close();
-    }
-    if(m_complianceClient != nullptr) {
-      m_complianceClient->Close();
-    }
-    if(m_marketDataClient != nullptr) {
-      m_marketDataClient->Close();
-    }
-    if(m_definitionsClient != nullptr) {
-      m_definitionsClient->Close();
-    }
-    if(m_administrationClient != nullptr) {
-      m_administrationClient->Close();
-    }
-    if(m_serviceLocatorClient != nullptr) {
-      m_serviceLocatorClient->Close();
-    }
+    m_timeClient->Close();
+    m_riskClient->Close();
+    m_orderExecutionClient->Close();
+    m_complianceClient->Close();
+    m_marketDataClient->Close();
+    m_definitionsClient->Close();
+    m_administrationClient->Close();
+    m_serviceLocatorClient->Close();
     m_client->Close();
     m_openState.SetClosed();
   }

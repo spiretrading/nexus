@@ -108,6 +108,8 @@ namespace SoupBinTcp {
     Login(username, password, {}, 1);
   }
 
+  /** TODO: Move to constructor. */
+#if 0
   template<typename ChannelType, typename TimerType>
   void SoupBinTcpClient<ChannelType, TimerType>::Login(
       const std::string& username, const std::string& password,
@@ -116,7 +118,6 @@ namespace SoupBinTcp {
       return;
     }
     try {
-      m_channel->GetConnection().Open();
       m_buffer.Reset();
       BuildLoginRequestPacket(username, password, session, sequenceNumber,
         Beam::Store(m_buffer));
@@ -156,6 +157,7 @@ namespace SoupBinTcp {
     }
     m_openState.SetOpen();
   }
+#endif
 
   template<typename ChannelType, typename TimerType>
   void SoupBinTcpClient<ChannelType, TimerType>::Close() {

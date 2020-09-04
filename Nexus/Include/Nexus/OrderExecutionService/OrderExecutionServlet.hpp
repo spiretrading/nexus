@@ -103,8 +103,6 @@ namespace Nexus::OrderExecutionService {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -200,7 +198,20 @@ namespace Nexus::OrderExecutionService {
         m_administrationClient(std::forward<AdministrationClientForward>(
           administrationClient)),
         m_driver(std::forward<OrderExecutionDriverForward>(driver)),
-        m_dataStore(std::forward<OrderExecutionDataStoreForward>(dataStore)) {}
+        m_dataStore(std::forward<OrderExecutionDataStoreForward>(dataStore)) {
+    m_openState.SetOpening();
+    try {
+      auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
+      for(auto& account : accounts) {
+        m_registry.AddAccount(account);
+      }
+      RecoverTradingSession();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename ContainerType, typename TimeClientType,
     typename ServiceLocatorClientType, typename UidClientType,
@@ -267,34 +278,6 @@ namespace Nexus::OrderExecutionService {
     m_executionReportSubscriptions.RemoveAll(client);
     m_orderSubscriptions.RemoveAll(client);
     m_submissionSubscriptions.RemoveAll(client);
-  }
-
-  template<typename ContainerType, typename TimeClientType,
-    typename ServiceLocatorClientType, typename UidClientType,
-    typename AdministrationClientType, typename OrderExecutionDriverType,
-    typename OrderExecutionDataStoreType>
-  void OrderExecutionServlet<ContainerType, TimeClientType,
-      ServiceLocatorClientType, UidClientType, AdministrationClientType,
-      OrderExecutionDriverType, OrderExecutionDataStoreType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_timeClient->Open();
-      m_dataStore->Open();
-      m_uidClient->Open();
-      m_administrationClient->Open();
-      m_driver->Open();
-      const auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
-      for(const auto& account : accounts) {
-        m_registry.AddAccount(account);
-      }
-      RecoverTradingSession();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename ContainerType, typename TimeClientType,

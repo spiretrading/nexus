@@ -17,7 +17,6 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/VirtualAdministrationClient.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -122,8 +121,6 @@ namespace Nexus::MarketDataService::Tests {
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
-      void Open();
-
       void Close();
 
     private:
@@ -173,23 +170,30 @@ namespace Nexus::MarketDataService::Tests {
       MarketDataRegistry m_registry;
       ServerConnection m_serverConnection;
       std::shared_ptr<VirtualHistoricalDataStore> m_dataStore;
-      boost::optional<BaseRegistryServlet> m_registryServlet;
-      boost::optional<ServiceProtocolServletContainer> m_container;
+      BaseRegistryServlet m_registryServlet;
+      ServiceProtocolServletContainer m_container;
       ServerConnection m_feedServerConnection;
-      boost::optional<FeedServiceProtocolServletContainer> m_feedContainer;
+      FeedServiceProtocolServletContainer m_feedContainer;
       Beam::Threading::TriggerTimer m_samplingTimer;
       std::unique_ptr<MarketDataFeedClient> m_feedClient;
   };
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-    serviceLocatorClient,
-    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-    administrationClient,
-    std::shared_ptr<VirtualHistoricalDataStore> dataStore)
-    : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-      m_administrationClient(std::move(administrationClient)),
-      m_dataStore(std::move(dataStore)) {}
+      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+      serviceLocatorClient,
+      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+      administrationClient,
+      std::shared_ptr<VirtualHistoricalDataStore> dataStore)
+      : m_serviceLocatorClient(std::move(serviceLocatorClient)),
+        m_administrationClient(std::move(administrationClient)),
+        m_dataStore(std::move(dataStore)),
+        m_registryServlet(m_administrationClient, &m_registry, &*m_dataStore),
+        m_container(Beam::Initialize(m_serviceLocatorClient.get(),
+          &m_registryServlet), &m_serverConnection,
+          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
+        m_feedContainer(Beam::Initialize(m_serviceLocatorClient.get(),
+          &m_registryServlet), &m_feedServerConnection,
+          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
@@ -216,31 +220,31 @@ namespace Nexus::MarketDataService::Tests {
 
   inline void MarketDataServiceTestEnvironment::Publish(
       MarketCode market, const OrderImbalance& orderImbalance) {
-    m_registryServlet->PublishOrderImbalance(
+    m_registryServlet.PublishOrderImbalance(
       MarketOrderImbalance{orderImbalance, market}, 0);
   }
 
   inline void MarketDataServiceTestEnvironment::Publish(
       const Security& security, const BboQuote& bboQuote) {
-    m_registryServlet->PublishBboQuote(
+    m_registryServlet.PublishBboQuote(
       SecurityBboQuote{bboQuote, security}, 0);
   }
 
   inline void MarketDataServiceTestEnvironment::Publish(
       const Security& security, const BookQuote& bookQuote) {
-    m_registryServlet->UpdateBookQuote(
+    m_registryServlet.UpdateBookQuote(
       SecurityBookQuote{bookQuote, security}, 0);
   }
 
   inline void MarketDataServiceTestEnvironment::Publish(
       const Security& security, const MarketQuote& marketQuote) {
-    m_registryServlet->PublishMarketQuote(
+    m_registryServlet.PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security}, 0);
   }
 
   inline void MarketDataServiceTestEnvironment::Publish(
       const Security& security, const TimeAndSale& timeAndSale) {
-    m_registryServlet->PublishTimeAndSale(
+    m_registryServlet.PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security}, 0);
   }
 
@@ -276,23 +280,10 @@ namespace Nexus::MarketDataService::Tests {
     return MakeVirtualMarketDataFeedClient(std::move(client));
   }
 
-  inline void MarketDataServiceTestEnvironment::Open() {
-    m_registryServlet.emplace(m_administrationClient, &m_registry,
-      &*m_dataStore);
-    m_container.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
-      &*m_registryServlet), &m_serverConnection,
-      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_feedContainer.emplace(Beam::Initialize(m_serviceLocatorClient.get(),
-      &*m_registryServlet), &m_feedServerConnection,
-      boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>());
-    m_container->Open();
-    m_feedContainer->Open();
-  }
-
   inline void MarketDataServiceTestEnvironment::Close() {
-    m_feedContainer.reset();
-    m_container.reset();
-    m_registryServlet.reset();
+    m_feedContainer.Close();
+    m_container.Close();
+    m_registryServlet.Close();
   }
 }
 

@@ -145,8 +145,6 @@ namespace Nexus::AdministrationService {
       virtual Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -283,8 +281,6 @@ namespace Nexus::AdministrationService {
 
       Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -534,11 +530,6 @@ namespace Nexus::AdministrationService {
       SendAccountModificationRequestMessage(AccountModificationRequest::Id id,
       const Message& message) {
     return m_client->SendAccountModificationRequestMessage(id, message);
-  }
-
-  template<typename C>
-  void WrapperAdministrationClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

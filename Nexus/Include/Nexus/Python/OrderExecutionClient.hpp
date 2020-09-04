@@ -45,8 +45,6 @@ namespace Nexus::OrderExecutionService {
       void Update(OrderId orderId,
         const ExecutionReport& executionReport) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -123,12 +121,6 @@ namespace Nexus::OrderExecutionService {
       const ExecutionReport& executionReport) {
     auto release = Beam::Python::GilRelease();
     m_client->Update(orderId, executionReport);
-  }
-
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

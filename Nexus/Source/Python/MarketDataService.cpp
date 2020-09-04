@@ -155,11 +155,6 @@ namespace {
         Store, timeAndSales);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "open",
-        Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualHistoricalDataStore, "close",
         Close);
@@ -257,10 +252,6 @@ namespace {
         LoadSecurityInfoFromPrefix, prefix);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataClient, "close",
         Close);
@@ -329,11 +320,6 @@ namespace {
     void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient,
         "publish_time_and_sale", PublishTimeAndSale, timeAndSale);
-    }
-
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualMarketDataFeedClient, "open",
-        Open);
     }
 
     void Close() override {
@@ -486,7 +472,6 @@ void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
     .def("store", static_cast<void (VirtualHistoricalDataStore::*)(
       const std::vector<SequencedSecurityTimeAndSale>&)>(
       &VirtualHistoricalDataStore::Store))
-    .def("open", &VirtualHistoricalDataStore::Open)
     .def("close", &VirtualHistoricalDataStore::Close);
 }
 
@@ -536,7 +521,6 @@ void Nexus::Python::ExportMarketDataClient(pybind11::module& module) {
     .def("load_security_info", &VirtualMarketDataClient::LoadSecurityInfo)
     .def("load_security_info_from_prefix",
       &VirtualMarketDataClient::LoadSecurityInfoFromPrefix)
-    .def("open", &VirtualMarketDataClient::Open)
     .def("close", &VirtualMarketDataClient::Close);
 }
 
@@ -557,7 +541,6 @@ void Nexus::Python::ExportMarketDataFeedClient(pybind11::module& module) {
     .def("delete_order", &VirtualMarketDataFeedClient::DeleteOrder)
     .def("publish_time_and_sale",
       &VirtualMarketDataFeedClient::PublishTimeAndSale)
-    .def("open", &VirtualMarketDataFeedClient::Open)
     .def("close", &VirtualMarketDataFeedClient::Close);
 }
 
@@ -654,9 +637,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
           administrationClient) {
         return std::make_unique<MarketDataServiceTestEnvironment>(
           serviceLocatorClient, administrationClient);
-      }))
-    .def("open", &MarketDataServiceTestEnvironment::Open,
-      call_guard<GilRelease>())
+      }), call_guard<GilRelease>())
     .def("close", &MarketDataServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(

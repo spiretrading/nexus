@@ -62,8 +62,6 @@ namespace Nexus::DefinitionsService {
       /** Loads the TradingSchedule. */
       TradingSchedule LoadTradingSchedule();
 
-      void Open();
-
       void Close();
 
     private:
@@ -78,6 +76,7 @@ namespace Nexus::DefinitionsService {
   DefinitionsClient<B>::DefinitionsClient(BF&& clientBuilder)
       : m_clientHandler(std::forward<BF>(clientBuilder)) {
     RegisterDefinitionsServices(Beam::Store(m_clientHandler.GetSlots()));
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -149,20 +148,6 @@ namespace Nexus::DefinitionsService {
   TradingSchedule DefinitionsClient<B>::LoadTradingSchedule() {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadTradingScheduleService>();
-  }
-
-  template<typename B>
-  void DefinitionsClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

@@ -80,8 +80,6 @@ namespace Nexus::RiskService {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -141,24 +139,33 @@ namespace Nexus::RiskService {
     typename T, typename D>
   template<typename AF, typename MF, typename OF, typename TF, typename DF>
   RiskServlet<C, A, M, O, R, T, D>::RiskServlet(
-    Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
-    AF&& administrationClient, MF&& marketDataClient,
-    OF&& orderExecutionClient, std::function<
-    std::unique_ptr<TransitionTimer> ()> transitionTimerFactory,
-    TF&& timeClient, DF&& dataStore, std::vector<ExchangeRate> exchangeRates,
-    MarketDatabase markets, DestinationDatabase destinations)
-    : m_administrationClient(std::forward<AF>(administrationClient)),
-      m_marketDataClient(std::forward<MF>(marketDataClient)),
-      m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
-      m_transitionTimerFactory(std::move(transitionTimerFactory)),
-      m_timeClient(std::forward<TF>(timeClient)),
-      m_dataStore(std::forward<DF>(dataStore)),
-      m_exchangeRates(std::move(exchangeRates)),
-      m_markets(std::move(markets)),
-      m_destinations(std::move(destinations)),
-      m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_shared<
-        Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
-        std::move(accounts)))) {}
+      Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
+      AF&& administrationClient, MF&& marketDataClient,
+      OF&& orderExecutionClient, std::function<
+      std::unique_ptr<TransitionTimer> ()> transitionTimerFactory,
+      TF&& timeClient, DF&& dataStore, std::vector<ExchangeRate> exchangeRates,
+      MarketDatabase markets, DestinationDatabase destinations)
+      : m_administrationClient(std::forward<AF>(administrationClient)),
+        m_marketDataClient(std::forward<MF>(marketDataClient)),
+        m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
+        m_transitionTimerFactory(std::move(transitionTimerFactory)),
+        m_timeClient(std::forward<TF>(timeClient)),
+        m_dataStore(std::forward<DF>(dataStore)),
+        m_exchangeRates(std::move(exchangeRates)),
+        m_markets(std::move(markets)),
+        m_destinations(std::move(destinations)),
+        m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_shared<
+          Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
+          std::move(accounts)))) {
+    m_openState.SetOpening();
+    try {
+      BuildController();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C, typename A, typename M, typename O, typename R,
     typename T, typename D>
@@ -182,26 +189,6 @@ namespace Nexus::RiskService {
   void RiskServlet<C, A, M, O, R, T, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_portfolioSubscribers.Remove(&client);
-  }
-
-  template<typename C, typename A, typename M, typename O, typename R,
-    typename T, typename D>
-  void RiskServlet<C, A, M, O, R, T, D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_administrationClient->Open();
-      m_marketDataClient->Open();
-      m_orderExecutionClient->Open();
-      m_timeClient->Open();
-      m_dataStore->Open();
-      BuildController();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename A, typename M, typename O, typename R,

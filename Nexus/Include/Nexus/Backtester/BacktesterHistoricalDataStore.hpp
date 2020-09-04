@@ -70,8 +70,6 @@ namespace Nexus {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -199,11 +197,6 @@ namespace Nexus {
   void BacktesterHistoricalDataStore<H>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_dataStore.Store(timeAndSales);
-  }
-
-  template<typename H>
-  void BacktesterHistoricalDataStore<H>::Open() {
-    m_dataStore.Open();
   }
 
   template<typename H>

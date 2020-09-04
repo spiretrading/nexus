@@ -137,8 +137,6 @@ namespace Nexus::AdministrationService {
       Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -427,12 +425,6 @@ namespace Nexus::AdministrationService {
       const Message& message) {
     auto release = Beam::Python::GilRelease();
     return m_client->SendAccountModificationRequestMessage(id, message);
-  }
-
-  template<typename C>
-  void ToPythonAdministrationClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

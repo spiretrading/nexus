@@ -23,8 +23,6 @@ namespace Nexus::RiskService {
       virtual const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -58,8 +56,6 @@ namespace Nexus::RiskService {
 
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher()
         override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -98,11 +94,6 @@ namespace Nexus::RiskService {
   const RiskPortfolioUpdatePublisher& WrapperRiskClient<C>::
       GetRiskPortfolioUpdatePublisher() {
     return m_client->GetRiskPortfolioUpdatePublisher();
-  }
-
-  template<typename C>
-  void WrapperRiskClient<C>::Open() {
-    return m_client->Open();
   }
 
   template<typename C>

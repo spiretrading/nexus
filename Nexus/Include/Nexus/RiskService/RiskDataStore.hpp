@@ -26,8 +26,6 @@ namespace Nexus::RiskService {
     void Store(const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot);
 
-    void Open();
-
     void Close();
   };
 

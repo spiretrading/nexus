@@ -50,8 +50,6 @@ namespace Nexus::DefinitionsService::Tests {
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
-      void Open();
-
       void Close();
 
     private:
@@ -111,10 +109,6 @@ namespace Nexus::DefinitionsService::Tests {
     auto client = std::make_unique<DefinitionsService::DefinitionsClient<
       ServiceProtocolClientBuilder>>(builder);
     return MakeVirtualDefinitionsClient(std::move(client));
-  }
-
-  inline void DefinitionsServiceTestEnvironment::Open() {
-    m_container.Open();
   }
 
   inline void DefinitionsServiceTestEnvironment::Close() {

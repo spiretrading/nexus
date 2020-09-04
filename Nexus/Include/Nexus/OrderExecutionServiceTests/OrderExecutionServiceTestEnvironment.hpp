@@ -79,9 +79,6 @@ namespace Nexus::OrderExecutionService::Tests {
 
       ~OrderExecutionServiceTestEnvironment();
 
-      //! Opens the servlet.
-      void Open();
-
       //! Closes the servlet.
       void Close();
 
@@ -167,10 +164,6 @@ namespace Nexus::OrderExecutionService::Tests {
   inline OrderExecutionServiceTestEnvironment::
       ~OrderExecutionServiceTestEnvironment() {
     Close();
-  }
-
-  inline void OrderExecutionServiceTestEnvironment::Open() {
-    m_container.Open();
   }
 
   inline void OrderExecutionServiceTestEnvironment::Close() {

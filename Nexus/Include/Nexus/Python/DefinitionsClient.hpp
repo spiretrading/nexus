@@ -46,8 +46,6 @@ namespace Nexus::DefinitionsService {
 
       TradingSchedule LoadTradingSchedule() override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -136,12 +134,6 @@ namespace Nexus::DefinitionsService {
   TradingSchedule ToPythonDefinitionsClient<C>::LoadTradingSchedule() {
     auto release = Beam::Python::GilRelease();
     return m_client->LoadTradingSchedule();
-  }
-
-  template<typename C>
-  void ToPythonDefinitionsClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

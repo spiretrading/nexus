@@ -81,8 +81,6 @@ namespace Nexus {
       std::unique_ptr<Timer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      void Open();
-
       void Close();
 
     private:
@@ -103,27 +101,29 @@ namespace Nexus {
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
-    Beam::Ref<BacktesterEnvironment> environment)
-    : m_environment(environment.Get()),
-      m_serviceLocatorClient(
-        m_environment->GetServiceLocatorEnvironment().BuildClient()),
-      m_definitionsClient(
-        m_environment->GetDefinitionsEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_administrationClient(
-        m_environment->GetAdministrationEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
-        std::make_unique<BacktesterMarketDataClient>(
-        Beam::Ref(m_environment->GetMarketDataService()),
-        m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
-        *m_serviceLocatorClient))))),
-      m_orderExecutionClient(
-        m_environment->GetOrderExecutionEnvironment().BuildClient(
-        Beam::Ref(*m_serviceLocatorClient))),
-      m_timeClient(Beam::TimeService::MakeVirtualTimeClient<
-        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
-        m_environment->GetEventHandler())))) {}
+      Beam::Ref<BacktesterEnvironment> environment)
+      : m_environment(environment.Get()),
+        m_serviceLocatorClient(
+          m_environment->GetServiceLocatorEnvironment().BuildClient()),
+        m_definitionsClient(
+          m_environment->GetDefinitionsEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_administrationClient(
+          m_environment->GetAdministrationEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_marketDataClient(MarketDataService::MakeVirtualMarketDataClient(
+          std::make_unique<BacktesterMarketDataClient>(
+          Beam::Ref(m_environment->GetMarketDataService()),
+          m_environment->GetMarketDataEnvironment().BuildClient(Beam::Ref(
+          *m_serviceLocatorClient))))),
+        m_orderExecutionClient(
+          m_environment->GetOrderExecutionEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_timeClient(Beam::TimeService::MakeVirtualTimeClient<
+          BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
+          m_environment->GetEventHandler())))) {
+    m_openState.SetOpen();
+  }
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
@@ -184,25 +184,6 @@ namespace Nexus {
       boost::posix_time::time_duration expiry) {
     return Beam::Threading::MakeVirtualTimer(std::make_unique<BacktesterTimer>(
       expiry, Beam::Ref(m_environment->GetEventHandler())));
-  }
-
-  inline void BacktesterServiceClients::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->SetCredentials("root", "");
-      m_serviceLocatorClient->Open();
-      m_definitionsClient->Open();
-      m_administrationClient->Open();
-      m_marketDataClient->Open();
-      m_orderExecutionClient->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterServiceClients::Close() {

@@ -34,8 +34,6 @@ namespace Nexus::OrderExecutionService {
       virtual void Update(OrderId orderId,
         const ExecutionReport& executionReport) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -80,8 +78,6 @@ namespace Nexus::OrderExecutionService {
 
       void Update(OrderId orderId,
         const ExecutionReport& executionReport) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -146,11 +142,6 @@ namespace Nexus::OrderExecutionService {
   void WrapperOrderExecutionClient<C>::Update(OrderId orderId,
       const ExecutionReport& executionReport) {
     m_client->Update(orderId, executionReport);
-  }
-
-  template<typename C>
-  void WrapperOrderExecutionClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

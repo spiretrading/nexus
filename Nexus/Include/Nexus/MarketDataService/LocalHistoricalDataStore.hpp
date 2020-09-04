@@ -73,8 +73,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -213,8 +211,6 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
   }
-
-  inline void LocalHistoricalDataStore::Open() {}
 
   inline void LocalHistoricalDataStore::Close() {}
 }

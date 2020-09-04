@@ -88,8 +88,6 @@ namespace Nexus::Compliance {
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
 
-      void Open();
-
       void Close();
 
     private:
@@ -121,6 +119,7 @@ namespace Nexus::Compliance {
       Store(m_clientHandler.GetSlots()),
       std::bind(&ComplianceClient::OnComplianceRuleEntry, this,
       std::placeholders::_1, std::placeholders::_2));
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -182,20 +181,6 @@ namespace Nexus::Compliance {
     *snapshot = client->template SendRequest<
       LoadDirectoryEntryComplianceRuleEntryService>(directoryEntry);
     entry->m_queues.push_back(std::move(queue));
-  }
-
-  template<typename B>
-  void ComplianceClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

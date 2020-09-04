@@ -32,8 +32,6 @@ namespace Nexus::RiskService {
       void Store(const Beam::ServiceLocator::DirectoryEntry& account,
         const InventorySnapshot& snapshot) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -75,12 +73,6 @@ namespace Nexus::RiskService {
       const InventorySnapshot& snapshot) {
     auto release = Beam::Python::GilRelease();
     return m_dataStore->Store(account, snapshot);
-  }
-
-  template<typename D>
-  void ToPythonRiskDataStore<D>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Open();
   }
 
   template<typename D>

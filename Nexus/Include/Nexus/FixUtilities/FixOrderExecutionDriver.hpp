@@ -66,8 +66,6 @@ namespace Nexus::FixUtilities {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -110,6 +108,63 @@ namespace Nexus::FixUtilities {
         m_fixApplications.insert(std::make_pair(destination, application));
       }
     }
+    m_openState.SetOpening();
+    try {
+      auto initializedApplications =
+        std::unordered_set<std::shared_ptr<Application>>();
+      for(auto& fixApplication : m_fixApplications) {
+        if(!initializedApplications.insert(fixApplication.second).second) {
+          continue;
+        }
+        try {
+          auto& entry = *(fixApplication.second);
+          entry.m_settings.emplace(entry.m_configPath);
+          if(entry.m_settings->getSessions().size() != 1) {
+            BOOST_THROW_EXCEPTION(std::runtime_error(
+              "Only one session per application is permitted."));
+          }
+          auto sessionId = *entry.m_settings->getSessions().begin();
+          entry.m_storeFactory.emplace(*entry.m_settings);
+          entry.m_logFactory.emplace(*entry.m_settings);
+          entry.m_initiator.emplace(*entry.m_application,
+            *entry.m_storeFactory, *entry.m_settings, *entry.m_logFactory);
+          entry.m_application->SetSessionSettings(sessionId, *entry.m_settings);
+          for(auto& sessionId : entry.m_settings->getSessions()) {
+            auto session = FIX::Session::lookupSession(sessionId);
+            if(session != nullptr) {
+              auto dataDictionaryProvider =
+                session->getDataDictionaryProvider();
+              auto sessionDataDictionary =
+                dataDictionaryProvider.getSessionDataDictionary(
+                sessionId.getBeginString());
+              sessionDataDictionary.checkFieldsOutOfOrder(false);
+              sessionDataDictionary.checkFieldsHaveValues(false);
+              dataDictionaryProvider.addTransportDataDictionary(
+                sessionId.getBeginString(),
+                std::make_shared<FIX::DataDictionary>(sessionDataDictionary));
+              auto applicationDataDictionary =
+                dataDictionaryProvider.getApplicationDataDictionary(
+                FIX::Message::toApplVerID(sessionId.getBeginString()));
+              applicationDataDictionary.checkFieldsOutOfOrder(false);
+              applicationDataDictionary.checkFieldsHaveValues(false);
+              dataDictionaryProvider.addApplicationDataDictionary(
+                FIX::Message::toApplVerID(sessionId.getBeginString()),
+                std::make_shared<FIX::DataDictionary>(
+                applicationDataDictionary));
+              session->setDataDictionaryProvider(dataDictionaryProvider);
+            }
+          }
+          entry.m_initiator->start();
+          entry.m_isConnected = true;
+        } catch(const std::exception& e) {
+          std::cerr << "Error: " << fixApplication.first << ": " << e.what();
+        }
+      }
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   inline FixOrderExecutionDriver::~FixOrderExecutionDriver() {
@@ -191,68 +246,6 @@ namespace Nexus::FixUtilities {
       fixApplicationEntry->m_application->Update(session, orderId,
         executionReport);
     }
-  }
-
-  inline void FixOrderExecutionDriver::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      auto initializedApplications =
-        std::unordered_set<std::shared_ptr<Application>>();
-      for(auto& fixApplication : m_fixApplications) {
-        if(!initializedApplications.insert(fixApplication.second).second) {
-          continue;
-        }
-        try {
-          auto& entry = *(fixApplication.second);
-          entry.m_settings.emplace(entry.m_configPath);
-          if(entry.m_settings->getSessions().size() != 1) {
-            BOOST_THROW_EXCEPTION(std::runtime_error(
-              "Only one session per application is permitted."));
-          }
-          auto sessionId = *entry.m_settings->getSessions().begin();
-          entry.m_storeFactory.emplace(*entry.m_settings);
-          entry.m_logFactory.emplace(*entry.m_settings);
-          entry.m_initiator.emplace(*entry.m_application,
-            *entry.m_storeFactory, *entry.m_settings, *entry.m_logFactory);
-          entry.m_application->SetSessionSettings(sessionId, *entry.m_settings);
-          for(auto& sessionId : entry.m_settings->getSessions()) {
-            auto session = FIX::Session::lookupSession(sessionId);
-            if(session != nullptr) {
-              auto dataDictionaryProvider =
-                session->getDataDictionaryProvider();
-              auto sessionDataDictionary =
-                dataDictionaryProvider.getSessionDataDictionary(
-                sessionId.getBeginString());
-              sessionDataDictionary.checkFieldsOutOfOrder(false);
-              sessionDataDictionary.checkFieldsHaveValues(false);
-              dataDictionaryProvider.addTransportDataDictionary(
-                sessionId.getBeginString(),
-                std::make_shared<FIX::DataDictionary>(sessionDataDictionary));
-              auto applicationDataDictionary =
-                dataDictionaryProvider.getApplicationDataDictionary(
-                FIX::Message::toApplVerID(sessionId.getBeginString()));
-              applicationDataDictionary.checkFieldsOutOfOrder(false);
-              applicationDataDictionary.checkFieldsHaveValues(false);
-              dataDictionaryProvider.addApplicationDataDictionary(
-                FIX::Message::toApplVerID(sessionId.getBeginString()),
-                std::make_shared<FIX::DataDictionary>(
-                applicationDataDictionary));
-              session->setDataDictionaryProvider(dataDictionaryProvider);
-            }
-          }
-          entry.m_initiator->start();
-          entry.m_isConnected = true;
-        } catch(const std::exception& e) {
-          std::cerr << "Error: " << fixApplication.first << ": " << e.what();
-        }
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void FixOrderExecutionDriver::Close() {

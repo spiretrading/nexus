@@ -61,8 +61,6 @@ namespace Nexus {
        */
       void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
 
-      void Open();
-
       void Close();
 
     private:
@@ -85,9 +83,20 @@ namespace Nexus {
         boost::posix_time::pos_infin) {}
 
   inline BacktesterEventHandler::BacktesterEventHandler(
-    boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
-    : m_startTime(std::move(startTime)),
-      m_endTime(std::move(endTime)) {}
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
+      : m_startTime(std::move(startTime)),
+        m_endTime(std::move(endTime)) {
+    m_openState.SetOpening();
+    try {
+      m_timeEnvironment.SetTime(m_startTime);
+      m_eventLoopRoutine = Beam::Routines::Spawn(
+        std::bind(&BacktesterEventHandler::EventLoop, this));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   inline BacktesterEventHandler::~BacktesterEventHandler() {
     Close();
@@ -136,22 +145,6 @@ namespace Nexus {
       }
     }
     m_eventAvailableCondition.notify_one();
-  }
-
-  inline void BacktesterEventHandler::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_timeEnvironment.SetTime(m_startTime);
-      m_timeEnvironment.Open();
-      m_eventLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&BacktesterEventHandler::EventLoop, this));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterEventHandler::Close() {

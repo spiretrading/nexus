@@ -58,8 +58,6 @@ namespace Nexus::ChartingService {
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
         boost::posix_time::time_duration interval);
 
-      void Open();
-
       void Close();
 
     private:
@@ -96,6 +94,7 @@ namespace Nexus::ChartingService {
       Beam::Store(m_clientHandler.GetSlots()), std::bind(
       &ChartingClient::OnSecurityQuery, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -160,20 +159,6 @@ namespace Nexus::ChartingService {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<LoadSecurityTimePriceSeriesService>(
       security, startTime, endTime, interval);
-  }
-
-  template<typename B>
-  void ChartingClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

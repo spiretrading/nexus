@@ -76,8 +76,6 @@ namespace Nexus {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
@@ -90,11 +88,13 @@ namespace Nexus {
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-    Beam::Ref<BacktesterMarketDataService> service,
-    std::unique_ptr<MarketDataService::VirtualMarketDataClient>
-    marketDataClient)
-    : m_service(service.Get()),
-      m_marketDataClient(std::move(marketDataClient)) {}
+      Beam::Ref<BacktesterMarketDataService> service,
+      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+      marketDataClient)
+      : m_service(service.Get()),
+        m_marketDataClient(std::move(marketDataClient)) {
+    m_openState.SetOpen();
+  }
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
@@ -189,19 +189,6 @@ namespace Nexus {
   inline std::vector<SecurityInfo> BacktesterMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return m_marketDataClient->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  inline void BacktesterMarketDataClient::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterMarketDataClient::Close() {

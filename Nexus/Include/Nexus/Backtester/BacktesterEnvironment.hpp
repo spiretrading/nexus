@@ -80,8 +80,6 @@ namespace Nexus {
       /** Returns the BacktesterMarketDataService. */
       const BacktesterMarketDataService& GetMarketDataService() const;
 
-      void Open();
-
       void Close();
 
     private:
@@ -117,10 +115,72 @@ namespace Nexus {
         Beam::Ref(serviceClients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-    Beam::Ref<VirtualServiceClients> serviceClients)
-    : m_serviceClients(serviceClients.Get()),
-      m_eventHandler(startTime, endTime) {}
+      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+      Beam::Ref<VirtualServiceClients> serviceClients)
+      : m_serviceClients(serviceClients.Get()),
+        m_eventHandler(startTime, endTime) {
+    m_openState.SetOpening();
+    try {
+      m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
+      auto rootAccount = m_serviceLocatorClient->GetAccount();
+      m_definitionsEnvironment.emplace(
+        m_serviceLocatorEnvironment.BuildClient());
+      m_administrationEnvironment.emplace(
+        m_serviceLocatorEnvironment.BuildClient());
+      auto marketDataServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      auto marketDataAdministrationClient =
+        m_administrationEnvironment->BuildClient(
+        Beam::Ref(*marketDataServiceLocatorClient));
+      auto historicalDataStore =
+        MarketDataService::MakeVirtualHistoricalDataStore(
+        std::make_unique<BacktesterHistoricalDataStore<
+        MarketDataService::ClientHistoricalDataStore<
+        MarketDataService::VirtualMarketDataClient*>>>(
+        &m_serviceClients->GetMarketDataClient(),
+        m_eventHandler.GetStartTime()));
+      m_marketDataEnvironment.emplace(
+        std::move(marketDataServiceLocatorClient),
+        std::move(marketDataAdministrationClient),
+        std::move(historicalDataStore));
+      m_marketDataService.emplace(Beam::Ref(m_eventHandler),
+        Beam::Ref(*m_marketDataEnvironment),
+        Beam::Ref(m_serviceClients->GetMarketDataClient()));
+      auto orderExecutionServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient();
+      auto administrationClient = m_administrationEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadAdministratorsRootEntry());
+      m_serviceLocatorClient->Associate(rootAccount,
+        administrationClient->LoadServicesRootEntry());
+      auto driverMarketDataClient =
+        MarketDataService::MakeVirtualMarketDataClient(
+        std::make_unique<BacktesterMarketDataClient>(
+        Beam::Ref(*m_marketDataService),
+        m_marketDataEnvironment->BuildClient(Beam::Ref(
+        *orderExecutionServiceLocatorClient))));
+      auto driver = OrderExecutionService::MakeVirtualOrderExecutionDriver(
+        std::make_unique<OrderExecutionService::SimulationOrderExecutionDriver<
+        std::unique_ptr<MarketDataService::VirtualMarketDataClient>,
+        std::unique_ptr<Beam::TimeService::VirtualTimeClient>>>(
+        std::move(driverMarketDataClient),
+        Beam::TimeService::MakeVirtualTimeClient<BacktesterTimeClient>(
+        Beam::Initialize(Beam::Ref(m_eventHandler)))));
+      auto orderTimeClient = Beam::TimeService::MakeVirtualTimeClient<
+        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(m_eventHandler)));
+      m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
+        GetDefaultDestinationDatabase(),
+        std::move(orderExecutionServiceLocatorClient),
+        m_uidEnvironment.BuildClient(),
+        std::move(administrationClient), std::move(orderTimeClient),
+        std::move(driver));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
     Close();
@@ -173,96 +233,6 @@ namespace Nexus {
   inline const BacktesterMarketDataService&
       BacktesterEnvironment::GetMarketDataService() const {
     return *m_marketDataService;
-  }
-
-  inline void BacktesterEnvironment::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceClients->Open();
-      m_eventHandler.Open();
-      m_serviceLocatorEnvironment.Open();
-      m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
-      m_serviceLocatorClient->SetCredentials("root", "");
-      m_serviceLocatorClient->Open();
-      auto rootAccount = m_serviceLocatorClient->GetAccount();
-      m_uidEnvironment.Open();
-      auto definitionsServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      definitionsServiceLocatorClient->SetCredentials("root", "");
-      definitionsServiceLocatorClient->Open();
-      m_definitionsEnvironment.emplace(
-        std::move(definitionsServiceLocatorClient));
-      m_definitionsEnvironment->Open();
-      auto administrationServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      administrationServiceLocatorClient->SetCredentials("root", "");
-      administrationServiceLocatorClient->Open();
-      m_administrationEnvironment.emplace(
-        std::move(administrationServiceLocatorClient));
-      m_administrationEnvironment->Open();
-      auto marketDataServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      marketDataServiceLocatorClient->SetCredentials("root", "");
-      marketDataServiceLocatorClient->Open();
-      auto marketDataAdministrationClient =
-        m_administrationEnvironment->BuildClient(
-        Beam::Ref(*marketDataServiceLocatorClient));
-      auto historicalDataStore =
-        MarketDataService::MakeVirtualHistoricalDataStore(
-        std::make_unique<BacktesterHistoricalDataStore<
-        MarketDataService::ClientHistoricalDataStore<
-        MarketDataService::VirtualMarketDataClient*>>>(
-        &m_serviceClients->GetMarketDataClient(),
-        m_eventHandler.GetStartTime()));
-      m_marketDataEnvironment.emplace(
-        std::move(marketDataServiceLocatorClient),
-        std::move(marketDataAdministrationClient),
-        std::move(historicalDataStore));
-      m_marketDataEnvironment->Open();
-      m_marketDataService.emplace(Beam::Ref(m_eventHandler),
-        Beam::Ref(*m_marketDataEnvironment),
-        Beam::Ref(m_serviceClients->GetMarketDataClient()));
-      auto orderExecutionServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      orderExecutionServiceLocatorClient->SetCredentials("root", "");
-      orderExecutionServiceLocatorClient->Open();
-      auto uidClient = m_uidEnvironment.BuildClient();
-      uidClient->Open();
-      auto administrationClient = m_administrationEnvironment->BuildClient(
-        Beam::Ref(*m_serviceLocatorClient));
-      administrationClient->Open();
-      m_serviceLocatorClient->Associate(rootAccount,
-        administrationClient->LoadAdministratorsRootEntry());
-      m_serviceLocatorClient->Associate(rootAccount,
-        administrationClient->LoadServicesRootEntry());
-      auto driverMarketDataClient =
-        MarketDataService::MakeVirtualMarketDataClient(
-        std::make_unique<BacktesterMarketDataClient>(
-        Beam::Ref(*m_marketDataService),
-        m_marketDataEnvironment->BuildClient(Beam::Ref(
-        *orderExecutionServiceLocatorClient))));
-      auto driverTimeClient = Beam::TimeService::MakeVirtualTimeClient<
-        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(m_eventHandler)));
-      auto driver = OrderExecutionService::MakeVirtualOrderExecutionDriver(
-        std::make_unique<OrderExecutionService::SimulationOrderExecutionDriver<
-        std::unique_ptr<MarketDataService::VirtualMarketDataClient>,
-        std::unique_ptr<Beam::TimeService::VirtualTimeClient>>>(
-        std::move(driverMarketDataClient), std::move(driverTimeClient)));
-      auto orderTimeClient = Beam::TimeService::MakeVirtualTimeClient<
-        BacktesterTimeClient>(Beam::Initialize(Beam::Ref(m_eventHandler)));
-      m_orderExecutionEnvironment.emplace(GetDefaultMarketDatabase(),
-        GetDefaultDestinationDatabase(),
-        std::move(orderExecutionServiceLocatorClient), std::move(uidClient),
-        std::move(administrationClient), std::move(orderTimeClient),
-        std::move(driver));
-      m_orderExecutionEnvironment->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterEnvironment::Close() {
