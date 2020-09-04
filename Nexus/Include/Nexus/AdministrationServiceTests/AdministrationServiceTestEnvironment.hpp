@@ -131,6 +131,8 @@ namespace Nexus::AdministrationService::Tests {
       }
       m_entitlements.emplace();
       m_entitlements->Add(globalEntitlement);
+      m_serviceLocatorClient->Associate(m_serviceLocatorClient->GetAccount(),
+        m_globalEntitlementGroup);
     }
     m_container.emplace(Beam::Initialize(m_serviceLocatorClient,
       Beam::Initialize(m_serviceLocatorClient, *m_entitlements, &m_dataStore)),
@@ -161,12 +163,7 @@ namespace Nexus::AdministrationService::Tests {
       Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
       serviceLocatorClient) {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
-      [=, serviceLocatorClient = serviceLocatorClient.Get()] {
-        if(m_globalEntitlementGroup.m_type !=
-            Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-          m_serviceLocatorClient->Associate(serviceLocatorClient->GetAccount(),
-            m_globalEntitlementGroup);
-        }
+      [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
           "test_administration_client", m_serverConnection);
       },

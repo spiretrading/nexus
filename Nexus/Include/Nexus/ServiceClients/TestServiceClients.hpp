@@ -115,7 +115,8 @@ namespace Nexus {
       std::string password, Beam::Ref<TestEnvironment> environment)
       : m_environment(environment.Get()),
         m_serviceLocatorClient(
-          m_environment->GetServiceLocatorEnvironment().BuildClient()),
+          m_environment->GetServiceLocatorEnvironment().BuildClient(
+          std::move(username), std::move(password))),
         m_definitionsClient(m_environment->GetDefinitionsEnvironment().
           BuildClient(Beam::Ref(*m_serviceLocatorClient))),
         m_administrationClient(m_environment->GetAdministrationEnvironment().
