@@ -37,7 +37,6 @@ namespace {
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
     AdministrationServiceTestEnvironment m_administrationEnvironment;
-    EntitlementDatabase m_entitlements;
     MarketDataRegistry m_registry;
     boost::optional<TestServletContainer::Servlet::Servlet> m_registryServlet;
     boost::optional<TestServletContainer> m_container;
@@ -45,13 +44,12 @@ namespace {
 
     Fixture()
         : m_administrationEnvironment(
-            m_serviceLocatorEnvironment.BuildClient()) {
-      BuildEntitlements();
-      auto serverConnection = std::make_shared<TestServerConnection>();
+            m_serviceLocatorEnvironment.BuildClient(), BuildEntitlements()) {
       auto servletServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
       m_registryServlet.emplace(m_administrationEnvironment.BuildClient(
         Ref(*servletServiceLocatorClient)), &m_registry, Initialize());
+      auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
         &*m_registryServlet), serverConnection,
         factory<std::unique_ptr<TriggerTimer>>());
@@ -68,7 +66,7 @@ namespace {
       authenticator(*m_clientProtocol);
     }
 
-    void BuildEntitlements() {
+    EntitlementDatabase BuildEntitlements() {
       auto servletAccount = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
         "servlet", "", DirectoryEntry::GetStarDirectory());
       auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
@@ -95,7 +93,8 @@ namespace {
         MarketDataType::BBO_QUOTE);
       nyseEntitlement.m_applicability[DefaultMarkets::NYSE()].Set(
         MarketDataType::ORDER_IMBALANCE);
-      m_entitlements.Add(nyseEntitlement);
+      auto entitlements = EntitlementDatabase();
+      entitlements.Add(nyseEntitlement);
       auto tsxEntitlements = EntitlementDatabase::Entry();
       tsxEntitlements.m_name = "TSX";
       tsxEntitlements.m_groupEntry = tsxEntitlementGroup;
@@ -106,12 +105,12 @@ namespace {
         DefaultMarkets::CHIC());
       tsxEntitlements.m_applicability[chicTsxKey].Set(
         MarketDataType::BOOK_QUOTE);
-      m_entitlements.Add(tsxEntitlements);
+      entitlements.Add(tsxEntitlements);
       m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
         nyseEntitlementGroup);
       m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
         tsxEntitlementGroup);
-      m_administrationEnvironment.SetEntitlements(m_entitlements);
+      return entitlements;
     }
   };
 }

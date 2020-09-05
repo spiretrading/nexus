@@ -49,8 +49,7 @@ namespace Nexus::AdministrationService {
        */
       template<typename SF, typename DF>
       AdministrationServlet(SF&& serviceLocatorClient,
-        const MarketDataService::EntitlementDatabase& entitlements,
-        DF&& dataStore);
+        MarketDataService::EntitlementDatabase entitlements, DF&& dataStore);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -229,9 +228,9 @@ namespace Nexus::AdministrationService {
   template<typename SF, typename DF>
   AdministrationServlet<C, S, D>::AdministrationServlet(
     SF&& serviceLocatorClient,
-    const MarketDataService::EntitlementDatabase& entitlements, DF&& dataStore)
+    MarketDataService::EntitlementDatabase entitlements, DF&& dataStore)
     : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
-      m_entitlements(entitlements),
+      m_entitlements(std::move(entitlements)),
       m_dataStore(std::forward<DF>(dataStore)) {
     m_openState.SetOpening();
     try {
