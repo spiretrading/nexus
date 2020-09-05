@@ -40,7 +40,9 @@ SecurityInputLineEdit::SecurityInputLineEdit(const QString& initial_text,
     Beam::Ref<SecurityInputModel> model, bool is_icon_visible, QWidget* parent)
     : TextInputWidget(initial_text, parent),
       m_model(model.Get()),
-      m_is_icon_visible(is_icon_visible) {
+      m_is_icon_visible(is_icon_visible),
+      m_is_suggestion_disabled(false),
+      m_last_key(Qt::Key_unknown) {
   setText(initial_text);
   parent->installEventFilter(this);
   connect(this, &TextInputWidget::textEdited, this,
@@ -80,23 +82,42 @@ void SecurityInputLineEdit::focusInEvent(QFocusEvent* event) {
 }
 
 void SecurityInputLineEdit::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    auto current_security = ParseSecurity(text().toUpper().toStdString());
-    if(!current_security.GetSymbol().empty()) {
-      on_commit(current_security);
-    } else {
-      on_commit(m_security);
-    }
-    return;
-  } else if(event->key() == Qt::Key_Delete) {
-    on_commit({});
+  switch(event->key()) {
+    case Qt::Key_Backspace:
+      if(m_last_key != Qt::Key_Backspace && m_securities->isVisible()) {
+        m_last_key = static_cast<Qt::Key>(event->key());
+        m_is_suggestion_disabled = true;
+        m_securities->clear_activated_item();
+        update();
+        return;
+      }
+      break;
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+      {
+        auto current_security = ParseSecurity(text().toUpper().toStdString());
+        if(!current_security.GetSymbol().empty()) {
+          on_commit(current_security);
+        } else {
+          on_commit(m_security);
+        }
+        return;
+      }
+    case Qt::Key_Delete:
+      clear();
+      m_securities->hide();
+      return;
   }
+  //m_is_suggestion_disabled = event->key() == Qt::Key_Backspace &&
+  //  text().length() > 1;
   TextInputWidget::keyPressEvent(event);
+  m_last_key = static_cast<Qt::Key>(event->key());
 }
 
 void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
   TextInputWidget::paintEvent(event);
-  if(!text().isEmpty()) {
+  if(!text().isEmpty() && !m_is_suggestion_disabled &&
+      m_last_key != Qt::Key_Backspace) {
     auto& item = m_securities->get_value(0);
     if(item.isValid()) {
       auto item_text = m_item_delegate.displayText(item);
@@ -110,11 +131,11 @@ void SecurityInputLineEdit::paintEvent(QPaintEvent* event) {
         auto metrics = QFontMetrics(font);
         auto highlight_x_pos = metrics.horizontalAdvance(text()) +
           get_padding() + scale_width(3);
-        painter.fillRect(highlight_x_pos,
-          (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
-          metrics.horizontalAdvance(item_text),
-          metrics.ascent() + scale_height(4), QColor("#0078D7"));
-        painter.setPen(Qt::white);
+        //painter.fillRect(highlight_x_pos,
+        //  (height() / 2) - ((metrics.ascent() + scale_height(4)) / 2) - 1,
+        //  metrics.horizontalAdvance(item_text),
+        //  metrics.ascent() + scale_height(4), QColor("#0078D7"));
+        painter.setPen(QColor("#A0A0A0"));
         painter.drawText(QPoint(highlight_x_pos,
           (height() / 2) + (metrics.ascent() / 2) - 1), item_text);
       }
@@ -144,6 +165,9 @@ void SecurityInputLineEdit::on_commit(const Security& security) {
 }
 
 void SecurityInputLineEdit::on_text_edited() {
+  if(text().isEmpty()) {
+    m_is_suggestion_disabled = false;
+  }
   m_completions = m_model->autocomplete(text().toStdString());
   m_completions.then([=] (auto result) {
     auto completions = [&] {
@@ -165,6 +189,9 @@ void SecurityInputLineEdit::on_text_edited() {
     } else {
       m_securities->setVisible(true);
       m_securities->raise();
+    }
+    if(m_is_suggestion_disabled) {
+      m_securities->clear_activated_item();
     }
   });
   auto current_security = ParseSecurity(text().toUpper().toStdString());

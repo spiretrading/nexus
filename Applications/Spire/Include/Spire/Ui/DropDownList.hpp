@@ -58,6 +58,9 @@ namespace Spire {
       //! no item is currently activated.
       void activate_previous();
 
+      //! Removes the highlight from the activated item.
+      void clear_activated_item();
+
       //! Returns the value of the item at the given index.
       /*!
         \param index The index of the item.

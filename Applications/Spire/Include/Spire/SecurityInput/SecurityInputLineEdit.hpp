@@ -56,6 +56,8 @@ namespace Spire {
       Nexus::Security m_security;
       bool m_is_icon_visible;
       CustomVariantItemDelegate m_item_delegate;
+      bool m_is_suggestion_disabled;
+      Qt::Key m_last_key;
 
       void on_activated(const Nexus::Security& security);
       void on_commit(const Nexus::Security& security);
