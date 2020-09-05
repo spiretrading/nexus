@@ -15,7 +15,6 @@
 #include <Beam/Utilities/Streamable.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <tclap/CmdLine.h>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
@@ -42,7 +41,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Compliance;
 using namespace Nexus::DefinitionsService;
-using namespace std;
 using namespace TCLAP;
 
 namespace {
@@ -53,27 +51,28 @@ namespace {
     std::shared_ptr<LiveTimer>>;
 
   struct DefinitionsServerConnectionInitializer {
-    string m_serviceName;
+    std::string m_serviceName;
     IpAddress m_interface;
-    vector<IpAddress> m_addresses;
+    std::vector<IpAddress> m_addresses;
 
     void Initialize(const YAML::Node& config);
   };
 
   void DefinitionsServerConnectionInitializer::Initialize(
       const YAML::Node& config) {
-    m_serviceName = Extract<string>(config, "service",
+    m_serviceName = Extract<std::string>(config, "service",
       DefinitionsService::SERVICE_NAME);
     m_interface = Extract<IpAddress>(config, "interface");
-    vector<IpAddress> addresses;
+    auto addresses = std::vector<IpAddress>();
     addresses.push_back(m_interface);
-    m_addresses = Extract<vector<IpAddress>>(config, "addresses", addresses);
+    m_addresses = Extract<std::vector<IpAddress>>(config, "addresses",
+      addresses);
   }
 
-  vector<ExchangeRate> ParseExchangeRates(const YAML::Node& config) {
-    vector<ExchangeRate> exchangeRates;
+  std::vector<ExchangeRate> ParseExchangeRates(const YAML::Node& config) {
+    auto exchangeRates = std::vector<ExchangeRate>();
     for(auto& entry : config) {
-      auto symbol = Extract<string>(entry, "symbol");
+      auto symbol = Extract<std::string>(entry, "symbol");
       auto pair = ParseCurrencyPair(symbol);
       auto rate = Extract<rational<int>>(entry, "rate");
       auto exchangeRate = ExchangeRate(pair, rate);
@@ -84,50 +83,52 @@ namespace {
 }
 
 int main(int argc, const char** argv) {
-  string configFile;
+  auto configFile = std::string();
   try {
-    CmdLine cmd{"", ' ', "1.0-r" DEFINITIONS_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc."};
-    ValueArg<string> configArg{"c", "config", "Configuration file", false,
-      "config.yml", "path"};
+    auto cmd = CmdLine("", ' ', "1.0-r" DEFINITIONS_SERVER_VERSION
+      "\nCopyright (C) 2020 Spire Trading Inc.");
+    auto configArg = ValueArg<std::string>("c", "config", "Configuration file",
+      false, "config.yml", "path");
     cmd.add(configArg);
     cmd.parse(argc, argv);
     configFile = configArg.getValue();
   } catch(const ArgException& e) {
-    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+    std::cerr << "error: " << e.error() << " for arg " << e.argId() <<
+      std::endl;
     return -1;
   }
   auto config = Require(LoadFile, configFile);
-  DefinitionsServerConnectionInitializer definitionsServerConnectionInitializer;
+  auto definitionsServerConnectionInitializer =
+    DefinitionsServerConnectionInitializer();
   try {
     definitionsServerConnectionInitializer.Initialize(
       GetNode(config, "server"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'server': " << e.what() << endl;
+    std::cerr << "Error parsing section 'server': " << e.what() << std::endl;
     return -1;
   }
-  ServiceLocatorClientConfig serviceLocatorClientConfig;
+  auto serviceLocatorClientConfig = ServiceLocatorClientConfig();
   try {
     serviceLocatorClientConfig = ServiceLocatorClientConfig::Parse(
       GetNode(config, "service_locator"));
   } catch(const std::exception& e) {
-    cerr << "Error parsing section 'service_locator': " << e.what() << endl;
+    std::cerr << "Error parsing section 'service_locator': " << e.what() <<
+      std::endl;
     return -1;
   }
-  SocketThreadPool socketThreadPool;
-  TimerThreadPool timerThreadPool;
-  ApplicationServiceLocatorClient serviceLocatorClient;
+  auto socketThreadPool = SocketThreadPool();
+  auto timerThreadPool = TimerThreadPool();
+  auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
+      Ref(timerThreadPool));
   } catch(const std::exception& e) {
-    cerr << "Error logging in: " << e.what() << endl;
+    std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
   }
-  vector<ComplianceRuleSchema> complianceRuleSchemas;
+  auto complianceRuleSchemas = std::vector<ComplianceRuleSchema>();
   complianceRuleSchemas.push_back(BuildBuyingPowerComplianceRuleSchema());
   complianceRuleSchemas.push_back(
     BuildCancelRestrictionPeriodComplianceRuleSchema());
@@ -139,71 +140,73 @@ int main(int argc, const char** argv) {
   complianceRuleSchemas.push_back(
     BuildSubmissionRestrictionPeriodComplianceRuleSchema());
   complianceRuleSchemas.push_back(BuildSymbolRestrictionComplianceRuleSchema());
-  boost::optional<DefinitionsServletContainer> definitionsServer;
+  auto definitionsServer = optional<DefinitionsServletContainer>();
   try {
-    auto minimumSpireClientVersion = Extract<string>(config,
+    auto minimumSpireClientVersion = Extract<std::string>(config,
       "minimum_spire_version");
-    auto organizationName = Extract<string>(config, "organization",
+    auto organizationName = Extract<std::string>(config, "organization",
       "Spire Trading Inc.");
-    ifstream timeZoneDatabaseFile{Extract<string>(config, "time_zones")};
+    auto timeZoneDatabaseFile = std::ifstream(
+      Extract<std::string>(config, "time_zones"));
     if(!timeZoneDatabaseFile.good()) {
-      cerr << "Error parsing time zones." << endl;
+      std::cerr << "Error parsing time zones." << std::endl;
       return -1;
     }
-    stringstream timeZoneDatabaseBuffer;
+    auto timeZoneDatabaseBuffer = std::stringstream();
     timeZoneDatabaseBuffer << timeZoneDatabaseFile.rdbuf();
-    auto countriesConfigFile = Extract<string>(config, "countries",
+    auto countriesConfigFile = Extract<std::string>(config, "countries",
       "countries.yml");
     auto countriesConfig = Require(LoadFile, countriesConfigFile);
     auto countryDatabase = ParseCountryDatabase(GetNode(countriesConfig,
       "countries"));
-    auto currenciesConfigFile = Extract<string>(config, "currencies",
+    auto currenciesConfigFile = Extract<std::string>(config, "currencies",
       "currencies.yml");
     auto currenciesConfig = Require(LoadFile, currenciesConfigFile);
     auto currencyDatabase = ParseCurrencyDatabase(GetNode(currenciesConfig,
       "currencies"));
-    auto marketsConfigFile = Extract<string>(config, "markets", "markets.yml");
+    auto marketsConfigFile = Extract<std::string>(config, "markets",
+      "markets.yml");
     auto marketsConfig = Require(LoadFile, marketsConfigFile);
     auto marketDatabase = ParseMarketDatabase(GetNode(marketsConfig, "markets"),
       countryDatabase, currencyDatabase);
-    auto destinationsConfigFile = Extract<string>(config, "destinations",
+    auto destinationsConfigFile = Extract<std::string>(config, "destinations",
       "destinations.yml");
     auto destinationsConfig = Require(LoadFile, destinationsConfigFile);
     auto destinationDatabase = ParseDestinationDatabase(
       destinationsConfig, marketDatabase);
     auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));
-    definitionsServer.emplace(Initialize(serviceLocatorClient.Get(),
-      Initialize(minimumSpireClientVersion, organizationName,
-        timeZoneDatabaseBuffer.str(), std::move(countryDatabase),
-        std::move(currencyDatabase), std::move(marketDatabase),
-        std::move(destinationDatabase), std::move(exchangeRates),
-        std::move(complianceRuleSchemas))),
-      Initialize(definitionsServerConnectionInitializer.m_interface,
-      Ref(socketThreadPool)),
-      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-      Ref(timerThreadPool)));
+    try {
+      definitionsServer.emplace(Initialize(serviceLocatorClient.Get(),
+        Initialize(minimumSpireClientVersion, organizationName,
+          timeZoneDatabaseBuffer.str(), std::move(countryDatabase),
+          std::move(currencyDatabase), std::move(marketDatabase),
+          std::move(destinationDatabase), std::move(exchangeRates),
+          std::move(complianceRuleSchemas))),
+        Initialize(definitionsServerConnectionInitializer.m_interface,
+        Ref(socketThreadPool)),
+        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+        Ref(timerThreadPool)));
+    } catch(const std::exception& e) {
+      std::cerr << "Error opening server: " << e.what() << std::endl;
+      return -1;
+    }
   } catch(const std::exception& e) {
-    cerr << "Error initializing definitions server: " << e.what() << endl;
+    std::cerr << "Error initializing definitions server: " << e.what() <<
+      std::endl;
     return -1;
   }
   try {
-    definitionsServer->Open();
-  } catch(const std::exception& e) {
-    cerr << "Error opening server: " << e.what() << endl;
-    return -1;
-  }
-  try {
-    auto ntpPool = Extract<vector<IpAddress>>(config, "ntp_pool");
-    JsonObject ntpService;
+    auto ntpPool = Extract<std::vector<IpAddress>>(config, "ntp_pool");
+    auto ntpService = JsonObject();
     ntpService["addresses"] = lexical_cast<std::string>(Stream(ntpPool));
     serviceLocatorClient->Register(TimeService::SERVICE_NAME, ntpService);
-    JsonObject definitionsService;
+    auto definitionsService = JsonObject();
     definitionsService["addresses"] = lexical_cast<std::string>(
       Stream(definitionsServerConnectionInitializer.m_addresses));
     serviceLocatorClient->Register(
       definitionsServerConnectionInitializer.m_serviceName, definitionsService);
   } catch(const std::exception& e) {
-    cerr << "Error registering service: " << e.what() << endl;
+    std::cerr << "Error registering service: " << e.what() << std::endl;
     return -1;
   }
   WaitForKillEvent();

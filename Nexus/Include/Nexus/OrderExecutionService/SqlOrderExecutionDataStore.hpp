@@ -74,7 +74,6 @@ namespace Nexus::OrderExecutionService {
       template<typename V, typename I>
       using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
         Queries::SqlTranslator>;
-      ConnectionBuilder m_connectionBuilder;
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_accountEntries;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
@@ -128,8 +127,19 @@ namespace Nexus::OrderExecutionService {
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
       ConnectionBuilder connectionBuilder,
       const AccountSourceFunction& accountSourceFunction)
-      : m_connectionBuilder(std::move(connectionBuilder)),
-        m_accountEntries(accountSourceFunction),
+      : m_accountEntries(accountSourceFunction),
+        m_readerPool(std::thread::hardware_concurrency(),
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
+        m_writerPool(1,
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
         m_submissionDataStore("submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)),
@@ -144,29 +154,14 @@ namespace Nexus::OrderExecutionService {
       set_primary_key("order_id");
     m_openState.SetOpening();
     try {
-      for(auto i = std::size_t(0);
-          i <= std::thread::hardware_concurrency(); ++i) {
-        auto readerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        readerConnection->open();
-        m_readerPool.Add(std::move(readerConnection));
-      }
-      {
-        auto writerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        writerConnection->open();
-        writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
-          "live_orders"));
-        m_writerPool.Add(std::move(writerConnection));
-      }
-      {
-        auto writerConnection = m_writerPool.Acquire();
-        if(!writerConnection->has_table("status_submissions")) {
-          writerConnection->execute("CREATE VIEW status_submissions AS "
-            "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
-            "is_live FROM submissions LEFT JOIN live_orders ON "
-            "submissions.order_id = live_orders.order_id");
-        }
+      auto writerConnection = m_writerPool.Acquire();
+      writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
+        "live_orders"));
+      if(!writerConnection->has_table("status_submissions")) {
+        writerConnection->execute("CREATE VIEW status_submissions AS "
+          "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
+          "is_live FROM submissions LEFT JOIN live_orders ON "
+          "submissions.order_id = live_orders.order_id");
       }
     } catch(const std::exception&) {
       m_openState.SetOpenFailure();

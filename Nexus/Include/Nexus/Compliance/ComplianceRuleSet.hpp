@@ -112,6 +112,11 @@ namespace Nexus::Compliance {
   };
 
   template<typename C, typename S>
+  ComplianceRuleSet(C&&, S&&, std::function<
+    std::unique_ptr<ComplianceRule> (const ComplianceRuleEntry&)>) ->
+    ComplianceRuleSet<std::remove_reference_t<C>, std::remove_reference_t<S>>;
+
+  template<typename C, typename S>
   template<typename CF, typename SF>
   ComplianceRuleSet<C, S>::ComplianceRuleSet(CF&& complianceClient,
     SF&& serviceLocatorClient, ComplianceRuleBuilder complianceRuleBuilder)

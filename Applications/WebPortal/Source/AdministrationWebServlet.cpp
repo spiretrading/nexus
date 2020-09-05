@@ -16,8 +16,10 @@ using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
 
 AdministrationWebServlet::AdministrationWebServlet(
-  Ref<SessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.Get()) {}
+    Ref<SessionStore<WebPortalSession>> sessions)
+    : m_sessions(sessions.Get()) {
+  m_openState.SetOpen();
+}
 
 AdministrationWebServlet::~AdministrationWebServlet() {
   Close();
@@ -142,13 +144,6 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::GetSlots() {
     &AdministrationWebServlet::OnSendAccountModificationRequestMessage, this,
     std::placeholders::_1));
   return slots;
-}
-
-void AdministrationWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
 }
 
 void AdministrationWebServlet::Close() {

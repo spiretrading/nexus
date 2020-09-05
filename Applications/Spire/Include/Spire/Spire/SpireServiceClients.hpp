@@ -76,9 +76,6 @@ namespace Spire {
       std::unique_ptr<Beam::Threading::VirtualTimer> BuildTimer(
         boost::posix_time::time_duration expiry);
 
-      //! Opens all the clients.
-      void Open();
-
       //! Closes all the clients.
       void Close();
 

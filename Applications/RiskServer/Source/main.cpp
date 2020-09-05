@@ -110,11 +110,10 @@ int main(int argc, const char** argv) {
   auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
+      Ref(timerThreadPool));
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
@@ -123,7 +122,6 @@ int main(int argc, const char** argv) {
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    definitionsClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
@@ -132,7 +130,6 @@ int main(int argc, const char** argv) {
   try {
     administrationClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    administrationClient->Open();
   } catch(const std::exception& e) {
     std::cerr << "Error connecting to the administration service: " <<
       e.what() << std::endl;
@@ -142,7 +139,6 @@ int main(int argc, const char** argv) {
   try {
     marketDataClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    marketDataClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
@@ -151,7 +147,6 @@ int main(int argc, const char** argv) {
   try {
     orderExecutionClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    orderExecutionClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the order execution service." <<
       std::endl;
@@ -167,16 +162,15 @@ int main(int argc, const char** argv) {
     auto& timeService = timeServices.front();
     auto ntpPool = Parse<std::vector<IpAddress>>(get<std::string>(
       timeService.GetProperties().At("addresses")));
-    timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
-      Ref(timerThreadPool));
+    try {
+      timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(socketThreadPool),
+        Ref(timerThreadPool));
+    } catch(const std::exception&) {
+      std::cerr << "NTP service unavailable." << std::endl;
+      return -1;
+    }
   } catch(const  std::exception& e) {
     std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
-    return -1;
-  }
-  try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    std::cerr << "NTP service unavailable." << std::endl;
     return -1;
   }
   auto mySqlConfig = MySqlConfig();
@@ -221,24 +215,24 @@ int main(int argc, const char** argv) {
   }
   auto accounts = std::make_shared<Queue<AccountUpdate>>();
   serviceLocatorClient->MonitorAccounts(accounts);
-  auto riskServer = RiskServletContainer(Initialize(serviceLocatorClient.Get(),
-    Initialize(MakeConverterQueueReader(MakeFilteredQueueReader(
-    std::move(accounts), [] (const auto& update) {
-      return update.m_type == AccountUpdate::Type::ADDED;
-    }),
-    [] (const auto& update) {
-      return update.m_account;
-    }), administrationClient.Get(), marketDataClient.Get(),
-    orderExecutionClient.Get(),
-    [&] {
-      return std::make_unique<LiveTimer>(seconds(1), Ref(timerThreadPool));
-    }, std::move(timeClient), &dataStore, std::move(exchangeRates),
-    std::move(*markets), std::move(*destinations))), Initialize(
-    riskServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-    Ref(timerThreadPool)));
+  auto riskServer = optional<RiskServletContainer>();
   try {
-    riskServer.Open();
+    riskServer.emplace(Initialize(serviceLocatorClient.Get(),
+      Initialize(MakeConverterQueueReader(MakeFilteredQueueReader(
+      std::move(accounts), [] (const auto& update) {
+        return update.m_type == AccountUpdate::Type::ADDED;
+      }),
+      [] (const auto& update) {
+        return update.m_account;
+      }), administrationClient.Get(), marketDataClient.Get(),
+      orderExecutionClient.Get(),
+      [&] {
+        return std::make_unique<LiveTimer>(seconds(1), Ref(timerThreadPool));
+      }, std::move(timeClient), &dataStore, std::move(exchangeRates),
+      std::move(*markets), std::move(*destinations))), Initialize(
+      riskServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+      Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;

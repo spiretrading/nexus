@@ -22,7 +22,12 @@ bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
 }
 
 PortfolioModel::PortfolioModel(Ref<VirtualServiceClients> serviceClients)
-  : m_serviceClients(serviceClients.Get()) {}
+    : m_serviceClients(serviceClients.Get()) {
+  m_serviceClients->GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
+    m_tasks.GetSlot<RiskInventoryEntry>(
+    std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
+    std::placeholders::_1)));
+}
 
 PortfolioModel::~PortfolioModel() {
   Close();
@@ -30,13 +35,6 @@ PortfolioModel::~PortfolioModel() {
 
 const Publisher<PortfolioModel::Entry>& PortfolioModel::GetPublisher() const {
   return m_publisher;
-}
-
-void PortfolioModel::Open() {
-  m_serviceClients->GetRiskClient().GetRiskPortfolioUpdatePublisher().Monitor(
-    m_tasks.GetSlot<RiskInventoryEntry>(
-    std::bind(&PortfolioModel::OnRiskPortfolioInventoryUpdate, this,
-    std::placeholders::_1)));
 }
 
 void PortfolioModel::Close() {}

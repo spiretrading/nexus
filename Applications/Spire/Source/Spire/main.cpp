@@ -201,11 +201,12 @@ int main(int argc, char* argv[]) {
   if(loginResultCode == QDialog::Rejected) {
     return -1;
   }
-  auto serviceClients = MakeVirtualServiceClients(
-    std::make_unique<SpireServiceClients>(loginDialog.GetServiceLocatorClient(),
-    Ref(socketThreadPool), Ref(timerThreadPool)));
+  auto serviceClients = std::unique_ptr<VirtualServiceClients>();
   try {
-    serviceClients->Open();
+    serviceClients = MakeVirtualServiceClients(
+      std::make_unique<SpireServiceClients>(
+      loginDialog.GetServiceLocatorClient(), Ref(socketThreadPool),
+      Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
     return -1;

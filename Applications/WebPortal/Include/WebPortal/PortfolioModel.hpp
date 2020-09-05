@@ -61,8 +61,6 @@ namespace Nexus::WebPortal {
       /** Returns the Publisher updating the position Entries. */
       const Beam::Publisher<Entry>& GetPublisher() const;
 
-      void Open();
-
       void Close();
 
     private:
