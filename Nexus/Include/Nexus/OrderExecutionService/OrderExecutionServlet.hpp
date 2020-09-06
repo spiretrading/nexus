@@ -201,7 +201,7 @@ namespace Nexus::OrderExecutionService {
         m_dataStore(std::forward<OrderExecutionDataStoreForward>(dataStore)) {
     m_openState.SetOpening();
     try {
-      auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
+      auto accounts = m_serviceLocatorClient->LoadAllAccounts();
       for(auto& account : accounts) {
         m_registry.AddAccount(account);
       }

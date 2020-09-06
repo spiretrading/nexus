@@ -154,9 +154,9 @@ int main(int argc, const char** argv) {
         auto countries = std::vector<CountryCode>();
         for(auto& countryValue : *countriesList) {
           if(auto country = get<double>(&countryValue)) {
-            return false;
-          } else {
             countries.emplace_back(static_cast<std::uint16_t>(*country));
+          } else {
+            return false;
           }
         }
         for(auto& country : countries) {
