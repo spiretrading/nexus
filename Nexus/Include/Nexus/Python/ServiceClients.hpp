@@ -177,10 +177,7 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::ServiceLocatorClient&
       ToPythonServiceClients<C>::GetServiceLocatorClient() {
-    if(m_openState.IsOpen()) {
-      return *m_serviceLocatorClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_serviceLocatorClient;
   }
 
   template<typename C>
@@ -192,28 +189,19 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::AdministrationClient&
       ToPythonServiceClients<C>::GetAdministrationClient() {
-    if(m_openState.IsOpen()) {
-      return *m_administrationClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_administrationClient;
   }
 
   template<typename C>
   typename ToPythonServiceClients<C>::DefinitionsClient&
       ToPythonServiceClients<C>::GetDefinitionsClient() {
-    if(m_openState.IsOpen()) {
-      return *m_definitionsClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_definitionsClient;
   }
 
   template<typename C>
   typename ToPythonServiceClients<C>::MarketDataClient&
       ToPythonServiceClients<C>::GetMarketDataClient() {
-    if(m_openState.IsOpen()) {
-      return *m_marketDataClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_marketDataClient;
   }
 
   template<typename C>
@@ -225,37 +213,25 @@ namespace Python {
   template<typename C>
   typename ToPythonServiceClients<C>::ComplianceClient&
       ToPythonServiceClients<C>::GetComplianceClient() {
-    if(m_openState.IsOpen()) {
-      return *m_complianceClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_complianceClient;
   }
 
   template<typename C>
   typename ToPythonServiceClients<C>::OrderExecutionClient&
       ToPythonServiceClients<C>::GetOrderExecutionClient() {
-    if(m_openState.IsOpen()) {
-      return *m_orderExecutionClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_orderExecutionClient;
   }
 
   template<typename C>
   typename ToPythonServiceClients<C>::RiskClient&
       ToPythonServiceClients<C>::GetRiskClient() {
-    if(m_openState.IsOpen()) {
-      return *m_riskClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_riskClient;
   }
 
   template<typename C>
   typename ToPythonServiceClients<C>::TimeClient&
       ToPythonServiceClients<C>::GetTimeClient() {
-    if(m_openState.IsOpen()) {
-      return *m_timeClient;
-    }
-    BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
+    return *m_timeClient;
   }
 
   template<typename C>
@@ -263,8 +239,7 @@ namespace Python {
       ToPythonServiceClients<C>::BuildTimer(
       boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return Beam::Threading::MakeVirtualTimer(
-      Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry)));
+    return Beam::Threading::MakeToPythonTimer(m_client->BuildTimer(expiry));
   }
 
   template<typename C>

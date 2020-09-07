@@ -64,13 +64,17 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
           std::shared_ptr<VirtualServiceClients> serviceClients) {
         return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
           std::move(serviceClients));
-      }))
+      }), call_guard<GilRelease>())
     .def(init(
       [] (ptime startTime, ptime endTime,
           std::shared_ptr<VirtualServiceClients> serviceClients) {
         return std::make_unique<TrampolineBacktesterEnvironment>(startTime,
           endTime, std::move(serviceClients));
-      }))
+      }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (BacktesterEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def_property_readonly("event_handler",
       static_cast<BacktesterEventHandler& (BacktesterEnvironment::*)()>(
       &BacktesterEnvironment::GetEventHandler),
@@ -85,8 +89,12 @@ void Nexus::Python::ExportBacktesterEnvironment(pybind11::module& module) {
 
 void Nexus::Python::ExportBacktesterEventHandler(pybind11::module& module) {
   class_<BacktesterEventHandler>(module, "BacktesterEventHandler")
-    .def(init<ptime>())
-    .def(init<ptime, ptime>())
+    .def(init<ptime>(), call_guard<GilRelease>())
+    .def(init<ptime, ptime>(), call_guard<GilRelease>())
+    .def("__del__",
+      [] (BacktesterEventHandler& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def_property_readonly("start_time", &BacktesterEventHandler::GetStartTime)
     .def_property_readonly("end_time", &BacktesterEventHandler::GetEndTime)
     .def("add", static_cast<void (BacktesterEventHandler::*)(
@@ -111,5 +119,5 @@ void Nexus::Python::ExportBacktesterServiceClients(pybind11::module& module) {
       [] (std::shared_ptr<BacktesterEnvironment> environment) {
         return std::make_shared<ToPythonBacktesterServiceClients>(
           std::move(environment));
-      }));
+      }), call_guard<GilRelease>());
 }

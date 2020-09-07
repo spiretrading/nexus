@@ -93,7 +93,7 @@ namespace {
         m_environment(std::move(environment)) {}
 
     ~PythonTestServiceClients() override {
-      auto release = gil_scoped_release();
+      auto release = GilRelease();
       Close();
       m_environment.reset();
     }
@@ -111,7 +111,7 @@ void Nexus::Python::ExportApplicationServiceClients(pybind11::module& module) {
           std::make_unique<ApplicationServiceClients>(std::move(username),
           std::move(password), address, Ref(*GetSocketThreadPool()),
           Ref(*GetTimerThreadPool())));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportServiceClients(pybind11::module& module) {
@@ -124,8 +124,13 @@ void Nexus::Python::ExportServiceClients(pybind11::module& module) {
 void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(module,
       "TestEnvironment")
-    .def(init())
-    .def(init<std::shared_ptr<VirtualHistoricalDataStore>>())
+    .def(init(), call_guard<GilRelease>())
+    .def(init<std::shared_ptr<VirtualHistoricalDataStore>>(),
+      call_guard<GilRelease>())
+    .def("__del__",
+      [] (TestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("set_time", &TestEnvironment::SetTime, call_guard<GilRelease>())
     .def("advance_time", &TestEnvironment::AdvanceTime,
       call_guard<GilRelease>())
@@ -188,7 +193,7 @@ void Nexus::Python::ExportTestServiceClients(pybind11::module& module) {
       [] (std::shared_ptr<TestEnvironment> environment) {
         return std::make_shared<PythonTestServiceClients>(
           std::make_unique<TestServiceClients>(Ref(*environment)), environment);
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportVirtualServiceClients(pybind11::module& module) {

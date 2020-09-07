@@ -123,7 +123,7 @@ void Nexus::Python::ExportApplicationDefinitionsClient(
           });
         return MakeToPythonDefinitionsClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportDefinitionsClient(pybind11::module& module) {

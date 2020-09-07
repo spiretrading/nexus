@@ -135,7 +135,7 @@ void Nexus::Python::ExportApplicationOrderExecutionClient(
           });
         return MakeToPythonOrderExecutionClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
@@ -284,7 +284,11 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
     .def(init<const MarketDatabase&, const DestinationDatabase&,
       std::shared_ptr<VirtualServiceLocatorClient>,
       std::shared_ptr<VirtualUidClient>,
-      std::shared_ptr<VirtualAdministrationClient>>())
+      std::shared_ptr<VirtualAdministrationClient>>(), call_guard<GilRelease>())
+    .def("__del__",
+      [] (OrderExecutionServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
       return_value_policy::reference_internal)
     .def("close", &OrderExecutionServiceTestEnvironment::Close,
@@ -294,7 +298,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonOrderExecutionClient(
           self.BuildClient(Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportOrderFields(pybind11::module& module) {

@@ -416,6 +416,10 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
         return std::make_unique<AdministrationServiceTestEnvironment>(
           std::move(serviceLocatorClient));
       }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (AdministrationServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("close", &AdministrationServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("make_administrator",
@@ -426,7 +430,7 @@ void Nexus::Python::ExportAdministrationServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonAdministrationClient(self.BuildClient(
           Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportApplicationAdministrationClient(
@@ -461,7 +465,7 @@ void Nexus::Python::ExportApplicationAdministrationClient(
           });
         return MakeToPythonAdministrationClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportEntitlementModification(pybind11::module& module) {

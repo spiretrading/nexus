@@ -397,7 +397,7 @@ void Nexus::Python::ExportApplicationMarketDataClient(
           });
         return MakeToPythonMarketDataClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportApplicationMarketDataFeedClient(
@@ -412,23 +412,23 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(
           CountryCode country, time_duration sampling) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
           sampling);
-      }))
+      }), call_guard<GilRelease>())
     .def(init(
       [] (VirtualServiceLocatorClient& serviceLocatorClient,
           CountryCode country) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, country,
           milliseconds(10));
-      }))
+      }), call_guard<GilRelease>())
     .def(init(
       [] (VirtualServiceLocatorClient& serviceLocatorClient,
           time_duration sampling) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient, sampling);
-      }))
+      }), call_guard<GilRelease>())
     .def(init(
       [] (VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakePythonMarketDataFeedClient(serviceLocatorClient,
           milliseconds(10));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportHistoricalDataStore(pybind11::module& module) {
@@ -638,6 +638,10 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
         return std::make_unique<MarketDataServiceTestEnvironment>(
           serviceLocatorClient, administrationClient);
       }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (MarketDataServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("close", &MarketDataServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("publish", static_cast<void (MarketDataServiceTestEnvironment::*)(
@@ -665,7 +669,7 @@ void Nexus::Python::ExportMarketDataServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonMarketDataClient(self.BuildClient(
           Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
@@ -683,7 +687,7 @@ void Nexus::Python::ExportMySqlHistoricalDataStore(pybind11::module& module) {
             return Viper::MySql::Connection(host, port, username, password,
               database);
           }));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportSecuritySnapshot(pybind11::module& module) {
@@ -712,5 +716,5 @@ void Nexus::Python::ExportSqliteHistoricalDataStore(pybind11::module& module) {
           [=] {
             return Viper::Sqlite3::Connection(path);
           }));
-      }));
+      }), call_guard<GilRelease>());
 }

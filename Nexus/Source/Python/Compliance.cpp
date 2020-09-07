@@ -107,7 +107,7 @@ void Nexus::Python::ExportApplicationComplianceClient(
         });
       return MakeToPythonComplianceClient(std::make_unique<Client>(
         sessionBuilder));
-    }));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportComplianceClient(pybind11::module& module) {

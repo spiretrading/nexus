@@ -101,7 +101,7 @@ void Nexus::Python::ExportApplicationRiskClient(pybind11::module& module) {
               Ref(*GetTimerThreadPool()));
           });
         return MakeToPythonRiskClient(std::make_unique<Client>(sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportLocalRiskDataStore(pybind11::module& module) {
@@ -127,7 +127,7 @@ void Nexus::Python::ExportMySqlRiskDataStore(pybind11::module& module) {
           std::make_unique<SqlRiskDataStore<Viper::MySql::Connection>>(
           std::make_unique<Viper::MySql::Connection>(host, port, username,
           password, database)));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportRiskClient(pybind11::module& module) {
@@ -205,5 +205,5 @@ void Nexus::Python::ExportSqliteRiskDataStore(pybind11::module& module) {
         return MakeToPythonRiskDataStore(
           std::make_unique<SqlRiskDataStore<Viper::Sqlite3::Connection>>(
           std::make_unique<Viper::Sqlite3::Connection>(path)));
-      }));
+      }), call_guard<GilRelease>());
 }
