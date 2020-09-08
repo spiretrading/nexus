@@ -117,14 +117,23 @@ namespace Nexus {
         m_serviceLocatorClient(
           m_environment->GetServiceLocatorEnvironment().BuildClient(
           std::move(username), std::move(password))),
+        m_registryClient(m_environment->GetRegistryEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
         m_definitionsClient(m_environment->GetDefinitionsEnvironment().
           BuildClient(Beam::Ref(*m_serviceLocatorClient))),
         m_administrationClient(m_environment->GetAdministrationEnvironment().
           BuildClient(Beam::Ref(*m_serviceLocatorClient))),
         m_marketDataClient(m_environment->GetMarketDataEnvironment().
           BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_chartingClient(m_environment->GetChartingEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
+        m_complianceClient(
+          m_environment->GetComplianceEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
         m_orderExecutionClient(m_environment->GetOrderExecutionEnvironment().
           BuildClient(Beam::Ref(*m_serviceLocatorClient))),
+        m_riskClient(m_environment->GetRiskEnvironment().BuildClient(
+          Beam::Ref(*m_serviceLocatorClient))),
         m_timeClient(Beam::TimeService::MakeVirtualTimeClient(
           std::make_unique<Beam::TimeService::Tests::TestTimeClient>(
           Beam::Ref(m_environment->GetTimeEnvironment())))) {
@@ -199,9 +208,14 @@ namespace Nexus {
 
   inline void TestServiceClients::Shutdown() {
     m_timeClient->Close();
+    m_riskClient->Close();
     m_orderExecutionClient->Close();
+    m_complianceClient->Close();
+    m_chartingClient->Close();
     m_marketDataClient->Close();
     m_administrationClient->Close();
+    m_definitionsClient->Close();
+    m_registryClient->Close();
     m_serviceLocatorClient->Close();
     m_openState.SetClosed();
   }

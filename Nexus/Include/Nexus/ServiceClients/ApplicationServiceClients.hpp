@@ -1,11 +1,10 @@
-#ifndef NEXUS_APPLICATIONSERVICECLIENTS_HPP
-#define NEXUS_APPLICATIONSERVICECLIENTS_HPP
+#ifndef NEXUS_APPLICATION_SERVICE_CLIENTS_HPP
+#define NEXUS_APPLICATION_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
 #include "Nexus/Compliance/ApplicationDefinitions.hpp"
@@ -37,11 +36,9 @@ namespace Nexus {
       using MarketDataClient =
         MarketDataService::ApplicationMarketDataClient::Client;
 
-      using ChartingClient =
-        ChartingService::ApplicationChartingClient::Client;
+      using ChartingClient = ChartingService::ApplicationChartingClient::Client;
 
-      using ComplianceClient =
-        Compliance::ApplicationComplianceClient::Client;
+      using ComplianceClient = Compliance::ApplicationComplianceClient::Client;
 
       using OrderExecutionClient =
         OrderExecutionService::ApplicationOrderExecutionClient::Client;
@@ -52,14 +49,14 @@ namespace Nexus {
 
       using Timer = Beam::Threading::LiveTimer;
 
-      //! Constructs an ApplicationServiceClients.
-      /*!
-        \param username The client's username.
-        \param password The client's password.
-        \param address The IpAddress to connect to.
-        \param socketThreadPool The SocketThreadPool to use by the clients.
-        \param timerThreadPool The TimerThreadPool to use by the clients.
-      */
+      /**
+       * Constructs an ApplicationServiceClients.
+       * @param username The client's username.
+       * @param password The client's password.
+       * @param address The IpAddress to connect to.
+       * @param socketThreadPool The SocketThreadPool to use by the clients.
+       * @param timerThreadPool The TimerThreadPool to use by the clients.
+       */
       ApplicationServiceClients(std::string username, std::string password,
         const Beam::Network::IpAddress& address,
         Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
@@ -109,6 +106,9 @@ namespace Nexus {
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
 
+      ApplicationServiceClients(const ApplicationServiceClients&) = delete;
+      ApplicationServiceClients& operator =(
+        const ApplicationServiceClients&) = delete;
       void Shutdown();
   };
 

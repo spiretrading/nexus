@@ -124,8 +124,11 @@ void Nexus::Python::ExportServiceClients(pybind11::module& module) {
 void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(module,
       "TestEnvironment")
-    .def(init(), call_guard<GilRelease>())
+    .def(init<>(), call_guard<GilRelease>())
+    .def(init<ptime>(), call_guard<GilRelease>())
     .def(init<std::shared_ptr<VirtualHistoricalDataStore>>(),
+      call_guard<GilRelease>())
+    .def(init<std::shared_ptr<VirtualHistoricalDataStore>, ptime>(),
       call_guard<GilRelease>())
     .def("__del__",
       [] (TestEnvironment& self) {
@@ -180,8 +183,15 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
     .def("get_market_data_environment",
       &TestEnvironment::GetMarketDataEnvironment,
       return_value_policy::reference_internal)
+    .def("get_charting_environment", &TestEnvironment::GetChartingEnvironment,
+      return_value_policy::reference_internal)
+    .def("get_compliance_environment",
+      &TestEnvironment::GetComplianceEnvironment,
+      return_value_policy::reference_internal)
     .def("get_order_execution_environment",
       &TestEnvironment::GetOrderExecutionEnvironment,
+      return_value_policy::reference_internal)
+    .def("get_risk_environment", &TestEnvironment::GetRiskEnvironment,
       return_value_policy::reference_internal)
     .def("close", &TestEnvironment::Close, call_guard<GilRelease>());
 }

@@ -33,10 +33,9 @@ namespace {
     TestServiceClients m_serviceClients;
 
     Fixture()
-        : m_serviceClients(Ref(m_environment)) {
-      m_environment.SetTime(
-        ptime(gregorian::date(2000, gregorian::Jan, 1), seconds(0)));
-    }
+        : m_environment(
+            ptime(gregorian::date(2000, gregorian::Jan, 1), seconds(0))),
+          m_serviceClients(Ref(m_environment)) {}
   };
 }
 

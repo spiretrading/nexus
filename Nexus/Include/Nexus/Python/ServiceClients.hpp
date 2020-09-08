@@ -1,6 +1,5 @@
 #ifndef NEXUS_PYTHON_SERVICE_CLIENTS_HPP
 #define NEXUS_PYTHON_SERVICE_CLIENTS_HPP
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
@@ -41,18 +40,6 @@ namespace Python {
    * @param module The module to export to.
    */
   void ExportTestServiceClients(pybind11::module& module);
-
-  /**
-   * Exports the TestTimeClient class.
-   * @param module The module to export to.
-   */
-  void ExportTestTimeClient(pybind11::module& module);
-
-  /**
-   * Exports the TestTimer class.
-   * @param module The module to export to.
-   */
-  void ExportTestTimer(pybind11::module& module);
 
   /**
    * Exports the VirtualServiceClients class.
@@ -147,6 +134,9 @@ namespace Python {
         m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
           MarketDataService::MakeVirtualMarketDataClient(
           &m_client->GetMarketDataClient()))),
+        m_complianceClient(Compliance::MakeToPythonComplianceClient(
+          Compliance::MakeVirtualComplianceClient(
+          &m_client->GetComplianceClient()))),
         m_orderExecutionClient(
           OrderExecutionService::MakeToPythonOrderExecutionClient(
           OrderExecutionService::MakeVirtualOrderExecutionClient(

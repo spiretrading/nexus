@@ -10,6 +10,7 @@
 #include "Nexus/RiskService/SqlRiskDataStore.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/RiskService/VirtualRiskDataStore.hpp"
+#include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -22,8 +23,13 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
+using namespace Beam::TimeService;
 using namespace Nexus;
+using namespace Nexus::AdministrationService;
+using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
+using namespace Nexus::RiskService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace pybind11;
@@ -150,18 +156,6 @@ void Nexus::Python::ExportRiskDataStore(pybind11::module& module) {
     .def("close", &VirtualRiskDataStore::Close);
 }
 
-void Nexus::Python::ExportRiskService(pybind11::module& module) {
-  auto submodule = module.def_submodule("risk_service");
-  ExportRiskClient(submodule);
-  ExportApplicationRiskClient(submodule);
-  ExportRiskDataStore(submodule);
-  ExportLocalRiskDataStore(submodule);
-  ExportMySqlRiskDataStore(submodule);
-  ExportRiskParameters(submodule);
-  ExportRiskState(submodule);
-  ExportSqliteRiskDataStore(submodule);
-}
-
 void Nexus::Python::ExportRiskParameters(pybind11::module& module) {
   class_<RiskParameters>(module, "RiskParameters")
     .def(init())
@@ -175,6 +169,54 @@ void Nexus::Python::ExportRiskParameters(pybind11::module& module) {
     .def_readwrite("transition_time", &RiskParameters::m_transitionTime)
     .def(self == self)
     .def(self != self);
+}
+
+void Nexus::Python::ExportRiskService(pybind11::module& module) {
+  auto submodule = module.def_submodule("risk_service");
+  ExportRiskClient(submodule);
+  ExportApplicationRiskClient(submodule);
+  ExportRiskDataStore(submodule);
+  ExportLocalRiskDataStore(submodule);
+  ExportMySqlRiskDataStore(submodule);
+  ExportRiskParameters(submodule);
+  ExportRiskState(submodule);
+  ExportSqliteRiskDataStore(submodule);
+  auto testModule = submodule.def_submodule("tests");
+  ExportRiskServiceTestEnvironment(testModule);
+}
+
+void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
+  class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
+    .def(init([] (
+          std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
+          std::shared_ptr<VirtualAdministrationClient> administrationClient,
+          std::shared_ptr<VirtualMarketDataClient> marketDataClient,
+          std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
+          std::function<std::shared_ptr<VirtualTimer> ()>
+          transitionTimerFactory, std::shared_ptr<VirtualTimeClient> timeClient,
+          std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
+          DestinationDatabase destinations) {
+        auto adaptedTransitionTimerFactory = [=] {
+          return MakeVirtualTimer(transitionTimerFactory());
+        };
+        return std::make_unique<RiskServiceTestEnvironment>(
+          std::move(serviceLocatorClient), std::move(administrationClient),
+          std::move(marketDataClient), std::move(orderExecutionClient),
+          std::move(adaptedTransitionTimerFactory), std::move(timeClient),
+          std::move(exchangeRates), std::move(markets),
+          std::move(destinations));
+      }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (RiskServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
+    .def("build_client",
+      [] (RiskServiceTestEnvironment& self,
+          VirtualServiceLocatorClient& serviceLocatorClient) {
+        return MakeToPythonRiskClient(
+          self.BuildClient(Ref(serviceLocatorClient)));
+      }, call_guard<GilRelease>())
+    .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportRiskState(pybind11::module& module) {

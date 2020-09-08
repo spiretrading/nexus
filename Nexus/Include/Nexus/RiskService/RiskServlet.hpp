@@ -1,6 +1,5 @@
 #ifndef NEXUS_RISK_SERVLET_HPP
 #define NEXUS_RISK_SERVLET_HPP
-#include <unordered_map>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -58,7 +57,8 @@ namespace Nexus::RiskService {
        * @param administrationClient Initializes the AdministrationClient.
        * @param marketDataClient Initializes the MarketDataClient.
        * @param orderExecutionClient Initializes the OrderExecutionClient.
-       * @param transitionTimer Initializes the transition Timer.
+       * @param transitionTimerFactory The function used to build transition
+       *        Timers.
        * @param timeClient Initializes the TimeClient.
        * @param dataStore Initializes the RiskDataStore.
        * @param exchangeRates The list of exchange rates.
@@ -110,6 +110,8 @@ namespace Nexus::RiskService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
+      RiskServlet(const RiskServlet&) = delete;
+      RiskServlet& operator =(const RiskServlet&) = delete;
       void Shutdown();
       void BuildController();
       void Reset(const Beam::ServiceLocator::DirectoryEntry& account,

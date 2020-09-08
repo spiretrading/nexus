@@ -33,8 +33,8 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
-      Initialize(Ref(testEnvironment)));
+    auto testServiceClients = MakeVirtualServiceClients(
+      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
@@ -83,8 +83,8 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto testEnvironment = TestEnvironment(
       MakeVirtualHistoricalDataStore(dataStore));
-    auto testServiceClients = MakeVirtualServiceClients<TestServiceClients>(
-      Initialize(Ref(testEnvironment)));
+    auto testServiceClients = MakeVirtualServiceClients(
+      std::make_unique<TestServiceClients>(Ref(testEnvironment)));
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
