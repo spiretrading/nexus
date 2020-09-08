@@ -50,6 +50,7 @@ ToolbarWindow::ToolbarWindow(Ref<RecentlyClosedModel> model,
   m_window_manager_button = new StaticDropDownMenu({tr("Minimize All"),
     tr("Restore All"), tr("Import/Export Settings")}, tr("Window Manager"),
     body);
+  m_window_manager_button->set_next_activated(false);
   m_window_manager_button->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   combo_box_layout->addWidget(m_window_manager_button);

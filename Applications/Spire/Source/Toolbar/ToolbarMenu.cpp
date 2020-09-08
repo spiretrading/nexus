@@ -7,6 +7,7 @@ using namespace Spire;
 ToolbarMenu::ToolbarMenu(const QString& title, QWidget* parent)
     : StaticDropDownMenu({}, title, parent) {
   setDisabled(true);
+  set_next_activated(false);
 }
 
 void ToolbarMenu::add(const QString& text, const QImage& icon) {

@@ -27,7 +27,8 @@ StaticDropDownMenu::StaticDropDownMenu(std::vector<QVariant> items,
       m_display_text(display_text),
       m_dropdown_image(imageFromSvg(":/Icons/arrow-down.svg", scale(6, 4))),
       m_disabled_dropdown_image(imageFromSvg(":/Icons/arrow-down-grey.svg",
-        scale(6, 4))) {
+        scale(6, 4))),
+      m_is_next_activated(true) {
   setFocusPolicy(Qt::StrongFocus);
   if(!items.empty()) {
     m_current_item = items.front();
@@ -72,6 +73,10 @@ QVariant StaticDropDownMenu::get_current_item() const {
   return m_current_item;
 }
 
+void StaticDropDownMenu::set_next_activated(bool is_next_activated) {
+  m_is_next_activated = is_next_activated;
+}
+
 bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_menu_list) {
     if(event->type() == QEvent::KeyPress) {
@@ -96,7 +101,9 @@ bool StaticDropDownMenu::eventFilter(QObject* watched, QEvent* event) {
       } else if(e->key() == Qt::Key_Down) {
         if(!m_menu_list->isVisible()) {
           m_menu_list->show();
-          m_menu_list->activate_next();
+          if(m_is_next_activated) {
+            m_menu_list->activate_next();
+          }
           return true;
         }
       }
