@@ -4,7 +4,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/thread/lock_types.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
@@ -17,7 +16,7 @@ namespace Nexus {
    * @param <H> The underlying data store to wrap.
    */
   template<typename H>
-  class CutoffHistoricalDataStore : private boost::noncopyable {
+  class CutoffHistoricalDataStore {
     public:
 
       /** The type of underlying data store to wrap. */
@@ -93,6 +92,9 @@ namespace Nexus {
         m_timeAndSalesCutoffSequences;
       Beam::IO::OpenState m_openState;
 
+      CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
+      CutoffHistoricalDataStore& operator =(
+        const CutoffHistoricalDataStore&) = delete;
       void Shutdown();
       template<typename Query, typename F>
       std::invoke_result_t<F, const Query&> Load(const Query& query,

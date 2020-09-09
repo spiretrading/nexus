@@ -1,6 +1,5 @@
 #ifndef NEXUS_BACKTESTER_TIME_CLIENT_HPP
 #define NEXUS_BACKTESTER_TIME_CLIENT_HPP
-#include <boost/noncopyable.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
@@ -9,7 +8,7 @@
 namespace Nexus {
 
   /** A TimeClient used by the backtester. */
-  class BacktesterTimeClient : private boost::noncopyable {
+  class BacktesterTimeClient {
     public:
 
       /**
@@ -28,6 +27,8 @@ namespace Nexus {
       BacktesterEventHandler* m_eventHandler;
       Beam::IO::OpenState m_openState;
 
+      BacktesterTimeClient(const BacktesterTimeClient&) = delete;
+      BacktesterTimeClient& operator =(const BacktesterTimeClient&) = delete;
       void Shutdown();
   };
 

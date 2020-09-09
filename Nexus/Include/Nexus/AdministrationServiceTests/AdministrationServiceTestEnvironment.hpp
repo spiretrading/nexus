@@ -145,9 +145,9 @@ namespace Nexus::AdministrationService::Tests {
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<AdministrationService::AdministrationClient<
-      ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualAdministrationClient(std::move(client));
+    return MakeVirtualAdministrationClient(
+      std::make_unique<AdministrationClient<ServiceProtocolClientBuilder>>(
+      builder));
   }
 
   inline void AdministrationServiceTestEnvironment::Close() {

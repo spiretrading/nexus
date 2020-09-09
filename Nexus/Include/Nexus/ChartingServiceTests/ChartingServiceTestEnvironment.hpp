@@ -87,7 +87,7 @@ namespace Nexus::ChartingService::Tests {
     std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
     serviceLocatorClient, std::shared_ptr<
     MarketDataService::VirtualMarketDataClient> marketDataClient)
-    : m_container(Beam::Initialize(serviceLocatorClient,
+    : m_container(Beam::Initialize(std::move(serviceLocatorClient),
       Beam::Initialize(std::move(marketDataClient))), &m_serverConnection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 

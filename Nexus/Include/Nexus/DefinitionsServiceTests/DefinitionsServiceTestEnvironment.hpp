@@ -35,8 +35,8 @@ namespace Nexus::DefinitionsService::Tests {
        * Constructs a DefinitionsServiceTestEnvironment.
        * @param serviceLocatorClient The ServiceLocatorClient to use.
        */
-      DefinitionsServiceTestEnvironment(const std::shared_ptr<
-        Beam::ServiceLocator::VirtualServiceLocatorClient>&
+      DefinitionsServiceTestEnvironment(
+        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
       ~DefinitionsServiceTestEnvironment();
@@ -78,9 +78,9 @@ namespace Nexus::DefinitionsService::Tests {
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-    const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
+    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
     serviceLocatorClient)
-    : m_container(Beam::Initialize(serviceLocatorClient,
+    : m_container(Beam::Initialize(std::move(serviceLocatorClient),
         Beam::Initialize("1", "Spire Trading Inc.", GetDefaultTimeZoneTable(),
         GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
         GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
@@ -106,9 +106,8 @@ namespace Nexus::DefinitionsService::Tests {
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<DefinitionsService::DefinitionsClient<
-      ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualDefinitionsClient(std::move(client));
+    return MakeVirtualDefinitionsClient(std::make_unique<DefinitionsClient<
+      ServiceProtocolClientBuilder>>(builder));
   }
 
   inline void DefinitionsServiceTestEnvironment::Close() {

@@ -13,7 +13,6 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/range/iterator_range.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
@@ -21,7 +20,7 @@
 namespace Nexus {
 
   /** Implements an event loop to handle BacktesterEvents. */
-  class BacktesterEventHandler : private boost::noncopyable {
+  class BacktesterEventHandler {
     public:
 
       /**
@@ -73,6 +72,9 @@ namespace Nexus {
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      BacktesterEventHandler(const BacktesterEventHandler&) = delete;
+      BacktesterEventHandler& operator =(
+        const BacktesterEventHandler&) = delete;
       void EventLoop();
       void Shutdown();
   };
@@ -85,10 +87,10 @@ namespace Nexus {
   inline BacktesterEventHandler::BacktesterEventHandler(
       boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
       : m_startTime(std::move(startTime)),
-        m_endTime(std::move(endTime)) {
+        m_endTime(std::move(endTime)),
+        m_timeEnvironment(m_startTime) {
     m_openState.SetOpening();
     try {
-      m_timeEnvironment.SetTime(m_startTime);
       m_eventLoopRoutine = Beam::Routines::Spawn(
         std::bind(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {

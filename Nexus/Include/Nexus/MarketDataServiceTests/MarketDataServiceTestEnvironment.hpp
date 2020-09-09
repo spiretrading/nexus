@@ -40,6 +40,17 @@ namespace Nexus::MarketDataService::Tests {
       /*!
         \param serviceLocatorClient The ServiceLocatorClient to use.
         \param administrationClient The AdministrationClient to use.
+      */
+      MarketDataServiceTestEnvironment(
+        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+        serviceLocatorClient,
+        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+        administrationClient);
+
+      //! Constructs an MarketDataServiceTestEnvironment.
+      /*!
+        \param serviceLocatorClient The ServiceLocatorClient to use.
+        \param administrationClient The AdministrationClient to use.
         \param dataStore The data store containing market data to test with.
       */
       MarketDataServiceTestEnvironment(
@@ -48,17 +59,6 @@ namespace Nexus::MarketDataService::Tests {
         std::shared_ptr<AdministrationService::VirtualAdministrationClient>
         administrationClient,
         std::shared_ptr<VirtualHistoricalDataStore> dataStore);
-
-      //! Constructs an MarketDataServiceTestEnvironment.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient to use.
-        \param administrationClient The AdministrationClient to use.
-      */
-      MarketDataServiceTestEnvironment(
-        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-        serviceLocatorClient,
-        std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-        administrationClient);
 
       ~MarketDataServiceTestEnvironment();
 
@@ -162,9 +162,6 @@ namespace Nexus::MarketDataService::Tests {
         std::unique_ptr<ClientChannel>,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
         Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
-      using MarketDataClient = MarketDataService::VirtualMarketDataClient;
-      using MarketDataFeedClient =
-        MarketDataService::VirtualMarketDataFeedClient;
       std::shared_ptr<ServiceLocatorClient> m_serviceLocatorClient;
       std::shared_ptr<AdministrationClient> m_administrationClient;
       MarketDataRegistry m_registry;
@@ -175,25 +172,8 @@ namespace Nexus::MarketDataService::Tests {
       ServerConnection m_feedServerConnection;
       FeedServiceProtocolServletContainer m_feedContainer;
       Beam::Threading::TriggerTimer m_samplingTimer;
-      std::unique_ptr<MarketDataFeedClient> m_feedClient;
+      std::unique_ptr<VirtualMarketDataFeedClient> m_feedClient;
   };
-
-  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-      std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
-      serviceLocatorClient,
-      std::shared_ptr<AdministrationService::VirtualAdministrationClient>
-      administrationClient,
-      std::shared_ptr<VirtualHistoricalDataStore> dataStore)
-      : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-        m_administrationClient(std::move(administrationClient)),
-        m_dataStore(std::move(dataStore)),
-        m_registryServlet(m_administrationClient, &m_registry, &*m_dataStore),
-        m_container(Beam::Initialize(m_serviceLocatorClient.get(),
-          &m_registryServlet), &m_serverConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
-        m_feedContainer(Beam::Initialize(m_serviceLocatorClient.get(),
-          &m_registryServlet), &m_feedServerConnection,
-          boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
@@ -203,6 +183,22 @@ namespace Nexus::MarketDataService::Tests {
     : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
         std::move(administrationClient), MakeVirtualHistoricalDataStore(
         std::make_unique<LocalHistoricalDataStore>())) {}
+
+  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
+    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
+    serviceLocatorClient,
+    std::shared_ptr<AdministrationService::VirtualAdministrationClient>
+    administrationClient, std::shared_ptr<VirtualHistoricalDataStore> dataStore)
+    : m_serviceLocatorClient(std::move(serviceLocatorClient)),
+      m_administrationClient(std::move(administrationClient)),
+      m_dataStore(std::move(dataStore)),
+      m_registryServlet(m_administrationClient, &m_registry, &*m_dataStore),
+      m_container(Beam::Initialize(m_serviceLocatorClient.get(),
+        &m_registryServlet), &m_serverConnection,
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
+      m_feedContainer(Beam::Initialize(m_serviceLocatorClient.get(),
+        &m_registryServlet), &m_feedServerConnection,
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
     Close();
@@ -260,9 +256,9 @@ namespace Nexus::MarketDataService::Tests {
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<MarketDataService::MarketDataClient<
-      ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualMarketDataClient(std::move(client));
+    return MakeVirtualMarketDataClient(
+      std::make_unique<MarketDataClient<ServiceProtocolClientBuilder>>(
+      builder));
   }
 
   inline std::unique_ptr<VirtualMarketDataFeedClient>

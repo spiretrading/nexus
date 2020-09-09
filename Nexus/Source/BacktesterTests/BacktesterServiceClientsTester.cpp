@@ -10,7 +10,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 
-TEST_SUITE("BacktesterServiceClientsTester") {
+TEST_SUITE("BacktesterServiceClients") {
   TEST_CASE("test_timer") {
     auto localDataStore = LocalHistoricalDataStore();
     auto testEnvironment = TestEnvironment(MakeVirtualHistoricalDataStore(
@@ -21,10 +21,11 @@ TEST_SUITE("BacktesterServiceClientsTester") {
     auto backtesterEnvironment = BacktesterEnvironment(startTime,
       Ref(*testServiceClients));
     auto serviceClients = BacktesterServiceClients(Ref(backtesterEnvironment));
-    auto timer = serviceClients.BuildTimer(seconds(5));
+    auto timer = serviceClients.BuildTimer(seconds(21));
     REQUIRE(serviceClients.GetTimeClient().GetTime() == startTime);
     timer->Start();
     timer->Wait();
-    REQUIRE(serviceClients.GetTimeClient().GetTime() == startTime + seconds(5));
+    REQUIRE(serviceClients.GetTimeClient().GetTime() ==
+      startTime + seconds(21));
   }
 }

@@ -2,7 +2,6 @@
 #define NEXUS_BACKTESTER_MARKET_DATA_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -10,7 +9,7 @@
 namespace Nexus {
 
   /** Implements a MarketDataClient used for backtesting. */
-  class BacktesterMarketDataClient : private boost::noncopyable {
+  class BacktesterMarketDataClient {
     public:
 
       /**
@@ -84,6 +83,9 @@ namespace Nexus {
         m_marketDataClient;
       Beam::IO::OpenState m_openState;
 
+      BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
+      BacktesterMarketDataClient& operator =(
+        const BacktesterMarketDataClient&) = delete;
       void Shutdown();
   };
 

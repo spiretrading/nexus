@@ -295,25 +295,26 @@ namespace Nexus {
       m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
       m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
         m_timeClient) {
-    auto definitionsClient = m_definitionsEnvironment.BuildClient(
-      Beam::Ref(*m_serviceLocatorClient));
-    m_orderExecutionEnvironment.emplace(definitionsClient->LoadMarketDatabase(),
-      definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
-      m_uidClient, m_administrationClient);
-    m_orderExecutionClient = m_orderExecutionEnvironment->BuildClient(
-      Beam::Ref(*m_serviceLocatorClient));
-    auto transitionTimerFactory = [=] {
-      return Beam::Threading::MakeVirtualTimer(
-        std::make_unique<Beam::TimeService::Tests::TestTimer>(
-        boost::posix_time::seconds(1), Beam::Ref(m_timeEnvironment)));
-    };
-    m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
-      m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
-      m_timeClient, definitionsClient->LoadExchangeRates(),
-      definitionsClient->LoadMarketDatabase(),
-      definitionsClient->LoadDestinationDatabase());
     m_openState.SetOpening();
     try {
+      auto definitionsClient = m_definitionsEnvironment.BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      m_orderExecutionEnvironment.emplace(
+        definitionsClient->LoadMarketDatabase(),
+        definitionsClient->LoadDestinationDatabase(), m_serviceLocatorClient,
+        m_uidClient, m_administrationClient);
+      m_orderExecutionClient = m_orderExecutionEnvironment->BuildClient(
+        Beam::Ref(*m_serviceLocatorClient));
+      auto transitionTimerFactory = [=] {
+        return Beam::Threading::MakeVirtualTimer(
+          std::make_unique<Beam::TimeService::Tests::TestTimer>(
+          boost::posix_time::seconds(1), Beam::Ref(m_timeEnvironment)));
+      };
+      m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
+        m_marketDataClient, m_orderExecutionClient, transitionTimerFactory,
+        m_timeClient, definitionsClient->LoadExchangeRates(),
+        definitionsClient->LoadMarketDatabase(),
+        definitionsClient->LoadDestinationDatabase());
       auto rootAccount = m_serviceLocatorClient->GetAccount();
       m_serviceLocatorClient->Associate(rootAccount,
         m_administrationClient->LoadAdministratorsRootEntry());
