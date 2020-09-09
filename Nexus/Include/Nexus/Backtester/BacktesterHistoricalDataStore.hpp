@@ -1,6 +1,5 @@
 #ifndef NEXUS_BACKTESTER_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_BACKTESTER_HISTORICAL_DATA_STORE_HPP
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/CutoffHistoricalDataStore.hpp"
 
@@ -11,7 +10,7 @@ namespace Nexus {
    * @param <H> The underlying data store to wrap.
    */
   template<typename H>
-  class BacktesterHistoricalDataStore : private boost::noncopyable {
+  class BacktesterHistoricalDataStore {
     public:
 
       /** The type of underlying data store to wrap. */
@@ -70,12 +69,15 @@ namespace Nexus {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
       CutoffHistoricalDataStore<H> m_dataStore;
+
+      BacktesterHistoricalDataStore(
+        const BacktesterHistoricalDataStore&) = delete;
+      BacktesterHistoricalDataStore& operator =(
+        const BacktesterHistoricalDataStore&) = delete;
   };
 
   template<typename H>
@@ -199,11 +201,6 @@ namespace Nexus {
   void BacktesterHistoricalDataStore<H>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_dataStore.Store(timeAndSales);
-  }
-
-  template<typename H>
-  void BacktesterHistoricalDataStore<H>::Open() {
-    m_dataStore.Open();
   }
 
   template<typename H>

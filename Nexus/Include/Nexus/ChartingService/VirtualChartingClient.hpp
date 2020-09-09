@@ -26,8 +26,6 @@ namespace Nexus::ChartingService {
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
         boost::posix_time::time_duration interval) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -60,8 +58,6 @@ namespace Nexus::ChartingService {
       TimePriceQueryResult LoadTimePriceSeries(const Security& security,
         boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
         boost::posix_time::time_duration interval) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -99,11 +95,6 @@ namespace Nexus::ChartingService {
       boost::posix_time::time_duration interval) {
     return m_client->LoadTimePriceSeries(security, startTime, endTime,
       interval);
-  }
-
-  template<typename C>
-  void WrapperChartingClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

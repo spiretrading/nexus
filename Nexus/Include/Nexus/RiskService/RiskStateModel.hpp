@@ -81,7 +81,6 @@ namespace Nexus::RiskService {
       const std::vector<ExchangeRate>& exchangeRates, TF&& timeClient)
       : m_portfolio(std::move(portfolio)),
         m_timeClient(std::forward<TF>(timeClient)) {
-    m_timeClient->Open();
     for(auto& exchangeRate : exchangeRates) {
       m_exchangeRates.Add(exchangeRate);
     }

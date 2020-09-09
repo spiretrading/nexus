@@ -11,10 +11,9 @@ namespace Nexus {
   class BacktesterTimeClient;
   class BacktesterTimer;
   template<typename H> class CutoffHistoricalDataStore;
-  template<typename IndexType, typename MarketDataTypeType>
-    class MarketDataEvent;
-  template<typename MarketDataTypeType> class MarketDataLoadEvent;
-  template<typename MarketDataTypeType> class MarketDataQueryEvent;
+  template<typename I, typename T> class MarketDataEvent;
+  template<typename T> class MarketDataLoadEvent;
+  template<typename T> class MarketDataQueryEvent;
   class TimerBacktesterEvent;
 }
 

@@ -2,7 +2,6 @@
 #define NEXUS_BACKTESTER_MARKET_DATA_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
 #include "Nexus/MarketDataService/VirtualMarketDataClient.hpp"
@@ -10,7 +9,7 @@
 namespace Nexus {
 
   /** Implements a MarketDataClient used for backtesting. */
-  class BacktesterMarketDataClient : private boost::noncopyable {
+  class BacktesterMarketDataClient {
     public:
 
       /**
@@ -76,8 +75,6 @@ namespace Nexus {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
@@ -86,15 +83,20 @@ namespace Nexus {
         m_marketDataClient;
       Beam::IO::OpenState m_openState;
 
+      BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
+      BacktesterMarketDataClient& operator =(
+        const BacktesterMarketDataClient&) = delete;
       void Shutdown();
   };
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
-    Beam::Ref<BacktesterMarketDataService> service,
-    std::unique_ptr<MarketDataService::VirtualMarketDataClient>
-    marketDataClient)
-    : m_service(service.Get()),
-      m_marketDataClient(std::move(marketDataClient)) {}
+      Beam::Ref<BacktesterMarketDataService> service,
+      std::unique_ptr<MarketDataService::VirtualMarketDataClient>
+      marketDataClient)
+      : m_service(service.Get()),
+        m_marketDataClient(std::move(marketDataClient)) {
+    m_openState.SetOpen();
+  }
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
     Close();
@@ -189,19 +191,6 @@ namespace Nexus {
   inline std::vector<SecurityInfo> BacktesterMarketDataClient::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return m_marketDataClient->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  inline void BacktesterMarketDataClient::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterMarketDataClient::Close() {

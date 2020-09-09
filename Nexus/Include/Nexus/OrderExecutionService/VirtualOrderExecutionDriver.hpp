@@ -28,8 +28,6 @@ namespace OrderExecutionService {
       virtual void Update(const OrderExecutionSession& session,
         OrderId orderId, const ExecutionReport& executionReport) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -75,8 +73,6 @@ namespace OrderExecutionService {
 
       virtual void Update(const OrderExecutionSession& session,
         OrderId orderId, const ExecutionReport& executionReport) override;
-
-      virtual void Open() override;
 
       virtual void Close() override;
 
@@ -147,11 +143,6 @@ namespace OrderExecutionService {
       const OrderExecutionSession& session, OrderId orderId,
       const ExecutionReport& executionReport) {
     m_driver->Update(session, orderId, executionReport);
-  }
-
-  template<typename DriverType>
-  void WrapperOrderExecutionDriver<DriverType>::Open() {
-    m_driver->Open();
   }
 
   template<typename DriverType>

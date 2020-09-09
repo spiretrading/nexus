@@ -78,8 +78,6 @@ namespace Nexus::MarketDataService {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -180,6 +178,7 @@ namespace Nexus::MarketDataService {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
     }
+    m_openState.SetOpen();
   }
 
   template<typename C, typename M, typename A>
@@ -291,14 +290,6 @@ namespace Nexus::MarketDataService {
     m_marketQuoteSubscriptions.RemoveAll(client);
     m_bookQuoteSubscriptions.RemoveAll(client);
     m_timeAndSaleSubscriptions.RemoveAll(client);
-  }
-
-  template<typename C, typename M, typename A>
-  void MarketDataRelayServlet<C, M, A>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename M, typename A>

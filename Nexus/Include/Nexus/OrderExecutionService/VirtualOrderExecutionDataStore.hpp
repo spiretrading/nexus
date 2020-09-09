@@ -29,8 +29,6 @@ namespace OrderExecutionService {
       virtual void Store(
         const SequencedAccountExecutionReport& executionReport) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -72,8 +70,6 @@ namespace OrderExecutionService {
 
       virtual void Store(
         const SequencedAccountExecutionReport& executionReport) override final;
-
-      virtual void Open() override final;
 
       virtual void Close() override final;
 
@@ -129,11 +125,6 @@ namespace OrderExecutionService {
   void WrapperOrderExecutionDataStore<DataStoreType>::Store(
       const SequencedAccountExecutionReport& executionReport) {
     return m_dataStore->Store(executionReport);
-  }
-
-  template<typename DataStoreType>
-  void WrapperOrderExecutionDataStore<DataStoreType>::Open() {
-    m_dataStore->Open();
   }
 
   template<typename DataStoreType>

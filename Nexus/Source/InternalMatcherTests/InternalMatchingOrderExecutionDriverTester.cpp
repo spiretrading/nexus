@@ -77,11 +77,7 @@ namespace {
             m_environment.GetUidEnvironment().BuildClient(),
             &m_environment.GetOrderExecutionEnvironment().GetDriver(),
             Ref(m_timerThreadPool)) {
-      m_environment.Open();
-      m_serviceClients.Open();
-      m_uidClient->Open();
       m_environment.MonitorOrderSubmissions(m_mockDriverMonitor);
-      m_orderExecutionDriver.Open();
     }
 
     ~Fixture() {

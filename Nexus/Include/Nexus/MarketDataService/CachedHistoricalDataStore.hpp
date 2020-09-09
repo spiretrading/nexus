@@ -74,8 +74,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -97,13 +95,15 @@ namespace Nexus::MarketDataService {
   template<typename D>
   template<typename HistoricalDataStoreForward>
   CachedHistoricalDataStore<D>::CachedHistoricalDataStore(
-    HistoricalDataStoreForward&& dataStore, int blockSize)
-    : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
-      m_orderImbalanceDataStore(&*m_dataStore, blockSize),
-      m_bboQuoteDataStore(&*m_dataStore, blockSize),
-      m_bookQuoteDataStore(&*m_dataStore, blockSize),
-      m_marketQuoteDataStore(&*m_dataStore, blockSize),
-      m_timeAndSaleDataStore(&*m_dataStore, blockSize) {}
+      HistoricalDataStoreForward&& dataStore, int blockSize)
+      : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
+        m_orderImbalanceDataStore(&*m_dataStore, blockSize),
+        m_bboQuoteDataStore(&*m_dataStore, blockSize),
+        m_bookQuoteDataStore(&*m_dataStore, blockSize),
+        m_marketQuoteDataStore(&*m_dataStore, blockSize),
+        m_timeAndSaleDataStore(&*m_dataStore, blockSize) {
+    m_openState.SetOpen();
+  }
 
   template<typename D>
   CachedHistoricalDataStore<D>::~CachedHistoricalDataStore() {
@@ -215,25 +215,6 @@ namespace Nexus::MarketDataService {
   void CachedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
-  }
-
-  template<typename D>
-  void CachedHistoricalDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_orderImbalanceDataStore.Open();
-      m_bboQuoteDataStore.Open();
-      m_bookQuoteDataStore.Open();
-      m_marketQuoteDataStore.Open();
-      m_timeAndSaleDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D>

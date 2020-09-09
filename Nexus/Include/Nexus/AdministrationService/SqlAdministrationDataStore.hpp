@@ -104,8 +104,6 @@ namespace Nexus::AdministrationService {
 
       void WithTransaction(const std::function<void ()>& transaction) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -120,10 +118,41 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   SqlAdministrationDataStore<C>::SqlAdministrationDataStore(
-    std::unique_ptr<Connection> connection,
-    const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
-    : m_connection(std::move(connection)),
-      m_directoryEntries(directoryEntrySourceFunction) {}
+      std::unique_ptr<Connection> connection,
+      const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
+      : m_connection(std::move(connection)),
+        m_directoryEntries(directoryEntrySourceFunction) {
+    m_openState.SetOpening();
+    try {
+      m_connection->open();
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedAccountIdentityRow(), "account_identities"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedRiskParametersRow(), "risk_parameters"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedRiskStateRow(), "risk_states"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAccountModificationRequestRow(), "account_modification_requests"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetEntitlementModificationRow(), "entitlement_modifications"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetRiskModificationRow(), "risk_modifications"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedAccountModificationRequestStatus(),
+        "account_modification_request_status"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAdministrationMessageIndexRow(), "administration_messages"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetIndexedMessageBodyRow(), "administration_message_bodies"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetAccountModificationRequestMessageIndexRow(),
+        "account_modification_request_messages"));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   SqlAdministrationDataStore<C>::~SqlAdministrationDataStore() {
@@ -485,42 +514,6 @@ namespace Nexus::AdministrationService {
       const std::function<void ()>& transaction) {
     auto lock = std::lock_guard(m_mutex);
     Viper::transaction(*m_connection, transaction);
-  }
-
-  template<typename C>
-  void SqlAdministrationDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_connection->open();
-      m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedAccountIdentityRow(), "account_identities"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedRiskParametersRow(), "risk_parameters"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedRiskStateRow(), "risk_states"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetAccountModificationRequestRow(), "account_modification_requests"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetEntitlementModificationRow(), "entitlement_modifications"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetRiskModificationRow(), "risk_modifications"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedAccountModificationRequestStatus(),
-        "account_modification_request_status"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetAdministrationMessageIndexRow(), "administration_messages"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedMessageBodyRow(), "administration_message_bodies"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetAccountModificationRequestMessageIndexRow(),
-        "account_modification_request_messages"));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C>

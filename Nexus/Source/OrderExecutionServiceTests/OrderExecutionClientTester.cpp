@@ -42,11 +42,9 @@ namespace {
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*serverConnection));
+            "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_client.emplace(builder);
-      m_server->Open();
-      m_client->Open();
     }
   };
 }

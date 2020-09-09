@@ -68,15 +68,12 @@ namespace Nexus::OrderExecutionService {
       void Store(const std::vector<SequencedAccountExecutionReport>&
         executionReports);
 
-      void Open();
-
       void Close();
 
     private:
       template<typename V, typename I>
       using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
         Queries::SqlTranslator>;
-      ConnectionBuilder m_connectionBuilder;
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_accountEntries;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
@@ -130,8 +127,19 @@ namespace Nexus::OrderExecutionService {
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
       ConnectionBuilder connectionBuilder,
       const AccountSourceFunction& accountSourceFunction)
-      : m_connectionBuilder(std::move(connectionBuilder)),
-        m_accountEntries(accountSourceFunction),
+      : m_accountEntries(accountSourceFunction),
+        m_readerPool(std::thread::hardware_concurrency(),
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
+        m_writerPool(1,
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
         m_submissionDataStore("submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)),
@@ -144,6 +152,22 @@ namespace Nexus::OrderExecutionService {
     m_liveOrdersRow = Viper::Row<OrderId>().
       add_column("order_id").
       set_primary_key("order_id");
+    m_openState.SetOpening();
+    try {
+      auto writerConnection = m_writerPool.Acquire();
+      writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
+        "live_orders"));
+      if(!writerConnection->has_table("status_submissions")) {
+        writerConnection->execute("CREATE VIEW status_submissions AS "
+          "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
+          "is_live FROM submissions LEFT JOIN live_orders ON "
+          "submissions.order_id = live_orders.order_id");
+      }
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename C>
@@ -250,46 +274,6 @@ namespace Nexus::OrderExecutionService {
       auto connection = m_writerPool.Acquire();
       connection->execute(Viper::erase("live_orders", eraseCondition));
     }
-  }
-
-  template<typename C>
-  void SqlOrderExecutionDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      for(auto i = std::size_t(0);
-          i <= std::thread::hardware_concurrency(); ++i) {
-        auto readerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        readerConnection->open();
-        m_readerPool.Add(std::move(readerConnection));
-      }
-      {
-        auto writerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        writerConnection->open();
-        writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
-          "live_orders"));
-        m_writerPool.Add(std::move(writerConnection));
-      }
-      m_submissionDataStore.Open();
-      m_executionReportDataStore.Open();
-      {
-        auto writerConnection = m_writerPool.Acquire();
-        if(!writerConnection->has_table("status_submissions")) {
-          writerConnection->execute("CREATE VIEW status_submissions AS "
-            "SELECT submissions.*, IFNULL(live_orders.order_id, 0) != 0 AS "
-            "is_live FROM submissions LEFT JOIN live_orders ON "
-            "submissions.order_id = live_orders.order_id");
-        }
-      }
-      m_statusSubmissionDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C>

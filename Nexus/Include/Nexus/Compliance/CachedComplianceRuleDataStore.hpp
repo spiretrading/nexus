@@ -47,8 +47,6 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
@@ -63,8 +61,20 @@ namespace Nexus::Compliance {
   template<typename D>
   template<typename DF>
   CachedComplianceRuleDataStore<D>::CachedComplianceRuleDataStore(
-    DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)) {}
+      DF&& dataStore)
+      : m_dataStore(std::forward<DF>(dataStore)) {
+    m_openState.SetOpening();
+    try {
+      auto entries = m_dataStore->LoadAllComplianceRuleEntries();
+      for(auto& entry : entries) {
+        m_cache.Store(entry);
+      }
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename D>
   CachedComplianceRuleDataStore<D>::~CachedComplianceRuleDataStore() {
@@ -122,25 +132,6 @@ namespace Nexus::Compliance {
     auto lock = boost::lock_guard(m_mutex);
     m_dataStore->Store(violationRecord);
     m_cache.Store(violationRecord);
-  }
-
-  template<typename D>
-  void CachedComplianceRuleDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_cache.Open();
-      auto entries = m_dataStore->LoadAllComplianceRuleEntries();
-      for(auto& entry : entries) {
-        m_cache.Store(entry);
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D>

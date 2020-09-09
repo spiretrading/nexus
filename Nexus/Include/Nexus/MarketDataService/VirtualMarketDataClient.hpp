@@ -63,8 +63,6 @@ namespace Nexus::MarketDataService {
       virtual std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -131,8 +129,6 @@ namespace Nexus::MarketDataService {
 
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -359,11 +355,6 @@ namespace Nexus::MarketDataService {
   std::vector<SecurityInfo> WrapperMarketDataClient<C>::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return m_client->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  template<typename C>
-  void WrapperMarketDataClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

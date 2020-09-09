@@ -16,7 +16,6 @@ TEST_SUITE("BacktesterTimer") {
   TEST_CASE("expiry") {
     auto startTime = ptime(date{2016, 5, 6}, seconds(0));
     auto eventHandler = BacktesterEventHandler(startTime);
-    eventHandler.Open();
     auto timer = BacktesterTimer(seconds(1), Ref(eventHandler));
     auto routines = RoutineTaskQueue();
     auto expectedTimestamp = startTime + seconds(1);
@@ -46,7 +45,6 @@ TEST_SUITE("BacktesterTimer") {
   TEST_CASE("cancel") {
     auto startTime = ptime(date(2016, 5, 6), seconds(0));
     auto eventHandler = BacktesterEventHandler(startTime);
-    eventHandler.Open();
     auto timerA = BacktesterTimer(seconds(1), Ref(eventHandler));
     auto timerB = BacktesterTimer(seconds(2), Ref(eventHandler));
     auto routines = RoutineTaskQueue();

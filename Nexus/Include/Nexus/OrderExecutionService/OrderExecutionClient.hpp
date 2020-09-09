@@ -97,8 +97,6 @@ namespace OrderExecutionService {
       */
       void Update(OrderId orderId, const ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -161,6 +159,7 @@ namespace OrderExecutionService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&OrderExecutionClient::OnOrderUpdate, this,
       std::placeholders::_1, std::placeholders::_2));
+    m_openState.SetOpen();
   }
 
   template<typename ServiceProtocolClientBuilderType>
@@ -251,20 +250,6 @@ namespace OrderExecutionService {
       OrderId orderId, const ExecutionReport& executionReport) {
     auto client = m_clientHandler.GetClient();
     client->template SendRequest<UpdateOrderService>(orderId, executionReport);
-  }
-
-  template<typename ServiceProtocolClientBuilderType>
-  void OrderExecutionClient<ServiceProtocolClientBuilderType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename ServiceProtocolClientBuilderType>

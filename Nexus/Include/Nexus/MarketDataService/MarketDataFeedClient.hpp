@@ -155,8 +155,6 @@ namespace Nexus::MarketDataService {
       */
       void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
 
-      void Open();
-
       void Close();
 
     private:
@@ -262,6 +260,19 @@ namespace Nexus::MarketDataService {
         m_authenticator(authenticator),
         m_samplingTimer(std::forward<SamplingTimerForward>(samplingTimer)) {
     RegisterMarketDataFeedMessages(Beam::Store(m_client.GetSlots()));
+    m_openState.SetOpening();
+    try {
+      Beam::ServiceLocator::OpenAndAuthenticate(m_authenticator, m_client);
+      m_samplingTimer->GetPublisher().Monitor(
+        m_callbacks.GetSlot<Beam::Threading::Timer::Result>(
+        std::bind(&MarketDataFeedClient::OnTimerExpired, this,
+        std::placeholders::_1)));
+      m_samplingTimer->Start();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
   }
 
   template<typename OrderIdType, typename SamplingTimerType,
@@ -415,27 +426,6 @@ namespace Nexus::MarketDataService {
       const MarketOrderImbalance& orderImbalance) {
     auto lock = boost::lock_guard(m_mutex);
     m_orderImbalances.push_back(orderImbalance);
-  }
-
-  template<typename OrderIdType, typename SamplingTimerType,
-    typename MessageProtocolType, typename HeartbeatTimerType>
-  void MarketDataFeedClient<OrderIdType, SamplingTimerType, MessageProtocolType,
-      HeartbeatTimerType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      Beam::ServiceLocator::OpenAndAuthenticate(m_authenticator, m_client);
-      m_samplingTimer->GetPublisher().Monitor(
-        m_callbacks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind(&MarketDataFeedClient::OnTimerExpired, this,
-        std::placeholders::_1)));
-      m_samplingTimer->Start();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename OrderIdType, typename SamplingTimerType,

@@ -81,15 +81,12 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
       template<typename V, typename I>
       using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
         Queries::SqlTranslator>;
-      ConnectionBuilder m_connectionBuilder;
       Beam::DatabaseConnectionPool<Connection> m_readerPool;
       Beam::DatabaseConnectionPool<Connection> m_writerPool;
       Beam::Threading::ThreadPool m_threadPool;
@@ -109,23 +106,45 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
-    ConnectionBuilder connectionBuilder)
-    : m_connectionBuilder(std::move(connectionBuilder)),
-      m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
-        GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-        Beam::Ref(m_threadPool)),
-      m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
-        Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-        Beam::Ref(m_threadPool)),
-      m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
-        GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-        Beam::Ref(m_threadPool)),
-      m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
-        Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-        Beam::Ref(m_threadPool)),
-      m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
-        GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
-        Beam::Ref(m_threadPool)) {}
+      ConnectionBuilder connectionBuilder)
+      : m_readerPool(std::thread::hardware_concurrency(),
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
+        m_writerPool(1,
+          [&] {
+            auto connection = std::make_unique<Connection>(connectionBuilder());
+            connection->open();
+            return connection;
+          }),
+        m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
+          GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
+        m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
+        m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
+          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
+        m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)),
+        m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
+          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+          Beam::Ref(m_threadPool)) {
+    m_openState.SetOpening();
+    try {
+      auto connection = m_writerPool.Acquire();
+      connection->execute(Viper::create_if_not_exists(
+        GetSecurityInfoRow(), "security_info"));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   SqlHistoricalDataStore<C>::~SqlHistoricalDataStore() {
@@ -254,37 +273,6 @@ namespace Nexus::MarketDataService {
   void SqlHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      for(auto i = std::size_t(0);
-          i <= std::thread::hardware_concurrency(); ++i) {
-        auto readerConnection =
-          std::make_unique<Connection>(m_connectionBuilder());
-        readerConnection->open();
-        m_readerPool.Add(std::move(readerConnection));
-      }
-      auto writerConnection =
-        std::make_unique<Connection>(m_connectionBuilder());
-      writerConnection->open();
-      writerConnection->execute(Viper::create_if_not_exists(
-        GetSecurityInfoRow(), "security_info"));
-      m_writerPool.Add(std::move(writerConnection));
-      m_orderImbalanceDataStore.Open();
-      m_bboQuoteDataStore.Open();
-      m_marketQuoteDataStore.Open();
-      m_bookQuoteDataStore.Open();
-      m_timeAndSaleDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C>

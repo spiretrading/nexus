@@ -35,10 +35,8 @@ namespace {
           m_buyingPowerCheck(std::vector<ExchangeRate>{},
             &m_serviceClients.GetAdministrationClient(),
             &m_serviceClients.GetMarketDataClient()) {
-      m_environment.Open();
       m_environment.MonitorOrderSubmissions(m_orderSubmissions);
       m_environment.UpdateBboPrice(TST, Money::ONE, Money::ONE + Money::CENT);
-      m_serviceClients.Open();
       m_traderRiskParameters.m_currency = DefaultCurrencies::USD();
       m_traderRiskParameters.m_allowedState.m_type = RiskState::Type::ACTIVE;
       m_traderRiskParameters.m_buyingPower = 1000 * Money::ONE;

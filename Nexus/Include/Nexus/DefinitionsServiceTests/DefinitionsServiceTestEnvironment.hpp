@@ -35,8 +35,8 @@ namespace Nexus::DefinitionsService::Tests {
        * Constructs a DefinitionsServiceTestEnvironment.
        * @param serviceLocatorClient The ServiceLocatorClient to use.
        */
-      DefinitionsServiceTestEnvironment(const std::shared_ptr<
-        Beam::ServiceLocator::VirtualServiceLocatorClient>&
+      DefinitionsServiceTestEnvironment(
+        std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
 
       ~DefinitionsServiceTestEnvironment();
@@ -49,8 +49,6 @@ namespace Nexus::DefinitionsService::Tests {
       std::unique_ptr<VirtualDefinitionsClient> BuildClient(
         Beam::Ref<Beam::ServiceLocator::VirtualServiceLocatorClient>
         serviceLocatorClient);
-
-      void Open();
 
       void Close();
 
@@ -80,9 +78,9 @@ namespace Nexus::DefinitionsService::Tests {
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-    const std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>&
+    std::shared_ptr<Beam::ServiceLocator::VirtualServiceLocatorClient>
     serviceLocatorClient)
-    : m_container(Beam::Initialize(serviceLocatorClient,
+    : m_container(Beam::Initialize(std::move(serviceLocatorClient),
         Beam::Initialize("1", "Spire Trading Inc.", GetDefaultTimeZoneTable(),
         GetDefaultCountryDatabase(), GetDefaultCurrencyDatabase(),
         GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
@@ -103,18 +101,13 @@ namespace Nexus::DefinitionsService::Tests {
     auto builder = ServiceProtocolClientBuilder(Beam::Ref(serviceLocatorClient),
       [=] {
         return std::make_unique<ServiceProtocolClientBuilder::Channel>(
-          "test_definitions_client", Beam::Ref(m_serverConnection));
+          "test_definitions_client", m_serverConnection);
       },
       [] {
         return std::make_unique<ServiceProtocolClientBuilder::Timer>();
       });
-    auto client = std::make_unique<DefinitionsService::DefinitionsClient<
-      ServiceProtocolClientBuilder>>(builder);
-    return MakeVirtualDefinitionsClient(std::move(client));
-  }
-
-  inline void DefinitionsServiceTestEnvironment::Open() {
-    m_container.Open();
+    return MakeVirtualDefinitionsClient(std::make_unique<DefinitionsClient<
+      ServiceProtocolClientBuilder>>(builder));
   }
 
   inline void DefinitionsServiceTestEnvironment::Close() {

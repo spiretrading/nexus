@@ -38,14 +38,12 @@ namespace {
           m_userBClients(Ref(m_environment)),
           m_orders(std::make_shared<Queue<const Order*>>()) {
       m_environment.MonitorOrderSubmissions(m_orders);
-      m_environment.Open();
       m_environment.GetAdministrationEnvironment().MakeAdministrator(
         DirectoryEntry::GetRootAccount());
       m_environment.Publish(TSLA, BboQuote(
         Quote(*Money::FromValue("1.00"), 100, Side::BID),
         Quote(*Money::FromValue("1.01"), 100, Side::ASK),
         m_environment.GetTimeEnvironment().GetTime()));
-      m_adminClients.Open();
       m_accountA = MakeAccount("simba1", 2 * Money::ONE, minutes(10));
       m_accountB = MakeAccount("simba2", 10 * Money::ONE, minutes(3));
     }
@@ -68,7 +66,6 @@ TEST_SUITE("ConsolidatedRiskController") {
   TEST_CASE_FIXTURE(Fixture, "single_account") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
     auto accounts = std::make_shared<Queue<DirectoryEntry>>();
     auto controller = ConsolidatedRiskController(accounts,
       &m_adminClients.GetAdministrationClient(),
@@ -85,7 +82,6 @@ TEST_SUITE("ConsolidatedRiskController") {
   TEST_CASE_FIXTURE(Fixture, "data_store_exception") {
     auto exchangeRates = std::vector<ExchangeRate>();
     auto dataStore = TestRiskDataStore();
-    Open(dataStore);
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
     dataStore.GetPublisher().Monitor(operations);

@@ -25,15 +25,18 @@ using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
 
 WebPortalServlet::WebPortalServlet(
-  ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
-  Ref<VirtualServiceClients> serviceClients)
-  : m_fileStore("web_app"),
-    m_serviceLocatorServlet(Ref(m_sessions), std::move(serviceClientsBuilder)),
-    m_definitionsServlet(Ref(m_sessions)),
-    m_administrationServlet(Ref(m_sessions)),
-    m_marketDataServlet(Ref(m_sessions)),
-    m_complianceServlet(Ref(m_sessions)),
-    m_riskServlet(Ref(m_sessions), Ref(serviceClients)) {}
+    ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
+    Ref<VirtualServiceClients> serviceClients)
+    : m_fileStore("web_app"),
+      m_serviceLocatorServlet(Ref(m_sessions),
+        std::move(serviceClientsBuilder)),
+      m_definitionsServlet(Ref(m_sessions)),
+      m_administrationServlet(Ref(m_sessions)),
+      m_marketDataServlet(Ref(m_sessions)),
+      m_complianceServlet(Ref(m_sessions)),
+      m_riskServlet(Ref(m_sessions), Ref(serviceClients)) {
+  m_openState.SetOpen();
+}
 
 WebPortalServlet::~WebPortalServlet() {
   Close();
@@ -72,24 +75,6 @@ std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
   auto riskSlots = m_riskServlet.GetWebSocketSlots();
   slots.insert(slots.end(), riskSlots.begin(), riskSlots.end());
   return slots;
-}
-
-void WebPortalServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  try {
-    m_serviceLocatorServlet.Open();
-    m_definitionsServlet.Open();
-    m_administrationServlet.Open();
-    m_marketDataServlet.Open();
-    m_complianceServlet.Open();
-    m_riskServlet.Open();
-  } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
-  }
-  m_openState.SetOpen();
 }
 
 void WebPortalServlet::Close() {

@@ -153,11 +153,10 @@ int main(int argc, const char** argv) {
   auto threadPool = ThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
+      Ref(timerThreadPool));
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
@@ -166,7 +165,6 @@ int main(int argc, const char** argv) {
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    definitionsClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
@@ -175,7 +173,6 @@ int main(int argc, const char** argv) {
   try {
     administrationClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    administrationClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the administration service." <<
       std::endl;
@@ -225,10 +222,9 @@ int main(int argc, const char** argv) {
         mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
         mySqlConfig.m_password, mySqlConfig.m_schema);
     });
-  auto asyncDataStore =
-    boost::optional<AsyncHistoricalDataStore<SqlDataStore*>>();
+  auto asyncDataStore = optional<AsyncHistoricalDataStore<SqlDataStore*>>();
   auto marketDataRegistry = MarketDataRegistry();
-  auto baseRegistryServlet = boost::optional<BaseRegistryServlet>();
+  auto baseRegistryServlet = optional<BaseRegistryServlet>();
   try {
     auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
     asyncDataStore.emplace(&historicalDataStore);
@@ -238,13 +234,13 @@ int main(int argc, const char** argv) {
     std::cerr << "Error initializing server: " << e.what() << std::endl;
     return -1;
   }
-  auto registryServer = RegistryServletContainer(Initialize(
-    serviceLocatorClient.Get(), baseRegistryServlet.get_ptr()), Initialize(
-    registryServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-    Ref(timerThreadPool)));
+  auto registryServer = optional<RegistryServletContainer>();
   try {
-    registryServer.Open();
+    registryServer.emplace(Initialize(
+      serviceLocatorClient.Get(), baseRegistryServlet.get_ptr()), Initialize(
+      registryServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+      Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;
@@ -262,13 +258,13 @@ int main(int argc, const char** argv) {
     std::cerr << "Error registering service: " << e.what() << std::endl;
     return -1;
   }
-  auto feedServer = FeedServletContainer(Initialize(serviceLocatorClient.Get(),
-    baseRegistryServlet.get_ptr()), Initialize(
-    feedServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-    Ref(timerThreadPool)));
+  auto feedServer = optional<FeedServletContainer>();
   try {
-    feedServer.Open();
+    feedServer.emplace(Initialize(serviceLocatorClient.Get(),
+      baseRegistryServlet.get_ptr()), Initialize(
+      feedServerConnectionInitializer.m_interface, Ref(socketThreadPool)),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+      Ref(timerThreadPool)));
   } catch(const std::exception& e) {
     std::cerr << "Error opening server: " << e.what() << std::endl;
     return -1;

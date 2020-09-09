@@ -70,14 +70,9 @@ namespace {
     Fixture()
         : m_accounts(std::make_shared<Queue<DirectoryEntry>>()),
           m_serverConnection(std::make_shared<TestServerConnection>()) {
-      m_serviceLocatorEnvironment.Open();
-      m_uidServiceEnvironment.Open();
       auto serviceLocatorClient =
         std::shared_ptr(m_serviceLocatorEnvironment.BuildClient());
-      serviceLocatorClient->SetCredentials("root", "");
-      serviceLocatorClient->Open();
       m_administrationServiceEnvironment.emplace(serviceLocatorClient);
-      m_administrationServiceEnvironment->Open();
       m_administrationServiceEnvironment->MakeAdministrator(
         DirectoryEntry::GetRootAccount());
       m_administrationClient = std::shared_ptr(
@@ -85,7 +80,6 @@ namespace {
         Ref(*serviceLocatorClient)));
       m_marketDataServiceEnvironment.emplace(serviceLocatorClient,
         m_administrationClient);
-      m_marketDataServiceEnvironment->Open();
       m_orderExecutionServiceEnvironment.emplace(GetDefaultMarketDatabase(),
         GetDefaultDestinationDatabase(), serviceLocatorClient,
         m_uidServiceEnvironment.BuildClient(), m_administrationClient,
@@ -93,7 +87,6 @@ namespace {
         MakeVirtualOrderExecutionDriver(&m_driver));
       m_orders = std::make_shared<Queue<PrimitiveOrder*>>();
       m_driver.GetPublisher().Monitor(m_orders);
-      m_orderExecutionServiceEnvironment->Open();
       auto exchangeRates = std::vector<ExchangeRate>();
       exchangeRates.push_back(ExchangeRate(CurrencyPair(
         DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
@@ -108,7 +101,6 @@ namespace {
         }, std::make_shared<FixedTimeClient>(), &m_dataStore, exchangeRates,
         GetDefaultMarketDatabase(), GetDefaultDestinationDatabase())),
         m_serverConnection, factory<std::unique_ptr<TriggerTimer>>());
-      m_container->Open();
       m_marketDataServiceEnvironment->Publish(TSLA, BboQuote(
         Quote(*Money::FromValue("1.00"), 100, Side::BID),
         Quote(*Money::FromValue("1.01"), 100, Side::ASK),
@@ -127,18 +119,15 @@ namespace {
         RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(1)));
       m_administrationClient->StoreRiskState(account, RiskState::Type::ACTIVE);
       auto client = Client();
-      client.m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
-      client.m_serviceLocatorClient->SetCredentials(name, "1234");
-      client.m_serviceLocatorClient->Open();
+      client.m_serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient(
+        name, "1234");
       client.m_orderExecutionClient =
         m_orderExecutionServiceEnvironment->BuildClient(
         Ref(*client.m_serviceLocatorClient));
-      client.m_orderExecutionClient->Open();
       client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
-        Initialize("test", Ref(*m_serverConnection)), Initialize());
+        Initialize("test", *m_serverConnection), Initialize());
       RegisterRiskServices(Store(client.m_riskClient->GetSlots()));
       RegisterRiskMessages(Store(client.m_riskClient->GetSlots()));
-      client.m_riskClient->Open();
       auto authenticator = SessionAuthenticator(
         Ref(*client.m_serviceLocatorClient));
       authenticator(*client.m_riskClient);

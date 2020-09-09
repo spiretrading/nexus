@@ -70,10 +70,6 @@ namespace {
       throw std::runtime_error("Not implemented.");
     }
 
-    void Open() override  {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualComplianceClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualComplianceClient, "close",
         Close);
@@ -111,7 +107,7 @@ void Nexus::Python::ExportApplicationComplianceClient(
         });
       return MakeToPythonComplianceClient(std::make_unique<Client>(
         sessionBuilder));
-    }));
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportComplianceClient(pybind11::module& module) {
@@ -122,7 +118,6 @@ void Nexus::Python::ExportComplianceClient(pybind11::module& module) {
     .def("update", &VirtualComplianceClient::Update)
     .def("delete", &VirtualComplianceClient::Delete)
     .def("report", &VirtualComplianceClient::Report)
-    .def("open", &VirtualComplianceClient::Open)
     .def("close", &VirtualComplianceClient::Close);
 }
 

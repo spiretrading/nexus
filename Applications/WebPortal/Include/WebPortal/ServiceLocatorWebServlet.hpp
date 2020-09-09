@@ -38,8 +38,6 @@ namespace Nexus::WebPortal {
 
       std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
 
-      void Open();
-
       void Close();
 
     private:

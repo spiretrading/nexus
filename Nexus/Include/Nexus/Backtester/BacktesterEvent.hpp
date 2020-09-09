@@ -2,13 +2,12 @@
 #define NEXUS_BACKTESTER_EVENT_HPP
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 
 namespace Nexus {
 
   /** Base class of an event to be handled by the backtester. */
-  class BacktesterEvent : private boost::noncopyable {
+  class BacktesterEvent {
     public:
       virtual ~BacktesterEvent() = default;
 
@@ -37,6 +36,9 @@ namespace Nexus {
       bool m_isComplete;
       Beam::Threading::ConditionVariable m_isCompleteCondition;
       boost::posix_time::ptime m_timestamp;
+
+      BacktesterEvent(const BacktesterEvent&) = delete;
+      BacktesterEvent& operator =(const BacktesterEvent&) = delete;
   };
 
   inline boost::posix_time::ptime BacktesterEvent::GetTimestamp() const {

@@ -74,8 +74,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -96,13 +94,14 @@ namespace Nexus::MarketDataService {
   template<typename D>
   template<typename HistoricalDataStoreForward>
   SessionCachedHistoricalDataStore<D>::SessionCachedHistoricalDataStore(
-    HistoricalDataStoreForward&& dataStore,
-    int blockSize)
-    : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
-      m_bboQuoteDataStore(&*m_dataStore, blockSize / 10),
-      m_bookQuoteDataStore(&*m_dataStore, blockSize / 10),
-      m_marketQuoteDataStore(&*m_dataStore, blockSize / 10),
-      m_timeAndSaleDataStore(&*m_dataStore, blockSize) {}
+      HistoricalDataStoreForward&& dataStore, int blockSize)
+      : m_dataStore(std::forward<HistoricalDataStoreForward>(dataStore)),
+        m_bboQuoteDataStore(&*m_dataStore, blockSize / 10),
+        m_bookQuoteDataStore(&*m_dataStore, blockSize / 10),
+        m_marketQuoteDataStore(&*m_dataStore, blockSize / 10),
+        m_timeAndSaleDataStore(&*m_dataStore, blockSize) {
+    m_openState.SetOpen();
+  }
 
   template<typename D>
   SessionCachedHistoricalDataStore<D>::~SessionCachedHistoricalDataStore() {
@@ -214,24 +213,6 @@ namespace Nexus::MarketDataService {
   void SessionCachedHistoricalDataStore<D>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_timeAndSaleDataStore.Store(timeAndSales);
-  }
-
-  template<typename D>
-  void SessionCachedHistoricalDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_bboQuoteDataStore.Open();
-      m_bookQuoteDataStore.Open();
-      m_marketQuoteDataStore.Open();
-      m_timeAndSaleDataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D>

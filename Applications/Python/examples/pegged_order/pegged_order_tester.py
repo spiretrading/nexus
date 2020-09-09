@@ -7,13 +7,7 @@ import unittest
 class TestPeggedOrder(unittest.TestCase):
   def setUp(self):
     self.environment = nexus.TestEnvironment()
-    self.environment.open()
     self.service_clients = nexus.TestServiceClients(self.environment)
-    self.service_clients.open()
-
-  def tearDown(self):
-    self.service_clients.close()
-    self.environment.close()
 
   # Start a PeggedOrder on the bid for 1000 shares with an offset of 0.01.
   # Set the BBO to 1.00 / 1.01.
@@ -31,14 +25,13 @@ class TestPeggedOrder(unittest.TestCase):
       nexus.Money.from_value('1.00'), nexus.Money.from_value('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
-    expected_order = submission_queue.top()
-    submission_queue.pop()
+    expected_order = submission_queue.pop()
     self.assertEqual(expected_order.info.fields.price,
       nexus.Money.from_value('0.99'))
     self.assertEqual(expected_order.info.fields.quantity, 1000)
-    self.environment.reject_order(expected_order)
+    self.environment.reject(expected_order)
     order.wait()
-    self.assertTrue(submission_queue.is_empty())
+    self.assertIsNone(submission_queue.try_pop())
 
   # Start a PeggedOrder on the ask for 1000 shares with an offset of 0.01.
   # Set the BBO to 1.00 / 1.01.
@@ -62,26 +55,24 @@ class TestPeggedOrder(unittest.TestCase):
        nexus.Money.from_value('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
-    expected_order = submission_queue.top()
-    submission_queue.pop()
+    expected_order = submission_queue.pop()
     self.assertEqual(expected_order.info.fields.price,
       nexus.Money.from_value('1.02'))
     self.assertEqual(expected_order.info.fields.quantity, 1000)
-    self.environment.accept_order(expected_order)
+    self.environment.accept(expected_order)
     self.environment.update_bbo_price(security,
       nexus.Money.from_value('0.90'), nexus.Money.from_value('0.91'))
     self.assertTrue(nexus.order_execution_service.tests.is_pending_cancel(
       expected_order))
-    self.environment.cancel_order(expected_order)
-    expected_order = submission_queue.top()
-    submission_queue.pop()
+    self.environment.cancel(expected_order)
+    expected_order = submission_queue.pop()
     self.assertEqual(expected_order.info.fields.price,
       nexus.Money.from_value('0.92'))
     self.assertEqual(expected_order.info.fields.quantity, 1000)
-    self.environment.accept_order(expected_order)
-    self.environment.fill_order(expected_order, 1000)
+    self.environment.accept(expected_order)
+    self.environment.fill(expected_order, 1000)
     order.wait()
-    self.assertTrue(submission_queue.is_empty())
+    self.assertIsNone(submission_queue.try_pop())
 
 def main():
   unittest.main()

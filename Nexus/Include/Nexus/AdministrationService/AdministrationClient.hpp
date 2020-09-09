@@ -326,8 +326,6 @@ namespace Nexus::AdministrationService {
       Message SendAccountModificationRequestMessage(
         AccountModificationRequest::Id id, const Message& message);
 
-      void Open();
-
       void Close();
 
     private:
@@ -388,6 +386,7 @@ namespace Nexus::AdministrationService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&AdministrationClient::OnRiskStateMessage, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -697,20 +696,6 @@ namespace Nexus::AdministrationService {
     auto client = m_clientHandler.GetClient();
     return client->template SendRequest<
       SendAccountModificationRequestMessageService>(id, message);
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

@@ -73,8 +73,6 @@ namespace Nexus::MarketDataService {
       void Store(
         const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -230,12 +228,6 @@ namespace Nexus::MarketDataService {
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     auto release = Beam::Python::GilRelease();
     m_dataStore->Store(timeAndSales);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Open();
   }
 
   template<typename D>

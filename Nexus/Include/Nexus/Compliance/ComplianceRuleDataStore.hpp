@@ -53,8 +53,6 @@ namespace Nexus::Compliance {
      */
     void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-    void Open();
-
     void Close();
   };
 }

@@ -36,20 +36,37 @@ namespace {
       NativePointerPolicy>;
 
     ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    boost::optional<AdministrationServiceTestEnvironment>
-      m_administrationEnvironment;
-    EntitlementDatabase m_entitlements;
+    AdministrationServiceTestEnvironment m_administrationEnvironment;
     MarketDataRegistry m_registry;
     boost::optional<TestServletContainer::Servlet::Servlet> m_registryServlet;
     boost::optional<TestServletContainer> m_container;
-    boost::optional<Beam::Services::Tests::TestServiceProtocolClient>
-      m_clientProtocol;
+    boost::optional<TestServiceProtocolClient> m_clientProtocol;
 
-    Fixture() {
-      m_serviceLocatorEnvironment.Open();
-      auto administrationServiceLocatorClient =
+    Fixture()
+        : m_administrationEnvironment(
+            m_serviceLocatorEnvironment.BuildClient(), BuildEntitlements()) {
+      auto servletServiceLocatorClient =
         m_serviceLocatorEnvironment.BuildClient();
-      administrationServiceLocatorClient->SetCredentials("root", "");
+      m_registryServlet.emplace(m_administrationEnvironment.BuildClient(
+        Ref(*servletServiceLocatorClient)), &m_registry, Initialize());
+      auto serverConnection = std::make_shared<TestServerConnection>();
+      m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
+        &*m_registryServlet), serverConnection,
+        factory<std::unique_ptr<TriggerTimer>>());
+      m_clientProtocol.emplace(Initialize("test", *serverConnection),
+        Initialize());
+      Nexus::Queries::RegisterQueryTypes(
+        Store(m_clientProtocol->GetSlots().GetRegistry()));
+      RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
+      RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
+      auto clientServiceLocatorClient =
+        m_serviceLocatorEnvironment.BuildClient("client", "");
+      auto authenticator = SessionAuthenticator(
+        Ref(*clientServiceLocatorClient));
+      authenticator(*m_clientProtocol);
+    }
+
+    EntitlementDatabase BuildEntitlements() {
       auto servletAccount = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
         "servlet", "", DirectoryEntry::GetStarDirectory());
       auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
@@ -76,7 +93,8 @@ namespace {
         MarketDataType::BBO_QUOTE);
       nyseEntitlement.m_applicability[DefaultMarkets::NYSE()].Set(
         MarketDataType::ORDER_IMBALANCE);
-      m_entitlements.Add(nyseEntitlement);
+      auto entitlements = EntitlementDatabase();
+      entitlements.Add(nyseEntitlement);
       auto tsxEntitlements = EntitlementDatabase::Entry();
       tsxEntitlements.m_name = "TSX";
       tsxEntitlements.m_groupEntry = tsxEntitlementGroup;
@@ -87,43 +105,12 @@ namespace {
         DefaultMarkets::CHIC());
       tsxEntitlements.m_applicability[chicTsxKey].Set(
         MarketDataType::BOOK_QUOTE);
-      m_entitlements.Add(tsxEntitlements);
+      entitlements.Add(tsxEntitlements);
       m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
         nyseEntitlementGroup);
       m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
         tsxEntitlementGroup);
-      auto serverConnection = std::make_shared<TestServerConnection>();
-      m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
-        Initialize());
-      Nexus::Queries::RegisterQueryTypes(
-        Store(m_clientProtocol->GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(m_clientProtocol->GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(m_clientProtocol->GetSlots()));
-      auto servletServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      servletServiceLocatorClient->SetCredentials("servlet", "");
-      servletServiceLocatorClient->Open();
-      m_administrationEnvironment.emplace(
-        std::move(administrationServiceLocatorClient));
-      m_administrationEnvironment->SetEntitlements(m_entitlements);
-      m_administrationEnvironment->Open();
-      auto marketDataAdministrationClient =
-        m_administrationEnvironment->BuildClient(
-        Ref(*servletServiceLocatorClient));
-      m_registryServlet.emplace(std::move(marketDataAdministrationClient),
-        &m_registry, Initialize());
-      m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
-        &*m_registryServlet), serverConnection,
-        factory<std::unique_ptr<TriggerTimer>>());
-      m_container->Open();
-      auto clientServiceLocatorClient =
-        m_serviceLocatorEnvironment.BuildClient();
-      clientServiceLocatorClient->SetCredentials("client", "");
-      clientServiceLocatorClient->Open();
-      m_clientProtocol->Open();
-      auto authenticator = SessionAuthenticator(
-        Ref(*clientServiceLocatorClient));
-      authenticator(*m_clientProtocol);
+      return entitlements;
     }
   };
 }

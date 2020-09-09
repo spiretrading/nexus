@@ -43,8 +43,6 @@ namespace MoldUdp64 {
       */
       MoldUdp64Message Read(Beam::Out<std::uint64_t> sequenceNumber);
 
-      void Open();
-
       void Close();
 
     private:
@@ -63,7 +61,10 @@ namespace MoldUdp64 {
   template<typename ChannelType>
   template<typename ChannelForward>
   MoldUdp64Client<ChannelType>::MoldUdp64Client(ChannelForward&& channel)
-      : m_channel(std::forward<ChannelType>(channel)) {}
+      : m_channel(std::forward<ChannelType>(channel)),
+        m_sequenceNumber(-1) {
+    m_openState.SetOpen();
+  }
 
   template<typename ChannelType>
   MoldUdp64Client<ChannelType>::~MoldUdp64Client() {
@@ -104,21 +105,6 @@ namespace MoldUdp64 {
     *sequenceNumber = m_sequenceNumber;
     ++m_sequenceNumber;
     return message;
-  }
-
-  template<typename ChannelType>
-  void MoldUdp64Client<ChannelType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_channel->GetConnection().Open();
-      m_sequenceNumber = -1;
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename ChannelType>

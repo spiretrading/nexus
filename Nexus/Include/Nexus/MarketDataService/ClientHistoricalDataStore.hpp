@@ -72,8 +72,6 @@ namespace Nexus::MarketDataService {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -90,8 +88,10 @@ namespace Nexus::MarketDataService {
   template<typename C>
   template<typename MarketDataClientForward>
   ClientHistoricalDataStore<C>::ClientHistoricalDataStore(
-    MarketDataClientForward&& client)
-    : m_client{std::forward<MarketDataClientForward>(client)} {}
+      MarketDataClientForward&& client)
+      : m_client(std::forward<MarketDataClientForward>(client)) {
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
@@ -197,20 +197,6 @@ namespace Nexus::MarketDataService {
   template<typename C>
   void ClientHistoricalDataStore<C>::Store(
     const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_client->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
 
   template<typename C>
   void ClientHistoricalDataStore<C>::Close() {

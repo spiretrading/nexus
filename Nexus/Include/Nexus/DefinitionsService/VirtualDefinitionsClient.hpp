@@ -44,8 +44,6 @@ namespace Nexus::DefinitionsService {
 
       virtual TradingSchedule LoadTradingSchedule() = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -92,8 +90,6 @@ namespace Nexus::DefinitionsService {
         LoadComplianceRuleSchemas() override;
 
       TradingSchedule LoadTradingSchedule() override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -167,11 +163,6 @@ namespace Nexus::DefinitionsService {
   template<typename C>
   TradingSchedule WrapperDefinitionsClient<C>::LoadTradingSchedule() {
     return m_client->LoadTradingSchedule();
-  }
-
-  template<typename C>
-  void WrapperDefinitionsClient<C>::Open() {
-    m_client->Open();
   }
 
   template<typename C>

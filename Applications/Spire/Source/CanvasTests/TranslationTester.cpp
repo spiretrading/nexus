@@ -35,21 +35,13 @@ namespace {
     UserProfile m_userProfile;
 
     Environment()
-BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_serviceClients(
-          [&] {
-            m_environment.Open();
-            return MakeVirtualServiceClients(
-              std::make_unique<TestServiceClients>(Ref(m_environment)));
-          }()),
+      : m_serviceClients(MakeVirtualServiceClients(
+          std::make_unique<TestServiceClients>(Ref(m_environment)))),
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
           EntitlementDatabase(), Ref(m_timerThreadPool),
-          Ref(*m_serviceClients)) {
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
-      m_serviceClients->Open();
-    }
+          Ref(*m_serviceClients)) {}
   };
 
   const auto TEST_SECURITY = ParseSecurity("TST.TSX");

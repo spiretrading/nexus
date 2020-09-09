@@ -16,8 +16,10 @@ using namespace Nexus::Compliance;
 using namespace Nexus::WebPortal;
 
 ComplianceWebServlet::ComplianceWebServlet(
-  Ref<SessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.Get()) {}
+    Ref<SessionStore<WebPortalSession>> sessions)
+    : m_sessions(sessions.Get()) {
+  m_openState.SetOpen();
+}
 
 ComplianceWebServlet::~ComplianceWebServlet() {
   Close();
@@ -42,13 +44,6 @@ std::vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
     std::bind(&ComplianceWebServlet::OnDeleteComplianceRuleEntry, this,
     std::placeholders::_1));
   return slots;
-}
-
-void ComplianceWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
 }
 
 void ComplianceWebServlet::Close() {

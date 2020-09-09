@@ -167,10 +167,8 @@ void LoginDialog::OnLoginButtonClicked() {
       auto serviceLocatorClient =
         std::make_unique<ApplicationServiceLocatorClient>();
       try {
-        serviceLocatorClient->BuildSession(address,
+        serviceLocatorClient->BuildSession(username, password, address,
           Ref(*socketThreadPoolHandle), Ref(*timerThreadPoolHandle));
-        (*serviceLocatorClient)->SetCredentials(username, password);
-        (*serviceLocatorClient)->Open();
         With(*m_loginRoutine,
           [=, &serviceLocatorClient] (LoginRoutine& loginRoutine) {
             if(loginRoutine.m_loginCount != currentLoginCount) {

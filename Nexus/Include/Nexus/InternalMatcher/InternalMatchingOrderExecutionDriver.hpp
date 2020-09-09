@@ -101,8 +101,6 @@ namespace Details {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -199,6 +197,7 @@ namespace Details {
         m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
         m_timerThreadPool(timerThreadPool.Get()) {
     m_rootSession.SetAccount(rootSessionAccount);
+    m_openState.SetOpen();
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -273,23 +272,6 @@ namespace Details {
           m_orderExecutionDriver->Update(session, orderId, executionReport);
         }
       });
-  }
-
-  template<typename B, typename M, typename T, typename U, typename D>
-  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-      m_timeClient->Open();
-      m_uidClient->Open();
-      m_orderExecutionDriver->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B, typename M, typename T, typename U, typename D>

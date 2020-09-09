@@ -1,6 +1,5 @@
 #ifndef NEXUS_BACKTESTER_TIME_CLIENT_HPP
 #define NEXUS_BACKTESTER_TIME_CLIENT_HPP
-#include <boost/noncopyable.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
@@ -9,7 +8,7 @@
 namespace Nexus {
 
   /** A TimeClient used by the backtester. */
-  class BacktesterTimeClient : private boost::noncopyable {
+  class BacktesterTimeClient {
     public:
 
       /**
@@ -22,20 +21,22 @@ namespace Nexus {
 
       boost::posix_time::ptime GetTime();
 
-      void Open();
-
       void Close();
 
     private:
       BacktesterEventHandler* m_eventHandler;
       Beam::IO::OpenState m_openState;
 
+      BacktesterTimeClient(const BacktesterTimeClient&) = delete;
+      BacktesterTimeClient& operator =(const BacktesterTimeClient&) = delete;
       void Shutdown();
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-    Beam::Ref<BacktesterEventHandler> eventHandler)
-    : m_eventHandler(eventHandler.Get()) {}
+      Beam::Ref<BacktesterEventHandler> eventHandler)
+      : m_eventHandler(eventHandler.Get()) {
+    m_openState.SetOpen();
+  }
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {
     Close();
@@ -43,13 +44,6 @@ namespace Nexus {
 
   inline boost::posix_time::ptime BacktesterTimeClient::GetTime() {
     return m_eventHandler->GetTime();
-  }
-
-  inline void BacktesterTimeClient::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
   }
 
   inline void BacktesterTimeClient::Close() {

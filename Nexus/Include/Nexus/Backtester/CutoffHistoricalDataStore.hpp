@@ -4,7 +4,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/thread/lock_types.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
@@ -17,7 +16,7 @@ namespace Nexus {
    * @param <H> The underlying data store to wrap.
    */
   template<typename H>
-  class CutoffHistoricalDataStore : private boost::noncopyable {
+  class CutoffHistoricalDataStore {
     public:
 
       /** The type of underlying data store to wrap. */
@@ -75,8 +74,6 @@ namespace Nexus {
 
       void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-      void Open();
-
       void Close();
 
     private:
@@ -95,6 +92,9 @@ namespace Nexus {
         m_timeAndSalesCutoffSequences;
       Beam::IO::OpenState m_openState;
 
+      CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
+      CutoffHistoricalDataStore& operator =(
+        const CutoffHistoricalDataStore&) = delete;
       void Shutdown();
       template<typename Query, typename F>
       std::invoke_result_t<F, const Query&> Load(const Query& query,
@@ -105,9 +105,11 @@ namespace Nexus {
   template<typename H>
   template<typename D>
   CutoffHistoricalDataStore<H>::CutoffHistoricalDataStore(D&& dataStore,
-    boost::posix_time::ptime cutoff)
-    : m_dataStore(std::forward<D>(dataStore)),
-      m_cutoff(cutoff) {}
+      boost::posix_time::ptime cutoff)
+      : m_dataStore(std::forward<D>(dataStore)),
+        m_cutoff(cutoff) {
+    m_openState.SetOpen();
+  }
 
   template<typename H>
   CutoffHistoricalDataStore<H>::~CutoffHistoricalDataStore() {
@@ -237,20 +239,6 @@ namespace Nexus {
   void CutoffHistoricalDataStore<H>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_dataStore->Store(timeAndSales);
-  }
-
-  template<typename H>
-  void CutoffHistoricalDataStore<H>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename H>

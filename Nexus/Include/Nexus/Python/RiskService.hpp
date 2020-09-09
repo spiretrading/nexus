@@ -35,16 +35,22 @@ namespace Nexus::Python {
   void ExportRiskDataStore(pybind11::module& module);
 
   /**
+   * Exports the RiskParameters class.
+   * @param module The module to export to.
+   */
+  void ExportRiskParameters(pybind11::module& module);
+
+  /**
    * Exports the RiskService namespace.
    * @param module The module to export to.
    */
   void ExportRiskService(pybind11::module& module);
 
   /**
-   * Exports the RiskParameters class.
+   * Exports the RiskServiceTestEnvironment class.
    * @param module The module to export to.
    */
-  void ExportRiskParameters(pybind11::module& module);
+  void ExportRiskServiceTestEnvironment(pybind11::module& module);
 
   /**
    * Exports the RiskState struct.

@@ -76,9 +76,125 @@ SpireServiceClients::SpireServiceClients(
     m_serviceLocatorClient{MakeVirtualServiceLocatorClient(
       &**m_applicationServiceLocatorClient)},
     m_socketThreadPool{socketThreadPool.Get()},
-    m_timerThreadPool{timerThreadPool.Get()} {}
+    m_timerThreadPool{timerThreadPool.Get()} {
+  try {
+    auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
+    definitionsClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    auto minimumVersion = (*definitionsClient)->LoadMinimumSpireClientVersion();
+    if(minimumVersion > string{SPIRE_VERSION}) {
+      BOOST_THROW_EXCEPTION(std::runtime_error{
+        ("Spire version incompatible.\n"
+        "Minimum version required: ") +
+        minimumVersion + ("\n"
+        "Current version installed: ") + string{SPIRE_VERSION}});
+    }
+    m_definitionsClient = MakeVirtualDefinitionsClient(ByPassPtr(
+      std::move(definitionsClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the definitions service."});
+  }
+  try {
+    auto registryClient = std::make_unique<ApplicationRegistryClient>();
+    registryClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_registryClient = MakeVirtualRegistryClient(ByPassPtr(
+      std::move(registryClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the registry service."});
+  }
+  try {
+    auto administrationClient =
+      std::make_unique<ApplicationAdministrationClient>();
+    administrationClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_administrationClient = MakeVirtualAdministrationClient(ByPassPtr(
+      std::move(administrationClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the administration service."});
+  }
+  try {
+    auto marketDataClient = std::make_unique<ApplicationMarketDataClient>();
+    marketDataClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_marketDataClient = MakeVirtualMarketDataClient(ByPassPtr(
+      std::move(marketDataClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the market data service."});
+  }
+  try {
+    auto chartingClient = std::make_unique<ApplicationChartingClient>();
+    chartingClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_chartingClient = MakeVirtualChartingClient(ByPassPtr(
+      std::move(chartingClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the charting service."});
+  }
+  try {
+    auto complianceClient = std::make_unique<ApplicationComplianceClient>();
+    complianceClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_complianceClient = MakeVirtualComplianceClient(ByPassPtr(
+      std::move(complianceClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the compliance service."});
+  }
+  try {
+    auto timeServices = m_serviceLocatorClient->Locate(
+      TimeService::SERVICE_NAME);
+    if(timeServices.empty()) {
+      BOOST_THROW_EXCEPTION(ConnectException{"No time services available."});
+    }
+    auto& timeService = timeServices.front();
+    auto ntpPool = Parse<vector<IpAddress>>(get<string>(
+      timeService.GetProperties().At("addresses")));
+    auto timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(*m_socketThreadPool),
+      Ref(*m_timerThreadPool));
+    m_timeClient = MakeVirtualTimeClient(std::move(timeClient));
+  } catch(std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the time service."});
+  }
+  try {
+    auto orderExecutionClient =
+      std::make_unique<ApplicationOrderExecutionClient>();
+    orderExecutionClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_orderExecutionClient = MakeVirtualOrderExecutionClient(ByPassPtr(
+      std::move(orderExecutionClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the order execution service."});
+  }
+  try {
+    auto riskClient = std::make_unique<ApplicationRiskClient>();
+    riskClient->BuildSession(
+      Ref(*(m_applicationServiceLocatorClient->Get())),
+      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
+    m_riskClient = MakeVirtualRiskClient(ByPassPtr(std::move(riskClient)));
+  } catch(const std::exception&) {
+    BOOST_THROW_EXCEPTION(ConnectException{
+      "Unable to connect to the risk service."});
+  }
+}
 
-SpireServiceClients::~SpireServiceClients() {}
+SpireServiceClients::~SpireServiceClients() {
+  Close();
+}
 
 VirtualServiceLocatorClient&
     SpireServiceClients::GetServiceLocatorClient() const {
@@ -127,123 +243,6 @@ std::unique_ptr<VirtualTimer> SpireServiceClients::BuildTimer(
     time_duration expiry) {
   return MakeVirtualTimer(
     std::make_unique<LiveTimer>(expiry, Ref(*m_timerThreadPool)));
-}
-
-void SpireServiceClients::Open() {
-  auto& serviceLocatorClient = *(m_applicationServiceLocatorClient->Get());
-  auto definitionsClient = std::make_unique<ApplicationDefinitionsClient>();
-  try {
-    definitionsClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*definitionsClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the definitions service."});
-  }
-  auto minimumVersion = (*definitionsClient)->LoadMinimumSpireClientVersion();
-  if(minimumVersion > string{SPIRE_VERSION}) {
-    BOOST_THROW_EXCEPTION(std::runtime_error{
-      ("Spire version incompatible.\n"
-      "Minimum version required: ") +
-      minimumVersion + ("\n"
-      "Current version installed: ") + string{SPIRE_VERSION}});
-  }
-  m_definitionsClient = MakeVirtualDefinitionsClient(ByPassPtr(
-    std::move(definitionsClient)));
-  auto registryClient = std::make_unique<ApplicationRegistryClient>();
-  try {
-    registryClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*registryClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the registry service."});
-  }
-  m_registryClient = MakeVirtualRegistryClient(ByPassPtr(
-    std::move(registryClient)));
-  auto administrationClient =
-    std::make_unique<ApplicationAdministrationClient>();
-  try {
-    administrationClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*administrationClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the administration service."});
-  }
-  m_administrationClient = MakeVirtualAdministrationClient(ByPassPtr(
-    std::move(administrationClient)));
-  auto marketDataClient = std::make_unique<ApplicationMarketDataClient>();
-  try {
-    marketDataClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*marketDataClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the market data service."});
-  }
-  m_marketDataClient = MakeVirtualMarketDataClient(ByPassPtr(
-    std::move(marketDataClient)));
-  auto chartingClient = std::make_unique<ApplicationChartingClient>();
-  try {
-    chartingClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*chartingClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the charting service."});
-  }
-  m_chartingClient = MakeVirtualChartingClient(ByPassPtr(
-    std::move(chartingClient)));
-  auto complianceClient = std::make_unique<ApplicationComplianceClient>();
-  try {
-    complianceClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*complianceClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the compliance service."});
-  }
-  m_complianceClient = MakeVirtualComplianceClient(ByPassPtr(
-    std::move(complianceClient)));
-  auto timeServices = serviceLocatorClient.Locate(TimeService::SERVICE_NAME);
-  if(timeServices.empty()) {
-    BOOST_THROW_EXCEPTION(ConnectException{"No time services available."});
-  }
-  auto& timeService = timeServices.front();
-  auto ntpPool = Parse<vector<IpAddress>>(get<string>(
-    timeService.GetProperties().At("addresses")));
-  auto timeClient = MakeLiveNtpTimeClient(ntpPool, Ref(*m_socketThreadPool),
-    Ref(*m_timerThreadPool));
-  try {
-    timeClient->Open();
-  } catch(std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the time service."});
-  }
-  m_timeClient = MakeVirtualTimeClient(std::move(timeClient));
-  auto orderExecutionClient =
-    std::make_unique<ApplicationOrderExecutionClient>();
-  try {
-    orderExecutionClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*orderExecutionClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the order execution service."});
-  }
-  m_orderExecutionClient = MakeVirtualOrderExecutionClient(ByPassPtr(
-    std::move(orderExecutionClient)));
-  auto riskClient = std::make_unique<ApplicationRiskClient>();
-  try {
-    riskClient->BuildSession(Ref(serviceLocatorClient),
-      Ref(*m_socketThreadPool), Ref(*m_timerThreadPool));
-    (*riskClient)->Open();
-  } catch(const std::exception&) {
-    BOOST_THROW_EXCEPTION(ConnectException{
-      "Unable to connect to the risk service."});
-  }
-  m_riskClient = MakeVirtualRiskClient(ByPassPtr(std::move(riskClient)));
 }
 
 void SpireServiceClients::Close() {

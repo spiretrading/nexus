@@ -17,20 +17,6 @@ TEST_SUITE("TestRiskDataStore") {
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
     dataStore.GetPublisher().Monitor(operations);
-    auto openReceiver = Async<void>();
-    Spawn([&] {
-      try {
-        dataStore.Open();
-        openReceiver.GetEval().SetResult();
-      } catch(const std::exception&) {
-        openReceiver.GetEval().SetException(std::current_exception());
-      }
-    });
-    auto operation = operations->Pop();
-    auto openOperation = get<TestRiskDataStore::OpenOperation>(&*operation);
-    REQUIRE(openOperation);
-    openOperation->m_result.SetResult();
-    REQUIRE_NOTHROW(openReceiver.Get());
     auto closeReceiver = Async<void>();
     Spawn([&] {
       try {
@@ -40,7 +26,7 @@ TEST_SUITE("TestRiskDataStore") {
         closeReceiver.GetEval().SetException(std::current_exception());
       }
     });
-    operation = operations->Pop();
+    auto operation = operations->Pop();
     auto closeOperation = get<TestRiskDataStore::CloseOperation>(&*operation);
     REQUIRE(closeOperation);
     closeOperation->m_result.SetResult();
@@ -49,7 +35,6 @@ TEST_SUITE("TestRiskDataStore") {
 
   TEST_CASE("store") {
     auto dataStore = TestRiskDataStore();
-    Open(dataStore);
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
     dataStore.GetPublisher().Monitor(operations);
@@ -98,7 +83,6 @@ TEST_SUITE("TestRiskDataStore") {
 
   TEST_CASE("load") {
     auto dataStore = TestRiskDataStore();
-    Open(dataStore);
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
     dataStore.GetPublisher().Monitor(operations);

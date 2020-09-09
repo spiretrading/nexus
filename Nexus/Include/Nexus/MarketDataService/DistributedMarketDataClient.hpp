@@ -70,8 +70,6 @@ namespace Nexus::MarketDataService {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
@@ -87,11 +85,13 @@ namespace Nexus::MarketDataService {
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(
-    std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
-    countryToMarketDataClients, std::unordered_map<MarketCode,
-    std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
-    : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
-      m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {}
+      std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
+      countryToMarketDataClients, std::unordered_map<MarketCode,
+      std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
+      : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
+        m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {
+    m_openState.SetOpen();
+  }
 
   inline DistributedMarketDataClient::~DistributedMarketDataClient() {
     Close();
@@ -238,24 +238,6 @@ namespace Nexus::MarketDataService {
       securityInfos.insert(securityInfos.end(), result.begin(), result.end());
     }
     return securityInfos;
-  }
-
-  inline void DistributedMarketDataClient::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      for(auto& marketDataClient : m_countryToMarketDataClients) {
-        marketDataClient.second->Open();
-      }
-      for(auto& marketDataClient : m_marketToMarketDataClients) {
-        marketDataClient.second->Open();
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   inline void DistributedMarketDataClient::Close() {

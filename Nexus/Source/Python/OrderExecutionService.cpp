@@ -96,11 +96,6 @@ namespace {
         Update, orderId, executionReport);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient, "open",
-        Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualOrderExecutionClient, "close",
         Close);
@@ -140,7 +135,7 @@ void Nexus::Python::ExportApplicationOrderExecutionClient(
           });
         return MakeToPythonOrderExecutionClient(std::make_unique<Client>(
           sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportExecutionReport(pybind11::module& module) {
@@ -189,7 +184,6 @@ void Nexus::Python::ExportMockOrderExecutionDriver(pybind11::module& module) {
       call_guard<GilRelease>(), return_value_policy::reference_internal)
     .def("cancel", &MockOrderExecutionDriver::Cancel, call_guard<GilRelease>())
     .def("update", &MockOrderExecutionDriver::Update, call_guard<GilRelease>())
-    .def("open", &MockOrderExecutionDriver::Open, call_guard<GilRelease>())
     .def("close", &MockOrderExecutionDriver::Close, call_guard<GilRelease>());
 }
 
@@ -231,7 +225,6 @@ void Nexus::Python::ExportOrderExecutionClient(pybind11::module& module) {
       return_value_policy::reference_internal)
     .def("cancel", &VirtualOrderExecutionClient::Cancel)
     .def("update", &VirtualOrderExecutionClient::Update)
-    .def("open", &VirtualOrderExecutionClient::Open)
     .def("close", &VirtualOrderExecutionClient::Close);
 }
 
@@ -291,11 +284,13 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
     .def(init<const MarketDatabase&, const DestinationDatabase&,
       std::shared_ptr<VirtualServiceLocatorClient>,
       std::shared_ptr<VirtualUidClient>,
-      std::shared_ptr<VirtualAdministrationClient>>())
+      std::shared_ptr<VirtualAdministrationClient>>(), call_guard<GilRelease>())
+    .def("__del__",
+      [] (OrderExecutionServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("get_driver", &OrderExecutionServiceTestEnvironment::GetDriver,
       return_value_policy::reference_internal)
-    .def("open", &OrderExecutionServiceTestEnvironment::Open,
-      call_guard<GilRelease>())
     .def("close", &OrderExecutionServiceTestEnvironment::Close,
       call_guard<GilRelease>())
     .def("build_client",
@@ -303,7 +298,7 @@ void Nexus::Python::ExportOrderExecutionServiceTestEnvironment(
           VirtualServiceLocatorClient& serviceLocatorClient) {
         return MakeToPythonOrderExecutionClient(
           self.BuildClient(Ref(serviceLocatorClient)));
-      });
+      }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportOrderFields(pybind11::module& module) {

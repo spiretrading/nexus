@@ -66,8 +66,6 @@ namespace Nexus::Compliance {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -87,11 +85,13 @@ namespace Nexus::Compliance {
   template<typename D, typename C, typename S>
   template<typename DF, typename CF, typename SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
-    ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-    CF&& timeClient, SF&& complianceRuleSet)
-    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-      m_timeClient(std::forward<CF>(timeClient)),
-      m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
+      ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
+      CF&& timeClient, SF&& complianceRuleSet)
+      : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
+        m_timeClient(std::forward<CF>(timeClient)),
+        m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {
+    m_openState.SetOpen();
+  }
 
   template<typename D, typename C, typename S>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
@@ -162,21 +162,6 @@ namespace Nexus::Compliance {
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
     m_orderExecutionDriver->Update(session, orderId, executionReport);
-  }
-
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_orderExecutionDriver->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D, typename C, typename S>

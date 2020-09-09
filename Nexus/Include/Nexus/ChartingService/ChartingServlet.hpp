@@ -61,8 +61,6 @@ namespace Details {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -117,8 +115,10 @@ namespace Details {
   template<typename C, typename M>
   template<typename MF>
   ChartingServlet<C, M>::ChartingServlet(MF&& marketDataClient)
-    : m_marketDataClient(std::forward<MF>(marketDataClient)),
-      m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
+      : m_marketDataClient(std::forward<MF>(marketDataClient)),
+        m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {
+    m_openState.SetOpen();
+  }
 
   template<typename C, typename M>
   void ChartingServlet<C, M>::RegisterServices(
@@ -142,21 +142,6 @@ namespace Details {
   void ChartingServlet<C, M>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_timeAndSaleQueries.m_queries.RemoveAll(client);
-  }
-
-  template<typename C, typename M>
-  void ChartingServlet<C, M>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-      m_dataStore.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename M>

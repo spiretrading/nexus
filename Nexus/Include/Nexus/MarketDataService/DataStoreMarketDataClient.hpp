@@ -76,8 +76,6 @@ namespace Nexus::MarketDataService {
       std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
         const std::string& prefix);
 
-      void Open();
-
       void Close();
 
     private:
@@ -90,7 +88,9 @@ namespace Nexus::MarketDataService {
   template<typename D>
   template<typename S>
   DataStoreMarketDataClient<D>::DataStoreMarketDataClient(S&& dataStore)
-    : m_dataStore(std::forward<S>(dataStore)) {}
+      : m_dataStore(std::forward<S>(dataStore)) {
+    m_openState.SetOpen();
+  }
 
   template<typename D>
   DataStoreMarketDataClient<D>::~DataStoreMarketDataClient() {
@@ -229,20 +229,6 @@ namespace Nexus::MarketDataService {
   std::vector<SecurityInfo> DataStoreMarketDataClient<D>::
       LoadSecurityInfoFromPrefix(const std::string& prefix) {
     return {};
-  }
-
-  template<typename D>
-  void DataStoreMarketDataClient<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D>

@@ -52,8 +52,6 @@ namespace MarketDataService {
       virtual void PublishTimeAndSale(
         const SecurityTimeAndSale& timeAndSale) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -111,8 +109,6 @@ namespace MarketDataService {
         const boost::posix_time::ptime& timestamp);
 
       virtual void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale);
-
-      virtual void Open();
 
       virtual void Close();
 
@@ -208,11 +204,6 @@ namespace MarketDataService {
   void WrapperMarketDataFeedClient<MarketDataFeedClientType>::
       PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale) {
     return m_client->PublishTimeAndSale(timeAndSale);
-  }
-
-  template<typename MarketDataFeedClientType>
-  void WrapperMarketDataFeedClient<MarketDataFeedClientType>::Open() {
-    m_client->Open();
   }
 
   template<typename MarketDataFeedClientType>

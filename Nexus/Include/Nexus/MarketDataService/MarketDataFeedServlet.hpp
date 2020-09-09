@@ -43,8 +43,6 @@ namespace MarketDataService {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -96,6 +94,7 @@ namespace MarketDataService {
       Beam::Store(slots), std::bind(
       &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this,
       std::placeholders::_1, std::placeholders::_2));
+    m_openState.SetOpen();
   }
 
   template<typename ContainerType, typename MarketDataRegistryType>
@@ -110,14 +109,6 @@ namespace MarketDataService {
       HandleClientClosed(ServiceProtocolClient& client) {
     auto& session = client.GetSession();
     m_registry->Clear(session.m_sourceId);
-  }
-
-  template<typename ContainerType, typename MarketDataRegistryType>
-  void MarketDataFeedServlet<ContainerType, MarketDataRegistryType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    m_openState.SetOpen();
   }
 
   template<typename ContainerType, typename MarketDataRegistryType>

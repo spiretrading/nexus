@@ -33,15 +33,12 @@ namespace {
     boost::optional<TestComplianceRuleSet> m_complianceRuleSet;
 
     Fixture() {
-      m_serviceLocatorEnvironment.Open();
       auto serviceLocatorClient = m_serviceLocatorEnvironment.BuildClient();
-      serviceLocatorClient->SetCredentials("root", "");
-      serviceLocatorClient->Open();
       auto serverConnection = std::make_shared<TestServerConnection>();
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*serverConnection));
+            "test", *serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_complianceClient.emplace(builder);
       m_complianceRuleSet.emplace(&*m_complianceClient,

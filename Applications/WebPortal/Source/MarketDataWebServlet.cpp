@@ -15,8 +15,10 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::WebPortal;
 
 MarketDataWebServlet::MarketDataWebServlet(
-  Ref<SessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.Get()) {}
+    Ref<SessionStore<WebPortalSession>> sessions)
+    : m_sessions(sessions.Get()) {
+  m_openState.SetOpen();
+}
 
 MarketDataWebServlet::~MarketDataWebServlet() {
   Close();
@@ -29,13 +31,6 @@ std::vector<HttpRequestSlot> MarketDataWebServlet::GetSlots() {
     std::bind(&MarketDataWebServlet::OnLoadSecurityInfoFromPrefix, this,
     std::placeholders::_1));
   return slots;
-}
-
-void MarketDataWebServlet::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_openState.SetOpen();
 }
 
 void MarketDataWebServlet::Close() {

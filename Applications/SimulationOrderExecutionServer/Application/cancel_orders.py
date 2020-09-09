@@ -55,8 +55,7 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = nexus.ApplicationServiceClients(address, username, password)
-  service_clients.open()
+  service_clients = nexus.ApplicationServiceClients(username, password, address)
   market_database = \
     service_clients.get_definitions_client().load_market_database()
   time_zone_database = \

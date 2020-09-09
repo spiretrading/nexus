@@ -41,13 +41,10 @@ def main():
   username = section['username']
   password = section['password']
   service_locator_client = beam.service_locator.ApplicationServiceLocatorClient(
-    address)
-  service_locator_client.set_credentials(username, password)
-  service_locator_client.open()
+    username, password, address)
   administration_client = \
     nexus.administration_service.ApplicationAdministrationClient(
     service_locator_client)
-  administration_client.open()
   for account in service_locator_client.load_all_accounts():
     administration_client.store_risk_state(account,
       nexus.risk_service.RiskState())

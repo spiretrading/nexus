@@ -49,15 +49,12 @@ namespace Nexus::AdministrationService {
        */
       template<typename SF, typename DF>
       AdministrationServlet(SF&& serviceLocatorClient,
-        const MarketDataService::EntitlementDatabase& entitlements,
-        DF&& dataStore);
+        MarketDataService::EntitlementDatabase entitlements, DF&& dataStore);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
 
       void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Open();
 
       void Close();
 
@@ -231,10 +228,34 @@ namespace Nexus::AdministrationService {
   template<typename SF, typename DF>
   AdministrationServlet<C, S, D>::AdministrationServlet(
     SF&& serviceLocatorClient,
-    const MarketDataService::EntitlementDatabase& entitlements, DF&& dataStore)
+    MarketDataService::EntitlementDatabase entitlements, DF&& dataStore)
     : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
-      m_entitlements(entitlements),
-      m_dataStore(std::forward<DF>(dataStore)) {}
+      m_entitlements(std::move(entitlements)),
+      m_dataStore(std::forward<DF>(dataStore)) {
+    m_openState.SetOpening();
+    try {
+      auto requestIds = m_dataStore->LoadAccountModificationRequestIds(-1, 1);
+      if(requestIds.empty()) {
+        m_nextModificationRequestId = 0;
+      } else {
+        m_nextModificationRequestId = requestIds.back();
+      }
+      m_nextMessageId = m_dataStore->LoadLastMessageId();
+      m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "administrators",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_servicesRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "services",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      m_tradingGroupsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
+        *m_serviceLocatorClient, "trading_groups",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C, typename S, typename D>
   void AdministrationServlet<C, S, D>::RegisterServices(
@@ -370,37 +391,6 @@ namespace Nexus::AdministrationService {
           Beam::RemoveAll(entry.m_subscribers, &client);
         }
       });
-  }
-
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_serviceLocatorClient->Open();
-      m_dataStore->Open();
-      auto requestIds = m_dataStore->LoadAccountModificationRequestIds(-1, 1);
-      if(requestIds.empty()) {
-        m_nextModificationRequestId = 0;
-      } else {
-        m_nextModificationRequestId = requestIds.back();
-      }
-      m_nextMessageId = m_dataStore->LoadLastMessageId();
-      m_administratorsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "administrators",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      m_servicesRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "services",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-      m_tradingGroupsRoot = Beam::ServiceLocator::LoadOrCreateDirectory(
-        *m_serviceLocatorClient, "trading_groups",
-        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename S, typename D>

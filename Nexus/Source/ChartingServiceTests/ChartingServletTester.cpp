@@ -30,16 +30,12 @@ namespace {
 
     Fixture()
         : m_serviceClients(Ref(m_environment)) {
-      m_environment.Open();
-      m_serviceClients.Open();
       auto serverConnection = std::make_shared<TestServerConnection>();
       m_container.emplace(Initialize(&m_serviceClients.GetMarketDataClient()),
         serverConnection, factory<std::unique_ptr<TriggerTimer>>());
-      m_container->Open();
-      m_clientProtocol.emplace(Initialize("test", Ref(*serverConnection)),
+      m_clientProtocol.emplace(Initialize("test", *serverConnection),
         Initialize());
       RegisterChartingServices(Store(m_clientProtocol->GetSlots()));
-      m_clientProtocol->Open();
     }
   };
 }

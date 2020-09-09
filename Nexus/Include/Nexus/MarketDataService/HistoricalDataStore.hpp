@@ -133,9 +133,6 @@ namespace Nexus::MarketDataService {
      */
     void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
 
-    /** Opens the data store. */
-    void Open();
-
     /** Closes the data store. */
     void Close();
   };

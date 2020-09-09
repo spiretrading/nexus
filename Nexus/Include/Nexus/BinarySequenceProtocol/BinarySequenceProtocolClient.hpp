@@ -47,8 +47,6 @@ namespace Nexus::BinarySequenceProtocol {
        */
       BinarySequenceProtocolMessage Read(Beam::Out<Sequence> sequenceNumber);
 
-      void Open();
-
       void Close();
 
     private:
@@ -67,7 +65,10 @@ namespace Nexus::BinarySequenceProtocol {
   template<typename C, typename S>
   template<typename CF>
   BinarySequenceProtocolClient<C, S>::BinarySequenceProtocolClient(CF&& channel)
-    : m_channel(std::forward<CF>(channel)) {}
+      : m_channel(std::forward<CF>(channel)),
+        m_sequenceNumber(-1) {
+    m_openState.SetOpen();
+  }
 
   template<typename C, typename S>
   BinarySequenceProtocolClient<C, S>::~BinarySequenceProtocolClient() {
@@ -110,21 +111,6 @@ namespace Nexus::BinarySequenceProtocol {
     *sequenceNumber = m_sequenceNumber;
     ++m_sequenceNumber;
     return message;
-  }
-
-  template<typename C, typename S>
-  void BinarySequenceProtocolClient<C, S>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_channel->GetConnection().Open();
-      m_sequenceNumber = -1;
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename S>

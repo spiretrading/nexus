@@ -77,8 +77,6 @@ namespace Nexus::MarketDataService {
 
       void HandleClientClosed(ServiceProtocolClient& client);
 
-      void Open();
-
       void Close();
 
     private:
@@ -147,10 +145,23 @@ namespace Nexus::MarketDataService {
   template<typename C, typename R, typename D, typename A>
   template<typename AF, typename RF, typename DF>
   MarketDataRegistryServlet<C, R, D, A>::MarketDataRegistryServlet(
-    AF&& administrationClient, RF&& registry, DF&& dataStore)
-    : m_administrationClient(std::forward<AF>(administrationClient)),
-      m_registry(std::forward<RF>(registry)),
-      m_dataStore(std::forward<DF>(dataStore)) {}
+      AF&& administrationClient, RF&& registry, DF&& dataStore)
+      : m_administrationClient(std::forward<AF>(administrationClient)),
+        m_registry(std::forward<RF>(registry)),
+        m_dataStore(std::forward<DF>(dataStore)) {
+    m_openState.SetOpening();
+    try {
+      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
+      for(auto& entry : securityInfo) {
+        m_registry->Add(entry);
+      }
+      m_entitlementDatabase = m_administrationClient->LoadEntitlements();
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C, typename R, typename D, typename A>
   void MarketDataRegistryServlet<C, R, D, A>::Add(
@@ -322,26 +333,6 @@ namespace Nexus::MarketDataService {
     m_marketQuoteSubscriptions.RemoveAll(client);
     m_bookQuoteSubscriptions.RemoveAll(client);
     m_timeAndSaleSubscriptions.RemoveAll(client);
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_administrationClient->Open();
-      m_dataStore->Open();
-      auto securityInfo = m_dataStore->LoadAllSecurityInfo();
-      for(auto& entry : securityInfo) {
-        m_registry->Add(entry);
-      }
-      m_entitlementDatabase = m_administrationClient->LoadEntitlements();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename R, typename D, typename A>

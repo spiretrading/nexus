@@ -73,10 +73,6 @@ namespace {
       return MakeVirtualTimer(BuildPythonTimer(expiry));
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualServiceClients, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualServiceClients, "close", Close);
     }
@@ -97,7 +93,7 @@ namespace {
         m_environment(std::move(environment)) {}
 
     ~PythonTestServiceClients() override {
-      auto release = gil_scoped_release();
+      auto release = GilRelease();
       Close();
       m_environment.reset();
     }
@@ -109,12 +105,13 @@ void Nexus::Python::ExportApplicationServiceClients(pybind11::module& module) {
       std::shared_ptr<ToPythonServiceClients<ApplicationServiceClients>>,
       VirtualServiceClients>(module, "ApplicationServiceClients")
     .def(init(
-      [] (const IpAddress& address, const std::string& username,
-          const std::string& password) {
+      [] (std::string username, std::string password,
+          const IpAddress& address) {
         return MakeToPythonServiceClients(
-          std::make_unique<ApplicationServiceClients>(address, username,
-          password, Ref(*GetSocketThreadPool()), Ref(*GetTimerThreadPool())));
-      }));
+          std::make_unique<ApplicationServiceClients>(std::move(username),
+          std::move(password), address, Ref(*GetSocketThreadPool()),
+          Ref(*GetTimerThreadPool())));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportServiceClients(pybind11::module& module) {
@@ -127,8 +124,16 @@ void Nexus::Python::ExportServiceClients(pybind11::module& module) {
 void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(module,
       "TestEnvironment")
-    .def(init())
-    .def(init<std::shared_ptr<VirtualHistoricalDataStore>>())
+    .def(init<>(), call_guard<GilRelease>())
+    .def(init<ptime>(), call_guard<GilRelease>())
+    .def(init<std::shared_ptr<VirtualHistoricalDataStore>>(),
+      call_guard<GilRelease>())
+    .def(init<std::shared_ptr<VirtualHistoricalDataStore>, ptime>(),
+      call_guard<GilRelease>())
+    .def("__del__",
+      [] (TestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
     .def("set_time", &TestEnvironment::SetTime, call_guard<GilRelease>())
     .def("advance_time", &TestEnvironment::AdvanceTime,
       call_guard<GilRelease>())
@@ -178,10 +183,16 @@ void Nexus::Python::ExportTestEnvironment(pybind11::module& module) {
     .def("get_market_data_environment",
       &TestEnvironment::GetMarketDataEnvironment,
       return_value_policy::reference_internal)
+    .def("get_charting_environment", &TestEnvironment::GetChartingEnvironment,
+      return_value_policy::reference_internal)
+    .def("get_compliance_environment",
+      &TestEnvironment::GetComplianceEnvironment,
+      return_value_policy::reference_internal)
     .def("get_order_execution_environment",
       &TestEnvironment::GetOrderExecutionEnvironment,
       return_value_policy::reference_internal)
-    .def("open", &TestEnvironment::Open, call_guard<GilRelease>())
+    .def("get_risk_environment", &TestEnvironment::GetRiskEnvironment,
+      return_value_policy::reference_internal)
     .def("close", &TestEnvironment::Close, call_guard<GilRelease>());
 }
 
@@ -192,7 +203,7 @@ void Nexus::Python::ExportTestServiceClients(pybind11::module& module) {
       [] (std::shared_ptr<TestEnvironment> environment) {
         return std::make_shared<PythonTestServiceClients>(
           std::make_unique<TestServiceClients>(Ref(*environment)), environment);
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportVirtualServiceClients(pybind11::module& module) {
@@ -225,6 +236,5 @@ void Nexus::Python::ExportVirtualServiceClients(pybind11::module& module) {
       [] (VirtualServiceClients& serviceClients, const time_duration& expiry) {
         return std::shared_ptr(serviceClients.BuildTimer(expiry));
       })
-    .def("open", &VirtualServiceClients::Open)
     .def("close", &VirtualServiceClients::Close);
 }

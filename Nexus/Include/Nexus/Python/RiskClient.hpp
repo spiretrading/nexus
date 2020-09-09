@@ -34,8 +34,6 @@ namespace Nexus::RiskService {
       const RiskPortfolioUpdatePublisher&
         GetRiskPortfolioUpdatePublisher() override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -80,12 +78,6 @@ namespace Nexus::RiskService {
       ToPythonRiskClient<C>::GetRiskPortfolioUpdatePublisher() {
     auto release = Beam::Python::GilRelease();
     return m_client->GetRiskPortfolioUpdatePublisher();
-  }
-
-  template<typename C>
-  void ToPythonRiskClient<C>::Open() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Open();
   }
 
   template<typename C>

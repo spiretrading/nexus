@@ -49,8 +49,6 @@ namespace Nexus::Compliance {
 
       void Store(const ComplianceRuleViolationRecord& violationRecord);
 
-      void Open();
-
       void Close();
 
     private:
@@ -63,8 +61,22 @@ namespace Nexus::Compliance {
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::SqlComplianceRuleDataStore(
-    std::unique_ptr<Connection> connection)
-    : m_connection(std::move(connection)) {}
+      std::unique_ptr<Connection> connection)
+      : m_connection(std::move(connection)) {
+    m_openState.SetOpening();
+    try {
+      m_connection->open();
+      m_connection->execute(Viper::create_if_not_exists(
+        GetComplianceRuleEntriesRow(), "compliance_rule_entries"));
+      m_connection->execute(Viper::create_if_not_exists(
+        GetComplianceRuleViolationRecordsRow(),
+        "compliance_rule_violation_records"));
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::~SqlComplianceRuleDataStore() {
@@ -190,25 +202,6 @@ namespace Nexus::Compliance {
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(ComplianceRuleDataStoreException(e.what()));
     }
-  }
-
-  template<typename C>
-  void SqlComplianceRuleDataStore<C>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_connection->open();
-      m_connection->execute(Viper::create_if_not_exists(
-        GetComplianceRuleEntriesRow(), "compliance_rule_entries"));
-      m_connection->execute(Viper::create_if_not_exists(
-        GetComplianceRuleViolationRecordsRow(),
-        "compliance_rule_violation_records"));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C>

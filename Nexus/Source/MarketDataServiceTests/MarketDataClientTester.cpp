@@ -53,7 +53,6 @@ namespace {
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
         std::bind(&Fixture::OnQuerySecurityBboQuotes, this,
         std::placeholders::_1, std::placeholders::_2));
-      m_server.Open();
     }
 
     template<typename T>
@@ -64,10 +63,9 @@ namespace {
       auto builder = TestServiceProtocolClientBuilder(
         [=] {
           return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", Ref(*m_serverConnection));
+            "test", *m_serverConnection);
         }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       auto clientEntry = std::make_unique<ClientEntry>(builder);
-      clientEntry->m_client.Open();
       return clientEntry;
     }
 

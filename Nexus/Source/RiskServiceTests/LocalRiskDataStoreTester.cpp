@@ -14,7 +14,6 @@ using namespace Nexus::RiskService;
 TEST_SUITE("LocalRiskDataStore") {
   TEST_CASE("load_empty_inventories") {
     auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
     auto snapshot = dataStore.LoadInventorySnapshot(DirectoryEntry::MakeAccount(
       123, "test"));
     REQUIRE(snapshot.m_sequence == Sequence::First());
@@ -24,7 +23,6 @@ TEST_SUITE("LocalRiskDataStore") {
 
   TEST_CASE("store_load_inventory") {
     auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
     auto inventories = std::vector<RiskInventory>();
     inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),
@@ -48,7 +46,6 @@ TEST_SUITE("LocalRiskDataStore") {
 
   TEST_CASE("store_empty_inventory") {
     auto dataStore = LocalRiskDataStore();
-    dataStore.Open();
     auto inventories = std::vector<RiskInventory>();
     inventories.emplace_back(RiskInventory::Position::Key(
       Security("A", DefaultMarkets::NYSE(), DefaultCountries::US()),

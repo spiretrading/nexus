@@ -60,8 +60,6 @@ namespace Nexus::MarketDataService {
       virtual void Store(
         const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) = 0;
 
-      virtual void Open() = 0;
-
       virtual void Close() = 0;
 
     protected:
@@ -134,8 +132,6 @@ namespace Nexus::MarketDataService {
 
       void Store(
         const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) override;
-
-      void Open() override;
 
       void Close() override;
 
@@ -267,11 +263,6 @@ namespace Nexus::MarketDataService {
   void WrapperHistoricalDataStore<C>::Store(
       const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
     m_dataStore->Store(timeAndSales);
-  }
-
-  template<typename C>
-  void WrapperHistoricalDataStore<C>::Open() {
-    m_dataStore->Open();
   }
 
   template<typename C>

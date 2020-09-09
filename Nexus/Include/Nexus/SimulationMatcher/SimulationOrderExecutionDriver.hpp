@@ -53,8 +53,6 @@ namespace Nexus::OrderExecutionService {
       void Update(const OrderExecutionSession& session, OrderId orderId,
         const ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -84,7 +82,9 @@ namespace Nexus::OrderExecutionService {
       : m_marketDataClient(std::forward<MarketDataClientForward>(
           marketDataClient)),
         m_timeClient(std::forward<TimeClientForward>(timeClient)),
-        m_nextOrderId(1) {}
+        m_nextOrderId(1) {
+    m_openState.SetOpen();
+  }
 
   template<typename MarketDataClientType, typename TimeClientType>
   SimulationOrderExecutionDriver<MarketDataClientType, TimeClientType>::
@@ -135,22 +135,6 @@ namespace Nexus::OrderExecutionService {
     }
     auto& simulator = LoadSimulator((*order)->GetInfo().m_fields.m_security);
     simulator.Update(*order, executionReport);
-  }
-
-  template<typename MarketDataClientType, typename TimeClientType>
-  void SimulationOrderExecutionDriver<MarketDataClientType, TimeClientType>::
-      Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataClient->Open();
-      m_timeClient->Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename MarketDataClientType, typename TimeClientType>

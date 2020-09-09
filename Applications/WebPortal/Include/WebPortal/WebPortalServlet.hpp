@@ -51,8 +51,6 @@ namespace Nexus::WebPortal {
       std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
         GetWebSocketSlots();
 
-      void Open();
-
       void Close();
 
     private:

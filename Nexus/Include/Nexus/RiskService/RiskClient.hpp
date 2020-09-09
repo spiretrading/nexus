@@ -51,8 +51,6 @@ namespace Nexus::RiskService {
       /** Returns the object publishing a RiskPortfolioUpdates. */
       const RiskPortfolioUpdatePublisher& GetRiskPortfolioUpdatePublisher();
 
-      void Open();
-
       void Close();
 
     private:
@@ -105,6 +103,7 @@ namespace Nexus::RiskService {
             }
           });
       });
+    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -129,20 +128,6 @@ namespace Nexus::RiskService {
   const RiskPortfolioUpdatePublisher& RiskClient<B>::
       GetRiskPortfolioUpdatePublisher() {
     return *m_publisher;
-  }
-
-  template<typename B>
-  void RiskClient<B>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_clientHandler.Open();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename B>

@@ -20,9 +20,7 @@ TEST_SUITE("OrderReactor") {
     auto trigger = Trigger();
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto reactor = MakeLimitOrderReactor(
       Ref(serviceClients.GetOrderExecutionClient()), Aspen::none<Security>(),
       Aspen::constant(Side::BID), Aspen::constant(100),
@@ -39,9 +37,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto reactor = MakeLimitOrderReactor(
@@ -74,9 +70,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto price = Aspen::Shared<Aspen::Queue<Money>>();
@@ -135,9 +129,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto price = Aspen::Shared<Aspen::Queue<Money>>();
@@ -169,9 +161,7 @@ TEST_SUITE("OrderReactor") {
       });
     Trigger::set_trigger(trigger);
     auto environment = TestEnvironment();
-    environment.Open();
     auto serviceClients = TestServiceClients(Ref(environment));
-    serviceClients.Open();
     auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
     environment.MonitorOrderSubmissions(orderSubmissions);
     auto quantity = Aspen::Shared<Aspen::Queue<Quantity>>();

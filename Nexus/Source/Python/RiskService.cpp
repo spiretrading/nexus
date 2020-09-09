@@ -10,6 +10,7 @@
 #include "Nexus/RiskService/SqlRiskDataStore.hpp"
 #include "Nexus/RiskService/VirtualRiskClient.hpp"
 #include "Nexus/RiskService/VirtualRiskDataStore.hpp"
+#include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
 
 using namespace Beam;
 using namespace Beam::Codecs;
@@ -22,8 +23,13 @@ using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Threading;
+using namespace Beam::TimeService;
 using namespace Nexus;
+using namespace Nexus::AdministrationService;
+using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
+using namespace Nexus::RiskService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace pybind11;
@@ -47,10 +53,6 @@ namespace {
         GetRiskPortfolioUpdatePublisher);
     }
 
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskClient, "open", Open);
-    }
-
     void Close() override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskClient, "close", Close);
     }
@@ -67,10 +69,6 @@ namespace {
         const InventorySnapshot& snapshot) override {
       PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "store", Store,
         account, snapshot);
-    }
-
-    void Open() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "open", Open);
     }
 
     void Close() override {
@@ -109,7 +107,7 @@ void Nexus::Python::ExportApplicationRiskClient(pybind11::module& module) {
               Ref(*GetTimerThreadPool()));
           });
         return MakeToPythonRiskClient(std::make_unique<Client>(sessionBuilder));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportLocalRiskDataStore(pybind11::module& module) {
@@ -135,7 +133,7 @@ void Nexus::Python::ExportMySqlRiskDataStore(pybind11::module& module) {
           std::make_unique<SqlRiskDataStore<Viper::MySql::Connection>>(
           std::make_unique<Viper::MySql::Connection>(host, port, username,
           password, database)));
-      }));
+      }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportRiskClient(pybind11::module& module) {
@@ -144,7 +142,6 @@ void Nexus::Python::ExportRiskClient(pybind11::module& module) {
     .def("reset", &VirtualRiskClient::Reset)
     .def("get_risk_portfolio_update_publisher",
       &VirtualRiskClient::GetRiskPortfolioUpdatePublisher)
-    .def("open", &VirtualRiskClient::Open)
     .def("close", &VirtualRiskClient::Close);
   ExportQueueSuite<KeyValuePair<RiskPortfolioKey, RiskInventory>>(module,
     "RiskPortfolioUpdateEntry");
@@ -156,20 +153,7 @@ void Nexus::Python::ExportRiskDataStore(pybind11::module& module) {
     .def("load_inventory_snapshot",
       &VirtualRiskDataStore::LoadInventorySnapshot)
     .def("store", &VirtualRiskDataStore::Store)
-    .def("open", &VirtualRiskDataStore::Open)
     .def("close", &VirtualRiskDataStore::Close);
-}
-
-void Nexus::Python::ExportRiskService(pybind11::module& module) {
-  auto submodule = module.def_submodule("risk_service");
-  ExportRiskClient(submodule);
-  ExportApplicationRiskClient(submodule);
-  ExportRiskDataStore(submodule);
-  ExportLocalRiskDataStore(submodule);
-  ExportMySqlRiskDataStore(submodule);
-  ExportRiskParameters(submodule);
-  ExportRiskState(submodule);
-  ExportSqliteRiskDataStore(submodule);
 }
 
 void Nexus::Python::ExportRiskParameters(pybind11::module& module) {
@@ -185,6 +169,54 @@ void Nexus::Python::ExportRiskParameters(pybind11::module& module) {
     .def_readwrite("transition_time", &RiskParameters::m_transitionTime)
     .def(self == self)
     .def(self != self);
+}
+
+void Nexus::Python::ExportRiskService(pybind11::module& module) {
+  auto submodule = module.def_submodule("risk_service");
+  ExportRiskClient(submodule);
+  ExportApplicationRiskClient(submodule);
+  ExportRiskDataStore(submodule);
+  ExportLocalRiskDataStore(submodule);
+  ExportMySqlRiskDataStore(submodule);
+  ExportRiskParameters(submodule);
+  ExportRiskState(submodule);
+  ExportSqliteRiskDataStore(submodule);
+  auto testModule = submodule.def_submodule("tests");
+  ExportRiskServiceTestEnvironment(testModule);
+}
+
+void Nexus::Python::ExportRiskServiceTestEnvironment(pybind11::module& module) {
+  class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
+    .def(init([] (
+          std::shared_ptr<VirtualServiceLocatorClient> serviceLocatorClient,
+          std::shared_ptr<VirtualAdministrationClient> administrationClient,
+          std::shared_ptr<VirtualMarketDataClient> marketDataClient,
+          std::shared_ptr<VirtualOrderExecutionClient> orderExecutionClient,
+          std::function<std::shared_ptr<VirtualTimer> ()>
+          transitionTimerFactory, std::shared_ptr<VirtualTimeClient> timeClient,
+          std::vector<ExchangeRate> exchangeRates, MarketDatabase markets,
+          DestinationDatabase destinations) {
+        auto adaptedTransitionTimerFactory = [=] {
+          return MakeVirtualTimer(transitionTimerFactory());
+        };
+        return std::make_unique<RiskServiceTestEnvironment>(
+          std::move(serviceLocatorClient), std::move(administrationClient),
+          std::move(marketDataClient), std::move(orderExecutionClient),
+          std::move(adaptedTransitionTimerFactory), std::move(timeClient),
+          std::move(exchangeRates), std::move(markets),
+          std::move(destinations));
+      }), call_guard<GilRelease>())
+    .def("__del__",
+      [] (RiskServiceTestEnvironment& self) {
+        self.Close();
+      }, call_guard<GilRelease>())
+    .def("build_client",
+      [] (RiskServiceTestEnvironment& self,
+          VirtualServiceLocatorClient& serviceLocatorClient) {
+        return MakeToPythonRiskClient(
+          self.BuildClient(Ref(serviceLocatorClient)));
+      }, call_guard<GilRelease>())
+    .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::ExportRiskState(pybind11::module& module) {
@@ -215,5 +247,5 @@ void Nexus::Python::ExportSqliteRiskDataStore(pybind11::module& module) {
         return MakeToPythonRiskDataStore(
           std::make_unique<SqlRiskDataStore<Viper::Sqlite3::Connection>>(
           std::make_unique<Viper::Sqlite3::Connection>(path)));
-      }));
+      }), call_guard<GilRelease>());
 }

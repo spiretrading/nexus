@@ -98,8 +98,6 @@ namespace Nexus::AdministrationService {
 
       void WithTransaction(const std::function<void ()>& transaction) override;
 
-      void Open() override;
-
       void Close() override;
 
     private:
@@ -113,8 +111,28 @@ namespace Nexus::AdministrationService {
   template<typename D>
   template<typename DF>
   CachedAdministrationDataStore<D>::CachedAdministrationDataStore(
-    DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)) {}
+      DF&& dataStore)
+      : m_dataStore(std::forward<DF>(dataStore)) {
+    m_openState.SetOpening();
+    try {
+      auto identities = m_dataStore->LoadAllAccountIdentities();
+      for(auto& identity : identities) {
+        m_cache.Store(std::get<0>(identity), std::get<1>(identity));
+      }
+      auto riskParameters = m_dataStore->LoadAllRiskParameters();
+      for(auto& riskParameter : riskParameters) {
+        m_cache.Store(std::get<0>(riskParameter), std::get<1>(riskParameter));
+      }
+      auto riskStates = m_dataStore->LoadAllRiskStates();
+      for(auto& riskState : riskStates) {
+        m_cache.Store(std::get<0>(riskState), std::get<1>(riskState));
+      }
+    } catch(const std::exception&) {
+      m_openState.SetOpenFailure();
+      Shutdown();
+    }
+    m_openState.SetOpen();
+  }
 
   template<typename D>
   CachedAdministrationDataStore<D>::~CachedAdministrationDataStore() {
@@ -274,33 +292,6 @@ namespace Nexus::AdministrationService {
       [&] {
         m_cache.WithTransaction(transaction);
       });
-  }
-
-  template<typename D>
-  void CachedAdministrationDataStore<D>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_dataStore->Open();
-      m_cache.Open();
-      auto identities = m_dataStore->LoadAllAccountIdentities();
-      for(auto& identity : identities) {
-        m_cache.Store(std::get<0>(identity), std::get<1>(identity));
-      }
-      auto riskParameters = m_dataStore->LoadAllRiskParameters();
-      for(auto& riskParameter : riskParameters) {
-        m_cache.Store(std::get<0>(riskParameter), std::get<1>(riskParameter));
-      }
-      auto riskStates = m_dataStore->LoadAllRiskStates();
-      for(auto& riskState : riskStates) {
-        m_cache.Store(std::get<0>(riskState), std::get<1>(riskState));
-      }
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename D>

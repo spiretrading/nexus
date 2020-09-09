@@ -32,10 +32,7 @@ namespace {
     Fixture()
         : m_serviceClients(Ref(m_environment)),
           m_check(&m_serviceClients.GetMarketDataClient(),
-            GetDefaultMarketDatabase(), GetDefaultTimeZoneDatabase()) {
-      m_environment.Open();
-      m_serviceClients.Open();
-    }
+            GetDefaultMarketDatabase(), GetDefaultTimeZoneDatabase()) {}
   };
 }
 
