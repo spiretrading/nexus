@@ -136,6 +136,9 @@ void DropDownList::remove_item(int index) {
   m_item_selected_connections.Disconnect(layout_item->widget());
   delete layout_item->widget();
   delete layout_item;
+  if(index == m_highlight_index) {
+    m_highlight_index = boost::none;
+  }
   update_height();
 }
 

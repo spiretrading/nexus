@@ -77,8 +77,8 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void paintEvent(QPaintEvent* event);
-      void resizeEvent(QResizeEvent* event);
+      void paintEvent(QPaintEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable ValueSelectedSignal m_value_selected_signal;
