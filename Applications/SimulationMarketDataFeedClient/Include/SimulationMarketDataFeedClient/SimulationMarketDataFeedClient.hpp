@@ -82,12 +82,9 @@ namespace Nexus {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
-      void OnBboTimerExpired(const Beam::Threading::Timer::Result& result);
-      void OnMarketQuoteTimerExpired(
-        const Beam::Threading::Timer::Result& result);
-      void OnTimeAndSaleTimerExpired(
-        const Beam::Threading::Timer::Result& result);
+      void OnBboTimerExpired(Beam::Threading::Timer::Result result);
+      void OnMarketQuoteTimerExpired(Beam::Threading::Timer::Result result);
+      void OnTimeAndSaleTimerExpired(Beam::Threading::Timer::Result result);
   };
 
   template<typename F, typename T, typename B, typename M, typename S>
@@ -108,7 +105,6 @@ namespace Nexus {
       auto& snapshot = m_securities.back();
       snapshot.m_security = security;
     }
-    m_openState.SetOpening();
     try {
       for(auto& snapshot : m_securities) {
         snapshot.m_bboQuote->m_bid.m_side = Side::BID;
@@ -143,10 +139,9 @@ namespace Nexus {
       m_marketQuoteTimer->Start();
       m_timeAndSaleTimer->Start();
     } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename F, typename T, typename B, typename M, typename S>
@@ -160,22 +155,17 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename F, typename T, typename B, typename M, typename S>
-  void SimulationMarketDataFeedClient<F, T, B, M, S>::Shutdown() {
     m_feedClient->Close();
     m_bboTimer->Cancel();
     m_marketQuoteTimer->Cancel();
     m_timeAndSaleTimer->Cancel();
     m_tasks.Break();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename F, typename T, typename B, typename M, typename S>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::OnBboTimerExpired(
-      const Beam::Threading::Timer::Result& result) {
+      Beam::Threading::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       snapshot.m_bboQuote->m_bid.m_size = 100 + (std::rand() % 1000);
       snapshot.m_bboQuote->m_ask.m_size = 100 + (std::rand() % 1000);
@@ -196,7 +186,7 @@ namespace Nexus {
 
   template<typename F, typename T, typename B, typename M, typename S>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::OnMarketQuoteTimerExpired(
-      const Beam::Threading::Timer::Result& result) {
+      Beam::Threading::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       for(auto& marketQuote : snapshot.m_marketQuotes |
           boost::adaptors::map_values) {
@@ -213,8 +203,8 @@ namespace Nexus {
   }
 
   template<typename F, typename T, typename B, typename M, typename S>
-  void SimulationMarketDataFeedClient<F, T, B, M, S>::
-      OnTimeAndSaleTimerExpired(const Beam::Threading::Timer::Result& result) {
+  void SimulationMarketDataFeedClient<F, T, B, M, S>::OnTimeAndSaleTimerExpired(
+      Beam::Threading::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       auto condition = TimeAndSale::Condition(
         TimeAndSale::Condition::Type::REGULAR, "@");

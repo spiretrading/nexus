@@ -39,7 +39,6 @@ namespace Spire {
       Beam::Threading::ConditionVariable m_updateCondition;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       void RunLoop();
       void OnUpdate();
   };

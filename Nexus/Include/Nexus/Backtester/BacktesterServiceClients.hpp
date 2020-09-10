@@ -89,7 +89,6 @@ namespace Nexus {
       BacktesterServiceClients(const BacktesterServiceClients&) = delete;
       BacktesterServiceClients& operator =(
         const BacktesterServiceClients&) = delete;
-      void Shutdown();
   };
 
   inline BacktesterServiceClients::BacktesterServiceClients(
@@ -121,9 +120,7 @@ namespace Nexus {
         Beam::Ref(*m_serviceLocatorClient))),
       m_timeClient(Beam::TimeService::MakeVirtualTimeClient<
         BacktesterTimeClient>(Beam::Initialize(Beam::Ref(
-        m_environment->GetEventHandler())))) {
-    m_openState.SetOpen();
-  }
+        m_environment->GetEventHandler())))) {}
 
   inline BacktesterServiceClients::~BacktesterServiceClients() {
     Close();
@@ -190,10 +187,6 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void BacktesterServiceClients::Shutdown() {
     m_timeClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
@@ -204,7 +197,7 @@ namespace Nexus {
     m_definitionsClient->Close();
     m_registryClient->Close();
     m_serviceLocatorClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

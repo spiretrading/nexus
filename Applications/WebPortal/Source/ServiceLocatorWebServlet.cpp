@@ -19,12 +19,10 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::WebPortal;
 
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions,
-    ServiceClientsBuilder serviceClientsBuilder)
-    : m_sessions(sessions.Get()),
-      m_serviceClientsBuilder(std::move(serviceClientsBuilder)) {
-  m_openState.SetOpen();
-}
+  Ref<SessionStore<WebPortalSession>> sessions,
+  ServiceClientsBuilder serviceClientsBuilder)
+  : m_sessions(sessions.Get()),
+    m_serviceClientsBuilder(std::move(serviceClientsBuilder)) {}
 
 ServiceLocatorWebServlet::~ServiceLocatorWebServlet() {
   Close();
@@ -67,14 +65,7 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::GetSlots() {
 }
 
 void ServiceLocatorWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void ServiceLocatorWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse ServiceLocatorWebServlet::OnLogin(const HttpRequest& request) {

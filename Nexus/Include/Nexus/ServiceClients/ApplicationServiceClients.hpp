@@ -15,10 +15,7 @@
 
 namespace Nexus {
 
-  /*! \class ApplicationServiceClients
-      \brief Implements the ServiceClients interface using live application
-             clients.
-   */
+  /** Implements the ServiceClients interface using live application clients. */
   class ApplicationServiceClients : private boost::noncopyable {
     public:
       using ServiceLocatorClient =
@@ -109,7 +106,6 @@ namespace Nexus {
       ApplicationServiceClients(const ApplicationServiceClients&) = delete;
       ApplicationServiceClients& operator =(
         const ApplicationServiceClients&) = delete;
-      void Shutdown();
   };
 
   inline ApplicationServiceClients::ApplicationServiceClients(
@@ -118,7 +114,6 @@ namespace Nexus {
       Beam::Ref<Beam::Network::SocketThreadPool> socketThreadPool,
       Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
       : m_timerThreadPool(timerThreadPool.Get()) {
-    m_openState.SetOpening();
     try {
       m_serviceLocatorClient.BuildSession(std::move(username),
         std::move(password), address, Beam::Ref(socketThreadPool),
@@ -152,10 +147,9 @@ namespace Nexus {
       m_timeClient = Beam::TimeService::MakeLiveNtpTimeClient(ntpPool,
         Beam::Ref(socketThreadPool), Beam::Ref(timerThreadPool));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   inline ApplicationServiceClients::~ApplicationServiceClients() {
@@ -222,10 +216,6 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  inline void ApplicationServiceClients::Shutdown() {
     m_timeClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
@@ -236,7 +226,7 @@ namespace Nexus {
     m_administrationClient->Close();
     m_registryClient->Close();
     m_serviceLocatorClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

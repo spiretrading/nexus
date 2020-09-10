@@ -59,7 +59,6 @@ namespace Nexus::DefinitionsService {
       std::vector<Compliance::ComplianceRuleSchema> m_complianceRuleSchemas;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       std::string OnLoadMinimumSpireClientVersion(
         ServiceProtocolClient& client);
       std::string OnLoadOrganizationName(ServiceProtocolClient& client);
@@ -132,20 +131,11 @@ namespace Nexus::DefinitionsService {
       std::placeholders::_1));
     LoadTradingScheduleService::AddSlot(Store(slots), std::bind(
       &DefinitionsServlet::OnLoadTradingSchedule, this, std::placeholders::_1));
-    m_openState.SetOpen();
   }
 
   template<typename C>
   void DefinitionsServlet<C>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
-  }
-
-  template<typename C>
-  void DefinitionsServlet<C>::Shutdown() {
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C>

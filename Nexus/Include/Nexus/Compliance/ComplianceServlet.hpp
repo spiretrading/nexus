@@ -75,7 +75,6 @@ namespace Nexus::Compliance {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       std::vector<ComplianceRuleEntry> OnLoadDirectoryEntryComplianceRuleEntry(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry);
@@ -104,11 +103,18 @@ namespace Nexus::Compliance {
   template<typename C, typename S, typename A, typename D, typename T>
   template<typename SF, typename AF, typename DF, typename TF>
   ComplianceServlet<C, S, A, D, T>::ComplianceServlet(SF&& serviceLocatorClient,
-    AF&& administrationClient, DF&& dataStore, TF&& timeClient)
-    : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
-      m_administrationClient(std::forward<AF>(administrationClient)),
-      m_dataStore(std::forward<DF>(dataStore)),
-      m_timeClient(std::forward<TF>(timeClient)) {}
+      AF&& administrationClient, DF&& dataStore, TF&& timeClient)
+      : m_serviceLocatorClient(std::forward<SF>(serviceLocatorClient)),
+        m_administrationClient(std::forward<AF>(administrationClient)),
+        m_dataStore(std::forward<DF>(dataStore)),
+        m_timeClient(std::forward<TF>(timeClient)) {
+    try {
+      m_nextEntryId = m_dataStore->LoadNextComplianceRuleEntryId();
+    } catch(const std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename C, typename S, typename A, typename D, typename T>
   void ComplianceServlet<C, S, A, D, T>::RegisterServices(
@@ -134,25 +140,16 @@ namespace Nexus::Compliance {
       Beam::Store(slots), std::bind(
       &ComplianceServlet::OnReportComplianceRuleViolation, this,
       std::placeholders::_1, std::placeholders::_2));
-    m_openState.SetOpening();
-    try {
-      m_nextEntryId = m_dataStore->LoadNextComplianceRuleEntryId();
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename S, typename A, typename D, typename T>
-  void ComplianceServlet<C, S, A, D, T>::
-      HandleClientClosed(ServiceProtocolClient& client) {
-    m_complianceEntrySubscriptions.With(
-      [&] (auto& subscriptions) {
-        for(auto& subscription : subscriptions | boost::adaptors::map_values) {
-          subscription.Remove(&client);
-        }
-      });
+  void ComplianceServlet<C, S, A, D, T>::HandleClientClosed(
+      ServiceProtocolClient& client) {
+    m_complianceEntrySubscriptions.With([&] (auto& subscriptions) {
+      for(auto& subscription : subscriptions | boost::adaptors::map_values) {
+        subscription.Remove(&client);
+      }
+    });
   }
 
   template<typename C, typename S, typename A, typename D, typename T>
@@ -160,13 +157,8 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename S, typename A, typename D, typename T>
-  void ComplianceServlet<C, S, A, D, T>::Shutdown() {
     m_tasks.Break();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename S, typename A, typename D, typename T>
@@ -215,11 +207,10 @@ namespace Nexus::Compliance {
     auto entry = ComplianceRuleEntry(id, directoryEntry, state, schema);
     m_dataStore->Store(entry);
     auto& subscribers = m_complianceEntrySubscriptions.Get(directoryEntry);
-    subscribers.ForEach(
-      [&] (auto client) {
-        Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
-          entry);
-      });
+    subscribers.ForEach([&] (auto client) {
+      Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
+        entry);
+    });
     return entry.GetId();
   }
 
@@ -236,11 +227,10 @@ namespace Nexus::Compliance {
     m_dataStore->Store(entry);
     auto& subscribers = m_complianceEntrySubscriptions.Get(
       entry.GetDirectoryEntry());
-    subscribers.ForEach(
-      [&] (auto client) {
-        Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
-          entry);
-      });
+    subscribers.ForEach([&] (auto client) {
+      Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
+        entry);
+    });
   }
 
   template<typename C, typename S, typename A, typename D, typename T>
@@ -261,11 +251,10 @@ namespace Nexus::Compliance {
     entry->SetState(ComplianceRuleEntry::State::DELETED);
     auto& subscribers = m_complianceEntrySubscriptions.Get(
       entry->GetDirectoryEntry());
-    subscribers.ForEach(
-      [&] (auto client) {
-        Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
-          *entry);
-      });
+    subscribers.ForEach([&] (auto client) {
+      Beam::Services::SendRecordMessage<ComplianceRuleEntryMessage>(*client,
+        *entry);
+    });
   }
 
   template<typename C, typename S, typename A, typename D, typename T>

@@ -76,17 +76,15 @@ namespace Nexus {
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       boost::posix_time::ptime m_openTime;
       TimerBuilder m_timerBuilder;
-      std::atomic_bool m_isRunning;
       Beam::Threading::Mutex m_pendingMutex;
       std::size_t m_pendingLoadCount;
       Beam::Threading::ConditionVariable m_isPendingLoad;
       Beam::IO::OpenState m_openState;
       Beam::Routines::RoutineHandlerGroup m_routines;
 
-      void Shutdown();
       template<typename F, typename P>
-      void ReplayMarketData(const Security& security, F queryLoader,
-        P publisher);
+      void ReplayMarketData(const Security& security, F&& queryLoader,
+        P&& publisher);
   };
 
   template<typename M, typename D, typename T, typename R>
@@ -100,7 +98,53 @@ namespace Nexus {
         m_feedClient(std::forward<MF>(feedClient)),
         m_dataStore(std::forward<DF>(dataStore)),
         m_timeClient(std::forward<TF>(timeClient)),
-        m_timerBuilder(std::move(timerBuilder)) {}
+        m_timerBuilder(std::move(timerBuilder)) {
+    try {
+      m_openTime = m_timeClient->GetTime();
+      m_pendingLoadCount = 4 * m_securities.size();
+      for(auto& security : m_securities) {
+        m_routines.Spawn([=] {
+          ReplayMarketData(security,
+            [=] (const auto& query) {
+              return m_dataStore->LoadBboQuotes(query);
+            },
+            [=] (const auto& value) {
+              return m_feedClient->PublishBboQuote(value);
+            });
+        });
+        m_routines.Spawn([=] {
+          ReplayMarketData(security,
+            [=] (const auto& query) {
+              return m_dataStore->LoadMarketQuotes(query);
+            },
+            [=] (const auto& value) {
+              return m_feedClient->PublishMarketQuote(value);
+            });
+        });
+        m_routines.Spawn([=] {
+          ReplayMarketData(security,
+            [=] (const auto& query) {
+              return m_dataStore->LoadBookQuotes(query);
+            },
+            [=] (const auto& value) {
+              return m_feedClient->SetBookQuote(value);
+            });
+        });
+        m_routines.Spawn([=] {
+          ReplayMarketData(security,
+            [=] (const auto& query) {
+              return m_dataStore->LoadTimeAndSales(query);
+            },
+            [=] (const auto& value) {
+              return m_feedClient->PublishTimeAndSale(value);
+            });
+        });
+      }
+    } catch(std::exception&) {
+      Close();
+      BOOST_RETHROW;
+    }
+  }
 
   template<typename M, typename D, typename T, typename R>
   ReplayMarketDataFeedClient<M, D, T, R>::~ReplayMarketDataFeedClient() {
@@ -108,85 +152,18 @@ namespace Nexus {
   }
 
   template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_isRunning = true;
-      m_feedClient->Open();
-      m_dataStore->Open();
-      m_timeClient->Open();
-      m_openTime = m_timeClient->GetTime();
-      m_pendingLoadCount = 4 * m_securities.size();
-      for(auto& security : m_securities) {
-        m_routines.Spawn(
-          [=] {
-            ReplayMarketData(security,
-              [=] (const auto& query) {
-                return m_dataStore->LoadBboQuotes(query);
-              },
-              [=] (const auto& value) {
-                return m_feedClient->PublishBboQuote(value);
-              });
-          });
-        m_routines.Spawn(
-          [=] {
-            ReplayMarketData(security,
-              [=] (const auto& query) {
-                return m_dataStore->LoadMarketQuotes(query);
-              },
-              [=] (const auto& value) {
-                return m_feedClient->PublishMarketQuote(value);
-              });
-          });
-        m_routines.Spawn(
-          [=] {
-            ReplayMarketData(security,
-              [=] (const auto& query) {
-                return m_dataStore->LoadBookQuotes(query);
-              },
-              [=] (const auto& value) {
-                return m_feedClient->SetBookQuote(value);
-              });
-          });
-        m_routines.Spawn(
-          [=] {
-            ReplayMarketData(security,
-              [=] (const auto& query) {
-                return m_dataStore->LoadTimeAndSales(query);
-              },
-              [=] (const auto& value) {
-                return m_feedClient->PublishTimeAndSale(value);
-              });
-          });
-      }
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename M, typename D, typename T, typename R>
   void ReplayMarketDataFeedClient<M, D, T, R>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::Shutdown() {
-    m_isRunning = false;
     m_routines.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename M, typename D, typename T, typename R>
   template<typename F, typename P>
   void ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketData(
-      const Security& security, F queryLoader, P publisher) {
+      const Security& security, F&& queryLoader, P&& publisher) {
     constexpr auto QUERY_SIZE = 1000;
     const auto WAIT_QUANTUM = boost::posix_time::time_duration(
       boost::posix_time::seconds(1));
@@ -206,16 +183,16 @@ namespace Nexus {
     }
     auto currentTime = m_timeClient->GetTime();
     auto replayTime = m_replayTime + (currentTime - m_openTime);
-    while(!data.empty() && m_isRunning) {
+    while(!data.empty() && m_openState.IsOpen()) {
       for(auto& item : data) {
         auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
-        while(m_isRunning && wait > boost::posix_time::seconds(0)) {
+        while(m_openState.IsOpen() && wait > boost::posix_time::seconds(0)) {
           auto timer = m_timerBuilder(std::min(wait, WAIT_QUANTUM));
           timer->Start();
           timer->Wait();
           wait -= WAIT_QUANTUM;
         }
-        if(!m_isRunning) {
+        if(!m_openState.IsOpen()) {
           return;
         }
         Beam::Queries::GetTimestamp(*item) = m_timeClient->GetTime();

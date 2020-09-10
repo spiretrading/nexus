@@ -82,7 +82,6 @@ namespace Details {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_taskQueue;
 
-      void Shutdown();
       void OnQuerySecurityRequest(Beam::Services::RequestToken<
         ServiceProtocolClient, QuerySecurityService>& request,
         const SecurityChartingQuery& query, int clientQueryId);
@@ -115,10 +114,8 @@ namespace Details {
   template<typename C, typename M>
   template<typename MF>
   ChartingServlet<C, M>::ChartingServlet(MF&& marketDataClient)
-      : m_marketDataClient(std::forward<MF>(marketDataClient)),
-        m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {
-    m_openState.SetOpen();
-  }
+    : m_marketDataClient(std::forward<MF>(marketDataClient)),
+      m_dataStore(Beam::Initialize(&*m_marketDataClient), 10000) {}
 
   template<typename C, typename M>
   void ChartingServlet<C, M>::RegisterServices(
@@ -149,13 +146,8 @@ namespace Details {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename M>
-  void ChartingServlet<C, M>::Shutdown() {
     m_marketDataClient->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename M>
@@ -234,17 +226,16 @@ namespace Details {
       int clientQueryId, QueryEntry<MarketDataType>& queryEntry) {
     using Query = MarketDataService::GetMarketDataQueryType<MarketDataType>;
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      queryEntry.m_realTimeSubscriptions.TestAndSet(query.GetIndex(),
-        [&] {
-          auto realTimeQuery = Query();
-          realTimeQuery.SetIndex(query.GetIndex());
-          realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
-          MarketDataService::QueryMarketDataClient(*m_marketDataClient,
-            realTimeQuery, m_taskQueue.GetSlot<MarketDataType>(std::bind(
-            &ChartingServlet::OnQueryUpdate<
-            typename Query::Index, MarketDataType>, this, query.GetIndex(),
-            std::placeholders::_1, std::ref(queryEntry))));
-        });
+      queryEntry.m_realTimeSubscriptions.TestAndSet(query.GetIndex(), [&] {
+        auto realTimeQuery = Query();
+        realTimeQuery.SetIndex(query.GetIndex());
+        realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
+        MarketDataService::QueryMarketDataClient(*m_marketDataClient,
+          realTimeQuery, m_taskQueue.GetSlot<MarketDataType>(std::bind(
+          &ChartingServlet::OnQueryUpdate<
+          typename Query::Index, MarketDataType>, this, query.GetIndex(),
+          std::placeholders::_1, std::ref(queryEntry))));
+      });
     }
     auto result = SecurityChartingQueryResult();
     result.m_queryId = clientQueryId;

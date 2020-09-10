@@ -17,32 +17,23 @@ void Executor::Add(Aspen::Box<void> reactor) {
 }
 
 void Executor::Open() {
-  if(m_openState.SetOpening()) {
-    return;
-  }
-  m_reactorLoop = Spawn(
-    [=] {
-      RunLoop();
-    });
-  m_openState.SetOpen();
+  m_reactorLoop = Spawn([=] {
+    RunLoop();
+  });
 }
 
 void Executor::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  Shutdown();
-}
-
-void Executor::Shutdown() {
   m_updateCondition.notify_all();
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 void Executor::RunLoop() {
   m_has_update = false;
   auto sequence = 0;
-  while(m_openState.IsRunning()) {
+  while(m_openState.IsOpen()) {
     Aspen::Trigger::set_trigger(m_trigger);
     auto state = m_reactor.commit(sequence);
     ++sequence;
@@ -50,7 +41,7 @@ void Executor::RunLoop() {
       break;
     } else if(!Aspen::has_continuation(state)) {
       auto lock = std::unique_lock(m_mutex);
-      while(!m_has_update && m_openState.IsRunning()) {
+      while(!m_has_update && m_openState.IsOpen()) {
         m_updateCondition.wait(lock);
       }
       m_has_update = false;

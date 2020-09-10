@@ -1,7 +1,6 @@
-#ifndef NEXUS_MOLDUDP64CLIENT_HPP
-#define NEXUS_MOLDUDP64CLIENT_HPP
+#ifndef NEXUS_MOLD_UDP_64_CLIENT_HPP
+#define NEXUS_MOLD_UDP_64_CLIENT_HPP
 #include <cstdint>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -11,78 +10,71 @@
 #include "Nexus/MoldUdp64/MoldUdp64Message.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
 
-namespace Nexus {
-namespace MoldUdp64 {
+namespace Nexus::MoldUdp64 {
 
-  /*! \class MoldUdp64Client
-      \brief Implements a client using the MoldUdp64 protocol.
-      \tparam ChannelType The type of Channel connected to the MoldUdp64 server.
+  /**
+   * Implements a client using the MoldUdp64 protocol.
+   * @param <C> The type of Channel connected to the MoldUdp64 server.
    */
-  template<typename ChannelType>
+  template<typename C>
   class MoldUdp64Client : private boost::noncopyable {
     public:
 
-      //! The type of Channel connected to the MoldUdp64 server.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The type of Channel connected to the MoldUdp64 server. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a MoldUdp64Client.
-      /*!
-        \param channel The Channel to connect to the MoldUdp64 server
-      */
-      template<typename ChannelForward>
-      MoldUdp64Client(ChannelForward&& channel);
+      /**
+       * Constructs a MoldUdp64Client.
+       * @param channel The Channel to connect to the MoldUdp64 server
+       */
+      template<typename CF>
+      MoldUdp64Client(CF&& channel);
 
       ~MoldUdp64Client();
 
-      //! Reads the next message from the feed.
+      /** Reads the next message from the feed. */
       MoldUdp64Message Read();
 
-      //! Reads the next message from the feed.
-      /*!
-        \param sequenceNumber The message's sequence number.
-      */
+      /**
+       * Reads the next message from the feed.
+       * @param sequenceNumber The message's sequence number.
+       */
       MoldUdp64Message Read(Beam::Out<std::uint64_t> sequenceNumber);
 
       void Close();
 
     private:
       using Buffer = typename Channel::Reader::Buffer;
-      Beam::GetOptionalLocalPtr<ChannelType> m_channel;
+      Beam::GetOptionalLocalPtr<C> m_channel;
       Buffer m_buffer;
       MoldUdp64Packet m_packet;
       const char* m_source;
       std::size_t m_remainingSize;
       std::uint64_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  template<typename ChannelType>
-  template<typename ChannelForward>
-  MoldUdp64Client<ChannelType>::MoldUdp64Client(ChannelForward&& channel)
-      : m_channel(std::forward<ChannelType>(channel)),
-        m_sequenceNumber(-1) {
-    m_openState.SetOpen();
-  }
+  template<typename C>
+  template<typename CF>
+  MoldUdp64Client<C>::MoldUdp64Client(CF&& channel)
+    : m_channel(std::forward<C>(channel)),
+      m_sequenceNumber(-1) {}
 
-  template<typename ChannelType>
-  MoldUdp64Client<ChannelType>::~MoldUdp64Client() {
+  template<typename C>
+  MoldUdp64Client<C>::~MoldUdp64Client() {
     Close();
   }
 
-  template<typename ChannelType>
-  MoldUdp64Message MoldUdp64Client<ChannelType>::Read() {
-    std::uint64_t sequenceNumber;
+  template<typename C>
+  MoldUdp64Message MoldUdp64Client<C>::Read() {
+    auto sequenceNumber = std::uint64_t();
     return Read(Beam::Store(sequenceNumber));
   }
 
-  template<typename ChannelType>
-  MoldUdp64Message MoldUdp64Client<ChannelType>::Read(
+  template<typename C>
+  MoldUdp64Message MoldUdp64Client<C>::Read(
       Beam::Out<std::uint64_t> sequenceNumber) {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
+    m_openState.EnsureOpen();
     if(m_sequenceNumber == -1 ||
         m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
       while(true) {
@@ -107,20 +99,14 @@ namespace MoldUdp64 {
     return message;
   }
 
-  template<typename ChannelType>
-  void MoldUdp64Client<ChannelType>::Close() {
+  template<typename C>
+  void MoldUdp64Client<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename ChannelType>
-  void MoldUdp64Client<ChannelType>::Shutdown() {
     m_channel->GetConnection().Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
-}
 }
 
 #endif

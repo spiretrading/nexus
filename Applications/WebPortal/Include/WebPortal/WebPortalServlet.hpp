@@ -65,7 +65,6 @@ namespace Nexus::WebPortal {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       Beam::WebServices::HttpResponse OnIndex(
         const Beam::WebServices::HttpRequest& request);
       Beam::WebServices::HttpResponse OnServeFile(

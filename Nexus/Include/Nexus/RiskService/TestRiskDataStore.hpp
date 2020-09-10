@@ -48,7 +48,7 @@ namespace Nexus::RiskService {
         LoadInventorySnapshotOperation, StoreInventorySnapshotOperation>;
 
       /** Constructs a TestRiskDataStore. */
-      TestRiskDataStore();
+      TestRiskDataStore() = default;
 
       ~TestRiskDataStore();
 
@@ -68,12 +68,8 @@ namespace Nexus::RiskService {
       Beam::IO::OpenState m_openState;
   };
 
-  inline TestRiskDataStore::TestRiskDataStore() {
-    m_openState.SetOpen();
-  }
-
   inline TestRiskDataStore::~TestRiskDataStore() {
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   inline const Beam::Publisher<std::shared_ptr<TestRiskDataStore::Operation>>&
@@ -83,9 +79,7 @@ namespace Nexus::RiskService {
 
   inline InventorySnapshot TestRiskDataStore::LoadInventorySnapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
+    m_openState.EnsureOpen();
     auto result = Beam::Routines::Async<InventorySnapshot>();
     auto operation = std::make_shared<Operation>(
       LoadInventorySnapshotOperation{&account, result.GetEval()});
@@ -96,9 +90,7 @@ namespace Nexus::RiskService {
   inline void TestRiskDataStore::Store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
+    m_openState.EnsureOpen();
     auto result = Beam::Routines::Async<void>();
     auto operation = std::make_shared<Operation>(
       StoreInventorySnapshotOperation{&account, &snapshot, result.GetEval()});

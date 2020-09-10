@@ -29,14 +29,11 @@ namespace Nexus {
 
       BacktesterTimeClient(const BacktesterTimeClient&) = delete;
       BacktesterTimeClient& operator =(const BacktesterTimeClient&) = delete;
-      void Shutdown();
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-      Beam::Ref<BacktesterEventHandler> eventHandler)
-      : m_eventHandler(eventHandler.Get()) {
-    m_openState.SetOpen();
-  }
+    Beam::Ref<BacktesterEventHandler> eventHandler)
+    : m_eventHandler(eventHandler.Get()) {}
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {
     Close();
@@ -47,14 +44,7 @@ namespace Nexus {
   }
 
   inline void BacktesterTimeClient::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
-  }
-
-  inline void BacktesterTimeClient::Shutdown() {
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

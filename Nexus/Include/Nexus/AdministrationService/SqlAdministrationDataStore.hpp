@@ -112,8 +112,6 @@ namespace Nexus::AdministrationService {
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex> m_directoryEntries;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename C>
@@ -122,7 +120,6 @@ namespace Nexus::AdministrationService {
       const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
       : m_connection(std::move(connection)),
         m_directoryEntries(directoryEntrySourceFunction) {
-    m_openState.SetOpening();
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
@@ -148,10 +145,9 @@ namespace Nexus::AdministrationService {
         GetAccountModificationRequestMessageIndexRow(),
         "account_modification_request_messages"));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C>
@@ -521,13 +517,8 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlAdministrationDataStore<C>::Shutdown() {
     m_connection->close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

@@ -100,25 +100,21 @@ namespace Nexus::MarketDataService {
       DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
         m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
       ConnectionBuilder connectionBuilder)
-      : m_readerPool(std::thread::hardware_concurrency(),
-          [&] {
-            auto connection = std::make_unique<Connection>(connectionBuilder());
-            connection->open();
-            return connection;
-          }),
-        m_writerPool(1,
-          [&] {
-            auto connection = std::make_unique<Connection>(connectionBuilder());
-            connection->open();
-            return connection;
-          }),
+      : m_readerPool(std::thread::hardware_concurrency(), [&] {
+          auto connection = std::make_unique<Connection>(connectionBuilder());
+          connection->open();
+          return connection;
+        }),
+        m_writerPool(1, [&] {
+          auto connection = std::make_unique<Connection>(connectionBuilder());
+          connection->open();
+          return connection;
+        }),
         m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
           GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)),
@@ -134,16 +130,14 @@ namespace Nexus::MarketDataService {
         m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
           GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)) {
-    m_openState.SetOpening();
     try {
       auto connection = m_writerPool.Acquire();
       connection->execute(Viper::create_if_not_exists(
         GetSecurityInfoRow(), "security_info"));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C>
@@ -280,11 +274,6 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_marketQuoteDataStore.Close();
@@ -292,7 +281,7 @@ namespace Nexus::MarketDataService {
     m_orderImbalanceDataStore.Close();
     m_writerPool.Close();
     m_readerPool.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

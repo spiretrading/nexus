@@ -25,18 +25,15 @@ using namespace Nexus::RiskService;
 using namespace Nexus::WebPortal;
 
 WebPortalServlet::WebPortalServlet(
-    ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
-    Ref<VirtualServiceClients> serviceClients)
-    : m_fileStore("web_app"),
-      m_serviceLocatorServlet(Ref(m_sessions),
-        std::move(serviceClientsBuilder)),
-      m_definitionsServlet(Ref(m_sessions)),
-      m_administrationServlet(Ref(m_sessions)),
-      m_marketDataServlet(Ref(m_sessions)),
-      m_complianceServlet(Ref(m_sessions)),
-      m_riskServlet(Ref(m_sessions), Ref(serviceClients)) {
-  m_openState.SetOpen();
-}
+  ServiceLocatorWebServlet::ServiceClientsBuilder serviceClientsBuilder,
+  Ref<VirtualServiceClients> serviceClients)
+  : m_fileStore("web_app"),
+    m_serviceLocatorServlet(Ref(m_sessions), std::move(serviceClientsBuilder)),
+    m_definitionsServlet(Ref(m_sessions)),
+    m_administrationServlet(Ref(m_sessions)),
+    m_marketDataServlet(Ref(m_sessions)),
+    m_complianceServlet(Ref(m_sessions)),
+    m_riskServlet(Ref(m_sessions), Ref(serviceClients)) {}
 
 WebPortalServlet::~WebPortalServlet() {
   Close();
@@ -81,17 +78,13 @@ void WebPortalServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  Shutdown();
-}
-
-void WebPortalServlet::Shutdown() {
   m_riskServlet.Close();
   m_complianceServlet.Close();
   m_marketDataServlet.Close();
   m_administrationServlet.Close();
   m_definitionsServlet.Close();
   m_serviceLocatorServlet.Close();
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse WebPortalServlet::OnIndex(const HttpRequest& request) {

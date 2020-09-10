@@ -112,7 +112,6 @@ namespace Nexus::RiskService {
 
       RiskServlet(const RiskServlet&) = delete;
       RiskServlet& operator =(const RiskServlet&) = delete;
-      void Shutdown();
       void BuildController();
       void Reset(const Beam::ServiceLocator::DirectoryEntry& account,
         const Region& region);
@@ -159,14 +158,12 @@ namespace Nexus::RiskService {
         m_accountPublisher(Beam::MakeSequencePublisherAdaptor(std::make_shared<
           Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
           std::move(accounts)))) {
-    m_openState.SetOpening();
     try {
       BuildController();
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -199,14 +196,8 @@ namespace Nexus::RiskService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename A, typename M, typename O, typename R,
-    typename T, typename D>
-  void RiskServlet<C, A, M, O, R, T, D>::Shutdown() {
     m_controller = boost::none;
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename A, typename M, typename O, typename R,
@@ -311,10 +302,9 @@ namespace Nexus::RiskService {
     typename T, typename D>
   Beam::ServiceLocator::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
       LoadGroup(const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_accountToGroup.GetOrInsert(account,
-      [&] {
-        return m_administrationClient->LoadParentTradingGroup(account);
-      });
+    return m_accountToGroup.GetOrInsert(account, [&] {
+      return m_administrationClient->LoadParentTradingGroup(account);
+    });
   }
 
   template<typename C, typename A, typename M, typename O, typename R,

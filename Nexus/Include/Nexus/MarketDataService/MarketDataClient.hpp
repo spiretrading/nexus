@@ -172,7 +172,6 @@ namespace Nexus::MarketDataService {
         m_timeAndSalePublisher;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
@@ -197,7 +196,6 @@ namespace Nexus::MarketDataService {
     m_bookQuotePublisher.template AddMessageHandler<BookQuoteMessage>();
     m_marketQuotePublisher.template AddMessageHandler<MarketQuoteMessage>();
     m_timeAndSalePublisher.template AddMessageHandler<TimeAndSaleMessage>();
-    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -308,13 +306,8 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void MarketDataClient<B>::Shutdown() {
     m_clientHandler.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename B>

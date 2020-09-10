@@ -11,10 +11,8 @@ using namespace Nexus;
 using namespace Nexus::WebPortal;
 
 DefinitionsWebServlet::DefinitionsWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions)
-    : m_sessions(sessions.Get()) {
-  m_openState.SetOpen();
-}
+  Ref<SessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.Get()) {}
 
 DefinitionsWebServlet::~DefinitionsWebServlet() {
   Close();
@@ -54,14 +52,7 @@ std::vector<HttpRequestSlot> DefinitionsWebServlet::GetSlots() {
 }
 
 void DefinitionsWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void DefinitionsWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse DefinitionsWebServlet::OnLoadOrganizationName(

@@ -104,8 +104,6 @@ namespace Nexus::AdministrationService {
       Beam::GetOptionalLocalPtr<D> m_dataStore;
       LocalAdministrationDataStore m_cache;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
@@ -113,7 +111,6 @@ namespace Nexus::AdministrationService {
   CachedAdministrationDataStore<D>::CachedAdministrationDataStore(
       DF&& dataStore)
       : m_dataStore(std::forward<DF>(dataStore)) {
-    m_openState.SetOpening();
     try {
       auto identities = m_dataStore->LoadAllAccountIdentities();
       for(auto& identity : identities) {
@@ -128,10 +125,9 @@ namespace Nexus::AdministrationService {
         m_cache.Store(std::get<0>(riskState), std::get<1>(riskState));
       }
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename D>
@@ -288,10 +284,9 @@ namespace Nexus::AdministrationService {
   template<typename D>
   void CachedAdministrationDataStore<D>::WithTransaction(
       const std::function<void ()>& transaction) {
-    m_dataStore->WithTransaction(
-      [&] {
-        m_cache.WithTransaction(transaction);
-      });
+    m_dataStore->WithTransaction([&] {
+      m_cache.WithTransaction(transaction);
+    });
   }
 
   template<typename D>
@@ -299,14 +294,9 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void CachedAdministrationDataStore<D>::Shutdown() {
     m_dataStore->Close();
     m_cache.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

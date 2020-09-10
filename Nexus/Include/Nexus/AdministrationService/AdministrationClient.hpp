@@ -342,7 +342,6 @@ namespace Nexus::AdministrationService {
         std::shared_ptr<RiskStatePublisher>> m_riskStatePublishers;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void RecoverRiskParameters(ServiceProtocolClient& client);
       void RecoverRiskState(ServiceProtocolClient& client);
@@ -386,7 +385,6 @@ namespace Nexus::AdministrationService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&AdministrationClient::OnRiskStateMessage, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    m_openState.SetOpen();
   }
 
   template<typename B>
@@ -528,23 +526,20 @@ namespace Nexus::AdministrationService {
   const Beam::Publisher<RiskService::RiskParameters>&
       AdministrationClient<B>::GetRiskParametersPublisher(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return *m_riskParameterPublishers.GetOrInsert(account,
-      [&] {
-        auto publisher = std::make_shared<RiskParameterPublisher>();
-        m_tasks.Push(
-          [=] {
-            try {
-              auto client = m_clientHandler.GetClient();
-              auto parameters =
-                client->template SendRequest<MonitorRiskParametersService>(
-                account);
-              publisher->Push(parameters);
-            } catch(const std::exception&) {
-              publisher->Break(std::current_exception());
-            }
-          });
-        return publisher;
+    return *m_riskParameterPublishers.GetOrInsert(account, [&] {
+      auto publisher = std::make_shared<RiskParameterPublisher>();
+      m_tasks.Push([=] {
+        try {
+          auto client = m_clientHandler.GetClient();
+          auto parameters =
+            client->template SendRequest<MonitorRiskParametersService>(account);
+          publisher->Push(parameters);
+        } catch(const std::exception&) {
+          publisher->Break(std::current_exception());
+        }
       });
+      return publisher;
+    });
   }
 
   template<typename B>
@@ -560,22 +555,20 @@ namespace Nexus::AdministrationService {
   const Beam::Publisher<RiskService::RiskState>&
       AdministrationClient<B>::GetRiskStatePublisher(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return *m_riskStatePublishers.GetOrInsert(account,
-      [&] {
-        auto publisher = std::make_shared<RiskStatePublisher>();
-        m_tasks.Push(
-          [=] {
-            try {
-              auto client = m_clientHandler.GetClient();
-              auto state = client->template SendRequest<
-                MonitorRiskStateService>(account);
-              publisher->Push(state);
-            } catch(const std::exception&) {
-              publisher->Break(std::current_exception());
-            }
-          });
-        return publisher;
+    return *m_riskStatePublishers.GetOrInsert(account, [&] {
+      auto publisher = std::make_shared<RiskStatePublisher>();
+      m_tasks.Push([=] {
+        try {
+          auto client = m_clientHandler.GetClient();
+          auto state = client->template SendRequest<MonitorRiskStateService>(
+            account);
+          publisher->Push(state);
+        } catch(const std::exception&) {
+          publisher->Break(std::current_exception());
+        }
       });
+      return publisher;
+    });
   }
 
   template<typename B>
@@ -703,24 +696,18 @@ namespace Nexus::AdministrationService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_tasks.Break();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename B>
   void AdministrationClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_tasks.Push(
-      [=] {
-        RecoverRiskParameters(*client);
-        RecoverRiskState(*client);
-      });
+    m_tasks.Push([=] {
+      RecoverRiskParameters(*client);
+      RecoverRiskState(*client);
+    });
   }
 
   template<typename B>
@@ -729,13 +716,12 @@ namespace Nexus::AdministrationService {
     auto currentRiskParameterEntries =
       std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       std::shared_ptr<RiskParameterPublisher>>>();
-    m_riskParameterPublishers.With(
-      [&] (auto& riskParameterPublishers) {
-        for(auto& publisher : riskParameterPublishers) {
-          currentRiskParameterEntries.emplace_back(
-            publisher.first, publisher.second);
-        }
-      });
+    m_riskParameterPublishers.With([&] (auto& riskParameterPublishers) {
+      for(auto& publisher : riskParameterPublishers) {
+        currentRiskParameterEntries.emplace_back(
+          publisher.first, publisher.second);
+      }
+    });
     for(auto& entry : currentRiskParameterEntries) {
       auto& publisher = std::get<1>(entry);
       try {
@@ -757,13 +743,12 @@ namespace Nexus::AdministrationService {
     auto currentRiskStateEntries =
       std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
       std::shared_ptr<RiskStatePublisher>>>();
-    m_riskStatePublishers.With(
-      [&] (auto& riskStatePublishers) {
-        for(auto& publisher : riskStatePublishers) {
-          currentRiskStateEntries.emplace_back(
-            publisher.first, publisher.second);
-        }
-      });
+    m_riskStatePublishers.With([&] (auto& riskStatePublishers) {
+      for(auto& publisher : riskStatePublishers) {
+        currentRiskStateEntries.emplace_back(
+          publisher.first, publisher.second);
+      }
+    });
     for(auto& entry : currentRiskStateEntries) {
       auto& publisher = std::get<1>(entry);
       try {
@@ -783,14 +768,11 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
-    m_tasks.Push(
-      [=] {
-        auto publisher = m_riskParameterPublishers.FindValue(account);
-        if(!publisher.is_initialized()) {
-          return;
-        }
+    m_tasks.Push([=] {
+      if(auto publisher = m_riskParameterPublishers.FindValue(account)) {
         (*publisher)->Push(riskParameters);
-      });
+      }
+    });
   }
 
   template<typename B>
@@ -798,14 +780,11 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       RiskService::RiskState riskState) {
-    m_tasks.Push(
-      [=] {
-        auto publisher = m_riskStatePublishers.FindValue(account);
-        if(!publisher.is_initialized()) {
-          return;
-        }
+    m_tasks.Push([=] {
+      if(auto publisher = m_riskStatePublishers.FindValue(account)) {
         (*publisher)->Push(riskState);
-      });
+      }
+    });
   }
 }
 

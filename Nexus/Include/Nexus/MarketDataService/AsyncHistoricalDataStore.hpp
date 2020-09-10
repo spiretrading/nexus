@@ -86,8 +86,6 @@ namespace Nexus::MarketDataService {
       DataStore<MarketQuote> m_marketQuoteDataStore;
       DataStore<TimeAndSale> m_timeAndSaleDataStore;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename D>
@@ -99,9 +97,7 @@ namespace Nexus::MarketDataService {
       m_bboQuoteDataStore(&*m_dataStore),
       m_bookQuoteDataStore(&*m_dataStore),
       m_marketQuoteDataStore(&*m_dataStore),
-      m_timeAndSaleDataStore(&*m_dataStore) {
-    m_openState.SetOpen();
-  }
+      m_timeAndSaleDataStore(&*m_dataStore) {}
 
   template<typename D>
   AsyncHistoricalDataStore<D>::~AsyncHistoricalDataStore() {
@@ -219,18 +215,13 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Shutdown() {
     m_timeAndSaleDataStore.Close();
     m_marketQuoteDataStore.Close();
     m_bookQuoteDataStore.Close();
     m_bboQuoteDataStore.Close();
     m_orderImbalanceDataStore.Close();
     m_dataStore->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

@@ -76,7 +76,6 @@ namespace Nexus {
       BacktesterEventHandler& operator =(
         const BacktesterEventHandler&) = delete;
       void EventLoop();
-      void Shutdown();
   };
 
   inline BacktesterEventHandler::BacktesterEventHandler(
@@ -89,15 +88,13 @@ namespace Nexus {
       : m_startTime(std::move(startTime)),
         m_endTime(std::move(endTime)),
         m_timeEnvironment(m_startTime) {
-    m_openState.SetOpening();
     try {
       m_eventLoopRoutine = Beam::Routines::Spawn(
         std::bind(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   inline BacktesterEventHandler::~BacktesterEventHandler() {
@@ -153,7 +150,11 @@ namespace Nexus {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    m_eventAvailableCondition.notify_one();
+    m_eventLoopRoutine.Wait();
+    m_timeEnvironment.Close();
+    m_openState.Close();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void BacktesterEventHandler::EventLoop() {
@@ -179,14 +180,6 @@ namespace Nexus {
       }
       event->Execute();
     }
-  }
-
-  inline void BacktesterEventHandler::Shutdown() {
-    m_eventAvailableCondition.notify_one();
-    m_eventLoopRoutine.Wait();
-    m_timeEnvironment.Close();
-    Beam::Routines::FlushPendingRoutines();
-    m_openState.SetClosed();
   }
 }
 

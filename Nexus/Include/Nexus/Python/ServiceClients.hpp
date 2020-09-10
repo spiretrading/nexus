@@ -103,8 +103,6 @@ namespace Python {
       std::unique_ptr<RiskClient> m_riskClient;
       std::unique_ptr<TimeClient> m_timeClient;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   /**
@@ -118,36 +116,34 @@ namespace Python {
 
   template<typename C>
   ToPythonServiceClients<C>::ToPythonServiceClients(
-      std::unique_ptr<Client> client)
-      : m_client(std::move(client)),
-        m_serviceLocatorClient(
-          Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
-          Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
-          &m_client->GetServiceLocatorClient()))),
-        m_administrationClient(
-          AdministrationService::MakeToPythonAdministrationClient(
-          AdministrationService::MakeVirtualAdministrationClient(
-          &m_client->GetAdministrationClient()))),
-        m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
-          DefinitionsService::MakeVirtualDefinitionsClient(
-          &m_client->GetDefinitionsClient()))),
-        m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
-          MarketDataService::MakeVirtualMarketDataClient(
-          &m_client->GetMarketDataClient()))),
-        m_complianceClient(Compliance::MakeToPythonComplianceClient(
-          Compliance::MakeVirtualComplianceClient(
-          &m_client->GetComplianceClient()))),
-        m_orderExecutionClient(
-          OrderExecutionService::MakeToPythonOrderExecutionClient(
-          OrderExecutionService::MakeVirtualOrderExecutionClient(
-          &m_client->GetOrderExecutionClient()))),
-        m_riskClient(RiskService::MakeToPythonRiskClient(
-          RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
-        m_timeClient(Beam::TimeService::MakeToPythonTimeClient(
-          Beam::TimeService::MakeVirtualTimeClient(
-          &m_client->GetTimeClient()))) {
-    m_openState.SetOpen();
-  }
+    std::unique_ptr<Client> client)
+    : m_client(std::move(client)),
+      m_serviceLocatorClient(
+        Beam::ServiceLocator::MakeToPythonServiceLocatorClient(
+        Beam::ServiceLocator::MakeVirtualServiceLocatorClient(
+        &m_client->GetServiceLocatorClient()))),
+      m_administrationClient(
+        AdministrationService::MakeToPythonAdministrationClient(
+        AdministrationService::MakeVirtualAdministrationClient(
+        &m_client->GetAdministrationClient()))),
+      m_definitionsClient(DefinitionsService::MakeToPythonDefinitionsClient(
+        DefinitionsService::MakeVirtualDefinitionsClient(
+        &m_client->GetDefinitionsClient()))),
+      m_marketDataClient(MarketDataService::MakeToPythonMarketDataClient(
+        MarketDataService::MakeVirtualMarketDataClient(
+        &m_client->GetMarketDataClient()))),
+      m_complianceClient(Compliance::MakeToPythonComplianceClient(
+        Compliance::MakeVirtualComplianceClient(
+        &m_client->GetComplianceClient()))),
+      m_orderExecutionClient(
+        OrderExecutionService::MakeToPythonOrderExecutionClient(
+        OrderExecutionService::MakeVirtualOrderExecutionClient(
+        &m_client->GetOrderExecutionClient()))),
+      m_riskClient(RiskService::MakeToPythonRiskClient(
+        RiskService::MakeVirtualRiskClient(&m_client->GetRiskClient()))),
+      m_timeClient(Beam::TimeService::MakeToPythonTimeClient(
+        Beam::TimeService::MakeVirtualTimeClient(
+        &m_client->GetTimeClient()))) {}
 
   template<typename C>
   ToPythonServiceClients<C>::~ToPythonServiceClients() {
@@ -238,11 +234,6 @@ namespace Python {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void ToPythonServiceClients<C>::Shutdown() {
     m_timeClient->Close();
     m_riskClient->Close();
     m_orderExecutionClient->Close();
@@ -252,7 +243,7 @@ namespace Python {
     m_administrationClient->Close();
     m_serviceLocatorClient->Close();
     m_client->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

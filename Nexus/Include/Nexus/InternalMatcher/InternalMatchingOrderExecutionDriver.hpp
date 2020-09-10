@@ -143,7 +143,6 @@ namespace Details {
       Beam::RoutineTaskQueue m_submissionTasks;
       Beam::RoutineTaskQueue m_executionReportTasks;
 
-      void Shutdown();
       void Submit(const std::shared_ptr<OrderEntry>& orderEntry);
       void SubmitToDriver(
         const Beam::ServiceLocator::DirectoryEntry submissionAccount,
@@ -197,7 +196,6 @@ namespace Details {
         m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
         m_timerThreadPool(timerThreadPool.Get()) {
     m_rootSession.SetAccount(rootSessionAccount);
-    m_openState.SetOpen();
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -232,10 +230,9 @@ namespace Details {
     }
     auto orderEntry = std::make_shared<OrderEntry>(orderInfo,
       Beam::Ref(*m_timerThreadPool));
-    m_submissionTasks.Push(
-      [=] {
-        Submit(orderEntry);
-      });
+    m_submissionTasks.Push([=] {
+      Submit(orderEntry);
+    });
     m_orders.Insert(orderEntry->m_order);
     return *orderEntry->m_order;
   }
@@ -244,15 +241,13 @@ namespace Details {
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId) {
-    m_submissionTasks.Push(
-      [=] {
-        auto driverOrderId = m_orderIds.FindValue(orderId);
-        if(driverOrderId.is_initialized()) {
-          m_orderExecutionDriver->Cancel(session, *driverOrderId);
-        } else {
-          m_orderExecutionDriver->Cancel(session, orderId);
-        }
-      });
+    m_submissionTasks.Push([=] {
+      if(auto driverOrderId = m_orderIds.FindValue(orderId)) {
+        m_orderExecutionDriver->Cancel(session, *driverOrderId);
+      } else {
+        m_orderExecutionDriver->Cancel(session, orderId);
+      }
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -260,18 +255,17 @@ namespace Details {
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId orderId,
       const OrderExecutionService::ExecutionReport& executionReport) {
-    m_submissionTasks.Push(
-      [=] {
-        auto driverOrderId = m_orderIds.FindValue(orderId);
-        if(driverOrderId) {
-          auto sanitizedExecutionReport = executionReport;
-          sanitizedExecutionReport.m_id = *driverOrderId;
-          m_orderExecutionDriver->Update(session, *driverOrderId,
-            sanitizedExecutionReport);
-        } else {
-          m_orderExecutionDriver->Update(session, orderId, executionReport);
-        }
-      });
+    m_submissionTasks.Push([=] {
+      auto driverOrderId = m_orderIds.FindValue(orderId);
+      if(driverOrderId) {
+        auto sanitizedExecutionReport = executionReport;
+        sanitizedExecutionReport.m_id = *driverOrderId;
+        m_orderExecutionDriver->Update(session, *driverOrderId,
+          sanitizedExecutionReport);
+      } else {
+        m_orderExecutionDriver->Update(session, orderId, executionReport);
+      }
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -279,15 +273,10 @@ namespace Details {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B, typename M, typename T, typename U, typename D>
-  void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::Shutdown() {
     m_executionReportTasks.Break();
     m_submissionTasks.Break();
     m_orderExecutionDriver->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -309,14 +298,13 @@ namespace Details {
         return boost::none;
       }
     }();
-    if(!bboQuote.is_initialized()) {
-      orderEntry->m_order->With(
-        [&] (auto status, auto& executionReports) {
-          auto newReport = OrderExecutionService::ExecutionReport::
-            BuildUpdatedReport(executionReports.back(), OrderStatus::REJECTED,
-            m_timeClient->GetTime());
-          orderEntry->m_order->Update(newReport);
-        });
+    if(!bboQuote) {
+      orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+        auto newReport = OrderExecutionService::ExecutionReport::
+          BuildUpdatedReport(executionReports.back(), OrderStatus::REJECTED,
+          m_timeClient->GetTime());
+        orderEntry->m_order->Update(newReport);
+      });
       return;
     }
     auto [orderEntries, passiveOrderEntries, bboThresholdPrice] = [&] {
@@ -365,21 +353,20 @@ namespace Details {
       }
     }
     if(!internalMatchReports.empty()) {
-      orderEntry->m_order->With(
-        [&] (auto status, auto& executionReports) {
-          orderEntry->m_isPendingNew = false;
-          auto newReport = OrderExecutionService::ExecutionReport::
-            BuildUpdatedReport(executionReports.back(), OrderStatus::NEW,
-            m_timeClient->GetTime());
-          orderEntry->m_order->Update(newReport);
-          auto sequence = newReport.m_sequence;
-          for(auto& executionReport : internalMatchReports) {
-            ++sequence;
-            executionReport.m_timestamp = m_timeClient->GetTime();
-            executionReport.m_sequence = sequence;
-            orderEntry->m_order->Update(executionReport);
-          }
-        });
+      orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+        orderEntry->m_isPendingNew = false;
+        auto newReport = OrderExecutionService::ExecutionReport::
+          BuildUpdatedReport(executionReports.back(), OrderStatus::NEW,
+          m_timeClient->GetTime());
+        orderEntry->m_order->Update(newReport);
+        auto sequence = newReport.m_sequence;
+        for(auto& executionReport : internalMatchReports) {
+          ++sequence;
+          executionReport.m_timestamp = m_timeClient->GetTime();
+          executionReport.m_sequence = sequence;
+          orderEntry->m_order->Update(executionReport);
+        }
+      });
     }
     if(matchedQuantityRemaining != 0) {
       auto insertIterator = std::lower_bound(orderEntries->begin(),
@@ -489,12 +476,11 @@ namespace Details {
     m_matchReportBuilder->Build(passiveOrderEntry->m_order->GetInfo().m_fields,
       activeOrderEntry->m_order->GetInfo().m_fields,
       Beam::Store(passiveMatchReport), Beam::Store(activeMatchReport));
-    passiveOrderEntry->m_order->With(
-      [&] (auto status, auto& executionReports) {
-        passiveMatchReport.m_timestamp = m_timeClient->GetTime();
-        passiveMatchReport.m_sequence = executionReports.back().m_sequence + 1;
-        passiveOrderEntry->m_order->Update(passiveMatchReport);
-      });
+    passiveOrderEntry->m_order->With([&] (auto status, auto& executionReports) {
+      passiveMatchReport.m_timestamp = m_timeClient->GetTime();
+      passiveMatchReport.m_sequence = executionReports.back().m_sequence + 1;
+      passiveOrderEntry->m_order->Update(passiveMatchReport);
+    });
     if(passiveOrderEntry->m_remainingQuantity != 0) {
       auto matchedFields = passiveOrderEntry->m_order->GetInfo().m_fields;
       matchedFields.m_quantity = passiveOrderEntry->m_remainingQuantity;
@@ -507,51 +493,47 @@ namespace Details {
   template<typename B, typename M, typename T, typename U, typename D>
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::WaitForLiveOrder(
       OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isLive,
-      [&] (auto& isLive) {
-        while(!isLive) {
-          orderEntry.m_isLiveCondition.timed_wait(boost::posix_time::seconds(1),
-            orderEntry.m_isLive.GetLock());
-        }
-      });
+    Beam::Threading::With(orderEntry.m_isLive, [&] (auto& isLive) {
+      while(!isLive) {
+        orderEntry.m_isLiveCondition.timed_wait(boost::posix_time::seconds(1),
+          orderEntry.m_isLive.GetLock());
+      }
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::
       WaitForTerminalOrder(OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isTerminal,
-      [&] (auto& isTerminal) {
-        while(!isTerminal) {
-          orderEntry.m_isTerminalCondition.timed_wait(
-            boost::posix_time::seconds(1), orderEntry.m_isTerminal.GetLock());
-        }
-      });
+    Beam::Threading::With(orderEntry.m_isTerminal, [&] (auto& isTerminal) {
+      while(!isTerminal) {
+        orderEntry.m_isTerminalCondition.timed_wait(
+          boost::posix_time::seconds(1), orderEntry.m_isTerminal.GetLock());
+      }
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::SetOrderToLive(
       OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isLive,
-      [&] (auto& isLive) {
-        if(isLive) {
-          return;
-        }
-        isLive = true;
-        orderEntry.m_isLiveCondition.notify_all();
-      });
+    Beam::Threading::With(orderEntry.m_isLive, [&] (auto& isLive) {
+      if(isLive) {
+        return;
+      }
+      isLive = true;
+      orderEntry.m_isLiveCondition.notify_all();
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
   void InternalMatchingOrderExecutionDriver<B, M, T, U, D>::SetOrderToTerminal(
       OrderEntry& orderEntry) {
-    Beam::Threading::With(orderEntry.m_isTerminal,
-      [&] (auto& isTerminal) {
-        if(isTerminal) {
-          return;
-        }
-        isTerminal = true;
-        orderEntry.m_isTerminalCondition.notify_all();
-      });
+    Beam::Threading::With(orderEntry.m_isTerminal, [&] (auto& isTerminal) {
+      if(isTerminal) {
+        return;
+      }
+      isTerminal = true;
+      orderEntry.m_isTerminalCondition.notify_all();
+    });
   }
 
   template<typename B, typename M, typename T, typename U, typename D>
@@ -584,12 +566,11 @@ namespace Details {
     }
     auto updateReport = executionReport;
     updateReport.m_id = orderEntry->m_order->GetInfo().m_orderId;
-    orderEntry->m_order->With(
-      [&] (auto status, auto& executionReports) {
-        updateReport.m_timestamp = executionReport.m_timestamp;
-        updateReport.m_sequence = executionReports.back().m_sequence + 1;
-        orderEntry->m_order->Update(updateReport);
-      });
+    orderEntry->m_order->With([&] (auto status, auto& executionReports) {
+      updateReport.m_timestamp = executionReport.m_timestamp;
+      updateReport.m_sequence = executionReports.back().m_sequence + 1;
+      orderEntry->m_order->Update(updateReport);
+    });
     if(IsTerminal(executionReport.m_status)) {
       orderEntry->m_remainingQuantity = 0;
       SetOrderToTerminal(*orderEntry);

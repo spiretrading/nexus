@@ -62,7 +62,6 @@ namespace Nexus::RiskService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void OnInventoryUpdate(ServiceProtocolClient& client,
         const std::vector<InventoryUpdate>& inventories);
@@ -80,30 +79,27 @@ namespace Nexus::RiskService {
       Beam::Store(m_clientHandler.GetSlots()),
       std::bind(&RiskClient::OnInventoryUpdate, this, std::placeholders::_1,
       std::placeholders::_2));
-    m_publisher.SetInitializationFunction(
-      [=] (auto& publisher) {
-        publisher.emplace();
-        m_tasks.Push(
-          [=] {
-            auto entries = std::vector<RiskInventoryEntry>();
-            try {
-              auto client = m_clientHandler.GetClient();
-              entries = client->template SendRequest<
-                SubscribeRiskPortfolioUpdatesService>();
-            } catch(const std::exception&) {
-              m_publisher->Break(std::current_exception());
-              return;
-            }
-            for(auto& entry : entries) {
-              if(entry.m_value.m_transactionCount == 0) {
-                m_publisher->Delete(entry);
-              } else {
-                m_publisher->Push(entry);
-              }
-            }
-          });
+    m_publisher.SetInitializationFunction([=] (auto& publisher) {
+      publisher.emplace();
+      m_tasks.Push([=] {
+        auto entries = std::vector<RiskInventoryEntry>();
+        try {
+          auto client = m_clientHandler.GetClient();
+          entries = client->template SendRequest<
+            SubscribeRiskPortfolioUpdatesService>();
+        } catch(const std::exception&) {
+          m_publisher->Break(std::current_exception());
+          return;
+        }
+        for(auto& entry : entries) {
+          if(entry.m_value.m_transactionCount == 0) {
+            m_publisher->Delete(entry);
+          } else {
+            m_publisher->Push(entry);
+          }
+        }
       });
-    m_openState.SetOpen();
+    });
   }
 
   template<typename B>
@@ -125,8 +121,8 @@ namespace Nexus::RiskService {
   }
 
   template<typename B>
-  const RiskPortfolioUpdatePublisher& RiskClient<B>::
-      GetRiskPortfolioUpdatePublisher() {
+  const RiskPortfolioUpdatePublisher&
+      RiskClient<B>::GetRiskPortfolioUpdatePublisher() {
     return *m_publisher;
   }
 
@@ -135,65 +131,58 @@ namespace Nexus::RiskService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename B>
-  void RiskClient<B>::Shutdown() {
     m_clientHandler.Close();
     m_tasks.Break();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename B>
   void RiskClient<B>::OnReconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_tasks.Push(
-      [=] {
-        if(!m_publisher.IsAvailable()) {
-          return;
-        }
-        auto entries = std::vector<RiskInventoryEntry>();
-        try {
-          entries = client->template SendRequest<
-            SubscribeRiskPortfolioUpdatesService>();
-        } catch(const std::exception&) {
-          m_publisher->Break(std::current_exception());
-          return;
-        }
-        if(auto snapshot = m_publisher->GetSnapshot()) {
-          for(auto& snapshotEntry : *snapshot) {
-            auto entryIterator = std::find_if(entries.begin(), entries.end(),
-              [&] (auto& entry) {
-                return entry.m_key == snapshotEntry.first;
-              });
-            if(entryIterator == entries.end()) {
-              m_publisher->Delete(snapshotEntry.first,
-                RiskInventory(snapshotEntry.second.m_position.m_key));
-            }
+    m_tasks.Push([=] {
+      if(!m_publisher.IsAvailable()) {
+        return;
+      }
+      auto entries = std::vector<RiskInventoryEntry>();
+      try {
+        entries = client->template SendRequest<
+          SubscribeRiskPortfolioUpdatesService>();
+      } catch(const std::exception&) {
+        m_publisher->Break(std::current_exception());
+        return;
+      }
+      if(auto snapshot = m_publisher->GetSnapshot()) {
+        for(auto& snapshotEntry : *snapshot) {
+          auto entryIterator = std::find_if(entries.begin(), entries.end(),
+            [&] (auto& entry) {
+              return entry.m_key == snapshotEntry.first;
+            });
+          if(entryIterator == entries.end()) {
+            m_publisher->Delete(snapshotEntry.first,
+              RiskInventory(snapshotEntry.second.m_position.m_key));
           }
         }
-        for(auto& entry : entries) {
-          m_publisher->Push(entry);
-        }
-      });
+      }
+      for(auto& entry : entries) {
+        m_publisher->Push(entry);
+      }
+    });
   }
 
   template<typename B>
   void RiskClient<B>::OnInventoryUpdate(ServiceProtocolClient& client,
       const std::vector<InventoryUpdate>& inventories) {
-    m_tasks.Push(
-      [=] {
-        for(auto& update : inventories) {
-          if(update.inventory.m_transactionCount == 0) {
-            m_publisher->Delete(RiskPortfolioKey(update.account,
-              update.inventory.m_position.m_key.m_index), update.inventory);
-          } else {
-            m_publisher->Push(RiskPortfolioKey(update.account,
-              update.inventory.m_position.m_key.m_index), update.inventory);
-          }
+    m_tasks.Push([=] {
+      for(auto& update : inventories) {
+        if(update.inventory.m_transactionCount == 0) {
+          m_publisher->Delete(RiskPortfolioKey(update.account,
+            update.inventory.m_position.m_key.m_index), update.inventory);
+        } else {
+          m_publisher->Push(RiskPortfolioKey(update.account,
+            update.inventory.m_position.m_key.m_index), update.inventory);
         }
-      });
+      }
+    });
   }
 }
 
