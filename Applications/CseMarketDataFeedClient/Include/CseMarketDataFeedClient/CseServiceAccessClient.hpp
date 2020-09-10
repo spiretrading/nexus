@@ -4,7 +4,6 @@
 #include <deque>
 #include <functional>
 #include <vector>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -14,82 +13,70 @@
 #include "Nexus/StampProtocol/StampPacket.hpp"
 #include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \struct CseServiceAccessConfiguration
-      \brief Stores the configuration used for a CseServiceAccessClient.
-   */
+  /** Stores the configuration used for a CseServiceAccessClient. */
   struct CseServiceAccessConfiguration {
 
-    //! Whether retransmission is enabled.
+    /** Whether retransmission is enabled. */
     bool m_enableRetransmission;
 
-    //! The maximum number of retransmissions to perform.
+    /** The maximum number of retransmissions to perform. */
     int m_maxRetransmissionCount;
 
-    //! The size of the largest possible retransmission block.
+    /** The size of the largest possible retransmission block. */
     std::size_t m_maxRetransmissionBlock;
 
-    //! Constructs a CseServiceAccessConfiguration with default values.
+    /** Constructs a CseServiceAccessConfiguration with default values. */
     CseServiceAccessConfiguration();
   };
 
-  /*! \class CseServiceAccessClient
-      \brief Produces StampMessages received from a CSE data feed.
-      \tparam FeedChannelType The type of Channel receiving the market data
-              feed.
-      \tparam RetransmissionClientChannelType The type of Channel used to send
-              retransmission requests.
-      \tparam RetransmissionServerChannelType The type of Channel used to
-              receive retransmission messages.
+  /**
+   * Produces StampMessages received from a CSE data feed.
+   * @param <F> The type of Channel receiving the market data feed.
+   * @param <C> The type of Channel used to send retransmission requests.
+   * @param <S> The type of Channel used to receive retransmission messages.
    */
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
+  template<typename F, typename C, typename S>
   class CseServiceAccessClient : private boost::noncopyable {
     public:
 
-      //! The type of channel receiving the market data feed.
-      using FeedChannel = Beam::GetTryDereferenceType<FeedChannelType>;
+      /** The type of channel receiving the market data feed. */
+      using FeedChannel = Beam::GetTryDereferenceType<F>;
 
-      //! The type of Channel used to send retransmission requests.
-      using RetransmissionClientChannel = Beam::GetTryDereferenceType<
-        RetransmissionClientChannelType>;
+      /** The type of Channel used to send retransmission requests. */
+      using RetransmissionClientChannel = Beam::GetTryDereferenceType<C>;
 
-      //! The type of Channel used to receive retransmission messages.
-      using RetransmissionServerChannel = Beam::GetTryDereferenceType<
-        RetransmissionServerChannelType>;
+      /** The type of Channel used to receive retransmission messages. */
+      using RetransmissionServerChannel = Beam::GetTryDereferenceType<S>;
 
-      //! The type of function used to build instances of the
-      //! RetransmissionClientChannel.
-      /*!
-        \param channel Stores the Channel to build.
-      */
+      /**
+       * The type of function used to build instances of the
+       * RetransmissionClientChannel.
+       * @param channel Stores the Channel to build.
+       */
       using RetransmissionClientChannelBuilder = std::function<void (
         Beam::Out<std::optional<RetransmissionClientChannel>> channel)>;
 
-      //! Constructs a CseServiceAccessClient.
-      /*!
-        \param config The configuration to use.
-        \param feedChannel The Channel receiving the market data feed.
-        \param retransmissionClientChannelBuilder Builds instances of the
-               Channel used to send retransmission requests.
-        \param retransmissionServerChannel The Channel receiving retransmission
-               messages.
-      */
-      template<typename FeedChannelForward,
-        typename RetransmissionServerChannelForward>
-      CseServiceAccessClient(const CseServiceAccessConfiguration& config,
-        FeedChannelForward&& feedChannel,
+      /**
+       * Constructs a CseServiceAccessClient.
+       * @param config The configuration to use.
+       * @param feedChannel The Channel receiving the market data feed.
+       * @param retransmissionClientChannelBuilder Builds instances of the
+       *        Channel used to send retransmission requests.
+       * @param retransmissionServerChannel The Channel receiving retransmission
+       *        messages.
+       */
+      template<typename FF, typename SF>
+      CseServiceAccessClient(CseServiceAccessConfiguration config,
+        FF&& feedChannel,
         RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-        RetransmissionServerChannelForward&& retransmissionServerChannel);
+        SF&& retransmissionServerChannel);
 
       ~CseServiceAccessClient();
 
-      //! Reads the next message from the feed.
+      /** Reads the next message from the feed. */
       StampProtocol::StampMessage Read();
-
-      void Open();
 
       void Close();
 
@@ -102,10 +89,9 @@ namespace MarketDataService {
         BufferEntry(FeedBuffer buffer, std::uint32_t sequenceNumber);
       };
       CseServiceAccessConfiguration m_config;
-      Beam::GetOptionalLocalPtr<FeedChannelType> m_feedChannel;
+      Beam::GetOptionalLocalPtr<F> m_feedChannel;
       RetransmissionClientChannelBuilder m_retransmissionClientChannelBuilder;
-      Beam::GetOptionalLocalPtr<RetransmissionServerChannelType>
-        m_retransmissionServerChannel;
+      Beam::GetOptionalLocalPtr<S> m_retransmissionServerChannel;
       int m_retransmissionCount;
       std::uint32_t m_sequenceNumber;
       std::vector<FeedBuffer> m_buffers;
@@ -115,7 +101,6 @@ namespace MarketDataService {
       template<typename Buffer>
       static void BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
         std::size_t startSequenceNumber, std::size_t endSequenceNumber);
-      void Shutdown();
       void AddPendingBuffer(FeedBuffer buffer, std::size_t sequenceNumber);
       void SendRetransmissionRequest(std::size_t startSequenceNumber,
         std::size_t endSequenceNumber);
@@ -126,62 +111,51 @@ namespace MarketDataService {
   };
 
   inline CseServiceAccessConfiguration::CseServiceAccessConfiguration()
-      : m_enableRetransmission(false),
-        m_maxRetransmissionCount(100),
-        m_maxRetransmissionBlock(20000) {}
+    : m_enableRetransmission(false),
+      m_maxRetransmissionCount(100),
+      m_maxRetransmissionBlock(20000) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  CseServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::BufferEntry::BufferEntry(
-      FeedBuffer buffer, std::uint32_t sequenceNumber)
-      : m_buffer(std::move(buffer)),
-        m_sequenceNumber(sequenceNumber) {}
+  template<typename F, typename C, typename S>
+  CseServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
+    std::uint32_t sequenceNumber)
+    : m_buffer(std::move(buffer)),
+      m_sequenceNumber(sequenceNumber) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  template<typename FeedChannelForward,
-    typename RetransmissionServerChannelForward>
-  CseServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::CseServiceAccessClient(
-      const CseServiceAccessConfiguration& config,
-      FeedChannelForward&& feedChannel,
-      RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-      RetransmissionServerChannelForward&& retransmissionServerChannel)
-      : m_config(config),
-        m_feedChannel(std::forward<FeedChannelType>(feedChannel)),
-        m_retransmissionClientChannelBuilder(
-          std::move(retransmissionClientChannelBuilder)),
-        m_retransmissionServerChannel(
-          std::forward<RetransmissionServerChannelForward>(
-          retransmissionServerChannel)) {}
+  template<typename F, typename C, typename S>
+  template<typename FF, typename SF>
+  CseServiceAccessClient<F, C, S>::CseServiceAccessClient(
+    CseServiceAccessConfiguration config, FF&& feedChannel,
+    RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
+    SF&& retransmissionServerChannel)
+    : m_config(std::move(config)),
+      m_feedChannel(std::forward<F>(feedChannel)),
+      m_retransmissionClientChannelBuilder(
+        std::move(retransmissionClientChannelBuilder)),
+      m_retransmissionServerChannel(std::forward<SF>(
+        retransmissionServerChannel)),
+      m_retransmissionCount(0),
+      m_sequenceNumber(0) {}
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  CseServiceAccessClient<FeedChannelType, RetransmissionClientChannelType,
-      RetransmissionServerChannelType>::~CseServiceAccessClient() {
+  template<typename F, typename C, typename S>
+  CseServiceAccessClient<F, C, S>::~CseServiceAccessClient() {
     Close();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  StampProtocol::StampMessage CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Read() {
-    static const Beam::FixedString<2> HEARTBEAT_MESSAGE_TYPE = "V ";
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
-    StampProtocol::StampPacket packet;
+  template<typename F, typename C, typename S>
+  StampProtocol::StampMessage CseServiceAccessClient<F, C, S>::Read() {
+    static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
+    m_openState.EnsureOpen();
+    auto packet = StampProtocol::StampPacket();
     if(m_config.m_enableRetransmission) {
-      typename RetransmissionServerChannel::Reader::Buffer retransmissionBuffer;
+      auto retransmissionBuffer =
+        typename RetransmissionServerChannel::Reader::Buffer();
       while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
         retransmissionBuffer.Reset();
         m_retransmissionServerChannel->GetReader().Read(
           Beam::Store(retransmissionBuffer));
       }
     }
-    std::size_t bufferIndex = 0;
+    auto bufferIndex = std::size_t(0);
     while(true) {
       if(m_buffers.size() <= bufferIndex) {
         m_buffers.emplace_back();
@@ -232,8 +206,8 @@ namespace MarketDataService {
       }
       if(packet.m_header.m_continuationIndicator ==
           StampProtocol::ContinuationIndicator::STAND_ALONE) {
-        StampProtocol::StampMessage message(packet.m_header, packet.m_message,
-          packet.m_messageSize);
+        auto message = StampProtocol::StampMessage(packet.m_header,
+          packet.m_message, packet.m_messageSize);
         return message;
       } else if(packet.m_header.m_continuationIndicator ==
           StampProtocol::ContinuationIndicator::SPANNING) {
@@ -248,47 +222,25 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_feedChannel->GetConnection().Open();
-      if(m_config.m_enableRetransmission) {
-        m_retransmissionServerChannel->GetConnection().Open();
-      }
-      m_retransmissionCount = 0;
-      m_sequenceNumber = 0;
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Close() {
+  template<typename F, typename C, typename S>
+  void CseServiceAccessClient<F, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    if(m_config.m_enableRetransmission) {
+      m_retransmissionServerChannel->GetConnection().Close();
+    }
+    m_feedChannel->GetConnection().Close();
+    m_buffers.clear();
+    m_openState.Close();
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
+  template<typename F, typename C, typename S>
   template<typename Buffer>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
-      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
-    static const std::size_t SEQUENCE_NUMBER_SIZE = 9;
+  void CseServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
+      Beam::Out<Buffer> buffer, std::size_t startSequenceNumber,
+      std::size_t endSequenceNumber) {
+    static constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
     buffer->Append("SEQN", 4);
     auto messageStartNumber = boost::lexical_cast<std::string>(
       startSequenceNumber);
@@ -304,28 +256,13 @@ namespace MarketDataService {
     buffer->Append('\n');
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Shutdown() {
-    if(m_config.m_enableRetransmission) {
-      m_retransmissionServerChannel->GetConnection().Close();
-    }
-    m_feedChannel->GetConnection().Close();
-    m_openState.SetClosed();
-    m_buffers.clear();
-  }
-
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      AddPendingBuffer(FeedBuffer buffer, std::size_t sequenceNumber) {
-    BufferEntry entry(std::move(buffer), sequenceNumber);
+  template<typename F, typename C, typename S>
+  void CseServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
+      std::size_t sequenceNumber) {
+    auto entry = BufferEntry(std::move(buffer), sequenceNumber);
     auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
       m_pendingBuffers.end(), entry,
-      [] (const BufferEntry& lhs, const BufferEntry& rhs) {
+      [] (const auto& lhs, const auto& rhs) {
         return lhs.m_sequenceNumber < rhs.m_sequenceNumber;
       });
     if(pendingBufferIterator == m_pendingBuffers.end() ||
@@ -334,24 +271,21 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      SendRetransmissionRequest(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
-    static const std::size_t RETRANSMISSION_RESPONSE_SIZE = 151;
-    typename RetransmissionClientChannel::Writer::Buffer
-      retransmissionRequestBuffer;
+  template<typename F, typename C, typename S>
+  void CseServiceAccessClient<F, C, S>::SendRetransmissionRequest(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
+    static constexpr auto RETRANSMISSION_RESPONSE_SIZE = std::size_t(151);
+    auto retransmissionRequestBuffer =
+      typename RetransmissionClientChannel::Writer::Buffer();
     BuildRetransmissionRequestBuffer(Beam::Store(retransmissionRequestBuffer),
       startSequenceNumber, endSequenceNumber);
-    std::optional<RetransmissionClientChannel> retransmissionClientChannel;
+    auto retransmissionClientChannel =
+      std::optional<RetransmissionClientChannel>();
     m_retransmissionClientChannelBuilder(
       Beam::Store(retransmissionClientChannel));
-    retransmissionClientChannel->GetConnection().Open();
     retransmissionClientChannel->GetWriter().Write(retransmissionRequestBuffer);
-    typename RetransmissionClientChannel::Reader::Buffer
-      retransmissionResponseBuffer;
+    auto retransmissionResponseBuffer =
+      typename RetransmissionClientChannel::Reader::Buffer();
     while(retransmissionResponseBuffer.GetSize() <
         RETRANSMISSION_RESPONSE_SIZE) {
       retransmissionClientChannel->GetReader().Read(
@@ -364,14 +298,12 @@ namespace MarketDataService {
     } catch(const std::exception&) {}
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      ReadRetransmissionResponse(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
-    StampProtocol::StampPacket packet;
-    typename RetransmissionServerChannel::Reader::Buffer retransmissionBuffer;
+  template<typename F, typename C, typename S>
+  void CseServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
+    auto packet = StampProtocol::StampPacket();
+    auto retransmissionBuffer =
+      typename RetransmissionServerChannel::Reader::Buffer();
     while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
       retransmissionBuffer.Reset();
       m_retransmissionServerChannel->GetReader().Read(
@@ -388,12 +320,9 @@ namespace MarketDataService {
     }
   }
 
-  template<typename FeedChannelType, typename RetransmissionClientChannelType,
-    typename RetransmissionServerChannelType>
-  void CseServiceAccessClient<FeedChannelType,
-      RetransmissionClientChannelType, RetransmissionServerChannelType>::
-      Retransmit(std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
+  template<typename F, typename C, typename S>
+  void CseServiceAccessClient<F, C, S>::Retransmit(
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     while(startSequenceNumber <= endSequenceNumber) {
       if(m_retransmissionCount > m_config.m_maxRetransmissionCount) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Too many retransmissions"));
@@ -406,7 +335,6 @@ namespace MarketDataService {
       startSequenceNumber = endBlock + 1;
     }
   }
-}
 }
 
 #endif

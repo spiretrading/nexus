@@ -1,5 +1,5 @@
-#ifndef NEXUS_CHIAMARKETDATAFEEDCLIENT_HPP
-#define NEXUS_CHIAMARKETDATAFEEDCLIENT_HPP
+#ifndef NEXUS_CHIA_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_CHIA_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -18,37 +18,35 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class ChiaMarketDataFeedClient
-      \brief Parses packets from the CHIA market data feed.
-      \tparam MarketDataFeedClientType The type of MarketDataFeedClient used to
-              update the MarketDataServer.
-      \tparam ProtocolClientType The type of client receiving CHIA messages.
+  /**
+   * Parses packets from the CHIA market data feed.
+   * @param <M> The type of MarketDataFeedClient used to update the
+   *        MarketDataServer.
+   * @param <P> The type of client receiving CHIA messages.
    */
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  template<typename M, typename P>
   class ChiaMarketDataFeedClient : private boost::noncopyable {
     public:
 
-      //! The type of MarketDataFeedClient used to update the MarketDataServer.
-      using MarketDataFeedClient =
-        Beam::GetTryDereferenceType<MarketDataFeedClientType>;
+      /**
+       * The type of MarketDataFeedClient used to update the MarketDataServer.
+       */
+      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of client receiving CHIA messages.
-      using ProtocolClient = Beam::GetTryDereferenceType<ProtocolClientType>;
+      /** The type of client receiving CHIA messages. */
+      using ProtocolClient = Beam::GetTryDereferenceType<P>;
 
-      //! Constructs a ChiaMarketDataFeedClient.
-      /*!
-        \param config The configuration to use.
-        \param marketDataFeedClient Initializes the MarketDataFeedClient.
-        \param protocolClient The client receiving CHIA messages.
-      */
-      template<typename MarketDataFeedClientForward,
-        typename ProtocolClientForward>
-      ChiaMarketDataFeedClient(const ChiaConfiguration& config,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ProtocolClientForward&& itchClient);
+      /**
+       * Constructs a ChiaMarketDataFeedClient.
+       * @param config The configuration to use.
+       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
+       * @param protocolClient The client receiving CHIA messages.
+       */
+      template<typename MF, typename PF>
+      ChiaMarketDataFeedClient(ChiaConfiguration config,
+        MF&& marketDataFeedClient, PF&& itchClient);
 
       ~ChiaMarketDataFeedClient();
 
@@ -65,14 +63,12 @@ namespace MarketDataService {
         OrderEntry(Security security, Money price);
       };
       ChiaConfiguration m_config;
-      Beam::GetOptionalLocalPtr<MarketDataFeedClientType>
-        m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<ProtocolClientType> m_protocolClient;
+      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
+      Beam::GetOptionalLocalPtr<P> m_protocolClient;
       std::unordered_map<std::string, OrderEntry> m_orderEntries;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       boost::posix_time::ptime ParseTimestamp(
         boost::posix_time::time_duration timestamp);
       void HandleAddOrderMessage(bool isLongForm, const ChiaMessage& message);
@@ -85,87 +81,58 @@ namespace MarketDataService {
       void ReadLoop();
   };
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      OrderEntry::OrderEntry(Security security, Money price)
-      : m_security(std::move(security)),
-        m_price(price) {}
+  template<typename M, typename P>
+  ChiaMarketDataFeedClient<M, P>::OrderEntry::OrderEntry(Security security,
+    Money price)
+    : m_security(std::move(security)),
+      m_price(price) {}
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  template<typename MarketDataFeedClientForward, typename ProtocolClientForward>
-  ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ChiaMarketDataFeedClient(const ChiaConfiguration& config,
-      MarketDataFeedClientForward&& marketDataFeedClient,
-      ProtocolClientForward&& protocolClient)
-      : m_config(config),
-        m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
-          marketDataFeedClient)},
-        m_protocolClient{std::forward<ProtocolClientForward>(protocolClient)} {}
+  template<typename M, typename P>
+  template<typename MF, typename PF>
+  ChiaMarketDataFeedClient<M, P>::ChiaMarketDataFeedClient(
+    ChiaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
+    : m_config(std::move(config)),
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_protocolClient(std::forward<PF>(protocolClient)),
+      m_readLoopRoutine(Beam::Routines::Spawn(
+        std::bind(&ChiaMarketDataFeedClient::ReadLoop, this))) {}
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ~ChiaMarketDataFeedClient() {
+  template<typename M, typename P>
+  ChiaMarketDataFeedClient<M, P>::~ChiaMarketDataFeedClient() {
     Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_protocolClient->Open();
-      m_readLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&ChiaMarketDataFeedClient::ReadLoop, this));
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Close() {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Shutdown() {
     m_protocolClient->Close();
     m_marketDataFeedClient->Close();
     m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  boost::posix_time::ptime ChiaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseTimestamp(
+  template<typename M, typename P>
+  boost::posix_time::ptime ChiaMarketDataFeedClient<M, P>::ParseTimestamp(
       boost::posix_time::time_duration timestamp) {
     return m_config.m_timeOrigin + timestamp;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleAddOrderMessage(bool isLongForm, const ChiaMessage& message) {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::HandleAddOrderMessage(bool isLongForm,
+      const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto side = ChiaMessage::ParseSide(Beam::Store(cursor));
-    auto shares =
-      [&] {
-        if(isLongForm) {
-          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
-        } else {
-          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
-        }
-      }();
+    auto shares = [&] {
+      if(isLongForm) {
+        return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
+      } else {
+        return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
+      }
+    }();
     auto symbol = ChiaMessage::ParseAlphanumeric(6, Beam::Store(cursor));
     auto price = ChiaMessage::ParsePrice(isLongForm, Beam::Store(cursor));
     auto display = ChiaMessage::ParseChar(Beam::Store(cursor));
@@ -173,7 +140,8 @@ namespace MarketDataService {
       return;
     }
     auto timestamp = ParseTimestamp(message.m_timestamp);
-    Security security(symbol, m_config.m_primaryMarket, m_config.m_country);
+    auto security = Security(symbol, m_config.m_primaryMarket,
+      m_config.m_country);
     m_marketDataFeedClient->AddOrder(security, m_config.m_disseminatingMarket,
       m_config.m_mpid, false, orderReference, side, price, shares, timestamp);
     if(m_config.m_isTimeAndSaleFeed) {
@@ -187,20 +155,19 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleOrderExecutionMessage(bool isLongForm, const ChiaMessage& message) {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::HandleOrderExecutionMessage(
+      bool isLongForm, const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
-    auto shares =
-      [&] {
-        if(isLongForm) {
-          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
-        } else {
-          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
-        }
-      }();
+    auto shares = [&] {
+      if(isLongForm) {
+        return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
+      } else {
+        return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
+      }
+    }();
     auto tradeReference = ChiaMessage::ParseNumeric(9, Beam::Store(cursor));
     auto contraOrderReference = boost::lexical_cast<std::string>(
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
@@ -211,9 +178,9 @@ namespace MarketDataService {
       if(!orderEntry.is_initialized()) {
         return;
       }
-      TimeAndSale::Condition condition;
+      auto condition = TimeAndSale::Condition();
       condition.m_code = "@";
-      TimeAndSale timeAndSale(timestamp, orderEntry->m_price, shares,
+      auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price, shares,
         std::move(condition), m_config.m_mpid);
       m_marketDataFeedClient->PublishTimeAndSale(
         SecurityTimeAndSale(std::move(timeAndSale), orderEntry->m_security));
@@ -226,9 +193,9 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleOrderCancelMessage(bool isLongForm, const ChiaMessage& message) {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::HandleOrderCancelMessage(bool isLongForm,
+      const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
@@ -241,21 +208,20 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleTradeMessage(bool isLongForm, const ChiaMessage& message) {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::HandleTradeMessage(bool isLongForm,
+      const ChiaMessage& message) {
     auto cursor = message.m_data;
     auto orderReference = boost::lexical_cast<std::string>(
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto sideIndicator = ChiaMessage::ParseChar(Beam::Store(cursor));
-    auto shares =
-      [&] {
-        if(isLongForm) {
-          return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
-        } else {
-          return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
-        }
-      }();
+    auto shares = [&] {
+      if(isLongForm) {
+        return ChiaMessage::ParseNumeric(10, Beam::Store(cursor));
+      } else {
+        return ChiaMessage::ParseNumeric(6, Beam::Store(cursor));
+      }
+    }();
     auto symbol = ChiaMessage::ParseAlphanumeric(6, Beam::Store(cursor));
     auto price = ChiaMessage::ParsePrice(isLongForm, Beam::Store(cursor));
     auto tradeReference = boost::lexical_cast<std::string>(
@@ -264,11 +230,12 @@ namespace MarketDataService {
       ChiaMessage::ParseNumeric(9, Beam::Store(cursor)));
     auto tradeType = ChiaMessage::ParseChar(Beam::Store(cursor));
     auto timestamp = ParseTimestamp(message.m_timestamp);
-    Security security(symbol, m_config.m_primaryMarket, m_config.m_country);
-    TimeAndSale::Condition condition;
+    auto security = Security(symbol, m_config.m_primaryMarket,
+      m_config.m_country);
+    auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
-    TimeAndSale timeAndSale(timestamp, price, shares, std::move(condition),
-      m_config.m_mpid);
+    auto timeAndSale = TimeAndSale(timestamp, price, shares,
+      std::move(condition), m_config.m_mpid);
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale(std::move(timeAndSale), security));
     if(m_config.m_isLoggingMessages) {
@@ -279,9 +246,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Dispatch(const ChiaMessage& message) {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::Dispatch(const ChiaMessage& message) {
     if(message.m_type == 'A') {
       HandleAddOrderMessage(false, message);
     } else if(message.m_type == 'a') {
@@ -301,9 +267,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void ChiaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ReadLoop() {
+  template<typename M, typename P>
+  void ChiaMarketDataFeedClient<M, P>::ReadLoop() {
     while(true) {
       try {
         auto message = m_protocolClient->Read();
@@ -313,7 +278,6 @@ namespace MarketDataService {
       }
     }
   }
-}
 }
 
 #endif

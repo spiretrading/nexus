@@ -1,5 +1,5 @@
-#ifndef NEXUS_CHIAMMDPROTOCOLCLIENT_HPP
-#define NEXUS_CHIAMMDPROTOCOLCLIENT_HPP
+#ifndef NEXUS_CHIA_MMD_PROTOCOL_CLIENT_HPP
+#define NEXUS_CHIA_MMD_PROTOCOL_CLIENT_HPP
 #include <deque>
 #include <functional>
 #include <Beam/IO/NotConnectedException.hpp>
@@ -12,58 +12,51 @@
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolClient.hpp"
 #include "Nexus/BinarySequenceProtocol/BinarySequenceProtocolMessage.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class ChiaMmdProtocolClient
-      \brief Parses packets from the CHIA multicast market data feed.
-      \tparam ChannelType The type of Channel receiving data.
-      \tparam RetransmissionChannelType The type of Channel used for
-              retransmissions.
+  /**
+   * Parses packets from the CHIA multicast market data feed.
+   * @param <C> The type of Channel receiving data.
+   * @param <R> The type of Channel used for retransmissions.
    */
-  template<typename ChannelType, typename RetransmissionChannelType>
+  template<typename C, typename R>
   class ChiaMmdProtocolClient : private boost::noncopyable {
     public:
 
-      //! The type of Channel receiving data.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The type of Channel receiving data. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! The type of Channel used for retransmission.
-      using RetransmissionChannel = Beam::GetTryDereferenceType<
-        RetransmissionChannelType>;
+      /** The type of Channel used for retransmission. */
+      using RetransmissionChannel = Beam::GetTryDereferenceType<R>;
 
-      //! The factory function used to build RetransmissionChannels.
+      /** The factory function used to build RetransmissionChannels. */
       using RetransmissionChannelFactory =
         std::function<std::unique_ptr<RetransmissionChannel> ()>;
 
-      //! Constructs a ChiaMmdProtocolClient.
-      /*!
-        \param channel Initializes the Channel receiving data.
-        \param username The retransmission username.
-        \param password The retransmission password.
-        \param retransmissionFactory The factory function used to build
-               RetransmissionChannels.
-      */
-      template<typename ChannelForward>
-      ChiaMmdProtocolClient(ChannelForward&& channel, std::string username,
+      /**
+       * Constructs a ChiaMmdProtocolClient.
+       * @param channel Initializes the Channel receiving data.
+       * @param username The retransmission username.
+       * @param password The retransmission password.
+       * @param retransmissionFactory The factory function used to build
+       *        RetransmissionChannels.
+       */
+      template<typename CF>
+      ChiaMmdProtocolClient(CF&& channel, std::string username,
         std::string password,
         RetransmissionChannelFactory retransmissionChannelFactory);
 
       ~ChiaMmdProtocolClient();
 
-      //! Reads the next message.
+      /** Reads the next message. */
       ChiaMessage Read();
-
-      void Open();
 
       void Close();
 
     private:
       using ProtocolClient =
-        Nexus::BinarySequenceProtocol::BinarySequenceProtocolClient<
-        ChannelType, std::uint32_t>;
-      Nexus::BinarySequenceProtocol::BinarySequenceProtocolClient<
-        ChannelType, std::uint32_t> m_client;
+        BinarySequenceProtocol::BinarySequenceProtocolClient<C, std::uint32_t>;
+      ProtocolClient m_client;
       std::string m_username;
       std::string m_password;
       RetransmissionChannelFactory m_retransmissionChannelFactory;
@@ -71,34 +64,27 @@ namespace MarketDataService {
       std::deque<Beam::IO::SharedBuffer> m_pendingMessageBuffers;
       Beam::IO::SharedBuffer m_messageBuffer;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  template<typename ChannelType, typename RetransmissionChannelType>
-  template<typename ChannelForward>
-  ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::
-      ChiaMmdProtocolClient(ChannelForward&& channel, std::string username,
-      std::string password,
-      RetransmissionChannelFactory retransmissionChannelFactory)
-      : m_client{std::forward<ChannelForward>(channel)},
-        m_username{std::move(username)},
-        m_password{std::move(password)},
-        m_retransmissionChannelFactory{
-          std::move(retransmissionChannelFactory)} {}
+  template<typename C, typename R>
+  template<typename CF>
+  ChiaMmdProtocolClient<C, R>::ChiaMmdProtocolClient(CF&& channel,
+    std::string username, std::string password,
+    RetransmissionChannelFactory retransmissionChannelFactory)
+    : m_client(std::forward<CF>(channel)),
+      m_username(std::move(username)),
+      m_password(std::move(password)),
+      m_retransmissionChannelFactory(std::move(retransmissionChannelFactory)),
+      m_sequenceNumber(0) {}
 
-  template<typename ChannelType, typename RetransmissionChannelType>
-  ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::
-      ~ChiaMmdProtocolClient() {
+  template<typename C, typename R>
+  ChiaMmdProtocolClient<C, R>::~ChiaMmdProtocolClient() {
     Close();
   }
 
-  template<typename ChannelType, typename RetransmissionChannelType>
-  ChiaMessage ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::
-      Read() {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
-    }
+  template<typename C, typename R>
+  ChiaMessage ChiaMmdProtocolClient<C, R>::Read() {
+    m_openState.EnsureOpen();
     if(!m_pendingMessageBuffers.empty()) {
       m_messageBuffer = m_pendingMessageBuffers.front();
       m_pendingMessageBuffers.pop_front();
@@ -108,7 +94,7 @@ namespace MarketDataService {
       return message;
     }
     while(true) {
-      std::uint32_t sequenceNumber;
+      auto sequenceNumber = std::uint32_t();
       auto protocolMessage = m_client.Read(Beam::Store(sequenceNumber));
       if(sequenceNumber <= m_sequenceNumber) {
         continue;
@@ -118,11 +104,11 @@ namespace MarketDataService {
         auto retransmissionChannel = m_retransmissionChannelFactory();
         if(retransmissionChannel != nullptr) {
           try {
-            ChiaMdProtocolClient<std::unique_ptr<RetransmissionChannel>>
-              retransmissionClient{std::move(retransmissionChannel), m_username,
-              m_password, "", m_sequenceNumber + 1};
-            std::uint32_t retransmissionSequence = 0;
-            retransmissionClient.Open();
+            auto retransmissionClient = ChiaMdProtocolClient<
+              std::unique_ptr<RetransmissionChannel>>(
+              std::move(retransmissionChannel), m_username, m_password, "",
+              m_sequenceNumber + 1);
+            auto retransmissionSequence = std::uint32_t(0);
             while(retransmissionSequence < sequenceNumber) {
               auto buffer = retransmissionClient.ReadBuffer(
                 Beam::Store(retransmissionSequence));
@@ -148,36 +134,14 @@ namespace MarketDataService {
     }
   }
 
-  template<typename ChannelType, typename RetransmissionChannelType>
-  void ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_client.Open();
-      m_sequenceNumber = 0;
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename ChannelType, typename RetransmissionChannelType>
-  void ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::Close() {
+  template<typename C, typename R>
+  void ChiaMmdProtocolClient<C, R>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename ChannelType, typename RetransmissionChannelType>
-  void ChiaMmdProtocolClient<ChannelType, RetransmissionChannelType>::
-      Shutdown() {
     m_client.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
-}
 }
 
 #endif

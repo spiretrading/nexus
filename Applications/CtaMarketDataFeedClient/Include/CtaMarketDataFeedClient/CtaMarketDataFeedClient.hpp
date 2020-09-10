@@ -1,5 +1,5 @@
-#ifndef NEXUS_CTAMARKETDATAFEEDCLIENT_HPP
-#define NEXUS_CTAMARKETDATAFEEDCLIENT_HPP
+#ifndef NEXUS_CTA_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_CTA_MARKET_DATA_FEED_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -11,53 +11,48 @@
 #include "CtaMarketDataFeedClient/CtaConfiguration.hpp"
 #include "CtaMarketDataFeedClient/CtaMessage.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class CtaMarketDataFeedClient
-      \brief Parses packets from a CTA market data feed.
-      \tparam MarketDataFeedClientType The type of MarketDataFeedClient used to
-              update the MarketDataServer.
-      \tparam ProtocolClientType The type of client receiving messages.
+  /**
+   * Parses packets from a CTA market data feed.
+   * @param <M> The type of MarketDataFeedClient used to update the
+   *        MarketDataServer.
+   * @param <P> The type of client receiving messages.
    */
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  template<typename M, typename P>
   class CtaMarketDataFeedClient : private boost::noncopyable {
     public:
 
-      //! The type of MarketDataFeedClient used to update the MarketDataServer.
-      using MarketDataFeedClient =
-        Beam::GetTryDereferenceType<MarketDataFeedClientType>;
+      /**
+       * The type of MarketDataFeedClient used to update the MarketDataServer.
+       */
+      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
 
-      //! The type of client receiving messages.
-      using ProtocolClient = Beam::GetTryDereferenceType<ProtocolClientType>;
+      /** The type of client receiving messages. */
+      using ProtocolClient = Beam::GetTryDereferenceType<P>;
 
-      //! Constructs a CtaMarketDataFeedClient.
-      /*!
-        \param config The configuration to use.
-        \param marketDataFeedClient Initializes the MarketDataFeedClient.
-        \param protocolClient The client receiving messages.
-      */
-      template<typename MarketDataFeedClientForward,
-        typename ProtocolClientForward>
-      CtaMarketDataFeedClient(const CtaConfiguration& config,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ProtocolClientForward&& protocolClient);
+      /**
+       * Constructs a CtaMarketDataFeedClient.
+       * @param config The configuration to use.
+       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
+       * @param protocolClient The client receiving messages.
+       */
+      template<typename MF, typename PF>
+      CtaMarketDataFeedClient(CtaConfiguration config,
+        MF&& marketDataFeedClient, PF&& protocolClient);
 
       ~CtaMarketDataFeedClient();
-
-      void Open();
 
       void Close();
 
     private:
       CtaConfiguration m_config;
-      Beam::GetOptionalLocalPtr<MarketDataFeedClientType>
+      Beam::GetOptionalLocalPtr<M>
         m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<ProtocolClientType> m_protocolClient;
+      Beam::GetOptionalLocalPtr<P> m_protocolClient;
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       char ParseChar(Beam::Out<const char*> cursor);
       std::string ParseAlphanumeric(std::size_t size,
         Beam::Out<const char*> cursor);
@@ -79,72 +74,43 @@ namespace MarketDataService {
       void ReadLoop();
   };
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  template<typename MarketDataFeedClientForward, typename ProtocolClientForward>
-  CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      CtaMarketDataFeedClient(const CtaConfiguration& config,
-      MarketDataFeedClientForward&& marketDataFeedClient,
-      ProtocolClientForward&& protocolClient)
-      : m_config{config},
-        m_marketDataFeedClient{std::forward<MarketDataFeedClientForward>(
-          marketDataFeedClient)},
-        m_protocolClient{std::forward<ProtocolClientForward>(protocolClient)} {}
+  template<typename M, typename P>
+  template<typename MF, typename PF>
+  CtaMarketDataFeedClient<M, P>::CtaMarketDataFeedClient(
+    CtaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
+    : m_config(std::move(config)),
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_protocolClient(std::forward<PF>(protocolClient)),
+      m_readLoopRoutine(Beam::Routines::Spawn(
+        std::bind(&CtaMarketDataFeedClient::ReadLoop, this))) {}
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ~CtaMarketDataFeedClient() {
+  template<typename M, typename P>
+  CtaMarketDataFeedClient<M, P>::~CtaMarketDataFeedClient() {
     Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_protocolClient->Open();
-      m_readLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&CtaMarketDataFeedClient::ReadLoop, this));
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Close() {
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Shutdown() {
     m_protocolClient->Close();
     m_marketDataFeedClient->Close();
     m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  char CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseChar(Beam::Out<const char*> cursor) {
+  template<typename M, typename P>
+  char CtaMarketDataFeedClient<M, P>::ParseChar(Beam::Out<const char*> cursor) {
     auto value = **cursor;
     ++*cursor;
     return value;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  std::string CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseAlphanumeric(std::size_t size,
+  template<typename M, typename P>
+  std::string CtaMarketDataFeedClient<M, P>::ParseAlphanumeric(std::size_t size,
       Beam::Out<const char*> cursor) {
-    std::string value;
+    auto value = std::string();
     auto token = *cursor;
     while(size > 0) {
       if(*token != ' ') {
@@ -160,14 +126,13 @@ namespace MarketDataService {
     return value;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  std::string CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseSymbol(std::size_t size,
+  template<typename M, typename P>
+  std::string CtaMarketDataFeedClient<M, P>::ParseSymbol(std::size_t size,
       Beam::Out<const char*> cursor) {
-    std::string value;
+    auto value = std::string();
     auto token = *cursor;
     auto state = 0;
-    std::string suffix;
+    auto suffix = std::string();
     while(size > 0) {
       if(state == 0) {
         if(*token == '.' || *token == 'p' || *token == 'r' || *token == 'w') {
@@ -223,10 +188,10 @@ namespace MarketDataService {
     return value;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
+  template<typename M, typename P>
   template<typename T>
-  Quantity CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseNumeric(Beam::Out<const char*> cursor) {
+  Quantity CtaMarketDataFeedClient<M, P>::ParseNumeric(
+      Beam::Out<const char*> cursor) {
     auto token = *cursor;
     auto value = static_cast<Quantity>(Beam::FromBigEndian(
       *reinterpret_cast<const T*>(token)));
@@ -235,13 +200,13 @@ namespace MarketDataService {
     return value;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  Money CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ParseMoney(std::size_t length, Beam::Out<const char*> cursor) {
-    static auto SHORT_FORM = 2;
-    static auto LONG_FORM = 8;
-    std::uint64_t rawValue;
-    Money value;
+  template<typename M, typename P>
+  Money CtaMarketDataFeedClient<M, P>::ParseMoney(std::size_t length,
+      Beam::Out<const char*> cursor) {
+    static constexpr auto SHORT_FORM = 2;
+    static constexpr auto LONG_FORM = 8;
+    auto rawValue = std::uint64_t();
+    auto value = Money();
     auto token = *cursor;
     if(length == SHORT_FORM) {
       rawValue = Beam::FromBigEndian(
@@ -254,32 +219,31 @@ namespace MarketDataService {
       value = (rawValue * Money::ONE) / 1000000;
       token += sizeof(std::uint64_t);
     } else {
-      BOOST_THROW_EXCEPTION(std::runtime_error{"Unknown price format."});
+      BOOST_THROW_EXCEPTION(std::runtime_error("Unknown price format."));
     }
     *cursor = token;
     return value;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  MarketCode CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseMarket(std::uint8_t identifier) {
+  template<typename M, typename P>
+  MarketCode CtaMarketDataFeedClient<M, P>::ParseMarket(
+      std::uint8_t identifier) {
     return m_config.m_marketCodes[identifier];
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  MarketCode CtaMarketDataFeedClient<MarketDataFeedClientType,
-      ProtocolClientType>::ParseMarket(Beam::Out<const char*> cursor) {
+  template<typename M, typename P>
+  MarketCode CtaMarketDataFeedClient<M, P>::ParseMarket(
+      Beam::Out<const char*> cursor) {
     auto value = static_cast<std::uint8_t>(**cursor);
     auto code = ParseMarket(value);
     ++*cursor;
     return code;
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  Quote CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleShortNationalBboAppendage(Side side,
-      Beam::Out<const char*> cursor) {
-    static const auto SHORT_FORM = 2;
+  template<typename M, typename P>
+  Quote CtaMarketDataFeedClient<M, P>::HandleShortNationalBboAppendage(
+      Side side, Beam::Out<const char*> cursor) {
+    static constexpr auto SHORT_FORM = 2;
     auto token = *cursor;
     token += sizeof(std::uint8_t);
     auto price = ParseMoney(SHORT_FORM, Beam::Store(token));
@@ -288,10 +252,10 @@ namespace MarketDataService {
     return Quote{price, size, side};
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  Quote CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleLongNationalBboAppendage(Side side, Beam::Out<const char*> cursor) {
-    static const auto LONG_FORM = 8;
+  template<typename M, typename P>
+  Quote CtaMarketDataFeedClient<M, P>::HandleLongNationalBboAppendage(Side side,
+      Beam::Out<const char*> cursor) {
+    static constexpr auto LONG_FORM = 8;
     auto token = *cursor;
     token += sizeof(std::uint8_t);
     token += sizeof(std::uint8_t);
@@ -302,12 +266,12 @@ namespace MarketDataService {
     return Quote{price, size, side};
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleShortFormMarketQuoteMessage(const CtaMessage& message) {
-    const auto SYMBOL_LENGTH = 5;
-    const auto PRICE_LENGTH = 2;
-    const auto LOT_SIZE = 100;
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::HandleShortFormMarketQuoteMessage(
+      const CtaMessage& message) {
+    constexpr auto SYMBOL_LENGTH = 5;
+    constexpr auto PRICE_LENGTH = 2;
+    constexpr auto LOT_SIZE = 100;
     auto cursor = message.m_body;
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     auto bidPrice = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
@@ -317,11 +281,11 @@ namespace MarketDataService {
     auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    Security security{symbol, primaryMarket, m_config.m_country};
-    Quote bid{bidPrice, bidSize, Side::BID};
-    Quote ask{askPrice, askSize, Side::ASK};
+    auto security = Security(symbol, primaryMarket, m_config.m_country);
+    auto bid = Quote(bidPrice, bidSize, Side::BID);
+    auto ask = Quote(askPrice, askSize, Side::ASK);
     if(nationalBboIndicator == 'G') {
-      BboQuote bboQuote{bid, ask, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == 'T') {
@@ -329,7 +293,7 @@ namespace MarketDataService {
         Beam::Store(cursor));
       auto bboAsk = HandleShortNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
-      BboQuote bboQuote{bboBid, bboAsk, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == 'U') {
@@ -337,21 +301,22 @@ namespace MarketDataService {
         Beam::Store(cursor));
       auto bboAsk = HandleLongNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
-      BboQuote bboQuote{bboBid, bboAsk, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     }
-    MarketQuote marketQuote{market, bid, ask, message.m_header.m_timestamp};
+    auto marketQuote = MarketQuote(market, bid, ask,
+      message.m_header.m_timestamp);
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleLongFormMarketQuoteMessage(const CtaMessage& message) {
-    const auto SYMBOL_LENGTH = 11;
-    const auto PRICE_LENGTH = 8;
-    const auto LOT_SIZE = 100;
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::HandleLongFormMarketQuoteMessage(
+      const CtaMessage& message) {
+    constexpr auto SYMBOL_LENGTH = 11;
+    constexpr auto PRICE_LENGTH = 8;
+    constexpr auto LOT_SIZE = 100;
     auto cursor = message.m_body;
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
@@ -375,11 +340,11 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     auto nationalBboIndicator = ParseChar(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    Security security{symbol, primaryMarket, m_config.m_country};
-    Quote bid{bidPrice, bidSize, Side::BID};
-    Quote ask{askPrice, askSize, Side::ASK};
+    auto security = Security(symbol, primaryMarket, m_config.m_country);
+    auto bid = Quote(bidPrice, bidSize, Side::BID);
+    auto ask = Quote(askPrice, askSize, Side::ASK);
     if(nationalBboIndicator == 'G') {
-      BboQuote bboQuote{bid, ask, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bid, ask, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == 'T') {
@@ -387,7 +352,7 @@ namespace MarketDataService {
         Beam::Store(cursor));
       auto bboAsk = HandleShortNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
-      BboQuote bboQuote{bboBid, bboAsk, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     } else if(nationalBboIndicator == 'U') {
@@ -395,43 +360,44 @@ namespace MarketDataService {
         Beam::Store(cursor));
       auto bboAsk = HandleLongNationalBboAppendage(Side::ASK,
         Beam::Store(cursor));
-      BboQuote bboQuote{bboBid, bboAsk, message.m_header.m_timestamp};
+      auto bboQuote = BboQuote(bboBid, bboAsk, message.m_header.m_timestamp);
       m_marketDataFeedClient->PublishBboQuote(
         SecurityBboQuote{bboQuote, security});
     }
-    MarketQuote marketQuote{market, bid, ask, message.m_header.m_timestamp};
+    auto marketQuote = MarketQuote(market, bid, ask,
+      message.m_header.m_timestamp);
     m_marketDataFeedClient->PublishMarketQuote(
       SecurityMarketQuote{marketQuote, security});
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleShortFormTradeMessage(const CtaMessage& message) {
-    const auto SYMBOL_LENGTH = 5;
-    const auto PRICE_LENGTH = 2;
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::HandleShortFormTradeMessage(
+      const CtaMessage& message) {
+    constexpr auto SYMBOL_LENGTH = 5;
+    constexpr auto PRICE_LENGTH = 2;
     auto cursor = message.m_body;
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
-    auto saleCondition = ParseChar(Beam::Store(cursor));
+    auto saleCondition = std::string(1, ParseChar(Beam::Store(cursor)));
     cursor += sizeof(std::uint8_t);
     auto price = ParseMoney(PRICE_LENGTH, Beam::Store(cursor));
     auto quantity = ParseNumeric<std::uint16_t>(Beam::Store(cursor));
     auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    TimeAndSale::Condition condition{
-      TimeAndSale::Condition::Type::REGULAR, std::string{saleCondition}};
-    TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
-      condition, market.GetData()};
-    Security security{symbol, primaryMarket, m_config.m_country};
+    auto condition = TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, saleCondition);
+    auto timeAndSale = TimeAndSale(message.m_header.m_timestamp, price,
+      quantity, condition, market.GetData());
+    auto security = Security(symbol, primaryMarket, m_config.m_country);
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      HandleLongFormTradeMessage(const CtaMessage& message) {
-    const auto SYMBOL_LENGTH = 11;
-    const auto PRICE_LENGTH = 8;
-    const auto CONDITION_LENGTH = 4;
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::HandleLongFormTradeMessage(
+      const CtaMessage& message) {
+    constexpr auto SYMBOL_LENGTH = 11;
+    constexpr auto PRICE_LENGTH = 8;
+    constexpr auto CONDITION_LENGTH = 4;
     auto cursor = message.m_body;
     auto symbol = ParseSymbol(SYMBOL_LENGTH, Beam::Store(cursor));
     cursor += sizeof(std::uint8_t);
@@ -447,18 +413,17 @@ namespace MarketDataService {
     cursor += sizeof(std::uint8_t);
     auto primaryMarket = ParseMarket(Beam::Store(cursor));
     auto market = ParseMarket(message.m_header.m_participantId);
-    TimeAndSale::Condition condition{
-      TimeAndSale::Condition::Type::REGULAR, saleCondition};
-    TimeAndSale timeAndSale{message.m_header.m_timestamp, price, quantity,
-      condition, market.GetData()};
-    Security security{symbol, primaryMarket, m_config.m_country};
+    auto condition = TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, saleCondition);
+    auto timeAndSale = TimeAndSale(message.m_header.m_timestamp, price,
+      quantity, condition, market.GetData());
+    auto security = Security(symbol, primaryMarket, m_config.m_country);
     m_marketDataFeedClient->PublishTimeAndSale(
       SecurityTimeAndSale{timeAndSale, security});
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      Dispatch(const CtaMessage& message) {
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::Dispatch(const CtaMessage& message) {
     if(message.m_header.m_category == 'Q') {
       if(message.m_header.m_type == 'L') {
         HandleLongFormMarketQuoteMessage(message);
@@ -474,9 +439,8 @@ namespace MarketDataService {
     }
   }
 
-  template<typename MarketDataFeedClientType, typename ProtocolClientType>
-  void CtaMarketDataFeedClient<MarketDataFeedClientType, ProtocolClientType>::
-      ReadLoop() {
+  template<typename M, typename P>
+  void CtaMarketDataFeedClient<M, P>::ReadLoop() {
     while(true) {
       try {
         auto message = m_protocolClient->Read();
@@ -491,7 +455,6 @@ namespace MarketDataService {
       }
     }
   }
-}
 }
 
 #endif

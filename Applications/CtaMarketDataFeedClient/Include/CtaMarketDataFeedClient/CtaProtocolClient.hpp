@@ -1,74 +1,71 @@
-#ifndef NEXUS_CTAPROTOCOLCLIENT_HPP
-#define NEXUS_CTAPROTOCOLCLIENT_HPP
+#ifndef NEXUS_CTA_PROTOCOL_CLIENT_HPP
+#define NEXUS_CTA_PROTOCOL_CLIENT_HPP
 #include <cstdint>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/noncopyable.hpp>
 #include "CtaMarketDataFeedClient/CtaMessage.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class CtaProtocolClient
-      \brief Implements a client using the CTA protocol.
-      \tparam ChannelType The type of Channel connected to the server.
+  /**
+   * Implements a client using the CTA protocol.
+   * @param <C> The type of Channel connected to the server.
    */
-  template<typename ChannelType>
+  template<typename C>
   class CtaProtocolClient : private boost::noncopyable {
     public:
 
-      //! The type of Channel connected to the server.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The type of Channel connected to the server. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a CtaProtocolClient.
-      /*!
-        \param channel The Channel to connect to the server
-      */
-      template<typename ChannelForward>
-      CtaProtocolClient(ChannelForward&& channel);
+      /**
+       * Constructs a CtaProtocolClient.
+       * @param channel The Channel to connect to the server
+       */
+      template<typename CF>
+      CtaProtocolClient(CF&& channel);
 
       ~CtaProtocolClient();
 
-      //! Reads the next message from the feed.
-      /*!
-        \return The next CtaMessage in the data feed.
-      */
+      /**
+       * Reads the next message from the feed.
+       * @return The next CtaMessage in the data feed.
+       */
       CtaMessage Read();
-
-      void Open();
 
       void Close();
 
     private:
       using Buffer = typename Channel::Reader::Buffer;
-      Beam::GetOptionalLocalPtr<ChannelType> m_channel;
+      Beam::GetOptionalLocalPtr<C> m_channel;
       Buffer m_buffer;
       const char* m_token;
       CtaBlock m_block;
       std::uint8_t m_blockIndex;
       std::uint32_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  template<typename ChannelType>
-  template<typename ChannelForward>
-  CtaProtocolClient<ChannelType>::CtaProtocolClient(ChannelForward&& channel)
-      : m_channel{std::forward<ChannelType>(channel)} {}
+  template<typename C>
+  template<typename CF>
+  CtaProtocolClient<C>::CtaProtocolClient(CF&& channel)
+      : m_channel(std::forward<C>(channel)),
+        m_token(m_buffer.GetData()),
+        m_blockIndex(0),
+        m_sequenceNumber(-1) {
+    m_block.m_header.m_messageCount = 0;
+  }
 
-  template<typename ChannelType>
-  CtaProtocolClient<ChannelType>::~CtaProtocolClient() {
+  template<typename C>
+  CtaProtocolClient<C>::~CtaProtocolClient() {
     Close();
   }
 
-  template<typename ChannelType>
-  CtaMessage CtaProtocolClient<ChannelType>::Read() {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
-    }
+  template<typename C>
+  CtaMessage CtaProtocolClient<C>::Read() {
+    m_openState.EnsureOpen();
     while(m_blockIndex == m_block.m_header.m_messageCount) {
       m_buffer.Reset();
       m_channel->GetReader().Read(Beam::Store(m_buffer));
@@ -99,38 +96,14 @@ namespace MarketDataService {
     }
   }
 
-  template<typename ChannelType>
-  void CtaProtocolClient<ChannelType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_channel->GetConnection().Open();
-      m_block.m_header.m_messageCount = 0;
-      m_sequenceNumber = -1;
-      m_blockIndex = 0;
-      m_token = m_buffer.GetData();
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename ChannelType>
-  void CtaProtocolClient<ChannelType>::Close() {
+  template<typename C>
+  void CtaProtocolClient<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename ChannelType>
-  void CtaProtocolClient<ChannelType>::Shutdown() {
     m_channel->GetConnection().Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
-}
 }
 
 #endif

@@ -98,8 +98,6 @@ namespace Nexus::MarketDataService {
 
       ~AsxItchMarketDataFeedClient();
 
-      void Open();
-
       void Close();
 
     private:
@@ -129,7 +127,6 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       boost::posix_time::ptime ParseTimestamp(Beam::Out<const char*> cursor);
       std::uint8_t ParseChar(Beam::Out<const char*> cursor);
       std::uint8_t ParseInt8(Beam::Out<const char*> cursor);
@@ -143,7 +140,7 @@ namespace Nexus::MarketDataService {
       std::string BuildOrderKey(const Security& security, Side side,
         std::uint64_t orderId);
       void UpdateBbo(const Security& security, Side side, Money price,
-        Quantity delta, const boost::posix_time::ptime& timestamp);
+        Quantity delta, boost::posix_time::ptime timestamp);
       void HandleSecondsMessage(const MoldUdp64::MoldUdp64Message& message);
       void HandleAddOrderMessage(bool isAnonymous,
         const MoldUdp64::MoldUdp64Message& message);
@@ -173,7 +170,9 @@ namespace Nexus::MarketDataService {
       m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
       m_itchClient(std::forward<IF>(itchClient)),
       m_glimpseClient(std::forward<GF>(glimpseClient)),
-      m_lastTimePoint(boost::posix_time::not_a_date_time) {}
+      m_lastTimePoint(boost::posix_time::not_a_date_time),
+      m_readLoopRoutine(Beam::Routines::Spawn(
+        std::bind(&AsxItchMarketDataFeedClient::ReadLoop, this))) {}
 
   template<typename M, typename I, typename G>
   AsxItchMarketDataFeedClient<M, I, G>::~AsxItchMarketDataFeedClient() {
@@ -181,39 +180,15 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_itchClient->Open();
-      m_glimpseClient->Login(m_config.m_glimpseUsername,
-        m_config.m_glimpsePassword);
-      m_readLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&AsxItchMarketDataFeedClient::ReadLoop, this));
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename M, typename I, typename G>
   void AsxItchMarketDataFeedClient<M, I, G>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::Shutdown() {
     m_glimpseClient->Close();
     m_itchClient->Close();
     m_marketDataFeedClient->Close();
     m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename M, typename I, typename G>
@@ -313,14 +288,13 @@ namespace Nexus::MarketDataService {
   template<typename M, typename I, typename G>
   Money AsxItchMarketDataFeedClient<M, I, G>::ParsePrice(
       const OrderBookDirectory& directory, Beam::Out<const char*> cursor) {
-    auto PowerOfTen =
-      [] (std::uint16_t exponent) {
-        Quantity result = 1;
-        for(auto i = std::uint16_t{0}; i < exponent; ++i) {
-          result *= 10;
-        }
-        return result;
-      };
+    auto PowerOfTen = [] (std::uint16_t exponent) {
+      auto result = Quantity(1);
+      for(auto i = std::uint16_t(0); i < exponent; ++i) {
+        result *= 10;
+      }
+      return result;
+    };
     auto price = Money{ParseInt32(Beam::Store(cursor)) /
       (100 * PowerOfTen(directory.m_priceDecimalPlaces))};
     return price;
@@ -353,11 +327,10 @@ namespace Nexus::MarketDataService {
   template<typename M, typename I, typename G>
   void AsxItchMarketDataFeedClient<M, I, G>::UpdateBbo(const Security& security,
       Side side, Money price, Quantity delta,
-      const boost::posix_time::ptime& timestamp) {
-    auto& bboEntry = Beam::GetOrInsert(m_bboEntries, security,
-      [] {
-        return BboEntry();
-      });
+      boost::posix_time::ptime timestamp) {
+    auto& bboEntry = Beam::GetOrInsert(m_bboEntries, security, [] {
+      return BboEntry();
+    });
     auto& levels = Pick(side, bboEntry.m_asks, bboEntry.m_bids);
     auto positionIterator = std::lower_bound(levels.begin(),
       levels.end(), price,
@@ -368,8 +341,7 @@ namespace Nexus::MarketDataService {
           return lhs.m_price > rhs;
         }
       });
-    if(positionIterator == levels.end() ||
-        positionIterator->m_price != price) {
+    if(positionIterator == levels.end() || positionIterator->m_price != price) {
       if(delta <= 0) {
         return;
       }
@@ -416,7 +388,7 @@ namespace Nexus::MarketDataService {
     auto orderId = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto side = ParseSide(Beam::Store(cursor));
@@ -457,7 +429,7 @@ namespace Nexus::MarketDataService {
     auto orderId = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto side = ParseSide(Beam::Store(cursor));
@@ -467,8 +439,7 @@ namespace Nexus::MarketDataService {
       orderId);
     m_marketDataFeedClient->OffsetOrderSize(orderKey, -executedQuantity,
       timestamp);
-    auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(orderEntry.is_initialized()) {
+    if(auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey)) {
       orderEntry->m_remainingQuantity -= executedQuantity;
       if(m_config.m_isTimeAndSaleFeed) {
         auto condition = TimeAndSale::Condition();
@@ -493,7 +464,7 @@ namespace Nexus::MarketDataService {
     auto orderId = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto side = ParseSide(Beam::Store(cursor));
@@ -509,8 +480,7 @@ namespace Nexus::MarketDataService {
       orderId);
     m_marketDataFeedClient->OffsetOrderSize(orderKey, -executedQuantity,
       timestamp);
-    auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(orderEntry.is_initialized()) {
+    if(auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey)) {
       orderEntry->m_remainingQuantity -= executedQuantity;
       if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
         auto condition = TimeAndSale::Condition();
@@ -534,7 +504,7 @@ namespace Nexus::MarketDataService {
     auto orderId = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto side = ParseSide(Beam::Store(cursor));
@@ -546,7 +516,7 @@ namespace Nexus::MarketDataService {
       orderId);
     m_marketDataFeedClient->DeleteOrder(orderKey, timestamp);
     auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(!orderEntry.is_initialized()) {
+    if(!orderEntry) {
       return;
     }
     UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
@@ -570,7 +540,7 @@ namespace Nexus::MarketDataService {
     auto orderId = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto side = ParseSide(Beam::Store(cursor));
@@ -578,7 +548,7 @@ namespace Nexus::MarketDataService {
       orderId);
     m_marketDataFeedClient->DeleteOrder(orderKey, timestamp);
     auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(!orderEntry.is_initialized()) {
+    if(!orderEntry) {
       return;
     }
     UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
@@ -596,7 +566,7 @@ namespace Nexus::MarketDataService {
     auto quantity = ParseInt64(Beam::Store(cursor));
     auto orderBookId = ParseInt32(Beam::Store(cursor));
     auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
-    if(!directory.is_initialized()) {
+    if(!directory) {
       return;
     }
     auto price = ParsePrice(*directory, Beam::Store(cursor));

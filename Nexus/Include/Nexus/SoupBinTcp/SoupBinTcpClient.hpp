@@ -132,7 +132,7 @@ namespace Nexus::SoupBinTcp {
         std::bind(&SoupBinTcpClient::HeartbeatLoop, this));
     } catch(const std::exception&) {
       Close();
-      BEAM_RETHROW;
+      BOOST_RETHROW;
     }
   }
 
