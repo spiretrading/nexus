@@ -41,9 +41,8 @@ namespace Nexus::OasisOrderExecutionService {
        * @param tmxFeeTable The fee table used by TMX markets.
        * @param usFeeTable The fee table used by US markets.
        */
-      template<typename OrderExecutionDriverForward>
-      FeesCalculatorOrderExecutionDriver(
-        OrderExecutionDriverForward&& orderExecutionDriver,
+      template<typename OF>
+      FeesCalculatorOrderExecutionDriver(OF&& orderExecutionDriver,
         AsxtFeeTable asxFeeTable, HkexFeeTable hkexFeeTable,
         JpxFeeTable jpxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
         ConsolidatedUsFeeTable usFeeTable);
@@ -63,8 +62,6 @@ namespace Nexus::OasisOrderExecutionService {
         OrderExecutionService::OrderId orderId,
         const OrderExecutionService::ExecutionReport& executionReport);
 
-      void Open();
-
       void Close();
 
     private:
@@ -80,7 +77,6 @@ namespace Nexus::OasisOrderExecutionService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void HandleAustralianMarketFees(
         OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
@@ -101,14 +97,12 @@ namespace Nexus::OasisOrderExecutionService {
   };
 
   template<typename O>
-  template<typename OrderExecutionDriverForward>
+  template<typename OF>
   FeesCalculatorOrderExecutionDriver<O>::FeesCalculatorOrderExecutionDriver(
-    OrderExecutionDriverForward&& orderExecutionDriver,
-    AsxtFeeTable asxtFeeTable, HkexFeeTable hkexFeeTable,
-    JpxFeeTable jpxFeeTable, ConsolidatedTmxFeeTable tmxFeeTable,
-    ConsolidatedUsFeeTable usFeeTable)
-    : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
-        orderExecutionDriver)),
+    OF&& orderExecutionDriver, AsxtFeeTable asxtFeeTable,
+    HkexFeeTable hkexFeeTable, JpxFeeTable jpxFeeTable,
+    ConsolidatedTmxFeeTable tmxFeeTable, ConsolidatedUsFeeTable usFeeTable)
+    : m_orderExecutionDriver(std::forward<OF>(orderExecutionDriver)),
       m_asxtFeeTable(std::move(asxtFeeTable)),
       m_hkexFeeTable(std::move(hkexFeeTable)),
       m_jpxFeeTable(std::move(jpxFeeTable)),
@@ -128,25 +122,24 @@ namespace Nexus::OasisOrderExecutionService {
     auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(
       **orderRecord);
     m_orders.Insert(order);
-    driverOrder.GetPublisher().With(
-      [&] {
-        auto existingExecutionReports = boost::optional<
-          std::vector<OrderExecutionService::ExecutionReport>>();
-        driverOrder.GetPublisher().Monitor(
-          m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind(
-          &FeesCalculatorOrderExecutionDriver::OnExecutionReport, this, order,
-          std::placeholders::_1)), Beam::Store(existingExecutionReports));
-        if(existingExecutionReports.is_initialized()) {
-          existingExecutionReports->erase(existingExecutionReports->begin(),
-            existingExecutionReports->begin() +
-            (*orderRecord)->m_executionReports.size());
-          for(auto& executionReport : *existingExecutionReports) {
-            m_tasks.Push(
-              std::bind(&FeesCalculatorOrderExecutionDriver::OnExecutionReport,
-              this, order, executionReport));
-          }
+    driverOrder.GetPublisher().With([&] {
+      auto existingExecutionReports = boost::optional<
+        std::vector<OrderExecutionService::ExecutionReport>>();
+      driverOrder.GetPublisher().Monitor(
+        m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind(
+        &FeesCalculatorOrderExecutionDriver::OnExecutionReport, this, order,
+        std::placeholders::_1)), Beam::Store(existingExecutionReports));
+      if(existingExecutionReports.is_initialized()) {
+        existingExecutionReports->erase(existingExecutionReports->begin(),
+          existingExecutionReports->begin() +
+          (*orderRecord)->m_executionReports.size());
+        for(auto& executionReport : *existingExecutionReports) {
+          m_tasks.Push(
+            std::bind(&FeesCalculatorOrderExecutionDriver::OnExecutionReport,
+            this, order, executionReport));
         }
-      });
+      }
+    });
     return *order;
   }
 
@@ -180,30 +173,8 @@ namespace Nexus::OasisOrderExecutionService {
   }
 
   template<typename O>
-  void FeesCalculatorOrderExecutionDriver<O>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_orderExecutionDriver->Open();
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
-  }
-
-  template<typename O>
-  void FeesCalculatorOrderExecutionDriver<O>::Shutdown() {
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename O>
@@ -212,11 +183,9 @@ namespace Nexus::OasisOrderExecutionService {
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_asxtFeeTable, order.GetInfo().m_fields,
       executionReport);
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
-        order.Update(feesReport);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      order.Update(feesReport);
+    });
   }
 
   template<typename O>
@@ -225,11 +194,9 @@ namespace Nexus::OasisOrderExecutionService {
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_tmxFeeTable, m_tmxState, order,
       executionReport);
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
-        order.Update(feesReport);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      order.Update(feesReport);
+    });
   }
 
   template<typename O>
@@ -238,11 +205,9 @@ namespace Nexus::OasisOrderExecutionService {
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_hkexFeeTable, order.GetInfo().m_fields,
       executionReport);
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
-        order.Update(feesReport);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      order.Update(feesReport);
+    });
   }
 
   template<typename O>
@@ -251,11 +216,9 @@ namespace Nexus::OasisOrderExecutionService {
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_jpxFeeTable, order.GetInfo().m_fields,
       executionReport);
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
-        order.Update(feesReport);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      order.Update(feesReport);
+    });
   }
 
   template<typename O>
@@ -263,11 +226,9 @@ namespace Nexus::OasisOrderExecutionService {
       OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& executionReport) {
     auto feesReport = CalculateFee(m_usFeeTable, order, executionReport);
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<OrderExecutionService::ExecutionReport>& reports) {
-        order.Update(feesReport);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      order.Update(feesReport);
+    });
   }
 
   template<typename O>

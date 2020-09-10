@@ -44,7 +44,7 @@ namespace Nexus::MarketDataService {
     public:
 
       /** The type of channel receiving the market data feed. */
-      using FeedChannel = Beam::GetTryDereferenceType<F>;
+      using Channel = Beam::GetTryDereferenceType<F>;
 
       /** The type of Channel used to send retransmission requests. */
       using RetransmissionClientChannel = Beam::GetTryDereferenceType<C>;
@@ -63,15 +63,15 @@ namespace Nexus::MarketDataService {
       /**
        * Constructs a TmxIpServiceAccessClient.
        * @param config The configuration to use.
-       * @param feedChannel The Channel receiving the market data feed.
+       * @param channel The Channel receiving the market data feed.
        * @param retransmissionClientChannelBuilder Builds instances of the
        *        Channel used to send retransmission requests.
        * @param retransmissionServerChannel The Channel receiving retransmission
        *        messages.
        */
       template<typename FF, typename SF>
-      TmxIpServiceAccessClient(const TmxIpServiceAccessConfiguration& config,
-        FF&& feedChannel,
+      TmxIpServiceAccessClient(TmxIpServiceAccessConfiguration config,
+        FF&& channel,
         RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
         SF&& retransmissionServerChannel);
 
@@ -80,17 +80,15 @@ namespace Nexus::MarketDataService {
       /** Reads the next message from the feed. */
       StampProtocol::StampMessage Read();
 
-      void Open();
-
       void Close();
 
     private:
-      using FeedBuffer = typename FeedChannel::Reader::Buffer;
+      using Buffer = typename Channel::Reader::Buffer;
       struct BufferEntry {
-        FeedBuffer m_buffer;
+        Buffer m_buffer;
         std::uint32_t m_sequenceNumber;
 
-        BufferEntry(FeedBuffer buffer, std::uint32_t sequenceNumber);
+        BufferEntry(Buffer buffer, std::uint32_t sequenceNumber);
       };
       TmxIpServiceAccessConfiguration m_config;
       Beam::GetOptionalLocalPtr<F> m_feedChannel;
@@ -98,15 +96,14 @@ namespace Nexus::MarketDataService {
       Beam::GetOptionalLocalPtr<S> m_retransmissionServerChannel;
       int m_retransmissionCount;
       std::uint32_t m_sequenceNumber;
-      std::vector<FeedBuffer> m_buffers;
+      std::vector<Buffer> m_buffers;
       std::deque<BufferEntry> m_pendingBuffers;
       Beam::IO::OpenState m_openState;
 
-      template<typename Buffer>
-      static void BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
+      static void BuildRetransmissionRequestBuffer(
+        Beam::Out<typename RetransmissionClientChannel::Writer::Buffer> buffer,
         std::size_t startSequenceNumber, std::size_t endSequenceNumber);
-      void Shutdown();
-      void AddPendingBuffer(FeedBuffer buffer, std::size_t sequenceNumber);
+      void AddPendingBuffer(Buffer buffer, std::size_t sequenceNumber);
       void SendRetransmissionRequest(std::size_t startSequenceNumber,
         std::size_t endSequenceNumber);
       void ReadRetransmissionResponse(std::size_t startSequenceNumber,
@@ -121,7 +118,7 @@ namespace Nexus::MarketDataService {
       m_maxRetransmissionBlock(20000) {}
 
   template<typename F, typename C, typename S>
-  TmxIpServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
+  TmxIpServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(Buffer buffer,
     std::uint32_t sequenceNumber)
     : m_buffer(std::move(buffer)),
       m_sequenceNumber(sequenceNumber) {}
@@ -129,15 +126,17 @@ namespace Nexus::MarketDataService {
   template<typename F, typename C, typename S>
   template<typename FF, typename SF>
   TmxIpServiceAccessClient<F, C, S>::TmxIpServiceAccessClient(
-    const TmxIpServiceAccessConfiguration& config, FF&& feedChannel,
+    TmxIpServiceAccessConfiguration config, FF&& feedChannel,
     RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
     SF&& retransmissionServerChannel)
-    : m_config(config),
+    : m_config(std::move(config)),
       m_feedChannel(std::forward<FF>(feedChannel)),
       m_retransmissionClientChannelBuilder(
         std::move(retransmissionClientChannelBuilder)),
       m_retransmissionServerChannel(std::forward<SF>(
-        retransmissionServerChannel)) {}
+        retransmissionServerChannel)),
+      m_retransmissionCount(0),
+      m_sequenceNumber(0) {}
 
   template<typename F, typename C, typename S>
   TmxIpServiceAccessClient<F, C, S>::~TmxIpServiceAccessClient() {
@@ -147,9 +146,7 @@ namespace Nexus::MarketDataService {
   template<typename F, typename C, typename S>
   StampProtocol::StampMessage TmxIpServiceAccessClient<F, C, S>::Read() {
     static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException());
-    }
+    m_openState.EnsureOpen();
     auto packet = StampProtocol::StampPacket();
     if(m_config.m_enableRetransmission) {
       auto retransmissionBuffer =
@@ -228,37 +225,22 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void TmxIpServiceAccessClient<F, C, S>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_feedChannel->GetConnection().Open();
-      if(m_config.m_enableRetransmission) {
-        m_retransmissionServerChannel->GetConnection().Open();
-      }
-      m_retransmissionCount = 0;
-      m_sequenceNumber = 0;
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename F, typename C, typename S>
   void TmxIpServiceAccessClient<F, C, S>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    if(m_config.m_enableRetransmission) {
+      m_retransmissionServerChannel->GetConnection().Close();
+    }
+    m_feedChannel->GetConnection().Close();
+    m_buffers.clear();
+    m_openState.Close();
   }
 
   template<typename F, typename C, typename S>
-  template<typename Buffer>
   void TmxIpServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
-      Beam::Out<Buffer> buffer, std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
+      Beam::Out<typename RetransmissionClientChannel::Writer::Buffer> buffer,
+      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
     constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
     buffer->Append("SEQN", 4);
     auto messageStartNumber = boost::lexical_cast<std::string>(
@@ -276,17 +258,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename F, typename C, typename S>
-  void TmxIpServiceAccessClient<F, C, S>::Shutdown() {
-    if(m_config.m_enableRetransmission) {
-      m_retransmissionServerChannel->GetConnection().Close();
-    }
-    m_feedChannel->GetConnection().Close();
-    m_openState.SetClosed();
-    m_buffers.clear();
-  }
-
-  template<typename F, typename C, typename S>
-  void TmxIpServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
+  void TmxIpServiceAccessClient<F, C, S>::AddPendingBuffer(Buffer buffer,
       std::size_t sequenceNumber) {
     auto entry = BufferEntry(std::move(buffer), sequenceNumber);
     auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
@@ -312,7 +284,6 @@ namespace Nexus::MarketDataService {
       std::optional<RetransmissionClientChannel>();
     m_retransmissionClientChannelBuilder(
       Beam::Store(retransmissionClientChannel));
-    retransmissionClientChannel->GetConnection().Open();
     retransmissionClientChannel->GetWriter().Write(retransmissionRequestBuffer);
     auto retransmissionResponseBuffer =
       typename RetransmissionClientChannel::Reader::Buffer();

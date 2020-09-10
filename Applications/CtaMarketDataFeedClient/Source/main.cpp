@@ -146,7 +146,7 @@ int main(int argc, const char** argv) {
   }
   auto feedChannel = optional<ApplicationFeedChannel>();
   auto protocolClient = optional<ApplicationProtocolClient>();
-  CtaConfiguration ctaConfig;
+  auto ctaConfig = CtaConfiguration();
   try {
     auto countryDatabase = definitionsClient->LoadCountryDatabase();
     auto marketDatabase = definitionsClient->LoadMarketDatabase();

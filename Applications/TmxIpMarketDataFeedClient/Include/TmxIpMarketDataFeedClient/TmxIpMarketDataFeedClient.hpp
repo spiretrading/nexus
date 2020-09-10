@@ -44,12 +44,10 @@ namespace Nexus::MarketDataService {
        * @param timeClient The TimeClient used for timestamps.
        */
       template<typename MF, typename SF, typename TF>
-      TmxIpMarketDataFeedClient(const TmxIpConfiguration& config,
+      TmxIpMarketDataFeedClient(TmxIpConfiguration config,
         MF&& marketDataFeedClient, SF&& serviceAccessClient, TF&& timeClient);
 
       ~TmxIpMarketDataFeedClient();
-
-      void Open();
 
       void Close();
 
@@ -65,7 +63,6 @@ namespace Nexus::MarketDataService {
         Money price);
       static std::int64_t RoundToBoardLotPortion(std::int64_t quantity,
         Money price);
-      void Shutdown();
       boost::optional<boost::posix_time::ptime> GetTimestamp(
         const StampProtocol::StampMessage& message, int index);
       std::string GetOrderId(const boost::optional<std::string>& symbol,
@@ -93,12 +90,14 @@ namespace Nexus::MarketDataService {
   template<typename M, typename S, typename T>
   template<typename MF, typename SF, typename TF>
   TmxIpMarketDataFeedClient<M, S, T>::TmxIpMarketDataFeedClient(
-    const TmxIpConfiguration& config, MF&& marketDataFeedClient,
+    TmxIpConfiguration config, MF&& marketDataFeedClient,
     SF&& serviceAccessClient, TF&& timeClient)
-    : m_config(config),
+    : m_config(std::move(config)),
       m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
       m_serviceAccessClient(std::forward<SF>(serviceAccessClient)),
-      m_timeClient(std::forward<TF>(timeClient)) {}
+      m_timeClient(std::forward<TF>(timeClient)),
+      m_readLoopRoutine(Beam::Routines::Spawn(
+        std::bind(&TmxIpMarketDataFeedClient::ReadLoop, this))) {}
 
   template<typename M, typename S, typename T>
   TmxIpMarketDataFeedClient<M, S, T>::~TmxIpMarketDataFeedClient() {
@@ -106,29 +105,15 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename S, typename T>
-  void TmxIpMarketDataFeedClient<M, S, T>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_serviceAccessClient->Open();
-      m_timeClient->Open();
-      m_readLoopRoutine = Beam::Routines::Spawn(
-        std::bind(&TmxIpMarketDataFeedClient::ReadLoop, this));
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename M, typename S, typename T>
   void TmxIpMarketDataFeedClient<M, S, T>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
+    m_timeClient->Close();
+    m_serviceAccessClient->Close();
+    m_marketDataFeedClient->Close();
+    m_readLoopRoutine.Wait();
+    m_openState.Close();
   }
 
   template<typename M, typename S, typename T>
@@ -153,15 +138,6 @@ namespace Nexus::MarketDataService {
     } else {
       return quantity + 100 - (quantity % 100);
     }
-  }
-
-  template<typename M, typename S, typename T>
-  void TmxIpMarketDataFeedClient<M, S, T>::Shutdown() {
-    m_timeClient->Close();
-    m_serviceAccessClient->Close();
-    m_marketDataFeedClient->Close();
-    m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
   }
 
   template<typename M, typename S, typename T>

@@ -152,11 +152,10 @@ int main(int argc, const char** argv) {
   auto timerThreadPool = TimerThreadPool();
   auto serviceLocatorClient = ApplicationServiceLocatorClient();
   try {
-    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_address,
-      Ref(socketThreadPool), Ref(timerThreadPool));
-    serviceLocatorClient->SetCredentials(serviceLocatorClientConfig.m_username,
-      serviceLocatorClientConfig.m_password);
-    serviceLocatorClient->Open();
+    serviceLocatorClient.BuildSession(serviceLocatorClientConfig.m_username,
+      serviceLocatorClientConfig.m_password,
+      serviceLocatorClientConfig.m_address, Ref(socketThreadPool),
+      Ref(timerThreadPool));
   } catch(const std::exception& e) {
     std::cerr << "Error logging in: " << e.what() << std::endl;
     return -1;
@@ -165,7 +164,6 @@ int main(int argc, const char** argv) {
   try {
     uidClient.BuildSession(Ref(*serviceLocatorClient), Ref(socketThreadPool),
       Ref(timerThreadPool));
-    uidClient->Open();
   } catch(const std::exception& e) {
     std::cerr << "Error connecting to the uid service: " << e.what() <<
       std::endl;
@@ -187,17 +185,10 @@ int main(int argc, const char** argv) {
     std::cerr << "Unable to initialize NTP client: " << e.what() << std::endl;
     return -1;
   }
-  try {
-    timeClient->Open();
-  } catch(const std::exception&) {
-    std::cerr << "NTP service unavailable." << std::endl;
-    return -1;
-  }
   auto administrationClient = ApplicationAdministrationClient();
   try {
     administrationClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    administrationClient->Open();
   } catch(const std::exception& e) {
     std::cerr << "Error connecting to the administration service: " <<
       e.what() << std::endl;
@@ -207,7 +198,6 @@ int main(int argc, const char** argv) {
   try {
     definitionsClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    definitionsClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the definitions service." << std::endl;
     return -1;
@@ -216,7 +206,6 @@ int main(int argc, const char** argv) {
   try {
     complianceClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    complianceClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the compliance service." << std::endl;
     return -1;
@@ -225,7 +214,6 @@ int main(int argc, const char** argv) {
   try {
     marketDataClient.BuildSession(Ref(*serviceLocatorClient),
       Ref(socketThreadPool), Ref(timerThreadPool));
-    marketDataClient->Open();
   } catch(const std::exception&) {
     std::cerr << "Unable to connect to the market data service." << std::endl;
     return -1;
@@ -388,13 +376,12 @@ int main(int argc, const char** argv) {
   }
   auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
     &feesCalculator, std::move(checks));
-  ComplianceRuleSet<ApplicationComplianceClient::Client*,
-    ApplicationServiceLocatorClient::Client*> complianceRuleSet{
-    complianceClient.Get(), serviceLocatorClient.Get(),
-    [&] (const ComplianceRuleEntry& entry) {
+  auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
+    serviceLocatorClient.Get(),
+    [&] (const auto& entry) {
       return BuildComplianceRule(entry.GetSchema(), *marketDataClient,
         *definitionsClient, *timeClient);
-    }};
+    });
   auto complianceCheckOrderExecutionDriver =
     ApplicationComplianceCheckOrderExecutionDriver(&orderSubmissionCheckDriver,
     timeClient.get(), &complianceRuleSet);
@@ -420,35 +407,32 @@ int main(int argc, const char** argv) {
       std::endl;
     return -1;
   }
-  auto accountSource =
-    [&] (unsigned int id) {
-      return serviceLocatorClient->LoadDirectoryEntry(id);
-    };
+  auto accountSource = [&] (unsigned int id) {
+    return serviceLocatorClient->LoadDirectoryEntry(id);
+  };
   auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
   for(auto& mySqlConfig : mySqlConfigs) {
-    connectionBuilders.emplace_back(
-      [=] {
-        return MySql::Connection(mySqlConfig.m_address.GetHost(),
-          mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-          mySqlConfig.m_password, mySqlConfig.m_schema);
-      });
+    connectionBuilders.emplace_back([=] {
+      return MySql::Connection(mySqlConfig.m_address.GetHost(),
+        mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
+        mySqlConfig.m_password, mySqlConfig.m_schema);
+    });
   }
   auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
     connectionBuilders, accountSource);
-  auto orderExecutionServer = OrderExecutionServletContainer(Initialize(
-    serviceLocatorClient.Get(), Initialize(sessionStartTime,
-    definitionsClient->LoadMarketDatabase(),
-    definitionsClient->LoadDestinationDatabase(), timeClient.get(),
-    serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-    &manualOrderExecutionDriver, dataStore.get())),
-    Initialize(orderExecutionServerConnectionInitializer.m_interface,
-    Ref(socketThreadPool)),
-    std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
-    Ref(timerThreadPool)));
+  auto orderExecutionServer = optional<OrderExecutionServletContainer>();
   try {
-    orderExecutionServer.Open();
+    orderExecutionServer.emplace(Initialize(serviceLocatorClient.Get(),
+      Initialize(sessionStartTime, definitionsClient->LoadMarketDatabase(),
+      definitionsClient->LoadDestinationDatabase(), timeClient.get(),
+      serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+      &manualOrderExecutionDriver, dataStore.get())),
+      Initialize(orderExecutionServerConnectionInitializer.m_interface,
+      Ref(socketThreadPool)),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10),
+      Ref(timerThreadPool)));
   } catch(const std::exception& e) {
-    std::cerr << "Error opening server: " << e.what() << std::endl;
+    std::cerr << "Error opening order server: " << e.what() << std::endl;
     return -1;
   }
   try {
