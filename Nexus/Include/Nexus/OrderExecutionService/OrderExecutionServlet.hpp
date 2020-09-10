@@ -250,7 +250,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::RecoverTradingSession() {
-    auto& accounts = m_serviceLocatorClient->LoadAllAccounts();
+    auto accounts = m_serviceLocatorClient->LoadAllAccounts();
     for(auto& account : accounts) {
       auto recoveryQuery = AccountQuery();
       recoveryQuery.SetIndex(account);
@@ -258,7 +258,7 @@ namespace Nexus::OrderExecutionService {
         Beam::Queries::Sequence::Last());
       recoveryQuery.SetSnapshotLimit(
         Beam::Queries::SnapshotLimit::Unlimited());
-      auto& orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
+      auto orders = m_dataStore->LoadOrderSubmissions(recoveryQuery);
       for(auto& orderRecord : orders) {
         auto& syncShortingModel = m_shortingModels.GetOrInsert(
           orderRecord->m_info.m_fields.m_account,
