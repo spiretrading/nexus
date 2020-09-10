@@ -43,15 +43,11 @@ namespace Nexus::MarketDataService {
        * @param marketDataFeedClient Initializes the MarketDataFeedClient.
        * @param protocolClient The client receiving HKEX messages.
        */
-      template<typename MarketDataFeedClientForward,
-        typename ProtocolClientForward>
+      template<typename MF, typename PF>
       HkexMarketDataFeedClient(HkexConfiguration config,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ProtocolClientForward&& protocolClient);
+        MF&& marketDataFeedClient, PF&& protocolClient);
 
       ~HkexMarketDataFeedClient();
-
-      void Open();
 
       void Close();
 
@@ -71,7 +67,6 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       Entry& GetEntry(const Security& security);
       Security ParseSecurity(Beam::Out<const char*> cursor) const;
       Money ParsePrice(Beam::Out<const char*> cursor) const;
@@ -90,15 +85,13 @@ namespace Nexus::MarketDataService {
   };
 
   template<typename C, typename P>
-  template<typename MarketDataFeedClientForward, typename ProtocolClientForward>
+  template<typename MF, typename PF>
   HkexMarketDataFeedClient<C, P>::HkexMarketDataFeedClient(
-    HkexConfiguration config,
-    MarketDataFeedClientForward&& marketDataFeedClient,
-    ProtocolClientForward&& protocolClient)
+    HkexConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
     : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MarketDataFeedClientForward>(
-        marketDataFeedClient)),
-      m_protocolClient(std::forward<ProtocolClientForward>(protocolClient)) {}
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_protocolClient(std::forward<PF>(protocolClient)),
+      m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {}
 
   template<typename C, typename P>
   HkexMarketDataFeedClient<C, P>::~HkexMarketDataFeedClient() {
@@ -106,35 +99,14 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  void HkexMarketDataFeedClient<C, P>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_protocolClient->Open();
-      m_readLoopRoutine = Beam::Routines::Spawn([=] { ReadLoop(); });
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C, typename P>
   void HkexMarketDataFeedClient<C, P>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename P>
-  void HkexMarketDataFeedClient<C, P>::Shutdown() {
     m_protocolClient->Close();
     m_marketDataFeedClient->Close();
     m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename P>

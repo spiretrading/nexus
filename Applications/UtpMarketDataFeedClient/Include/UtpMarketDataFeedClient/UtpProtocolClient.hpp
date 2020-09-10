@@ -1,70 +1,63 @@
-#ifndef NEXUS_UTPPROTOCOLCLIENT_HPP
-#define NEXUS_UTPPROTOCOLCLIENT_HPP
+#ifndef NEXUS_UTP_PROTOCOL_CLIENT_HPP
+#define NEXUS_UTP_PROTOCOL_CLIENT_HPP
 #include <cstdint>
-#include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "UtpMarketDataFeedClient/UtpMessage.hpp"
 
-namespace Nexus {
-namespace MarketDataService {
+namespace Nexus::MarketDataService {
 
-  /*! \class UtpProtocolClient
-      \brief Implements a client using the UTP protocol.
-      \tparam ChannelType The type of Channel connected to the server.
+  /**
+   * Implements a client using the UTP protocol.
+   * @param <C> The type of Channel connected to the server.
    */
-  template<typename ChannelType>
+  template<typename C>
   class UtpProtocolClient : private boost::noncopyable {
     public:
 
-      //! The type of Channel connected to the server.
-      using Channel = Beam::GetTryDereferenceType<ChannelType>;
+      /** The type of Channel connected to the server. */
+      using Channel = Beam::GetTryDereferenceType<C>;
 
-      //! Constructs a UtpProtocolClient.
-      /*!
-        \param channel The Channel to connect to the server
-      */
-      template<typename ChannelForward>
-      UtpProtocolClient(ChannelForward&& channel);
+      /**
+       * Constructs a UtpProtocolClient.
+       * @param channel The Channel to connect to the server
+       */
+      template<typename CF>
+      UtpProtocolClient(CF&& channel);
 
       ~UtpProtocolClient();
 
-      //! Reads the next message from the feed.
-      /*!
-        \return The next UtpMessage in the data feed.
-      */
+      /**
+       * Reads the next message from the feed.
+       * @return The next UtpMessage in the data feed.
+       */
       UtpMessage Read();
-
-      void Open();
 
       void Close();
 
     private:
-      MoldUdp64::MoldUdp64Client<ChannelType> m_moldClient;
+      MoldUdp64::MoldUdp64Client<C> m_moldClient;
       std::uint64_t m_sequenceNumber;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  template<typename ChannelType>
-  template<typename ChannelForward>
-  UtpProtocolClient<ChannelType>::UtpProtocolClient(ChannelForward&& channel)
-      : m_moldClient{std::forward<ChannelForward>(channel)} {}
+  template<typename C>
+  template<typename CF>
+  UtpProtocolClient<C>::UtpProtocolClient(CF&& channel)
+    : m_moldClient(std::forward<CF>(channel)),
+      m_sequenceNumber(-1) {}
 
-  template<typename ChannelType>
-  UtpProtocolClient<ChannelType>::~UtpProtocolClient() {
+  template<typename C>
+  UtpProtocolClient<C>::~UtpProtocolClient() {
     Close();
   }
 
-  template<typename ChannelType>
-  UtpMessage UtpProtocolClient<ChannelType>::Read() {
-    if(!m_openState.IsOpen()) {
-      BOOST_THROW_EXCEPTION(Beam::IO::NotConnectedException{});
-    }
-    std::uint64_t sequenceNumber;
+  template<typename C>
+  UtpMessage UtpProtocolClient<C>::Read() {
+    m_openState.EnsureOpen();
+    auto sequenceNumber = std::uint64_t();
     auto moldMessage = m_moldClient.Read(Beam::Store(sequenceNumber));
     if(m_sequenceNumber != -1 && sequenceNumber > m_sequenceNumber + 1) {
       std::cout << "Packets dropped: " << (m_sequenceNumber + 1) << " - " <<
@@ -76,35 +69,14 @@ namespace MarketDataService {
     return message;
   }
 
-  template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_moldClient.Open();
-      m_sequenceNumber = -1;
-    } catch(std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Close() {
+  template<typename C>
+  void UtpProtocolClient<C>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename ChannelType>
-  void UtpProtocolClient<ChannelType>::Shutdown() {
     m_moldClient.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
-}
 }
 
 #endif

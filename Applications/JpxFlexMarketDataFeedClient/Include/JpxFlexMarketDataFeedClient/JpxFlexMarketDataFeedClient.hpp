@@ -40,15 +40,11 @@ namespace Nexus::MarketDataService {
        * @param marketDataFeedClient Initializes the MarketDataFeedClient.
        * @param protocolClient The client receiving HKEX messages.
        */
-      template<typename MarketDataFeedClientForward,
-        typename ProtocolClientForward>
+      template<typename MF, typename PF>
       JpxFlexMarketDataFeedClient(JpxFlexConfiguration config,
-        MarketDataFeedClientForward&& marketDataFeedClient,
-        ProtocolClientForward&& protocolClient);
+        MF&& marketDataFeedClient, PF&& protocolClient);
 
       ~JpxFlexMarketDataFeedClient();
-
-      void Open();
 
       void Close();
 
@@ -72,7 +68,6 @@ namespace Nexus::MarketDataService {
       std::unordered_map<Security, SecurityEntry> m_securityEntries;
       Beam::IO::OpenState m_openState;
 
-      void Shutdown();
       boost::posix_time::ptime ParseTimestamp(Beam::Out<const char*> source);
       Security ParseSecurity(const JpxFlexPacket& packet);
       Money ParsePrice(Beam::Out<const char*> source);
@@ -87,15 +82,13 @@ namespace Nexus::MarketDataService {
   };
 
   template<typename C, typename P>
-  template<typename MarketDataFeedClientForward, typename ProtocolClientForward>
+  template<typename MF, typename PF>
   JpxFlexMarketDataFeedClient<C, P>::JpxFlexMarketDataFeedClient(
-    JpxFlexConfiguration config,
-    MarketDataFeedClientForward&& marketDataFeedClient,
-    ProtocolClientForward&& protocolClient)
+    JpxFlexConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
     : m_config(std::move(config)),
-      m_marketDataFeedClient(std::forward<MarketDataFeedClientForward>(
-        marketDataFeedClient)),
-      m_protocolClient(std::forward<ProtocolClientForward>(protocolClient)) {}
+      m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
+      m_protocolClient(std::forward<PF>(protocolClient)),
+      m_readLoopRoutine(Beam::Routines::Spawn([=] { ReadLoop(); })) {}
 
   template<typename C, typename P>
   JpxFlexMarketDataFeedClient<C, P>::~JpxFlexMarketDataFeedClient() {
@@ -103,35 +96,14 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename P>
-  void JpxFlexMarketDataFeedClient<C, P>::Open() {
-    if(m_openState.SetOpening()) {
-      return;
-    }
-    try {
-      m_marketDataFeedClient->Open();
-      m_protocolClient->Open();
-      m_readLoopRoutine = Beam::Routines::Spawn([=] { ReadLoop(); });
-    } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
-    }
-    m_openState.SetOpen();
-  }
-
-  template<typename C, typename P>
   void JpxFlexMarketDataFeedClient<C, P>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename P>
-  void JpxFlexMarketDataFeedClient<C, P>::Shutdown() {
     m_protocolClient->Close();
     m_marketDataFeedClient->Close();
     m_readLoopRoutine.Wait();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename P>
