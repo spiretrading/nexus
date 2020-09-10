@@ -45,7 +45,6 @@ RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
     : m_sessions(sessions.Get()),
       m_serviceClients(serviceClients.Get()),
       m_portfolioModel(Ref(*m_serviceClients)) {
-  m_openState.SetOpening();
   try {
     m_portfolioTimer = m_serviceClients->BuildTimer(seconds(1));
     m_portfolioTimer->GetPublisher().Monitor(m_tasks.GetSlot<Timer::Result>(
@@ -57,10 +56,9 @@ RiskWebServlet::RiskWebServlet(Ref<SessionStore<WebPortalSession>> sessions,
       std::placeholders::_1)));
     m_portfolioTimer->Start();
   } catch(const std::exception&) {
-    m_openState.SetOpenFailure();
-    Shutdown();
+    Close();
+    BOOST_RETHROW;
   }
-  m_openState.SetOpen();
 }
 
 RiskWebServlet::~RiskWebServlet() {
@@ -86,12 +84,8 @@ void RiskWebServlet::Close() {
   if(m_openState.SetClosing()) {
     return;
   }
-  Shutdown();
-}
-
-void RiskWebServlet::Shutdown() {
   m_portfolioTimer->Cancel();
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 const DirectoryEntry& RiskWebServlet::FindTradingGroup(

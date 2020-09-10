@@ -16,10 +16,8 @@ using namespace Nexus::Compliance;
 using namespace Nexus::WebPortal;
 
 ComplianceWebServlet::ComplianceWebServlet(
-    Ref<SessionStore<WebPortalSession>> sessions)
-    : m_sessions(sessions.Get()) {
-  m_openState.SetOpen();
-}
+  Ref<SessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.Get()) {}
 
 ComplianceWebServlet::~ComplianceWebServlet() {
   Close();
@@ -47,14 +45,7 @@ std::vector<HttpRequestSlot> ComplianceWebServlet::GetSlots() {
 }
 
 void ComplianceWebServlet::Close() {
-  if(m_openState.SetClosing()) {
-    return;
-  }
-  Shutdown();
-}
-
-void ComplianceWebServlet::Shutdown() {
-  m_openState.SetClosed();
+  m_openState.Close();
 }
 
 HttpResponse ComplianceWebServlet::OnLoadDirectoryEntryComplianceRuleEntry(

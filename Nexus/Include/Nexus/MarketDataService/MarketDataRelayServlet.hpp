@@ -64,12 +64,12 @@ namespace Nexus::MarketDataService {
        * @param timerThreadPool The thread pool used for timed operations.
        */
       template<typename AF>
-      MarketDataRelayServlet(const EntitlementDatabase& entitlementDatabase,
-        const boost::posix_time::time_duration& clientTimeout,
-        const MarketDataClientBuilder& marketDataClientBuilder,
+      MarketDataRelayServlet(EntitlementDatabase entitlementDatabase,
+        boost::posix_time::time_duration clientTimeout,
+        MarketDataClientBuilder marketDataClientBuilder,
         std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-        AF&& administrationClient, Beam::Ref<Beam::Threading::TimerThreadPool>
-        timerThreadPool);
+        AF&& administrationClient,
+        Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool);
 
       void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
         ServiceProtocolClient>> slots);
@@ -112,7 +112,6 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
       std::vector<std::unique_ptr<RealTimeQueryEntry>> m_realTimeQueryEntries;
 
-      void Shutdown();
       template<typename T>
       RealTimeQueryEntry& GetRealTimeQueryEntry(const T& index);
       template<typename Service, typename Query, typename Subscriptions,
@@ -162,23 +161,22 @@ namespace Nexus::MarketDataService {
   template<typename C, typename M, typename A>
   template<typename AF>
   MarketDataRelayServlet<C, M, A>::MarketDataRelayServlet(
-      const EntitlementDatabase& entitlementDatabase,
-      const boost::posix_time::time_duration& clientTimeout,
-      const MarketDataClientBuilder& marketDataClientBuilder,
+      EntitlementDatabase entitlementDatabase,
+      boost::posix_time::time_duration clientTimeout,
+      MarketDataClientBuilder marketDataClientBuilder,
       std::size_t minMarketDataClients, std::size_t maxMarketDataClients,
-      AF&& administrationClient, Beam::Ref<Beam::Threading::TimerThreadPool>
-      timerThreadPool)
+      AF&& administrationClient,
+      Beam::Ref<Beam::Threading::TimerThreadPool> timerThreadPool)
       : m_entitlementDatabase(entitlementDatabase),
         m_marketDataClients(clientTimeout, marketDataClientBuilder,
           Beam::Ref(timerThreadPool), minMarketDataClients,
           maxMarketDataClients),
         m_administrationClient(std::forward<AF>(administrationClient)) {
-    for(auto i = std::size_t{0}; i < boost::thread::hardware_concurrency();
+    for(auto i = std::size_t(0); i < boost::thread::hardware_concurrency();
         ++i) {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
     }
-    m_openState.SetOpen();
   }
 
   template<typename C, typename M, typename A>
@@ -297,15 +295,10 @@ namespace Nexus::MarketDataService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C, typename M, typename A>
-  void MarketDataRelayServlet<C, M, A>::Shutdown() {
     for(auto& entry : m_realTimeQueryEntries) {
       entry->m_marketDataClient->Close();
     }
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename C, typename M, typename A>

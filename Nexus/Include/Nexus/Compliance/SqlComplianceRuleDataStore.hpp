@@ -55,15 +55,12 @@ namespace Nexus::Compliance {
       mutable Beam::Threading::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   template<typename C>
   SqlComplianceRuleDataStore<C>::SqlComplianceRuleDataStore(
       std::unique_ptr<Connection> connection)
       : m_connection(std::move(connection)) {
-    m_openState.SetOpening();
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
@@ -72,10 +69,9 @@ namespace Nexus::Compliance {
         GetComplianceRuleViolationRecordsRow(),
         "compliance_rule_violation_records"));
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C>
@@ -209,13 +205,8 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlComplianceRuleDataStore<C>::Shutdown() {
     m_connection->close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

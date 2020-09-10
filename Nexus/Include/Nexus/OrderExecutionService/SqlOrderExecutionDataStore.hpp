@@ -19,36 +19,38 @@
 
 namespace Nexus::OrderExecutionService {
 
-  /** Stores Order execution data in an SQL database.
-      \tparam C The type of SQL connection to use.
+  /**
+   * Stores Order execution data in an SQL database.
+   * @param <C> The type of SQL connection to use.
    */
   template<typename C>
   class SqlOrderExecutionDataStore : private boost::noncopyable {
     public:
 
-      //! The type of SQL connection.
+      /** The type of SQL connection. */
       using Connection = C;
 
-      //! The callable used to build SQL connections.
+      /** The callable used to build SQL connections. */
       using ConnectionBuilder = std::function<Connection ()>;
 
-      //! The function used to load DirectoryEntries.
+      /** The function used to load DirectoryEntries. */
       using AccountSourceFunction = Beam::KeyValueCache<unsigned int,
         Beam::ServiceLocator::DirectoryEntry,
         Beam::Threading::Mutex>::SourceFunction;
 
-      //! Constructs an SqlOrderExecutionDataStore.
-      /*!
-        \param connectionBuilder The callable used to build SQL connections.
-        \param accountSourceFunction The function used to load DirectoryEntries.
-      */
+      /**
+       * Constructs an SqlOrderExecutionDataStore.
+       * @param connectionBuilder The callable used to build SQL connections.
+       * @param accountSourceFunction The function used to load
+       *        DirectoryEntries.
+       */
       SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder,
         const AccountSourceFunction& accountSourceFunction);
 
-      //! Constructs a MySqlOrderExecutionDataStore.
-      /*!
-        \param connectionBuilder The callable used to build SQL connections.
-      */
+      /**
+       * Constructs a MySqlOrderExecutionDataStore.
+       * @param connectionBuilder The callable used to build SQL connections.
+       */
       SqlOrderExecutionDataStore(ConnectionBuilder connectionBuilder);
 
       ~SqlOrderExecutionDataStore();
@@ -90,17 +92,15 @@ namespace Nexus::OrderExecutionService {
         m_executionReportDataStore;
       Viper::Row<OrderId> m_liveOrdersRow;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  //! Makes an OrderExecutionDataStore replicated among multiple database
-  //! instances.
-  /*!
-    \param connectionBuilders Builds the connections to the SQL database to
-           replicate.
-    \param accountSourceFunction The function used to load DirectoryEntries.
-  */
+  /**
+   * Makes an OrderExecutionDataStore replicated among multiple database
+   * instances.
+   * @param connectionBuilders Builds the connections to the SQL database to
+   *        replicate.
+   * @param accountSourceFunction The function used to load DirectoryEntries.
+   */
   template<typename Connection>
   auto MakeReplicatedMySqlOrderExecutionDataStore(
       const std::vector<std::function<Connection ()>>& connectionBuilders,
@@ -128,20 +128,18 @@ namespace Nexus::OrderExecutionService {
       ConnectionBuilder connectionBuilder,
       const AccountSourceFunction& accountSourceFunction)
       : m_accountEntries(accountSourceFunction),
-        m_readerPool(std::thread::hardware_concurrency(),
-          [&] {
-            auto connection = std::make_unique<Connection>(connectionBuilder());
-            connection->open();
-            return connection;
-          }),
-        m_writerPool(1,
-          [&] {
-            auto connection = std::make_unique<Connection>(connectionBuilder());
-            connection->open();
-            return connection;
-          }),
-        m_submissionDataStore("submissions", GetOrderInfoRow(),
-          GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
+        m_readerPool(std::thread::hardware_concurrency(), [&] {
+          auto connection = std::make_unique<Connection>(connectionBuilder());
+          connection->open();
+          return connection;
+        }),
+        m_writerPool(1, [&] {
+          auto connection = std::make_unique<Connection>(connectionBuilder());
+          connection->open();
+          return connection;
+        }),
+        m_submissionDataStore("submissions", GetOrderInfoRow(), GetAccountRow(),
+          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
           Beam::Ref(m_threadPool)),
         m_statusSubmissionDataStore("status_submissions", GetOrderInfoRow(),
           GetAccountRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool),
@@ -152,7 +150,6 @@ namespace Nexus::OrderExecutionService {
     m_liveOrdersRow = Viper::Row<OrderId>().
       add_column("order_id").
       set_primary_key("order_id");
-    m_openState.SetOpening();
     try {
       auto writerConnection = m_writerPool.Acquire();
       writerConnection->execute(Viper::create_if_not_exists(m_liveOrdersRow,
@@ -164,19 +161,18 @@ namespace Nexus::OrderExecutionService {
           "submissions.order_id = live_orders.order_id");
       }
     } catch(const std::exception&) {
-      m_openState.SetOpenFailure();
-      Shutdown();
+      Close();
+      BOOST_RETHROW;
     }
-    m_openState.SetOpen();
   }
 
   template<typename C>
   SqlOrderExecutionDataStore<C>::SqlOrderExecutionDataStore(
-      ConnectionBuilder connectionBuilder)
-      : SqlOrderExecutionDataStore(std::move(connectionBuilder),
-        [] (unsigned int id) {
-          return Beam::ServiceLocator::DirectoryEntry::MakeAccount(id, "");
-        }) {}
+    ConnectionBuilder connectionBuilder)
+    : SqlOrderExecutionDataStore(std::move(connectionBuilder),
+      [] (unsigned int id) {
+        return Beam::ServiceLocator::DirectoryEntry::MakeAccount(id, "");
+      }) {}
 
   template<typename C>
   SqlOrderExecutionDataStore<C>::~SqlOrderExecutionDataStore() {
@@ -186,14 +182,13 @@ namespace Nexus::OrderExecutionService {
   template<typename C>
   std::vector<SequencedOrderRecord> SqlOrderExecutionDataStore<C>::
       LoadOrderSubmissions(const AccountQuery& query) {
-    auto orderInfo =
-      [&] {
-        if(HasLiveCheck(query.GetFilter())) {
-          return m_statusSubmissionDataStore.Load(query);
-        } else {
-          return m_submissionDataStore.Load(query);
-        }
-      }();
+    auto orderInfo = [&] {
+      if(HasLiveCheck(query.GetFilter())) {
+        return m_statusSubmissionDataStore.Load(query);
+      } else {
+        return m_submissionDataStore.Load(query);
+      }
+    }();
     auto orderRecords = std::vector<SequencedOrderRecord>();
     for(auto& order : orderInfo) {
       order->m_fields.m_account = m_accountEntries.Load(
@@ -281,17 +276,12 @@ namespace Nexus::OrderExecutionService {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename C>
-  void SqlOrderExecutionDataStore<C>::Shutdown() {
     m_executionReportDataStore.Close();
     m_statusSubmissionDataStore.Close();
     m_submissionDataStore.Close();
     m_writerPool.Close();
     m_readerPool.Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 }
 

@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDERSUBMISSIONCHECKDRIVER_HPP
-#define NEXUS_ORDERSUBMISSIONCHECKDRIVER_HPP
+#ifndef NEXUS_ORDER_SUBMISSION_CHECK_DRIVER_HPP
+#define NEXUS_ORDER_SUBMISSION_CHECK_DRIVER_HPP
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -10,33 +10,32 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 
-namespace Nexus {
-namespace OrderExecutionService {
+namespace Nexus::OrderExecutionService {
 
-  /*! \class OrderSubmissionCheckDriver
-      \brief Performs a series of checks on an Order submission.
-      \tparam OrderExecutionDriverType The type of OrderExecutionDriver to send
-              the submission to if all checks pass.
+  /**
+   * Performs a series of checks on an Order submission.
+   * @param <D> The type of OrderExecutionDriver to send the submission to if
+   *        all checks pass.
    */
-  template<typename OrderExecutionDriverType>
+  template<typename D>
   class OrderSubmissionCheckDriver : private boost::noncopyable {
     public:
 
-      //! The type of OrderExecutionDriver to send the submission to if all
-      //! checks pass.
-      using OrderExecutionDriver =
-        Beam::GetTryDereferenceType<OrderExecutionDriverType>;
+      /**
+       * The type of OrderExecutionDriver to send the submission to if all
+       * checks pass.
+       */
+      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
 
-      //! Constructs an OrderSubmissionCheckDriver.
-      /*!
-        \param orderExecutionDriver The OrderExecutionDriver to send the
-               submission to if all checks pass.
-        \param orderSubmissionChecks The list of order submission checks to
-               perform.
-      */
-      template<typename OrderExecutionDriverForward>
-      OrderSubmissionCheckDriver(
-        OrderExecutionDriverForward&& orderExecutionDriver,
+      /**
+       * Constructs an OrderSubmissionCheckDriver.
+       * @param orderExecutionDriver The OrderExecutionDriver to send the
+       *        submission to if all checks pass.
+       * @param orderSubmissionChecks The list of order submission checks to
+       *        perform.
+       */
+      template<typename DF>
+      OrderSubmissionCheckDriver(DF&& orderExecutionDriver,
         std::vector<std::unique_ptr<OrderSubmissionCheck>>
         orderSubmissionChecks);
 
@@ -54,35 +53,28 @@ namespace OrderExecutionService {
       void Close();
 
     private:
-      Beam::GetOptionalLocalPtr<OrderExecutionDriverType>
+      Beam::GetOptionalLocalPtr<D>
         m_orderExecutionDriver;
       Beam::Threading::Sync<std::vector<std::unique_ptr<Order>>> m_orders;
       std::vector<std::unique_ptr<OrderSubmissionCheck>> m_checks;
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
-  template<typename OrderExecutionDriverType>
-  template<typename OrderExecutionDriverForward>
-  OrderSubmissionCheckDriver<OrderExecutionDriverType>::
-      OrderSubmissionCheckDriver(OrderExecutionDriverForward&&
-      orderExecutionDriver, std::vector<std::unique_ptr<OrderSubmissionCheck>>
-      orderSubmissionChecks)
-      : m_orderExecutionDriver(std::forward<OrderExecutionDriverForward>(
-          orderExecutionDriver)),
-        m_checks(std::move(orderSubmissionChecks)) {
-    m_openState.SetOpen();
-  }
+  template<typename D>
+  template<typename DF>
+  OrderSubmissionCheckDriver<D>::OrderSubmissionCheckDriver(
+    DF&& orderExecutionDriver,
+    std::vector<std::unique_ptr<OrderSubmissionCheck>> orderSubmissionChecks)
+    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
+      m_checks(std::move(orderSubmissionChecks)) {}
 
-  template<typename OrderExecutionDriverType>
-  OrderSubmissionCheckDriver<OrderExecutionDriverType>::
-      ~OrderSubmissionCheckDriver() {
+  template<typename D>
+  OrderSubmissionCheckDriver<D>::~OrderSubmissionCheckDriver() {
     Close();
   }
 
-  template<typename OrderExecutionDriverType>
-  const Order& OrderSubmissionCheckDriver<OrderExecutionDriverType>::Recover(
+  template<typename D>
+  const Order& OrderSubmissionCheckDriver<D>::Recover(
       const SequencedAccountOrderRecord& orderRecord) {
     auto& order = m_orderExecutionDriver->Recover(orderRecord);
     for(auto& check : m_checks) {
@@ -91,8 +83,8 @@ namespace OrderExecutionService {
     return order;
   }
 
-  template<typename OrderExecutionDriverType>
-  const Order& OrderSubmissionCheckDriver<OrderExecutionDriverType>::Submit(
+  template<typename D>
+  const Order& OrderSubmissionCheckDriver<D>::Submit(
       const OrderInfo& orderInfo) {
     auto submissionIterator = m_checks.begin();
     try {
@@ -106,10 +98,9 @@ namespace OrderExecutionService {
       }
       auto order = BuildRejectedOrder(orderInfo, e.what());
       auto result = order.get();
-      Beam::Threading::With(m_orders,
-        [&] (std::vector<std::unique_ptr<Order>>& orders) {
-          orders.emplace_back(std::move(order));
-        });
+      Beam::Threading::With(m_orders, [&] (auto& orders) {
+        orders.emplace_back(std::move(order));
+      });
       return *result;
     }
     auto& order = m_orderExecutionDriver->Submit(orderInfo);
@@ -119,32 +110,23 @@ namespace OrderExecutionService {
     return order;
   }
 
-  template<typename OrderExecutionDriverType>
-  void OrderSubmissionCheckDriver<OrderExecutionDriverType>::Cancel(
+  template<typename D>
+  void OrderSubmissionCheckDriver<D>::Cancel(
       const OrderExecutionSession& session, OrderId orderId) {
     return m_orderExecutionDriver->Cancel(session, orderId);
   }
 
-  template<typename OrderExecutionDriverType>
-  void OrderSubmissionCheckDriver<OrderExecutionDriverType>::Update(
+  template<typename D>
+  void OrderSubmissionCheckDriver<D>::Update(
       const OrderExecutionSession& session, OrderId orderId,
       const ExecutionReport& executionReport) {
     return m_orderExecutionDriver->Update(session, orderId, executionReport);
   }
 
-  template<typename OrderExecutionDriverType>
-  void OrderSubmissionCheckDriver<OrderExecutionDriverType>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
+  template<typename D>
+  void OrderSubmissionCheckDriver<D>::Close() {
+    m_openState.Close();
   }
-
-  template<typename OrderExecutionDriverType>
-  void OrderSubmissionCheckDriver<OrderExecutionDriverType>::Shutdown() {
-    m_openState.SetClosed();
-  }
-}
 }
 
 #endif

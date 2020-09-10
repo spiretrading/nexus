@@ -80,18 +80,14 @@ namespace Nexus::MarketDataService {
       VirtualMarketDataClient* FindMarketDataClient(MarketCode market);
       VirtualMarketDataClient* FindMarketDataClient(const Security& security);
       Beam::IO::OpenState m_openState;
-
-      void Shutdown();
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(
-      std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
-      countryToMarketDataClients, std::unordered_map<MarketCode,
-      std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
-      : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
-        m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {
-    m_openState.SetOpen();
-  }
+    std::unordered_map<CountryCode, std::shared_ptr<VirtualMarketDataClient>>
+    countryToMarketDataClients, std::unordered_map<MarketCode,
+    std::shared_ptr<VirtualMarketDataClient>> marketToMarketDataClients)
+    : m_countryToMarketDataClients(std::move(countryToMarketDataClients)),
+      m_marketToMarketDataClients(std::move(marketToMarketDataClients)) {}
 
   inline DistributedMarketDataClient::~DistributedMarketDataClient() {
     Close();
@@ -241,14 +237,7 @@ namespace Nexus::MarketDataService {
   }
 
   inline void DistributedMarketDataClient::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    Shutdown();
-  }
-
-  inline void DistributedMarketDataClient::Shutdown() {
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   inline VirtualMarketDataClient* DistributedMarketDataClient::

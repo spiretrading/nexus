@@ -77,7 +77,6 @@ namespace Nexus::Compliance {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      void Shutdown();
       void OnExecutionReport(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
   };
@@ -85,13 +84,11 @@ namespace Nexus::Compliance {
   template<typename D, typename C, typename S>
   template<typename DF, typename CF, typename SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
-      ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-      CF&& timeClient, SF&& complianceRuleSet)
-      : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-        m_timeClient(std::forward<CF>(timeClient)),
-        m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {
-    m_openState.SetOpen();
-  }
+    ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
+    CF&& timeClient, SF&& complianceRuleSet)
+    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
+      m_timeClient(std::forward<CF>(timeClient)),
+      m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
 
   template<typename D, typename C, typename S>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
@@ -169,13 +166,8 @@ namespace Nexus::Compliance {
     if(m_openState.SetClosing()) {
       return;
     }
-    Shutdown();
-  }
-
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Shutdown() {
     m_orderExecutionDriver->Close();
-    m_openState.SetClosed();
+    m_openState.Close();
   }
 
   template<typename D, typename C, typename S>
@@ -185,12 +177,11 @@ namespace Nexus::Compliance {
     if(executionReport.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
-    order.With(
-      [&] (auto status, const auto& reports) {
-        auto update = executionReport;
-        update.m_sequence = reports.back().m_sequence + 1;
-        order.Update(update);
-      });
+    order.With([&] (auto status, const auto& reports) {
+      auto update = executionReport;
+      update.m_sequence = reports.back().m_sequence + 1;
+      order.Update(update);
+    });
   }
 }
 
